@@ -14,7 +14,8 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// The segment and the picker button (#274) share one look. The stepper is left out: it draws its
-/// own 44px frame with a line under it (#349).
+/// own 44px frame with a line under it (#349). The segment's height is left out too: it grows to
+/// fit its buttons, wrapped lines included, rather than clipping them (#408).
 /// </summary>
 public class ChoiceControlsLookAlikeTests
 {
@@ -64,11 +65,12 @@ public class ChoiceControlsLookAlikeTests
     /// <summary>
     /// What the two have to agree about: shape and size at rest. Not fill, border colour or
     /// corner radius — each keeps its own theme's for those, rather than DressAsAChoice forcing
-    /// one across all three (#289).
+    /// one across all three (#289). Not height either, when either side is a Segment: it grows to
+    /// fit its buttons rather than holding to the picker button's fixed 32px (#408).
     /// </summary>
     private static IEnumerable<string> Differences(TemplatedControl a, TemplatedControl b)
     {
-        if (a.Bounds.Height != b.Bounds.Height)
+        if (a is not Segment && b is not Segment && a.Bounds.Height != b.Bounds.Height)
         {
             yield return $"height {a.Bounds.Height:0.#} against {b.Bounds.Height:0.#}";
         }

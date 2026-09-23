@@ -8,12 +8,16 @@
 
 ## 1.7.0 — Elite's colours
 
+Segmented settings rows (Theme among them) no longer clip to a fixed height: the row now grows to
+fit its labels, wrapped lines included. The Theme row's fourth choice is renamed from "Elite
+colour scheme" to "My HUD colours".
+
 Every theme now draws from a fixed table of colours, one meaning each, instead of mixing every
 shade from the accent. Body text is off-white on Elite instead of amber. Neutral greys stay the
-same whatever your HUD colour is, and only the coloured tokens follow the HUD matrix under Elite
-colour scheme. Dark no longer glows or draws scanlines, and the Bloom setting is shown disabled
-on Dark as well as Light. The scanlines are slightly lighter. The Control Kit's Ramp section
-shows every colour with its hex value.
+same whatever your HUD colour is, and only the coloured tokens follow the HUD matrix under My HUD
+colours. Dark no longer glows or draws scanlines, and the Bloom setting is shown disabled on Dark
+as well as Light. The scanlines are slightly lighter. The Control Kit's Ramp section shows every
+colour with its hex value.
 
 ## 1.6.3 — Guardian theme removed
 

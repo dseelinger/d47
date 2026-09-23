@@ -2261,6 +2261,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             return;
         }
 
+        // A segment row sizes itself too: fixing its height clips wrapped labels (#408).
+        if (control is Segment)
+        {
+            control.Padding = ChoicePadding;
+            control.BorderThickness = new Thickness(1);
+            control.FontSize = TypeScale.Body;
+            return;
+        }
+
         // Fixed rather than a floor.
         control.Height = ChoiceHeight;
         control.Padding = ChoicePadding;

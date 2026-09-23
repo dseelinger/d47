@@ -19,7 +19,7 @@ public static class ThemeCatalog
         new(Elite, "Elite", "Amber on near-black. The default, and the one that matches the cockpit."),
         new(Dark, "Dark", "Neutral dark. No colour opinion."),
         new(Light, "Light", "Neutral light, for a desktop that is not in a dark room."),
-        new(ElitePaletteId, "Elite colour scheme", "Elite, recoloured by your own HUD matrix if you have one."),
+        new(ElitePaletteId, "My HUD colours", "Elite, recoloured by your own HUD colour matrix if you have one."),
     ];
 
     public static IReadOnlyList<string> Ids { get; } = [.. All.Select(t => t.Id)];

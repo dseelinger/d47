@@ -59,7 +59,7 @@ public static class InterfaceCapability
             {
                 Key = ThemeKey,
                 Label = "Theme",
-                Help = "Colour scheme. \"Elite colour scheme\" follows your own HUD matrix if the game has one.",
+                Help = "Colour scheme. \"My HUD colours\" follows your own HUD colour matrix if the game has one.",
                 Kind = SettingKind.Choice,
                 Choices = ThemeCatalog.Ids,
                 ChoiceLabel = id => ThemeCatalog.Selected(id).Name,
@@ -75,7 +75,7 @@ public static class InterfaceCapability
                 Key = BloomKey,
                 Label = "Bloom",
                 Help = "How wide the glow halos draw around the panel's edges. 0 turns the glow off; "
-                       + "the top of the range draws the widest halos. Elite and Elite colour scheme only — "
+                       + "the top of the range draws the widest halos. Elite and My HUD colours only — "
                        + "Dark and Light draw no glow at any value.",
                 Kind = SettingKind.Number,
                 Step = 0.1,
