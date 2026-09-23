@@ -144,8 +144,8 @@ public class TheRoutingTabTests
 
         var drawn = TextOf(panel).ToArray();
 
-        Assert.Contains(drawn, text => text.Contains("scoop unknown", StringComparison.Ordinal));
-        Assert.DoesNotContain(drawn, text => text.Contains("no scoop", StringComparison.Ordinal));
+        Assert.Contains(drawn, text => text.Contains("SCOOP UNKNOWN", StringComparison.Ordinal));
+        Assert.DoesNotContain(drawn, text => text.Contains("NO SCOOP", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -611,11 +611,12 @@ public class TheRoutingTabTests
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Equal(1, drawn.Count(text => text == "next"));
+            Assert.Equal(1, drawn.Count(text => text == "NEXT"));
 
             var next = panel.GetVisualDescendants()
-                .OfType<StackPanel>()
-                .First(row => row.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "next"));
+                .OfType<Border>()
+                .Where(row => row.Classes.Contains(ListRow.Class))
+                .First(row => row.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "NEXT"));
 
             Assert.Contains(
                 next.GetVisualDescendants().OfType<TextBlock>(),
@@ -641,8 +642,9 @@ public class TheRoutingTabTests
             var panel = MiniOnPlan(NavRoute.None, plans, here: "Waypoint 0");
 
             var next = panel.GetVisualDescendants()
-                .OfType<StackPanel>()
-                .First(row => row.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "next"));
+                .OfType<Border>()
+                .Where(row => row.Classes.Contains(ListRow.Class))
+                .First(row => row.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "NEXT"));
 
             Assert.Contains(
                 next.GetVisualDescendants().OfType<TextBlock>(),
@@ -670,7 +672,7 @@ public class TheRoutingTabTests
             var drawn = TextOf(panel).ToArray();
 
             Assert.Contains(drawn, text => text.Contains("destination is reached", StringComparison.Ordinal));
-            Assert.DoesNotContain(drawn, text => text == "next");
+            Assert.DoesNotContain(drawn, text => text == "NEXT");
         }
         finally
         {
@@ -694,7 +696,7 @@ public class TheRoutingTabTests
             var drawn = TextOf(panel).ToArray();
 
             Assert.Contains("Waypoint 0", drawn);
-            Assert.DoesNotContain(drawn, text => text == "next");
+            Assert.DoesNotContain(drawn, text => text == "NEXT");
         }
         finally
         {
@@ -754,7 +756,7 @@ public class TheRoutingTabTests
             panel.Mode = PanelMode.Mini;
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Equal(1, TextOf(panel).Count(text => text == "next"));
+            Assert.Equal(1, TextOf(panel).Count(text => text == "NEXT"));
 
             here = "Colonia";
             panel.TickRouting();
@@ -763,7 +765,7 @@ public class TheRoutingTabTests
             var drawn = TextOf(panel).ToArray();
 
             Assert.Contains(drawn, text => text.Contains("destination is reached", StringComparison.Ordinal));
-            Assert.DoesNotContain(drawn, text => text == "next");
+            Assert.DoesNotContain(drawn, text => text == "NEXT");
         }
         finally
         {
@@ -832,7 +834,7 @@ public class TheRoutingTabTests
         var title = page.GetVisualDescendants().OfType<TextBlock>()
             .First(text => text.Text == heading.ToUpperInvariant());
 
-        return ((StackPanel)title.Parent!).Children
+        return ((Avalonia.Controls.Panel)title.Parent!).Children
             .OfType<Button>()
             .First(button => button.Content as string == "HELP");
     }
@@ -1033,14 +1035,20 @@ public class TheRoutingTabTests
             ? parsed!
             : throw new InvalidOperationException("bad journal fixture");
 
-    private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
-
     /// <summary>The row whose text block reads the given name, on the plan's result page.</summary>
     private static Border ResultRow(PanelView panel, string text) =>
         (Border)panel.GetVisualDescendants()
             .OfType<TextBlock>()
             .First(block => block.Text == text)
             .FindAncestorOfType<Border>()!;
+
+    /// <summary>Whether the result row naming <paramref name="text"/> carries its tick.</summary>
+    private static bool Ticked(PanelView panel, string text) =>
+        ResultRow(panel, text).GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "✓");
+
+    /// <summary>Whether the result row naming <paramref name="text"/> is marked as the next one.</summary>
+    private static bool MarkedNext(PanelView panel, string text) =>
+        ResultRow(panel, text).GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "NEXT");
 
     /// <summary>
     /// Reached rows on the result page carry a tick and read muted; the row after the reached stop is
@@ -1066,10 +1074,10 @@ public class TheRoutingTabTests
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Contains("✓ Waypoint 0", drawn);
+            Assert.True(Ticked(panel, "Waypoint 0"));
             Assert.Contains("Waypoint 1", drawn);
-            Assert.DoesNotContain("✓ Waypoint 1", drawn);
-            Assert.DoesNotContain("✓ Colonia", drawn);
+            Assert.False(Ticked(panel, "Waypoint 1"));
+            Assert.False(Ticked(panel, "Colonia"));
         }
         finally
         {
@@ -1078,18 +1086,15 @@ public class TheRoutingTabTests
     }
 
     /// <summary>
-    /// The row after the reached stop gets the current-row treatment RouteProgressPage.Row uses; with
-    /// nothing reached, that is the first row (#200).
+    /// The row after the reached stop is marked NEXT; with nothing reached, that is the first row (#200).
     /// </summary>
     [AvaloniaFact]
-    public void TheRowAfterTheReachedStopGetsTheCurrentRowTreatment()
+    public void TheRowAfterTheReachedStopIsMarkedNext()
     {
         var folder = Scratch();
 
         try
         {
-            new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(themeId: null);
-
             var plans = Book(folder);
             RecordJumpPlan(plans);
             plans.Apply([Arrival("FSDJump", "Waypoint 0", new DateTimeOffset(2026, 9, 1, 9, 5, 0, TimeSpan.Zero))]);
@@ -1101,10 +1106,8 @@ public class TheRoutingTabTests
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
 
-            var fill = Colour(panel.FindResource(ThemeManager.FillHighKey) as IBrush);
-
-            Assert.Equal(fill, Colour(ResultRow(panel, "Waypoint 1").Background));
-            Assert.NotEqual(fill, Colour(ResultRow(panel, "Colonia").Background));
+            Assert.True(MarkedNext(panel, "Waypoint 1"));
+            Assert.False(MarkedNext(panel, "Colonia"));
         }
         finally
         {
@@ -1130,12 +1133,12 @@ public class TheRoutingTabTests
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
 
-            Assert.DoesNotContain("✓ Waypoint 0", TextOf(panel));
+            Assert.False(Ticked(panel, "Waypoint 0"));
 
             plans.Apply([Arrival("FSDJump", "Waypoint 0", new DateTimeOffset(2026, 9, 1, 9, 5, 0, TimeSpan.Zero))]);
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Contains("✓ Waypoint 0", TextOf(panel));
+            Assert.True(Ticked(panel, "Waypoint 0"));
         }
         finally
         {

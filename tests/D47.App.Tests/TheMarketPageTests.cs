@@ -160,7 +160,7 @@ public class TheMarketPageTests
         window.Arrange(new Avalonia.Rect(0, 0, 900, 700));
         Dispatcher.UIThread.RunJobs();
 
-        ResultsTableBounds.RowsStayInsideTheCard(panel, "What came back", "Station");
+        ResultsTableBounds.RowsStayInsideTheCard(panel, "WHAT CAME BACK", "Station");
     }
 
     /// <summary>The date is the part this feature is wrong without.</summary>
@@ -215,7 +215,7 @@ public class TheMarketPageTests
 
         var drawn = TextOf(panel);
 
-        Assert.Contains("Where to buy it", drawn);
+        Assert.Contains("WHERE TO BUY IT", drawn);
         Assert.DoesNotContain("Price", drawn);
     }
 

@@ -127,6 +127,19 @@ The filter row wraps in a narrow pane instead of cutting Delete completed items 
 strip the title is left out so the list has room. On every tab that has one, Settings for this
 page is an ordinary button with its count in brackets.
 
+Routing is restyled to match. Each page opens with a large white title over an accent rule: Plan,
+Course, Market, Community Goal and Trade route by name, Progress by the route, and a plan by its
+summary. The cards are gone. Each form sits under a white capitals heading over a rule, with its
+HELP on the heading's line, and Plan's two planners sit side by side where the pane is wide
+enough. Form fields, switches and buttons wrap in a narrow pane instead of being cut off, and
+each switch is only as wide as its label. Every hop, waypoint, stop and market result is a tile.
+A system name is in the accent colour, your current system is cyan, and a system you have
+already passed is grey. A reached stop on a plan is marked ✓ in blue, and the next one reads
+NEXT. Hazards read in red capitals and scoop warnings in grey capitals, with no box around them.
+A price you saw yourself reads in cyan. The Community Goal ledger's session, day and week are
+tiles, and a mistake in a form, such as a missing destination, reads in red. On a market result,
+COPY no longer overlaps the Distance column.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

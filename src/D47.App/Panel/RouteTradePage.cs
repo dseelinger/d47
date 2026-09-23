@@ -27,7 +27,7 @@ public sealed class RouteTradePage : UserControl
     private readonly SettingsService _settings;
     private readonly Action? _openSettings;
 
-    private readonly StackPanel _cards = new() { Spacing = 12 };
+    private readonly StackPanel _cards = new();
 
     public RouteTradePage(
         CapabilityRegistry registry,
@@ -61,6 +61,7 @@ public sealed class RouteTradePage : UserControl
     private void Build()
     {
         _cards.Children.Clear();
+        _cards.Children.Add(RoutingKit.Title("Trade route").Row);
 
         if (!_lookupsEnabled())
         {
@@ -71,30 +72,12 @@ public sealed class RouteTradePage : UserControl
         _cards.Children.Add(TradeCard());
     }
 
-    private Control SwitchedOff()
-    {
-        var body = new StackPanel { Spacing = 8 };
-
-        body.Children.Add(Text(
+    private Control SwitchedOff() =>
+        RoutingKit.SwitchedOff(
+            "Plotting is off",
             "Route planning is switched off. It shares the galaxy search setting, so turning on "
             + "“Look things up in the galaxy” switches both on.",
-            TypeScale.Body,
-            ThemeManager.TextKey,
-            wrap: true));
-
-        if (_openSettings is { } open)
-        {
-            var button = new Button { Content = "Open settings", Padding = new Thickness(12, 4) };
-            button.Click += (_, _) => open();
-            body.Children.Add(new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Children = { button },
-            });
-        }
-
-        return Card("Plotting is off", body);
-    }
+            _openSettings);
 
     /// <summary>The page behind this card's question mark.</summary>
     public const string TradeHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "trade-run";
@@ -114,10 +97,10 @@ public sealed class RouteTradePage : UserControl
         maxDistance.Box.Text = trade.MaxStationDistance.ToString("N0", CultureInfo.InvariantCulture);
         maxAge.Box.Text = trade.MaxPriceAgeHours.ToString("N0", CultureInfo.InvariantCulture);
 
-        var (loop, _) = LabeledCheckBox.Build("End where it started");
-        var (largePad, _) = LabeledCheckBox.Build("Large pads only");
-        var (planetary, _) = LabeledCheckBox.Build("Planetary ports");
-        var (avoidPermit, _) = LabeledCheckBox.Build("Avoid permit systems");
+        var loop = RoutingKit.Switch("End where it started");
+        var largePad = RoutingKit.Switch("Large pads only");
+        var planetary = RoutingKit.Switch("Planetary ports");
+        var avoidPermit = RoutingKit.Switch("Avoid permit systems");
 
         loop.IsChecked = trade.Loop;
         largePad.IsChecked = trade.LargePadOnly;
@@ -160,49 +143,24 @@ public sealed class RouteTradePage : UserControl
                 Row(capital, hops),
                 Row(maxJumps, maxDistance),
                 Row(maxAge, null),
-                loop,
-                largePad,
-                planetary,
-                avoidPermit,
-                Text(
+                RoutingKit.Fields(loop, largePad, planetary, avoidPermit),
+                RoutingKit.Prose(
                     "Your balance is never read from the journal and never saved — say what you "
                     + "want to trade with. It plans from the station you are docked at. Everything "
                     + "else on this page is saved, and a voice plot that says only the credits uses "
-                    + "it.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
+                    + "it."),
             },
         };
 
-        var plot = new Button { Content = "Plot", Padding = new Thickness(14, 4), MinHeight = 30 };
-        var cancel = new Button
-        {
-            Content = "Cancel",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
-            IsVisible = false,
-        };
+        var plot = new Button { Content = "Plot" };
+        var cancel = new Button { Content = "Cancel", IsVisible = false };
 
-        var status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
-        status.IsVisible = false;
-
-        var actions = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Margin = new Thickness(0, 4, 0, 0),
-            Children = { plot, cancel },
-        };
+        var status = RoutingKit.Status();
+        var actions = RoutingKit.Actions(plot, cancel);
 
         if (_plans.Last(RoutePlanKind.Trade) is { } kept)
         {
-            var show = new Button
-            {
-                Content = "Show most recent",
-                Padding = new Thickness(12, 4),
-                MinHeight = 30,
-            };
+            var show = new Button { Content = "Show most recent", VerticalAlignment = VerticalAlignment.Top };
 
             show.Click += (_, _) => _nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, kept.Headline));
             actions.Children.Add(show);
@@ -214,8 +172,7 @@ public sealed class RouteTradePage : UserControl
         {
             if (string.IsNullOrWhiteSpace(capital.Text))
             {
-                status.IsVisible = true;
-                status.Text = "Say how many credits to trade with. It is never inferred.";
+                RoutingKit.Say(status, "Say how many credits to trade with. It is never inferred.", error: true);
                 return;
             }
 
@@ -224,8 +181,7 @@ public sealed class RouteTradePage : UserControl
 
             plot.IsEnabled = false;
             cancel.IsVisible = true;
-            status.IsVisible = true;
-            status.Text = "Working it out…";
+            RoutingKit.Say(status, "Working it out…");
 
             var before = _plans.Last(RoutePlanKind.Trade);
 
@@ -238,7 +194,7 @@ public sealed class RouteTradePage : UserControl
                         inFlight.Token)
                     .ConfigureAwait(true);
 
-                status.Text = result.Content;
+                RoutingKit.Say(status, result.Content, result.IsError);
 
                 // The book is what the result level draws, and the capability has just written it — so
                 // redrawing the page is what puts "Show most recent" on the card.
@@ -251,7 +207,7 @@ public sealed class RouteTradePage : UserControl
             }
             catch (OperationCanceledException)
             {
-                status.Text = "Stopped.";
+                RoutingKit.Say(status, "Stopped.");
             }
             finally
             {
@@ -264,10 +220,18 @@ public sealed class RouteTradePage : UserControl
 
         cancel.Click += (_, _) => inFlight?.Cancel();
 
-        var body = new StackPanel { Spacing = 8, Children = { form, actions, status } };
-        body.Children.Insert(1, FormField.Legend(required: true));
-
-        return Card("Trade run", body, TradeHelp);
+        return new StackPanel
+        {
+            Spacing = 8,
+            Children =
+            {
+                RoutingKit.Section("Trade run", RoutingKit.Help(_nav, TradeHelp, "Trade run")),
+                form,
+                FormField.Legend(required: true),
+                actions,
+                status,
+            },
+        };
     }
 
     private static int ParseInt(string? text, int fallback, int min, int max) =>
@@ -294,78 +258,9 @@ public sealed class RouteTradePage : UserControl
             ["capital"] = (capital ?? string.Empty).Replace(",", string.Empty).Trim(),
         });
 
-    private static StackPanel Row(FormField left, FormField? right)
-    {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-
-        row.Children.Add(left.Control);
-
-        if (right is not null)
-        {
-            row.Children.Add(right.Control);
-        }
-
-        return row;
-    }
+    private static WrapPanel Row(FormField left, FormField? right) =>
+        right is null ? RoutingKit.Fields(left.Control) : RoutingKit.Fields(left.Control, right.Control);
 
     private static FormField Field(string label, string placeholder, FieldNeed need = FieldNeed.Optional) =>
         new(label, placeholder, need);
-
-    private static TextBlock Text(string text, double size, string colourKey, bool wrap = false)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            MaxWidth = wrap ? 520 : double.PositiveInfinity,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
-    }
-
-    private Control Card(string title, Control body, string? help = null)
-    {
-        var heading = new TextBlock { FontWeight = FontWeight.SemiBold };
-        TitleText.Style(heading, TypeScale.Caption, TitleRank.Subgroup);
-        TitleText.Show(heading, title);
-
-        var headingRow = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { heading },
-        };
-
-        if (help is { Length: > 0 } page)
-        {
-            var mark = D47.App.Controls.Glyphs.Quiet(
-                new Button { VerticalAlignment = VerticalAlignment.Center }, "HELP", $"About {title}");
-
-            mark.Click += (_, _) => D47.Core.Help.HelpLevel.Open(_nav, page);
-
-            headingRow.Children.Add(mark);
-        }
-
-        var stack = new StackPanel
-        {
-            Spacing = 10,
-            Children = { headingRow, body },
-        };
-
-        var card = new Border
-        {
-            Padding = new Thickness(14),
-            Child = stack,
-        };
-
-        CardChrome.Card(card);
-
-        return card;
-    }
 }

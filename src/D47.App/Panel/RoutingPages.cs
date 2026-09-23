@@ -162,7 +162,8 @@ public static class RoutingPages
                 surface.LookupsEnabled ?? (() => false),
                 surface.OpenSettings,
                 Copy(surface),
-                settingsStrip?.Invoke())
+                settingsStrip?.Invoke(),
+                surface.Here)
             : Missing("The Community Goal search is not available on this surface.");
 
     private static Control Result(NavCrumb crumb, RoutingSurface surface)
@@ -176,18 +177,18 @@ public static class RoutingPages
             return Missing("That plan is no longer here. Plot it again.");
         }
 
-        return new RoutePlanResultPage(plan, Copy(surface), plans);
+        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>
     private static Func<string, Task<bool>>? Copy(RoutingSurface surface) =>
         surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null;
 
-    private static Control Missing(string why) =>
-        new TextBlock
-        {
-            Text = why,
-            Margin = new Avalonia.Thickness(14),
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-        };
+    private static Control Missing(string why)
+    {
+        var text = RoutingKit.Prose(why, D47.App.Theming.TypeScale.Body);
+        text.Margin = new Avalonia.Thickness(14);
+
+        return text;
+    }
 }

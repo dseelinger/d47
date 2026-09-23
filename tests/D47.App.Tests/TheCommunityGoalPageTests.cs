@@ -253,9 +253,9 @@ public class TheCommunityGoalPageTests
 
         var drawn = TextOf(panel);
 
-        Assert.Contains("This session", drawn);
-        Assert.Contains("Today", drawn);
-        Assert.Contains("This week", drawn);
+        Assert.Contains("THIS SESSION", drawn);
+        Assert.Contains("TODAY", drawn);
+        Assert.Contains("THIS WEEK", drawn);
 
  // Three rows only: no fourth, goal-named row, even though none of the sales in this fixture
         // come from a live goal to begin with.
@@ -283,9 +283,9 @@ public class TheCommunityGoalPageTests
 
         var drawn = TextOf(panel);
 
-        Assert.Contains("This session", drawn);
-        Assert.Contains("Today", drawn);
-        Assert.Contains("This week", drawn);
+        Assert.Contains("THIS SESSION", drawn);
+        Assert.Contains("TODAY", drawn);
+        Assert.Contains("THIS WEEK", drawn);
         Assert.DoesNotContain("This goal", drawn);
         Assert.DoesNotContain("Palladium Drive", drawn);
     }
@@ -323,7 +323,7 @@ public class TheCommunityGoalPageTests
         run().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Community Goal search", TextOf(panel));
+        Assert.Contains("COMMUNITY GOAL SEARCH", TextOf(panel));
     }
 
     [AvaloniaFact]
@@ -463,7 +463,7 @@ public class TheCommunityGoalPageTests
         Assert.Contains(drawn, text => text.Contains("switched off", StringComparison.OrdinalIgnoreCase));
 
         // The ledger is the journal's and stays: nothing about it needs the network.
-        Assert.Contains("This session", drawn);
+        Assert.Contains("THIS SESSION", drawn);
     }
 
     [AvaloniaFact]
@@ -476,6 +476,6 @@ public class TheCommunityGoalPageTests
 
         Assert.Contains("Distance", TextOf(panel));
 
-        ResultsTableBounds.RowsStayInsideTheCard(panel, "What came back", "Station");
+        ResultsTableBounds.RowsStayInsideTheCard(panel, "WHAT CAME BACK", "Station");
     }
 }

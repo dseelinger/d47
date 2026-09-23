@@ -14,15 +14,21 @@ public sealed class RoutePlanResultPage : UserControl
 {
     private readonly Func<string, Task<bool>>? _copy;
     private readonly RoutePlanBook? _plans;
+    private readonly Func<string?>? _here;
     private readonly RoutePlanKind _kind;
-    private readonly StackPanel _stack = new() { Spacing = 4 };
+    private readonly StackPanel _stack = new() { Spacing = 2 };
 
     private StoredRoutePlan? _planSeen;
 
-    public RoutePlanResultPage(StoredRoutePlan plan, Func<string, Task<bool>>? copy = null, RoutePlanBook? plans = null)
+    public RoutePlanResultPage(
+        StoredRoutePlan plan,
+        Func<string, Task<bool>>? copy = null,
+        RoutePlanBook? plans = null,
+        Func<string?>? here = null)
     {
         _copy = copy;
         _plans = plans;
+        _here = here;
         _kind = plan.Kind;
 
         Content = new ScrollViewer
@@ -59,44 +65,34 @@ public sealed class RoutePlanResultPage : UserControl
     {
         _planSeen = plan;
 
-        _stack.Children.Clear();
-        _stack.Children.Add(Heading(plan));
-        _stack.Children.Add(Aside(Provenance(plan)));
+        var here = _here?.Invoke();
 
-        foreach (var row in Rows(plan))
+        _stack.Children.Clear();
+        _stack.Children.Add(RoutingKit.Title(Heading(plan)).Row);
+
+        var provenance = RoutingKit.Prose(Provenance(plan));
+        provenance.Margin = new Thickness(0, 0, 0, 10);
+        _stack.Children.Add(provenance);
+
+        foreach (var row in Rows(plan, here))
         {
             _stack.Children.Add(row);
         }
     }
 
-    private Control Heading(StoredRoutePlan plan)
+    private static string Heading(StoredRoutePlan plan) => plan switch
     {
-        var text = plan switch
-        {
-            { Jump: { } jump } =>
-                $"{jump.Origin} → {jump.Destination}: {jump.TotalDistance:N0} ly, "
-                + $"{Count(jump.TotalJumps, "jump")} across {Count(jump.Waypoints.Count, "waypoint")}.",
-            { Riches: { } riches } =>
-                $"{Count(riches.Stops.Count, "stop")}, {Count(riches.TotalJumps, "jump")}, "
-                + $"{riches.TotalValue:N0} credits of mapping.",
-            { Trade: { } trade } =>
-                $"{Count(trade.Stops.Count, "stop")}, {trade.TotalProfit:N0} credits on {trade.Capital:N0} "
-                + $"over {trade.TotalDistance:N0} ly.",
-            _ => plan.Headline,
-        };
-
-        var block = new TextBlock
-        {
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 2),
-        };
-
-        TitleText.Style(block, TypeScale.Caption, TitleRank.Subgroup, sentence: true);
-        TitleText.Show(block, text, sentence: true);
-
-        return block;
-    }
+        { Jump: { } jump } =>
+            $"{jump.Origin} → {jump.Destination}: {jump.TotalDistance:N0} ly, "
+            + $"{Count(jump.TotalJumps, "jump")} across {Count(jump.Waypoints.Count, "waypoint")}.",
+        { Riches: { } riches } =>
+            $"{Count(riches.Stops.Count, "stop")}, {Count(riches.TotalJumps, "jump")}, "
+            + $"{riches.TotalValue:N0} credits of mapping.",
+        { Trade: { } trade } =>
+            $"{Count(trade.Stops.Count, "stop")}, {trade.TotalProfit:N0} credits on {trade.Capital:N0} "
+            + $"over {trade.TotalDistance:N0} ly.",
+        _ => plan.Headline,
+    };
 
     private static string Count(int n, string noun) => n == 1 ? $"1 {noun}" : $"{n} {noun}s";
 
@@ -128,11 +124,11 @@ public sealed class RoutePlanResultPage : UserControl
         return string.Join(" ", parts);
     }
 
-    private IEnumerable<Control> Rows(StoredRoutePlan plan) => plan switch
+    private IEnumerable<Control> Rows(StoredRoutePlan plan, string? here) => plan switch
     {
-        { Jump: { } jump } => jump.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached))),
-        { Riches: { } riches } => riches.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached))),
-        { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached))),
+        { Jump: { } jump } => jump.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached), here)),
+        { Riches: { } riches } => riches.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+        { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
         _ => [],
     };
 
@@ -146,206 +142,143 @@ public sealed class RoutePlanResultPage : UserControl
         Reached: reached is { } r && index <= r,
         Next: index == (reached is { } r2 ? r2 + 1 : 0));
 
-    private Control Waypoint(RouteWaypoint waypoint, RowState state)
+    private Control Waypoint(RouteWaypoint waypoint, RowState state, string? here)
     {
-        var line = Line(waypoint.System, state);
-
-        line.Children.Add(Muted(
-            waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps"));
+        var values = new List<string> { waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps" };
 
         if (waypoint.DistanceJumped is { } jumped)
         {
-            line.Children.Add(Muted($"{jumped:N0} ly"));
+            values.Add($"{jumped:N0} ly");
         }
 
         // The destination's own row carried "0 ly left" here for the same reason the spoken line did (#405).
         if (waypoint.DistanceLeftToReport is { } left)
         {
-            line.Children.Add(Muted($"{left:N0} ly left"));
+            values.Add($"{left:N0} ly left");
         }
 
-        if (waypoint.IsNeutron)
-        {
-            // The only line that changes what you do on arrival, so it rides on the row.
-            line.Children.Add(Badge("neutron — supercharge here", ThemeManager.AccentKey));
-        }
+        // The only line that changes what you do on arrival, so it rides on the row.
+        Control[] tags = waypoint.IsNeutron ? [RoutingKit.Tag("neutron — supercharge here", ThemeManager.AKey)] : [];
 
-        return Wrap(line, waypoint.System, state);
+        return RoutingKit.Row(
+            [Line(waypoint.System, waypoint.System, state, here, tags), RoutingKit.Values(Joined(values), state.Reached)],
+            waypoint.System,
+            _copy);
     }
 
-    private Control Stop(RichesStop stop, RowState state)
+    private Control Stop(RichesStop stop, RowState state, string? here)
     {
-        var line = Line(stop.System, state);
-
-        line.Children.Add(Muted(stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps"));
-        line.Children.Add(Muted(
-            stop.Bodies.Count == 1 ? "1 body" : $"{stop.Bodies.Count} bodies"));
-
-        var stack = new StackPanel { Spacing = 2, Children = { line } };
+        var lines = new List<Control>
+        {
+            Line(stop.System, stop.System, state, here),
+            RoutingKit.Values(
+                Joined(
+                [
+                    stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps",
+                    stop.Bodies.Count == 1 ? "1 body" : $"{stop.Bodies.Count} bodies",
+                ]),
+                state.Reached),
+        };
 
         // Worth-most first, because that is the number deciding whether the stop is worth making.
         foreach (var body in stop.Bodies.OrderByDescending(body => body.MappingValue ?? 0))
         {
-            var detail = body.MappingValue is { } value
-                ? $"    {body.Name} — {body.Subtype ?? "unknown"}, {value:N0} cr"
-                : $"    {body.Name} — {body.Subtype ?? "unknown"}";
-
-            stack.Children.Add(Muted(detail));
+            lines.Add(RoutingKit.Values(
+                body.MappingValue is { } value
+                    ? $"{body.Name} — {body.Subtype ?? "unknown"}, {value:N0} cr"
+                    : $"{body.Name} — {body.Subtype ?? "unknown"}",
+                state.Reached));
         }
 
-        return Wrap(stack, stop.System, state);
+        return RoutingKit.Row(lines, stop.System, _copy);
     }
 
-    private Control Stop(TradeStop stop, RowState state)
+    private Control Stop(TradeStop stop, RowState state, string? here)
     {
-        var line = Line($"{stop.Station} in {stop.System}", state);
+        var values = new List<string>();
 
         if (stop.Distance is { } distance)
         {
-            line.Children.Add(Muted($"{distance:N1} ly"));
-            line.Children.Add(Muted(stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps"));
+            values.Add($"{distance:N1} ly");
+            values.Add(stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps");
         }
 
         if (stop.DistanceToArrival is { } arrival)
         {
-            line.Children.Add(Muted($"{arrival:N0} ls in"));
+            values.Add($"{arrival:N0} ls in");
         }
 
-        var stack = new StackPanel { Spacing = 2, Children = { line } };
+        var lines = new List<Control> { Line($"{stop.Station} in {stop.System}", stop.System, state, here) };
+
+        if (values.Count > 0)
+        {
+            lines.Add(RoutingKit.Values(Joined(values), state.Reached));
+        }
 
         foreach (var lot in stop.Sell)
         {
-            stack.Children.Add(Muted($"    sell {lot.Amount} × {lot.Commodity} at {lot.UnitPrice:N0} — {lot.Value:N0} cr"));
+            lines.Add(RoutingKit.Values(
+                $"sell {lot.Amount} × {lot.Commodity} at {lot.UnitPrice:N0} — {lot.Value:N0} cr", state.Reached));
         }
 
         // A keep line always says what declining to sell here is worth.
         foreach (var lot in stop.Hold)
         {
-            stack.Children.Add(Muted($"    keep {lot.Amount} × {lot.Commodity} — this station only pays {lot.UnitPrice:N0}"));
+            lines.Add(RoutingKit.Values(
+                $"keep {lot.Amount} × {lot.Commodity} — this station only pays {lot.UnitPrice:N0}", state.Reached));
         }
 
         foreach (var lot in stop.Buy)
         {
-            stack.Children.Add(Muted($"    buy {lot.Amount} × {lot.Commodity} at {lot.UnitPrice:N0} — {lot.Value:N0} cr"));
+            lines.Add(RoutingKit.Values(
+                $"buy {lot.Amount} × {lot.Commodity} at {lot.UnitPrice:N0} — {lot.Value:N0} cr", state.Reached));
         }
 
         if (stop.CappedByDemand)
         {
-            stack.Children.Add(Muted("    a lot here was cut short by what the station will take"));
+            lines.Add(Caveat("a lot here was cut short by what the station will take"));
         }
 
-        stack.Children.Add(Muted(
+        lines.Add(Caveat(
             stop.PricesSeen is { } seen
                 ? stop.PricesAreYours
-                    ? $"    your own prices, read {seen.ToLocalTime():d MMM yyyy}"
-                    : $"    prices reported {seen.ToLocalTime():d MMM yyyy}"
-                : "    prices of unknown age"));
+                    ? $"your own prices, read {seen.ToLocalTime():d MMM yyyy}"
+                    : $"prices reported {seen.ToLocalTime():d MMM yyyy}"
+                : "prices of unknown age"));
 
-        return Wrap(stack, stop.System, state);
+        return RoutingKit.Row(lines, stop.System, _copy);
     }
 
-    private static StackPanel Line(string title, RowState state)
-    {
-        var text = state.Reached ? $"✓ {title}" : title;
-        var name = Text(text, TypeScale.Body, state.Reached ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
-        name.VerticalAlignment = VerticalAlignment.Center;
-
-        return new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Children = { name },
-        };
-    }
+    private static string Joined(IEnumerable<string> values) => string.Join(" · ", values);
 
     /// <summary>
-    /// Every system name here is a copy target, for the reason the Course page gives: the clipboard is
-    /// the part of plotting that always works.
+    /// A row's first line: a Blue tick where it is reached, the name in its system's ink, and NEXT on the
+    /// next one to copy.
     /// </summary>
-    private Control Wrap(Control content, string system, RowState state)
+    private static Control Line(string title, string system, RowState state, string? here, params Control[] tags)
     {
-        Control body = content;
+        var line = RoutingKit.Named(title, RoutingKit.SystemKey(system, here, state.Reached), tags);
 
-        if (_copy is { } copy)
+        if (state.Reached)
         {
-            body = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                Children = { content, D47.App.Controls.CopyWord.For(system, copy) },
-            };
+            var tick = RoutingKit.Ink("✓", TypeScale.Body, ThemeManager.BlueKey);
+            tick.VerticalAlignment = VerticalAlignment.Center;
+            line.Children.Insert(0, tick);
         }
-
-        var row = new Border
-        {
-            Padding = new Thickness(8, 5),
-            Child = body,
-        };
 
         if (state.Next)
         {
-            CardChrome.CurrentRow(row);
+            line.Children.Add(RoutingKit.Tag("next", ThemeManager.AKey));
         }
 
-        if (_copy is { } tap)
-        {
-            row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
-            row.Tapped += (_, _) => _ = tap(system);
-        }
-
-        return row;
+        return line;
     }
 
-    private static TextBlock Muted(string text)
+    private static TextBlock Caveat(string text)
     {
-        var block = Text(text, TypeScale.Secondary, ThemeManager.TextMutedKey);
-        block.VerticalAlignment = VerticalAlignment.Center;
+        var line = RoutingKit.Ink(text, TypeScale.Small, ThemeManager.Grey2Key);
+        line.TextWrapping = TextWrapping.Wrap;
 
-        return block;
-    }
-
-    private static TextBlock Aside(string text)
-    {
-        var block = Text(text, TypeScale.Small, ThemeManager.TextMutedKey, wrap: true);
-        block.Margin = new Thickness(0, 0, 0, 10);
-
-        return block;
-    }
-
-    private static Control Badge(string word, string colourKey)
-    {
-        var text = Text(word, TypeScale.Small, colourKey);
-        text.VerticalAlignment = VerticalAlignment.Center;
-
-        var badge = new Border
-        {
-            Padding = new Thickness(6, 1),
-            CornerRadius = new CornerRadius(0),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = text,
-        };
-
-        badge.Bind(
-            Border.BorderBrushProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return badge;
-    }
-
-    private static TextBlock Text(string text, double size, string colourKey, bool wrap = false)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-        };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
+        return line;
     }
 }

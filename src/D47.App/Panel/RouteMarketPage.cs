@@ -20,10 +20,8 @@ public sealed class RouteMarketPage : UserControl
 
     // The Station column is a name cell, a gap and a copy button, and the header above it has to line up
     // with every row (#157).
-    private const double StationTextWidth = 200;
+    private const double StationColumnWidth = 260;
     private const double CopyGap = 6;
-    private const double CopyButtonSize = 24;
-    private const double StationColumnWidth = StationTextWidth + CopyGap + CopyButtonSize;
 
     private readonly CapabilityRegistry _registry;
     private readonly CommodityBoard _board;
@@ -79,12 +77,11 @@ public sealed class RouteMarketPage : UserControl
         _openSettings = openSettings;
         _copy = copy;
 
-        (_selling, _) = D47.App.Controls.LabeledCheckBox.Build("Selling it, not buying");
-        (_largePad, _) = D47.App.Controls.LabeledCheckBox.Build("Large pad only");
-        (_surfaceStations, _) = D47.App.Controls.LabeledCheckBox.Build("Include surface stations");
+        _selling = RoutingKit.Switch("Selling it, not buying");
+        _largePad = RoutingKit.Switch("Large pad only");
+        _surfaceStations = RoutingKit.Switch("Include surface stations");
 
-        _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
-        _status.IsVisible = false;
+        _status = RoutingKit.Status();
 
         Content = new ScrollViewer
         {
@@ -103,6 +100,7 @@ public sealed class RouteMarketPage : UserControl
     private void Build()
     {
         _body.Children.Clear();
+        _body.Children.Add(RoutingKit.Title("Market").Row);
 
         if (!_lookupsEnabled())
         {
@@ -115,26 +113,12 @@ public sealed class RouteMarketPage : UserControl
         _body.Children.Add(_results);
     }
 
-    private Control SwitchedOff()
-    {
-        var body = new StackPanel { Spacing = 8 };
-
-        body.Children.Add(Text(
+    private Control SwitchedOff() =>
+        RoutingKit.SwitchedOff(
+            "Market lookups are off",
             "Looking up markets is switched off. It shares the galaxy search setting, so turning on "
             + "“Look things up in the galaxy” switches both on.",
-            TypeScale.Body,
-            ThemeManager.TextKey,
-            wrap: true));
-
-        if (_openSettings is { } open)
-        {
-            var button = new Button { Content = "Open settings", Padding = new Thickness(12, 4) };
-            button.Click += (_, _) => open();
-            body.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = { button } });
-        }
-
-        return Card("Market lookups are off", body);
-    }
+            _openSettings);
 
     private Control SearchCard()
     {
@@ -149,14 +133,8 @@ public sealed class RouteMarketPage : UserControl
         Detach(_surfaceStations);
         Detach(_status);
 
-        var find = new Button { Content = "Find it", Padding = new Thickness(12, 4), MinHeight = 30 };
-        var cancel = new Button
-        {
-            Content = "Cancel",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
-            IsVisible = false,
-        };
+        var find = new Button { Content = "Find it" };
+        var cancel = new Button { Content = "Cancel", IsVisible = false };
 
         CancellationTokenSource? inFlight = null;
 
@@ -164,8 +142,7 @@ public sealed class RouteMarketPage : UserControl
         {
             if (string.IsNullOrWhiteSpace(_commodity.Text))
             {
-                _status.IsVisible = true;
-                _status.Text = "Name a commodity first.";
+                RoutingKit.Say(_status, "Name a commodity first.", error: true);
                 return;
             }
 
@@ -174,8 +151,7 @@ public sealed class RouteMarketPage : UserControl
 
             find.IsEnabled = false;
             cancel.IsVisible = true;
-            _status.IsVisible = true;
-            _status.Text = "Reading the markets nearby…";
+            RoutingKit.Say(_status, "Reading the markets nearby…");
 
             try
             {
@@ -185,12 +161,12 @@ public sealed class RouteMarketPage : UserControl
 
                 // The sentence stays: it is what the Commander would have been told, and it carries the
                 // caveats the table cannot.
-                _status.Text = result.Content;
+                RoutingKit.Say(_status, result.Content, result.IsError);
                 Refresh();
             }
             catch (OperationCanceledException)
             {
-                _status.Text = "Stopped.";
+                RoutingKit.Say(_status, "Stopped.");
             }
             finally
             {
@@ -208,38 +184,21 @@ public sealed class RouteMarketPage : UserControl
             Spacing = 8,
             Children =
             {
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
-                    Children =
-                    {
-                        Labelled("Commodity", _commodity, D47.App.Controls.FieldNeed.Required),
-                        Labelled("Tonnes", _tonnes),
-                    },
-                },
+                RoutingKit.Section("Where to buy it"),
+                RoutingKit.Fields(
+                    Labelled("Commodity", _commodity, D47.App.Controls.FieldNeed.Required),
+                    Labelled("Tonnes", _tonnes)),
                 D47.App.Controls.FormField.Legend(required: true),
-                _selling,
-                _largePad,
-                _surfaceStations,
-                Text(
+                RoutingKit.Fields(_selling, _largePad, _surfaceStations),
+                RoutingKit.Prose(
                     "Say the tonnage and stations that cannot fill the whole load drop out, and a "
-                    + "bigger load is worth a longer trip. Leave it blank to rank on price alone.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    Margin = new Thickness(0, 4, 0, 0),
-                    Children = { find, cancel },
-                },
+                    + "bigger load is worth a longer trip. Leave it blank to rank on price alone."),
+                RoutingKit.Actions(find, cancel),
                 _status,
             },
         };
 
-        return Card("Where to buy it", form);
+        return form;
     }
 
     private ToolArguments Arguments()
@@ -283,14 +242,13 @@ public sealed class RouteMarketPage : UserControl
 
         var buying = posting.Query.Side == TradeSide.Buying;
 
-        var heading = Text(
+        var heading = RoutingKit.Ink(
             $"{(buying ? "Buying" : "Selling")} {posting.Query.Commodity} near {posting.Near}",
-            TypeScale.Subheading,
-            ThemeManager.TextKey);
+            TypeScale.Body,
+            ThemeManager.AKey,
+            wrap: true);
 
-        heading.FontWeight = FontWeight.SemiBold;
-
-        var rows = new StackPanel { Spacing = 4 };
+        var rows = new StackPanel { Spacing = 2 };
 
         rows.Children.Add(HeaderRow(buying, posting.Query.Tonnes is not null, posting.Answer.OriginKnown));
 
@@ -309,24 +267,22 @@ public sealed class RouteMarketPage : UserControl
             Content = rows,
         };
 
-        var stack = new StackPanel { Spacing = 10, Children = { heading, table } };
+        var stack = new StackPanel { Spacing = 10, Children = { RoutingKit.Section("What came back"), heading, table } };
 
         // The date on the answer itself, which is a different caveat from the date on each price and a
         // Commander needs both: a twenty-minute-old answer quoting six-hour-old prices is two kinds of stale
         // at once.
-        stack.Children.Add(Text(
+        stack.Children.Add(RoutingKit.Prose(
             $"Searched {Ago(DateTimeOffset.UtcNow - posting.AskedAt)}. Prices are reported by other "
-            + "Commanders; supply moves fastest of all.",
-            TypeScale.Small,
-            ThemeManager.TextMutedKey,
-            wrap: true));
+            + "Commanders; supply moves fastest of all."));
 
-        _results.Children.Add(Card("What came back", stack));
+        _results.Children.Add(stack);
     }
 
     private static Control HeaderRow(bool buying, bool hasLoad, bool distances)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        // Inset by a list row's padding, so each header sits over its column.
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(12, 0) };
 
         row.Children.Add(Cell("Station", StationColumnWidth, muted: true));
 
@@ -376,9 +332,9 @@ public sealed class RouteMarketPage : UserControl
                 ? $"{(offer.IsTheirs ? "you saw it " : string.Empty)}{Ago(DateTimeOffset.UtcNow - when)}"
                 : "undated",
             130,
-            muted: !offer.IsTheirs));
+            offer.IsTheirs ? ThemeManager.CyanKey : ThemeManager.GreyKey));
 
-        return row;
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
     }
 
     private static string Ago(TimeSpan old) => old switch
@@ -392,28 +348,35 @@ public sealed class RouteMarketPage : UserControl
     /// <summary>The Station column: the name, and a copy glyph for the system it names (#157).</summary>
     private Control StationCell(string station, string system)
     {
-        var cells = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = CopyGap,
-            Width = StationColumnWidth,
-            Children = { Cell($"{station} ({system})", StationTextWidth) },
-        };
+        // The name takes what the copy word leaves, so a long one trims rather than running under it.
+        var cells = new DockPanel { Width = StationColumnWidth };
 
         if (_copy is { } copy)
         {
-            cells.Children.Add(D47.App.Controls.CopyWord.For(system, copy));
+            var glyph = D47.App.Controls.CopyWord.For(system, copy);
+            glyph.VerticalAlignment = VerticalAlignment.Center;
+            glyph.Margin = new Thickness(CopyGap, 0, 0, 0);
+
+            DockPanel.SetDock(glyph, Dock.Right);
+            cells.Children.Add(glyph);
         }
+
+        var name = Cell($"{station} ({system})", double.NaN, ThemeManager.WhiteKey);
+        cells.Children.Add(name);
 
         return cells;
     }
 
-    private static Control Cell(string text, double width, bool muted = false)
+    private static Control Cell(string text, double width, bool muted = false) =>
+        Cell(text, width, muted ? ThemeManager.GreyKey : ThemeManager.AKey);
+
+    private static Control Cell(string text, double width, string key)
     {
-        var block = Text(text, TypeScale.Secondary, muted ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
+        var block = RoutingKit.Ink(text, TypeScale.Secondary, key);
 
         block.Width = width;
         block.TextTrimming = TextTrimming.CharacterEllipsis;
+        block.VerticalAlignment = VerticalAlignment.Center;
 
         return block;
     }
@@ -443,39 +406,5 @@ public sealed class RouteMarketPage : UserControl
         }
 
         return stack;
-    }
-
-    private static TextBlock Text(string text, double size, string colourKey, bool wrap = false)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            MaxWidth = wrap ? 520 : double.PositiveInfinity,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
-    }
-
-    private static Control Card(string title, Control body)
-    {
-        var heading = Text(title, TypeScale.Subheading, ThemeManager.TextKey);
-        heading.FontWeight = FontWeight.SemiBold;
-
-        var card = new Border
-        {
-            Padding = new Thickness(14),
-            Child = new StackPanel { Spacing = 10, Children = { heading, body } },
-        };
-
-        CardChrome.Card(card);
-
-        return card;
     }
 }

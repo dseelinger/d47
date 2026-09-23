@@ -2,8 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
-using Avalonia.Media;
-using D47.App.Theming;
 using D47.Core.Capabilities;
 
 namespace D47.App.Panel;
@@ -37,8 +35,7 @@ public sealed class RouteCoursePage : UserControl
         D47.App.Controls.FormField.Announce(
             _system, "System", D47.App.Controls.FieldNeed.Required);
 
-        _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
-        _status.IsVisible = false;
+        _status = RoutingKit.Status();
 
         // The destination of the route being flown, where there is one.
         if (suggestion?.Invoke() is { Length: > 0 } already)
@@ -46,15 +43,10 @@ public sealed class RouteCoursePage : UserControl
             _system.Text = already;
         }
 
-        var copy = new Button { Content = "Copy", Padding = new Thickness(14, 4), MinHeight = 30 };
+        var copy = new Button { Content = "Copy" };
         copy.Click += async (_, _) => await RunAsync("copy_to_clipboard", "text").ConfigureAwait(true);
 
-        var plot = new Button
-        {
-            Content = "Copy and plot in the galaxy map",
-            Padding = new Thickness(14, 4),
-            MinHeight = 30,
-        };
+        var plot = new Button { Content = "Copy and plot in the galaxy map" };
 
         plot.Click += async (_, _) => await RunAsync("plot_course", "system").ConfigureAwait(true);
 
@@ -63,6 +55,7 @@ public sealed class RouteCoursePage : UserControl
             Spacing = 10,
             Children =
             {
+                RoutingKit.Title("Course").Row,
                 new StackPanel
                 {
                     Spacing = 3,
@@ -74,21 +67,13 @@ public sealed class RouteCoursePage : UserControl
                     },
                 },
                 D47.App.Controls.FormField.Legend(required: true),
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    Children = { copy, plot },
-                },
+                RoutingKit.Actions(copy, plot),
                 _status,
-                Text(
+                RoutingKit.Prose(
                     "Asking for a course always puts the name on your clipboard first, before "
                     + "anything else is tried — paste it into the galaxy map's search box and it "
                     + "works every time. Letting d47 drive the map is best-effort, and it checks "
-                    + "afterwards whether it took.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
+                    + "afterwards whether it took."),
             },
         };
 
@@ -105,13 +90,11 @@ public sealed class RouteCoursePage : UserControl
     {
         if (_system.Text is not { Length: > 0 } system)
         {
-            _status.IsVisible = true;
-            _status.Text = "Name a system first.";
+            RoutingKit.Say(_status, "Name a system first.", error: true);
             return;
         }
 
-        _status.IsVisible = true;
-        _status.Text = "…";
+        RoutingKit.Say(_status, "…");
 
         try
         {
@@ -127,31 +110,11 @@ public sealed class RouteCoursePage : UserControl
                     CancellationToken.None)
                 .ConfigureAwait(true);
 
-            _status.Text = result.Content;
+            RoutingKit.Say(_status, result.Content, result.IsError);
         }
         catch (OperationCanceledException)
         {
             _status.Text = "Stopped.";
         }
-    }
-
-    private static TextBlock Text(string text, double size, string colourKey, bool wrap = false)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            MaxWidth = wrap ? 520 : double.PositiveInfinity,
-
-            // Same trap as the box above: a capped width centres unless it is told not to.
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
     }
 }

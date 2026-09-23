@@ -33,7 +33,10 @@ public sealed class RoutePlanPage : UserControl
     /// </summary>
     private readonly List<FormField> _supplied = [];
 
-    private readonly StackPanel _cards = new() { Spacing = 12 };
+    private readonly StackPanel _cards = new();
+
+    /// <summary>The narrowest a planner is laid out before the two stack.</summary>
+    private const double PlannerWidth = 440;
 
     public RoutePlanPage(
         CapabilityRegistry registry,
@@ -66,6 +69,7 @@ public sealed class RoutePlanPage : UserControl
     private void Build()
     {
         _cards.Children.Clear();
+        _cards.Children.Add(RoutingKit.Title("Plan").Row);
 
         if (!_lookupsEnabled())
         {
@@ -79,37 +83,18 @@ public sealed class RoutePlanPage : UserControl
         // forever after they stopped being on screen.
         _supplied.Clear();
 
-        _cards.Children.Add(JumpCard());
-        _cards.Children.Add(RichesCard());
+        _cards.Children.Add(Reflow.Grid([JumpCard(), RichesCard()], PlannerWidth, 28, 12, 2));
     }
 
     /// <summary>Redraws — after a plot, or after the setting behind the whole page moved.</summary>
     public void Refresh() => Dispatcher.UIThread.Post(Build);
 
-    private Control SwitchedOff()
-    {
-        var body = new StackPanel { Spacing = 8 };
-
-        body.Children.Add(Text(
+    private Control SwitchedOff() =>
+        RoutingKit.SwitchedOff(
+            "Plotting is off",
             "Route planning is switched off. It shares the galaxy search setting, so turning on "
             + "“Look things up in the galaxy” switches both on.",
-            TypeScale.Body,
-            ThemeManager.TextKey,
-            wrap: true));
-
-        if (_openSettings is { } open)
-        {
-            var button = new Button { Content = "Open settings", Padding = new Thickness(12, 4) };
-            button.Click += (_, _) => open();
-            body.Children.Add(new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Children = { button },
-            });
-        }
-
-        return Card("Plotting is off", body);
-    }
+            _openSettings);
 
     private Control JumpCard()
     {
@@ -137,22 +122,16 @@ public sealed class RoutePlanPage : UserControl
             {
                 Row(to, from),
                 Row(range, efficiency),
-                Text(
+                RoutingKit.Prose(
                     "Efficiency is how strictly the plotter holds to the direct line, so a lower "
-                    + "number wanders further, finds more neutron stars and finishes in fewer jumps.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
+                    + "number wanders further, finds more neutron stars and finishes in fewer jumps."),
 
                 // Asked for 2026-08-22, alongside the rename: what the galaxy map does not do is the reason
                 // this card exists, and it was only ever stated in the tool description — which the model
                 // reads and the Commander does not.
-                Text(
+                RoutingKit.Prose(
                     "The galaxy map plots this too, but only in short hops and only in a straight "
-                    + "line. This one reaches across the galaxy and detours through neutron stars.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
+                    + "line. This one reaches across the galaxy and detours through neutron stars."),
             },
         };
 
@@ -185,7 +164,7 @@ public sealed class RoutePlanPage : UserControl
         var stops = Field("Stops", "10");
         var radius = Field("Radius (ly)", "500");
         var minimum = Field("Least worth stopping for (cr)", "500,000");
-        var (loop, _) = LabeledCheckBox.Build("Come back to the start");
+        var loop = RoutingKit.Switch("Come back to the start");
         loop.IsChecked = true;
 
         var form = new StackPanel
@@ -227,34 +206,15 @@ public sealed class RoutePlanPage : UserControl
         string help,
         Control? legend = null)
     {
-        var plot = new Button { Content = "Plot", Padding = new Thickness(14, 4), MinHeight = 30 };
-        var cancel = new Button
-        {
-            Content = "Cancel",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
-            IsVisible = false,
-        };
+        var plot = new Button { Content = "Plot" };
+        var cancel = new Button { Content = "Cancel", IsVisible = false };
 
-        var status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
-        status.IsVisible = false;
-
-        var actions = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Margin = new Thickness(0, 4, 0, 0),
-            Children = { plot, cancel },
-        };
+        var status = RoutingKit.Status();
+        var actions = RoutingKit.Actions(plot, cancel);
 
         if (_plans.Last(kind) is { } kept)
         {
-            var show = new Button
-            {
-                Content = "Show most recent",
-                Padding = new Thickness(12, 4),
-                MinHeight = 30,
-            };
+            var show = new Button { Content = "Show most recent", VerticalAlignment = VerticalAlignment.Top };
 
             show.Click += (_, _) => _nav.Drill(RoutingPages.ResultCrumb(kind, kept.Headline));
             actions.Children.Add(show);
@@ -266,8 +226,7 @@ public sealed class RoutePlanPage : UserControl
         {
             if (validate() is { } complaint)
             {
-                status.IsVisible = true;
-                status.Text = complaint;
+                RoutingKit.Say(status, complaint, error: true);
                 return;
             }
 
@@ -276,11 +235,10 @@ public sealed class RoutePlanPage : UserControl
 
             plot.IsEnabled = false;
             cancel.IsVisible = true;
-            status.IsVisible = true;
 
             // A plot is a submitted job rather than a request and a reply, so the surface has to say it is
             // waiting.
-            status.Text = "Plotting… this is a job the service queues, so it can take a moment.";
+            RoutingKit.Say(status, "Plotting… this is a job the service queues, so it can take a moment.");
 
             var before = _plans.Last(kind);
 
@@ -290,7 +248,7 @@ public sealed class RoutePlanPage : UserControl
                     .InvokeAsync(tool, arguments(), inFlight.Token)
                     .ConfigureAwait(true);
 
-                status.Text = result.Content;
+                RoutingKit.Say(status, result.Content, result.IsError);
 
                 // The book is what the result level draws, and the capability has just written it — so
                 // redrawing the page is what puts "Show most recent" on the card.
@@ -307,7 +265,7 @@ public sealed class RoutePlanPage : UserControl
             }
             catch (OperationCanceledException)
             {
-                status.Text = "Stopped.";
+                RoutingKit.Say(status, "Stopped.");
             }
             finally
             {
@@ -320,14 +278,18 @@ public sealed class RoutePlanPage : UserControl
 
         cancel.Click += (_, _) => inFlight?.Cancel();
 
-        var body = new StackPanel { Spacing = 8, Children = { form, actions, status } };
+        var body = new StackPanel
+        {
+            Spacing = 8,
+            Children = { RoutingKit.Section(title, RoutingKit.Help(_nav, help, title)), form, actions, status },
+        };
 
         if (legend is not null)
         {
-            body.Children.Insert(1, legend);
+            body.Children.Insert(2, legend);
         }
 
-        return Card(title, body, help);
+        return body;
     }
 
     private static ToolArguments Arguments(params (string Name, string? Value)[] values) =>
@@ -337,19 +299,8 @@ public sealed class RoutePlanPage : UserControl
             // a number.
             .ToDictionary(pair => pair.Name, pair => pair.Value!.Replace(",", string.Empty).Trim(), StringComparer.Ordinal));
 
-    private static StackPanel Row(FormField left, FormField? right)
-    {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-
-        row.Children.Add(left.Control);
-
-        if (right is not null)
-        {
-            row.Children.Add(right.Control);
-        }
-
-        return row;
-    }
+    private static WrapPanel Row(FormField left, FormField? right) =>
+        right is null ? RoutingKit.Fields(left.Control) : RoutingKit.Fields(left.Control, right.Control);
 
     private FormField Field(
         string label,
@@ -375,74 +326,5 @@ public sealed class RoutePlanPage : UserControl
         {
             field.Refresh();
         }
-    }
-
-    private static TextBlock Text(string text, double size, string colourKey, bool wrap = false)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            MaxWidth = wrap ? 520 : double.PositiveInfinity,
-
-            // A capped width in a stretching slot centres itself, which lands a wrapped line in the middle of
-            // the card with nothing above it to line up with.
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
-    }
-
-    /// <summary>
-    /// <param name="help"> The page this card's question mark opens, or null for a card that is not a
-    /// planner (asked for 2026-08-23).
-    /// </summary>
-    /// <param name="help">
-    /// The page this card's question mark opens, or null for a card that is not a planner (asked for
-    /// 2026-08-23).
-    /// </param>
-    private Control Card(string title, Control body, string? help = null)
-    {
-        var heading = new TextBlock { FontWeight = FontWeight.SemiBold };
-        TitleText.Style(heading, TypeScale.Caption, TitleRank.Subgroup);
-        TitleText.Show(heading, title);
-
-        var headingRow = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { heading },
-        };
-
-        if (help is { Length: > 0 } page)
-        {
-            var mark = D47.App.Controls.Glyphs.Quiet(
-                new Button { VerticalAlignment = VerticalAlignment.Center }, "HELP", $"About {title}");
-
-            mark.Click += (_, _) => D47.Core.Help.HelpLevel.Open(_nav, page);
-
-            headingRow.Children.Add(mark);
-        }
-
-        var stack = new StackPanel
-        {
-            Spacing = 10,
-            Children = { headingRow, body },
-        };
-
-        var card = new Border
-        {
-            Padding = new Thickness(14),
-            Child = stack,
-        };
-
-        CardChrome.Card(card);
-
-        return card;
     }
 }

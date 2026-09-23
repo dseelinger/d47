@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Journal;
@@ -16,7 +14,7 @@ public sealed class RouteMini : UserControl
     private readonly RoutePlanBook _plans;
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
-    private readonly StackPanel _body = new() { Spacing = 3 };
+    private readonly StackPanel _body = new() { Spacing = 2 };
 
     public RouteMini(RoutePlanBook plans, Func<NavRoute> route, Func<string?> here)
     {
@@ -55,9 +53,12 @@ public sealed class RouteMini : UserControl
             return;
         }
 
-        _body.Children.Add(Title(jump.Origin));
+        var title = TitleText.Build(jump.Origin, TypeScale.Heading, TitleRank.Screen, sentence: true);
+        title.Margin = new Thickness(0, 0, 0, 4);
+        _body.Children.Add(title);
 
-        var next = NextWaypoint(jump, _route(), _here());
+        var here = _here();
+        var next = NextWaypoint(jump, _route(), here);
 
         if (next == Arrived)
         {
@@ -66,7 +67,7 @@ public sealed class RouteMini : UserControl
 
         for (var index = 0; index < jump.Waypoints.Count; index++)
         {
-            _body.Children.Add(Row(jump.Waypoints[index], index == next));
+            _body.Children.Add(Row(jump.Waypoints[index], index == next, here));
         }
     }
 
@@ -106,54 +107,45 @@ public sealed class RouteMini : UserControl
         return None;
     }
 
-    private static Control Row(RouteWaypoint waypoint, bool isNext)
+    private static Control Row(RouteWaypoint waypoint, bool isNext, string? here)
     {
-        var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-
-        line.Children.Add(Text(waypoint.System, TypeScale.Body, isNext ? ThemeManager.AccentKey : ThemeManager.TextKey));
-        line.Children.Add(Muted(waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps"));
+        var values = new List<string> { waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps" };
 
         if (waypoint.DistanceJumped is { } jumped)
         {
-            line.Children.Add(Muted($"{jumped:N0} ly"));
+            values.Add($"{jumped:N0} ly");
         }
 
         if (waypoint.DistanceLeftToReport is { } left)
         {
-            line.Children.Add(Muted($"{left:N0} ly left"));
+            values.Add($"{left:N0} ly left");
         }
+
+        var tags = new List<Control>();
 
         if (waypoint.IsNeutron)
         {
-            line.Children.Add(Muted("neutron"));
+            tags.Add(RoutingKit.Tag("neutron", ThemeManager.AKey));
         }
 
         if (isNext)
         {
-            line.Children.Add(Muted("next"));
+            tags.Add(RoutingKit.Tag("next", ThemeManager.AKey));
         }
 
-        return line;
+        var row = RoutingKit.Row(
+            [
+                RoutingKit.Named(waypoint.System, RoutingKit.SystemKey(waypoint.System, here), [.. tags]),
+                RoutingKit.Values(string.Join(" · ", values)),
+            ],
+            waypoint.System,
+            copy: null);
+
+        row.Padding = new Thickness(10, 4);
+        row.MinHeight = 0;
+
+        return row;
     }
 
-    private static TextBlock Title(string text)
-    {
-        var block = Text(text, TypeScale.Subheading, ThemeManager.TextKey);
-        block.FontWeight = FontWeight.SemiBold;
-
-        return block;
-    }
-
-    private static TextBlock Muted(string text) => Text(text, TypeScale.Secondary, ThemeManager.TextMutedKey);
-
-    private static TextBlock Text(string text, double size, string colourKey)
-    {
-        var block = new TextBlock { Text = text, FontSize = size };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
-    }
+    private static TextBlock Muted(string text) => RoutingKit.Ink(text, TypeScale.Secondary, ThemeManager.GreyKey);
 }

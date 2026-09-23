@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Layout;
-using Avalonia.Media;
 using D47.App.Theming;
 using D47.Core.Journal;
 
@@ -15,27 +13,11 @@ public sealed class RouteProgressPage : UserControl
     private readonly Func<string?> _here;
     private readonly Func<string, Task<bool>>? _copy;
 
-    private readonly TextBlock _headline = new()
-    {
-        FontSize = TypeScale.Heading,
-        FontWeight = FontWeight.SemiBold,
-        TextWrapping = TextWrapping.Wrap,
-    };
+    private readonly SelectableTextBlock _headline;
 
-    private readonly TextBlock _totals = new()
-    {
-        FontSize = TypeScale.Body,
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(0, 2, 0, 0),
-    };
+    private readonly TextBlock _totals = RoutingKit.Ink(string.Empty, TypeScale.Body, ThemeManager.AKey, wrap: true);
 
-    private readonly TextBlock _aside = new()
-    {
-        FontSize = TypeScale.Secondary,
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(0, 6, 0, 0),
-        IsVisible = false,
-    };
+    private readonly TextBlock _aside = RoutingKit.Prose(string.Empty, TypeScale.Secondary);
 
     private readonly StackPanel _hops = new() { Spacing = 2 };
 
@@ -48,14 +30,16 @@ public sealed class RouteProgressPage : UserControl
         _here = here;
         _copy = copy;
 
-        Themed(_headline, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-        Themed(_totals, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_aside, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        _totals.MaxWidth = double.PositiveInfinity;
+        _aside.Margin = new Thickness(0, 6, 0, 0);
+        _aside.IsVisible = false;
+
+        (var title, _headline) = RoutingKit.Title(string.Empty);
 
         var header = new StackPanel
         {
             Margin = new Thickness(0, 0, 0, 12),
-            Children = { _headline, _totals, _aside },
+            Children = { title, _totals, _aside },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -86,8 +70,9 @@ public sealed class RouteProgressPage : UserControl
 
         if (!route.IsPlotted)
         {
-            _headline.Text = "No route plotted.";
+            TitleText.Show(_headline, "No route plotted.", sentence: true);
             _totals.Text = "Plot one in the galaxy map, or on the Plan page, and it appears here.";
+            RoutingKit.Themed(_totals, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _aside.IsVisible = false;
             return;
         }
@@ -95,7 +80,9 @@ public sealed class RouteProgressPage : UserControl
         var first = route.Hops[0];
         var last = route.Hops[^1];
 
-        _headline.Text = $"{first.StarSystem} → {last.StarSystem}";
+        TitleText.Show(_headline, $"{first.StarSystem} → {last.StarSystem}", sentence: true);
+
+        RoutingKit.Themed(_totals, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var jumps = progress.JumpsRemaining == 1 ? "1 jump left" : $"{progress.JumpsRemaining} jumps left";
         var span = route.Hops.Count == 1 ? "1 system" : $"{route.Hops.Count} systems";
@@ -125,89 +112,41 @@ public sealed class RouteProgressPage : UserControl
 
         for (var index = 0; index < route.Hops.Count; index++)
         {
-            _hops.Children.Add(Row(route.Hops[index], index, progress));
+            _hops.Children.Add(Row(route.Hops[index], index, progress, here));
         }
     }
 
     /// <summary>One hop.</summary>
-    private Control Row(RouteHop hop, int index, RouteProgress progress)
+    private Control Row(RouteHop hop, int index, RouteProgress progress, string? here)
     {
         var behind = !progress.OffRoute && index < progress.Index;
-        var current = index == progress.Index;
-
-        var name = new TextBlock
-        {
-            Text = hop.StarSystem,
-            FontSize = TypeScale.Body,
-            FontWeight = current ? FontWeight.SemiBold : FontWeight.Normal,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        Themed(
-            name,
-            TextBlock.ForegroundProperty,
-            current ? ThemeManager.AccentKey : behind ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
-
-        var detail = new TextBlock
-        {
-            Text = Detail(hop),
-            FontSize = TypeScale.Secondary,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        Themed(detail, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-
-        var line = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Children = { name, detail },
-        };
-
-        if (_copy is { } glyph)
-        {
-            line.Children.Add(D47.App.Controls.CopyWord.For(hop.StarSystem, glyph));
-        }
+        var tags = new List<Control>();
 
         if (hop.Hazardous)
         {
-            line.Children.Add(Badge(BadgeWord(hop), ThemeManager.DangerKey));
+            tags.Add(RoutingKit.Tag(BadgeWord(hop), ThemeManager.RedKey));
         }
 
         // Scoopable is only worth saying where it changes a decision: a star that cannot refuel you, or one
-        // d47 cannot vouch for either way. "Yes" on every K, G and B would be a badge on most of the route
-        // saying nothing.
+        // d47 cannot vouch for either way.
         if (hop.Scoopable is false)
         {
-            line.Children.Add(Badge("no scoop", ThemeManager.TextMutedKey));
+            tags.Add(RoutingKit.Tag("no scoop", ThemeManager.GreyKey));
         }
         else if (hop.Scoopable is null)
         {
             // Never drawn as "no".
-            line.Children.Add(Badge("scoop unknown", ThemeManager.TextMutedKey));
+            tags.Add(RoutingKit.Tag("scoop unknown", ThemeManager.GreyKey));
         }
 
-        var row = new Border
-        {
-            Padding = new Thickness(8, 5),
-            Child = line,
-        };
+        var key = index == progress.Index || RoutingKit.IsHere(hop.StarSystem, here)
+            ? ThemeManager.CyanKey
+            : behind ? ThemeManager.GreyKey : ThemeManager.AKey;
 
-        if (current)
-        {
-            CardChrome.CurrentRow(row);
-        }
-
-        if (_copy is { } copy)
-        {
-            // Every system name on this page is a copy target (Phase 37, "Course"): the clipboard is the part
-            // of plotting that always works, whatever the map is doing.
-            row.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
-            row.Tapped += (_, _) => _ = copy(hop.StarSystem);
-        }
-
-        return row;
+        return RoutingKit.Row(
+            [RoutingKit.Named(hop.StarSystem, key, [.. tags]), RoutingKit.Values(Detail(hop), behind)],
+            hop.StarSystem,
+            _copy);
     }
 
     private static string Detail(RouteHop hop) => StarClasses.Speak(hop.StarClass);
@@ -215,32 +154,4 @@ public sealed class RouteProgressPage : UserControl
     /// <summary>What the hazard means for the Commander, rather than what it is.</summary>
     private static string BadgeWord(RouteHop hop) =>
         StarClasses.IsNeutron(hop.StarClass) ? "supercharge here" : "exclusion zone";
-
-    private static Control Badge(string word, string colourKey)
-    {
-        var text = new TextBlock
-        {
-            Text = word,
-            FontSize = TypeScale.Small,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        Themed(text, TextBlock.ForegroundProperty, colourKey);
-
-        var badge = new Border
-        {
-            Padding = new Thickness(6, 1),
-            CornerRadius = new CornerRadius(0),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = text,
-        };
-
-        Themed(badge, Border.BorderBrushProperty, colourKey);
-
-        return badge;
-    }
-
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Journal;
@@ -19,16 +20,17 @@ public sealed class RouteCommunityGoalPage : UserControl
 
     // The System column is a name cell, a gap and a copy button, and the header above it has to line up with
     // every row.
-    private const double SystemNameWidth = 200;
+    private const double SystemColumnWidth = 260;
     private const double CopyGap = 6;
-    private const double CopyButtonSize = 24;
-    private const double SystemColumnWidth = SystemNameWidth + CopyGap + CopyButtonSize;
 
-    // The rest of the results table, narrowed against the card's inner width (#333).
+    // The rest of the results table, narrowed against the page's inner width (#333).
     private const double StationWidth = 150;
     private const double FromStarWidth = 80;
     private const double UpdatedWidth = 110;
     private const double RowSpacing = 8;
+
+    /// <summary>A list row's horizontal padding, which the header row is inset by.</summary>
+    private const double RowInset = 12;
 
     private readonly CapabilityRegistry _registry;
     private readonly CommodityBoard _board;
@@ -36,9 +38,10 @@ public sealed class RouteCommunityGoalPage : UserControl
     private readonly Func<bool> _lookupsEnabled;
     private readonly Action? _openSettings;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly Func<string?>? _here;
 
-    private readonly Border _off;
-    private readonly Border _form;
+    private readonly Control _off;
+    private readonly Control _form;
     private readonly StackPanel _results = new() { Spacing = 6 };
     private readonly StackPanel _ledger = new() { Spacing = 6 };
 
@@ -50,26 +53,14 @@ public sealed class RouteCommunityGoalPage : UserControl
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
-    private readonly Button _run = new() { Content = "Run", Padding = new Thickness(12, 4), MinHeight = 30 };
+    private readonly Button _run = new() { Content = "Run" };
 
-    private readonly Button _cancel = new()
-    {
-        Content = "Cancel",
-        Padding = new Thickness(12, 4),
-        MinHeight = 30,
-        IsVisible = false,
-    };
+    private readonly Button _cancel = new() { Content = "Cancel", IsVisible = false };
 
-    private readonly TextBlock _status;
+    private readonly TextBlock _status = RoutingKit.Status();
 
     /// <summary>A posting on <see cref="_board"/> to treat as if it were not there.</summary>
     private CommodityPosting? _hidden;
-
-    /// <summary>
-    /// The colour bindings <see cref="DrawResults"/> and <see cref="DrawLedger"/> hand out to controls
-    /// that get discarded on the next rebuild.
-    /// </summary>
-    private readonly List<IDisposable> _transientBindings = [];
 
     private CancellationTokenSource? _inFlight;
 
@@ -83,7 +74,8 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         // Community Goal's own settings, on the tab they only affect (#218). Docked outside the
         // scroller and never touched by Build(), so it survives every Refresh() (#340).
-        Control? settingsStrip = null)
+        Control? settingsStrip = null,
+        Func<string?>? here = null)
     {
         _registry = registry;
         _board = board;
@@ -91,9 +83,7 @@ public sealed class RouteCommunityGoalPage : UserControl
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
         _copy = copy;
-
-        _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
-        _status.IsVisible = false;
+        _here = here;
 
         _commodity.Text = goal.Search.Commodity;
 
@@ -106,11 +96,17 @@ public sealed class RouteCommunityGoalPage : UserControl
         _run.Click += async (_, _) => await RunAsync();
         _cancel.Click += (_, _) => _inFlight?.Cancel();
 
-        _off = SwitchedOff();
+        _off = RoutingKit.SwitchedOff(
+            "Market lookups are off",
+            "Looking up markets is switched off. It shares the galaxy search setting, so turning on "
+            + "“Look things up in the galaxy” switches both on.",
+            _openSettings);
+
         _form = SearchCard();
 
         var body = new StackPanel { Spacing = 12 };
 
+        body.Children.Add(RoutingKit.Title("Community Goal").Row);
         body.Children.Add(_off);
         body.Children.Add(_form);
         body.Children.Add(_results);
@@ -156,13 +152,6 @@ public sealed class RouteCommunityGoalPage : UserControl
 
     private void Build()
     {
-        foreach (var binding in _transientBindings)
-        {
-            binding.Dispose();
-        }
-
-        _transientBindings.Clear();
-
         var on = _lookupsEnabled();
 
         _off.IsVisible = !on;
@@ -191,8 +180,7 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         _run.IsEnabled = false;
         _cancel.IsVisible = true;
-        _status.IsVisible = true;
-        _status.Text = "Reading the markets nearby…";
+        RoutingKit.Say(_status, "Reading the markets nearby…");
 
         var before = _board.Last;
 
@@ -204,7 +192,7 @@ public sealed class RouteCommunityGoalPage : UserControl
 
             // The sentence stays: it is what the Commander would have heard, and it carries the caveats the
             // table cannot.
-            _status.Text = result.Content;
+            RoutingKit.Say(_status, result.Content, result.IsError);
 
             // An error, and a non-cargo commodity answered before the search even runs, both leave the board
             // exactly as it was: neither counts as a fresh answer, so the table is cleared rather than left
@@ -215,7 +203,7 @@ public sealed class RouteCommunityGoalPage : UserControl
         }
         catch (OperationCanceledException)
         {
-            _status.Text = "Stopped.";
+            RoutingKit.Say(_status, "Stopped.");
         }
         finally
         {
@@ -226,59 +214,25 @@ public sealed class RouteCommunityGoalPage : UserControl
         }
     }
 
-    private Border SwitchedOff()
+    private StackPanel SearchCard() => new()
     {
-        var body = new StackPanel { Spacing = 8 };
-
-        body.Children.Add(Text(
-            "Looking up markets is switched off. It shares the galaxy search setting, so turning on "
-            + "“Look things up in the galaxy” switches both on.",
-            TypeScale.Body,
-            ThemeManager.TextKey,
-            wrap: true));
-
-        if (_openSettings is { } open)
+        Spacing = 8,
+        Children =
         {
-            var button = new Button { Content = "Open settings", Padding = new Thickness(12, 4) };
-            button.Click += (_, _) => open();
-            body.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = { button } });
-        }
-
-        return Card("Market lookups are off", body);
-    }
-
-    private Border SearchCard()
-    {
-        var form = new StackPanel
-        {
-            Spacing = 8,
-            Children =
-            {
-                Labelled("Commodity", _commodity),
-                Text(
-                    $"Buying, from the goal's own system, nearest first. Within {CommunityGoalSearch.MaxDistance:0} ly, "
-                    + $"prices under {CommunityGoalSearch.MaxPriceAgeHours} hours old, a large pad, a station within "
-                    + $"{CommunityGoalSearch.MaxStationDistance:N0} Ls of the star, at least "
-                    + $"{CommunityGoalSearch.MinSupply:N0} in stock, no surface stations, no carriers. "
-                    + "With no goal running it searches from wherever the ship is, and says so. "
-                    + "Say “community goal search” to run the same thing by voice, “cg search from here” to "
-                    + "measure from the ship instead, and “refresh” while this page is up to run it again.",
-                    TypeScale.Small,
-                    ThemeManager.TextMutedKey,
-                    wrap: true),
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    Margin = new Thickness(0, 4, 0, 0),
-                    Children = { _run, _cancel },
-                },
-                _status,
-            },
-        };
-
-        return Card("Community Goal search", form);
-    }
+            RoutingKit.Section("Community Goal search"),
+            Labelled("Commodity", _commodity),
+            RoutingKit.Prose(
+                $"Buying, from the goal's own system, nearest first. Within {CommunityGoalSearch.MaxDistance:0} ly, "
+                + $"prices under {CommunityGoalSearch.MaxPriceAgeHours} hours old, a large pad, a station within "
+                + $"{CommunityGoalSearch.MaxStationDistance:N0} Ls of the star, at least "
+                + $"{CommunityGoalSearch.MinSupply:N0} in stock, no surface stations, no carriers. "
+                + "With no goal running it searches from wherever the ship is, and says so. "
+                + "Say “community goal search” to run the same thing by voice, “cg search from here” to "
+                + "measure from the ship instead, and “refresh” while this page is up to run it again."),
+            RoutingKit.Actions(_run, _cancel),
+            _status,
+        },
+    };
 
     private void DrawResults()
     {
@@ -294,26 +248,25 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         var order = posting.Query.OrderBy == CommodityOrder.Distance ? "nearest first" : "best price first";
 
-        // Whose system this was measured from, in words (#331). "near Scorpii Sector ND-S b4-0" was already
-        // true and still went unread: a system name alone does not say whether it is the goal's or the
-        // ship's, and the reason for the search is that those differ.
+        // Whose system this was measured from, in words (#331): a system name alone does not say whether it
+        // is the goal's or the ship's, and the reason for the search is that those differ.
         var whose = CommunityGoalSearch.Whose(posting.Query.Tag) is { } named ? $", {named}" : string.Empty;
 
-        var heading = Text(
+        var heading = RoutingKit.Ink(
             $"{posting.Query.Commodity} near {posting.Near}{whose}, {order}",
-            TypeScale.Subheading,
-            ThemeManager.TextKey,
-            track: _transientBindings);
+            TypeScale.Body,
+            ThemeManager.AKey,
+            wrap: true);
 
-        heading.FontWeight = FontWeight.SemiBold;
-
-        var rows = new StackPanel { Spacing = 4 };
+        var rows = new StackPanel { Spacing = 2 };
 
         rows.Children.Add(HeaderRow(posting.Answer.OriginKnown));
 
+        var here = _here?.Invoke();
+
         foreach (var offer in posting.Answer.Offers)
         {
-            rows.Children.Add(OfferRow(offer, posting));
+            rows.Children.Add(OfferRow(offer, posting, here));
         }
 
         // Scrolls horizontally: the columns are fixed pixel widths and a narrow panel cannot hold them (#333).
@@ -324,17 +277,19 @@ public sealed class RouteCommunityGoalPage : UserControl
             Content = rows,
         };
 
-        var stack = new StackPanel { Spacing = 10, Children = { heading, table } };
-
-        stack.Children.Add(Text(
-            $"Searched {Ago(DateTimeOffset.UtcNow - posting.AskedAt)}. Prices are reported by other "
-            + "Commanders; supply moves fastest of all.",
-            TypeScale.Small,
-            ThemeManager.TextMutedKey,
-            wrap: true,
-            track: _transientBindings));
-
-        _results.Children.Add(Card("What came back", stack, _transientBindings));
+        _results.Children.Add(new StackPanel
+        {
+            Spacing = 10,
+            Children =
+            {
+                RoutingKit.Section("What came back"),
+                heading,
+                table,
+                RoutingKit.Prose(
+                    $"Searched {Ago(DateTimeOffset.UtcNow - posting.AskedAt)}. Prices are reported by other "
+                    + "Commanders; supply moves fastest of all."),
+            },
+        });
     }
 
     private void DrawLedger()
@@ -344,19 +299,15 @@ public sealed class RouteCommunityGoalPage : UserControl
         var commodity = _goal.Search.Commodity;
         var who = _goal.Commander();
 
+        _ledger.Children.Add(RoutingKit.Section($"{commodity} ledger"));
+
         if (who is null)
         {
             // Falling back to whoever wrote the newest journal file would silently answer as the wrong
             // Commander with Elite not running (#313); a page can say so plainly instead.
-            _ledger.Children.Add(Card(
-                $"{commodity} ledger",
-                Text(
-                    "No active Commander — start Elite Dangerous to see what this has made or lost.",
-                    TypeScale.Secondary,
-                    ThemeManager.TextMutedKey,
-                    wrap: true,
-                    track: _transientBindings),
-                _transientBindings));
+            _ledger.Children.Add(RoutingKit.Prose(
+                "No active Commander — start Elite Dangerous to see what this has made or lost.",
+                TypeScale.Secondary));
 
             return;
         }
@@ -364,49 +315,43 @@ public sealed class RouteCommunityGoalPage : UserControl
         var now = _goal.Now();
         var week = _goal.Week(now);
 
-        var lines = new StackPanel { Spacing = 4 };
+        _ledger.Children.Add(StatTile.Grid(
+            [
+                LedgerTile("This session", _goal.Ledger.Session(who, commodity)),
+                LedgerTile("Today", _goal.Ledger.Between(who, commodity, CommodityLedger.Today(now))),
+                LedgerTile("This week", _goal.Ledger.Between(who, commodity, week)),
+            ],
+            maxColumns: 3));
 
-        lines.Children.Add(LedgerRow("This session", _goal.Ledger.Session(who, commodity)));
-        lines.Children.Add(LedgerRow(
-            "Today", _goal.Ledger.Between(who, commodity, CommodityLedger.Today(now))));
-        lines.Children.Add(LedgerRow("This week", _goal.Ledger.Between(who, commodity, week)));
-
-        var stack = new StackPanel { Spacing = 10, Children = { lines } };
-
-        stack.Children.Add(Text(
+        var last = RoutingKit.Ink(
             _goal.Ledger.LastSale(who, commodity) is { } sale
                 ? $"Last sale: {sale.Count:N0} tonnes at {sale.UnitPrice:N0} cr, "
                   + (sale.CostBasis > 0 ? $"paid {sale.UnitPaid:N0} cr each, " : "cost unknown, ")
                   + $"{Signed(sale.Net)} — {Ago(now - sale.At)}."
                 : $"No {commodity} sold yet.",
             TypeScale.Secondary,
-            ThemeManager.TextKey,
-            wrap: true,
-            track: _transientBindings));
+            ThemeManager.AKey,
+            wrap: true);
 
-        stack.Children.Add(Text(
+        last.Margin = new Thickness(0, 4, 0, 0);
+
+        _ledger.Children.Add(last);
+        _ledger.Children.Add(RoutingKit.Prose(
             "Net of what the cargo cost, from your journal. The week turns where the advanced "
-            + "setting says, Thursday 07:00 UTC by default.",
-            TypeScale.Small,
-            ThemeManager.TextMutedKey,
-            wrap: true,
-            track: _transientBindings));
-
-        _ledger.Children.Add(Card($"{commodity} ledger", stack, _transientBindings));
+            + "setting says, Thursday 07:00 UTC by default."));
     }
 
-    private Control LedgerRow(string label, LedgerTotal total)
+    /// <summary>One window's net as a stat tile, with its sales under the figure.</summary>
+    private static Border LedgerTile(string label, LedgerTotal total)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        var tile = StatTile.Build(label, total.Sales == 0 ? "—" : Signed(total.Net));
 
-        row.Children.Add(Cell(label, 200, muted: true));
-        row.Children.Add(Cell(total.Sales == 0 ? "—" : Signed(total.Net), 130));
-        row.Children.Add(Cell(
+        ((StackPanel)tile.Child!).Children.Add(RoutingKit.Ink(
             total.Sales == 0 ? "no sales" : $"{total.Sales} sales, {total.Tonnes:N0} t",
-            180,
-            muted: true));
+            TypeScale.Secondary,
+            ThemeManager.GreyKey));
 
-        return row;
+        return tile;
     }
 
     private static string Signed(long net) => net switch
@@ -416,36 +361,41 @@ public sealed class RouteCommunityGoalPage : UserControl
         _ => "level",
     };
 
-    private Control HeaderRow(bool distances)
+    private static Control HeaderRow(bool distances)
     {
-        // Trimmed against the card's inner width (#333) so the common case needs no scrolling at all.
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = RowSpacing };
+        // Trimmed against the page's inner width (#333) so the common case needs no scrolling at all.
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = RowSpacing,
+            Margin = new Thickness(RowInset, 0),
+        };
 
-        row.Children.Add(Cell("Station", StationWidth, muted: true));
-        row.Children.Add(Cell("System", SystemColumnWidth, muted: true));
-        row.Children.Add(Cell("Pad", 50, muted: true));
-        row.Children.Add(Cell("From star", FromStarWidth, muted: true));
+        row.Children.Add(Cell("Station", StationWidth, ThemeManager.GreyKey));
+        row.Children.Add(Cell("System", SystemColumnWidth, ThemeManager.GreyKey));
+        row.Children.Add(Cell("Pad", 50, ThemeManager.GreyKey));
+        row.Children.Add(Cell("From star", FromStarWidth, ThemeManager.GreyKey));
 
         if (distances)
         {
-            row.Children.Add(Cell("Distance", 80, muted: true));
+            row.Children.Add(Cell("Distance", 80, ThemeManager.GreyKey));
         }
 
-        row.Children.Add(Cell("Supply", 80, muted: true));
-        row.Children.Add(Cell("Price", 80, muted: true));
-        row.Children.Add(Cell("Updated", UpdatedWidth, muted: true));
+        row.Children.Add(Cell("Supply", 80, ThemeManager.GreyKey));
+        row.Children.Add(Cell("Price", 80, ThemeManager.GreyKey));
+        row.Children.Add(Cell("Updated", UpdatedWidth, ThemeManager.GreyKey));
 
         return row;
     }
 
-    private Control OfferRow(CommodityOffer offer, CommodityPosting posting)
+    private Control OfferRow(CommodityOffer offer, CommodityPosting posting, string? here)
     {
         var quote = offer.Market.Quote(posting.Query.Commodity);
         var buying = posting.Query.Side == TradeSide.Buying;
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = RowSpacing };
 
-        row.Children.Add(Cell(offer.Market.Station, StationWidth));
-        row.Children.Add(SystemCell(offer.Market.System));
+        row.Children.Add(Cell(offer.Market.Station, StationWidth, ThemeManager.WhiteKey));
+        row.Children.Add(SystemCell(offer.Market.System, here));
         row.Children.Add(Cell(offer.Market.HasLargePad ? "L" : "M", 50));
         row.Children.Add(Cell(
             offer.Market.DistanceToArrival is { } arrival ? $"{arrival:N0} Ls" : "?",
@@ -463,29 +413,32 @@ public sealed class RouteCommunityGoalPage : UserControl
                 ? $"{(offer.IsTheirs ? "you saw it " : string.Empty)}{Ago(DateTimeOffset.UtcNow - when)}"
                 : "undated",
             UpdatedWidth,
-            muted: !offer.IsTheirs));
+            offer.IsTheirs ? ThemeManager.CyanKey : ThemeManager.GreyKey));
 
-        return row;
+        return ListRow.Dress(new Border { Padding = new Thickness(RowInset, 6), Child = row });
     }
 
     /// <summary>
     /// The System cell plus a small copy-to-clipboard button beside it, so a Commander can grab a
     /// system name in full without it ever needing to fit uncut in the column (#328).
     /// </summary>
-    private Control SystemCell(string system)
+    private Control SystemCell(string system, string? here)
     {
-        var cells = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = CopyGap,
-            Width = SystemColumnWidth,
-            Children = { Cell(system, SystemNameWidth) },
-        };
+        // The name takes what the copy word leaves, so a long one trims rather than running under it.
+        var cells = new DockPanel { Width = SystemColumnWidth };
 
         if (_copy is { } copy)
         {
-            cells.Children.Add(D47.App.Controls.CopyWord.For(system, copy));
+            var glyph = D47.App.Controls.CopyWord.For(system, copy);
+            glyph.VerticalAlignment = VerticalAlignment.Center;
+            glyph.Margin = new Thickness(CopyGap, 0, 0, 0);
+
+            DockPanel.SetDock(glyph, Dock.Right);
+            cells.Children.Add(glyph);
         }
+
+        var name = Cell(system, double.NaN, RoutingKit.SystemKey(system, here));
+        cells.Children.Add(name);
 
         return cells;
     }
@@ -499,16 +452,13 @@ public sealed class RouteCommunityGoalPage : UserControl
         _ => $"{old.TotalDays / 7:0} weeks ago",
     };
 
-    private Control Cell(string text, double width, bool muted = false)
+    private static Control Cell(string text, double width, string key = ThemeManager.AKey)
     {
-        var block = Text(
-            text,
-            TypeScale.Secondary,
-            muted ? ThemeManager.TextMutedKey : ThemeManager.TextKey,
-            track: _transientBindings);
+        var block = RoutingKit.Ink(text, TypeScale.Secondary, key);
 
         block.Width = width;
         block.TextTrimming = TextTrimming.CharacterEllipsis;
+        block.VerticalAlignment = VerticalAlignment.Center;
 
         return block;
     }
@@ -523,58 +473,5 @@ public sealed class RouteCommunityGoalPage : UserControl
         D47.App.Controls.FormField.Announce(box, label, D47.App.Controls.FieldNeed.Optional);
 
         return stack;
-    }
-
-    /// <summary>
-    /// <param name="track"> Where the returned <c>Bind</c> disposable is kept, for a control that will
-    /// later be discarded and rebuilt — <see cref="_transientBindings"/> from <see cref="DrawResults"/>
-    /// and <see cref="DrawLedger"/> (#320).
-    /// </summary>
-    /// <param name="track">
-    /// Where the returned <c>Bind</c> disposable is kept, for a control that will later be discarded
-    /// and rebuilt — <see cref="_transientBindings"/> from <see cref="DrawResults"/> and <see
-    /// cref="DrawLedger"/> (#320).
-    /// </param>
-    private static TextBlock Text(string text, double size, string colourKey, bool wrap = false, List<IDisposable>? track = null)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            MaxWidth = wrap ? 520 : double.PositiveInfinity,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        var binding = block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        track?.Add(binding);
-
-        return block;
-    }
-
-    /// <summary>
-    /// <param name="track">See <see cref="Text"/>; threaded through to the heading it draws
-    /// too.</param>
-    /// </summary>
-    /// <param name="track">
-    /// See <see cref="Text"/>; threaded through to the heading it draws too.
-    /// </param>
-    private static Border Card(string title, Control body, List<IDisposable>? track = null)
-    {
-        var heading = Text(title, TypeScale.Subheading, ThemeManager.TextKey, track: track);
-        heading.FontWeight = FontWeight.SemiBold;
-
-        var card = new Border
-        {
-            Padding = new Thickness(14),
-            Child = new StackPanel { Spacing = 10, Children = { heading, body } },
-        };
-
-        CardChrome.Card(card, selected: false, track);
-
-        return card;
     }
 }
