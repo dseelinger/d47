@@ -5,7 +5,9 @@ using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Reactive;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Checklists;
@@ -34,7 +36,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly Func<DateTimeOffset> _now;
 
     /// <summary>The arcs band, rebuilt with the page because an arc's figure moves with the journal.</summary>
-    private readonly StackPanel _arcs = new() { Spacing = 4 };
+    private readonly StackPanel _arcs = new() { Spacing = 2 };
 
     /// <summary>The band's window onto the arcs (remediation.md 11, item 4).</summary>
     private readonly ScrollViewer _band = new()
@@ -53,7 +55,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly CheckBox _arcsToggle;
     private readonly TextBlock _arcsLabel;
 
-    private readonly StackPanel _list = new() { Spacing = 4 };
+    private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly TextBlock _problems = new()
     {
         TextWrapping = TextWrapping.Wrap,
@@ -83,12 +85,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// The bar's controls, held so the one above can be taken out of the tree entirely rather than
     /// hidden.
     /// </summary>
-    private readonly StackPanel _controls = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
+    private readonly WrapPanel _controls = new() { ItemSpacing = 8, LineSpacing = 8 };
 
     private readonly Button _suggestions = new()
     {
-        Padding = new Thickness(12, 4),
-        MinHeight = TouchTarget,
+        VerticalAlignment = VerticalAlignment.Top,
         IsVisible = false,
     };
 
@@ -96,9 +97,21 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly Button _deleteCompleted = new()
     {
         Content = "Delete completed items",
-        Padding = new Thickness(12, 4),
-        MinHeight = TouchTarget,
+        VerticalAlignment = VerticalAlignment.Top,
+        Classes = { "destructive" },
     };
+
+    /// <summary>The screen title, left out on mini.</summary>
+    private readonly SelectableTextBlock _title = TitleText.Style(
+        new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
+        TypeScale.Title,
+        TitleRank.Screen,
+        sentence: true);
+
+    private readonly Control _titleRow;
+
+    private IDisposable? _sized;
+    private bool _mini;
 
     /// <summary>The filter and the search text.</summary>
     private string Chosen => _checklists.Filter;
@@ -115,10 +128,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private const double BandShare = 0.45;
 
     /// <summary>
-    /// What the list keeps whatever the band would like, in pixels: the filter row above it plus enough
-    /// rows underneath to still be a list.
+    /// What the list keeps whatever the band would like, in pixels: enough rows to still be a list.
     /// </summary>
-    private const double ListKeeps = 170;
+    private const double ListKeeps = 110;
 
     /// <summary>The floor under anything on this page a ray has to hit, in pixels.</summary>
     private const double TouchTarget = 30;
@@ -143,14 +155,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         (_arcsToggle, _arcsLabel) = LabeledCheckBox.Build(string.Empty, labelFirst: false);
         _arcsToggle.MinHeight = TouchTarget;
-        _arcsToggle.VerticalAlignment = VerticalAlignment.Center;
+        _arcsToggle.VerticalAlignment = VerticalAlignment.Top;
         _arcsToggle.IsVisible = false;
 
         (_partial, _) = LabeledCheckBox.Build("Include Partial Grades", labelFirst: false);
         _partial.MinHeight = TouchTarget;
-        _partial.VerticalAlignment = VerticalAlignment.Center;
+        _partial.VerticalAlignment = VerticalAlignment.Top;
 
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         AutomationProperties.SetName(_scopeCombo, "Checklist scope");
         _scopeCombo.SelectionChanged += (_, _) => OnScopeChanged();
@@ -170,6 +182,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         };
 
         var add = D47.App.Controls.Glyphs.Quiet(new Button(), "ADD", "Add a line");
+        add.VerticalAlignment = VerticalAlignment.Top;
 
         add.Click += (_, _) => AddLine();
 
@@ -202,6 +215,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
+        TitleText.Show(_title, "Checklist", sentence: true);
+
+        _titleRow = TitleText.GroupRow(_title);
+        _titleRow.Margin = new Thickness(0, 0, 0, 10);
+
+        DockPanel.SetDock(_titleRow, Dock.Top);
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
 
@@ -212,10 +231,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         DockPanel.SetDock(_band, Dock.Top);
 
         // A share of the page, so the list keeps a working share of the tab whatever the window is doing.
-        SizeChanged += (_, e) => _band.MaxHeight = Math.Max(
-            0,
-            Math.Min(e.NewSize.Height * BandShare, e.NewSize.Height - ListKeeps));
+        // Measured below the title and the bar, which the band and the list do not share.
+        SizeChanged += (_, e) =>
+        {
+            var below = e.NewSize.Height
+                        - (_titleRow.IsVisible ? _titleRow.Bounds.Height + _titleRow.Margin.Bottom : 0)
+                        - bar.Bounds.Height - bar.Margin.Bottom;
 
+            _band.MaxHeight = Math.Max(0, Math.Min(below * BandShare, below - ListKeeps));
+        };
+
+        root.Children.Add(_titleRow);
         root.Children.Add(bar);
         root.Children.Add(_band);
         root.Children.Add(_problems);
@@ -238,6 +264,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+
+        _sized = this.GetSelfAndVisualAncestors()
+            .OfType<PanelView>()
+            .FirstOrDefault()
+            ?.GetObservable(PanelView.ModeProperty)
+            .Subscribe(new AnonymousObserver<PanelMode>(OnSurface));
 
         _checklists.List.Changed += OnChanged;
         _checklists.Proposals.Changed += OnChanged;
@@ -278,6 +310,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     {
         base.OnDetachedFromVisualTree(e);
 
+        _sized?.Dispose();
+        _sized = null;
+
         _checklists.List.Changed -= OnChanged;
         _checklists.Proposals.Changed -= OnChanged;
         _checklists.FilterChanged -= OnChanged;
@@ -290,14 +325,38 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         }
     }
 
+    /// <summary>The surface went mini, or came back.</summary>
+    private void OnSurface(PanelMode mode)
+    {
+        var mini = mode == PanelMode.Mini;
+
+        if (mini != _mini)
+        {
+            _mini = mini;
+
+            // Mini's height goes to the list, which scrolls under a header that does not.
+            _titleRow.IsVisible = !mini;
+            Rebuild();
+        }
+    }
+
     /// <summary>The suggestions page, built for the crumb the button above pushes (Phase 25).</summary>
     public Control BuildSuggestions()
     {
-        var page = new StackPanel { Spacing = 8, Margin = new Thickness(14) };
+        var page = new StackPanel { Spacing = 2, Margin = new Thickness(14) };
 
         void Fill()
         {
             page.Children.Clear();
+
+            var title = TitleText.GroupRow(TitleText.Style(
+                new SelectableTextBlock { Text = "Suggestions", TextWrapping = TextWrapping.Wrap },
+                _mini ? TypeScale.Heading : TypeScale.Title,
+                TitleRank.Screen,
+                sentence: true));
+
+            title.Margin = new Thickness(0, 0, 0, _mini ? 4 : 10);
+            page.Children.Add(title);
 
             var pending = _checklists.Proposals.PendingFor(_checklists.Document.CommanderFid);
 
@@ -465,7 +524,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         if (done.Count > 0)
         {
             // Below the line and counted, never removed.
-            _list.Children.Add(Heading($"Done ({done.Count})"));
+            _list.Children.Add(LoadoutPages.Section($"Done ({done.Count})", compact: _mini));
 
             foreach (var item in done)
             {
@@ -519,8 +578,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             var read = new Button
             {
                 Content = "Read my journals",
-                Padding = new Thickness(12, 4),
-                MinHeight = TouchTarget,
+                HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, 4, 0, 0),
             };
 
@@ -542,26 +600,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var open = standing.Arc.Key == _openArc;
         var body = new StackPanel { Spacing = 2 };
 
-        body.Children.Add(new TextBlock
-        {
-            Text = standing.IsDone ? "✓  " + standing.Arc.Name : standing.Arc.Name,
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        body.Children.Add(Named(standing.Arc.Name, standing.IsDone ? Met : null));
 
         // The figure, then the bar — and no bar at all where the fraction is unknown.
-        body.Children.Add(Muted(Aside(standing)));
+        body.Children.Add(Secondary(Aside(standing)));
 
         if (standing.Fraction is { } fraction)
         {
-            body.Children.Add(new ProgressBar
-            {
-                Minimum = 0,
-                Maximum = 1,
-                Value = fraction,
-                Height = 4,
-                Margin = new Thickness(0, 4, 0, 0),
-            });
+            var bar = D47.App.Controls.Gauge.Track(fraction, ThemeManager.AKey);
+            bar.Margin = new Thickness(0, 4, 0, 0);
+
+            body.Children.Add(bar);
         }
 
         if (open)
@@ -569,19 +618,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             body.Children.Add(Step(standing));
         }
 
-        var card = new Border
-        {
-            Padding = new Thickness(12, 8),
-            BorderThickness = new Thickness(1),
-            Child = body,
-            MinHeight = 34,
-        };
-
-        Themed(card, Border.BackgroundProperty, open ? ThemeManager.CardFillSelectedKey : ThemeManager.CardFillKey);
-        Themed(
-            card,
-            Border.BorderBrushProperty,
-            open ? ThemeManager.AccentKey : ThemeManager.RuleKey);
+        var card = ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = body }, selected: open);
 
         AutomationProperties.SetName(card, standing.Arc.Name);
 
@@ -639,23 +676,18 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var step = _goals?.Next(standing.Arc.Key);
 
-        panel.Children.Add(new TextBlock
+        panel.Children.Add(ListRow.Name(new TextBlock
         {
             Text = step?.Say ?? standing.Arc.Done,
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
-        });
+        }));
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
 
         if (step is { CanPropose: true })
         {
-            var promote = new Button
-            {
-                Content = "Suggest a line",
-                Padding = new Thickness(12, 4),
-                MinHeight = TouchTarget,
-            };
+            var promote = new Button { Content = "Suggest a line" };
 
             promote.Click += (_, _) =>
             {
@@ -666,12 +698,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             buttons.Children.Add(promote);
         }
 
-        var aside = new Button
-        {
-            Content = "Set aside",
-            Padding = new Thickness(12, 4),
-            MinHeight = TouchTarget,
-        };
+        var aside = new Button { Content = "Set aside" };
 
         aside.Click += (_, _) =>
         {
@@ -748,10 +775,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         if (item.TicksByHand)
         {
-            body.Children.Add(new TextBlock { Text = said, TextWrapping = TextWrapping.Wrap });
+            body.Children.Add(Named(said, null));
 
-            // The leftmost control of the right-hand group, so it shares the group's centre on the card
-            // instead of the first line of the text.
             checkbox = new CheckBox
             {
                 Content = "completed",
@@ -775,11 +800,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         else
         {
             // No switch at all, rather than a disabled one.
-            body.Children.Add(new TextBlock
-            {
-                Text = (item.IsComplete ? "✓  " : "•  ") + said,
-                TextWrapping = TextWrapping.Wrap,
-            });
+            body.Children.Add(Named(said, item.IsComplete ? Met : NotMet));
         }
 
         // Scope on the line rather than as a heading over a group of them, and named rather than numbered:
@@ -822,12 +843,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             aside.Add(read.Says);
         }
 
-        var caption = Muted(string.Join(" · ", aside));
+        var caption = Secondary(string.Join(" · ", aside));
 
         // Colour only where something is wrong.
         if (ChecklistNextAction.IsWrong(item.State))
         {
-            Themed(caption, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+            Themed(caption, TextBlock.ForegroundProperty, ThemeManager.RedKey);
         }
 
         body.Children.Add(caption);
@@ -838,51 +859,29 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             body.Children.Add(LoadoutPages.MeasureBar(item.IsComplete ? 1 : measure.Fill));
         }
 
+        // On a line of their own under the text, so they wrap rather than clip on a narrow panel.
+        if (selected)
+        {
+            var movers = Movers(item);
+            movers.Margin = new Thickness(0, 4, 0, 0);
+
+            body.Children.Add(movers);
+        }
+
         var row = new DockPanel();
 
-        // The checkbox and the movers share one group so they share one vertical centre on the card
-        // (#271) — unlike the switch it replaces, which centred on the first line of body instead.
-        if (checkbox is not null || selected)
+        // Centred on the text beside it rather than on its first line (#271).
+        if (checkbox is not null)
         {
-            var group = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 4,
-                Margin = new Thickness(10, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-            };
+            checkbox.Margin = new Thickness(10, 0, 0, 0);
 
-            if (checkbox is not null)
-            {
-                group.Children.Add(checkbox);
-            }
-
-            if (selected)
-            {
-                group.Children.Add(Movers(item));
-            }
-
-            DockPanel.SetDock(group, Dock.Right);
-            row.Children.Add(group);
+            DockPanel.SetDock(checkbox, Dock.Right);
+            row.Children.Add(checkbox);
         }
 
         row.Children.Add(body);
 
-        var card = new Border
-        {
-            Padding = new Thickness(12, 8),
-            BorderThickness = new Thickness(1),
-            Child = row,
-
-            // Tall enough for a ray at a metre.
-            MinHeight = 34,
-        };
-
-        Themed(card, Border.BackgroundProperty, selected ? ThemeManager.CardFillSelectedKey : ThemeManager.CardFillKey);
-        Themed(
-            card,
-            Border.BorderBrushProperty,
-            selected ? ThemeManager.AccentKey : ThemeManager.RuleKey);
+        var card = ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row }, selected);
 
         // Selecting is what grows the movers, so the whole card takes the press rather than a handle
         // somewhere on it.
@@ -903,11 +902,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var down = Mover(ChecklistMove.Down, "Move down", item);
         var bottom = Mover(ChecklistMove.Bottom, "Move to the bottom", item);
 
-        var movers = new StackPanel
+        var movers = new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            VerticalAlignment = VerticalAlignment.Center,
+            ItemSpacing = 4,
+            LineSpacing = 4,
             Children = { top, up, down, bottom },
         };
 
@@ -932,6 +930,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 MinHeight = TouchTarget,
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
+                Classes = { "destructive" },
             };
 
             edit.Click += (_, _) => EditLine(item);
@@ -1182,22 +1181,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Spacing = 8,
             Children =
             {
-                new TextBlock { Text = proposal.Summary, TextWrapping = TextWrapping.Wrap },
+                ListRow.Name(new TextBlock { Text = proposal.Summary, TextWrapping = TextWrapping.Wrap }),
                 actions,
             },
         };
 
-        var card = new Border
-        {
-            Padding = new Thickness(12),
-            BorderThickness = new Thickness(1),
-            Child = body,
-        };
-
-        Themed(card, Border.BackgroundProperty, ThemeManager.CardFillSelectedKey);
-        Themed(card, Border.BorderBrushProperty, ThemeManager.AccentKey);
-
-        return card;
+        return ListRow.Dress(new Border { Padding = new Thickness(12), Child = body });
     }
 
     private void ShowProblems()
@@ -1216,24 +1205,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _problems.Text = message;
     }
 
-    private static TextBlock Heading(string text)
-    {
-        var block = new TextBlock
-        {
-            FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(0, 12, 0, 2),
-        };
-
-        TitleText.Style(block, TypeScale.Body, TitleRank.Row, sentence: true);
-        TitleText.Show(block, text, sentence: true);
-
-        return block;
-    }
-
-    /// <summary>
-    /// The second line of a row: its scope, the arc it serves, and — on a derived item — the sentence
-    /// saying why it is not something to tick.
-    /// </summary>
     /// <summary>
     /// Names the query and the scope that emptied the list — the same two values <see cref="Matches"/>
     /// reads — so a Commander in mini, where neither is on screen, can still tell what to undo (#94).
@@ -1267,8 +1238,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var button = new Button
         {
             Content = "Clear filter",
-            Padding = new Thickness(12, 4),
-            MinHeight = TouchTarget,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 4, 0, 0),
         };
 
         button.Click += (_, _) =>
@@ -1289,9 +1260,41 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
+
+    /// <summary>The status ladder's mark for a line or goal that is met, in Blue.</summary>
+    private static readonly (string Glyph, string Key) Met = ("✓", ThemeManager.BlueKey);
+
+    /// <summary>The mark for a derived line not yet met, in Grey.</summary>
+    private static readonly (string Glyph, string Key) NotMet = ("•", ThemeManager.GreyKey);
+
+    /// <summary>A row's name in the row's name ink, led by <paramref name="mark"/> where one is given.</summary>
+    private static Control Named(string text, (string Glyph, string Key)? mark)
+    {
+        var name = ListRow.Name(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap });
+
+        if (mark is not var (glyph, key))
+        {
+            return name;
+        }
+
+        var sign = new TextBlock { Text = glyph, Width = 16 };
+        Themed(sign, TextBlock.ForegroundProperty, key);
+        DockPanel.SetDock(sign, Dock.Left);
+
+        return new DockPanel { Children = { sign, name } };
+    }
+
+    /// <summary>A row's secondary line, in the row's secondary ink.</summary>
+    private static TextBlock Secondary(string text) =>
+        ListRow.Secondary(new TextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+        });
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));

@@ -193,7 +193,7 @@ public class TheChecklistIsInTheHeadsetTests
         using var _disposable = panel;
 
         var card = Page(view).GetVisualDescendants().OfType<Border>()
-            .First(border => border.MinHeight > 0 && border.Bounds.Height > 0);
+            .First(border => border.Classes.Contains(D47.App.Theming.ListRow.Class) && border.Bounds.Height > 0);
 
         var (u, v) = At(card, view, panel);
 

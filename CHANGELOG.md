@@ -116,6 +116,17 @@ prerequisite sits on its own tile and reads ✓ MET in blue, IN PROGRESS in the 
 its bar, ? UNKNOWN in white or NOT MET in grey. On the Route, each ranked engineer is a tile with
 their name in white and the ranking's summary under it, and pressing it opens them.
 
+The Checklist is restyled to match. It opens with a large white Checklist title over an accent
+rule, and Suggestions does the same. Each line and each goal is a tile with its name in white and
+its second line in the accent colour. The selected line fills solid in the accent colour instead
+of taking an outline. Its move, Edit and Delete buttons sit on a line of their own under the text
+and wrap in a narrow pane instead of being cut off. A finished goal or plan line is marked ✓ in
+blue, and a goal's bar is the accent colour on a tile track. DONE is a white capitals heading over
+a rule. Delete completed items is a red button at ordinary button height, as is Delete on a line.
+The filter row wraps in a narrow pane instead of cutting Delete completed items off. On the mini
+strip the title is left out so the list has room. On every tab that has one, Settings for this
+page is an ordinary button with its count in brackets.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

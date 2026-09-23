@@ -154,10 +154,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     private string? _tabPlaceId;
 
-    /// <summary>The tab strip's own disclosure content and chevron, so a search match can open it (#222).</summary>
+    /// <summary>The tab strip's own disclosure content and header, so a search match can open it (#222).</summary>
     private StackPanel? _tabStripContent;
 
-    private TextBlock? _tabStripChevron;
+    private Action<bool>? _tabStripHeader;
 
     /// <summary>Every named group in every place, for a query that matches a group's title or help (#222).</summary>
     private readonly List<GroupView> _groups = [];
@@ -329,7 +329,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         _otherTabsSection = null;
         _otherTabsList = null;
         _tabStripContent = null;
-        _tabStripChevron = null;
+        _tabStripHeader = null;
 
         if (_tabPlaceId is { } placeId)
         {
@@ -515,51 +515,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         content.IsVisible = expanded;
         _tabStripContent = content;
 
-        var chevron = new TextBlock
-        {
-            Text = expanded ? "▾" : "▸",
-            FontSize = TypeScale.Body,
-            Width = 14,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        _tabStripChevron = chevron;
+        var count = rows.Count.ToString(CultureInfo.InvariantCulture);
 
-        var heading = new TextBlock
-        {
-            Text = "Settings for this page",
-            FontSize = TypeScale.Subheading,
-            FontWeight = FontWeight.Medium,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        string Said(bool open) => $"{(open ? "▾" : "▸")} Settings for this page ({count})";
 
-        var headerRow = new StackPanel
+        var header = new Button
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            Margin = new Thickness(8, 4),
-        };
-        headerRow.Children.Add(chevron);
-        headerRow.Children.Add(heading);
-        headerRow.Children.Add(Chip(rows.Count.ToString(CultureInfo.InvariantCulture)));
-
-        var header = new Border
-        {
-            CornerRadius = new CornerRadius(0),
-            BorderThickness = new Thickness(1),
-            Cursor = new Cursor(StandardCursorType.Hand),
-            Child = headerRow,
+            Content = Said(expanded),
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Themed(header, Border.BackgroundProperty, ThemeManager.FillLowKey);
-        Themed(header, Border.BorderBrushProperty, ThemeManager.RuleKey);
+        AutomationProperties.SetName(header, "Settings for this page");
+        _tabStripHeader = open => header.Content = Said(open);
 
-        header.PointerPressed += (_, _) =>
+        header.Click += (_, _) =>
         {
             var open = !content.IsVisible;
             content.IsVisible = open;
-            chevron.Text = open ? "▾" : "▸";
+            header.Content = Said(open);
             SaveViewState(state => state.With(placeId, open));
         };
 
@@ -570,32 +543,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Cards.Children.Add(strip);
 
         Refresh();
-    }
-
-    /// <summary>A small bordered count, the shape the build badge and the issue chips already use (#278).</summary>
-    private Border Chip(string said)
-    {
-        var text = new TextBlock
-        {
-            Text = said,
-            FontSize = TypeScale.Small,
-            FontWeight = FontWeight.Bold,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        var chip = new Border
-        {
-            Padding = new Thickness(4, 4),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = text,
-        };
-
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-        Themed(chip, Border.BorderBrushProperty, ThemeManager.AccentKey);
-        Themed(chip, Border.BackgroundProperty, ThemeManager.FillLowKey);
-
-        return chip;
     }
 
     /// <summary>Marks the strip a tab place draws, for a test to find it by name (#218).</summary>
@@ -4225,13 +4172,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     public void ExpandTabStrip()
     {
         if (_tabPlaceId is not { } placeId || _tabStripContent is not { } content
-            || _tabStripChevron is not { } chevron || content.IsVisible)
+            || _tabStripHeader is not { } header || content.IsVisible)
         {
             return;
         }
 
         content.IsVisible = true;
-        chevron.Text = "▾";
+        header(true);
         SaveViewState(state => state.With(placeId, true));
     }
 

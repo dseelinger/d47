@@ -173,22 +173,15 @@ public class ATabsOwnSettingsShowOnItTests
 
         var strip = (StackPanel)view.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
         var content = (StackPanel)strip.Children[1];
-        var header = (Border)strip.Children[0];
+        var header = (Button)strip.Children[0];
 
         Assert.False(content.IsVisible);
 
-        header.RaiseEvent(new PointerPressedEventArgs(
-            header,
-            new Pointer(0, PointerType.Mouse, true),
-            header,
-            default,
-            0,
-            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
-            KeyModifiers.None));
-
+        header.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(content.IsVisible);
+        Assert.StartsWith("▾ Settings for this page (", header.Content as string, StringComparison.Ordinal);
 
         window.Close();
     }
