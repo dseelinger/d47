@@ -206,6 +206,14 @@ for the maintainer to judge by eye. Write or reuse a test in `D47.App.Tests` tha
 changed view and saves it with `CaptureRenderedFrame()` to `TestSurface.CaptureDirectory`, run it
 with a filter, and read the PNG. Capture before and after the change where the change is a look.
 
+A capture shows what the app would draw. Anything the app loads at startup, the test sets up the
+same way — hull art is the one that has been missed: `MainWindow` points `ShipArt.Folder` and
+`ShipArt.Shipped` at the data and build `ships` folders, and a test that leaves them unset draws
+every Fleet card without its picture. The build's stills are copied beside the test binary under
+`ships\`. Before sending a capture, compare it with what the running app shows on that screen; if
+something the app draws is missing, fix the test's setup and capture again. A capture missing
+something the app draws looks like a regression the change caused.
+
 Send every capture you checked to the maintainer with `SendUserFile` (`display: "render"`), with a
 caption naming the screen and what it shows, so they see what you judged. A capture you did not
 check is not sent.
