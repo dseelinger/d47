@@ -194,6 +194,12 @@ app is open. Say in one line above the list that the test drive is running with 
 
 ### Capture it yourself where a picture can check it
 
+Captures are shown to the maintainer, and only the desktop app displays them. Before taking the
+first capture, check where the session is running: the system prompt says so when it is the Claude
+desktop app. If it does not, stop. Tell the maintainer the change needs screenshots, ask them to run
+`/desktop`, and ask them to say "continue" once the session is open in the desktop app. Do nothing
+more until they do.
+
 Where a result can be read off a picture — hex values in the Control Kit, a colour, a layout, a
 label — render the screen headlessly and check the image yourself, rather than handing over a step
 for the maintainer to judge by eye. Write or reuse a test in `D47.App.Tests` that renders the
@@ -204,15 +210,10 @@ Send every capture you checked to the maintainer with `SendUserFile` (`display: 
 caption naming the screen and what it shows, so they see what you judged. A capture you did not
 check is not sent.
 
-Until #412 lands, `HeadlessApp` does not load `ControlKitTheme.axaml` or apply a theme, so a
-capture draws Fluent's grey on white unless the test sets the theme up itself — see
-`HoverGroundsAndFocusRingsTakeTheLowBloomTests` for how. A capture that does not show the d47 theme
-checks nothing about colour.
-
 Ask the maintainer for a screenshot only for what headless rendering does not show: display
 scaling, the native window border, and the headset overlay. Name the window and what the shot must
-show; reading one needs the desktop app, so in a terminal session say that `/desktop` has to be
-run first. Steps that need a device, speech or the game stay with the maintainer.
+show; reading one needs the desktop app, so in a terminal session stop and ask for `/desktop` as
+above. Steps that need a device, speech or the game stay with the maintainer.
 
 ### Every step is exact
 
