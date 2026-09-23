@@ -53,9 +53,8 @@ public sealed class HelpImproveWindow : Window
     private readonly DateTimeOffset _markedAt;
     private readonly CancellationTokenSource _sending = new();
 
-    /// <summary>The toggle the merge exists for (#238). The leftmost cluster in its row, so the switch leads.</summary>
-    private readonly StackPanel _includeHistory;
-    private readonly ToggleSwitch _includeHistorySwitch;
+    /// <summary>The toggle the merge exists for (#238). The leftmost cluster in its row, so the checkbox leads.</summary>
+    private readonly CheckBox _includeHistory;
 
     /// <summary>How far back an excerpt reaches, in spans a person can name (#173).</summary>
     private readonly Segment _span = new()
@@ -79,8 +78,7 @@ public sealed class HelpImproveWindow : Window
 
     // Named, like the choosers and the panes, because these are what a test drives to assert that the
     // text on screen is the text on the clipboard.
-    private readonly StackPanel _mySpeech;
-    private readonly ToggleSwitch _mySpeechSwitch;
+    private readonly CheckBox _mySpeech;
 
     private readonly Button _read_ = new() { Name = "ReadJournals", Content = "Read my journals", MinWidth = 160 };
 
@@ -262,11 +260,11 @@ public sealed class HelpImproveWindow : Window
         _sendCorpus = sendCorpus;
         _forget = forget;
 
-        (_includeHistory, _, _includeHistorySwitch) = LabeledSwitch.Build("Include journal history", labelFirst: false);
-        _includeHistorySwitch.Name = "IncludeHistory";
+        (_includeHistory, _) = LabeledCheckBox.Build("Include journal history", labelFirst: false);
+        _includeHistory.Name = "IncludeHistory";
 
-        (_mySpeech, _, _mySpeechSwitch) = LabeledSwitch.Build("Include what I said out loud");
-        _mySpeechSwitch.Name = "IncludeMySpeech";
+        (_mySpeech, _) = LabeledCheckBox.Build("Include what I said out loud");
+        _mySpeech.Name = "IncludeMySpeech";
 
         Title = "Help improve D47";
         Width = 900;
@@ -287,7 +285,7 @@ public sealed class HelpImproveWindow : Window
         // The history half exists where both of its delegates do — which is every reading the button appears
         // on, since the page it was pressed on stopped deciding that.
         _includeHistory.IsVisible = HistoryOffered;
-        _includeHistorySwitch.IsChecked = false;
+        _includeHistory.IsChecked = false;
 
         // "Instead" needs a send to be instead of (asked 2026-08-31, from a window with no address set and a
         // button that dangled).
@@ -347,9 +345,9 @@ public sealed class HelpImproveWindow : Window
 
         Content = root;
 
-        _includeHistorySwitch.IsCheckedChanged += (_, _) => ApplyMode();
+        _includeHistory.IsCheckedChanged += (_, _) => ApplyMode();
         _span.SelectionChanged += (_, _) => Render();
-        _mySpeechSwitch.IsCheckedChanged += (_, _) => Render();
+        _mySpeech.IsCheckedChanged += (_, _) => Render();
         _scope.SelectionChanged += (_, _) => Discard();
         _read_.Click += async (_, _) => await ReadAsync();
         _copy.Click += async (_, _) => await CopyAsync();
@@ -376,7 +374,7 @@ public sealed class HelpImproveWindow : Window
 
     private bool HistoryOffered => _read is not null && _write is not null;
 
-    private bool History => HistoryOffered && _includeHistorySwitch.IsChecked == true;
+    private bool History => HistoryOffered && _includeHistory.IsChecked == true;
 
     /// <summary>
     /// Everything the toggle decides, in one place: which chooser, which pane, which buttons — and a
@@ -689,7 +687,7 @@ public sealed class HelpImproveWindow : Window
 
         var span = _span.SelectedIndex >= 0 ? ExcerptSpan.All[_span.SelectedIndex] : ExcerptSpan.Default;
 
-        var (text, tally) = _build(span.Around(_markedAt, _mySpeechSwitch.IsChecked == true));
+        var (text, tally) = _build(span.Around(_markedAt, _mySpeech.IsChecked == true));
 
         _text = text;
         _preview.Text = _text;
@@ -1128,7 +1126,7 @@ public sealed class HelpImproveWindow : Window
 
     private void Busy(bool busy)
     {
-        _includeHistorySwitch.IsEnabled = !busy;
+        _includeHistory.IsEnabled = !busy;
         _scope.IsEnabled = !busy;
         _read_.IsEnabled = !busy;
         _stop.Content = busy ? "Stop" : "Cancel";

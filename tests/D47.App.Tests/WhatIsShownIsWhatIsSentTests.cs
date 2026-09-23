@@ -244,7 +244,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         Assert.Equal("Sent", send.Content);
         Assert.False(send.IsEnabled);
 
-        Control<ToggleSwitch>(window, "IncludeMySpeech").IsChecked = true;
+        Control<CheckBox>(window, "IncludeMySpeech").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("Send it", send.Content);

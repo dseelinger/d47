@@ -346,14 +346,7 @@ public class TheRoutingTabTests
             .OfType<TextBox>()
             .First(box => AutomationProperties.GetName(box) == label);
 
-    private static ToggleSwitch SwitchNamed(PanelView panel, string label) =>
-        (ToggleSwitch)((StackPanel)panel.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .First(text => text.Text == label)
-            .Parent!)
-            .Children
-            .OfType<ToggleSwitch>()
-            .Single();
+    private static CheckBox SwitchNamed(PanelView panel, string label) => CheckBoxes.Single(panel, label);
 
     /// <summary>Everything but the credits box is saved, and it survives a restart (#311).</summary>
     [AvaloniaFact]

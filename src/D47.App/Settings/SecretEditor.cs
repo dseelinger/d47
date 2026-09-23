@@ -23,8 +23,7 @@ public sealed class SecretEditor : UserControl
     private readonly SettingRow _row;
     private readonly SettingsService _settings;
     private readonly TextBox _box;
-    private readonly StackPanel _reveal;
-    private readonly ToggleSwitch _revealSwitch;
+    private readonly CheckBox _reveal;
     private readonly Button _clear;
     private readonly Button _store;
     private readonly Button _check;
@@ -55,14 +54,14 @@ public sealed class SecretEditor : UserControl
 
         // Masked by default with a reveal, because the commonest reason a key does not work is that it was
         // pasted wrong and a Commander cannot see that through bullets.
-        (_reveal, _, _revealSwitch) = LabeledSwitch.Build("Show key");
+        (_reveal, _) = LabeledCheckBox.Build("Show key");
 
-        _revealSwitch.IsCheckedChanged += (_, _) =>
+        _reveal.IsCheckedChanged += (_, _) =>
         {
-            var shown = _revealSwitch.IsChecked == true;
+            var shown = _reveal.IsChecked == true;
             _box.PasswordChar = shown ? '\0' : '•';
 
-            AutomationProperties.SetName(_revealSwitch, shown ? "Hide the key" : "Show the key");
+            AutomationProperties.SetName(_reveal, shown ? "Hide the key" : "Show the key");
         };
 
         // An undo arrow, and deliberately the one control here that asks before it acts: it blanks the box,
@@ -168,7 +167,7 @@ public sealed class SecretEditor : UserControl
 
         // Never held in a control after it is stored.
         _box.Text = string.Empty;
-        _revealSwitch.IsChecked = false;
+        _reveal.IsChecked = false;
 
         // A new key makes any previous verdict a statement about a value that is gone.
         _result = SecretCheck.Untested;
@@ -209,7 +208,7 @@ public sealed class SecretEditor : UserControl
     private void Clear()
     {
         _box.Text = string.Empty;
-        _revealSwitch.IsChecked = false;
+        _reveal.IsChecked = false;
         _result = SecretCheck.Untested;
 
         var result = _settings.Apply(_row.Key, null, SettingsCaller.Panel);

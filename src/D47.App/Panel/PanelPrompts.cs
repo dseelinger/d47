@@ -333,8 +333,8 @@ public sealed class PanelPrompts : IHearsText
             () => Typed(query.Length > 0 ? query[..^1] : query),
             () => Typed(string.Empty)).Control);
 
-        var (swap, _, swapSwitch) = LabeledSwitch.Build("Keyboard");
-        swapSwitch.IsCheckedChanged += (_, _) => board.IsVisible = swapSwitch.IsChecked == true;
+        var (swap, _) = LabeledCheckBox.Build("Keyboard");
+        swap.IsCheckedChanged += (_, _) => board.IsVisible = swap.IsChecked == true;
 
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
 
@@ -519,8 +519,7 @@ public sealed class PanelPrompts : IHearsText
         private readonly TextBox _shown;
         private readonly TextBlock _state;
         private readonly StackPanel _board = new() { Spacing = 6 };
-        private readonly StackPanel _swap;
-        private readonly ToggleSwitch _swapSwitch;
+        private readonly CheckBox _swap;
         private readonly Button _accept;
 
         /// <summary>The keys, so a spelled word can press the one it named (#51).</summary>
@@ -581,10 +580,10 @@ public sealed class PanelPrompts : IHearsText
                 TextBlock.ForegroundProperty,
                 App.Current!.GetResourceObservable(ThemeManager.TextMutedKey));
 
-            (_swap, _, _swapSwitch) = LabeledSwitch.Build("Keyboard");
-            _swapSwitch.IsCheckedChanged += (_, _) =>
+            (_swap, _) = LabeledCheckBox.Build("Keyboard");
+            _swap.IsCheckedChanged += (_, _) =>
             {
-                var keyboard = _swapSwitch.IsChecked == true;
+                var keyboard = _swap.IsChecked == true;
 
                 if (keyboard != _keyboard)
                 {
@@ -647,7 +646,7 @@ public sealed class PanelPrompts : IHearsText
             _keyboard = keyboard;
 
             _board.IsVisible = keyboard;
-            _swapSwitch.IsChecked = keyboard;
+            _swap.IsChecked = keyboard;
 
             // Listening either way (#51): with the keys drawn, what is heard is spelled onto them.
             _state.Text = say ?? (keyboard ? Spelling.Shape : Waiting);

@@ -18,8 +18,7 @@ public sealed class LogbookWindow : Window
     private readonly Segment _span;
     private readonly DatePicker _from;
     private readonly DatePicker _to;
-    private readonly StackPanel _exact;
-    private readonly ToggleSwitch _exactSwitch;
+    private readonly CheckBox _exact;
     private readonly Button _estimate;
     private readonly Button _write;
     private readonly TextBlock _quote;
@@ -52,14 +51,14 @@ public sealed class LogbookWindow : Window
             MinWidth = 220,
         };
 
-        (_exact, _, _exactSwitch) = LabeledSwitch.Build("Between two dates instead");
-        _exactSwitch.Name = "LogExactDates";
+        (_exact, _) = LabeledCheckBox.Build("Between two dates instead");
+        _exact.Name = "LogExactDates";
         _from = new DatePicker { IsEnabled = false, MinWidth = 200 };
         _to = new DatePicker { IsEnabled = false, MinWidth = 200 };
 
-        _exactSwitch.IsCheckedChanged += (_, _) =>
+        _exact.IsCheckedChanged += (_, _) =>
         {
-            var exact = _exactSwitch.IsChecked == true;
+            var exact = _exact.IsChecked == true;
             _span.IsEnabled = !exact;
             _from.IsEnabled = exact;
             _to.IsEnabled = exact;
@@ -146,7 +145,7 @@ public sealed class LogbookWindow : Window
         _estimate.IsEnabled = false;
         _quote.Text = "Reading your journals…";
 
-        var exact = _exactSwitch.IsChecked == true;
+        var exact = _exact.IsChecked == true;
         var span = LogRanges.Ids[Math.Max(0, _span.SelectedIndex)];
         var from = exact ? _from.SelectedDate : null;
         var to = exact ? _to.SelectedDate : null;

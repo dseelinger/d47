@@ -5,7 +5,7 @@
 
   <!--
     The HUD dress for the controls that appear everywhere and had no d47 look of their own:
-    Button, ToggleSwitch, the choice controls and ListBoxItem. Squared corners throughout — the
+    Button, CheckBox, the choice controls and ListBoxItem. Squared corners throughout — the
     dress carries no rounded shape (#273).
   -->
   <Styles.Resources>
@@ -205,81 +205,104 @@
     </ControlTheme>
 
     <!--
-      Two halves, each naming its own state, so a page of switches reads without checking knob
-      position and brightness one at a time (#334). A row that wants no words sets OnContent and
-      OffContent to null itself; every other row gets this pair by default.
+      Elite's checkbox: a 16px square with a 2px A outline, an 8px solid A square centred in it when
+      checked, a Grey2 outline when disabled. The box and its label are one Tile row, 44 tall, and the
+      whole row is the hit target; Tile2 on hover or keyboard focus. A string label is a control's
+      name, in uppercase Saira and A ink; the "sentence" class sets the label in Sintony and White.
+      The "box-last" class puts the box after the label. A checkbox with no label draws the box alone
+      on a clear ground.
     -->
-    <ControlTheme x:Key="{x:Type ToggleSwitch}" TargetType="ToggleSwitch">
-      <Setter Property="ClipToBounds" Value="False" />
+    <ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="OnContent" Value="ON" />
-      <Setter Property="OffContent" Value="OFF" />
+      <Setter Property="IsThreeState" Value="False" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="14" />
-      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="LetterSpacing" Value="0.84" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="MinWidth" Value="44" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Border x:Name="Track"
-                  Width="128"
-                  Height="42"
-                  BorderThickness="1"
-                  BorderBrush="{DynamicResource D47.Border}">
-            <Grid Margin="3" ColumnDefinitions="*,3,*">
-              <!-- Required by ToggleSwitch itself but not otherwise used — this template
-                   toggles on a tap, not a drag, so the two halves below carry the whole visual. -->
-              <Panel x:Name="PART_MovingKnobs" Width="0" Height="0" IsHitTestVisible="False" />
-              <theming:BloomStack x:Name="Glow" Grid.Column="0" Tier="Normal" IsLit="False">
-                <Border x:Name="OnHalf" Background="Transparent">
-                  <Border.Transitions>
-                    <Transitions>
-                      <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
-                    </Transitions>
-                  </Border.Transitions>
-                  <ContentPresenter x:Name="OnText"
-                                    Content="{TemplateBinding OnContent}"
-                                    Foreground="{DynamicResource D47.TextFaint}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center" />
-                </Border>
-              </theming:BloomStack>
-              <Border x:Name="OffHalf" Grid.Column="2" Background="Transparent">
-                <Border.Transitions>
-                  <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
-                  </Transitions>
-                </Border.Transitions>
-                <ContentPresenter x:Name="OffText"
-                                  Content="{TemplateBinding OffContent}"
-                                  Foreground="{DynamicResource D47.TextFaint}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center" />
+          <Border x:Name="Row"
+                  Background="{TemplateBinding Background}"
+                  Padding="{TemplateBinding Padding}">
+            <DockPanel>
+              <Border x:Name="Box"
+                      DockPanel.Dock="Left"
+                      Width="16"
+                      Height="16"
+                      BorderThickness="2"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      VerticalAlignment="Center">
+                <Border x:Name="Mark"
+                        Width="8"
+                        Height="8"
+                        Background="{TemplateBinding BorderBrush}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsVisible="False" />
               </Border>
-            </Grid>
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                Foreground="{TemplateBinding Foreground}"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </DockPanel>
           </Border>
         </ControlTemplate>
       </Setter>
 
-      <!-- On: the left half fills Accent, ink the colour of the background it sits on, with the fill's own glow. -->
-      <Style Selector="^:checked /template/ Border#Track">
-        <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
-      </Style>
-      <Style Selector="^:checked /template/ Border#OnHalf">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-      </Style>
-      <Style Selector="^:checked /template/ theming|BloomStack#Glow">
-        <Setter Property="IsLit" Value="True" />
-      </Style>
-      <Style Selector="^:checked /template/ ContentPresenter#OnText">
-        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      <Style Selector="^:checked /template/ Border#Mark">
+        <Setter Property="IsVisible" Value="True" />
       </Style>
 
-      <!-- Off: the right half fills Border instead, muted ink on it; the left half stays faint. -->
-      <Style Selector="^:not(:checked) /template/ Border#OffHalf">
-        <Setter Property="Background" Value="{DynamicResource D47.Border}" />
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
       </Style>
-      <Style Selector="^:not(:checked) /template/ ContentPresenter#OffText">
-        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+      </Style>
+
+      <Style Selector="^:not(.sentence) /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="ContentTemplate">
+          <DataTemplate x:DataType="x:Object">
+            <TextBlock Text="{Binding Converter={x:Static controls:Segment.Uppercase}}" />
+          </DataTemplate>
+        </Setter>
+      </Style>
+
+      <Style Selector="^.sentence">
+        <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
+        <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="LetterSpacing" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      </Style>
+
+      <Style Selector="^.box-last /template/ Border#Box">
+        <Setter Property="DockPanel.Dock" Value="Right" />
+      </Style>
+      <Style Selector="^.box-last /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Margin" Value="0,0,12,0" />
+      </Style>
+
+      <Style Selector="^:not(:pointerover):not(:focus-visible).bare">
+        <Setter Property="Background" Value="Transparent" />
+      </Style>
+      <Style Selector="^.bare">
+        <Setter Property="Padding" Value="14,0" />
+      </Style>
+
+      <Style Selector="^:disabled">
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Grey2}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
       </Style>
     </ControlTheme>
 

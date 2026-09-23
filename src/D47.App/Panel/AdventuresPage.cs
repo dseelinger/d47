@@ -468,7 +468,7 @@ public sealed class AdventuresPage : UserControl
         };
         AutomationProperties.SetName(lengthCombo, "Length");
 
-        var (usingBox, _, usingSwitch) = LabeledSwitch.Build("This ship only");
+        var (thisShip, _) = LabeledCheckBox.Build("This ship only");
         var briefButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
         var status = Muted(string.Empty);
         var go = new Button { Content = "Go", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
@@ -492,8 +492,8 @@ public sealed class AdventuresPage : UserControl
             _ => AdventureLength.Evening,
         };
 
-        usingSwitch.IsChecked = thisShipOnly;
-        usingSwitch.IsCheckedChanged += (_, _) => thisShipOnly = usingSwitch.IsChecked == true;
+        thisShip.IsChecked = thisShipOnly;
+        thisShip.IsCheckedChanged += (_, _) => thisShipOnly = thisShip.IsChecked == true;
 
         briefButton.Click += (_, _) => _prompts.Enter(
             new EntryRequest(
@@ -542,7 +542,7 @@ public sealed class AdventuresPage : UserControl
         // Left out rather than hidden when there is nothing to choose between (#202).
         if (hasChoice)
         {
-            page.Children.Add(usingBox);
+            page.Children.Add(thisShip);
         }
 
         page.Children.Add(briefButton);

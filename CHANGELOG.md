@@ -48,6 +48,12 @@ accent colour. Icon buttons, such as reset and a number's up and down arrows, ar
 fill solid on hover or when reached with Tab, and a label naming the button appears beside the tile
 straight away. They no longer have a tooltip, and no longer glow.
 
+Every on/off switch is now Elite's checkbox: a small square with an accent-coloured outline, filled
+with a smaller solid square when ticked. The box and its label form one tile row that turns
+lighter on hover or when reached with Tab, and clicking anywhere on the row ticks it. Space and
+Enter tick it too. Settings rows, the Transcript's Raw switch, the page filters and the checklist's
+completed box all use it. A checkbox you cannot change has a grey outline.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

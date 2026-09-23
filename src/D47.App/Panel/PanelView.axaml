@@ -35,7 +35,7 @@
 
     <b>Exact `Button`, deliberately.</b> Avalonia matches the type rather than the hierarchy unless
     asked with `:is()`, and that is the distinction wanted here: a `Button` exists to be pressed and
-    is nothing without a pointer, while `ToggleSwitch` shows whether a checklist line is done and
+    is nothing without a pointer, while `CheckBox` shows whether a checklist line is done and
     `RepeatButton` is half of a scrollbar. Removing those would take away the data rather than make
     room for it.
   -->
@@ -606,32 +606,16 @@
             with, which was that a wall of JSON is not readable at a metre and exists to be pasted
             into a bug report. Recorded here so it is not put back as a regression.
           -->
-          <!--
-            A ToggleSwitch rather than a ToggleButton, on the Commander's instruction
-            (2026-08-31): a button that changes colour reads as a pressed button, and the
-            settings page has already taught what a switch looks like - the same control, the
-            same accent, no On/Off words, the label doing the work.
-
-            The label sits beside the knob rather than inside the switch, because a
-            ToggleSwitch stacks its Content above the knob - one word wrapped onto two lines in
-            a 28-pixel bar. The settings page keeps its labels outside the control for the same
-            reason, so this does what it does: a TextBlock, then a bare switch, and the box is
-            what shows and hides.
-          -->
           <StackPanel x:Name="RawToggleBox"
                       Orientation="Horizontal"
                       VerticalAlignment="Center"
                       Margin="13,0,0,0"
                       IsVisible="False">
-            <TextBlock Text="Raw"
-                       VerticalAlignment="Center"
-                       Margin="0,0,6,0"
-                       FontSize="{StaticResource D47.Type.Secondary}" />
-            <ToggleSwitch x:Name="RawToggle"
-                          VerticalAlignment="Center"
-                          OnContent="{x:Null}"
-                          OffContent="{x:Null}"
-                          IsCheckedChanged="OnRawToggled" />
+            <CheckBox x:Name="RawToggle"
+                      Content="Raw"
+                      Classes="box-last"
+                      VerticalAlignment="Center"
+                      IsCheckedChanged="OnRawToggled" />
           </StackPanel>
         </DockPanel>
       </DockPanel>

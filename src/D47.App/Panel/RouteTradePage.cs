@@ -114,10 +114,10 @@ public sealed class RouteTradePage : UserControl
         maxDistance.Box.Text = trade.MaxStationDistance.ToString("N0", CultureInfo.InvariantCulture);
         maxAge.Box.Text = trade.MaxPriceAgeHours.ToString("N0", CultureInfo.InvariantCulture);
 
-        var (loopRow, _, loop) = LabeledSwitch.Build("End where it started");
-        var (largePadRow, _, largePad) = LabeledSwitch.Build("Large pads only");
-        var (planetaryRow, _, planetary) = LabeledSwitch.Build("Planetary ports");
-        var (permitRow, _, avoidPermit) = LabeledSwitch.Build("Avoid permit systems");
+        var (loop, _) = LabeledCheckBox.Build("End where it started");
+        var (largePad, _) = LabeledCheckBox.Build("Large pads only");
+        var (planetary, _) = LabeledCheckBox.Build("Planetary ports");
+        var (avoidPermit, _) = LabeledCheckBox.Build("Avoid permit systems");
 
         loop.IsChecked = trade.Loop;
         largePad.IsChecked = trade.LargePadOnly;
@@ -160,10 +160,10 @@ public sealed class RouteTradePage : UserControl
                 Row(capital, hops),
                 Row(maxJumps, maxDistance),
                 Row(maxAge, null),
-                loopRow,
-                largePadRow,
-                planetaryRow,
-                permitRow,
+                loop,
+                largePad,
+                planetary,
+                avoidPermit,
                 Text(
                     "Your balance is never read from the journal and never saved — say what you "
                     + "want to trade with. It plans from the station you are docked at. Everything "

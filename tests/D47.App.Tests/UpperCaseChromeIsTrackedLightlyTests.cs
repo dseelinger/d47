@@ -45,7 +45,7 @@ public class UpperCaseChromeIsTrackedLightlyTests
         throw new InvalidOperationException($"{property} is not set.");
     }
 
-    public static TheoryData<string> Themes => ["Button", "ToggleSwitch", "D47.Segment", "D47.TextChoice", "D47.Tab"];
+    public static TheoryData<string> Themes => ["Button", "CheckBox", "D47.Segment", "D47.TextChoice", "D47.Tab"];
 
     [AvaloniaTheory]
     [MemberData(nameof(Themes))]
@@ -56,7 +56,7 @@ public class UpperCaseChromeIsTrackedLightlyTests
         object resourceKey = key switch
         {
             "Button" => typeof(Button),
-            "ToggleSwitch" => typeof(ToggleSwitch),
+            "CheckBox" => typeof(CheckBox),
             _ => key,
         };
         var theme = Assert.IsType<ControlTheme>(Application.Current!.FindResource(resourceKey));

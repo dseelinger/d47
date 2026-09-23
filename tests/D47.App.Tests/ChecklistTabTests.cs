@@ -612,7 +612,7 @@ public class ChecklistTabTests
         // Unchecked stays exactly what shipped.
         Assert.DoesNotContain(Lines(panel), line => line.Contains("Grade 5", StringComparison.Ordinal));
 
-        var box = Switches.Single(panel, "Include Partial Grades");
+        var box = CheckBoxes.Single(panel, "Include Partial Grades");
 
         box.IsChecked = true;
         Dispatcher.UIThread.RunJobs();
@@ -642,7 +642,7 @@ public class ChecklistTabTests
 
         var (window, panel) = Open(checklists);
 
-        Assert.Empty(Switches.Labelled(panel, "Include Partial Grades"));
+        Assert.Empty(CheckBoxes.Labelled(panel, "Include Partial Grades"));
 
         window.Close();
     }

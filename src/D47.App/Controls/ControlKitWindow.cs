@@ -169,19 +169,32 @@ public sealed class ControlKitWindow : Window
         var (report, reportText) = SettingsView.Report();
         reportText.Text = "11 ships, the oldest last seen about a day ago.";
 
-        var switches = new WrapPanel
+        var (sentence, _) = LabeledCheckBox.Build("Include journal history", labelFirst: false);
+        var (disabled, _) = LabeledCheckBox.Build("Unavailable here", labelFirst: false);
+        disabled.IsChecked = true;
+        disabled.IsEnabled = false;
+
+        var checkboxes = new StackPanel
         {
-            ItemSpacing = 16,
-            LineSpacing = 16,
-            Children = { new ToggleSwitch { IsChecked = true }, new ToggleSwitch { IsChecked = false } },
+            Spacing = 2,
+            Children =
+            {
+                new CheckBox { Content = "Raw", IsChecked = true, HorizontalAlignment = HorizontalAlignment.Left },
+                new CheckBox { Content = "Keyboard", IsChecked = false, HorizontalAlignment = HorizontalAlignment.Left },
+                sentence,
+                disabled,
+                new CheckBox { IsChecked = true, Classes = { "bare" }, HorizontalAlignment = HorizontalAlignment.Left },
+            },
         };
+        sentence.HorizontalAlignment = HorizontalAlignment.Left;
+        disabled.HorizontalAlignment = HorizontalAlignment.Left;
 
         var cells = new Control[]
         {
             Cell("REPORT — READ ONLY", report, Note("No box at all. A box is a promise you can type in it.")),
             Cell("FIELD — EDITABLE", _field, Note("Inset ground, one lit edge, block caret.")),
             Cell("ACTIONS — EVERY STATE", Actions(), Note("Every class draws the same tile. Focus fills it; delete is red.")),
-            Cell("SWITCH — TWO STATE", switches, SwitchNote()),
+            Cell("CHECKBOX — TWO STATE", checkboxes, Note("A name in capitals, a sentence in prose. The row is the target; hover or focus lights it.")),
             Cell(
                 "CHOICE — FEW OPTIONS",
                 new Segment
@@ -401,15 +414,6 @@ public sealed class ControlKitWindow : Window
         return chip;
     }
 
-    private static TextBlock SwitchNote()
-    {
-        var note = Note(null);
-        note.Inlines!.Add(new Run("Double-coded: the lit block moves "));
-        note.Inlines.Add(new Run("and") { FontStyle = FontStyle.Italic });
-        note.Inlines.Add(new Run(" names itself. Scannable down thirty rows."));
-        return note;
-    }
-
     // -- Theme --
 
     private Control ThemeSection()
@@ -621,7 +625,7 @@ public sealed class ControlKitWindow : Window
                     new Segment { ItemsSource = ["NAMED ONLY", "CAUTIOUS", "BALANCED", "EAGER"], SelectedIndex = 2 }),
                 SettingsRowDemo(
                     "Push to talk",
-                    new ToggleSwitch { IsChecked = true },
+                    new CheckBox { IsChecked = true, Classes = { "bare" } },
                     protectedRow: true),
                 SettingsRowDemo(
                     "Capture before the key",

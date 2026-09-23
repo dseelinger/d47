@@ -54,7 +54,7 @@ public sealed class HelpImproveHasOnePrimaryActionTests
     {
         var window = Full();
 
-        Control<ToggleSwitch>(window, "IncludeHistory").IsChecked = true;
+        Control<CheckBox>(window, "IncludeHistory").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(window.GetVisualDescendants().OfType<Button>(), b => b.Classes.Contains("primary"));

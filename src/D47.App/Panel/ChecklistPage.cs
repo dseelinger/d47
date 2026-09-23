@@ -49,10 +49,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
-    /// <summary>The goals band, opened and closed (#203). A left cluster, so the switch leads its label.</summary>
-    private readonly StackPanel _arcsToggle;
+    /// <summary>The goals band, opened and closed (#203). A left cluster, so the checkbox leads its label.</summary>
+    private readonly CheckBox _arcsToggle;
     private readonly TextBlock _arcsLabel;
-    private readonly ToggleSwitch _arcsSwitch;
 
     private readonly StackPanel _list = new() { Spacing = 4 };
     private readonly TextBlock _problems = new()
@@ -76,10 +75,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
     /// <summary>
     /// Include Partial Grades (change-requests.md 35): also show work an engineer here can start and
-    /// somebody else has to finish. A left cluster, so the switch leads its label.
+    /// somebody else has to finish. A left cluster, so the checkbox leads its label.
     /// </summary>
-    private readonly StackPanel _partial;
-    private readonly ToggleSwitch _partialSwitch;
+    private readonly CheckBox _partial;
 
     /// <summary>
     /// The bar's controls, held so the one above can be taken out of the tree entirely rather than
@@ -143,12 +141,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _backfill = backfill;
         _now = now ?? (() => DateTimeOffset.Now);
 
-        (_arcsToggle, _arcsLabel, _arcsSwitch) = LabeledSwitch.Build(string.Empty, labelFirst: false);
+        (_arcsToggle, _arcsLabel) = LabeledCheckBox.Build(string.Empty, labelFirst: false);
         _arcsToggle.MinHeight = TouchTarget;
         _arcsToggle.VerticalAlignment = VerticalAlignment.Center;
         _arcsToggle.IsVisible = false;
 
-        (_partial, _, _partialSwitch) = LabeledSwitch.Build("Include Partial Grades", labelFirst: false);
+        (_partial, _) = LabeledCheckBox.Build("Include Partial Grades", labelFirst: false);
         _partial.MinHeight = TouchTarget;
         _partial.VerticalAlignment = VerticalAlignment.Center;
 
@@ -158,16 +156,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _scopeCombo.SelectionChanged += (_, _) => OnScopeChanged();
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
-        _partialSwitch.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partialSwitch.IsChecked == true);
+        _partial.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partial.IsChecked == true);
 
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
 
-        // The switch owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
+        // The checkbox owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
         // never assigns IsChecked back and there is no loop to break.
-        _arcsSwitch.IsCheckedChanged += (_, _) =>
+        _arcsToggle.IsCheckedChanged += (_, _) =>
         {
-            _showArcs = _arcsSwitch.IsChecked == true;
+            _showArcs = _arcsToggle.IsChecked == true;
             Rebuild();
         };
 
@@ -407,7 +405,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var offerPartial = Chosen == ChecklistService.HereKey
                            && (_checklists.IncludePartialGrades || _checklists.HasPartialWorkHere());
 
-        _partialSwitch.IsChecked = _checklists.IncludePartialGrades;
+        _partial.IsChecked = _checklists.IncludePartialGrades;
 
         if (offerPartial && !_controls.Children.Contains(_partial))
         {
@@ -752,8 +750,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             body.Children.Add(new TextBlock { Text = said, TextWrapping = TextWrapping.Wrap });
 
-            // A checkbox rather than a switch, on the Commander's own instruction (#271, narrowing #223):
-            // the leftmost control of the right-hand group, so it shares the group's centre on the card
+            // The leftmost control of the right-hand group, so it shares the group's centre on the card
             // instead of the first line of the text.
             checkbox = new CheckBox
             {

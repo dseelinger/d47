@@ -8,22 +8,22 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A toggle row shows what the setting behind it says.</summary>
-public class EveryToggleShowsItsOwnStateTests
+/// <summary>A toggle row's checkbox shows what the setting behind it says.</summary>
+public class EveryCheckboxShowsItsOwnSettingTests
 {
     /// <summary>
     /// Through the real drawn control, because the drawn control is the only place this fault was ever
     /// visible.
     /// </summary>
     [AvaloniaFact]
-    public void ATogglesSwitchAgreesWithItsSettingInBothDirections()
+    public void ATogglesCheckboxAgreesWithItsSettingInBothDirections()
     {
         var (settings, viewState, paths, registry, _) = TestSurface.CreateFull();
         var host = SettingsHost.Open(settings, viewState, paths);
 
         var toggles = Rows(registry)
-            .Select(row => (row.Key, Switch: host.View.ControlFor(row.Key) as ToggleSwitch))
-            .Where(found => found.Switch is not null)
+            .Select(row => (row.Key, Box: host.View.ControlFor(row.Key) as CheckBox))
+            .Where(found => found.Box is not null)
             .ToList();
 
         Assert.NotEmpty(toggles);
@@ -46,7 +46,7 @@ public class EveryToggleShowsItsOwnStateTests
 
                 if (toggle!.IsChecked != wanted)
                 {
-                    lying.Add($"{key} is {wanted} and its switch reads {toggle.IsChecked}");
+                    lying.Add($"{key} is {wanted} and its checkbox reads {toggle.IsChecked}");
                 }
             }
         }

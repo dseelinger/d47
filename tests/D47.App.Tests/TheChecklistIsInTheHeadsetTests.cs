@@ -202,7 +202,7 @@ public class TheChecklistIsInTheHeadsetTests
 
         var targets = Page(view).GetVisualDescendants()
             .OfType<Control>()
-            .Where(control => control is Button or ToggleSwitch or CheckBox)
+            .Where(control => control is Button or CheckBox)
             .Where(control => control.IsVisible && control.Bounds.Height > 0)
             .ToList();
 

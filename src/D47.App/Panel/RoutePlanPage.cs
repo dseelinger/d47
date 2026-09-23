@@ -185,13 +185,13 @@ public sealed class RoutePlanPage : UserControl
         var stops = Field("Stops", "10");
         var radius = Field("Radius (ly)", "500");
         var minimum = Field("Least worth stopping for (cr)", "500,000");
-        var (loopRow, _, loop) = LabeledSwitch.Build("Come back to the start");
+        var (loop, _) = LabeledCheckBox.Build("Come back to the start");
         loop.IsChecked = true;
 
         var form = new StackPanel
         {
             Spacing = 8,
-            Children = { Row(stops, radius), Row(minimum, null), loopRow },
+            Children = { Row(stops, radius), Row(minimum, null), loop },
         };
 
         return Plottable(

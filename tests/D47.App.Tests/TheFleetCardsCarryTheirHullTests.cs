@@ -189,7 +189,7 @@ public class TheFleetCardsCarryTheirHullTests
         var (panel, _) = Fleet();
 
         Assert.DoesNotContain(
-            panel.GetVisualDescendants().OfType<ToggleSwitch>(), box => box.Name == "FleetToggle");
+            panel.GetVisualDescendants().OfType<CheckBox>(), box => box.Name == "FleetToggle");
     }
 
     [AvaloniaFact]

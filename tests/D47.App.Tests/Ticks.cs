@@ -7,7 +7,7 @@ using D47.App.Panel;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The checklist's own line ticks, told apart from a switch that is part of a page's chrome.
+/// The checklist's own line ticks, told apart from the other checkboxes on a page.
 /// </summary>
 internal static class Ticks
 {
@@ -16,9 +16,7 @@ internal static class Ticks
     [
         .. root.GetVisualDescendants()
             .OfType<CheckBox>()
-            .Where(box => box.GetVisualParent() is StackPanel group
-                          && group.GetVisualParent() is DockPanel
-                          && !IsChrome(box)),
+            .Where(box => box.Content is "completed" && !IsChrome(box)),
     ];
 
     /// <summary>The words on those ticks, in the order they are drawn.</summary>

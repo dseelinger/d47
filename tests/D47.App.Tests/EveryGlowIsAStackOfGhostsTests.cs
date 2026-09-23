@@ -172,7 +172,6 @@ public class EveryGlowIsAStackOfGhostsTests
 
             var kit = new Controls(
                 TitleText.Screen("Screen title"),
-                new ToggleSwitch { IsChecked = true },
                 new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 });
 
             var kitWindow = new Window
@@ -180,7 +179,7 @@ public class EveryGlowIsAStackOfGhostsTests
                 Title = "Directive 47 — 0.1.0",
                 Width = 800,
                 Height = 600,
-                Content = new StackPanel { Children = { kit.Title, kit.Switch, kit.Level } },
+                Content = new StackPanel { Children = { kit.Title, kit.Level } },
             };
             CaptionStrip.Apply(kitWindow);
             kitWindow.Show();
@@ -203,7 +202,6 @@ public class EveryGlowIsAStackOfGhostsTests
             yield return ("level handle", BloomTier.High, Within(Kit.Level, stack => stack.Child is Rectangle));
             yield return ("microphone dot", BloomTier.High, Panel.FindControl<BloomStack>("MicrophoneBloom")!);
             yield return ("active tab", BloomTier.Normal, Within(Panel.FindControl<RadioButton>("TranscriptTab")!, stack => stack.Name == "Glow"));
-            yield return ("lit switch half", BloomTier.Normal, Within(Kit.Switch));
         }
 
         public void Dispose()
@@ -219,5 +217,5 @@ public class EveryGlowIsAStackOfGhostsTests
     }
 
     private sealed record Controls(
-        Control Title, ToggleSwitch Switch, Slider Level);
+        Control Title, Slider Level);
 }

@@ -59,15 +59,15 @@ public class TheGoalsBandLeavesRoomForTheListTests
     private static ScrollViewer BandScroller(PanelView panel) =>
         panel.GetVisualDescendants().OfType<ScrollViewer>().First(scroller => scroller.Name == "GoalsBand");
 
-    /// <summary>The label beside the switch that opens the band.</summary>
+    /// <summary>The label of the checkbox that opens the band.</summary>
     private static TextBlock BandLabel(PanelView panel) =>
         panel.GetVisualDescendants()
             .OfType<TextBlock>()
             .First(text => text.Text?.StartsWith("Goals", StringComparison.Ordinal) == true);
 
     /// <summary>The control that opens the band.</summary>
-    private static ToggleSwitch Band(PanelView panel) =>
-        BandLabel(panel).GetVisualParent()!.GetVisualDescendants().OfType<ToggleSwitch>().Single();
+    private static CheckBox Band(PanelView panel) =>
+        BandLabel(panel).FindAncestorOfType<CheckBox>()!;
 
     /// <summary>Opens or closes it the way a press does, so the page rebuilds around it.</summary>
     private static void Toggle(PanelView panel)

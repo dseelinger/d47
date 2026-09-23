@@ -3382,11 +3382,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private (Control, Action, bool) BuildToggle(SettingRow row, TextBlock message)
     {
-        var toggle = new ToggleSwitch
-        {
-            Margin = new Thickness(0),
-            Padding = new Thickness(0),
-        };
+        var toggle = new CheckBox { Margin = new Thickness(0) };
+        toggle.Classes.Add("bare");
 
         toggle.IsCheckedChanged += (_, _) =>
         {

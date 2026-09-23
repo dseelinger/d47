@@ -3,45 +3,34 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The gate #223 asks for: every two-state control in the app is drawn as a switch.</summary>
-public sealed class EveryTwoStateControlIsASwitchTests
+/// <summary>Every two-state control in the app is drawn as Elite's checkbox (#395).</summary>
+public sealed class EveryTwoStateControlIsAnEliteCheckboxTests
 {
-    private static readonly Regex CheckBoxToken = new(@"\bCheckBox\b", RegexOptions.Compiled);
+    private static readonly Regex ToggleSwitchToken = new(@"\bToggleSwitch\b", RegexOptions.Compiled);
 
     private static readonly Regex ExactToggleButton =
         new(@"\bnew\s+ToggleButton\b|:\s*ToggleButton\b", RegexOptions.Compiled);
 
-    /// <summary>
-    /// The one site this gate admits: the custom line's checkbox, exempted from #223 on the
-    /// Commander's own instruction (#271). Named by its exact line so nothing else in this file, or
-    /// added later to it, slips through unnoticed.
-    /// </summary>
-    private static readonly (string Path, string Line)[] Admitted =
-    [
-        ("Panel\\ChecklistPage.cs", "CheckBox? checkbox = null;"),
-        ("Panel\\ChecklistPage.cs", "checkbox = new CheckBox"),
-    ];
-
     [Fact]
-    public void NoControlIsBuiltAsACheckBoxOrAToggleButton()
+    public void NoControlIsBuiltAsAToggleSwitchOrAToggleButton()
     {
         var root = Path.Combine(RepositoryRoot(), "src", "D47.App");
 
         var offenders =
             Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
                 .Concat(Directory.EnumerateFiles(root, "*.axaml", SearchOption.AllDirectories))
+                .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
+                               && !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
                 .SelectMany(path => File.ReadAllLines(path)
                     .Select((line, index) => (path, line, index))
-                    .Where(entry => CheckBoxToken.IsMatch(entry.line) || ExactToggleButton.IsMatch(entry.line)))
-                .Where(entry => !Admitted.Contains((Path.GetRelativePath(root, entry.path), entry.line.Trim())))
+                    .Where(entry => ToggleSwitchToken.IsMatch(entry.line) || ExactToggleButton.IsMatch(entry.line)))
                 .Select(entry => $"{Path.GetRelativePath(root, entry.path)}:{entry.index + 1}: {entry.line.Trim()}")
                 .ToList();
 
         Assert.True(
             offenders.Count == 0,
-            "Use ToggleSwitch instead — a CheckBox, or a control whose declared or constructed type is "
-            + $"exactly ToggleButton, is one the app no longer draws except the one site named in "
-            + $"Admitted (#223, narrowed for #271):{Environment.NewLine}"
+            "Use CheckBox instead — a ToggleSwitch, or a control whose declared or constructed type is "
+            + $"exactly ToggleButton, is one the app does not draw:{Environment.NewLine}"
             + string.Join(Environment.NewLine, offenders));
     }
 

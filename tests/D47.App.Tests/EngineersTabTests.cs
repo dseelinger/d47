@@ -385,7 +385,7 @@ public class EngineersTabTests
         surface.Window.Close();
     }
 
-    private static ToggleSwitch Check(PanelView panel, string label) => Switches.Single(panel, label);
+    private static CheckBox Check(PanelView panel, string label) => CheckBoxes.Single(panel, label);
 
     /// <summary>
     /// The eight engineers out at Colonia can be taken off the list, and back, without touching who is

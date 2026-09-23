@@ -121,7 +121,7 @@ public class ALongUploadSaysHowFarItHasGotTests : IDisposable
 
         // The bar these tests are about belongs to the history send, which is one press in: one donation page
         // for every reading opens on the excerpt, and the toggle asks for the other half.
-        Control<ToggleSwitch>(window, "IncludeHistory").IsChecked = true;
+        Control<CheckBox>(window, "IncludeHistory").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
         return window;

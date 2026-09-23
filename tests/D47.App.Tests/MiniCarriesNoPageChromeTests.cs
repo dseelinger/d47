@@ -103,12 +103,13 @@ public class MiniCarriesNoPageChromeTests
             .Where(control => Drawn(control, view))
             .Select(control => control.Content as string ?? string.Empty);
 
-        // A switch carries no Content of its own (#223): the word it shows is the TextBlock beside it.
-        var switchWords = page.GetSelfAndVisualDescendants()
-            .OfType<ToggleSwitch>()
-            .Where(toggle => !toggle.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
-            .Where(toggle => Drawn(toggle, view))
-            .Select(SwitchLabel);
+        // A labelled checkbox carries its label as a TextBlock rather than a string.
+        var labelledWords = page.GetSelfAndVisualDescendants()
+            .OfType<CheckBox>()
+            .Where(box => box.Content is TextBlock)
+            .Where(box => !box.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
+            .Where(box => Drawn(box, view))
+            .Select(CheckBoxes.Label);
 
         // A stepper shows its selected item rather than a Content (#269, #274).
         var comboWords = page.GetSelfAndVisualDescendants()
@@ -121,22 +122,17 @@ public class MiniCarriesNoPageChromeTests
         // above), but the word worth asserting on is the line it sits beside (#271).
         var checkboxWords = page.GetSelfAndVisualDescendants()
             .OfType<CheckBox>()
+            .Where(box => box.Content is string)
             .Where(box => !box.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
             .Where(box => Drawn(box, view))
             .Select(Ticks.Label);
 
         return
         [
-            .. controlWords.Concat(switchWords).Concat(comboWords).Concat(checkboxWords)
+            .. controlWords.Concat(labelledWords).Concat(comboWords).Concat(checkboxWords)
                 .Where(word => word.Length > 0),
         ];
     }
-
-    /// <summary>The label beside a switch, wherever it sits among the switch's siblings.</summary>
-    private static string SwitchLabel(ToggleSwitch toggle) =>
-        toggle.GetVisualParent() is Control parent
-            ? parent.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty
-            : string.Empty;
 
     /// <summary>Whether anything between this control and the surface is hiding it.</summary>
     private static bool Drawn(Control control, PanelView view) =>

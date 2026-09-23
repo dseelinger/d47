@@ -153,7 +153,7 @@ public class TheChecklistFollowsTheShipTests
 
         var panel = Showing(checklists);
 
-        static bool Offered(PanelView panel) => Switches.Labelled(panel, "Include Partial Grades").Any();
+        static bool Offered(PanelView panel) => CheckBoxes.Labelled(panel, "Include Partial Grades").Any();
 
         Assert.False(Offered(panel));
 

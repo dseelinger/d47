@@ -52,19 +52,15 @@ public sealed class RouteMarketPage : UserControl
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
-    private readonly StackPanel _selling;
-    private readonly ToggleSwitch _sellingSwitch;
-
-    private readonly StackPanel _largePad;
-    private readonly ToggleSwitch _largePadSwitch;
+    private readonly CheckBox _selling;
+    private readonly CheckBox _largePad;
 
     /// <summary>
     /// Opts back into surface stations (#309): #296 defaulted <c>surface_stations</c> to false for
     /// every search, so a commodity only available at a Planetary Port was otherwise unreachable from
     /// this page.
     /// </summary>
-    private readonly StackPanel _surfaceStations;
-    private readonly ToggleSwitch _surfaceStationsSwitch;
+    private readonly CheckBox _surfaceStations;
 
     private readonly TextBlock _status;
 
@@ -83,9 +79,9 @@ public sealed class RouteMarketPage : UserControl
         _openSettings = openSettings;
         _copy = copy;
 
-        (_selling, _, _sellingSwitch) = D47.App.Controls.LabeledSwitch.Build("Selling it, not buying");
-        (_largePad, _, _largePadSwitch) = D47.App.Controls.LabeledSwitch.Build("Large pad only");
-        (_surfaceStations, _, _surfaceStationsSwitch) = D47.App.Controls.LabeledSwitch.Build("Include surface stations");
+        (_selling, _) = D47.App.Controls.LabeledCheckBox.Build("Selling it, not buying");
+        (_largePad, _) = D47.App.Controls.LabeledCheckBox.Build("Large pad only");
+        (_surfaceStations, _) = D47.App.Controls.LabeledCheckBox.Build("Include surface stations");
 
         _status = Text(string.Empty, TypeScale.Secondary, ThemeManager.TextMutedKey, wrap: true);
         _status.IsVisible = false;
@@ -258,17 +254,17 @@ public sealed class RouteMarketPage : UserControl
             values["tonnes"] = _tonnes.Text!.Replace(",", string.Empty).Trim();
         }
 
-        if (_sellingSwitch.IsChecked == true)
+        if (_selling.IsChecked == true)
         {
             values["selling"] = "true";
         }
 
-        if (_largePadSwitch.IsChecked == true)
+        if (_largePad.IsChecked == true)
         {
             values["large_pad"] = "true";
         }
 
-        if (_surfaceStationsSwitch.IsChecked == true)
+        if (_surfaceStations.IsChecked == true)
         {
             values["surface_stations"] = "true";
         }
