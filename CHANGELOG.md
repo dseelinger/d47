@@ -160,6 +160,24 @@ PER COMMANDER is grey capitals with no box. The rows use more of a wide window, 
 when a search brings it out, wraps beside the control instead of running across it. While
 searching, each area's name is a capitals heading over a rule. The first-run key window matches.
 
+Utilities, Learned phrases and the in-app help are restyled to match. Each opens with a large white
+title over an accent rule; on the small panel Utilities leaves its title out so the list keeps the
+room. The two clocks are grey-labelled tiles with the time in the accent colour, and each timer,
+alarm, learned phrase and help link is a tile row with a white name. Forget is red. Help's section
+headings are white capitals over a rule, and its prose is grey.
+
+Every other dialog now has the same layout as the confirmation and cost dialogs: an orange line
+naming where it belongs, a white title over an accent rule, and the buttons beneath a thin rule.
+Esc closes each one, and cancels the picker. This covers the audio recorder, What changed,
+Exercised by hand, the debrief, Help improve D47, the Commander's log, lore, macros, memory, your
+own cores, HOTAS switches and the picker. Headings inside them are white capitals over a rule,
+helper text is grey and problems are red. Saved entries are tile rows, and entries you edit sit
+under a thin rule so their boxes still show. Forget, Discard, Withdraw, Remove and Delete are red. Help
+improve D47's four counts are tiles, and the exact text sits on a darker ground with no outline.
+In Exercised by hand, done reads blue, failed red, and never and changed grey, in capitals. The
+recorder fills the row you picked in the accent colour. Rows of buttons and choices wrap in a
+narrow window instead of running off the edge.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

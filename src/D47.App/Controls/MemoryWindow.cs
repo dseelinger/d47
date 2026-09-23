@@ -18,7 +18,7 @@ public sealed class MemoryWindow : Window
 {
     private readonly MemoryBook _book;
     private readonly Func<DateTimeOffset> _now;
-    private readonly StackPanel _entries = new() { Spacing = 10 };
+    private readonly StackPanel _entries = new() { Spacing = 2 };
     private readonly TextBox _fact;
     private readonly TextBlock _status;
     private readonly Button _add;
@@ -36,8 +36,6 @@ public sealed class MemoryWindow : Window
         Height = 560;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
-
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
         _fact = new TextBox
         {
@@ -71,34 +69,26 @@ public sealed class MemoryWindow : Window
                 + "It is also sent to the model with your questions when it is relevant to where you are.",
         };
 
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var body = new StackPanel
         {
-            Margin = new Thickness(24),
             Spacing = 16,
             Children =
             {
-                Heading("Tell D47 something"),
+                Modal.Section("Tell D47 something"),
                 _fact,
                 _add,
                 _status,
-                Heading("What it has written down"),
+                Modal.Section("What it has written down"),
                 _entries,
             },
         };
 
-        var close = new Button { Content = "Close", MinWidth = 110, HorizontalAlignment = HorizontalAlignment.Right };
+        var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
-        body.Children.Add(close);
 
-        // Horizontal scrolling off, so wrapping below it actually wraps (GitHub issue 87).
-        Content = new ScrollViewer
-        {
-            Content = body,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
+        Modal.Apply(this, "Memory", Title, body, [close]);
 
         Refresh();
     }
@@ -143,7 +133,7 @@ public sealed class MemoryWindow : Window
         // the same rule the checklist and the notes file follow.
         foreach (var problem in _book.Store.Problems)
         {
-            _entries.Children.Add(Muted($"Could not read {problem.What}: {problem.Why}"));
+            _entries.Children.Add(Muted($"Could not read {problem.What}: {problem.Why}", ThemeManager.RedKey));
         }
     }
 
@@ -154,20 +144,21 @@ public sealed class MemoryWindow : Window
             Spacing = 6,
             Children =
             {
-                new TextBlock
+                ListRow.Secondary(new TextBlock
                 {
                     Text = $"{entry.Key} — {Label(entry)}{Stamp(entry)}",
                     FontSize = TypeScale.Secondary,
                     FontWeight = FontWeight.SemiBold,
-                },
-                new SelectableTextBlock { Text = entry.Fact, TextWrapping = TextWrapping.Wrap },
+                    TextWrapping = TextWrapping.Wrap,
+                }),
+                ListRow.Name(new SelectableTextBlock { Text = entry.Fact, TextWrapping = TextWrapping.Wrap }),
             },
         };
 
         // No forget button on an observation.
         if (!MemoryObserver.IsObservation(entry.Key))
         {
-            var forget = new Button { Content = "Forget", MinWidth = 90 };
+            var forget = new Button { Content = "Forget", MinWidth = 90, Classes = { "destructive" } };
 
             forget.Click += (_, _) =>
             {
@@ -178,10 +169,7 @@ public sealed class MemoryWindow : Window
             stack.Children.Add(forget);
         }
 
-        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
-        CardChrome.Card(inset);
-
-        return inset;
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 10), Child = stack });
     }
 
     /// <summary>
@@ -199,17 +187,10 @@ public sealed class MemoryWindow : Window
     private static string Stamp(MemoryEntry entry) =>
         entry.AddedAt is { } at ? $", {at.ToLocalTime():d MMM yyyy}" : string.Empty;
 
-    private static TextBlock Heading(string text)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Body, FontWeight = FontWeight.SemiBold };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        return block;
-    }
-
-    private static TextBlock Muted(string text)
+    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 

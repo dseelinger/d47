@@ -99,7 +99,7 @@ public class TheLearnedPhrasesPageTests
     {
         var surface = Open(seed: false);
 
-        Assert.Contains(Drawn(surface.Panel), said => said.Contains("Nothing learned yet", StringComparison.Ordinal));
+        Assert.Contains(Drawn(surface.Panel), said => said.Contains("NOTHING LEARNED YET", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -117,7 +117,7 @@ public class TheLearnedPhrasesPageTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(surface.Store.PhraseFor("F1", "set focus on elite"));
-        Assert.Contains(Drawn(surface.Panel), said => said.Contains("Nothing learned yet", StringComparison.Ordinal));
+        Assert.Contains(Drawn(surface.Panel), said => said.Contains("NOTHING LEARNED YET", StringComparison.Ordinal));
 
         surface.Window.Close();
     }

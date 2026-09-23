@@ -17,8 +17,8 @@ public sealed class DebriefWindow : Window
     private readonly DebriefBook _book;
     private readonly Func<DateTimeOffset> _now;
     private readonly Func<Persona> _core;
-    private readonly StackPanel _waiting = new() { Spacing = 12 };
-    private readonly StackPanel _taken = new() { Spacing = 12 };
+    private readonly StackPanel _waiting = new();
+    private readonly StackPanel _taken = new() { Spacing = 2 };
     private readonly SelectableTextBlock _prompt;
     private readonly TextBlock _status;
 
@@ -40,8 +40,6 @@ public sealed class DebriefWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-
         _status = new TextBlock
         {
             FontSize = TypeScale.Secondary,
@@ -55,7 +53,7 @@ public sealed class DebriefWindow : Window
                 + "session — never in the middle of this one.",
         };
 
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _prompt = new SelectableTextBlock
         {
@@ -64,21 +62,22 @@ public sealed class DebriefWindow : Window
             FontSize = TypeScale.Secondary,
         };
 
-        var promptBox = new Border { Padding = new Thickness(12, 10), Child = _prompt };
-        CardChrome.Card(promptBox);
+        Themed(_prompt, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        var promptBox = new Border { Padding = new Thickness(14, 10), Child = _prompt };
+        Themed(promptBox, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var body = new StackPanel
         {
-            Margin = new Thickness(24),
             Spacing = 16,
             Children =
             {
-                Heading("Waiting for you"),
+                Modal.Section("Waiting for you"),
                 _status,
                 _waiting,
-                Heading("What you have taken"),
+                Modal.Section("What you have taken"),
                 _taken,
-                Heading("Exactly what D47 will be told"),
+                Modal.Section("Exactly what D47 will be told"),
                 Muted(
                     "Word for word, at the start of your next session. This is the text itself, not a "
                     + "description of it."),
@@ -86,17 +85,10 @@ public sealed class DebriefWindow : Window
             },
         };
 
-        var close = new Button { Content = "Close", MinWidth = 110, HorizontalAlignment = HorizontalAlignment.Right };
+        var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
-        body.Children.Add(close);
 
-        // Horizontal scrolling off, so the wrapping below it actually wraps (GitHub issue 87).
-        Content = new ScrollViewer
-        {
-            Content = body,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
+        Modal.Apply(this, "Debrief", Title, body, [close]);
 
         Refresh();
     }
@@ -146,7 +138,7 @@ public sealed class DebriefWindow : Window
         // rather than dropped — the rule every hand-editable store here follows.
         foreach (var problem in _book.Store.Problems)
         {
-            _taken.Children.Add(Muted($"Could not read {problem.What}: {problem.Why}"));
+            _taken.Children.Add(Muted($"Could not read {problem.What}: {problem.Why}", ThemeManager.RedKey));
         }
 
         _prompt.Text = Rendered(taken);
@@ -186,7 +178,7 @@ public sealed class DebriefWindow : Window
 
         var take = new Button { Content = "Take it", MinWidth = 100 };
         var takeForCore = new Button { Content = $"Just for {core.Name}", MinWidth = 140 };
-        var discard = new Button { Content = "Discard", MinWidth = 100 };
+        var discard = new Button { Content = "Discard", MinWidth = 100, Classes = { "destructive" } };
 
         void Enable() =>
             take.IsEnabled = takeForCore.IsEnabled = !string.IsNullOrWhiteSpace(editor.Text);
@@ -208,19 +200,21 @@ public sealed class DebriefWindow : Window
             Spacing = 8,
             Children =
             {
-                new TextBlock
+                Ink(new TextBlock
                 {
                     Text = $"{entry.Key} — {entry.Label()}{Stamp(entry.ProposedAt)}",
                     FontSize = TypeScale.Secondary,
                     FontWeight = FontWeight.SemiBold,
-                },
+                    TextWrapping = TextWrapping.Wrap,
+                }, ThemeManager.AKey),
             },
         };
 
         if (entry.Kind == DirectionKind.Question)
         {
             // A question is shown as a question and cannot be taken as one.
-            stack.Children.Add(new SelectableTextBlock { Text = entry.Text, TextWrapping = TextWrapping.Wrap });
+            stack.Children.Add(Ink(
+                new SelectableTextBlock { Text = entry.Text, TextWrapping = TextWrapping.Wrap }, ThemeManager.WhiteKey));
         }
 
         stack.Children.Add(editor);
@@ -236,17 +230,18 @@ public sealed class DebriefWindow : Window
             stack.Children.Add(Muted($"Recorded as {clip} in the audio recorder."));
         }
 
-        stack.Children.Add(new StackPanel
+        stack.Children.Add(new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            ItemSpacing = 8,
+            LineSpacing = 8,
             Children = { take, takeForCore, discard },
         });
 
-        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
-        CardChrome.Card(inset);
+        // Ruled rather than a list row: the editor and the buttons are Tile, and vanish on a Tile row.
+        var ruled = new Border { Padding = new Thickness(0, 10), BorderThickness = new Thickness(0, 1, 0, 0), Child = stack };
+        Themed(ruled, Border.BorderBrushProperty, ThemeManager.LineKey);
 
-        return inset;
+        return ruled;
     }
 
     private void Adopt(StandingDirection entry, string? text, string? persona)
@@ -265,7 +260,7 @@ public sealed class DebriefWindow : Window
 
     private Control Taken(StandingDirection entry)
     {
-        var withdraw = new Button { Content = "Withdraw", MinWidth = 110 };
+        var withdraw = new Button { Content = "Withdraw", MinWidth = 110, Classes = { "destructive" } };
 
         withdraw.Click += (_, _) =>
         {
@@ -280,37 +275,35 @@ public sealed class DebriefWindow : Window
             Spacing = 6,
             Children =
             {
-                new TextBlock
+                ListRow.Secondary(new TextBlock
                 {
                     Text = $"{entry.Key} — {entry.Label()}{scope}{Stamp(entry.AdoptedAt)}",
                     FontSize = TypeScale.Secondary,
                     FontWeight = FontWeight.SemiBold,
-                },
-                new SelectableTextBlock { Text = entry.Text, TextWrapping = TextWrapping.Wrap },
+                    TextWrapping = TextWrapping.Wrap,
+                }),
+                ListRow.Name(new SelectableTextBlock { Text = entry.Text, TextWrapping = TextWrapping.Wrap }),
                 withdraw,
             },
         };
 
-        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
-        CardChrome.Card(inset);
-
-        return inset;
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 10), Child = stack });
     }
 
     private static string Stamp(DateTimeOffset? at) =>
         at is { } when ? $", {when.ToLocalTime():d MMM yyyy}" : string.Empty;
 
-    private static TextBlock Heading(string text)
+    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
     {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Body, FontWeight = FontWeight.SemiBold };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
+        Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static TextBlock Muted(string text)
+    private static T Ink<T>(T block, string key)
+        where T : TextBlock
     {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 

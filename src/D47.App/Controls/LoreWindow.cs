@@ -18,7 +18,7 @@ public sealed class LoreWindow : Window
 {
     private readonly LoreEditing _editing;
     private readonly bool _canSearch;
-    private readonly StackPanel _entries = new() { Spacing = 10 };
+    private readonly StackPanel _entries = new() { Spacing = 2 };
     private readonly TextBox _note;
     private readonly TextBlock _status;
     private readonly Button _add;
@@ -37,8 +37,6 @@ public sealed class LoreWindow : Window
         Height = 560;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
-
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
 
         var place = _editing.Here();
 
@@ -80,34 +78,26 @@ public sealed class LoreWindow : Window
                     : "D47 searches once before storing, and records whether anything backed it up.",
         };
 
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var body = new StackPanel
         {
-            Margin = new Thickness(24),
             Spacing = 16,
             Children =
             {
-                Heading("Add a note"),
+                Modal.Section("Add a note"),
                 _note,
                 _add,
                 _status,
-                Heading("What you have already said"),
+                Modal.Section("What you have already said"),
                 _entries,
             },
         };
 
-        var close = new Button { Content = "Close", MinWidth = 110, HorizontalAlignment = HorizontalAlignment.Right };
+        var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
-        body.Children.Add(close);
 
-        // Horizontal scrolling off, so wrapping below it actually wraps (GitHub issue 87).
-        Content = new ScrollViewer
-        {
-            Content = body,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
+        Modal.Apply(this, "Lore", Title, body, [close]);
 
         Refresh();
     }
@@ -172,13 +162,13 @@ public sealed class LoreWindow : Window
         // the same rule the checklist file follows.
         foreach (var problem in _editing.Book.Store.Problems)
         {
-            _entries.Children.Add(Muted($"Could not read {problem.What}: {problem.Why}"));
+            _entries.Children.Add(Muted($"Could not read {problem.What}: {problem.Why}", ThemeManager.RedKey));
         }
     }
 
     private Control Card(LoreEntry entry)
     {
-        var forget = new Button { Content = "Forget", MinWidth = 90 };
+        var forget = new Button { Content = "Forget", MinWidth = 90, Classes = { "destructive" } };
 
         forget.Click += (_, _) =>
         {
@@ -186,21 +176,27 @@ public sealed class LoreWindow : Window
             Refresh();
         };
 
-        var heading = new TextBlock
+        var system = new TextBlock
         {
-            Text = $"{(entry.Name.Length == 0 ? entry.SystemAddress.ToString() : entry.Name)} — {Label(entry)}",
+            Text = entry.Name.Length == 0 ? entry.SystemAddress.ToString() : entry.Name,
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.SemiBold,
         };
 
-        var note = new SelectableTextBlock { Text = entry.Note, TextWrapping = TextWrapping.Wrap };
+        Themed(system, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-        var stack = new StackPanel { Spacing = 6, Children = { heading, note, forget } };
+        var label = ListRow.Secondary(new TextBlock
+        {
+            Text = Label(entry),
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        });
 
-        var inset = new Border { Padding = new Thickness(12, 10), Child = stack };
-        CardChrome.Card(inset);
+        var note = ListRow.Name(new SelectableTextBlock { Text = entry.Note, TextWrapping = TextWrapping.Wrap });
 
-        return inset;
+        var stack = new StackPanel { Spacing = 6, Children = { system, label, note, forget } };
+
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 10), Child = stack });
     }
 
     /// <summary>
@@ -213,17 +209,10 @@ public sealed class LoreWindow : Window
         _ => "your word",
     };
 
-    private static TextBlock Heading(string text)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Body, FontWeight = FontWeight.SemiBold };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        return block;
-    }
-
-    private static TextBlock Muted(string text)
+    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 

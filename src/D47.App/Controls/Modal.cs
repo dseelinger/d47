@@ -20,9 +20,16 @@ public static class Modal
     /// <summary>
     /// The layout. <paramref name="figure"/> is a key figure the dialog already shows, set at the top right
     /// of the header; <paramref name="buttons"/> are laid right-aligned in the footer in the order given.
+    /// A body that does its own scrolling passes <paramref name="scrolls"/> false and is given the height
+    /// between the header and the footer.
     /// </summary>
     public static DockPanel Build(
-        string context, string title, Control body, IReadOnlyList<Control> buttons, Control? figure = null)
+        string context,
+        string title,
+        Control body,
+        IReadOnlyList<Control> buttons,
+        Control? figure = null,
+        bool scrolls = true)
     {
         var layout = new DockPanel { Name = "Modal" };
         Themed(layout, Avalonia.Controls.Panel.BackgroundProperty, ThemeManager.BarKey);
@@ -39,7 +46,9 @@ public static class Modal
         {
             Name = "ModalBody",
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = scrolls
+                ? Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
+                : Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             Content = new Border { Padding = new Thickness(Inset, 18), Child = body },
         });
 
@@ -48,11 +57,26 @@ public static class Modal
 
     /// <summary>Dresses <paramref name="window"/> in <see cref="Build"/>'s layout and closes it on Esc.</summary>
     public static void Apply(
-        Window window, string context, string title, Control body, IReadOnlyList<Control> buttons, Control? figure = null)
+        Window window,
+        string context,
+        string title,
+        Control body,
+        IReadOnlyList<Control> buttons,
+        Control? figure = null,
+        bool scrolls = true)
     {
         Themed(window, Window.BackgroundProperty, ThemeManager.BarKey);
-        window.Content = Build(context, title, body, buttons, figure);
+        window.Content = Build(context, title, body, buttons, figure, scrolls);
         CloseOnEscape(window);
+    }
+
+    /// <summary>A section heading inside a dialog's body: uppercase White over a 1px A rule.</summary>
+    public static Control Section(string text)
+    {
+        var heading = TitleText.Build(text, TypeScale.Section, TitleRank.Group);
+        var row = TitleText.GroupRow(heading);
+        row.Margin = new Thickness(0, 8, 0, 0);
+        return row;
     }
 
     /// <summary>Closes <paramref name="window"/> when Esc reaches it unhandled.</summary>
@@ -112,11 +136,11 @@ public static class Modal
         var rule = new Border { Height = 1 };
         Themed(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
 
-        var row = new StackPanel
+        var row = new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = Segment.Gap,
+            ItemSpacing = Segment.Gap,
+            LineSpacing = Segment.Gap,
             Margin = new Thickness(0, 14, 0, 18),
         };
 

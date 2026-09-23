@@ -33,12 +33,12 @@ public class CoverageWindowTests
     {
         var window = Open(Report());
 
-        Assert.Equal(Brush(window, ThemeManager.AccentKey), MarkBrush(window, "done"));
-        Assert.Equal(Brush(window, ThemeManager.DangerKey), MarkBrush(window, "failed"));
-        Assert.Equal(Brush(window, ThemeManager.TextMutedKey), MarkBrush(window, "never"));
+        Assert.Equal(Brush(window, ThemeManager.BlueKey), MarkBrush(window, "DONE"));
+        Assert.Equal(Brush(window, ThemeManager.RedKey), MarkBrush(window, "FAILED"));
+        Assert.Equal(Brush(window, ThemeManager.GreyKey), MarkBrush(window, "NEVER"));
 
         // Stale reads as work remaining, because the last run proved nothing about what is there now.
-        Assert.Equal(Brush(window, ThemeManager.TextMutedKey), MarkBrush(window, "changed"));
+        Assert.Equal(Brush(window, ThemeManager.GreyKey), MarkBrush(window, "CHANGED"));
 
         window.Close();
     }
@@ -49,8 +49,8 @@ public class CoverageWindowTests
     {
         var window = Open(Report());
 
-        Assert.Equal(FontWeight.Bold, Mark(window, "failed").FontWeight);
-        Assert.Equal(FontWeight.Normal, Mark(window, "done").FontWeight);
+        Assert.Equal(FontWeight.Bold, Mark(window, "FAILED").FontWeight);
+        Assert.Equal(FontWeight.Normal, Mark(window, "DONE").FontWeight);
 
         window.Close();
     }
@@ -112,8 +112,8 @@ public class CoverageWindowTests
             .Where(text => text.EndsWith(')') && text.Contains(" ("))
             .ToList();
 
-        Assert.Equal("Came back with an error (1)", headings[0]);
-        Assert.Equal("Never exercised (1)", headings[1]);
+        Assert.Equal("CAME BACK WITH AN ERROR (1)", headings[0]);
+        Assert.Equal("NEVER EXERCISED (1)", headings[1]);
 
         var names = window.GetVisualDescendants()
             .OfType<TextBlock>()

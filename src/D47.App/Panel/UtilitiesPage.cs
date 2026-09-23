@@ -3,7 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Reactive;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Utilities;
@@ -18,17 +21,12 @@ public sealed class UtilitiesPage : UserControl
     private readonly Func<TimeZoneInfo> _zone;
     private readonly PanelPrompts _prompts;
 
-    private readonly TextBlock _galactic = new()
-    {
-        FontSize = TypeScale.Heading,
-        FontWeight = FontWeight.SemiBold,
-    };
+    private readonly TextBlock _galactic;
+    private readonly TextBlock _galacticDate = Dated();
+    private readonly TextBlock _local;
+    private readonly TextBlock _localDate = Dated();
 
-    private readonly TextBlock _galacticDate = new() { FontSize = TypeScale.Body };
-    private readonly TextBlock _local = new() { FontSize = TypeScale.Heading };
-    private readonly TextBlock _localDate = new() { FontSize = TypeScale.Body };
-
-    private readonly StackPanel _running = new() { Spacing = 4 };
+    private readonly StackPanel _running = new() { Spacing = 2 };
     private readonly TextBlock _problems = new()
     {
         TextWrapping = TextWrapping.Wrap,
@@ -48,46 +46,44 @@ public sealed class UtilitiesPage : UserControl
         _zone = zone;
         _prompts = prompts;
 
-        Themed(_galactic, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-        Themed(_galacticDate, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_local, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_localDate, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
-        var timer = new Button { Content = "New timer", Padding = new Thickness(12, 4), MinHeight = 30 };
+        var timer = new Button { Content = "New timer", VerticalAlignment = VerticalAlignment.Top };
         timer.Click += (_, _) => AddTimer();
 
-        var alarm = new Button { Content = "New alarm", Padding = new Thickness(12, 4), MinHeight = 30 };
+        var alarm = new Button { Content = "New alarm", VerticalAlignment = VerticalAlignment.Top };
         alarm.Click += (_, _) => AddAlarm();
 
-        var clocks = new StackPanel
-        {
-            Spacing = 16,
-            Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 0, 0, 16),
-            Children =
-            {
-                Clock("Galactic", _galactic, _galacticDate),
-                Clock("Local", _local, _localDate),
-            },
-        };
+        var (galactic, galacticTime) = Clock("Galactic", _galacticDate);
+        var (local, localTime) = Clock("Local", _localDate);
 
-        var actions = new StackPanel
+        _galactic = galacticTime;
+        _local = localTime;
+
+        var clocks = StatTile.Grid([galactic, local], maxColumns: 2);
+        clocks.Margin = new Thickness(0, 0, 0, 16);
+
+        var actions = new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            ItemSpacing = 8,
+            LineSpacing = 8,
             Margin = new Thickness(0, 0, 0, 10),
             Children = { timer, alarm },
         };
 
+        var (title, _) = RoutingKit.Title("Utilities");
+        _title = title;
+
         var root = new DockPanel { Margin = new Thickness(14) };
 
+        DockPanel.SetDock(title, Dock.Top);
         DockPanel.SetDock(clocks, Dock.Top);
         DockPanel.SetDock(actions, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
 
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
+        root.Children.Add(title);
         root.Children.Add(clocks);
         root.Children.Add(actions);
         root.Children.Add(_problems);
@@ -103,6 +99,30 @@ public sealed class UtilitiesPage : UserControl
         alarms.Changed += () => Dispatcher.UIThread.Post(() => Refresh());
 
         Refresh();
+    }
+
+    /// <summary>The screen title, left out on mini so the running list keeps the height.</summary>
+    private readonly Control _title;
+
+    private IDisposable? _mode;
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _mode = this.GetSelfAndVisualAncestors()
+            .OfType<PanelView>()
+            .FirstOrDefault()
+            ?.GetObservable(PanelView.ModeProperty)
+            .Subscribe(new AnonymousObserver<PanelMode>(mode => _title.IsVisible = mode != PanelMode.Mini));
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        _mode?.Dispose();
+        _mode = null;
     }
 
     /// <summary>Redraws the clocks and the running list.</summary>
@@ -183,24 +203,22 @@ public sealed class UtilitiesPage : UserControl
 
     private Control Line(Reminder reminder, DateTimeOffset now, TimeZoneInfo zone)
     {
-        var name = new TextBlock
+        var name = ListRow.Name(new TextBlock
         {
             Text = reminder.Name,
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
-        };
+        });
 
-        var due = new TextBlock
+        var due = ListRow.Secondary(new TextBlock
         {
             Text = reminder.Describe(now, zone),
             FontSize = TypeScale.Body,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
-        };
-
-        Themed(due, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        });
 
         // Kept, so the next tick writes the countdown rather than building this row again.
         _due[reminder.Id] = due;
@@ -210,8 +228,6 @@ public sealed class UtilitiesPage : UserControl
         var cancel = new Button
         {
             Content = "Cancel",
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
             Margin = new Thickness(12, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -231,16 +247,7 @@ public sealed class UtilitiesPage : UserControl
         row.Children.Add(due);
         row.Children.Add(name);
 
-        var card = new Border
-        {
-            Padding = new Thickness(12, 8),
-            Child = row,
-            MinHeight = 34,
-        };
-
-        CardChrome.Card(card);
-
-        return card;
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
     }
 
     /// <summary>A name, then a length.</summary>
@@ -343,21 +350,22 @@ public sealed class UtilitiesPage : UserControl
             ? at
             : null;
 
-    private static Control Clock(string caption, TextBlock time, TextBlock date)
+    /// <summary>A clock's stat tile, with its date under the time; returns the tile and its time.</summary>
+    private static (Border Tile, TextBlock Time) Clock(string caption, TextBlock date)
     {
-        var label = new TextBlock { Text = caption, FontSize = TypeScale.Small };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        var tile = StatTile.Build(caption, string.Empty);
+        var lines = (StackPanel)tile.Child!;
 
-        var card = new Border
-        {
-            Padding = new Thickness(14, 10),
-            MinWidth = 180,
-            Child = new StackPanel { Spacing = 2, Children = { label, time, date } },
-        };
+        lines.Children.Add(date);
 
-        CardChrome.Card(card);
+        return (tile, (TextBlock)lines.Children[1]);
+    }
 
-        return card;
+    private static TextBlock Dated()
+    {
+        var block = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        return block;
     }
 
     private static TextBlock Muted(string text)
@@ -369,7 +377,7 @@ public sealed class UtilitiesPage : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 

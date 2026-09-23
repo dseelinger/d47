@@ -18,7 +18,7 @@ public sealed class AudioRecorderWindow : Window
 {
     private readonly RecordingLog _log;
     private readonly Func<DateTimeOffset> _now;
-    private readonly StackPanel _list = new() { Spacing = 1 };
+    private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly StackPanel _detail = new() { Spacing = 6 };
     private readonly TextBlock _summary = new();
 
@@ -37,19 +37,15 @@ public sealed class AudioRecorderWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-
         _summary.Name = "RecordingSummary";
         _summary.FontSize = TypeScale.Body;
         _summary.TextWrapping = TextWrapping.Wrap;
-        Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var folder = new Button
         {
             Name = "RecordingFolder",
             Content = "Open the folder",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
         };
 
         folder.Click += (_, _) => Launch(_log.Folder);
@@ -65,29 +61,16 @@ public sealed class AudioRecorderWindow : Window
             Child = _detail,
         };
 
-        CardChrome.Card(detailBox);
+        Themed(detailBox, Border.BackgroundProperty, ThemeManager.SlabKey);
 
-        Content = new DockPanel
+        _summary.Margin = new Thickness(0, 0, 0, 16);
+        DockPanel.SetDock(_summary, Dock.Top);
+
+        var body = new DockPanel
         {
-            Margin = new Thickness(24),
             Children =
             {
-                new StackPanel
-                {
-                    [DockPanel.DockProperty] = Dock.Top,
-                    Spacing = 4,
-                    Margin = new Thickness(0, 0, 0, 16),
-                    Children = { Heading("Audio recorder"), _summary },
-                },
-                new StackPanel
-                {
-                    [DockPanel.DockProperty] = Dock.Bottom,
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 8,
-                    Margin = new Thickness(0, 16, 0, 0),
-                    Children = { folder, close },
-                },
+                _summary,
                 detailBox,
                 new ScrollViewer
                 {
@@ -97,6 +80,8 @@ public sealed class AudioRecorderWindow : Window
                 },
             },
         };
+
+        Modal.Apply(this, "Recorder", Title, body, [folder, close], scrolls: false);
 
         Refresh();
 
@@ -129,41 +114,37 @@ public sealed class AudioRecorderWindow : Window
                 string.Equals(row.Id, was.Id, StringComparison.Ordinal));
         }
 
+        MarkSelected();
         ShowDetail();
     }
 
     private Control Row(RecordingRow row)
     {
-        var mark = new TextBlock
+        var mark = ListRow.Secondary(new TextBlock
         {
-            Text = row.Direction == RecordingDirection.Heard ? "heard" : "said",
-            FontSize = TypeScale.Small,
-            Width = 52,
+            Text = row.Direction == RecordingDirection.Heard ? "HEARD" : "SAID",
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Meta,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            Width = 56,
             VerticalAlignment = VerticalAlignment.Center,
 
             // Weight as well as colour, for the reason the coverage list carries it: two of the five themes
             // take their palette from the Commander's own file, so no pair of brushes can be guaranteed to
             // read as different.
             FontWeight = row.Kept is null ? FontWeight.Normal : FontWeight.Bold,
-        };
+        });
 
-        Themed(
-            mark,
-            TextBlock.ForegroundProperty,
-            row.Direction == RecordingDirection.Heard ? ThemeManager.AccentKey : ThemeManager.TextMutedKey);
-
-        var text = new TextBlock
+        var text = ListRow.Name(new TextBlock
         {
             Text = row.Text is { Length: > 0 } said ? said : "(nothing intelligible)",
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        });
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-
-        var when = new TextBlock
+        var when = ListRow.Secondary(new TextBlock
         {
             Text = row.Kept is null
                 ? $"{row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s"
@@ -171,18 +152,13 @@ public sealed class AudioRecorderWindow : Window
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
-        };
-
-        Themed(when, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        });
 
         var button = new Button
         {
             Name = "RecordingRow",
             Tag = row.Id,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Padding = new Thickness(10, 5),
-            FontSize = TypeScale.Body,
             Content = new DockPanel
             {
                 Children =
@@ -199,13 +175,27 @@ public sealed class AudioRecorderWindow : Window
             },
         };
 
+        ListRow.Dress(button, string.Equals(_selected?.Id, row.Id, StringComparison.Ordinal));
+
         button.Click += (_, _) =>
         {
             _selected = row;
+            MarkSelected();
             ShowDetail();
         };
 
         return button;
+    }
+
+    /// <summary>Moves the selected fill to the row <see cref="_selected"/> names.</summary>
+    private void MarkSelected()
+    {
+        foreach (var button in _list.Children.OfType<Button>())
+        {
+            button.Classes.Set(
+                ListRow.SelectedClass,
+                string.Equals(button.Tag as string, _selected?.Id, StringComparison.Ordinal));
+        }
     }
 
     /// <summary>
@@ -227,10 +217,10 @@ public sealed class AudioRecorderWindow : Window
         if (row.Phonemes is { Length: > 0 } phonemes)
         {
             // The column that turns a mispronunciation from an anecdote into a diagnosis.
-            _detail.Children.Add(Muted($"Phonemes  {phonemes}", selectable: true));
+            _detail.Children.Add(Muted($"Phonemes  {phonemes}", selectable: true, key: ThemeManager.AKey));
         }
 
-        _detail.Children.Add(Muted(Provenance(row)));
+        _detail.Children.Add(Muted(Provenance(row), key: ThemeManager.Grey2Key));
 
         if (row.Kept is { } kept)
         {
@@ -243,8 +233,6 @@ public sealed class AudioRecorderWindow : Window
         {
             Name = "RecordingPlay",
             Content = "Play it",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
         };
 
         play.Click += (_, _) => Launch(Path.Combine(_log.Folder, row.Clip));
@@ -266,8 +254,6 @@ public sealed class AudioRecorderWindow : Window
         {
             Name = "RecordingKeep",
             Content = mishear ? "Keep as a mishear case" : "Keep as a pronunciation case",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(10, 4),
         };
 
         var complaint = new TextBlock
@@ -278,7 +264,7 @@ public sealed class AudioRecorderWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(complaint, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(complaint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         keep.Click += (_, _) =>
         {
@@ -298,10 +284,10 @@ public sealed class AudioRecorderWindow : Window
             Refresh();
         };
 
-        _detail.Children.Add(new StackPanel
+        _detail.Children.Add(new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            ItemSpacing = 8,
+            LineSpacing = 8,
             Margin = new Thickness(0, 6, 0, 0),
             Children = { play, expected, keep },
         });
@@ -361,12 +347,12 @@ public sealed class AudioRecorderWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return block;
     }
 
-    private static Control Muted(string text, bool selectable = false)
+    private static Control Muted(string text, bool selectable = false, string key = ThemeManager.GreyKey)
     {
         if (!selectable)
         {
@@ -377,7 +363,7 @@ public sealed class AudioRecorderWindow : Window
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(block, TextBlock.ForegroundProperty, key);
 
             return block;
         }
@@ -389,23 +375,9 @@ public sealed class AudioRecorderWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(selectableBlock, SelectableTextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(selectableBlock, SelectableTextBlock.ForegroundProperty, key);
 
         return selectableBlock;
-    }
-
-    private static TextBlock Heading(string text)
-    {
-        var heading = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Heading,
-            FontWeight = FontWeight.Medium,
-        };
-
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-
-        return heading;
     }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>

@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Controls.Primitives;
 using D47.App.Theming;
 
 namespace D47.App.Controls;
@@ -27,8 +25,6 @@ public sealed class ChangelogWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-
         var body = new TextBlock
         {
             Name = "ChangelogText",
@@ -41,30 +37,13 @@ public sealed class ChangelogWindow : Window
             [TextBlock.TextAlignmentProperty] = TextAlignment.Left,
         };
 
-        Themed(body, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(body, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var close = new Button
-        {
-            Content = "Close",
-            MinWidth = 110,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 12, 0, 0),
-        };
+        var close = new Button { Content = "Close", MinWidth = 110 };
 
         close.Click += (_, _) => Close();
 
-        var stack = new StackPanel
-        {
-            Margin = new Thickness(24),
-            Children = { body, close },
-        };
-
-        Content = new ScrollViewer
-        {
-            Name = "ChangelogScroller",
-            Content = stack,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        };
+        Modal.Apply(this, "About", Title, body, [close]);
 
         Opened += (_, _) => close.Focus();
     }

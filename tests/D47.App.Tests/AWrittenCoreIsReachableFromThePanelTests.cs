@@ -71,7 +71,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         Dispatcher.UIThread.RunJobs();
 
         var card = editor.GetVisualDescendants().OfType<Border>()
-            .Single(border => border.Child is StackPanel);
+            .Single(border => border.Child is StackPanel && border.BorderThickness.Top == 1);
 
         // Docked sideways the card measured 440 of the window's 680.
         Assert.True(card.Bounds.Width > 600, $"the card was {card.Bounds.Width:0} wide");

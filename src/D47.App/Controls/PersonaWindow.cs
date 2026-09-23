@@ -12,7 +12,7 @@ public sealed class PersonaWindow : Window
 {
     private readonly OwnPersonaStore _store;
     private readonly List<Written> _cores;
-    private readonly StackPanel _list = new() { Spacing = 12 };
+    private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly TextBlock _problems = new()
     {
         TextWrapping = TextWrapping.Wrap,
@@ -30,7 +30,7 @@ public sealed class PersonaWindow : Window
         Height = 620;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var add = new Button { Content = "Write a core", Padding = new Thickness(10, 4) };
+        var add = new Button { Content = "Write a core" };
 
         add.Click += (_, _) =>
         {
@@ -38,15 +38,15 @@ public sealed class PersonaWindow : Window
             Rebuild();
         };
 
-        var save = new Button { Content = "Save", Padding = new Thickness(14, 4) };
+        var save = new Button { Content = "Save", MinWidth = 110 };
 
         save.Click += (_, _) => Save();
 
-        var close = new Button { Content = "Close", Padding = new Thickness(14, 4) };
+        var close = new Button { Content = "Close", MinWidth = 110 };
 
         close.Click += (_, _) => Close();
 
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var header = new TextBlock
         {
@@ -57,43 +57,16 @@ public sealed class PersonaWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(header, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var buttons = new StackPanel
+        // The legend is the key to the marks on the cores below (#253).
+        var root = new StackPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 12, 0, 0),
-            Children = { add, save, close },
+            Spacing = 10,
+            Children = { header, _problems, FormField.Legend(required: true, supplied: true), _list },
         };
 
-        var root = new DockPanel { Margin = new Thickness(16) };
-
-        DockPanel.SetDock(header, Dock.Top);
-        DockPanel.SetDock(_problems, Dock.Top);
-        DockPanel.SetDock(buttons, Dock.Bottom);
-
-        root.Children.Add(header);
-        root.Children.Add(_problems);
-        root.Children.Add(buttons);
-        // The key to the marks on the cards below (#253).
-        var legend = new StackPanel
-        {
-            Margin = new Thickness(0, 10, 0, 0),
-            Children = { FormField.Legend(required: true, supplied: true) },
-        };
-
-        // Docked, like the two rows above it.
-        DockPanel.SetDock(legend, Dock.Top);
-
-        root.Children.Add(legend);
-
-        root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 8, 0, 0) });
-
-        Content = root;
-
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        Modal.Apply(this, "Persona", Title, root, [add, save, close]);
 
         Rebuild();
         ShowProblems();
@@ -135,7 +108,7 @@ public sealed class PersonaWindow : Window
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
 
             return;
@@ -186,7 +159,7 @@ public sealed class PersonaWindow : Window
         FormField.Announce(body, "Character", FieldNeed.Required);
         FormField.Announce(voice, "Voice", FieldNeed.Supplied);
 
-        var drop = new Button { Content = "Delete", Padding = new Thickness(10, 4) };
+        var drop = new Button { Content = "Delete", Classes = { "destructive" } };
 
         drop.Click += (_, _) =>
         {
@@ -205,9 +178,11 @@ public sealed class PersonaWindow : Window
         // Voice is the one field on this window that already described the ship-supplied state in prose —
         // "left empty, D47 pairs it on the name alone" — which is the same third state as the Neutron
         // Plotter's "this ship's".
+        // Ruled rather than a list row: the boxes are Tile, and vanish on a Tile row.
         var card = new Border
         {
-            Padding = new Thickness(12),
+            Padding = new Thickness(0, 12),
+            BorderThickness = new Thickness(0, 1, 0, 0),
             Child = new StackPanel
             {
                 Spacing = 8,
@@ -228,7 +203,7 @@ public sealed class PersonaWindow : Window
             },
         };
 
-        CardChrome.Card(card);
+        Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return card;
     }

@@ -37,20 +37,20 @@ public sealed class MacroWindow : Window
         Height = 560;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var add = new Button { Content = "Add a macro", Padding = new Thickness(10, 4) };
+        var add = new Button { Content = "Add a macro" };
         add.Click += (_, _) =>
         {
             _macros.Add(new MutableMacro { Name = "new macro" });
             Rebuild();
         };
 
-        var save = new Button { Content = "Save", Padding = new Thickness(14, 4) };
+        var save = new Button { Content = "Save", MinWidth = 110 };
         save.Click += (_, _) => Save();
 
-        var close = new Button { Content = "Close", Padding = new Thickness(14, 4) };
+        var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var header = new TextBlock
         {
@@ -58,30 +58,11 @@ public sealed class MacroWindow : Window
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(header, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var root = new DockPanel { Margin = new Thickness(16) };
+        var root = new StackPanel { Spacing = 10, Children = { header, _problems, _list } };
 
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 12, 0, 0),
-            Children = { add, save, close },
-        };
-
-        DockPanel.SetDock(header, Dock.Top);
-        DockPanel.SetDock(_problems, Dock.Top);
-        DockPanel.SetDock(buttons, Dock.Bottom);
-
-        root.Children.Add(header);
-        root.Children.Add(_problems);
-        root.Children.Add(buttons);
-        root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 12, 0, 0) });
-
-        Content = root;
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        Modal.Apply(this, "Macros", Title, root, [add, save, close]);
 
         Rebuild();
         ShowProblems();
@@ -129,7 +110,7 @@ public sealed class MacroWindow : Window
                 FontSize = TypeScale.Body,
                 TextWrapping = TextWrapping.Wrap,
             };
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
             return;
         }
@@ -145,7 +126,7 @@ public sealed class MacroWindow : Window
         var name = new TextBox { Text = macro.Name, Width = 260 };
         name.TextChanged += (_, _) => macro.Name = name.Text ?? string.Empty;
 
-        var remove = new Button { Content = "Remove", Padding = new Thickness(10, 2), FontSize = TypeScale.Body };
+        var remove = new Button { Content = "Remove", Classes = { "destructive" } };
         remove.Click += (_, _) =>
         {
             _macros.Remove(macro);
@@ -162,8 +143,6 @@ public sealed class MacroWindow : Window
         var addStep = new Button
         {
             Content = "Add a step",
-            Padding = new Thickness(10, 2),
-            FontSize = TypeScale.Body,
             Margin = new Thickness(0, 6, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
             IsEnabled = macro.Steps.Count < Macro.MaxSteps,
@@ -180,23 +159,20 @@ public sealed class MacroWindow : Window
             Spacing = 4,
             Children =
             {
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 8,
-                    Children = { name, remove },
-                },
+                new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Children = { name, remove } },
                 steps,
                 addStep,
             },
         };
 
+        // Ruled rather than a list row: the boxes and choices are Tile, and vanish on a Tile row.
         var card = new Border
         {
-            Padding = new Thickness(12),
+            Padding = new Thickness(0, 12),
+            BorderThickness = new Thickness(0, 1, 0, 0),
             Child = body,
         };
-        CardChrome.Card(card);
+        Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return card;
     }
@@ -221,25 +197,39 @@ public sealed class MacroWindow : Window
         };
         pause.ValueChanged += (_, _) => step.PauseMs = (int)(pause.Value ?? 0);
 
-        var up = new Button { Content = "↑", Padding = new Thickness(8, 2), FontSize = TypeScale.Body };
+        var up = Glyph("↑", "Move this step up");
         up.Click += (_, _) => Move(macro, step, -1);
 
-        var down = new Button { Content = "↓", Padding = new Thickness(8, 2), FontSize = TypeScale.Body };
+        var down = Glyph("↓", "Move this step down");
         down.Click += (_, _) => Move(macro, step, +1);
 
-        var drop = new Button { Content = "✕", Padding = new Thickness(8, 2), FontSize = TypeScale.Body };
+        var drop = Glyph("✕", "Remove this step");
         drop.Click += (_, _) =>
         {
             macro.Steps.Remove(step);
             Rebuild();
         };
 
-        return new StackPanel
+        return new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
+            ItemSpacing = 6,
+            LineSpacing = 6,
             Children = { actionView, stateView, pause, up, down, drop },
         };
+    }
+
+    private static Button Glyph(string glyph, string says)
+    {
+        var button = new Button
+        {
+            Theme = Avalonia.Application.Current?.FindResource("D47.GlyphButton") as Avalonia.Styling.ControlTheme,
+            Content = Glyphs.Text(glyph, TypeScale.Body),
+        };
+
+        ToolTip.SetTip(button, says);
+        Avalonia.Automation.AutomationProperties.SetName(button, says);
+
+        return button;
     }
 
     private void Move(MutableMacro macro, MutableStep step, int by)

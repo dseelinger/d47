@@ -179,21 +179,21 @@ public sealed class HelpFigureView : Control
 
         var key = colour switch
         {
-            HelpColour.Background => ThemeManager.BackgroundKey,
-            HelpColour.Surface => ThemeManager.SurfaceKey,
-            HelpColour.SurfaceAlt => ThemeManager.SurfaceAltKey,
-            HelpColour.Border => ThemeManager.BorderKey,
-            HelpColour.Text => ThemeManager.TextKey,
-            HelpColour.TextMuted => ThemeManager.TextMutedKey,
-            HelpColour.Accent => ThemeManager.AccentKey,
-            HelpColour.AccentMuted => ThemeManager.AccentMutedKey,
-            HelpColour.Danger => ThemeManager.DangerKey,
-            _ => ThemeManager.InfoKey,
+            HelpColour.Background => ThemeManager.BgKey,
+            HelpColour.Surface => ThemeManager.BarKey,
+            HelpColour.SurfaceAlt => ThemeManager.SlabKey,
+            HelpColour.Border => ThemeManager.Line2Key,
+            HelpColour.Text => ThemeManager.WhiteKey,
+            HelpColour.TextMuted => ThemeManager.GreyKey,
+            HelpColour.Accent => ThemeManager.AKey,
+            HelpColour.AccentMuted => ThemeManager.LineKey,
+            HelpColour.Danger => ThemeManager.RedKey,
+            _ => ThemeManager.BlueKey,
         };
 
         return this.TryFindResource(key, out var found) && found is IBrush brush
             ? brush
-            : new SolidColorBrush(ThemeManager.Legacy(Palettes.Elite)[key]);
+            : new SolidColorBrush(ThemeManager.TokenColours(Palettes.Elite)[key]);
     }
 }
 
@@ -231,6 +231,9 @@ public static class HelpPageView
     {
         var stack = new StackPanel { Spacing = 26, Margin = new Thickness(0, 4, 0, 24) };
 
+        var (title, _) = RoutingKit.Title(article.Title);
+        stack.Children.Add(title);
+
         if (article.Intro.Length > 0)
         {
             var intro = new TextBlock
@@ -241,7 +244,7 @@ public static class HelpPageView
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            LoadoutPages.Themed(intro, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            LoadoutPages.Themed(intro, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
             stack.Children.Add(intro);
         }
 
@@ -286,7 +289,7 @@ public static class HelpPageView
                 LineHeight = TypeScale.Body * 1.5,
             };
 
-            LoadoutPages.Themed(prose, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            LoadoutPages.Themed(prose, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             step.Children.Add(prose);
         }
 
@@ -313,7 +316,7 @@ public static class HelpPageView
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            LoadoutPages.Themed(number, TextBlock.ForegroundProperty, ThemeManager.BackgroundKey);
+            LoadoutPages.Themed(number, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
 
             // 32 px, which is over the 30 px touch floor the checklist settled on — it is not pressable, but
             // a badge smaller than the things beside it reads as an afterthought on a quad a metre away.
@@ -321,12 +324,11 @@ public static class HelpPageView
             {
                 Width = 32,
                 Height = 32,
-                CornerRadius = new CornerRadius(0),
                 Child = number,
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
-            LoadoutPages.Themed(badge, Border.BackgroundProperty, ThemeManager.AccentKey);
+            LoadoutPages.Themed(badge, Border.BackgroundProperty, ThemeManager.AKey);
             row.Children.Add(badge);
         }
 
@@ -339,7 +341,7 @@ public static class HelpPageView
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         row.Children.Add(heading);
 
         return row;
@@ -365,30 +367,17 @@ public static class HelpPageView
             return null;
         }
 
-        var block = new StackPanel { Spacing = 6, Margin = new Thickness(0, 24, 0, 0) };
+        var block = new StackPanel { Spacing = 2, Margin = new Thickness(0, 24, 0, 0) };
 
-        var caption = new TextBlock
-        {
-            Text = "EVERYTHING DRAWN IN HERE",
-            FontSize = TypeScale.Small,
-            FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(0, 0, 0, 6),
-        };
-
-        LoadoutPages.Themed(caption, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        block.Children.Add(caption);
+        block.Children.Add(LoadoutPages.Section("Everything drawn in here"));
 
         foreach (var group in pages.GroupBy(page => page.Group, StringComparer.Ordinal))
         {
-            var heading = new TextBlock
-            {
-                Text = group.Key.Length > 0 ? group.Key : "Elsewhere",
-                FontSize = TypeScale.Secondary,
-                FontWeight = FontWeight.Bold,
-                Margin = new Thickness(0, 10, 0, 2),
-            };
+            var heading = TitleText.Build(
+                group.Key.Length > 0 ? group.Key : "Elsewhere", TypeScale.Meta, TitleRank.Group);
 
-            LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+            LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            heading.Margin = new Thickness(0, 10, 0, 4);
             block.Children.Add(heading);
 
             foreach (var page in group)
@@ -405,18 +394,9 @@ public static class HelpPageView
     private static Control Next(
         HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings)
     {
-        var block = new StackPanel { Spacing = 8, Margin = new Thickness(0, 18, 0, 0) };
+        var block = new StackPanel { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
 
-        var caption = new TextBlock
-        {
-            Text = "WHERE TO GO NEXT",
-            FontSize = TypeScale.Small,
-            FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(0, 0, 0, 4),
-        };
-
-        LoadoutPages.Themed(caption, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        block.Children.Add(caption);
+        block.Children.Add(LoadoutPages.Section("Where to go next"));
 
         foreach (var link in article.Links)
         {
@@ -487,18 +467,14 @@ public static class HelpPageView
 
     private static Control Pressable(string title, string? blurb, Action pressed)
     {
-        var button = new Button
+        var button = ListRow.Dress(new Button
         {
-            Content = Stacked(title, blurb, ThemeManager.AccentKey),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0, 0, 0, 0),
-            Padding = new Thickness(12, 8),
+            Content = Stacked(title, blurb),
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
 
             // The ray floor, as everything pressable on this surface has.
             MinHeight = 30,
-        };
+        });
 
         button.Click += (_, _) => pressed();
 
@@ -508,7 +484,7 @@ public static class HelpPageView
     /// <summary>A link on a surface that cannot follow it.</summary>
     private static Control Written(string title, string? blurb, string address)
     {
-        var stack = (StackPanel)Stacked(title, blurb, ThemeManager.TextKey);
+        var stack = (StackPanel)Stacked(title, blurb);
 
         var written = new TextBlock
         {
@@ -517,39 +493,35 @@ public static class HelpPageView
             TextWrapping = TextWrapping.Wrap,
         };
 
-        LoadoutPages.Themed(written, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        LoadoutPages.Themed(written, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         stack.Children.Add(written);
 
-        stack.Margin = new Thickness(12, 8);
-
-        return stack;
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = stack });
     }
 
-    private static Control Stacked(string title, string? blurb, string titleRole)
+    private static Control Stacked(string title, string? blurb)
     {
         var stack = new StackPanel { Spacing = 3 };
 
-        var heading = new TextBlock
+        var heading = ListRow.Name(new TextBlock
         {
             Text = title,
             FontSize = TypeScale.Body,
-            FontWeight = FontWeight.Bold,
+            FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap,
-        };
+        });
 
-        LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, titleRole);
         stack.Children.Add(heading);
 
         if (blurb is { Length: > 0 })
         {
-            var line = new TextBlock
+            var line = ListRow.Secondary(new TextBlock
             {
                 Text = blurb,
                 FontSize = TypeScale.Secondary,
                 TextWrapping = TextWrapping.Wrap,
-            };
+            });
 
-            LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
             stack.Children.Add(line);
         }
 
@@ -567,7 +539,7 @@ public static class HelpPageView
             Margin = new Thickness(0, 8, 0, 0),
         };
 
-        LoadoutPages.Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        LoadoutPages.Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return text;
     }

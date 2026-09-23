@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 
+using D47.App.Theming;
 using D47.App.Windowing;
 using D47.Core.Capabilities;
 
@@ -191,6 +192,24 @@ public partial class PickerWindow : Window
     public PickerWindow()
     {
         InitializeComponent();
+
+        PickerContext.FontFamily = new FontFamily(Fonts.ChromeFamily);
+        PickerContext.FontSize = TypeScale.Meta;
+        PickerContext.FontWeight = FontWeight.SemiBold;
+        PickerContext.LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking;
+        PickerContext.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(ThemeManager.AKey));
+
+        TitleText.Style(PromptText, TypeScale.Heading, TitleRank.Screen, sentence: true);
+
+        // Esc anywhere in the window is Cancel, as it is from the filter and the list.
+        KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape && !e.Handled)
+            {
+                e.Handled = true;
+                Close(null);
+            }
+        };
     }
 
     /// <summary><param name="onListed"> Called once the picker is on screen with its list built.</summary>

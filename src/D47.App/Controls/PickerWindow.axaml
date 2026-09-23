@@ -2,23 +2,38 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="using:D47.App.Controls"
         x:Class="D47.App.Controls.PickerWindow"
-        Width="520" Height="420"
+        Width="520" Height="480"
         CanResize="False"
         ShowInTaskbar="False"
         WindowDecorations="BorderOnly"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource D47.Background}"
-        Foreground="{DynamicResource D47.Text}">
+        Background="{DynamicResource D47.Bar}"
+        Foreground="{DynamicResource D47.White}">
 
-  <Border BorderBrush="{DynamicResource D47.Border}" BorderThickness="1" Padding="14">
-    <DockPanel>
+  <!-- The modal layout: context line, title and A rule; the body; a Line2 rule and the buttons. -->
+  <DockPanel>
+
+    <StackPanel DockPanel.Dock="Top" Margin="24,20,24,0">
+      <TextBlock x:Name="PickerContext" Text="CHOOSE" />
+      <TextBlock x:Name="PromptText" Margin="0,4,0,0" TextWrapping="Wrap" />
+      <Border Height="1" Margin="0,14,0,0" Background="{DynamicResource D47.A}" />
+    </StackPanel>
+
+    <StackPanel DockPanel.Dock="Bottom" Margin="24,0,24,0">
+      <Border Height="1" Background="{DynamicResource D47.Line2}" />
+      <WrapPanel HorizontalAlignment="Right" ItemSpacing="2" LineSpacing="2" Margin="0,14,0,18">
+        <Button Content="Cancel" Click="OnCancelClick" />
+        <Button x:Name="AcceptButton" Content="Use this" Click="OnAcceptClick" IsDefault="True" />
+      </WrapPanel>
+    </StackPanel>
+
+    <DockPanel Margin="24,14,24,14">
 
       <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,10">
-        <TextBlock x:Name="PromptText" FontSize="{StaticResource D47.Type.Subheading}" Foreground="{DynamicResource D47.Accent}" />
         <TextBlock x:Name="HelpText"
                    FontSize="{StaticResource D47.Type.Secondary}"
                    TextWrapping="Wrap"
-                   Foreground="{DynamicResource D47.TextMuted}" />
+                   Foreground="{DynamicResource D47.Grey}" />
         <!--
           What pressing a play glyph costs, said once for the whole list rather than on every row
           (change-requests.md 18). The number itself is Phase 11's and is not negotiable: an
@@ -31,7 +46,7 @@
                    Margin="0,4,0,0"
                    FontSize="{StaticResource D47.Type.Secondary}"
                    TextWrapping="Wrap"
-                   Foreground="{DynamicResource D47.TextMuted}" />
+                   Foreground="{DynamicResource D47.Grey}" />
       </StackPanel>
 
       <TextBox x:Name="FilterBox"
@@ -57,7 +72,7 @@
         <TextBlock x:Name="FacetLabel"
                    VerticalAlignment="Center"
                    FontSize="{StaticResource D47.Type.Secondary}"
-                   Foreground="{DynamicResource D47.TextMuted}" />
+                   Foreground="{DynamicResource D47.Grey}" />
         <controls:Segment x:Name="FacetBox"
                            VerticalAlignment="Center"
                            SelectionChanged="OnFacetChanged" />
@@ -71,16 +86,7 @@
                  Margin="0,8,0,0"
                  FontSize="{StaticResource D47.Type.Secondary}"
                  TextWrapping="Wrap"
-                 Foreground="{DynamicResource D47.TextMuted}" />
-
-      <StackPanel DockPanel.Dock="Bottom"
-                  Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  Spacing="8"
-                  Margin="0,10,0,0">
-        <Button Content="Cancel" Click="OnCancelClick" />
-        <Button x:Name="AcceptButton" Content="Use this" Click="OnAcceptClick" IsDefault="True" />
-      </StackPanel>
+                 Foreground="{DynamicResource D47.Grey}" />
 
       <!-- Its own row, stretched to the list rather than sized to its content. What goes in it
            is a resolved default - "(the system default - Microphone (Virtual Desktop Audio))" -
@@ -109,9 +115,8 @@
         must cost nothing at all.
       -->
       <ListBox x:Name="Choices"
-               Background="{DynamicResource D47.SurfaceAlt}"
-               BorderBrush="{DynamicResource D47.Border}"
-               BorderThickness="1"
+               Background="Transparent"
+               BorderThickness="0"
                DoubleTapped="OnChoiceDoubleTapped"
                KeyDown="OnFilterKeyDown"
                SelectionChanged="OnChoiceChanged">
@@ -140,7 +145,7 @@
                      bounds, and these two have different ones. -->
                 <Viewbox Width="15" Height="15">
                   <Canvas Width="24" Height="24">
-                    <Path Data="{Binding Glyph}" Fill="{DynamicResource D47.TextMuted}" />
+                    <Path Data="{Binding Glyph}" Fill="{Binding $parent[ListBoxItem].Foreground}" />
                   </Canvas>
                 </Viewbox>
               </Button>
@@ -159,7 +164,7 @@
                       Cursor="Hand">
                 <Viewbox Width="15" Height="15">
                   <Canvas Width="24" Height="24">
-                    <Path Data="{Binding LineGlyph}" Fill="{DynamicResource D47.TextMuted}" />
+                    <Path Data="{Binding LineGlyph}" Fill="{Binding $parent[ListBoxItem].Foreground}" />
                   </Canvas>
                 </Viewbox>
               </Button>
@@ -172,5 +177,5 @@
       </ListBox>
 
     </DockPanel>
-  </Border>
+  </DockPanel>
 </Window>

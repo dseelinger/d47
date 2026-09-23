@@ -41,8 +41,6 @@ public sealed class LogbookWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-
         _span = new Segment
         {
             Name = "LogSpan",
@@ -73,7 +71,7 @@ public sealed class LogbookWindow : Window
                 + "Working it out reads your journals on this machine and spends nothing.",
         };
 
-        Themed(_quote, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_quote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _estimate = new Button { Name = "EstimateLog", Content = "Work out what this would cost", MinWidth = 230 };
         _write = new Button { Name = "WriteLog", Content = "Write it", MinWidth = 130, IsEnabled = false };
@@ -84,49 +82,30 @@ public sealed class LogbookWindow : Window
         var open = new Button { Name = "OpenLogFolder", Content = "Open the folder", MinWidth = 150 };
         open.Click += (_, _) => OpenFolder();
 
-        var close = new Button { Content = "Close", MinWidth = 110, HorizontalAlignment = HorizontalAlignment.Right };
+        var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
         var body = new StackPanel
         {
-            Margin = new Thickness(24),
             Spacing = 14,
             Children =
             {
-                Heading("Write up a session"),
+                Modal.Section("Write up a session"),
                 Muted(
                     "D47 reads your flight journal, works out what it can account for, and hands a language "
                     + "model the facts — never the journal itself. Every sentence it writes has to point at "
                     + "one of those facts, and the ones that do not are marked in the file."),
                 _span,
                 _exact,
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
-                    Children = { _from, _to },
-                },
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
-                    Children = { _estimate, _write },
-                },
+                new WrapPanel { ItemSpacing = 10, LineSpacing = 10, Children = { _from, _to } },
+                new WrapPanel { ItemSpacing = 10, LineSpacing = 10, Children = { _estimate, _write } },
                 _quote,
-                Heading("What you have written"),
+                Modal.Section("What you have written"),
                 _entries,
-                open,
-                close,
             },
         };
 
-        // Horizontal scrolling off, so wrapping below it actually wraps (GitHub issue 87).
-        Content = new ScrollViewer
-        {
-            Content = body,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
+        Modal.Apply(this, "Logbook", Title, body, [open, close]);
 
         book.Changed += OnChanged;
         Closed += (_, _) =>
@@ -267,40 +246,35 @@ public sealed class LogbookWindow : Window
             }
         };
 
-        var stack = new StackPanel
+        var written = ListRow.Secondary(new TextBlock
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 12,
-            Children =
-            {
-                new SelectableTextBlock
-                {
-                    Text = entry.Name,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    MinWidth = 260,
-                },
-                Muted($"{entry.Written.ToLocalTime():d MMM yyyy HH:mm}"),
-                open,
-            },
-        };
+            Text = $"{entry.Written.ToLocalTime():d MMM yyyy HH:mm}",
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0),
+        });
 
-        var inset = new Border { Padding = new Thickness(12, 8), Child = stack };
-        CardChrome.Card(inset);
+        var name = ListRow.Name(new SelectableTextBlock
+        {
+            Text = entry.Name,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
 
-        return inset;
+        var row = new DockPanel();
+        DockPanel.SetDock(open, Dock.Right);
+        DockPanel.SetDock(written, Dock.Right);
+        row.Children.Add(open);
+        row.Children.Add(written);
+        row.Children.Add(name);
+
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
     }
 
-    private static TextBlock Heading(string text)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Body, FontWeight = FontWeight.SemiBold };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        return block;
-    }
-
-    private static TextBlock Muted(string text)
+    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 

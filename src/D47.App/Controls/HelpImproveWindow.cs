@@ -275,12 +275,11 @@ public sealed class HelpImproveWindow : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-        Themed(_preview, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(_intro, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_preview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        Themed(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        Themed(_intro, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        Themed(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         // The history half exists where both of its delegates do — which is every reading the button appears
         // on, since the page it was pressed on stopped deciding that.
@@ -291,7 +290,7 @@ public sealed class HelpImproveWindow : Window
         // button that dangled).
         _saveCorpus.Content = sendCorpus is null ? "Save it to a file…" : "Save it instead…";
 
-        var root = new DockPanel { Margin = new Thickness(20) };
+        var root = new DockPanel();
 
         var options = Options();
 
@@ -305,7 +304,7 @@ public sealed class HelpImproveWindow : Window
         _figureFourthValue = figureFourthValue;
         _figureFourthCaption = figureFourthCaption;
 
-        var footer = Footer();
+        var (buttons, progress) = Footer();
 
         var disclosureSection = new DockPanel();
         DockPanel.SetDock(_disclosureToggle, Dock.Top);
@@ -319,31 +318,28 @@ public sealed class HelpImproveWindow : Window
             _disclosureToggle.Content = _disclosureExpanded ? "Hide the exact text" : "Show the exact text";
         };
 
-        // Help, above everything and on the right; the reasoning behind the window is the intro's hover (#269).
-        var marked = new DockPanel { Margin = new Thickness(0, 0, 0, 6), LastChildFill = false };
+        // Help leads the footer, apart from the buttons that act (#252); the reasoning behind the window is in
+        // the intro's tooltip (#269).
         var mark = SiteHelpMark.For(DocsSite.Page(HelpPage), "HelpImproveHelp");
 
         ToolTip.SetTip(_intro, Reasoning);
+        _intro.Margin = new Thickness(0, 0, 0, 12);
 
-        DockPanel.SetDock(mark, Dock.Right);
-        marked.Children.Add(mark);
-
-        DockPanel.SetDock(marked, Dock.Top);
         DockPanel.SetDock(_intro, Dock.Top);
         DockPanel.SetDock(options, Dock.Top);
         DockPanel.SetDock(consent, Dock.Top);
         DockPanel.SetDock(figures, Dock.Top);
-        DockPanel.SetDock(footer, Dock.Bottom);
+        DockPanel.SetDock(progress, Dock.Bottom);
 
-        root.Children.Add(marked);
         root.Children.Add(_intro);
         root.Children.Add(options);
         root.Children.Add(consent);
         root.Children.Add(figures);
-        root.Children.Add(footer);
+        root.Children.Add(progress);
         root.Children.Add(disclosureSection);
 
-        Content = root;
+        // The exact text takes the height left, so the body does not scroll as a whole.
+        Modal.Apply(this, "Transcript", Title, root, [mark, .. buttons], scrolls: false);
 
         _includeHistory.IsCheckedChanged += (_, _) => ApplyMode();
         _span.SelectionChanged += (_, _) => Render();
@@ -408,7 +404,7 @@ public sealed class HelpImproveWindow : Window
 
         _intro.Text = Sentence(history);
         _consentDestination.Text = DestinationText(history);
-        _figureFourthCaption.Text = history ? "journal files" : "log entries";
+        _figureFourthCaption.Text = history ? "JOURNAL FILES" : "LOG ENTRIES";
 
         // Collapsed again on every fresh entry to a mode, the same rule the send buttons follow: a payload
         // shown open under one mode is not consent given under the other.
@@ -527,7 +523,7 @@ public sealed class HelpImproveWindow : Window
     private Border ConsentLine(out TextBlock text)
     {
         var block = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var row = new Border
         {
@@ -537,15 +533,14 @@ public sealed class HelpImproveWindow : Window
             Child = block,
         };
 
-        Themed(row, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         text = block;
         return row;
     }
 
     /// <summary>
-    /// What will leave, in four figures over captions, each a mono number on a <c>D47.FillHigh</c>
-    /// block (#338). <see cref="Render"/>, <see cref="Discard"/> and <see cref="ReadAsync"/> keep them
+    /// What will leave, in four stat tiles (#338). <see cref="Render"/>, <see cref="Discard"/> and <see cref="ReadAsync"/> keep them
     /// current; nothing here computes a count itself.
     /// </summary>
     private (Control Block, TextBlock Events, TextBlock Names, TextBlock Chars, TextBlock FourthValue, TextBlock FourthCaption) Figures()
@@ -555,54 +550,22 @@ public sealed class HelpImproveWindow : Window
         var names = Figure("names replaced", out var namesValue);
         var chars = Figure("characters", out var charsValue);
 
-        var block = new WrapPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 0, 0, 12),
-            Children = { fourth, events, names, chars },
-        };
+        var block = StatTile.Grid([fourth, events, names, chars]);
+        block.Margin = new Thickness(0, 0, 0, 12);
 
         return (block, eventsValue, namesValue, charsValue, fourthValue, fourthCaption);
     }
 
     private Border Figure(string caption, out TextBlock value) => Figure(caption, out value, out _);
 
-    private Border Figure(string caption, out TextBlock value, out TextBlock captionBlock)
+    private static Border Figure(string caption, out TextBlock value, out TextBlock captionBlock)
     {
-        var valueBlock = new TextBlock
-        {
-            Text = "—",
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Heading,
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
+        var tile = StatTile.Build(caption, "—");
+        var lines = (StackPanel)tile.Child!;
 
-        var label = new TextBlock
-        {
-            Text = caption,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Caption,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        Themed(valueBlock, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-
-        var block = new Border
-        {
-            Padding = new Thickness(12, 10),
-            Margin = new Thickness(0, 0, 8, 8),
-            MinWidth = 110,
-            Child = new StackPanel { Spacing = 2, Children = { valueBlock, label } },
-        };
-
-        Themed(block, Border.BackgroundProperty, ThemeManager.FillHighKey);
-
-        value = valueBlock;
-        captionBlock = label;
-        return block;
+        captionBlock = (TextBlock)lines.Children[0];
+        value = (TextBlock)lines.Children[1];
+        return tile;
     }
 
     /// <summary>The exact text, collapsed until <see cref="_disclosureToggle"/> is pressed (#338).</summary>
@@ -613,9 +576,7 @@ public sealed class HelpImproveWindow : Window
         pane = new Border
         {
             Name = "DisclosurePane",
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(0),
-            Padding = new Thickness(10),
+            Padding = new Thickness(14, 10),
             Height = 0,
             Child = new ScrollViewer
             {
@@ -626,55 +587,49 @@ public sealed class HelpImproveWindow : Window
             },
         };
 
-        Themed(pane, Border.BorderBrushProperty, ThemeManager.BorderKey);
+        Themed(pane, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return pane;
     }
 
-    private Control Footer()
+    /// <summary>The footer's buttons, and the size, status and progress lines above them.</summary>
+    private (List<Control> Buttons, Control Progress) Footer()
     {
-        var primary = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var primary = new List<Control>();
 
         // Send leads the primary cluster, with the alternates beside it rather than instead of it — the
         // upload is the default action, not the only one.
         if (_send is not null)
         {
-            primary.Children.Add(_sendButton);
+            primary.Add(_sendButton);
         }
 
-        primary.Children.Add(_saveExcerpt);
-        primary.Children.Add(_copy);
-        primary.Children.Add(_saveCorpus);
+        primary.Add(_saveExcerpt);
+        primary.Add(_copy);
+        primary.Add(_saveCorpus);
 
         if (_sendCorpus is not null)
         {
-            primary.Children.Add(_sendCorpusButton);
+            primary.Add(_sendCorpusButton);
         }
 
-        // A fixed gap rather than a star column: the bar sits inside a DockPanel that measures a
-        // docked-right child with unconstrained width, where a "*" column has nothing to divide (#87).
-        primary.Children.Add(new Border { Width = 24 });
+        // A fixed gap between the actions and Cancel and Forget.
+        primary.Add(new Border { Width = 24 });
 
-        primary.Children.Add(_stop);
+        primary.Add(_stop);
 
         // Beside Send, on whichever page is showing (#295): the retention line above names this button, and a
         // Commander who reads it there should not have to go looking for it.
         if (_forget is not null)
         {
-            primary.Children.Add(_forgetButton);
+            primary.Add(_forgetButton);
         }
-
-        var footer = new DockPanel { Margin = new Thickness(0, 12, 0, 0) };
-
-        DockPanel.SetDock(primary, Dock.Right);
-
-        footer.Children.Add(primary);
 
         // The bar under the sentence rather than in place of it (#212): "Nothing else is being sent, and
         // nothing is being kept anywhere else" is doing work about scope that a percentage cannot do.
-        footer.Children.Add(new StackPanel { Children = { _size, _status, _bar } });
+        var progress = new StackPanel { Margin = new Thickness(0, 12, 0, 0), Children = { _size, _status, _bar } };
 
-        return footer;
+        return (primary, progress);
     }
 
     /// <summary>Rebuilds the excerpt, shows it and refreshes the figures.</summary>
@@ -717,7 +672,7 @@ public sealed class HelpImproveWindow : Window
         _sizeColour = Themed(
             _size,
             TextBlock.ForegroundProperty,
-            long_ ? ThemeManager.DangerKey : ThemeManager.TextMutedKey);
+            long_ ? ThemeManager.RedKey : ThemeManager.GreyKey);
     }
 
     /// <summary>Throws away a history reading, and resets the figures to unknown.</summary>
@@ -864,7 +819,7 @@ public sealed class HelpImproveWindow : Window
             // Rebinding rather than leaving the colour on whatever the last render chose: this line is now an
             // outcome rather than a character count.
             _sizeColour?.Dispose();
-            _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         }
     }
 
@@ -1094,7 +1049,7 @@ public sealed class HelpImproveWindow : Window
                 // This line is an outcome now rather than a character count, so it is not left in whatever
                 // colour the last render chose for it.
                 _sizeColour?.Dispose();
-                _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+                _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             }
         }
         catch (OperationCanceledException)
@@ -1155,7 +1110,7 @@ public sealed class HelpImproveWindow : Window
             Margin = new Thickness(0, 0, 6, 0),
         };
 
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return new StackPanel
         {

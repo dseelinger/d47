@@ -36,7 +36,7 @@ public sealed class SwitchWindow : Window
     private readonly string _exportPath;
 
     private readonly List<MutableSwitch> _switches;
-    private readonly StackPanel _list = new() { Spacing = 12 };
+    private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly DispatcherTimer _timer;
 
     private readonly TextBlock _problems = new()
@@ -91,47 +91,42 @@ public sealed class SwitchWindow : Window
         Height = 620;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var assign = new Button { Content = "Assign a switch", Padding = new Thickness(10, 4) };
+        var assign = new Button { Content = "Assign a switch" };
         assign.Click += (_, _) => StartWalk();
 
-        var save = new Button { Content = "Save", Padding = new Thickness(14, 4) };
+        var save = new Button { Content = "Save", MinWidth = 110 };
         save.Click += (_, _) => Save();
 
-        var close = new Button { Content = "Close", Padding = new Thickness(14, 4) };
+        var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
-        _finish = new Button { Content = "Finish", Padding = new Thickness(10, 4), IsVisible = false };
+        _finish = new Button { Content = "Finish", IsVisible = false };
         _finish.Click += (_, _) => FinishWalk();
 
-        _export = new Button { Content = "Export the capture report", Padding = new Thickness(10, 4), IsVisible = false };
+        _export = new Button { Content = "Export the capture report", IsVisible = false };
         _export.Click += (_, _) => Export();
 
-        var cancel = new Button { Content = "Cancel", Padding = new Thickness(10, 4) };
+        var cancel = new Button { Content = "Cancel" };
         cancel.Click += (_, _) => EndWalk();
 
         _walkCard = new Border
         {
-            Padding = new Thickness(12),
+            Padding = new Thickness(14, 12),
             IsVisible = false,
-            Margin = new Thickness(0, 12, 0, 0),
             Child = new StackPanel
             {
                 Spacing = 8,
                 Children =
                 {
                     _walkSays,
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 8,
-                        Children = { _finish, _export, cancel },
-                    },
+                    new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Children = { _finish, _export, cancel } },
                 },
             },
         };
 
-        CardChrome.Card(_walkCard);
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_walkCard, Border.BackgroundProperty, ThemeManager.SlabKey);
+        Themed(_walkSays, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var header = new TextBlock
         {
@@ -139,32 +134,11 @@ public sealed class SwitchWindow : Window
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(header, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 12, 0, 0),
-            Children = { assign, save, close },
-        };
+        var root = new StackPanel { Spacing = 12, Children = { header, _problems, _walkCard, _list } };
 
-        var root = new DockPanel { Margin = new Thickness(16) };
-
-        DockPanel.SetDock(header, Dock.Top);
-        DockPanel.SetDock(_problems, Dock.Top);
-        DockPanel.SetDock(_walkCard, Dock.Top);
-        DockPanel.SetDock(buttons, Dock.Bottom);
-
-        root.Children.Add(header);
-        root.Children.Add(_problems);
-        root.Children.Add(_walkCard);
-        root.Children.Add(buttons);
-        root.Children.Add(new ScrollViewer { Content = _list, Margin = new Thickness(0, 12, 0, 0) });
-
-        Content = root;
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        Modal.Apply(this, "HOTAS", Title, root, [assign, save, close]);
 
         _timer = new DispatcherTimer { Interval = Period };
         _timer.Tick += (_, _) => Sample();
@@ -335,7 +309,7 @@ public sealed class SwitchWindow : Window
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
             return;
         }
@@ -351,7 +325,7 @@ public sealed class SwitchWindow : Window
         var name = new TextBox { Text = mapping.Name, Width = 260 };
         name.TextChanged += (_, _) => mapping.Name = name.Text ?? string.Empty;
 
-        var remove = new Button { Content = "Remove", Padding = new Thickness(10, 2), FontSize = TypeScale.Body };
+        var remove = new Button { Content = "Remove", Classes = { "destructive" } };
         remove.Click += (_, _) =>
         {
             _switches.Remove(mapping);
@@ -361,8 +335,6 @@ public sealed class SwitchWindow : Window
         var resume = new Button
         {
             Content = "Resume",
-            Padding = new Thickness(10, 2),
-            FontSize = TypeScale.Body,
             IsVisible = false,
         };
 
@@ -375,13 +347,17 @@ public sealed class SwitchWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(device, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(device, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var health = new TextBlock
         {
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };
+
+        Themed(health, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        var collided = false;
 
         var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
 
@@ -390,20 +366,17 @@ public sealed class SwitchWindow : Window
             positions.Children.Add(BuildPosition(position));
         }
 
+        // Ruled rather than a list row: the box and the choices are Tile, and vanish on a Tile row.
         var card = new Border
         {
-            Padding = new Thickness(12),
+            Padding = new Thickness(0, 12),
+            BorderThickness = new Thickness(0, 1, 0, 0),
             Child = new StackPanel
             {
                 Spacing = 4,
                 Children =
                 {
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 8,
-                        Children = { name, remove, resume },
-                    },
+                    new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Children = { name, remove, resume } },
                     device,
                     positions,
                     health,
@@ -411,7 +384,7 @@ public sealed class SwitchWindow : Window
             },
         };
 
-        CardChrome.Card(card);
+        Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         // Refreshed on every sample, so a device that has just gone away — a 4x32 mode change, an unplugged
         // throttle — says so on this card while the window is still open.
@@ -434,6 +407,13 @@ public sealed class SwitchWindow : Window
                         : state.Note;
 
             health.IsVisible = health.Text is { Length: > 0 };
+
+            // A collision is a fault in the setup, so it is Red; every other note is Grey.
+            if (state?.Collides is not null != collided)
+            {
+                collided = !collided;
+                Themed(health, TextBlock.ForegroundProperty, collided ? ThemeManager.RedKey : ThemeManager.GreyKey);
+            }
         });
 
         return card;
@@ -448,6 +428,8 @@ public sealed class SwitchWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = TypeScale.Body,
         };
+
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var actionIndex = position.Action.Length == 0 ? 0 : Array.IndexOf(Assignable, position.Action);
         var (actionView, action) = Choice.Build(Assignable, actionIndex < 0 ? 0 : actionIndex);
@@ -491,10 +473,10 @@ public sealed class SwitchWindow : Window
 
         state.SelectionChanged += (_, _) => position.State = state.SelectedItem ?? position.State;
 
-        return new StackPanel
+        return new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
+            ItemSpacing = 6,
+            LineSpacing = 6,
             Children = { label, actionView, stateView, pageView },
         };
     }

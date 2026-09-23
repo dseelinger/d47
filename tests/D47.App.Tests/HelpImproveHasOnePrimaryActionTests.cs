@@ -125,9 +125,9 @@ public sealed class HelpImproveHasOnePrimaryActionTests
         Assert.Contains("3", texts);
         Assert.Contains("7", texts);
         Assert.Contains("9", texts);
-        Assert.Contains("log entries", texts);
-        Assert.Contains("journal events", texts);
-        Assert.Contains("names replaced", texts);
-        Assert.Contains("characters", texts);
+        Assert.Contains("LOG ENTRIES", texts);
+        Assert.Contains("JOURNAL EVENTS", texts);
+        Assert.Contains("NAMES REPLACED", texts);
+        Assert.Contains("CHARACTERS", texts);
     }
 }

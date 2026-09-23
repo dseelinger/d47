@@ -21,8 +21,6 @@ public sealed class CoverageWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
-
         var summary = new SelectableTextBlock
         {
             Name = "CoverageSummary",
@@ -31,9 +29,9 @@ public sealed class CoverageWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(summary, SelectableTextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(summary, SelectableTextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var list = new StackPanel { Spacing = 14 };
+        var list = new StackPanel { Spacing = 14, Children = { summary } };
 
         // Same order as the written report, and for the same reason: a list that opens with the work is a
         // list that gets used.
@@ -45,34 +43,7 @@ public sealed class CoverageWindow : Window
         var close = new Button { Name = "CoverageClose", Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
-        Content = new DockPanel
-        {
-            Margin = new Thickness(24),
-            Children =
-            {
-                new StackPanel
-                {
-                    [DockPanel.DockProperty] = Dock.Top,
-                    Spacing = 4,
-                    Margin = new Thickness(0, 0, 0, 16),
-                    Children = { Heading("Exercised by hand"), summary },
-                },
-                new StackPanel
-                {
-                    [DockPanel.DockProperty] = Dock.Bottom,
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Margin = new Thickness(0, 16, 0, 0),
-                    Children = { close },
-                },
-                new ScrollViewer
-                {
-                    Name = "CoverageScroller",
-                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                    Content = list,
-                },
-            },
-        };
+        Modal.Apply(this, "Coverage", Title, list, [close]);
 
         Opened += (_, _) => close.Focus();
     }
@@ -94,46 +65,41 @@ public sealed class CoverageWindow : Window
             return;
         }
 
-        var title = new TextBlock
-        {
-            Text = $"{heading} ({lines.Count})",
-            FontSize = TypeScale.Subheading,
-            FontWeight = FontWeight.Medium,
-        };
+        var title = Modal.Section($"{heading} ({lines.Count})");
 
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-
-        var rows = new StackPanel { Spacing = 1 };
+        var rows = new StackPanel { Spacing = 2 };
 
         foreach (var line in lines)
         {
             rows.Children.Add(Row(line));
         }
 
-        into.Children.Add(new StackPanel { Spacing = 6, Children = { title, rows } });
+        into.Children.Add(new StackPanel { Spacing = 8, Children = { title, rows } });
     }
 
-    /// <summary>One line, colour-carrying its own state.</summary>
+    /// <summary>One line, its state on the status ladder: done is met, failed is an error, the rest not met.</summary>
     private static Control Row(CoverageLine line)
     {
         var brush = line switch
         {
-            { Failed: true } => ThemeManager.DangerKey,
-            { Status: CoverageStatus.Exercised } => ThemeManager.AccentKey,
-            _ => ThemeManager.TextMutedKey,
+            { Failed: true } => ThemeManager.RedKey,
+            { Status: CoverageStatus.Exercised } => ThemeManager.BlueKey,
+            _ => ThemeManager.GreyKey,
         };
 
         var mark = new TextBlock
         {
             Text = line switch
             {
-                { Failed: true } => "failed",
-                { Status: CoverageStatus.Exercised } => "done",
-                { Status: CoverageStatus.Stale } => "changed",
-                _ => "never",
+                { Failed: true } => "FAILED",
+                { Status: CoverageStatus.Exercised } => "DONE",
+                { Status: CoverageStatus.Stale } => "CHANGED",
+                _ => "NEVER",
             },
-            FontSize = TypeScale.Small,
-            Width = 52,
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Meta,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            Width = 64,
             VerticalAlignment = VerticalAlignment.Center,
 
             // Weight as well as colour, because colour alone cannot be relied on here.
@@ -142,35 +108,31 @@ public sealed class CoverageWindow : Window
 
         Themed(mark, TextBlock.ForegroundProperty, brush);
 
-        var name = new TextBlock
+        var name = ListRow.Name(new TextBlock
         {
             Text = line.Item.Name,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        });
 
         TruncationTip.Watch(name, () => line.Item.Name);
 
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-
-        var when = new TextBlock
+        var when = ListRow.Secondary(new TextBlock
         {
             Text = line.LastSeen is { } seen ? seen.ToString("yyyy-MM-dd") : string.Empty,
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0),
-        };
-
-        Themed(when, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        });
 
         // Every line goes somewhere.
         var help = SiteHelpMark.For(DocsSite.Capability(line.Item.CapabilityId), "CoverageHelp");
 
         var row = new Border
         {
-            Padding = new Thickness(10, 5),
+            Padding = new Thickness(12, 2),
             Child = new DockPanel
             {
                 Children =
@@ -187,23 +149,7 @@ public sealed class CoverageWindow : Window
             },
         };
 
-        CardChrome.Card(row);
-
-        return row;
-    }
-
-    private static TextBlock Heading(string text)
-    {
-        var heading = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Heading,
-            FontWeight = FontWeight.Medium,
-        };
-
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-
-        return heading;
+        return ListRow.Dress(row);
     }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
