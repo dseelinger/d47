@@ -60,6 +60,57 @@ public static class VoicePool
         || !IsLocale(tag)
         || tag.StartsWith("en", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// The accent a voice is heard in, as an adjective ("British"), or null when its tag names no region
+    /// or none that is known: a locale's region for a provider that tags voices with a locale, or the
+    /// accent label itself for one that tags them with a word.
+    /// </summary>
+    public static string? AccentOf(VoiceInfo? voice)
+    {
+        if (voice?.Locale is not { Length: > 0 } tag)
+        {
+            return null;
+        }
+
+        if (!IsLocale(tag))
+        {
+            var words = tag.Split([' ', '-', '_'], StringSplitOptions.RemoveEmptyEntries);
+
+            return words.Length == 0
+                ? null
+                : string.Join(' ', words.Select(word => char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant()));
+        }
+
+        if (!tag.StartsWith("en", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var region = tag.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries).Skip(1).FirstOrDefault();
+
+        return region is not null && Regions.TryGetValue(region, out var accent) ? accent : null;
+    }
+
+    /// <summary>The English-speaking regions a locale can name, as the accent heard there.</summary>
+    private static readonly Dictionary<string, string> Regions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["GB"] = "British",
+        ["US"] = "American",
+        ["AU"] = "Australian",
+        ["CA"] = "Canadian",
+        ["IE"] = "Irish",
+        ["IN"] = "Indian",
+        ["NZ"] = "New Zealand",
+        ["ZA"] = "South African",
+        ["SG"] = "Singaporean",
+        ["PH"] = "Filipino",
+        ["KE"] = "Kenyan",
+        ["NG"] = "Nigerian",
+        ["TZ"] = "Tanzanian",
+        ["HK"] = "Hong Kong",
+        ["JM"] = "Jamaican",
+    };
+
     /// <summary>Whether this reads as a language tag rather than as a word.</summary>
     private static bool IsLocale(string tag)
     {

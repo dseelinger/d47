@@ -3577,6 +3577,11 @@ public sealed class AppHost : IDisposable
             // And which read as British, so an Empire station can be given one (#68).
             cast.British = VoicePool.British(listed.Voices);
 
+            // And what each sounds like, so an NPC's line can be written for the voice that speaks it (#415).
+            cast.Voices = listed.Voices
+                .GroupBy(voice => voice.Id, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+
             // Both numbers, because one of them alone is what hid that: "1 voice available" is alarming
             // beside "473 offered" and unremarkable on its own.
             _logger.LogInformation(
@@ -5129,14 +5134,7 @@ public sealed class AppHost : IDisposable
             Text = _referent.Speak(announcement.Text, SystemsIn(announcement.Text), DateTimeOffset.Now),
         };
 
-        // Drawn from the cast belonging to whoever speaks for this slot.
-        var cast = Casting.Of(VoiceGroups.ProviderFor(
-            Settings.Current.Speech,
-            VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
-
-        var voice = announcement.Speaker is { Length: > 0 } speaker
-            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice, announcement.SpeakerAllegiance)
-            : cast.For(announcement.Voice);
+        var voice = SpeakerAccent.VoiceOf(CastFor(announcement), announcement);
 
         // Written before it is spoken, and whether or not the speaking works: a message that could not be
         // synthesised is still a message that arrived. **Into the log, on the Commander's instruction**
@@ -5155,6 +5153,12 @@ public sealed class AppHost : IDisposable
 
         await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
     }
+
+    /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
+    private VoiceCast CastFor(Announcement announcement) =>
+        Casting.Of(VoiceGroups.ProviderFor(
+            Settings.Current.Speech,
+            VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
 
     /// <summary>Which lines with a brief actually go to the model, and what is said when none comes back.</summary>
     private readonly Core.Callouts.Rewording _rewording;
@@ -5187,7 +5191,9 @@ public sealed class AppHost : IDisposable
                 return FlavourTurn.AskForAsync(
                     Turns.Provider,
                     Turns.BackgroundModel,
-                    brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
+                    brief.NeedsPersona
+                        ? Personas.RenderBlock(personalityEnabled: true)
+                        : SpeakerAccent.Join(brief.Speaker, SpeakerAccent.For(CastFor(announcement), announcement)),
                     StoryFor(brief),
                     ask,
                     brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
@@ -5230,6 +5236,19 @@ public sealed class AppHost : IDisposable
         var carrier = NpcChatterCarrier.Of(GameState.Active?.Carrier, location);
         var spotlight = _carrierSpotlight.Claim(carrier.Present);
 
+        // The voices are cast before the exchange is written, so each line can be written for its accent (#415).
+        var npcs = CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.Comms, CommsChannel = "npc" });
+        var posts = CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.TowerControl, CommsChannel = "npc" });
+
+        var roster = NpcChatterRoster.Cast(
+            npcs,
+            kind,
+            marker.Variant ?? 0,
+            location?.StarSystem,
+            docked ? location?.StationAllegiance : null,
+            posts.AccentOf(posts.For(VoiceRole.TowerControl).VoiceId),
+            posts.AccentOf(posts.For(VoiceRole.CarrierCaptain).VoiceId));
+
         using var budget = new CancellationTokenSource(ChatterBudget);
 
         var directed = DirectableIn(VoiceGroup.Npcs);
@@ -5240,7 +5259,7 @@ public sealed class AppHost : IDisposable
             NpcChatter.Speaker,
             null,
             NpcChatter.WithHumor(
-                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType),
+                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster),
                 carrier,
                 Settings.Current.Persona,
                 _humor,
@@ -5255,8 +5274,12 @@ public sealed class AppHost : IDisposable
         var facts = ShipFacts.Of(GameState.Active);
         var heard = new List<Announcement>();
 
-        foreach (var line in NpcChatter.Parse(script, kind, carrier))
+        foreach (var line in NpcChatter.Parse(script, kind, carrier, roster))
         {
+            var accent = SpeakerAccent.Sentence(line.Role is { } post
+                ? posts.AccentOf(posts.For(post).VoiceId)
+                : npcs.AccentOf(line.VoiceId));
+
             // **Per line rather than per exchange** (#338).
             var said = ContradictedClaims.AboutTheCommandersShip(line.Text)
                 ? await ContradictedClaims.SayableAsync(
@@ -5266,7 +5289,7 @@ public sealed class AppHost : IDisposable
                         await FlavourTurn.AskAsync(
                             Turns.Provider,
                             Turns.BackgroundModel,
-                            NpcChatter.Speaker,
+                            SpeakerAccent.Join(NpcChatter.Speaker, accent),
                             null,
                             ContradictedClaims.Rewrite(line.Text, contradiction),
                             Turns.LiveGameState?.Invoke(),
@@ -5284,6 +5307,12 @@ public sealed class AppHost : IDisposable
             if (said is null)
             {
                 continue;
+            }
+
+            // The slot's voice, whatever name the model gave it.
+            if (line.VoiceId is { } voice)
+            {
+                npcs.Keep(line.Name, voice);
             }
 
             heard.Add(new Announcement(NpcChatter.LineKey, said)

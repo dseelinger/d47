@@ -18,6 +18,13 @@ can also laugh or chuckle. Warnings never get humor.
 If you had humor switched on, the ship's AI starts at level 3 and 25%. NPCs and the carrier crew
 start at 0. "Humor on" now sets the ship's AI to level 3, and "humor off" sets it to 0.
 
+NPC lines are now written for the voice that speaks them. d47 chooses the voice first and tells the
+model its accent, so a re-voiced comms line, a line from your carrier's captain or tower, and
+invented chatter use the word choice and idiom of that accent. The model is told not to spell the
+accent out phonetically or play it as a stereotype. In chatter, d47 casts the voices before the
+exchange is written and the model names the speakers. An NPC already heard in the system keeps
+their voice if they speak again. Voices with no accent listed, and the ship's AI, are unchanged.
+
 ## 1.10.0 — Every voice paired afresh
 
 The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and

@@ -21,10 +21,59 @@ public enum NpcChatterKind
 }
 
 /// <summary>One parsed line of an exchange: who says it, what they say, and whose voice it is.</summary>
-/// <param name="Role">
-/// The cast role this line belongs to, or null for the invented nobody that every line used to be.
-/// </param>
-public sealed record NpcChatterLine(string Name, string Text, VoiceRole? Role = null);
+/// <param name="Role">The carrier post this line belongs to, or null for an invented speaker.</param>
+/// <param name="VoiceId">The voice its roster slot was cast with, or null where there was no roster.</param>
+public sealed record NpcChatterLine(string Name, string Text, VoiceRole? Role = null, string? VoiceId = null);
+
+/// <summary>One voice an exchange may use, cast before the exchange is written (#415).</summary>
+/// <param name="Tag">What the model tags this slot's lines with.</param>
+/// <param name="Name">The NPC's name where they were already heard in this system, or null for a new one.</param>
+public sealed record NpcChatterSlot(string Tag, string VoiceId, string? Accent, Audio.VoiceGender Gender, string? Name = null);
+
+/// <summary>The voices an exchange is written for: the invented speakers' slots and the carrier's two posts.</summary>
+public sealed record NpcChatterRoster(
+    IReadOnlyList<NpcChatterSlot> Slots,
+    string? TowerAccent = null,
+    string? CaptainAccent = null)
+{
+    public static readonly NpcChatterRoster None = new([]);
+
+    /// <summary>The most NPCs already heard in this system that one exchange is offered back.</summary>
+    public const int MostMet = 3;
+
+    /// <summary>
+    /// Casts the slots for one exchange from the NPC cast: new voices for the speakers the kind needs,
+    /// and the NPCs already heard here with the voices they already have.
+    /// </summary>
+    public static NpcChatterRoster Cast(
+        VoiceCast cast,
+        NpcChatterKind kind,
+        int exchangeIndex,
+        string? system,
+        string? allegiance = null,
+        string? towerAccent = null,
+        string? captainAccent = null)
+    {
+        ArgumentNullException.ThrowIfNull(cast);
+
+        var fresh = cast.Roster(kind == NpcChatterKind.Hail ? 1 : 2, VoiceCast.SeedOf(exchangeIndex, system), allegiance);
+        var slots = new List<NpcChatterSlot>();
+
+        foreach (var voice in fresh)
+        {
+            slots.Add(new NpcChatterSlot(TagOf(slots.Count), voice, cast.AccentOf(voice), cast.GenderOf(voice)));
+        }
+
+        foreach (var (name, voice) in cast.MetHere.Take(MostMet))
+        {
+            slots.Add(new NpcChatterSlot(TagOf(slots.Count), voice, cast.AccentOf(voice), cast.GenderOf(voice), name));
+        }
+
+        return new NpcChatterRoster(slots, towerAccent, captainAccent);
+    }
+
+    private static string TagOf(int index) => ((char)('A' + index)).ToString();
+}
 
 /// <summary>What d47 knows about the Commander's own fleet carrier while an exchange is composed (#249).</summary>
 public sealed record NpcChatterCarrier
@@ -181,15 +230,60 @@ public static class NpcChatter
         + "hands, controllers. Plain working speech, brief and human. Never mention being an AI "
         + "or a model, and never break the fiction.";
 
-    /// <summary>The format contract every kind shares.</summary>
-    private const string Contract =
+    /// <summary>The line format when no voices were cast ahead of the exchange.</summary>
+    private const string Unslotted =
         "Write only the exchange, one line per speaker turn, each formatted exactly as "
         + "Name: words — an invented plain name or call sign, a colon, what they say. A speaker "
-        + "keeps one name, written the same way on every line of theirs. No other "
-        + "text, no quotation marks, no stage directions. Use the live game state only for where "
-        + "this is happening; invent everything else. Never name or imitate a real person or "
+        + "keeps one name, written the same way on every line of theirs. ";
+
+    /// <summary>The line format when each speaker is a slot in a cast roster (#415).</summary>
+    private const string Slotted =
+        "Write only the exchange, one line per speaker turn, each formatted exactly as "
+        + "Name [slot]: words — the speaker's name, their slot letter in square brackets, a colon, "
+        + "what they say. Each slot is one person with one name, written the same way on every line "
+        + "of theirs, and no two slots share a name. Not every slot has to speak. ";
+
+    /// <summary>The rest of the format contract every kind shares.</summary>
+    private const string Contract =
+        "No other text, no quotation marks, no stage directions. Use the live game state only for "
+        + "where this is happening; invent everything else. Never name or imitate a real person or "
         + "another player. Nobody asks the Commander to do anything, nobody asks the Commander a "
         + "question, and nobody expects an answer.";
+
+    /// <summary>The cast slots, described by accent and gender, or nothing where there is no roster.</summary>
+    private static string Roster(NpcChatterRoster roster)
+    {
+        if (roster.Slots.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var described = roster.Slots.Select(slot =>
+        {
+            var who = slot.Gender switch
+            {
+                Audio.VoiceGender.Feminine => "a woman",
+                Audio.VoiceGender.Masculine => "a man",
+                _ => "a person",
+            };
+
+            var accent = slot.Accent is { Length: > 0 } heard
+                ? $" with {SpeakerAccent.Article(heard)} {heard} accent"
+                : string.Empty;
+
+            return slot.Name is { Length: > 0 } name
+                ? $"[{slot.Tag}] {name}, already heard in this system, {who}{accent} — if they speak, "
+                    + "use exactly that name"
+                : $"[{slot.Tag}] {who}{accent} — invent a plain name or call sign";
+        });
+
+        var accented = roster.Slots.Any(slot => slot.Accent is { Length: > 0 })
+            ? " Each speaker's words suit their slot's accent. " + SpeakerAccent.Rules
+            : string.Empty;
+
+        return "The voices are already cast; every invented speaker is one of these slots: "
+            + string.Join("; ", described) + "." + accented + " ";
+    }
 
     /// <summary>
     /// What the model is asked for one exchange of the given kind, in the situation the Commander's own
@@ -212,20 +306,25 @@ public static class NpcChatter
     /// The journal's <c>StationType</c> for the dock, or null when it is not known — used to say
     /// whether the station has a mail slot (#314) rather than leave the model to guess at one.
     /// </param>
+    /// <param name="roster">The voices cast for this exchange, or null to let the model name them freely.</param>
     public static string Instruction(
         NpcChatterKind kind,
         NpcChatterCarrier? carrier = null,
         bool docked = false,
         bool spotlight = false,
         int exchangeIndex = 0,
-        string? stationType = null)
+        string? stationType = null,
+        NpcChatterRoster? roster = null)
     {
         var about = carrier ?? NpcChatterCarrier.None;
+        var cast = roster ?? NpcChatterRoster.None;
 
         return Situation(docked, stationType)
             + Scene(kind, about, docked, exchangeIndex)
+            + Roster(cast)
+            + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
-            + Carrier(about, spotlight);
+            + Carrier(about, spotlight, cast);
     }
 
     /// <summary>
@@ -474,7 +573,7 @@ public static class NpcChatter
     /// The rules the Commander's own carrier adds (#249, #88): who its two posts are when he is at it,
     /// how the people around him regard that, and that it is not going anywhere when it is not.
     /// </summary>
-    private static string Carrier(NpcChatterCarrier carrier, bool spotlight = false)
+    private static string Carrier(NpcChatterCarrier carrier, bool spotlight, NpcChatterRoster roster)
     {
         if (!carrier.Owned)
         {
@@ -489,8 +588,10 @@ public static class NpcChatter
                 " The Commander is at their own fleet carrier "
                 + $"{Called(carrier)}— two people aboard it are not invented, its tower "
                 + $"controller and its captain. If either speaks, that line's name is exactly "
-                + $"{TowerName} or exactly {CaptainName}, with nothing else in it, and no other "
-                + "speaker may use those two names. "
+                + $"{TowerName} or exactly {CaptainName}, with nothing else in it"
+                + (roster.Slots.Count > 0 ? " and no slot" : string.Empty)
+                + ", and no other speaker may use those two names. "
+                + PostAccents(roster)
                 + "Everybody here knows whose deck this is. His own crew — the tower, the "
                 + "captain, anyone working for him — are not surprised he is aboard; it is "
                 + "their job to be here, so write deference, easy familiarity, or a grumble made "
@@ -516,15 +617,33 @@ public static class NpcChatter
         return rules;
     }
 
+    /// <summary>What the tower's and the captain's voices sound like, where their listing says.</summary>
+    private static string PostAccents(NpcChatterRoster roster)
+    {
+        var posts = new[] { (Post: TowerName, Accent: roster.TowerAccent), (Post: CaptainName, Accent: roster.CaptainAccent) }
+            .Where(post => post.Accent is { Length: > 0 })
+            .Select(post => $"{post.Post}'s voice has {SpeakerAccent.Article(post.Accent!)} {post.Accent} accent")
+            .ToList();
+
+        return posts.Count == 0
+            ? string.Empty
+            : string.Join(" and ", posts) + ". Their words suit it the same way. ";
+    }
+
     /// <summary>The carrier's name and a trailing space, or nothing when it has no name to give.</summary>
     private static string Called(NpcChatterCarrier carrier) =>
         carrier.Called is { Length: > 0 } name ? $"{name} " : string.Empty;
 
     /// <summary>The reply, read strictly.</summary>
+    /// <param name="roster">
+    /// The voices the exchange was written for. With slots, a line's slot decides its voice, and a line
+    /// with a missing or unknown slot is dropped.
+    /// </param>
     public static IReadOnlyList<NpcChatterLine> Parse(
         string? script,
         NpcChatterKind kind,
-        NpcChatterCarrier? carrier = null)
+        NpcChatterCarrier? carrier = null,
+        NpcChatterRoster? roster = null)
     {
         if (string.IsNullOrWhiteSpace(script))
         {
@@ -532,6 +651,11 @@ public static class NpcChatter
         }
 
         var about = carrier ?? NpcChatterCarrier.None;
+
+        if (roster is { Slots.Count: > 0 })
+        {
+            return ParseSlotted(script, kind, about, roster);
+        }
         var heard = new List<(string Spelled, string Text)>();
 
         foreach (var raw in script.Split('\n'))
@@ -578,6 +702,97 @@ public static class NpcChatter
         }
 
         return lines.Count >= (kind == NpcChatterKind.Hail ? 1 : 2) ? lines : [];
+    }
+
+    /// <summary>Every invented speaker a slot, and every slot one name (#415).</summary>
+    private static IReadOnlyList<NpcChatterLine> ParseSlotted(
+        string script,
+        NpcChatterKind kind,
+        NpcChatterCarrier carrier,
+        NpcChatterRoster roster)
+    {
+        var slotNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var nameSlots = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var lines = new List<NpcChatterLine>();
+
+        foreach (var raw in script.Split('\n'))
+        {
+            if (lines.Count == MostLines)
+            {
+                break;
+            }
+
+            var split = raw.IndexOf(':', StringComparison.Ordinal);
+
+            if (split <= 0)
+            {
+                continue;
+            }
+
+            var (name, tag) = Tagged(raw[..split]);
+            var text = raw[(split + 1)..].Trim().Trim('"');
+
+            if (name.Length is < 2 or > 40 || text.Length == 0 || !FlavourBriefs.MayBeSpoken(text))
+            {
+                continue;
+            }
+
+            var role = RoleOf(name, carrier);
+            string? voice = null;
+
+            if (role is null)
+            {
+                // Somebody already heard here keeps the voice they have, whichever slot they were written into.
+                var slot = roster.Slots.FirstOrDefault(slot => Is(name, slot.Name ?? string.Empty))
+                    ?? roster.Slots.FirstOrDefault(slot => tag is not null && Is(tag, slot.Tag));
+
+                if (slot is null)
+                {
+                    continue;
+                }
+
+                if (!slotNames.TryGetValue(slot.Tag, out var settled))
+                {
+                    settled = slot.Name ?? name;
+
+                    if (nameSlots.ContainsKey(settled))
+                    {
+                        continue;
+                    }
+
+                    slotNames[slot.Tag] = settled;
+                    nameSlots[settled] = slot.Tag;
+                }
+
+                name = settled;
+                voice = slot.VoiceId;
+            }
+
+            if (MovesTheCarrier(text, role, carrier))
+            {
+                return [];
+            }
+
+            lines.Add(new NpcChatterLine(name, text, role, voice));
+        }
+
+        return lines.Count >= (kind == NpcChatterKind.Hail ? 1 : 2) ? lines : [];
+    }
+
+    /// <summary>A speaker's name and the slot tag written after it in square brackets, if any.</summary>
+    private static (string Name, string? Tag) Tagged(string head)
+    {
+        var trimmed = head.Trim().Trim('*', '-', '#', '"').Trim();
+        var open = trimmed.LastIndexOf('[');
+
+        if (open < 0 || !trimmed.EndsWith(']'))
+        {
+            return (trimmed, null);
+        }
+
+        var tag = trimmed[(open + 1)..^1].Trim();
+
+        return (trimmed[..open].Trim().Trim('*', '-', '#', '"').Trim(), tag.Length > 0 ? tag : null);
     }
 
     /// <summary>One replacement beat, read back the way <see cref="Parse"/> reads a script (#338).</summary>
