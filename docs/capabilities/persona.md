@@ -458,25 +458,37 @@ and back — selecting the core that is already running is not a switch, and nev
 
 This row is not reachable by the model, for the same reason the persona row above is not.
 
-#### A little humor {#humor}
+#### Humor {#humor}
 
-Off, the cores are exactly as they shipped — serious throughout. On, one line is added to the
-persona block granting an occasional light touch of wit: dry, brief, in each core's own character,
-never at your expense and never inside a warning.
+Humor has a level and a frequency for each of three groups: **Core humor** (the ship's AI),
+**NPC humor** (chatter, hails and the canned lines d47 rewords) and **Carrier crew humor** (your
+carrier's captain and tower).
 
-**Permission, not a personality transplant.** The eleven cores keep their own registers — a dry
-core gets drier wit, not someone else's jokes — and the line reaches everything the core says in
-character: conversation, In Ship chatter, the opening brief. The carrier captain and tower are not
-the core and are untouched.
+- **Level, 0 to 10.** 0 is no humor, and greys out the frequency row beneath it. 10 is as funny as
+  a stand-up comedian.
+- **Frequency, a percentage.** The share of that group's lines that get humor. d47 decides, not
+  the model: it rolls for each line the model writes and adds the humor instruction only when the
+  roll hits. It does not apply to lines spoken as written.
+- **Levels 1 to 6 are dry.** Understatement and timing only, with hard bans on similes and
+  comparisons, puns, whimsy, zany exaggeration, exclamation marks and "…" pauses for comic effect.
+  **From 7 the bans lift**: puns, comparisons and absurdity are allowed.
+- **Laughter.** When a line gets humor and its voice performs delivery notes (ElevenLabs v3
+  today), the model is offered `[laughs]` and `[chuckles]` as well. Any other voice has them
+  stripped.
+- **Warnings never get humor**, at any level.
 
-**And not the standard AI fare.** The instruction bans the stock moves as hard rules — similes
-and borrowed images of any kind, puns, whimsy, zany exaggeration, exclamation marks, "…" pauses
-for comic effect — and tells the model what to do at the moment of temptation: when "like" or
-"as if" is about to introduce a comparison, cut the comparison and let the plain fact land dry.
-A model given permission to be funny reaches for decoration first, so the permission names what
-it is not, and names it as bans rather than taste.
+In an NPC exchange that includes your carrier's tower or captain, d47 rolls once for the invented
+speakers and once for the crew, and tells the model which result belongs to which.
+
+The humor instruction is sent after the conversation rather than in the persona block, so a hit or
+a miss does not change the cached part of the prompt.
+
+A settings file from before these rows existed, with humor on, loads as Core humor 3 at 25%.
+Every other group starts at 0.
 
 > "humor on" / "humor off"
+
+"Humor on" sets Core humor to 3; "humor off" sets it to 0.
 
 #### Cores of your own {#cores-of-your-own}
 

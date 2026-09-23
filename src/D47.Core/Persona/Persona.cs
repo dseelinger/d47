@@ -30,10 +30,7 @@ public sealed record Persona(
     /// restated last.
     /// </summary>
     /// <param name="shipName">What the Commander calls this AI.</param>
-    /// <param name="humor">
-    /// Whether the Commander has allowed an occasional light touch of wit (#243).
-    /// </param>
-    public string RenderBlock(string? shipName = null, bool humor = false)
+    public string RenderBlock(string? shipName = null)
     {
         var block = new System.Text.StringBuilder(PersonaCatalog.Preamble);
 
@@ -51,23 +48,8 @@ public sealed record Persona(
 
         block.Append("\n\n").Append(StandingInstructions);
 
-        if (humor)
-        {
-            block.Append("\n\n").Append(HumorInstruction);
-        }
-
         return block.ToString();
     }
-
-    /// <summary>The one line the humor toggle adds (#243).</summary>
-    public const string HumorInstruction =
-        "The Commander has switched on a little humor: an occasional light touch of wit is "
-        + "welcome, dry and brief, in your own character. Never at the Commander's expense, "
-        + "and never inside a warning. Your wit is understatement, timing and precision — "
-        + "never decoration. Hard bans, no exceptions: no similes and no borrowed images — "
-        + "the moment \"like\" or \"as if\" is about to introduce a comparison, cut the "
-        + "comparison and let the plain fact land dry. No puns, no whimsy, no zany "
-        + "exaggeration, no exclamation marks, and no \"...\" pauses for comic effect.";
 
     /// <summary><summary> Repeated verbatim at the end of every core's block.</summary>
     public const string StandingInstructions =

@@ -432,26 +432,15 @@ public class PersonaHostTests
         Assert.Null(host.RenderBlock(personalityEnabled: false));
     }
 
- /// <summary>The humor toggle grants a line and never rewrites.</summary>
+    /// <summary>Humor is rolled per line after the history, so the cached persona block never changes with it.</summary>
     [Fact]
-    public void HumorIsALineGrantedByTheToggleAndAbsentByDefault()
+    public void HumorNeverRidesThePersonaBlock()
     {
         var host = new PersonaHost();
-
         var shipped = host.RenderBlock(personalityEnabled: true);
 
-        Assert.NotNull(shipped);
-        Assert.DoesNotContain(D47.Core.Persona.Persona.HumorInstruction, shipped, StringComparison.Ordinal);
+        host.Apply(new PersonaSettings { CoreHumor = 10, CoreHumorPercent = 100 });
 
-        host.Apply(new PersonaSettings { Humor = true });
-        var granted = host.RenderBlock(personalityEnabled: true);
-
-        Assert.NotNull(granted);
-        Assert.EndsWith(D47.Core.Persona.Persona.HumorInstruction, granted, StringComparison.Ordinal);
-        Assert.StartsWith(shipped, granted, StringComparison.Ordinal);
-
-        // And back off: the shipped bytes again, not a memory of having been funny.
-        host.Apply(new PersonaSettings());
         Assert.Equal(shipped, host.RenderBlock(personalityEnabled: true));
     }
 }

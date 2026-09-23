@@ -220,11 +220,30 @@ public sealed record PersonaSettings
     /// <summary>Whether a name the Commander gave the ship's AI survives a change of core.</summary>
     public bool KeepShipName { get; init; } = true;
 
-    /// <summary>
-    /// Whether the cores are allowed an occasional light touch of wit (#243 — "it's so serious all the
-    /// time").
-    /// </summary>
-    public bool Humor { get; init; }
+    /// <summary>How funny the cores may be, 0 (none) to 10.</summary>
+    public int CoreHumor { get; init; }
+
+    /// <summary>The share of the cores' lines that carry humor, 0 to 100.</summary>
+    public int CoreHumorPercent { get; init; } = DefaultHumorPercent;
+
+    /// <summary>How funny NPCs may be, 0 (none) to 10.</summary>
+    public int NpcHumor { get; init; }
+
+    /// <summary>The share of NPC lines that carry humor, 0 to 100.</summary>
+    public int NpcHumorPercent { get; init; } = DefaultHumorPercent;
+
+    /// <summary>How funny the carrier captain and tower may be, 0 (none) to 10.</summary>
+    public int CarrierHumor { get; init; }
+
+    /// <summary>The share of the carrier captain's and tower's lines that carry humor, 0 to 100.</summary>
+    public int CarrierHumorPercent { get; init; } = DefaultHumorPercent;
+
+    /// <summary>What each humor frequency starts at.</summary>
+    public const int DefaultHumorPercent = 25;
+
+    /// <summary>What the humor toggle held, read once by <see cref="SettingsStore"/> and cleared.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Humor { get; init; }
 
     /// <summary>The voice paired to each core, keyed by persona id (Phase 11, #33).</summary>
     public IReadOnlyDictionary<string, string> Voices { get; init; } =

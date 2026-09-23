@@ -48,7 +48,8 @@ public static class FlavourTurn
         int? maxOutputTokens = null,
         ThinkingEffort effort = ThinkingEffort.Low,
         LlmSampling? sampling = null,
-        bool canBeDirected = false) =>
+        bool canBeDirected = false,
+        string? humor = null) =>
         (await AskForAsync(
             provider,
             model,
@@ -64,7 +65,8 @@ public static class FlavourTurn
             maxOutputTokens,
             effort,
             sampling,
-            canBeDirected).ConfigureAwait(false)).Line;
+            canBeDirected,
+            humor).ConfigureAwait(false)).Line;
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     public static async Task<FlavourReply> AskForAsync(
@@ -82,7 +84,8 @@ public static class FlavourTurn
         int? maxOutputTokens = null,
         ThinkingEffort effort = ThinkingEffort.Low,
         LlmSampling? sampling = null,
-        bool canBeDirected = false)
+        bool canBeDirected = false,
+        string? humor = null)
     {
         if (provider is null)
         {
@@ -118,6 +121,7 @@ public static class FlavourTurn
                 AboutMe = aboutMe,
                 History = [new ConversationMessage(ConversationRole.User, instruction)],
                 LiveGameState = gameState,
+                Humor = humor,
             },
         };
 

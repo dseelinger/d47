@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.11.0 — NPC lines written for their voice and humor
+
+The "A little humor" toggle is replaced by a level and a frequency for three groups: the ship's AI,
+NPCs, and your carrier's captain and tower. The rows are under Persona › Humor. The level runs from
+0 (none) to 10 (as funny as a stand-up comedian). The frequency is the share of that group's lines
+that get humor, and d47 decides line by line. Up to level 6 the humor stays dry, with no puns,
+comparisons or whimsy. From 7 those are allowed. When a voice performs delivery notes, a funny line
+can also laugh or chuckle. Warnings never get humor.
+
+If you had humor switched on, the ship's AI starts at level 3 and 25%. NPCs and the carrier crew
+start at 0. "Humor on" now sets the ship's AI to level 3, and "humor off" sets it to 0.
+
 ## 1.10.0 — Every voice paired afresh
 
 The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and

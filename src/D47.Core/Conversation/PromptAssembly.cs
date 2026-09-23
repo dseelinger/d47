@@ -77,6 +77,19 @@ public sealed record PromptAssembly
     /// <summary>Position 8.</summary>
     public string? LiveGameState { get; init; }
 
+    /// <summary>Position 9 — this line's humor instruction, rolled per line, or null.</summary>
+    public string? Humor { get; init; }
+
+    /// <summary>Positions 8 and 9, which providers send after the history, or null when both are empty.</summary>
+    public string? TrailingState =>
+        (string.IsNullOrWhiteSpace(LiveGameState), string.IsNullOrWhiteSpace(Humor)) switch
+        {
+            (true, true) => null,
+            (false, true) => LiveGameState,
+            (true, false) => Humor,
+            _ => $"{LiveGameState}\n\n{Humor}",
+        };
+
     /// <summary>Positions 2 through 6, in order.</summary>
     public string RenderCachedSystemBlock()
     {

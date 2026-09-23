@@ -75,19 +75,19 @@ internal static class OpenAiPrompt
 
         trailingState = null;
 
-        if (string.IsNullOrWhiteSpace(prompt.LiveGameState))
+        if (string.IsNullOrWhiteSpace(prompt.TrailingState))
         {
             return turns;
         }
 
         if (operatorRoleAvailable)
         {
-            trailingState = prompt.LiveGameState;
+            trailingState = prompt.TrailingState;
             return turns;
         }
 
         // The fallback.
-        var reminder = $"<system-reminder>\n{prompt.LiveGameState}\n</system-reminder>";
+        var reminder = $"<system-reminder>\n{prompt.TrailingState}\n</system-reminder>";
 
         turns.Add(new WireTurn(IsAssistant: false, [], reminder, []));
 

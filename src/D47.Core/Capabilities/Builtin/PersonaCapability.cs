@@ -19,8 +19,17 @@ public static class PersonaCapability
 
     public const string IntroductionsKey = "persona.introductions";
 
-    /// <summary>An occasional light touch of wit, per core character (#243).</summary>
-    public const string HumorKey = "persona.humor";
+    public const string CoreHumorKey = "persona.coreHumor";
+
+    public const string CoreHumorPercentKey = "persona.coreHumorPercent";
+
+    public const string NpcHumorKey = "persona.npcHumor";
+
+    public const string NpcHumorPercentKey = "persona.npcHumorPercent";
+
+    public const string CarrierHumorKey = "persona.carrierHumor";
+
+    public const string CarrierHumorPercentKey = "persona.carrierHumorPercent";
 
     /// <summary>The row that reads what the ship the Commander is in flies with, and binds it.</summary>
     public const string ShipCoreKey = "persona.shipCore";
@@ -164,31 +173,7 @@ public static class PersonaCapability
                 },
             },
         },
-        new SettingRow
-        {
-            Key = HumorKey,
-            Advanced = true,
-            Label = "A little humor",
-            Help =
-                "On, the core is allowed an occasional light touch of wit, in its own character. "
-                + "Off is the register d47 shipped with - serious throughout.",
-            Kind = SettingKind.Toggle,
-            DefaultDisplay = "Off",
-            DocsAnchor = "humor",
-
-            // Not protected, like the name rows: the worst a hostile message can do is make the ship's AI
-            // allow itself a dry aside, and the panel row takes it straight back.
-            Commands =
-            [
-                new SettingCommandPhrase("humor on", "true"),
-                new SettingCommandPhrase("humor off", "false"),
-            ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Persona.Humor ? "true" : "false",
-                Write = (s, v) => s with { Persona = s.Persona with { Humor = v == "true" } },
-            },
-        },
+        ..HumorRows(),
         new SettingRow
         {
             Key = IntroductionsKey,
@@ -228,6 +213,120 @@ public static class PersonaCapability
         },
         ..ships is null ? Array.Empty<SettingRow>() : ShipCoreRows(host, ships),
     ];
+
+    /// <summary>A level and a frequency for each group. Not protected: either can be changed back on the panel.</summary>
+    private static SettingRow[] HumorRows() =>
+    [
+        HumorLevel(
+            CoreHumorKey,
+            "Core humor",
+            "How funny the ship's AI may be, from 0 (none) to 10 (comedian). Up to 6 the wit is "
+            + "dry: no puns, comparisons or whimsy. From 7 those are allowed.",
+            s => s.CoreHumor,
+            (p, v) => p with { CoreHumor = v },
+            [new SettingCommandPhrase("humor on", "3"), new SettingCommandPhrase("humor off", "0")]),
+        HumorPercent(
+            CoreHumorPercentKey,
+            "Core humor frequency",
+            "The share of the ship's AI's lines that get humor. d47 decides line by line.",
+            s => s.CoreHumor,
+            s => s.CoreHumorPercent,
+            (p, v) => p with { CoreHumorPercent = v }),
+        HumorLevel(
+            NpcHumorKey,
+            "NPC humor",
+            "How funny NPCs may be - chatter, hails, and the canned lines d47 rewords - from 0 "
+            + "(none) to 10 (comedian).",
+            s => s.NpcHumor,
+            (p, v) => p with { NpcHumor = v },
+            []),
+        HumorPercent(
+            NpcHumorPercentKey,
+            "NPC humor frequency",
+            "The share of NPC lines that get humor.",
+            s => s.NpcHumor,
+            s => s.NpcHumorPercent,
+            (p, v) => p with { NpcHumorPercent = v }),
+        HumorLevel(
+            CarrierHumorKey,
+            "Carrier crew humor",
+            "How funny your carrier's captain and tower may be, from 0 (none) to 10 (comedian).",
+            s => s.CarrierHumor,
+            (p, v) => p with { CarrierHumor = v },
+            []),
+        HumorPercent(
+            CarrierHumorPercentKey,
+            "Carrier crew humor frequency",
+            "The share of the captain's and tower's lines that get humor.",
+            s => s.CarrierHumor,
+            s => s.CarrierHumorPercent,
+            (p, v) => p with { CarrierHumorPercent = v }),
+    ];
+
+    private static SettingRow HumorLevel(
+        string key,
+        string label,
+        string help,
+        Func<PersonaSettings, int> read,
+        Func<PersonaSettings, int, PersonaSettings> write,
+        IReadOnlyList<SettingCommandPhrase> commands) => new()
+    {
+        Key = key,
+        Advanced = true,
+        Label = label,
+        Help = help + " Warnings never get humor.",
+        Kind = SettingKind.Number,
+        DefaultDisplay = "0",
+        DocsAnchor = "humor",
+        Group = "Humor",
+        Minimum = 0,
+        Maximum = Humor.Top,
+        Commands = commands,
+        Binding = new SettingBinding
+        {
+            Read = s => read(s.Persona).ToString(CultureInfo.InvariantCulture),
+            Write = (s, v) => s with
+            {
+                Persona = write(s.Persona, Clamped(v, Humor.Top, read(s.Persona))),
+            },
+        },
+    };
+
+    private static SettingRow HumorPercent(
+        string key,
+        string label,
+        string help,
+        Func<PersonaSettings, int> level,
+        Func<PersonaSettings, int> read,
+        Func<PersonaSettings, int, PersonaSettings> write) => new()
+    {
+        Key = key,
+        Advanced = true,
+        Label = label,
+        Help = help,
+        Kind = SettingKind.Number,
+        DefaultDisplay = PersonaSettings.DefaultHumorPercent.ToString(CultureInfo.InvariantCulture),
+        DocsAnchor = "humor",
+        Group = "Humor",
+        Minimum = 0,
+        Maximum = 100,
+        Unit = "%",
+        DisabledWhen = s => level(s.Persona) == 0,
+        Binding = new SettingBinding
+        {
+            Read = s => read(s.Persona).ToString(CultureInfo.InvariantCulture),
+            Write = (s, v) => s with
+            {
+                Persona = write(s.Persona, Clamped(v, 100, read(s.Persona))),
+            },
+        },
+    };
+
+    /// <summary>A whole number from 0 to <paramref name="most"/>, or <paramref name="unchanged"/> when it will not parse.</summary>
+    private static int Clamped(string? value, int most, int unchanged) =>
+        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)
+            ? Math.Clamp(number, 0, most)
+            : unchanged;
 
     /// <summary>A core per ship, on the panel (Phase 35).</summary>
     private static SettingRow[] ShipCoreRows(PersonaHost host, ShipCoreService ships) =>

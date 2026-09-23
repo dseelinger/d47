@@ -1,5 +1,7 @@
 using D47.Core.Audio;
+using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Persona;
 
 namespace D47.Core.Callouts;
 
@@ -225,6 +227,47 @@ public static class NpcChatter
             + Contract
             + Carrier(about, spotlight);
     }
+
+    /// <summary>
+    /// The instruction with humor rolled once for the invented speakers and once for the carrier's crew
+    /// when they are present, each result stated beside its speakers.
+    /// </summary>
+    public static string WithHumor(
+        string instruction,
+        NpcChatterCarrier? carrier,
+        PersonaSettings settings,
+        HumorRoll roll,
+        bool canBeDirected)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(roll);
+
+        var crewPresent = carrier?.Present == true;
+        var npcs = Humor.DialFor(settings, HumorGroup.Npcs);
+        var crew = Humor.DialFor(settings, HumorGroup.Carrier);
+
+        var invented = roll.Hits(npcs) ? npcs.Level : 0;
+        var own = crewPresent && roll.Hits(crew) ? crew.Level : 0;
+
+        if (invented == 0 && own == 0)
+        {
+            return instruction;
+        }
+
+        var text = instruction + " " + HumorFor("the invented speakers", invented);
+
+        if (crewPresent)
+        {
+            text += " " + HumorFor($"{TowerName} and {CaptainName}", own);
+        }
+
+        return canBeDirected ? $"{text} {Humor.Laughter}" : text;
+    }
+
+    private static string HumorFor(string who, int level) =>
+        Humor.Describe(level, canBeDirected: false) is { } described
+            ? $"Humor for {who}, level {level} of {Humor.Top}: {described}"
+            : $"No humor for {who}; they play it straight.";
 
     /// <summary>The journal's <c>StationType</c> values for a dock with a mail slot.</summary>
     private static readonly HashSet<string> StationsWithAMailSlot = new(StringComparer.OrdinalIgnoreCase)

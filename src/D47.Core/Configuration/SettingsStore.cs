@@ -169,6 +169,25 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
                 settings.Callouts.AmbientSeconds);
         }
 
+        // Humor was one toggle for the cores and is now a level and a frequency per group.
+        if (settings.Persona.Humor is { } humor)
+        {
+            settings = settings with
+            {
+                Persona = settings.Persona with
+                {
+                    CoreHumor = humor ? LegacyHumorLevel : 0,
+                    CoreHumorPercent = PersonaSettings.DefaultHumorPercent,
+                    Humor = null,
+                },
+            };
+
+            logger.LogInformation(
+                "Humor is now a level and a frequency; the cores start at {Level} and {Percent}%",
+                settings.Persona.CoreHumor,
+                settings.Persona.CoreHumorPercent);
+        }
+
         // The panel pitch was the whole tilt angle and is now a trim on top of one derived from distance and
         // drop, so every value already on disk means something else than it did.
         if (settings.Vr.PitchRepaired < PitchRepair)
@@ -233,6 +252,9 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
     /// <summary>Which revision of the pitch repair this build performs.</summary>
     private const int PitchRepair = 1;
+
+    /// <summary>The cores' level for a file that had humor switched on.</summary>
+    private const int LegacyHumorLevel = 3;
 
     /// <summary>What the old pitch was in absolute degrees, expressed as a trim on the derived tilt.</summary>
     private static VrSurfaceSettings Retrim(VrSurfaceSettings surface)

@@ -350,6 +350,12 @@ public sealed class TurnLoop(
     /// </summary>
     public Func<bool>? CanBeDirected { get; set; }
 
+    /// <summary>
+    /// Rolls humor for one turn: given the group speaking and whether the voice can be directed, the
+    /// instruction on a hit, or null.
+    /// </summary>
+    public Func<D47.Core.Persona.HumorGroup, bool, string?>? HumorFor { get; set; }
+
     /// <summary>Live game state for the turn about to run.</summary>
     public Func<string?>? LiveGameState { get; set; }
 
@@ -1027,6 +1033,12 @@ public sealed class TurnLoop(
         // What this turn says it thought at, which is not always what it asked for (Phase 54).
         var effortReported = providerCapabilities.SupportsThinkingEffort ? effort : (ThinkingEffort?)null;
 
+        // Rolled once for the whole turn, so the rounds of one reply agree.
+        var directed = CanBeDirected?.Invoke() == true;
+        var humor = HumorFor?.Invoke(
+            speaker is null ? D47.Core.Persona.HumorGroup.Cores : D47.Core.Persona.Humor.GroupOf(speaker.Role),
+            directed);
+
         // What this turn has said so far, tool rounds included.
         List<ConversationMessage> pending =
             [new ConversationMessage(ConversationRole.User, speaker is null ? Spoken() + input : input)];
@@ -1080,12 +1092,13 @@ public sealed class TurnLoop(
                     Tools = lastRound ? [] : advertised,
                     ToolsSearchable = searchable,
                     Persona = speaker?.Brief ?? Persona,
-                    CanBeDirected = CanBeDirected?.Invoke() == true,
+                    CanBeDirected = directed,
                     AboutMe = AboutMe,
                     Recall = speaker is null ? Recall : null,
                     Directions = speaker is null ? Directions : null,
                     History = [.. transcript, .. pending],
                     LiveGameState = LiveGameState?.Invoke(),
+                    Humor = humor,
                 },
             };
 

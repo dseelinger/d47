@@ -2736,6 +2736,7 @@ public sealed class AppHost : IDisposable
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
         // describes the voice a Commander will actually hear.
         Turns.CanBeDirected = () => DirectableIn(VoiceGroup.Aboard);
+        Turns.HumorFor = HumorFor;
 
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's thirteen
         // hundred tokens are paid once per edit rather than per turn (Phase 43).
@@ -3823,7 +3824,8 @@ public sealed class AppHost : IDisposable
                         gap.TelemetryDelta,
                         Spend,
                         PriceTable.Default,
-                        _logger);
+                        _logger,
+                        humor: HumorFor(HumorGroup.Cores, canBeDirected: false));
 
                     var generated = await AskAsync(instruction).ConfigureAwait(false);
 
@@ -3853,7 +3855,8 @@ public sealed class AppHost : IDisposable
                         gameState: null,
                         Spend,
                         PriceTable.Default,
-                        _logger);
+                        _logger,
+                        humor: HumorFor(HumorGroup.Cores, canBeDirected: false));
 
                     var generated = await AskAsync(brief.Instruction).ConfigureAwait(false);
 
@@ -5156,6 +5159,13 @@ public sealed class AppHost : IDisposable
     /// <summary>Which lines with a brief actually go to the model, and what is said when none comes back.</summary>
     private readonly Core.Callouts.Rewording _rewording;
 
+    /// <summary>Decides, line by line, which model-written lines get humor.</summary>
+    private readonly HumorRoll _humor = new();
+
+    /// <summary>The humor instruction for one line from a group, or null on a miss.</summary>
+    private string? HumorFor(HumorGroup group, bool canBeDirected) =>
+        _humor.ForLine(Humor.DialFor(Settings.Current.Persona, group), canBeDirected);
+
     /// <summary>
     /// The same announcement, said in character, when there is a model to ask and it is one of the
     /// lines the checklist wants varied (Phase 11: "with varied LLM arrival and departure responses").
@@ -5169,20 +5179,27 @@ public sealed class AppHost : IDisposable
             Settings.Current.Llm.RewordPercent,
             () => ShipFacts.Of(GameState.Active),
             GameState.Active?.Identity.Name,
-            (brief, ask, token) => FlavourTurn.AskForAsync(
-                Turns.Provider,
-                Turns.BackgroundModel,
-                brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
-                StoryFor(brief),
-                ask,
-                brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
-                Spend,
-                PriceTable.Default,
-                _logger,
-                token,
-
+            (brief, ask, token) =>
+            {
                 // Against the slot this line will be spoken in, not the ship's.
-                canBeDirected: DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel))));
+                var directed = DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel));
+
+                return FlavourTurn.AskForAsync(
+                    Turns.Provider,
+                    Turns.BackgroundModel,
+                    brief.NeedsPersona ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
+                    StoryFor(brief),
+                    ask,
+                    brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
+                    Spend,
+                    PriceTable.Default,
+                    _logger,
+                    token,
+                    canBeDirected: directed,
+                    humor: FlavourBriefs.HumorGroupOf(announcement, brief) is { } group
+                        ? HumorFor(group, directed)
+                        : null);
+            });
     }
 
     /// <summary>How long an exchange may spend being written.</summary>
@@ -5215,18 +5232,25 @@ public sealed class AppHost : IDisposable
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
+        var directed = DirectableIn(VoiceGroup.Npcs);
+
         var script = await FlavourTurn.AskAsync(
             Turns.Provider,
             Turns.BackgroundModel,
             NpcChatter.Speaker,
             null,
-            NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType),
+            NpcChatter.WithHumor(
+                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType),
+                carrier,
+                Settings.Current.Persona,
+                _humor,
+                directed),
             Turns.LiveGameState?.Invoke(),
             Spend,
             PriceTable.Default,
             _logger,
             budget.Token,
-            canBeDirected: DirectableIn(VoiceGroup.Npcs)).ConfigureAwait(false);
+            canBeDirected: directed).ConfigureAwait(false);
 
         var facts = ShipFacts.Of(GameState.Active);
         var heard = new List<Announcement>();

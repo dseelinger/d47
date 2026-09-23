@@ -61,9 +61,10 @@ public static class SettingsLayout
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
     /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the eight Guardian voice toggles
     /// rather than collapsing them into one family entry (23 entries with the Test row, all Advanced,
-    /// so 0 shown beyond what already applied) (#225, #226).
+    /// so 0 shown beyond what already applied) (#225, #226); <c>persona</c> spells out a humor level and
+    /// frequency for each of three groups (17 entries, the six humor rows Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -272,12 +273,22 @@ public static class SettingsLayout
                         [
                             E("persona.id"),
                             E("llm.personality"),
-                            E("persona.humor"),
                             E("persona.introductions"),
                             E("persona.own"),
                             E("llm.characterSheet"),
                             E("llm.aboutMe"),
                         ]),
+                        G(
+                            "Humor",
+                            "How funny each group may be, and on how many of its lines.",
+                            [
+                                E("persona.coreHumor"),
+                                E("persona.coreHumorPercent", under: true),
+                                E("persona.npcHumor"),
+                                E("persona.npcHumorPercent", under: true),
+                                E("persona.carrierHumor"),
+                                E("persona.carrierHumorPercent", under: true),
+                            ]),
                         G(
                             "Ship name",
                             "What you call your ship's AI, and whether the name follows it across a core switch.",

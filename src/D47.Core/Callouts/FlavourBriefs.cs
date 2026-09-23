@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Conversation;
+using D47.Core.Persona;
 
 namespace D47.Core.Callouts;
 
@@ -68,6 +69,21 @@ public static class FlavourBriefs
             // The sheet, so the first words are addressed to somebody — a name, not "Commander" every time.
             NeedsAboutMe = true,
         };
+    }
+
+    /// <summary>Whose humor settings a briefed line follows, or null for a warning, which never gets any.</summary>
+    public static HumorGroup? HumorGroupOf(Announcement announcement, FlavourBrief brief)
+    {
+        ArgumentNullException.ThrowIfNull(announcement);
+        ArgumentNullException.ThrowIfNull(brief);
+
+        if (announcement.Urgency == CalloutUrgency.Urgent
+            || string.Equals(announcement.Key, AnnouncedAttackCallout.HuntedKey, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return brief.NeedsPersona ? HumorGroup.Cores : Humor.GroupOf(announcement.Voice);
     }
 
     /// <summary>The brief for one announcement, or null when it is to be said exactly as written.</summary>

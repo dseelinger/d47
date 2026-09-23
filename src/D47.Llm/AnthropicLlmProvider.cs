@@ -404,16 +404,16 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         }
 
         // Live game state goes after the cached history either way.
-        if (!string.IsNullOrWhiteSpace(prompt.LiveGameState))
+        if (!string.IsNullOrWhiteSpace(prompt.TrailingState))
         {
             if (capabilities.SupportsOperatorSystemMessages)
             {
-                messages.Add(new MessageParam { Role = Role.System, Content = prompt.LiveGameState });
+                messages.Add(new MessageParam { Role = Role.System, Content = prompt.TrailingState });
             }
             else if (messages.Count > 0)
             {
                 var last = messages[^1];
-                var reminder = $"<system-reminder>\n{prompt.LiveGameState}\n</system-reminder>";
+                var reminder = $"<system-reminder>\n{prompt.TrailingState}\n</system-reminder>";
 
                 // Folded into the last message rather than added after it: a message of its own would be a
                 // second user turn in a row, and in the middle of a tool round it would stand between a

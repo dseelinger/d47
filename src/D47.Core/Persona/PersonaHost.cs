@@ -55,9 +55,6 @@ public sealed class PersonaHost
 
     private string? _shipNameOverride;
 
-    /// <summary>Whether the humor line rides the block (#243).</summary>
-    private bool _humor;
-
     public PersonaHost(Persona? current = null, IIntroductionMemory? memory = null)
     {
         Current = current ?? PersonaCatalog.Resolve(null);
@@ -109,7 +106,7 @@ public sealed class PersonaHost
 
     /// <summary>The persona block for the assembled prompt, or null when personality is off.</summary>
     public string? RenderBlock(bool personalityEnabled) =>
-        personalityEnabled ? Current.RenderBlock(_shipNameOverride, _humor) : null;
+        personalityEnabled ? Current.RenderBlock(_shipNameOverride) : null;
 
     /// <summary>Applies the persona and ship-name settings.</summary>
     /// <param name="away">How long the incoming core has been off, for its gap reaction.</param>
@@ -125,7 +122,6 @@ public sealed class PersonaHost
         PersonaSwitch cause = PersonaSwitch.Selected)
     {
         _shipNameOverride = settings.ShipName;
-        _humor = settings.Humor;
 
         var incoming = PersonaCatalog.Resolve(settings.Id);
 
