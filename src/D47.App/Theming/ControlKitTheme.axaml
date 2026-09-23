@@ -85,81 +85,83 @@
     </ControlTheme>
 
     <!--
-      A button whose only content is a glyph — the stepper's arrows, the amount control's spinner
-      buttons, and every reset icon (#376). No frame in any state; the whole cell takes the ground,
-      not the glyph's bounds. Applies to Button and, since RepeatButton derives from it, to
-      RepeatButton too.
+      A button whose only content is a glyph: a 34-square Tile holding an A glyph, centred in a hit
+      target of at least 44 x 44. Hover or keyboard focus turns the tile solid A with a Knock glyph and
+      opens a label flush beside it naming the button, taken from AutomationProperties.Name, so every
+      glyph button must set one. Disabled, the glyph is Grey2 and no label opens. No glow. Applies to
+      RepeatButton, which derives from Button.
     -->
     <ControlTheme x:Key="D47.GlyphButton" TargetType="Button">
-      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="0" />
-      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="MinWidth" Value="44" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
-      <Setter Property="FocusAdorner" Value="{x:Static theming:FocusRing.Template}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Grid ClipToBounds="False">
-            <!-- Hover halo (#379). The ground stays transparent (#376), so the halo comes from a hidden
-                 Accent cell, its ghosts hollow so only the glow outside the cell draws. -->
-            <theming:BloomStack x:Name="HoverGlow" Tier="Low" IsLit="False" IsHollow="True" ClipToBounds="False">
-              <Border Background="{DynamicResource D47.Accent}" Opacity="0" IsHitTestVisible="False" />
-            </theming:BloomStack>
-            <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
-              <Border x:Name="Ground"
-                      Background="{TemplateBinding Background}"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch">
-                <ContentPresenter x:Name="PART_ContentPresenter"
-                                  Content="{TemplateBinding Content}"
-                                  Foreground="{TemplateBinding Foreground}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center" />
+          <Panel Background="Transparent">
+            <Border x:Name="Tile"
+                    Width="34"
+                    Height="34"
+                    Background="{TemplateBinding Background}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+            </Border>
+            <Popup x:Name="Label"
+                   PlacementTarget="{Binding ElementName=Tile}"
+                   Placement="Right"
+                   IsLightDismissEnabled="False"
+                   IsOpen="False">
+              <Border Background="{DynamicResource D47.Bg}"
+                      BorderBrush="{DynamicResource D47.A}"
+                      BorderThickness="1"
+                      Height="34"
+                      Padding="10,0"
+                      IsHitTestVisible="False">
+                <TextBlock x:Name="LabelText"
+                           Text="{TemplateBinding (AutomationProperties.Name), Converter={x:Static theming:Capitals.Text}}"
+                           Foreground="{DynamicResource D47.White}"
+                           FontFamily="{StaticResource D47.Font.Chrome}"
+                           FontSize="{StaticResource D47.Type.Meta}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
               </Border>
-            </theming:BloomStack>
-          </Grid>
+            </Popup>
+          </Panel>
         </ControlTemplate>
       </Setter>
 
-      <!--
-        The transition lives here, gated to everything but the pressed state, so pressing in jumps
-        straight to Accent while releasing eases back over 120ms (the ToggleSwitch technique at
-        this file's line 146, made one-directional).
-      -->
-      <Style Selector="^:not(:pressed) /template/ Border#Ground">
-        <Setter Property="Transitions">
-          <Transitions>
-            <BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
-          </Transitions>
-        </Setter>
-      </Style>
-
-      <!-- Hover lifts the ink alone; the ground stays transparent. -->
       <Style Selector="^:pointerover">
-        <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
-      </Style>
-
-      <!-- The hover halo (#379), off again once the press lights the Normal-tier glow instead. -->
-      <Style Selector="^:pointerover:not(:pressed) /template/ theming|BloomStack#HoverGlow">
-        <Setter Property="IsLit" Value="True" />
-      </Style>
-
-      <Style Selector="^:focus-visible">
-        <Setter Property="Foreground" Value="{DynamicResource D47.Text}" />
-      </Style>
-
-      <Style Selector="^:pressed">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-        <Style Selector="^ /template/ theming|BloomStack#Glow">
-          <Setter Property="IsLit" Value="True" />
-        </Style>
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       </Style>
 
-      <!-- No hover or press while disabled — a limit reads the same as an empty list. -->
+      <Style Selector="^:pointerover:not(:disabled) /template/ Popup#Label">
+        <Setter Property="IsOpen" Value="True" />
+      </Style>
+      <Style Selector="^:focus-visible:not(:disabled) /template/ Popup#Label">
+        <Setter Property="IsOpen" Value="True" />
+      </Style>
+
       <Style Selector="^:disabled">
-        <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
       </Style>
     </ControlTheme>
 
@@ -442,22 +444,22 @@
     </ControlTheme>
 
     <!--
-      Text entry: a ground, no corners, one lit edge on the bottom rather than a box, so a field
-      cannot be mistaken for a read-only row (#335). PART_TextPresenter's own caret is drawn
+      Text entry: a 1px A outline on all four sides over no ground, White text, a Grey2 placeholder and
+      a Line selection. Focus turns the outline Cyan; disabled turns it Grey2. PART_TextPresenter's own caret is drawn
       transparent; a BlockCaret overlay tracks its caret position and draws the 9x21 Accent block
       instead (#350). The template keeps Fluent's own parts — PART_TextPresenter, the two
       placeholder TextBlocks, PART_ScrollViewer — so selection and the floating placeholder still
       work; only the brushes, sizing and the corner radius are d47's.
     -->
     <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
-      <Setter Property="Foreground" Value="{DynamicResource D47.AccentInk}" />
-      <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
-      <Setter Property="CaretBrush" Value="{DynamicResource D47.Accent}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CaretBrush" Value="{DynamicResource D47.A}" />
       <Setter Property="CaretBlinkInterval" Value="0:0:1.1" />
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Accent}" />
-      <Setter Property="SelectionBrush" Value="{DynamicResource D47.AccentMuted}" />
-      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextFaint}" />
-      <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
+      <Setter Property="SelectionBrush" Value="{DynamicResource D47.Line}" />
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.Grey2}" />
+      <Setter Property="BorderThickness" Value="1" />
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Padding" Value="13,0" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
@@ -550,8 +552,13 @@
         </ControlTemplate>
       </Setter>
 
+      <Style Selector="^:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Cyan}" />
+      </Style>
+
       <Style Selector="^:disabled">
-        <Setter Property="Foreground" Value="{DynamicResource D47.TextMuted}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Grey2}" />
       </Style>
 
       <Style Selector="^[UseFloatingPlaceholder=true]:not(:empty) /template/ TextBlock#PART_FloatingPlaceholder">
@@ -562,8 +569,8 @@
     <!--
       The border and stepper buttons a NumericUpDown wraps its field in — kept as its own theme
       because NumericUpDown composes an actual ButtonSpinner rather than drawing the spinner
-      itself (#289). Square, no fill; the increase/decrease glyphs take D47.GlyphButton (#376),
-      each in a 40-wide cell, repeating after 400 ms at 8 per second. The dividers are drawn here,
+      itself (#289). Square, no fill; the increase/decrease glyphs take D47.GlyphButton, each in a
+      44-wide cell, repeating after 400 ms at 8 per second. The dividers are drawn here,
       on the control, so they hold D47.Border regardless of a button's state.
     -->
     <ControlTheme x:Key="D47.NumberSpinner" TargetType="ButtonSpinner">
@@ -586,8 +593,9 @@
                               Theme="{StaticResource D47.GlyphButton}"
                               IsTabStop="{TemplateBinding IsTabStop}"
                               Content="▲"
+                              AutomationProperties.Name="Increase"
                               FontSize="{StaticResource D47.Type.Small}"
-                              Width="40"
+                              Width="44"
                               Delay="400"
                               Interval="125"
                               VerticalAlignment="Stretch"
@@ -598,8 +606,9 @@
                               Theme="{StaticResource D47.GlyphButton}"
                               IsTabStop="{TemplateBinding IsTabStop}"
                               Content="▼"
+                              AutomationProperties.Name="Decrease"
                               FontSize="{StaticResource D47.Type.Small}"
-                              Width="40"
+                              Width="44"
                               Delay="400"
                               Interval="125"
                               VerticalAlignment="Stretch"
@@ -625,15 +634,15 @@
     </ControlTheme>
 
     <!--
-      A number field, 44 tall in a D47.Rule frame: the value in mono, InnerRightContent as the
-      unit chip beside it, then the spinner above. Focus underlines the value cell only.
+      A number field, 46 tall so its spinner cells stay 44, outlined as a text field is: the value in mono, InnerRightContent as the
+      unit chip beside it, then the spinner. Focus turns the whole outline Cyan.
     -->
     <ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
-      <Setter Property="Foreground" Value="{DynamicResource D47.AccentInk}" />
-      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.TextMuted}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Rule}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource D47.Grey2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Height" Value="44" />
+      <Setter Property="Height" Value="46" />
       <Setter Property="Padding" Value="14,0" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Mono}" />
@@ -683,8 +692,11 @@
         </ControlTemplate>
       </Setter>
 
-      <Style Selector="^:focus-within /template/ TextBox#PART_TextBox">
-        <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Style Selector="^:focus-within">
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Cyan}" />
+      </Style>
+      <Style Selector="^:disabled">
+        <Setter Property="BorderBrush" Value="{DynamicResource D47.Grey2}" />
       </Style>
     </ControlTheme>
 

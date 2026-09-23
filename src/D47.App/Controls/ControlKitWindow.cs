@@ -1,5 +1,6 @@
 #if DEBUG
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
@@ -392,7 +393,7 @@ public sealed class ControlKitWindow : Window
             FontSize = TypeScale.Meta,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var chip = new Border { BorderThickness = new Thickness(1, 0, 0, 0), Padding = new Thickness(11, 0), Child = text };
         Themed(chip, Border.BorderBrushProperty, ThemeManager.BorderKey);
@@ -683,6 +684,7 @@ public sealed class ControlKitWindow : Window
                 Height = TypeScale.MinimumTarget,
             };
 
+            AutomationProperties.SetName(reset, "Reset to default");
             Grid.SetColumn(reset, 4);
             grid.Children.Add(reset);
         }

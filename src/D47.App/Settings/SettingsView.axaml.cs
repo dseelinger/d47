@@ -744,8 +744,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         reset.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
         AutomationProperties.SetName(reset, $"Reset {title}");
 
-        ToolTip.SetTip(reset, "Reset to default");
-
         reset.Click += (_, _) =>
         {
             _settings!.ResetPlace(place.Id, SettingsCaller.Panel);
@@ -881,8 +879,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         reset.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
         AutomationProperties.SetName(reset, $"Reset {group}");
-
-        ToolTip.SetTip(reset, "Reset to default");
 
         reset.Click += (_, _) =>
         {
@@ -2409,8 +2405,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             back.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
             AutomationProperties.SetName(back, $"Reset {row.Label}");
 
-            ToolTip.SetTip(back, "Reset to default");
-
             back.Click += (_, _) =>
             {
                 // Every key the control holds, so resetting a merged row puts both halves back rather than
@@ -3788,7 +3782,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 FontSize = TypeScale.Meta,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
+            Themed(text, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
             var chip = new Border
             {

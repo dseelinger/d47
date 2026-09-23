@@ -11,7 +11,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The field's side padding, faint placeholder and block caret (#350).</summary>
+/// <summary>The field's side padding, Grey2 placeholder and block caret (#350).</summary>
 public class FieldGetsSidePaddingAndBlockCaretTests
 {
     private static (Window Window, TextBox Box) Open()
@@ -35,14 +35,14 @@ public class FieldGetsSidePaddingAndBlockCaretTests
     }
 
     [AvaloniaFact]
-    public void PaddingIsThirteenHorizontalAndPlaceholderIsTextFaint()
+    public void PaddingIsThirteenHorizontalAndPlaceholderIsGrey2()
     {
         var (_, box) = Open();
 
         Assert.Equal(new Thickness(13, 0), box.Padding);
 
         var resources = Application.Current!.Resources;
-        Assert.Equal(resources[ThemeManager.TextFaintKey], box.PlaceholderForeground);
+        Assert.Equal(resources[ThemeManager.Grey2Key], box.PlaceholderForeground);
     }
 
     [AvaloniaFact]
@@ -57,7 +57,7 @@ public class FieldGetsSidePaddingAndBlockCaretTests
         Assert.Same(presenter, caret.Target);
 
         var resources = Application.Current!.Resources;
-        Assert.Equal(resources[ThemeManager.AccentKey], caret.Brush);
+        Assert.Equal(resources[ThemeManager.AKey], caret.Brush);
         Assert.Equal(TimeSpan.FromSeconds(1.1), caret.Interval);
     }
 

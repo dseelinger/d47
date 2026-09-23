@@ -20,10 +20,9 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Hovering a glyph button lights a Low-tier halo around its hover ground without painting over the
-/// ground itself. A button, a tab and a segment carry no hover glow; only the selected tab glows
-/// (#393, #394). Keyboard focus lights the same halo behind the focus ring without touching the
-/// ring's own outline (#379).
+/// A button, a glyph button, a tab and a segment carry no hover glow; only the selected tab glows
+/// (#393, #394, #396). Keyboard focus lights a Low-tier halo behind the focus ring without touching
+/// the ring's own outline (#379).
 /// </summary>
 public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 {
@@ -48,51 +47,6 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
         Hover(window, button);
 
         Assert.Empty(button.GetVisualDescendants().OfType<BloomStack>());
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void HoveringAGlyphButtonLightsTheLowHaloWithTheGroundStillTransparent()
-    {
-        using var kit = ControlKitTheme();
-        Manager().Apply(ThemeCatalog.Elite);
-
-        var button = GlyphButton();
-        var window = Open(button);
-
-        Hover(window, button);
-
-        var halo = button.GetVisualDescendants().OfType<BloomStack>().Single(stack => stack.Name == "HoverGlow");
-        Assert.True(halo.IsLit);
-        AssertGlowing(halo);
-
-        var ground = button.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "Ground");
-        Assert.Equal(Colors.Transparent, ((ISolidColorBrush)ground.Background!).Color);
-
-        window.Close();
-    }
-
-    /// <summary>The halo draws outside the cell and leaves the cell itself as it was.</summary>
-    [AvaloniaFact]
-    public void AHoveredGlyphButtonsCellIsNotFilledByItsHalo()
-    {
-        using var kit = ControlKitTheme();
-        Manager().Apply(ThemeCatalog.Elite);
-
-        var button = GlyphButton();
-        var window = Open(button);
-
-        var inside = At(button, window, 3, 3);
-        var outside = At(button, window, -3, 22);
-
-        var restInside = Pixel(window, inside);
-        var restOutside = Pixel(window, outside);
-
-        Hover(window, button);
-
-        Assert.Equal(restInside, Pixel(window, inside));
-        Assert.NotEqual(restOutside, Pixel(window, outside));
 
         window.Close();
     }
@@ -157,35 +111,18 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     }
 
     [AvaloniaFact]
-    public void LightShowsNoHaloEvenWhileHovering()
-    {
-        using var kit = ControlKitTheme();
-        Manager().Apply(ThemeCatalog.Light);
-
-        var button = GlyphButton();
-        var window = Open(button);
-
-        Hover(window, button);
-
-        var halo = button.GetVisualDescendants().OfType<BloomStack>().Single(stack => stack.Name == "HoverGlow");
-        Assert.All(halo.Ghosts, ghost => Assert.False(ghost.IsVisible));
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void FocusLightsALowHaloBehindTheRingWithTheOutlineAtFullStrength()
     {
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
 
-        var button = GlyphButton();
-        var window = Open(button);
+        var slider = new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 };
+        var window = Open(slider);
 
-        button.Focus(NavigationMethod.Tab);
+        slider.Focus(NavigationMethod.Tab);
         Dispatcher.UIThread.RunJobs();
 
-        var layer = AdornerLayer.GetAdornerLayer(button)!;
+        var layer = AdornerLayer.GetAdornerLayer(slider)!;
         var stack = layer.GetVisualDescendants().OfType<BloomStack>().Single();
 
         Assert.True(stack.IsLit);
@@ -202,14 +139,6 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         window.Close();
     }
-
-    private static Button GlyphButton() => new()
-    {
-        Theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!,
-        Content = "↺",
-        Width = 44,
-        Height = 44,
-    };
 
     private static void AssertGlowing(BloomStack stack)
     {

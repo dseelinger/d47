@@ -42,6 +42,12 @@ title is white, no longer glows, and sits over an accent-coloured rule. Section 
 smaller, with the rule beneath them instead of beside them. The smallest text is 12 instead of 11.
 A settings row label too long for its column wraps instead of running under the control beside it.
 
+Text and number fields have a thin accent-coloured outline on all four sides, which turns cyan
+while you type in the field, with white text on no background. Units beside a number read in the
+accent colour. Icon buttons, such as reset and a number's up and down arrows, are square tiles that
+fill solid on hover or when reached with Tab, and a label naming the button appears beside the tile
+straight away. They no longer have a tooltip, and no longer glow.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

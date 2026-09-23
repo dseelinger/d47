@@ -190,18 +190,9 @@ public class EveryGlowIsAStackOfGhostsTests
             var panelWindow = new Window { Content = panel, Width = 1180, Height = 880 };
             panelWindow.Show();
 
-            var glyph = new Button
-            {
-                Theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!,
-                Content = "↺",
-                Width = 44,
-                Height = 44,
-            };
-
             var kit = new Controls(
                 TitleText.Screen("Screen title"),
                 new ToggleSwitch { IsChecked = true },
-                glyph,
                 new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 });
 
             var kitWindow = new Window
@@ -209,16 +200,11 @@ public class EveryGlowIsAStackOfGhostsTests
                 Title = "Directive 47 — 0.1.0",
                 Width = 800,
                 Height = 600,
-                Content = new StackPanel { Children = { kit.Title, kit.Switch, kit.Glyph, kit.Level } },
+                Content = new StackPanel { Children = { kit.Title, kit.Switch, kit.Level } },
             };
             CaptionStrip.Apply(kitWindow);
             kitWindow.Show();
 
-            Dispatcher.UIThread.RunJobs();
-
-            // Held down, not released.
-            var centre = glyph.TranslatePoint(new Point(22, 22), kitWindow)!.Value;
-            kitWindow.MouseDown(centre, MouseButton.Left);
             Dispatcher.UIThread.RunJobs();
 
             return new Scene(panel, model, panelWindow, kitWindow, kit);
@@ -238,7 +224,6 @@ public class EveryGlowIsAStackOfGhostsTests
             yield return ("microphone dot", BloomTier.High, Panel.FindControl<BloomStack>("MicrophoneBloom")!);
             yield return ("active tab", BloomTier.Normal, Within(Panel.FindControl<RadioButton>("TranscriptTab")!, stack => stack.Name == "Glow"));
             yield return ("lit switch half", BloomTier.Normal, Within(Kit.Switch));
-            yield return ("pressed glyph button", BloomTier.Normal, Within(Kit.Glyph, stack => stack.Name == "Glow"));
         }
 
         public void Dispose()
@@ -254,5 +239,5 @@ public class EveryGlowIsAStackOfGhostsTests
     }
 
     private sealed record Controls(
-        Control Title, ToggleSwitch Switch, Button Glyph, Slider Level);
+        Control Title, ToggleSwitch Switch, Slider Level);
 }

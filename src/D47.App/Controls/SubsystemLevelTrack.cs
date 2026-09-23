@@ -293,7 +293,6 @@ public sealed class SubsystemLevelTrack : ContentControl
             IsVisible = false,
         };
 
-        ToolTip.SetTip(reset, "Reset to default");
         AutomationProperties.SetName(reset, $"Reset {row.Label}");
         reset.Click += (_, _) => ClearRow(row);
         Grid.SetColumn(reset, Stops.Length + 2);
