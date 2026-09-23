@@ -80,22 +80,11 @@ public static class Palettes
         AccentMuted = Color.Parse("#C69178"),
     };
 
-    public static Palette Guardian { get; } = new()
-    {
-        IsDark = true,
-        InkIsAccent = true,
-        Background = Color.Parse("#040705"),
-        Text = Color.Parse("#DCEFEA"),
-        Accent = Color.Parse("#3BE377"),
-        AccentMuted = Color.Parse("#226A39"),
-    };
-
     /// <summary>The palette for a theme id, before any HUD matrix is applied.</summary>
     public static Palette For(string? themeId) => ThemeCatalog.Selected(themeId).Id switch
     {
         ThemeCatalog.Dark => Dark,
         ThemeCatalog.Light => Light,
-        ThemeCatalog.Guardian => Guardian,
         _ => Elite,
     };
 }

@@ -73,7 +73,7 @@ public class TurnThreadingTests
 
         var thrown = await OffTheUiThread(() => settings.Apply(
             "ui.theme",
-            D47.Core.Interface.ThemeCatalog.Guardian,
+            D47.Core.Interface.ThemeCatalog.ElitePaletteId,
             D47.Core.Configuration.SettingsCaller.Model));
 
         Assert.Null(thrown);

@@ -141,10 +141,10 @@ public class AFileFromANewerBuildStillLoadsTests
         var surface = TestSurface.For(install, settings: new D47Settings(), loadFailed: true);
 
         var result = surface.Settings.Apply(
-            InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+            InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
 
         // Applied in memory, so it is live for this run...
-        Assert.Equal(ThemeCatalog.Guardian, surface.Settings.Current.Ui.Theme);
+        Assert.Equal(ThemeCatalog.ElitePaletteId, surface.Settings.Current.Ui.Theme);
 
         // ...and the row says why it will not outlive it.
         Assert.Equal(SettingApplyStatus.Failed, result.Status);

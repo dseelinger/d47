@@ -33,7 +33,6 @@ public class EveryGlowIsAStackOfGhostsTests
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
-    [InlineData(ThemeCatalog.Guardian)]
     [InlineData(ThemeCatalog.ElitePaletteId)]
     public void EveryGlowingElementHasOneLitGhostPerStop(string themeId)
     {

@@ -70,11 +70,11 @@ public class SettingsCapabilityTests
             new ToolArguments(new Dictionary<string, string>
             {
                 ["key"] = InterfaceCapability.ThemeKey,
-                ["value"] = ThemeCatalog.Guardian,
+                ["value"] = ThemeCatalog.ElitePaletteId,
             }));
 
         Assert.False(result.IsError);
-        Assert.Equal(ThemeCatalog.Guardian, surface.Settings.Current.Ui.Theme);
+        Assert.Equal(ThemeCatalog.ElitePaletteId, surface.Settings.Current.Ui.Theme);
     }
 
     [Theory]

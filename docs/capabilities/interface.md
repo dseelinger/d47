@@ -210,7 +210,6 @@ the phrase list is where Directive 47 meets your words, and the label is where i
 | `elite` | Amber on near-black. The default, and the one that matches the cockpit. |
 | `dark` | Neutral dark. No colour opinion. |
 | `light` | Neutral light, for a desktop that is not in a dark room. |
-| `guardian` | Guardian teal and gold. |
 | `elite-palette` | Elite, recoloured to match your own HUD. |
 
 ##### What the accent is for

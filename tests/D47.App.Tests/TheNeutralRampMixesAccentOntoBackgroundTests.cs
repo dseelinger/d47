@@ -80,9 +80,9 @@ public class TheNeutralRampMixesAccentOntoBackgroundTests
         manager.Apply(ThemeCatalog.Elite);
         var eliteRule = ((SolidColorBrush)Application.Current!.Resources[ThemeManager.RuleKey]!).Color;
 
-        manager.Apply(ThemeCatalog.Guardian);
-        var guardianRule = ((SolidColorBrush)Application.Current!.Resources[ThemeManager.RuleKey]!).Color;
+        manager.Apply(ThemeCatalog.Dark);
+        var darkRule = ((SolidColorBrush)Application.Current!.Resources[ThemeManager.RuleKey]!).Color;
 
-        Assert.NotEqual(eliteRule, guardianRule);
+        Assert.NotEqual(eliteRule, darkRule);
     }
 }

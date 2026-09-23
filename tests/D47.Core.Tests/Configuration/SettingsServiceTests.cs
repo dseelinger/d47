@@ -25,14 +25,14 @@ public class SettingsServiceTests
         using var install = new TempInstall();
         var surface = TestSurface.For(install);
 
-        var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+        var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
 
         Assert.Equal(SettingApplyStatus.Applied, result.Status);
-        Assert.Equal(ThemeCatalog.Guardian, surface.Settings.Current.Ui.Theme);
+        Assert.Equal(ThemeCatalog.ElitePaletteId, surface.Settings.Current.Ui.Theme);
 
         // Read back through a second store over the same folder — a restart, in effect.
         var reloaded = TestSurface.For(install);
-        Assert.Equal(ThemeCatalog.Guardian, reloaded.Settings.Current.Ui.Theme);
+        Assert.Equal(ThemeCatalog.ElitePaletteId, reloaded.Settings.Current.Ui.Theme);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class SettingsServiceTests
         Directory.CreateDirectory(install.Paths.SettingsFile + ".writing");
 
         var result = surface.Settings.Apply(
-            InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+            InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
 
         Assert.Equal(SettingApplyStatus.Failed, result.Status);
         Assert.Equal([new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Failed)], applied);
@@ -125,7 +125,7 @@ public class SettingsServiceTests
         var shouted = InterfaceCapability.ThemeKey.ToUpperInvariant();
         Assert.NotEqual(InterfaceCapability.ThemeKey, shouted);
 
-        var result = surface.Settings.Apply(shouted, ThemeCatalog.Guardian, SettingsCaller.Panel);
+        var result = surface.Settings.Apply(shouted, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
 
         Assert.Equal(SettingApplyStatus.Applied, result.Status);
         Assert.Equal([InterfaceCapability.ThemeKey], applied);
@@ -265,7 +265,7 @@ public class SettingsServiceTests
         var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, "sparkly", SettingsCaller.Panel);
 
         Assert.Equal(SettingApplyStatus.Rejected, result.Status);
-        Assert.Contains(ThemeCatalog.Guardian, result.Message, StringComparison.Ordinal);
+        Assert.Contains(ThemeCatalog.ElitePaletteId, result.Message, StringComparison.Ordinal);
     }
 
     [Fact]

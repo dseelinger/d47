@@ -6,6 +6,11 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.6.3 — Guardian theme removed
+
+The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,
+with no error. The Guardian voice and Guardian cores are unaffected.
+
 ## 1.6.2 — Controls drop their ornaments
 
 The Interface capability now has a Bloom setting, beside Theme: 0 to 2.5, default 1.1. Changing it

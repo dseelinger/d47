@@ -26,7 +26,6 @@ public class ADarkThemeGlowsAndLightDoesNotTests
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
-    [InlineData(ThemeCatalog.Guardian)]
     [InlineData(ThemeCatalog.ElitePaletteId)]
     public void EveryDarkThemeCarriesEveryBloomStopAndScanlines(string themeId)
     {

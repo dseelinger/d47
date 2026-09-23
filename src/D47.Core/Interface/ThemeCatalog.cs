@@ -11,8 +11,6 @@ public static class ThemeCatalog
 
     public const string Elite = "elite";
 
-    public const string Guardian = "guardian";
-
     /// <summary>Derived from the Commander's own HUD matrix — see <see cref="ElitePalette"/>.</summary>
     public const string ElitePaletteId = "elite-palette";
 
@@ -21,7 +19,6 @@ public static class ThemeCatalog
         new(Elite, "Elite", "Amber on near-black. The default, and the one that matches the cockpit."),
         new(Dark, "Dark", "Neutral dark. No colour opinion."),
         new(Light, "Light", "Neutral light, for a desktop that is not in a dark room."),
-        new(Guardian, "Guardian", "Guardian teal and gold."),
         new(ElitePaletteId, "Elite colour scheme", "Elite, recoloured by your own HUD matrix if you have one."),
     ];
 

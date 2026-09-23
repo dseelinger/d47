@@ -140,10 +140,10 @@ public class CommanderScopeTests
         var surface = TestSurface.For(install);
 
         surface.Settings.UseCommander("F1", "Alice");
-        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Guardian, SettingsCaller.Panel);
+        surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
 
         var reloaded = TestSurface.For(install).Settings.Current;
-        Assert.Equal(ThemeCatalog.Guardian, reloaded.Ui.Theme);
+        Assert.Equal(ThemeCatalog.ElitePaletteId, reloaded.Ui.Theme);
 
         // No entry was created for a Commander who set nothing of their own.
         Assert.Empty(reloaded.Commanders);

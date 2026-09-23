@@ -99,4 +99,19 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
         Assert.Contains("habits", System.IO.File.ReadAllText(install.Paths.SettingsFile), StringComparison.Ordinal);
         Assert.Equal("0.170.0", settings.LastVersion);
     }
+
+    /// <summary>A theme the catalogue dropped (#389) opens as Elite rather than failing to load.</summary>
+    [Fact]
+    public void ARetiredThemeOpensAsElite()
+    {
+        using var install = new TempInstall();
+        System.IO.File.WriteAllText(
+            install.Paths.SettingsFile,
+            """{ "schemaVersion": 1, "ui": { "theme": "guardian" } }""");
+
+        var store = StoreFor(install);
+        var settings = store.Load(Running);
+
+        Assert.Equal(ThemeCatalog.Elite, ThemeCatalog.Selected(settings.Ui.Theme).Id);
+    }
 }

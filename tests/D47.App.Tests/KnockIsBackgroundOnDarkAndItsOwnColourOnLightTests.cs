@@ -17,7 +17,6 @@ public class KnockIsBackgroundOnDarkAndItsOwnColourOnLightTests
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
-    [InlineData(ThemeCatalog.Guardian)]
     public void KnockIsBackgroundOnEveryDarkPalette(string themeId)
     {
         Manager().Apply(themeId);

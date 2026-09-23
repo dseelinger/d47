@@ -37,7 +37,6 @@ public class EveryRoleDerivesFromAccentAndBackgroundTests
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
     [InlineData(ThemeCatalog.Light)]
-    [InlineData(ThemeCatalog.Guardian)]
     public void NoRoleResolvesToAPartiallyTransparentSolidColourBrush(string themeId)
     {
         Manager().Apply(themeId);
@@ -70,12 +69,10 @@ public class EveryRoleDerivesFromAccentAndBackgroundTests
         Assert.Equal(Palettes.Light.Text, ((SolidColorBrush)Application.Current!.Resources[ThemeManager.TextKey]!).Color);
     }
 
-    [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite)]
-    [InlineData(ThemeCatalog.Guardian)]
-    public void EliteAndGuardianSetTextToAccent(string themeId)
+    [AvaloniaFact]
+    public void EliteSetsTextToAccent()
     {
-        Manager().Apply(themeId);
+        Manager().Apply(ThemeCatalog.Elite);
 
         var resources = Application.Current!.Resources;
 
