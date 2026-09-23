@@ -3,38 +3,83 @@ using D47.Core.Interface;
 
 namespace D47.App.Theming;
 
-/// <summary>Colour by role, never by name.</summary>
+/// <summary>Elite's token table for one theme: fixed neutrals, one meaning per coloured token.</summary>
 public sealed record Palette
 {
     public required bool IsDark { get; init; }
 
-    /// <summary>Whether <see cref="ThemeManager.TextKey"/> is <see cref="Accent"/> rather than <see cref="Text"/>.</summary>
-    public required bool InkIsAccent { get; init; }
+    /// <summary>Whether the theme draws bloom and scanlines.</summary>
+    public required bool Glows { get; init; }
 
-    /// <summary>The window behind everything, and the base colour every derived role mixes onto.</summary>
-    public required Color Background { get; init; }
+    /// <summary>Window ground.</summary>
+    public required Color Bg { get; init; }
 
-    /// <summary>The neutral ink, used only where <see cref="InkIsAccent"/> is false.</summary>
-    public required Color Text { get; init; }
+    /// <summary>Title bar, modal ground.</summary>
+    public required Color Bar { get; init; }
 
-    /// <summary>The theme's own colour: focus, headings, the ask button, and the other base colour every derived role mixes with.</summary>
-    public required Color Accent { get; init; }
+    /// <summary>Read-only data tile.</summary>
+    public required Color Slab { get; init; }
 
-    /// <summary>The same colour with the volume down.</summary>
-    public required Color AccentMuted { get; init; }
+    /// <summary>Identity and speech.</summary>
+    public required Color White { get; init; }
 
-    /// <summary>Near-black, mixed with Accent for AccentInk on a light theme.</summary>
-    public static Color NearBlack { get; } = Color.Parse("#140800");
+    /// <summary>Labels, helper prose.</summary>
+    public required Color Grey { get; init; }
 
-    /// <summary>Off-white, the Knock ink on a solid accent fill in the Light theme.</summary>
-    public static Color OffWhite { get; } = Color.Parse("#FBF8F2");
+    /// <summary>Placeholders, disabled.</summary>
+    public required Color Grey2 { get; init; }
 
-    /// <summary>Recolours the accents through Elite's own HUD matrix.</summary>
+    /// <summary>Values, interactive text, rules, frames.</summary>
+    public required Color A { get; init; }
+
+    /// <summary>Text on solid <see cref="A"/>.</summary>
+    public required Color Knock { get; init; }
+
+    /// <summary>Secondary text in a selected row.</summary>
+    public required Color Brown { get; init; }
+
+    /// <summary>Yours, here, ready.</summary>
+    public required Color Cyan { get; init; }
+
+    /// <summary>Confirmed, met.</summary>
+    public required Color Blue { get; init; }
+
+    /// <summary>Destructive, hostile, locked, error.</summary>
+    public required Color Red { get; init; }
+
+    /// <summary>Stored, capacity.</summary>
+    public required Color Yellow { get; init; }
+
+    /// <summary><see cref="A"/> at 20% onto <see cref="Bg"/>, in OKLab.</summary>
+    public Color Tile => Mix(Bg, A, 0.20);
+
+    /// <summary><see cref="A"/> at 30% onto <see cref="Bg"/>, in OKLab.</summary>
+    public Color Tile2 => Mix(Bg, A, 0.30);
+
+    /// <summary><see cref="A"/> at 55% onto <see cref="Bg"/>, in OKLab.</summary>
+    public Color Line => Mix(Bg, A, 0.55);
+
+    /// <summary><see cref="A"/> at 28% onto <see cref="Bg"/>, in OKLab.</summary>
+    public Color Line2 => Mix(Bg, A, 0.28);
+
+    /// <summary>Passes the coloured tokens through Elite's HUD matrix, leaving the neutrals as they are.</summary>
     public Palette RecolouredBy(GuiColourMatrix matrix) => this with
     {
-        Accent = Transform(matrix, Accent),
-        AccentMuted = Transform(matrix, AccentMuted),
+        A = Transform(matrix, A),
+        Knock = Transform(matrix, Knock),
+        Brown = Transform(matrix, Brown),
+        Cyan = Transform(matrix, Cyan),
+        Blue = Transform(matrix, Blue),
+        Red = Transform(matrix, Red),
+        Yellow = Transform(matrix, Yellow),
     };
+
+    /// <summary>Mixes <paramref name="to"/> into <paramref name="from"/> by <paramref name="t"/>, in OKLab.</summary>
+    public static Color Mix(Color from, Color to, double t)
+    {
+        var (r, g, b) = OklabMixing.Mix((from.R, from.G, from.B), (to.R, to.G, to.B), t);
+        return Color.FromRgb(r, g, b);
+    }
 
     private static Color Transform(GuiColourMatrix matrix, Color colour)
     {
@@ -46,39 +91,52 @@ public sealed record Palette
 /// <summary>The shipped palettes, one per <see cref="ThemeCatalog"/> id.</summary>
 public static class Palettes
 {
-    /// <summary>Amber on black.</summary>
     public static Palette Elite { get; } = new()
     {
         IsDark = true,
-        InkIsAccent = true,
-
-        // Near-black rather than pure black: the Accent tint on a bubble or a pane still reads as a
-        // lit panel against a ground with nothing in it.
-        Background = Color.Parse("#08070A"),
-        Text = Color.Parse("#E8E2D8"),
-        Accent = Color.Parse("#FF7A1A"),
-        AccentMuted = Color.Parse("#773D1E"),
+        Glows = true,
+        Bg = Color.Parse("#070606"),
+        Bar = Color.Parse("#0F0D0C"),
+        Slab = Color.Parse("#232120"),
+        White = Color.Parse("#EDE9E3"),
+        Grey = Color.Parse("#A09B94"),
+        Grey2 = Color.Parse("#6E6A65"),
+        A = Color.Parse("#FF7A1A"),
+        Knock = Color.Parse("#140800"),
+        Brown = Color.Parse("#6B2F00"),
+        Cyan = Color.Parse("#33D6E8"),
+        Blue = Color.Parse("#1FA8F5"),
+        Red = Color.Parse("#F0343F"),
+        Yellow = Color.Parse("#F5D426"),
     };
 
-    public static Palette Dark { get; } = new()
-    {
-        IsDark = true,
-        InkIsAccent = false,
-        Background = Color.Parse("#121212"),
-        Text = Color.Parse("#E6E6E6"),
-        Accent = Color.Parse("#4C8DFF"),
-        AccentMuted = Color.Parse("#2F5DA8"),
-    };
+    public static Palette Dark { get; } = Mixed(
+        isDark: true,
+        bg: Color.Parse("#1E1E1E"),
+        bar: Color.Parse("#2D2D2D"),
+        slab: Color.Parse("#252526"),
+        white: Color.Parse("#D4D4D4"),
+        grey: Color.Parse("#9D9D9D"),
+        a: Color.Parse("#3794FF"),
+        knock: Color.Parse("#0B1F33"),
+        cyan: Color.Parse("#4EC9B0"),
+        blue: Color.Parse("#569CD6"),
+        red: Color.Parse("#F48771"),
+        yellow: Color.Parse("#DCDCAA"));
 
-    public static Palette Light { get; } = new()
-    {
-        IsDark = false,
-        InkIsAccent = false,
-        Background = Color.Parse("#EAE6DE"),
-        Text = Color.Parse("#1A1A1A"),
-        Accent = Color.Parse("#9A3B00"),
-        AccentMuted = Color.Parse("#C69178"),
-    };
+    public static Palette Light { get; } = Mixed(
+        isDark: false,
+        bg: Color.Parse("#F4F1EB"),
+        bar: Color.Parse("#E6E1D8"),
+        slab: Color.Parse("#E4DFD6"),
+        white: Color.Parse("#1C1917"),
+        grey: Color.Parse("#5E5852"),
+        a: Color.Parse("#B84E00"),
+        knock: Color.Parse("#FFFFFF"),
+        cyan: Color.Parse("#007C8A"),
+        blue: Color.Parse("#0B6BCB"),
+        red: Color.Parse("#C8192B"),
+        yellow: Color.Parse("#8A6D00"));
 
     /// <summary>The palette for a theme id, before any HUD matrix is applied.</summary>
     public static Palette For(string? themeId) => ThemeCatalog.Selected(themeId).Id switch
@@ -86,5 +144,27 @@ public static class Palettes
         ThemeCatalog.Dark => Dark,
         ThemeCatalog.Light => Light,
         _ => Elite,
+    };
+
+    /// <summary>A palette without glow whose <see cref="Palette.Grey2"/> is grey 45% toward bg and <see cref="Palette.Brown"/> is a 60% toward knock.</summary>
+    private static Palette Mixed(
+        bool isDark, Color bg, Color bar, Color slab, Color white, Color grey,
+        Color a, Color knock, Color cyan, Color blue, Color red, Color yellow) => new()
+    {
+        IsDark = isDark,
+        Glows = false,
+        Bg = bg,
+        Bar = bar,
+        Slab = slab,
+        White = white,
+        Grey = grey,
+        Grey2 = Palette.Mix(grey, bg, 0.45),
+        A = a,
+        Knock = knock,
+        Brown = Palette.Mix(a, knock, 0.60),
+        Cyan = cyan,
+        Blue = blue,
+        Red = red,
+        Yellow = yellow,
     };
 }

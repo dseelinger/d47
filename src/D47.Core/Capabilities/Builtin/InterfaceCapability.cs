@@ -75,15 +75,14 @@ public static class InterfaceCapability
                 Key = BloomKey,
                 Label = "Bloom",
                 Help = "How wide the glow halos draw around the panel's edges. 0 turns the glow off; "
-                       + "the top of the range draws the widest halos. Dark themes only — Light draws "
-                       + "no glow at any value.",
+                       + "the top of the range draws the widest halos. Elite and Elite colour scheme only — "
+                       + "Dark and Light draw no glow at any value.",
                 Kind = SettingKind.Number,
                 Step = 0.1,
                 Minimum = 0,
                 Maximum = 2.5,
                 DocsAnchor = "bloom",
-                DisabledWhen = s => string.Equals(
-                    ThemeCatalog.Selected(s.Ui.Theme).Id, ThemeCatalog.Light, StringComparison.OrdinalIgnoreCase),
+                DisabledWhen = s => ThemeCatalog.Selected(s.Ui.Theme).Id is ThemeCatalog.Dark or ThemeCatalog.Light,
                 Binding = new SettingBinding
                 {
                     Read = s => s.Ui.BloomAmount.ToString(CultureInfo.InvariantCulture),

@@ -901,14 +901,14 @@
   </DockPanel>
 
   <!--
-    Scanlines, over the whole window and on top of everything else — dark themes only, since the
-    brush itself is null in Light (#345). Never hit-testable: a Commander's press or a headset's
+    Scanlines, over the whole window and on top of everything else — only on a theme that glows, since the
+    brush itself is null otherwise. Never hit-testable: a Commander's press or a headset's
     ray must land on the panel underneath, not on this.
   -->
   <!--
     The brush is built in code for this surface's render scaling, not taken from the resource, which only
     says whether the theme has scanlines at all. No bitmap smoothing, so a 1px line stays 1px.
   -->
-  <Border x:Name="Scanlines" Opacity="0.55" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
+  <Border x:Name="Scanlines" Opacity="0.5" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
   </Panel>
 </UserControl>

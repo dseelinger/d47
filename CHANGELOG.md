@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.7.0 — Elite's colours
+
+Every theme now draws from a fixed table of colours, one meaning each, instead of mixing every
+shade from the accent. Body text is off-white on Elite instead of amber. Neutral greys stay the
+same whatever your HUD colour is, and only the coloured tokens follow the HUD matrix under Elite
+colour scheme. Dark no longer glows or draws scanlines, and the Bloom setting is shown disabled
+on Dark as well as Light. The scanlines are slightly lighter. The Control Kit's Ramp section
+shows every colour with its hex value.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

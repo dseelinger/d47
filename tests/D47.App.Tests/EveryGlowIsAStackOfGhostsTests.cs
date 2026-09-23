@@ -23,7 +23,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Every element #377's tier table names glows through one ghost per stop of its tier, each ghost
-/// carrying one stop's effect, and Light draws none of them.
+/// carrying one stop's effect, and Dark and Light draw none of them.
 /// </summary>
 public class EveryGlowIsAStackOfGhostsTests
 {
@@ -32,7 +32,6 @@ public class EveryGlowIsAStackOfGhostsTests
 
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
-    [InlineData(ThemeCatalog.Dark)]
     [InlineData(ThemeCatalog.ElitePaletteId)]
     public void EveryGlowingElementHasOneLitGhostPerStop(string themeId)
     {
@@ -57,17 +56,19 @@ public class EveryGlowIsAStackOfGhostsTests
         }
     }
 
-    [AvaloniaFact]
-    public void LightDrawsNoGhost()
+    [AvaloniaTheory]
+    [InlineData(ThemeCatalog.Dark)]
+    [InlineData(ThemeCatalog.Light)]
+    public void DarkAndLightDrawNoGhost(string themeId)
     {
         using var kit = ControlKitTheme();
-        Manager().Apply(ThemeCatalog.Light);
+        Manager().Apply(themeId);
 
         using var scene = Scene.Open();
 
         foreach (var (name, _, stack) in scene.Glows())
         {
-            Assert.All(stack.Ghosts, ghost => Assert.False(ghost.IsVisible, $"{name} draws a ghost in Light"));
+            Assert.All(stack.Ghosts, ghost => Assert.False(ghost.IsVisible, $"{name} draws a ghost in {themeId}"));
         }
     }
 

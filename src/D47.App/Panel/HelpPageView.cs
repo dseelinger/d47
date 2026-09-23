@@ -193,27 +193,7 @@ public sealed class HelpFigureView : Control
 
         return this.TryFindResource(key, out var found) && found is IBrush brush
             ? brush
-            : new SolidColorBrush(Fallback(colour));
-    }
-
-    private static Color Fallback(HelpColour role)
-    {
-        var palette = Palettes.Elite;
-        var derived = DerivedPalette.From(palette);
-
-        return role switch
-        {
-            HelpColour.Background => palette.Background,
-            HelpColour.Surface => derived.Surface,
-            HelpColour.SurfaceAlt => derived.SurfaceAlt,
-            HelpColour.Border => derived.Border,
-            HelpColour.Text => derived.Text,
-            HelpColour.TextMuted => derived.TextMuted,
-            HelpColour.Accent => palette.Accent,
-            HelpColour.AccentMuted => palette.AccentMuted,
-            HelpColour.Danger => derived.Danger,
-            _ => derived.Info,
-        };
+            : new SolidColorBrush(ThemeManager.Legacy(Palettes.Elite)[key]);
     }
 }
 

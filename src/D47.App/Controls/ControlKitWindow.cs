@@ -97,10 +97,10 @@ public sealed class ControlKitWindow : Window
         _field.CaretIndex = _field.Text?.Length ?? 0;
     }
 
-    /// <summary>The panel's scanline layer over the whole window, drawn on dark themes only.</summary>
+    /// <summary>The panel's scanline layer over the whole window, drawn only on a theme that glows.</summary>
     private Border Scanlines()
     {
-        var scanlines = new Border { Opacity = 0.55, IsHitTestVisible = false };
+        var scanlines = new Border { Opacity = ThemeManager.ScanlinesOpacity, IsHitTestVisible = false };
         RenderOptions.SetBitmapInterpolationMode(scanlines, BitmapInterpolationMode.None);
 
         void Show() => scanlines.Background =
@@ -320,7 +320,7 @@ public sealed class ControlKitWindow : Window
         var accentBox = new TextBox
         {
             Width = 160,
-            PlaceholderText = Palettes.Elite.Accent.ToString(),
+            PlaceholderText = Palettes.Elite.A.ToString(),
             VerticalAlignment = VerticalAlignment.Stretch,
         };
         var apply = new Button
@@ -365,13 +365,13 @@ public sealed class ControlKitWindow : Window
     }
 
     /// <summary>
-    /// A diagonal matrix that scales Elite's own Accent to <paramref name="target"/> one channel at a
+    /// A diagonal matrix that scales Elite's own <see cref="Palette.A"/> to <paramref name="target"/> one channel at a
     /// time — the same shape a Commander's HUD colour matrix takes, so typing an Accent exercises
     /// <see cref="ThemeManager.Apply"/>'s matrix path rather than a shortcut around it (#358).
     /// </summary>
     private static GuiColourMatrix MatrixFor(Color target)
     {
-        var source = Palettes.Elite.Accent;
+        var source = Palettes.Elite.A;
 
         double Scale(byte from, byte to) => from == 0 ? 0 : to / (double)from;
 
@@ -381,31 +381,31 @@ public sealed class ControlKitWindow : Window
             0, 0, Scale(source.B, target.B));
     }
 
-    // -- Status, derived from Accent --
+    // -- Status --
 
     private static Control StatusSection()
     {
         var intro = Prose(
-            "Status hues are anchored (danger 27°, warn 82°, good 146°, info 248°) but take their lightness and "
-                + "chroma from Accent. Switch theme above and watch them follow — no fixed hex survives the HUD matrix.",
+            "Each coloured token has one meaning. On the HUD-matrix theme all of them pass through the matrix; "
+                + "the neutrals do not.",
             TypeScale.Body,
-            ThemeManager.TextMutedKey);
+            ThemeManager.GreyKey);
         intro.MaxWidth = 680;
 
         var bars = Reflow(
             [
-                StatusBar("ACCENT", ThemeManager.AccentKey),
-                StatusBar("DANGER · rebuy", ThemeManager.DangerKey),
-                StatusBar("WARN · over budget", ThemeManager.WarnKey),
-                StatusBar("GOOD · unlocked", ThemeManager.GoodKey),
-                StatusBar("INFO · inherited", ThemeManager.InfoKey),
+                StatusBar("A · values, rules", ThemeManager.AKey),
+                StatusBar("CYAN · yours, ready", ThemeManager.CyanKey),
+                StatusBar("BLUE · confirmed", ThemeManager.BlueKey),
+                StatusBar("RED · hostile, error", ThemeManager.RedKey),
+                StatusBar("YELLOW · stored", ThemeManager.YellowKey),
             ],
             BarMinWidth,
             BarGap,
             BarGap,
             maxColumns: 5);
 
-        return Section("Status, derived from Accent", new StackPanel { Spacing = 16, Children = { intro, bars } });
+        return Section("Status", new StackPanel { Spacing = 16, Children = { intro, bars } });
     }
 
     private static Control StatusBar(string label, string fillKey)
@@ -431,38 +431,12 @@ public sealed class ControlKitWindow : Window
     {
         var ramp = new WrapPanel { ItemSpacing = 20, LineSpacing = 20 };
 
-        foreach (var (token, key) in new[]
+        foreach (var key in ThemeManager.Tokens)
         {
-            ("hot", ThemeManager.AccentInkKey),
-            ("ink", ThemeManager.TextKey),
-            ("ink-2", ThemeManager.TextMutedKey),
-            ("ink-3", ThemeManager.TextFaintKey),
-            ("line", ThemeManager.RuleKey),
-            ("line-2", ThemeManager.BorderKey),
-            ("fill-1", ThemeManager.FillLowKey),
-            ("fill-2", ThemeManager.FillHighKey),
-            ("fill-3", ThemeManager.FillHigherKey),
-            ("knock", ThemeManager.KnockKey),
-            ("Background", ThemeManager.BackgroundKey),
-        })
-        {
-            ramp.Children.Add(Swatch(token, key));
+            ramp.Children.Add(Swatch(key["D47.".Length..].ToLowerInvariant(), key));
         }
 
-        var status = new WrapPanel { ItemSpacing = 20, LineSpacing = 20 };
-
-        foreach (var (token, key) in new[]
-        {
-            ("danger", ThemeManager.DangerKey),
-            ("warn", ThemeManager.WarnKey),
-            ("good", ThemeManager.GoodKey),
-            ("info", ThemeManager.InfoKey),
-        })
-        {
-            status.Children.Add(Swatch(token, key));
-        }
-
-        return Section("Ramp", new StackPanel { Spacing = 20, Children = { ramp, status } });
+        return Section("Ramp", ramp);
     }
 
     private static Control Swatch(string token, string resourceKey)
@@ -488,7 +462,12 @@ public sealed class ControlKitWindow : Window
         };
         Themed(key, TextBlock.ForegroundProperty, ThemeManager.TextFaintKey);
 
-        return new StackPanel { Spacing = 6, Width = 130, Children = { box, name, key } };
+        var hex = new TextBlock { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Caption };
+        Themed(hex, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        box.GetResourceObservable(resourceKey).Subscribe(new Avalonia.Reactive.AnonymousObserver<object?>(value =>
+            hex.Text = value is SolidColorBrush { Color: var c } ? $"#{c.R:X2}{c.G:X2}{c.B:X2}" : null));
+
+        return new StackPanel { Spacing = 6, Width = 130, Children = { box, name, hex, key } };
     }
 
     // -- Four ranks of heading --

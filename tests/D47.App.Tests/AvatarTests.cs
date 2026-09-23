@@ -104,7 +104,7 @@ public class AvatarTests
         var accent = Assert.IsType<SolidColorBrush>(core.Fill, exactMatch: false);
 
         Assert.NotEqual(Colors.Gray, accent.Color);
-        Assert.Equal(Palettes.Elite.Accent, accent.Color);
+        Assert.Equal(Palettes.Elite.A, accent.Color);
     }
 
     [AvaloniaFact]

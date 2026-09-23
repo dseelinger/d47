@@ -251,8 +251,8 @@ How wide the panel's glow halos draw, 0 to 2.5 in steps of 0.1, default 1.1:
 2.5                      the widest halos the range offers
 ```
 
-Dark themes only. On `light`, the row is shown disabled and nothing glows at any value — bloom
-does not exist in a theme that never draws it.
+`elite` and `elite-palette` only. On `dark` and `light`, the row is shown disabled and nothing
+glows at any value — bloom does not exist in a theme that never draws it.
 
 #### Zoom {#zoom}
 

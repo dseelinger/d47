@@ -147,7 +147,7 @@ public static class CaptionStrip
         tint.Bind(Border.BackgroundProperty, tint.GetResourceObservable(ThemeManager.PaneFillKey));
 
         // Over the text as well as the tint, sampled pixel for pixel so each line stays 1px, as on the panel.
-        var scanlines = new Border { Opacity = 0.55, IsHitTestVisible = false };
+        var scanlines = new Border { Opacity = ThemeManager.ScanlinesOpacity, IsHitTestVisible = false };
         RenderOptions.SetBitmapInterpolationMode(scanlines, BitmapInterpolationMode.None);
 
         void ShowScanlines() => scanlines.Background =

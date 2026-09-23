@@ -7,14 +7,16 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Bloom and scanlines (#345, #377): present in every dark theme, absent in Light.</summary>
-public class ADarkThemeGlowsAndLightDoesNotTests
+/// <summary>Bloom and scanlines: on for Elite and the HUD-matrix theme, off for Dark and Light.</summary>
+public class EliteGlowsAndDarkAndLightDoNotTests
 {
     private static ThemeManager Manager() =>
         new(Application.Current!, NullLogger<ThemeManager>.Instance);
@@ -25,9 +27,8 @@ public class ADarkThemeGlowsAndLightDoesNotTests
 
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
-    [InlineData(ThemeCatalog.Dark)]
     [InlineData(ThemeCatalog.ElitePaletteId)]
-    public void EveryDarkThemeCarriesEveryBloomStopAndScanlines(string themeId)
+    public void AGlowingThemeCarriesEveryBloomStopAndScanlines(string themeId)
     {
         Manager().Apply(themeId);
 
@@ -40,6 +41,20 @@ public class ADarkThemeGlowsAndLightDoesNotTests
         }
 
         Assert.IsType<ImageBrush>(resources[ThemeManager.ScanlinesKey]);
+    }
+
+    /// <summary>The Bloom setting is disabled on exactly the themes whose palette does not glow.</summary>
+    [Fact]
+    public void TheBloomRowIsDisabledWhereThePaletteDoesNotGlow()
+    {
+        var row = InterfaceCapability.Create().Settings.Single(r => r.Key == InterfaceCapability.BloomKey);
+
+        foreach (var id in ThemeCatalog.Ids)
+        {
+            var settings = D47Settings.Defaults with { Ui = D47Settings.Defaults.Ui with { Theme = id } };
+
+            Assert.Equal(!Palettes.For(id).Glows, row.DisabledWhen!(settings));
+        }
     }
 
     /// <summary>The bloom tier's widest stop, [38, 22] at amount 1.1, with no offset.</summary>
@@ -64,10 +79,12 @@ public class ADarkThemeGlowsAndLightDoesNotTests
     public void AConvertedRadiusSpreadsAsFarAsTheCssOne(double css) =>
         Assert.Equal(css / 2, (0.288675 * ThemeManager.SkiaBlurRadius(css)) + 0.5, 9);
 
-    [AvaloniaFact]
-    public void LightCarriesNoBloomAndNoScanlinesButStillDrawsTheRule()
+    [AvaloniaTheory]
+    [InlineData(ThemeCatalog.Dark)]
+    [InlineData(ThemeCatalog.Light)]
+    public void DarkAndLightCarryNoBloomAndNoScanlinesButStillDrawTheRule(string themeId)
     {
-        Manager().Apply(ThemeCatalog.Light);
+        Manager().Apply(themeId);
 
         var resources = Application.Current!.Resources;
 
@@ -120,9 +137,9 @@ public class ADarkThemeGlowsAndLightDoesNotTests
         Assert.Same(scanlines, root.Children[^1]);
     }
 
-    /// <summary>The overlay is 55% opaque as a whole, on top of the tile's own 34% alpha line (#345).</summary>
+    /// <summary>The overlay is half opaque as a whole, on top of the tile's own 30% alpha line.</summary>
     [AvaloniaFact]
-    public void TheScanlineLayerIsFiftyFivePercentOpaque()
+    public void TheScanlineLayerIsHalfOpaque()
     {
         Manager().Apply(ThemeCatalog.Elite);
 
@@ -132,7 +149,7 @@ public class ADarkThemeGlowsAndLightDoesNotTests
 
         var scanlines = view.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "Scanlines");
 
-        Assert.Equal(0.55, scanlines.Opacity);
+        Assert.Equal(0.5, scanlines.Opacity);
     }
 
     /// <summary>The unselected tab's label carries no Effect at all — it sits on a tinted fill, where a glow has
