@@ -34,13 +34,15 @@ public class SecretRowTests
         host.View.Reveal(D47.Core.Capabilities.Builtin.ConversationCapability.Id);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("No key", Texts(host));
-        Assert.DoesNotContain("Key stored", Texts(host));
+        Assert.Contains("NO KEY", Texts(host));
+        Assert.DoesNotContain("KEY STORED", Texts(host));
+        Assert.Equal(Ink(ThemeManager.GreyKey), Badge(host, "NO KEY"));
 
         settings.Apply("llm.anthropic.apiKey", "sk-not-a-real-key", SettingsCaller.Panel);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Key stored", Texts(host));
+        Assert.Contains("KEY STORED", Texts(host));
+        Assert.Equal(Ink(ThemeManager.YellowKey), Badge(host, "KEY STORED"));
 
         // And the box stops inviting a first key once there is one to replace.
         Assert.Contains(
@@ -49,6 +51,13 @@ public class SecretRowTests
 
         host.Close();
     }
+
+    private static Avalonia.Media.Color? Badge(SettingsHost host, string words) =>
+        (host.View.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == words).Foreground
+            as Avalonia.Media.ISolidColorBrush)?.Color;
+
+    private static Avalonia.Media.Color Ink(string key) =>
+        ((Avalonia.Media.ISolidColorBrush)Application.Current!.FindResource(key)!).Color;
 
     [AvaloniaFact]
     public void VerifyIsShutUntilAKeyHasBeenTyped()

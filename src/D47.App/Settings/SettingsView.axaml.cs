@@ -406,7 +406,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // own line rather than disappearing.
             var alone = BulkControls();
 
-            alone.Margin = new Thickness(16, 0, 16, 4);
+            alone.Margin = new Thickness(0, 0, 0, 4);
             Cards.Children.Add(alone);
             _topStrip = alone;
         }
@@ -432,7 +432,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
             NavItems.Children.Add(areaHeading);
 
-            var filterHeading = BuildFilterAreaHeading(area.Title);
+            var (filterRow, filterHeading) = BuildFilterAreaHeading(area.Title);
 
             foreach (var place in area.Places)
             {
@@ -453,7 +453,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             _navAreas.Add(
                 new AreaView(
                     area.Id, area.Title, area.Sentence, areaHeading, areaHeadingText, areaHeadingBar,
-                    filterHeading, first, _sections.Count - first));
+                    filterRow, filterHeading, first, _sections.Count - first));
         }
 
         if (_sections.Count > 0)
@@ -482,7 +482,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var rows = settings.RowsForPlace(placeId);
 
-        var content = new StackPanel { Spacing = 16, Margin = new Thickness(0, 8, 0, 0) };
+        var content = new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 0) };
 
         for (var i = 0; i < rows.Count; i++)
         {
@@ -506,7 +506,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 continue;
             }
 
-            var view = BuildRow(SectionOwning(settings, row), row, shaded: i % 2 == 1);
+            var view = BuildRow(SectionOwning(settings, row), row);
             _rows.Add(view);
             content.Children.Add(view.Container);
         }
@@ -563,8 +563,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var content = new StackPanel
         {
-            Spacing = 16,
-            Margin = new Thickness(16, 4, 16, 16),
+            Spacing = 2,
+            Margin = new Thickness(0, 8, 0, 0),
             // Applied while building, not after painting: a card that flashes open and then collapses is
             // worse than one that never remembered (Phase 4).
             IsVisible = _viewState.IsExpanded(place.Id, place.StartCollapsed),
@@ -597,11 +597,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             {
                 foreach (var row in settings.RowsForEntry(entry))
                 {
-                    // Alternates on every row this card draws, so the stripe holds regardless of how
-                    // groups and folds arrange the rows (#279).
-                    var view = BuildRow(owners[row.Key], row, shaded: rows.Count % 2 == 1)
-                        with
-                    { Section = index, GroupIndex = groupIndex };
+                    var view = BuildRow(owners[row.Key], row) with { Section = index, GroupIndex = groupIndex };
 
                     if (entry.Under)
                     {
@@ -623,7 +619,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             FontSize = TypeScale.Secondary,
             Padding = new Thickness(0),
             MinWidth = 0,
-            Margin = new Thickness(0, -4, 0, 0),
+            Margin = new Thickness(0, 8, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
@@ -631,7 +627,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             IsVisible = false,
         };
 
-        Themed(foldButton, Button.ForegroundProperty, ThemeManager.AccentKey);
+        Themed(foldButton, Button.ForegroundProperty, ThemeManager.AKey);
 
         foldButton.Click += (_, _) =>
         {
@@ -652,13 +648,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Width = 14,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var heading = new TextBlock { FontWeight = FontWeight.Medium, VerticalAlignment = VerticalAlignment.Center };
-        TitleText.Style(heading, TypeScale.Caption, TitleRank.Subgroup);
+        var heading = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+        TitleText.Style(heading, TypeScale.Section, TitleRank.Group);
         TitleText.Show(heading, title);
 
-        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         headerRow.Children.Add(chevron);
         headerRow.Children.Add(heading);
 
@@ -710,7 +706,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var header = new Border
         {
-            Padding = new Thickness(12, 12),
+            Padding = new Thickness(0, 4),
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.Hand),
             Child = headerRow,
@@ -738,19 +734,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         header.PointerPressed += (_, _) => Expand(!content.IsVisible);
 
-        header.PointerEntered += (_, _) => header.Background = Res(ThemeManager.FillLowKey);
+        header.PointerEntered += (_, _) => header.Background = Res(ThemeManager.TileKey);
         header.PointerExited += (_, _) => header.Background = Brushes.Transparent;
 
         var body = new StackPanel();
-        body.Children.Add(header);
+        body.Children.Add(TitleText.GroupRow(header));
         body.Children.Add(content);
 
         var card = new Border { Child = body };
-
-        CardChrome.Card(card);
-
-        // On the page ground rather than CardFill, which is Tile, so a segment's Tile options show.
-        Themed(card, Border.BackgroundProperty, ThemeManager.BgKey);
 
         return (card, content, heading, Expand, foldButton);
     }
@@ -758,22 +749,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     private (Control Container, TextBlock Heading, TextBlock? Help) BuildGroupHeading(
         string group, string? help, string? resetSlot = null)
     {
-        // Full text colour at the row-label size, not muted at help-text size.
-        var heading = new TextBlock
-        {
-            Text = group,
-            FontSize = TypeScale.Body,
-            FontWeight = FontWeight.Medium,
-        };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        var heading = new TextBlock();
+        TitleText.Style(heading, TypeScale.Caption, TitleRank.Group);
+        TitleText.Show(heading, group);
+        heading.TextWrapping = TextWrapping.Wrap;
 
         var stack = new StackPanel { Spacing = 4, Margin = new Thickness(0, 16, 0, 4) };
 
-        // The rule goes above the heading.
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 8) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.BorderKey);
-
-        stack.Children.Add(rule);
+        var rule = new Border { Height = 1 };
+        Themed(rule, Border.BackgroundProperty, ThemeManager.LineKey);
 
         if (resetSlot is { } slot)
         {
@@ -795,12 +779,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             stack.Children.Add(heading);
         }
 
+        stack.Children.Add(rule);
+
         TextBlock? note = null;
 
         if (!string.IsNullOrWhiteSpace(help))
         {
             note = new TextBlock { Text = help, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-            Themed(note, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             stack.Children.Add(note);
         }
 
@@ -852,7 +838,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             LetterSpacing = TypeScale.Secondary * Fonts.ChromeTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         // The selected tree node's own mark (#279), shared in shape with a place's below.
         var bar = new Border
@@ -861,7 +847,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Margin = new Thickness(0, 4, 8, 4),
             Opacity = 0,
         };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
+        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(bar, Dock.Left);
@@ -883,18 +869,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     }
 
     /// <summary>The area's title, drawn once above its group of cards while a query is active (#220).</summary>
-    private TextBlock BuildFilterAreaHeading(string title)
+    private static (Control Row, TextBlock Text) BuildFilterAreaHeading(string title)
     {
-        var heading = new TextBlock
-        {
-            Text = title,
-            FontSize = TypeScale.Subheading,
-            FontWeight = FontWeight.Medium,
-            Margin = new Thickness(16, 16, 16, 4),
-        };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        var heading = new TextBlock();
+        TitleText.Style(heading, TypeScale.Section, TitleRank.Group);
+        TitleText.Show(heading, title);
 
-        return heading;
+        var row = TitleText.GroupRow(heading);
+        row.Margin = new Thickness(0, 16, 0, 4);
+
+        return (row, heading);
     }
 
     /// <summary>
@@ -909,16 +893,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// </summary>
     private Control BuildOtherTabsSection(out StackPanel list)
     {
-        var heading = new TextBlock
-        {
-            Text = "On other tabs",
-            FontSize = TypeScale.Subheading,
-            FontWeight = FontWeight.Medium,
-            Margin = new Thickness(16, 16, 16, 4),
-        };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        var heading = TitleText.GroupRow(TitleText.Build("On other tabs", TypeScale.Section, TitleRank.Group));
+        heading.Margin = new Thickness(0, 16, 0, 8);
 
-        list = new StackPanel { Spacing = 4, Margin = new Thickness(16, 0, 16, 12) };
+        list = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
 
         return new StackPanel
         {
@@ -938,13 +916,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var button = new Button
         {
             Content = tab.Strip ? $"Open {tab.Title}" : $"Open the {tab.Title} tab",
-            FontSize = TypeScale.Secondary,
-            Padding = new Thickness(8, 4),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
         };
@@ -956,21 +932,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         line.Children.Add(button);
         line.Children.Add(text);
 
-        return line;
+        return RuledRow(line, TypeScale.MinimumTarget, new Thickness(RowHorizontalPadding, 4));
     }
 
-    /// <summary>The selected area's own title and sentence, drawn above its cards (#220).</summary>
     /// <summary>What a protected row's bar means, said once per screen rather than on every row (#333).</summary>
     internal const string ProtectedLegend =
         "Rows marked ▌ are protected — D47 will not change them on your say-so alone.";
 
+    /// <summary>The selected area's Screen title over a 1px A rule, then its sentence and legend (#220).</summary>
     private StackPanel BuildAreaHeader(out TextBlock title, out TextBlock sentence, out TextBlock legend)
     {
-        title = new TextBlock { FontWeight = FontWeight.Medium };
-        TitleText.Style(title, TypeScale.Section, TitleRank.Group);
+        title = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        TitleText.Style(title, TypeScale.Title, TitleRank.Screen, sentence: true);
 
-        sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
-        Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        sentence = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0) };
+        Themed(sentence, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         legend = new TextBlock
         {
@@ -980,11 +956,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Margin = new Thickness(0, 4, 0, 0),
             IsVisible = false,
         };
-        Themed(legend, TextBlock.ForegroundProperty, ThemeManager.WarnKey);
+        Themed(legend, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return new StackPanel
         {
-            Margin = new Thickness(16, 4, 16, 8),
+            Margin = new Thickness(0, 4, 0, 8),
             Children = { TitleText.GroupRow(title), sentence, legend },
         };
     }
@@ -996,7 +972,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             Name = "AreaDropdown",
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(16, 0, 16, 8),
+            Margin = new Thickness(0, 0, 0, 8),
             IsVisible = false,
         };
         DressAsAChoice(combo);
@@ -1125,7 +1101,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         area.Ink = Themed(
             area.HeadingText,
             TextBlock.ForegroundProperty,
-            active ? ThemeManager.TextKey : ThemeManager.TextMutedKey);
+            active ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
         area.HeadingBar.Opacity = active ? 1 : 0;
 
@@ -1134,7 +1110,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (active)
         {
-            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.FillHighKey);
+            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.Tile2Key);
         }
         else
         {
@@ -1151,7 +1127,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Margin = new Thickness(0, 4),
             Opacity = 0,
         };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
+        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var text = new TextBlock
         {
@@ -1185,7 +1161,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         {
             if (index != _activeSection)
             {
-                item.Background = Res(ThemeManager.FillLowKey);
+                item.Background = Res(ThemeManager.TileKey);
             }
         };
         item.PointerExited += (_, _) =>
@@ -1357,14 +1333,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         if (active)
         {
-            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.AccentKey);
+            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.AKey);
             section.NavInk = Themed(section.NavText, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
         }
         else
         {
             // No resource for "nothing", so the fill is dropped rather than bound.
             section.NavItem.Background = Brushes.Transparent;
-            section.NavInk = Themed(section.NavText, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+            section.NavInk = Themed(section.NavText, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         }
     }
 
@@ -1466,13 +1442,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
 
         const double Floor = 420;
-        const double Ceiling = 700;
+        const double Ceiling = 960;
 
-        // The margin the cards are laid out with, both sides.
-        var available = e.NewSize.Width - 56;
+
+        // The margin the cards are laid out with, both sides, and the vertical scroll bar's width.
+        var available = e.NewSize.Width - 56 - ScrollBarWidth;
 
         Cards.Width = Math.Clamp(available, Floor, Ceiling);
     }
+
+    /// <summary>The width the scroller's vertical bar takes from its viewport.</summary>
+    private const double ScrollBarWidth = 16;
 
     /// <summary>The nav column's width, and the point below which it is not worth its space.</summary>
     private const double NavWidth = 224;
@@ -1714,7 +1694,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // The section's own name, marked in both places it is written, and its "Show N more" beside it.
         for (var i = 0; i < _sections.Count; i++)
         {
-            Paint(_sections[i].Heading, _sections[i].Title);
+            Paint(_sections[i].Heading, _sections[i].Title.ToUpperInvariant());
             Paint(_sections[i].NavText, _sections[i].Title);
 
             if (_sections[i].FoldButton is not { } button)
@@ -1732,13 +1712,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         foreach (var area in _navAreas)
         {
             Paint(area.HeadingText, area.Title);
-            Paint(area.FilterHeading, area.Title);
+            Paint(area.FilterHeading, area.Title.ToUpperInvariant());
         }
 
         // A group's own title and help, the other two things a query can match (#222).
         foreach (var group in _groups)
         {
-            Paint(group.HeadingText, group.Title);
+            Paint(group.HeadingText, group.Title.ToUpperInvariant());
 
             if (group.HelpText is { } helpText && group.Help is { } help)
             {
@@ -1901,7 +1881,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             }
 
             var hit = new Run(text[match.Start..match.End]);
-            hit.Bind(TextElement.BackgroundProperty, this.GetResourceObservable(ThemeManager.AccentMutedKey));
+            hit.Bind(TextElement.BackgroundProperty, this.GetResourceObservable(ThemeManager.LineKey));
 
             block.Inlines!.Add(hit);
             cursor = match.End;
@@ -1954,14 +1934,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 {
                     run.Bind(
                         TextElement.BackgroundProperty,
-                        this.GetResourceObservable(ThemeManager.AccentMutedKey));
+                        this.GetResourceObservable(ThemeManager.LineKey));
                 }
 
                 if (segment.Target is not null)
                 {
                     run.Bind(
                         TextElement.ForegroundProperty,
-                        this.GetResourceObservable(ThemeManager.AccentKey));
+                        this.GetResourceObservable(ThemeManager.AKey));
 
                     run.TextDecorations = TextDecorations.Underline;
                 }
@@ -2116,7 +2096,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     continue;
                 }
 
-                order.Add(area.FilterHeading);
+                order.Add(area.FilterHeadingRow);
                 order.AddRange(cards.Select(i => (Control)_sections[i].Card));
             }
 
@@ -2135,7 +2115,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         var selected = _navAreas[_activeArea];
 
-        TitleText.Show(_areaHeaderTitle!, selected.Title);
+        TitleText.Show(_areaHeaderTitle!, selected.Title, sentence: true);
         _areaHeaderSentence!.Text = selected.Sentence;
 
         _areaLegend!.IsVisible = _rows.Any(row =>
@@ -2171,14 +2151,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>A compact row's minimum height — enough for its label at the current type scale (#332).</summary>
     private const double RowMinHeight = 52;
 
-    /// <summary>A compact row's own top and bottom padding (#332).</summary>
+    /// <summary>A row's own top and bottom padding (#332).</summary>
     private const double RowVerticalPadding = 8;
+
+    /// <summary>A row's own left and right padding.</summary>
+    private const double RowHorizontalPadding = 12;
 
     /// <summary>The width of a protected row's left bar (#333).</summary>
     private const double ProtectedBarWidth = 3;
 
-    /// <summary>The extra left padding a protected row needs, so its bar does not crowd the label (#333).</summary>
-    private const double ProtectedBarPadding = 12;
+    /// <summary>The gap between a protected row's bar and the row.</summary>
+    private const double ProtectedBarPadding = 2;
 
     /// <summary>
     /// Marks a caption-and-control row, so a test can find the rows this view builds rather than every
@@ -2229,25 +2212,25 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
     /// <summary>One download at a time, and the row that is showing it.</summary>
     private bool _downloadingModel;
 
-    /// <summary>A row's inline tag — a 1px Accent border at 60%, Accent ink, no fill, no rounded corners (#279).</summary>
-    private Control RowTag(string said)
+    /// <summary>A row on the page ground under a 1px Line rule.</summary>
+    private Border RuledRow(Control child, double minHeight, Thickness padding)
     {
-        var text = new TextBlock { Text = said, FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
-
-        var tag = new Border
+        var row = new Border
         {
-            Padding = new Thickness(4, 4),
-            BorderThickness = new Thickness(1),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = text,
+            MinHeight = minHeight,
+            Padding = padding,
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            Child = child,
         };
-        Themed(tag, Border.BorderBrushProperty, ThemeManager.TagBorderKey);
+        Themed(row, Border.BorderBrushProperty, ThemeManager.LineKey);
 
-        return tag;
+        return row;
     }
 
-    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row, bool shaded = false)
+    /// <summary>A row's inline tag: the word in uppercase chrome type, Grey.</summary>
+    private static TextBlock RowTag(string said) => D47.App.Panel.RoutingKit.Tag(said, ThemeManager.GreyKey);
+
+    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row)
     {
         var header = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
 
@@ -2259,7 +2242,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         if (row.Scope == SettingScope.Commander)
         {
@@ -2267,7 +2250,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             // Commander's who is flying, and a second Commander on this machine will see their own here
             // rather than this one.
             var tag = RowTag("per Commander");
-            tag.Margin = new Thickness(4, 0, 0, 0);
+            tag.Margin = new Thickness(8, 0, 0, 0);
             DockPanel.SetDock(tag, Dock.Right);
             header.Children.Add(tag);
         }
@@ -2283,7 +2266,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(help, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(help, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var message = new TextBlock
         {
@@ -2292,15 +2275,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Margin = new Thickness(0, 4, 0, 0),
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(message, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var (control, refresh, compact) = BuildControl(row, message);
 
-        // A compact row's label wraps within the caption column rather than running under the control.
-        if (compact && !row.PageTop)
-        {
-            header.MaxWidth = LabelColumnMaxWidth;
-        }
 
         // The settings key, shown only when it is the reason this row survived a filter.
         var keyLine = new TextBlock
@@ -2310,7 +2288,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(keyLine, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(keyLine, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
 
         // A way back from this one row .com/dseelinger/d47/issues/61), on the rows the Commander has actually
         // changed and nowhere else.
@@ -2321,7 +2299,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
         };
-        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         if (!string.IsNullOrWhiteSpace(row.Help))
         {
@@ -2378,6 +2356,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         }
 
         var caption = new StackPanel { Spacing = 0 };
+
+        // A compact row's label, help and key wrap within the caption column rather than running under the control.
+        if (compact && !row.PageTop)
+        {
+            caption.MaxWidth = LabelColumnMaxWidth;
+        }
+
         caption.Children.Add(header);
         caption.Children.Add(help);
         caption.Children.Add(keyLine);
@@ -2482,21 +2467,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         // The page-top strip is a separate case and keeps its own rules (#279).
         if (!row.PageTop)
         {
-            var rowShape = new Border
-            {
-                MinHeight = RowMinHeight,
-                Padding = new Thickness(0, RowVerticalPadding),
-                BorderThickness = new Thickness(0, 1, 0, 0),
-                Child = line,
-            };
-            Themed(rowShape, Border.BorderBrushProperty, ThemeManager.BorderKey);
-
-            if (shaded)
-            {
-                Themed(rowShape, Border.BackgroundProperty, ThemeManager.RowFillKey);
-            }
-
-            line = rowShape;
+            line = RuledRow(line, RowMinHeight, new Thickness(RowHorizontalPadding, RowVerticalPadding));
         }
 
         if (row.Protected)
@@ -2509,7 +2480,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 Padding = new Thickness(ProtectedBarPadding, 0, 0, 0),
                 Child = line,
             };
-            Themed(bar, Border.BorderBrushProperty, ThemeManager.WarnKey);
+            Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
 
             line = bar;
         }
@@ -2574,7 +2545,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            Themed(glyph, BusyGlyph.StrokeProperty, ThemeManager.AccentKey);
+            Themed(glyph, BusyGlyph.StrokeProperty, ThemeManager.AKey);
 
             Grid.SetColumn(glyph, 1);
             grid.Children.Add(glyph);
@@ -2703,24 +2674,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             : (inset, () => { }, false);
     }
 
-    /// <summary>A Report: its text on a 2px left rule, with no box around it.</summary>
+    /// <summary>A Report: its value in A on a 2px left rule, with no box around it.</summary>
     internal static (Border Inset, SelectableTextBlock Text) Report()
     {
         var text = new SelectableTextBlock { FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
-        text[!SelectableTextBlock.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.TextKey);
+        text[!SelectableTextBlock.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.AKey);
 
         var inset = new Border
         {
             BorderThickness = new Thickness(2, 0, 0, 0),
-            Padding = new Thickness(14),
+            Padding = new Thickness(12),
             Child = text,
         };
-        inset[!Border.BorderBrushProperty] = new DynamicResourceExtension(ThemeManager.BorderKey);
+        inset[!Border.BorderBrushProperty] = new DynamicResourceExtension(ThemeManager.Line2Key);
 
         return (inset, text);
     }
 
-    /// <summary>A binding chip: mono at normal weight and no letterspacing, on fill-3.</summary>
+    /// <summary>A binding chip: mono at normal weight and no letterspacing, White on Slab.</summary>
     internal static Button BindingChip()
     {
         var chip = new Button
@@ -2729,10 +2700,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.Normal,
             LetterSpacing = 0,
-            Padding = new Thickness(14, 10),
+            Padding = new Thickness(12, 8),
         };
-        chip[!Button.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.FillHigherKey);
-        chip[!Button.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.AccentInkKey);
+        chip[!Button.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.SlabKey);
+        chip[!Button.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.WhiteKey);
         return chip;
     }
 
@@ -2749,9 +2720,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
-            Margin = new Thickness(14, 0, 14, 8),
+            Margin = new Thickness(12, 0, 12, 8),
         };
-        Themed(detail, SelectableTextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(detail, SelectableTextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var toggle = new Button
         {
@@ -2762,9 +2733,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             BorderThickness = new Thickness(0),
             HorizontalAlignment = HorizontalAlignment.Left,
             Cursor = new Cursor(StandardCursorType.Hand),
-            Margin = new Thickness(14, 4, 0, 8),
+            Margin = new Thickness(12, 4, 0, 8),
         };
-        Themed(toggle, ForegroundProperty, ThemeManager.AccentKey);
+        Themed(toggle, ForegroundProperty, ThemeManager.AKey);
 
         toggle.Click += (_, _) =>
         {
@@ -3422,7 +3393,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             Margin = new Thickness(0, 4, 0, 0),
         };
 
-        Themed(stagedNote, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(stagedNote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         string? staged = null;
 
@@ -3643,7 +3614,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         };
 
         var chevron = new TextBlock { Text = "▾", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(chevron, Dock.Right);
@@ -3677,7 +3648,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        Themed(busy, BusyGlyph.StrokeProperty, ThemeManager.AccentKey);
+        Themed(busy, BusyGlyph.StrokeProperty, ThemeManager.AKey);
 
         button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
@@ -3696,7 +3667,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                 ? $"({row.BareDefaultFor(_settings.Current) ?? "not set"})"
                 : row.LabelForChoice(current, _settings.Current);
 
-            Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.TextMutedKey : ThemeManager.TextKey);
+            Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.AKey);
         }, true);
     }
 
@@ -3731,10 +3702,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
             var chip = new Border
             {
                 BorderThickness = new Thickness(1, 0, 0, 0),
-                Padding = new Thickness(11, 0),
+                Padding = new Thickness(12, 0),
                 Child = text,
             };
-            Themed(chip, Border.BorderBrushProperty, ThemeManager.BorderKey);
+            Themed(chip, Border.BorderBrushProperty, ThemeManager.Line2Key);
+
 
             number.InnerRightContent = chip;
         }
@@ -4246,6 +4218,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         Border HeadingBar,
 
         /// <summary>Drawn above this area's cards while a query is narrowing every area at once.</summary>
+        Control FilterHeadingRow,
         TextBlock FilterHeading,
         int First,
         int Count)

@@ -79,13 +79,11 @@ public sealed class SecretEditor : UserControl
         // Asking means a dialog, which the headset's copy of this surface must not open.
         Panel.OffscreenSurface.OpensAWindow(_clear);
 
-        _state = new TextBlock { FontSize = TypeScale.Secondary, VerticalAlignment = VerticalAlignment.Center };
+        _state = D47.App.Panel.RoutingKit.Tag(string.Empty, ThemeManager.GreyKey);
 
         _badge = new Border
         {
             Padding = new Thickness(8, 2),
-            CornerRadius = new CornerRadius(0),
-            BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
             Child = _state,
         };
@@ -104,7 +102,7 @@ public sealed class SecretEditor : UserControl
             IsVisible = false,
         };
 
-        Themed(_message, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         // The clear glyph rides inside the field; the reveal switch sits beside it (#223).
         _box.InnerRightContent = _clear;
@@ -121,7 +119,7 @@ public sealed class SecretEditor : UserControl
 
         _box.TextChanged += (_, _) => RefreshBox();
 
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var controls = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
         controls.Children.Add(_box);
         controls.Children.Add(_reveal);
         controls.Children.Add(_store);
@@ -235,7 +233,7 @@ public sealed class SecretEditor : UserControl
         _check.IsEnabled = false;
         _verdict.IsVisible = true;
         _verdict.Text = "Checking…";
-        Themed(_verdict, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
+        Themed(_verdict, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         try
         {
@@ -267,19 +265,13 @@ public sealed class SecretEditor : UserControl
 
         _store.Content = stored ? "Overwrite" : "Save";
 
-        _state.Text = stored ? "Key stored" : "No key";
+        _state.Text = (stored ? "Key stored" : "No key").ToUpperInvariant();
 
-        // Accent for stored and muted for not, so the two states differ in colour as well as in wording — the
-        // row is glanced at far more often than it is read.
+        // Yellow for stored and Grey for not, so the two states differ in colour as well as in wording.
         Themed(
             _state,
             TextBlock.ForegroundProperty,
-            stored ? ThemeManager.AccentKey : ThemeManager.TextMutedKey);
-
-        Themed(
-            _badge,
-            Border.BorderBrushProperty,
-            stored ? ThemeManager.AccentKey : ThemeManager.BorderKey);
+            stored ? ThemeManager.YellowKey : ThemeManager.GreyKey);
 
         RefreshBox();
 
@@ -293,9 +285,9 @@ public sealed class SecretEditor : UserControl
             TextBlock.ForegroundProperty,
             _result.Verdict switch
             {
-                SecretVerdict.Works => ThemeManager.AccentKey,
-                SecretVerdict.Rejected => ThemeManager.DangerKey,
-                _ => ThemeManager.TextMutedKey,
+                SecretVerdict.Works => ThemeManager.BlueKey,
+                SecretVerdict.Rejected => ThemeManager.RedKey,
+                _ => ThemeManager.GreyKey,
             });
     }
 
@@ -324,7 +316,7 @@ public sealed class SecretEditor : UserControl
         control.Classes.Add(InBoxClass);
         control.Background = Brushes.Transparent;
         control.BorderThickness = new Thickness(0);
-        control.Padding = new Thickness(5, 0);
+        control.Padding = new Thickness(4, 0);
         control.MinWidth = 0;
         control.VerticalAlignment = VerticalAlignment.Center;
         control.Cursor = new Cursor(StandardCursorType.Hand);
@@ -363,7 +355,7 @@ public sealed class SecretEditor : UserControl
             StrokeLineCap = PenLineCap.Round,
         };
 
-        path[!Shape.StrokeProperty] = new DynamicResourceExtension(ThemeManager.TextMutedKey);
+        path[!Shape.StrokeProperty] = new DynamicResourceExtension(ThemeManager.GreyKey);
         return path;
     }
 
@@ -371,7 +363,8 @@ public sealed class SecretEditor : UserControl
     {
         var path = new Path { Data = data };
 
-        path[!Shape.FillProperty] = new DynamicResourceExtension(ThemeManager.TextMutedKey);
+        path[!Shape.FillProperty] = new DynamicResourceExtension(ThemeManager.GreyKey);
+
         return path;
     }
 }

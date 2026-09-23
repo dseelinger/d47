@@ -22,7 +22,7 @@ public sealed class FirstRunWindow : Window
         CanResize = false;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BackgroundKey);
+        Themed(this, BackgroundProperty, ThemeManager.BgKey);
 
         var stack = new StackPanel { Spacing = 16, Margin = new Thickness(24) };
 
@@ -51,7 +51,7 @@ public sealed class FirstRunWindow : Window
     /// <summary>One key: what it is for, what it costs you in privacy, and the control to set it.</summary>
     private Control StepCard(FirstRunStep step, SettingsService settings)
     {
-        var card = new StackPanel { Spacing = 6 };
+        var card = new StackPanel { Spacing = 8 };
 
         var title = new TextBlock
         {
@@ -59,10 +59,15 @@ public sealed class FirstRunWindow : Window
                 ? $"{step.Row.Label} — needed to hold a conversation"
                 : $"{step.Row.Label} — optional",
             FontWeight = FontWeight.Medium,
+            TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         card.Children.Add(title);
+
+        var rule = new Border { Height = 1 };
+        Themed(rule, Border.BackgroundProperty, ThemeManager.LineKey);
+        card.Children.Add(rule);
 
         if (step.Row.Help is { Length: > 0 } help)
         {
@@ -74,37 +79,21 @@ public sealed class FirstRunWindow : Window
         // screen where a Commander is deciding whether to trust it.
         if (step.Egress is { } egress)
         {
-            var line = Body($"{egress.Line}\n{egress.What}");
-            Themed(line, TextBlock.ForegroundProperty, ThemeManager.TextMutedKey);
-            card.Children.Add(line);
+            card.Children.Add(Body($"{egress.Line}\n{egress.What}"));
         }
 
         card.Children.Add(new SecretEditor(step.Row, settings));
 
-        var border = new Border
-        {
-            Padding = new Thickness(16),
-            CornerRadius = new CornerRadius(0),
-            BorderThickness = new Thickness(1),
-            Child = card,
-        };
-
-        Themed(border, Border.BorderBrushProperty, ThemeManager.BorderKey);
-        return border;
+        return card;
     }
 
-    private TextBlock Heading(string text)
+    /// <summary>The window's Screen title, at Heading size, over a 1px A rule.</summary>
+    private static Control Heading(string text)
     {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Heading,
-            FontWeight = FontWeight.Medium,
-            TextWrapping = TextWrapping.Wrap,
-        };
+        var block = TitleText.Build(text, TypeScale.Heading, TitleRank.Screen, sentence: true);
+        block.TextWrapping = TextWrapping.Wrap;
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
-        return block;
+        return TitleText.GroupRow(block);
     }
 
     private TextBlock Body(string text)
@@ -116,7 +105,7 @@ public sealed class FirstRunWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.TextKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 

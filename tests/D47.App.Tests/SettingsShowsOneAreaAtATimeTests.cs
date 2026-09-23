@@ -43,8 +43,11 @@ public sealed class SettingsShowsOneAreaAtATimeTests
             .Select(p => p.Title)
             .ToHashSet();
 
-        Assert.Equal(screens.Places.Select(p => p.Title), Cards(host.View).Select(Title));
-        Assert.DoesNotContain(Cards(host.View), card => Title(card) is { } title && otherTitles.Contains(title));
+        Assert.Equal(screens.Places.Select(p => p.Title.ToUpperInvariant()), Cards(host.View).Select(Title));
+        Assert.DoesNotContain(
+            Cards(host.View),
+            card => Title(card) is { } title
+                    && otherTitles.Any(other => string.Equals(other, title, StringComparison.OrdinalIgnoreCase)));
 
         host.Close();
     }
@@ -63,8 +66,8 @@ public sealed class SettingsShowsOneAreaAtATimeTests
         Jobs();
 
         Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
-        Assert.Contains(Cards(host.View), card => Title(card) == "Voice Input");
-        Assert.DoesNotContain(Cards(host.View), card => Title(card) == "Overlay");
+        Assert.Contains(Cards(host.View), card => Title(card) == "VOICE INPUT");
+        Assert.DoesNotContain(Cards(host.View), card => Title(card) == "OVERLAY");
 
         host.Close();
     }
@@ -87,13 +90,13 @@ public sealed class SettingsShowsOneAreaAtATimeTests
         box.Text = "Attempts";
         Jobs();
 
-        Assert.Contains(Cards(host.View), card => Title(card) == "When a turn fails");
+        Assert.Contains(Cards(host.View), card => Title(card) == "WHEN A TURN FAILS");
 
         box.Text = string.Empty;
         Jobs();
 
         Assert.Equal(
-            SettingsLayout.Areas.Single(a => a.Title == "Screens").Places.Select(p => p.Title),
+            SettingsLayout.Areas.Single(a => a.Title == "Screens").Places.Select(p => p.Title.ToUpperInvariant()),
             Cards(host.View).Select(Title));
 
         host.Close();
@@ -111,8 +114,8 @@ public sealed class SettingsShowsOneAreaAtATimeTests
         Jobs();
 
         Assert.Equal("turn-fails", host.View.SectionIds[host.View.ActiveSection]);
-        Assert.Contains(Cards(host.View), card => Title(card) == "When a turn fails");
-        Assert.DoesNotContain(Cards(host.View), card => Title(card) == "Voice Input");
+        Assert.Contains(Cards(host.View), card => Title(card) == "WHEN A TURN FAILS");
+        Assert.DoesNotContain(Cards(host.View), card => Title(card) == "VOICE INPUT");
 
         host.Close();
     }
@@ -149,7 +152,7 @@ public sealed class SettingsShowsOneAreaAtATimeTests
         Jobs();
 
         Assert.Equal(
-            SettingsLayout.Areas[index].Places.Select(p => p.Title),
+            SettingsLayout.Areas[index].Places.Select(p => p.Title.ToUpperInvariant()),
             Cards(view).Select(Title));
 
         host.Close();

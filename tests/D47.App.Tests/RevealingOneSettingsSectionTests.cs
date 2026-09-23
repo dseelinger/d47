@@ -23,12 +23,12 @@ public class RevealingOneSettingsSectionTests
         ((StackPanel)view.FindControl<Control>("Cards")!).Children
             .OfType<Border>()
             .First(card => card.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == Heading));
+                .Any(text => string.Equals(text.Text, Heading, StringComparison.OrdinalIgnoreCase)));
 
     /// <summary>The rows under the heading, which are what collapsing hides.</summary>
     private static StackPanel Body(Border card) =>
         card.GetVisualDescendants().OfType<StackPanel>()
-            .First(stack => stack.Margin == new Thickness(16, 4, 16, 16));
+            .First(stack => stack.Margin == new Thickness(0, 8, 0, 0));
 
     /// <summary>The chevron beside the heading, which has to agree with the rows.</summary>
     private static TextBlock Chevron(Border card) =>

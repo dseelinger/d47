@@ -72,7 +72,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
 
         Assert.Equal(area.Places.Count, Cards(host));
         Assert.Equal(
-            area.Places.Select(p => p.Title).ToHashSet(),
+            area.Places.Select(p => p.Title.ToUpperInvariant()).ToHashSet(),
             VisibleCards(host).Select(CardTitle).Where(t => t is not null).Select(t => t!).ToHashSet());
 
         host.Close();
@@ -91,7 +91,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Jobs();
 
         Assert.Equal(1, Cards(host));
-        Assert.Equal("Voice Input", CardTitle(VisibleCards(host).Single()));
+        Assert.Equal("VOICE INPUT", CardTitle(VisibleCards(host).Single()));
 
         // A row whose own words say nothing about "ptt" is still on the card, because the match is on the
         // place's term rather than on any one row.
@@ -114,7 +114,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Jobs();
 
         Assert.Equal(1, Cards(host));
-        Assert.Equal("Sounds and levels", CardTitle(VisibleCards(host).Single()));
+        Assert.Equal("SOUNDS AND LEVELS", CardTitle(VisibleCards(host).Single()));
         Assert.Contains("Level", VisibleRowLabels(host));
         Assert.Contains("Mute", VisibleRowLabels(host));
 

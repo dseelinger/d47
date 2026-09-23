@@ -63,7 +63,7 @@ public class TheFoldToggleIsAtTheTopTests
         var drawn = Drawn(Cards(host));
 
         var toggle = drawn.FindIndex(label => label == "Show every setting");
-        var firstCard = drawn.FindIndex(label => label == "Language model");
+        var firstCard = drawn.FindIndex(label => label == "LANGUAGE MODEL");
 
         Assert.True(toggle >= 0, "The toggle is not on the page at all.");
         Assert.True(firstCard >= 0, "The first card is not on the page at all.");

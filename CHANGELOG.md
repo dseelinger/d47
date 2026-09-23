@@ -148,6 +148,18 @@ under white capitals headings, each beat is a tile, and an empty field reads in 
 editor's field buttons are as wide as the longest label rather than cutting labels off, and the
 caution under the beats wraps instead of running off the edge. Button rows wrap in a narrow pane.
 
+Settings is restyled to match. The area you have chosen opens with a large white title over an
+accent rule. The cards' outlines are gone: each card's name is a white capitals heading over an
+accent rule, and each group inside it a smaller white capitals heading over a thin rule. Rows no
+longer alternate in shade. Each row sits on the page background under a thin rule, so the
+steppers, choices and buttons in it still show as tiles. Helper text and the protected-rows note
+read in grey, and a read-only value such as what leaves this machine reads in the accent colour.
+A chosen voice or model reads in the accent colour and an unset one in dim grey. A stored key reads
+KEY STORED in yellow and a missing one NO KEY in grey, and a key that checks out reads in blue.
+PER COMMANDER is grey capitals with no box. The rows use more of a wide window, and a row's help,
+when a search brings it out, wraps beside the control instead of running across it. While
+searching, each area's name is a capitals heading over a rule. The first-run key window matches.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

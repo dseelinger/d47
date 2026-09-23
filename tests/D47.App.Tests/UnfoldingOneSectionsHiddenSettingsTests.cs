@@ -43,7 +43,8 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
     private static Border Card(SettingsView view, string heading) =>
         ((StackPanel)view.FindControl<Control>("Cards")!).Children
             .OfType<Border>()
-            .First(card => card.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == heading));
+            .First(card => card.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => string.Equals(text.Text, heading, StringComparison.OrdinalIgnoreCase)));
 
     private static Button FoldButton(Border card) =>
         card.GetVisualDescendants().OfType<Button>()

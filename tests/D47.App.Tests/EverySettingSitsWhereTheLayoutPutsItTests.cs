@@ -79,7 +79,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         var listed = Nav(host.View, SettingsView.NavPlaceClass).Where(item => item.IsVisible).ToList();
 
         Assert.Equal(expected, listed.Select(Words));
-        Assert.Equal(expected, Cards(host.View).Select(Title));
+        Assert.Equal(expected.Select(title => title.ToUpperInvariant()), Cards(host.View).Select(Title));
 
         host.Close();
     }
@@ -92,7 +92,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         host.View.SelectArea(AreaIndex("The ship's AI"));
         Jobs();
 
-        var card = Cards(host.View).Single(card => Title(card) == "When a turn fails");
+        var card = Cards(host.View).Single(card => Title(card) == "WHEN A TURN FAILS");
 
         Assert.Contains(
             card.GetVisualDescendants().OfType<TextBlock>(),
@@ -139,7 +139,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         box.Text = SpeechCapability.RetryAttemptsKey;
         Jobs();
 
-        Assert.Equal(["When a turn fails"], Cards(host.View).Where(card => card.IsVisible).Select(Title));
+        Assert.Equal(["WHEN A TURN FAILS"], Cards(host.View).Where(card => card.IsVisible).Select(Title));
 
         host.Close();
     }

@@ -28,7 +28,7 @@ public class ACardsHelpDrawsItsPageTests
         var card = ((StackPanel)view.FindControl<Control>("Cards")!).Children
             .OfType<Border>()
             .First(border => border.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == heading));
+                .Any(text => string.Equals(text.Text, heading, StringComparison.OrdinalIgnoreCase)));
 
         return card.GetVisualDescendants().OfType<Button>()
             .First(button => button.Content as string == "HELP");

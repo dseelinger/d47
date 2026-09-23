@@ -1,8 +1,8 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="D47.App.Settings.SettingsView"
-             Background="{DynamicResource D47.Background}"
-             Foreground="{DynamicResource D47.Text}">
+             Background="{DynamicResource D47.Bg}"
+             Foreground="{DynamicResource D47.White}">
 
   <!--
     One view definition. Phase 9 instantiates it a second time against the same settings
@@ -25,19 +25,19 @@
 
     <Border x:Name="Nav"
             Grid.Column="0"
-            Background="{DynamicResource D47.Background}"
-            BorderBrush="{DynamicResource D47.Border}"
+            Background="{DynamicResource D47.Bg}"
+            BorderBrush="{DynamicResource D47.Line2}"
             BorderThickness="0,0,1,0">
       <DockPanel Margin="12,20,12,16">
-        <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="10,0,10,16">
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="8,0,8,16">
           <TextBlock Text="Settings"
                      FontSize="{StaticResource D47.Type.Heading}"
                      FontWeight="Medium"
-                     Foreground="{DynamicResource D47.Text}" />
+                     Foreground="{DynamicResource D47.White}" />
           <TextBlock Text="Changes apply as you make them."
                      FontSize="{StaticResource D47.Type.Secondary}"
                      TextWrapping="Wrap"
-                     Foreground="{DynamicResource D47.TextMuted}" />
+                     Foreground="{DynamicResource D47.Grey}" />
         </StackPanel>
         <!--
           The nav scrolls (remediation.md 17, item 3). One heading per area of the layout and one
@@ -87,7 +87,7 @@
                     HorizontalScrollBarVisibility="Auto">
         <StackPanel x:Name="Cards"
                     Margin="28,20,28,28"
-                    Spacing="14"
+                    Spacing="16"
                     HorizontalAlignment="Left" />
       </ScrollViewer>
 
