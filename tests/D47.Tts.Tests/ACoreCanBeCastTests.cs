@@ -39,7 +39,7 @@ public class ACoreCanBeCastTests
             handler,
             direction);
 
-        await provider.SynthesizeAsync("Course laid in.", VoiceSelection.Default, TestContext.Current.CancellationToken);
+        await provider.SynthesizeAsync("Course laid in.", new VoiceSelection("onyx"), TestContext.Current.CancellationToken);
 
         Assert.NotNull(handler.Body);
 
@@ -90,12 +90,12 @@ public class ACoreCanBeCastTests
             handler,
             () => core);
 
-        await provider.SynthesizeAsync("One.", VoiceSelection.Default, TestContext.Current.CancellationToken);
+        await provider.SynthesizeAsync("One.", new VoiceSelection("onyx"), TestContext.Current.CancellationToken);
         Assert.Contains("Warden", handler.Body!, StringComparison.Ordinal);
 
         core = "Speak as Archivist.";
 
-        await provider.SynthesizeAsync("Two.", VoiceSelection.Default, TestContext.Current.CancellationToken);
+        await provider.SynthesizeAsync("Two.", new VoiceSelection("onyx"), TestContext.Current.CancellationToken);
         Assert.Contains("Archivist", handler.Body!, StringComparison.Ordinal);
     }
 

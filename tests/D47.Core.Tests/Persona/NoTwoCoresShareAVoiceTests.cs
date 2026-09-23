@@ -82,38 +82,4 @@ public class NoTwoCoresShareAVoiceTests
         Assert.True(paired.ContainsKey("cora"), "the core was left with no voice of its own");
         Assert.NotEqual("neutral-one", paired["cora"]);
     }
-
-    /// <summary>
-    /// Where there are fewer voices than cores, nothing is dealt out twice: the cores that cannot be
-    /// given one of their own stay unpaired, which is the established answer everywhere else here — a
-    /// core keeps the voice in force rather than being dealt one on a guess.
-    /// </summary>
-    [Fact]
-    public async Task FewerVoicesThanCoresStillNeverRepeats()
-    {
-        IReadOnlyList<VoiceInfo> two =
-        [
-            new("en-GB-RyanNeural", "Ryan", "en-GB", "Male"),
-            new("en-GB-SoniaNeural", "Sonia", "en-GB", "Female"),
-        ];
-
-        var said = string.Join(
-            "\n",
-            PersonaCatalog.Shipped.Select(core => $"{core.Id} = en-GB-RyanNeural"));
-
-        var paired = await VoicePairing.ChooseAsync(
-            two,
-            Nothing(),
-            FakeLlmProvider.Answering(said),
-            model: "claude-opus-5",
-            spend: null,
-            prices: null,
-            logger: null,
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        var given = paired.Values.ToArray();
-
-        Assert.Equal(given.Length, given.Distinct(StringComparer.OrdinalIgnoreCase).Count());
-        Assert.True(given.Length <= 2, $"{given.Length} cores were paired from two voices");
-    }
 }

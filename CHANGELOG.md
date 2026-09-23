@@ -6,6 +6,27 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.10.0 — Every voice paired afresh
+
+The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and
+pair again". It forgets the voice of every core, the carrier captain and the tower on every provider
+you have used, hand-picked ones included, and pairs the provider in use again from its current
+list. Any other provider is paired the next time you select it. The row then says what was paired
+and on how many providers.
+
+With a language model configured, the model chooses from every English voice on the list, not only
+the first 120, and reads ElevenLabs' and Cartesia's own voice descriptions. Without one, d47 picks
+a free voice whose labels fit, or one at random where the list has no labels, so every core gets a
+voice either way.
+
+The carrier captain and tower now get voices of their own whenever they have none, from the
+carrier's provider, instead of borrowing the ship AI's.
+
+Gender now binds only Cora and Analyst Prime. Cartesia's "feminine" and "masculine" labels are read.
+
+No voice is chosen in advance any more. Edge Neural, OpenAI and Kokoro refuse to speak with no voice
+chosen, as ElevenLabs and Cartesia already did. Warden is no longer fixed to George on ElevenLabs.
+
 ## 1.7.0 — Elite's colours
 
 In the headset, the dimming behind a chooser is the same shade as on the desktop.

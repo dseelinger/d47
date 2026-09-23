@@ -732,9 +732,9 @@ Carrier itself rather than in this settings window (#305), at the top of the pag
 | Row | Who it is |
 |---|---|
 | Captain name | What you call the captain, spoken in place of "Captain" alone. Empty leaves the line as it reads today. |
-| Carrier captain voice | Your fleet carrier, answering as its captain. Empty borrows the ship AI's rather than falling silent. |
+| Carrier captain voice | Your fleet carrier, answering as its captain. Empty is paired from the carrier's voice list. |
 | Tower name | What you call the tower, spoken in place of "Tower Control". Empty leaves the line as it reads today. |
-| Carrier tower voice | The same carrier's tower, handling arrivals and departures. Empty borrows the ship AI's. |
+| Carrier tower voice | The same carrier's tower, handling arrivals and departures. Empty is paired from the carrier's voice list. |
 
 A name and a voice are different things: the name is what the crew is called, the voice is who
 speaks. Each pair is two rows rather than one because the captain and the tower are two people — a
@@ -745,37 +745,49 @@ The two voice rows offer the same play glyphs as the voice row, and both auditio
 rather than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven"
 is what you are actually listening for when you cast one.
 
-#### Reset every voice to its pairing {#reset-voices}
+#### Forget every voice and pair again {#reset-voices}
 
-"Default" here means one specific thing: **the voice the pairing pass picked as the best match for
-that core**, not a shipped constant. Once you hand-pick a voice for a core, it overwrites the
-pairing pass's own choice in the same slot — and that choice was never kept anywhere else, so there
-was nothing to put back. This row is what fixes that: the pairing pass now records what it chose in
-a second slot a hand-pick never touches, and the row restores from it.
+This row throws away every voice assignment and chooses again from what your provider offers now.
+Nothing is restored from an earlier pairing, and no voice is a shipped constant.
 
 Pressing it once only asks — the button changes to *"Press again to confirm"* and reverts on its
 own after a few seconds if nothing follows. A second press inside that window is what actually
 runs it:
 
-- Every core goes back to the voice the pairing pass chose for it. A core you never touched by hand
-  is unaffected.
-- The carrier captain and tower go back to following the ship AI's voice — there is no separate
-  pairing for them, so "default" for those two means empty, exactly as the row above already says.
-- **Every voice provider you have used is covered, not only the one selected now.** A reset that
-  touched only the live slot would be undone the next time you switched providers, because
-  switching restores whatever was filed away under the provider you are switching to.
-- A core with no recorded pairing — set before this row existed — is dropped rather than left as it
-  was, and paired again the next chance d47 gets, since nothing was recorded for it to restore.
+- Every core's voice is forgotten, including any you picked by hand, and so are the carrier
+  captain's and the tower's. The ship AI speaks in the voice of the core aboard, so it is covered
+  too.
+- **Every voice provider you have used is covered, not only the one selected now.** The provider in
+  use is paired again at once, from its current list. Any other is paired the next time you select
+  it, from its list at that time.
+- The carrier captain and tower are paired from the carrier's provider, which can differ from the
+  ship's.
+
+How a voice is chosen:
+
+1. **With a language model configured**, the model reads everything d47 knows about each English
+   voice — name, gender, locale and, on ElevenLabs and Cartesia, the provider's own description —
+   and picks the best fit for each core, the carrier captain and the tower. A long list is sent in
+   parts and the model's shortlists are compared, so it sees every voice, not only the first page.
+2. **Without one**, d47 picks a free voice whose labels fit.
+3. **Where the list has nothing to match on** — OpenAI's voices carry no gender — a free voice is
+   picked at random.
+
+No two get the same voice while the list has one for each. Gender binds only Cora, who
+never gets a voice the list marks male, and Analyst Prime, who never gets one marked female.
 
 The row says afterwards what happened:
 
 ```text
-One core now has the voice d47 paired it with. The carrier captain and tower are back to speaking
-in the ship AI's voice. Covered the voice provider in use.
+Forgot every voice on all 2 voice providers you have used. Paired 11 cores and the carrier captain
+and the tower from Edge Neural's list, chosen by the language model. The other providers are paired
+the next time you select them.
 ```
 
-No model call and no network are needed for the restore itself — only a core with nothing recorded
-needs pairing again, and that runs the same background pass startup already uses.
+Until a list has arrived nothing can be chosen, and a provider with no voice chosen refuses to speak
+rather than falling back to one d47 picked in advance. Kokoro's and OpenAI's lists are on the
+machine and immediate; Edge Neural's is fetched, so a line in the first moments after a reset can
+be refused.
 
 #### Speak incoming messages {#incoming-messages}
 

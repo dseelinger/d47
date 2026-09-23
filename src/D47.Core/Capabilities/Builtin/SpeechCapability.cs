@@ -261,11 +261,11 @@ public static class SpeechCapability
         public Func<string, CancellationToken, Task<SecretCheck>>? VerifyKey { get; init; }
 
         /// <summary>
-        /// Puts every core, on every provider used, back to the voice the pairing pass chose for it,
-        /// and reports what that did. Late-bound like <see cref="DownloadLocalVoice"/>, for the same
-        /// reason: rows are built before the host that answers a press exists (#85).
+        /// Forgets every voice on every provider, pairs the selected provider again and reports what
+        /// was paired. Late-bound like <see cref="DownloadLocalVoice"/>: rows are built before the host
+        /// that answers a press exists.
         /// </summary>
-        public Func<Func<string>?>? ResetVoices { get; init; }
+        public Func<LongPress?>? ResetVoices { get; init; }
 
         /// <summary>Output devices, as id/label pairs the picker can render.</summary>
         public Func<IReadOnlyList<string>>? OutputDevices { get; init; }
@@ -664,9 +664,9 @@ public static class SpeechCapability
                 Key = CarrierCaptainVoiceKey,
                 Advanced = true,
                 Label = "Carrier captain voice",
-                Help = "Who answers for your fleet carrier. Empty uses the ship AI's voice.",
+                Help = "Who answers for your fleet carrier. Left empty, d47 pairs one from the carrier's voice list.",
                 Kind = SettingKind.Choice,
-                DefaultDisplay = "(the ship AI's voice)",
+                DefaultDisplay = "(not paired yet)",
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Carrier) ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
@@ -711,7 +711,7 @@ public static class SpeechCapability
                 Label = "Carrier tower voice",
                 Help = "Who handles arrivals and departures. A different person from the captain.",
                 Kind = SettingKind.Choice,
-                DefaultDisplay = "(the ship AI's voice)",
+                DefaultDisplay = "(not paired yet)",
                 AllowsFreeText = true,
                 ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Carrier) ?? [],
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
@@ -731,23 +731,24 @@ public static class SpeechCapability
             {
                 Key = ResetVoicesKey,
                 Advanced = true,
-                Label = "Reset every voice to its pairing",
+                Label = "Forget every voice and pair again",
                 Help =
-                    "Puts every core back to the voice d47 paired it with, and the carrier captain "
-                    + "and tower back to speaking in the ship AI's — undoing any voice you have "
-                    + "since hand-picked. Covers every voice provider you have used, not only the "
-                    + "one selected now, so switching providers afterwards will not bring a "
-                    + "hand-picked voice back. A core with no recorded pairing — set before this row "
-                    + "existed — is paired again rather than left as it was.",
+                    "Forgets the voice of every core, the carrier captain and the tower, on every voice "
+                    + "provider you have used, including any you picked by hand. The provider in use is "
+                    + "paired again at once from its current voice list; any other is paired the next "
+                    + "time you select it. With a language model configured it chooses; without one, "
+                    + "d47 matches from what the list says about each voice, or picks at random.",
                 Kind = SettingKind.Info,
                 ConfirmPress = true,
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "reset-voices",
                 Group = "Other voices",
-                PressLabel = "Reset every voice",
+                PressLabel = "Pair every voice again",
                 PressAsync = surface.ResetVoices is null
                     ? null
-                    : (_, _) => Task.FromResult<string?>(surface.ResetVoices.Invoke()?.Invoke()),
+                    : (progress, cancellationToken) =>
+                        surface.ResetVoices.Invoke()?.Invoke(progress, cancellationToken)
+                        ?? Task.FromResult<string?>(null),
                 Binding = new SettingBinding { Read = DescribeVoiceResetState },
             },
             new SettingRow

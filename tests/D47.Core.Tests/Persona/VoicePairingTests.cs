@@ -5,7 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>A sensible voice per core, chosen once.</summary>
+/// <summary>A voice per core, chosen by the model where there is one.</summary>
 public class VoicePairingTests
 {
     private static IReadOnlyList<VoiceInfo> Voices() =>
@@ -18,36 +18,12 @@ public class VoicePairingTests
         new("en-GB-ThomasNeural", "Thomas", "en-GB", "Male"),
     ];
 
-    /// <summary>An ElevenLabs account's list: named voices, an accent rather than a locale.</summary>
-    private static IReadOnlyList<VoiceInfo> ElevenLabsVoices() =>
-    [
-        new("JBFqnCBsd6RMkjVDRZzb", "George", "british", "male"),
-        new("XrExE9yKIg1WjnnlVkGX", "Matilda", "american", "female"),
-        new("N2lVS1w4EtoT3dr4eOWO", "Callum", "transatlantic", "male"),
-    ];
-
     private static Dictionary<string, string> Nothing() => new(StringComparer.Ordinal);
-
-    [Fact]
-    public async Task WithNoModelNothingIsPaired()
-    {
-        // Bypassed rather than guessed at.
-        var paired = await VoicePairing.ChooseAsync(
-            Voices(), Nothing(), provider: null, model: null, spend: null, prices: null, logger: null,
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.Empty(paired);
-    }
 
     [Fact]
     public async Task AVoiceTheCommanderChoseIsNeverOverwritten()
     {
-        // Nothing distinguishes a hand-picked pairing from one an earlier run made, so the rule has to be
-        // "never overwrite" rather than "overwrite the ones we made".
-        var existing = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["warden"] = "en-GB-SoniaNeural",
-        };
+        var existing = new Dictionary<string, string>(StringComparer.Ordinal) { ["warden"] = "en-GB-ThomasNeural" };
 
         var paired = await VoicePairing.ChooseAsync(
             Voices(),
@@ -59,14 +35,13 @@ public class VoicePairingTests
             logger: null,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.Equal("en-GB-SoniaNeural", paired["warden"]);
+        Assert.Equal("en-GB-ThomasNeural", paired["warden"]);
         Assert.Equal("en-US-AriaNeural", paired["cora"]);
     }
 
     [Fact]
     public async Task NoVoicesMeansNoPairingsRatherThanAnError()
     {
-        // The provider may be unreachable.
         var paired = await VoicePairing.ChooseAsync(
             [],
             Nothing(),
@@ -83,8 +58,8 @@ public class VoicePairingTests
     [Fact]
     public async Task EveryPairingNamesAVoiceThatActuallyExists()
     {
-        // The anti-invention rule, enforced rather than asked for: a model that names a voice the provider
-        // does not offer would write a pairing that fails at the first line spoken.
+        var offered = Voices().Select(voice => voice.Id).ToHashSet();
+
         var paired = await VoicePairing.ChooseAsync(
             Voices(),
             Nothing(),
@@ -96,142 +71,272 @@ public class VoicePairingTests
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("en-GB-RyanNeural", paired["warden"]);
-        Assert.DoesNotContain("cora", paired.Keys);
-        Assert.All(paired.Keys, id => Assert.True(PersonaCatalog.Knows(id), id));
+        Assert.All(paired.Values, voice => Assert.Contains(voice, offered));
     }
 
-    /// <summary>
-    /// Warden on ElevenLabs is not a judgement call, so it does not wait on a model — or need one.
-    /// </summary>
     [Fact]
-    public async Task WardenTakesGeorgeOnElevenLabsWithNoModelAtAll()
+    public async Task TheModelIsNotAskedAboutAVoiceInAnotherLanguage()
     {
-        var paired = await VoicePairing.ChooseAsync(
-            ElevenLabsVoices(),
-            Nothing(),
-            provider: null,
-            model: null,
+        var llm = FakeLlmProvider.Answering("warden = fr-FR-HenriNeural");
+
+        var paired = await VoicePairing.ChooseForAsync(
+            [.. Voices(), new VoiceInfo("fr-FR-HenriNeural", "Henri", "fr-FR", "Male")],
+            [VoicePairing.SlotFor(PersonaCatalog.Warden)],
+            taken: [],
+            llm,
+            model: "claude-opus-5",
             spend: null,
             prices: null,
             logger: null,
-            ttsProvider: "elevenlabs",
             cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", Assert.Single(paired).Value);
-        Assert.Equal("warden", paired.Keys.Single());
+        var asked = string.Join(
+            ' ',
+            llm.LastRequest!.Prompt.History
+                .SelectMany(message => message.Content.OfType<D47.Core.Conversation.ConversationContent.Text>())
+                .Select(part => part.Value));
+
+        Assert.Contains("en-GB-RyanNeural", asked);
+        Assert.DoesNotContain("fr-FR-HenriNeural", asked);
+        Assert.NotEqual("fr-FR-HenriNeural", paired["warden"]);
     }
 
-    /// <summary>
-    /// The account this was found on names its voices "George - Warm, Captivating Storyteller", and an
-    /// exact match found nothing — so the one pairing that is not a judgement call went to the model
-    /// with all the others, and George was handed to whoever it liked.
-    /// </summary>
+    /// <summary>A remark's ceiling is spent on reasoning before a thinking model writes the answer.</summary>
     [Fact]
-    public async Task WardenStillTakesGeorgeWhenTheAccountAppendsADescriptor()
+    public async Task AThinkingModelIsGivenRoomToAnswer()
     {
-        var paired = await VoicePairing.ChooseAsync(
-            [
-                new("pqHfZKP75CvOlQylNhV4", "Bill - Wise, Mature, Balanced", "american", "male"),
-                new("JBFqnCBsd6RMkjVDRZzb", "George - Warm, Captivating Storyteller", "british", "male"),
-            ],
-            Nothing(),
-            provider: null,
-            model: null,
-            spend: null,
-            prices: null,
-            logger: null,
-            ttsProvider: "elevenlabs",
-            cancellationToken: TestContext.Current.CancellationToken);
+        var llm = FakeLlmProvider.Answering("warden = en-GB-RyanNeural");
 
-        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", paired["warden"]);
-    }
-
-    [Fact]
-    public async Task ANamedDefaultBelongsToItsOwnProviderAndToNoOther()
-    {
-        // "George" means an ElevenLabs voice.
-        var paired = await VoicePairing.ChooseAsync(
-            [new("en-GB-GeorgeNeural", "George", "en-GB", "Male")],
-            Nothing(),
-            provider: null,
-            model: null,
-            spend: null,
-            prices: null,
-            logger: null,
-            ttsProvider: "edge",
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.Empty(paired);
-    }
-
-    /// <summary>
-    /// Ten of the eleven cores are written as men and one as a woman, and a voice of the wrong gender
-    /// is not a near miss — it is a different character saying the lines.
-    /// </summary>
-    [Fact]
-    public async Task ACoreWrittenAsAManIsNotGivenAWomansVoice()
-    {
-        var paired = await VoicePairing.ChooseAsync(
+        await VoicePairing.ChooseForAsync(
             Voices(),
-            Nothing(),
-            FakeLlmProvider.Answering(
-                "analyst-prime = en-US-AriaNeural\ncora = en-GB-SoniaNeural\nwarden = en-GB-RyanNeural"),
+            [VoicePairing.SlotFor(PersonaCatalog.Warden)],
+            taken: [],
+            llm,
             model: "claude-opus-5",
             spend: null,
             prices: null,
             logger: null,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain("analyst-prime", paired.Keys);
-        Assert.Equal("en-GB-SoniaNeural", paired["cora"]);
-        Assert.Equal("en-GB-RyanNeural", paired["warden"]);
+        Assert.Equal(VoicePairing.CastingTokens, llm.LastRequest!.MaxOutputTokens);
     }
 
-    /// <summary>A provider that says nothing about gender must not end up offering nothing.</summary>
     [Fact]
-    public async Task AVoiceTheProviderDoesNotLabelIsStillOffered()
+    public async Task TheModelIsOfferedEveryVoiceNotOnlyTheFirstPage()
     {
-        var paired = await VoicePairing.ChooseAsync(
-            [new("some-voice", "Unlabelled", "en-GB")],
-            Nothing(),
-            FakeLlmProvider.Answering("analyst-prime = some-voice"),
+        // The only voice that fits is past the first request's worth.
+        IReadOnlyList<VoiceInfo> many =
+        [
+            .. Enumerable.Range(0, VoicePairing.VoicesPerRequest * 2)
+                .Select(n => new VoiceInfo($"voice-{n}", $"Voice {n}", "en-GB")),
+        ];
+
+        var last = many[^1].Id;
+        var llm = FakeLlmProvider.Answering($"warden = {last}");
+
+        var paired = await VoicePairing.ChooseForAsync(
+            many,
+            [VoicePairing.SlotFor(PersonaCatalog.Warden)],
+            taken: [],
+            llm,
             model: "claude-opus-5",
             spend: null,
             prices: null,
             logger: null,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.Equal("some-voice", paired["analyst-prime"]);
-    }
-
-    [Fact]
-    public async Task ANamedDefaultDoesNotDisplaceAChoiceAlreadyMade()
-    {
-        var existing = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["warden"] = "N2lVS1w4EtoT3dr4eOWO",
-        };
-
-        var paired = await VoicePairing.ChooseAsync(
-            ElevenLabsVoices(),
-            existing,
-            provider: null,
-            model: null,
-            spend: null,
-            prices: null,
-            logger: null,
-            ttsProvider: "elevenlabs",
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.Equal("N2lVS1w4EtoT3dr4eOWO", paired["warden"]);
+        Assert.Equal(last, paired["warden"]);
     }
 }
 
-/// <summary>
-/// The lazy half: a voice for the one core the Commander has just selected, asked for at the moment it
-/// is needed rather than at a startup that may have run before there was a model, a key, or a voice
-/// list.
-/// </summary>
+/// <summary>With no model, every slot is still paired from what the list says.</summary>
+public class NoModelPairingFillsEverySlotTests
+{
+    private static IReadOnlyList<VoiceInfo> Voices() =>
+    [
+        .. Enumerable.Range(0, 10).Select(n => new VoiceInfo($"woman-{n}", $"Woman {n}", "en-GB", "Female")),
+        .. Enumerable.Range(0, 10).Select(n => new VoiceInfo($"man-{n}", $"Man {n}", "en-US", "Male")),
+    ];
+
+    [Fact]
+    public async Task EveryCoreTheCarrierCaptainAndTheTowerGetAVoiceOfTheirOwn()
+    {
+        IReadOnlyList<VoicePairing.Slot> slots = [.. VoicePairing.Cores, .. VoicePairing.CarrierRoles];
+
+        var paired = await VoicePairing.ChooseForAsync(
+            Voices(),
+            slots,
+            taken: [],
+            provider: null,
+            model: null,
+            spend: null,
+            prices: null,
+            logger: null,
+            new Random(7),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(slots.Select(slot => slot.Id).Order(), paired.Keys.Order());
+        Assert.Equal(paired.Count, paired.Values.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task AListWithNoMetadataIsDealtAtRandom()
+    {
+        // OpenAI's list, which says nothing about gender.
+        IReadOnlyList<VoiceInfo> bare =
+        [
+            .. new[] { "alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer",
+                "verse", "marin", "cedar" }.Select(id => new VoiceInfo(id, id, "multilingual")),
+        ];
+
+        var paired = await VoicePairing.ChooseForAsync(
+            bare,
+            VoicePairing.Cores,
+            taken: [],
+            provider: null,
+            model: null,
+            spend: null,
+            prices: null,
+            logger: null,
+            new Random(3),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(VoicePairing.Cores.Count, paired.Count);
+        Assert.Equal(paired.Count, paired.Values.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task FewerVoicesThanSlotsStillPairsEverySlot()
+    {
+        IReadOnlyList<VoiceInfo> two =
+        [
+            new("en-GB-RyanNeural", "Ryan", "en-GB", "Male"),
+            new("en-GB-SoniaNeural", "Sonia", "en-GB", "Female"),
+        ];
+
+        var paired = await VoicePairing.ChooseForAsync(
+            two,
+            VoicePairing.Cores,
+            taken: [],
+            provider: null,
+            model: null,
+            spend: null,
+            prices: null,
+            logger: null,
+            new Random(1),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(VoicePairing.Cores.Count, paired.Count);
+
+        // The two bound by gender are served first, so each gets the one voice that fits it.
+        Assert.Equal("en-GB-SoniaNeural", paired["cora"]);
+        Assert.Equal("en-GB-RyanNeural", paired["analyst-prime"]);
+    }
+
+    [Fact]
+    public async Task AVoiceAlreadyTakenIsNotDealtAgainWhileAFreeOneRemains()
+    {
+        var paired = await VoicePairing.ChooseForAsync(
+            [new VoiceInfo("held", "Held", "en-GB"), new VoiceInfo("free", "Free", "en-GB")],
+            [VoicePairing.Tower],
+            taken: ["held"],
+            provider: null,
+            model: null,
+            spend: null,
+            prices: null,
+            logger: null,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal("free", paired[VoicePairing.Tower.Id]);
+    }
+}
+
+/// <summary>Gender binds Cora and Analyst Prime, and no other core.</summary>
+public class OnlyCoraAndAnalystPrimeAreBoundByGenderTests
+{
+    private static IReadOnlyList<VoiceInfo> Voices() =>
+    [
+        new("aria", "Aria", "en-US", "Female"),
+        new("sonia", "Sonia", "en-GB", "Female"),
+        new("ryan", "Ryan", "en-GB", "Male"),
+        new("guy", "Guy", "en-US", "Male"),
+    ];
+
+    [Fact]
+    public async Task TheModelCannotGiveCoraAMansVoice()
+    {
+        var paired = await VoicePairing.ChooseForAsync(
+            Voices(),
+            [VoicePairing.SlotFor(PersonaCatalog.Cora)],
+            taken: [],
+            FakeLlmProvider.Answering("cora = ryan"),
+            model: "claude-opus-5",
+            spend: null,
+            prices: null,
+            logger: null,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Contains(paired["cora"], new[] { "aria", "sonia" });
+    }
+
+    [Fact]
+    public async Task TheModelCannotGiveAnalystPrimeAWomansVoice()
+    {
+        var paired = await VoicePairing.ChooseForAsync(
+            Voices(),
+            [VoicePairing.SlotFor(PersonaCatalog.AnalystPrime)],
+            taken: [],
+            FakeLlmProvider.Answering("analyst-prime = aria"),
+            model: "claude-opus-5",
+            spend: null,
+            prices: null,
+            logger: null,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Contains(paired["analyst-prime"], new[] { "ryan", "guy" });
+    }
+
+    [Fact]
+    public async Task AnyOtherCoreTakesTheVoiceTheModelNamedWhateverItsGender()
+    {
+        // Warden's hint is written as a man, and that does not constrain the choice.
+        var paired = await VoicePairing.ChooseForAsync(
+            Voices(),
+            [VoicePairing.SlotFor(PersonaCatalog.Warden)],
+            taken: [],
+            FakeLlmProvider.Answering("warden = aria"),
+            model: "claude-opus-5",
+            spend: null,
+            prices: null,
+            logger: null,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal("aria", paired["warden"]);
+    }
+
+    [Fact]
+    public void OnlyTheTwoSlotsCarryAGender()
+    {
+        var bound = VoicePairing.Cores
+            .Concat(VoicePairing.CarrierRoles)
+            .Where(slot => slot.Hint.Gender != D47.Core.Persona.VoiceGender.Unspecified)
+            .Select(slot => slot.Id)
+            .Order();
+
+        Assert.Equal(["analyst-prime", "cora"], bound);
+    }
+
+    [Fact]
+    public void CartesiasFeminineAndMasculineLabelsAreRead()
+    {
+        var cora = VoicePairing.SlotFor(PersonaCatalog.Cora).Hint;
+
+        Assert.False(cora.Admits("masculine"));
+        Assert.True(cora.Admits("feminine"));
+    }
+}
+
+/// <summary>The lazy half: a voice for the one core the Commander has just selected.</summary>
 public class LazyVoicePairingTests
 {
     private static IReadOnlyList<VoiceInfo> Voices() =>
@@ -258,10 +363,8 @@ public class LazyVoicePairingTests
     }
 
     [Fact]
-    public async Task WithNoModelNothingIsChosen()
+    public async Task WithNoModelTheCoreIsStillGivenAVoiceThatFits()
     {
-        // The caller reads null as "leave the voice alone", which is the whole of the no-model behaviour: a
-        // core speaks in the voice already in force rather than in a guess.
         var voice = await VoicePairing.ChooseOneAsync(
             PersonaCatalog.Cora,
             Voices(),
@@ -273,48 +376,11 @@ public class LazyVoicePairingTests
             logger: null,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.Null(voice);
-    }
-
-    [Fact]
-    public async Task WardenStillTakesGeorgeOnElevenLabsWithNoModel()
-    {
-        var voice = await VoicePairing.ChooseOneAsync(
-            PersonaCatalog.Warden,
-            Voices(),
-            taken: [],
-            provider: null,
-            model: null,
-            spend: null,
-            prices: null,
-            logger: null,
-            ttsProvider: "elevenlabs",
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", voice);
-    }
-
-    [Fact]
-    public async Task AVoiceAnotherCoreHoldsIsNotOffered()
-    {
-        // Two cores sharing a voice is the thing the pairing exists to avoid, and the lazy path is the one
-        // that runs when the others already have theirs.
-        var voice = await VoicePairing.ChooseOneAsync(
-            PersonaCatalog.Cora,
-            Voices(),
-            taken: ["XrExE9yKIg1WjnnlVkGX"],
-            FakeLlmProvider.Answering("cora = XrExE9yKIg1WjnnlVkGX"),
-            model: "claude-opus-5",
-            spend: null,
-            prices: null,
-            logger: null,
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.Null(voice);
+        Assert.Equal("XrExE9yKIg1WjnnlVkGX", voice);
     }
 }
 
-/// <summary>The pairings written before the pass was told which cores are men.</summary>
+/// <summary>The pairings written before Cora and Analyst Prime were bound by gender.</summary>
 public class MiscastVoicesAreDroppedTests
 {
     private static IReadOnlyList<VoiceInfo> Voices() =>
@@ -328,7 +394,7 @@ public class MiscastVoicesAreDroppedTests
         pairs.ToDictionary(pair => pair.Persona, pair => pair.Voice, StringComparer.Ordinal);
 
     [Fact]
-    public void AManSpeakingInAWomansVoiceLosesIt()
+    public void AnalystPrimeSpeakingInAWomansVoiceLosesIt()
     {
         var kept = VoicePairing.WithoutMiscastVoices(
             Paired(("analyst-prime", "en-US-AriaNeural")), Voices());
@@ -337,20 +403,18 @@ public class MiscastVoicesAreDroppedTests
     }
 
     [Fact]
-    public void EveryOtherPairingSurvives()
+    public void AnyOtherCoreKeepsItsVoiceWhateverItsGender()
     {
-        // Including the core the miscast one sat beside: this drops a pairing, it does not re-run the
-        // pairing.
         var kept = VoicePairing.WithoutMiscastVoices(
             Paired(
                 ("analyst-prime", "en-US-AriaNeural"),
                 ("cora", "en-US-AriaNeural"),
-                ("warden", "en-GB-RyanNeural"),
+                ("warden", "en-US-AriaNeural"),
                 ("kex", "unlabelled")),
             Voices());
 
         Assert.Equal("en-US-AriaNeural", kept["cora"]);
-        Assert.Equal("en-GB-RyanNeural", kept["warden"]);
+        Assert.Equal("en-US-AriaNeural", kept["warden"]);
         Assert.Equal("unlabelled", kept["kex"]);
         Assert.DoesNotContain("analyst-prime", kept.Keys);
     }
@@ -358,83 +422,9 @@ public class MiscastVoicesAreDroppedTests
     [Fact]
     public void AVoiceThisProviderDoesNotOfferIsLeftAlone()
     {
-        // It is another provider's, and which pairings belong to the provider in force is a question that
-        // already has an owner.
         var kept = VoicePairing.WithoutMiscastVoices(
             Paired(("analyst-prime", "XrExE9yKIg1WjnnlVkGX")), Voices());
 
         Assert.Equal("XrExE9yKIg1WjnnlVkGX", kept["analyst-prime"]);
-    }
-}
-
-/// <summary>The named defaults, on a file where one of them did not take.</summary>
-public class NamedVoicesAreRestoredTests
-{
-    private static IReadOnlyList<VoiceInfo> Voices() =>
-    [
-        new("pqHfZKP75CvOlQylNhV4", "Bill - Wise, Mature, Balanced", "american", "male"),
-        new("JBFqnCBsd6RMkjVDRZzb", "George - Warm, Captivating Storyteller", "british", "male"),
-        new("XrExE9yKIg1WjnnlVkGX", "Matilda - Warm, Professional", "american", "female"),
-    ];
-
-    private static Dictionary<string, string> Paired(params (string Persona, string Voice)[] pairs) =>
-        pairs.ToDictionary(pair => pair.Persona, pair => pair.Voice, StringComparer.Ordinal);
-
-    [Fact]
-    public void WardenIsPutBackOnGeorge()
-    {
-        var put = VoicePairing.WithNamedDefaultsRestored(
-            Paired(("warden", "pqHfZKP75CvOlQylNhV4")), Voices(), "elevenlabs");
-
-        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", put["warden"]);
-    }
-
-    [Fact]
-    public void TheCoreThatHadGeorgeLosesItAndIsPairedAgain()
-    {
-        // Dropped rather than swapped: two cores cannot share a voice, and the one with no claim on this one
-        // goes back through the ordinary pairing rather than being handed Warden's cast-off by a rule that
-        // was never asked to choose for it.
-        var put = VoicePairing.WithNamedDefaultsRestored(
-            Paired(
-                ("warden", "pqHfZKP75CvOlQylNhV4"),
-                ("mender", "JBFqnCBsd6RMkjVDRZzb"),
-                ("cora", "XrExE9yKIg1WjnnlVkGX")),
-            Voices(),
-            "elevenlabs");
-
-        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", put["warden"]);
-        Assert.DoesNotContain("mender", put.Keys);
-        Assert.Equal("XrExE9yKIg1WjnnlVkGX", put["cora"]);
-    }
-
-    /// <summary>A Commander who picked George for Warden by hand leaves the repair seeing the pairing it wanted, so it skips the entry — and the core the model had given George keeps holding it.</summary>
-    [Fact]
-    public void TheOtherCoreLosesItEvenWhenWardenAlreadyHasIt()
-    {
-        var put = VoicePairing.WithNamedDefaultsRestored(
-            Paired(("warden", "JBFqnCBsd6RMkjVDRZzb"), ("mender", "JBFqnCBsd6RMkjVDRZzb")),
-            Voices(),
-            "elevenlabs");
-
-        Assert.Equal("JBFqnCBsd6RMkjVDRZzb", put["warden"]);
-        Assert.DoesNotContain("mender", put.Keys);
-    }
-
-    [Fact]
-    public void APairingAlreadyRightIsLeftExactlyAlone()
-    {
-        var already = Paired(("warden", "JBFqnCBsd6RMkjVDRZzb"), ("cora", "XrExE9yKIg1WjnnlVkGX"));
-
-        Assert.Same(already, VoicePairing.WithNamedDefaultsRestored(already, Voices(), "elevenlabs"));
-    }
-
-    [Fact]
-    public void AnotherProvidersFileIsNotTouched()
-    {
-        // "George" means an ElevenLabs voice.
-        var edge = Paired(("warden", "en-GB-RyanNeural"));
-
-        Assert.Same(edge, VoicePairing.WithNamedDefaultsRestored(edge, Voices(), "edge"));
     }
 }

@@ -97,23 +97,23 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
             phonemiser = LoadPhonemiser();
         }
 
-        return phonemiser.ToPhonemes(text, VoiceIdFor(voice));
+        return VoiceIdFor(voice) is { } voiceId ? phonemiser.ToPhonemes(text, voiceId) : null;
     }
 
-    /// <summary>
-    /// The voice actually spoken in: the chosen one where Kokoro has it, and its own default where it
-    /// does not.
-    /// </summary>
-    private static string VoiceIdFor(VoiceSelection voice) =>
-        voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen)
-            ? chosen
-            : "af_heart";
+    /// <summary>The chosen voice where Kokoro has it, or null.</summary>
+    private static string? VoiceIdFor(VoiceSelection voice) =>
+        voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen) ? chosen : null;
 
     private AudioClip Speak(string text, VoiceSelection voice, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var voiceId = VoiceIdFor(voice);
+        if (VoiceIdFor(voice) is not { } voiceId)
+        {
+            throw new TtsException(voice.VoiceId is { Length: > 0 } unknown
+                ? $"Kokoro has no voice called {unknown}. Pick one in Settings."
+                : "No Kokoro voice has been chosen. Pick one in Settings.");
+        }
 
         var (session, vocabulary, phonemiser) = Load();
 

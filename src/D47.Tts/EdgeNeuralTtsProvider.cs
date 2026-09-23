@@ -25,9 +25,6 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
 
     public string Name => "Edge Neural";
 
-    /// <summary>Used when nothing has been chosen.</summary>
-    public const string DefaultVoice = "en-GB-SoniaNeural";
-
     /// <summary>What leaves the machine for this provider.</summary>
     public const string EgressDisclosure =
         "The text of every reply D47 speaks is sent to Microsoft's Edge Read Aloud service to be " +
@@ -92,6 +89,11 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         VoiceSelection voice,
         CancellationToken cancellationToken = default)
     {
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.");
+        }
+
         var now = DateTimeOffset.UtcNow;
         using var socket = new ClientWebSocket();
 
@@ -114,7 +116,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
                 socket,
                 EdgeProtocol.SsmlRequest(
                     text,
-                    voice.VoiceId ?? DefaultVoice,
+                    voiceId,
                     voice.Rate,
                     Guid.NewGuid().ToString("N"),
                     now),

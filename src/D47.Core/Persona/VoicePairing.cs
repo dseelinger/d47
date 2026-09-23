@@ -4,27 +4,53 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Persona;
 
-/// <summary>Choosing a sensible voice for each core, once, in the background (Phase 11, #33).</summary>
+/// <summary>Choosing a voice for each core, the carrier captain and the tower, from a provider's list.</summary>
 public static class VoicePairing
 {
-    /// <summary>The revision of the named-default repair this build carries.</summary>
-    public const int RepairRevision = 1;
-
-    /// <summary>A voice for each core that does not already have one.</summary>
-    /// <param name="voices">What the provider offers.</param>
-    private static readonly (string Provider, string Persona, string Voice)[] Named =
-    [
-        (TtsProviderCatalog.ElevenLabsId, "warden", "George"),
-    ];
+    /// <summary>The most voices one request to the model lists.</summary>
+    public const int VoicesPerRequest = 120;
 
     /// <summary>
-    /// <param name="existing">Pairings already made, by persona id.</param> <param name="ttsProvider">
-    /// Which voice provider the list came from, for the named defaults above.
+    /// The completion ceiling for one casting request. Matching a dozen characters against a list is
+    /// reasoning, and a thinking model spends a remark's ceiling before it writes the answer.
     /// </summary>
-    /// <param name="existing">Pairings already made, by persona id.</param>
-    /// <param name="ttsProvider">
-    /// Which voice provider the list came from, for the named defaults above.
-    /// </param>
+    public const int CastingTokens = 8000;
+
+    /// <summary>One voice to be chosen, and how it should sound.</summary>
+    public sealed record Slot(string Id, VoiceHint Hint);
+
+    public static Slot CarrierCaptain { get; } = new(
+        "carrier-captain",
+        new VoiceHint(
+            "The captain of the Commander's fleet carrier: announcements to the crew and the Commander, "
+            + "jump countdowns, calm command over a ship's tannoy."));
+
+    public static Slot Tower { get; } = new(
+        "tower",
+        new VoiceHint(
+            "The fleet carrier's tower control: docking clearances and traffic instructions, brisk and "
+            + "procedural over the radio."));
+
+    /// <summary>The two carrier roles.</summary>
+    public static IReadOnlyList<Slot> CarrierRoles { get; } = [CarrierCaptain, Tower];
+
+    /// <summary>Every core, as a slot.</summary>
+    public static IReadOnlyList<Slot> Cores => [.. PersonaCatalog.All.Select(SlotFor)];
+
+    /// <summary>One core as a slot; only Cora and Analyst Prime are bound by gender.</summary>
+    public static Slot SlotFor(Persona persona) => new(
+        persona.Id,
+        persona.VoiceHint with
+        {
+            Gender = persona.Id == PersonaCatalog.Cora.Id || persona.Id == PersonaCatalog.AnalystPrime.Id
+                ? persona.VoiceHint.Gender
+                : VoiceGender.Unspecified,
+        });
+
+    /// <summary>
+    /// A voice for every core not already in <paramref name="existing"/>, merged with it. The same
+    /// instance comes back when nothing was added.
+    /// </summary>
     public static async Task<IReadOnlyDictionary<string, string>> ChooseAsync(
         IReadOnlyList<VoiceInfo> voices,
         IReadOnlyDictionary<string, string> existing,
@@ -33,184 +59,130 @@ public static class VoicePairing
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
-        string? ttsProvider = null,
+        Random? random = null,
         CancellationToken cancellationToken = default)
     {
-        var paired = WithNamedDefaults(voices, existing, ttsProvider);
-        var unpaired = PersonaCatalog.All.Where(p => !paired.ContainsKey(p.Id)).ToArray();
+        var unpaired = Cores.Where(slot => !existing.ContainsKey(slot.Id)).ToArray();
 
-        // No model, no pairing beyond the named defaults.
-        if (provider is null || voices.Count == 0 || unpaired.Length == 0)
-        {
-            return paired.Count == existing.Count ? existing : paired;
-        }
-
-        // One call for all of them rather than one per core.
-        var chosen = await AskAsync(voices, unpaired, provider, model, spend, prices, logger, cancellationToken)
+        var chosen = await ChooseForAsync(
+            voices, unpaired, existing.Values, provider, model, spend, prices, logger, random, cancellationToken)
             .ConfigureAwait(false);
 
-        var taken = new HashSet<string>(paired.Values, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var persona in unpaired)
+        if (chosen.Count == 0)
         {
-            // The model's answer where it gave one and nothing else has it, and the nearest unused voice
-            // otherwise (remediation.md 11, item 13). Leaving a core unpaired is what made two of them
-            // sound alike. A voice already spoken for is refused when the answer is read, which is right
-            // — and the core it was meant for was then left with nothing, and a core with no pairing speaks
-            // in the provider's default.
-            if (chosen.GetValueOrDefault(persona.Id) is not { } wanted)
-            {
-                // The model said nothing usable about this core — an invented voice, or one whose sex its
-                // description refuses.
-                continue;
-            }
-
-            if (taken.Add(wanted))
-            {
-                paired[persona.Id] = wanted;
-                continue;
-            }
-
-            if (Spare(voices, taken, persona) is { } instead)
-            {
-                taken.Add(instead);
-                paired[persona.Id] = instead;
-            }
+            return existing;
         }
 
-        logger?.LogInformation("Paired {Count} personas to voices", paired.Count - existing.Count);
-
-        return paired;
-    }
-
-    /// <summary>
-    /// A voice nobody has yet, for a core the model could not be given one for (remediation.md 11, item
-    /// 13).
-    /// </summary>
-    private static string? Spare(
-        IReadOnlyList<VoiceInfo> voices,
-        IReadOnlySet<string> taken,
-        Persona persona)
-    {
-        var free = voices.Where(voice => !taken.Contains(voice.Id)).ToArray();
-
-        return free.FirstOrDefault(voice => persona.VoiceHint.Admits(voice.Gender))?.Id;
-    }
-
-    /// <summary>
-    /// The pairings above, plus any named default this provider carries for a core that has none.
-    /// </summary>
-    private static Dictionary<string, string> WithNamedDefaults(
-        IReadOnlyList<VoiceInfo> voices,
-        IReadOnlyDictionary<string, string> existing,
-        string? ttsProvider)
-    {
         var paired = new Dictionary<string, string>(existing, StringComparer.Ordinal);
 
-        if (ttsProvider is null)
+        foreach (var (id, voice) in chosen)
         {
-            return paired;
-        }
-
-        foreach (var (provider, persona, name) in Named)
-        {
-            if (!string.Equals(provider, ttsProvider, StringComparison.OrdinalIgnoreCase)
-                || paired.ContainsKey(persona))
-            {
-                continue;
-            }
-
-            if (TheVoiceCalled(name, voices, persona, paired.Values) is { } match)
-            {
-                paired[persona] = match.Id;
-            }
+            paired[id] = voice;
         }
 
         return paired;
     }
 
-    /// <summary>The voice a named default means, in what this provider actually offers.</summary>
-    private static VoiceInfo? TheVoiceCalled(
-        string name,
+    /// <summary>
+    /// A voice for each slot, by slot id: the model's choice where there is a model, otherwise a free
+    /// voice whose metadata fits, otherwise a free voice at random. Voices in <paramref name="taken"/>
+    /// and voices already handed out are reused only once no free one fits.
+    /// </summary>
+    public static async Task<IReadOnlyDictionary<string, string>> ChooseForAsync(
         IReadOnlyList<VoiceInfo> voices,
-        string persona,
-        IEnumerable<string> taken)
+        IReadOnlyList<Slot> slots,
+        IEnumerable<string> taken,
+        ILlmProvider? provider,
+        string? model,
+        SpendTracker? spend,
+        PriceTable? prices,
+        ILogger? logger,
+        Random? random = null,
+        CancellationToken cancellationToken = default)
     {
-        var spokenFor = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        var free = voices
-            .Where(voice =>
-                !spokenFor.Contains(voice.Id)
-                && PersonaCatalog.Resolve(persona).VoiceHint.Admits(voice.Gender))
-            .ToArray();
+        if (slots.Count == 0 || voices.Count == 0)
+        {
+            return chosen;
+        }
 
-        return free.FirstOrDefault(voice => voice.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-            ?? free.FirstOrDefault(voice => WithoutDescriptor(voice.Name).Equals(name, StringComparison.OrdinalIgnoreCase));
-    }
+        random ??= Random.Shared;
 
-    /// <summary>The name in front of whatever an account has appended to it.</summary>
-    private static string WithoutDescriptor(string name)
-    {
-        var cut = name.IndexOfAny(['-', '–', '—', '(', ',']);
+        var used = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var english = voices.Where(SpeaksEnglish).ToArray();
+        IReadOnlyList<VoiceInfo> offered = english.Length > 0 ? english : voices;
 
-        return (cut < 0 ? name : name[..cut]).Trim();
+        if (provider is not null)
+        {
+            var free = offered.Where(voice => !used.Contains(voice.Id)).ToArray();
+            var answered = await AskInRoundsAsync(
+                free, slots, provider, model, spend, prices, logger, cancellationToken).ConfigureAwait(false);
+
+            foreach (var slot in slots)
+            {
+                if (answered.GetValueOrDefault(slot.Id) is { } wanted && used.Add(wanted))
+                {
+                    chosen[slot.Id] = wanted;
+                }
+            }
+        }
+
+        // Gender-bound slots first, so an unbound one does not take the only voice that fits them.
+        foreach (var slot in slots
+            .Where(slot => !chosen.ContainsKey(slot.Id))
+            .OrderBy(slot => slot.Hint.Gender == VoiceGender.Unspecified))
+        {
+            if ((Matched(offered, used, slot, random) ?? Matched(voices, used, slot, random)) is { } voice)
+            {
+                used.Add(voice);
+                chosen[slot.Id] = voice;
+            }
+        }
+
+        logger?.LogInformation(
+            "Paired {Count} of {Slots} voices ({Model})",
+            chosen.Count,
+            slots.Count,
+            provider is null ? "no model" : "model");
+
+        return chosen;
     }
 
     /// <summary>
-    /// The pairings, with every named default this provider carries put where it belongs (Phase 11,
-    /// #33).
+    /// A voice for a slot without the model: a free voice whose labelled gender fits, then a free voice
+    /// with no gender label, then any voice that fits even if already used.
     /// </summary>
-    public static IReadOnlyDictionary<string, string> WithNamedDefaultsRestored(
-        IReadOnlyDictionary<string, string> paired,
-        IReadOnlyList<VoiceInfo> voices,
-        string? ttsProvider,
-        ILogger? logger = null)
+    private static string? Matched(IReadOnlyList<VoiceInfo> pool, IReadOnlySet<string> used, Slot slot, Random random)
     {
-        if (ttsProvider is null)
-        {
-            return paired;
-        }
+        var fitting = pool.Where(voice => slot.Hint.Admits(voice.Gender)).ToArray();
+        var free = fitting.Where(voice => !used.Contains(voice.Id)).ToArray();
 
-        var put = new Dictionary<string, string>(paired, StringComparer.Ordinal);
-        var moved = false;
+        var tiers = slot.Hint.Gender == VoiceGender.Unspecified
+            ? new[] { free, fitting }
+            : [
+                [.. free.Where(voice => VoiceHint.Read(voice.Gender) == slot.Hint.Gender)],
+                free,
+                fitting,
+            ];
 
-        foreach (var (provider, persona, name) in Named)
-        {
-            if (!string.Equals(provider, ttsProvider, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (TheVoiceCalled(name, voices, persona, []) is not { } wanted)
-            {
-                continue;
-            }
-
-            // Taken off everyone else whether or not the named core already holds it.
-            foreach (var other in put
-                .Where(pair => pair.Value == wanted.Id && pair.Key != persona)
-                .Select(pair => pair.Key)
-                .ToArray())
-            {
-                logger?.LogInformation(
-                    "Taking {Voice} off {Persona}: it is {Named}'s named default", wanted.Id, other, persona);
-
-                put.Remove(other);
-            }
-
-            if (put.GetValueOrDefault(persona) != wanted.Id)
-            {
-                logger?.LogInformation("Restoring {Persona} to {Voice}, its named default", persona, wanted.Id);
-                put[persona] = wanted.Id;
-            }
-
-            moved = moved || put.Count != paired.Count || put[persona] != paired.GetValueOrDefault(persona);
-        }
-
-        return moved ? put : paired;
+        return tiers.FirstOrDefault(tier => tier.Length > 0) is { } candidates
+            ? candidates[random.Next(candidates.Length)].Id
+            : null;
     }
 
-    /// <summary>The pairings, less any that gives a core a voice of the wrong gender (Phase 11, #33).</summary>
+    /// <summary>
+    /// Whether a voice is English or not tagged with a language at all. An accent label such as
+    /// "british", or "multilingual", is not a language tag.
+    /// </summary>
+    private static bool SpeaksEnglish(VoiceInfo voice)
+    {
+        var language = voice.Locale.Split('-', '_')[0];
+
+        return language.Length is not (2 or 3) || language.Equals("en", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The pairings, less any that gives Cora or Analyst Prime a voice of the wrong gender.</summary>
     public static IReadOnlyDictionary<string, string> WithoutMiscastVoices(
         IReadOnlyDictionary<string, string> paired,
         IReadOnlyList<VoiceInfo> voices,
@@ -229,13 +201,14 @@ public static class VoicePairing
         {
             if (byId.TryGetValue(voiceId, out var voice)
                 && PersonaCatalog.Knows(personaId)
-                && !PersonaCatalog.Resolve(personaId).VoiceHint.Admits(voice.Gender))
+                && SlotFor(PersonaCatalog.Resolve(personaId)).Hint is var hint
+                && !hint.Admits(voice.Gender))
             {
                 logger?.LogInformation(
                     "Dropping the voice {Voice} paired to {Persona}: the core is written {Gender}",
                     voiceId,
                     personaId,
-                    PersonaCatalog.Resolve(personaId).VoiceHint.Gender);
+                    hint.Gender);
 
                 continue;
             }
@@ -246,10 +219,7 @@ public static class VoicePairing
         return kept.Count == paired.Count ? paired : kept;
     }
 
-    /// <summary>
-    /// A voice for one core, asked for at the moment it is needed — the Commander has just selected a
-    /// core that has none (Phase 11, #33).
-    /// </summary>
+    /// <summary>A voice for one core, chosen at the moment it is needed.</summary>
     /// <param name="taken">Voices already spoken for, so two cores do not end up sharing one.</param>
     public static async Task<string?> ChooseOneAsync(
         Persona persona,
@@ -260,39 +230,16 @@ public static class VoicePairing
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
-        string? ttsProvider = null,
+        Random? random = null,
         CancellationToken cancellationToken = default)
     {
-        var used = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        // Filtered rather than checked afterwards, because this path asks about one core and so can.
-        var offered = voices
-            .Where(voice => !used.Contains(voice.Id) && persona.VoiceHint.Admits(voice.Gender))
-            .ToArray();
-
-        // A named default is not a judgement, so it is answered here rather than asked of a model — and
-        // answered even when there is none.
-        if (Named.FirstOrDefault(named =>
-                string.Equals(named.Provider, ttsProvider, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(named.Persona, persona.Id, StringComparison.Ordinal)) is { Voice: { } wanted }
-            && TheVoiceCalled(wanted, offered, persona.Id, []) is { } named)
-        {
-            logger?.LogInformation("Voice for {Persona}: {Voice}, its named default", persona.Id, named.Id);
-            return named.Id;
-        }
-
-        if (provider is null || offered.Length == 0)
-        {
-            return null;
-        }
-
-        var chosen = await AskAsync(
-            offered, [persona], provider, model, spend, prices, logger, cancellationToken).ConfigureAwait(false);
+        var chosen = await ChooseForAsync(
+            voices, [SlotFor(persona)], taken, provider, model, spend, prices, logger, random, cancellationToken)
+            .ConfigureAwait(false);
 
         var voice = chosen.GetValueOrDefault(persona.Id);
 
-        logger?.LogInformation(
-            "Voice for {Persona}: {Voice}", persona.Id, voice ?? "none the model would name");
+        logger?.LogInformation("Voice for {Persona}: {Voice}", persona.Id, voice ?? "none");
 
         return voice;
     }
@@ -305,7 +252,7 @@ public static class VoicePairing
     /// </param>
     public sealed record VoiceRepair(IReadOnlyDictionary<string, string> Voices, bool Complete);
 
-    /// <summary>Gives a voice back to every core a repair took one off (Phase 11, #33).</summary>
+    /// <summary>Gives a voice back to every core a repair took one off.</summary>
     /// <param name="before">The pairings as they stood, before the repair removed anything.</param>
     /// <param name="after">The repair's output.</param>
     public static async Task<VoiceRepair> WithReplacementsAsync(
@@ -317,7 +264,7 @@ public static class VoicePairing
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
-        string? ttsProvider = null,
+        Random? random = null,
         CancellationToken cancellationToken = default)
     {
         if (ReferenceEquals(after, before))
@@ -341,7 +288,7 @@ public static class VoicePairing
                 spend,
                 prices,
                 logger,
-                ttsProvider,
+                random,
                 cancellationToken).ConfigureAwait(false);
 
             if (voice is null)
@@ -356,7 +303,6 @@ public static class VoicePairing
 
             logger?.LogInformation("{Persona} takes {Voice} instead", id, voice);
 
-            // The line the log line was always claiming.
             repaired[id] = voice;
         }
 
@@ -386,29 +332,71 @@ public static class VoicePairing
         return merged;
     }
 
-    /// <summary>The model's answer, as persona id to voice id.</summary>
-    private static async Task<IReadOnlyDictionary<string, string>> AskAsync(
+    /// <summary>
+    /// The model's answer over a list of any length: where the list is longer than one request holds,
+    /// each part is asked for a shortlist and the shortlists are asked again.
+    /// </summary>
+    private static async Task<IReadOnlyDictionary<string, string>> AskInRoundsAsync(
         IReadOnlyList<VoiceInfo> voices,
-        IReadOnlyList<Persona> unpaired,
-        ILlmProvider? provider,
+        IReadOnlyList<Slot> slots,
+        ILlmProvider provider,
         string? model,
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
         CancellationToken cancellationToken)
     {
-        if (provider is null)
+        var pool = voices;
+
+        while (pool.Count > VoicesPerRequest)
         {
-            return new Dictionary<string, string>();
+            var parts = pool.Chunk(VoicesPerRequest).ToArray();
+
+            // The parts are independent, so they are asked at once.
+            var answers = await Task.WhenAll(parts.Select(part =>
+                AskAsync(part, slots, provider, model, spend, prices, logger, cancellationToken))).ConfigureAwait(false);
+
+            List<VoiceInfo> shortlist =
+            [
+                .. parts.Zip(answers).SelectMany(pair => pair.First.Where(voice =>
+                    pair.Second.Values.Contains(voice.Id, StringComparer.OrdinalIgnoreCase))),
+            ];
+
+            // A round that did not shorten the list would repeat forever.
+            if (shortlist.Count == 0 || shortlist.Count >= pool.Count)
+            {
+                return new Dictionary<string, string>();
+            }
+
+            pool = shortlist;
         }
 
-        // Capped.
-        var offered = voices.Take(120).ToArray();
+        return await AskAsync(pool, slots, provider, model, spend, prices, logger, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>The model's answer, as slot id to voice id.</summary>
+    private static async Task<IReadOnlyDictionary<string, string>> AskAsync(
+        IReadOnlyList<VoiceInfo> offered,
+        IReadOnlyList<Slot> slots,
+        ILlmProvider provider,
+        string? model,
+        SpendTracker? spend,
+        PriceTable? prices,
+        ILogger? logger,
+        CancellationToken cancellationToken)
+    {
+        var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        if (offered.Count == 0)
+        {
+            return chosen;
+        }
 
         var request = new System.Text.StringBuilder();
         request.AppendLine(
             "Pick the most fitting voice for each character below, from the voice list. "
-            + "Each character states the gender its voice must have; that part is not a "
+            + "Where a character states the gender its voice must have, that part is not a "
             + "judgement call and an answer that ignores it is discarded. "
             + "Answer with one line per character, exactly `id = voiceId`, and nothing else. "
             + "Use each voice at most once. If none fits, leave that character out.");
@@ -417,19 +405,21 @@ public static class VoicePairing
 
         foreach (var voice in offered)
         {
-            request.AppendLine($"  {voice.Id} — {voice.Label}");
+            request.AppendLine(voice.Description is { Length: > 0 } description
+                ? $"  {voice.Id} — {voice.Label}. {description}"
+                : $"  {voice.Id} — {voice.Label}");
         }
 
         request.AppendLine();
         request.AppendLine("Characters:");
 
-        foreach (var persona in unpaired)
+        foreach (var slot in slots)
         {
-            var gender = persona.VoiceHint.Gender == VoiceGender.Unspecified
+            var gender = slot.Hint.Gender == VoiceGender.Unspecified
                 ? string.Empty
-                : $"{persona.VoiceHint.Gender.ToString().ToLowerInvariant()} voice. ";
+                : $"{slot.Hint.Gender.ToString().ToLowerInvariant()} voice. ";
 
-            request.AppendLine($"  {persona.Id} — {gender}{persona.VoiceHint.Description}");
+            request.AppendLine($"  {slot.Id} — {gender}{slot.Hint.Description}");
         }
 
         var answer = await FlavourTurn.AskAsync(
@@ -446,17 +436,23 @@ public static class VoicePairing
             logger,
             cancellationToken,
 
+            maxOutputTokens: CastingTokens,
+
             // Cold (#98).
             sampling: LlmSampling.VoiceCasting).ConfigureAwait(false);
-
-        var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
 
         if (answer is null)
         {
             return chosen;
         }
 
-        var byId = offered.ToDictionary(v => v.Id, StringComparer.OrdinalIgnoreCase);
+        var bySlot = slots.ToDictionary(slot => slot.Id, StringComparer.Ordinal);
+        var byId = new Dictionary<string, VoiceInfo>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var voice in offered)
+        {
+            byId.TryAdd(voice.Id, voice);
+        }
 
         foreach (var line in answer.Split('\n'))
         {
@@ -467,33 +463,28 @@ public static class VoicePairing
                 continue;
             }
 
-            var personaId = parts[0].Trim().Trim('`', '*', '-', ' ');
+            var slotId = parts[0].Trim().Trim('`', '*', '-', ' ');
             var voiceId = parts[1].Trim().Trim('`', '*', ' ');
 
-            // Both halves checked against what was actually offered.
-            if (!PersonaCatalog.Knows(personaId)
+            // Both halves checked against what was actually asked and offered.
+            if (!bySlot.TryGetValue(slotId, out var slot)
                 || !byId.TryGetValue(voiceId, out var voice)
                 || chosen.ContainsValue(voice.Id))
             {
                 continue;
             }
 
-            // The stated gender, enforced rather than asked for — the same rule as the voice id itself.
-            if (!PersonaCatalog.Resolve(personaId).VoiceHint.Admits(voice.Gender))
+            if (!slot.Hint.Admits(voice.Gender))
             {
                 logger?.LogInformation(
-                    "Not pairing {Persona} to {Voice}: the core is written {Gender}",
-                    personaId,
-                    voice.Id,
-                    PersonaCatalog.Resolve(personaId).VoiceHint.Gender);
+                    "Not pairing {Slot} to {Voice}: the voice must be {Gender}", slotId, voice.Id, slot.Hint.Gender);
 
                 continue;
             }
 
-            chosen[personaId] = voice.Id;
+            chosen[slotId] = voice.Id;
         }
 
         return chosen;
     }
-
 }

@@ -24,9 +24,6 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
     /// </summary>
     public const string DefaultModel = "gpt-4o-mini-tts-2025-12-15";
 
-    /// <summary>The voice used when nothing has been chosen.</summary>
-    public const string DefaultVoice = "onyx";
-
     /// <summary>
     /// The documented bounds of <c>speed</c>, and they are real: measured 2026-08-26 across the whole
     /// range, <c>0.25</c> gives 40.82 seconds where <c>1.0</c> gives 10.75
@@ -112,6 +109,11 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
                 fault: TtsFault.KeyRejected);
         }
 
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.");
+        }
+
         // Queued rather than refused.
         await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -129,7 +131,7 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
                     // rewrites nothing on the way out — ElevenLabs overrides it only because it spells
                     // numerals, and it is the rewritten length that lands on that bill.
                     Input = text,
-                    Voice = voice.VoiceId is { Length: > 0 } chosen ? chosen : DefaultVoice,
+                    Voice = voiceId,
 
                     // Raw samples rather than a container, so nothing has to be decoded on the way to the
                     // arbiter — the same trade ElevenLabs makes with pcm_24000.
@@ -184,7 +186,7 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
 
     /// <summary>One character, synthesised and thrown away, to prove a key (Phase 58).</summary>
     public async Task ProveKeyAsync(CancellationToken cancellationToken = default) =>
-        _ = await SynthesizeAsync(".", VoiceSelection.Default, cancellationToken).ConfigureAwait(false);
+        _ = await SynthesizeAsync(".", new VoiceSelection(Catalogue[0].Id), cancellationToken).ConfigureAwait(false);
 
     /// <summary>What the service said, classified into the two answers a Commander can act on.</summary>
     private async Task<TtsException> DescribeAsync(

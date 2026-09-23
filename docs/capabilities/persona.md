@@ -374,23 +374,14 @@ provider offers, matching the voice to the character rather than making you audi
 hundred of them. It is chosen in the background, at the moment you pick that core, and the core's
 own first line is spoken in it.
 
-**A language model does the matching, or nothing does.** Reading "a clipped, precise woman"
-against a list of voice names is a judgement, so with no model configured no voice is chosen at
-all and the core keeps the one already in force. Directive 47 does not guess from voice names —
-the version that did handed every core a confident miscast. Configure a model later and the next
-core you select is paired properly.
+**A language model does the matching where there is one.** Reading "a clipped, precise woman"
+against a list of voices is a judgement, so with a model configured the model makes it. With no
+model, d47 picks a free voice whose labels fit, or one at random where the list has no labels, so
+every core still has a voice of its own.
 
-**Gender is not part of the judgement.** Ten of the eleven cores are written as men and Cora as
-a woman, and the model is told so rather than left to infer it from the description — a voice of
-the wrong gender is not a near miss, it is a different character reading the lines. A voice your
-provider labels as contradicting the core is refused, and one it does not label either way is
-allowed, so an account that says nothing about gender still gets a full list to choose from.
-
-One exception, because it is not a judgement: on ElevenLabs, **Warden** takes **George** — warm,
-captivating storyteller, male, British — with or without a model. Accounts name that voice
-differently — "George" on one, "George - Warm, Captivating Storyteller" on another — and both are
-recognised. A file where Warden ended up on something else because the name did not match is put
-right once, and whichever core was holding George gives it back and is paired again.
+**Gender binds two cores.** Cora is written as a woman and Analyst Prime as a man, and for those
+two the model is told so: a voice your provider labels as contradicting them is refused, and one it
+does not label either way is allowed. Every other core can take any voice.
 
 The voice sits on the [Voice row](speech.md#voice) in Speech, and that row is the core aboard's.
 Change it and you have chosen that core's voice; nothing re-derives it afterwards.

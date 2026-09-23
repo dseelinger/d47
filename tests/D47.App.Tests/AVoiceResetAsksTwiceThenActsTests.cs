@@ -76,7 +76,7 @@ public class AVoiceResetAsksTwiceThenActsTests
         Click(button);
 
         Assert.Equal(1, calls);
-        Assert.Equal("Reset every voice", button.Content as string);
+        Assert.Equal("Pair every voice again", button.Content as string);
         Assert.Contains("RESET-OUTCOME", PageText(host), StringComparison.Ordinal);
 
         host.Close();
@@ -100,7 +100,7 @@ public class AVoiceResetAsksTwiceThenActsTests
             SettingsView.ConfirmPressWindow + TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Reset every voice", button.Content as string);
+        Assert.Equal("Pair every voice again", button.Content as string);
 
         Click(button);
 

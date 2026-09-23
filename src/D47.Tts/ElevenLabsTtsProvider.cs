@@ -163,6 +163,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                         voice.Labels?.GetValueOrDefault("gender"))
                     {
                         PreviewUrl = PreviewFrom(voice.PreviewUrl),
+                        Description = DescriptionOf(voice),
                     }),
             ]);
 
@@ -475,6 +476,19 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         public List<ElevenVoice>? Voices { get; init; }
     }
 
+    /// <summary>The voice's own description and every label but the two already read, as one line.</summary>
+    private static string? DescriptionOf(ElevenVoice voice)
+    {
+        var parts = (voice.Labels ?? [])
+            .Where(label => label.Key is not ("accent" or "gender") && !string.IsNullOrWhiteSpace(label.Value))
+            .Select(label => $"{label.Key.Replace('_', ' ')}: {label.Value}")
+            .Prepend(voice.Description ?? string.Empty)
+            .Where(part => part.Length > 0)
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join("; ", parts);
+    }
+
     private sealed record ElevenVoice
     {
         [JsonPropertyName("voice_id")]
@@ -483,6 +497,8 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         public string? Name { get; init; }
 
         public Dictionary<string, string>? Labels { get; init; }
+
+        public string? Description { get; init; }
 
         [JsonPropertyName("preview_url")]
         public string? PreviewUrl { get; init; }

@@ -58,16 +58,6 @@ public class WhatOpenAiIsAskedForTests
         Assert.False(sent.TryGetProperty("language", out _));
     }
 
-    [Fact]
-    public async Task AVoiceThatWasNotChosenFallsBackToANamedOne()
-    {
-        var sent = await SentAsync(VoiceSelection.Default);
-
-        // A named default is right here and wrong for ElevenLabs: this catalogue is fixed and public, so
-        // naming one is a choice rather than a guess at somebody's account.
-        Assert.Equal("onyx", sent.GetProperty("voice").GetString());
-    }
-
     [Theory]
     [InlineData(1.0, 1.0)]
     [InlineData(0.1, 0.25)]

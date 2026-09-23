@@ -132,7 +132,10 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
                             // Published for all 924 — 480 feminine, 443 masculine, one neutral — which is
                             // what lets `VoiceCast.ForSender` match sex here where it cannot on OpenAI.
-                            voice.Gender)));
+                            voice.Gender)
+                        {
+                            Description = voice.Description,
+                        }));
 
                 path = page is { HasMore: true, NextPage: { Length: > 0 } next }
                     ? $"/voices/?limit=100&starting_after={Uri.EscapeDataString(next)}"
@@ -399,6 +402,8 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
         public string? Language { get; init; }
 
         public string? Gender { get; init; }
+
+        public string? Description { get; init; }
     }
 
     public void Dispose() => _http.Dispose();

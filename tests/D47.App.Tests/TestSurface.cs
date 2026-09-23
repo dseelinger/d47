@@ -90,7 +90,7 @@ public static class TestSurface
                 DownloadLocalVoice = () => localVoice ?? ((_, _) => Task.FromResult<string?>(null)),
 
                 // Supplied rather than left null, for the same reason as the local voice download above.
-                ResetVoices = () => resetVoices ?? (() => string.Empty),
+                ResetVoices = () => (_, _) => Task.FromResult<string?>(resetVoices?.Invoke() ?? string.Empty),
             },
             new ShipsCapability.ShipsSurface
             {

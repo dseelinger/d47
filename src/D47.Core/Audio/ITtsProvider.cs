@@ -8,6 +8,9 @@ public sealed record VoiceInfo(string Id, string Name, string Locale, string? Ge
 
     /// <summary>A hosted sample of this voice that costs nothing to fetch, or null where there is none (#106).</summary>
     public string? PreviewUrl { get; init; }
+
+    /// <summary>What the provider says the voice sounds like, where it says anything.</summary>
+    public string? Description { get; init; }
 }
 
 /// <summary>A voice, plus how fast to say it.</summary>
@@ -16,7 +19,7 @@ public sealed record VoiceSelection(string? VoiceId, double Rate = 1.0)
     /// <summary>What the voice is called, where the caller could find out.</summary>
     public string? Name { get; init; }
 
-    /// <summary>No voice chosen, so the provider picks its own.</summary>
+    /// <summary>No voice chosen; a provider refuses to speak with it.</summary>
     public static readonly VoiceSelection Default = new(VoiceId: null);
 }
 

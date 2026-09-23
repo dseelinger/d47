@@ -1510,7 +1510,7 @@ public sealed class AppHost : IDisposable
                         : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
 
                     // Late-bound for the same reason as the local voice download above.
-                    ResetVoices = () => self is null ? null : self.ResetVoices,
+                    ResetVoices = () => self is null ? null : self.ResetVoicesAsync,
                 },
                 new ShipsCapability.ShipsSurface
                 {
@@ -2892,7 +2892,7 @@ public sealed class AppHost : IDisposable
         return provider.Speaks ? VoicesOf(provider.Id).WhyEmpty(provider.Name) : null;
     }
 
-    /// <summary>One voice per core, chosen once and written to settings (Phase 11, #33).</summary>
+    /// <summary>A voice for the core aboard, when it has none.</summary>
     private async Task EnsureVoiceForCurrentPersonaAsync()
     {
         var persona = Personas.Current;
@@ -2912,8 +2912,7 @@ public sealed class AppHost : IDisposable
                 Turns.BackgroundModel,
                 Spend,
                 PriceTable.Default,
-                _logger,
-                TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id).ConfigureAwait(false);
+                _logger).ConfigureAwait(false);
 
             if (voice is null)
             {
@@ -2941,27 +2940,32 @@ public sealed class AppHost : IDisposable
         }
         catch (Exception ex)
         {
-            // A convenience, exactly like the pass at startup.
             _logger.LogWarning(ex, "Could not choose a voice for {Persona}", persona.Id);
         }
     }
 
     /// <summary>
-    /// Drops any pairing that has a core speaking in the wrong gender, once, and gives that core
-    /// another voice in the same breath.
+    /// Drops any pairing that has Cora or Analyst Prime speaking in the wrong gender, once, and gives
+    /// that core another voice in the same pass.
     /// </summary>
     private async Task RepairMiscastVoicesAsync()
     {
-        if (Settings.Current.Persona.VoicesGenderChecked || Turns.Provider is null)
+        if (Settings.Current.Persona.VoicesGenderChecked)
         {
             return;
         }
 
         var before = Settings.Current.Persona.Voices;
 
-        var repair = await WithReplacementsAsync(
+        var repair = await VoicePairing.WithReplacementsAsync(
             before,
-            VoicePairing.WithoutMiscastVoices(before, AboardVoices.Voices, _logger)).ConfigureAwait(false);
+            VoicePairing.WithoutMiscastVoices(before, AboardVoices.Voices, _logger),
+            AboardVoices.Voices,
+            Turns.Provider,
+            Turns.BackgroundModel,
+            Spend,
+            PriceTable.Default,
+            _logger).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -2976,120 +2980,165 @@ public sealed class AppHost : IDisposable
         ApplySpeechSettings();
     }
 
-    /// <summary>One repair's result, with a voice chosen for every core the repair took one off.</summary>
-    private Task<VoicePairing.VoiceRepair> WithReplacementsAsync(
-        IReadOnlyDictionary<string, string> before,
-        IReadOnlyDictionary<string, string> after) =>
-        VoicePairing.WithReplacementsAsync(
-            before,
-            after,
-            AboardVoices.Voices,
+    /// <summary>Serialises pairing passes, which read and write the same settings.</summary>
+    private readonly SemaphoreSlim _pairing = new(1, 1);
+
+    /// <summary>What one pairing pass gave a voice to.</summary>
+    private readonly record struct PairingPass(int Cores, int CarrierRoles);
+
+    /// <summary>
+    /// A voice for every core, the carrier captain and the tower that has none, from the lists that
+    /// have arrived. With <paramref name="forgetFirst"/>, every voice on every provider is forgotten,
+    /// in the same settings write as the new voices, so nothing is left without a voice while the
+    /// model is asked.
+    /// </summary>
+    private async Task<PairingPass> PairVoicesAsync(bool forgetFirst = false, CancellationToken cancellationToken = default)
+    {
+        await _pairing.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (!forgetFirst && AboardVoices.Count > 0)
+            {
+                await RepairMiscastVoicesAsync().ConfigureAwait(false);
+            }
+
+            return await PairUnvoicedAsync(forgetFirst, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Pairing is a convenience.
+            _logger.LogWarning(ex, "Could not pair voices");
+            return default;
+        }
+        finally
+        {
+            _pairing.Release();
+        }
+    }
+
+    /// <summary>The body of <see cref="PairVoicesAsync"/>, run under its lock.</summary>
+    private async Task<PairingPass> PairUnvoicedAsync(bool forgetFirst, CancellationToken cancellationToken)
+    {
+        D47Settings Basis(D47Settings settings) => forgetFirst ? VoiceMemory.Forgotten(settings).Settings : settings;
+
+        var start = Basis(Settings.Current);
+        var speech = start.Speech;
+        var persona = start.Persona;
+        var aboard = VoicesFor(VoiceGroup.Aboard);
+        var carrier = VoicesFor(VoiceGroup.Carrier);
+        var shared = string.Equals(
+            VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard),
+            VoiceGroups.ProviderFor(speech, VoiceGroup.Carrier),
+            StringComparison.OrdinalIgnoreCase);
+
+        var cores = VoicePairing.Cores.Where(slot => !persona.Voices.ContainsKey(slot.Id)).ToArray();
+        var roles = VoicePairing.CarrierRoles.Where(slot => CarrierVoice(speech, slot) is null).ToArray();
+        string[] carrierTaken = [.. new[] { speech.CarrierCaptainVoice, speech.TowerVoice }.OfType<string>()];
+
+        var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        if (aboard.Count > 0)
+        {
+            await PairFromAsync(
+                aboard,
+                shared ? [.. cores, .. roles] : cores,
+                shared ? persona.Voices.Values.Concat(carrierTaken) : persona.Voices.Values,
+                chosen,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        if (!shared && carrier.Count > 0 && roles.Length > 0)
+        {
+            await PairFromAsync(carrier, roles, carrierTaken, chosen, cancellationToken).ConfigureAwait(false);
+        }
+
+        string[] pairedCores = [.. chosen.Keys.Where(id => cores.Any(slot => slot.Id == id))];
+
+        if (!forgetFirst && chosen.Count == 0 && (aboard.Count == 0 || persona.VoicesPaired))
+        {
+            return default;
+        }
+
+        Settings.Replace(forgetFirst ? SpeechCapability.ResetVoicesKey : "persona.voices", settings =>
+        {
+            var current = Basis(settings);
+            var voices = new Dictionary<string, string>(current.Persona.Voices, StringComparer.Ordinal);
+
+            foreach (var id in pairedCores)
+            {
+                voices.TryAdd(id, chosen[id]);
+            }
+
+            return current with
+            {
+                Persona = current.Persona with
+                {
+                    Voices = voices,
+                    VoicesPaired = current.Persona.VoicesPaired || aboard.Count > 0,
+                    PairedVoices = VoicePairing.WithPairingsRecorded(
+                        current.Persona.PairedVoices, current.Persona.Voices, voices),
+                },
+                Speech = current.Speech with
+                {
+                    CarrierCaptainVoice = current.Speech.CarrierCaptainVoice
+                        ?? chosen.GetValueOrDefault(VoicePairing.CarrierCaptain.Id),
+                    TowerVoice = current.Speech.TowerVoice ?? chosen.GetValueOrDefault(VoicePairing.Tower.Id),
+                },
+            };
+        });
+
+        if (chosen.Count > 0 || forgetFirst)
+        {
+            // Nothing else will notice: the core aboard or the carrier may have just changed voice.
+            ApplySpeechSettings();
+        }
+
+        return new PairingPass(pairedCores.Length, chosen.Count - pairedCores.Length);
+    }
+
+    /// <summary>Pairs <paramref name="slots"/> from one provider's list into <paramref name="chosen"/>.</summary>
+    private async Task PairFromAsync(
+        VoiceCatalogue list,
+        IReadOnlyList<VoicePairing.Slot> slots,
+        IEnumerable<string> taken,
+        Dictionary<string, string> chosen,
+        CancellationToken cancellationToken)
+    {
+        foreach (var (id, voice) in await VoicePairing.ChooseForAsync(
+            list.Voices,
+            slots,
+            taken,
             Turns.Provider,
             Turns.BackgroundModel,
             Spend,
             PriceTable.Default,
             _logger,
-            TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id);
-
-    /// <summary>Puts every named default back where the table says it goes, once.</summary>
-    private async Task RestoreNamedVoicesAsync()
-    {
-        if (Settings.Current.Persona.VoicesRepaired >= VoicePairing.RepairRevision || Turns.Provider is null)
+            cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            return;
-        }
-
-        var provider = TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id;
-        var before = Settings.Current.Persona.Voices;
-
-        var repair = await WithReplacementsAsync(
-            before,
-            VoicePairing.WithNamedDefaultsRestored(before, AboardVoices.Voices, provider, _logger)).ConfigureAwait(false);
-
-        Settings.Replace("persona.voices", current => current with
-        {
-            Persona = current.Persona with
-            {
-                Voices = repair.Voices,
-                VoicesRepaired = repair.Complete ? VoicePairing.RepairRevision : current.Persona.VoicesRepaired,
-                PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
-            },
-        });
-
-        // The core aboard may have just changed voice, and nothing else will notice.
-        ApplySpeechSettings();
-    }
-
-    private async Task PairPersonaVoicesAsync()
-    {
-        if (AboardVoices.Count > 0)
-        {
-            await RepairMiscastVoicesAsync().ConfigureAwait(false);
-            await RestoreNamedVoicesAsync().ConfigureAwait(false);
-        }
-
-        if (Settings.Current.Persona.VoicesPaired || AboardVoices.Count == 0)
-        {
-            // The pass has run, but it may have run in a session with no model configured and left the core
-            // aboard with nothing.
-            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-            return;
-        }
-
-        try
-        {
-            var before = Settings.Current.Persona.Voices;
-
-            var paired = await VoicePairing.ChooseAsync(
-                AboardVoices.Voices,
-                before,
-                Turns.Provider,
-                Turns.BackgroundModel,
-                Spend,
-                PriceTable.Default,
-                _logger,
-                TtsProviderCatalog.Selected(Settings.Current.Speech.Provider).Id).ConfigureAwait(false);
-
-            // Flagged as run even when no model was configured and only the named defaults were written.
-            Settings.Replace("persona.voices", current => current with
-            {
-                Persona = current.Persona with
-                {
-                    Voices = paired,
-                    VoicesPaired = true,
-                    PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, paired),
-                },
-            });
-
-            // The core aboard may have just acquired a voice, and nothing else will notice.
-            ApplySpeechSettings();
-        }
-        catch (Exception ex)
-        {
-            // Pairing is a convenience.
-            _logger.LogWarning(ex, "Could not pair voices to personas");
+            chosen[id] = voice;
         }
     }
+
+    /// <summary>The voice held for one carrier role.</summary>
+    private static string? CarrierVoice(SpeechSettings speech, VoicePairing.Slot role) =>
+        role == VoicePairing.CarrierCaptain ? speech.CarrierCaptainVoice : speech.TowerVoice;
 
     /// <summary>
-    /// Puts every core, on every provider the Commander has used, back to the voice d47 paired it
-    /// with, and reports what that did (#85).
+    /// Forgets every voice on every provider, pairs the selected provider again at once and reports
+    /// what was paired.
     /// </summary>
-    private string ResetVoices()
+    private async Task<string?> ResetVoicesAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
-        var (updated, outcome) = VoiceMemory.ResetToPairing(Settings.Current);
+        var (_, providers) = VoiceMemory.Forgotten(Settings.Current);
+        var pass = await PairVoicesAsync(forgetFirst: true, cancellationToken).ConfigureAwait(false);
 
-        Settings.Replace("speech.resetVoices", _ => updated);
-        ApplySpeechSettings();
-
-        // A core with no recorded pairing was dropped rather than restored: paired again now, rather than
-        // waiting for whatever next fetches the voice list.
-        if (outcome.PairingPending > 0)
-        {
-            _ = PairPersonaVoicesAsync();
-        }
-
-        return outcome.Said;
+        return VoiceMemory.ForgottenSaid(
+            pass.Cores,
+            pass.CarrierRoles,
+            providers,
+            TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard)).Name,
+            byModel: Turns.Provider is not null);
     }
 
     /// <summary>
@@ -3535,14 +3584,17 @@ public sealed class AppHost : IDisposable
                 listed.Count,
                 cast.Feminine.Count);
 
-            // Pairing a voice to each core needs the list, so it starts once the list arrives rather than at
-            // startup.
+            // Pairing needs the list, so it starts once the list arrives rather than at startup.
             if (string.Equals(
                     provider.Id,
                     VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard),
+                    StringComparison.OrdinalIgnoreCase)
+                || string.Equals(
+                    provider.Id,
+                    VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Carrier),
                     StringComparison.OrdinalIgnoreCase))
             {
-                _ = PairPersonaVoicesAsync();
+                _ = PairVoicesAsync();
             }
         }
         catch (Exception ex)
@@ -6068,8 +6120,11 @@ public sealed class AppHost : IDisposable
     {
         try
         {
+            // Any voice from the provider's own list: the check is of the key, not of a choice.
+            var listed = await provider.ListVoicesAsync(cancellationToken).ConfigureAwait(false);
+
             _ = await provider
-                .SynthesizeAsync(".", VoiceSelection.Default, cancellationToken)
+                .SynthesizeAsync(".", new VoiceSelection(listed.Voices.FirstOrDefault()?.Id), cancellationToken)
                 .ConfigureAwait(false);
 
             return SecretCheck.Works($"{selected.Name} accepted the key.");

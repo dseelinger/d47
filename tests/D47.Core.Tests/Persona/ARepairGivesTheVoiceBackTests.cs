@@ -12,8 +12,6 @@ public class ARepairGivesTheVoiceBackTests
     private const string Matilda = "XrExE9yKIg1WjnnlVkGX";
     private const string Callum = "N2lVS1w4EtoT3dr4eOWO";
 
-    private const string Eleven = TtsProviderCatalog.ElevenLabsId;
-
     private static IReadOnlyList<VoiceInfo> Voices() =>
     [
         new(George, "George", "british", "male"),
@@ -24,53 +22,37 @@ public class ARepairGivesTheVoiceBackTests
     private static Task<VoicePairing.VoiceRepair> RepairAsync(
         IReadOnlyDictionary<string, string> before,
         IReadOnlyDictionary<string, string> after,
-        D47.Core.Conversation.ILlmProvider? provider = null) =>
+        D47.Core.Conversation.ILlmProvider? provider = null,
+        IReadOnlyList<VoiceInfo>? voices = null) =>
         VoicePairing.WithReplacementsAsync(
             before,
             after,
-            Voices(),
+            voices ?? Voices(),
             provider,
             model: provider is null ? null : "claude-opus-5",
             spend: null,
             prices: null,
             logger: null,
-            ttsProvider: Eleven,
             cancellationToken: TestContext.Current.CancellationToken);
 
-    /// <summary>The fault, at its smallest.</summary>
     [Fact]
     public async Task ACoreTheRepairStripsIsGivenAVoiceRatherThanNone()
     {
-        var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["warden"] = Matilda };
+        var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["analyst-prime"] = Matilda };
         var after = VoicePairing.WithoutMiscastVoices(before, Voices());
 
         // The repair really did take it off, or this test proves nothing.
-        Assert.False(after.ContainsKey("warden"));
+        Assert.False(after.ContainsKey("analyst-prime"));
 
         var repair = await RepairAsync(before, after);
 
-        Assert.True(repair.Voices.ContainsKey("warden"));
-        Assert.Equal(George, repair.Voices["warden"]);
-    }
-
-    /// <summary>
-    /// No model at all, which is the common case: a named default is a lookup rather than a judgement,
-    /// so the repair still completes without anything to ask.
-    /// </summary>
-    [Fact]
-    public async Task TheRepairFinishesWithNoModelWhenTheAnswerIsANamedDefault()
-    {
-        var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["warden"] = Matilda };
-
-        var repair = await RepairAsync(before, VoicePairing.WithoutMiscastVoices(before, Voices()));
-
+        Assert.Contains(repair.Voices["analyst-prime"], new[] { George, Callum });
         Assert.True(repair.Complete);
     }
 
     [Fact]
     public async Task AModelsChoiceIsWrittenDownToo()
     {
-        // Cora is written female and was holding a man's voice.
         var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["cora"] = George };
         var after = VoicePairing.WithoutMiscastVoices(before, Voices());
 
@@ -82,25 +64,16 @@ public class ARepairGivesTheVoiceBackTests
         Assert.True(repair.Complete);
     }
 
+    /// <summary>A list with no voice that fits leaves the core where it was, and the repair unfinished.</summary>
     [Fact]
     public async Task ACoreNothingCanBeChosenForKeepsWhatItHad()
     {
+        IReadOnlyList<VoiceInfo> men = [new(George, "George", "british", "male"), new(Callum, "Callum", "british", "male")];
         var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["cora"] = George };
 
-        // No model and no named default for Cora, so ChooseOneAsync answers null.
-        var repair = await RepairAsync(before, VoicePairing.WithoutMiscastVoices(before, Voices()));
+        var repair = await RepairAsync(before, VoicePairing.WithoutMiscastVoices(before, men), voices: men);
 
         Assert.Equal(George, repair.Voices["cora"]);
-    }
-
-    /// <summary>And the repair says it did not finish, so the caller leaves its mark off.</summary>
-    [Fact]
-    public async Task TheRepairIsNotMarkedDoneWhenACoreWasLeftBehind()
-    {
-        var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["cora"] = George };
-
-        var repair = await RepairAsync(before, VoicePairing.WithoutMiscastVoices(before, Voices()));
-
         Assert.False(repair.Complete);
     }
 
@@ -110,28 +83,21 @@ public class ARepairGivesTheVoiceBackTests
     {
         var before = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["warden"] = Matilda,
-            ["sentinel"] = Matilda,
+            ["analyst-prime"] = Matilda,
+            ["cora"] = George,
         };
 
-        var after = VoicePairing.WithoutMiscastVoices(before, Voices());
-        var repair = await RepairAsync(before, after, FakeLlmProvider.Answering($"sentinel = {Callum}"));
+        var repair = await RepairAsync(before, VoicePairing.WithoutMiscastVoices(before, Voices()));
 
-        // Both are still paired — asserted before the distinctness, because two cores holding nothing are
-        // also trivially not sharing anything, which is exactly what the broken version did.
-        Assert.Equal(George, repair.Voices["warden"]);
-        Assert.Equal(Callum, repair.Voices["sentinel"]);
-
-        var assigned = repair.Voices.Values.ToArray();
-
-        Assert.Equal(assigned.Length, assigned.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(Matilda, repair.Voices["cora"]);
+        Assert.Contains(repair.Voices["analyst-prime"], new[] { George, Callum });
     }
 
     /// <summary>A repair that changed nothing answers the same instance and asks nothing of the model.</summary>
     [Fact]
     public async Task ARepairThatChangedNothingIsLeftAlone()
     {
-        var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["warden"] = George };
+        var before = new Dictionary<string, string>(StringComparer.Ordinal) { ["warden"] = Matilda };
         var after = VoicePairing.WithoutMiscastVoices(before, Voices());
 
         Assert.Same(before, after);
@@ -149,12 +115,11 @@ public class ARepairGivesTheVoiceBackTests
         var before = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["warden"] = Matilda,
-            ["cora"] = Matilda,
+            ["analyst-prime"] = Matilda,
         };
 
         var repair = await RepairAsync(before, VoicePairing.WithoutMiscastVoices(before, Voices()));
 
-        // Cora is written female and Matilda is a woman's voice, so that pairing was never in question.
-        Assert.Equal(Matilda, repair.Voices["cora"]);
+        Assert.Equal(Matilda, repair.Voices["warden"]);
     }
 }

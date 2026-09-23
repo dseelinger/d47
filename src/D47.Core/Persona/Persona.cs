@@ -99,10 +99,11 @@ public sealed record VoiceHint(string Description, VoiceGender Gender = VoiceGen
         || Read(providerGender) is not { } labelled
         || labelled == Gender;
 
-    private static VoiceGender? Read(string? gender) => gender?.Trim().ToLowerInvariant() switch
+    /// <summary>The gender a provider's label names, or null where it names none.</summary>
+    public static VoiceGender? Read(string? gender) => gender?.Trim().ToLowerInvariant() switch
     {
-        "male" or "m" or "man" => VoiceGender.Male,
-        "female" or "f" or "woman" => VoiceGender.Female,
+        "male" or "m" or "man" or "masculine" => VoiceGender.Male,
+        "female" or "f" or "woman" or "feminine" => VoiceGender.Female,
         _ => null,
     };
 }

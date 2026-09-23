@@ -24,7 +24,6 @@ public class EdgeNeuralLiveTests
         var voices = (await provider.ListVoicesAsync(timeout.Token)).Voices;
 
         Assert.NotEmpty(voices);
-        Assert.Contains(voices, voice => voice.Id == EdgeNeuralTtsProvider.DefaultVoice);
         Assert.Contains(voices, voice => voice.Locale.StartsWith("en-", StringComparison.Ordinal));
     }
 
@@ -38,7 +37,7 @@ public class EdgeNeuralLiveTests
 
         var clip = await provider.SynthesizeAsync(
             "Docking granted, Commander. Pad three.",
-            VoiceSelection.Default,
+            new VoiceSelection("en-GB-SoniaNeural"),
             timeout.Token);
 
         Assert.Equal(AudioFormat.Standard, clip.Format);
