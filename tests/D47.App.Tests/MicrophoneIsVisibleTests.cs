@@ -172,7 +172,7 @@ public class MicrophoneIsVisibleTests
 
     /// <summary>Only the dot says the state by colour: Good when ready, Warn listening, Danger when off.</summary>
     [AvaloniaTheory]
-    [InlineData(MicrophoneState.Idle, Theming.ThemeManager.GoodKey)]
+    [InlineData(MicrophoneState.Idle, Theming.ThemeManager.CyanKey)]
     [InlineData(MicrophoneState.Armed, Theming.ThemeManager.WarnKey)]
     [InlineData(MicrophoneState.Open, Theming.ThemeManager.WarnKey)]
     [InlineData(MicrophoneState.Off, Theming.ThemeManager.DangerKey)]

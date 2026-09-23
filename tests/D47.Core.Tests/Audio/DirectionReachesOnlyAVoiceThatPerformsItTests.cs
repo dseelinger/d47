@@ -66,4 +66,12 @@ public class DirectionReachesOnlyAVoiceThatPerformsItTests
     [Fact]
     public void ALineOfNothingButDirectionIsEmptyOnceStripped() =>
         Assert.Empty(AudioTags.Strip("[sighs]"));
+
+    /// <summary>A span of a longer line keeps its edges, so it still joins the spans beside it.</summary>
+    [Theory]
+    [InlineData(" [calm] Holding here ", " Holding here ")]
+    [InlineData("Holding [calm] here, then", "Holding here, then")]
+    [InlineData(" and a plain span ", " and a plain span ")]
+    public void RemovingDirectionFromASpanLeavesItsEdges(string span, string expected) =>
+        Assert.Equal(expected, AudioTags.Remove(span));
 }

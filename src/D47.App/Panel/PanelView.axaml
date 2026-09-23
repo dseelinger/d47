@@ -128,7 +128,6 @@
             IsVisible="{Binding HasError}"
             Margin="0,14,0,0"
             Padding="12"
-            CornerRadius="0"
             Background="{DynamicResource D47.SurfaceAlt}"
             BorderBrush="{DynamicResource D47.Danger}"
             BorderThickness="1">
@@ -158,7 +157,6 @@
             IsVisible="{Binding HasUpdate}"
             Margin="0,14,0,0"
             Padding="12"
-            CornerRadius="0"
             Background="{DynamicResource D47.SurfaceAlt}"
             BorderBrush="{DynamicResource D47.Info}"
             BorderThickness="1">
@@ -182,14 +180,13 @@
     </StackPanel>
 
     <!--
-      The footer: the microphone's state over the ask box, on one ground, with one rule above both.
+      The footer: the microphone's state over the ask box, with one rule above both.
       The footer shows whenever the transcript tab does, so the microphone state survives mini and the
       headset; the ask band goes with them.
     -->
     <Border x:Name="Footer"
             DockPanel.Dock="Bottom"
             Margin="0,16,0,0"
-            Background="{DynamicResource D47.FillLow}"
             BorderBrush="{DynamicResource D47.Border}"
             BorderThickness="0,1,0,0">
       <StackPanel>
@@ -215,7 +212,6 @@
         <!-- Enter sends. The box grows to three lines, then scrolls. -->
         <DockPanel x:Name="AskRow" Margin="16,0,16,16">
           <Button x:Name="AskButton"
-                  Classes="primary"
                   DockPanel.Dock="Right"
                   Margin="10,0,0,0"
                   Padding="34,0"
@@ -252,7 +248,6 @@
               IsVisible="{Binding StartupVisible}"
               Margin="10,0,0,0"
               Padding="7,2"
-              CornerRadius="0"
               VerticalAlignment="Center"
               Background="{DynamicResource D47.SurfaceAlt}"
               BorderBrush="{DynamicResource D47.TextMuted}"
@@ -270,7 +265,6 @@
               IsVisible="{Binding SwitchesVisible}"
               Margin="10,0,0,0"
               Padding="7,2"
-              CornerRadius="0"
               VerticalAlignment="Center"
               Background="{DynamicResource D47.SurfaceAlt}"
               BorderBrush="{DynamicResource D47.TextMuted}"
@@ -340,7 +334,6 @@
                 VerticalAlignment="Center"
                 Margin="0,0,6,0"
                 Padding="7,2"
-                CornerRadius="0"
                 Background="Transparent"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource D47.Accent}">
@@ -502,8 +495,7 @@
     <Border x:Name="ContentPane"
             Background="{DynamicResource D47.Background}"
             BorderBrush="{DynamicResource D47.PaneBorder}"
-            BorderThickness="1"
-            CornerRadius="0">
+            BorderThickness="1">
       <DockPanel>
 
       <!--
@@ -645,7 +637,7 @@
             <!--
               Two presentations of one page, and exactly one of them is ever visible. The
               conversation is a conversation, so it is drawn as one - each turn its own message,
-              both speakers on the left, told apart by the badge. Technical and the log file
+              the ship on the left and the Commander on the right. Technical and the log file
               are not conversations: one is a diagnostic feed and the other is a file, and both
               stay the flat block they have always been.
 
@@ -719,7 +711,7 @@
               leaving the top of the pane full and the rest empty. TranscriptContent is held at least
               the viewport's height for this to have room to act in.
             -->
-            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Bottom" Spacing="16" />
+            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Bottom" Spacing="4" Margin="0,0,14,0" SizeChanged="OnBubblesResized" />
 
             <!-- The conversation before anything has been said. -->
             <TextBlock x:Name="EmptyConversation"
@@ -811,12 +803,6 @@
                   HorizontalAlignment="Right"
                   VerticalAlignment="Bottom"
                   Margin="0,0,14,10"
-                  Padding="10,5"
-                  CornerRadius="0"
-                  FontSize="{StaticResource D47.Type.Secondary}"
-                  Background="{DynamicResource D47.SurfaceAlt}"
-                  BorderBrush="{DynamicResource D47.Border}"
-                  BorderThickness="1"
                   Click="OnFollowClick" />
         </Panel>
       </Border>
@@ -861,8 +847,7 @@
               ClipToBounds="True"
               Background="{DynamicResource D47.Background}"
               BorderBrush="{DynamicResource D47.Border}"
-              BorderThickness="1"
-              CornerRadius="0" />
+              BorderThickness="1" />
 
       <!--
         The in-tree layer, for the choosers that are declared as layers rather than as pages - a

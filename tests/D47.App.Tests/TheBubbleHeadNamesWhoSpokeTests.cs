@@ -15,8 +15,13 @@ public class TheBubbleHeadNamesWhoSpokeTests
     private static IReadOnlyList<Control> Turns(PanelView panel) =>
         [.. panel.GetControl<StackPanel>("Bubbles").Children];
 
-    private static StackPanel Head(Control turn) =>
-        (StackPanel)((StackPanel)((Border)turn).Child!).Children[0];
+    /// <summary>The head's parts in reading order: the name, any tags, then the time.</summary>
+    private static IReadOnlyList<Control> Head(Control turn)
+    {
+        var head = (DockPanel)((StackPanel)((Border)turn).Child!).Children[0];
+
+        return [.. ((WrapPanel)head.Children[1]).Children, head.Children[0]];
+    }
 
     private static string? Said(Control chipOrTag) => chipOrTag switch
     {
@@ -48,10 +53,10 @@ public class TheBubbleHeadNamesWhoSpokeTests
 
         var head = Head(Turns(Laid(model))[0]);
 
-        Assert.Equal(3, head.Children.Count);
-        Assert.Equal("Tower", Said(head.Children[0]));
-        Assert.Equal("carrier.departure", Said(head.Children[1]));
-        Assert.Matches(@"^\d{2}:\d{2}$", Said(head.Children[2]));
+        Assert.Equal(3, head.Count);
+        Assert.Equal("TOWER", Said(head[0]));
+        Assert.Equal("carrier.departure", Said(head[1]));
+        Assert.Matches(@"^\d{2}:\d{2}$", Said(head[2]));
     }
 
     /// <summary>A line with no callout behind it carries no tag — the head has nothing to name.</summary>
@@ -63,19 +68,19 @@ public class TheBubbleHeadNamesWhoSpokeTests
 
         var head = Head(Turns(Laid(model))[0]);
 
-        Assert.Equal(2, head.Children.Count);
-        Assert.Equal("D47", Said(head.Children[0]));
+        Assert.Equal(2, head.Count);
+        Assert.Equal("D47", Said(head[0]));
     }
 
     [AvaloniaFact]
-    public void TheCommandersLineIsChippedCMDR()
+    public void TheCommandersLineIsNamedCMDR()
     {
         var model = new PanelViewModel();
         model.Append("where am I", voice: TranscriptVoice.Commander);
 
         var head = Head(Turns(Laid(model))[0]);
 
-        Assert.Equal("CMDR", Said(head.Children[0]));
+        Assert.Equal("CMDR", Said(head[0]));
     }
 
     /// <summary>
@@ -92,9 +97,9 @@ public class TheBubbleHeadNamesWhoSpokeTests
         Assert.Equal(2, Turns(Laid(model)).Count);
     }
 
-    /// <summary>The persona's name is the chip; the text itself carries no bracketed prefix.</summary>
+    /// <summary>The persona's name heads the turn; the text itself carries no bracketed prefix.</summary>
     [AvaloniaFact]
-    public void APersonaRepliesChipCarriesTheirNameAndNoBracketedPrefix()
+    public void APersonasReplyIsHeadedWithTheirNameAndNoBracketedPrefix()
     {
         var model = new PanelViewModel();
         model.Append("On it, Commander.", speaker: "Cora");
@@ -106,6 +111,6 @@ public class TheBubbleHeadNamesWhoSpokeTests
             block.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
 
         Assert.Equal("On it, Commander.", said);
-        Assert.Equal("Cora", Said(Head(turn).Children[0]));
+        Assert.Equal("CORA", Said(Head(turn)[0]));
     }
 }

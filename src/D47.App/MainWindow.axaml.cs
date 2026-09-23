@@ -158,7 +158,7 @@ public partial class MainWindow : Window
             // Every system name a ship turn names, so it draws a chip beside it too (#159).
             if (host.SystemsInPlay is { } systemsInPlay)
             {
-                Panel.EnableSystemNames(systemsInPlay);
+                Panel.EnableSystemNames(systemsInPlay, () => host.GameState.Active?.Location.StarSystem);
             }
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the

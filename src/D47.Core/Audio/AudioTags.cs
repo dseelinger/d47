@@ -14,6 +14,15 @@ public static partial class AudioTags
     public static string Strip(string sentence) =>
         Has(sentence) ? Tidy(Tag().Replace(sentence, string.Empty)) : sentence;
 
+    /// <summary>
+    /// The text with its direction removed and the runs of spaces that leaves collapsed, untrimmed, so it
+    /// can stand as one span of a longer line.
+    /// </summary>
+    public static string Remove(string text) =>
+        Has(text)
+            ? Gap().Replace(Tag().Replace(text, string.Empty), " ").Replace(" ,", ",", StringComparison.Ordinal)
+            : text;
+
     /// <summary>Whether there is any direction in here at all.</summary>
     public static bool Has(string sentence) =>
         sentence.Contains('[', StringComparison.Ordinal) && Tag().IsMatch(sentence);

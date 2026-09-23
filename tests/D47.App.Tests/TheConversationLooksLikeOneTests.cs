@@ -15,8 +15,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Conversation page is drawn as a conversation: a turn to a message, every one on the left behind a
-/// 2px rule, told apart by the badge in its head rather than by side or colour.
+/// The Conversation page is drawn as a conversation: a turn to a message, the ship's on the left behind an A
+/// bar and the Commander's on the right behind a cyan bar on a cyan ground (#398).
 /// </summary>
 public class TheConversationLooksLikeOneTests
 {
@@ -42,47 +42,36 @@ public class TheConversationLooksLikeOneTests
 
     private static Color? Resource(Control near, string key) => Colour((IBrush?)near.FindResource(key));
 
-    /// <summary>The badge in a message's head.</summary>
-    private static Border Badge(Border message) =>
-        message.GetVisualDescendants().OfType<Border>().First(border => border.Child is TextBlock);
+    /// <summary>The speaker's name at the head of a message.</summary>
+    private static TextBlock Name(Border message) =>
+        (TextBlock)((WrapPanel)((DockPanel)((StackPanel)message.Child!).Children[0]).Children[1]).Children[0];
 
     /// <summary>What one turn says.</summary>
     private static string Said(SelectableTextBlock block) =>
         string.Concat(block.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
 
     [AvaloniaFact]
-    public void BothSpeakersSitOnTheLeft()
+    public void TheShipSitsLeftAndTheCommanderRight()
     {
         var panel = Laid(new PanelView { DataContext = Exchange() });
 
         var messages = Messages(panel);
 
         Assert.Equal(3, messages.Count);
-        Assert.All(messages, message => Assert.Equal(HorizontalAlignment.Stretch, message.HorizontalAlignment));
-        Assert.All(messages, message => Assert.Equal(new Thickness(14, 0, 0, 0), message.Padding));
+        Assert.Equal(HorizontalAlignment.Left, messages[0].HorizontalAlignment);
+        Assert.Equal(HorizontalAlignment.Right, messages[1].HorizontalAlignment);
+        Assert.Equal(HorizontalAlignment.Left, messages[2].HorizontalAlignment);
+        Assert.Equal(new Thickness(3, 0, 0, 0), messages[0].BorderThickness);
+        Assert.Equal(new Thickness(0, 0, 3, 0), messages[1].BorderThickness);
+
+        var list = panel.GetControl<StackPanel>("Bubbles").Bounds;
+
+        Assert.True(messages[1].Bounds.Right >= list.Width - 1, "the Commander's turn does not reach the right edge");
     }
 
-    /// <summary>A 2px left rule and nothing else: no border, no ground, no clipped corner.</summary>
+    /// <summary>The ship's bar is A over no ground; the Commander's is cyan over cyan mixed onto bg. No corner.</summary>
     [AvaloniaFact]
-    public void AMessageIsALeftRuleAndNothingElse()
-    {
-        Themed();
-
-        var window = new Window();
-        var panel = Laid(new PanelView { DataContext = Exchange() }, window);
-
-        Assert.All(Messages(panel), message =>
-        {
-            Assert.Equal(new Thickness(2, 0, 0, 0), message.BorderThickness);
-            Assert.Equal(default, message.CornerRadius);
-            Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(message.BorderBrush));
-            Assert.Equal(Colors.Transparent, Colour(message.Background));
-        });
-    }
-
-    /// <summary>D47's badge is reverse video in Accent; the Commander's is a line-2 fill in ink-2.</summary>
-    [AvaloniaFact]
-    public void TheBadgeTellsTheSpeakersApart()
+    public void TheBarAndGroundFollowTheSpeaker()
     {
         Themed();
 
@@ -90,20 +79,37 @@ public class TheConversationLooksLikeOneTests
         var panel = Laid(new PanelView { DataContext = Exchange() }, window);
         var messages = Messages(panel);
 
-        var ship = Badge(messages[0]);
-        var commander = Badge(messages[1]);
+        Assert.All(messages, message => Assert.Equal(default, message.CornerRadius));
 
-        Assert.Equal(Resource(window, ThemeManager.AccentKey), Colour(ship.Background));
-        Assert.Equal(Resource(window, ThemeManager.KnockKey), Colour(((TextBlock)ship.Child!).Foreground));
-        Assert.IsType<BloomStack>(ship.GetVisualParent());
+        Assert.Equal(Resource(window, ThemeManager.AKey), Colour(messages[0].BorderBrush));
+        Assert.Equal(Colors.Transparent, Colour(messages[0].Background));
 
-        Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(commander.Background));
-        Assert.Equal(Resource(window, ThemeManager.TextMutedKey), Colour(((TextBlock)commander.Child!).Foreground));
+        Assert.Equal(Resource(window, ThemeManager.CyanKey), Colour(messages[1].BorderBrush));
+        Assert.Equal(Resource(window, ThemeManager.CyanGroundKey), Colour(messages[1].Background));
     }
 
-    /// <summary>The body is ink-2 prose, whoever spoke it.</summary>
+    /// <summary>The name is uppercase text in the bar's colour, and no name glows.</summary>
     [AvaloniaFact]
-    public void EveryBodyIsInkTwoProse()
+    public void TheNameIsTheBarsColourAndNothingGlows()
+    {
+        Themed();
+
+        var window = new Window();
+        var panel = Laid(new PanelView { DataContext = Exchange() }, window);
+        var messages = Messages(panel);
+
+        Assert.Equal("D47", Name(messages[0]).Text);
+        Assert.Equal(Resource(window, ThemeManager.AKey), Colour(Name(messages[0]).Foreground));
+
+        Assert.Equal("CMDR", Name(messages[1]).Text);
+        Assert.Equal(Resource(window, ThemeManager.CyanKey), Colour(Name(messages[1]).Foreground));
+
+        Assert.Empty(panel.GetControl<StackPanel>("Bubbles").GetVisualDescendants().OfType<BloomStack>());
+    }
+
+    /// <summary>The body is white, left-aligned prose, whoever spoke it.</summary>
+    [AvaloniaFact]
+    public void EveryBodyIsWhiteProseAlignedLeft()
     {
         Themed();
 
@@ -115,34 +121,86 @@ public class TheConversationLooksLikeOneTests
         Assert.Equal(3, bodies.Length);
         Assert.All(bodies, body =>
         {
-            Assert.Equal(Resource(window, ThemeManager.TextMutedKey), Colour(body.Foreground));
+            Assert.Equal(Resource(window, ThemeManager.WhiteKey), Colour(body.Foreground));
+            Assert.Equal(TextAlignment.Left, body.TextAlignment);
             Assert.Equal(TypeScale.Body, body.FontSize);
             Assert.Contains("Sintony", body.FontFamily.ToString(), StringComparison.Ordinal);
         });
     }
 
-    /// <summary>Hovering lays fill-1 under the row and lifts the rule from line-2 to line.</summary>
+    /// <summary>Hovering lays slab under a turn, and leaving puts back the ground it had.</summary>
     [AvaloniaFact]
-    public void HoverLiftsTheRule()
+    public void HoverLaysSlabUnderATurn()
     {
         Themed();
 
         var window = new Window();
         var panel = Laid(new PanelView { DataContext = Exchange() }, window);
-        var message = Messages(panel)[0];
 
-        var middle = message.TranslatePoint(new Point(40, message.Bounds.Height / 2), window)!.Value;
-        window.MouseMove(middle, RawInputModifiers.None);
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        foreach (var (message, rest) in new[]
+                 {
+                     (Messages(panel)[0], (Color?)Colors.Transparent),
+                     (Messages(panel)[1], Resource(window, ThemeManager.CyanGroundKey)),
+                 })
+        {
+            var middle = message.TranslatePoint(new Point(40, message.Bounds.Height / 2), window)!.Value;
+            window.MouseMove(middle, RawInputModifiers.None);
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(Resource(window, ThemeManager.FillLowKey), Colour(message.Background));
-        Assert.Equal(Resource(window, ThemeManager.RuleKey), Colour(message.BorderBrush));
+            Assert.Equal(Resource(window, ThemeManager.SlabKey), Colour(message.Background));
 
-        window.MouseMove(new Point(1, 1), RawInputModifiers.None);
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            window.MouseMove(new Point(1, 1), RawInputModifiers.None);
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(Colors.Transparent, Colour(message.Background));
-        Assert.Equal(Resource(window, ThemeManager.BorderKey), Colour(message.BorderBrush));
+            Assert.Equal(rest, Colour(message.Background));
+        }
+    }
+
+    /// <summary>No turn is wider than 72% of the list, and the cap follows the list when it is resized.</summary>
+    [AvaloniaTheory]
+    [InlineData(1600)]
+    [InlineData(700)]
+    public void NoTurnIsWiderThanItsShareOfTheList(double resizedTo)
+    {
+        var model = Exchange();
+
+        model.Append(
+            string.Join(' ', Enumerable.Repeat("where is the nearest scoopable star", 12)),
+            voice: TranscriptVoice.Commander);
+        model.Append(string.Join(' ', Enumerable.Repeat("The beacon is quiet and the turn is done.", 12)));
+
+        var window = new Window();
+        var panel = Laid(new PanelView { DataContext = model }, window, width: 1100);
+
+        Laid(panel, window, width: resizedTo);
+
+        var list = panel.GetControl<StackPanel>("Bubbles").Bounds.Width;
+
+        Assert.All(Messages(panel), message =>
+            Assert.True(
+                message.Bounds.Width <= (list * PanelView.TurnShare) + 1,
+                $"a turn is {message.Bounds.Width} wide in a list {list} wide"));
+    }
+
+    /// <summary>A delivery tag is drawn in the head and taken out of the body.</summary>
+    [AvaloniaFact]
+    public void ADeliveryTagIsInTheHeadAndNotTheBody()
+    {
+        var model = new PanelViewModel();
+        model.Append("[calm] Functioning within tolerance, Commander.");
+
+        var panel = Laid(new PanelView { DataContext = model });
+        var message = Messages(panel).Single();
+
+        var body = Said(panel.TranscriptBlocks.Single());
+        var head = ((StackPanel)message.Child!).Children[0]
+            .GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Select(label => label.Text ?? string.Empty);
+
+        Assert.DoesNotContain('[', body);
+        Assert.Equal("Functioning within tolerance, Commander.", body);
+        Assert.Contains(head, text => text.Contains("calm", StringComparison.Ordinal));
     }
 
     /// <summary>A long body wraps at 76 characters' width rather than running the width of the window.</summary>
@@ -211,7 +269,7 @@ public class TheConversationLooksLikeOneTests
         var mini = Laid(new PanelView { DataContext = model, Mode = PanelMode.Mini });
 
         Assert.Equal(Messages(full).Count, Messages(mini).Count);
-        Assert.All(Messages(mini), message => Assert.Equal(new Thickness(2, 0, 0, 0), message.BorderThickness));
+        Assert.All(Messages(mini), message => Assert.NotEqual(default, message.BorderThickness));
     }
 
     /// <summary>A reply arrives a delta at a time, and each one redraws the page.</summary>
@@ -245,7 +303,7 @@ public class TheConversationLooksLikeOneTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(before + 1, Turns(panel).Count);
-        Assert.Equal("CMDR", ((TextBlock)Badge(Messages(panel)[^1]).Child!).Text);
+        Assert.Equal("CMDR", Name(Messages(panel)[^1]).Text);
     }
 
     /// <summary>Before anything is said, one centred line stands in for the list.</summary>

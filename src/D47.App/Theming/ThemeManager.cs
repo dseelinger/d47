@@ -61,6 +61,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public const string PaneBorderKey = "D47.PaneBorder"; // line2
     public const string TagInkKey = "D47.TagInk"; // a
 
+    /// <summary><see cref="Palette.CyanGround"/>.</summary>
+    public const string CyanGroundKey = "D47.CyanGround";
+
     /// <summary>Black at 72% — a layer chooser's dimming behind its card, in every theme.</summary>
     public const string ScrimKey = "D47.Scrim";
 
@@ -82,7 +85,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     [
         .. Tokens,
         .. Legacy(Palettes.Elite).Keys,
-        .. BloomStopKeys(), ScanlinesKey, ScrimKey,
+        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey,
     ];
 
     /// <summary>Each token key and its colour in <paramref name="palette"/>.</summary>
@@ -214,6 +217,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         }
 
         resources[ScrimKey] = new SolidColorBrush(Colors.Black, 0.72);
+        resources[CyanGroundKey] = new SolidColorBrush(palette.CyanGround);
 
         // Null on a theme that does not glow, which turns both off: an unset Effect or Background paints nothing.
         foreach (var tier in Enum.GetValues<BloomTier>())

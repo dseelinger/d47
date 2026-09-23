@@ -141,8 +141,8 @@ public partial class PanelView : UserControl
     /// </summary>
     private readonly List<(SelectableTextBlock Block, int Start, WrapPanel? Strip)> _bubbles = [];
 
-    /// <summary>What those bubbles were drawn from, as three comparable things each.</summary>
-    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text)> _shape = [];
+    /// <summary>What those bubbles were drawn from, as comparable things each.</summary>
+    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text, string Direction)> _shape = [];
 
     /// <summary>The block a selection was last made in.</summary>
     private SelectableTextBlock? _selection;
@@ -412,7 +412,7 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Draws what the microphone is doing (Phase 13, "Show that the microphone is open"). The dot carries
-    /// the state — Good when ready, Warn while listening or loading, Danger when nothing is open — and is
+    /// the state — cyan when ready, Warn while listening or loading, Danger when nothing is open — and is
     /// hollow unless a device is open; the words stay ink-3 in every state.
     /// </summary>
     private void ApplyMicrophone()
@@ -429,7 +429,7 @@ public partial class PanelView : UserControl
         {
             D47.Core.Listening.MicrophoneState.Open => (Theming.ThemeManager.WarnKey, "MIC ON", true),
             D47.Core.Listening.MicrophoneState.Armed => (Theming.ThemeManager.WarnKey, "LISTENING", true),
-            D47.Core.Listening.MicrophoneState.Idle => (Theming.ThemeManager.GoodKey, "PTT READY", true),
+            D47.Core.Listening.MicrophoneState.Idle => (Theming.ThemeManager.CyanKey, "PTT READY", true),
             _ => (Theming.ThemeManager.DangerKey, "MIC OFF", false),
         };
 
@@ -588,11 +588,17 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Gives this surface the system names d47 already holds, so a conversation turn that names one draws a
-    /// copy chip beneath it (#159).
+    /// copy chip beneath it (#159), and the Commander's current system, whose chip is drawn in cyan.
     /// </summary>
-    public void EnableSystemNames(D47.Core.Knowledge.SystemsInPlay known) => _systemsInPlay = known;
+    public void EnableSystemNames(D47.Core.Knowledge.SystemsInPlay known, Func<string?>? current = null)
+    {
+        _systemsInPlay = known;
+        _currentSystem = current;
+    }
 
     private D47.Core.Knowledge.SystemsInPlay? _systemsInPlay;
+
+    private Func<string?>? _currentSystem;
 
     public void EnableLoadout(
         D47.Core.Ships.ShipPlanService ships,
@@ -2868,18 +2874,20 @@ public partial class PanelView : UserControl
     /// </summary>
     private void DrawBubbles(IReadOnlyList<DrawnTurn> turns, bool appended)
     {
-        // The turns as three comparable things each, because a record holding a list compares the list by
+        // The turns as comparable things each, because a record holding a list compares the list by
         // reference and would call every redraw a change.
         var shape = turns
             .Select(turn => (
                 turn.Voice,
                 turn.Marker,
-                Text: string.Concat(turn.Segments.Select(segment => segment.Text))))
+                Text: string.Concat(turn.Segments.Select(segment => segment.Text)),
+                Direction: string.Join(' ', turn.Direction)))
             .ToArray();
 
         // One snapshot of what d47 already knows, shared by every chip this call draws, so a name that
         // arrives mid-draw does not make one turn's chips disagree with another's (#159).
         var known = _systemsInPlay?.Snapshot();
+        var current = _currentSystem?.Invoke();
 
         if (appended
             && _query.Length == 0
@@ -2890,10 +2898,13 @@ public partial class PanelView : UserControl
             // A proposal card's buttons live on the bubble this fast path never rebuilds — settling the
             // newest one has to go through the full redraw below to lose them (#277).
             && turns[^1].Kind != TranscriptRunKind.Proposal
+
+            // The head is not redrawn here, so a delivery tag arriving mid-reply needs the full redraw.
+            && shape[^1].Direction == _shape[^1].Direction
             && shape.Take(shape.Length - 1).SequenceEqual(_shape.Take(_shape.Count - 1)))
         {
             Fill(_bubbles[^1].Block, turns[^1], _bubbles[^1].Start);
-            FillStrip(_bubbles[^1].Strip, turns[^1], known);
+            FillStrip(_bubbles[^1].Strip, turns[^1], known, current);
             _shape = shape;
             return;
         }
@@ -2911,6 +2922,8 @@ public partial class PanelView : UserControl
                 FontSize = Transcript.FontSize,
                 TextWrapping = TextWrapping.Wrap,
 
+                LineHeight = Transcript.FontSize * 1.5,
+
                 // The menu the block beside this one declares, not a second copy of it.
                 ContextMenu = Transcript.ContextMenu,
             };
@@ -2920,12 +2933,12 @@ public partial class PanelView : UserControl
 
             var strip = turn.Marker || known is null || _copy is null ? null : new WrapPanel
             {
-                Margin = new Thickness(0, mini ? 3 : 6, 0, 0),
+                Margin = new Thickness(0, mini ? 2 : 4, 0, 0),
                 ItemSpacing = mini ? 6 : 8,
                 LineSpacing = 4,
             };
 
-            FillStrip(strip, turn, known);
+            FillStrip(strip, turn, known, current);
 
             Bubbles.Children.Add(Bubble(block, turn, strip));
             _bubbles.Add((block, at, strip));
@@ -2938,9 +2951,10 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// The strip's chips, one per distinct system name <paramref name="turn"/> mentions, in first-appearance
-    /// order (#159).
+    /// order (#159): a slab tile with the name in uppercase Saira, cyan for <paramref name="current"/> and
+    /// A for any other, and its copy button beside it.
     /// </summary>
-    private void FillStrip(WrapPanel? strip, DrawnTurn turn, IReadOnlyCollection<string>? known)
+    private void FillStrip(WrapPanel? strip, DrawnTurn turn, IReadOnlyCollection<string>? known, string? current)
     {
         if (strip is null || known is null || _copy is not { } copy)
         {
@@ -2962,36 +2976,40 @@ public partial class PanelView : UserControl
 
         foreach (var name in names)
         {
-            var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center };
-
-            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AccentKey));
-
-            // The secondary button's own dress (#273): Accent ink on a faint Accent fill, with the rule as a
-            // border — applied here rather than a real Button, because only the glyph inside is clickable.
-            var chip = new Border
+            var label = new TextBlock
             {
-                Padding = new Thickness(8, 3),
-                BorderThickness = new Thickness(1),
-                Child = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 4,
-                    Children = { label, Controls.CopyWord.For(name, copy) },
-                },
+                Text = name.ToUpperInvariant(),
+                FontFamily = ChromeFamily,
+                FontSize = Theming.TypeScale.Tip,
+                FontWeight = FontWeight.Medium,
+                VerticalAlignment = VerticalAlignment.Center,
             };
 
-            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.FillLowKey));
-            chip.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
+            label.Bind(
+                TextBlock.ForegroundProperty,
+                this.GetResourceObservable(string.Equals(name, current, StringComparison.OrdinalIgnoreCase)
+                    ? Theming.ThemeManager.CyanKey
+                    : Theming.ThemeManager.AKey));
 
-            strip.Children.Add(chip);
+            var chip = new Border { MinHeight = 32, Padding = new Thickness(12, 0), Child = label };
+
+            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.SlabKey));
+
+            strip.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 2,
+                Children = { chip, Controls.CopyWord.For(name, copy) },
+            });
         }
 
         strip.IsVisible = strip.Children.Count > 0;
     }
 
     /// <summary>
-    /// One turn, dressed: a 2px left rule and the turn beside it, no border, ground or clip. Hovering lays
-    /// a fill-1 ground under the row and lifts the rule from line-2 to line.
+    /// One turn, dressed as a message: the ship's and every in-ship speaker's on the left behind a 3px A bar,
+    /// the Commander's on the right behind a 3px cyan bar on a cyan ground. Each is at most
+    /// <see cref="TurnShare"/> of the list's width, its text left-aligned. Hovering lays slab under it.
     /// </summary>
     private Control Bubble(SelectableTextBlock block, DrawnTurn turn, WrapPanel? strip)
     {
@@ -3002,11 +3020,12 @@ public partial class PanelView : UserControl
             return block;
         }
 
-        block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
+        block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextKey));
         block.MaxWidth = BodyMaxWidth;
         block.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        block.TextAlignment = TextAlignment.Left;
 
-        var content = new StackPanel { Spacing = 8, Children = { Head(turn), block } };
+        var content = new StackPanel { Spacing = 5, Children = { Head(turn), block } };
 
         // The buttons only while the proposal is still waiting — looked up live rather than trusted from
         // whatever this run's own tag last said, so a settlement this surface missed still takes them away
@@ -3023,100 +3042,136 @@ public partial class PanelView : UserControl
             content.Children.Add(strip);
         }
 
+        var commander = turn.Voice == TranscriptVoice.Commander;
+
         var row = new Border
         {
             Child = content,
-            BorderThickness = new Thickness(2, 0, 0, 0),
-            Padding = new Thickness(14, 0, 0, 0),
-            Background = Brushes.Transparent,
+            BorderThickness = commander ? new Thickness(0, 0, 3, 0) : new Thickness(3, 0, 0, 0),
+            Padding = new Thickness(12, 10, 14, 12),
+            HorizontalAlignment = commander
+                ? Avalonia.Layout.HorizontalAlignment.Right
+                : Avalonia.Layout.HorizontalAlignment.Left,
+            MaxWidth = TurnWidth(),
         };
 
-        row.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.BorderKey));
+        row.Bind(
+            Border.BorderBrushProperty,
+            this.GetResourceObservable(commander ? Theming.ThemeManager.CyanKey : Theming.ThemeManager.AKey));
+
+        void Rest()
+        {
+            if (commander)
+            {
+                row.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.CyanGroundKey));
+            }
+            else
+            {
+                row.Background = Brushes.Transparent;
+            }
+        }
+
+        Rest();
 
         row.PointerEntered += (_, _) =>
-        {
-            row.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.FillLowKey));
-            row.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.RuleKey));
-        };
+            row.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.SlabKey));
 
-        row.PointerExited += (_, _) =>
-        {
-            row.Background = Brushes.Transparent;
-            row.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.BorderKey));
-        };
+        row.PointerExited += (_, _) => Rest();
 
         return row;
+    }
+
+    /// <summary>The widest a turn is, as a share of the list's width.</summary>
+    internal const double TurnShare = 0.72;
+
+    /// <summary>A turn's widest at the list's current width, or no cap before the list has one.</summary>
+    private double TurnWidth() =>
+        Bubbles.Bounds.Width > 0 ? Math.Floor(Bubbles.Bounds.Width * TurnShare) : double.PositiveInfinity;
+
+    /// <summary>Recaps every turn when the list's width changes.</summary>
+    private void OnBubblesResized(object? sender, SizeChangedEventArgs e)
+    {
+        if (e.WidthChanged)
+        {
+            var width = TurnWidth();
+
+            foreach (var row in Bubbles.Children.OfType<Border>())
+            {
+                row.MaxWidth = width;
+            }
+        }
     }
 
     /// <summary>A message body's widest line.</summary>
     internal const double BodyMaxWidth = 608;
 
-    /// <summary>Who spoke, what it was about, and when — atop every turn but the panel's own note (#276).</summary>
+    /// <summary>
+    /// Who spoke, what it was about, how it was delivered and when — atop every turn but the panel's own note
+    /// (#276). The time sits at the right; the rest wraps when the turn is narrow.
+    /// </summary>
     private Control Head(DrawnTurn turn)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        var said = new WrapPanel { ItemSpacing = 10, LineSpacing = 2, VerticalAlignment = VerticalAlignment.Center };
 
-        row.Children.Add(SpeakerChip(turn));
+        said.Children.Add(SpeakerName(turn));
 
         if (turn.SourceKey is { Length: > 0 } key)
         {
-            row.Children.Add(Faint(key));
+            said.Children.Add(Faint(key));
         }
 
-        row.Children.Add(Faint(turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
+        foreach (var direction in turn.Direction)
+        {
+            said.Children.Add(Faint($"[{direction}]"));
+        }
 
-        return row;
+        var time = Faint(turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture));
+
+        time.Margin = new Thickness(10, 0, 0, 0);
+        time.VerticalAlignment = VerticalAlignment.Top;
+        DockPanel.SetDock(time, Dock.Right);
+
+        return new DockPanel { Children = { time, said } };
     }
 
     /// <summary>
-    /// The badge a turn's head names its speaker with: D47 in reverse video with bloom, the Commander on a
-    /// line-2 fill in ink-2, and everyone else — a persona, Tower, Carrier, Crew, Comms — on fill-2 in hot.
+    /// The speaker's name in uppercase Saira 13/600, in the colour of the turn's bar: cyan for the Commander,
+    /// A for the ship and every other in-ship voice.
     /// </summary>
-    private Control SpeakerChip(DrawnTurn turn)
+    private TextBlock SpeakerName(DrawnTurn turn)
     {
-        var label = new TextBlock
+        var name = new TextBlock
         {
-            Text = turn.Speaker,
+            Text = turn.Speaker.ToUpperInvariant(),
             FontFamily = ChromeFamily,
             FontSize = Theming.TypeScale.Small,
-            FontWeight = FontWeight.Bold,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = 1.04,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var chip = new Border { Padding = new Thickness(7, 3), Child = label };
+        name.Bind(
+            TextBlock.ForegroundProperty,
+            this.GetResourceObservable(turn.Voice == TranscriptVoice.Commander
+                ? Theming.ThemeManager.CyanKey
+                : Theming.ThemeManager.AKey));
 
-        var (fill, ink) = turn.Voice == TranscriptVoice.Commander
-            ? (Theming.ThemeManager.BorderKey, Theming.ThemeManager.TextMutedKey)
-            : turn.Speaker == "D47"
-                ? (Theming.ThemeManager.AccentKey, Theming.ThemeManager.KnockKey)
-                : (Theming.ThemeManager.FillHighKey, Theming.ThemeManager.AccentInkKey);
-
-        chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(fill));
-        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(ink));
-
-        return turn.Speaker == "D47" && turn.Voice != TranscriptVoice.Commander
-            ? new Theming.BloomStack
-            {
-                Tier = BloomTier.Normal,
-                Child = chip,
-                VerticalAlignment = VerticalAlignment.Center,
-            }
-            : chip;
+        return name;
     }
 
-    /// <summary>A turn's intent or its time: JetBrains Mono 13 in ink-3, never wrapped.</summary>
-    private Control Faint(string text)
+    /// <summary>A turn's intent, delivery or time: JetBrains Mono 12 in grey, never wrapped.</summary>
+    private TextBlock Faint(string text)
     {
         var label = new TextBlock
         {
             Text = text,
             FontFamily = MonospaceFamily,
-            FontSize = Theming.TypeScale.Small,
+            FontSize = Theming.TypeScale.Caption,
             TextWrapping = TextWrapping.NoWrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextFaintKey));
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
 
         return label;
     }
@@ -3276,11 +3331,33 @@ public partial class PanelView : UserControl
             ? [.. segments.Select(segment => new DrawnSegment(
                 segment.Text, segment.Marker, segment.Voice, MarkupStyle.None,
                 segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId))]
-            : [.. segments.SelectMany(segment => TranscriptMarkup
-                .Parse(segment.Text)
-                .Select(span => new DrawnSegment(
-                    span.Text, segment.Marker, segment.Voice, span.Style,
-                    segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId)))];
+            : [.. segments.SelectMany(segment => Spans(segment, page))];
+
+    /// <summary>
+    /// One segment's markup spans. On the conversation, delivery direction such as <c>[calm]</c> is taken out
+    /// of the drawn text and carried on the span for the turn's head; the text sent to speech is not this text.
+    /// </summary>
+    private static IEnumerable<DrawnSegment> Spans(TranscriptSegment segment, TranscriptPage page)
+    {
+        var direction = page == TranscriptPage.Conversation && !segment.Marker
+            ? D47.Core.Audio.AudioTags.In(segment.Text)
+            : [];
+
+        foreach (var span in TranscriptMarkup.Parse(segment.Text))
+        {
+            var text = direction.Count > 0 ? D47.Core.Audio.AudioTags.Remove(span.Text) : span.Text;
+
+            if (text.Length == 0)
+            {
+                continue;
+            }
+
+            yield return new DrawnSegment(
+                text, segment.Marker, segment.Voice, span.Style,
+                segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
+                direction);
+        }
+    }
 
     /// <summary>
     /// The page's segments gathered into turns: consecutive stretches from one side, with the blank
@@ -3317,7 +3394,15 @@ public partial class PanelView : UserControl
             .. gathered
                 .Select(turn => new DrawnTurn(
                     turn.Voice, turn.Marker, Trimmed(turn.Segments), turn.Speaker, turn.SourceKey, turn.Time,
-                    turn.Kind, turn.ProposalId))
+                    turn.Kind, turn.ProposalId)
+                {
+                    Direction =
+                    [
+                        .. turn.Segments
+                            .SelectMany(segment => segment.Direction ?? [])
+                            .Distinct(StringComparer.OrdinalIgnoreCase),
+                    ],
+                })
                 .Where(turn => turn.Segments.Count > 0)
         ];
     }
@@ -3915,7 +4000,8 @@ internal readonly record struct DrawnSegment(
     string? SourceKey,
     DateTimeOffset Time,
     TranscriptRunKind Kind = TranscriptRunKind.Text,
-    string? ProposalId = null);
+    string? ProposalId = null,
+    IReadOnlyList<string>? Direction = null);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
@@ -3926,4 +4012,8 @@ internal sealed record DrawnTurn(
     string? SourceKey,
     DateTimeOffset Time,
     TranscriptRunKind Kind = TranscriptRunKind.Text,
-    string? ProposalId = null);
+    string? ProposalId = null)
+{
+    /// <summary>The delivery direction taken out of the turn's text, drawn in its head.</summary>
+    public IReadOnlyList<string> Direction { get; init; } = [];
+}

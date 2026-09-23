@@ -73,6 +73,15 @@ solid bar in place of the thick striped one. The bar is orange, and red when the
 The gauge's name is grey and its reading is in the bar's colour. The Control Kit has Stat tiles,
 Gauges and Modal sections.
 
+The Transcript's In Ship page is laid out like a text conversation. D47, Tower, Carrier and every
+other in-ship voice sit on the left behind an accent-coloured bar. Your own turns sit on the right
+behind a cyan bar on a faint cyan ground. No turn is wider than 72% of the list, and hovering shades
+a turn grey. Each turn is headed by the speaker's name in capitals, in the bar's colour, then its
+source and delivery note in grey, with the time at the right. A delivery note such as [calm] is
+shown in the heading and no longer in the text. System name chips are grey tiles, cyan for the
+system you are in. The microphone dot is cyan when push-to-talk is ready. The footer has no
+background of its own, and SEND and the Newest button are ordinary tiles.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

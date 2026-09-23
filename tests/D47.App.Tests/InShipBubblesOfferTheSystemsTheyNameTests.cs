@@ -113,6 +113,37 @@ public class InShipBubblesOfferTheSystemsTheyNameTests
         Assert.Equal(["Copy Farport Reach"], Chips(panel).Select(AutomationProperties.GetName));
     }
 
+    /// <summary>The Commander's current system is named in cyan; any other system in A.</summary>
+    [AvaloniaFact]
+    public void TheCurrentSystemsChipIsCyanAndAnyOtherIsA()
+    {
+        new D47.App.Theming.ThemeManager(
+            Application.Current!,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<D47.App.Theming.ThemeManager>.Instance).Apply(themeId: null);
+
+        var model = new PanelViewModel();
+
+        model.Append("Plot from Giryak to Deciat.");
+
+        var panel = new PanelView { DataContext = model };
+
+        panel.EnableCopy(new RecordingClipboard());
+        panel.EnableSystemNames(Known("Giryak", "Deciat"), () => "Giryak");
+        Laid(panel);
+
+        var labels = panel.GetControl<StackPanel>("Bubbles")
+            .GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Where(label => label.Text is "GIRYAK" or "DECIAT")
+            .ToDictionary(label => label.Text!, label => ((Avalonia.Media.ISolidColorBrush)label.Foreground!).Color);
+
+        Assert.Equal(Resource(panel, D47.App.Theming.ThemeManager.CyanKey), labels["GIRYAK"]);
+        Assert.Equal(Resource(panel, D47.App.Theming.ThemeManager.AKey), labels["DECIAT"]);
+    }
+
+    private static Avalonia.Media.Color Resource(Control near, string key) =>
+        ((Avalonia.Media.ISolidColorBrush)near.FindResource(key)!).Color;
+
     [AvaloniaFact]
     public void ASurfaceWithNoEnableSystemNamesDrawsNoStrip()
     {

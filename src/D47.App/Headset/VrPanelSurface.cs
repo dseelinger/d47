@@ -145,7 +145,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (known is not null)
         {
-            _view.EnableSystemNames(known);
+            _view.EnableSystemNames(known, gameState is null ? null : () => gameState()?.Location.StarSystem);
         }
 
         if (settingsPage is not null)
