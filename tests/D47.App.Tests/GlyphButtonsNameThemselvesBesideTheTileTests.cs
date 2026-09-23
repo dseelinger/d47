@@ -20,7 +20,8 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// A glyph button opens a label beside its tile on hover or keyboard focus, naming it from
-/// AutomationProperties.Name, and never while disabled. No glyph button carries a tooltip, and each
+/// AutomationProperties.Name, closes it when hover or focus ends or the button hides, and never
+/// opens it while disabled. No glyph button carries a tooltip, and each
 /// has a hit target of at least 44 x 44. A text field is outlined in A, and in Cyan while focused (#396).
 /// </summary>
 public class GlyphButtonsNameThemselvesBesideTheTileTests
@@ -43,6 +44,70 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
 
         Assert.True(Label(button).IsOpen);
         Assert.Equal("RESET SHIP VOICES", LabelText(button).Text);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheLabelClosesWhenThePointerLeaves()
+    {
+        using var kit = ControlKitTheme();
+        Manager().Apply(ThemeCatalog.Elite);
+
+        var button = GlyphButton("Reset ship voices");
+        var window = Open(button);
+
+        window.MouseMove(button.TranslatePoint(new Point(22, 22), window)!.Value);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(Label(button).IsOpen);
+
+        window.MouseMove(new Point(390, 290));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Label(button).IsOpen);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheLabelClosesWhenTheButtonHidesUnderThePointer()
+    {
+        using var kit = ControlKitTheme();
+        Manager().Apply(ThemeCatalog.Elite);
+
+        var button = GlyphButton("Reset ship voices");
+        var window = Open(button);
+
+        window.MouseMove(button.TranslatePoint(new Point(22, 22), window)!.Value);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(Label(button).IsOpen);
+
+        button.IsVisible = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Label(button).IsOpen);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheLabelClosesWhenFocusMovesOn()
+    {
+        using var kit = ControlKitTheme();
+        Manager().Apply(ThemeCatalog.Elite);
+
+        var button = GlyphButton("Reset ship voices");
+        var next = new TextBox { Width = 200 };
+        var window = Open(button, next);
+
+        button.Focus(NavigationMethod.Tab);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(Label(button).IsOpen);
+
+        next.Focus(NavigationMethod.Tab);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Label(button).IsOpen);
 
         window.Close();
     }
@@ -164,11 +229,14 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
     private static Border Tile(Button button) =>
         button.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "Tile");
 
-    private static Window Open(Control content)
+    private static Window Open(params Control[] content)
     {
+        var panel = new StackPanel { Margin = new Thickness(20) };
+        panel.Children.AddRange(content);
+
         var window = new Window
         {
-            Content = new StackPanel { Margin = new Thickness(20), Children = { content } },
+            Content = panel,
             Width = 400,
             Height = 300,
         };

@@ -87,8 +87,8 @@
     <!--
       A button whose only content is a glyph: a 34-square Tile holding an A glyph, centred in a hit
       target of at least 44 x 44. Hover or keyboard focus turns the tile solid A with a Knock glyph and
-      opens a label flush beside it naming the button, taken from AutomationProperties.Name, so every
-      glyph button must set one. Disabled, the glyph is Grey2 and no label opens. No glow. Applies to
+      opens a label flush beside it (GlyphLabel) naming the button, taken from
+      AutomationProperties.Name, so every glyph button must set one. Disabled, the glyph is Grey2 and no label opens. No glow. Applies to
       RepeatButton, which derives from Button.
     -->
     <ControlTheme x:Key="D47.GlyphButton" TargetType="Button">
@@ -100,6 +100,7 @@
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="FocusAdorner" Value="{x:Null}" />
+      <Setter Property="theming:GlyphLabel.Follows" Value="True" />
       <Setter Property="Template">
         <ControlTemplate>
           <Panel Background="Transparent">
@@ -150,13 +151,6 @@
       <Style Selector="^:pressed">
         <Setter Property="Background" Value="{DynamicResource D47.A}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-      </Style>
-
-      <Style Selector="^:pointerover:not(:disabled) /template/ Popup#Label">
-        <Setter Property="IsOpen" Value="True" />
-      </Style>
-      <Style Selector="^:focus-visible:not(:disabled) /template/ Popup#Label">
-        <Setter Property="IsOpen" Value="True" />
       </Style>
 
       <Style Selector="^:disabled">
