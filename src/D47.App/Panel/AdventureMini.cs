@@ -63,11 +63,11 @@ public sealed class AdventureMini : UserControl
         var standing = active[0];
         var adventure = standing.Adventure;
 
-        _body.Children.Add(AdventuresPage.Title(adventure.Name));
+        _body.Children.Add(TitleText.Build(adventure.Name, TypeScale.Heading, TitleRank.Screen));
 
         if (standing.Step() is { } step)
         {
-            _body.Children.Add(AdventuresPage.Text(step, TypeScale.Small, ThemeManager.TextMutedKey));
+            _body.Children.Add(AdventuresPage.Text(step, TypeScale.Small, ThemeManager.AKey));
         }
 
         // The short description: the premise, which is the one sentence the whole story was built out of.
@@ -76,20 +76,22 @@ public sealed class AdventureMini : UserControl
             _body.Children.Add(AdventuresPage.Text(premise, TypeScale.Secondary));
         }
 
+        var here = _surface.State()?.Location?.StarSystem;
+
         if (standing.LastTrigger() is { } done)
         {
-            _body.Children.Add(Row("Done", done));
+            _body.Children.Add(Row("Done", done, here));
         }
 
         if (standing.NextTrigger() is { } next)
         {
-            _body.Children.Add(Row("Next", next));
+            _body.Children.Add(Row("Next", next, here));
         }
 
         if (standing.LastSaid() is { } said)
         {
             _body.Children.Add(AdventuresPage.Text(
-                $"“{Shorten(said.Text)}”", TypeScale.Secondary, ThemeManager.TextMutedKey));
+                $"“{Shorten(said.Text)}”", TypeScale.Secondary, ThemeManager.GreyKey));
         }
 
         if (_surface.Book.IsStirring(commander, adventure.Key))
@@ -98,9 +100,9 @@ public sealed class AdventureMini : UserControl
         }
     }
 
-    /// <summary>A trigger with its word in front, both in the highlight colour so the pair reads as one.</summary>
-    private static Control Row(string label, string trigger) =>
-        AdventuresPage.Trigger($"{label}: {AdventuresPage.Sentence(trigger)}");
+    /// <summary>A trigger with its word in front, both in A so the pair reads as one.</summary>
+    private static Control Row(string label, string trigger, string? here) =>
+        AdventuresPage.Trigger($"{label}: {AdventuresPage.Sentence(trigger)}", here);
 
     /// <summary>The last line, trimmed to what mini can hold.</summary>
     private static string Shorten(string text)

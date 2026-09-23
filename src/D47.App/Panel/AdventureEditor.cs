@@ -16,8 +16,6 @@ namespace D47.App.Panel;
 /// <summary>Writing an adventure by hand (Phase 47, "Written, generated or imported").</summary>
 public sealed class AdventureEditor : UserControl
 {
-    private const double TouchTarget = 30;
-
     private readonly AdventureSurface _surface;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
@@ -25,7 +23,7 @@ public sealed class AdventureEditor : UserControl
 
     private Adventure _draft;
 
-    private readonly StackPanel _page = new() { Spacing = 8, Margin = new Thickness(14) };
+    private readonly StackPanel _page = new() { Spacing = 2, Margin = new Thickness(14) };
 
     public AdventureEditor(AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts, Adventure? existing)
     {
@@ -42,6 +40,8 @@ public sealed class AdventureEditor : UserControl
             Written = surface.Now(),
         };
 
+        Grid.SetIsSharedSizeScope(_page, true);
+
         Content = new ScrollViewer
         {
             Content = _page,
@@ -56,56 +56,57 @@ public sealed class AdventureEditor : UserControl
     {
         _page.Children.Clear();
 
-        _page.Children.Add(AdventuresPage.Title(_isNew ? "Write an adventure" : $"Edit {_draft.Name}", TypeScale.Section, TitleRank.Group));
+        _page.Children.Add(RoutingKit.Title(_isNew ? "Write an adventure" : $"Edit {_draft.Name}").Row);
 
-        _page.Children.Add(Field("Name", string.IsNullOrWhiteSpace(_draft.Name) ? "unnamed" : _draft.Name, () => Enter(
+        _page.Children.Add(Field("Name", string.IsNullOrWhiteSpace(_draft.Name) ? null : _draft.Name, "unnamed", () => Enter(
             "adventure.name", "Name", "What is it called?", null, _draft.Name, EntrySurface.Keyboard,
             value => _draft = _draft with { Name = value.Trim(), Key = _isNew ? AdventureValidation.Key(value) : _draft.Key },
             value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("An adventure needs a name.") : EntryVerdict.Ok)));
 
-        _page.Children.Add(Field("Opening", _draft.Opening ?? "none — said when it begins", () => Enter(
+        _page.Children.Add(Field("Opening", _draft.Opening, "none — said when it begins", () => Enter(
             "adventure.opening", "Opening", "What does the ship's AI say when it begins?",
             "The beat before the first beat. Show the place and what is in it; never tell yourself what to feel.",
             _draft.Opening ?? string.Empty, EntrySurface.Voice,
             value => _draft = _draft with { Opening = string.IsNullOrWhiteSpace(value) ? null : value.Trim() })));
 
-        _page.Children.Add(AdventuresPage.Text("The spine — optional, in the craft's order", TypeScale.Small, ThemeManager.TextMutedKey));
+        _page.Children.Add(RoutingKit.Section("The spine"));
+        _page.Children.Add(AdventuresPage.Text("Optional, in the craft's order.", TypeScale.Small, ThemeManager.GreyKey));
 
         var spine = _draft.Spine ?? new AdventureSpine();
 
-        _page.Children.Add(Field("What is this about", spine.Premise ?? "—", () => Enter(
+        _page.Children.Add(Field("What is this about", spine.Premise, "—", () => Enter(
             "adventure.premise", "Premise", "What is this about?", null, spine.Premise ?? string.Empty, EntrySurface.Voice,
             value => _draft = _draft with { Spine = (_draft.Spine ?? new AdventureSpine()) with { Premise = Blank(value) } })));
 
-        _page.Children.Add(Field("What do you want in it", spine.Want ?? "—", () => Enter(
+        _page.Children.Add(Field("What do you want in it", spine.Want, "—", () => Enter(
             "adventure.want", "Want", "What do you want in it?", null, spine.Want ?? string.Empty, EntrySurface.Voice,
             value => _draft = _draft with { Spine = (_draft.Spine ?? new AdventureSpine()) with { Want = Blank(value) } })));
 
-        _page.Children.Add(Field("What is really at stake", spine.Stake ?? "—", () => Enter(
+        _page.Children.Add(Field("What is really at stake", spine.Stake, "—", () => Enter(
             "adventure.stake", "Stake", "What is really at stake?", null, spine.Stake ?? string.Empty, EntrySurface.Voice,
             value => _draft = _draft with { Spine = (_draft.Spine ?? new AdventureSpine()) with { Stake = Blank(value) } })));
 
-        _page.Children.Add(Field("Where does it turn", spine.Turn ?? "—", () => Enter(
+        _page.Children.Add(Field("Where does it turn", spine.Turn, "—", () => Enter(
             "adventure.turn", "Turn", "Where does it turn?", null, spine.Turn ?? string.Empty, EntrySurface.Voice,
             value => _draft = _draft with { Spine = (_draft.Spine ?? new AdventureSpine()) with { Turn = Blank(value) } })));
 
-        _page.Children.Add(Field("What does the end mean", spine.Ending ?? "—", () => Enter(
+        _page.Children.Add(Field("What does the end mean", spine.Ending, "—", () => Enter(
             "adventure.ending", "Ending", "What does the end mean?", null, spine.Ending ?? string.Empty, EntrySurface.Voice,
             value => _draft = _draft with { Spine = (_draft.Spine ?? new AdventureSpine()) with { Ending = Blank(value) } })));
 
-        _page.Children.Add(AdventuresPage.Text("Beats", TypeScale.Small, ThemeManager.TextMutedKey));
+        _page.Children.Add(RoutingKit.Section("Beats"));
 
         for (var index = 0; index < _draft.Beats.Count; index++)
         {
             _page.Children.Add(BeatRow(index));
         }
 
-        var add = new Button { Content = "Add a beat", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var add = new Button { Content = "Add a beat", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 6, 0, 0) };
         add.Click += (_, _) => AddBeat();
         _page.Children.Add(add);
 
         // The reasons, printed, never a silently grey button. An unfinished adventure is not a fault,
-        // so this is Accent, never Danger (#280).
+        // so this is A, never Red (#280).
         var problems = AdventureValidation.Problems(_draft);
         var notReady = problems.Count == 0 ? AdventureValidation.NotReady(_draft) : [];
 
@@ -115,21 +116,20 @@ public sealed class AdventureEditor : UserControl
         }
         else if (notReady.Count > 0)
         {
-            var reasons = AdventuresPage.Text(string.Join("\n", notReady), TypeScale.Secondary, ThemeManager.AccentKey);
+            var reasons = AdventuresPage.Text(string.Join("\n", notReady), TypeScale.Secondary, ThemeManager.AKey);
             reasons.Margin = new Thickness(0, 8, 0, 0);
             _page.Children.Add(reasons);
         }
 
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 8, 0, 0) };
+        var bar = AdventuresPage.Buttons();
+        bar.Margin = new Thickness(0, 8, 0, 0);
 
-        var save = new Button { Content = "Save", Padding = new Thickness(12, 4), MinHeight = TouchTarget, IsEnabled = problems.Count == 0 };
+        var save = new Button { Content = "Save", IsEnabled = problems.Count == 0 };
         save.Click += (_, _) => Save(begin: false);
 
         var begin = new Button
         {
             Content = _draft.IsAbandoned ? "Save and begin again" : "Save and begin",
-            Padding = new Thickness(12, 4),
-            MinHeight = TouchTarget,
             IsEnabled = problems.Count == 0 && notReady.Count == 0,
         };
 
@@ -140,11 +140,11 @@ public sealed class AdventureEditor : UserControl
         _page.Children.Add(bar);
     }
 
-    /// <summary>The caution banner: an Accent bar on the leading edge, a CAUTION label, then the sentence.</summary>
+    /// <summary>The caution banner: an A bar on the leading edge, a CAUTION label, then the sentence.</summary>
     private static Control Caution(string sentence)
     {
         var bar = new Border { Width = 3 };
-        AdventuresPage.Themed(bar, Border.BackgroundProperty, ThemeManager.AccentKey);
+        AdventuresPage.Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var label = new TextBlock
         {
@@ -153,13 +153,14 @@ public sealed class AdventureEditor : UserControl
             FontSize = TypeScale.Small,
             FontWeight = FontWeight.SemiBold,
         };
-        AdventuresPage.Themed(label, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        AdventuresPage.Themed(label, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var content = new StackPanel { Spacing = 2, Margin = new Thickness(8, 0, 0, 0) };
         content.Children.Add(label);
-        content.Children.Add(AdventuresPage.Text(sentence, TypeScale.Secondary, ThemeManager.AccentKey));
+        content.Children.Add(AdventuresPage.Text(sentence, TypeScale.Secondary, ThemeManager.AKey));
 
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        var row = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
+        DockPanel.SetDock(bar, Dock.Left);
         row.Children.Add(bar);
         row.Children.Add(content);
         return row;
@@ -170,21 +171,27 @@ public sealed class AdventureEditor : UserControl
     private Control BeatRow(int index)
     {
         var beat = _draft.Beats[index];
-        var row = new StackPanel { Spacing = 4, Margin = new Thickness(0, 2, 0, 6) };
+        var row = new StackPanel { Spacing = 4 };
 
-        var heading = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        heading.Children.Add(AdventuresPage.Title($"{index + 1}. {beat.Title}"));
+        var heading = new WrapPanel { ItemSpacing = 8 };
+        heading.Children.Add(AdventuresPage.RowName($"{index + 1}. {beat.Title}"));
 
         if (!beat.Trigger.IsResolved)
         {
-            heading.Children.Add(AdventuresPage.Text("not yet a real place", TypeScale.Small, ThemeManager.AccentKey));
+            var unresolved = AdventuresPage.Text("not yet a real place", TypeScale.Small, ThemeManager.GreyKey);
+            unresolved.VerticalAlignment = VerticalAlignment.Center;
+            heading.Children.Add(unresolved);
         }
 
         row.Children.Add(heading);
-        row.Children.Add(AdventuresPage.Muted($"When you {beat.Trigger.Describe()}{(string.IsNullOrWhiteSpace(beat.Function) ? string.Empty : $" — {beat.Function}")}"));
+        row.Children.Add(AdventuresPage.Trigger(
+            $"When you {beat.Trigger.Describe()}{(string.IsNullOrWhiteSpace(beat.Function) ? string.Empty : $" — {beat.Function}")}",
+            _surface.State()?.Location?.StarSystem));
+
         row.Children.Add(AdventuresPage.Text($"\"{beat.Line}\"", TypeScale.Body));
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var buttons = AdventuresPage.Buttons();
+        buttons.Margin = new Thickness(0, 4, 0, 0);
 
         buttons.Children.Add(Small("Title", () => Enter(
             "adventure.beat.title", "Title", "The chapter's name", "A name, never a number.", beat.Title, EntrySurface.Keyboard,
@@ -209,14 +216,17 @@ public sealed class AdventureEditor : UserControl
             buttons.Children.Add(Small("Down", () => Move(index, 1)));
         }
 
-        buttons.Children.Add(Small("Remove", () =>
+        var remove = Small("Remove", () =>
         {
             _draft = _draft with { Beats = [.. _draft.Beats.Where((_, i) => i != index)] };
             Rebuild();
-        }));
+        });
+
+        remove.Classes.Add("destructive");
+        buttons.Children.Add(remove);
 
         row.Children.Add(buttons);
-        return row;
+        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
     }
 
     private void ReplaceBeat(int index, AdventureBeat beat)
@@ -527,24 +537,31 @@ public sealed class AdventureEditor : UserControl
         });
     }
 
-    private static Control Field(string label, string value, Action edit)
+    /// <summary>A field: its label as the button that edits it, then its value in A, or a placeholder in Grey2.</summary>
+    private static Control Field(string label, string? value, string placeholder, Action edit)
     {
-        var row = new DockPanel();
-        var button = new Button { Content = label, Padding = new Thickness(10, 4), MinHeight = TouchTarget, Width = 200, HorizontalContentAlignment = HorizontalAlignment.Left };
+        var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+        row.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto) { SharedSizeGroup = "label" });
+        row.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+
+        var button = new Button { Content = label, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left };
         button.Click += (_, _) => edit();
-        DockPanel.SetDock(button, Dock.Left);
         row.Children.Add(button);
 
-        var text = AdventuresPage.Text(value, TypeScale.Body);
+        var text = string.IsNullOrWhiteSpace(value)
+            ? AdventuresPage.Text(placeholder, TypeScale.Body, ThemeManager.Grey2Key)
+            : AdventuresPage.Text(value, TypeScale.Body, ThemeManager.AKey);
+
         text.Margin = new Thickness(10, 0, 0, 0);
         text.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(text, 1);
         row.Children.Add(text);
         return row;
     }
 
     private static Button Small(string label, Action act)
     {
-        var button = new Button { Content = label, Padding = new Thickness(8, 2), MinHeight = TouchTarget, FontSize = TypeScale.Secondary };
+        var button = new Button { Content = label };
         button.Click += (_, _) => act();
         return button;
     }

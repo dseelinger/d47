@@ -140,6 +140,14 @@ A price you saw yourself reads in cyan. The Community Goal ledger's session, day
 tiles, and a mistake in a form, such as a missing destination, reads in red. On a market result,
 COPY no longer overlaps the Distance column.
 
+Adventures is restyled to match. The tab opens with a large white Adventures title over an accent
+rule, and a story, Write, Edit and Ask each open with their own. Each story is a tile with its name
+in white and where it stands in the accent colour, and the cards' outlines are gone. In a trigger,
+your current system is cyan. Decline and Remove are red buttons. The editor's spine and beats sit
+under white capitals headings, each beat is a tile, and an empty field reads in dim grey. The
+editor's field buttons are as wide as the longest label rather than cutting labels off, and the
+caution under the beats wraps instead of running off the edge. Button rows wrap in a narrow pane.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

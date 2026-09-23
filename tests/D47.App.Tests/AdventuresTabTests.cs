@@ -165,7 +165,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("THE LANTERN ROUTE"));
+        Assert.Contains(drawn, text => text.Contains("The Lantern Route"));
         Assert.Contains(drawn, text => text.Contains("yours") && text.Contains("The Lantern"));
         Assert.Contains(drawn, text => text.Contains("written by Archivist") && text.Contains("waiting for your yes"));
         Assert.Contains(drawn, text => text.Contains("Step 1 of 2"));
@@ -216,7 +216,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("WRITE AN ADVENTURE"));
+        Assert.Contains(drawn, text => text.Contains("Write an adventure"));
         Assert.Contains(drawn, text => text.StartsWith("An adventure needs", StringComparison.Ordinal) && text.Contains("a name"));
         Assert.Contains(drawn, text => text.Contains("at least one beat"));
 
@@ -234,7 +234,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("ASK FOR AN ADVENTURE"));
+        Assert.Contains(drawn, text => text.Contains("Ask for an adventure"));
         Assert.Contains(drawn, text => text.Contains("needs a language model"));
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
@@ -426,8 +426,8 @@ public class AdventuresTabTests
         Assert.Contains(drawn, text => text.Contains("Who keeps the lantern lit?"));
         Assert.Contains(drawn, text => text.Contains("The bills are being paid"));
 
-        var accent = panel.FindResource(D47.App.Theming.ThemeManager.AccentKey);
-        var body = panel.FindResource(D47.App.Theming.ThemeManager.TextKey);
+        var accent = panel.FindResource(D47.App.Theming.ThemeManager.AKey);
+        var body = panel.FindResource(D47.App.Theming.ThemeManager.WhiteKey);
 
         var trigger = panel.GetVisualDescendants().OfType<TextBlock>()
             .Single(block => block.Text == "Arrive at Ossen's Lantern.");

@@ -36,7 +36,7 @@ public sealed class AdventureThinking : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        AdventuresPage.Themed(word, TextBlock.ForegroundProperty, ThemeManager.AccentKey);
+        AdventuresPage.Themed(word, TextBlock.ForegroundProperty, ThemeManager.AKey);
         row.Children.Add(word);
 
         for (var index = 0; index < Dots; index++)
@@ -49,7 +49,7 @@ public sealed class AdventureThinking : UserControl
                 Opacity = Dim,
             };
 
-            AdventuresPage.Themed(dot, Shape.FillProperty, ThemeManager.AccentKey);
+            AdventuresPage.Themed(dot, Shape.FillProperty, ThemeManager.AKey);
             _dots[index] = dot;
             row.Children.Add(dot);
         }

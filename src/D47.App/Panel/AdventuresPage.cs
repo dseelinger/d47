@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -30,13 +31,11 @@ public sealed class AdventuresPage : UserControl
     /// <summary>The editor's key for a story that does not exist yet.</summary>
     public const string NewKey = "new";
 
-    private const double TouchTarget = 30;
-
     private readonly AdventureSurface _surface;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
 
-    private readonly StackPanel _list = new() { Spacing = 8 };
+    private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly TextBlock _problems = new()
     {
         TextWrapping = TextWrapping.Wrap,
@@ -44,12 +43,7 @@ public sealed class AdventuresPage : UserControl
         IsVisible = false,
     };
 
-    private readonly Button _ask = new()
-    {
-        Content = "Ask for one",
-        Padding = new Thickness(12, 4),
-        MinHeight = TouchTarget,
-    };
+    private readonly Button _ask = new() { Content = "Ask for one" };
 
     /// <summary>The revision conversation per draft, for this session.</summary>
     private readonly Dictionary<string, List<AdventureRemark>> _exchanges = new(StringComparer.OrdinalIgnoreCase);
@@ -66,29 +60,33 @@ public sealed class AdventuresPage : UserControl
         _nav = nav;
         _prompts = prompts;
 
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.DangerKey);
+        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
-        var write = new Button { Content = "Write an adventure", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var write = new Button { Content = "Write an adventure" };
         write.Click += (_, _) => _nav.Drill(new NavCrumb(EditPrefix + NewKey, "Write") { Help = EditHelp });
 
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
 
-        var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
-        var right = new StackPanel
+        var bar = new StackPanel
         {
-            Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center,
-            Children = { _ask, write },
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 0, 10),
+            Children =
+            {
+                Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."),
+                Buttons(_ask, write),
+            },
         };
-        DockPanel.SetDock(right, Dock.Right);
-        bar.Children.Add(right);
-        bar.Children.Add(Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."));
 
         var root = new DockPanel { Margin = new Thickness(14) };
+        var (title, _) = RoutingKit.Title("Adventures");
 
+        DockPanel.SetDock(title, Dock.Top);
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
+        root.Children.Add(title);
         root.Children.Add(bar);
         root.Children.Add(_problems);
 
@@ -206,8 +204,7 @@ public sealed class AdventuresPage : UserControl
                 Content = _showAside
                     ? "Hide set aside"
                     : $"Set aside ({aside.Count.ToString(CultureInfo.InvariantCulture)})",
-                Padding = new Thickness(12, 4),
-                MinHeight = TouchTarget,
+                HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, 8, 0, 0),
             };
 
@@ -236,10 +233,10 @@ public sealed class AdventuresPage : UserControl
     private Control Card(AdventureStanding standing)
     {
         var adventure = standing.Adventure;
-        var card = CardShell();
+        var card = Row();
         var body = (StackPanel)card.Child!;
 
-        body.Children.Add(Title(adventure.Name));
+        body.Children.Add(RowName(adventure.Name));
 
         // The step joins the place on the same line rather than taking one of its own: it is the second half
         // of "where am I", and a card is read at a glance (asked for 2026-08-22).
@@ -247,11 +244,11 @@ public sealed class AdventuresPage : UserControl
             ? $"{By(adventure)} — {standing.Place()} · {step}"
             : $"{By(adventure)} — {standing.Place()}";
 
-        body.Children.Add(Muted(where));
+        body.Children.Add(RowSecondary(where));
 
         if (standing.NextTrigger() is { } next)
         {
-            body.Children.Add(Trigger($"Next: {next}."));
+            body.Children.Add(Trigger($"Next: {next}.", Here()));
         }
 
         if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -266,26 +263,27 @@ public sealed class AdventuresPage : UserControl
     private Control DraftCard(AdventureStanding standing)
     {
         var adventure = standing.Adventure;
-        var card = CardShell();
+        var card = Row();
         var body = (StackPanel)card.Child!;
 
-        body.Children.Add(Title(adventure.Name));
-        body.Children.Add(Muted($"{By(adventure)} — waiting for your yes"));
+        body.Children.Add(RowName(adventure.Name));
+        body.Children.Add(RowSecondary($"{By(adventure)} — waiting for your yes"));
 
         if (!string.IsNullOrWhiteSpace(adventure.Spine?.Premise))
         {
             body.Children.Add(Text(adventure.Spine.Premise, TypeScale.Body));
         }
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 6, 0, 0) };
+        var buttons = Buttons();
+        buttons.Margin = new Thickness(0, 6, 0, 0);
 
-        var accept = new Button { Content = "Accept", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var accept = new Button { Content = "Accept" };
         accept.Click += (_, _) => Begin(adventure.Key);
 
-        var change = new Button { Content = "Change something", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var change = new Button { Content = "Change something" };
         change.Click += (_, _) => Revise(adventure);
 
-        var decline = new Button { Content = "Decline", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var decline = new Button { Content = "Decline", Classes = { "destructive" } };
         decline.Click += (_, _) => Remove(adventure, confirm: false);
 
         buttons.Children.Add(accept);
@@ -293,7 +291,7 @@ public sealed class AdventuresPage : UserControl
 
         if (adventure.Previous is not null)
         {
-            var back = new Button { Content = "Put it back", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+            var back = new Button { Content = "Put it back" };
             back.Click += (_, _) =>
             {
                 var refusal = _surface.Book.Write(_surface.Commander(), adventure.Previous with { Previous = null });
@@ -309,7 +307,7 @@ public sealed class AdventuresPage : UserControl
 
         buttons.Children.Add(decline);
 
-        var read = new Button { Content = "Read it", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var read = new Button { Content = "Read it" };
         read.Click += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name));
         buttons.Children.Add(read);
 
@@ -335,7 +333,7 @@ public sealed class AdventuresPage : UserControl
 
             var adventure = standing.Adventure;
 
-            page.Children.Add(Title(adventure.Name, TypeScale.Heading));
+            page.Children.Add(RoutingKit.Title(adventure.Name).Row);
 
             var where = standing.Step() is { } step
                 ? $"{By(adventure)} — {standing.Place()} · {step}"
@@ -348,7 +346,7 @@ public sealed class AdventuresPage : UserControl
                 page.Children.Add(Text(spine.Premise, TypeScale.Body));
             }
 
-            Told(page, standing);
+            Told(page, standing, Here());
 
             // The wait, drawn (asked for 2026-08-22).
             if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -359,7 +357,7 @@ public sealed class AdventuresPage : UserControl
             // What to do next, spelled out (asked for 2026-08-22).
             if (standing.NextTrigger() is { } next)
             {
-                page.Children.Add(Labelled("Next", null, Trigger(Sentence(next))));
+                page.Children.Add(Labelled("Next", null, Trigger(Sentence(next), Here())));
             }
 
             if (standing.IsDone && adventure.Beats.Count > 0)
@@ -403,13 +401,14 @@ public sealed class AdventuresPage : UserControl
     private Control ReadingBar(AdventureStanding standing)
     {
         var adventure = standing.Adventure;
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 10, 0, 0) };
+        var bar = Buttons();
+        bar.Margin = new Thickness(0, 10, 0, 0);
 
         if (adventure.IsDraft)
         {
             bar.Children.Add(Action("Accept", () => Begin(adventure.Key)));
             bar.Children.Add(Action("Change something", () => Revise(adventure)));
-            bar.Children.Add(Action("Decline", () => Remove(adventure, confirm: false)));
+            bar.Children.Add(Action("Decline", () => Remove(adventure, confirm: false), destructive: true));
             return bar;
         }
 
@@ -430,7 +429,7 @@ public sealed class AdventuresPage : UserControl
                 $"{adventure.Name} is under way. Abandon it first, change it, and begin again.")));
         }
 
-        bar.Children.Add(Action("Remove", () => Remove(adventure, confirm: adventure.IsBegun)));
+        bar.Children.Add(Action("Remove", () => Remove(adventure, confirm: adventure.IsBegun), destructive: true));
         return bar;
     }
 
@@ -447,14 +446,13 @@ public sealed class AdventuresPage : UserControl
         var state = _surface.State();
         var hasChoice = state is not null && (state.Fleet.Ships.Count > 0 || state.Carrier.Owned);
 
-        page.Children.Add(Title("Ask for an adventure", TypeScale.Heading));
+        page.Children.Add(RoutingKit.Title("Ask for an adventure").Row);
         page.Children.Add(Muted(
             "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
             + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
 
         var reachCombo = new Segment
         {
-            MinHeight = TouchTarget,
             ItemsSource = ["Reach: near here", "Reach: a session's flying", "Reach: anywhere"],
             SelectedIndex = 0,
         };
@@ -462,16 +460,15 @@ public sealed class AdventuresPage : UserControl
 
         var lengthCombo = new Segment
         {
-            MinHeight = TouchTarget,
             ItemsSource = ["Length: short", "Length: an evening", "Length: long"],
             SelectedIndex = 1,
         };
         AutomationProperties.SetName(lengthCombo, "Length");
 
         var (thisShip, _) = LabeledCheckBox.Build("This ship only");
-        var briefButton = new Button { Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var briefButton = new Button { HorizontalAlignment = HorizontalAlignment.Left };
         var status = Muted(string.Empty);
-        var go = new Button { Content = "Go", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
+        var go = new Button { Content = "Go", HorizontalAlignment = HorizontalAlignment.Left };
 
         void Label()
         {
@@ -513,12 +510,12 @@ public sealed class AdventuresPage : UserControl
         {
             if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
             {
-                status.Text = AskShutBecause();
+                Say(status, AskShutBecause());
                 return;
             }
 
             go.IsEnabled = false;
-            status.Text = "Writing…";
+            Say(status, "Writing…");
 
             var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief);
 
@@ -554,7 +551,7 @@ public sealed class AdventuresPage : UserControl
             status.Text = AskShutBecause();
             go.IsEnabled = false;
 
-            var settings = new Button { Content = "Open settings", Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+            var settings = new Button { Content = "Open settings", HorizontalAlignment = HorizontalAlignment.Left };
             settings.Click += (_, _) => _surface.OpenSettings();
             page.Children.Add(settings);
         }
@@ -567,7 +564,7 @@ public sealed class AdventuresPage : UserControl
     {
         if (outcome.Draft is not { } draft)
         {
-            status.Text = outcome.Refusal ?? "Nothing came back.";
+            Say(status, outcome.Refusal ?? "Nothing came back.", ThemeManager.RedKey);
             _surface.Say(outcome.Refusal ?? "I could not write that one.");
             return;
         }
@@ -578,12 +575,12 @@ public sealed class AdventuresPage : UserControl
 
         if (refusal is not null)
         {
-            status.Text = refusal;
+            Say(status, refusal, ThemeManager.RedKey);
             return;
         }
 
         _asks[key] = ask;
-        status.Text = string.Join(" ", outcome.Notes);
+        Say(status, string.Join(" ", outcome.Notes));
 
         _surface.Say(outcome.Reply ?? $"{stored.Name}. It is yours to accept or send back.");
 
@@ -732,23 +729,54 @@ public sealed class AdventuresPage : UserControl
             ? $"written by {D47.Core.Persona.PersonaCatalog.Resolve(id).Name}"
             : "written by d47";
 
-    private static Border CardShell()
+    /// <summary>A pressable list row holding a stack.</summary>
+    private static Border Row() => ListRow.Dress(new Border
     {
-        var border = new Border
-        {
-            Padding = new Thickness(12, 8),
-            Child = new StackPanel { Spacing = 4 },
-            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
-        };
+        Padding = new Thickness(12, 6),
+        Child = new StackPanel { Spacing = 2 },
+        Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+    });
 
-        CardChrome.Card(border);
-        return border;
+    /// <summary>A row of buttons that wraps rather than clips.</summary>
+    internal static WrapPanel Buttons(params Control[] buttons)
+    {
+        var panel = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+
+        foreach (var button in buttons)
+        {
+            panel.Children.Add(button);
+        }
+
+        return panel;
     }
+
+    /// <summary>A row's name, in the row's name ink.</summary>
+    internal static TextBlock RowName(string text) => ListRow.Name(new TextBlock
+    {
+        Text = text,
+        FontSize = TypeScale.Body,
+        FontWeight = FontWeight.SemiBold,
+        TextWrapping = TextWrapping.Wrap,
+    });
+
+    /// <summary>A row's second line, in the row's secondary ink.</summary>
+    internal static TextBlock RowSecondary(string text) =>
+        ListRow.Secondary(new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap });
+
+    /// <summary>Writes a status line in <paramref name="key"/>'s ink.</summary>
+    private static void Say(TextBlock status, string text, string key = ThemeManager.GreyKey)
+    {
+        status.Text = text;
+        Themed(status, TextBlock.ForegroundProperty, key);
+    }
+
+    /// <summary>The Commander's current system, from the app's own state.</summary>
+    private string? Here() => _surface.State()?.Location?.StarSystem;
 
     private static Control Labelled(string label, string? text, Control? content = null)
     {
         var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 4, 0, 0) };
-        stack.Children.Add(Text(label, TypeScale.Small, ThemeManager.TextMutedKey));
+        stack.Children.Add(Text(label, TypeScale.Small, ThemeManager.GreyKey));
 
         if (text is { Length: > 0 })
         {
@@ -763,15 +791,54 @@ public sealed class AdventuresPage : UserControl
         return stack;
     }
 
-    /// <summary>A trigger, in the highlight colour (asked for 2026-08-22).</summary>
-    internal static TextBlock Trigger(string text) => Text(text, TypeScale.Secondary, ThemeManager.AccentKey);
+    /// <summary>A trigger, in A, with <paramref name="here"/> in Cyan where the text names it.</summary>
+    internal static TextBlock Trigger(string text, string? here)
+    {
+        var block = Text(text, TypeScale.Secondary, ThemeManager.AKey);
+
+        if (Naming(text, here) is not { } at)
+        {
+            return block;
+        }
+
+        var system = new Run(text.Substring(at, here!.Length));
+        Themed(system, TextElement.ForegroundProperty, ThemeManager.CyanKey);
+
+        block.Text = null;
+        block.Inlines = [new Run(text[..at]), system, new Run(text[(at + here.Length)..])];
+
+        return block;
+    }
+
+    /// <summary>Where <paramref name="text"/> names <paramref name="system"/> as a whole name, or null.</summary>
+    internal static int? Naming(string text, string? system)
+    {
+        if (string.IsNullOrWhiteSpace(system))
+        {
+            return null;
+        }
+
+        for (var at = text.IndexOf(system, StringComparison.OrdinalIgnoreCase);
+             at >= 0;
+             at = text.IndexOf(system, at + 1, StringComparison.OrdinalIgnoreCase))
+        {
+            var end = at + system.Length;
+
+            if ((at == 0 || !char.IsLetterOrDigit(text[at - 1])) && (end == text.Length || !char.IsLetterOrDigit(text[end])))
+            {
+                return at;
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>A trigger phrase as a sentence: "arrive at X" reads badly without a capital and a stop.</summary>
     internal static string Sentence(string phrase) =>
         phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..] + ".";
 
     /// <summary>What has actually been said about this story (asked for 2026-08-22).</summary>
-    private static void Told(StackPanel page, AdventureStanding standing)
+    private static void Told(StackPanel page, AdventureStanding standing, string? here)
     {
         var adventure = standing.Adventure;
 
@@ -792,11 +859,11 @@ public sealed class AdventuresPage : UserControl
                 stack.Children.Add(Text(
                     $"{heading} — {told.At.ToLocalTime():d MMM HH:mm}",
                     TypeScale.Small,
-                    ThemeManager.TextMutedKey));
+                    ThemeManager.GreyKey));
 
                 if (told.Trigger is { Length: > 0 } trigger)
                 {
-                    stack.Children.Add(Trigger(Sentence(trigger)));
+                    stack.Children.Add(Trigger(Sentence(trigger), here));
                 }
             }
             else
@@ -808,7 +875,7 @@ public sealed class AdventuresPage : UserControl
                         ? $"You asked, {told.At.ToLocalTime():d MMM HH:mm} — “{asked}”"
                         : $"Aside — {told.At.ToLocalTime():d MMM HH:mm}",
                     TypeScale.Small,
-                    ThemeManager.TextMutedKey));
+                    ThemeManager.GreyKey));
             }
 
             stack.Children.Add(Text(told.Text, TypeScale.Body));
@@ -840,35 +907,22 @@ public sealed class AdventuresPage : UserControl
         }
     }
 
-    private static Button Action(string label, System.Action act)
+    private static Button Action(string label, System.Action act, bool destructive = false)
     {
-        var button = new Button { Content = label, Padding = new Thickness(12, 4), MinHeight = TouchTarget };
+        var button = new Button { Content = label };
+        button.Classes.Set("destructive", destructive);
         button.Click += (_, _) => act();
         return button;
     }
 
-    internal static Control Title(string text, double size = TypeScale.Caption, TitleRank rank = TitleRank.Subgroup)
-    {
-        var block = new TextBlock
-        {
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        TitleText.Style(block, size, rank);
-        TitleText.Show(block, text);
-
-        return rank == TitleRank.Group ? TitleText.GroupRow(block) : block;
-    }
-
-    internal static TextBlock Text(string text, double size, string key = ThemeManager.TextKey)
+    internal static TextBlock Text(string text, double size, string key = ThemeManager.WhiteKey)
     {
         var block = new TextBlock { Text = text, FontSize = size, TextWrapping = TextWrapping.Wrap };
         Themed(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    internal static TextBlock Muted(string text) => Text(text, TypeScale.Body, ThemeManager.TextMutedKey);
+    internal static TextBlock Muted(string text) => Text(text, TypeScale.Body, ThemeManager.GreyKey);
 
     internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
