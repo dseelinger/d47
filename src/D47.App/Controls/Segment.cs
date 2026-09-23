@@ -2,16 +2,15 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
-using Avalonia.Markup.Xaml.MarkupExtensions;
+using Avalonia.Data.Converters;
 using Avalonia.Styling;
-using D47.App.Theming;
 
 namespace D47.App.Controls;
 
 /// <summary>
-/// 2 to 4 fixed choices in one framed, wrapping group (#348). Built on <see cref="RadioButton"/>, themed <c>D47.Segment</c>, for the mutual exclusion,
-/// arrow-key movement and accessibility role that come with it for free, the same reason
-/// <c>D47.Tab</c> is.
+/// 2 to 4 fixed choices as equal-width cells 2px apart, wrapping rather than clipping (#348). Built
+/// on <see cref="RadioButton"/>, themed <c>D47.Segment</c>, for the mutual exclusion, arrow-key
+/// movement and accessibility role that come with it, the same reason <c>D47.Tab</c> is.
 /// </summary>
 public sealed class Segment : ContentControl, IChoiceControl
 {
@@ -20,6 +19,13 @@ public sealed class Segment : ContentControl, IChoiceControl
 
     public static readonly StyledProperty<int> SelectedIndexProperty =
         AvaloniaProperty.Register<Segment, int>(nameof(SelectedIndex), -1);
+
+    /// <summary>The space between options, across and down.</summary>
+    public const double Gap = 2;
+
+    /// <summary>An option's label as drawn; the option's Content keeps the caller's text.</summary>
+    public static readonly IValueConverter Uppercase =
+        new FuncValueConverter<object?, string?>(value => value?.ToString()?.ToUpperInvariant());
 
     /// <summary>Raised when the choice changes by a press — never by setting <see cref="SelectedIndex"/>.</summary>
     public event EventHandler? SelectionChanged;
@@ -73,7 +79,7 @@ public sealed class Segment : ContentControl, IChoiceControl
     private void Rebuild()
     {
         var theme = Application.Current?.FindResource("D47.Segment") as ControlTheme;
-        var row = new WrapPanel();
+        var row = new EqualCells();
 
         _buttons.Clear();
 
@@ -86,7 +92,6 @@ public sealed class Segment : ContentControl, IChoiceControl
                 Theme = theme,
                 GroupName = _group,
                 Content = ItemsSource[i],
-                Margin = new Thickness(0, 0, 3, 3),
             };
 
             button.IsCheckedChanged += (_, _) =>
@@ -104,17 +109,7 @@ public sealed class Segment : ContentControl, IChoiceControl
             row.Children.Add(button);
         }
 
-        var frame = new Border
-        {
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(3),
-            Child = row,
-        };
-
-        frame[!Border.BorderBrushProperty] = new DynamicResourceExtension(ThemeManager.RuleKey);
-        frame[!Border.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.FillLowKey);
-
-        Content = frame;
+        Content = row;
         SyncChecked();
     }
 
@@ -160,5 +155,67 @@ public sealed class Segment : ContentControl, IChoiceControl
         }
 
         _syncing = false;
+    }
+
+    /// <summary>
+    /// Every child as wide as the widest, <see cref="Gap"/> apart, on as few lines as fit, with the
+    /// children spread evenly across those lines. Given more width than that, the cells share it.
+    /// </summary>
+    private sealed class EqualCells : Avalonia.Controls.Panel
+    {
+        private int _columns = 1;
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            var widest = 0.0;
+            var tallest = 0.0;
+
+            foreach (var child in Children)
+            {
+                child.Measure(Size.Infinity);
+                widest = Math.Max(widest, child.DesiredSize.Width);
+                tallest = Math.Max(tallest, child.DesiredSize.Height);
+            }
+
+            var count = Children.Count;
+            if (count == 0)
+            {
+                return default;
+            }
+
+            var fit = double.IsInfinity(availableSize.Width)
+                ? count
+                : (int)Math.Floor((availableSize.Width + Gap) / (widest + Gap));
+
+            var perLine = Math.Clamp(fit, 1, count);
+            var rows = (count + perLine - 1) / perLine;
+            _columns = (count + rows - 1) / rows;
+
+            return new Size(
+                _columns * widest + (_columns - 1) * Gap,
+                rows * tallest + (rows - 1) * Gap);
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            var count = Children.Count;
+            if (count == 0)
+            {
+                return finalSize;
+            }
+
+            var rows = (count + _columns - 1) / _columns;
+            var width = Math.Max(0, (finalSize.Width - (_columns - 1) * Gap) / _columns);
+            var height = Math.Max(0, (finalSize.Height - (rows - 1) * Gap) / rows);
+
+            for (var i = 0; i < count; i++)
+            {
+                var column = i % _columns;
+                var line = i / _columns;
+                Children[i].Arrange(new Rect(column * (width + Gap), line * (height + Gap), width, height));
+            }
+
+            return finalSize;
+        }
     }
 }

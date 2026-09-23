@@ -14,8 +14,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Every glyph-only button — the stepper's arrows, the amount control's spinner, and the three
-/// reset icons — takes D47.GlyphButton rather than Fluent's own theme (#376).
+/// Every glyph-only button takes a d47 theme rather than Fluent's own: the amount control's spinner
+/// and the three reset icons take D47.GlyphButton (#376), the stepper's arrows D47.StepperArrow (#394).
 ///
 /// HeadlessApp does not merge ControlKitTheme.axaml the way App.axaml does (that gap predates
 /// this issue and is outside it), so each test merges it onto Application.Current for its own
@@ -25,11 +25,11 @@ namespace D47.App.Tests;
 public class GlyphButtonsTakeTheirOwnThemeTests
 {
     [AvaloniaFact]
-    public void TheStepperArrowsTakeTheGlyphButtonTheme()
+    public void TheStepperArrowsTakeTheStepperArrowTheme()
     {
         using var _ = ControlKitTheme();
         var host = Open();
-        var theme = GlyphButtonTheme();
+        var theme = (ControlTheme)Application.Current!.FindResource("D47.StepperArrow")!;
 
         // Laid out, not merely built — a card the view keeps in memory but has not expanded never
         // gets its content templated, so its RepeatButtons are not visual descendants yet.

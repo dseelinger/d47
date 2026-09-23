@@ -19,6 +19,15 @@ colours. Dark no longer glows or draws scanlines, and the Bloom setting is shown
 as well as Light. The scanlines are slightly lighter. The Control Kit's Ramp section shows every
 colour with its hex value.
 
+List rows, segmented choices and steppers are restyled to match Elite. A list row is a tile with a white
+name and a coloured second line. The selected row fills solid in the accent colour with dark text
+in place of the bar at its left edge. Segmented choices are equal-width tiles 2px apart in capitals,
+with no frame around the group, and the chosen one fills solid. When they wrap, each line holds
+the same number of tiles, give or take one. A stepper's arrows are tiles that
+fill solid on hover, either side of the value, and its position reads in grey. None of these glow
+any more. The Control Kit has a Choosing among items section showing every state of each.
+Settings cards sit on the page background, so a segment's options show as tiles.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

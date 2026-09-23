@@ -5,6 +5,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.LogicalTree;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
@@ -65,6 +66,7 @@ public sealed class ControlKitWindow : Window
             {
                 Header(),
                 ControlsSection(),
+                ChoosingSection(),
                 ThemeSection(),
                 StatusSection(),
                 RampSection(),
@@ -183,11 +185,11 @@ public sealed class ControlKitWindow : Window
                 "CHOICE — FEW OPTIONS",
                 new Segment
                 {
-                    ItemsSource = ["NONE", "WARN", "INFO", "DEBUG", "TRACE"],
+                    ItemsSource = ["NONE", "WARN", "INFO", "DEBUG"],
                     SelectedIndex = 2,
                     HorizontalAlignment = HorizontalAlignment.Left,
                 },
-                Note("Up to six: show them all. No ComboBox needed, and nothing is hidden behind arrows.")),
+                Note($"Up to {Choice.SegmentLimit}: show them all. No ComboBox needed, and nothing is hidden behind arrows.")),
             Cell(
                 "CHOICE — MANY OPTIONS",
                 Capped(new Stepper
@@ -223,6 +225,101 @@ public sealed class ControlKitWindow : Window
         };
 
         return Section("Telling things apart", Reflow(cells, GridMinColumn, GridGap, GridGap, maxColumns: 3));
+    }
+
+    // -- Choosing among items --
+
+    /// <summary>
+    /// The list row, the segment and the stepper in every state. Hover is shown by setting the
+    /// pseudo-class, so a pointer passing over one of these clears it.
+    /// </summary>
+    private static Control ChoosingSection()
+    {
+        var rows = new StackPanel
+        {
+            Spacing = Segment.Gap,
+            Children =
+            {
+                KitRow("At rest", "tile · white · a"),
+                Hovered(KitRow("Hover", "tile2")),
+                KitRow("Selected", "a · knock · brown", selected: true),
+                Disabled(KitRow("Disabled", "slab · grey")),
+            },
+        };
+
+        var list = new ListBox
+        {
+            ItemsSource = new[] { "Diaguandri", "Shinrarta Dezhra", "Colonia" },
+            SelectedIndex = 1,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+        };
+
+        string[] options = ["NEAR", "SESSION", "ANYWHERE"];
+
+        var segmentHover = new Segment { ItemsSource = options, SelectedIndex = 1 };
+        Hovered(((Avalonia.Controls.Panel)segmentHover.Content!).Children[0]);
+
+        var segments = new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                segmentHover,
+                Disabled(new Segment { ItemsSource = options, SelectedIndex = 1 }),
+            },
+        };
+
+        string[] models = ["Tiny", "Small", "Medium", "Large", "Large (turbo)", "Base", "Base (English)", "Medium (English)"];
+
+        var stepperHover = new Stepper { ItemsSource = models, SelectedIndex = 2 };
+        Hovered(stepperHover.GetLogicalDescendants().OfType<RepeatButton>().Last());
+
+        var steppers = new StackPanel
+        {
+            Spacing = 16,
+            Children =
+            {
+                Capped(stepperHover),
+                Capped(Disabled(new Stepper { ItemsSource = models, SelectedIndex = 2 })),
+            },
+        };
+
+        var cells = new Control[]
+        {
+            Cell("LIST ROW — THE d47-row CLASS", rows, Note("Rows sit 2px apart. No outline, no bar, no glow.")),
+            Cell("LIST ROW — LISTBOX", list, Note("The same states on a ListBoxItem.")),
+            Cell("SEGMENT — HOVER, CHOSEN, DISABLED", segments, Note("Equal-width tiles, 2px apart. The first option is hovered.")),
+            Cell("STEPPER — HOVER, DISABLED", steppers, Note("The right arrow is hovered. The second stepper is disabled.")),
+        };
+
+        return Section("Choosing among items", Reflow(cells, GridMinColumn, GridGap, GridGap, maxColumns: 2));
+    }
+
+    private static Border KitRow(string name, string secondary, bool selected = false)
+    {
+        var nameText = ListRow.Name(new TextBlock { Text = name, FontFamily = Fonts.ProseFamily, FontSize = TypeScale.Body });
+        var secondaryText = ListRow.Secondary(new TextBlock { Text = secondary, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta });
+
+        return ListRow.Dress(
+            new Border
+            {
+                Padding = new Thickness(12, 6),
+                Child = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { nameText, secondaryText } },
+            },
+            selected);
+    }
+
+    private static T Hovered<T>(T control) where T : Control
+    {
+        ((IPseudoClasses)control.Classes).Set(":pointerover", true);
+        return control;
+    }
+
+    private static T Disabled<T>(T control) where T : Control
+    {
+        control.IsEnabled = false;
+        return control;
     }
 
     private static Control Actions()

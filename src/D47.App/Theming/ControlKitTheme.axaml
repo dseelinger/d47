@@ -5,7 +5,7 @@
 
   <!--
     The HUD dress for the three controls that appear everywhere and had no d47 look of their
-    own: Button, ToggleSwitch and ListBoxItem's selected row. Squared corners throughout — the
+    own: Button, ToggleSwitch, the choice controls and ListBoxItem. Squared corners throughout — the
     dress carries no rounded shape (#273).
   -->
   <Styles.Resources>
@@ -206,6 +206,51 @@
     </ControlTheme>
 
     <!--
+      A stepper's arrow: a Tile cell with an A glyph; solid A with a Knock glyph on hover, focus or
+      press; a Grey2 glyph when disabled. No glow. Applies to RepeatButton, which derives from Button.
+    -->
+    <ControlTheme x:Key="D47.StepperArrow" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Ground"
+                  Background="{TemplateBinding Background}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+
+      <Style Selector="^:disabled">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
+      </Style>
+    </ControlTheme>
+
+    <!--
       Two halves, each naming its own state, so a page of switches reads without checking knob
       position and brightness one at a time (#334). A row that wants no words sets OnContent and
       OffContent to null itself; every other row gets this pair by default.
@@ -285,59 +330,59 @@
     </ControlTheme>
 
     <!--
-      2 to 4 fixed choices, framed as one group and wrapping rather than clipping past its width
-      (#348). The chosen segment is a solid Accent block with Knock ink and the bloom; the rest
-      carry no fill and no border of their own. App-wide rather than scoped to the panel, since a
-      desktop-only window (SwitchWindow, MacroWindow, and the rest) needs the same look and
-      carries no merge of PanelTabs.axaml.
+      One option of a Segment: a Tile cell with A ink in uppercase Saira, Tile2 on hover or focus,
+      solid A with Knock ink when chosen, Slab with Grey2 ink when disabled. No border and no glow.
+      App-wide rather than scoped to the panel, since a desktop-only window (SwitchWindow,
+      MacroWindow, and the rest) needs the same look and carries no merge of PanelTabs.axaml.
 
       Built on RadioButton for the mutual exclusion, arrow-key movement and accessibility role that
       come with it, the same reason D47.Tab is.
     -->
     <ControlTheme x:Key="D47.Segment" TargetType="RadioButton">
-      <Setter Property="ClipToBounds" Value="False" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
       <Setter Property="FontSize" Value="14" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="LetterSpacing" Value="1.68" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.TextFaint}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
       <Setter Property="Padding" Value="15,9" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
 
       <Setter Property="Template">
         <ControlTemplate>
-          <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
-            <Border x:Name="Shape" Background="Transparent">
-              <ContentPresenter x:Name="PART_ContentPresenter"
-                                Content="{TemplateBinding Content}"
-                                Padding="{TemplateBinding Padding}"
-                                Foreground="{TemplateBinding Foreground}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-            </Border>
-          </theming:BloomStack>
+          <Border x:Name="Shape" Background="{TemplateBinding Background}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+              <ContentPresenter.ContentTemplate>
+                <DataTemplate x:DataType="x:Object">
+                  <TextBlock Text="{Binding Converter={x:Static controls:Segment.Uppercase}}" />
+                </DataTemplate>
+              </ContentPresenter.ContentTemplate>
+            </ContentPresenter>
+          </Border>
         </ControlTemplate>
       </Setter>
 
-      <Style Selector="^:pointerover /template/ Border#Shape">
-        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
       </Style>
-
-      <!-- Hover halo (#379), drawn from the hover fill; the selected segment is already lit at Normal. -->
-      <Style Selector="^:pointerover:not(:checked) /template/ theming|BloomStack#Glow">
-        <Setter Property="Tier" Value="Low" />
-        <Setter Property="IsLit" Value="True" />
-        <Setter Property="Glow" Value="{DynamicResource D47.Accent}" />
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
       </Style>
 
       <Style Selector="^:checked">
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
-        <Style Selector="^ /template/ Border#Shape">
-          <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
-        </Style>
-        <Style Selector="^ /template/ theming|BloomStack#Glow">
-          <Setter Property="IsLit" Value="True" />
-        </Style>
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+      </Style>
+
+      <Style Selector="^:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
       </Style>
     </ControlTheme>
 
@@ -377,35 +422,52 @@
     </ControlTheme>
 
     <!--
-      The highlighted row of a list: a bar at the left edge and a fill. A highlight is not a choice,
-      so nothing here reads as committed (#274). 40 tall, so a ray at a metre lands on it.
+      A list row, in the same states as the d47-row class below: Tile at rest, Tile2 on hover or
+      focus, solid A when selected, Slab when disabled. Foreground is the name's ink, and
+      ListRow.NameBrush and ListRow.SecondaryBrush inherit to the content. 44 tall, 2px apart, no
+      outline, no bar and no glow.
     -->
     <ControlTheme x:Key="{x:Type ListBoxItem}" TargetType="ListBoxItem">
       <Setter Property="Padding" Value="10,7" />
-      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Margin" Value="0,0,0,2" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+      <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.White}" />
+      <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.A}" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Grid ColumnDefinitions="3,*">
-            <Border x:Name="Bar" Grid.Column="0" Background="Transparent" />
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Grid.Column="1"
-                              Content="{TemplateBinding Content}"
-                              ContentTemplate="{TemplateBinding ContentTemplate}"
-                              Padding="{TemplateBinding Padding}"
-                              Foreground="{TemplateBinding Foreground}"
-                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                              Background="Transparent" />
-          </Grid>
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            Foreground="{TemplateBinding Foreground}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Background="{TemplateBinding Background}" />
         </ControlTemplate>
       </Setter>
 
-      <Style Selector="^:selected /template/ Border#Bar">
-        <Setter Property="Background" Value="{DynamicResource D47.Accent}" />
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
       </Style>
-      <Style Selector="^:selected /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource D47.FillHigh}" />
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+      </Style>
+
+      <Style Selector="^:selected">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Brown}" />
+      </Style>
+
+      <Style Selector="^:disabled">
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Grey}" />
       </Style>
     </ControlTheme>
 
@@ -779,6 +841,31 @@
     <Setter Property="ToolTip.ShowDelay" Value="600" />
     <Setter Property="ToolTip.Placement" Value="BottomEdgeAlignedLeft" />
     <Setter Property="ToolTip.VerticalOffset" Value="8" />
+  </Style>
+
+  <!--
+    The list-row class (ListRow.Class) for a hand-built Border row: the ListBoxItem states, with
+    ListRow.SelectedClass marking the selected row. The row's text follows ListRow.NameBrush and
+    ListRow.SecondaryBrush through ListRow.Name and ListRow.Secondary.
+  -->
+  <Style Selector="Border.d47-row">
+    <Setter Property="MinHeight" Value="44" />
+    <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+    <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.White}" />
+    <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.A}" />
+  </Style>
+  <Style Selector="Border.d47-row:pointerover">
+    <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+  </Style>
+  <Style Selector="Border.d47-row.selected">
+    <Setter Property="Background" Value="{DynamicResource D47.A}" />
+    <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Knock}" />
+    <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Brown}" />
+  </Style>
+  <Style Selector="Border.d47-row:disabled">
+    <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+    <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Grey}" />
+    <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Grey}" />
   </Style>
 
 </Styles>

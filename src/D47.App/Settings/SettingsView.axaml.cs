@@ -804,6 +804,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         CardChrome.Card(card);
 
+        // On the page ground rather than CardFill, which is Tile, so a segment's Tile options show.
+        Themed(card, Border.BackgroundProperty, ThemeManager.BgKey);
+
         return (card, content, heading, Expand, foldButton);
     }
 

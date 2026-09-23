@@ -11,8 +11,8 @@ namespace D47.App.Controls;
 
 /// <summary>
 /// One value stepped through a list too long, or too changeable, for <see cref="Segment"/>
-/// (#274). <c>◀</c> and <c>▶</c> either side of the current value,
-/// each press moving one item and wrapping at the ends. Holding an arrow repeats the move.
+/// (#274). <c>◄</c> and <c>►</c> tiles either side of the value, 2px apart, each press moving one
+/// item and wrapping at the ends. Holding an arrow repeats the move.
 /// </summary>
 public sealed class Stepper : ContentControl, IChoiceControl
 {
@@ -73,12 +73,12 @@ public sealed class Stepper : ContentControl, IChoiceControl
         Focusable = true;
         FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
-        _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.AccentInkKey));
-        _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextFaintKey));
+        _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
+        _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
         _consequence.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.TextMutedKey));
 
-        _previous = Arrow("◀", "Previous", -1);
-        _next = Arrow("▶", "Next", 1);
+        _previous = Arrow("◄", "Previous", -1);
+        _next = Arrow("►", "Next", 1);
 
         // The value cell's own truncation tip, not the whole control's — an arrow carries none (#382).
         TruncationTip.Watch(_value, () => _value.Text);
@@ -91,9 +91,14 @@ public sealed class Stepper : ContentControl, IChoiceControl
             Child = _value,
         };
 
-        valueCell.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.FillHigherKey));
+        valueCell.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.SlabKey));
 
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+        var row = new Grid
+        {
+            Height = Theming.TypeScale.MinimumTarget,
+            ColumnSpacing = Segment.Gap,
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+        };
         Grid.SetColumn(_previous, 0);
         Grid.SetColumn(valueCell, 1);
         Grid.SetColumn(_next, 2);
@@ -101,22 +106,13 @@ public sealed class Stepper : ContentControl, IChoiceControl
         row.Children.Add(valueCell);
         row.Children.Add(_next);
 
-        var frame = new Border
-        {
-            Height = Theming.TypeScale.MinimumTarget,
-            BorderThickness = new Thickness(1),
-            Child = row,
-        };
-
-        frame.Bind(Border.BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.RuleKey));
-
         var caption = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         Grid.SetColumn(_position, 0);
         Grid.SetColumn(_consequence, 1);
         caption.Children.Add(_position);
         caption.Children.Add(_consequence);
 
-        Content = new StackPanel { Spacing = 8, Children = { frame, caption } };
+        Content = new StackPanel { Spacing = 8, Children = { row, caption } };
 
         KeyDown += OnKeyDown;
     }
@@ -158,7 +154,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
     {
         var button = new RepeatButton
         {
-            Theme = Application.Current!.FindResource("D47.GlyphButton") as ControlTheme,
+            Theme = Application.Current!.FindResource("D47.StepperArrow") as ControlTheme,
             Delay = 400,
             Interval = 125,
             Content = glyph,

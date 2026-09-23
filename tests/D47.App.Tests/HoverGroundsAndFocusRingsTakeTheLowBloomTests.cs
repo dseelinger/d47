@@ -20,9 +20,9 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Hovering a button, a glyph button, an unselected tab or an unselected segment lights a Low-tier
-/// halo around its hover ground without painting over the ground itself; the primary button, the
-/// selected tab and the selected segment stay at Normal. Keyboard focus lights the same halo behind
+/// Hovering a button, a glyph button or an unselected tab lights a Low-tier halo around its hover
+/// ground without painting over the ground itself; the primary button and the selected tab stay at
+/// Normal. A segment carries no glow in any state (#394). Keyboard focus lights the same halo behind
 /// the focus ring without touching the ring's own outline (#379).
 /// </summary>
 public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
@@ -135,7 +135,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
     }
 
     [AvaloniaFact]
-    public void HoveringAnUnselectedSegmentLightsTheLowHalo()
+    public void AHoveredOrChosenSegmentCarriesNoGlow()
     {
         using var kit = ControlKitTheme();
         Manager().Apply(ThemeCatalog.Elite);
@@ -147,16 +147,13 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         Hover(window, one);
 
-        Assert.Equal(BloomTier.Low, Glow(one).Tier);
-        AssertGlowing(Glow(one));
-
-        Hover(window, two);
-        Assert.Equal(BloomTier.Normal, Glow(two).Tier);
+        Assert.Empty(one.GetVisualDescendants().OfType<BloomStack>());
+        Assert.Empty(two.GetVisualDescendants().OfType<BloomStack>());
 
         window.Close();
     }
 
-    /// <summary>A hovered segment's ground is D47.FillHigh, not Accent laid over it by its halo.</summary>
+    /// <summary>A hovered segment's ground is D47.Tile2.</summary>
     [AvaloniaFact]
     public void AHoveredSegmentsGroundKeepsItsFill()
     {
@@ -168,7 +165,7 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         Hover(window, segment);
 
-        var fill = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.FillHighKey]!).Color;
+        var fill = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.Tile2Key]!).Color;
         Assert.Equal(fill, Pixel(window, At(segment, window, 3, 3)));
 
         window.Close();

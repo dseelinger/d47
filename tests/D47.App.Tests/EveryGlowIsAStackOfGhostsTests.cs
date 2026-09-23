@@ -202,7 +202,6 @@ public class EveryGlowIsAStackOfGhostsTests
                 TitleText.Screen("Screen title"),
                 new Button { Content = "Primary", Classes = { "primary" } },
                 new ToggleSwitch { IsChecked = true },
-                new RadioButton { Theme = (ControlTheme)Application.Current!.FindResource("D47.Segment")!, IsChecked = true, Content = "One" },
                 glyph,
                 new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 });
 
@@ -211,7 +210,7 @@ public class EveryGlowIsAStackOfGhostsTests
                 Title = "Directive 47 — 0.1.0",
                 Width = 800,
                 Height = 600,
-                Content = new StackPanel { Children = { kit.Title, kit.Primary, kit.Switch, kit.Segment, kit.Glyph, kit.Level } },
+                Content = new StackPanel { Children = { kit.Title, kit.Primary, kit.Switch, kit.Glyph, kit.Level } },
             };
             CaptionStrip.Apply(kitWindow);
             kitWindow.Show();
@@ -242,7 +241,6 @@ public class EveryGlowIsAStackOfGhostsTests
             yield return ("active tab", BloomTier.Normal, Within(Panel.FindControl<RadioButton>("TranscriptTab")!, stack => stack.Name == "Glow"));
             yield return ("primary button", BloomTier.Normal, Within(Kit.Primary, stack => stack.Name == "Glow"));
             yield return ("lit switch half", BloomTier.Normal, Within(Kit.Switch));
-            yield return ("selected segment", BloomTier.Normal, Within(Kit.Segment, stack => stack.Name == "Glow"));
             yield return ("pressed glyph button", BloomTier.Normal, Within(Kit.Glyph, stack => stack.Name == "Glow"));
         }
 
@@ -259,5 +257,5 @@ public class EveryGlowIsAStackOfGhostsTests
     }
 
     private sealed record Controls(
-        Control Title, Button Primary, ToggleSwitch Switch, RadioButton Segment, Button Glyph, Slider Level);
+        Control Title, Button Primary, ToggleSwitch Switch, Button Glyph, Slider Level);
 }
