@@ -61,9 +61,9 @@ public class TypingMaleDoesNotListEveryWomanTests
     /// handlers that re-filter are wired by the template, so a window that was never shown answers
     /// every question with its opening list.
     /// </summary>
-    private static PickerWindow Shown(PickerRequest? request = null)
+    private static PickerPage Shown(PickerRequest? request = null)
     {
-        var picker = PickerWindow.For(request ?? Voices());
+        var picker = PickerPage.For(request ?? Voices());
 
         picker.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
@@ -71,7 +71,7 @@ public class TypingMaleDoesNotListEveryWomanTests
         return picker;
     }
 
-    private static PickerWindow Typing(string filter, PickerRequest? request = null)
+    private static PickerPage Typing(string filter, PickerRequest? request = null)
     {
         var picker = Shown(request);
 
@@ -81,7 +81,7 @@ public class TypingMaleDoesNotListEveryWomanTests
         return picker;
     }
 
-    private static void Choose(PickerWindow picker, int option)
+    private static void Choose(PickerPage picker, int option)
     {
         // A press, not a write: a segment fires its event only on one (#274).
         picker.GetControl<Segment>("FacetBox")
@@ -90,7 +90,7 @@ public class TypingMaleDoesNotListEveryWomanTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
     }
 
-    private static IReadOnlyList<string> Listed(PickerWindow picker) =>
+    private static IReadOnlyList<string> Listed(PickerPage picker) =>
         [.. picker.GetControl<ListBox>("Choices").ItemsSource!.Cast<PickerChoice>().Select(choice => choice.Value)];
 
     // ---- The reported bug ------------------------------------------------------------------

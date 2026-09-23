@@ -181,7 +181,6 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         yield return ("Memory", OpenMemory);
         yield return ("Persona", OpenPersona);
         yield return ("Switches", OpenSwitches);
-        yield return ("Picker", OpenPicker);
     }
 
     private static Window OpenAudioRecorder()
@@ -325,9 +324,6 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             []);
     }
 
-    private static Window OpenPicker() =>
-        PickerWindow.For(new PickerRequest { Prompt = "Choose a value", Choices = ["one", "two"] });
-
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
@@ -365,13 +361,11 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
-            var picker = name == "Picker";
-
             var context = window.GetVisualDescendants().OfType<TextBlock>()
-                .Single(block => block.Name == (picker ? "PickerContext" : "ModalContext"));
+                .Single(block => block.Name == "ModalContext");
 
             var title = window.GetVisualDescendants().OfType<TextBlock>()
-                .Single(block => block.Name == (picker ? "PromptText" : "ModalTitle"));
+                .Single(block => block.Name == "ModalTitle");
 
             Assert.Equal(Ink(ThemeManager.AKey), (context.Foreground as ISolidColorBrush)?.Color);
             Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
@@ -438,8 +432,8 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
     [InlineData("Controls/MemoryWindow.cs")]
     [InlineData("Controls/PersonaWindow.cs")]
     [InlineData("Controls/SwitchWindow.cs")]
-    [InlineData("Controls/PickerWindow.axaml")]
-    [InlineData("Controls/PickerWindow.axaml.cs")]
+    [InlineData("Controls/PickerPage.axaml")]
+    [InlineData("Controls/PickerPage.axaml.cs")]
     public void TheSourceDrawsOnlyInTheNewTokens(string relative)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", relative.Replace('/', Path.DirectorySeparatorChar)));

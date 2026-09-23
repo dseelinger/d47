@@ -35,8 +35,7 @@ public static class CaptionStrip
     /// <see cref="Window.Content"/> is built.
     /// </summary>
     /// <param name="showMinimize">
-    /// Off for <see cref="D47.App.Controls.PickerWindow"/>: it is <c>ShowInTaskbar="False"</c>, and a
-    /// minimised window with no taskbar entry has no way back (#286).
+    /// Off for a window that is <c>ShowInTaskbar="False"</c>: minimised, it has no way back (#286).
     /// </param>
     public static void Apply(Window window, bool showMinimize = true)
     {

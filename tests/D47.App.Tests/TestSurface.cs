@@ -57,7 +57,8 @@ public static class TestSurface
         D47.Core.Ticking.TickLoop? ticking = null,
 
         // Appended, like every optional here: the composition root passes these positionally.
-        Func<string>? resetVoices = null)
+        Func<string>? resetVoices = null,
+        Func<string, VoiceRole, CancellationToken, Task>? audition = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -83,6 +84,8 @@ public static class TestSurface
                 Beds = () => [.. CueLibrary.Load().BedNames],
                 Voices = _ => [.. (voices ?? []).Select(voice => voice.Id)],
                 VoiceLabel = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
+                VoiceGender = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Gender,
+                Audition = audition,
 
                 // Supplied rather than left null, because a null host delegate makes its row ABSENT and the
                 // surface these tests bind is then not the one that ships.
@@ -172,10 +175,11 @@ public static class TestSurface
         LongPress? localVoice = null,
         D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
         LongPress? rescan = null,
-        Func<string>? resetVoices = null)
+        Func<string>? resetVoices = null,
+        Func<string, VoiceRole, CancellationToken, Task>? audition = null)
     {
-        var (settings, viewState, paths, _, _) =
-            CreateFull(coverage, personas, voices, localVoice, recording, rescan, resetVoices: resetVoices);
+        var (settings, viewState, paths, _, _) = CreateFull(
+            coverage, personas, voices, localVoice, recording, rescan, resetVoices: resetVoices, audition: audition);
         return (settings, viewState, paths);
     }
 

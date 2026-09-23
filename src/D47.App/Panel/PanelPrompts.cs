@@ -79,6 +79,29 @@ public sealed class PanelPrompts : IHearsText
     }
 
     /// <summary>
+    /// Opens a settings picker as a page, calling back once with what was chosen and not at all when the
+    /// Commander leaves it.
+    /// </summary>
+    /// <param name="onListed">Called once the page is in a tree with its list built.</param>
+    public void Pick(
+        string key, string word, PickerRequest request, Action<PickerResult> chosen, Action? onListed = null)
+    {
+        // Built once: the panel asks for the page again on every navigation, and the page holds the filter,
+        // the highlight and any audition in flight.
+        PickerPage? page = null;
+
+        Open(key, word, page: true, () => page ??= PickerPage.For(
+            request,
+            result =>
+            {
+                Dismiss(key, ChoiceSurface.Page);
+                chosen(result);
+            },
+            () => Dismiss(key, ChoiceSurface.Page),
+            onListed));
+    }
+
+    /// <summary>
     /// The page that takes the answer: a picker where the caller could name every value it would
     /// accept, and the box-and-keyboard everywhere else (#282).
     /// </summary>

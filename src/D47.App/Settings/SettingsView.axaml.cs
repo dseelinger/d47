@@ -3635,8 +3635,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
         DressAsAChoice(button);
 
-        Panel.OffscreenSurface.OpensAWindow(button);
-
         // The button's own tip, carrying what the column clipped — only while it actually did (#382).
         TruncationTip.Watch(value, () => value.Text, button);
 
@@ -3877,22 +3875,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
 
     private async Task ChooseAsync(SettingRow row, Button button, BusyGlyph busy, TextBlock message)
     {
-        if (_settings is null || TopLevel.GetTopLevel(this) is not Window owner)
+        // The surface this view is drawn on, so the page opens there: the window's panel or the headset's.
+        if (_settings is null || this.FindAncestorOfType<Panel.PanelView>()?.Prompts is not { } prompts)
         {
             return;
         }
 
         // The work is "until the list is on screen", not "until the Commander has chosen": what can take a
-        // moment is asking the machine for its capture devices or a provider for its voices, and once the
-        // picker is up it is modal and speaks for itself.
+        // moment is asking the machine for its capture devices or a provider for its voices.
         var listed = new TaskCompletionSource();
 
-        var picking = PickerWindow.ShowAsync(
-            owner,
+        prompts.Pick(
+            $"settings-pick:{row.Key}",
+            row.Label,
             new PickerRequest
             {
                 Prompt = row.Label,
-                Help = row.Help,
+
+                // A voice row states what a press costs instead; every other row's help is readable here,
+                // where a ray cannot reach the label's hover text.
+                Help = row.Audition is null ? row.Help : null,
                 Choices = row.ChoicesFor(_settings.Current),
 
                 // Read at open like the choices themselves: a label can depend on the provider serving the
@@ -3921,21 +3923,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
                     }
                     : null,
             },
+            result =>
+            {
+                Apply(row, result.Value, message);
+                button.Focus();
+            },
             onListed: () => listed.TrySetResult());
 
-        // A picker that throws on its way open never lists, and a glyph waiting for a list that is not coming
-        // spins forever on a row nobody can use.
-        _ = picking.ContinueWith(_ => listed.TrySetResult(), TaskScheduler.Default);
-
-        // Hand-rolled here until Phase 12: shut, spinning, and two numbers nobody else shared.
         await Busy.While(button, busy, () => listed.Task);
-
-        if (await picking is { } result)
-        {
-            Apply(row, result.Value, message);
-        }
-
-        button.Focus();
     }
 
     /// <summary>Binds by listening for a gesture, rather than by offering a list of key names.</summary>

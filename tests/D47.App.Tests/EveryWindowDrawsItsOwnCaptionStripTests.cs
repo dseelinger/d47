@@ -348,17 +348,6 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         Assert.Equal(2, Buttons(window).Count);
     }
 
-    /// <summary>Not ShowInTaskbar, so a minimised picker would have no way back — the reason
-    /// <see cref="PickerWindow.ShowAsync"/> passes <c>showMinimize: false</c> (#286).</summary>
-    [AvaloniaFact]
-    public void PickerWindowShowsCloseOnly()
-    {
-        var window = PickerWindow.For(new PickerRequest { Prompt = "Choose one" });
-        CaptionStrip.Apply(window, showMinimize: false);
-
-        Assert.Single(Buttons(window));
-    }
-
     [AvaloniaFact]
     public void HelpImproveWindowCarriesTheStrip()
     {

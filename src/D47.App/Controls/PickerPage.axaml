@@ -1,0 +1,139 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:D47.App.Controls"
+             x:Class="D47.App.Controls.PickerPage"
+             Foreground="{DynamicResource D47.White}">
+
+  <!-- The breadcrumb above the page names what is being chosen, so the page starts at the list's own
+       lines: the help or the cost, the filter and facet, the list, and one row of buttons. -->
+  <DockPanel Margin="16,12,16,12">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,8">
+      <TextBlock x:Name="HelpText"
+                 FontSize="{StaticResource D47.Type.Secondary}"
+                 TextWrapping="Wrap"
+                 Foreground="{DynamicResource D47.Grey}" />
+      <!-- What pressing a play glyph costs, said once for the whole list. -->
+      <TextBlock x:Name="AuditionNote"
+                 IsVisible="False"
+                 FontSize="{StaticResource D47.Type.Secondary}"
+                 TextWrapping="Wrap"
+                 Foreground="{DynamicResource D47.Grey}" />
+    </StackPanel>
+
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+      <!-- The structured half of the filter (#146), absent where the choices carry no such field. -->
+      <StackPanel x:Name="FacetPanel"
+                  DockPanel.Dock="Right"
+                  Orientation="Horizontal"
+                  Spacing="8"
+                  IsVisible="False"
+                  Margin="12,0,0,0">
+        <TextBlock x:Name="FacetLabel"
+                   VerticalAlignment="Center"
+                   FontSize="{StaticResource D47.Type.Secondary}"
+                   Foreground="{DynamicResource D47.Grey}" />
+        <controls:Segment x:Name="FacetBox"
+                          VerticalAlignment="Center"
+                          SelectionChanged="OnFacetChanged" />
+      </StackPanel>
+      <TextBox x:Name="FilterBox"
+               KeyDown="OnFilterKeyDown"
+               TextChanged="OnFilterChanged" />
+    </DockPanel>
+
+    <!-- The default is a trimmed button on the left, because what it names is a resolved default of any
+         length; Back and Use this keep their place on the right whatever it says. -->
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <Button x:Name="AcceptButton"
+              DockPanel.Dock="Right"
+              Content="Use this"
+              Click="OnAcceptClick" />
+      <Button x:Name="BackButton"
+              DockPanel.Dock="Right"
+              Content="Back"
+              Margin="0,0,8,0"
+              Click="OnCancelClick" />
+      <Button x:Name="DefaultButton"
+              HorizontalAlignment="Left"
+              HorizontalContentAlignment="Left"
+              Margin="0,0,12,0"
+              IsVisible="False"
+              Click="OnUseDefaultClick">
+        <TextBlock x:Name="DefaultButtonText" TextTrimming="CharacterEllipsis" />
+      </Button>
+    </DockPanel>
+
+    <TextBlock x:Name="EmptyHint"
+               DockPanel.Dock="Bottom"
+               IsVisible="False"
+               Margin="0,8,0,0"
+               FontSize="{StaticResource D47.Type.Secondary}"
+               TextWrapping="Wrap"
+               Foreground="{DynamicResource D47.Grey}" />
+
+    <!-- A glyph press plays and commits nothing; only Use this, Enter or a double-click chooses. -->
+    <ListBox x:Name="Choices"
+             Background="Transparent"
+             BorderThickness="0"
+             DoubleTapped="OnChoiceDoubleTapped"
+             KeyDown="OnFilterKeyDown"
+             SelectionChanged="OnChoiceChanged">
+      <!-- Short rows, so eight voices fit at the smallest panel size. -->
+      <ListBox.Styles>
+        <Style Selector="ListBoxItem">
+          <Setter Property="Padding" Value="12,4" />
+          <Setter Property="MinHeight" Value="0" />
+        </Style>
+      </ListBox.Styles>
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="controls:PickerChoice">
+          <DockPanel>
+            <Button DockPanel.Dock="Right"
+                    IsVisible="{Binding CanPlay}"
+                    IsEnabled="{Binding Playable}"
+                    ToolTip.Tip="{Binding Tip}"
+                    AutomationProperties.Name="{Binding ActionName}"
+                    Click="OnPlayClick"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="6,0"
+                    MinWidth="0"
+                    VerticalAlignment="Center"
+                    Cursor="Hand">
+              <!-- One 24x24 coordinate space for both glyphs, so they draw at the same size. -->
+              <Viewbox Width="15" Height="15">
+                <Canvas Width="24" Height="24">
+                  <Path Data="{Binding Glyph}" Fill="{Binding $parent[ListBoxItem].Foreground}" />
+                </Canvas>
+              </Viewbox>
+            </Button>
+            <!-- The paid line, present only on a row whose play glyph plays a free sample (#106). -->
+            <Button DockPanel.Dock="Right"
+                    IsVisible="{Binding HasSample}"
+                    IsEnabled="{Binding Playable}"
+                    ToolTip.Tip="{Binding LineTip}"
+                    AutomationProperties.Name="{Binding LineActionName}"
+                    Click="OnSayLineClick"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="6,0"
+                    MinWidth="0"
+                    VerticalAlignment="Center"
+                    Cursor="Hand">
+              <Viewbox Width="15" Height="15">
+                <Canvas Width="24" Height="24">
+                  <Path Data="{Binding LineGlyph}" Fill="{Binding $parent[ListBoxItem].Foreground}" />
+                </Canvas>
+              </Viewbox>
+            </Button>
+            <TextBlock Text="{Binding Text}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
+          </DockPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+  </DockPanel>
+</UserControl>

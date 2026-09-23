@@ -3,7 +3,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using D47.App.Controls;
-using D47.App.Windowing;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -28,27 +27,28 @@ public class UseThisTakesWhatYouCanSeeTests
         AllowsFreeText = false,
     };
 
-    /// <summary>The picker on screen over an owner, with the answer still in flight.</summary>
-    private static (PickerWindow Picker, Task<PickerResult?> Answer) Asking(PickerRequest request)
+    /// <summary>The picker on screen, with the answer still in flight; leaving answers null.</summary>
+    private static (PickerPage Picker, Task<PickerResult?> Answer) Asking(PickerRequest request)
     {
-        var owner = new Window { Width = 900, Height = 700 };
-        owner.Show();
+        var answer = new TaskCompletionSource<PickerResult?>();
 
-        var picker = PickerWindow.For(request);
-        var answer = picker.Over<PickerResult?>(owner);
+        var picker = PickerPage.For(
+            request,
+            chosen: result => answer.TrySetResult(result),
+            cancelled: () => answer.TrySetResult(null));
 
-        Dispatcher.UIThread.RunJobs();
+        picker.Show();
 
-        return (picker, answer);
+        return (picker, answer.Task);
     }
 
-    private static void Type(PickerWindow picker, string text)
+    private static void Type(PickerPage picker, string text)
     {
         picker.GetControl<TextBox>("FilterBox").Text = text;
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void UseThis(PickerWindow picker)
+    private static void UseThis(PickerPage picker)
     {
         picker.GetControl<Button>("AcceptButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Headless.XUnit;
@@ -25,7 +26,7 @@ public class PickerShowsEverythingTests
     [AvaloniaFact]
     public void EveryChoiceIsListedAndTheIdIsNotInTheBox()
     {
-        var picker = PickerWindow.For(Devices());
+        var picker = PickerPage.For(Devices());
 
         var filter = picker.GetControl<TextBox>("FilterBox");
         var choices = picker.GetControl<ListBox>("Choices");
@@ -54,7 +55,7 @@ public class PickerShowsEverythingTests
     [AvaloniaFact]
     public void TheCurrentValueIsSelectedRatherThanTyped()
     {
-        var picker = PickerWindow.For(Devices());
+        var picker = PickerPage.For(Devices());
 
         Assert.Equal(0, picker.GetControl<ListBox>("Choices").SelectedIndex);
     }
@@ -63,7 +64,7 @@ public class PickerShowsEverythingTests
     [AvaloniaFact]
     public void AnEmptyListSaysWhatTheRowKnowsAboutWhy()
     {
-        var picker = PickerWindow.For(new PickerRequest
+        var picker = PickerPage.For(new PickerRequest
         {
             Prompt = "Voice",
             Choices = [],
@@ -80,7 +81,7 @@ public class PickerShowsEverythingTests
     [AvaloniaFact]
     public void AndFallsBackToTheGenericLineWhenTheRowHasNothingToAdd()
     {
-        var picker = PickerWindow.For(new PickerRequest
+        var picker = PickerPage.For(new PickerRequest
         {
             Prompt = "Model",
             Choices = [],
@@ -97,7 +98,7 @@ public class PickerShowsEverythingTests
     [AvaloniaFact]
     public void TheDefaultButtonTrimsInsteadOfPushingTheOtherButtonsOffScreen()
     {
-        var picker = PickerWindow.For(Devices());
+        var picker = PickerPage.For(Devices());
         picker.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
@@ -105,12 +106,16 @@ public class PickerShowsEverythingTests
 
         Assert.Equal(TextTrimming.CharacterEllipsis, label.TextTrimming);
 
-        // Both of the other buttons are still on screen, which is the failure this row shape exists to
-        // prevent.
-        var buttons = picker.GetVisualDescendants().OfType<Button>().ToList();
+        // Both of the other buttons are still inside the page, which is the failure this row shape exists
+        // to prevent.
+        foreach (var name in new[] { "BackButton", "AcceptButton" })
+        {
+            var button = picker.GetControl<Button>(name);
+            var left = button.TranslatePoint(default, picker)!.Value.X;
 
-        Assert.Contains(buttons, b => b.Content as string == "Cancel");
-        Assert.Contains(buttons, b => b.Content as string == "Use this");
+            Assert.True(button.Bounds.Width > 0, $"{name} has no width.");
+            Assert.True(left >= 0 && left + button.Bounds.Width <= picker.Bounds.Width + 0.5, $"{name} is off the page.");
+        }
 
         picker.Close();
     }

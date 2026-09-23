@@ -4,10 +4,10 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Controls.Templates;
 using Avalonia.Media;
-
-using D47.App.Theming;
-using D47.App.Windowing;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
@@ -176,12 +176,16 @@ public sealed class PickerChoice : INotifyPropertyChanged
 }
 
 /// <summary>
-/// One searchable picker, used everywhere a value is chosen — models, themes, log levels, and the
-/// voices and devices that arrive in later phases (Phase 4).
+/// The searchable picker every settings Choice row opens, drawn as a page of the panel so the window and
+/// the headset both show it.
 /// </summary>
-public partial class PickerWindow : Window
+public partial class PickerPage : UserControl
 {
     private PickerRequest _request = new() { Prompt = "Choose" };
+
+    private Action<PickerResult> _chosen = _ => { };
+
+    private Action _cancelled = () => { };
 
     /// <summary>Every choice, built once when the picker is bound.</summary>
     private IReadOnlyList<PickerChoice> _all = [];
@@ -189,71 +193,60 @@ public partial class PickerWindow : Window
     /// <summary>The rows currently listed, in the order they are drawn.</summary>
     private IReadOnlyList<PickerChoice> _visible = [];
 
-    public PickerWindow()
+    /// <summary>Whether the page has answered, so it answers once.</summary>
+    private bool _answered;
+
+    /// <summary>The audition in flight, so the next press can drop it.</summary>
+    private CancellationTokenSource? _auditioning;
+
+    public PickerPage()
     {
         InitializeComponent();
 
-        PickerContext.FontFamily = new FontFamily(Fonts.ChromeFamily);
-        PickerContext.FontSize = TypeScale.Meta;
-        PickerContext.FontWeight = FontWeight.SemiBold;
-        PickerContext.LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking;
-        PickerContext.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(ThemeManager.AKey));
-
-        TitleText.Style(PromptText, TypeScale.Heading, TitleRank.Screen, sentence: true);
-
-        // Esc anywhere in the window is Cancel, as it is from the filter and the list.
+        // Esc anywhere on the page leaves it, as it does from the filter and the list.
         KeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape && !e.Handled)
             {
                 e.Handled = true;
-                Close(null);
+                Cancel();
             }
         };
     }
 
-    /// <summary><param name="onListed"> Called once the picker is on screen with its list built.</summary>
-    /// <param name="onListed">Called once the picker is on screen with its list built.</param>
-    public static async Task<PickerResult?> ShowAsync(
-        Window owner,
+    /// <summary>A bound picker that calls back once: with a result when one is taken, or cancelled.</summary>
+    /// <param name="onListed">Called once the page is in a tree with its list built.</param>
+    public static PickerPage For(
         PickerRequest request,
+        Action<PickerResult>? chosen = null,
+        Action? cancelled = null,
         Action? onListed = null)
     {
-        var picker = For(request);
-
-        if (onListed is not null)
+        var picker = new PickerPage
         {
-            picker.Opened += (_, _) => onListed();
-        }
+            _request = request,
+            _chosen = chosen ?? (_ => { }),
+            _cancelled = cancelled ?? (() => { }),
+        };
 
-        // Not ShowInTaskbar, so a minimised picker would have no way back (#286).
-        return await picker.Over<PickerResult?>(owner, showMinimize: false);
-    }
-
-    /// <summary>A bound picker that has not been shown.</summary>
-    public static PickerWindow For(PickerRequest request)
-    {
-        var picker = new PickerWindow { _request = request };
-        picker.Bind();
+        picker.Bind(onListed);
 
         return picker;
     }
 
-    private void Bind()
+    private void Bind(Action? onListed)
     {
-        Title = _request.Prompt;
-        PromptText.Text = _request.Prompt;
+        AutomationProperties.SetName(this, _request.Prompt);
+        AutomationProperties.SetName(Choices, _request.Prompt);
+
         HelpText.Text = _request.Help ?? string.Empty;
         HelpText.IsVisible = !string.IsNullOrWhiteSpace(_request.Help);
 
-        // Empty, not the current value.
         FilterBox.Text = string.Empty;
         FilterBox.PlaceholderText = _request.AllowsFreeText
             ? "Type to filter, or type a value of your own"
             : "Type to filter";
 
-        // Absent rather than empty where the choices carry nothing to filter on, which is every picker but
-        // the three voice ones (#146).
         FacetPanel.IsVisible = _request.Facet is not null;
 
         if (_request.Facet is { } facet)
@@ -262,21 +255,19 @@ public partial class PickerWindow : Window
             FacetBox.ItemsSource = facet.Options.Select(option => option.Label).ToArray();
             AutomationProperties.SetName(FacetBox, facet.Label);
 
-            // The first option is the one that hides nothing, which is where a picker has to open: a list
-            // that arrives pre-narrowed looks like a list with things missing.
+            // The option that hides nothing, so the list does not open pre-narrowed.
             FacetBox.SelectedIndex = 0;
         }
 
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
 
-        // Bracketed unconditionally, because what arrives here is the bare phrase — see
-        // SettingRow.BareDefaultFor, which is why this cannot say "((the provider's default))".
+        // Bracketed here because the row hands over the bare phrase (SettingRow.BareDefaultFor).
         var useDefault = $"Use the default ({_request.DefaultDisplay})";
 
         DefaultButtonText.Text = useDefault;
+        ToolTip.SetTip(DefaultButton, useDefault);
 
-        // Said once for the whole list, whichever way it goes: shut, it says why nothing here can be played;
-        // live, it says what pressing a glyph will do, which on a paid provider is spend money.
+        // Shut, it says why nothing can be played; live, what a press costs.
         if (_request.Audition is { } audition)
         {
             AuditionNote.IsVisible = true;
@@ -303,25 +294,46 @@ public partial class PickerWindow : Window
 
         ApplyFilter();
 
-        // Selecting the current value means Enter with no typing keeps what you had, which is the least
-        // surprising thing a picker opened by accident can do — and it is the only thing showing what is
-        // selected now, since the box above no longer says.
+        // The current value is highlighted, so Enter with no typing keeps it.
         Choices.SelectedIndex = _request.Current is null
             ? -1
             : Array.FindIndex(
                 [.. _visible],
                 choice => string.Equals(choice.Value, _request.Current, StringComparison.OrdinalIgnoreCase));
 
-        if (Choices.SelectedIndex >= 0)
-        {
-            Choices.ScrollIntoView(Choices.SelectedIndex);
-        }
+        var listed = false;
 
-        Opened += (_, _) =>
+        AttachedToVisualTree += (_, _) =>
         {
-            FilterBox.Focus();
-            FilterBox.SelectAll();
+            // The headset lays out a window that is never shown, where a virtualizing panel is never told its
+            // viewport and realizes no rows.
+            if (this.FindAncestorOfType<Panel.PanelView>()?.Classes.Contains("headset") == true)
+            {
+                Choices.ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new StackPanel());
+            }
+
+            // Posted, so focus and scrolling run after the page under it has finished building.
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    if (Choices.SelectedIndex >= 0)
+                    {
+                        Choices.ScrollIntoView(Choices.SelectedIndex);
+                    }
+
+                    FilterBox.Focus();
+
+                    if (!listed)
+                    {
+                        listed = true;
+                        onListed?.Invoke();
+                    }
+                },
+                DispatcherPriority.Loaded);
         };
+
+        // Leaving the page stops whatever it was playing.
+        DetachedFromVisualTree += (_, _) => _auditioning?.Cancel();
     }
 
     private string Label(string choice) => _request.Describe?.Invoke(choice) ?? choice;
@@ -330,11 +342,10 @@ public partial class PickerWindow : Window
     {
         var filter = FilterBox.Text?.Trim() ?? string.Empty;
 
-        // The facet first, because it is a statement about the list and the text is a search within it.
+        // The facet first, then the text search within it.
         var facet = SelectedFacet();
 
-        // Matches on either what it is called or what it is named, so a Commander who types what they can see
-        // finds it, and one who types the id does too.
+        // Matches on the label or the id.
         var matches = _all
             .Where(choice => (facet is null || facet(choice.Value))
                              && (ChoiceMatch.Matches(choice.Value, filter)
@@ -349,7 +360,6 @@ public partial class PickerWindow : Window
 
         EmptyHint.IsVisible = matches.Length == 0;
 
-        // Three different empties, and the row gets to answer the first one.
         EmptyHint.Text = _request.Choices.Count == 0
             ? _request.WhyEmpty
               ?? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
@@ -360,19 +370,13 @@ public partial class PickerWindow : Window
         ShowWhetherAnythingCanBeTaken();
     }
 
-    /// <summary>
-    /// Whether Use this has anything to take — the same question <see cref="Accept"/> asks, so the
-    /// button cannot be pressed into the branch that does nothing (#190).
-    /// </summary>
+    /// <summary>Use this is enabled exactly when <see cref="Accept"/> would take something (#190).</summary>
     private void ShowWhetherAnythingCanBeTaken() =>
         AcceptButton.IsEnabled =
             Choices.SelectedIndex >= 0
             || (_request.AllowsFreeText && !string.IsNullOrWhiteSpace(FilterBox.Text));
 
-    /// <summary>
-    /// The predicate for the facet option currently chosen, or null when there is no facet or when the
-    /// chosen option is the one that takes everything.
-    /// </summary>
+    /// <summary>The chosen facet option's predicate, or null for no facet or the option that takes everything.</summary>
     private Func<string, bool>? SelectedFacet() =>
         _request.Facet is { } facet
         && FacetBox.SelectedIndex >= 0
@@ -391,7 +395,6 @@ public partial class PickerWindow : Window
         }
     }
 
-    /// <summary>Choosing a facet re-filters and puts the highlight back on something visible.</summary>
     private void OnFacetChanged(object? sender, EventArgs e)
     {
         ApplyFilter();
@@ -408,7 +411,6 @@ public partial class PickerWindow : Window
         }
     }
 
-    /// <summary>The selection is half of what Use this can take, so it says so (#190).</summary>
     private void OnChoiceChanged(object? sender, SelectionChangedEventArgs e) =>
         ShowWhetherAnythingCanBeTaken();
 
@@ -418,7 +420,7 @@ public partial class PickerWindow : Window
         {
             case Key.Escape:
                 e.Handled = true;
-                Close(null);
+                Cancel();
                 break;
 
             case Key.Enter:
@@ -438,7 +440,7 @@ public partial class PickerWindow : Window
         }
     }
 
-    /// <summary>Wraps, so a list of three is navigable without looking at where the end is.</summary>
+    /// <summary>Wraps at either end.</summary>
     private void Move(int delta)
     {
         var count = Choices.ItemCount;
@@ -450,10 +452,10 @@ public partial class PickerWindow : Window
 
     private void Accept()
     {
-        // A selection wins over typed text, because typing is how you got to the selection.
+        // A selection wins over typed text.
         if (Choices.SelectedIndex >= 0 && Choices.SelectedIndex < _visible.Count)
         {
-            Close(new PickerResult(_visible[Choices.SelectedIndex].Value));
+            Answer(new PickerResult(_visible[Choices.SelectedIndex].Value));
             return;
         }
 
@@ -461,23 +463,45 @@ public partial class PickerWindow : Window
 
         if (_request.AllowsFreeText && !string.IsNullOrEmpty(typed))
         {
-            Close(new PickerResult(typed));
+            Answer(new PickerResult(typed));
         }
+    }
+
+    private void Answer(PickerResult result)
+    {
+        if (_answered)
+        {
+            return;
+        }
+
+        _answered = true;
+        _auditioning?.Cancel();
+        _chosen(result);
+    }
+
+    private void Cancel()
+    {
+        if (_answered)
+        {
+            return;
+        }
+
+        _answered = true;
+        _auditioning?.Cancel();
+        _cancelled();
     }
 
     private void OnAcceptClick(object? sender, RoutedEventArgs e) => Accept();
 
-    /// <summary>A click highlights, and the second one takes it (change-requests.md 19).</summary>
     private void OnChoiceDoubleTapped(object? sender, TappedEventArgs e) => Accept();
 
-    /// <summary>The audition in flight, so the next press can drop it.</summary>
-    private CancellationTokenSource? _auditioning;
+    private void OnCancelClick(object? sender, RoutedEventArgs e) => Cancel();
+
+    private void OnUseDefaultClick(object? sender, RoutedEventArgs e) => Answer(new PickerResult(null));
 
     /// <summary>
-    /// Plays the row the glyph is on — not the selection, which is the point of moving it there
-    /// (change-requests.md 18): a Commander can listen to one voice while another stays highlighted,
-    /// and pressing play commits to nothing whatsoever. The free sample where the row has one, and the
-    /// paid line otherwise.
+    /// Plays the row the glyph is on, not the selection, and commits nothing: the free sample where the row
+    /// has one, and the paid line otherwise.
     /// </summary>
     private async void OnPlayClick(object? sender, RoutedEventArgs e)
     {
@@ -506,7 +530,7 @@ public partial class PickerWindow : Window
     /// <summary>One audition from one glyph: a second press on that glyph stops it, and any press stops the rest.</summary>
     private async Task AuditionAsync(PickerChoice choice, bool line, Func<string, CancellationToken, Task> play)
     {
-        // Read before stopping, because stopping is what clears it.
+        // Read before stopping, because stopping clears it.
         var stopping = line ? choice.PlayingLine : choice.Playing;
 
         await StopAsync();
@@ -526,11 +550,11 @@ public partial class PickerWindow : Window
         }
         catch (OperationCanceledException)
         {
-            // A second press, or the shut-up key.
+            // A second press, the shut-up key, or the page closing.
         }
         catch (Exception ex)
         {
-            // A provider that would not speak. AuditionNote already carries the message (#383).
+            // A provider that would not speak (#383).
             AuditionNote.Text = ex.Message;
         }
         finally
@@ -565,7 +589,7 @@ public partial class PickerWindow : Window
 
         _auditioning = null;
 
-        // Every row, not the listed ones.
+        // Every row, not only the listed ones.
         foreach (var row in _all)
         {
             row.Playing = false;
@@ -578,15 +602,5 @@ public partial class PickerWindow : Window
             previous.Dispose();
         }
     }
-
-    /// <summary>Whatever is still being auditioned when the dialog goes stops with it.</summary>
-    protected override void OnClosed(EventArgs e)
-    {
-        _auditioning?.Cancel();
-        base.OnClosed(e);
-    }
-
-    private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(null);
-
-    private void OnUseDefaultClick(object? sender, RoutedEventArgs e) => Close(new PickerResult(null));
 }
+

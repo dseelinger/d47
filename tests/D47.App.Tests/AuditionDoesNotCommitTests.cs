@@ -35,29 +35,35 @@ public class AuditionDoesNotCommitTests
     };
 
     /// <summary>The rows as the list holds them, which is what the glyphs are bound to.</summary>
-    private static IReadOnlyList<PickerChoice> Rows(PickerWindow picker) =>
+    private static IReadOnlyList<PickerChoice> Rows(PickerPage picker) =>
         [.. (IEnumerable<PickerChoice>)picker.GetControl<ListBox>("Choices").ItemsSource!];
 
     /// <summary>The play control on one row, found by the value it plays rather than by position.</summary>
-    private static Button Glyph(PickerWindow picker, string value) =>
+    private static Button Glyph(PickerPage picker, string value) =>
         picker.GetVisualDescendants().OfType<Button>()
             .First(button => (button.DataContext as PickerChoice)?.Value == value);
 
-    private static PickerWindow Shown(PickerRequest request)
+    /// <summary>The page on screen, marking its <see cref="StyledElement.Tag"/> when it answers either way.</summary>
+    private static PickerPage Shown(PickerRequest request)
     {
-        var picker = PickerWindow.For(request);
+        PickerPage? picker = null;
+
+        picker = PickerPage.For(
+            request,
+            chosen: result => picker!.Tag = result,
+            cancelled: () => picker!.Tag = "left");
 
         picker.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        return picker;
+        return picker!;
     }
 
     [AvaloniaFact]
     public void ARowThatOffersNoAuditionHasNoGlyphAtAll()
     {
         // Absent rather than present and inert.
-        var picker = PickerWindow.For(new PickerRequest { Prompt = "Microphone", Choices = ["a"] });
+        var picker = PickerPage.For(new PickerRequest { Prompt = "Microphone", Choices = ["a"] });
 
         Assert.False(picker.GetControl<TextBlock>("AuditionNote").IsVisible);
         Assert.All(Rows(picker), row => Assert.False(row.CanPlay));
@@ -66,7 +72,7 @@ public class AuditionDoesNotCommitTests
     [AvaloniaFact]
     public void ThePriceIsOnScreenBeforeAnythingIsPressed()
     {
-        var picker = PickerWindow.For(
+        var picker = PickerPage.For(
             Voices(cost: "Play a voice to hear it. Each one costs about $0.013."));
 
         var note = picker.GetControl<TextBlock>("AuditionNote");
@@ -92,7 +98,7 @@ public class AuditionDoesNotCommitTests
     [AvaloniaFact]
     public void WhenNothingCanBePlayedItSaysWhy()
     {
-        var picker = PickerWindow.For(
+        var picker = PickerPage.For(
             Voices(unavailable: "ElevenLabs needs an API key before it will speak."));
 
         Assert.Equal(
@@ -132,8 +138,8 @@ public class AuditionDoesNotCommitTests
 
         Assert.Equal(["en-GB-SoniaNeural"], played);
 
-        // Still open, still on the voice they arrived with.
-        Assert.True(picker.IsVisible);
+        // Nothing taken, still on the voice they arrived with.
+        Assert.Null(picker.Tag);
         Assert.Equal(0, picker.GetControl<ListBox>("Choices").SelectedIndex);
 
         picker.Close();
@@ -259,14 +265,15 @@ public class AuditionDoesNotCommitTests
         var list = picker.GetControl<ListBox>("Choices");
 
         var second = list.GetRealizedContainers().ElementAt(1);
-        var middle = second.TranslatePoint(new Point(4, second.Bounds.Height / 2), picker)!.Value;
+        var window = (Window)TopLevel.GetTopLevel(picker)!;
+        var middle = second.TranslatePoint(new Point(4, second.Bounds.Height / 2), window)!.Value;
 
-        picker.MouseDown(middle, MouseButton.Left);
-        picker.MouseUp(middle, MouseButton.Left);
+        window.MouseDown(middle, MouseButton.Left);
+        window.MouseUp(middle, MouseButton.Left);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(1, list.SelectedIndex);
-        Assert.True(picker.IsVisible);
+        Assert.Null(picker.Tag);
 
         picker.Close();
     }
@@ -302,11 +309,11 @@ public class AuditionDoesNotCommitTests
         picker.Close();
     }
 
-    private static void Capture(Window window, string name)
+    private static void Capture(PickerPage picker, string name)
     {
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
+        ((Window)TopLevel.GetTopLevel(picker)!).CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, $"{name}.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
     }
@@ -339,7 +346,11 @@ public class AuditionDoesNotCommitTests
     [AvaloniaFact]
     public void UseThisTakesWhatWasHighlighted()
     {
-        var picker = Shown(Voices());
+        PickerResult? taken = null;
+
+        var picker = PickerPage.For(Voices(), chosen: result => taken = result);
+        picker.Show();
+
         var list = picker.GetControl<ListBox>("Choices");
 
         list.SelectedIndex = 1;
@@ -348,7 +359,9 @@ public class AuditionDoesNotCommitTests
         picker.GetControl<Button>("AcceptButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.False(picker.IsVisible);
+        Assert.Equal(((PickerChoice)list.Items[1]!).Value, taken?.Value);
+
+        picker.Close();
     }
 
     private static PickerRequest Sampled(List<string> played)
@@ -375,7 +388,7 @@ public class AuditionDoesNotCommitTests
     }
 
     /// <summary>The second glyph on one row, the one that says the line.</summary>
-    private static Button LineGlyph(PickerWindow picker, string value) =>
+    private static Button LineGlyph(PickerPage picker, string value) =>
         picker.GetVisualDescendants().OfType<Button>()
             .Where(button => (button.DataContext as PickerChoice)?.Value == value)
             .ElementAt(1);

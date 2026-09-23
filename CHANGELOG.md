@@ -27,6 +27,13 @@ Gender now binds only Cora and Analyst Prime. Cartesia's "feminine" and "masculi
 No voice is chosen in advance any more. Edge Neural, OpenAI and Kokoro refuse to speak with no voice
 chosen, as ElevenLabs and Cartesia already did. Warden is no longer fixed to George on ElevenLabs.
 
+Choosing a voice, a model or any other value from a Settings list now opens a page in the panel
+instead of a separate window. The breadcrumb above it leads back to Settings, and Back, Esc and the
+mouse's back button leave without changing the setting. The page opens in the headset too, where
+these rows used to say "Not currently supported in VR". At the smallest panel size it shows
+at least eight voices and the whole gender filter. The voice pages say what playing a voice costs;
+every other page shows the row's help.
+
 ## 1.7.0 — Elite's colours
 
 In the headset, the dimming behind a chooser is the same shade as on the desktop.
