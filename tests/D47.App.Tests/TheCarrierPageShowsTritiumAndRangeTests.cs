@@ -126,15 +126,15 @@ public class TheCarrierPageShowsTritiumAndRangeTests
 
         var text = Text(panel);
 
-        Assert.Contains("In the tank", text, StringComparison.Ordinal);
+        Assert.Contains("IN THE TANK", text, StringComparison.Ordinal);
         Assert.Contains("982", text, StringComparison.Ordinal);
-        Assert.Contains("Carrier's hold", text, StringComparison.Ordinal);
+        Assert.Contains("CARRIER'S HOLD", text, StringComparison.Ordinal);
         Assert.Contains("158 t (counted)", text, StringComparison.Ordinal);
-        Assert.Contains("Your ship's hold", text, StringComparison.Ordinal);
+        Assert.Contains("YOUR SHIP'S HOLD", text, StringComparison.Ordinal);
         Assert.Contains("40 t", text, StringComparison.Ordinal);
-        Assert.Contains("Total", text, StringComparison.Ordinal);
+        Assert.Contains("TOTAL", text, StringComparison.Ordinal);
         Assert.Contains("1,180 t", text, StringComparison.Ordinal);
-        Assert.Contains("Range, roughly", text, StringComparison.Ordinal);
+        Assert.Contains("RANGE, ROUGHLY", text, StringComparison.Ordinal);
         Assert.Contains("jump", text, StringComparison.Ordinal);
         Assert.Contains("at 500 ly", text, StringComparison.Ordinal);
 
@@ -203,7 +203,7 @@ public class TheCarrierPageShowsTritiumAndRangeTests
         Assert.True(panel.TickLoadout(), "a changed ship's hold is drawn");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Your ship's hold", Text(panel), StringComparison.Ordinal);
+        Assert.Contains("YOUR SHIP'S HOLD", Text(panel), StringComparison.Ordinal);
 
         window.Close();
     }

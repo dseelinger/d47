@@ -169,6 +169,8 @@ public sealed class OnFootMode(
             .Where(name => !string.Equals(name, "Flight Suit", StringComparison.OrdinalIgnoreCase)),
     ];
 
+    public string? Title(string item) => Resolve(item)?.Equipment;
+
     public string? Summary(string item)
     {
         if (Resolve(item) is not { } build)
@@ -521,7 +523,8 @@ public sealed class OnFootMode(
         {
             lines.Add(new LoadoutLine(
                 $"{ingredient.Material.Name}: {ingredient.Held} of {ingredient.Needed}"
-                + (ingredient.Short > 0 ? $", {ingredient.Short} short" : string.Empty)));
+                + (ingredient.Short > 0 ? $", {ingredient.Short} short" : string.Empty),
+                ingredient.Short > 0 ? LoadoutTone.Muted : LoadoutTone.Good));
         }
 
         return lines;

@@ -97,6 +97,15 @@ as tall as its rows and the page scrolls. A material you hold enough of reads in
 in the accent colour instead of red, and its detail opens in the same layout as the confirmation
 dialog. Scrollbars on Fleet and Engineers pages sit clear of the content instead of over it.
 
+Fleet › Carrier is restyled to match. The carrier's name is a large white title over an accent
+rule. Its system, jump range, space, cargo, balance, docking and services, and the tritium figures
+under a TRITIUM heading, are grey-labelled tiles that drop columns as the pane narrows, with COPY
+inside the system tile. A carrier in the system you are in shows that system in cyan. The
+squadron's carrier sits under a white capitals heading with its own tiles, and "Booked for
+decommissioning" reads in red. A suit or weapon's page now opens with its name as a large white
+title, and a material on its costs list that you hold enough of reads in blue. Tiles in one row
+of any Fleet page are now all the same height.
+
 ## 1.6.3 — Guardian theme removed
 
 The Guardian theme is gone from Theme's choices. A saved theme of `guardian` now opens as Elite,

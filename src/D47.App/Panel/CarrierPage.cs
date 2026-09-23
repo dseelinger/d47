@@ -2,12 +2,21 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Reactive;
+using Avalonia.VisualTree;
+using D47.App.Controls;
+using D47.App.Theming;
 using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
 /// <summary>Where the Commander gets their carrier from, and a nudge when it changes.</summary>
-public sealed class CarrierSource(Func<CarrierState> own, Func<CarrierState> squadron, Func<int> shipTritium)
+public sealed class CarrierSource(
+    Func<CarrierState> own,
+    Func<CarrierState> squadron,
+    Func<int> shipTritium,
+    Func<string?>? here = null)
 {
     /// <summary>Raised when the journal moved either carrier, or the ship's hold, on.</summary>
     public event Action? Changed;
@@ -21,6 +30,9 @@ public sealed class CarrierSource(Func<CarrierState> own, Func<CarrierState> squ
     /// <summary>Tritium in the flown ship's hold, zero when the hold is the SRV's or is empty.</summary>
     public int ShipTritium => shipTritium();
 
+    /// <summary>The system the Commander is in, or null when it is not known.</summary>
+    public string? Here => here?.Invoke();
+
     public void Invalidate() => Changed?.Invoke();
 }
 
@@ -31,6 +43,8 @@ public sealed class CarrierPage : UserControl
     private readonly Func<DateTimeOffset> _now;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 4 };
+    private IDisposable? _sized;
+    private bool _mini;
 
     public CarrierPage(
         CarrierSource carrier,
@@ -69,10 +83,35 @@ public sealed class CarrierPage : UserControl
 
     private void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(Refresh);
 
-    protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _sized = this.GetSelfAndVisualAncestors()
+            .OfType<PanelView>()
+            .FirstOrDefault()
+            ?.GetObservable(PanelView.ModeProperty)
+            .Subscribe(new AnonymousObserver<PanelMode>(OnSurface));
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _carrier.Changed -= OnChanged;
+        _sized?.Dispose();
+        _sized = null;
         base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>The surface went mini, or came back.</summary>
+    private void OnSurface(PanelMode mode)
+    {
+        var mini = mode == PanelMode.Mini;
+
+        if (mini != _mini)
+        {
+            _mini = mini;
+            Refresh();
+        }
     }
 
     /// <summary>Redraws against the live state.</summary>
@@ -100,24 +139,23 @@ public sealed class CarrierPage : UserControl
             return;
         }
 
-        _body.Children.Add(Head(carrier));
+        _body.Children.Add(Title(carrier));
 
         if (carrier.PendingDecommission)
         {
-            _body.Children.Add(LoadoutPages.Muted("Booked for decommissioning."));
+            _body.Children.Add(LoadoutPages.Toned("Booked for decommissioning.", ThemeManager.RedKey));
         }
 
-        _body.Children.Add(Where(carrier));
-        Tritium(carrier);
+        var tiles = new List<Control> { Where(carrier) };
 
         if (carrier.JumpRange is { } range)
         {
-            _body.Children.Add(Row("Jump range", $"{range:0.#} ly"));
+            tiles.Add(StatTile.Build("Jump range", $"{range:0.#} ly"));
         }
 
         if (carrier.Capacity is { } capacity && carrier.FreeSpace is { } free)
         {
-            _body.Children.Add(Row(
+            tiles.Add(StatTile.Build(
                 "Space",
                 $"{capacity - free:N0} of {capacity:N0} t used, {free:N0} t free"));
         }
@@ -125,26 +163,33 @@ public sealed class CarrierPage : UserControl
         if (carrier.CargoTonnes is { } cargo)
         {
             // How much, never what.
-            _body.Children.Add(Row("Cargo", $"{cargo:N0} t"));
+            tiles.Add(StatTile.Build("Cargo", $"{cargo:N0} t"));
         }
 
         if (carrier.Balance is { } balance)
         {
-            _body.Children.Add(Row("Balance", balance.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
+            tiles.Add(StatTile.Build("Balance", balance.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
         }
 
         if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
         {
-            _body.Children.Add(Row("Docking", carrier.DockingAccess));
+            tiles.Add(StatTile.Build("Docking", carrier.DockingAccess));
         }
 
-        Services(carrier);
+        Services(carrier, tiles);
+
+        _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
+
+        Tritium(carrier);
 
         if (carrier.StatsSeenAt is { } seen)
         {
-            _body.Children.Add(LoadoutPages.Muted(
+            var age = LoadoutPages.Muted(
                 $"Figures as of {Ago(seen)}. They only refresh when you open the carrier "
-                + "management panel in the game."));
+                + "management panel in the game.");
+            age.Margin = new Thickness(0, 6, 0, 0);
+
+            _body.Children.Add(age);
         }
     }
 
@@ -158,45 +203,66 @@ public sealed class CarrierPage : UserControl
             return;
         }
 
-        _body.Children.Add(new Border { Height = 18 });
-        _body.Children.Add(LoadoutPages.Heading("Your squadron's carrier"));
-        _body.Children.Add(Head(carrier));
-        _body.Children.Add(Where(carrier));
+        _body.Children.Add(LoadoutPages.Section("Your squadron's carrier", compact: _mini));
+        _body.Children.Add(LoadoutPages.SlotName(Named(carrier)));
+
+        var tiles = new List<Control> { Where(carrier) };
 
         if (carrier.FuelLevel is { } fuel)
         {
-            _body.Children.Add(Row("Tritium", $"{fuel:N0} t"));
+            tiles.Add(StatTile.Build("Tritium", $"{fuel:N0} t"));
         }
 
         if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
         {
-            _body.Children.Add(Row("Docking", carrier.DockingAccess));
+            tiles.Add(StatTile.Build("Docking", carrier.DockingAccess));
         }
 
         var open = carrier.Services.Where(service => service.IsOpen).Select(Named).ToList();
 
         if (open.Count > 0)
         {
-            _body.Children.Add(Row("Services", string.Join(", ", open)));
+            tiles.Add(StatTile.Build("Services", string.Join(", ", open)));
         }
 
+        _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
+
         // No balance and no space.
-        _body.Children.Add(LoadoutPages.Muted(
-            "Your squadron's, not yours — shown so you know where it is and whether you can dock."));
+        var theirs = LoadoutPages.Muted(
+            "Your squadron's, not yours — shown so you know where it is and whether you can dock.");
+        theirs.Margin = new Thickness(0, 6, 0, 0);
+
+        _body.Children.Add(theirs);
     }
 
-    private Control Head(CarrierState carrier) =>
-        LoadoutPages.Heading(
-            string.IsNullOrWhiteSpace(carrier.Name)
-                ? carrier.CallSign ?? "Your carrier"
-                : $"{carrier.Name} ({carrier.CallSign})");
+    private static string Named(CarrierState carrier) =>
+        string.IsNullOrWhiteSpace(carrier.Name)
+            ? carrier.CallSign ?? "Your carrier"
+            : $"{carrier.Name} ({carrier.CallSign})";
+
+    /// <summary>The carrier's name as the screen title, over a 1px A rule, under the breadcrumb that is its context line.</summary>
+    private Control Title(CarrierState carrier)
+    {
+        var name = TitleText.Style(
+            new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
+            _mini ? TypeScale.Heading : TypeScale.Title,
+            TitleRank.Screen,
+            sentence: true);
+
+        TitleText.Show(name, Named(carrier), sentence: true);
+
+        var title = TitleText.GroupRow(name);
+        title.Margin = new Thickness(0, 0, 0, _mini ? 4 : 10);
+
+        return title;
+    }
 
     /// <summary>Where it is, and where it is going if it has been told to go somewhere.</summary>
     private Control Where(CarrierState carrier)
     {
         if (carrier.DestinationSystem is not { Length: > 0 } destination)
         {
-            return Row("System", carrier.StarSystem ?? "not seen", carrier.StarSystem);
+            return System("System", carrier.StarSystem ?? "not seen", carrier.StarSystem);
         }
 
         var parking = string.IsNullOrWhiteSpace(carrier.DestinationBody)
@@ -205,14 +271,14 @@ public sealed class CarrierPage : UserControl
 
         if (carrier.DepartureTime is not { } departure)
         {
-            return Row("Jumping to", parking, destination);
+            return System("Jumping to", parking, destination);
         }
 
         // Counted against the clock the caller supplies rather than one read here, so a test can stand where
         // the Commander stands.
         var left = departure - _now();
 
-        return Row(
+        return System(
             "Jumping to",
             left > TimeSpan.Zero
                 ? $"{parking} — leaves in {Left(left)}"
@@ -223,8 +289,12 @@ public sealed class CarrierPage : UserControl
     /// <summary>In the tank, in the carrier's hold, in the ship's hold, a total, and a rough range (#307).</summary>
     private void Tritium(CarrierState carrier)
     {
-        _body.Children.Add(LoadoutPages.Heading("Tritium"));
-        _body.Children.Add(Row("In the tank", carrier.FuelLevel is { } fuel ? $"{fuel:N0} t" : "not seen"));
+        _body.Children.Add(LoadoutPages.Section("Tritium", compact: _mini));
+
+        var tiles = new List<Control>
+        {
+            StatTile.Build("In the tank", carrier.FuelLevel is { } fuel ? $"{fuel:N0} t" : "not seen"),
+        };
 
         if (carrier.TritiumInHold is { } hold)
         {
@@ -232,27 +302,29 @@ public sealed class CarrierPage : UserControl
                 ? "counted, may be off: a tritium order was open"
                 : "counted";
 
-            _body.Children.Add(Row("Carrier's hold", $"{hold:N0} t ({note})"));
+            tiles.Add(StatTile.Build("Carrier's hold", $"{hold:N0} t ({note})"));
         }
 
         var shipTritium = _carrier.ShipTritium;
 
         if (shipTritium > 0)
         {
-            _body.Children.Add(Row("Your ship's hold", $"{shipTritium:N0} t"));
+            tiles.Add(StatTile.Build("Your ship's hold", $"{shipTritium:N0} t"));
         }
 
         var total = (carrier.FuelLevel ?? 0) + (carrier.TritiumInHold ?? 0) + shipTritium;
 
-        _body.Children.Add(Row("Total", $"{total:N0} t"));
+        tiles.Add(StatTile.Build("Total", $"{total:N0} t"));
 
         var usedSpace = carrier.Capacity is { } capacity && carrier.FreeSpace is { } free ? capacity - free : 0;
         var (rangeLy, jumps) = CarrierFuel.RoughRange(total, usedSpace, carrier.JumpRange);
         var distance = carrier.JumpRange ?? 500;
 
-        _body.Children.Add(Row(
+        tiles.Add(StatTile.Build(
             "Range, roughly",
             $"about {RoundToTwoSigFigs(rangeLy):N0} ly — {jumps} jump{(jumps == 1 ? "" : "s")} at {distance:0.#} ly"));
+
+        _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
     }
 
     /// <summary>Two significant figures, the precision this estimate is worth.</summary>
@@ -268,7 +340,7 @@ public sealed class CarrierPage : UserControl
         return Math.Round(value / magnitude) * magnitude;
     }
 
-    private void Services(CarrierState carrier)
+    private static void Services(CarrierState carrier, List<Control> tiles)
     {
         if (carrier.Services.Count == 0)
         {
@@ -277,7 +349,7 @@ public sealed class CarrierPage : UserControl
 
         var open = carrier.Services.Where(service => service.IsOpen).Select(Named).ToList();
 
-        _body.Children.Add(Row(
+        tiles.Add(StatTile.Build(
             "Services",
             open.Count > 0 ? string.Join(", ", open) : "none switched on"));
 
@@ -290,7 +362,7 @@ public sealed class CarrierPage : UserControl
 
         if (idle.Count > 0)
         {
-            _body.Children.Add(Row("Switched off", string.Join(", ", idle)));
+            tiles.Add(StatTile.Build("Switched off", string.Join(", ", idle)));
         }
     }
 
@@ -320,45 +392,36 @@ public sealed class CarrierPage : UserControl
                 : $"{(int)span.TotalDays} days ago";
     }
 
-    /// <summary>A label and its value, with a copy glyph beside the value where <paramref name="system"/> names one.</summary>
-    private Control Row(string label, string value, string? system = null)
+    /// <summary>
+    /// A stat tile naming a system, in Cyan where the Commander is in it, with a copy glyph beside the
+    /// value where <paramref name="system"/> names one.
+    /// </summary>
+    private Control System(string label, string value, string? system)
     {
-        var grid = new Grid
+        var here = system is { Length: > 0 }
+                   && string.Equals(system, _carrier.Here, StringComparison.OrdinalIgnoreCase);
+
+        var tile = StatTile.Build(label, value, here ? StatInk.Here : StatInk.Value);
+
+        if (system is not { Length: > 0 } target || _copy is not { } copy || tile.Child is not { } figures)
         {
-            ColumnDefinitions = new ColumnDefinitions("150,*"),
-            Margin = new Thickness(0, 2, 0, 2),
-        };
-
-        var name = LoadoutPages.Muted(label);
-        name.VerticalAlignment = VerticalAlignment.Top;
-
-        var said = new SelectableTextBlock
-        {
-            Text = value,
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-            FontSize = Theming.TypeScale.Body,
-        };
-
-        grid.Children.Add(name);
-
-        if (system is { Length: > 0 } target && _copy is { } copy)
-        {
-            var content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                Children = { said, D47.App.Controls.CopyWord.For(target, copy) },
-            };
-
-            Grid.SetColumn(content, 1);
-            grid.Children.Add(content);
-        }
-        else
-        {
-            Grid.SetColumn(said, 1);
-            grid.Children.Add(said);
+            return tile;
         }
 
-        return grid;
+        tile.Child = null;
+
+        var word = CopyWord.For(target, copy);
+        word.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(word, 1);
+
+        tile.Child = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 6,
+            Children = { figures, word },
+        };
+
+        return tile;
     }
 }
+

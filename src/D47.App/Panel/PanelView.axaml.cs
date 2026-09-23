@@ -677,7 +677,8 @@ public partial class PanelView : UserControl
         _carrier = new CarrierSource(
             () => state()?.Carrier ?? D47.Core.Journal.CarrierState.None,
             () => state()?.SquadronCarrier ?? D47.Core.Journal.CarrierState.NoSquadron,
-            () => state()?.Hold is { IsShip: true } hold ? hold.Of("tritium") : 0);
+            () => state()?.Hold is { IsShip: true } hold ? hold.Of("tritium") : 0,
+            () => state()?.Location.StarSystem);
 
         // No help declared: no capability page covers the carrier yet, and a root whose page has no band
         // simply shows no mark.
@@ -827,6 +828,7 @@ public partial class PanelView : UserControl
             _loadoutEngineerStamp = engineerStamp;
             mode.Invalidate();
             _onFootMode?.Invalidate();
+            _carrier?.Invalidate();
             changed = true;
         }
 

@@ -64,9 +64,21 @@ public static class StatTile
         return tile;
     }
 
-    /// <summary>Tiles in up to <paramref name="maxColumns"/> columns, dropping columns as the width falls.</summary>
-    public static Grid Grid(IReadOnlyList<Control> tiles, int maxColumns = 4) =>
-        Reflow.Grid(tiles, MinWidth, Gap, Gap, maxColumns);
+    /// <summary>
+    /// Tiles in up to <paramref name="maxColumns"/> columns, dropping columns as the width falls; tiles in
+    /// one row share its height.
+    /// </summary>
+    public static Grid Grid(IReadOnlyList<Control> tiles, int maxColumns = 4)
+    {
+        var grid = Reflow.Grid(tiles, MinWidth, Gap, Gap, maxColumns);
+
+        foreach (var tile in tiles)
+        {
+            tile.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
+        }
+
+        return grid;
+    }
 
     public static string InkKey(StatInk ink) => ink switch
     {

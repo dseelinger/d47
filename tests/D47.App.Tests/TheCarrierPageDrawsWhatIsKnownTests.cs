@@ -112,7 +112,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
         var text = Shown(Stats);
 
         Assert.Contains("Refuel", text, StringComparison.Ordinal);
-        Assert.Contains("Switched off", text, StringComparison.Ordinal);
+        Assert.Contains("SWITCHED OFF", text, StringComparison.Ordinal);
         Assert.Contains("Repair", text, StringComparison.Ordinal);
 
         // Never bought at all, so it is neither open nor switched off.
@@ -161,7 +161,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
             """);
 
         Assert.Contains("Sacred Fire (BNH-T2F)", text, StringComparison.Ordinal);
-        Assert.Contains("Your squadron's carrier", text, StringComparison.Ordinal);
+        Assert.Contains("YOUR SQUADRON'S CARRIER", text, StringComparison.Ordinal);
         Assert.Contains("Wandering Home (QRS-11X)", text, StringComparison.Ordinal);
         Assert.Contains("Your squadron's, not yours", text, StringComparison.Ordinal);
 
