@@ -49,8 +49,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private TextBlock? _pageTitle;
 
-    private Button? _pageReset;
-
     /// <summary>The protected-row legend, shown under the page title when the place has one (#333).</summary>
     private TextBlock? _areaLegend;
 
@@ -264,17 +262,39 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         settings.Changed += OnSettingsChanged;
 
+        if (vrHost is not null)
+        {
+            vrHost.AnchorsChanged += OnAnchorsChanged;
+        }
+
         // **Symmetric, which it was not** (#90).
         AttachedToVisualTree += (_, _) =>
         {
             settings.Changed -= OnSettingsChanged;
             settings.Changed += OnSettingsChanged;
+
+            if (vrHost is not null)
+            {
+                vrHost.AnchorsChanged -= OnAnchorsChanged;
+                vrHost.AnchorsChanged += OnAnchorsChanged;
+            }
         };
 
-        DetachedFromVisualTree += (_, _) => settings.Changed -= OnSettingsChanged;
+        DetachedFromVisualTree += (_, _) =>
+        {
+            settings.Changed -= OnSettingsChanged;
+
+            if (vrHost is not null)
+            {
+                vrHost.AnchorsChanged -= OnAnchorsChanged;
+            }
+        };
     }
 
     private void OnSettingsChanged(SettingsChanged change) => Dispatcher.UIThread.Post(Refresh);
+
+    /// <summary>A placement group's reset lights while its surface has an anchor.</summary>
+    private void OnAnchorsChanged() => Dispatcher.UIThread.Post(Refresh);
 
     /// <summary>A brush fetched at call time, so state changes pick up the current theme.</summary>
     private IBrush? Res(string key) => this.FindResource(key) as IBrush;
@@ -310,7 +330,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _pageHead = null;
         _pageCrumb = null;
         _pageTitle = null;
-        _pageReset = null;
         _areaLegend = null;
         _emptyBlock = null;
         _emptyNote = null;
@@ -491,21 +510,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var rows = new List<SettingRow>();
 
-        foreach (var group in place.Groups)
+        for (var inPlace = 0; inPlace < place.Groups.Count; inPlace++)
         {
-            // A group heading, stated once, in place of the same sentence on every row — and, once it has
-            // one, something a query can match to reveal every row under it (#222).
-            var groupIndex = -1;
+            // A group heading, stated once, in place of the same sentence on every row — and something a
+            // query can match to reveal every row under it (#222).
+            var group = place.Groups[inPlace];
+            var groupIndex = _groups.Count;
+            var groupView = BuildGroupHeading(index, place.Id, inPlace, group);
 
-            if (group.Title is { } groupTitle)
-            {
-                var resetSlot = VrCapability.SlotForPlacementGroup(groupTitle);
-                var (groupHeading, headingText, helpText) = BuildGroupHeading(groupTitle, group.Help, resetSlot);
-
-                content.Children.Add(groupHeading);
-                groupIndex = _groups.Count;
-                _groups.Add(new GroupView(index, groupTitle, group.Help, headingText, helpText));
-            }
+            content.Children.Add(groupView.Container);
+            _groups.Add(groupView);
 
             foreach (var entry in group.Entries)
             {
@@ -557,83 +571,93 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (content, rows, foldButton);
     }
 
-    private (Control Container, TextBlock Heading, TextBlock? Help) BuildGroupHeading(
-        string group, string? help, string? resetSlot = null)
-    {
-        var heading = new TextBlock();
-        TitleText.Style(heading, TypeScale.Caption, TitleRank.Group);
-        TitleText.Show(heading, group);
-        heading.TextWrapping = TextWrapping.Wrap;
-
-        var stack = new StackPanel { Spacing = 4, Margin = new Thickness(0, 16, 0, 4) };
-
-        var rule = new Border { Height = 1 };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.LineKey);
-
-        if (resetSlot is { } slot)
-        {
-            // Minimum height 44 so the reset's fixed cell does not change the row's height (#376).
-            var headingRow = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 4,
-                MinHeight = TypeScale.MinimumTarget,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            heading.VerticalAlignment = VerticalAlignment.Center;
-            headingRow.Children.Add(heading);
-            headingRow.Children.Add(GroupResetButton(group, slot));
-            stack.Children.Add(headingRow);
-        }
-        else
-        {
-            stack.Children.Add(heading);
-        }
-
-        stack.Children.Add(rule);
-
-        TextBlock? note = null;
-
-        if (!string.IsNullOrWhiteSpace(help))
-        {
-            note = new TextBlock { Text = help, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-            Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            stack.Children.Add(note);
-        }
-
-        return (stack, heading, note);
-    }
-
     /// <summary>
-    /// The reset glyph on a placement group heading — puts that surface back where a fresh install
-    /// puts it, through <see cref="_vrHost"/> rather than by writing view-state directly, since VrHost
-    /// is the anchors' only owner and rewrites the file on every change of its own (#162).
+    /// A group's head: its title and description on one line, the description wrapping under the title
+    /// only when it cannot fit, the group's reset in a fixed 44px cell on the right, and a 1px accent rule
+    /// under the whole line.
     /// </summary>
-    private Button GroupResetButton(string group, string slot)
+    private GroupView BuildGroupHeading(int section, string placeId, int inPlace, SettingsPlaceGroup group)
     {
+        var heading = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
+        TitleText.Style(heading, TypeScale.Secondary, TitleRank.Group);
+        TitleText.Show(heading, group.Title);
+
+        var note = new TextBlock
+        {
+            Text = group.Help,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        var words = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        words.Children.Add(heading);
+        words.Children.Add(note);
+
+        var slot = VrCapability.SlotForPlacementGroup(group.Title);
+
         var reset = new Button
         {
+            Name = GroupResetName,
             Theme = GlyphButtonTheme,
             Width = TypeScale.MinimumTarget,
             Height = TypeScale.MinimumTarget,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0),
+            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
         };
 
-        reset.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
-        AutomationProperties.SetName(reset, $"Reset {group}");
+        AutomationProperties.SetName(reset, $"Reset {group.Title}");
 
+        // A placement group also clears its surface's anchor, through VrHost rather than by writing
+        // view-state directly, since VrHost is the anchors' only owner (#162).
         reset.Click += (_, _) =>
         {
-            _vrHost?.ResetPlacement(slot);
+            _settings!.ResetGroup(placeId, inPlace, SettingsCaller.Panel);
+
+            if (slot is not null)
+            {
+                _vrHost?.ResetPlacement(slot);
+            }
+
             Refresh();
         };
 
         reset.PointerPressed += (_, e) => e.Handled = true;
 
-        return reset;
+        var line = new DockPanel { MinHeight = TypeScale.MinimumTarget };
+        DockPanel.SetDock(reset, Dock.Right);
+        line.Children.Add(reset);
+        line.Children.Add(words);
+
+        var rule = new Border { Height = 1 };
+        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
+
+        var container = new StackPanel
+        {
+            Name = GroupHeadName,
+            Margin = new Thickness(0, 16, 0, 4),
+            Children = { line, rule },
+        };
+
+        return new GroupView(section, group.Title, group.Help, container, heading, note, reset, slot);
     }
+
+    /// <summary>Marks a group's head, for a test to find it.</summary>
+    public const string GroupHeadName = "GroupHead";
+
+    /// <summary>Marks a group's reset glyph, for a test to find it.</summary>
+    public const string GroupResetName = "GroupReset";
+
+    /// <summary>Whether a placement group's surface has an anchor its reset would clear.</summary>
+    private bool HasAnchor(string slot) =>
+        _vrHost is { } host
+        && (slot == VrCapability.CurrentSlot
+            ? host.AnchorFor(VrCapability.PanelSlot) is not null || host.AnchorFor(VrCapability.MiniSlot) is not null
+            : host.AnchorFor(slot) is not null);
 
     /// <summary>
     /// An area's title in the nav; pressing it selects the area. Upper case and tracked, the top-level
@@ -740,10 +764,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Marks the page head, for a test to find it.</summary>
     public const string PageHeadName = "PageHead";
 
-    /// <summary>
-    /// The open place's head: its area as a breadcrumb, its title, the reset for the whole place, and
-    /// the protected-row legend (#333).
-    /// </summary>
+    /// <summary>The open place's head: its area as a breadcrumb, its title, and the protected-row legend (#333).</summary>
     private StackPanel BuildPageHead()
     {
         var crumb = new TextBlock
@@ -758,36 +779,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var title = new TextBlock { TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
         TitleText.Style(title, TypeScale.Title, TitleRank.Screen, sentence: true);
 
-        // A fixed 44x44 cell whether or not the place has changes, so the head does not change height when
-        // the reset is enabled (#376).
-        var reset = new Button
-        {
-            Theme = GlyphButtonTheme,
-            Width = TypeScale.MinimumTarget,
-            Height = TypeScale.MinimumTarget,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
-            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
-        };
-
-        reset.Click += (_, _) =>
-        {
-            if (_activeSection < 0 || _activeSection >= _sections.Count)
-            {
-                return;
-            }
-
-            _settings!.ResetPlace(_sections[_activeSection].PlaceId, SettingsCaller.Panel);
-            Refresh();
-        };
-
-        var titleRow = new DockPanel();
-        DockPanel.SetDock(reset, Dock.Right);
-        titleRow.Children.Add(reset);
-        titleRow.Children.Add(title);
-
         var legend = new TextBlock
         {
             Text = ProtectedLegend,
@@ -800,7 +791,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         _pageCrumb = crumb;
         _pageTitle = title;
-        _pageReset = reset;
         _areaLegend = legend;
 
         return new StackPanel
@@ -808,7 +798,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Name = PageHeadName,
             Spacing = 4,
             Margin = new Thickness(0, 0, 0, 8),
-            Children = { crumb, titleRow, legend },
+            Children = { crumb, title, legend },
         };
     }
 
@@ -1399,7 +1389,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                            || areaNamed[AreaOf(i)]);
         }
 
-        // Which named groups the query matches, by title or help (#222).
+        // Which groups the query matches, by title or help (#222).
         var groupNamed = new bool[_groups.Count];
 
         for (var g = 0; g < _groups.Count; g++)
@@ -1408,13 +1398,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             groupNamed[g] = _query.Length > 0
                             && (group.Title.Contains(_query, StringComparison.OrdinalIgnoreCase)
-                                || (group.Help is { } help
-                                    && D47.Core.Interface.HelpLinks.Plain(help)
-                                        .Contains(_query, StringComparison.OrdinalIgnoreCase)));
+                                || D47.Core.Interface.HelpLinks.Plain(group.Help)
+                                    .Contains(_query, StringComparison.OrdinalIgnoreCase));
         }
 
         // Rows that apply in each section, whatever the query or the fold says.
         var exists = new bool[_sections.Count];
+
+        // Per group: whether any row is drawn, and whether any row that applies differs from its default.
+        var groupShowing = new bool[_groups.Count];
+        var groupChanged = new bool[_groups.Count];
 
         _refreshing = true;
         try
@@ -1469,6 +1462,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                     showing[row.Section]++;
                 }
 
+                if (row.GroupIndex >= 0)
+                {
+                    groupShowing[row.GroupIndex] |= shown;
+                    groupChanged[row.GroupIndex] |= applies && _settings.IsChanged(row.Row.Key);
+                }
+
                 if (applies && row.Section >= 0)
                 {
                     exists[row.Section] = true;
@@ -1509,15 +1508,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Paint(area.HeadingText, area.Title);
         }
 
-        // A group's own title and help, the other two things a query can match (#222).
-        foreach (var group in _groups)
+        // A group's own title and help, the other two things a query can match (#222). A group with no row
+        // drawn is not drawn either, heading and all.
+        for (var g = 0; g < _groups.Count; g++)
         {
-            Paint(group.HeadingText, group.Title.ToUpperInvariant());
+            var group = _groups[g];
 
-            if (group.HelpText is { } helpText && group.Help is { } help)
-            {
-                Paint(helpText, help);
-            }
+            group.Container.IsVisible = groupShowing[g];
+            group.Reset.IsEnabled = groupChanged[g] || (group.Slot is { } slot && HasAnchor(slot));
+
+            Paint(group.HeadingText, group.Title.ToUpperInvariant());
+            Paint(group.HelpText, group.Help);
         }
 
         UpdateOtherTabs();
@@ -1875,7 +1876,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         if (_activeSection >= 0 && _activeSection < _sections.Count
             && _pageHead is { } head && _pageCrumb is { } crumb && _pageTitle is { } title
-            && _areaLegend is { } legend && _pageReset is { } reset && _emptyBlock is { } empty)
+            && _areaLegend is { } legend && _emptyBlock is { } empty)
         {
             var section = _sections[_activeSection];
             var filtering = _query.Length > 0;
@@ -1885,9 +1886,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Paint(title, section.Title);
 
             legend.IsVisible = _rows.Any(row => row.Row.Protected && row.Section == _activeSection);
-
-            reset.IsEnabled = CardHasChanges(section.Rows);
-            AutomationProperties.SetName(reset, $"Reset {section.Title}");
 
             order.Add(head);
 
@@ -1961,10 +1959,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>One look for the two controls that open a list.</summary>
     private bool ShowingEverything =>
         _tabPlaceId is not null || (_settings?.Current.Ui.ShowEverySetting ?? true);
-
-    private bool CardHasChanges(IReadOnlyList<SettingRow> rows) =>
-        _settings is { } settings
-        && rows.Any(row => row.Applies(settings.Current) && settings.IsChanged(row.Key));
 
     private void DressAsAChoice(TemplatedControl control)
     {
@@ -4019,7 +4013,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>A named group heading within a place, so a query matching it reveals every row under it
     /// (#222).</summary>
-    private sealed record GroupView(int Section, string Title, string? Help, TextBlock HeadingText, TextBlock? HelpText);
+    /// <param name="Slot">The headset surface a placement group's reset also clears the anchor of.</param>
+    private sealed record GroupView(
+        int Section,
+        string Title,
+        string Help,
+        Control Container,
+        TextBlock HeadingText,
+        TextBlock HelpText,
+        Button Reset,
+        string? Slot);
 
     private sealed record RowView(SettingRow Row, Control Container, Action Refresh)
     {
@@ -4027,8 +4030,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         public int Section { get; init; } = -1;
 
         /// <summary>
-        /// Which of <see cref="_groups"/> this row is under, or −1 where its group has no title to
-        /// search (#222).
+        /// Which of <see cref="_groups"/> this row is under, or −1 on a tab place, which has no groups.
         /// </summary>
         public int GroupIndex { get; init; } = -1;
 

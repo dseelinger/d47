@@ -159,7 +159,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         Jobs();
 
         host.View.GetVisualDescendants().OfType<Button>()
-            .Single(button => AutomationProperties.GetName(button) == "Reset When a turn fails")
+            .Single(button => AutomationProperties.GetName(button) == "Reset Retries")
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Jobs();
 

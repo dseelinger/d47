@@ -272,7 +272,7 @@ public sealed class SettingsService
                     StringComparison.Ordinal));
         }
 
-        return !string.Equals(binding.Read(Current), binding.Read(D47Settings.Defaults), StringComparison.Ordinal);
+        return !string.Equals(binding.Read(Current), row.DefaultValueFor(Current), StringComparison.Ordinal);
     }
 
     /// <summary>Puts a row back to its default (#61).</summary>
@@ -297,7 +297,12 @@ public sealed class SettingsService
             return forgotten;
         }
 
-        return Apply(key, null, caller);
+        // A blank where a blank lands on the default. Otherwise the default's own value: push-to-talk stores a
+        // blank as unbound, and a placement row keeps its current number.
+        var @default = row.DefaultValueFor(Current);
+        var blank = row.Binding is { Write: { } write } binding ? binding.Read(write(Current, null)) : @default;
+
+        return Apply(key, string.Equals(blank, @default, StringComparison.Ordinal) ? null : @default, caller);
     }
 
     /// <summary>Every row on one capability's card, put back to its default (#61).</summary>
@@ -325,6 +330,23 @@ public sealed class SettingsService
     public int ResetPlace(string placeId, SettingsCaller caller)
     {
         var keys = RowsForPlace(placeId)
+            .Select(row => row.Key)
+            .Where(IsChanged)
+            .ToList();
+
+        return keys.Count(key => Reset(key, caller).Status == SettingApplyStatus.Applied);
+    }
+
+    /// <summary>Every changed row in one group of a <see cref="SettingsLayout"/> place, put back to its default.</summary>
+    public int ResetGroup(string placeId, int groupIndex, SettingsCaller caller)
+    {
+        var place = SettingsLayout.Areas
+            .SelectMany(area => area.Places)
+            .FirstOrDefault(p => string.Equals(p.Id, placeId, StringComparison.Ordinal))
+            ?? throw new ArgumentException($"There is no settings place called '{placeId}'.", nameof(placeId));
+
+        var keys = place.Groups[groupIndex].Entries
+            .SelectMany(RowsForEntry)
             .Select(row => row.Key)
             .Where(IsChanged)
             .ToList();

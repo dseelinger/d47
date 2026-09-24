@@ -296,6 +296,13 @@ public class ASettingPickerIsAPageOfThePanelTests
         surface.Render();
 
         var button = PickerButton(view, "Voice");
+        // Scrolled to near the top of the page, so the ray lands on it wherever the groups above push it.
+        var scroller = view.GetControl<ScrollViewer>("Scroller");
+        var top = button.TranslatePoint(default, (Visual)scroller.Content!)!.Value.Y;
+        scroller.Offset = new Vector(0, Math.Max(0, top - 40));
+        Jobs();
+        surface.Render();
+
         var centre = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), panel)!.Value;
 
         var windows = (Application.Current!.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Windows.Count;

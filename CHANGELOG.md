@@ -22,6 +22,15 @@ pages have one.
 In a narrow window the picker that replaces the sidebar lists pages by area and name, for example
 "Voice and hearing › Its voice".
 
+Every group of settings now has a title, and a sentence beside it saying what its rows are for. The
+reset arrow is at the right of each group's heading and puts back only that group's changed rows. It
+is greyed out while nothing in the group has been changed. The reset for a whole page is gone. A group
+with no rows showing is hidden, heading and all, so Wake word no longer shows an empty heading while
+you use push to talk. Under Headset, each panel's placement is its own group again, and its reset
+arrow also clears where that panel was put.
+
+Resetting Push-to-talk puts back Right Shift. Before, it left push-to-talk with no key.
+
 ## 1.12.0 — Hearing through a cloud provider
 
 A new **Hearing provider** row under Voice Input › Speech recognition chooses who turns your speech

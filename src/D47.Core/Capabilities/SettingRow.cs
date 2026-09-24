@@ -106,6 +106,13 @@ public sealed record SettingRow
     /// </summary>
     public Func<D47Settings, string?>? DefaultDisplaySource { get; init; }
 
+    /// <summary>
+    /// The defaults this row is compared with and reset to, given the settings as they stand — for a row
+    /// whose binding reads a different field depending on another setting. Null means
+    /// <see cref="D47Settings.Defaults"/>.
+    /// </summary>
+    public Func<D47Settings, D47Settings>? DefaultsIn { get; init; }
+
     public IReadOnlyList<string> Choices { get; init; } = [];
 
     /// <summary>How a choice is written for a person.</summary>
@@ -334,6 +341,10 @@ public sealed record SettingRow
     public bool Applies(D47Settings settings) => AppliesWhen?.Invoke(settings) ?? true;
 
     public bool DisabledFor(D47Settings settings) => DisabledWhen?.Invoke(settings) ?? false;
+
+    /// <summary>The value this row holds by default, given the settings as they stand.</summary>
+    public string? DefaultValueFor(D47Settings settings) =>
+        Binding?.Read(DefaultsIn?.Invoke(settings) ?? D47Settings.Defaults);
 
     public string? DefaultDisplayFor(D47Settings settings) =>
         DefaultDisplaySource?.Invoke(settings) ?? DefaultDisplay;

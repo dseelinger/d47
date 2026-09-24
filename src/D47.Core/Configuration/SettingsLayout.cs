@@ -4,8 +4,8 @@ namespace D47.Core.Configuration;
 /// <param name="Under">Drawn indented beneath the entry before it in the same group.</param>
 public sealed record SettingsEntry(string? Key, Func<string, bool>? Family = null, bool Under = false);
 
-/// <summary>A named or unnamed run of entries under one place.</summary>
-public sealed record SettingsPlaceGroup(string? Title, string? Help, IReadOnlyList<SettingsEntry> Entries);
+/// <summary>A titled run of entries under one place, with one sentence saying what its rows are for.</summary>
+public sealed record SettingsPlaceGroup(string Title, string Help, IReadOnlyList<SettingsEntry> Entries);
 
 /// <summary>One card on the settings page, gathering rows from any number of capabilities by key.</summary>
 public sealed record SettingsPlace(
@@ -73,8 +73,6 @@ public static class SettingsLayout
 
     private static SettingsEntry F(Func<string, bool> family) => new(null, family);
 
-    private static SettingsPlaceGroup G(IReadOnlyList<SettingsEntry> entries) => new(null, null, entries);
-
     private static SettingsPlaceGroup G(string title, string help, IReadOnlyList<SettingsEntry> entries) =>
         new(title, help, entries);
 
@@ -91,10 +89,9 @@ public static class SettingsLayout
     public static bool IsLlmProviderKeyFamily(string key) =>
         key.StartsWith("llm.", StringComparison.Ordinal) && key.EndsWith(".apiKey", StringComparison.Ordinal);
 
-    public static bool IsVrPlacementFamily(string key) =>
-        key.StartsWith("vr.current.", StringComparison.Ordinal)
-        || key.StartsWith("vr.panel.", StringComparison.Ordinal)
-        || key.StartsWith("vr.mini.", StringComparison.Ordinal);
+    /// <summary>One surface's placement rows, for a slot <see cref="Capabilities.Builtin.VrCapability"/> names.</summary>
+    public static Func<string, bool> IsVrPlacementFamily(string slot) =>
+        key => key.StartsWith($"vr.{slot}.", StringComparison.Ordinal);
 
     public static bool IsVrHotkeyFamily(string key) =>
         key is Capabilities.Builtin.VrCapability.ZoomInHotkeyKey
@@ -164,17 +161,19 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("speech.outputDevice"),
-                            E("speech.provider"),
-                            E("speech.voice"),
-                            E("speech.rate"),
-                            E("speech.localVoice"),
-                            E("speech.localVoiceBuild"),
-                            F(IsSpeechProviderKeyFamily),
-                            E("speech.elevenlabs.model"),
-                            E("speech.resetVoices"),
-                        ]),
+                            "Ship's voice",
+                            "Where D47 speaks from, and who voices it.",
+                            [
+                                E("speech.outputDevice"),
+                                E("speech.provider"),
+                                E("speech.voice"),
+                                E("speech.rate"),
+                                E("speech.localVoice"),
+                                E("speech.localVoiceBuild"),
+                                F(IsSpeechProviderKeyFamily),
+                                E("speech.elevenlabs.model"),
+                                E("speech.resetVoices"),
+                            ]),
                         G(
                             "Where each voice comes from",
                             "Every voice that is not the ship's own can come from a different provider.",
@@ -213,13 +212,15 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("speech.cues"),
-                            E("speech.thinkingBed"),
-                            E("speech.thinkingBedSound", under: true),
-                        ]),
+                            "Cues",
+                            "Sounds D47 makes while it listens and thinks.",
+                            [
+                                E("speech.cues"),
+                                E("speech.thinkingBed"),
+                                E("speech.thinkingBedSound", under: true),
+                            ]),
                         G("Levels", "Level, mute and duck, for every channel.", LevelEntries()),
-                        G([E("audio.drops")]),
+                        G("Your own audio", "Sound files you've dropped in for D47 to use.", [E("audio.drops")]),
                     ]),
             ]),
         new SettingsArea(
@@ -236,15 +237,17 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("llm.provider"),
-                            F(IsLlmProviderKeyFamily),
-                            E("llm.endpoint"),
-                            E("llm.model"),
-                            E("llm.backgroundModel"),
-                            E("llm.effortFloor"),
-                            E("llm.effortCeiling"),
-                        ]),
+                            "Provider and model",
+                            "Who answers, with which model, and how hard it thinks.",
+                            [
+                                E("llm.provider"),
+                                F(IsLlmProviderKeyFamily),
+                                E("llm.endpoint"),
+                                E("llm.model"),
+                                E("llm.backgroundModel"),
+                                E("llm.effortFloor"),
+                                E("llm.effortCeiling"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "look-up",
@@ -254,7 +257,7 @@ public static class SettingsLayout
                     [],
                     false,
                     [
-                        G([E("llm.webSearch"), E("knowledge.galaxy")]),
+                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("knowledge.galaxy")]),
                     ]),
                 new SettingsPlace(
                     "turn-fails",
@@ -265,12 +268,14 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("speech.retryAttempts"),
-                            E("speech.retryWait"),
-                            E("speech.retryBackoff"),
-                            E("speech.turnTimeout"),
-                        ]),
+                            "Retries",
+                            "How often a failed turn is tried again, and how long D47 waits for one.",
+                            [
+                                E("speech.retryAttempts"),
+                                E("speech.retryWait"),
+                                E("speech.retryBackoff"),
+                                E("speech.turnTimeout"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "persona",
@@ -281,14 +286,16 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("persona.id"),
-                            E("llm.personality"),
-                            E("persona.introductions"),
-                            E("persona.own"),
-                            E("llm.characterSheet"),
-                            E("llm.aboutMe"),
-                        ]),
+                            "Core and character",
+                            "Which core is aboard, how it behaves, and what it knows about you.",
+                            [
+                                E("persona.id"),
+                                E("llm.personality"),
+                                E("persona.introductions"),
+                                E("persona.own"),
+                                E("llm.characterSheet"),
+                                E("llm.aboutMe"),
+                            ]),
                         G(
                             "Humor",
                             "How funny each group may be, and on how many of its lines.",
@@ -322,14 +329,16 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("memory.enabled"),
-                            E("memory.expiryDays"),
-                            E("memory.store"),
-                            E("lore.book"),
-                            E("debrief.enabled"),
-                            E("debrief.directions"),
-                        ]),
+                            "Memory and debrief",
+                            "What D47 keeps between sessions, and what it drafts after one.",
+                            [
+                                E("memory.enabled"),
+                                E("memory.expiryDays"),
+                                E("memory.store"),
+                                E("lore.book"),
+                                E("debrief.enabled"),
+                                E("debrief.directions"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "logs-and-goals",
@@ -340,13 +349,15 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("logbook.voice"),
-                            E("logbook.range"),
-                            E("logbook.length"),
-                            E("logbook.store"),
-                            E("goals.store"),
-                        ]),
+                            "Log and goals",
+                            "How the Commander's log is written, and where it and your goals are kept.",
+                            [
+                                E("logbook.voice"),
+                                E("logbook.range"),
+                                E("logbook.length"),
+                                E("logbook.store"),
+                                E("goals.store"),
+                            ]),
                     ]),
             ]),
         new SettingsArea(
@@ -361,7 +372,7 @@ public static class SettingsLayout
                     "callouts",
                     [],
                     false,
-                    [G([E("callouts.enabled")])]),
+                    [G("All callouts", "One switch for everything D47 says without being asked.", [E("callouts.enabled")])]),
                 new SettingsPlace(
                     "in-flight",
                     "In flight",
@@ -371,16 +382,18 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("callouts.danger"),
-                            E("callouts.fuel"),
-                            E("callouts.routeProgress"),
-                            E("callouts.routeEveryNJumps", under: true),
-                            E("callouts.longJumpRemark"),
-                            E("callouts.longJumpSeconds", under: true),
-                            E("callouts.announcedAttack"),
-                            E("callouts.rivalTerritory"),
-                        ]),
+                            "Flight callouts",
+                            "What D47 warns you about and reports while you fly.",
+                            [
+                                E("callouts.danger"),
+                                E("callouts.fuel"),
+                                E("callouts.routeProgress"),
+                                E("callouts.routeEveryNJumps", under: true),
+                                E("callouts.longJumpRemark"),
+                                E("callouts.longJumpSeconds", under: true),
+                                E("callouts.announcedAttack"),
+                                E("callouts.rivalTerritory"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "exploring",
@@ -391,18 +404,20 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("callouts.arrival"),
-                            E("callouts.homeSystem", under: true),
-                            E("callouts.lore"),
-                            E("callouts.loreCooldownDays", under: true),
-                            E("callouts.discovery"),
-                            E("callouts.footfall"),
-                            E("callouts.biologyValue"),
-                            E("callouts.surveyedBiology"),
-                            E("callouts.biologyThreshold", under: true),
-                            E("callouts.sampling"),
-                        ]),
+                            "Exploration callouts",
+                            "What D47 points out when you arrive somewhere, scan and sample.",
+                            [
+                                E("callouts.arrival"),
+                                E("callouts.homeSystem", under: true),
+                                E("callouts.lore"),
+                                E("callouts.loreCooldownDays", under: true),
+                                E("callouts.discovery"),
+                                E("callouts.footfall"),
+                                E("callouts.biologyValue"),
+                                E("callouts.surveyedBiology"),
+                                E("callouts.biologyThreshold", under: true),
+                                E("callouts.sampling"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "mining",
@@ -413,15 +428,17 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("callouts.materials"),
-                            E("callouts.emissions"),
-                            E("callouts.limpets"),
-                            E("callouts.limpetCargoFloor", under: true),
-                            E("callouts.limpetPercent", under: true),
-                            E("callouts.prospector"),
-                            E("callouts.coreAsteroid"),
-                        ]),
+                            "Mining callouts",
+                            "What D47 reports while you prospect and mine.",
+                            [
+                                E("callouts.materials"),
+                                E("callouts.emissions"),
+                                E("callouts.limpets"),
+                                E("callouts.limpetCargoFloor", under: true),
+                                E("callouts.limpetPercent", under: true),
+                                E("callouts.prospector"),
+                                E("callouts.coreAsteroid"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "plans-and-stories",
@@ -432,14 +449,16 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("callouts.checklist"),
-                            E("callouts.continuity"),
-                            E("callouts.adventure"),
-                            E("callouts.communityGoalSales"),
-                            E("callouts.tradingMode"),
-                            E("callouts.tradingModeMinHold", under: true),
-                        ]),
+                            "Plan and story callouts",
+                            "What D47 says about your checklist, adventures, community goals and trades.",
+                            [
+                                E("callouts.checklist"),
+                                E("callouts.continuity"),
+                                E("callouts.adventure"),
+                                E("callouts.communityGoalSales"),
+                                E("callouts.tradingMode"),
+                                E("callouts.tradingModeMinHold", under: true),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "chatter",
@@ -450,14 +469,16 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("callouts.ambient"),
-                            E("callouts.ambientSeconds", under: true),
-                            E("callouts.ambientMaxSeconds", under: true),
-                            E("callouts.npcChatter"),
-                            E("callouts.npcChatterSeconds", under: true),
-                            E("callouts.npcChatterMaxSeconds", under: true),
-                        ]),
+                            "Chatter",
+                            "Invented radio traffic between other pilots, and how often it plays.",
+                            [
+                                E("callouts.ambient"),
+                                E("callouts.ambientSeconds", under: true),
+                                E("callouts.ambientMaxSeconds", under: true),
+                                E("callouts.npcChatter"),
+                                E("callouts.npcChatterSeconds", under: true),
+                                E("callouts.npcChatterMaxSeconds", under: true),
+                            ]),
                         G(
                             "Messages read aloud",
                             "Which comms tabs D47 reads out, once incoming messages are on.",
@@ -486,17 +507,19 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("actions.keyboard"),
-                            E("actions.chat"),
-                            E("actions.autoPlot"),
-                            E("actions.switches"),
-                            E("actions.honkOnArrival"),
-                            E("actions.takeUsOut"),
-                            E("actions.separateAndEngage"),
-                            E("actions.separateAndSupercruise"),
-                            E("actions.requestDocking"),
-                        ]),
+                            "Permissions",
+                            "What D47 may do in the game for you. Each one starts off.",
+                            [
+                                E("actions.keyboard"),
+                                E("actions.chat"),
+                                E("actions.autoPlot"),
+                                E("actions.switches"),
+                                E("actions.honkOnArrival"),
+                                E("actions.takeUsOut"),
+                                E("actions.separateAndEngage"),
+                                E("actions.separateAndSupercruise"),
+                                E("actions.requestDocking"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "macros-and-switches",
@@ -505,7 +528,7 @@ public static class SettingsLayout
                     "macros",
                     [],
                     false,
-                    [G([E("switches.list"), E("macros.list")])]),
+                    [G("Your macros and switches", "Named key sequences you have made, and the HOTAS switches bound to them.", [E("switches.list"), E("macros.list")])]),
             ]),
         new SettingsArea(
             "screens",
@@ -521,13 +544,15 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("ui.theme"),
-                            E("ui.bloom"),
-                            E("ui.zoom"),
-                            E("hotkeys.openSettings"),
-                            E("hotkeys.focusAsk"),
-                        ]),
+                            "Look and keys",
+                            "The window's theme and zoom, and the keys that bring it forward.",
+                            [
+                                E("ui.theme"),
+                                E("ui.bloom"),
+                                E("ui.zoom"),
+                                E("hotkeys.openSettings"),
+                                E("hotkeys.focusAsk"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "overlay",
@@ -538,14 +563,16 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("ui.overlay.enabled"),
-                            E("ui.overlay.scale", under: true),
-                            E("ui.overlay.opacity", under: true),
-                            E("ui.overlay.display"),
-                            E("hotkeys.showOverlay"),
-                            E("hotkeys.moveOverlay"),
-                        ]),
+                            "Overlay",
+                            "Whether the mini panel shows over the game, how it looks, and where.",
+                            [
+                                E("ui.overlay.enabled"),
+                                E("ui.overlay.scale", under: true),
+                                E("ui.overlay.opacity", under: true),
+                                E("ui.overlay.display"),
+                                E("hotkeys.showOverlay"),
+                                E("hotkeys.moveOverlay"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "headset",
@@ -556,15 +583,28 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("vr.enabled"),
-                            E("vr.mode"),
-                            E("vr.opacity", under: true),
-                            E("vr.controllers", under: true),
-                            E("vr.state"),
-                            F(IsVrHotkeyFamily),
-                            F(IsVrPlacementFamily),
-                        ]),
+                            "Headset overlay",
+                            "Whether the overlay shows in SteamVR, which panel it shows, and its keys.",
+                            [
+                                E("vr.enabled"),
+                                E("vr.mode"),
+                                E("vr.opacity", under: true),
+                                E("vr.controllers", under: true),
+                                E("vr.state"),
+                                F(IsVrHotkeyFamily),
+                            ]),
+                        G(
+                            "Panel you are looking at placement",
+                            "Where the panel on screen right now sits in the headset.",
+                            [F(IsVrPlacementFamily(Capabilities.Builtin.VrCapability.CurrentSlot))]),
+                        G(
+                            "Panel placement",
+                            "Where the big panel sits in the headset.",
+                            [F(IsVrPlacementFamily(Capabilities.Builtin.VrCapability.PanelSlot))]),
+                        G(
+                            "Mini panel placement",
+                            "Where the mini panel sits in the headset.",
+                            [F(IsVrPlacementFamily(Capabilities.Builtin.VrCapability.MiniSlot))]),
                         G(
                             "Captions",
                             "What D47 says, written under it, in the headset.",
@@ -591,11 +631,13 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("privacy.memory"),
-                            E("privacy.audioFlight"),
-                            E("privacy.donor"),
-                        ]),
+                            "What D47 keeps",
+                            "Memories, recordings and your donation identifier, each deleted with one press.",
+                            [
+                                E("privacy.memory"),
+                                E("privacy.audioFlight"),
+                                E("privacy.donor"),
+                            ]),
                         G(
                             "What leaves this machine",
                             "Read-only, and computed from the settings as they stand right now.",
@@ -610,19 +652,21 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                        [
-                            E("updates.checkOnStartup"),
-                            E("about.installUpdate"),
-                            E("about.changelog"),
-                            E("about.changelogOnline"),
-                            E("about.setUpKeys"),
-                            E("about.startMenu"),
-                            E("about.dataFolder"),
-                            E("about.community"),
-                            E("about.version"),
-                            E("about.build"),
-                            E("about.attribution"),
-                        ]),
+                            "This install",
+                            "Update checks, this build, and the shortcuts to its files.",
+                            [
+                                E("updates.checkOnStartup"),
+                                E("about.installUpdate"),
+                                E("about.changelog"),
+                                E("about.changelogOnline"),
+                                E("about.setUpKeys"),
+                                E("about.startMenu"),
+                                E("about.dataFolder"),
+                                E("about.community"),
+                                E("about.version"),
+                                E("about.build"),
+                                E("about.attribution"),
+                            ]),
                     ]),
                 new SettingsPlace(
                     "diagnostics",
@@ -633,10 +677,12 @@ public static class SettingsLayout
                     true,
                     [
                         G(
-                        [
-                            E("diagnostics.paused"),
-                            E("diagnostics.coverage"),
-                        ]),
+                            "Diagnostics",
+                            "What is paused right now, and which features have been tested by hand.",
+                            [
+                                E("diagnostics.paused"),
+                                E("diagnostics.coverage"),
+                            ]),
                     ]),
             ]),
     ];

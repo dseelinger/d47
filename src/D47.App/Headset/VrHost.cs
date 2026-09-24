@@ -960,7 +960,11 @@ public sealed class VrHost : IDisposable
         }
 
         _viewState.Save(state);
+        AnchorsChanged?.Invoke();
     }
+
+    /// <summary>Raised after an anchor is set or forgotten, on whichever thread did it.</summary>
+    public event Action? AnchorsChanged;
 
     /// <summary>
     /// Puts a surface back where a fresh install puts it: forgets its anchor and sets its lock and

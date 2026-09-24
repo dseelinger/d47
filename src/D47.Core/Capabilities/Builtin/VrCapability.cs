@@ -562,6 +562,7 @@ public static class VrCapability
             Group = $"{what} placement",
             AppliesWhen = s => s.Vr.Enabled,
             PageOnly = pageOnly,
+            DefaultsIn = InTheSameMode,
             Binding = new SettingBinding
             {
                 Read = s => get(read(s)),
@@ -637,6 +638,7 @@ public static class VrCapability
             (v, _) => v,
             [.. Interface.PanelResolution.Choices]) with
         {
+            DefaultsIn = InTheSameMode,
             ChoiceSource = s => ResolutionChoices(read(s).ResolutionOr(Fallback(s)), Fallback(s)),
             Binding = new SettingBinding
             {
@@ -660,6 +662,10 @@ public static class VrCapability
                 .OrderBy(size => (long)size.Width * size.Height)
                 .Select(Interface.PanelResolution.Describe),
         ];
+
+    /// <summary>The defaults with the panel mode as it stands, so a row about the panel on screen resets that panel.</summary>
+    private static Configuration.D47Settings InTheSameMode(Configuration.D47Settings s) =>
+        Configuration.D47Settings.Defaults with { Vr = Configuration.D47Settings.Defaults.Vr with { Mode = s.Vr.Mode } };
 
     private static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
