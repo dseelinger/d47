@@ -118,7 +118,7 @@ public sealed class SpendWindow : Window
 
         _body.Children.Add(ByProviderSection());
 
-        _figure.Text = _session.RunningTotalDollars.ToString("C4");
+        _figure.Text = SessionDollars(_session, _speech, _settings).ToString("C4");
 
         _buttons.Children.Clear();
         Buttons(_buttons);
@@ -243,7 +243,18 @@ public sealed class SpendWindow : Window
     }
 
     /// <summary>This session, on one row (#227).</summary>
-    private static Control SessionRow(SpendTracker session, SpeechSpend speech, D47Settings settings)
+    private static Control SessionRow(SpendTracker session, SpeechSpend speech, D47Settings settings) =>
+        Row(
+            "Session",
+            SessionDollars(session, speech, settings).ToString("C4"),
+            SessionDetail(session, speech, settings));
+
+    /// <summary>The session's model turns and priced speech together (#432).</summary>
+    public static decimal SessionDollars(SpendTracker session, SpeechSpend speech, D47Settings settings) =>
+        session.RunningTotalDollars + speech.Dollars(settings);
+
+    /// <summary>The turn count and the voice sentence behind the session figure.</summary>
+    public static string SessionDetail(SpendTracker session, SpeechSpend speech, D47Settings settings)
     {
         var detail = $"{session.TurnCount:N0} {(session.TurnCount == 1 ? "turn" : "turns")}";
 
@@ -255,7 +266,7 @@ public sealed class SpendWindow : Window
             detail += $", {voice}";
         }
 
-        return Row("Session", session.RunningTotalDollars.ToString("C4"), detail);
+        return detail;
     }
 
     /// <summary>

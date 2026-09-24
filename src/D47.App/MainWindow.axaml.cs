@@ -300,7 +300,11 @@ public partial class MainWindow : Window
 
             // And the same window is the one with somewhere to open a dialog, which is what the turn line's
             // figures need.
-            Panel.EnableTurnDetails(ShowSpendAsync, () => host.Spend.RunningTotalDollars);
+            Panel.EnableTurnDetails(
+                ShowSpendAsync,
+                () => SpendWindow.SessionDollars(host.Spend, host.SpeechSpend, host.Settings.Current),
+                () => SpendWindow.SessionDetail(host.Spend, host.SpeechSpend, host.Settings.Current));
+            host.SpeechSpend.Recorded += Panel.RefreshSessionSpend;
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
             // 25).

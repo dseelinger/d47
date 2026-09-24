@@ -64,6 +64,19 @@ public class WhatTheVoicesCostTests
     }
 
     [Fact]
+    public void DollarsSumsThePricedChargesAndCountsFreeSpeechAsNothing()
+    {
+        var spend = new SpeechSpend();
+        spend.Record(Eleven, 749);
+        spend.Record(Edge, 5_000);
+
+        Assert.Equal(0.03745m, spend.Dollars(On(Eleven, price: 0.05)));
+    }
+
+    [Fact]
+    public void NothingSpokenCostsNothing() => Assert.Equal(0m, new SpeechSpend().Dollars(On(Eleven)));
+
+    [Fact]
     public void TheCommandersOwnRateBeatsTheListPrice()
     {
         var spend = new SpeechSpend();

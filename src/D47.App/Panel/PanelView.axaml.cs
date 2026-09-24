@@ -1390,13 +1390,15 @@ public partial class PanelView : UserControl
     /// (docs/plans/change-requests.md item 2).
     /// </summary>
     /// <remarks>
-    /// <paramref name="session"/> is the session's model spend, shown beside the link and read again after
-    /// each turn and when the figures close.
+    /// <paramref name="session"/> is the session's spend, shown beside the link with <paramref
+    /// name="detail"/> as its tooltip, and read again after each turn, when the figures close and on <see
+    /// cref="RefreshSessionSpend"/>.
     /// </remarks>
-    public void EnableTurnDetails(Func<Task> show, Func<decimal> session)
+    public void EnableTurnDetails(Func<Task> show, Func<decimal> session, Func<string>? detail = null)
     {
         _showTurnDetails = show;
         _sessionSpend = session;
+        _sessionDetail = detail;
         SpendRow.IsVisible = true;
         ApplySessionSpend();
     }
@@ -1417,11 +1419,30 @@ public partial class PanelView : UserControl
 
     private Func<decimal>? _sessionSpend;
 
+    private Func<string>? _sessionDetail;
+
+    /// <summary>Reads the session figure again; safe from any thread.</summary>
+    public void RefreshSessionSpend()
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            ApplySessionSpend();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(ApplySessionSpend);
+    }
+
     private void ApplySessionSpend()
     {
         if (_sessionSpend is { } session)
         {
             SessionFigure.Text = session().ToString("C4", System.Globalization.CultureInfo.CurrentCulture);
+        }
+
+        if (_sessionDetail is { } detail)
+        {
+            ToolTip.SetTip(SessionFigure, detail());
         }
     }
 

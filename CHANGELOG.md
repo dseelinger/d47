@@ -9,8 +9,10 @@
 ## 1.13.3 — Spend and the transcript
 
 The Transcript's footer is rearranged. SPEND has moved from the turn line to the right end of the
-microphone row, with SESSION and the session's model spend beside it. The figure is the one the
-Spend window shows. It updates after each turn and after you reset it in the Spend window. PTT READY
+microphone row, with SESSION and the session's spend beside it. The figure counts the model's
+answers and paid speech, such as ElevenLabs, together, and hovering over it shows the breakdown. The
+Spend window's header and Session row show the same total. It updates after each answer, after each
+spoken line and after you reset it in the Spend window. Speech with no rate set adds nothing. PTT READY
 is now cyan. The microphone row and the ask box now start at the same left edge as the turns.
 
 Each turn's time now follows its tags after a short gap instead of sitting at the far right. Your

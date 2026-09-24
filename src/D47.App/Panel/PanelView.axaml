@@ -208,7 +208,7 @@
                 Height="36"
                 Padding="0,0,16,0">
           <DockPanel>
-            <!-- The session's model spend and the way into its figures; shown where EnableTurnDetails is. -->
+            <!-- The session's spend, model and speech, and the way into its figures; shown where EnableTurnDetails is. -->
             <StackPanel x:Name="SpendRow"
                         DockPanel.Dock="Right"
                         Orientation="Horizontal"

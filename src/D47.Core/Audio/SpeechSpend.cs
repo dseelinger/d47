@@ -34,6 +34,9 @@ public sealed class SpeechSpend
 
     private Func<D47Settings>? _settings;
 
+    /// <summary>Raised after each charge is recorded, on the thread that synthesised it.</summary>
+    public event Action? Recorded;
+
     /// <summary>
     /// Handed the ledger and a way to read the current rates, after construction because the
     /// composition root builds the settings service and this on either side of each other.
@@ -69,26 +72,26 @@ public sealed class SpeechSpend
             };
         }
 
-        if (_ledger is null || _settings is null)
+        if (_ledger is not null && _settings is not null)
         {
-            return;
+            // Priced from this one utterance rather than from the running total, because a ledger row is
+            // one charge.
+            var settings = _settings();
+            var one = new SpeechCharge(providerId, characters, 1) { Audio = audio };
+
+            _ledger.Append(new Conversation.SpendEntry
+            {
+                Kind = Conversation.SpendKind.Voice,
+                ProviderId = providerId,
+                Model = TtsProviderCatalog.Selected(providerId).Name,
+                Dollars = DollarsFor(settings, one) ?? 0m,
+                Priced = Priced(settings, providerId),
+                Characters = characters,
+                AudioSeconds = audio > TimeSpan.Zero ? audio.TotalSeconds : null,
+            });
         }
 
-        // Priced from this one utterance rather than from the running total, because a ledger row is one
-        // charge.
-        var settings = _settings();
-        var one = new SpeechCharge(providerId, characters, 1) { Audio = audio };
-
-        _ledger.Append(new Conversation.SpendEntry
-        {
-            Kind = Conversation.SpendKind.Voice,
-            ProviderId = providerId,
-            Model = TtsProviderCatalog.Selected(providerId).Name,
-            Dollars = DollarsFor(settings, one) ?? 0m,
-            Priced = Priced(settings, providerId),
-            Characters = characters,
-            AudioSeconds = audio > TimeSpan.Zero ? audio.TotalSeconds : null,
-        });
+        Recorded?.Invoke();
     }
 
     /// <summary>Every provider that has spoken this session, most characters first.</summary>
@@ -146,6 +149,10 @@ public sealed class SpeechSpend
 
     public int Utterances => Charges.Sum(charge => charge.Utterances);
 
+    /// <summary>What the session's priced speech has cost; a provider with no rate adds nothing.</summary>
+    public decimal Dollars(D47Settings settings) =>
+        Charges.Sum(charge => DollarsFor(settings, charge) ?? 0m);
+
     /// <summary>What the session's speech has cost, in one line, or null when nothing has been spoken.</summary>
     public string? Describe(D47Settings settings)
     {
@@ -156,7 +163,7 @@ public sealed class SpeechSpend
             return null;
         }
 
-        var priced = charges.Sum(charge => DollarsFor(settings, charge) ?? 0m);
+        var priced = Dollars(settings);
         var everythingPriced = charges.All(charge => Priced(settings, charge.ProviderId));
 
         var line = new System.Text.StringBuilder(
