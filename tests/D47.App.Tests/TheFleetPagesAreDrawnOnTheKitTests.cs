@@ -60,7 +60,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
             () => store.Active);
 
         var build = ships.BuildFor(12, "python", "Bad Idea");
-        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
 
         var panel = new PanelView
         {

@@ -41,7 +41,7 @@ public class AFulfilledDerivedItemRemovesItselfTests
 
         var build = ships.BuildFor(ShipId, "python");
 
-        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
         ships.Promote(build.Id);
 
         checklists.AddNote(ChecklistScope.Ship(ShipId), "Buy a paint job");

@@ -21,9 +21,9 @@ public class TheProposalNagDecaysAndFitsTests
                 scope,
                 Hull,
                 [
-                    new BuildRequest("Armour", "Heavy Duty", 5, null),
-                    new BuildRequest("Armour", "Deep Plating", null, null),
-                    new BuildRequest("MainEngines", "Dirty Drive Tuning", 5, null),
+                    new BuildRequest("Armour", "Heavy Duty", 5),
+                    new BuildRequest("Armour", "Deep Plating", null),
+                    new BuildRequest("MainEngines", "Dirty Drive Tuning", 5),
                 ],
                 checklists.SlotFor),
             ["Armour", "MainEngines", "LifeSupport", "Radar", "Slot05_Size5", "Slot06_Size5"],
@@ -77,7 +77,7 @@ public class TheProposalNagDecaysAndFitsTests
             EngineeringPlan.Items(
                 scope,
                 Hull,
-                [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5, null)],
+                [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5)],
                 checklists.SlotFor),
             ["MainEngines"],
             "Cartage");

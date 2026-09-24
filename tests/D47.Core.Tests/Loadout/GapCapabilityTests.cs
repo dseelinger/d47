@@ -56,12 +56,12 @@ public class GapCapabilityTests
         var ships = new ShipPlanService(shipStore, checklists, () => state);
 
         var build = ships.BuildFor(12, "python", "Bad Idea");
-        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
 
         if (secondShip)
         {
             var second = ships.BuildFor(13, "python", "Second Idea");
-            ships.Plan(second.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+            ships.Plan(second.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
         }
 
         var capability = GapCapability.Create(ships, null, () => state);

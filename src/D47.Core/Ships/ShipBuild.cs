@@ -11,7 +11,6 @@ namespace D47.Core.Ships;
 /// The blueprint by name, or null for "something here, I don't mind what".
 /// </param>
 /// <param name="Grade">1 to 5, or null for wildcard — never "unknown".</param>
-/// <param name="Engineer">Who would roll it, where the Commander has an opinion.</param>
 /// <param name="Experimental">
 /// An experimental effect, which is its own item on the same slot.
 /// </param>
@@ -23,7 +22,6 @@ public sealed record SlotPlan(
     string Slot,
     string? Blueprint = null,
     int Grade = 0,
-    string? Engineer = null,
     string? Experimental = null,
     string? Module = null)
 {
@@ -48,7 +46,7 @@ public sealed record SlotPlan(
     /// Whether the module travels with the request (asked for 2026-08-24).
     /// </param>
     public BuildRequest ToRequest() =>
-        new(Slot, Blueprint, Grade > 0 ? Grade : null, Engineer, Experimental, Module);
+        new(Slot, Blueprint, Grade > 0 ? Grade : null, Experimental, Module);
 
     /// <summary>One line, as the slot index shows it and as d47 says it.</summary>
     /// <param name="withGrade">
@@ -90,9 +88,7 @@ public sealed record SlotPlan(
             return "nothing planned";
         }
 
-        var said = string.Join(", ", parts);
-
-        return Engineer is { Length: > 0 } engineer ? $"{said}, with {engineer}" : said;
+        return string.Join(", ", parts);
     }
 }
 

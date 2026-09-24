@@ -113,7 +113,7 @@ public static class EngineerWorkload
 
         if (slot.Blueprint is { Length: > 0 } blueprint && !blueprintDone)
         {
-            foreach (var name in PlannedNeeds.Rollers(blueprint, module, Grade(slot), slot.Engineer))
+            foreach (var name in PlannedNeeds.Rollers(blueprint, module, Grade(slot)))
             {
                 if (EngineerDirectory.ByName(name) is { } engineer)
                 {
@@ -124,10 +124,10 @@ public static class EngineerWorkload
 
         if (slot.Experimental is { Length: > 0 } experimental && !ExperimentalApplied(slot, fitted))
         {
-            var appliers = PlannedNeeds.Rollers(experimental, module, null, slot.Engineer);
+            var appliers = PlannedNeeds.Rollers(experimental, module, null);
 
             var gate = slot.Blueprint is { Length: > 0 } wanted && !blueprintDone
-                ? PlannedNeeds.Rollers(wanted, module, Grade(slot), slot.Engineer)
+                ? PlannedNeeds.Rollers(wanted, module, Grade(slot))
                     .ToHashSet(StringComparer.Ordinal)
                 : null;
 
@@ -185,7 +185,7 @@ public static class EngineerWorkload
 
         var ids = new HashSet<int>();
 
-        foreach (var name in PlannedNeeds.Rollers(wanted, build.Equipment, null, null))
+        foreach (var name in PlannedNeeds.Rollers(wanted, build.Equipment, null))
         {
             if (EngineerDirectory.ByName(name) is { } engineer)
             {

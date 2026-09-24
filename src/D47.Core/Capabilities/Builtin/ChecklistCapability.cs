@@ -193,8 +193,8 @@ public static class ChecklistCapability
             {
                 Name = "plan_ship_build",
                 Description =
-                    "Set what a ship's build wants in one slot: a blueprint, a grade, an engineer, an "
-                    + "experimental effect — any may be left out, and left out means \"any\" rather than "
+                    "Set what a ship's build wants in one slot: a blueprint, a grade, an experimental "
+                    + "effect — any may be left out, and left out means \"any\" rather than "
                     + "\"unknown\". Other slots are untouched. It does not reach the checklist until the "
                     + "Commander promotes the build.",
                 Parameters =
@@ -218,14 +218,6 @@ public static class ChecklistCapability
                         Name = "grade",
                         Type = ToolParameterType.Integer,
                         Description = "1 to 5. Omit for any grade — that is a wildcard, not an unknown.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "engineer",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Who would craft it. Naming one is what lets D47 quote an exact count and "
-                            + "say when a grade is out of rank reach entirely.",
                     },
                     new ToolParameter
                     {
@@ -598,7 +590,6 @@ public static class ChecklistCapability
             canonical,
             arguments.TryGetString("blueprint", out var blueprint) ? blueprint : null,
             arguments.TryGetInt32("grade", out var grade) ? grade : 0,
-            arguments.TryGetString("engineer", out var engineer) ? engineer : null,
             arguments.TryGetString("experimental", out var experimental) ? experimental : null);
 
         if (plan.IsEmpty)

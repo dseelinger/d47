@@ -31,6 +31,14 @@ Bresa, Rosa Dayette and Yi Shen. A suit plan with Night Vision lists Yi Shen bes
 its Engineers block, and the route counts them too. A Night Vision checklist item no longer names
 Oden Geiger as the only engineer.
 
+A ship slot plan no longer names an engineer. Any engineer who can roll the planned blueprint at the
+planned grade can do the work. `plan_ship_build` has no `engineer` parameter, a plan line no longer
+ends ", with Felicity Farseer", and putting a build on the checklist no longer adds a "Rank 5 with
+…" item. The cost is counted at the best-ranked unlocked engineer who can roll it, and the
+Engineers route credits the slot to every engineer who can. A build saved with an engineer loads as
+before and drops it when next saved; items already on the checklist are left as they are. When a
+changed build is put back on the checklist, items already there keep the order you put them in.
+
 ## 1.13.4 — Settings controls fit their values
 
 The Hearing provider and Voice provider rows, and each voice's provider row, now show just the

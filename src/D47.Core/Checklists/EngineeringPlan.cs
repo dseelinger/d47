@@ -9,7 +9,6 @@ namespace D47.Core.Checklists;
 /// <param name="Slot">The slot, or the module, as it was said.</param>
 /// <param name="Blueprint">The blueprint by name.</param>
 /// <param name="Grade">1 to 5, or null for wildcard — never "unknown".</param>
-/// <param name="Engineer">Who would roll it, where the Commander has an opinion.</param>
 /// <param name="Experimental">
 /// An experimental effect, which is its own item on the same slot.
 /// </param>
@@ -17,7 +16,6 @@ public sealed record BuildRequest(
     string Slot,
     string? Blueprint = null,
     int? Grade = null,
-    string? Engineer = null,
     string? Experimental = null,
 
     // What the plan means to put there, where it says (asked for 2026-08-24).
@@ -95,7 +93,6 @@ public static class EngineeringPlan
                     {
                         Detail = Blank(request.Blueprint),
                         Grade = request.Grade,
-                        Engineer = Blank(request.Engineer),
 
                         // So an empty slot's line can name what is going in it rather than where (asked for
                         // 2026-08-24).
@@ -112,20 +109,9 @@ public static class EngineeringPlan
                     new ChecklistIntent(ChecklistIntentKind.Experimental, request.Slot.Trim())
                     {
                         Detail = experimental,
-                        Engineer = Blank(request.Engineer),
                         Module = Blank(request.Module),
                     },
                     $"{experimental} on {request.Slot.Trim()}"));
-            }
-
-            // The engineer's own access, where one is named and a grade is wanted.
-            if (Blank(request.Engineer) is { } named && request.Grade is { } grade)
-            {
-                items.Add(Item(
-                    scope,
-                    hull,
-                    new ChecklistIntent(ChecklistIntentKind.EngineerAccess, named) { Grade = grade },
-                    $"Rank {grade} with {named}"));
             }
         }
 
@@ -159,11 +145,6 @@ public static class EngineeringPlan
 
         built.Append(request.Blueprint ?? "engineering");
         built.Append(CultureInfo.InvariantCulture, $" on {request.Slot.Trim()}");
-
-        if (request.Engineer is { Length: > 0 } engineer)
-        {
-            built.Append(CultureInfo.InvariantCulture, $", with {engineer}");
-        }
 
         return built.ToString();
     }
@@ -296,7 +277,7 @@ public static class EngineeringPlan
 
     /// <summary>
     /// The highest rank among the engineers who could craft this, unlocked ones only — the recipe's own
-    /// list, or just the one the plan named where it named one.
+    /// list, or just the one the item names where it names one.
     /// </summary>
     private static int? RankFor(Blueprint recipe, ChecklistIntent intent, CommanderGameState? state)
     {

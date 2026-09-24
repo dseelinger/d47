@@ -166,7 +166,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         // Plan a roll, and the gauges become figures d47 worked out rather than read.
         var build = surface.Ships.Fleet().First(entry => entry.Build is not null).Build!;
 
-        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5, "Hera Tani"));
+        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5));
         Dispatcher.UIThread.RunJobs();
 
         // **The condition on which these gauges may show planned figures at all.** A modelled reading must
@@ -283,7 +283,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         var build = surface.Ships.Fleet().First(entry => entry.Build is not null).Build!;
 
-        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5, "Hera Tani"));
+        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5));
 
         // Boarding is what asks.
         var drift = new ShipDriftWatch(surface.Ships, surface.Checklists);
@@ -337,7 +337,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         // One planned roll and one gated module, so a capture shows both the modelled hue and the coin beside
         // a measured row.
-        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5, "Hera Tani"));
+        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5));
 
         surface.Ships.Plan(
             build.Id,
@@ -370,7 +370,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
             EngineeringPlan.Items(
                 ChecklistScope.Universal,
                 hull: null,
-                [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer")],
+                [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5)],
                 surface.Checklists.SlotFor),
             ["MainEngines"]);
 

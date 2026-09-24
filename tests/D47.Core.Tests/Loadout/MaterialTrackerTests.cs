@@ -35,7 +35,7 @@ public class MaterialTrackerTests
 
     private static ShipBuild Ship() =>
         new("F1", "ship-1", "python", 12, "Bad Idea",
-            [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer")]);
+            [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5)]);
 
     private static IReadOnlyList<MaterialRow> ShipRows(MaterialTrackerReport report) =>
         [.. report.Ship.SelectMany(card => card.Rows)];

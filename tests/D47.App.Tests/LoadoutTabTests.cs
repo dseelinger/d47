@@ -293,7 +293,7 @@ public class LoadoutTabTests
         var build = surface.Ships.BuildFor(12, "python", "Bad Idea");
 
         surface.Ships.Plan(
-            build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+            build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
 
         surface.Panel.Nav.GoTo(
             LoadoutPages.Ship(surface.Ships.Fleet()[0]),

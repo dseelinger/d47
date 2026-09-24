@@ -586,7 +586,7 @@ public class EngineersTabTests
 
         builds.Save([
             new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
-                [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, Engineer: "Chloe Sedesi")]),
+                [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5)]),
         ]);
 
         var kit = new OnFootBuildStore(

@@ -77,7 +77,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
 
         var build = ships.BuildFor(ShipId, "cobramkv");
 
-        ships.Plan(build.Id, new SlotPlan("Radar", "Long Range Scanner", 5, "Juri Ishmaak"));
+        ships.Plan(build.Id, new SlotPlan("Radar", "Long Range Scanner", 5));
         ships.Promote(build.Id);
 
         game.Apply(Loadout("2026-09-23T20:32:15Z", grade: 5));

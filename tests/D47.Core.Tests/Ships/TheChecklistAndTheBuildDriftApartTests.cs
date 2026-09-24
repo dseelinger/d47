@@ -49,7 +49,7 @@ public class TheChecklistAndTheBuildDriftApartTests
 
         if (planned)
         {
-            ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+            ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
         }
 
         return new Bench(store, checklists, ships, new ShipDriftWatch(ships, checklists))
@@ -99,14 +99,14 @@ public class TheChecklistAndTheBuildDriftApartTests
         var drift = new ShipDriftWatch(ships, checklists);
 
         var alice = ships.BuildFor(12, "python", "Bad Idea");
-        ships.Plan(alice.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        ships.Plan(alice.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
 
         Assert.NotNull(drift.Observe([Boarding(12)]));
 
         // Bob logs in, also in a ship 12, with a plan of his own for it.
         state.Apply(Identity("F2", "Bob"));
         var bob = ships.BuildFor(12, "python", "Other Idea");
-        ships.Plan(bob.Id, new SlotPlan("MainEngines", "Drive Strengthening", 3, "Felicity Farseer"));
+        ships.Plan(bob.Id, new SlotPlan("PowerPlant", "Armoured", 3));
 
         // Same id, so without the reset this is the ship already seen — the defect.
         Assert.Null(drift.Observe([Boarding(12)]));
@@ -168,6 +168,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         using var install = new TempInstall();
         var bench = Set(install);
 
+        bench.Ships.Plan(bench.BuildId, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Drag Drives"));
         bench.Ships.Promote(bench.BuildId);
 
         static IReadOnlyList<string> Order(ChecklistService checklists) =>
@@ -189,7 +190,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         Assert.NotEqual(promoted, theirs);
 
         // Then the plan grows a slot, and the question is asked on the next boarding.
-        bench.Ships.Plan(bench.BuildId, new SlotPlan("PowerPlant", "Armoured", 3, "Hera Tani"));
+        bench.Ships.Plan(bench.BuildId, new SlotPlan("PowerPlant", "Armoured", 3));
 
         Assert.NotNull(bench.Drift.Observe([Boarding(12)]));
         Assert.NotEmpty(bench.Checklists.Accept());
@@ -251,7 +252,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         Assert.Null(bench.Drift.Observe([Boarding(12)]));
 
         // The Commander plans something else.
-        bench.Ships.Plan(bench.BuildId, new SlotPlan("PowerPlant", "Armoured", 3, "Hera Tani"));
+        bench.Ships.Plan(bench.BuildId, new SlotPlan("PowerPlant", "Armoured", 3));
 
         Assert.Null(bench.Drift.Observe([Boarding(7)]));
         Assert.NotNull(bench.Drift.Observe([Boarding(12)]));

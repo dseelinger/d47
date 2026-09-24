@@ -63,7 +63,7 @@ public static class PlannedNeeds
                         what,
                         blueprint,
                         slot.Grade,
-                        Rollers(blueprint, slot.Module, slot.Grade, slot.Engineer)));
+                        Rollers(blueprint, slot.Module, slot.Grade)));
                 }
 
                 if (slot.Experimental is { Length: > 0 } experimental)
@@ -72,7 +72,7 @@ public static class PlannedNeeds
                         what,
                         experimental,
                         null,
-                        Rollers(experimental, slot.Module, null, slot.Engineer)));
+                        Rollers(experimental, slot.Module, null)));
                 }
             }
         }
@@ -92,7 +92,7 @@ public static class PlannedNeeds
                     $"{build.Describe()} · {slot.Slot}",
                     modification,
                     null,
-                    Rollers(modification, build.Equipment, null, null)));
+                    Rollers(modification, build.Equipment, null)));
             }
         }
 
@@ -103,14 +103,8 @@ public static class PlannedNeeds
     public static IReadOnlyList<string> Rollers(
         string wants,
         string? module,
-        int? grade,
-        string? named)
+        int? grade)
     {
-        if (named is { Length: > 0 } chosen)
-        {
-            return EngineerDirectory.ByName(chosen) is { } engineer ? [engineer.Name] : [chosen];
-        }
-
         var blueprints = BlueprintCatalogue.Named(wants, module);
 
         var matching = grade is { } wanted

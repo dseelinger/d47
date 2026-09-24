@@ -175,7 +175,7 @@ all live here — because "what am I working on" should have exactly one answer.
 > "what am I working on"
 > "read my checklist"
 > "add buy limpets to my checklist"
-> "plan grade 5 dirty drives on the thrusters with Felicity Farseer"
+> "plan grade 5 dirty drives on the thrusters"
 > "what do my plans still need"
 
 The first two need no AI configured at all — they route straight through, with nothing guessed.
@@ -395,13 +395,12 @@ place, `ChecklistScope.Word`.
           "scope": { "group": "ship", "key": "12" },
           "kind": "derived",
           "source": "engineeringPlan",
-          "text": "Grade 5 Dirty Drive Tuning on MainEngines, with Felicity Farseer",
+          "text": "Grade 5 Dirty Drive Tuning on MainEngines",
           "intent": {
             "kind": "blueprint",
             "subject": "MainEngines",
             "detail": "Dirty Drive Tuning",
-            "grade": 5,
-            "engineer": "Felicity Farseer"
+            "grade": 5
           },
           "hull": "Krait_MkII",
           "state": "open",
@@ -552,7 +551,7 @@ Proposes what a ship's build should say about **one slot**, leaving everything t
 other slots alone.
 
 ```json
-{"type":"object","properties":{"blueprint":{"type":"string","description":"A blueprint by name \u2014 \u0022Dirty Drive Tuning\u0022. Omit for any."},"drop":{"type":"boolean","description":"Say nothing about this slot. What it already produced is kept."},"engineer":{"type":"string","description":"Who would craft it. Naming one is what lets D47 quote an exact count and say when a grade is out of rank reach entirely."},"experimental":{"type":"string","description":"An experimental effect, which becomes its own item on the same slot."},"grade":{"type":"integer","description":"1 to 5. Omit for any grade \u2014 that is a wildcard, not an unknown."},"ship":{"type":"string","description":"A ship id, name, or a hull they do not own yet. Omit for the one they fly."},"slot":{"type":"string","description":"The slot or the module \u2014 \u0022MainEngines\u0022, \u0022thrusters\u0022, \u0022Slot01_Size4\u0022."}},"required":["slot"],"additionalProperties":false}
+{"type":"object","properties":{"blueprint":{"type":"string","description":"A blueprint by name \u2014 \u0022Dirty Drive Tuning\u0022. Omit for any."},"drop":{"type":"boolean","description":"Say nothing about this slot. What it already produced is kept."},"experimental":{"type":"string","description":"An experimental effect, which becomes its own item on the same slot."},"grade":{"type":"integer","description":"1 to 5. Omit for any grade \u2014 that is a wildcard, not an unknown."},"ship":{"type":"string","description":"A ship id, name, or a hull they do not own yet. Omit for the one they fly."},"slot":{"type":"string","description":"The slot or the module \u2014 \u0022MainEngines\u0022, \u0022thrusters\u0022, \u0022Slot01_Size4\u0022."}},"required":["slot"],"additionalProperties":false}
 ```
 
 #### `plan_on_foot_build`

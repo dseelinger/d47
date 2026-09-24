@@ -157,7 +157,6 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     Slot = plan.Slot,
                     Blueprint = plan.Blueprint,
                     Grade = plan.Grade,
-                    Engineer = plan.Engineer,
                     Experimental = plan.Experimental,
                     Module = plan.Module,
                     Variant = plan.Variant,
@@ -287,7 +286,6 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     // A stored plan from before grades stopped being nullable reads as none rather than
                     // failing the load, the same way a retired persona id does.
                     slot.Grade ?? 0,
-                    Blank(slot.Engineer),
                     Blank(slot.Experimental),
                     Blank(slot.Module))
                 {
@@ -352,8 +350,6 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
         public string? Blueprint { get; init; }
 
         public int? Grade { get; init; }
-
-        public string? Engineer { get; init; }
 
         public string? Experimental { get; init; }
 

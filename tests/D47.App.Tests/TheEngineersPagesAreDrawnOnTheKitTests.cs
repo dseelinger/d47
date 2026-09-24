@@ -65,7 +65,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
             new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
                 [
                     new SlotPlan("FrameShiftDrive", "Increased FSD Range", 5),
-                    new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, Engineer: "Chloe Sedesi"),
+                    new SlotPlan("MainEngines", "Dirty Drive Tuning", 5),
                 ]),
         ]);
 

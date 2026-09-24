@@ -49,7 +49,7 @@ public class ShipPlanTests
     [Fact]
     public void TheSpokenLineKeepsTheGradeAndOnlyTheDrawnOneDropsIt()
     {
-        var plan = new SlotPlan("LargeHardpoint2", "Lightweight Mount", 5, null)
+        var plan = new SlotPlan("LargeHardpoint2", "Lightweight Mount", 5)
         {
             Module = "Pulse Laser",
         };
@@ -321,7 +321,7 @@ public class ShipPlanTests
 
         var build = ships.BuildFor(12, "python", "Bad Idea");
 
-        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
         var said = ships.Promote(build.Id);
 
         // The button says "Put this build on my checklist", so pressing it puts the lines on the list rather than leaving a proposal waiting.
@@ -330,11 +330,11 @@ public class ShipPlanTests
         // And it says how much arrived, because forty items landing is an event.
         Assert.Contains("on your checklist now", said, StringComparison.Ordinal);
 
-        // Promotion is one-to-many: the modification, plus the rank the grade needs.
+        // The modification arrives, and no rank line for one engineer: any who rolls it can do the work.
         var items = checklists.Document.Items;
 
         Assert.Contains(items, item => item.Intent?.Kind == ChecklistIntentKind.Blueprint);
-        Assert.Contains(items, item => item.Intent?.Kind == ChecklistIntentKind.EngineerAccess);
+        Assert.DoesNotContain(items, item => item.Intent?.Kind == ChecklistIntentKind.EngineerAccess);
     }
 
     /// <summary>

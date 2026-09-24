@@ -1338,7 +1338,7 @@ public sealed class ShipsMode(
         AskModule(build, known, plan, prompts, (module, variant) =>
             AskBlueprint(build, known, plan, module, variant, prompts, (blueprint, grade, experimental) =>
             {
-                var wanted = new SlotPlan(slot, blueprint, grade, plan?.Engineer)
+                var wanted = new SlotPlan(slot, blueprint, grade)
                 {
                     Module = module,
                     Variant = variant,
@@ -2035,7 +2035,6 @@ public sealed class ShipsMode(
         {
             Detail = plan.Blueprint,
             Grade = plan.Grade,
-            Engineer = plan.Engineer,
         };
 
         var verdict = ChecklistEvaluator.Evaluate(

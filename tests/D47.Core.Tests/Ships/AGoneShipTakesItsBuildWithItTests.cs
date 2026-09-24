@@ -40,7 +40,7 @@ public class AGoneShipTakesItsBuildWithItTests
         {
             var build = ships.BuildFor(id, hull);
 
-            ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+            ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
             ships.Promote(build.Id);
         }
 

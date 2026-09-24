@@ -37,7 +37,7 @@ public class AMetSlotLosesItsPlanTests
 
         var build = ships.BuildFor(ShipId, "python");
 
-        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"));
+        ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
 
         return new Bench(game, ships);
     }
@@ -76,7 +76,7 @@ public class AMetSlotLosesItsPlanTests
 
         ships.Plan(
             build.Id,
-            new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer", "Faster Boot Sequence"));
+            new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Faster Boot Sequence"));
 
         // The blueprint is rolled, and the experimental is not.
         game.Apply(Engineered());

@@ -35,7 +35,7 @@ public class ChecklistPlanTests
     {
         var items = EngineeringPlan.Items(Krait, "krait_mkii",
         [
-            new BuildRequest("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer"),
+            new BuildRequest("MainEngines", "Dirty Drive Tuning", 5),
             new BuildRequest("PowerPlant", "Armoured", 5),
         ]);
 
@@ -46,14 +46,14 @@ public class ChecklistPlanTests
     }
 
     [Fact]
-    public void NamingAnEngineerAddsTheirRankAsItsOwnItem()
+    public void APlannedSlotAddsNoRankItemForAnyOneEngineer()
     {
         var items = EngineeringPlan.Items(Krait, "krait_mkii",
-            [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer")]);
+            [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5)]);
 
-        // Rank blocks as surely as materials do, so it is a thing to do rather than a footnote under the
-        // thing to do.
-        Assert.Contains(items, item => item.Intent?.Kind == ChecklistIntentKind.EngineerAccess);
+        // Any engineer who rolls the blueprint at the grade can do the work, so none is singled out.
+        Assert.DoesNotContain(items, item => item.Intent?.Kind == ChecklistIntentKind.EngineerAccess);
+        Assert.All(items, item => Assert.Null(item.Intent?.Engineer));
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class ChecklistPlanTests
             """;
 
         var items = EngineeringPlan.Items(Krait, "krait_mkii",
-            [new BuildRequest("MainEngines", "Dirty Drive Tuning", 1, "Felicity Farseer")]);
+            [new BuildRequest("MainEngines", "Dirty Drive Tuning", 1)]);
 
         var costing = EngineeringPlan.Cost(items, State(rankOne));
 
@@ -98,7 +98,7 @@ public class ChecklistPlanTests
             """;
 
         var items = EngineeringPlan.Items(Krait, "krait_mkii",
-            [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer")]);
+            [new BuildRequest("MainEngines", "Dirty Drive Tuning", 5)]);
 
         var costing = EngineeringPlan.Cost(items, State(rankThree));
 
@@ -114,7 +114,7 @@ public class ChecklistPlanTests
     public void ABlueprintNoTableCoversIsKeptAndMarkedRatherThanRefused()
     {
         var items = EngineeringPlan.Items(Krait, "krait_mkii",
-            [new BuildRequest("MainEngines", "Sovereign Wobbulation", 5, "Felicity Farseer")]);
+            [new BuildRequest("MainEngines", "Sovereign Wobbulation", 5)]);
 
         var costing = EngineeringPlan.Cost(items, State());
 

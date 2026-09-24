@@ -374,10 +374,11 @@ public sealed record ChecklistDocument
         }
 
         var mine = Items
-            .Where(item => item.Scope.Same(scope) && item.Source == source)
-            .ToDictionary(item => item.Key, StringComparer.OrdinalIgnoreCase);
+            .Select((item, position) => (Item: item, Position: position))
+            .Where(entry => entry.Item.Scope.Same(scope) && entry.Item.Source == source)
+            .ToDictionary(entry => entry.Item.Key, StringComparer.OrdinalIgnoreCase);
 
-        var kept = new List<ChecklistItem>();
+        var kept = new List<(ChecklistItem Item, int Position)>();
         var opened = new List<ChecklistItem>();
 
         foreach (var item in wanted)
@@ -389,7 +390,7 @@ public sealed record ChecklistDocument
             }
 
             // The wording is refreshed and nothing else is.
-            kept.Add(existing with { Text = item.Text, Intent = item.Intent, Hull = item.Hull });
+            kept.Add((existing.Item with { Text = item.Text, Intent = item.Intent, Hull = item.Hull }, existing.Position));
         }
 
         var dropped = mine.Count - kept.Count;
@@ -400,7 +401,8 @@ public sealed record ChecklistDocument
 
         var document = this with
         {
-            Items = [.. untouched, .. kept, .. opened],
+            // Kept items stay in the order the Commander left them, not the plan's.
+            Items = [.. untouched, .. kept.OrderBy(entry => entry.Position).Select(entry => entry.Item), .. opened],
         };
 
         var moved = opened.Count + dropped;

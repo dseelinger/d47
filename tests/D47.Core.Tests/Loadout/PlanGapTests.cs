@@ -41,7 +41,7 @@ public class PlanGapTests
 
     private static ShipBuild Ship(int? shipId = 12) =>
         new("F1", "ship-1", "python", shipId, "Bad Idea",
-            [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Felicity Farseer")]);
+            [new SlotPlan("MainEngines", "Dirty Drive Tuning", 5)]);
 
     private static OnFootBuild Suit(long? itemId = 7) =>
         new("kit-1", "Maverick Suit", OnFootKind.Suit, itemId,
@@ -99,8 +99,8 @@ public class PlanGapTests
         {
             Slots =
             [
-                new SlotPlan("MainEngines", "Dirty Drive Tuning", 3, "Felicity Farseer"),
-                new SlotPlan("PowerPlant", "Dirty Drive Tuning", 3, "Felicity Farseer"),
+                new SlotPlan("MainEngines", "Dirty Drive Tuning", 3),
+                new SlotPlan("PowerPlant", "Dirty Drive Tuning", 3),
             ],
         };
 
@@ -158,7 +158,7 @@ public class PlanGapTests
     {
         var build = Ship() with
         {
-            Slots = [new SlotPlan("MainEngines", "Dirty Drive Tuning", 3, "Felicity Farseer")],
+            Slots = [new SlotPlan("MainEngines", "Dirty Drive Tuning", 3)],
         };
 
         var report = PlanGap.Of([build], [], State());
