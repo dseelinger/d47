@@ -339,6 +339,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _barToolControls.Clear();
         _areaDropdown = null;
         _groups.Clear();
+        _tileGrids.Clear();
         _tabPlaceRows.Clear();
         _otherTabsSection = null;
         _otherTabsList = null;
@@ -521,10 +522,30 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             content.Children.Add(groupView.Container);
             _groups.Add(groupView);
 
+            // The group's toggles, as one grid of tiles where its first toggle falls.
+            TileGrid? tiles = null;
+
             foreach (var entry in group.Entries)
             {
                 foreach (var row in settings.RowsForEntry(entry))
                 {
+                    if (row is { Kind: SettingKind.Toggle, PageTop: false } && group.ToggleColumns > 0)
+                    {
+                        if (tiles is null)
+                        {
+                            tiles = new TileGrid { Name = ToggleTilesName, Columns = group.ToggleColumns };
+                            _tileGrids.Add(tiles);
+                            content.Children.Add(tiles);
+                        }
+
+                        var tile = BuildToggleTile(row) with { Section = index, GroupIndex = groupIndex };
+
+                        _rows.Add(tile);
+                        rows.Add(row);
+                        tiles.Children.Add(tile.Container);
+                        continue;
+                    }
+
                     var view = BuildRow(owners[row.Key], row, entry.Under) with { Section = index, GroupIndex = groupIndex };
 
                     _rows.Add(view);
@@ -639,6 +660,87 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         };
 
         return new GroupView(section, group.Title, group.Help, container, heading, note, reset, slot);
+    }
+
+    /// <summary>Marks a group's grid of toggle tiles, for a test to find it.</summary>
+    public const string ToggleTilesName = "ToggleTiles";
+
+    /// <summary>Marks one toggle tile, for a test to find it.</summary>
+    public const string ToggleTileName = "ToggleTile";
+
+    /// <summary>Every group's grid of toggle tiles, hidden when none of its tiles is shown.</summary>
+    private readonly List<TileGrid> _tileGrids = [];
+
+    /// <summary>
+    /// A toggle row as a checkbox tile: the Elite box and the row's label, toggled from anywhere on it, with
+    /// the row's help on the label. No reset of its own; the group reset covers it.
+    /// </summary>
+    private RowView BuildToggleTile(SettingRow row)
+    {
+        var (box, label) = LabeledCheckBox.Build(row.Label, labelFirst: false);
+        label.TextWrapping = TextWrapping.Wrap;
+        box.HorizontalAlignment = HorizontalAlignment.Stretch;
+        box.VerticalAlignment = VerticalAlignment.Stretch;
+        AutomationProperties.SetName(box, row.Label);
+
+        var spoken = new TextBlock
+        {
+            Text = row.Help,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 420,
+        };
+        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        if (!string.IsNullOrWhiteSpace(row.Help))
+        {
+            ToolTip.SetTip(label, spoken);
+
+            // Keyboard focus lands on the tile, not the label, so the tile opens the label's help.
+            box.GotFocus += (_, e) => ToolTip.SetIsOpen(label, e.NavigationMethod == NavigationMethod.Tab);
+            box.LostFocus += (_, _) => ToolTip.SetIsOpen(label, false);
+        }
+
+        var message = new TextBlock
+        {
+            FontSize = TypeScale.Secondary,
+            IsVisible = false,
+            Margin = new Thickness(0, 4, 0, 0),
+            TextWrapping = TextWrapping.Wrap,
+        };
+        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+
+        box.IsCheckedChanged += (_, _) =>
+        {
+            if (!_refreshing)
+            {
+                Apply(row, box.IsChecked == true ? "true" : "false", message);
+            }
+        };
+
+        var bar = new Border
+        {
+            BorderThickness = new Thickness(RowBarWidth, 0, 0, 0),
+            BorderBrush = Brushes.Transparent,
+            Child = box,
+        };
+
+        if (row.Protected)
+        {
+            Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
+        }
+
+        var container = new DockPanel { Name = ToggleTileName };
+        DockPanel.SetDock(message, Dock.Bottom);
+        container.Children.Add(message);
+        container.Children.Add(bar);
+
+        return new RowView(row, container, () => box.IsChecked = _settings!.Read(row.Key) is "true")
+        {
+            Control = box,
+            Label = label,
+            Spoken = spoken,
+        };
     }
 
     /// <summary>Marks a group's head, for a test to find it.</summary>
@@ -1513,6 +1615,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             Paint(group.HeadingText, group.Title.ToUpperInvariant());
             Paint(group.HelpText, group.Help);
+        }
+
+        foreach (var tiles in _tileGrids)
+        {
+            tiles.IsVisible = tiles.Children.Any(tile => tile.IsVisible);
         }
 
         UpdateOtherTabs();

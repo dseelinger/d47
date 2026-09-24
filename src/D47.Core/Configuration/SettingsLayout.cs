@@ -5,7 +5,11 @@ namespace D47.Core.Configuration;
 public sealed record SettingsEntry(string? Key, Func<string, bool>? Family = null, bool Under = false);
 
 /// <summary>A titled run of entries under one place, with one sentence saying what its rows are for.</summary>
-public sealed record SettingsPlaceGroup(string Title, string Help, IReadOnlyList<SettingsEntry> Entries);
+/// <param name="ToggleColumns">
+/// How many across the group's toggles are drawn, as one grid of tiles; 0 draws them as rows.
+/// </param>
+public sealed record SettingsPlaceGroup(
+    string Title, string Help, IReadOnlyList<SettingsEntry> Entries, int ToggleColumns = 2);
 
 /// <summary>One card on the settings page, gathering rows from any number of capabilities by key.</summary>
 public sealed record SettingsPlace(
@@ -73,8 +77,9 @@ public static class SettingsLayout
 
     private static SettingsEntry F(Func<string, bool> family) => new(null, family);
 
-    private static SettingsPlaceGroup G(string title, string help, IReadOnlyList<SettingsEntry> entries) =>
-        new(title, help, entries);
+    private static SettingsPlaceGroup G(
+        string title, string help, IReadOnlyList<SettingsEntry> entries, int toggleColumns = 2) =>
+        new(title, help, entries, toggleColumns);
 
     /// <summary>The documented family patterns, named so the resolver and the tests can each use them.</summary>
     public static bool IsSpeechProviderKeyFamily(string key) =>
@@ -130,9 +135,9 @@ public static class SettingsLayout
                                 E("listening.mode"),
                                 E("listening.sensitivity"),
                                 E("listening.silence"),
+                                E("listening.preRoll"),
                                 E("listening.echoCancellation"),
                                 E("listening.noiseSuppression"),
-                                E("listening.preRoll"),
                             ]),
                         G(
                             "Speech recognition",
@@ -191,7 +196,8 @@ public static class SettingsLayout
                                 E("speech.guardianVoice.glitch"),
                                 E("speech.guardianVoice.reverb"),
                                 E("speech.guardianVoice.test"),
-                            ]),
+                            ],
+                            toggleColumns: 4),
                         G(
                             "What it costs",
                             "What this session has spent, and the rates it was priced at.",
@@ -219,7 +225,7 @@ public static class SettingsLayout
                                 E("speech.thinkingBed"),
                                 E("speech.thinkingBedSound", under: true),
                             ]),
-                        G("Levels", "Level, mute and duck, for every channel.", LevelEntries()),
+                        G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0),
                         G("Your own audio", "Sound files you've dropped in for D47 to use.", [E("audio.drops")]),
                     ]),
             ]),

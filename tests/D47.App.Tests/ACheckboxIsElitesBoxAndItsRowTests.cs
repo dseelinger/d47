@@ -124,6 +124,30 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
         window.Close();
     }
 
+    /// <summary>A settings toggle is the same box and row, drawn as a tile with its help on the label (#441).</summary>
+    [AvaloniaFact]
+    public void ASettingsToggleIsThisRowAsATile()
+    {
+        using var look = AppLook.Put();
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        SettingsPageReading.Open(host.View, "voice-input");
+
+        var box = (CheckBox)host.View.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.EchoKey)!;
+        var label = (TextBlock)box.Content!;
+        var tile = box.FindAncestorOfType<Control>(includeSelf: false)!;
+
+        Assert.Contains("sentence", box.Classes);
+        Assert.DoesNotContain("bare", box.Classes);
+        Assert.True(box.Bounds.Height >= 44);
+        Assert.IsType<TextBlock>(ToolTip.GetTip(label));
+        Assert.Equal(3, ((Border)tile).BorderThickness.Left);
+        Assert.Equal(Colors.Transparent, Solid(((Border)tile).BorderBrush));
+
+        host.Close();
+    }
+
     /// <summary>Checked, unchecked, focused and disabled rows on each theme, for a human to look at.</summary>
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]

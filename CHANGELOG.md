@@ -31,6 +31,13 @@ keys. Segments below the row's minimum are dim and set the minimum. A binding ro
 key in capitals, or NONE, then BIND to capture a new one and CLEAR, which is greyed out when nothing
 is bound. Without a controller, a stick-button row reads NO CONTROLLERS and BIND is greyed out.
 
+On/off settings in a settings group are now checkbox tiles in a grid, two across, where the group's
+first on/off setting was. Click anywhere on a tile to switch it. Guardian voice shows its eight
+treatments as two rows of four, Cancel D47's own voice and Take the room out are side by side at the
+end of Microphone, and Loop-state cues and Thinking bed are side by side under Cues. Tiles have no
+reset of their own; the group's reset puts them back. Capture before the key now comes before the
+two Microphone tiles. The Mute rows under Levels are unchanged.
+
 ## 1.13.3 — Spend and the transcript
 
 The Transcript's footer is rearranged. SPEND has moved from the turn line to the right end of the
