@@ -157,9 +157,10 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
         Manager().FollowSettings(settings);
         var host = SettingsHost.Open(settings, viewState, paths);
         var theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!;
+        var arrow = (ControlTheme)Application.Current!.FindResource("D47.StepperArrow")!;
 
         var glyphs = host.View.GetVisualDescendants().OfType<Button>()
-            .Where(button => ReferenceEquals(button.Theme, theme))
+            .Where(button => ReferenceEquals(button.Theme, theme) || ReferenceEquals(button.Theme, arrow))
             .ToList();
 
         Assert.Contains(glyphs, button => button is RepeatButton);

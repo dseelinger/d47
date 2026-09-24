@@ -2480,20 +2480,33 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (inset, text);
     }
 
-    /// <summary>A binding chip: mono at normal weight and no letterspacing, White on Slab.</summary>
-    internal static Button BindingChip()
+    /// <summary>Marks a binding chip, so a test can read what a bind row shows.</summary>
+    public const string BindingChipClass = "binding-chip";
+
+    /// <summary>A binding chip: the bound key in mono capitals, White on Slab. Shows; does not start a capture.</summary>
+    internal static (Border Chip, TextBlock Text) BindingChip(string? text = null)
     {
-        var chip = new Button
+        var said = new TextBlock
         {
+            Text = text?.ToUpperInvariant(),
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.Normal,
             LetterSpacing = 0,
-            Padding = new Thickness(12, 8),
+            VerticalAlignment = VerticalAlignment.Center,
         };
-        chip[!Button.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.SlabKey);
-        chip[!Button.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.WhiteKey);
-        return chip;
+        said[!TextBlock.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.WhiteKey);
+
+        var chip = new Border
+        {
+            Padding = new Thickness(12, 8),
+            MinHeight = TypeScale.MinimumTarget - 12,
+            Child = said,
+            Classes = { BindingChipClass },
+        };
+        chip[!Border.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.SlabKey);
+
+        return (chip, said);
     }
 
     /// <summary>
@@ -3516,61 +3529,86 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         });
     }
 
+    /// <summary>A 0–1 row, recognised by its declared range and step: drawn as a <see cref="Level"/> bar.</summary>
+    internal static bool IsLevel(SettingRow row) =>
+        row.Kind == SettingKind.Number && row.Maximum == 1 && row.Step == 0.05;
+
     private (Control, Action) BuildNumber(SettingRow row, TextBlock message)
     {
-        // Both from the row, so the control cannot offer a precision the store will not keep.
-        var number = new NumericUpDown
+        if (IsLevel(row))
         {
-            Increment = (decimal)row.Step,
-            FormatString = row.NumberFormat,
-            Width = 216,
-            HorizontalAlignment = HorizontalAlignment.Right,
-
-            // The row's own range where it declares one, so a stepper never offers a click that the store is
-            // only going to clamp away — an arrow that appears to do nothing reads as a broken control rather
-            // than as a value already at its limit.
-            Minimum = row.Minimum is { } low ? (decimal)low : decimal.MinValue,
-            Maximum = row.Maximum is { } high ? (decimal)high : decimal.MaxValue,
-        };
-
-        if (row.Unit is { } unit)
-        {
-            var text = new TextBlock
-            {
-                Text = unit,
-                FontFamily = new FontFamily(Fonts.MonoFamily),
-                FontSize = TypeScale.Meta,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            Themed(text, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-            var chip = new Border
-            {
-                BorderThickness = new Thickness(1, 0, 0, 0),
-                Padding = new Thickness(12, 0),
-                Child = text,
-            };
-            Themed(chip, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-
-            number.InnerRightContent = chip;
+            return BuildLevel(row, message);
         }
 
-        number.ValueChanged += (_, e) =>
+        // Both from the row, so the control cannot offer a precision the store will not keep, or a press the
+        // store is only going to clamp away.
+        var amount = new Amount
+        {
+            Step = (decimal)row.Step,
+            Format = row.NumberFormat,
+            Unit = row.Unit,
+            Minimum = row.Minimum is { } low ? (decimal)low : null,
+            Maximum = row.Maximum is { } high ? (decimal)high : null,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        amount.ValueCommitted += (_, _) =>
         {
             if (!_refreshing)
             {
                 Apply(
                     row,
-                    e.NewValue?.ToString(row.NumberFormat, System.Globalization.CultureInfo.InvariantCulture),
+                    amount.Value?.ToString(row.NumberFormat, CultureInfo.InvariantCulture),
                     message);
             }
         };
 
-        return (number, () =>
+        return (amount, () =>
         {
-            number.Value = decimal.TryParse(_settings!.Read(row.Key), out var parsed) ? parsed : null;
-            number.PlaceholderText = row.DefaultDisplayFor(_settings.Current);
+            amount.Value = decimal.TryParse(
+                _settings!.Read(row.Key),
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var parsed)
+                ? parsed
+                : null;
+            amount.Placeholder = row.DefaultDisplayFor(_settings.Current);
+        });
+    }
+
+    private (Control, Action) BuildLevel(SettingRow row, TextBlock message)
+    {
+        var level = new Level
+        {
+            Minimum = row.Minimum ?? 0,
+            Maximum = 1,
+            Step = row.Step,
+            Width = Level.CompactWidth,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        level.ValueChanged += (_, _) =>
+        {
+            if (!_refreshing)
+            {
+                Apply(
+                    row,
+                    level.Value.ToString(row.NumberFormat, CultureInfo.InvariantCulture),
+                    message);
+            }
+        };
+
+        return (level, () =>
+        {
+            var stored = _settings!.Read(row.Key) ?? row.DefaultValueFor(_settings.Current);
+
+            level.Value = double.TryParse(
+                stored,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var parsed)
+                ? parsed
+                : 1;
         });
     }
 
@@ -3638,23 +3676,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>
-    /// The one bind control (#217): a chip per bound key and a quiet CLEAR, in a row that wraps
-    /// (#354). One persistent slot per <see cref="SettingRow.BoundKeys"/> entry plus the empty-state
-    /// button, shown or hidden rather than rebuilt, so a capture in progress keeps its own control.
+    /// The one bind control (#217): a chip per bound key, or one reading NONE, then BIND and CLEAR, in a row
+    /// that wraps (#354). Chips are shown or hidden rather than rebuilt, so a capture in progress keeps its
+    /// own control.
     /// </summary>
     private (Control, Action) BuildBind(SettingRow row, TextBlock message)
     {
-        var empty = new Button { MinWidth = 150, HorizontalContentAlignment = HorizontalAlignment.Center };
-        var proseFont = empty.FontFamily;
+        var chips = row.BoundKeys.Select(_ => BindingChip()).ToList();
 
-        empty.Click += async (_, _) => await CaptureBindAsync(row, empty, message);
-
-        var chips = row.BoundKeys.Select(_ =>
-        {
-            var chip = BindingChip();
-            chip.Click += async (_, _) => await CaptureBindAsync(row, chip, message);
-            return chip;
-        }).ToList();
+        var bind = new Button { Content = "BIND" };
+        bind.Click += async (_, _) => await CaptureBindAsync(row, bind, message);
 
         var clear = new Button { Content = "CLEAR" };
 
@@ -3667,11 +3698,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         };
 
         var wrap = new WrapPanel { ItemSpacing = 8, LineSpacing = 8, HorizontalAlignment = HorizontalAlignment.Right };
-        wrap.Children.Add(empty);
-        foreach (var chip in chips)
+        foreach (var (chip, _) in chips)
         {
             wrap.Children.Add(chip);
         }
+        wrap.Children.Add(bind);
         wrap.Children.Add(clear);
 
         return (wrap, () =>
@@ -3679,25 +3710,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             var said = BoundAs(row);
             var bound = said.Any(text => text is not null);
 
-            // "Press to bind" and "No controllers" are prose, not data, so the empty-state control keeps
-            // the chrome font rather than the chips' monospace (#279).
-            empty.FontFamily = proseFont;
-            empty.IsVisible = !bound;
-
             // A row that can only be filled from a controller is dead without one, and saying so beats a
             // button that does nothing.
-            empty.IsEnabled = row.Kind != SettingKind.HotasButton || _switches is not null;
-            empty.Content = row.Kind == SettingKind.HotasButton && _switches is null
-                ? "No controllers"
-                : "Press to bind";
+            var dead = row.Kind == SettingKind.HotasButton && _switches is null;
 
             for (var i = 0; i < chips.Count; i++)
             {
-                chips[i].IsVisible = said[i] is not null;
-                chips[i].Content = said[i];
+                var (chip, text) = chips[i];
+                var empty = !bound && i == 0;
+
+                chip.IsVisible = said[i] is not null || empty;
+                text.Text = empty ? (dead ? "NO CONTROLLERS" : "NONE") : said[i]?.ToUpperInvariant();
+                text[!TextBlock.ForegroundProperty] = new DynamicResourceExtension(
+                    empty ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
             }
 
-            clear.IsVisible = bound;
+            bind.IsEnabled = !dead;
+            clear.IsEnabled = bound;
         });
     }
 

@@ -13,8 +13,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Every glyph-only button takes a d47 theme rather than Fluent's own: the amount control's spinner
-/// and the three reset icons take D47.GlyphButton (#376), the stepper's arrows D47.StepperArrow (#394).
+/// Every glyph-only button takes a d47 theme rather than Fluent's own: the three reset icons take
+/// D47.GlyphButton (#376), the stepper's and the amount's arrows D47.StepperArrow (#394).
 ///
 /// Each test merges ControlKitTheme.axaml through <see cref="AppLook.ControlKit"/> for its own
 /// duration — the same resource the button's own production code resolves from.
@@ -40,19 +40,17 @@ public class GlyphButtonsTakeTheirOwnThemeTests
     }
 
     [AvaloniaFact]
-    public void TheAmountControlSpinnerButtonsTakeTheGlyphButtonTheme()
+    public void TheAmountArrowsTakeTheStepperArrowTheme()
     {
         using var _ = AppLook.ControlKit();
         var host = Open();
-        var theme = GlyphButtonTheme();
+        var theme = (ControlTheme)Application.Current!.FindResource("D47.StepperArrow")!;
 
-        var number = host.View.GetVisualDescendants().OfType<NumericUpDown>().First(n => n.Bounds.Width > 0);
-        var spinnerButtons = number.GetVisualDescendants().OfType<RepeatButton>()
-            .Where(button => button.Name is "PART_IncreaseButton" or "PART_DecreaseButton")
-            .ToList();
+        var amount = host.View.GetVisualDescendants().OfType<Amount>().First(a => a.Bounds.Width > 0);
+        var arrows = amount.GetVisualDescendants().OfType<RepeatButton>().ToList();
 
-        Assert.Equal(2, spinnerButtons.Count);
-        Assert.All(spinnerButtons, button => Assert.Same(theme, button.Theme));
+        Assert.Equal(2, arrows.Count);
+        Assert.All(arrows, arrow => Assert.Same(theme, arrow.Theme));
 
         host.Close();
     }

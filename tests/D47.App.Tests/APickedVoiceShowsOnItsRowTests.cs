@@ -117,10 +117,10 @@ public class APickedVoiceShowsOnItsRowTests
 
         Assert.True(row is not null, "the push-to-talk row is not on the page");
 
-        Button Bind() => row!.GetVisualDescendants().OfType<Button>()
-            .First(button => !SettingsView.IsRowChrome(button)
-                             && button.IsEffectivelyVisible
-                             && button.Content as string != "CLEAR");
+        string? Bound() => row!.GetVisualDescendants().OfType<Border>()
+            .Where(chip => chip.Classes.Contains(SettingsView.BindingChipClass) && chip.IsEffectivelyVisible)
+            .Select(chip => (chip.Child as TextBlock)?.Text)
+            .First();
 
         Button Unbind() => row!.GetVisualDescendants().OfType<Button>()
             .First(button => button.Content as string == "CLEAR" && button.IsEffectivelyVisible);
@@ -131,7 +131,7 @@ public class APickedVoiceShowsOnItsRowTests
         settings.Apply(key, "Ctrl+Shift+D", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.NotEqual("Press to bind", Bind().Content as string);
+        Assert.NotEqual("NONE", Bound());
 
         // The app's own unsubscribe.
         DetachOnly(host);
@@ -140,7 +140,7 @@ public class APickedVoiceShowsOnItsRowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(settings.Read(key));
-        Assert.Equal("Press to bind", Bind().Content as string);
+        Assert.Equal("NONE", Bound());
 
         host.Close();
     }

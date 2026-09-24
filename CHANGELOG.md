@@ -22,6 +22,15 @@ Voice and Output device rows. Pressing it opens the list as a page of the panel,
 "Use the default" where the row has one, on the desktop and in the headset. The Local voice model
 build row keeps its arrows, because it asks before downloading.
 
+A number row, such as Capture before the key, is now a 220-wide control: ◄, the value with its unit
+in capitals (500 MS, $0.05), then ►. The arrows move by the row's step and stop at its limits, and
+repeat while held. Click the value to type one; Enter or clicking away applies it, and Esc cancels.
+The two speech price rows now show a $ unit. A level, opacity or duck row is a bar of 20 segments
+with the value beside it, such as 0.85: click a segment to set it, or use the Left and Right arrow
+keys. Segments below the row's minimum are dim and set the minimum. A binding row shows the bound
+key in capitals, or NONE, then BIND to capture a new one and CLEAR, which is greyed out when nothing
+is bound. Without a controller, a stick-button row reads NO CONTROLLERS and BIND is greyed out.
+
 ## 1.13.3 — Spend and the transcript
 
 The Transcript's footer is rearranged. SPEND has moved from the turn line to the right end of the

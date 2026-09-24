@@ -219,18 +219,17 @@ public sealed class ControlKitWindow : Window
                 noteGap: 8),
             Cell(
                 "AMOUNT — NUMBER + UNIT",
-                new NumericUpDown
+                new Amount
                 {
-                    Width = 216,
                     Value = 500,
-                    InnerRightContent = UnitChip("ms"),
+                    Unit = "ms",
                     HorizontalAlignment = HorizontalAlignment.Left,
                 },
-                Note("The unit lives in the control, so the label stops saying \"in milliseconds\".")),
+                Note("The unit lives in the control, so the label stops saying \"in milliseconds\". Click the value to type one.")),
             Cell(
                 "LEVEL — SETTABLE",
-                Capped(new Level { Minimum = 0, Maximum = 1.5, Value = 0.85, ReadoutFormat = "0.00" }),
-                Note("A handle that overhangs the track, and the number always present.")),
+                Capped(new Level { Minimum = 0.1, Value = 0.85 }),
+                Note("A segment per 0.05, and the number always present. Segments below the minimum are dim.")),
             Cell(
                 "GAUGE — REPORTED, NOT SETTABLE",
                 Capped(LoadoutPages.Gauge(new LoadoutGauge("Power", "25.04 / 22.93 MW · 109%", 1.0, LoadoutTone.Danger))),
@@ -386,34 +385,13 @@ public sealed class ControlKitWindow : Window
 
         foreach (var key in keys)
         {
-            var chip = SettingsView.BindingChip();
-            chip.Content = key;
-            wrap.Children.Add(chip);
+            wrap.Children.Add(SettingsView.BindingChip(key).Chip);
         }
 
-        var clear = new Button { Content = "CLEAR" };
-        wrap.Children.Add(clear);
+        wrap.Children.Add(new Button { Content = "BIND" });
+        wrap.Children.Add(new Button { Content = "CLEAR" });
 
         return wrap;
-    }
-
-    /// <summary>The unit chip an Amount's <c>InnerRightContent</c> carries, the same shape <c>BuildNumber</c>
-    /// draws for a real settings row (#351).</summary>
-    private static Control UnitChip(string unit)
-    {
-        var text = new TextBlock
-        {
-            Text = unit,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Meta,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        var chip = new Border { BorderThickness = new Thickness(1, 0, 0, 0), Padding = new Thickness(11, 0), Child = text };
-        Themed(chip, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-        return chip;
     }
 
     // -- Theme --
@@ -736,7 +714,7 @@ public sealed class ControlKitWindow : Window
                     protectedRow: true),
                 SettingsRowDemo(
                     "Capture before the key",
-                    new NumericUpDown { Value = 500, InnerRightContent = UnitChip("ms") },
+                    new Amount { Value = 500, Unit = "ms" },
                     showReset: true),
             },
         };

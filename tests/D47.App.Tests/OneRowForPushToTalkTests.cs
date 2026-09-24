@@ -36,14 +36,18 @@ public class OneRowForPushToTalkTests
             .FirstOrDefault(grid => grid.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text == label));
 
-    private static IReadOnlyList<Button> Chips(Grid row) =>
-        row.GetVisualDescendants().OfType<Button>()
-            .Where(button => !SettingsView.IsRowChrome(button)
-                             && button.IsEffectivelyVisible
-                             && button.Content as string != "CLEAR")
+    /// <summary>What the row's binding chips read, in order.</summary>
+    private static IReadOnlyList<string?> Chips(Grid row) =>
+        row.GetVisualDescendants().OfType<Border>()
+            .Where(chip => chip.Classes.Contains(SettingsView.BindingChipClass) && chip.IsEffectivelyVisible)
+            .Select(chip => (chip.Child as TextBlock)?.Text)
             .ToList();
 
-    private static Button Bind(Grid row) => Chips(row)[0];
+    private static Button Bind(Grid row) =>
+        row.GetVisualDescendants().OfType<Button>()
+            .First(button => !SettingsView.IsRowChrome(button)
+                             && button.IsEffectivelyVisible
+                             && button.Content as string != "CLEAR");
 
     private static Button Unbind(Grid row) =>
         row.GetVisualDescendants().OfType<Button>()
@@ -62,7 +66,7 @@ public class OneRowForPushToTalkTests
         var row = Row(host, "Push-to-talk");
         Assert.True(row is not null, "the push-to-talk row is not on the page");
 
-        Assert.Equal(["RightShift", "button 11"], Chips(row!).Select(button => button.Content as string));
+        Assert.Equal(["RIGHTSHIFT", "BUTTON 11"], Chips(row!));
 
         host.Close();
     }
@@ -118,7 +122,7 @@ public class OneRowForPushToTalkTests
 
         Assert.Null(settings.Current.Listening.PushToTalkKey);
         Assert.Null(settings.Current.Listening.PushToTalkButton);
-        Assert.Equal("Press to bind", Bind(row).Content as string);
+        Assert.Equal(["NONE"], Chips(row));
 
         host.Close();
     }
@@ -256,7 +260,7 @@ public class OneRowForPushToTalkTests
 
         Assert.Equal("F9", settings.Current.Listening.PushToTalkKey);
         Assert.Equal($"{Stick}#10", settings.Current.Listening.PushToTalkButton);
-        Assert.Equal(["F9", "button 11"], Chips(row).Select(button => button.Content as string));
+        Assert.Equal(["F9", "BUTTON 11"], Chips(row));
 
         host.Close();
     }
@@ -374,13 +378,13 @@ public class OneRowForPushToTalkTests
         Dispatcher.UIThread.RunJobs();
 
         Press(host, row, Avalonia.Input.Key.F9, Avalonia.Input.PhysicalKey.F9);
-        Assert.Equal(["F9", "button 11"], Chips(row).Select(button => button.Content as string));
+        Assert.Equal(["F9", "BUTTON 11"], Chips(row));
 
         Press(host, row, Avalonia.Input.Key.F10, Avalonia.Input.PhysicalKey.F10);
 
         Assert.Equal("F10", settings.Current.Listening.PushToTalkKey);
         Assert.Equal($"{Stick}#10", settings.Current.Listening.PushToTalkButton);
-        Assert.Equal(["F10", "button 11"], Chips(row).Select(button => button.Content as string));
+        Assert.Equal(["F10", "BUTTON 11"], Chips(row));
 
         host.Close();
     }
@@ -414,8 +418,8 @@ public class OneRowForPushToTalkTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["F9", "button 11"],
-            Chips(Row(host, "Push-to-talk")!).Select(button => button.Content as string));
+            ["F9", "BUTTON 11"],
+            Chips(Row(host, "Push-to-talk")!));
 
         host.Close();
     }

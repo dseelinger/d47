@@ -93,7 +93,7 @@ public class VoiceRowFitsItsColumnTests
             var column = row.ColumnDefinitions[2].ActualWidth;
 
             foreach (var control in row.GetVisualDescendants().OfType<Control>()
-                .Where(child => child is Button or Segment or Stepper or TextBox or NumericUpDown))
+                .Where(child => child is Button or Segment or Stepper or TextBox or Amount or Level))
             {
                 Assert.True(
                     control.Bounds.Width <= column + Rounding,

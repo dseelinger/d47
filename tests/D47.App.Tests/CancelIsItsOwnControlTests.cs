@@ -48,14 +48,18 @@ public class CancelIsItsOwnControlTests
         return new HotasReading { Id = Stick, Buttons = state };
     }
 
-    private static IReadOnlyList<Button> Chips(Grid row) =>
-        row.GetVisualDescendants().OfType<Button>()
-            .Where(button => !SettingsView.IsRowChrome(button)
-                             && button.IsEffectivelyVisible
-                             && button.Content as string != "CLEAR")
+    /// <summary>What the row's binding chips read, in order.</summary>
+    private static IReadOnlyList<string?> Chips(Grid row) =>
+        row.GetVisualDescendants().OfType<Border>()
+            .Where(chip => chip.Classes.Contains(SettingsView.BindingChipClass) && chip.IsEffectivelyVisible)
+            .Select(chip => (chip.Child as TextBlock)?.Text)
             .ToList();
 
-    private static Button Bind(Grid row) => Chips(row)[0];
+    private static Button Bind(Grid row) =>
+        row.GetVisualDescendants().OfType<Button>()
+            .First(button => !SettingsView.IsRowChrome(button)
+                             && button.IsEffectivelyVisible
+                             && button.Content as string != "CLEAR");
 
     /// <summary>A press opens the microphone and does nothing else.</summary>
     [Fact]
@@ -114,7 +118,7 @@ public class CancelIsItsOwnControlTests
 
         var row = Row(host, "Cancel")!;
 
-        Assert.Equal(["Ctrl+Alt+X", "button 8"], Chips(row).Select(button => button.Content as string));
+        Assert.Equal(["CTRL+ALT+X", "BUTTON 8"], Chips(row));
 
         // And the button half is not a second row on the page.
         Assert.Null(Row(host, "Cancel button"));

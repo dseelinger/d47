@@ -305,13 +305,13 @@ What you hold to talk. **Right shift out of the box** — a Commander on a stick
 a spare thumb and not much else, and it is the right-hand shift specifically, so the left one you
 may already be using in the game is not this.
 
-**One row, and it takes a key, a stick button, or both.** Press **Press to bind** and Directive 47
+**One row, and it takes a key, a stick button, or both.** Press **BIND** and Directive 47
 listens for either at once: press a key and it takes the key, press a button on your stick and it
 works out which one that was.
 
-**To have both, bind twice — one gesture each time.** Press the control and give it a key; press it
+**To have both, bind twice — one gesture each time.** Press **BIND** and give it a key; press it
 again and give it a button. The two are stored separately, so the second does not replace the first,
-and the row then reads `RightShift, button 11`. Either one opens the microphone, and the last one you
+and the row then shows `RIGHTSHIFT` and `BUTTON 11`. Either one opens the microphone, and the last one you
 let go of closes it — so letting go of the key while your thumb is still on the button does not cut
 you off mid-sentence.
 
@@ -356,7 +356,7 @@ how you talk to it.
 **Not a row of its own any more** — it is the **Push-to-talk** row above. This section is about
 what happens when you press a stick button at it, which is worth reading before you try.
 
-Press **Press to bind**, then press and release the button you want, and Directive 47 works out
+Press **BIND**, then press and release the button you want, and Directive 47 works out
 which one it was. It is stored separately from your key, so binding a button does not unbind the
 key: you said two things rather than changed your mind about one.
 

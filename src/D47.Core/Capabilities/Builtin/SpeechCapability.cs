@@ -561,6 +561,7 @@ public static class SpeechCapability
 
                 // Tenths of a cent.
                 Step = 0.001,
+                Unit = "$",
                 Minimum = 0,
                 Maximum = 10,
 
@@ -594,6 +595,7 @@ public static class SpeechCapability
 
                 // Tenths of a cent, matching the character row.
                 Step = 0.001,
+                Unit = "$",
                 Minimum = 0,
                 Maximum = 10,
 
