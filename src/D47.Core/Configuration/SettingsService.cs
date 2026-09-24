@@ -434,6 +434,9 @@ public sealed class SettingsService
     }
 
     /// <summary>Whether a secret has a value stored.</summary>
+    /// <summary>Whether a secret of this name is stored, from the names alone; the secret is not read.</summary>
+    public bool HoldsSecret(string secretName) => _secrets.Names.Contains(secretName);
+
     public bool HasSecret(string? secretName) =>
         secretName is not null && _secrets.Has(secretName);
 

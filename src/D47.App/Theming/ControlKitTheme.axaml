@@ -427,7 +427,9 @@
                               VerticalAlignment="Center">
               <ContentPresenter.ContentTemplate>
                 <DataTemplate x:DataType="x:Object">
-                  <TextBlock Text="{Binding Converter={x:Static controls:Segment.Uppercase}}" />
+                  <TextBlock Text="{Binding Converter={x:Static controls:Segment.Uppercase}}"
+                             TextWrapping="Wrap"
+                             TextAlignment="Center" />
                 </DataTemplate>
               </ContentPresenter.ContentTemplate>
             </ContentPresenter>

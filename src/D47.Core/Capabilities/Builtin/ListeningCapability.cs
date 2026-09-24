@@ -574,6 +574,7 @@ public static class ListeningCapability
                 Kind = SettingKind.Choice,
                 Choices = SttProviderCatalog.Ids,
                 ChoiceLabel = id => SttProviderCatalog.Selected(id).Label,
+                ChoiceStatus = (_, id) => ProviderStatus.Of(SttProviderCatalog.Selected(id), settings.HoldsSecret),
                 DefaultDisplay = SttProviderCatalog.LocalId,
                 DocsAnchor = "provider",
                 EgressId = EgressDisclosure.SpeechRecognition,

@@ -3124,7 +3124,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         // A row whose list comes from ChoiceSource can grow past a segment row's four between one Refresh
         // and the next, so it is always a stepper (#274).
-        var (view, combo) = Choice.Build(items, selectedIndex: -1, alwaysStepper: row.ChoiceSource is not null);
+        // Live: whether a provider's key is stored can change while the page is open.
+        List<ChoiceStatus?> Statuses() =>
+            [.. clearable ? [null] : Array.Empty<ChoiceStatus?>(), .. choices.Select(choice => row.StatusFor(choice, _settings!.Current))];
+
+        var (view, combo) = Choice.Build(
+            items, selectedIndex: -1, alwaysStepper: row.ChoiceSource is not null, statuses: Statuses());
 
         // The position and what stepping onto a value costs, both shown only on a stepper (#336).
         if (view is Stepper stepper)
@@ -3246,6 +3251,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (control, () =>
         {
             Unstage();
+
+            var statuses = Statuses();
+            switch (view)
+            {
+                case Segment segment when !statuses.SequenceEqual(segment.Statuses):
+                    segment.Statuses = statuses;
+                    break;
+
+                case Stepper stepper when !statuses.SequenceEqual(stepper.Statuses):
+                    stepper.Statuses = statuses;
+                    break;
+            }
 
             var value = _settings!.Read(row.Key);
             var found = value is null

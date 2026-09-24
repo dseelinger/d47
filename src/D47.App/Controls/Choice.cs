@@ -1,4 +1,5 @@
 using Avalonia.Controls.Primitives;
+using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
 
@@ -17,13 +18,17 @@ public static class Choice
     /// Builds the control and returns it as both its concrete type, for layout properties, and the
     /// shared interface, for wiring. <paramref name="alwaysStepper"/> is for a list that can change at
     /// run time — a stepper never has to decide whether it still fits a row of segments (#274).
+    /// <paramref name="statuses"/> is parallel to <paramref name="items"/>.
     /// </summary>
     public static (TemplatedControl View, IChoiceControl Choice) Build(
-        IReadOnlyList<string> items, int selectedIndex, bool alwaysStepper = false)
+        IReadOnlyList<string> items,
+        int selectedIndex,
+        bool alwaysStepper = false,
+        IReadOnlyList<ChoiceStatus?>? statuses = null)
     {
         IChoiceControl control = !alwaysStepper && items.Count is > 0 and <= SegmentLimit
-            ? new Segment()
-            : new Stepper();
+            ? new Segment { Statuses = statuses ?? [] }
+            : new Stepper { Statuses = statuses ?? [] };
 
         control.ItemsSource = items;
         control.SelectedIndex = selectedIndex;

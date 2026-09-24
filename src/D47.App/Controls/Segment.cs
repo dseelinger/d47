@@ -4,13 +4,15 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Data.Converters;
 using Avalonia.Styling;
+using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
 
 /// <summary>
 /// 2 to 4 fixed choices as equal-width cells 2px apart, wrapping rather than clipping (#348). Built
 /// on <see cref="RadioButton"/>, themed <c>D47.Segment</c>, for the mutual exclusion, arrow-key
-/// movement and accessibility role that come with it, the same reason <c>D47.Tab</c> is.
+/// movement and accessibility role that come with it, the same reason <c>D47.Tab</c> is. An option with
+/// a status carries it on a second line inside its tile.
 /// </summary>
 public sealed class Segment : ContentControl, IChoiceControl
 {
@@ -19,6 +21,10 @@ public sealed class Segment : ContentControl, IChoiceControl
 
     public static readonly StyledProperty<int> SelectedIndexProperty =
         AvaloniaProperty.Register<Segment, int>(nameof(SelectedIndex), -1);
+
+    /// <summary>A status line for each option, parallel to <see cref="ItemsSource"/>, drawn under its label.</summary>
+    public static readonly StyledProperty<IReadOnlyList<ChoiceStatus?>> StatusesProperty =
+        AvaloniaProperty.Register<Segment, IReadOnlyList<ChoiceStatus?>>(nameof(Statuses), []);
 
     /// <summary>The space between options, across and down.</summary>
     public const double Gap = 2;
@@ -31,6 +37,8 @@ public sealed class Segment : ContentControl, IChoiceControl
     public event EventHandler? SelectionChanged;
 
     private readonly List<RadioButton> _buttons = [];
+    private readonly List<(TextBlock Line, ChoiceTone Tone)?> _statusLines = [];
+    private readonly List<IDisposable> _statusInk = [];
     private bool _syncing;
     private static int _groupSerial;
     private readonly string _group = $"D47Segment{_groupSerial++}";
@@ -59,6 +67,12 @@ public sealed class Segment : ContentControl, IChoiceControl
         set => SetValue(SelectedIndexProperty, value);
     }
 
+    public IReadOnlyList<ChoiceStatus?> Statuses
+    {
+        get => GetValue(StatusesProperty);
+        set => SetValue(StatusesProperty, value);
+    }
+
     public string? SelectedItem =>
         SelectedIndex >= 0 && SelectedIndex < ItemsSource.Count ? ItemsSource[SelectedIndex] : null;
 
@@ -66,7 +80,7 @@ public sealed class Segment : ContentControl, IChoiceControl
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ItemsSourceProperty)
+        if (change.Property == ItemsSourceProperty || change.Property == StatusesProperty)
         {
             Rebuild();
         }
@@ -82,17 +96,24 @@ public sealed class Segment : ContentControl, IChoiceControl
         var row = new EqualCells();
 
         _buttons.Clear();
+        _statusLines.Clear();
 
         for (var i = 0; i < ItemsSource.Count; i++)
         {
             var index = i;
+            var status = i < Statuses.Count ? Statuses[i] : null;
+            TextBlock? line = null;
 
             var button = new RadioButton
             {
                 Theme = theme,
                 GroupName = _group,
-                Content = ItemsSource[i],
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Content = status is null ? ItemsSource[i] : Labelled(ItemsSource[i], status, out line),
             };
+
+            _statusLines.Add(line is null ? null : (line, status!.Tone));
 
             button.IsCheckedChanged += (_, _) =>
             {
@@ -111,6 +132,33 @@ public sealed class Segment : ContentControl, IChoiceControl
 
         Content = row;
         SyncChecked();
+    }
+
+    /// <summary>The label as the theme draws it, with the status line under it.</summary>
+    private static StackPanel Labelled(string label, ChoiceStatus status, out TextBlock line)
+    {
+        line = new TextBlock
+        {
+            Text = status.Text,
+            FontSize = Theming.TypeScale.Caption,
+            FontWeight = Avalonia.Media.FontWeight.Normal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+
+        return new StackPanel
+        {
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = label.ToUpperInvariant(),
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    TextAlignment = Avalonia.Media.TextAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                },
+                line,
+            },
+        };
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -155,11 +203,37 @@ public sealed class Segment : ContentControl, IChoiceControl
         }
 
         _syncing = false;
+
+        // A chosen tile's status takes the tile's own dark ink; the tone is for the dim tiles.
+        foreach (var ink in _statusInk)
+        {
+            ink.Dispose();
+        }
+
+        _statusInk.Clear();
+
+        for (var i = 0; i < _statusLines.Count; i++)
+        {
+            if (_statusLines[i] is not { } status)
+            {
+                continue;
+            }
+
+            if (i == SelectedIndex)
+            {
+                status.Line.ClearValue(TextBlock.ForegroundProperty);
+            }
+            else
+            {
+                _statusInk.Add(status.Line.Bind(TextBlock.ForegroundProperty, Stepper.Ink(status.Tone)));
+            }
+        }
     }
 
     /// <summary>
     /// Every child as wide as the widest, <see cref="Gap"/> apart, on as few lines as fit, with the
-    /// children spread evenly across those lines. Given more width than that, the cells share it.
+    /// children spread evenly across those lines, and never fewer than two across: where two of the
+    /// widest do not fit, the cells narrow and their labels wrap. Given more width, the cells share it.
     /// </summary>
     private sealed class EqualCells : Avalonia.Controls.Panel
     {
@@ -168,13 +242,11 @@ public sealed class Segment : ContentControl, IChoiceControl
         protected override Size MeasureOverride(Size availableSize)
         {
             var widest = 0.0;
-            var tallest = 0.0;
 
             foreach (var child in Children)
             {
                 child.Measure(Size.Infinity);
                 widest = Math.Max(widest, child.DesiredSize.Width);
-                tallest = Math.Max(tallest, child.DesiredSize.Height);
             }
 
             var count = Children.Count;
@@ -187,12 +259,24 @@ public sealed class Segment : ContentControl, IChoiceControl
                 ? count
                 : (int)Math.Floor((availableSize.Width + Gap) / (widest + Gap));
 
-            var perLine = Math.Clamp(fit, 1, count);
+            var perLine = Math.Clamp(fit, Math.Min(2, count), count);
             var rows = (count + perLine - 1) / perLine;
             _columns = (count + rows - 1) / rows;
 
+            var cell = double.IsInfinity(availableSize.Width)
+                ? widest
+                : Math.Max(0, Math.Min(widest, (availableSize.Width - (_columns - 1) * Gap) / _columns));
+
+            var tallest = 0.0;
+
+            foreach (var child in Children)
+            {
+                child.Measure(new Size(cell, double.PositiveInfinity));
+                tallest = Math.Max(tallest, child.DesiredSize.Height);
+            }
+
             return new Size(
-                _columns * widest + (_columns - 1) * Gap,
+                _columns * cell + (_columns - 1) * Gap,
                 rows * tallest + (rows - 1) * Gap);
         }
 

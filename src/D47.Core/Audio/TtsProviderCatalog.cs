@@ -99,7 +99,7 @@ public static class TtsProviderCatalog
     {
         Id = NoneId,
         Name = "None",
-        Label = "None — do not speak",
+        Label = "None",
         Destination = "nothing sent",
         Egress = "No voice provider is selected, so no text is sent anywhere to be spoken. "
                  + "Audio cues and the thinking bed still play; they are files on this machine.",
@@ -109,7 +109,7 @@ public static class TtsProviderCatalog
     {
         Id = EdgeId,
         Name = "Edge Neural",
-        Label = "Edge Neural (free)",
+        Label = "Edge Neural",
         Destination = "speech.platform.bing.com",
         Egress = "The text of every line D47 speaks is sent to Microsoft's Edge Read Aloud service to "
                  + "be turned into audio. That includes re-voiced in-game messages when you have "
@@ -121,7 +121,7 @@ public static class TtsProviderCatalog
     {
         Id = ElevenLabsId,
         Name = "ElevenLabs",
-        Label = "ElevenLabs (paid — needs a key)",
+        Label = "ElevenLabs",
         KeySecretName = ElevenLabsKeySecretName,
         Destination = "api.elevenlabs.io, storage.googleapis.com",
 
@@ -150,7 +150,7 @@ public static class TtsProviderCatalog
     {
         Id = OpenAiId,
         Name = "OpenAI",
-        Label = "OpenAI (paid — needs a key)",
+        Label = "OpenAI",
 
         // The same secret the language-model provider uses.
         KeySecretName = "openai.apiKey",
@@ -184,7 +184,7 @@ public static class TtsProviderCatalog
     {
         Id = CartesiaId,
         Name = "Cartesia",
-        Label = "Cartesia (paid — needs a key)",
+        Label = "Cartesia",
         KeySecretName = "cartesia.apiKey",
         Destination = "api.cartesia.ai",
         Egress = "The text of every line D47 speaks through this slot is sent to Cartesia to be "
@@ -219,7 +219,7 @@ public static class TtsProviderCatalog
     {
         Id = KokoroId,
         Name = "Kokoro",
-        Label = "Kokoro (free — runs on this machine)",
+        Label = "Kokoro",
         Destination = "nothing sent",
         Egress =
             "Nothing is sent anywhere. The voice runs on this computer, so the text D47 speaks — "

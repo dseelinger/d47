@@ -6,13 +6,15 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
 
 /// <summary>
 /// One value stepped through a list too long, or too changeable, for <see cref="Segment"/>
 /// (#274). <c>◄</c> and <c>►</c> tiles either side of the value, 2px apart, each press moving one
-/// item and wrapping at the ends. Holding an arrow repeats the move.
+/// item and wrapping at the ends. Holding an arrow repeats the move. The value box also carries the
+/// position and the value's status line; the cost line sits under the whole control.
 /// </summary>
 public sealed class Stepper : ContentControl, IChoiceControl
 {
@@ -29,11 +31,17 @@ public sealed class Stepper : ContentControl, IChoiceControl
     public static readonly StyledProperty<IReadOnlyList<string?>> ConsequencesProperty =
         AvaloniaProperty.Register<Stepper, IReadOnlyList<string?>>(nameof(Consequences), []);
 
+    /// <summary>A status line for each item, parallel to <see cref="ItemsSource"/>, drawn under the value.</summary>
+    public static readonly StyledProperty<IReadOnlyList<ChoiceStatus?>> StatusesProperty =
+        AvaloniaProperty.Register<Stepper, IReadOnlyList<ChoiceStatus?>>(nameof(Statuses), []);
+
     /// <summary>Raised when the choice changes by a press — never by setting <see cref="SelectedIndex"/>.</summary>
     public event EventHandler? SelectionChanged;
 
-    /// <summary>The value cell ellipsises past this width; nothing else in the stepper truncates.</summary>
-    private const double ValueMaxWidth = 512;
+    /// <summary>The widest a stepper is drawn; the value ellipsises inside it.</summary>
+    public const double MaximumWidth = 420;
+
+    private IDisposable? _statusInk;
 
     private readonly TextBlock _value = new()
     {
@@ -46,10 +54,21 @@ public sealed class Stepper : ContentControl, IChoiceControl
         FontSize = Theming.TypeScale.Body,
     };
 
+    private readonly TextBlock _status = new()
+    {
+        Name = "StepperStatus",
+        HorizontalAlignment = HorizontalAlignment.Center,
+        TextTrimming = TextTrimming.CharacterEllipsis,
+        FontSize = Theming.TypeScale.Caption,
+        IsVisible = false,
+    };
+
     private readonly TextBlock _position = new()
     {
         Name = "StepperPosition",
-        HorizontalAlignment = HorizontalAlignment.Left,
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Center,
+        Margin = new Thickness(8, 0, 0, 0),
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
         FontSize = Theming.TypeScale.Meta,
     };
@@ -71,6 +90,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
     public Stepper()
     {
         Focusable = true;
+        MaxWidth = MaximumWidth;
         FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
         _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
@@ -83,12 +103,23 @@ public sealed class Stepper : ContentControl, IChoiceControl
         // The value cell's own truncation tip, not the whole control's — an arrow carries none (#382).
         TruncationTip.Watch(_value, () => _value.Text);
 
+        var value = new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { _value, _status },
+        };
+
+        var inside = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        Grid.SetColumn(value, 0);
+        Grid.SetColumn(_position, 1);
+        inside.Children.Add(value);
+        inside.Children.Add(_position);
+
         var valueCell = new Border
         {
             Padding = new Thickness(14, 0),
-            MaxWidth = ValueMaxWidth,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Child = _value,
+            Child = inside,
         };
 
         valueCell.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.SlabKey));
@@ -106,13 +137,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         row.Children.Add(valueCell);
         row.Children.Add(_next);
 
-        var caption = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-        Grid.SetColumn(_position, 0);
-        Grid.SetColumn(_consequence, 1);
-        caption.Children.Add(_position);
-        caption.Children.Add(_consequence);
-
-        Content = new StackPanel { Spacing = 8, Children = { row, caption } };
+        Content = new StackPanel { Spacing = 8, Children = { row, _consequence } };
 
         KeyDown += OnKeyDown;
     }
@@ -135,6 +160,12 @@ public sealed class Stepper : ContentControl, IChoiceControl
         set => SetValue(ConsequencesProperty, value);
     }
 
+    public IReadOnlyList<ChoiceStatus?> Statuses
+    {
+        get => GetValue(StatusesProperty);
+        set => SetValue(StatusesProperty, value);
+    }
+
     public string? SelectedItem =>
         SelectedIndex >= 0 && SelectedIndex < ItemsSource.Count ? ItemsSource[SelectedIndex] : null;
 
@@ -144,7 +175,8 @@ public sealed class Stepper : ContentControl, IChoiceControl
 
         if (change.Property == ItemsSourceProperty
             || change.Property == SelectedIndexProperty
-            || change.Property == ConsequencesProperty)
+            || change.Property == ConsequencesProperty
+            || change.Property == StatusesProperty)
         {
             Sync();
         }
@@ -222,5 +254,18 @@ public sealed class Stepper : ContentControl, IChoiceControl
 
         _consequence.Text = consequence ?? string.Empty;
         _consequence.IsVisible = !string.IsNullOrEmpty(consequence);
+
+        var status = SelectedIndex >= 0 && SelectedIndex < Statuses.Count ? Statuses[SelectedIndex] : null;
+
+        _status.Text = status?.Text ?? string.Empty;
+        _status.IsVisible = status is not null;
+        _statusInk?.Dispose();
+        _statusInk = status is null ? null : _status.Bind(TextBlock.ForegroundProperty, Ink(status.Tone));
     }
+
+    /// <summary>The theme brush a status tone is drawn in.</summary>
+    internal static IObservable<object?> Ink(ChoiceTone tone) =>
+        Application.Current!.Resources.GetResourceObservable(tone == ChoiceTone.Yellow
+            ? Theming.ThemeManager.YellowKey
+            : Theming.ThemeManager.GreyKey);
 }

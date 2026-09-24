@@ -53,7 +53,7 @@ public static class SttProviderCatalog
     {
         Id = LocalId,
         Name = "This computer",
-        Label = "This computer (Whisper)",
+        Label = "Whisper",
         Destination = "nothing sent",
         Egress = "Speech is turned into words by a Whisper model running on this machine. No audio and "
                  + "no transcript leaves it.",
@@ -63,7 +63,7 @@ public static class SttProviderCatalog
     {
         Id = GroqId,
         Name = "Groq",
-        Label = "Groq (paid — needs a key)",
+        Label = "Groq",
         Model = "whisper-large-v3-turbo",
         KeySecretName = "groq.apiKey",
         Destination = "api.groq.com",
@@ -74,7 +74,7 @@ public static class SttProviderCatalog
     {
         Id = OpenAiId,
         Name = "OpenAI",
-        Label = "OpenAI (paid — needs a key)",
+        Label = "OpenAI",
         Model = "gpt-4o-mini-transcribe",
 
         // The same secret the language model and the OpenAI voice read.
@@ -87,7 +87,7 @@ public static class SttProviderCatalog
     {
         Id = DeepgramId,
         Name = "Deepgram",
-        Label = "Deepgram (paid — needs a key)",
+        Label = "Deepgram",
         Model = "nova-3",
         KeySecretName = "deepgram.apiKey",
         Destination = "api.deepgram.com",
@@ -98,7 +98,7 @@ public static class SttProviderCatalog
     {
         Id = ElevenLabsId,
         Name = "ElevenLabs",
-        Label = "ElevenLabs Scribe (paid — needs a key)",
+        Label = "ElevenLabs Scribe",
         Model = "scribe_v2",
 
         // The same secret the ElevenLabs voice reads.

@@ -13,7 +13,10 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A stepper says where it stands, and what it costs to step onto a value, under itself (#336).</summary>
+/// <summary>
+/// A stepper says where it stands inside its value box, and what it costs to step onto a value under
+/// itself (#336, #438).
+/// </summary>
 public class AStepperNamesItsPositionAndCostTests
 {
     [AvaloniaFact]
@@ -81,8 +84,14 @@ public class AStepperNamesItsPositionAndCostTests
         Assert.True(stepper.Bounds.Height >= TypeScale.MinimumTarget, $"stepper is {stepper.Bounds.Height:0.#} tall");
         Assert.NotNull(bottom);
         Assert.True(
-            bottom.Value.Y <= stepper.Bounds.Height,
-            $"position line ends at {bottom.Value.Y:0.#}, stepper is {stepper.Bounds.Height:0.#} tall");
+            bottom.Value.Y <= TypeScale.MinimumTarget,
+            $"position ends at {bottom.Value.Y:0.#}, outside the {TypeScale.MinimumTarget}px value box");
+
+        var consequence = Consequence(stepper);
+        var costTop = consequence.TranslatePoint(default, stepper);
+
+        Assert.NotNull(costTop);
+        Assert.True(costTop.Value.Y >= TypeScale.MinimumTarget, "the cost line is not under the value box");
 
         host.Close();
     }

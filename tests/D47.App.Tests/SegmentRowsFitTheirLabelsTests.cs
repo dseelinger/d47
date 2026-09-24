@@ -61,6 +61,40 @@ public sealed class SegmentRowsFitTheirLabelsTests
         host.Close();
     }
 
+    /// <summary>
+    /// At 924 wide the four listening modes do not fit four across or two across on one line each, so
+    /// they are two rows of two equal tiles with their labels wrapped inside them (#438).
+    /// </summary>
+    [AvaloniaFact]
+    public void FourLongOptionsAt924AreTwoRowsOfTwoEqualTilesWithNothingClipped()
+    {
+        using var look = AppLook.Put();
+
+        var (service, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(service, viewState, paths, width: 924, height: 640);
+
+        host.View.Reveal(D47.Core.Capabilities.Builtin.ListeningCapability.Id);
+        Jobs();
+
+        var segment = Assert.IsType<Segment>(host.View.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.ModeKey));
+        var buttons = segment.GetVisualDescendants().OfType<RadioButton>().ToList();
+
+        Assert.Equal(4, buttons.Count);
+        Assert.Equal(2, buttons.Select(button => button.Bounds.X).Distinct().Count());
+        Assert.Equal(2, buttons.Select(button => button.Bounds.Y).Distinct().Count());
+        Assert.Single(buttons.Select(button => button.Bounds.Width).Distinct());
+
+        AssertFitsInside(segment);
+
+        foreach (var label in buttons.SelectMany(button => button.GetVisualDescendants().OfType<TextBlock>()))
+        {
+            Assert.True(label.TextLayout.TextLines.All(line => line.Width <= label.Bounds.Width + 0.5), label.Text);
+            Assert.True(label.DesiredSize.Height <= label.Bounds.Height + 0.5, label.Text);
+        }
+
+        host.Close();
+    }
+
     /// <summary>Every choice row on the page, so a future fixed height on any of them fails the build.</summary>
     [AvaloniaFact]
     public void EverySegmentOnEveryAreaFitsItsButtons()

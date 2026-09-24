@@ -86,6 +86,7 @@ public static class TestSurface
                 VoiceLabel = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
                 VoiceGender = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Gender,
                 Audition = audition,
+                KeyStored = settings.HoldsSecret,
 
                 // Supplied rather than left null, because a null host delegate makes its row ABSENT and the
                 // surface these tests bind is then not the one that ships.

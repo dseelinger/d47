@@ -67,6 +67,16 @@ public sealed record SettingFacet
     public required IReadOnlyList<SettingFacetOption> Options { get; init; }
 }
 
+/// <summary>The ink a <see cref="ChoiceStatus"/> is drawn in.</summary>
+public enum ChoiceTone
+{
+    Grey,
+    Yellow,
+}
+
+/// <summary>A short line of live state drawn under one choice — "PAID · KEY STORED".</summary>
+public sealed record ChoiceStatus(string Text, ChoiceTone Tone);
+
 /// <summary>How a row reads and writes its value.</summary>
 public sealed record SettingBinding
 {
@@ -120,6 +130,9 @@ public sealed record SettingRow
 
     /// <summary>What choosing one value costs or changes — null where a row has nothing to add (#336).</summary>
     public Func<string, string?>? Consequence { get; init; }
+
+    /// <summary>A status line for one choice, computed from live settings, or null where it has none.</summary>
+    public Func<D47Settings, string, ChoiceStatus?>? ChoiceStatus { get; init; }
 
     /// <summary>
     /// Choices that depend on other settings — the model list belongs to the selected provider's
@@ -368,6 +381,9 @@ public sealed record SettingRow
 
     /// <summary>What one choice costs or changes, or null where <see cref="Consequence"/> has nothing to say.</summary>
     public string? ConsequenceFor(string choice) => Consequence?.Invoke(choice);
+
+    /// <summary>One choice's status line, or null.</summary>
+    public ChoiceStatus? StatusFor(string choice, D47Settings settings) => ChoiceStatus?.Invoke(settings, choice);
 
     /// <summary>The id reads fine as-is, which is true of log levels and of most rows.</summary>
     private static readonly Func<string, string> Verbatim = choice => choice;

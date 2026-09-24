@@ -1495,6 +1495,8 @@ public sealed class AppHost : IDisposable
                     WhyNoVoices = group => self?.WhyNoVoices(group),
                     SpeechSpend = () => self?.SpeechSpend,
 
+                    KeyStored = settings.HoldsSecret,
+
                     // Asked of the slot's own provider, not the ship's.
                     HasKey = group => self is not { } host
                                       || host.HasKeyFor(TtsProviderCatalog.Selected(

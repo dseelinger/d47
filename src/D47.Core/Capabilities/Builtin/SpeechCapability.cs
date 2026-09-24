@@ -198,6 +198,9 @@ public static class SpeechCapability
             : null;
     };
 
+    private static ChoiceStatus? KeyStatus(SpeechSurface surface, string id) =>
+        ProviderStatus.Of(TtsProviderCatalog.Selected(id), name => surface.KeyStored?.Invoke(name) ?? false);
+
     /// <summary>The provider ids the settings row offers. "none" is a first-class choice.</summary>
     public const string NoneId = TtsProviderCatalog.NoneId;
     public const string EdgeId = TtsProviderCatalog.EdgeId;
@@ -256,6 +259,9 @@ public static class SpeechCapability
         /// Whether the selected provider has whatever credential it needs, or true where it needs none.
         /// </summary>
         public Func<VoiceGroup, bool>? HasKey { get; init; }
+
+        /// <summary>Whether a secret of this name is stored, read from the names alone.</summary>
+        public Func<string, bool>? KeyStored { get; init; }
 
         /// <summary>Tries a provider's stored key against the real service (Phase 16).</summary>
         public Func<string, CancellationToken, Task<SecretCheck>>? VerifyKey { get; init; }
@@ -378,6 +384,7 @@ public static class SpeechCapability
                 Kind = SettingKind.Choice,
                 Choices = [.. TtsProviderCatalog.All.Select(p => p.Id)],
                 ChoiceLabel = id => TtsProviderCatalog.Selected(id).Label,
+                ChoiceStatus = (_, id) => KeyStatus(surface, id),
                 DocsAnchor = "provider",
                 Binding = new SettingBinding
                 {
@@ -1252,6 +1259,7 @@ public static class SpeechCapability
                 // English.
                 Choices = [.. TtsProviderCatalog.For(slot).Select(provider => provider.Id)],
                 ChoiceLabel = id => TtsProviderCatalog.Selected(id).Label,
+                ChoiceStatus = (_, id) => KeyStatus(surface, id),
 
                 // What an unwritten entry means, said in the row rather than left to be inferred from a
                 // blank: absent follows the ship's provider, which is what a settings file from before this

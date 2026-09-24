@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.4 — Settings controls fit their values
+
+The Hearing provider and Voice provider rows, and each voice's provider row, now show just the
+provider's name. The line under it says where the provider runs and whether its key is stored: THIS
+COMPUTER · FREE for Whisper and Kokoro, FREE for Edge Neural, and PAID · KEY STORED in yellow or
+PAID · NEEDS KEY for a paid provider. Storing a key changes the line straight away. A stepper's
+position, such as 1 / 5, is now inside its value box, and a stepper is at most 420 wide. A row of
+four options that does not fit on one line is two rows of two equal tiles, with long labels wrapped
+inside them.
+
 ## 1.13.3 — Spend and the transcript
 
 The Transcript's footer is rearranged. SPEND has moved from the turn line to the right end of the
