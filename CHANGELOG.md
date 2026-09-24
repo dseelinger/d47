@@ -31,6 +31,13 @@ arrow also clears where that panel was put.
 
 Resetting Push-to-talk puts back Right Shift. Before, it left push-to-talk with no key.
 
+Every row on a page now has the same columns: the label, then the control, then the reset arrow. The
+controls start at one line down the page, and so do the reset arrows, whatever the length of the
+label beside them. A long label wraps under itself. A protected row's orange bar no longer pushes its
+label to the right of the others. The rows stop at 900 pixels wide, so on a wide window a reset arrow
+stays near the control it resets. In a narrow window a wide text box shrinks to fit its column
+instead of running past it.
+
 ## 1.12.0 — Hearing through a cloud provider
 
 A new **Hearing provider** row under Voice Input › Speech recognition chooses who turns your speech

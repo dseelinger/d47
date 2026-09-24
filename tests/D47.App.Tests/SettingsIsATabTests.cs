@@ -247,9 +247,9 @@ public class SettingsIsATabTests
 
         Assert.NotEmpty(rows);
 
-        // The label column's own maximum width (SettingsView.LabelColumnMaxWidth, #332): past it the
-        // control takes the rest, which on a narrow page is most of the row.
-        const double labelColumnMaxWidth = 300;
+        // The label column's width (SettingsView.LabelColumnWidth, #437): the control takes the rest, which
+        // on a narrow page is most of the row.
+        const double labelColumnMaxWidth = 240;
 
         foreach (var row in rows)
         {

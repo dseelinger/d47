@@ -99,9 +99,9 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         host.Close();
     }
 
-    /// <summary>A place's rows sit on the page ground under a Line rule.</summary>
+    /// <summary>A place's rows sit on the page ground over a Line2 rule.</summary>
     [AvaloniaFact]
-    public void RowsSitOnThePageGroundUnderALineRule()
+    public void RowsSitOnThePageGroundOverALine2Rule()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
@@ -115,8 +115,8 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         Assert.NotEmpty(rows);
         Assert.All(rows, row => Assert.Null(row.Background));
         Assert.All(rows, row => Assert.DoesNotContain(ListRow.Class, row.Classes));
-        Assert.All(rows, row => Assert.Equal(new Avalonia.Thickness(0, 1, 0, 0), row.BorderThickness));
-        Assert.All(rows, row => Assert.Equal(Ink(ThemeManager.LineKey), (row.BorderBrush as ISolidColorBrush)?.Color));
+        Assert.All(rows, row => Assert.Equal(new Avalonia.Thickness(0, 0, 0, 1), row.BorderThickness));
+        Assert.All(rows, row => Assert.Equal(Ink(ThemeManager.Line2Key), (row.BorderBrush as ISolidColorBrush)?.Color));
 
         host.Close();
     }

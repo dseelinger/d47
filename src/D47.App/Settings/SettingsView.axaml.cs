@@ -525,12 +525,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             {
                 foreach (var row in settings.RowsForEntry(entry))
                 {
-                    var view = BuildRow(owners[row.Key], row) with { Section = index, GroupIndex = groupIndex };
-
-                    if (entry.Under)
-                    {
-                        view.Container.Margin = new Thickness(UnderIndent, 0, 0, 0);
-                    }
+                    var view = BuildRow(owners[row.Key], row, entry.Under) with { Section = index, GroupIndex = groupIndex };
 
                     _rows.Add(view);
                     rows.Add(row);
@@ -1293,12 +1288,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
 
         const double Floor = 420;
-        const double Ceiling = 960;
 
         // The margin the page is laid out with, both sides, and the vertical scroll bar's width.
         var available = e.NewSize.Width - 56 - ScrollBarWidth;
 
-        Cards.Width = Math.Clamp(available, Floor, Ceiling);
+        Cards.Width = Math.Clamp(available, Floor, RowsMaxWidth);
     }
 
     /// <summary>The width the scroller's vertical bar takes from its viewport.</summary>
@@ -1924,14 +1918,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>The width a compact row's control is built to.</summary>
     private const double StandardControlWidth = 190;
 
-    /// <summary>The label column's maximum width — past it the control takes the rest of the row (#332).</summary>
-    private const double LabelColumnMaxWidth = 300;
+    /// <summary>The label column's width, the same on every row so every control starts at one x.</summary>
+    private const double LabelColumnWidth = 240;
 
-    /// <summary>The reset gutter's width, reserved on every compact row whether or not it draws one (#332).</summary>
+    /// <summary>The gap either side of the control column.</summary>
+    private const double RowColumnGap = 16;
+
+    /// <summary>The reset gutter's width, reserved on every row whether or not it draws one (#332).</summary>
     private const double ResetGutterWidth = 44;
 
-    /// <summary>A compact row's minimum height — enough for its label at the current type scale (#332).</summary>
-    private const double RowMinHeight = 52;
+    /// <summary>A row's minimum height.</summary>
+    private const double RowMinHeight = 56;
+
+    /// <summary>The widest the page's rows run, bar to reset gutter, so each reset stays near its control.</summary>
+    public const double RowsMaxWidth = 900;
 
     /// <summary>A row's own top and bottom padding (#332).</summary>
     private const double RowVerticalPadding = 8;
@@ -1939,15 +1939,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>A row's own left and right padding.</summary>
     private const double RowHorizontalPadding = 12;
 
-    /// <summary>The width of a protected row's left bar (#333).</summary>
-    private const double ProtectedBarWidth = 3;
-
-    /// <summary>The gap between a protected row's bar and the row.</summary>
-    private const double ProtectedBarPadding = 2;
+    /// <summary>The width of every row's left bar: <c>A</c> on a protected row, transparent on the rest (#333).</summary>
+    private const double RowBarWidth = 3;
 
     /// <summary>
-    /// Marks a caption-and-control row, so a test can find the rows this view builds rather than every
-    /// three-column grid that happens to be in the tree.
+    /// Marks a settings row's grid, so a test can find the rows this view builds rather than every grid
+    /// that happens to be in the tree.
     /// </summary>
     public const string CompactRowClass = "compact-row";
 
@@ -2008,7 +2005,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>A row's inline tag: the word in uppercase chrome type, Grey.</summary>
     private static TextBlock RowTag(string said) => D47.App.Panel.RoutingKit.Tag(said, ThemeManager.GreyKey);
 
-    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row)
+    /// <summary>One row; <paramref name="under"/> indents its caption inside the label column.</summary>
+    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row, bool under = false)
     {
         var header = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
 
@@ -2022,14 +2020,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         };
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
+        // This value is the flying Commander's; a second Commander on this machine sees their own (Phase 44).
         if (row.Scope == SettingScope.Commander)
         {
-            // The same tag for the other declaration a row can make (Phase 44): this value is the
-            // Commander's who is flying, and a second Commander on this machine will see their own here
-            // rather than this one.
             var tag = RowTag("per Commander");
-            tag.Margin = new Thickness(8, 0, 0, 0);
-            DockPanel.SetDock(tag, Dock.Right);
+            tag.Margin = new Thickness(0, 4, 0, 0);
+            tag.HorizontalAlignment = HorizontalAlignment.Left;
+            DockPanel.SetDock(tag, Dock.Bottom);
             header.Children.Add(tag);
         }
 
@@ -2055,7 +2052,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         };
         Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
-        var (control, refresh, compact) = BuildControl(row, message);
+        var (control, refresh) = BuildControl(row, message);
 
 
         // The settings key, shown only when it is the reason this row survived a filter.
@@ -2135,10 +2132,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var caption = new StackPanel { Spacing = 0 };
 
-        // A compact row's label, help and key wrap within the caption column rather than running under the control.
-        if (compact && !row.PageTop)
+        if (under && !row.PageTop)
         {
-            caption.MaxWidth = LabelColumnMaxWidth;
+            caption.Margin = new Thickness(UnderIndent, 0, 0, 0);
         }
 
         caption.Children.Add(header);
@@ -2183,78 +2179,66 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             caption.Background = Brushes.Transparent;
         }
 
-        Control body;
-        if (compact)
+        // Fixed columns on every row, so every label, every control and every reset gutter sits at one x
+        // down the page whichever rows the filter leaves showing. The page-top strip keeps its own shape.
+        var grid = new Grid
         {
-            // The label sits at its own content width, capped rather than proportional, so the control
-            // starts immediately after it instead of at the far edge of a share it does not fill (#332).
-            // The reset gutter is its own column, held at the same width whether or not this row draws
-            // one, so the control column does not go ragged down a card that mixes both kinds of row.
-            var grid = new Grid
-            {
-                ColumnDefinitions = row.PageTop
-                    ?
-                    [
-                        new ColumnDefinition(GridLength.Auto),
-                        new ColumnDefinition(12, GridUnitType.Pixel),
-                        new ColumnDefinition(GridLength.Auto),
-                    ]
-                    :
-                    [
-                        new ColumnDefinition(GridLength.Auto) { MaxWidth = LabelColumnMaxWidth },
-                        new ColumnDefinition(16, GridUnitType.Pixel),
-                        new ColumnDefinition(1, GridUnitType.Star),
-                        new ColumnDefinition(16, GridUnitType.Pixel),
-                        new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel),
-                    ],
+            ColumnDefinitions = row.PageTop
+                ?
+                [
+                    new ColumnDefinition(GridLength.Auto),
+                    new ColumnDefinition(12, GridUnitType.Pixel),
+                    new ColumnDefinition(GridLength.Auto),
+                ]
+                :
+                [
+                    new ColumnDefinition(LabelColumnWidth, GridUnitType.Pixel),
+                    new ColumnDefinition(RowColumnGap, GridUnitType.Pixel),
+                    new ColumnDefinition(1, GridUnitType.Star),
+                    new ColumnDefinition(RowColumnGap, GridUnitType.Pixel),
+                    new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel),
+                ],
 
-                HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
-            };
+            HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
+        };
 
-            // Not a styling hook: tests find the rows this view builds by the class rather than by
-            // shape, since a three-column grid is also what Avalonia builds a TextBox out of.
-            if (!row.PageTop)
-            {
-                grid.Classes.Add(CompactRowClass);
-            }
-
-            Grid.SetColumn(caption, 0);
-            Grid.SetColumn(control, 2);
-
-            // **Both halves centred, not just the control** (asked 2026-09-01: *"now align them
-            // vertically"*).
-            caption.VerticalAlignment = VerticalAlignment.Center;
-            control.VerticalAlignment = VerticalAlignment.Center;
-            control.HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-            grid.Children.Add(caption);
-            grid.Children.Add(control);
-
-            // Placed in the row's own gutter column rather than docked outside it, so the column stays
-            // 44 wide whether or not this particular row can be reset.
-            if (!row.PageTop && resetButton is not null)
-            {
-                Grid.SetColumn(resetButton, 4);
-                resetButton.HorizontalAlignment = HorizontalAlignment.Center;
-                resetButton.Margin = new Thickness(0);
-                grid.Children.Add(resetButton);
-                resetButton = null;
-            }
-
-            body = grid;
-        }
-        else
+        // Not a styling hook: tests find the rows this view builds by the class rather than by
+        // shape, since a three-column grid is also what Avalonia builds a TextBox out of.
+        if (!row.PageTop)
         {
-            var stack = new StackPanel { Spacing = 8 };
-            stack.Children.Add(caption);
-            stack.Children.Add(control);
-            body = stack;
+            grid.Classes.Add(CompactRowClass);
         }
 
-        // The reset glyph sits at the end of the row, right of the caption and the control alike (#279)
-        // — the page-top row and the stacked (non-compact) rows are not part of the reserved gutter above,
-        // so they still dock it outside the body rather than into a grid column.
+        Grid.SetColumn(caption, 0);
+        Grid.SetColumn(control, 2);
+
+        caption.VerticalAlignment = VerticalAlignment.Center;
+        control.VerticalAlignment = VerticalAlignment.Center;
+        control.HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+        grid.Children.Add(caption);
+        grid.Children.Add(control);
+
+        // A control built to a fixed width caps to the control column rather than running past it.
+        if (!row.PageTop && !double.IsNaN(control.Width))
+        {
+            grid.SizeChanged += (_, e) => control.MaxWidth = Math.Max(
+                0, e.NewSize.Width - LabelColumnWidth - (2 * RowColumnGap) - ResetGutterWidth);
+        }
+
+        // In the row's own gutter column, which stays 44 wide whether or not this row can be reset.
+        if (!row.PageTop && resetButton is not null)
+        {
+            Grid.SetColumn(resetButton, 4);
+            resetButton.HorizontalAlignment = HorizontalAlignment.Center;
+            resetButton.Margin = new Thickness(0);
+            grid.Children.Add(resetButton);
+            resetButton = null;
+        }
+
+        Control body = grid;
         Control line = body;
 
+        // The page-top strip has no gutter column, so its reset docks outside the grid (#279).
         if (resetButton is not null)
         {
             var dock = new DockPanel { LastChildFill = true };
@@ -2264,23 +2248,30 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             line = dock;
         }
 
-        // The page-top strip is a separate case and keeps its own rules (#279).
         if (!row.PageTop)
         {
-            line = RuledRow(line, RowMinHeight, new Thickness(RowHorizontalPadding, RowVerticalPadding));
-        }
-
-        if (row.Protected)
-        {
-            // A bar rather than a chip: the row itself says it is protected, with no extra control to read
-            // (#333). The legend that explains the bar is drawn once, above the cards.
-            var bar = new Border
+            var ruled = new Border
             {
-                BorderThickness = new Thickness(ProtectedBarWidth, 0, 0, 0),
-                Padding = new Thickness(ProtectedBarPadding, 0, 0, 0),
+                MinHeight = RowMinHeight,
+                Padding = new Thickness(RowHorizontalPadding, RowVerticalPadding),
+                BorderThickness = new Thickness(0, 0, 0, 1),
                 Child = line,
             };
-            Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
+            Themed(ruled, Border.BorderBrushProperty, ThemeManager.Line2Key);
+
+            // Every row has the bar, so a protected row's label starts at the same x as the rest. It is drawn
+            // in A only on a protected row (#333); the legend that explains it is drawn once, above the rows.
+            var bar = new Border
+            {
+                BorderThickness = new Thickness(RowBarWidth, 0, 0, 0),
+                BorderBrush = Brushes.Transparent,
+                Child = ruled,
+            };
+
+            if (row.Protected)
+            {
+                Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
+            }
 
             line = bar;
         }
@@ -2367,11 +2358,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
     }
 
-    /// <summary>
-    /// The control for a row, its refresh action, and whether it is compact enough to sit to the right
-    /// of its own caption.
-    /// </summary>
-    private (Control Control, Action Refresh, bool Compact) BuildControl(SettingRow row, TextBlock message)
+    /// <summary>The control for a row, and its refresh action.</summary>
+    private (Control Control, Action Refresh) BuildControl(SettingRow row, TextBlock message)
     {
         switch (row.Kind)
         {
@@ -2424,7 +2412,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             // A disclosure that is consulted rather than read.
             case SettingKind.Info when row.ValueAsHint:
-                return (new Avalonia.Controls.Panel(), () => { }, true);
+                return (new Avalonia.Controls.Panel(), () => { });
 
             // A summary with its full detail behind a one-press disclosure (#339).
             case SettingKind.Info when row.DetailBinding is not null:
@@ -2466,13 +2454,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>The read-out an Info row shows: no box, a 2px rule on the left edge, so it cannot be
     /// mistaken for a field (#335).</summary>
-    private (Control, Action, bool) BuildInfo(SettingRow row)
+    private (Control, Action) BuildInfo(SettingRow row)
     {
         var (inset, text) = Report();
 
         return row.Binding?.Read is { } read
-            ? (inset, () => text.Text = read(_settings!.Current), false)
-            : (inset, () => { }, false);
+            ? (inset, () => text.Text = read(_settings!.Current))
+            : (inset, () => { });
     }
 
     /// <summary>A Report: its value in A on a 2px left rule, with no box around it.</summary>
@@ -2512,9 +2500,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// The two-line summary <see cref="BuildInfo"/> already draws, plus the full text behind a "Show
     /// more" press (#339).
     /// </summary>
-    private (Control, Action, bool) BuildEgressDisclosure(SettingRow row)
+    private (Control, Action) BuildEgressDisclosure(SettingRow row)
     {
-        var (summary, refreshSummary, _) = BuildInfo(row);
+        var (summary, refreshSummary) = BuildInfo(row);
 
         var detail = new SelectableTextBlock
         {
@@ -2556,13 +2544,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             }
         }
 
-        return (stack, Refresh, false);
+        return (stack, Refresh);
     }
 
     /// <summary>A disclosure with the button that clears it.</summary>
-    private (Control, Action, bool) BuildMemories(SettingRow row)
+    private (Control, Action) BuildMemories(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2591,13 +2579,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>The debrief summary, plus the way into the proposals.</summary>
-    private (Control, Action, bool) BuildDebrief(SettingRow row)
+    private (Control, Action) BuildDebrief(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2626,12 +2614,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
-    private (Control, Action, bool) BuildLore(SettingRow row)
+    private (Control, Action) BuildLore(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2660,13 +2648,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>The Commander's log, behind a button (Phase 33).</summary>
-    private (Control, Action, bool) BuildLogbook(SettingRow row)
+    private (Control, Action) BuildLogbook(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2700,13 +2688,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             stack.DetachedFromVisualTree += (_, _) => book.Changed -= OnChanged;
         }
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>What the audio recorder holds, the way into reviewing it, and the wipe (#164).</summary>
-    private (Control, Action, bool) BuildAudioRecording(SettingRow row)
+    private (Control, Action) BuildAudioRecording(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2750,12 +2738,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open, wipe } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
-    private (Control, Action, bool) BuildPressable(SettingRow row, TextBlock message)
+    private (Control, Action) BuildPressable(SettingRow row, TextBlock message)
     {
-        var (inset, baseRefresh, _) = BuildInfo(row);
+        var (inset, baseRefresh) = BuildInfo(row);
 
         var press = new Button
         {
@@ -2821,7 +2809,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             ? new StackPanel { Spacing = 8, Children = { pressed } }
             : new StackPanel { Spacing = 8, Children = { inset, pressed } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>How long a first press stays armed before a second press has to ask again (#85).</summary>
@@ -2927,9 +2915,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>The coverage summary, plus the way into the whole list.</summary>
-    private (Control, Action, bool) BuildCoverage(SettingRow row)
+    private (Control, Action) BuildCoverage(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2952,13 +2940,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>The Commander's own cores, plus the way into the editor (remediation.md 11, item 9).</summary>
-    private (Control, Action, bool) BuildOwnPersonas(SettingRow row)
+    private (Control, Action) BuildOwnPersonas(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -2985,13 +2973,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             refresh();
         };
 
-        return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh, false);
+        return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh);
     }
 
     /// <summary>The macro summary, plus the way into the editor.</summary>
-    private (Control, Action, bool) BuildMacros(SettingRow row)
+    private (Control, Action) BuildMacros(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -3020,13 +3008,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>The checklist summary, plus the way into the panel.</summary>
-    private (Control, Action, bool) BuildChecklists(SettingRow row)
+    private (Control, Action) BuildChecklists(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         // A tab of this panel since Phase 25, rather than a dialog over it: a Window cannot appear in the
         // headset at all, so the checklist was unreachable there for a Commander wearing one.
@@ -3054,13 +3042,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
     /// <summary>The switch summary, plus the way into the walk.</summary>
-    private (Control, Action, bool) BuildSwitches(SettingRow row)
+    private (Control, Action) BuildSwitches(SettingRow row)
     {
-        var (inset, refresh, _) = BuildInfo(row);
+        var (inset, refresh) = BuildInfo(row);
 
         var open = new Button
         {
@@ -3096,10 +3084,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
 
-        return (stack, refresh, false);
+        return (stack, refresh);
     }
 
-    private (Control, Action, bool) BuildToggle(SettingRow row, TextBlock message)
+    private (Control, Action) BuildToggle(SettingRow row, TextBlock message)
     {
         var toggle = new CheckBox { Margin = new Thickness(0) };
         toggle.Classes.Add("bare");
@@ -3112,10 +3100,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             }
         };
 
-        return (toggle, () => toggle.IsChecked = _settings!.Read(row.Key) is "true", true);
+        return (toggle, () => toggle.IsChecked = _settings!.Read(row.Key) is "true");
     }
 
-    private (Control, Action, bool) BuildChoice(SettingRow row, TextBlock message)
+    private (Control, Action) BuildChoice(SettingRow row, TextBlock message)
     {
         // Through ChoicesFor, not the bare list.
         var choices = row.ChoicesFor(_settings!.Current);
@@ -3268,7 +3256,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                     .FirstOrDefault() ?? -1;
 
             combo.SelectedIndex = found < 0 ? (clearable ? 0 : -1) : found + offset;
-        }, true);
+        });
     }
 
     /// <summary>Applies a speech model choice, downloading it first if it is not on disk.</summary>
@@ -3402,7 +3390,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         message.IsVisible = true;
     }
 
-    private (Control, Action, bool) BuildPickerButton(SettingRow row, TextBlock message)
+    private (Control, Action) BuildPickerButton(SettingRow row, TextBlock message)
     {
         // Trimmed, because the column is a fifth of a row and a voice name is whatever the provider's account
         // calls it — "Bill - Wise, Mature, Balanced — male, american" is one of 473 real ones.
@@ -3466,10 +3454,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 : row.LabelForChoice(current, _settings.Current);
 
             Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.AKey);
-        }, true);
+        });
     }
 
-    private (Control, Action, bool) BuildNumber(SettingRow row, TextBlock message)
+    private (Control, Action) BuildNumber(SettingRow row, TextBlock message)
     {
         // Both from the row, so the control cannot offer a precision the store will not keep.
         var number = new NumericUpDown
@@ -3524,10 +3512,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             number.Value = decimal.TryParse(_settings!.Read(row.Key), out var parsed) ? parsed : null;
             number.PlaceholderText = row.DefaultDisplayFor(_settings.Current);
-        }, true);
+        });
     }
 
-    private (Control, Action, bool) BuildText(SettingRow row, TextBlock message)
+    private (Control, Action) BuildText(SettingRow row, TextBlock message)
     {
         var box = new TextBox
         {
@@ -3568,14 +3556,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             // The default is a placeholder, never a value, so "I have not chosen" stays distinguishable from
             // "I chose the default" (Phase 4).
             box.PlaceholderText = row.DefaultDisplayFor(_settings.Current) ?? string.Empty;
-        }, false);
+        });
     }
 
     /// <summary>
     /// The key row, which is <see cref="SecretEditor"/> — the same control the first-run guide shows
     /// (Phase 16).
     /// </summary>
-    private (Control, Action, bool) BuildSecret(SettingRow row, TextBlock message)
+    private (Control, Action) BuildSecret(SettingRow row, TextBlock message)
     {
         // The editor reports its own failures inline, next to the box that caused them, so the row's shared
         // message line stays for everything else.
@@ -3587,7 +3575,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // surface re-reads itself rather than waiting for the next open.
         editor.Changed += Refresh;
 
-        return (editor, editor.Refresh, false);
+        return (editor, editor.Refresh);
     }
 
     /// <summary>
@@ -3595,7 +3583,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// (#354). One persistent slot per <see cref="SettingRow.BoundKeys"/> entry plus the empty-state
     /// button, shown or hidden rather than rebuilt, so a capture in progress keeps its own control.
     /// </summary>
-    private (Control, Action, bool) BuildBind(SettingRow row, TextBlock message)
+    private (Control, Action) BuildBind(SettingRow row, TextBlock message)
     {
         var empty = new Button { MinWidth = 150, HorizontalContentAlignment = HorizontalAlignment.Center };
         var proseFont = empty.FontFamily;
@@ -3651,7 +3639,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             }
 
             clear.IsVisible = bound;
-        }, true);
+        });
     }
 
     /// <summary>

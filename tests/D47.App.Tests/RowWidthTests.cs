@@ -17,8 +17,8 @@ public class RowWidthTests
     /// <summary>The longest choice label on the surface, and the one that broke the row.</summary>
     private const string LongestLabel = "small.en";
 
-    /// <summary>The label column's maximum width (<c>SettingsView.LabelColumnMaxWidth</c>, #332).</summary>
-    private const double LabelColumnMaxWidth = 300;
+    /// <summary>The label column's width (<c>SettingsView.LabelColumnWidth</c>, #437).</summary>
+    private const double LabelColumnMaxWidth = 240;
 
     /// <summary>What layout rounding is allowed to add.</summary>
     private const double Rounding = 1.0;
