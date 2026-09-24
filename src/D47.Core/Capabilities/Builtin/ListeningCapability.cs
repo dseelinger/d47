@@ -596,11 +596,17 @@ public static class ListeningCapability
                    Key = KeyRowFor(provider),
                    Advanced = true,
                    Label = $"{provider.Name} API key",
-                   Help = provider.Id == SttProviderCatalog.OpenAiId
-                       ? "The same key the OpenAI language model and voice use. Stored encrypted for this "
-                         + "Windows account. Write-only: D47 will never show it back to you."
-                       : "Stored encrypted for this Windows account. Write-only: D47 will never show it back "
-                         + "to you.",
+                   Help = provider.Id switch
+                   {
+                       SttProviderCatalog.OpenAiId =>
+                           "The same key the OpenAI language model and voice use. Stored encrypted for this "
+                           + "Windows account. Write-only: D47 will never show it back to you.",
+                       SttProviderCatalog.ElevenLabsId =>
+                           "The same key the ElevenLabs voice uses. Stored encrypted for this Windows account. "
+                           + "Write-only: D47 will never show it back to you.",
+                       _ => "Stored encrypted for this Windows account. Write-only: D47 will never show it back "
+                            + "to you.",
+                   },
                    Kind = SettingKind.Secret,
                    SecretName = provider.KeySecretName,
                    DocsAnchor = "provider-key",

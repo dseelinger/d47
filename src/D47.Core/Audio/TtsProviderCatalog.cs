@@ -86,6 +86,9 @@ public static class TtsProviderCatalog
 
     public const string ElevenLabsId = "elevenlabs";
 
+    /// <summary>The ElevenLabs key, read by the voice and by Scribe hearing.</summary>
+    public const string ElevenLabsKeySecretName = "elevenlabs.apiKey";
+
     public const string OpenAiId = "openai";
 
     public const string CartesiaId = "cartesia";
@@ -119,7 +122,7 @@ public static class TtsProviderCatalog
         Id = ElevenLabsId,
         Name = "ElevenLabs",
         Label = "ElevenLabs (paid — needs a key)",
-        KeySecretName = "elevenlabs.apiKey",
+        KeySecretName = ElevenLabsKeySecretName,
         Destination = "api.elevenlabs.io, storage.googleapis.com",
 
         // "JBFqnCBsd6RMkjVDRZzb" is a real one, and it is what the Voice row showed.

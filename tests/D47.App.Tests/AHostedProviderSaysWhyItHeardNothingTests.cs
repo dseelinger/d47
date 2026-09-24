@@ -182,6 +182,37 @@ public class AHostedProviderSaysWhyItHeardNothingTests
         Assert.Equal(0.3, outcome.Kept?.Confidence);
     }
 
+    [Fact]
+    public async Task ElevenLabsGetsTheScribeTranscriber()
+    {
+        var handler = new ScribeAnswer();
+
+        using var transcriber = Hearing.Hosted(
+            SttProviderCatalog.ElevenLabs, () => "xi-test", NullLoggerFactory.Instance, handler);
+
+        var outcome = await Hearing.TranscribeAsync(
+            transcriber, SttProviderCatalog.ElevenLabs, () => Task.FromResult<double?>(null), Speech, []);
+
+        Assert.IsType<ElevenLabsScribeTranscriber>(transcriber);
+        Assert.Equal("api.elevenlabs.io", handler.Address?.Host);
+        Assert.Equal("where am I", outcome.Kept?.Text);
+    }
+
+    private sealed class ScribeAnswer : HttpMessageHandler
+    {
+        public Uri? Address { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancel)
+        {
+            Address = request.RequestUri;
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"text":"where am I"}""", Encoding.UTF8, "application/json"),
+            });
+        }
+    }
+
     private sealed class DeepgramAnswer : HttpMessageHandler
     {
         public Uri? Address { get; private set; }

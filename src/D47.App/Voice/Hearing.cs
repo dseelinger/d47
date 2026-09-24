@@ -81,6 +81,8 @@ internal static class Hearing
             SttProviderCatalog.OpenAiId => OpenAiCompatible(OpenAiCompatibleTranscriber.OpenAiEndpoint),
             SttProviderCatalog.DeepgramId => new DeepgramTranscriber(
                 key, loggers.CreateLogger<DeepgramTranscriber>(), handler),
+            SttProviderCatalog.ElevenLabsId => new ElevenLabsScribeTranscriber(
+                key, loggers.CreateLogger<ElevenLabsScribeTranscriber>(), handler),
             _ => throw new ArgumentOutOfRangeException(nameof(provider), provider.Id, "Not a hosted provider."),
         };
 

@@ -1,3 +1,5 @@
+using D47.Core.Audio;
+
 namespace D47.Core.Listening;
 
 /// <summary>One way of turning speech into words, and what using it sends.</summary>
@@ -36,6 +38,8 @@ public static class SttProviderCatalog
     public const string OpenAiId = "openai";
 
     public const string DeepgramId = "deepgram";
+
+    public const string ElevenLabsId = "elevenlabs";
 
     private const string HostedEgress =
         "The audio of every utterance D47 transcribes is sent to {0}, along with your API key and the "
@@ -90,7 +94,20 @@ public static class SttProviderCatalog
         Egress = string.Format(System.Globalization.CultureInfo.InvariantCulture, HostedEgress, "Deepgram"),
     };
 
-    public static IReadOnlyList<SttProviderInfo> All { get; } = [Local, Groq, OpenAi, Deepgram];
+    public static SttProviderInfo ElevenLabs { get; } = new()
+    {
+        Id = ElevenLabsId,
+        Name = "ElevenLabs",
+        Label = "ElevenLabs Scribe (paid — needs a key)",
+        Model = "scribe_v2",
+
+        // The same secret the ElevenLabs voice reads.
+        KeySecretName = TtsProviderCatalog.ElevenLabsKeySecretName,
+        Destination = "api.elevenlabs.io",
+        Egress = string.Format(System.Globalization.CultureInfo.InvariantCulture, HostedEgress, "ElevenLabs"),
+    };
+
+    public static IReadOnlyList<SttProviderInfo> All { get; } = [Local, Groq, OpenAi, Deepgram, ElevenLabs];
 
     public static IReadOnlyList<string> Ids { get; } = [.. All.Select(provider => provider.Id)];
 

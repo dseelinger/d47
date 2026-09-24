@@ -148,8 +148,8 @@ It is **not** a signature: the hash and the bytes come from the same server, so 
 compromised GitHub. The same caveat applies to the speech models.
 
 **Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
-computer**. With Groq, OpenAI or Deepgram selected, `api.groq.com`, `api.openai.com` or
-`api.deepgram.com` receives the audio of
+computer**. With Groq, OpenAI, Deepgram or ElevenLabs selected, `api.groq.com`, `api.openai.com`,
+`api.deepgram.com` or `api.elevenlabs.io` receives the audio of
 every utterance Directive 47 transcribes, your API key, and the names from your journal used to
 recognise proper nouns. Hands free, that is every stretch judged to be speech, addressed to Directive
 47 or not. No journal files, game state or other keys go with it.
@@ -253,7 +253,7 @@ open all the time" is a sentence that deserves an answer rather than a shrug.
 
 **Out of the box, audio does not leave this machine.** Speech becomes words through a model
 running on your own computer. The one row that changes that is the
-[hearing provider](listening.md#provider): choose Groq, OpenAI or Deepgram and the audio of every utterance
+[hearing provider](listening.md#provider): choose Groq, OpenAI, Deepgram or ElevenLabs and the audio of every utterance
 goes to it, disclosed under **Speech recognition** above. Audio is not written to disk either way —
 it lives in a half-second ring buffer and is overwritten.
 

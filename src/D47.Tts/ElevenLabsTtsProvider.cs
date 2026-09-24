@@ -16,7 +16,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     private const string BaseUrl = "https://api.elevenlabs.io/v1";
 
     /// <summary>The name this provider's key is stored under.</summary>
-    public const string KeySecretName = "elevenlabs.apiKey";
+    public const string KeySecretName = TtsProviderCatalog.ElevenLabsKeySecretName;
 
     public const string ProviderId = "elevenlabs";
 

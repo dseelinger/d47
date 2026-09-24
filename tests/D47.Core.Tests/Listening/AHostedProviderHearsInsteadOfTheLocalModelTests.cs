@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -33,6 +34,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     [InlineData(SttProviderCatalog.GroqId)]
     [InlineData(SttProviderCatalog.OpenAiId)]
     [InlineData(SttProviderCatalog.DeepgramId)]
+    [InlineData(SttProviderCatalog.ElevenLabsId)]
     public void AHostedProviderUnloadsAModelThatIsOnDisk(string provider)
     {
         var plan = ListeningWiring.PlanModel(With(provider).Listening, new FakeModelStore("small.en"));
@@ -55,6 +57,8 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.Equal("openai.apiKey", SttProviderCatalog.OpenAi.KeySecretName);
         Assert.Equal("groq.apiKey", SttProviderCatalog.Groq.KeySecretName);
         Assert.Equal("deepgram.apiKey", SttProviderCatalog.Deepgram.KeySecretName);
+        Assert.Equal("elevenlabs.apiKey", SttProviderCatalog.ElevenLabs.KeySecretName);
+        Assert.Equal(TtsProviderCatalog.ElevenLabs.KeySecretName, SttProviderCatalog.ElevenLabs.KeySecretName);
         Assert.Null(SttProviderCatalog.Local.KeySecretName);
     }
 
@@ -72,6 +76,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     [InlineData(SttProviderCatalog.GroqId, "api.groq.com")]
     [InlineData(SttProviderCatalog.OpenAiId, "api.openai.com")]
     [InlineData(SttProviderCatalog.DeepgramId, "api.deepgram.com")]
+    [InlineData(SttProviderCatalog.ElevenLabsId, "api.elevenlabs.io")]
     public void TheDisclosureNamesTheHostAndWhatGoesThere(string provider, string host)
     {
         var entry = EgressDisclosure.Entry(EgressDisclosure.SpeechRecognition, With(provider), llmKeyPresent: false);
@@ -126,6 +131,18 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.True(groq.AppliesWhen!(With(SttProviderCatalog.GroqId)));
         Assert.False(groq.AppliesWhen!(With(SttProviderCatalog.OpenAiId)));
         Assert.False(openAi.AppliesWhen!(With(SttProviderCatalog.LocalId)));
+    }
+
+    [Fact]
+    public void ScribesKeyRowIsTheVoicesStoredKey()
+    {
+        var row = Rows().Single(row => row.Key == ListeningCapability.KeyRowFor(SttProviderCatalog.ElevenLabs));
+
+        Assert.Equal(SettingKind.Secret, row.Kind);
+        Assert.Equal("elevenlabs.apiKey", row.SecretName);
+        Assert.Contains("ElevenLabs voice", row.Help, StringComparison.Ordinal);
+        Assert.True(row.AppliesWhen!(With(SttProviderCatalog.ElevenLabsId)));
+        Assert.False(row.AppliesWhen!(With(SttProviderCatalog.DeepgramId)));
     }
 
     /// <summary>Sending the Commander's voice to a third party is not the model's decision.</summary>
