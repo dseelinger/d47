@@ -54,6 +54,9 @@ navy rank beside the Empire and the Federation. Ask about a minor faction by nam
 my reputation with Mother Gaia", for its band, number and the date d47 last read it. "What's my
 navy rank" and "what's my imperial rank" work too, and none of these needs a language model.
 
+On the Transcript, the COPY button no longer sits on top of the "Search this page" field when d47
+starts. The field used to run past the right edge of the panel until the window was resized.
+
 ## 1.10.0 — Every voice paired afresh
 
 The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and

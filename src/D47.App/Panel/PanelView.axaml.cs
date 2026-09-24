@@ -3885,9 +3885,22 @@ public partial class PanelView : UserControl
         var field = Math.Clamp(bar * 0.32, 240, 420);
         var beside = readings == 0 || readings + Gap + actions + field <= bar;
 
-        DockPanel.SetDock(SearchRow, beside ? Dock.Right : Dock.Bottom);
-        SearchRow.Margin = beside ? new Thickness(readings == 0 ? 0 : Gap, 0, 0, 0) : new Thickness(0, 8, 0, 0);
-        SearchInput.Width = Math.Max(90, Math.Min(field, bar - actions));
+        var dock = beside ? Dock.Right : Dock.Bottom;
+        var margin = beside ? new Thickness(readings == 0 ? 0 : Gap, 0, 0, 0) : new Thickness(0, 8, 0, 0);
+        var width = Math.Max(90, Math.Min(field, bar - actions));
+
+        if (DockPanel.GetDock(SearchRow) == dock && SearchRow.Margin == margin && SearchInput.Width == width)
+        {
+            return;
+        }
+
+        DockPanel.SetDock(SearchRow, dock);
+        SearchRow.Margin = margin;
+        SearchInput.Width = width;
+
+        // Called from PageBar.SizeChanged, inside a layout pass, where the row's new size does not reach the
+        // bar's arrange on its own (#424).
+        PageBar.InvalidateMeasure();
     }
 
     /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>
