@@ -119,16 +119,18 @@ public class HonkOnArrivalTests
     }
 
     [Fact]
-    public void CombatModeSaysWhyRatherThanSwitchingModesOnTheCommandersBehalf()
+    public void CombatModeInNormalSpaceSaysWhyRatherThanSwitchingModes()
     {
-        // Switching modes would be a second autonomous action wearing the first one's consent.
+        // Out of supercruise the hardpoints can be deployed, so holding fire could fire a weapon.
         var honk = Honk();
         honk.Examine(Context(Status(StatusFlags.InMainShip | StatusFlags.FsdJump), events: Jump()));
 
         var decision = honk.Examine(Context(Status(StatusFlags.InMainShip)));
 
         Assert.False(decision.Acts);
-        Assert.Contains("analysis mode", decision.Say ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            "I did not honk: the discovery scanner only fires in analysis mode, and you are in combat mode.",
+            decision.Say);
     }
 
     [Fact]

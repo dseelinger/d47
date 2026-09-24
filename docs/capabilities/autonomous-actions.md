@@ -95,11 +95,11 @@ nav_order: 134
 </section>
 <section>
 <h2><span class="num">3</span> The arrival honk, and the three things it needs.</h2>
-<svg viewBox="0 0 880 244" role="img" aria-label="The discovery scanner needs analysis mode, the scanner in your fire group, and a fire button it can press">
+<svg viewBox="0 0 880 244" role="img" aria-label="The discovery scanner needs analysis mode, which d47 switches to in supercruise, the scanner in your fire group, and a fire button it can press">
  <rect x="20" y="36" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ANALYSIS MODE</text>
- <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">switching you into it would</text>
- <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">be a second thing acting alone</text>
+ <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">in supercruise d47 switches</text>
+ <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">for you, then switches back</text>
  <rect x="305" y="36" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SCANNER IN YOUR</text>
  <text x="440" y="88" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FIRE GROUP</text>
@@ -109,9 +109,9 @@ nav_order: 134
  <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Mouse_1 works</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">a stick does not</text>
  <rect x="20" y="178" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="210" text-anchor="middle" font-size="16" fill="var(--text)">“I did not honk: the scanner only fires in analysis mode, and you are in combat mode.”</text>
+ <text x="440" y="210" text-anchor="middle" font-size="16" fill="var(--text)">Normal space: “I did not honk: the scanner only fires in analysis mode, and you are in combat mode.”</text>
 </svg>
-<p class="body">Elite has no honk binding, because the discovery scanner is not a button — it is a fire-group weapon. So this holds <em>your</em> fire button for the six seconds the scan takes. It arms on the jump and fires once you are actually in normal space, and if thirty seconds pass without that, the arm expires rather than waiting to surprise you later.</p>
+<p class="body">Elite has no honk binding, because the discovery scanner is not a button — it is a fire-group weapon. So this holds <em>your</em> fire button for the six seconds the scan takes. It arms on the jump and fires once you are out of the witchspace tunnel, and if thirty seconds pass without that, the arm expires rather than waiting to surprise you later.</p>
 </section>
 </div></div>
 </details>
@@ -156,21 +156,23 @@ fire group. So this holds **your** fire button, for the six seconds the scan tak
 
 Three things have to be true, and it tells you when they are not:
 
-```text
-I did not honk: the discovery scanner only fires in analysis mode, and you are in combat mode.
-```
+- **Analysis mode.** If you arrive in combat mode in supercruise, where your hardpoints are
+  stowed, it switches the HUD to analysis mode, honks, and switches back to combat mode. It holds
+  fire only once the game reports analysis mode; if that has not happened within two seconds, it
+  says so and holds nothing. In normal space holding fire could fire a weapon, so there it does not
+  switch and says this instead:
 
-- **Analysis mode.** Switching you into it would be a second thing acting on its own, wearing
-  the first one's permission, so it says this instead.
+  ```text
+  I did not honk: the discovery scanner only fires in analysis mode, and you are in combat mode.
+  ```
 - **The scanner in your current fire group.** Directive 47 cannot see your fire groups. If the
   honk seems to do nothing, this is the reason.
 - **A fire button it can press.** On Elite's default keyboard preset that is `Mouse_1`, which
   works. On a stick it does not, and you get told which device it is on.
 
-It arms on the jump and fires once you are actually in normal space, because during the
-witchspace tunnel the game has the controls and a held button goes nowhere. If thirty seconds
-pass without that happening — you dropped straight into supercruise and left — the arm expires
-rather than waiting to surprise you later.
+It arms on the jump and fires once the tunnel ends, because during the witchspace tunnel the
+game has the controls and a held button goes nowhere. If thirty seconds pass without that
+happening, the arm expires rather than waiting to surprise you later.
 
 It fires once per jump. It never fires for jumps that happened before Directive 47 started, which
 would otherwise mean a honk for every system you visited that afternoon.

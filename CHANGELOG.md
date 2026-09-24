@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.2 — The honk takes
+
+The arrival honk now works when you arrive in combat mode. In supercruise, where your hardpoints are
+stowed, d47 switches the HUD to analysis mode, holds fire for the scan, and switches back to combat
+mode. If the HUD does not change within two seconds, d47 says "I could not switch to analysis mode
+to honk" and holds nothing. In normal space it still refuses, because there holding fire could fire
+a weapon. When the HUD mode has no key d47 can press, the refusal now says that.
+
 ## 1.13.1 — The checklist stays quiet at login
 
 Starting d47, or loading into the game, no longer reads out finished checklist items as newly done.
