@@ -18,6 +18,12 @@ on that module, or a grade upgrade on that suit or weapon. Everything else ticks
 Checklist page without a word, including engineering finished in an earlier session, a module fitted
 in outfitting, and an engineer unlocked or ranked up.
 
+Asking what you are flying now lists every module fitted, slot by slot under the outfitting screen's
+headings, with the blueprint, grade and experimental effect of each engineered one. It used to give
+only a count, so d47 could not say which weapons were on the ship. The count no longer includes paint
+jobs, decals, name plates and other cosmetics, and unpowered modules are named as the game names them
+rather than by their internal symbol. A ship you name that you are not flying gets the same list.
+
 ## 1.13.0 — Settings pages drawn on one grid
 
 Each place in the Settings sidebar is now a page of its own. Clicking Voice Input shows Voice Input

@@ -56,6 +56,8 @@ public class AStoredShipsModulesAreAnswerableTooTests
         Assert.False(result.IsError);
         Assert.Contains("Campaigner", result.Content, StringComparison.Ordinal);
         Assert.Contains("1 modules fitted", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Optional Internal:", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Cargo Rack", result.Content, StringComparison.Ordinal);
         Assert.Contains("as of 2026-08-01 09:00 UTC", result.Content, StringComparison.Ordinal);
 
         // The figures are the Panther's, not the ship the Commander is actually sitting in.

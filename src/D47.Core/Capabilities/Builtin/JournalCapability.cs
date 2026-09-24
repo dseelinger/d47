@@ -519,7 +519,7 @@ public static class JournalCapability
         return Report(active, found.Loadout, isFlown: isCurrent, isCurrent ? null : found.SeenAt);
     }
 
-    /// <summary>One ship's report: metrics and module counts, from the live loadout or a remembered
+    /// <summary>One ship's report: metrics and the fitted modules, from the live loadout or a remembered
     /// one — dated, and with no claim about the current cargo fill, when it is not (#108).</summary>
     private static string Report(CommanderGameState active, ShipLoadout ship, bool isFlown, DateTimeOffset? seenAt)
     {
@@ -578,20 +578,88 @@ public static class JournalCapability
             report.AppendLine($"Rebuy {rebuy:N0} cr.");
         }
 
-        if (ship.Modules.Count > 0)
-        {
-            report.AppendLine($"{ship.Modules.Count} modules fitted, {ship.Engineered.Count} engineered.");
+        var fitted = Fitted(ship);
 
-            if (ship.Unpowered.Count > 0)
+        if (fitted.Count > 0)
+        {
+            var modules = fitted.Select(entry => entry.Module).ToList();
+
+            report.AppendLine(
+                $"{modules.Count} modules fitted, {modules.Count(module => module.IsEngineered)} engineered.");
+
+            string? group = null;
+
+            foreach (var (heading, slot, module) in fitted)
+            {
+                if (heading is not null && heading != group)
+                {
+                    group = heading;
+                    report.AppendLine(heading + ":");
+                }
+
+                report.AppendLine($"  {slot}: {Fitting(module)}");
+            }
+
+            var unpowered = modules.Where(module => !module.Powered).ToList();
+
+            if (unpowered.Count > 0)
             {
                 // Worth stating unprompted: an unpowered module is one the Commander believes they have.
-                report.AppendLine(
-                    "Unpowered: " + string.Join(", ", ship.Unpowered.Select(module => module.Item)) + ".");
+                report.AppendLine("Unpowered: " + string.Join(", ", unpowered.Select(Said)) + ".");
             }
         }
 
         return report.ToString().TrimEnd();
     }
+
+    /// <summary>
+    /// The modules inside the hull's slot layout, in the outfitting screen's order with its headings, so
+    /// cosmetics are left out. A hull with no layout gives every module in journal order, unheaded.
+    /// </summary>
+    private static List<(string? Heading, string Slot, ShipModule Module)> Fitted(ShipLoadout ship)
+    {
+        var layout = EliteSpecifications.Slots(ship.Type);
+
+        if (layout.Count == 0)
+        {
+            return [.. ship.Modules.Select(module => ((string?)null, module.Slot, module))];
+        }
+
+        return
+        [
+            .. layout
+                .Select(slot => (slot, module: ship.Modules.FirstOrDefault(module =>
+                    string.Equals(module.Slot, slot.Name, StringComparison.OrdinalIgnoreCase))))
+                .Where(pair => pair.module is not null)
+                .Select(pair => ((string?)ShipSlot.Heading(pair.slot.Kind), pair.slot.Describe(), pair.module!)),
+        ];
+    }
+
+    /// <summary>The module's name, then its blueprint, grade and experimental effect where it has them.</summary>
+    private static string Fitting(ShipModule module)
+    {
+        if (module.Blueprint is not { } blueprint)
+        {
+            return Said(module);
+        }
+
+        var engineering = new List<string> { BlueprintCatalogue.NameOf(blueprint) ?? ModuleNames.Readable(blueprint) };
+
+        if (module.BlueprintLevel is { } level)
+        {
+            engineering.Add($"grade {level}");
+        }
+
+        if (module.Experimental is { } experimental)
+        {
+            engineering.Add(BlueprintCatalogue.NameOf(module.ExperimentalSymbol) ?? experimental);
+        }
+
+        return $"{Said(module)} — {string.Join(", ", engineering)}";
+    }
+
+    private static string Said(ShipModule module) =>
+        EliteSpecifications.ModuleName(module.Item) ?? ModuleNames.Readable(module.Item);
 
     /// <summary>
     /// A named ship among everything remembered — the one being flown included — matched by the

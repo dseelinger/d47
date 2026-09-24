@@ -168,9 +168,26 @@ specifications — which is what makes your Anaconda different from anyone else'
 Flying Bold Endeavour, a Anaconda, ident JM-01.
 maximum jump range 52.31 ly, fuel tank 32 t, cargo 12/64 t, unladen mass 1122.6 t, hull 94%.
 Rebuy 9,694,497 cr.
-38 modules fitted, 12 engineered.
-Unpowered: int_cargorack_size4_class1.
+24 modules fitted, 9 engineered.
+Hardpoints:
+  Huge Hardpoint 1: 4A Plasma Accelerator, fixed — Efficient Weapon, grade 5, Thermal Conduit
+  Large Hardpoint 1: 3C Multi-Cannon, gimballed — Overcharged Weapon, grade 5, Auto Loader
+  ...
+Core Internal:
+  Armour: Military Grade Composite — Heavy Duty Armour, grade 5, Deep Plating
+  Power Plant: 8A Power Plant — Overcharged Power Plant, grade 5
+  Frame Shift Drive: 6A Frame Shift Drive — Increased FSD Range, grade 5, Mass Manager
+  ...
+Optional Internal:
+  Compartment 1 (size 7): 7A Shield Generator — Reinforced Shield Generator, grade 5
+  Compartment 4 (size 4): 4E Cargo Rack
+  ...
+Unpowered: 4E Cargo Rack.
 ```
+
+Paint jobs, decals, name plates and the other cosmetics are left out of the list and the count: only
+what sits in one of the hull's outfitting slots is listed, under the outfitting screen's headings and
+in its order.
 
 **Name another ship you own** and the same report comes off `loadouts.json` — every `Loadout`
 Elite has ever written for it, kept whether or not you are aboard right now — dated so a ship
@@ -179,7 +196,9 @@ refitted since you last boarded it is visibly stale:
 ```text
 Campaigner, a Panther Clipper MkII, as of 2026-08-01 09:00 UTC.
 maximum jump range 48.14 ly, fuel tank 128 t, cargo capacity 1200 t, unladen mass 1575.4 t.
-40 modules fitted, 6 engineered.
+27 modules fitted, 6 engineered.
+Hardpoints:
+  ...
 ```
 
 A ship you own that no `Loadout` has been read for says so rather than describing a different one:
