@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.6 — Engineering Frontier added in September
+
+The Ships tab now lists the blueprints Frontier added this month among what a module can be
+engineered with, including Balanced and Support Focused on a power distributor and Long Range on a
+Detailed Surface Scanner. d47 has no recipe for them yet, so each one says Frontier engineers it and
+d47 has no recipe for it, instead of leaving it out. A Detailed Surface Scanner's Expanded Radius
+blueprint is still offered with its ingredients.
+
 ## 1.13.5 — Engineers judged the way Elite judges them
 
 A referral into an on-foot engineer is now met once the referrer is unlocked. On-foot engineers have

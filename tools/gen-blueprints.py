@@ -199,6 +199,13 @@ SPELLINGS = {
     "Refineries_Shielded": "Misc_Shielded",
 }
 
+# EDEngineer's label for a blueprint, against EDSY's, where the two share no prefix and neither
+# carries an id the other knows. Consulted before the label lookup in `candidates_for`, and still
+# narrowed by module type there.
+LABELS = {
+    "Expanded Probe Scanning Radius": "Expanded Radius",
+}
+
 # EDEngineer's pseudo-engineers. Everything they front is a recipe of some other kind, and
 # telling them apart this way means a new munitions row classifies itself rather than waiting
 # for somebody to add its type name to a list.
@@ -755,7 +762,7 @@ def main() -> None:
         appeared twice, so "one candidate" counted as two and the row went unnamed. Kill Warrant
         Scanner's Wide Angle and every Multi-cannon experimental were lost to that alone.
         """
-        label = relax(name)
+        label = relax(LABELS.get(name, name))
         found = list(by_label.get(label, []))
 
         if not found:
@@ -833,8 +840,7 @@ def main() -> None:
 
     # Last resort, and the narrowest one there is. A module type offering exactly one blueprint
     # nothing has claimed, whose kind has exactly one recipe still unnamed, has only one pairing
-    # available — which is how "Expanded Probe Scanning Radius" meets `Sensor_Expanded`, two names
-    # for one thing that share no word.
+    # available.
     claimed = {row[8] for row in recipes if row[8]}
 
     for row in list(unnamed):
