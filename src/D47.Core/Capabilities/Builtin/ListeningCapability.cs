@@ -25,6 +25,9 @@ public static class ListeningCapability
     public const string PreRollKey = "listening.preRoll";
     public const string ModelKey = "listening.model";
 
+    /// <summary>Who turns speech into words.</summary>
+    public const string ProviderKey = "listening.provider";
+
     public const string GpuKey = "listening.useGpu";
     public const string EgressKey = "listening.egress";
     public const string EchoKey = "listening.echoCancellation";
@@ -97,7 +100,13 @@ public static class ListeningCapability
 
         /// <summary>A stored key as a Commander would write it: <c>[</c> rather than <c>Oem4</c>.</summary>
         public Func<string, string>? KeyLabel { get; init; }
+
+        /// <summary>Whether a secret of this name is stored.</summary>
+        public Func<string, bool>? KeyStored { get; init; }
     }
+
+    /// <summary>The key row for one hosted hearing provider.</summary>
+    public static string KeyRowFor(SttProviderInfo provider) => $"listening.key.{provider.Id}";
 
     public const string StatusTool = "get_listening_status";
 
@@ -167,8 +176,8 @@ public static class ListeningCapability
                 Name = StatusTool,
                 Description =
                     "Report whether D47 can hear the Commander: the microphone in use, whether audio is "
-                    + "flowing, the push-to-talk key, whether a transcription model is loaded, and whether "
-                    + "that key collides with an Elite Dangerous binding.",
+                    + "flowing, the push-to-talk key, who turns speech into words and whether that is ready, "
+                    + "and whether that key collides with an Elite Dangerous binding.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(settings.Current, surface))),
             },
             new ToolDefinition
@@ -554,6 +563,53 @@ public static class ListeningCapability
             },
             new SettingRow
             {
+                Key = ProviderKey,
+                Advanced = true,
+                Label = "Hearing provider",
+                Help =
+                    "Who turns your speech into words. This computer runs a Whisper model locally and "
+                    + "sends nothing. A hosted provider needs no model in memory, but sends the audio of "
+                    + "everything D47 transcribes to that company with your API key. If it cannot be "
+                    + "reached, D47 says so and does not fall back to a local model.",
+                Kind = SettingKind.Choice,
+                Choices = SttProviderCatalog.Ids,
+                ChoiceLabel = id => SttProviderCatalog.Selected(id).Label,
+                DefaultDisplay = SttProviderCatalog.LocalId,
+                DocsAnchor = "provider",
+                EgressId = EgressDisclosure.SpeechRecognition,
+
+                // Protected: choosing a hosted provider sends the Commander's voice to a third party.
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => SttProviderCatalog.Selected(s.Listening.Provider).Id,
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with { Provider = SttProviderCatalog.Selected(v).Id },
+                    },
+                },
+            },
+            .. from provider in SttProviderCatalog.All
+               where provider.KeySecretName is not null
+               select new SettingRow
+               {
+                   Key = KeyRowFor(provider),
+                   Advanced = true,
+                   Label = $"{provider.Name} API key",
+                   Help = provider.Id == SttProviderCatalog.OpenAiId
+                       ? "The same key the OpenAI language model and voice use. Stored encrypted for this "
+                         + "Windows account. Write-only: D47 will never show it back to you."
+                       : "Stored encrypted for this Windows account. Write-only: D47 will never show it back "
+                         + "to you.",
+                   Kind = SettingKind.Secret,
+                   SecretName = provider.KeySecretName,
+                   DocsAnchor = "provider-key",
+                   EgressId = EgressDisclosure.SpeechRecognition,
+                   EgressFor = _ => EgressDisclosure.SpeechRecognitionFor(provider),
+                   AppliesWhen = s => SttProviderCatalog.Selected(s.Listening.Provider).Id == provider.Id,
+               },
+            new SettingRow
+            {
                 Key = ModelKey,
                 Advanced = true,
                 Label = "Speech model",
@@ -607,6 +663,7 @@ public static class ListeningCapability
                         : $"Download {model.ApproximateMegabytes} MB and use it",
                 DefaultDisplay = WhisperModels.DefaultId,
                 DocsAnchor = "model",
+                AppliesWhen = s => !SttProviderCatalog.Selected(s.Listening.Provider).Hosted,
                 Binding = new SettingBinding
                 {
                     // Adopted on the way out, so a file still naming a retired multilingual model shows the
@@ -639,7 +696,8 @@ public static class ListeningCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "gpu",
-                AppliesWhen = s => s.Listening.Model != WhisperModels.NoneId,
+                AppliesWhen = s => !SttProviderCatalog.Selected(s.Listening.Provider).Hosted
+                                   && s.Listening.Model != WhisperModels.NoneId,
                 Binding = new SettingBinding
                 {
                     Read = s => s.Listening.UseGpu ? "true" : "false",
@@ -712,7 +770,7 @@ public static class ListeningCapability
     {
         var listening = settings.Listening;
         var (capturing, unavailable) = surface.CaptureState();
-        var (ready, model, reason) = surface.TranscriberState();
+        var (ready, model, reason) = Transcriber(listening, surface);
 
         var faults = new StringBuilder();
 
@@ -761,7 +819,28 @@ public static class ListeningCapability
             return $"Yes — I just heard you, on {device}.";
         }
 
-        return $"Yes — {device} is open and {model} is loaded. {HowToBeHeard(listening, surface)}";
+        var hearing = SttProviderCatalog.Selected(listening.Provider) is { Hosted: true } hosted
+            ? $"{hosted.Name} turns what you say into words with {hosted.Model}, and its key is stored"
+            : $"{model} is loaded";
+
+        return $"Yes — {device} is open and {hearing}. {HowToBeHeard(listening, surface)}";
+    }
+
+    /// <summary>Whether speech can be turned into words, by the local model or the hosted provider.</summary>
+    private static (bool Ready, string? Model, string? Reason) Transcriber(
+        ListeningSettings listening,
+        ListeningSurface surface)
+    {
+        var provider = SttProviderCatalog.Selected(listening.Provider);
+
+        if (!provider.Hosted)
+        {
+            return surface.TranscriberState();
+        }
+
+        var stored = provider.KeySecretName is { } secret && surface.KeyStored?.Invoke(secret) == true;
+
+        return (stored, provider.Model, stored ? null : SttProviderCatalog.NoKey(provider));
     }
 
     /// <summary>
@@ -894,11 +973,20 @@ public static class ListeningCapability
                 : $"Echo cancellation: off. {echo.Unavailable ?? "Not enabled."}");
         }
 
-        var (ready, model, reason) = surface.TranscriberState();
+        var (ready, model, reason) = Transcriber(listening, surface);
 
-        report.Append(ready
-            ? $"Transcription: {model} loaded."
-            : $"Transcription: unavailable. {reason ?? "No model is loaded."}");
+        if (SttProviderCatalog.Selected(listening.Provider) is { Hosted: true } hosted)
+        {
+            report.Append(ready
+                ? $"Transcription: {hosted.Name}, hosted, with {model}. Its key is stored."
+                : $"Transcription: {hosted.Name}, hosted, with {model}. No key is stored. {reason}");
+        }
+        else
+        {
+            report.Append(ready
+                ? $"Transcription: {model} loaded."
+                : $"Transcription: unavailable. {reason ?? "No model is loaded."}");
+        }
 
         return report.ToString();
     }

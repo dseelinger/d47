@@ -473,7 +473,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         }
     }
 
-    /// <summary>The file the probe runs on: tiny.en, looked for beside whatever model is loaded.</summary>
+    /// <summary>The file the probe runs on: tiny.en, looked for in the models folder.</summary>
     private const string ProbeFileName = "ggml-tiny.en.bin";
 
     /// <summary>
@@ -481,9 +481,21 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     /// <c>NoSpeechProbability</c> across the clip's segments, from tiny.en with no prompt — or null
     /// where no answer is possible: tiny.en not on disk, nothing loaded, the probe failing.
     /// </summary>
-    public async Task<double?> NoSpeechAsync(Utterance utterance, CancellationToken cancellationToken = default)
+    public Task<double?> NoSpeechAsync(Utterance utterance, CancellationToken cancellationToken = default) =>
+        _loadedFrom is { } loadedFrom
+            ? NoSpeechAsync(utterance, Path.GetDirectoryName(loadedFrom) ?? string.Empty, cancellationToken)
+            : Task.FromResult<double?>(null);
+
+    /// <summary>
+    /// The same probe with tiny.en looked for in <paramref name="modelsFolder"/>, for when no main model is
+    /// loaded because a hosted provider is transcribing.
+    /// </summary>
+    public async Task<double?> NoSpeechAsync(
+        Utterance utterance,
+        string modelsFolder,
+        CancellationToken cancellationToken = default)
     {
-        if (_disposed || _loadedFrom is not { } loadedFrom)
+        if (_disposed)
         {
             return null;
         }
@@ -492,7 +504,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
 
         try
         {
-            if (_disposed || !EnsureProbe(loadedFrom))
+            if (_disposed || !EnsureProbe(modelsFolder))
             {
                 return null;
             }
@@ -525,10 +537,10 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         }
     }
 
-    /// <summary>The probe's own load, lazy and beside the main model's file.</summary>
-    private bool EnsureProbe(string loadedFrom)
+    /// <summary>The probe's own load, lazy, from the folder the models are in.</summary>
+    private bool EnsureProbe(string folder)
     {
-        var path = Path.Combine(Path.GetDirectoryName(loadedFrom) ?? string.Empty, ProbeFileName);
+        var path = Path.Combine(folder, ProbeFileName);
 
         if (_probe is not null && string.Equals(_probeFrom, path, StringComparison.OrdinalIgnoreCase))
         {
@@ -547,7 +559,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
             {
                 _probeMissingSaid = true;
                 _logger.LogInformation(
-                    "No {File} beside the loaded model, so a word hallucinated from silence goes unchecked (#196)",
+                    "No {File} in the models folder, so a word hallucinated from silence goes unchecked (#196)",
                     ProbeFileName);
             }
 

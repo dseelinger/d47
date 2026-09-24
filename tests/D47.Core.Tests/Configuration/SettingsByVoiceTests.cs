@@ -23,6 +23,9 @@ public class SettingsByVoiceTests
             + "names one — a Commander does not know their own NonRoamableId.",
         ["listening.pushToTalkKey"] =
             "A key gesture, same as the cancel key.",
+        ["listening.provider"] =
+            "Choosing a hosted provider sends the Commander's voice to a company, and a misheard phrase "
+            + "must not be able to start that. Set on the panel only.",
         ["llm.endpoint"] =
             "A URL. There is no closed set of them, and a misheard host is a silent misconfiguration.",
         ["persona.shipCoreShip"] =

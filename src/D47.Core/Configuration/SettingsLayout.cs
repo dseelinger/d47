@@ -62,9 +62,11 @@ public static class SettingsLayout
     /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the eight Guardian voice toggles
     /// rather than collapsing them into one family entry (23 entries with the Test row, all Advanced,
     /// so 0 shown beyond what already applied) (#225, #226); <c>persona</c> spells out a humor level and
-    /// frequency for each of three groups (17 entries, the six humor rows Advanced).
+    /// frequency for each of three groups (17 entries, the six humor rows Advanced); <c>voice-input</c>
+    /// holds the hearing provider and one key row per hosted provider (17 entries, of which at most one key
+    /// row applies at a time, and every speech-recognition row Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -133,8 +135,14 @@ public static class SettingsLayout
                             ]),
                         G(
                             "Speech recognition",
-                            "Which model turns speech into words, and where it runs.",
-                            [E("listening.model"), E("listening.useGpu")]),
+                            "Who turns speech into words, and where it runs.",
+                            [
+                                E("listening.provider"),
+                                E("listening.key.groq"),
+                                E("listening.key.openai"),
+                                E("listening.model"),
+                                E("listening.useGpu"),
+                            ]),
                         G(
                             "Wake word",
                             "What D47 answers to, hands free, and how long it keeps listening after.",

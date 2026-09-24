@@ -558,7 +558,14 @@ public sealed class AppHost : IDisposable
         return result;
     }
 
+    /// <summary>Loads the local model, and runs the no-speech probe for every provider.</summary>
     private readonly WhisperTranscriber _transcriber;
+
+    /// <summary>The hearing provider as of the last apply.</summary>
+    private volatile SttProviderInfo _hearing = SttProviderCatalog.Local;
+
+    /// <summary>One per hosted provider, made on first use and kept until the host is disposed.</summary>
+    private readonly Dictionary<string, ISpeechTranscriber> _hosted = new(StringComparer.Ordinal);
 
     private readonly BindsWatch _binds;
 
@@ -1551,6 +1558,7 @@ public sealed class AppHost : IDisposable
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds.Current,
                     InstalledModels = () => models.Installed(),
+                    KeyStored = secrets.Has,
 
                     // Read at draw time, so the row shows what has been learned rather than what had been
                     // when the surface was assembled (#134).
@@ -4123,15 +4131,39 @@ public sealed class AppHost : IDisposable
         Said?.Invoke(problem);
     }
 
-    /// <summary>Turns one captured utterance into words and hands them on.</summary>
-    private const double NoSpeechFloor = 0.6;
+    /// <summary>The transcriber for a hosted provider.</summary>
+    private ISpeechTranscriber HostedTranscriber(SttProviderInfo provider)
+    {
+        lock (_hosted)
+        {
+            if (!_hosted.TryGetValue(provider.Id, out var transcriber))
+            {
+                var secret = provider.KeySecretName!;
 
+                transcriber = Hearing.Hosted(
+                    provider,
+                    () => Secrets.TryGet(secret, out var key) ? key : null,
+                    _loggerFactory);
+
+                _hosted[provider.Id] = transcriber;
+            }
+
+            return transcriber;
+        }
+    }
+
+    /// <summary>Turns one captured utterance into words and hands them on.</summary>
     private void TranscribeAsync(Utterance utterance)
     {
         // The microphone has closed and the words are being worked out.
         Voice.EnterState(Core.Audio.LoopState.Transcribing);
 
-        if (!_transcriber.IsReady && !_transcriber.IsLoading)
+        var provider = _hearing;
+
+        // A hosted provider is never loading, so the local model's state does not gate it.
+        var hosted = provider.Hosted ? HostedTranscriber(provider) : null;
+
+        if (hosted is null && !_transcriber.IsReady && !_transcriber.IsLoading)
         {
             NoSpeechModel(utterance);
             return;
@@ -4163,40 +4195,52 @@ public sealed class AppHost : IDisposable
             {
                 // A press made while the model was still loading waits for it here rather than being
                 // discarded (#147).
-                await _transcriber.Ready.ConfigureAwait(false);
-
-                if (!_transcriber.IsReady)
+                if (hosted is null)
                 {
-                    NoSpeechModel(utterance);
-                    return;
+                    await _transcriber.Ready.ConfigureAwait(false);
+
+                    if (!_transcriber.IsReady)
+                    {
+                        NoSpeechModel(utterance);
+                        return;
+                    }
                 }
 
                 // Journal-derived and network-free.
                 var nouns = ProperNouns.From(GameState.Active, _route?.Invoke());
 
                 // The unprompted second opinion, beside the prompted pass rather than after it (#196):
-                // tiny.en answers in ~350 ms while the main model is still working, so the gate below costs
-                // nothing in latency.
-                var probe = _transcriber.NoSpeechAsync(utterance);
-
-                var transcription = await _transcriber
-                    .TranscribeAsync(utterance, nouns)
+                // tiny.en answers in ~350 ms while the main pass is still working, so the gate costs nothing
+                // in latency. With a hosted provider no main model is loaded, so tiny.en is looked for in
+                // the models folder.
+                var outcome = await Hearing.TranscribeAsync(
+                        hosted ?? _transcriber,
+                        provider,
+                        () => hosted is null
+                            ? _transcriber.NoSpeechAsync(utterance)
+                            : _transcriber.NoSpeechAsync(utterance, Models.Directory),
+                        utterance,
+                        nouns)
                     .ConfigureAwait(false);
 
+                if (outcome.Problem is { } problem)
+                {
+                    TranscriptionUnavailable(problem);
+                    return;
+                }
+
                 // The exact buffer the transcriber was given, beside what it came back with (#164).
-                AudioRecorder?.Heard(utterance, transcription);
+                AudioRecorder?.Heard(utterance, outcome.Raw!);
+
+                var transcription = outcome.Kept!;
 
                 // **A word hallucinated from silence is refused here** (#196).
-                if (transcription.Text.Length > 0
-                    && await probe.ConfigureAwait(false) is { } noSpeech
-                    && noSpeech >= NoSpeechFloor)
+                if (outcome.RefusedAt is { } noSpeech)
                 {
                     _logger.LogInformation(
                         "Refused as no-speech: the unprompted probe read {Probability:0.###} against \"{Text}\"",
                         noSpeech,
-                        transcription.Text);
-
-                    transcription = transcription with { Text = string.Empty };
+                        outcome.Raw!.Text);
                 }
 
                 // A panel is asking for a value and this is the answer to it (Phase 25, "Say it, or type
@@ -4274,6 +4318,17 @@ public sealed class AppHost : IDisposable
                 Voice.EnterState(Core.Audio.LoopState.Failed);
             }
         });
+    }
+
+    /// <summary>A hosted provider gave no words: said, and back to idle without a cue.</summary>
+    private void TranscriptionUnavailable(string problem)
+    {
+        _logger.LogWarning("Hearing failed: {Problem}", problem);
+
+        _ = Voice.AnnounceAsync(problem);
+        Said?.Invoke(problem);
+
+        Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
     }
 
     /// <summary>An utterance arrived with nothing to transcribe it.</summary>
@@ -4545,7 +4600,9 @@ public sealed class AppHost : IDisposable
         _pushToTalk.ForceUp();
         _pushToTalkButton.ForceUp();
 
-        // The model, before the key.
+        _hearing = SttProviderCatalog.Selected(listening.Provider);
+
+        // The model, before the key. A hosted provider unloads it.
         var model = ListeningWiring.PlanModel(listening, Models);
 
         // Cleared here and set again by the load itself, so the two writes cannot arrive out of order.
@@ -6461,7 +6518,9 @@ public sealed class AppHost : IDisposable
             // that reads as a fault rather than as a setting nobody has set yet.
             current.Llm.Model is { Length: > 0 } model ? model : "no model chosen",
             current.Speech.Provider,
-            current.Listening.Model,
+            SttProviderCatalog.Selected(current.Listening.Provider) is { Hosted: true } hosted
+                ? hosted.Id
+                : current.Listening.Model,
             current.Listening.Mode,
             Vr is { } headset
                 ? $"{headset.State}{(current.Vr.Enabled ? string.Empty : " (switched off)")}"
@@ -6514,6 +6573,14 @@ public sealed class AppHost : IDisposable
         _cancelButton.ForceUp();
         _microphone.Dispose();
         _transcriber.Dispose();
+
+        lock (_hosted)
+        {
+            foreach (var hosted in _hosted.Values)
+            {
+                hosted.Dispose();
+            }
+        }
         (Models as IDisposable)?.Dispose();
 
         // Before the arbiter and the sink it is subscribed to, and before the last clip stops being writable.

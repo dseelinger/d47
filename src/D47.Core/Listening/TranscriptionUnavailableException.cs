@@ -27,4 +27,7 @@ public sealed class TranscriptionUnavailableException(
     public string Provider { get; } = provider;
 
     public TranscriptionFailure Reason { get; } = reason;
+
+    /// <summary>What the service itself said went wrong, where it said anything.</summary>
+    public string? Detail { get; init; }
 }

@@ -43,6 +43,11 @@ public static class ListeningWiring
         ArgumentNullException.ThrowIfNull(listening);
         ArgumentNullException.ThrowIfNull(models);
 
+        if (SttProviderCatalog.Selected(listening.Provider).Hosted)
+        {
+            return new SpeechModelPlan { Action = SpeechModelAction.Unload };
+        }
+
         // Adopted rather than looked up raw: a settings file naming a retired multilingual model resolves to
         // its English twin here (#187).
         var selected = WhisperModels.AdoptedId(listening.Model);

@@ -6,6 +6,26 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.12.0 — Hearing through a cloud provider
+
+A new **Hearing provider** row under Voice Input › Speech recognition chooses who turns your speech
+into words: this computer, as before, or Groq or OpenAI. A hosted provider needs no speech model in
+memory, so the local model is unloaded while one is selected. Groq uses `whisper-large-v3-turbo`
+and a key of its own. OpenAI uses `gpt-4o-mini-transcribe` and the same key the OpenAI language
+model and voice already use.
+
+A hosted provider receives the audio of every utterance d47 transcribes, your API key, and the
+names from your journal used to recognise proper nouns. Hands free, that is every stretch judged to
+be speech, whether or not it was addressed to d47. Privacy and egress shows this under **Speech
+recognition**.
+
+When the service cannot be reached, refuses the key or limits requests, d47 says so and does
+nothing else. It does not fall back to a local model. With no key stored, a press says the key is
+missing and sends nothing. The check that refuses words invented from silence still runs, on
+`ggml-tiny.en.bin` from the models folder, when that file is there.
+
+"Can you hear me" names the hosted provider and whether its key is stored.
+
 ## 1.11.0 — NPC lines written for their voice and humor
 
 The "A little humor" toggle is replaced by a level and a frequency for three groups: the ship's AI,

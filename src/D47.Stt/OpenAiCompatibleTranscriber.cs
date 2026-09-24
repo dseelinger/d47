@@ -108,7 +108,10 @@ public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
             var text = Text(body) ?? throw new TranscriptionUnavailableException(
                 _provider,
                 TranscriptionFailure.Failed,
-                $"{_provider} answered without a transcript.");
+                $"{_provider} answered without a transcript.")
+            {
+                Detail = "no transcript came back",
+            };
 
             _logger.LogInformation(
                 "{Provider} transcribed {Seconds:0.#}s of audio in {Elapsed}ms with {Nouns} name hints",
@@ -160,7 +163,10 @@ public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
             "{Provider} refused to transcribe ({Status}): {Because}", _provider, (int)response.StatusCode, said);
 
         return new TranscriptionUnavailableException(
-            _provider, reason, $"{_provider} could not transcribe: {said}");
+            _provider, reason, $"{_provider} could not transcribe: {said}")
+        {
+            Detail = said,
+        };
     }
 
     private static string? ErrorMessage(string body)

@@ -371,7 +371,10 @@ public sealed record ListeningSettings
     /// <summary>How much audio from before the key was noticed is kept, in milliseconds.</summary>
     public int PreRollMilliseconds { get; init; } = 500;
 
-    /// <summary>Which Whisper model transcribes.</summary>
+    /// <summary>Who turns speech into words: <c>local</c>, or a hosted provider's id.</summary>
+    public string Provider { get; init; } = Listening.SttProviderCatalog.LocalId;
+
+    /// <summary>Which Whisper model transcribes when the provider is local.</summary>
     public string Model { get; init; } = Listening.WhisperModels.DefaultId;
 
     /// <summary>Run inference on the GPU.</summary>

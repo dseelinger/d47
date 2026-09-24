@@ -38,6 +38,9 @@ public static class EgressDisclosure
     /// <summary>Synthesising a spoken line.</summary>
     public const string TextToSpeech = "tts";
 
+    /// <summary>Sending an utterance to a hosted transcriber.</summary>
+    public const string SpeechRecognition = "stt";
+
     /// <summary>Looking something up in the galaxy.</summary>
     public const string GalaxySearch = "galaxy";
 
@@ -67,6 +70,7 @@ public static class EgressDisclosure
         LanguageModel,
         WebSearch,
         TextToSpeech,
+        SpeechRecognition,
         GalaxySearch,
         NotablePlaces,
         CommunityGoals,
@@ -84,6 +88,7 @@ public static class EgressDisclosure
         LanguageModel => "Language model",
         UpdateCheck => "Update check",
         TextToSpeech => "Spoken replies",
+        SpeechRecognition => "Speech recognition",
         GalaxySearch => "Galaxy search",
         NotablePlaces => "Notable places",
         CommunityGoals => "Community goals",
@@ -113,6 +118,7 @@ public static class EgressDisclosure
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
         TextToSpeech => TextToSpeechEntry(settings),
+        SpeechRecognition => SpeechRecognitionFor(Listening.SttProviderCatalog.Selected(settings.Listening.Provider)),
 
         GalaxySearch => settings.Knowledge.GalaxySearch
             ? new EgressEntry(
@@ -225,7 +231,12 @@ public static class EgressDisclosure
                 + "request, on demand."),
 
         // On demand.
-        SpeechModels => settings.Listening.Model == Listening.WhisperModels.NoneId
+        SpeechModels => Listening.SttProviderCatalog.Selected(settings.Listening.Provider) is { Hosted: true } hosted
+            ? EgressEntry.Silent(
+                SpeechModels,
+                NameOf(SpeechModels),
+                $"{hosted.Name} turns speech into words, so no speech model is downloaded and no request is made.")
+            : settings.Listening.Model == Listening.WhisperModels.NoneId
             ? EgressEntry.Silent(
                 SpeechModels,
                 NameOf(SpeechModels),
@@ -417,6 +428,23 @@ public static class EgressDisclosure
                 TextToSpeech, NameOf(TextToSpeech), provider.Destination, what, Active: true, Summary: summary)
             : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), what, summary);
     }
+
+    /// <summary>What one hearing provider receives, whether or not it is the one selected.</summary>
+    public static EgressEntry SpeechRecognitionFor(Listening.SttProviderInfo provider) =>
+        provider.Hosted
+            ? new EgressEntry(
+                SpeechRecognition,
+                NameOf(SpeechRecognition),
+                provider.Destination,
+                provider.Egress,
+                Active: true,
+                Summary: $"The audio of every utterance D47 transcribes goes to {provider.Name}, with your "
+                    + "API key and the names from your journal.")
+            : EgressEntry.Silent(
+                SpeechRecognition,
+                NameOf(SpeechRecognition),
+                provider.Egress,
+                summary: "Speech is turned into words on this machine. No audio leaves it.");
 
     /// <summary>What one named voice provider receives, whether or not it is the one selected.</summary>
     public static EgressEntry TextToSpeechFor(Audio.TtsProviderInfo provider) =>

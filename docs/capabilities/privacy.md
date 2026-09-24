@@ -147,6 +147,12 @@ unpacked if it does not match. That catches a truncated transfer or a mirror ser
 It is **not** a signature: the hash and the bytes come from the same server, so it cannot detect a
 compromised GitHub. The same caveat applies to the speech models.
 
+**Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
+computer**. With Groq or OpenAI selected, `api.groq.com` or `api.openai.com` receives the audio of
+every utterance Directive 47 transcribes, your API key, and the names from your journal used to
+recognise proper nouns. Hands free, that is every stretch judged to be speech, addressed to Directive
+47 or not. No journal files, game state or other keys go with it.
+
 **Diagnostics and logs** — never active. Logs are written to `data/logs/` beside the executable
 and are not uploaded.
 
@@ -239,25 +245,27 @@ starts a second pile under a new number, with nothing saying the two halves are 
 only fix for that would be a token derived from your machine, which is the identifier this whole
 design refuses.
 
-## Your microphone is not a destination
+## Your microphone is not a destination, unless you make it one
 
 It is worth saying plainly, because Phase 13 added hands-free listening and "the microphone is
 open all the time" is a sentence that deserves an answer rather than a shrug.
 
-**Audio does not leave this machine.** Speech becomes words through a model running on your own
-computer; there is no cloud transcription option and no row to turn one on. Audio is not written
-to disk either — it lives in a half-second ring buffer and is overwritten.
+**Out of the box, audio does not leave this machine.** Speech becomes words through a model
+running on your own computer. The one row that changes that is the
+[hearing provider](listening.md#provider): choose Groq or OpenAI and the audio of every utterance
+goes to it, disclosed under **Speech recognition** above. Audio is not written to disk either way —
+it lives in a half-second ring buffer and is overwritten.
 
-What the hands-free settings change is what gets *kept*, locally, for long enough to transcribe.
+What the hands-free settings change is what gets *kept* for long enough to transcribe.
 In push-to-talk that is only what you held the key for; in the two hands-free settings it is every
 stretch of speech in the room, and in wake-word mode the ones that were not addressed to Directive
 47 are discarded without reaching the transcript, the panel or the log. Both are off out of the
 box, the row that turns them on is [unreachable by the model](listening.md#mode), and the panel
 shows the microphone's state the whole time it is open — on the desktop and in the headset.
 
-The one thing that does cross the network for listening is the speech model file itself, fetched
-once from `huggingface.co`. It is listed on the settings surface for as long as a model is
-selected.
+With the local model, the one thing that crosses the network for listening is the speech model
+file itself, fetched once from `huggingface.co`. It is listed on the settings surface for as long as
+a model is selected and the hearing provider is this computer.
 
 ## Settings
 
@@ -306,7 +314,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
 {#egress-hullart}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

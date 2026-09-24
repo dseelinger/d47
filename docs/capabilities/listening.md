@@ -100,7 +100,7 @@ nav_order: 124
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Whisper turns your voice into words, on your own machine — and how it decides you were talking to it.</p>
+<p class="intro">Whisper turns your voice into words, on your own machine unless you choose a hosted provider — and how it decides you were talking to it.</p>
 <section>
 <h2><span class="num">1</span> Four ways to open the microphone, and two of them change what is kept.</h2>
 <svg viewBox="0 0 880 296" role="img" aria-label="Four listening modes: hold a key, toggle a key, listen whenever anyone speaks, or listen when you say its name">
@@ -125,7 +125,7 @@ nav_order: 124
 <p class="body">The key works in all four. A policy that decides for itself is not a reason to take away the one that does not.</p>
 </section>
 <section>
-<h2><span class="num">2</span> One download, and then nothing about your speech goes anywhere.</h2>
+<h2><span class="num">2</span> One download, and then nothing about your speech goes anywhere, unless you choose a hosted provider.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="The speech model is downloaded once from huggingface.co; after that audio and transcripts stay on your machine">
  <rect x="20" y="34" width="250" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONCE</text>
@@ -138,7 +138,7 @@ nav_order: 124
  <text x="601" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">your voice becomes words on this computer.</text>
  <text x="601" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">No audio and no transcript leaves it.</text>
  <rect x="20" y="158" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A bigger model hears you better and costs more of your machine. Nothing about that choice is a subscription.</text>
+ <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A hosted provider needs no model here, and the audio goes to that company with your key.</text>
 </svg>
 </section>
 <section>
@@ -205,9 +205,10 @@ Talking to Directive 47 instead of typing at it. Hold a key, speak, let go, and 
 handled exactly as if you had typed it — or put your hands back on the stick and let it decide for
 itself when you are talking to it.
 
-**No audio and no transcript leaves your machine.** Speech is turned into words by a model
-running on your own computer. The model file itself is downloaded once, from `huggingface.co`;
-after that, nothing about your speech goes anywhere.
+**Out of the box, no audio and no transcript leaves your machine.** Speech is turned into words by
+a model running on your own computer. The model file itself is downloaded once, from
+`huggingface.co`; after that, nothing about your speech goes anywhere. The
+[hearing provider](#provider) row can send it to Groq or OpenAI instead, and says what that sends.
 
 ### Ask for it
 
@@ -428,8 +429,9 @@ key. In the two hands-free settings, every stretch of speech in the room is capt
 transcribed before Directive 47 can decide whether it was meant for it. That is a real change and
 it is why these are off out of the box.
 
-What does not change: **none of it leaves your machine and none of it is written to disk.** The
-speech model runs locally, a stretch that was not addressed to Directive 47 is discarded without
+What does not change: **none of it is written to disk, and with the local speech model none of it
+leaves your machine.** With a [hosted provider](#provider), every one of those stretches is sent to
+it, because whether you said Directive 47's name is decided from the words it sends back. A stretch that was not addressed to Directive 47 is discarded without
 reaching the transcript, and the panel says the microphone is open the whole time it is — see
 [Seeing that the microphone is open](#indicator).
 
@@ -536,6 +538,50 @@ is what you meant.
 This row lists what it has learned, and **Forget them all** clears the lot. Everything here stays on
 this machine and belongs to the Commander flying — nothing is learned from a chat message, a mission
 description, or anything another player wrote.
+
+#### Hearing provider {#provider}
+
+Who turns your speech into words. **This computer** runs the Whisper model chosen below and sends
+nothing. **Groq** and **OpenAI** are hosted: no model sits in your memory, and the audio goes to
+them instead. Each uses one fixed model — `whisper-large-v3-turbo` on Groq, `gpt-4o-mini-transcribe`
+on OpenAI.
+
+What a hosted provider receives: the audio of every utterance Directive 47 transcribes, your API key,
+and the names from your journal it uses to recognise proper nouns. In push-to-talk that is what you
+held the key for. Hands free it is every stretch the microphone judged to be speech, including ones
+not addressed to Directive 47. No journal files, game state or other keys are sent. The
+[Privacy](privacy.md#egress-stt) section shows the same thing, computed from your settings.
+
+**If the service cannot be reached, it says so and does nothing else.** There is no fallback to a
+local model: keeping one loaded would bring back the memory cost a hosted provider exists to remove,
+and the smallest model mishears often enough that a misheard command could act on the ship. What
+you hear instead:
+
+| What went wrong | What Directive 47 says |
+|---|---|
+| No key stored | "Groq needs an API key. Add it in Settings." — and nothing is sent |
+| No answer | "I couldn't reach Groq. Say it again, or type it." |
+| Key refused | "Groq refused the key. Check it in Settings." |
+| Too many requests | "Groq is limiting requests. Try again in a moment." |
+| Anything else | "Groq couldn't transcribe that:" and the service's own message |
+
+The check for words invented from silence still runs beside every hosted request, on the Tiny
+model, when `ggml-tiny.en.bin` is in the models folder. Without it the check is skipped.
+
+The **Speech model** and **GPU** rows below apply only to **This computer**.
+
+```csharp
+if (SttProviderCatalog.Selected(listening.Provider).Hosted)
+{
+    return new SpeechModelPlan { Action = SpeechModelAction.Unload };
+}
+```
+
+#### API key {#provider-key}
+
+One row for the selected hosted provider. Groq's key is its own; OpenAI's is the same key the OpenAI
+language model and voice already use, so storing it once serves all three. Stored encrypted for this
+Windows account and never shown back.
 
 #### Speech model {#model}
 
@@ -742,10 +788,11 @@ The names come from your journal. Nothing is looked up.
 Spoken and typed questions run exactly the same path, so "where am I" means the same thing
 however you said it.
 
-Nothing captured is written to disk or sent anywhere. Audio sits in a small buffer and is
+Nothing captured is written to disk. Audio sits in a small buffer and is
 overwritten within about half a second unless the gate is open — because you are holding the key,
-or because Directive 47 heard somebody start talking. Only that stretch goes any further, and
-"further" means a speech model on your own machine.
+or because Directive 47 heard somebody start talking. Only that stretch goes any further. With the
+local speech model, "further" means a model on your own machine. With a
+[hosted provider](#provider), it means that stretch is sent to Groq or OpenAI with your key.
 
 A few small kindnesses:
 
