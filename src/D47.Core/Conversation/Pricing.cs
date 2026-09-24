@@ -35,15 +35,15 @@ public sealed class PriceTable
 
     public static PriceTable Default { get; } = new(new Dictionary<(string, string), ModelPrice>
     {
-        // Anthropic list prices.
+        // Anthropic list prices, read from platform.claude.com/docs/en/about-claude/pricing on 2026-09-23.
         [("anthropic", "claude-opus-5")] = new(5m, 25m),
-        [("anthropic", "claude-opus-4-8")] = new(5m, 25m),
-        [("anthropic", "claude-sonnet-5")] = new(3m, 15m),
+        [("anthropic", "claude-opus-5-5")] = new(4m, 20m) { CacheReadFactor = 0.05m },
+        [("anthropic", "claude-sonnet-5")] = new(2m, 10m),
         [("anthropic", "claude-haiku-4-5")] = new(1m, 5m),
         [("anthropic", "claude-fable-5")] = new(10m, 50m),
 
-        // OpenAI list prices, read from developers.openai.com/api/docs/pricing on 2026-08-18.
-        [("openai", "gpt-5.6-sol")] = new(5m, 30m) { CacheReadFactor = 0.1m },
+        // OpenAI list prices, read from developers.openai.com/api/docs/pricing on 2026-09-23.
+        [("openai", "gpt-5.6-sol")] = new(4m, 20m) { CacheReadFactor = 0.1m },
         [("openai", "gpt-5.6-terra")] = new(2m, 12m) { CacheReadFactor = 0.1m },
         [("openai", "gpt-5.6-luna")] = new(0.20m, 1.20m) { CacheReadFactor = 0.1m },
 

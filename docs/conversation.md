@@ -249,7 +249,7 @@ See [think at least this hard](capabilities/conversation.md#effort-floor) and
 
 ### Which tools the model is given
 
-On Claude Opus 5, Opus 4.8, Opus 4.7, Fable 5, Mythos 5 and Claude Haiku 4.5, through Anthropic's
+On Claude Opus 5, Opus 5.5, Opus 4.7, Fable 5, Mythos 5 and Claude Haiku 4.5, through Anthropic's
 own endpoint, the model is given every tool it may use, deferred, together with a search tool. It
 searches for the tools a request needs, and only those are loaded. The list is the same in every
 mode and with key presses on or off, so a mode change does not re-bill the cached prompt.

@@ -266,7 +266,7 @@ logging.default — Default log level: Information
 logging.subsystems.journal — Journal log level: (default)
     one of: Trace, Debug, Information, Warning, Error, Critical, None
 llm.model — Model: (default: claude-opus-5)
-    one of: claude-opus-5, claude-opus-4-8, claude-sonnet-5, claude-haiku-4-5, claude-fable-5
+    one of: claude-opus-5, claude-opus-5-5, claude-sonnet-5, claude-haiku-4-5, claude-fable-5
 llm.personality — Personality: true
 ui.theme — Theme: elite
 ```

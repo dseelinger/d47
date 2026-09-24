@@ -277,7 +277,7 @@ public class PromptOnTheWireTests
 
     [Theory]
     [InlineData("claude-opus-5")]
-    [InlineData("claude-opus-4-8")]
+    [InlineData("claude-opus-5-5")]
     [InlineData("claude-sonnet-5")]
     [InlineData("claude-fable-5")]
     public async Task CurrentModelsAreSentBothOfThem(string model)

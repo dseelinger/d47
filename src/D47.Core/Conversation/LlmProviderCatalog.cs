@@ -86,7 +86,7 @@ public static class LlmProviderCatalog
             DefaultEndpoint = "https://api.anthropic.com",
             // The highest Sonnet, not the highest model.
             DefaultModel = "claude-sonnet-5",
-            Models = ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8", "claude-haiku-4-5", "claude-fable-5"],
+            Models = ["claude-sonnet-5", "claude-opus-5", "claude-opus-5-5", "claude-haiku-4-5", "claude-fable-5"],
             Egress =
                 "Your question, D47's reply so far, the guardrails, the persona, your About Me text, any standing " +
                 "directions you have adopted, and the few " +

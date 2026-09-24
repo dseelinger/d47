@@ -78,7 +78,7 @@ public class SupportedModelsSearchTheirToolsTests
 
     [Theory]
     [InlineData("claude-opus-5", true)]
-    [InlineData("claude-opus-4-8", true)]
+    [InlineData("claude-opus-5-5", true)]
     [InlineData("claude-opus-4-7", true)]
     [InlineData("claude-fable-5", true)]
     [InlineData("claude-mythos-5", true)]

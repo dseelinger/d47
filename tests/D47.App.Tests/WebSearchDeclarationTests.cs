@@ -35,7 +35,7 @@ public class WebSearchDeclarationTests
 
     [Theory]
     [InlineData("claude-opus-5")]
-    [InlineData("claude-opus-4-8")]
+    [InlineData("claude-opus-5-5")]
     [InlineData("claude-sonnet-5")]
     [InlineData("claude-fable-5")]
     public void CurrentModelsGetTheDynamicFilteringTool(string model)

@@ -16,14 +16,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     private static readonly HashSet<string> OperatorSystemMessageModels =
         new(StringComparer.Ordinal)
         {
-            "claude-opus-5", "claude-opus-4-8", "claude-fable-5", "claude-mythos-5",
+            "claude-opus-5", "claude-opus-5-5", "claude-fable-5", "claude-mythos-5",
         };
 
     /// <summary>Models that take the tool search tool and <c>defer_loading</c>.</summary>
     private static readonly HashSet<string> ToolSearchModels =
         new(StringComparer.Ordinal)
         {
-            "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-fable-5", "claude-mythos-5",
+            "claude-opus-5", "claude-opus-5-5", "claude-opus-4-7", "claude-fable-5", "claude-mythos-5",
             "claude-haiku-4-5",
         };
 
@@ -36,9 +36,9 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         new(StringComparer.Ordinal)
         {
             ["claude-opus-5"] = 512,
+            ["claude-opus-5-5"] = 512,
             ["claude-fable-5"] = 512,
             ["claude-mythos-5"] = 512,
-            ["claude-opus-4-8"] = 1024,
             ["claude-sonnet-5"] = 1024,
             ["claude-opus-4-7"] = 2048,
             ["claude-haiku-4-5"] = 4096,

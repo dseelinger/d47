@@ -373,7 +373,7 @@ and reporting "unknown" forever about something that genuinely costs nothing is 
 to be rigour.
 
 **The cheaper models carry live game state under a weaker guarantee, and it is worth knowing before
-you pick one.** On Claude Opus 5, Opus 4.8 and Fable 5, what your ship is doing right now reaches
+you pick one.** On Claude Opus 5, Opus 5.5 and Fable 5, what your ship is doing right now reaches
 the model under a role that journal content cannot imitate. Everywhere else — Claude Haiku 4.5,
 Sonnet 5, and every OpenAI-compatible endpoint — it is folded into the message instead, marked off
 by a convention rather than by a boundary. That is the well-travelled path rather than a new risk,

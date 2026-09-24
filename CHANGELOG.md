@@ -57,6 +57,12 @@ navy rank" and "what's my imperial rank" work too, and none of these needs a lan
 On the Transcript, the COPY button no longer sits on top of the "Search this page" field when d47
 starts. The field used to run past the right edge of the panel until the window was resized.
 
+Claude Opus 5.5 is now in the Model list under Language model, and Claude Opus 4.8 is no longer
+offered. A model typed into the row is still sent, but d47 no longer prices Opus 4.8 or gives it
+tool search. Claude Sonnet 5 is now priced at $2 per million input tokens and $10 per million
+output tokens, down from $3 and $15, and gpt-5.6-sol at $4 and $20, down from $5 and $30, so the
+spend figures for those models are lower from now on.
+
 ## 1.10.0 — Every voice paired afresh
 
 The Advanced speech row "Reset every voice to its pairing" is replaced by "Forget every voice and
