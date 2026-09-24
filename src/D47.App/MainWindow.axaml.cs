@@ -161,6 +161,8 @@ public partial class MainWindow : Window
                 Panel.EnableSystemNames(systemsInPlay, () => host.GameState.Active?.Location.StarSystem);
             }
 
+            Panel.EnableCommanderName(() => host.GameState.Active?.Identity.Name);
+
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
@@ -298,7 +300,7 @@ public partial class MainWindow : Window
 
             // And the same window is the one with somewhere to open a dialog, which is what the turn line's
             // figures need.
-            Panel.EnableTurnDetails(() => _ = ShowSpendAsync());
+            Panel.EnableTurnDetails(ShowSpendAsync, () => host.Spend.RunningTotalDollars);
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
             // 25).

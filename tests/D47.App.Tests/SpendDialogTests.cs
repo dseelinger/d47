@@ -254,14 +254,20 @@ public class SpendDialogTests
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.False(headset.FindControl<Control>("TurnDetails")!.IsVisible);
+        Assert.False(headset.FindControl<Control>("TurnDetails")!.IsEffectivelyVisible);
 
         var asked = 0;
-        headset.EnableTurnDetails(() => asked++);
+        headset.EnableTurnDetails(
+            () =>
+            {
+                asked++;
+                return Task.CompletedTask;
+            },
+            () => 0m);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var link = headset.FindControl<Control>("TurnDetails")!;
-        Assert.True(link.IsVisible);
+        Assert.True(link.IsEffectivelyVisible);
 
         link.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal(1, asked);
@@ -279,7 +285,7 @@ public class SpendDialogTests
         var model = new D47.App.Panel.PanelViewModel { TurnLine = "Answered via Model, effort Medium — $0.0231" };
         var view = new D47.App.Panel.PanelView { DataContext = model };
 
-        view.EnableTurnDetails(() => { });
+        view.EnableTurnDetails(() => Task.CompletedTask, () => 0.0231m);
 
         var window = new Window { Content = view, Width = 900, Height = 700 };
         window.Show();

@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.3 — Spend and the transcript
+
+The Transcript's footer is rearranged. SPEND has moved from the turn line to the right end of the
+microphone row, with SESSION and the session's model spend beside it. The figure is the one the
+Spend window shows. It updates after each turn and after you reset it in the Spend window. PTT READY
+is now cyan. The microphone row and the ask box now start at the same left edge as the turns.
+
+Each turn's time now follows its tags after a short gap instead of sitting at the far right. Your
+own turns are headed with your commander name, such as CMDR JOHN DEPARAGON, or CMDR when d47 does
+not know it yet. The search field is wider, and its border is dim until you click into it.
+
 ## 1.13.2 — The honk takes
 
 The arrival honk now works when you arrive in combat mode. In supercruise, where your hardpoints are

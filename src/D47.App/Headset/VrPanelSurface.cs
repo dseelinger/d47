@@ -148,6 +148,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableSystemNames(known, gameState is null ? null : () => gameState()?.Location.StarSystem);
         }
 
+        if (gameState is not null)
+        {
+            _view.EnableCommanderName(() => gameState()?.Identity.Name);
+        }
+
         if (settingsPage is not null)
         {
             Func<Panel.LearnedPhrasesPage>? phrases = capabilities is not null && learnedPhrases is not null

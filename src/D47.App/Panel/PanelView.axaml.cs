@@ -81,7 +81,7 @@ public partial class PanelView : UserControl
     private bool _searchable;
 
     /// <summary>How the host shows the turn's figures, when it gave a way.</summary>
-    private Action? _showTurnDetails;
+    private Func<Task>? _showTurnDetails;
 
     /// <summary>The tab to come back to when a furnished one is left.</summary>
     private PanelTab _lastTab = PanelTab.Transcript;
@@ -392,6 +392,17 @@ public partial class PanelView : UserControl
 
                 Dispatcher.UIThread.Post(ApplyAskHint);
                 return;
+
+            // The turn line is written as each turn completes, after its cost is recorded.
+            case nameof(PanelViewModel.TurnLine):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    ApplySessionSpend();
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(ApplySessionSpend);
+                return;
         }
     }
 
@@ -456,6 +467,13 @@ public partial class PanelView : UserControl
         MicrophoneBloom.IsLit = filled;
 
         MicrophoneLabel.Text = label;
+
+        // Only a ready microphone lights its words; the other states stay grey.
+        MicrophoneLabel.Bind(
+            TextBlock.ForegroundProperty,
+            this.GetResourceObservable(key == Theming.ThemeManager.CyanKey && !loading
+                ? Theming.ThemeManager.CyanKey
+                : Theming.ThemeManager.Grey2Key));
     }
 
     /// <summary>The Settings tab, so a host can hang a tooltip naming the bound gesture on it.</summary>
@@ -599,6 +617,11 @@ public partial class PanelView : UserControl
     private D47.Core.Knowledge.SystemsInPlay? _systemsInPlay;
 
     private Func<string?>? _currentSystem;
+
+    /// <summary>Gives this surface the Commander's name, which heads their turns.</summary>
+    public void EnableCommanderName(Func<string?> name) => _commanderName = name;
+
+    private Func<string?>? _commanderName;
 
     public void EnableLoadout(
         D47.Core.Ships.ShipPlanService ships,
@@ -1366,13 +1389,41 @@ public partial class PanelView : UserControl
     /// Offers the turn's figures behind a link, for a host that has somewhere to show them
     /// (docs/plans/change-requests.md item 2).
     /// </summary>
-    public void EnableTurnDetails(Action show)
+    /// <remarks>
+    /// <paramref name="session"/> is the session's model spend, shown beside the link and read again after
+    /// each turn and when the figures close.
+    /// </remarks>
+    public void EnableTurnDetails(Func<Task> show, Func<decimal> session)
     {
         _showTurnDetails = show;
-        TurnDetails.IsVisible = true;
+        _sessionSpend = session;
+        SpendRow.IsVisible = true;
+        ApplySessionSpend();
     }
 
-    private void OnTurnDetailsClick(object? sender, RoutedEventArgs e) => _showTurnDetails?.Invoke();
+    private void OnTurnDetailsClick(object? sender, RoutedEventArgs e)
+    {
+        if (_showTurnDetails is { } show)
+        {
+            _ = ShowTurnDetailsAsync(show);
+        }
+    }
+
+    private async Task ShowTurnDetailsAsync(Func<Task> show)
+    {
+        await show();
+        ApplySessionSpend();
+    }
+
+    private Func<decimal>? _sessionSpend;
+
+    private void ApplySessionSpend()
+    {
+        if (_sessionSpend is { } session)
+        {
+            SessionFigure.Text = session().ToString("C4", System.Globalization.CultureInfo.CurrentCulture);
+        }
+    }
 
     /// <summary>How the host opens the documentation site, when it gave a way.</summary>
     private Action<string>? _openHelp;
@@ -3106,7 +3157,8 @@ public partial class PanelView : UserControl
 
     /// <summary>
     /// Who spoke, what it was about, how it was delivered and when — atop every turn but the panel's own note
-    /// (#276). The time sits at the right; the rest wraps when the turn is narrow.
+    /// (#276). The time follows the last tag after <see cref="HeadTimeGap"/>; the rest wraps when the turn is
+    /// narrow.
     /// </summary>
     private Control Head(DrawnTurn turn)
     {
@@ -3126,22 +3178,37 @@ public partial class PanelView : UserControl
 
         var time = Faint(turn.Time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture));
 
-        time.Margin = new Thickness(10, 0, 0, 0);
+        time.Margin = new Thickness(HeadTimeGap, 0, 0, 0);
         time.VerticalAlignment = VerticalAlignment.Top;
-        DockPanel.SetDock(time, Dock.Right);
+        Grid.SetColumn(time, 1);
 
-        return new DockPanel { Children = { time, said } };
+        return new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+            Children = { said, time },
+        };
     }
+
+    /// <summary>The gap between a turn head's last tag and its time.</summary>
+    internal const double HeadTimeGap = 12;
 
     /// <summary>
     /// The speaker's name in uppercase Saira 13/600, in the colour of the turn's bar: cyan for the Commander,
-    /// A for the ship and every other in-ship voice.
+    /// A for the ship and every other in-ship voice. A Commander turn carries the Commander's name when one is
+    /// known.
     /// </summary>
     private TextBlock SpeakerName(DrawnTurn turn)
     {
+        var said = turn.Voice == TranscriptVoice.Commander
+                   && turn.Speaker == "CMDR"
+                   && _commanderName?.Invoke() is { Length: > 0 } commander
+            ? $"CMDR {commander}"
+            : turn.Speaker;
+
         var name = new TextBlock
         {
-            Text = turn.Speaker.ToUpperInvariant(),
+            Text = said.ToUpperInvariant(),
             FontFamily = ChromeFamily,
             FontSize = Theming.TypeScale.Small,
             FontWeight = FontWeight.SemiBold,
@@ -3864,8 +3931,12 @@ public partial class PanelView : UserControl
         SizeSearchRow();
     }
 
+    /// <summary>The search field's width on the Transcript.</summary>
+    public const double TranscriptSearchWidth = 340;
+
     /// <summary>
-    /// The search field's width, clamp(240, 32% of the bar, 420), beside the readings when the readings,
+    /// The search field's width, <see cref="TranscriptSearchWidth"/> on the Transcript and otherwise the page's
+    /// filter width or clamp(240, 32% of the bar, 420), beside the readings when the readings,
     /// the row's actions and the field all fit across the bar, and on a line of its own below them when
     /// they do not — where it narrows to what is left, down to 90.
     /// </summary>
@@ -3898,8 +3969,9 @@ public partial class PanelView : UserControl
         }
 
         const double Gap = 16;
-        var field = (Tab == PanelTab.Transcript ? null : (PagePane.Child as IFilterablePage)?.FilterWidth)
-                    ?? Math.Clamp(bar * 0.32, 240, 420);
+        var field = Tab == PanelTab.Transcript
+            ? TranscriptSearchWidth
+            : (PagePane.Child as IFilterablePage)?.FilterWidth ?? Math.Clamp(bar * 0.32, 240, 420);
 
         if (!SearchInput.IsVisible)
         {

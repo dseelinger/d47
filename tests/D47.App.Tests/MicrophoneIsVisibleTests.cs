@@ -170,13 +170,16 @@ public class MicrophoneIsVisibleTests
         Assert.False(Named(view, "Footer").IsVisible);
     }
 
-    /// <summary>Only the dot says the state by colour: Good when ready, Warn listening, Danger when off.</summary>
+    /// <summary>
+    /// The dot says the state by colour: Good when ready, Warn listening, Danger when off. The words are cyan
+    /// when ready and grey otherwise (#430).
+    /// </summary>
     [AvaloniaTheory]
-    [InlineData(MicrophoneState.Idle, Theming.ThemeManager.CyanKey)]
-    [InlineData(MicrophoneState.Armed, Theming.ThemeManager.AKey)]
-    [InlineData(MicrophoneState.Open, Theming.ThemeManager.AKey)]
-    [InlineData(MicrophoneState.Off, Theming.ThemeManager.RedKey)]
-    public void OnlyTheDotChangesColour(MicrophoneState state, string dotKey)
+    [InlineData(MicrophoneState.Idle, Theming.ThemeManager.CyanKey, Theming.ThemeManager.CyanKey)]
+    [InlineData(MicrophoneState.Armed, Theming.ThemeManager.AKey, Theming.ThemeManager.Grey2Key)]
+    [InlineData(MicrophoneState.Open, Theming.ThemeManager.AKey, Theming.ThemeManager.Grey2Key)]
+    [InlineData(MicrophoneState.Off, Theming.ThemeManager.RedKey, Theming.ThemeManager.Grey2Key)]
+    public void TheDotSaysTheStateAndOnlyReadyLightsTheWords(MicrophoneState state, string dotKey, string labelKey)
     {
         var model = new PanelViewModel { Microphone = state };
         var view = Bind(model);
@@ -188,7 +191,7 @@ public class MicrophoneIsVisibleTests
 
         Assert.Equal(Colour(view, dotKey), (dot.Stroke as Avalonia.Media.ISolidColorBrush)?.Color);
         Assert.Equal(
-            Colour(view, Theming.ThemeManager.Grey2Key),
+            Colour(view, labelKey),
             (label.Foreground as Avalonia.Media.ISolidColorBrush)?.Color);
 
         window.Close();

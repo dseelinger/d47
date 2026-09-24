@@ -18,9 +18,9 @@ public class TheBubbleHeadNamesWhoSpokeTests
     /// <summary>The head's parts in reading order: the name, any tags, then the time.</summary>
     private static IReadOnlyList<Control> Head(Control turn)
     {
-        var head = (DockPanel)((StackPanel)((Border)turn).Child!).Children[0];
+        var head = (Grid)((StackPanel)((Border)turn).Child!).Children[0];
 
-        return [.. ((WrapPanel)head.Children[1]).Children, head.Children[0]];
+        return [.. ((WrapPanel)head.Children[0]).Children, head.Children[1]];
     }
 
     private static string? Said(Control chipOrTag) => chipOrTag switch

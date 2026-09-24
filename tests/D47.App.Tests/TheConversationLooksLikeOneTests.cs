@@ -44,7 +44,7 @@ public class TheConversationLooksLikeOneTests
 
     /// <summary>The speaker's name at the head of a message.</summary>
     private static TextBlock Name(Border message) =>
-        (TextBlock)((WrapPanel)((DockPanel)((StackPanel)message.Child!).Children[0]).Children[1]).Children[0];
+        (TextBlock)((WrapPanel)((Grid)((StackPanel)message.Child!).Children[0]).Children[0]).Children[0];
 
     /// <summary>What one turn says.</summary>
     private static string Said(SelectableTextBlock block) =>

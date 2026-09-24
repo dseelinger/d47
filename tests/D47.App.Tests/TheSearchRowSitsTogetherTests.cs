@@ -70,22 +70,7 @@ public class TheSearchRowSitsTogetherTests
     }
 
     /// <summary>
-    /// And the spare width goes to the search box, which is the one control here that can use it —
-    /// </summary>
-    [AvaloniaFact]
-    public void TheSpareWidthGoesToTheBox()
-    {
-        var narrow = Where(Searching(700), "SearchInput");
-        var wider = Where(Searching(1400), "SearchInput");
-
-        Assert.True(
-            wider.Width > narrow.Width,
-            $"the box did not take the extra room: {narrow.Width} at 700, {wider.Width} at 1400");
-    }
-
-    /// <summary>
-    /// And it still shrinks when there is nothing to spare, which is the other half of why it is the
-    /// child that gives: a narrow pane takes the width out of the box rather than out of the mode
+    /// The field shrinks when there is nothing to spare: a narrow pane takes the width out of the box rather than out of the mode
     /// button beside it.
     /// </summary>
     [AvaloniaFact]
@@ -120,12 +105,12 @@ public class TheSearchRowSitsTogetherTests
         Assert.True(next.Right <= field.Left, "the steppers are not left of the field");
     }
 
-    /// <summary>The field is clamp(240px, 32%, 420px) of the bar, and pushed to its right-hand end.</summary>
+    /// <summary>The Transcript's field is 340 wide at any width with room for it, and pushed to the bar's right-hand end (#430).</summary>
     [AvaloniaTheory]
     [InlineData(924)]
     [InlineData(1400)]
     [InlineData(2400)]
-    public void TheFieldIsAThirdOfTheBarWithinItsLimits(double width)
+    public void TheTranscriptsFieldIsAFixedWidth(double width)
     {
         var panel = Searching(width);
 
@@ -134,7 +119,7 @@ public class TheSearchRowSitsTogetherTests
         var right = field.TranslatePoint(new Point(field.Bounds.Width, 0), bar)!.Value.X;
 
         // Within the pixel that layout rounding moves an edge by.
-        Assert.InRange(field.Bounds.Width - Math.Clamp(bar.Bounds.Width * 0.32, 240, 420), -1, 1);
+        Assert.InRange(field.Bounds.Width - PanelView.TranscriptSearchWidth, -1, 1);
         Assert.InRange(bar.Bounds.Width - right, -1, 1);
     }
 }

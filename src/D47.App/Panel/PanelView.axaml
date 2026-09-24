@@ -70,6 +70,14 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
+    <!-- The search field: line at rest, A while focused. -->
+    <Style Selector="TextBox#SearchInput">
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Line}" />
+    </Style>
+    <Style Selector="TextBox#SearchInput:focus">
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
+    </Style>
+
     <!-- The field on a page that filters by removing rows (IFilterablePage.FilterWidth). -->
     <Style Selector="TextBox#SearchInput.filter">
       <Setter Property="BorderBrush" Value="{DynamicResource D47.Line2}" />
@@ -195,27 +203,60 @@
             BorderBrush="{DynamicResource D47.Line2}"
             BorderThickness="0,1,0,0">
       <StackPanel>
-        <!-- The dot is the state, by colour and by fill; the words never change colour. -->
+        <!-- The dot is the state, by colour and by fill. Starts at the turns' left edge. -->
         <Border x:Name="MicrophoneRow"
                 Height="36"
-                Padding="16,0">
-          <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-            <theming:BloomStack x:Name="MicrophoneBloom" Tier="High" IsLit="False" VerticalAlignment="Center">
-              <Ellipse x:Name="MicrophoneGlyph"
-                       Width="8" Height="8"
-                       StrokeThickness="1.5" />
-            </theming:BloomStack>
-            <TextBlock x:Name="MicrophoneLabel"
-                       VerticalAlignment="Center"
-                       FontFamily="{StaticResource D47.Font.Mono}"
-                       FontSize="{StaticResource D47.Type.Caption}"
-                       LetterSpacing="0.72"
-                       Foreground="{DynamicResource D47.Grey2}" />
-          </StackPanel>
+                Padding="0,0,16,0">
+          <DockPanel>
+            <!-- The session's model spend and the way into its figures; shown where EnableTurnDetails is. -->
+            <StackPanel x:Name="SpendRow"
+                        DockPanel.Dock="Right"
+                        Orientation="Horizontal"
+                        IsVisible="False"
+                        VerticalAlignment="Center">
+              <TextBlock x:Name="SessionLabel"
+                         Text="SESSION"
+                         VerticalAlignment="Center"
+                         FontFamily="{StaticResource D47.Font.Chrome}"
+                         FontSize="{StaticResource D47.Type.Small}"
+                         FontWeight="Medium"
+                         LetterSpacing="1.04"
+                         Foreground="{DynamicResource D47.Grey}" />
+              <TextBlock x:Name="SessionFigure"
+                         Margin="8,0,12,0"
+                         VerticalAlignment="Center"
+                         FontFamily="{StaticResource D47.Font.Chrome}"
+                         FontSize="{StaticResource D47.Type.Small}"
+                         FontWeight="SemiBold"
+                         Foreground="{DynamicResource D47.A}" />
+              <Button x:Name="TurnDetails"
+                      Height="28"
+                      MinHeight="0"
+                      Padding="12,0"
+                      VerticalAlignment="Center"
+                      FontSize="{StaticResource D47.Type.Small}"
+                      FontWeight="SemiBold"
+                      Click="OnTurnDetailsClick" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+              <theming:BloomStack x:Name="MicrophoneBloom" Tier="High" IsLit="False" VerticalAlignment="Center">
+                <Ellipse x:Name="MicrophoneGlyph"
+                         Width="8" Height="8"
+                         StrokeThickness="1.5" />
+              </theming:BloomStack>
+              <TextBlock x:Name="MicrophoneLabel"
+                         VerticalAlignment="Center"
+                         FontFamily="{StaticResource D47.Font.Chrome}"
+                         FontSize="{StaticResource D47.Type.Small}"
+                         FontWeight="SemiBold"
+                         LetterSpacing="1.04"
+                         Foreground="{DynamicResource D47.Grey2}" />
+            </StackPanel>
+          </DockPanel>
         </Border>
 
         <!-- Enter sends. The box grows to three lines, then scrolls. -->
-        <DockPanel x:Name="AskRow" Margin="16,0,16,16">
+        <DockPanel x:Name="AskRow" Margin="0,0,16,16">
           <Button x:Name="AskButton"
                   DockPanel.Dock="Right"
                   Margin="10,0,0,0"
@@ -282,20 +323,7 @@
                    Foreground="{DynamicResource D47.A}" />
       </Border>
 
-      <!--
-        One line of provenance per turn: which path answered, at what effort, for what.
-
-        The figures behind it live in a dialog rather than on the line. Eleven numbers on one
-        row beside a running game is a wall a Commander reads none of; the ones that answer
-        "did that work" stay here and the rest are a click away. The link is docked so the line
-        wraps against it rather than pushing it off the row.
-      -->
-      <Button x:Name="TurnDetails"
-              DockPanel.Dock="Right"
-              IsVisible="False"
-              Margin="8,0,0,0"
-              VerticalAlignment="Center"
-              Click="OnTurnDetailsClick" />
+      <!-- One line of provenance per turn: which path answered, at what effort, for what. -->
       <!-- A sentence, not a readout: the prose face, not monospace, which is kept for times. -->
       <TextBlock x:Name="TurnLine"
                  Text="{Binding TurnLine}"
@@ -527,7 +555,8 @@
                    Margin="16,0,0,0">
           <TextBox x:Name="SearchInput"
                    DockPanel.Dock="Right"
-                   Width="240"
+                   Width="{x:Static panel:PanelView.TranscriptSearchWidth}"
+                   VerticalAlignment="Center"
                    PlaceholderText="Search this page"
                    TextChanged="OnSearchChanged"
                    KeyDown="OnSearchKeyDown" />
