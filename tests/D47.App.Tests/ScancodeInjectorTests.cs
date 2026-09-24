@@ -166,43 +166,65 @@ public class ScancodeInjectorTests
         Assert.Equal(InjectionOutcome.NotForeground, result.Outcome);
     }
 
- /// <summary>And it lets go during the hold, not at the end of it.</summary>
+    /// <summary>Runs an action on each step the injector reports, on the injector's own thread.</summary>
+    private sealed class OnStep(Action<InputStepReport> stepped) : IInputTrace
+    {
+        public void Stepped(InputStepReport report) => stepped(report);
+
+        public void Declare(string name, string value)
+        {
+        }
+
+        public void Verdict(string verdict, string reason)
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    /// <summary>Long enough that no delay in scheduling a 50 ms watch comes near it.</summary>
+    private static readonly TimeSpan LongHold = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// And it lets go during the hold, not at the end of it. The window leaves the front as the last key
+    /// goes down, so the only check that can see it is the hold's own.
+    /// </summary>
     [Fact]
     public async Task ALongHoldLetsGoTheMomentEliteStopsBeingInFront()
     {
         var elite = new FakeElite();
         using var injector = Injector(elite);
 
-        // The honk's shape, two seconds instead of 5.3 so the test is quick: a modifier down, the key under
-        // it, the charge, then the releases.
-        var hold = TimeSpan.FromSeconds(2);
-
+        // The honk's shape: a modifier down, the key under it, the charge, then the releases.
         var steps = new List<InputStep>
         {
             new(InputStepKind.KeyDown, 0xA2),
             new(InputStepKind.KeyDown, 0x58),
-            InputStep.Wait(hold),
+            InputStep.Wait(LongHold),
             new(InputStepKind.KeyUp, 0x58),
             new(InputStepKind.KeyUp, 0xA2),
         };
 
+        using var alt = new OnStep(report =>
+        {
+            if (report.Index == 1)
+            {
+                elite.IsForeground = false;
+            }
+        });
+
         var ran = System.Diagnostics.Stopwatch.StartNew();
-        var sending = injector.SendAsync(steps, TestContext.Current.CancellationToken);
-
-        await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
-        elite.IsForeground = false;
-
-        var result = await sending;
+        var result = await injector.SendAsync(steps, alt, TestContext.Current.CancellationToken);
         ran.Stop();
 
         Assert.Equal(InjectionOutcome.NotForeground, result.Outcome);
-
-        // The outcome on its own proved nothing before this fix: the step after the wait reported it too, a
-        // whole hold later.
-        Assert.True(ran.Elapsed < hold, $"the hold ran on for {ran.Elapsed} of {hold}");
+        Assert.Contains("while I was holding a key", result.Reason, StringComparison.Ordinal);
+        Assert.True(ran.Elapsed < LongHold, $"the hold ran on for {ran.Elapsed} of {LongHold}");
     }
 
- /// <summary>Leaving the game mid-hold ends it on the same terms.</summary>
+    /// <summary>Leaving the game mid-hold ends it on the same terms.</summary>
     [Fact]
     public async Task ALongHoldLetsGoWhenTheCommanderLeavesTheGame()
     {
@@ -214,29 +236,30 @@ public class ScancodeInjectorTests
 
         var live = aboard;
 
-        using var injector = Injector(new FakeElite(), () => live);
-
-        var hold = TimeSpan.FromSeconds(2);
+        using var injector = Injector(new FakeElite(), () => Volatile.Read(ref live));
 
         var steps = new List<InputStep>
         {
             new(InputStepKind.KeyDown, 0x58),
-            InputStep.Wait(hold),
+            InputStep.Wait(LongHold),
             new(InputStepKind.KeyUp, 0x58),
         };
 
+        using var leave = new OnStep(report =>
+        {
+            if (report.Index == 0)
+            {
+                Volatile.Write(ref live, aboard with { Flags = D47.Core.Journal.StatusFlags.None });
+            }
+        });
+
         var ran = System.Diagnostics.Stopwatch.StartNew();
-        var sending = injector.SendAsync(steps, TestContext.Current.CancellationToken);
-
-        await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
-
-        live = aboard with { Flags = D47.Core.Journal.StatusFlags.None };
-
-        var result = await sending;
+        var result = await injector.SendAsync(steps, leave, TestContext.Current.CancellationToken);
         ran.Stop();
 
         Assert.Equal(InjectionOutcome.NotOnline, result.Outcome);
-        Assert.True(ran.Elapsed < hold, $"the hold ran on for {ran.Elapsed} of {hold}");
+        Assert.Contains("while I was holding a key", result.Reason, StringComparison.Ordinal);
+        Assert.True(ran.Elapsed < LongHold, $"the hold ran on for {ran.Elapsed} of {LongHold}");
     }
 
     /// <summary>
