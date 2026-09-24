@@ -130,7 +130,7 @@ public class MicrophoneIsVisibleTests
 
         // Both halves: the region mini could have taken away with the rest of the chrome, and the indicator
         // inside it.
-        Assert.True(Named(view, "StatusRow").IsVisible);
+        Assert.True(Named(view, "Footer").IsVisible);
         Assert.True(Named(view, "MicrophoneRow").IsVisible);
 
         Assert.NotNull(frame);
@@ -156,7 +156,7 @@ public class MicrophoneIsVisibleTests
     }
 
     [AvaloniaFact]
-    public void TheSettingsPageShowsNeitherTheIndicatorNorTheProvenanceLine()
+    public void TheSettingsPageDoesNotShowTheIndicator()
     {
         var model = new PanelViewModel { Microphone = MicrophoneState.Open };
         var view = Bind(model);
@@ -165,8 +165,7 @@ public class MicrophoneIsVisibleTests
 
         Render(view, 1024, 640);
 
-        // Both hidden by ApplyChrome off the transcript tab; the indicator goes with its footer.
-        Assert.False(Named(view, "StatusRow").IsVisible);
+        // Hidden by ApplyChrome off the transcript tab; the indicator goes with its footer.
         Assert.False(Named(view, "Footer").IsVisible);
     }
 

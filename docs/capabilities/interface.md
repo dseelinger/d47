@@ -602,7 +602,7 @@ stepper rather than a single toggle.
 Which mode you are on belongs to the surface you are looking at, not to the transcript. The
 desktop window can sit on the log while the headset panel shows the conversation — same
 transcript underneath, and each surface decides how much of it to show. The mini headset panel
-has no bar at all, being the transcript's tail and the provenance line and nothing else.
+has no bar at all, being the transcript's tail and the microphone row and nothing else.
 
 #### Scrolling by saying so {#scrolling}
 

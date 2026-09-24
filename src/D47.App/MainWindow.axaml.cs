@@ -896,15 +896,13 @@ public partial class MainWindow : Window
         _model.AskText = string.Empty;
         _model.Append(input, voice: TranscriptVoice.Commander);
 
+        var presenter = new TurnPresenter(_model);
+
         // Claimed before the turn starts and released in the finally.
         var cancelling = _host.Cancellation.Begin();
 
         // Set when the turn is answered by someone other than the ship's AI, and undone in the finally.
         AppHost.AddressedVoice? addressedVoice = null;
-
-        // The chip this reply's bubble carries — null until Addressed names someone else, and D47 by
-        // Append's own default until then.
-        string? addressedName = null;
 
         try
         {
@@ -914,31 +912,15 @@ public partial class MainWindow : Window
                 _host.Turns.RunAsync(input, source, cancelling.Token),
                 turnEvent =>
                 {
+                    presenter.On(turnEvent);
+
                     switch (turnEvent)
                     {
                         case TurnEvent.Addressed addressed:
                             addressedVoice ??= _host.SpeakAs(addressed);
-                            addressedName = addressed.Name;
-                            break;
-
-                        case TurnEvent.Routed routed:
-                            _model.TurnLine = routed.Effort is { } effort
-                                ? $"routed: {routed.Route}, effort {effort}"
-                                : $"routed: {routed.Route}";
-                            break;
-
-                        case TurnEvent.TextDelta text:
-                            _model.Append(text.Text, speaker: addressedName);
-                            break;
-
-                        case TurnEvent.Retrying retry:
-                            _model.TurnLine =
-                                $"retrying ({retry.Attempt}/{retry.Of}) in {retry.Wait.TotalSeconds:0.#}s — {retry.Because}";
                             break;
 
                         case TurnEvent.Completed completed:
-                            _model.TurnLine = DescribeTurn(completed.Result, _host);
-
                             // And onto the story's own feed, if it was about one (asked for 2026-08-22).
                             _host.NoteTurn(input, completed.Result.Text);
                             break;
@@ -969,6 +951,9 @@ public partial class MainWindow : Window
             _host.Cancellation.End(cancelling);
 
             addressedVoice?.Dispose();
+
+            // A turn that threw or was cancelled never completed, so its live status is cleared here.
+            _model.TurnStatus = string.Empty;
 
             _turnInFlight = false;
             _model.CanAsk = true;
@@ -1067,27 +1052,6 @@ public partial class MainWindow : Window
                 _host.SayAside(VrResize.Describe(outcome));
             }
         });
-    }
-
-    /// <summary>
-    /// One short line of provenance, with the figures behind a link (docs/plans/change-requests.md item
-    /// 2).
-    /// </summary>
-    private static string DescribeTurn(TurnResult result, AppHost host)
-    {
-        var line = new StringBuilder($"{result.Outcome} via {result.Route}");
-
-        if (result.Effort is { } effort)
-        {
-            line.Append($", effort {effort}");
-        }
-
-        if (result.Cost is { } cost)
-        {
-            line.Append(cost.Priced ? $" — {cost.Dollars:C4}" : " — unpriced model");
-        }
-
-        return line.ToString();
     }
 
     /// <summary>Opens the figures.</summary>

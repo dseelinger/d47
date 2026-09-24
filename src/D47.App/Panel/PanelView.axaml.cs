@@ -142,7 +142,7 @@ public partial class PanelView : UserControl
     private readonly List<(SelectableTextBlock Block, int Start, WrapPanel? Strip)> _bubbles = [];
 
     /// <summary>What those bubbles were drawn from, as comparable things each.</summary>
-    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text, string Direction)> _shape = [];
+    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text, string Direction, string? Provenance)> _shape = [];
 
     /// <summary>The block a selection was last made in.</summary>
     private SelectableTextBlock? _selection;
@@ -393,8 +393,8 @@ public partial class PanelView : UserControl
                 Dispatcher.UIThread.Post(ApplyAskHint);
                 return;
 
-            // The turn line is written as each turn completes, after its cost is recorded.
-            case nameof(PanelViewModel.TurnLine):
+            // The turn status is cleared as each turn completes, after its cost is recorded.
+            case nameof(PanelViewModel.TurnStatus):
                 if (Dispatcher.UIThread.CheckAccess())
                 {
                     ApplySessionSpend();
@@ -2036,9 +2036,6 @@ public partial class PanelView : UserControl
         // saying nothing about a page with no turns on it.
         AskRow.IsVisible = full && transcript;
 
-        // The provenance line, because it is about the transcript and no other tab has turns on it.
-        StatusRow.IsVisible = transcript;
-
         // The footer shares that rule but not the ask row's: mini and the headset take the ask box away and
         // keep the microphone's state, since continuous capture with no visible state is the thing a
         // Commander is right to distrust.
@@ -2935,7 +2932,8 @@ public partial class PanelView : UserControl
                 turn.Voice,
                 turn.Marker,
                 Text: string.Concat(turn.Segments.Select(segment => segment.Text)),
-                Direction: string.Join(' ', turn.Direction)))
+                Direction: string.Join(' ', turn.Direction),
+                Provenance: turn.Provenance?.Text))
             .ToArray();
 
         // One snapshot of what d47 already knows, shared by every chip this call draws, so a name that
@@ -2953,8 +2951,10 @@ public partial class PanelView : UserControl
             // newest one has to go through the full redraw below to lose them (#277).
             && turns[^1].Kind != TranscriptRunKind.Proposal
 
-            // The head is not redrawn here, so a delivery tag arriving mid-reply needs the full redraw.
+            // The head and the provenance line are not redrawn here, so a delivery tag arriving mid-reply or
+            // the turn completing needs the full redraw.
             && shape[^1].Direction == _shape[^1].Direction
+            && shape[^1].Provenance == _shape[^1].Provenance
             && shape.Take(shape.Length - 1).SequenceEqual(_shape.Take(_shape.Count - 1)))
         {
             Fill(_bubbles[^1].Block, turns[^1], _bubbles[^1].Start);
@@ -3097,6 +3097,11 @@ public partial class PanelView : UserControl
 
         var commander = turn.Voice == TranscriptVoice.Commander;
 
+        if (!commander && turn.Provenance is { } provenance)
+        {
+            content.Children.Add(ProvenanceLine(provenance));
+        }
+
         var row = new TurnBorder
         {
             Child = content,
@@ -3132,6 +3137,36 @@ public partial class PanelView : UserControl
         row.PointerExited += (_, _) => Rest();
 
         return row;
+    }
+
+    /// <summary>
+    /// A finished turn's outcome, route, effort and cost: JetBrains Mono 12 in grey2, uppercase, the cost in A.
+    /// </summary>
+    private TextBlock ProvenanceLine(TurnProvenance provenance)
+    {
+        var inlines = new InlineCollection { new Run(provenance.Lead) };
+
+        if (provenance.Cost is { } cost)
+        {
+            var figure = new Run(cost);
+            figure.Bind(TextElement.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AKey));
+
+            inlines.Add(new Run(TurnProvenance.Separator));
+            inlines.Add(figure);
+        }
+
+        var line = new TextBlock
+        {
+            Name = "ProvenanceLine",
+            FontFamily = MonospaceFamily,
+            FontSize = Theming.TypeScale.Caption,
+            TextWrapping = TextWrapping.Wrap,
+            Inlines = inlines,
+        };
+
+        line.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.Grey2Key));
+
+        return line;
     }
 
     /// <summary>The widest a turn is, as a share of the list's width.</summary>
@@ -3421,7 +3456,7 @@ public partial class PanelView : UserControl
             yield return new DrawnSegment(
                 text, segment.Marker, segment.Voice, span.Style,
                 segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
-                direction);
+                direction, segment.Provenance);
         }
     }
 
@@ -3468,6 +3503,7 @@ public partial class PanelView : UserControl
                             .SelectMany(segment => segment.Direction ?? [])
                             .Distinct(StringComparer.OrdinalIgnoreCase),
                     ],
+                    Provenance = turn.Segments.Select(segment => segment.Provenance).LastOrDefault(line => line is not null),
                 })
                 .Where(turn => turn.Segments.Count > 0)
         ];
@@ -4106,7 +4142,8 @@ internal readonly record struct DrawnSegment(
     DateTimeOffset Time,
     TranscriptRunKind Kind = TranscriptRunKind.Text,
     string? ProposalId = null,
-    IReadOnlyList<string>? Direction = null);
+    IReadOnlyList<string>? Direction = null,
+    TurnProvenance? Provenance = null);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
@@ -4121,4 +4158,7 @@ internal sealed record DrawnTurn(
 {
     /// <summary>The delivery direction taken out of the turn's text, drawn in its head.</summary>
     public IReadOnlyList<string> Direction { get; init; } = [];
+
+    /// <summary>The line drawn inside the turn, after its body and chips.</summary>
+    public TurnProvenance? Provenance { get; init; }
 }

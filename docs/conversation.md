@@ -64,20 +64,17 @@ nav_order: 3
 </section>
 <section>
 <h2><span class="num">3</span> Every answer shows its receipt.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="The provenance line under each turn, explained part by part">
+<svg viewBox="0 0 880 250" role="img" aria-label="The provenance line inside each answer, explained part by part">
  <rect x="20" y="26" width="840" height="54" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="42" y="59" font-size="14" fill="var(--text)">Answered via Model,</text>
- <text x="190" y="59" font-size="14" fill="var(--text)">effort Medium,</text>
- <text x="300" y="59" font-size="14" fill="var(--text)">1420 in (1180 cached), 96 out,</text>
- <text x="510" y="59" font-size="14" fill="var(--text)">$0.0031 this turn, $0.0142 session</text>
- <line x1="100" y1="86" x2="100" y2="112" stroke="var(--accent)" stroke-width="2"/>
- <line x1="238" y1="86" x2="238" y2="112" stroke="var(--accent)" stroke-width="2"/>
- <line x1="398" y1="86" x2="398" y2="112" stroke="var(--accent)" stroke-width="2"/>
- <line x1="618" y1="86" x2="618" y2="112" stroke="var(--accent)" stroke-width="2"/>
- <text x="100" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">who answered</text>
- <text x="238" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">how hard it thought</text>
- <text x="398" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">what it read and wrote</text>
- <text x="618" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">what it cost</text>
+ <text x="42" y="59" font-size="14" font-family="monospace" fill="var(--text-muted)">ANSWERED VIA CLAUDE-SONNET-5</text>
+ <text x="300" y="59" font-size="14" font-family="monospace" fill="var(--text-muted)">· EFFORT MEDIUM</text>
+ <text x="450" y="59" font-size="14" font-family="monospace" fill="var(--accent)">· $0.0031</text>
+ <line x1="160" y1="86" x2="160" y2="112" stroke="var(--accent)" stroke-width="2"/>
+ <line x1="370" y1="86" x2="370" y2="112" stroke="var(--accent)" stroke-width="2"/>
+ <line x1="510" y1="86" x2="510" y2="112" stroke="var(--accent)" stroke-width="2"/>
+ <text x="160" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">who answered</text>
+ <text x="370" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">how hard it thought</text>
+ <text x="510" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">what it cost</text>
  <rect x="130" y="168" width="620" height="58" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
  <text x="440" y="194" text-anchor="middle" font-size="14" font-weight="700" fill="var(--danger)">If it ever says “unexplained cold prefix”</text>
  <text x="440" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">caching broke, and that turn was billed at full price</text>

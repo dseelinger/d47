@@ -112,9 +112,9 @@ public class SettingsIsATabTests
         Assert.True(Named(view, "PagePane").IsVisible);
         Assert.False(Named(view, "AskRow").IsVisible);
 
-        // Effectively rather than directly: the provenance line shares a row with the microphone indicator
-        // since Phase 13, and it is the row that is hidden.
-        Assert.False(Named(view, "TurnLine").IsEffectivelyVisible);
+        // Effectively rather than directly: the turn status sits in the microphone row, and it is the footer
+        // that is hidden.
+        Assert.False(Named(view, "TurnStatus").IsEffectivelyVisible);
 
         // The header stays: the avatar and the help glyph are as true on this page as on any other.
         Assert.True(Named(view, "Header").IsVisible);

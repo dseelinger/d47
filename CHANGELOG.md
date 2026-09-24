@@ -17,6 +17,12 @@ Each turn's time now follows its tags after a short gap instead of sitting at th
 own turns are headed with your commander name, such as CMDR JOHN DEPARAGON, or CMDR when d47 does
 not know it yet. The search field is wider, and its border is dim until you click into it.
 
+Each answer now shows its own cost line under its text, such as ANSWERED VIA CLAUDE-SONNET-5 ·
+EFFORT MEDIUM · $0.0690, and earlier answers keep theirs. An answer that needed no model names the
+route instead, with no cost. The line under the transcript is gone. What a turn is doing while it
+runs, such as retrying, and the switch and startup notices now show in the microphone row, left of
+SESSION.
+
 ## 1.13.2 — The honk takes
 
 The arrival honk now works when you arrive in combat mode. In supercruise, where your hardpoints are

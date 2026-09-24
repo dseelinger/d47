@@ -52,7 +52,7 @@ public class PanelParityTests
     {
         var model = new PanelViewModel();
         model.Append("Rendered by a surface with nothing on screen to show for it.");
-        model.TurnLine = "routed: keyword";
+        model.TurnStatus = "routed: keyword";
 
         var view = Bind(model);
         var frame = Render(view, 1024, 640);
@@ -73,7 +73,7 @@ public class PanelParityTests
         var model = new PanelViewModel();
         model.ErrorText = "Something to hide in mini.";
         model.Append("Fixture Anchorage, 12.4 ly.");
-        model.TurnLine = "routed: keyword";
+        model.TurnStatus = "routed: keyword";
 
         var view = Bind(model);
         using var surface = new OffscreenSurface(view, new PixelSize(1024, 640));

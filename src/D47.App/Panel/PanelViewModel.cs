@@ -63,6 +63,7 @@ public enum TranscriptRunKind
 /// <param name="SourceKey">The callout key this run came from, or null for one that did not.</param>
 /// <param name="Kind">Whether this is a proposal card rather than plain text (#277).</param>
 /// <param name="ProposalId">Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</param>
+/// <param name="Provenance">The line drawn inside the turn this run finished, or null.</param>
 public sealed record TranscriptSegment(
     string Text,
     bool Marker,
@@ -71,7 +72,8 @@ public sealed record TranscriptSegment(
     string? SourceKey = null,
     DateTimeOffset Time = default,
     TranscriptRunKind Kind = TranscriptRunKind.Text,
-    string? ProposalId = null);
+    string? ProposalId = null,
+    TurnProvenance? Provenance = null);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
@@ -93,13 +95,16 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         /// <summary>Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</summary>
         public string? ProposalId { get; init; }
+
+        /// <summary>The line drawn inside the turn this run finished.</summary>
+        public TurnProvenance? Provenance { get; set; }
     }
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
     private readonly Lock _appendLock = new();
 
     private string _logText = string.Empty;
-    private string _turnLine = string.Empty;
+    private string _turnStatus = string.Empty;
     private string? _errorText;
     private string? _updateText;
     private bool _updateBusy;
@@ -318,10 +323,11 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Whether the startup row is drawn at all.</summary>
     public bool StartupVisible => !string.IsNullOrEmpty(_startupText);
 
-    public string TurnLine
+    /// <summary>What the turn in flight is doing — routed, retrying — and empty once it completes.</summary>
+    public string TurnStatus
     {
-        get => _turnLine;
-        set => Set(ref _turnLine, value);
+        get => _turnStatus;
+        set => Set(ref _turnStatus, value);
     }
 
     /// <summary>Null when there is nothing wrong.</summary>
@@ -500,6 +506,45 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         TranscriptAppended?.Invoke();
     }
 
+    /// <summary>How many runs the transcript holds; a turn notes it at its start for <see cref="AttachProvenance"/>.</summary>
+    public int RunCount
+    {
+        get
+        {
+            lock (_appendLock)
+            {
+                return _runs.Count;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Puts <paramref name="provenance"/> on the last run the turn that began at <paramref name="since"/> wrote,
+    /// whoever it was spoken as. Callouts, notes and the Commander's own words are passed over; a turn that
+    /// wrote nothing gets no line.
+    /// </summary>
+    public void AttachProvenance(int since, TurnProvenance provenance)
+    {
+        lock (_appendLock)
+        {
+            var index = _runs.FindLastIndex(run =>
+                run.Voice == TranscriptVoice.Ship
+                && !run.Marker
+                && run.SourceKey is null
+                && run.Kind == TranscriptRunKind.Text
+                && !string.IsNullOrWhiteSpace(run.Text.ToString()));
+
+            if (index < since)
+            {
+                return;
+            }
+
+            _runs[index].Provenance = provenance;
+        }
+
+        TranscriptAppended?.Invoke();
+    }
+
     /// <summary>Empties what the transcript is showing (remediation.md 11, item 14).</summary>
     public void ClearTranscript()
     {
@@ -538,7 +583,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 .. _runs.Select(run =>
                     new TranscriptSegment(
                         Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
-                        run.Kind, run.ProposalId))
+                        run.Kind, run.ProposalId, run.Provenance))
             ],
         };
     }

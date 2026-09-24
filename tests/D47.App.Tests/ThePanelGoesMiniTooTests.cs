@@ -97,7 +97,7 @@ public class ThePanelGoesMiniTooTests
     }
 
     /// <summary>
-    /// The provenance line and the microphone indicator are unchanged: they are what mini already
+    /// The microphone row is unchanged: they are what mini already
     /// showed, and this phase adds the ask line rather than rearranging the rest.
     /// </summary>
     [AvaloniaFact]
@@ -108,7 +108,7 @@ public class ThePanelGoesMiniTooTests
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(panel.GetControl<DockPanel>("StatusRow").IsVisible);
+        Assert.True(panel.GetControl<Border>("MicrophoneRow").IsVisible);
         Assert.False(panel.GetControl<DockPanel>("TabStrip").IsVisible);
         Assert.False(panel.GetControl<DockPanel>("Header").IsVisible);
 

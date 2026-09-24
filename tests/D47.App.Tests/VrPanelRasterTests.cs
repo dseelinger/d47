@@ -148,7 +148,7 @@ public class VrPanelRasterTests
 
         var model = new PanelViewModel();
         model.Append("Holding in normal space over HIP 12099 1 b.");
-        model.TurnLine = "routed: model";
+        model.TurnStatus = "routed: model";
 
         var surface = new VrPanelSurface(model, settings, _ => null);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

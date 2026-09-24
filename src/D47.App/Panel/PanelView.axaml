@@ -238,7 +238,41 @@
                       FontWeight="SemiBold"
                       Click="OnTurnDetailsClick" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <!--
+              What startup is still doing, and which assigned HOTAS switches sit against the game's state
+              (list.md Phase 21). In this row because mini and the headset keep it.
+            -->
+            <Border x:Name="StartupRow"
+                    DockPanel.Dock="Right"
+                    IsVisible="{Binding StartupVisible}"
+                    Margin="10,0,12,0"
+                    Padding="7,2"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource D47.Slab}"
+                    BorderBrush="{DynamicResource D47.Grey}"
+                    BorderThickness="1">
+              <TextBlock x:Name="StartupLabel"
+                         Text="{Binding StartupText}"
+                         VerticalAlignment="Center"
+                         FontSize="{StaticResource D47.Type.Small}"
+                         Foreground="{DynamicResource D47.Grey}" />
+            </Border>
+            <Border x:Name="SwitchRow"
+                    DockPanel.Dock="Right"
+                    IsVisible="{Binding SwitchesVisible}"
+                    Margin="10,0,0,0"
+                    Padding="7,2"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource D47.Slab}"
+                    BorderBrush="{DynamicResource D47.Grey}"
+                    BorderThickness="1">
+              <TextBlock x:Name="SwitchText"
+                         Text="{Binding SwitchesText}"
+                         VerticalAlignment="Center"
+                         FontSize="{StaticResource D47.Type.Small}"
+                         Foreground="{DynamicResource D47.A}" />
+            </Border>
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
               <theming:BloomStack x:Name="MicrophoneBloom" Tier="High" IsLit="False" VerticalAlignment="Center">
                 <Ellipse x:Name="MicrophoneGlyph"
                          Width="8" Height="8"
@@ -252,6 +286,16 @@
                          LetterSpacing="1.04"
                          Foreground="{DynamicResource D47.Grey2}" />
             </StackPanel>
+            <!-- The turn in flight: routed, retrying. Cleared when the turn completes. -->
+            <TextBlock x:Name="TurnStatus"
+                       Text="{Binding TurnStatus}"
+                       Margin="12,0,16,0"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       FontFamily="{StaticResource D47.Font.Prose}"
+                       FontSize="{StaticResource D47.Type.Secondary}"
+                       Foreground="{DynamicResource D47.Grey}" />
           </DockPanel>
         </Border>
 
@@ -276,63 +320,6 @@
         </DockPanel>
       </StackPanel>
     </Border>
-
-    <!--
-      The provenance line, docked left of the turn line rather than under it: the two are read at
-      different moments and neither should push the other around as it changes length.
-    -->
-    <DockPanel x:Name="StatusRow" DockPanel.Dock="Bottom" Margin="0,10,0,0">
-
-      <!--
-        Which assigned HOTAS switches currently sit against the game's state (list.md Phase 21).
-        In this row rather than in the banners, and the difference is the reason for it: mini hides
-        the banners and mini is the headset's normal state, so a switch annunciator up there
-        would be invisible exactly where a Commander cannot see their own switches either.
-      -->
-      <Border x:Name="StartupRow"
-              DockPanel.Dock="Right"
-              IsVisible="{Binding StartupVisible}"
-              Margin="10,0,0,0"
-              Padding="7,2"
-              VerticalAlignment="Center"
-              Background="{DynamicResource D47.Slab}"
-              BorderBrush="{DynamicResource D47.Grey}"
-              BorderThickness="1">
-        <TextBlock x:Name="StartupLabel"
-                   Text="{Binding StartupText}"
-                   VerticalAlignment="Center"
-                   TextWrapping="Wrap"
-                   FontSize="{StaticResource D47.Type.Small}"
-                   Foreground="{DynamicResource D47.Grey}" />
-      </Border>
-
-      <Border x:Name="SwitchRow"
-              DockPanel.Dock="Right"
-              IsVisible="{Binding SwitchesVisible}"
-              Margin="10,0,0,0"
-              Padding="7,2"
-              VerticalAlignment="Center"
-              Background="{DynamicResource D47.Slab}"
-              BorderBrush="{DynamicResource D47.Grey}"
-              BorderThickness="1">
-        <TextBlock x:Name="SwitchText"
-                   Text="{Binding SwitchesText}"
-                   VerticalAlignment="Center"
-                   TextWrapping="Wrap"
-                   FontSize="{StaticResource D47.Type.Small}"
-                   Foreground="{DynamicResource D47.A}" />
-      </Border>
-
-      <!-- One line of provenance per turn: which path answered, at what effort, for what. -->
-      <!-- A sentence, not a readout: the prose face, not monospace, which is kept for times. -->
-      <TextBlock x:Name="TurnLine"
-                 Text="{Binding TurnLine}"
-                 VerticalAlignment="Center"
-                 FontFamily="{StaticResource D47.Font.Prose}"
-                 FontSize="{StaticResource D47.Type.Secondary}"
-                 Foreground="{DynamicResource D47.Grey}"
-                 TextWrapping="Wrap" />
-    </DockPanel>
 
     <!--
       Which surface of the panel this instantiation is showing, and which reading of it. On the

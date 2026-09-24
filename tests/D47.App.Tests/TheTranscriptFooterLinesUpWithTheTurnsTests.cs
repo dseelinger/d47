@@ -132,7 +132,8 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
         Assert.Equal(28, spend.Bounds.Height, 0.5);
 
         spent = 0.0415m;
-        model.TurnLine = "Answered via Model";
+        model.TurnStatus = "routed: Model";
+        model.TurnStatus = string.Empty;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(0.0415m.ToString("C4", System.Globalization.CultureInfo.CurrentCulture), figure.Text);
@@ -161,7 +162,7 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
         using var look = AppLook.Put(ThemeCatalog.Elite);
 
         var model = Conversation();
-        model.TurnLine = "Answered via Model, effort Medium";
+        model.AttachProvenance(0, new TurnProvenance("ANSWERED VIA CLAUDE-SONNET-5 · EFFORT MEDIUM", "$0.0690"));
 
         var panel = Laid(model, commander: "John Deparagon");
         var window = (Window)TopLevel.GetTopLevel(panel)!;

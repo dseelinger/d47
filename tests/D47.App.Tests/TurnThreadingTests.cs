@@ -27,11 +27,16 @@ public class TurnThreadingTests
 
     /// <summary>The end of a turn arrives off the UI thread too: an exception there takes the whole turn down, and the completion line with it.</summary>
     [AvaloniaFact]
-    public async Task SettingTheTurnLineFromOffTheUiThreadDoesNotThrow()
+    public async Task SettingTheTurnStatusAndProvenanceFromOffTheUiThreadDoesNotThrow()
     {
         var model = Shown();
 
-        var thrown = await OffTheUiThread(() => model.TurnLine = "routed: keyword");
+        var thrown = await OffTheUiThread(() =>
+        {
+            model.TurnStatus = "routed: keyword";
+            model.Append("Answered.");
+            model.AttachProvenance(0, new TurnProvenance("ANSWERED VIA KEYWORD ROUTER", Cost: null));
+        });
 
         Assert.Null(thrown);
     }

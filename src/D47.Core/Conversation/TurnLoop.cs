@@ -44,7 +44,8 @@ public sealed record TurnResult(
     TurnRoute Route,
     string Text,
     ThinkingEffort? Effort,
-    TurnCost? Cost);
+    TurnCost? Cost,
+    string? Model = null);
 
 public abstract record TurnEvent
 {
@@ -1178,7 +1179,7 @@ public sealed class TurnLoop(
 
                 yield return new TurnEvent.TextDelta(text);
                 yield return new TurnEvent.Completed(new TurnResult(
-                    TurnOutcome.Failed, TurnRoute.Model, text, effortReported, Cost: null));
+                    TurnOutcome.Failed, TurnRoute.Model, text, effortReported, Cost: null, chosenModel));
                 yield break;
             }
 
@@ -1343,7 +1344,8 @@ public sealed class TurnLoop(
             usage.OutputTokens,
             cost.Priced ? cost.Dollars.ToString("C4") : "unpriced");
 
-        yield return new TurnEvent.Completed(new TurnResult(turnOutcome, TurnRoute.Model, answer, effortReported, cost));
+        yield return new TurnEvent.Completed(new TurnResult(
+            turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel));
     }
 
     /// <summary>

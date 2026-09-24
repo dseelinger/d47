@@ -250,7 +250,7 @@ public class VrSurfaceTests
         }
 
         Assert.True(Named(view, "TranscriptScroller").IsVisible);
-        Assert.True(Named(view, "TurnLine").IsVisible);
+        Assert.True(Named(view, "TurnStatus").IsVisible);
     }
 
     /// <summary>The headset card, captured for a human to look at.</summary>

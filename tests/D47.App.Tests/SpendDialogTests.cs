@@ -275,14 +275,16 @@ public class SpendDialogTests
         window.Close();
     }
 
-    /// <summary>The short line and its link, for a human to look at.</summary>
+    /// <summary>A turn's provenance line and the SPEND link, for a human to look at.</summary>
     [AvaloniaFact]
-    public void TheShortTurnLineRendersToACapture()
+    public void TheProvenanceLineRendersToACapture()
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
 
-        var model = new D47.App.Panel.PanelViewModel { TurnLine = "Answered via Model, effort Medium — $0.0231" };
+        var model = new D47.App.Panel.PanelViewModel();
+        model.Append("Holding in normal space.");
+        model.AttachProvenance(0, new D47.App.Panel.TurnProvenance("ANSWERED VIA CLAUDE-SONNET-5 · EFFORT MEDIUM", "$0.0231"));
         var view = new D47.App.Panel.PanelView { DataContext = model };
 
         view.EnableTurnDetails(() => Task.CompletedTask, () => 0.0231m);
