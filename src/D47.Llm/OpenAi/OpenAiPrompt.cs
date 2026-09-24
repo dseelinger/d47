@@ -86,8 +86,26 @@ internal static class OpenAiPrompt
             return turns;
         }
 
-        // The fallback.
+        // The fallback: the reminder goes inside the last message the model reads, so a strict chat template
+        // sees alternating roles and a small model answers the Commander or the tool rather than the reminder.
         var reminder = $"<system-reminder>\n{prompt.TrailingState}\n</system-reminder>";
+
+        if (turns.Count > 0 && turns[^1] is { IsAssistant: false } last)
+        {
+            if (last.Text is { } text)
+            {
+                turns[^1] = last with { Text = $"{text}\n\n{reminder}" };
+                return turns;
+            }
+
+            if (last.Results.Count > 0)
+            {
+                var results = last.Results.ToList();
+                results[^1] = results[^1] with { Content = $"{results[^1].Content}\n\n{reminder}" };
+                turns[^1] = last with { Results = results };
+                return turns;
+            }
+        }
 
         turns.Add(new WireTurn(IsAssistant: false, [], reminder, []));
 

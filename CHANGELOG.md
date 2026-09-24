@@ -34,6 +34,11 @@ you to raise the context length in the server's settings. LM Studio loads models
 by default, which is too small. A failed turn also no longer says "after 3 tries" when it made only
 one attempt.
 
+Local models, such as those run in LM Studio or Ollama, now answer the question you asked. d47
+sent your ship's current state as a separate message after your question or after a tool's answer,
+and a small model replied to that message instead, for example with "Understood" rather than your
+fuel level. The state is now added to the end of your question, or to the end of the tool's answer.
+
 d47 now answers "what's my reputation with the Empire". It reads out your reputation with each
 superpower as a band and a number, such as "Cordial, 28 of 100", with your Imperial and Federal
 navy rank beside the Empire and the Federation. Ask about a minor faction by name, such as "what's
