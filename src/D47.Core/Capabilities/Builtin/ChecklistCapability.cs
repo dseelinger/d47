@@ -53,6 +53,7 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "get_checklist",
+                AlwaysLoaded = true,
                 Description =
                     "Read the Commander's checklist: open items first, then what is done, then anything "
                     + "waiting for them to accept. Derived items carry what the journal says about them "

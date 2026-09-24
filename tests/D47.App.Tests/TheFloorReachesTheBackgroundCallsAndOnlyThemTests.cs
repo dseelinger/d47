@@ -5,7 +5,7 @@ namespace D47.App.Tests;
 /// <summary>Which calls take the cheap model and which keep the Commander's.</summary>
 public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
 {
-    /// <summary>The three readers of the conversation model, exactly.</summary>
+    /// <summary>The four readers of the conversation model, exactly.</summary>
     private static readonly string[] KeepTheConversationModel =
     [
         // The Commander's log, quoted at a price before anything is written.
@@ -17,10 +17,13 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // Flagged, not fixed: correct today because web search is endpoint-gated in all three providers, and
         // the contract says it is model-gated in principle.
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;",
+
+        // The model row's line about a small context, for the model the turns are sent to (#423).
+        "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).ContextTokens is not { } context)",
     ];
 
     [Fact]
-    public void TheConversationModelIsReadByExactlyTheThreeCallsThatShouldReadIt()
+    public void TheConversationModelIsReadByExactlyTheFourCallsThatShouldReadIt()
     {
         var readers = CodeLinesContaining("Turns.Model", "turns.Model")
             .Where(line => !line.StartsWith("Turns.Model =", StringComparison.Ordinal))

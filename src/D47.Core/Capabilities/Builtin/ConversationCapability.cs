@@ -54,6 +54,13 @@ public static class ConversationCapability
               + "had been checked. They can turn it on in Settings, under the language model.";
     }
 
+    /// <summary>The model row's line for a model whose context is known to be too small for every tool (#423).</summary>
+    public static string ContextNote(int contextTokens, int offered, int total) =>
+        string.Create(
+            System.Globalization.CultureInfo.InvariantCulture,
+            $"This model's context is {contextTokens:N0} tokens, so D47 offers it {offered} of {total} tools. "
+            + $"Set its context length to {contextTokens * 2:N0} or more in your server for all of them.");
+
     /// <summary>
     /// <param name="verifyKey"> Tries a provider's stored key against the real service, by provider id
     /// (Phase 16).
@@ -69,7 +76,8 @@ public static class ConversationCapability
         Action silence,
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
         Func<Audio.SpeechSpend?>? speechSpend = null,
-        Func<IReadOnlyList<string>>? endpointModels = null)
+        Func<IReadOnlyList<string>>? endpointModels = null,
+        Func<string?>? contextNote = null)
     {
         return new CapabilityDescriptor
         {
@@ -107,6 +115,7 @@ public static class ConversationCapability
                 new ToolDefinition
                 {
                     Name = "cancel_turn",
+                    AlwaysLoaded = true,
                     Description =
                         "Abandon the turn currently running: stop speaking, stop the model, and stop " +
                         "spending. Use when the Commander says to cancel or never mind.",
@@ -133,7 +142,7 @@ public static class ConversationCapability
                         ToolResult.Ok(DescribeModel(settings.Current, availability, spend, speechSpend))),
                 },
             ],
-            Settings = BuildSettingRows(verifyKey, endpointModels),
+            Settings = BuildSettingRows(verifyKey, endpointModels, contextNote),
         };
     }
 
@@ -198,7 +207,8 @@ public static class ConversationCapability
 
     private static IReadOnlyList<SettingRow> BuildSettingRows(
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey,
-        Func<IReadOnlyList<string>>? endpointModels = null)
+        Func<IReadOnlyList<string>>? endpointModels = null,
+        Func<string?>? contextNote = null)
     {
         var rows = new List<SettingRow>
         {
@@ -300,6 +310,7 @@ public static class ConversationCapability
                 // (#152).
                 ChoiceLabelSource = Describer,
                 AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+                Note = s => s.Llm.Provider == LlmProviderCatalog.OpenAiCompatibleId ? contextNote?.Invoke() : null,
                 Binding = new SettingBinding
                 {
                     Read = s => s.Llm.Model,

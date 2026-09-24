@@ -98,6 +98,7 @@ public static class EngineeringCapability
             new ToolDefinition
             {
                 Name = "find_material",
+                AlwaysLoaded = true,
                 Description =
                     "Where to get an engineering material: where it is found, and — for a raw one — the "
                     + "nearest landable bodies carrying it, best share first. Also says what the Commander "

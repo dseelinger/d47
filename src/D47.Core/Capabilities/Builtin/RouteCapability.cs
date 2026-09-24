@@ -58,6 +58,7 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_route",
+                AlwaysLoaded = true,
                 Description =
                     "Plot a jump route between two star systems, using neutron star boosts where they "
                     + "help. This is how a long trip is planned — the in-game plotter cannot reach across "

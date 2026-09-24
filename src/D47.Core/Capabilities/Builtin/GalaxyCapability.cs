@@ -181,6 +181,7 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "distance_between",
+                AlwaysLoaded = true,
                 Description =
                     "The straight-line distance in light years between two star systems. "
                     + "Leave 'from' out to measure from where the Commander is now.",
@@ -206,6 +207,7 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "find_nearest_station",
+                AlwaysLoaded = true,
                 Description =
                     "Find the nearest station selling a named module or ship, or trading a commodity "
                     + "— cargo carried in tonnes, never an engineering material. A rare good answers "

@@ -181,7 +181,10 @@ public static class BuiltinCapabilities
         // The whole phrase book the model-free router accepts, macros and learned phrases included, so
         // the model can be told what actually works rather than guess (#229). Null builds one with no
         // dynamic commands, for a caller — a test — with no router of its own.
-        Func<PhraseBook>? phraseBook = null) =>
+        Func<PhraseBook>? phraseBook = null,
+
+        // Why a small-context model is offered fewer tools, for the model row (#423).
+        Func<string?>? contextNote = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -255,7 +258,8 @@ public static class BuiltinCapabilities
 
             // Late-bound like the voice list, and for the same reason: it is fetched from the endpoint over
             // the network well after this point in composition.
-            endpointModels),
+            endpointModels,
+            contextNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops),

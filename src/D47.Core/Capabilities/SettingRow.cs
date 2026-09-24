@@ -149,6 +149,9 @@ public sealed record SettingRow
     /// </summary>
     public SettingAudition? Audition { get; init; }
 
+    /// <summary>A line of live state shown under the row's label, or null when there is nothing to say.</summary>
+    public Func<D47Settings, string?>? Note { get; init; }
+
     /// <summary>Whether the row applies at all right now.</summary>
     public Func<D47Settings, bool>? AppliesWhen { get; init; }
 

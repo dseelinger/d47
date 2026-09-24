@@ -321,6 +321,7 @@ public static class SpeechCapability
             new ToolDefinition
             {
                 Name = "stop_speaking",
+                AlwaysLoaded = true,
                 Description =
                     "Immediately stop all speech and audio, discarding anything queued. " +
                     "Use when the Commander asks for silence.",

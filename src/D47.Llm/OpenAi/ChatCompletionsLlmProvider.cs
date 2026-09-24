@@ -135,7 +135,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
             return new Attempt(
                 null,
-                new LlmStreamEvent.Failed(message, transient),
+                new LlmStreamEvent.Failed(message, transient) { ContextExceeded = context is not null },
                 WhatWasRejected(detail));
         }
     }
@@ -177,11 +177,15 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             // once they have already sent 200 and started the body.
             if (chunk.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
             {
-                RecordContext(model, EndpointError.ContextSize(error));
+                var context = EndpointError.ContextSize(error);
+                RecordContext(model, context);
 
                 yield return new LlmStreamEvent.Failed(
                     EndpointError.Describe(error, _endpoint.Host) ?? "The endpoint reported an error mid-stream.",
-                    Transient: false);
+                    Transient: false)
+                {
+                    ContextExceeded = context is not null,
+                };
 
                 yield break;
             }

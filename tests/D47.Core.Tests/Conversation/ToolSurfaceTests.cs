@@ -185,7 +185,7 @@ public class ToolSurfaceTests
             tool => Assert.Equal(!definitions[tool.Name].AlwaysLoaded, tool.Deferred));
 
         // The provider refuses a request whose every tool is deferred.
-        Assert.InRange(definitions.Values.Count(tool => tool.AlwaysLoaded), 1, 5);
+        Assert.InRange(definitions.Values.Count(tool => tool.AlwaysLoaded), 1, 17);
     }
 
     [Fact]

@@ -29,6 +29,7 @@ public static class SettingsCapability
                 new ToolDefinition
                 {
                     Name = "list_settings",
+                    AlwaysLoaded = true,
                     Description =
                         "List the settings that can be changed through a tool call, with their current values. "
                         + "Settings that are protected or hold a secret are not listed and cannot be changed here.",
@@ -37,6 +38,7 @@ public static class SettingsCapability
                 new ToolDefinition
                 {
                     Name = "get_setting",
+                    AlwaysLoaded = true,
                     Description = "Report the current value of one setting by key.",
                     Parameters =
                     [
@@ -53,6 +55,7 @@ public static class SettingsCapability
                 new ToolDefinition
                 {
                     Name = "set_setting",
+                    AlwaysLoaded = true,
                     Description =
                         "Change one setting. Takes effect immediately. Protected settings and secrets are refused: "
                         + "those are changed from the settings panel by the Commander.",

@@ -28,6 +28,19 @@ public static class ToolSurface
             Name(context, actionsEnabled),
             Advertise(registry, capabilityId => Includes(capabilityId, context, actionsEnabled), deferring: false));
 
+    /// <summary>The <see cref="ToolDefinition.AlwaysLoaded"/> tools of one mode's list, none deferred, for a small context.</summary>
+    public static ToolProfile Compact(CapabilityRegistry registry, ControlContext context, bool actionsEnabled)
+    {
+        var mode = ForMode(registry, context, actionsEnabled);
+        var loaded = registry.All
+            .SelectMany(capability => capability.Descriptor.Tools)
+            .Where(tool => tool.AlwaysLoaded)
+            .Select(tool => tool.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        return new("compact", [.. mode.Tools.Where(tool => loaded.Contains(tool.Name))]);
+    }
+
     /// <summary>
     /// Every non-protected tool whatever the mode or key-press setting, each deferred unless it is
     /// <see cref="ToolDefinition.AlwaysLoaded"/>. The same on every turn.
@@ -35,13 +48,15 @@ public static class ToolSurface
     public static ToolProfile Searchable(CapabilityRegistry registry) =>
         new("searchable", Advertise(registry, _ => true, deferring: true));
 
-    /// <summary>Every tool list that can ever ship: each mode's with key presses on and off, and the searchable one.</summary>
+    /// <summary>Every tool list that can ever ship: each mode's full and compact, with key presses on and off, and the searchable one.</summary>
     public static IEnumerable<ToolProfile> All(CapabilityRegistry registry)
     {
         foreach (var context in Contexts)
         {
             yield return ForMode(registry, context, actionsEnabled: true);
             yield return ForMode(registry, context, actionsEnabled: false);
+            yield return Compact(registry, context, actionsEnabled: true);
+            yield return Compact(registry, context, actionsEnabled: false);
         }
 
         yield return Searchable(registry);

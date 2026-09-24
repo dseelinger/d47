@@ -46,6 +46,7 @@ public static class GoalsCapability
                 new ToolDefinition
                 {
                     Name = "get_goals",
+                    AlwaysLoaded = true,
                     Description =
                         "Read back the Commander's long-running goals: how far along each is, how long it has "
                         + "been running, and where the figure came from.",

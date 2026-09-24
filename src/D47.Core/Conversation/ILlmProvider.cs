@@ -128,7 +128,11 @@ public abstract record LlmStreamEvent
     /// <paramref name="Transient"/> separates "retry later" (rate limited, overloaded, network) from
     /// "this will not work until something changes" (no key, bad key, unknown model).
     /// </summary>
-    public sealed record Failed(string Message, bool Transient) : LlmStreamEvent;
+    public sealed record Failed(string Message, bool Transient) : LlmStreamEvent
+    {
+        /// <summary>The endpoint refused the prompt as larger than the model's context.</summary>
+        public bool ContextExceeded { get; init; }
+    }
 }
 
 public sealed record LlmRequest

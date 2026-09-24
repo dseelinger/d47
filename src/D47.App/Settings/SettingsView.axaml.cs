@@ -2367,6 +2367,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage
         caption.Children.Add(help);
         caption.Children.Add(keyLine);
 
+        if (row.Note is { } noteSource)
+        {
+            var note = new TextBlock
+            {
+                FontSize = TypeScale.Secondary,
+                Margin = new Thickness(0, 4, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                IsVisible = false,
+            };
+            Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            caption.Children.Add(note);
+
+            var shownBefore = refresh;
+
+            refresh = () =>
+            {
+                shownBefore();
+                note.Text = noteSource(_settings!.Current);
+                note.IsVisible = note.Text is not null;
+            };
+        }
+
         if (row is { ValueAsHint: true, Binding: { } hinted })
         {
             // On the caption rather than on the label alone, so the help line under it answers the hover too

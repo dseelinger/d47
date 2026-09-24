@@ -1010,19 +1010,28 @@ public sealed class TurnLoop(
                          && providerCapabilities.SupportsToolCalls
                          && providerCapabilities.SupportsToolSearch;
 
-        IReadOnlyList<ToolAdvertisement> ModeTools() => ToolSurface.ForMode(
-            capabilities,
-            ToolContext?.Invoke() ?? Input.ControlContext.None,
-            ActionsEnabled?.Invoke() ?? false).Tools;
+        // A model whose context is known to be small is sent the short list on every turn (#423).
+        var compact = providerCapabilities.ContextTokens is not null;
+
+        IReadOnlyList<ToolAdvertisement> ModeTools()
+        {
+            var context = speaker is null ? ToolContext?.Invoke() ?? Input.ControlContext.None : Input.ControlContext.None;
+            var actionsEnabled = speaker is null && (ActionsEnabled?.Invoke() ?? false);
+
+            return compact
+                ? ToolSurface.Compact(capabilities, context, actionsEnabled).Tools
+                : ToolSurface.ForMode(capabilities, context, actionsEnabled).Tools;
+        }
 
         IReadOnlyList<ToolAdvertisement> advertised =
             !providerCapabilities.SupportsToolCalls ? []
-            : speaker is not null
-                ? speaker.OffersTools
-                    ? ToolSurface.ForMode(capabilities, Input.ControlContext.None, actionsEnabled: false).Tools
-                    : []
+            : speaker is { OffersTools: false } ? []
             : searchable ? ToolSurface.Searchable(capabilities).Tools
             : ModeTools();
+
+        // Set once a round has been refused for size even with the short list: from then on the round carries
+        // only this turn's exchange.
+        var trimmed = false;
 
         // Both halves, and the endpoint half is not the Commander's doing: pointing llm.endpoint at a gateway
         // turns this off whatever the setting says, because a server-side tool is the provider's to offer.
@@ -1096,7 +1105,7 @@ public sealed class TurnLoop(
                     AboutMe = AboutMe,
                     Recall = speaker is null ? Recall : null,
                     Directions = speaker is null ? Directions : null,
-                    History = [.. transcript, .. pending],
+                    History = trimmed ? [.. pending] : [.. transcript, .. pending],
                     LiveGameState = LiveGameState?.Invoke(),
                     Humor = humor,
                 },
@@ -1118,6 +1127,42 @@ public sealed class TurnLoop(
 
                 searchable = false;
                 advertised = ModeTools();
+                previousRoundSpoke = false;
+                round--;
+                continue;
+            }
+
+            // The provider learned the model's context from refusing this request, so the round is asked once
+            // more with the short list.
+            if (outcome.Failure is not null
+                && !compact
+                && !searchable
+                && providerCapabilities.SupportsToolCalls
+                && speaker is not { OffersTools: false }
+                && activeProvider.CapabilitiesFor(chosenModel).ContextTokens is { } learned)
+            {
+                compact = true;
+                var full = advertised.Count;
+                advertised = ModeTools();
+
+                logger.LogInformation(
+                    "This model's context is {Context} tokens, so it is offered {Offered} of {Tools} tools; asking round {Round} again",
+                    learned,
+                    advertised.Count,
+                    full,
+                    round);
+
+                previousRoundSpoke = false;
+                round--;
+                continue;
+            }
+
+            // Too large even with the short list, so the round is asked once more without the earlier turns.
+            if (outcome.Failure is not null && outcome.ContextExceeded && !trimmed)
+            {
+                logger.LogInformation("Asking round {Round} again with only this turn's exchange: {Failure}", round, outcome.Failure);
+
+                trimmed = true;
                 previousRoundSpoke = false;
                 round--;
                 continue;
@@ -1347,6 +1392,9 @@ public sealed class TurnLoop(
 
         public string? Failure { get; set; }
 
+        /// <summary>The failure was the endpoint refusing the prompt as larger than the model's context.</summary>
+        public bool ContextExceeded { get; set; }
+
         /// <summary>The requests made for this round, retries included.</summary>
         public int Attempts { get; set; }
 
@@ -1389,6 +1437,7 @@ public sealed class TurnLoop(
             Usage = LlmUsage.None;
             StopReason = LlmStopReason.Completed;
             Failure = null;
+            ContextExceeded = false;
         }
     }
 
@@ -1491,6 +1540,7 @@ public sealed class TurnLoop(
 
                     case LlmStreamEvent.Failed failed:
                         outcome.Failure = failed.Message;
+                        outcome.ContextExceeded = failed.ContextExceeded;
                         transient = failed.Transient;
                         availability.MarkFailed(failed.Message, failed.Transient);
                         logger.LogWarning(

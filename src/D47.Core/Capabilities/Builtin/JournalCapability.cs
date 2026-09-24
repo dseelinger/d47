@@ -102,6 +102,7 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_location",
+                    AlwaysLoaded = true,
                     Description =
                         "Report the current Commander's star system, body, docking state and what they are "
                         + "doing — supercruise, hyperspace, landed, on foot — from the journal.",
@@ -110,6 +111,7 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_ship",
+                    AlwaysLoaded = true,
                     Description =
                         "Report a ship: type, name, hull health, jump range, fuel, cargo held and capacity, "
                         + "and the modules fitted. Omit ship for the one the Commander is flying, live where "
@@ -200,6 +202,7 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_materials",
+                    AlwaysLoaded = true,
                     Description =
                         "Report the Commander's material holdings — raw, manufactured and encoded — and their "
                         + "on-foot backpack and ship locker contents.",
@@ -209,6 +212,7 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_session_summary",
+                    AlwaysLoaded = true,
                     Description =
                         "Report what the Commander has done since entering the game: credits earned by source, "
                         + "jumps made, distance travelled, materials gained and bodies scanned.",

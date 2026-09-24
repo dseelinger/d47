@@ -59,6 +59,7 @@ public static class EngineerCapability
             new ToolDefinition
             {
                 Name = "get_engineer_progress",
+                AlwaysLoaded = true,
                 Description =
                     "How far along the Commander is with every engineer: which are unlocked and at what "
                     + "grade, which have invited them, and which they have not met. Read from the journal, "

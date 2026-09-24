@@ -39,6 +39,15 @@ sent your ship's current state as a separate message after your question or afte
 and a small model replied to that message instead, for example with "Understood" rather than your
 fuel level. The state is now added to the end of your question, or to the end of the tool's answer.
 
+A local model with a small context now answers instead of failing on every turn. When the server
+refuses a request as too large, d47 learns the model's context size and asks again, offering the
+model 17 tools rather than every tool. If that is still too large, it asks once more without the
+earlier turns of the conversation. For the rest of the session every turn to that model starts with
+the short list. With "OpenAI-compatible endpoint" selected, the Model row under Language model then
+gives the context size, how many tools the model is offered, and the context length to set in your
+server to get all of them. Claude, when it searches its tools, now has those 17 loaded without a
+search.
+
 d47 now answers "what's my reputation with the Empire". It reads out your reputation with each
 superpower as a band and a number, such as "Cordial, 28 of 100", with your Imperial and Federal
 navy rank beside the Empire and the Federation. Ask about a minor faction by name, such as "what's

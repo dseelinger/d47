@@ -1833,7 +1833,8 @@ public sealed class AppHost : IDisposable
                 offers: offers,
                 learnedPhrases: learnedPhrases,
                 phraseBook: () => builtRouter?.Book ?? throw new InvalidOperationException(
-                    "The phrase book was asked for before the router finished building.")));
+                    "The phrase book was asked for before the router finished building."),
+                contextNote: () => self?.ContextNote));
 
         buildingRegistry.Dispose();
 
@@ -5349,6 +5350,27 @@ public sealed class AppHost : IDisposable
     private bool SearchReachesTheWeb =>
         Turns.Provider is not { } provider
         || provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;
+
+    /// <summary>Why the model in use is offered fewer tools, when its context is known to be small (#423).</summary>
+    internal string? ContextNote
+    {
+        get
+        {
+            if (Turns.Provider is not { } provider
+                || provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).ContextTokens is not { } context)
+            {
+                return null;
+            }
+
+            var mode = Turns.ToolContext?.Invoke() ?? D47.Core.Input.ControlContext.None;
+            var actions = Turns.ActionsEnabled?.Invoke() ?? false;
+
+            return ConversationCapability.ContextNote(
+                context,
+                ToolSurface.Compact(Capabilities, mode, actions).Tools.Count,
+                ToolSurface.ForMode(Capabilities, mode, actions).Tools.Count);
+        }
+    }
 
     /// <summary>The same lore remark, told that nothing further is coming when nothing further can.</summary>
     private Announcement Owing(Announcement announcement) =>
