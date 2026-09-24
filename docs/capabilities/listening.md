@@ -208,7 +208,7 @@ itself when you are talking to it.
 **Out of the box, no audio and no transcript leaves your machine.** Speech is turned into words by
 a model running on your own computer. The model file itself is downloaded once, from
 `huggingface.co`; after that, nothing about your speech goes anywhere. The
-[hearing provider](#provider) row can send it to Groq or OpenAI instead, and says what that sends.
+[hearing provider](#provider) row can send it to Groq, OpenAI or Deepgram instead, and says what that sends.
 
 ### Ask for it
 
@@ -542,9 +542,10 @@ description, or anything another player wrote.
 #### Hearing provider {#provider}
 
 Who turns your speech into words. **This computer** runs the Whisper model chosen below and sends
-nothing. **Groq** and **OpenAI** are hosted: no model sits in your memory, and the audio goes to
-them instead. Each uses one fixed model — `whisper-large-v3-turbo` on Groq, `gpt-4o-mini-transcribe`
-on OpenAI.
+nothing. **Groq**, **OpenAI** and **Deepgram** are hosted: no model sits in your memory, and the
+audio goes to them instead. Each uses one fixed model — `whisper-large-v3-turbo` on Groq,
+`gpt-4o-mini-transcribe` on OpenAI, `nova-3` on Deepgram. Deepgram also says how sure it is of what it
+heard, so a panel prompt can ask you to say it again or type it when it is unsure.
 
 What a hosted provider receives: the audio of every utterance Directive 47 transcribes, your API key,
 and the names from your journal it uses to recognise proper nouns. In push-to-talk that is what you
@@ -579,7 +580,7 @@ if (SttProviderCatalog.Selected(listening.Provider).Hosted)
 
 #### API key {#provider-key}
 
-One row for the selected hosted provider. Groq's key is its own; OpenAI's is the same key the OpenAI
+One row for the selected hosted provider. Groq's and Deepgram's keys are their own; OpenAI's is the same key the OpenAI
 language model and voice already use, so storing it once serves all three. Stored encrypted for this
 Windows account and never shown back.
 
@@ -792,7 +793,7 @@ Nothing captured is written to disk. Audio sits in a small buffer and is
 overwritten within about half a second unless the gate is open — because you are holding the key,
 or because Directive 47 heard somebody start talking. Only that stretch goes any further. With the
 local speech model, "further" means a model on your own machine. With a
-[hosted provider](#provider), it means that stretch is sent to Groq or OpenAI with your key.
+[hosted provider](#provider), it means that stretch is sent to Groq, OpenAI or Deepgram with your key.
 
 A few small kindnesses:
 

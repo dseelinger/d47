@@ -9,10 +9,12 @@
 ## 1.12.0 — Hearing through a cloud provider
 
 A new **Hearing provider** row under Voice Input › Speech recognition chooses who turns your speech
-into words: this computer, as before, or Groq or OpenAI. A hosted provider needs no speech model in
-memory, so the local model is unloaded while one is selected. Groq uses `whisper-large-v3-turbo`
-and a key of its own. OpenAI uses `gpt-4o-mini-transcribe` and the same key the OpenAI language
-model and voice already use.
+into words: this computer, as before, or Groq, OpenAI or Deepgram. A hosted provider needs no speech
+model in memory, so the local model is unloaded while one is selected. Groq uses
+`whisper-large-v3-turbo` and a key of its own. OpenAI uses `gpt-4o-mini-transcribe` and the same key
+the OpenAI language model and voice already use. Deepgram uses `nova-3` and a key of its own, and
+reports how sure it is of each transcript, so a panel prompt asks you to say it again or type it
+when Deepgram is unsure.
 
 A hosted provider receives the audio of every utterance d47 transcribes, your API key, and the
 names from your journal used to recognise proper nouns. Hands free, that is every stretch judged to

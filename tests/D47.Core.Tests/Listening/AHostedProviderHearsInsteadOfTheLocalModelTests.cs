@@ -32,6 +32,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     [Theory]
     [InlineData(SttProviderCatalog.GroqId)]
     [InlineData(SttProviderCatalog.OpenAiId)]
+    [InlineData(SttProviderCatalog.DeepgramId)]
     public void AHostedProviderUnloadsAModelThatIsOnDisk(string provider)
     {
         var plan = ListeningWiring.PlanModel(With(provider).Listening, new FakeModelStore("small.en"));
@@ -53,6 +54,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     {
         Assert.Equal("openai.apiKey", SttProviderCatalog.OpenAi.KeySecretName);
         Assert.Equal("groq.apiKey", SttProviderCatalog.Groq.KeySecretName);
+        Assert.Equal("deepgram.apiKey", SttProviderCatalog.Deepgram.KeySecretName);
         Assert.Null(SttProviderCatalog.Local.KeySecretName);
     }
 
@@ -69,6 +71,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     [Theory]
     [InlineData(SttProviderCatalog.GroqId, "api.groq.com")]
     [InlineData(SttProviderCatalog.OpenAiId, "api.openai.com")]
+    [InlineData(SttProviderCatalog.DeepgramId, "api.deepgram.com")]
     public void TheDisclosureNamesTheHostAndWhatGoesThere(string provider, string host)
     {
         var entry = EgressDisclosure.Entry(EgressDisclosure.SpeechRecognition, With(provider), llmKeyPresent: false);

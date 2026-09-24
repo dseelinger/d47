@@ -166,6 +166,41 @@ public class AHostedProviderSaysWhyItHeardNothingTests
     }
 
     [Fact]
+    public async Task DeepgramGetsItsOwnTranscriberAndKeepsItsConfidence()
+    {
+        var handler = new DeepgramAnswer();
+
+        using var transcriber = Hearing.Hosted(
+            SttProviderCatalog.Deepgram, () => "dg-test", NullLoggerFactory.Instance, handler);
+
+        var outcome = await Hearing.TranscribeAsync(
+            transcriber, SttProviderCatalog.Deepgram, () => Task.FromResult<double?>(null), Speech, []);
+
+        Assert.IsType<DeepgramTranscriber>(transcriber);
+        Assert.Equal("api.deepgram.com", handler.Address?.Host);
+        Assert.Equal("where am I", outcome.Kept?.Text);
+        Assert.Equal(0.3, outcome.Kept?.Confidence);
+    }
+
+    private sealed class DeepgramAnswer : HttpMessageHandler
+    {
+        public Uri? Address { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancel)
+        {
+            Address = request.RequestUri;
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"results":{"channels":[{"alternatives":[{"transcript":"where am I","confidence":0.3}]}]}}""",
+                    Encoding.UTF8,
+                    "application/json"),
+            });
+        }
+    }
+
+    [Fact]
     public async Task WithNoTinyModelInTheFolderTheProbeIsSkipped()
     {
         using var whisper = new WhisperTranscriber(NullLogger<WhisperTranscriber>.Instance);

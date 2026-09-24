@@ -35,6 +35,8 @@ public static class SttProviderCatalog
 
     public const string OpenAiId = "openai";
 
+    public const string DeepgramId = "deepgram";
+
     private const string HostedEgress =
         "The audio of every utterance D47 transcribes is sent to {0}, along with your API key and the "
         + "names from your journal used to recognise proper nouns: systems, stations, bodies, your ships "
@@ -77,7 +79,18 @@ public static class SttProviderCatalog
         Egress = string.Format(System.Globalization.CultureInfo.InvariantCulture, HostedEgress, "OpenAI"),
     };
 
-    public static IReadOnlyList<SttProviderInfo> All { get; } = [Local, Groq, OpenAi];
+    public static SttProviderInfo Deepgram { get; } = new()
+    {
+        Id = DeepgramId,
+        Name = "Deepgram",
+        Label = "Deepgram (paid — needs a key)",
+        Model = "nova-3",
+        KeySecretName = "deepgram.apiKey",
+        Destination = "api.deepgram.com",
+        Egress = string.Format(System.Globalization.CultureInfo.InvariantCulture, HostedEgress, "Deepgram"),
+    };
+
+    public static IReadOnlyList<SttProviderInfo> All { get; } = [Local, Groq, OpenAi, Deepgram];
 
     public static IReadOnlyList<string> Ids { get; } = [.. All.Select(provider => provider.Id)];
 

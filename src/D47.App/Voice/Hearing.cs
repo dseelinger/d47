@@ -69,20 +69,22 @@ internal static class Hearing
     }
 
     /// <summary>The transcriber for a hosted provider, reading its key from <paramref name="key"/> at each call.</summary>
-    public static OpenAiCompatibleTranscriber Hosted(
+    public static ISpeechTranscriber Hosted(
         SttProviderInfo provider,
         Func<string?> key,
         ILoggerFactory loggers,
         HttpMessageHandler? handler = null)
     {
-        var endpoint = provider.Id switch
+        return provider.Id switch
         {
-            SttProviderCatalog.GroqId => OpenAiCompatibleTranscriber.GroqEndpoint,
-            SttProviderCatalog.OpenAiId => OpenAiCompatibleTranscriber.OpenAiEndpoint,
+            SttProviderCatalog.GroqId => OpenAiCompatible(OpenAiCompatibleTranscriber.GroqEndpoint),
+            SttProviderCatalog.OpenAiId => OpenAiCompatible(OpenAiCompatibleTranscriber.OpenAiEndpoint),
+            SttProviderCatalog.DeepgramId => new DeepgramTranscriber(
+                key, loggers.CreateLogger<DeepgramTranscriber>(), handler),
             _ => throw new ArgumentOutOfRangeException(nameof(provider), provider.Id, "Not a hosted provider."),
         };
 
-        return new OpenAiCompatibleTranscriber(
+        OpenAiCompatibleTranscriber OpenAiCompatible(string endpoint) => new(
             provider.Name,
             key,
             endpoint,

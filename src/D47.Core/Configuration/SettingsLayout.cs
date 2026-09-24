@@ -63,8 +63,9 @@ public static class SettingsLayout
     /// rather than collapsing them into one family entry (23 entries with the Test row, all Advanced,
     /// so 0 shown beyond what already applied) (#225, #226); <c>persona</c> spells out a humor level and
     /// frequency for each of three groups (17 entries, the six humor rows Advanced); <c>voice-input</c>
-    /// holds the hearing provider and one key row per hosted provider (17 entries, of which at most one key
-    /// row applies at a time, and every speech-recognition row Advanced).
+    /// holds the hearing provider beside the microphone, wake word and corrections rows (16 entries, the
+    /// hosted providers' keys one family entry of which at most one row applies at a time, and every
+    /// speech-recognition row Advanced).
     /// </summary>
     public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input"];
 
@@ -77,12 +78,15 @@ public static class SettingsLayout
     private static SettingsPlaceGroup G(string title, string help, IReadOnlyList<SettingsEntry> entries) =>
         new(title, help, entries);
 
-    /// <summary>The five documented family patterns, named so the resolver and the tests can each use them.</summary>
+    /// <summary>The documented family patterns, named so the resolver and the tests can each use them.</summary>
     public static bool IsSpeechProviderKeyFamily(string key) =>
         key.StartsWith("speech.", StringComparison.Ordinal) && key.EndsWith(".apiKey", StringComparison.Ordinal);
 
     public static bool IsVoiceProviderSlotFamily(string key) =>
         key.StartsWith("speech.provider.", StringComparison.Ordinal);
+
+    public static bool IsHearingProviderKeyFamily(string key) =>
+        key.StartsWith("listening.key.", StringComparison.Ordinal);
 
     public static bool IsLlmProviderKeyFamily(string key) =>
         key.StartsWith("llm.", StringComparison.Ordinal) && key.EndsWith(".apiKey", StringComparison.Ordinal);
@@ -138,8 +142,7 @@ public static class SettingsLayout
                             "Who turns speech into words, and where it runs.",
                             [
                                 E("listening.provider"),
-                                E("listening.key.groq"),
-                                E("listening.key.openai"),
+                                F(IsHearingProviderKeyFamily),
                                 E("listening.model"),
                                 E("listening.useGpu"),
                             ]),
