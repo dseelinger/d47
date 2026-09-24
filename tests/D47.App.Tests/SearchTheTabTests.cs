@@ -256,7 +256,7 @@ public class SearchTheTabTests
     }
 
     [AvaloniaFact]
-    public void SettingsFiltersItsRowsItsCardsAndItsNav()
+    public void SettingsFiltersTheOpenPageAndMarksTheNav()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -265,29 +265,33 @@ public class SearchTheTabTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        var cardsBefore = Cards(host);
-        var navBefore = Nav(host);
+        var rowsBefore = Rows(host);
 
-        Assert.True(cardsBefore > 1, "there is more than one card to filter down from");
+        Assert.Empty(SettingsPageReading.Counted(host.View));
+        Assert.Equal(0, Dimmed(host));
 
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
         box.Text = "push-to-talk";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.True(Cards(host) < cardsBefore, "a card holding nothing that matched is still shown");
-        Assert.True(Nav(host) < navBefore, "the nav still lists a section holding nothing");
         Assert.True(Rows(host) > 0, "the filter left no rows at all");
+        Assert.True(Rows(host) < rowsBefore, "the page still shows rows that did not match");
 
         Assert.All(
             VisibleRowLabels(host),
             label => Assert.Contains("push-to-talk", label, StringComparison.OrdinalIgnoreCase));
 
+        // The open place is marked with its count, and a place with nothing is drawn in Grey2.
+        Assert.Contains("Voice Input", SettingsPageReading.Counted(host.View).Keys);
+        Assert.True(Dimmed(host) > 0, "a place with no match is drawn in its ordinary ink");
+
         // And clearing it puts everything back.
         box.Text = string.Empty;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(cardsBefore, Cards(host));
-        Assert.Equal(navBefore, Nav(host));
+        Assert.Equal(rowsBefore, Rows(host));
+        Assert.Empty(SettingsPageReading.Counted(host.View));
+        Assert.Equal(0, Dimmed(host));
 
         host.Close();
     }
@@ -306,14 +310,13 @@ public class SearchTheTabTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        var cardsBefore = Cards(host);
-        var navBefore = Nav(host);
+        var rowsBefore = Rows(host);
 
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
         box.Text = "push-to-talk";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.True(Nav(host) < navBefore, "the filter did not take");
+        Assert.True(SettingsPageReading.Counted(host.View).Count > 0, "the filter did not take");
 
         host.Panel.Tab = PanelTab.Transcript;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
@@ -322,8 +325,8 @@ public class SearchTheTabTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(string.Empty, box.Text ?? string.Empty);
-        Assert.Equal(cardsBefore, Cards(host));
-        Assert.Equal(navBefore, Nav(host));
+        Assert.Equal(rowsBefore, Rows(host));
+        Assert.Empty(SettingsPageReading.Counted(host.View));
 
         host.Close();
     }
@@ -359,22 +362,21 @@ public class SearchTheTabTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        var cardsBefore = Cards(host);
-        var navBefore = Nav(host);
+        var rowsBefore = Rows(host);
 
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
         box.Text = "push-to-talk";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.True(Nav(host) < navBefore, "the filter did not take");
+        Assert.True(SettingsPageReading.Counted(host.View).Count > 0, "the filter did not take");
 
         var clear = host.Panel.FindControl<Control>("SearchClear")!;
         clear.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(string.Empty, box.Text ?? string.Empty);
-        Assert.Equal(cardsBefore, Cards(host));
-        Assert.Equal(navBefore, Nav(host));
+        Assert.Equal(rowsBefore, Rows(host));
+        Assert.Empty(SettingsPageReading.Counted(host.View));
 
         host.Close();
     }
@@ -518,30 +520,55 @@ public class SearchTheTabTests
         host.Close();
     }
 
-    /// <summary>A filter opens the card it matched in, whatever the Commander left it as.</summary>
+    /// <summary>
+    /// A query with no match on the open page says so, points at the pages that have one, and a marked
+    /// page opens filtered by the same query.
+    /// </summary>
     [AvaloniaFact]
-    public void AFilterOpensTheCardItMatchedInAndClosesItAgainAfter()
+    public void AQueryWithNoMatchHereSaysSoAndPointsAtTheMarkedPages()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
-        // Diagnostics starts collapsed, which is exactly the case this is about.
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
 
-        var shut = Rows(host);
-
-        box.Text = "log";
+        box.Text = "Attempts";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.True(Rows(host) > 0, "the rows that matched are behind a shut card");
+        var nothing = SettingsPageReading.NothingMatches(host.View);
 
+        Assert.NotNull(nothing);
+        Assert.Equal(0, Rows(host));
+
+        var lines = nothing!.GetVisualDescendants().OfType<TextBlock>()
+            .Where(text => text.IsEffectivelyVisible)
+            .Select(text => text.Text)
+            .ToList();
+
+        Assert.Contains("Nothing on this page matches \"Attempts\".", lines);
+        Assert.Contains(lines, line => line is not null
+                                       && line.StartsWith("Matches on ", StringComparison.Ordinal)
+                                       && line.EndsWith(" marked in the list.", StringComparison.Ordinal));
+
+        Assert.Contains("When a turn fails", SettingsPageReading.Counted(host.View).Keys);
+
+        SettingsPageReading.Open(host.View, "turn-fails");
+
+        Assert.Null(SettingsPageReading.NothingMatches(host.View));
+        Assert.NotEmpty(VisibleRowLabels(host));
+        Assert.All(
+            VisibleRowLabels(host),
+            label => Assert.Contains("Attempts", label, StringComparison.OrdinalIgnoreCase));
+
+        // Clearing the field shows the open page in full.
         box.Text = string.Empty;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(shut, Rows(host));
+        Assert.True(Rows(host) > 1, "the open page is back in full");
+        Assert.Null(SettingsPageReading.NothingMatches(host.View));
 
         host.Close();
     }
@@ -561,27 +588,28 @@ public class SearchTheTabTests
         box.Text = "Voice Input";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        // The name is marked in both places it is written — the card's own heading and the nav item — rather
-        // than only in whichever rows happen to repeat the word.
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "VOICE INPUT");
+        // The name is marked in both places it is written — the page title and the nav item — rather than
+        // only in whichever rows happen to repeat the word.
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Voice Input");
         Assert.Contains(MarkedIn(host.View.FindControl<Control>("NavItems")!), run => run.Text == "Voice Input");
 
         // Whether a mark on a heading reads as an answer or as noise is a question only eyes settle, and this
-        // one lands on a card title and a nav item at once.
+        // one lands on a page title and a nav item at once.
         host.Window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "settings-section-name-highlight.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         // And a named section keeps the rows it has, rather than only the ones that happen to repeat the
-        // word. "Sounds and levels" is the case that proves it: nothing inside that card says "sounds and levels", so
-        // before this the card answered a search for its own name by emptying itself and then vanishing for
-        // being empty.
+        // word: nothing inside Sounds and levels says "sounds and levels".
         box.Text = "Sounds and levels";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(1, Cards(host));
+        Assert.Equal(["Sounds and levels"], SettingsPageReading.Counted(host.View).Keys);
+
+        SettingsPageReading.Open(host.View, "sounds");
+
         Assert.NotEmpty(VisibleRowLabels(host));
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "SOUNDS AND LEVELS");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Sounds and levels");
 
         box.Text = string.Empty;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
@@ -614,13 +642,15 @@ public class SearchTheTabTests
         host.Close();
     }
 
-    private static int Cards(SettingsHost host) =>
-        // Borders only (#220): a query now draws an area's own title above its matches, one more visible
-        // child that is not a card.
-        ((StackPanel)host.View.FindControl<Control>("Cards")!).Children.OfType<Border>().Count(card => card.IsVisible);
+    /// <summary>How many places the nav draws in Grey2, which is a place with no match for the query.</summary>
+    private static int Dimmed(SettingsHost host)
+    {
+        var grey2 = (Application.Current!.FindResource(ThemeManager.Grey2Key) as ISolidColorBrush)?.Color;
 
-    private static int Nav(SettingsHost host) =>
-        ((StackPanel)host.View.FindControl<Control>("NavItems")!).Children.Count(item => item.IsVisible);
+        return SettingsPageReading.PlaceItems(host.View)
+            .Count(item => item.IsVisible
+                           && (SettingsPageReading.Name(item).Foreground as ISolidColorBrush)?.Color == grey2);
+    }
 
     private static List<string> VisibleRowLabels(SettingsHost host) =>
         [.. host.View.GetVisualDescendants().OfType<Grid>()

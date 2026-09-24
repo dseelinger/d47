@@ -39,16 +39,8 @@ public class APausedTickSubscriberIsOnThePageTests
         var (settings, viewState, paths, _, _) = TestSurface.CreateFull(ticking: ticking);
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        // Diagnostics' own area (#220).
-        host.View.Reveal(D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id);
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        // Diagnostics is one of the cards that starts closed, and a row inside a closed card is drawn but
-        // not visible.
-        host.View.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == "ExpandAll")
-            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-
+        // Diagnostics' own place (#220).
+        host.View.ShowPlaceOf(D47.Core.Capabilities.Builtin.DiagnosticsCapability.PausedKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

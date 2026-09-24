@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -37,6 +38,8 @@ public class LocalVoiceDownloadRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
+        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        Dispatcher.UIThread.RunJobs();
 
         var button = Find<Button>(host.View, ButtonName);
         var bar = Find<ProgressBar>(host.View, BarName);
@@ -87,6 +90,8 @@ public class LocalVoiceDownloadRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
+        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        Dispatcher.UIThread.RunJobs();
         var button = Find<Button>(host.View, ButtonName);
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -114,6 +119,8 @@ public class LocalVoiceDownloadRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
+        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        Dispatcher.UIThread.RunJobs();
 
         Find<Button>(host.View, ButtonName).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

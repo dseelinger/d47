@@ -12,7 +12,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The nav column down the side of Settings, which is a scroll-spy rather than a tab strip.</summary>
+/// <summary>The nav column down the side of Settings, one entry per page.</summary>
 public class SettingsNavTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
@@ -85,20 +85,20 @@ public class SettingsNavTests
     }
 
     /// <summary>
-    /// And the active one is marked apart from the rest — an Accent fill with Knock ink, against
-    /// TextMuted ink on everything else (#357) — and the mark follows the scroller.
+    /// And the open one is marked apart from the rest — an Accent fill with Knock ink, against
+    /// TextMuted ink on everything else (#357) — and the mark follows the page that is open.
     /// </summary>
     [AvaloniaFact]
-    public void TheActiveSectionIsMarkedAndTheMarkFollowsTheScroller()
+    public void TheOpenPlaceIsMarkedAndTheMarkFollowsThePage()
     {
         var (window, _, view) = OpenLikeTheApp();
 
-        // Only the selected area's places are drawn (#220) — the rest sit in the nav collapsed to nothing.
+        // A place with no page is absent from the nav.
         var labels = NavLabels(view).Where(label => label.IsEffectivelyVisible).ToList();
-        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children
-            .Where(item => item.Classes.Contains(SettingsView.NavPlaceClass) && item.IsVisible)
+        var all = ((StackPanel)view.FindControl<Control>("NavItems")!).Children
+            .Where(item => item.Classes.Contains(SettingsView.NavPlaceClass))
             .ToList();
-        var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
+        var items = all.Where(item => item.IsVisible).ToList();
 
         Assert.True(labels.Count > 1);
         Assert.NotEqual(Colour(labels[0].Foreground), Colour(labels[1].Foreground));
@@ -107,10 +107,10 @@ public class SettingsNavTests
         var wasFill = Colour(((Border)items[0]).Background);
         var wasInk = Colour(labels[0].Foreground);
 
-        scroller.Offset = new Vector(0, scroller.Extent.Height);
+        view.ShowPlace(all.IndexOf(items[^1]));
         Jobs();
 
-        // The last section is the one being read now, and it wears what the first one wore.
+        // The last place is the one open now, and it wears what the first one wore.
         Assert.Equal(wasFill, Colour(((Border)items[^1]).Background));
         Assert.Equal(wasInk, Colour(labels[^1].Foreground));
 
@@ -129,17 +129,17 @@ public class SettingsNavTests
         var (window, _, view) = OpenLikeTheApp(height: 500);
 
         var nav = (ScrollViewer)view.FindControl<Control>("NavScroller")!;
-        var items = ((StackPanel)view.FindControl<Control>("NavItems")!).Children.Where(item => item.Classes.Contains(SettingsView.NavPlaceClass)).ToList();
-        var cards = (ScrollViewer)view.FindControl<Control>("Scroller")!;
+        var all = ((StackPanel)view.FindControl<Control>("NavItems")!).Children.Where(item => item.Classes.Contains(SettingsView.NavPlaceClass)).ToList();
+        var items = all.Where(item => item.IsVisible).ToList();
 
         Assert.True(
             nav.Extent.Height > nav.Viewport.Height,
             "the nav is longer than the window, which is the reported condition");
 
-        // Nothing has moved it yet: the first section is the one being read.
+        // Nothing has moved it yet: the first place is the one open.
         Assert.Equal(0, nav.Offset.Y);
 
-        cards.Offset = new Vector(0, cards.Extent.Height);
+        view.ShowPlace(all.IndexOf(items[^1]));
         Jobs();
 
         var last = (Border)items[^1];

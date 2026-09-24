@@ -147,16 +147,6 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         Path.Combine(paths.Data, "switch-capture.txt"),
         () => []);
 
-    /// <summary>Every card open, so a row inside a shut one is still a control the sweep can see.</summary>
-    private static void Expand(SettingsView view)
-    {
-        view.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == "ExpandAll")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-        Jobs();
-    }
-
     /// <summary>The settings surface the way the headset builds it: offscreen, in a window never shown.</summary>
     private (OffscreenSurface Surface, SettingsView View) Headset()
     {
@@ -170,7 +160,6 @@ public class ARowThatOpensAWindowRefusesTheRayTests
 
         surface.Render();
         Jobs();
-        Expand(view);
         surface.Render();
 
         return (surface, view);
@@ -223,17 +212,17 @@ public class ARowThatOpensAWindowRefusesTheRayTests
     }
 
     /// <summary>
-    /// Every opener on the page, gathered one area at a time (#220): each area's cards are drawn only
-    /// while it is the one selected, so a sweep across the whole page has to select each in turn.
+    /// Every opener on the page, gathered one place at a time (#220): each place's rows are drawn only
+    /// while it is the one open, so a sweep across the whole page has to open each in turn.
     /// </summary>
     private static List<Button> AllOpeners(SettingsView view)
     {
         var found = new List<Button>();
 
-        for (var i = 0; i < D47.Core.Configuration.SettingsLayout.Areas.Count; i++)
+        for (var i = 0; i < view.SectionIds.Count; i++)
         {
-            view.SelectArea(i);
-            Expand(view);
+            view.ShowPlace(i);
+            Jobs();
 
             found.AddRange(Openers(view));
         }
@@ -321,11 +310,11 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         var host = (Window)surface.Root;
         var pressed = new List<string>();
 
-        // One area at a time (#220): each area's cards are drawn only while it is selected.
-        for (var i = 0; i < D47.Core.Configuration.SettingsLayout.Areas.Count; i++)
+        // One place at a time (#220): each place's rows are drawn only while it is open.
+        for (var i = 0; i < view.SectionIds.Count; i++)
         {
-            view.SelectArea(i);
-            Expand(view);
+            view.ShowPlace(i);
+            Jobs();
             surface.Render();
 
             // The ones a ray can land on: the secret editor's clear button is hidden until there is a key
@@ -356,9 +345,9 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         var (surface, view) = Headset();
         using var _ = surface;
 
-        // Diagnostics' own area (#220).
-        view.SelectArea(D47.Core.Configuration.SettingsLayout.Areas.ToList().FindIndex(a => a.Id == "install"));
-        Expand(view);
+        // Diagnostics' own place (#220).
+        view.ShowPlaceOf(DiagnosticsCapability.CoverageKey);
+        Jobs();
         surface.Render();
 
         var coverage = Openers(view).Single(button => button.Name == "OpenCoverage");
@@ -384,9 +373,9 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         window.Show();
         Jobs();
 
-        // Diagnostics' own area (#220).
-        view.SelectArea(D47.Core.Configuration.SettingsLayout.Areas.ToList().FindIndex(a => a.Id == "install"));
-        Expand(view);
+        // Diagnostics' own place (#220).
+        view.ShowPlaceOf(DiagnosticsCapability.CoverageKey);
+        Jobs();
 
         view.GetVisualDescendants().OfType<Button>()
             .Single(button => button.Name == "OpenCoverage")

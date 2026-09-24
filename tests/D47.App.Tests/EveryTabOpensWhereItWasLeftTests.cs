@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.App.Settings;
 using D47.App.Theming;
@@ -147,9 +148,9 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         window.Close();
     }
 
-    /// <summary>The settings page opens scrolled to the section it was left on — and unfolds nothing.</summary>
+    /// <summary>The settings page opens on the place it was left on.</summary>
     [AvaloniaFact]
-    public void SettingsOpensOnTheSectionItWasLeftOn()
+    public void SettingsOpensOnThePlaceItWasLeftOn()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -158,14 +159,11 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (_, view, window) = Settings(settings, viewState, paths);
 
-        // Well down the page, so the answer cannot be the top of the page by accident.
+        // Well down the list, so the answer cannot be the first page by accident.
         const string section = "memory";
 
         view.Reveal(MemoryCapability.Id);
         Jobs();
-
-        // What the settle timer calls.
-        view.SettleSection();
 
         Assert.Equal(section, viewState.Load().SettingsSection);
 
@@ -179,30 +177,31 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         second.Close();
     }
 
-    /// <summary>And it unfolds nothing.</summary>
+    /// <summary>Restoring the page unfolds none of its folded rows.</summary>
     [AvaloniaFact]
-    public void RestoringTheSectionOpensNoCard()
+    public void RestoringThePlaceUnfoldsNothing()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
-        settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
+        settings.Apply(InterfaceCapability.ShowEverySettingKey, "false", SettingsCaller.Panel);
+
+        // A place whose rows are all folded on a fresh install (UnfoldingOneSectionsHiddenSettingsTests).
+        const string section = "may-do";
+
+        viewState.Save(viewState.Load() with { SettingsSection = section });
 
         var (_, view, window) = Settings(settings, viewState, paths);
 
-        var section = view.SectionIds[2];
+        Assert.Equal(section, view.SectionIds[view.ActiveSection]);
+
+        var fold = view.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.IsEffectivelyVisible && button.Content is string text
+                              && text.StartsWith("Show", StringComparison.Ordinal));
+
+        Assert.EndsWith("more", (string)fold.Content!, StringComparison.Ordinal);
 
         window.Close();
-
-        // Left scrolled to a card the Commander had also closed.
-        viewState.Save(viewState.Load().With(section, expanded: false) with { SettingsSection = section });
-
-        var (_, next, second) = Settings(settings, viewState, paths);
-
-        Assert.Equal(section, next.SectionIds[next.ActiveSection]);
-        Assert.False(next.IsSectionExpanded(next.ActiveSection));
-
-        second.Close();
     }
 
     /// <summary>

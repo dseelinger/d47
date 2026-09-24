@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
@@ -15,48 +14,29 @@ public class RevealingOneSettingsSectionTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-    /// <summary>The section this is about, by its place's title.</summary>
-    private const string Heading = "Voice Input";
+    /// <summary>The page head's title, as the Commander sees it.</summary>
+    private static string? PageTitle(SettingsView view) =>
+        view.FindControl<StackPanel>("Cards")!.Children
+            .OfType<StackPanel>()
+            .Single(panel => panel.Name == SettingsView.PageHeadName)
+            .GetVisualDescendants().OfType<TextBlock>()
+            .Single(text => text.FontSize == Theming.TypeScale.Title)
+            .Text;
 
-    /// <summary>The card whose heading says this, as the Commander sees it.</summary>
-    private static Border Card(SettingsView view) =>
-        ((StackPanel)view.FindControl<Control>("Cards")!).Children
-            .OfType<Border>()
-            .First(card => card.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => string.Equals(text.Text, Heading, StringComparison.OrdinalIgnoreCase)));
-
-    /// <summary>The rows under the heading, which are what collapsing hides.</summary>
-    private static StackPanel Body(Border card) =>
-        card.GetVisualDescendants().OfType<StackPanel>()
-            .First(stack => stack.Margin == new Thickness(0, 8, 0, 0));
-
-    /// <summary>The chevron beside the heading, which has to agree with the rows.</summary>
-    private static TextBlock Chevron(Border card) =>
-        card.GetVisualDescendants().OfType<TextBlock>()
-            .First(text => text.Text is "▾" or "▸");
-
-    /// <summary>Expanded before scrolled.</summary>
+    /// <summary>A reveal opens the page holding the capability, from whichever page was open.</summary>
     [AvaloniaFact]
-    public void RevealingASectionOpensItAsWellAsScrollingToIt()
+    public void RevealingASectionOpensItsPage()
     {
         var (settings, viewState, paths) = TestSurface.Create();
-
-        // How the Commander left it last time.
-        viewState.Save(viewState.Load().With("voice-input", expanded: false));
-
         var host = SettingsHost.Open(settings, viewState, paths);
-        var card = Card(host.View);
 
-        Assert.False(Body(card).IsVisible, "the section starts this test collapsed");
-        Assert.Equal("▸", Chevron(card).Text);
+        host.View.Reveal(MemoryCapability.Id);
+        Jobs();
 
         host.View.Reveal(ListeningCapability.Id);
         Jobs();
 
-        Assert.True(Body(card).IsVisible, "the reveal opened it");
-
-        // And the chevron came with it.
-        Assert.Equal("▾", Chevron(card).Text);
+        Assert.Equal("Voice input", PageTitle(host.View), ignoreCase: true);
 
         host.Close();
     }
@@ -92,13 +72,13 @@ public class RevealingOneSettingsSectionTests
         Jobs();
 
         var active = host.View.ActiveSection;
-        var open = Enumerable.Range(0, host.View.SectionIds.Count).Select(host.View.IsSectionExpanded).ToList();
+        var title = PageTitle(host.View);
 
         host.View.Reveal(ShipsCapability.Id);
         Jobs();
 
         Assert.Equal(active, host.View.ActiveSection);
-        Assert.Equal(open, Enumerable.Range(0, host.View.SectionIds.Count).Select(host.View.IsSectionExpanded));
+        Assert.Equal(title, PageTitle(host.View));
 
         host.Close();
     }
@@ -110,11 +90,14 @@ public class RevealingOneSettingsSectionTests
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
 
+        var active = host.View.ActiveSection;
+
         host.View.Reveal("telepathy");
         Jobs();
 
         // Still standing, and still showing the page it was on.
-        Assert.NotNull(Card(host.View));
+        Assert.Equal(active, host.View.ActiveSection);
+        Assert.NotNull(PageTitle(host.View));
 
         host.Close();
     }

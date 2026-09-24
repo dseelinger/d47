@@ -2,21 +2,21 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using D47.App.Panel;
-using D47.Core.Interface;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.App.Windowing;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Interface;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.SettingsPageReading;
 
 namespace D47.App.Tests;
 
-/// <summary> The nav highlight against what is actually at the top of the page. </summary>
-public class NavFollowsTheScrollTests
+/// <summary>The nav's mark is on the place whose page is open, at every zoom.</summary>
+public class TheOpenPlaceIsMarkedInTheNavTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
@@ -27,7 +27,7 @@ public class NavFollowsTheScrollTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
         settings.Apply(InterfaceCapability.ZoomKey, zoom.ToString(), SettingsCaller.Panel);
 
-        // The whole page.
+        // Every place.
         settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
 
         var view = new SettingsView();
@@ -55,70 +55,41 @@ public class NavFollowsTheScrollTests
 
     private static Color? Colour(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
 
-    private static IReadOnlyList<Border> Cards(SettingsView view) =>
-        [.. ((StackPanel)view.FindControl<Control>("Cards")!).Children.OfType<Border>()];
-
-    private static IReadOnlyList<Border> NavItems(SettingsView view) =>
-        [.. ((StackPanel)view.FindControl<Control>("NavItems")!).Children.OfType<Border>().Where(item => item.Classes.Contains(SettingsView.NavPlaceClass))];
-
     /// <summary>The nav item wearing the active fill, or -1 when none is.</summary>
     private static int Active(SettingsView view)
     {
-        var items = NavItems(view);
+        var items = PlaceItems(view);
         var fill = Colour(Application.Current!.FindResource(ThemeManager.AKey) as IBrush);
 
-        for (var i = 0; i < items.Count; i++)
-        {
-            if (Colour(items[i].Background) == fill)
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    /// <summary>
-    /// Puts a card's top edge at the top of the viewport, measured off the card rather than computed
-    /// the way the surface computes it — otherwise the test agrees with the bug.
-    /// </summary>
-    private static void ScrollTo(ScrollViewer scroller, Border card)
-    {
-        var above = card.TranslatePoint(new Point(0, 0), scroller)!.Value.Y;
-        scroller.Offset = new Vector(0, scroller.Offset.Y + above);
-        Jobs();
+        return items.FindIndex(item => Colour(item.Background) == fill);
     }
 
     [AvaloniaTheory]
     [InlineData(100)]
     [InlineData(125)]
     [InlineData(175)]
-    public void TheMarkedSectionIsTheOneAtTheTopOfThePage(int zoom)
+    public void TheMarkedPlaceIsTheOneWhosePageIsOpen(int zoom)
     {
         var (window, view) = Open(zoom);
 
-        var scroller = (ScrollViewer)view.FindControl<Control>("Scroller")!;
-        var cards = Cards(view);
+        var items = PlaceItems(view);
 
-        Assert.True(cards.Count > 1, "there are sections to walk");
+        Assert.True(items.Count(item => item.IsVisible) > 1, "there are places to walk");
 
-        for (var i = 0; i < cards.Count; i++)
+        for (var i = 0; i < items.Count; i++)
         {
-            ScrollTo(scroller, cards[i]);
-
-            // The last card can be shorter than the viewport, so the scroller runs out before its top reaches
-            // the edge.
-            var reached = cards[i].TranslatePoint(new Point(0, 0), scroller)!.Value.Y <= 1;
-
-            if (!reached)
+            if (!items[i].IsVisible)
             {
                 continue;
             }
 
+            view.ShowPlace(i);
+            Jobs();
+
             Assert.Equal(i, Active(view));
+            Assert.Equal(Words(Name(items[i])), Words(Title(view)));
         }
 
         window.Close();
     }
-
 }

@@ -70,6 +70,11 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
+    <!-- The field on a page that filters by removing rows (IFilterablePage.FilterWidth). -->
+    <Style Selector="TextBox#SearchInput.filter">
+      <Setter Property="BorderBrush" Value="{DynamicResource D47.Line2}" />
+    </Style>
+
   </UserControl.Styles>
 
   <UserControl.Resources>
@@ -574,6 +579,12 @@
                   Margin="6,0,0,0"
                   VerticalAlignment="Center"
                   Click="OnCopyClick" />
+          <!-- The page's own control beside the field (IPageChrome.BarTool). Shown on surfaces with no field too. -->
+          <ContentControl x:Name="PageTool"
+                          DockPanel.Dock="Right"
+                          Margin="0,0,12,0"
+                          VerticalAlignment="Center"
+                          IsVisible="False" />
         </DockPanel>
 
         <DockPanel x:Name="ModePicker"

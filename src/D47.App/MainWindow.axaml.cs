@@ -742,10 +742,6 @@ public partial class MainWindow : Window
             _host.InstallUpdate = RunUpdateInstallAsync;
         }
 
-        // A card's question mark draws help in the panel rather than launching a browser (asked for
-        // 2026-08-23).
-        view.EnableHelp(capabilityId => Panel.OpenHelpFor(capabilityId));
-
         // An "On other tabs" match has no way to change tab itself (#222).
         view.EnableTabJump(OpenTabPlace);
 

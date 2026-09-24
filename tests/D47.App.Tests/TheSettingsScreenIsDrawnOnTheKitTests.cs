@@ -74,36 +74,38 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         Assert.All(saved, path => Assert.True(File.Exists(path)));
     }
 
-    /// <summary>The selected area is the Screen title, in sentence case and White at Title size.</summary>
+    /// <summary>
+    /// The open place is the Screen title, in sentence case and White at Title size, under its area as an
+    /// A breadcrumb.
+    /// </summary>
     [AvaloniaFact]
-    public void TheAreaIsTheScreenTitle()
+    public void ThePlaceIsTheScreenTitleUnderItsAreasBreadcrumb()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var host = Open(1280, 860);
         var area = SettingsLayout.Areas[0];
+        var place = area.Places[0];
 
-        var title = host.View.GetVisualDescendants().OfType<TextBlock>()
-            .Single(block => block.Text == area.Title && block.FontSize == TypeScale.Title);
+        var title = SettingsPageReading.Title(host.View);
+        var crumb = SettingsPageReading.Crumb(host.View);
 
+        Assert.Equal(place.Title, title.Text);
         Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
+
+        Assert.Equal($"{area.Title.ToUpperInvariant()} ›", crumb.Text);
+        Assert.Equal(Ink(ThemeManager.AKey), (crumb.Foreground as ISolidColorBrush)?.Color);
 
         host.Close();
     }
 
-    /// <summary>A place's heading is uppercase White, and its rows sit on the page ground under a Line rule.</summary>
+    /// <summary>A place's rows sit on the page ground under a Line rule.</summary>
     [AvaloniaFact]
-    public void PlacesHaveUppercaseHeadingsAndRuledRows()
+    public void RowsSitOnThePageGroundUnderALineRule()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var host = Open(1280, 860);
-        var place = SettingsLayout.Areas[0].Places[0];
-
-        var heading = host.View.GetVisualDescendants().OfType<TextBlock>()
-            .Single(block => block.Text == place.Title.ToUpperInvariant());
-
-        Assert.Equal(Ink(ThemeManager.WhiteKey), (heading.Foreground as ISolidColorBrush)?.Color);
 
         var rows = host.View.GetVisualDescendants().OfType<Grid>()
             .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && grid.IsEffectivelyVisible)
@@ -117,6 +119,32 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         Assert.All(rows, row => Assert.Equal(Ink(ThemeManager.LineKey), (row.BorderBrush as ISolidColorBrush)?.Color));
 
         host.Close();
+    }
+
+    /// <summary>
+    /// The three Voice and hearing pages at full width and at 924, for comparison with the brief: the page
+    /// head, no card borders, and nothing wrapping into or clipped by another element.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(1280, 860)]
+    [InlineData(924, 640)]
+    public void TheVoiceAndHearingPagesAreCaptured(double width, double height)
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var host = Open(width, height);
+        var saved = new List<string>();
+
+        foreach (var place in SettingsLayout.Areas[0].Places)
+        {
+            SettingsPageReading.Open(host.View, place.Id);
+            saved.Add(Save(host.Window, $"settings-page-{place.Id}-{width}x{height}.png"));
+        }
+
+        host.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.All(saved, path => Assert.True(File.Exists(path)));
     }
 
     private static Color Ink(string key) =>

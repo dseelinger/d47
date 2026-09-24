@@ -6,6 +6,22 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.0 — Settings pages drawn on one grid
+
+Each place in the Settings sidebar is now a page of its own. Clicking Voice Input shows Voice Input
+alone, under the area's name and the place's title, instead of scrolling a column of cards. The
+cards, their collapse arrows, EXPAND ALL, COLLAPSE ALL and the HELP on each card are gone. HELP at
+the top of the window opens the guide for the page that is open.
+
+**Show every setting** is a checkbox beside the filter field. The field reads "Filter settings". While
+something is typed in it, the open page shows only its matching rows. The sidebar shows the number
+of matches beside every place that has any, and draws the rest in grey. They can still be clicked,
+and each opens filtered by the same words. A page with no match says so and says how many other
+pages have one.
+
+In a narrow window the picker that replaces the sidebar lists pages by area and name, for example
+"Voice and hearing › Its voice".
+
 ## 1.12.0 — Hearing through a cloud provider
 
 A new **Hearing provider** row under Voice Input › Speech recognition chooses who turns your speech

@@ -12,7 +12,7 @@ namespace D47.App.Panel;
 /// A tab's drill stack, drawn as however many panes will fit (Phase 25, "Drill in, and find your way
 /// back" and "The panel resizes and zooms").
 /// </summary>
-public sealed class DrillView : UserControl, IFilterablePage
+public sealed class DrillView : UserControl, IFilterablePage, IPageChrome
 {
     /// <summary>The narrowest a pane may be before the strip shows one fewer.</summary>
     public const double MinimumPaneWidth = 380;
@@ -297,6 +297,17 @@ public sealed class DrillView : UserControl, IFilterablePage
             pane.Filter(query);
         }
     }
+
+    /// <summary>The deepest level showing, whose chrome the strip passes on.</summary>
+    private Control? Deepest => _showing.Count > 0 && _built.TryGetValue(_showing[^1], out var pane) ? pane : null;
+
+    public string FilterPlaceholder => (Deepest as IFilterablePage)?.FilterPlaceholder ?? "Search this page";
+
+    public double? FilterWidth => (Deepest as IFilterablePage)?.FilterWidth;
+
+    public Control? BarTool => (Deepest as IPageChrome)?.BarTool;
+
+    public string? HelpTopic => (Deepest as IPageChrome)?.HelpTopic;
 
     /// <summary>Forgets a level's page, so the next visit rebuilds it.</summary>
     public void Forget(string key)

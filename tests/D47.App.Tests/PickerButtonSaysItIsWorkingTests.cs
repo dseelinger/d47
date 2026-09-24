@@ -21,7 +21,11 @@ public class PickerButtonSaysItIsWorkingTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        return SettingsHost.Open(settings, viewState, paths);
+        var host = SettingsHost.Open(settings, viewState, paths);
+        host.View.ShowPlaceOf(SpeechCapability.OutputDeviceKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        return host;
     }
 
     /// <summary>

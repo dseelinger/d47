@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Theming;
+using D47.Core.Capabilities.Builtin;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -19,6 +20,9 @@ public class TheLocalVoiceRowIsOnThePageTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
+        Dispatcher.UIThread.RunJobs();
+
+        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
         Dispatcher.UIThread.RunJobs();
 
         return host;

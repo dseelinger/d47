@@ -8,12 +8,11 @@
     One view definition. Phase 9 instantiates it a second time against the same settings
     service for the VR overlay; nothing here knows about a window.
 
-    Layout is scroll-spy: one scrolling column of cards, and a nav that highlights whichever
-    card is topmost in view (list.md Phase 4, "Settings Nav Menu"). Nav items are built in
-    code from the same sections the cards are - there is no second list.
+    Each place is a page: the nav on the left, and the open place alone on the right. Nav items are
+    built in code from the same places the pages are - there is no second list.
   -->
   <!--
-    The page has a width below which it stops working: the nav, plus a card column wide enough to
+    The page has a width below which it stops working: the nav, plus a column wide enough to
     hold a caption beside its control. Narrower than this the window scrolls sideways rather than
     squeezing, which is what a browser does and what zoom needs.
 
@@ -66,15 +65,7 @@
       -->
 
       <!--
-        Open and shut every card (#223). Built in code and put beside "Show every setting"
-        rather than declared here, because it belongs on that row (the Commander's instruction,
-        2026-09-01) and a control declared in one container and moved into another carries the
-        first one's sizing with it - measured, it asked for 664 of the line's 700 pixels and left
-        the row nothing to draw in. See BulkControls.
-      -->
-
-      <!--
-        Horizontal scrolling is on, and the cards have a floor as well as a ceiling. Zoom shrinks
+        Horizontal scrolling is on, and the page has a floor as well as a ceiling. Zoom shrinks
         the space the panel is laid out in - at 175% in a 900-pixel window a row gets 197 - and
         below about 420 a row cannot hold its caption and its control side by side. Without a
         floor the caption was squeezed to nothing and the control drew over it; with one, the
@@ -82,7 +73,6 @@
         and a better one than two controls in the same place.
       -->
       <ScrollViewer x:Name="Scroller"
-                    ScrollChanged="OnScrollChanged"
                     SizeChanged="OnScrollerSizeChanged"
                     HorizontalScrollBarVisibility="Auto">
         <StackPanel x:Name="Cards"

@@ -14,4 +14,10 @@ public interface IFilterablePage
     /// item 6).
     /// </summary>
     bool Filters { get; }
+
+    /// <summary>What the field says while it is empty on this page.</summary>
+    string FilterPlaceholder => "Search this page";
+
+    /// <summary>A fixed width for the field on this page, or null for the panel's own sizing.</summary>
+    double? FilterWidth => null;
 }

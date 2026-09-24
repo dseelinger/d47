@@ -50,25 +50,34 @@ public class AProtectedRowGetsABarAndTheScreenGetsALegendTests
         host.Close();
     }
 
-    /// <summary>The legend is there exactly on the screens that hold a protected row, and nowhere else.</summary>
+    /// <summary>The legend is there exactly on the pages that hold a protected row, and nowhere else.</summary>
     [AvaloniaFact]
-    public void TheLegendMatchesWhetherTheScreenHasAProtectedRow()
+    public void TheLegendMatchesWhetherThePageHasAProtectedRow()
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
+        var places = SettingsLayout.Areas.SelectMany(area => area.Places).ToList();
 
-        for (var i = 0; i < SettingsLayout.Areas.Count; i++)
+        Assert.Contains(places, place => settings.RowsForPlace(place.Id).Any(row => row.Protected));
+        Assert.Contains(places, place => !settings.RowsForPlace(place.Id).Any(row => row.Protected));
+
+        for (var i = 0; i < places.Count; i++)
         {
-            host.View.SelectArea(i);
+            host.View.ShowPlace(i);
             Jobs();
 
-            var area = SettingsLayout.Areas[i];
-            var expected = area.Places.Any(place => settings.RowsForPlace(place.Id).Any(row => row.Protected));
+            // A place with no page on a fresh surface is not one the Commander can open.
+            if (host.View.ActiveSection != i)
+            {
+                continue;
+            }
+
+            var expected = settings.RowsForPlace(places[i].Id).Any(row => row.Protected);
 
             var legend = host.View.GetVisualDescendants().OfType<TextBlock>()
                 .FirstOrDefault(block => block.Text == SettingsView.ProtectedLegend);
 
-            Assert.True(legend is not null, $"{area.Title} drew no legend line at all");
+            Assert.True(legend is not null, $"{places[i].Title} drew no legend line at all");
             Assert.Equal(expected, legend!.IsVisible);
         }
 

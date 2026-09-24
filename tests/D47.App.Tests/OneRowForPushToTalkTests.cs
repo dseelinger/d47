@@ -321,7 +321,7 @@ public class OneRowForPushToTalkTests
         var (settings, host) = Open();
 
         // Screens' own area (#220).
-        host.View.Reveal(InterfaceCapability.Id);
+        host.View.ShowPlaceOf(InterfaceCapability.ShowOverlayHotkeyKey);
         Dispatcher.UIThread.RunJobs();
 
         var row = Row(host, "Show or hide the overlay")!;

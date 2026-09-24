@@ -42,6 +42,9 @@ public class AVoiceResetAsksTwiceThenActsTests
         var host = SettingsHost.Open(settings, viewState, paths);
         Dispatcher.UIThread.RunJobs();
 
+        host.View.ShowPlaceOf(SpeechCapability.ResetVoicesKey);
+        Dispatcher.UIThread.RunJobs();
+
         return host;
     }
 

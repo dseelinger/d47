@@ -85,9 +85,6 @@ internal sealed class SettingsHost
             return view;
         });
 
-        // As the window wires it.
-        view.EnableHelp(capabilityId => panel.OpenHelpFor(capabilityId));
-
         panel.EnableSearch();
         panel.Tab = PanelTab.Settings;
 

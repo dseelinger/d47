@@ -11,7 +11,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The settings page drawn from <see cref="SettingsLayout"/>: areas in the nav, places as cards.</summary>
+/// <summary>The settings page drawn from <see cref="SettingsLayout"/>: areas in the nav, places as pages.</summary>
 public sealed class EverySettingSitsWhereTheLayoutPutsItTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
@@ -29,13 +29,6 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
 
     private static string? Words(Control item) =>
         item.GetVisualDescendants().OfType<TextBlock>().First().Text;
-
-    private static List<Border> Cards(SettingsView view) =>
-        [.. ((StackPanel)view.FindControl<Control>("Cards")!).Children.OfType<Border>()];
-
-    /// <summary>The card's own title, which follows the chevron.</summary>
-    private static string? Title(Border card) =>
-        card.GetVisualDescendants().OfType<TextBlock>().Skip(1).First().Text;
 
     private static string LabelOf(SettingsService settings, string key) =>
         settings.Sections.SelectMany(section => section.Rows).First(row => row.Key == key).Label;
@@ -58,28 +51,34 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         host.Close();
     }
 
-    /// <summary>An area's own places are all the nav lists, and all the cards it draws (#220).</summary>
+    /// <summary>
+    /// An area's places are listed under its heading in layout order, and its heading opens the first of
+    /// them.
+    /// </summary>
     [AvaloniaTheory]
     [InlineData("Voice and hearing")]
     [InlineData("The ship's AI")]
     [InlineData("Privacy and this install")]
-    public void OnlyTheSelectedAreasPlacesAreListedAndDrawn(string areaTitle)
+    public void AnAreasPlacesAreListedUnderItsHeading(string areaTitle)
     {
         var host = Open(out _);
         var area = SettingsLayout.Areas.Single(a => a.Title == areaTitle);
 
         // Diagnostics holds only diagnostics.paused and diagnostics.coverage, and a fresh test
-        // surface has neither a paused subscriber nor coverage recording — so the card that fold
-        // takes off the page entirely never draws here (#283).
-        var expected = area.Places.Where(place => place.Id != "diagnostics").Select(place => place.Title);
+        // surface has neither a paused subscriber nor coverage recording — so that place has no page
+        // here and is absent from the nav (#283).
+        var expected = area.Places.Where(place => place.Id != "diagnostics").Select(place => place.Title).ToList();
+
+        var nav = ((StackPanel)host.View.FindControl<Control>("NavItems")!).Children.Where(item => item.IsVisible).ToList();
+        var heading = nav.FindIndex(item => item.Classes.Contains(SettingsView.NavAreaClass) && Words(item) == areaTitle);
+        var listed = nav.Skip(heading + 1).TakeWhile(item => item.Classes.Contains(SettingsView.NavPlaceClass));
+
+        Assert.Equal(expected, listed.Select(Words));
 
         host.View.SelectArea(AreaIndex(areaTitle));
         Jobs();
 
-        var listed = Nav(host.View, SettingsView.NavPlaceClass).Where(item => item.IsVisible).ToList();
-
-        Assert.Equal(expected, listed.Select(Words));
-        Assert.Equal(expected.Select(title => title.ToUpperInvariant()), Cards(host.View).Select(Title));
+        Assert.Equal(expected[0], SettingsPageReading.Words(SettingsPageReading.Title(host.View)));
 
         host.Close();
     }
@@ -89,13 +88,11 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     {
         var host = Open(out var settings);
 
-        host.View.SelectArea(AreaIndex("The ship's AI"));
+        host.View.ShowPlaceOf(SpeechCapability.RetryAttemptsKey);
         Jobs();
 
-        var card = Cards(host.View).Single(card => Title(card) == "WHEN A TURN FAILS");
-
         Assert.Contains(
-            card.GetVisualDescendants().OfType<TextBlock>(),
+            host.View.GetVisualDescendants().OfType<TextBlock>(),
             text => text.Text == LabelOf(settings, SpeechCapability.RetryAttemptsKey));
 
         // The nearest area heading above its nav item.
@@ -124,7 +121,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         box.Text = key;
         Jobs();
 
-        Assert.DoesNotContain(Cards(host.View), card => card.IsVisible);
+        Assert.Empty(SettingsPageReading.Counted(host.View));
 
         host.Close();
     }
@@ -139,7 +136,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         box.Text = SpeechCapability.RetryAttemptsKey;
         Jobs();
 
-        Assert.Equal(["WHEN A TURN FAILS"], Cards(host.View).Where(card => card.IsVisible).Select(Title));
+        Assert.Equal(["When a turn fails"], SettingsPageReading.Counted(host.View).Keys);
 
         host.Close();
     }
@@ -149,7 +146,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     {
         var host = Open(out var settings);
 
-        host.View.SelectArea(AreaIndex("The ship's AI"));
+        host.View.ShowPlaceOf(SpeechCapability.RetryAttemptsKey);
         Jobs();
 
         var provider = settings.Sections.SelectMany(section => section.Rows)

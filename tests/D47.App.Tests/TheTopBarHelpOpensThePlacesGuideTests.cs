@@ -3,16 +3,17 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
-using D47.App.Settings;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Help;
 using D47.Core.Interface;
 using Xunit;
+using static D47.App.Tests.SettingsPageReading;
 
 namespace D47.App.Tests;
 
-/// <summary>The HELP word on a settings card.</summary>
-public class ACardsHelpDrawsItsPageTests
+/// <summary>The top bar's HELP on the settings page opens the guide for the place that is open (#435).</summary>
+public class TheTopBarHelpOpensThePlacesGuideTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();
 
@@ -22,32 +23,24 @@ public class ACardsHelpDrawsItsPageTests
         return SettingsHost.Open(settings, viewState, paths);
     }
 
-    /// <summary>The mark on the card whose heading says this.</summary>
-    private static Button Mark(SettingsView view, string heading)
+    private static void PressHelp(SettingsHost host)
     {
-        var card = ((StackPanel)view.FindControl<Control>("Cards")!).Children
-            .OfType<Border>()
-            .First(border => border.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => string.Equals(text.Text, heading, StringComparison.OrdinalIgnoreCase)));
-
-        return card.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Content as string == "HELP");
+        host.Panel.FindControl<Button>("HelpButton")!
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Jobs();
     }
 
-    private static void Click(Button button) =>
-        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-
     /// <summary>
-    /// Pressed on Voice Input, it draws the Listening band — that card's own subject, not the page about
-    /// Settings that the tab's mark opens.
+    /// Pressed on Voice Input, it draws the Listening band — that place's own subject, not the page about
+    /// Settings.
     /// </summary>
     [AvaloniaFact]
-    public void ItDrawsThatCardsOwnPageInThePanel()
+    public void OnVoiceInputItDrawsThatPlacesOwnPageInThePanel()
     {
         var host = Open();
 
-        Click(Mark(host.View, "Voice Input"));
-        Jobs();
+        SettingsPageReading.Open(host.View, "voice-input");
+        PressHelp(host);
 
         Assert.True(host.Panel.Nav.Modal, "help took the panel");
         Assert.Equal(HelpLevel.Prefix + ListeningCapability.Id, host.Panel.Nav.Trail[^1].Key);
@@ -62,7 +55,22 @@ public class ACardsHelpDrawsItsPageTests
         host.Close();
     }
 
-    /// <summary>And there is a way back to the row it was pressed from.</summary>
+    /// <summary>On Its voice, the guide its place names.</summary>
+    [AvaloniaFact]
+    public void OnItsVoiceItOpensTheGuideThatPlaceNames()
+    {
+        var host = Open();
+        var place = SettingsLayout.Areas.SelectMany(a => a.Places).Single(p => p.Id == "voice");
+
+        SettingsPageReading.Open(host.View, "voice");
+        PressHelp(host);
+
+        Assert.Equal(HelpLevel.Prefix + place.DocsCapabilityId, host.Panel.Nav.Trail[^1].Key);
+
+        host.Close();
+    }
+
+    /// <summary>And there is a way back to the page it was pressed from.</summary>
     [AvaloniaFact]
     public void TheBreadcrumbGoesBackToTheSettingsPage()
     {
@@ -70,8 +78,8 @@ public class ACardsHelpDrawsItsPageTests
 
         Assert.Equal("Settings", host.Panel.Nav.Trail[^1].Word);
 
-        Click(Mark(host.View, "Voice Input"));
-        Jobs();
+        SettingsPageReading.Open(host.View, "voice-input");
+        PressHelp(host);
 
         Assert.Equal("Help", host.Panel.Nav.Trail[^1].Word);
 
@@ -81,6 +89,7 @@ public class ACardsHelpDrawsItsPageTests
         Assert.False(host.Panel.Nav.Modal, "help was dismissed");
         Assert.Equal(PanelTab.Settings, host.Panel.Tab);
         Assert.Equal("Settings", host.Panel.Nav.Trail[^1].Word);
+        Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
 
         host.Close();
     }
@@ -91,8 +100,8 @@ public class ACardsHelpDrawsItsPageTests
     {
         var host = Open();
 
-        Click(Mark(host.View, "Voice Input"));
-        Jobs();
+        SettingsPageReading.Open(host.View, "voice-input");
+        PressHelp(host);
 
         var shown = host.Panel.GetVisualDescendants().OfType<TextBlock>()
             .Select(text => text.Text ?? string.Empty)
@@ -103,35 +112,34 @@ public class ACardsHelpDrawsItsPageTests
         host.Close();
     }
 
-    /// <summary>
-    /// A card whose page nobody has illustrated still opens something, taking the same ladder down that
-    /// the tab's own mark takes.
-    /// </summary>
+    /// <summary>A place whose guide nobody has illustrated opens the Settings guide rather than nothing.</summary>
     [AvaloniaFact]
-    public void ACardWithNoBandOpensTheIndexRatherThanNothing()
+    public void APlaceWithNoBandOpensTheSettingsGuide()
     {
-        var bandless = HelpLibrary.Pages.First(id => HelpLibrary.For(id) is null);
+        var bandless = SettingsLayout.Areas.SelectMany(a => a.Places)
+            .FirstOrDefault(place => HelpLibrary.For(place.DocsCapabilityId) is null);
+
+        // Only meaningful while some place names a guide with no band.
+        if (bandless is null)
+        {
+            return;
+        }
+
         var host = Open();
 
-        var heading = ((StackPanel)host.View.FindControl<Control>("Cards")!).Children
-            .OfType<Border>()
-            .Select(card => card.GetVisualDescendants().OfType<TextBlock>().First().Text)
-            .ToList();
+        SettingsPageReading.Open(host.View, bandless.Id);
 
-        // Only meaningful while that page is a section on this surface; skip rather than assert something
-        // about a capability that declares no settings.
-        if (!heading.Any(text => string.Equals(text, "Privacy and egress", StringComparison.Ordinal))
-            || !string.Equals(bandless, "privacy", StringComparison.Ordinal))
+        if (host.View.SectionIds[host.View.ActiveSection] != bandless.Id)
         {
+            // That place has no page on a fresh surface.
             host.Close();
             return;
         }
 
-        Click(Mark(host.View, "Privacy and egress"));
-        Jobs();
+        PressHelp(host);
 
         Assert.True(host.Panel.Nav.Modal, "the mark always opens something");
-        Assert.Equal(HelpLevel.Prefix + HelpLevel.Index, host.Panel.Nav.Trail[^1].Key);
+        Assert.Equal(HelpLevel.Prefix + SettingsCapability.Id, host.Panel.Nav.Trail[^1].Key);
 
         host.Close();
     }

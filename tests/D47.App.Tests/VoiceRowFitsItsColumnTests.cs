@@ -136,6 +136,7 @@ public class VoiceRowFitsItsColumnTests
             : SettingsHost.Open(settings, viewState, paths);
 
         settings.Apply(SpeechCapability.VoiceKey, voice, SettingsCaller.Panel);
+        host.View.ShowPlaceOf(SpeechCapability.VoiceKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

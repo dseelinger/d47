@@ -1454,7 +1454,8 @@ public partial class PanelView : UserControl
     /// cref="GoBack"/> — the breadcrumb, the controller button and the spoken word, already agreeing
     /// with no special case anywhere.
     /// </summary>
-    public bool OpenHelp() => OpenHelpFor(null);
+    public bool OpenHelp() =>
+        OpenHelpFor(Tab == PanelTab.Transcript || Nav.Modal ? null : (PagePane.Child as IPageChrome)?.HelpTopic);
 
     /// <summary>
     /// The same, for a mark that is about something narrower than the tab it sits on — a settings
@@ -3821,11 +3822,26 @@ public partial class PanelView : UserControl
                                      or TranscriptPage.Journal
                                      or TranscriptPage.RawJournal;
 
-        SearchRow.IsVisible = _searchable
-                              && Mode == PanelMode.Full
+        var filterable = transcript ? null : PagePane.Child as IFilterablePage;
+        var field = _searchable && (transcript || filterable?.Filters == true);
+
+        SearchInput.IsVisible = field;
+        SearchInput.PlaceholderText = filterable?.FilterPlaceholder ?? "Search this page";
+        SearchInput.Classes.Set("filter", filterable?.FilterWidth is not null);
+
+        var tool = transcript ? null : (PagePane.Child as IPageChrome)?.BarTool;
+
+        if (!ReferenceEquals(PageTool.Content, tool))
+        {
+            PageTool.Content = tool;
+        }
+
+        PageTool.IsVisible = tool is not null;
+
+        SearchRow.IsVisible = Mode == PanelMode.Full
                               && ModalPane.Child is null
                               && !Layer.IsVisible
-                              && (transcript || (PagePane.Child as IFilterablePage)?.Filters == true);
+                              && (field || tool is not null);
 
         // On all four readings now (#413).
         ScrollPastReadingItem.IsEnabled = transcript;
@@ -3882,7 +3898,13 @@ public partial class PanelView : UserControl
         }
 
         const double Gap = 16;
-        var field = Math.Clamp(bar * 0.32, 240, 420);
+        var field = (Tab == PanelTab.Transcript ? null : (PagePane.Child as IFilterablePage)?.FilterWidth)
+                    ?? Math.Clamp(bar * 0.32, 240, 420);
+
+        if (!SearchInput.IsVisible)
+        {
+            field = 0;
+        }
         var beside = readings == 0 || readings + Gap + actions + field <= bar;
 
         var dock = beside ? Dock.Right : Dock.Bottom;

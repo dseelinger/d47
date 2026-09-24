@@ -178,6 +178,8 @@ public class DisclosureIsAHintTests
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
+        host.View.ShowPlaceOf(SpeechCapability.EgressKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var disclosure = TtsProviderCatalog.Selected(settings.Current.Speech.Provider).Egress;
         var caption = Caption(host.View);
@@ -197,6 +199,8 @@ public class DisclosureIsAHintTests
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
+        host.View.ShowPlaceOf(SpeechCapability.EgressKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(TtsProviderCatalog.Edge.Egress, ToolTip.GetTip(Caption(host.View)));
 

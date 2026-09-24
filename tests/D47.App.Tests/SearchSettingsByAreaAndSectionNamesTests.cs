@@ -20,22 +20,13 @@ namespace D47.App.Tests;
 /// <summary>
 /// A query on the settings page reaches beyond a row's own words: an area's title, a place's title or
 /// one of its search terms, a named group's title or help, and — for a row that lives on a tab rather
-/// than a card — a match under "On other tabs" that opens the tab and root it belongs to (#222).
+/// than a settings page — a match under "On other tabs" that opens the tab and root it belongs to (#222).
 /// </summary>
 public class SearchSettingsByAreaAndSectionNamesTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();
 
     private static TextBox Box(SettingsHost host) => (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
-
-    private static int Cards(SettingsHost host) =>
-        ((StackPanel)host.View.FindControl<Control>("Cards")!).Children.OfType<Border>().Count(card => card.IsVisible);
-
-    private static string? CardTitle(Border card) =>
-        card.GetVisualDescendants().OfType<TextBlock>().Skip(1).First().Text;
-
-    private static List<Border> VisibleCards(SettingsHost host) =>
-        [.. ((StackPanel)host.View.FindControl<Control>("Cards")!).Children.OfType<Border>().Where(c => c.IsVisible)];
 
     private static string Words(TextBlock block) =>
         block.Inlines is { Count: > 0 } inlines
@@ -57,7 +48,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         [.. OtherTabsSection(host)?.GetVisualDescendants().OfType<Button>() ?? []];
 
     [AvaloniaFact]
-    public void AnAreaTitleShowsEveryPlaceInIt()
+    public void AnAreaTitleMarksEveryPlaceInIt()
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -70,10 +61,9 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Box(host).Text = "Voice and hearing";
         Jobs();
 
-        Assert.Equal(area.Places.Count, Cards(host));
         Assert.Equal(
-            area.Places.Select(p => p.Title.ToUpperInvariant()).ToHashSet(),
-            VisibleCards(host).Select(CardTitle).Where(t => t is not null).Select(t => t!).ToHashSet());
+            area.Places.Select(p => p.Title).ToHashSet(),
+            SettingsPageReading.Counted(host.View).Keys.ToHashSet());
 
         host.Close();
     }
@@ -90,10 +80,9 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Box(host).Text = "ptt";
         Jobs();
 
-        Assert.Equal(1, Cards(host));
-        Assert.Equal("VOICE INPUT", CardTitle(VisibleCards(host).Single()));
+        Assert.Equal(["Voice Input"], SettingsPageReading.Counted(host.View).Keys);
 
-        // A row whose own words say nothing about "ptt" is still on the card, because the match is on the
+        // A row whose own words say nothing about "ptt" is still on the page, because the match is on the
         // place's term rather than on any one row.
         Assert.Contains("Cancel", VisibleRowLabels(host));
 
@@ -113,8 +102,10 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Box(host).Text = "for every channel";
         Jobs();
 
-        Assert.Equal(1, Cards(host));
-        Assert.Equal("SOUNDS AND LEVELS", CardTitle(VisibleCards(host).Single()));
+        Assert.Equal(["Sounds and levels"], SettingsPageReading.Counted(host.View).Keys);
+
+        SettingsPageReading.Open(host.View, "sounds");
+
         Assert.Contains("Level", VisibleRowLabels(host));
         Assert.Contains("Mute", VisibleRowLabels(host));
 

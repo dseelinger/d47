@@ -40,31 +40,28 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
         return (host, settings);
     }
 
-    private static Border Card(SettingsView view, string heading) =>
-        ((StackPanel)view.FindControl<Control>("Cards")!).Children
-            .OfType<Border>()
-            .First(card => card.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => string.Equals(text.Text, heading, StringComparison.OrdinalIgnoreCase)));
+    /// <summary>The open page's "Show N more", once the page is the place titled this.</summary>
+    private static Button FoldButton(SettingsView view, string title)
+    {
+        Assert.Equal(title, SettingsPageReading.Words(SettingsPageReading.Title(view)));
 
-    private static Button FoldButton(Border card) =>
-        card.GetVisualDescendants().OfType<Button>()
+        return SettingsPageReading.Page(view).GetVisualDescendants().OfType<Button>()
             .First(button => button.Content is string text && text.StartsWith("Show", StringComparison.Ordinal));
+    }
 
     private static bool LabelShown(SettingsView view, string label) =>
         view.GetVisualDescendants().OfType<TextBlock>()
             .Any(text => text.IsEffectivelyVisible && text.Text == label);
 
     [AvaloniaFact]
-    public void AFullyFoldedPlaceKeepsItsCardTitleAndButtonWithNoRows()
+    public void AFullyFoldedPlaceKeepsItsPageAndButtonWithNoRows()
     {
         var (host, _) = Folded();
 
         host.View.SelectArea(AreaIndex(ActingArea));
         Jobs();
 
-        var card = Card(host.View, MayDoPlace);
-
-        Assert.True(FoldButton(card).IsVisible);
+        Assert.True(FoldButton(host.View, MayDoPlace).IsVisible);
         Assert.False(LabelShown(host.View, KeyboardLabel));
 
         host.Close();
@@ -78,7 +75,7 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
         host.View.SelectArea(AreaIndex(ActingArea));
         Jobs();
 
-        var button = FoldButton(Card(host.View, MayDoPlace));
+        var button = FoldButton(host.View, MayDoPlace);
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Jobs();
@@ -102,13 +99,13 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
         host.View.SelectArea(AreaIndex(ActingArea));
         Jobs();
 
-        var card = Card(host.View, MayDoPlace);
-        Assert.True(FoldButton(card).IsVisible);
+        var button = FoldButton(host.View, MayDoPlace);
+        Assert.True(button.IsVisible);
 
         settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
         Jobs();
 
-        Assert.False(FoldButton(card).IsVisible);
+        Assert.False(button.IsVisible);
         Assert.True(LabelShown(host.View, KeyboardLabel));
 
         host.Close();

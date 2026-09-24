@@ -31,6 +31,8 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     public void TheRowIsDrawnWithBothModelsOnIt()
     {
         var host = OnElevenLabs(out _);
+        host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var segment = Row(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Segment>().First();
 
         Assert.Equal(2, segment.ItemsSource.Count);
@@ -57,6 +59,8 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     public void ChoosingV3TakesTheSpeakingRateOffThePageAndFlashBringsItBack()
     {
         var host = OnElevenLabs(out var settings);
+        host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         settings.Apply(SpeechCapability.ElevenLabsModelKey, ElevenLabsModels.Flash, SettingsCaller.Panel);
         Assert.True(Drawn(host, RateLabel));
