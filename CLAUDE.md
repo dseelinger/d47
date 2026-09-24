@@ -25,6 +25,11 @@ to say what you mean. When a literal phrase is available, use it.
 Apply this to comments, commit messages, docstrings, and any prose you write
 — not to code identifiers or established technical terms.
 
+## When to stop
+
+Keep going when a step needs no input. Stop first before anything that leaves this checkout: a
+push, a GitHub write, the installed app's `data\` folder, or files outside the repo.
+
 ## Build and test
 
 ```

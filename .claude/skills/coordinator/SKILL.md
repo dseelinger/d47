@@ -33,6 +33,14 @@ Triage is a report. You are the session that stays open after it.
   the Architect, rather than pushing on with an effort level that no longer fits. Any title you
   propose for a split-off issue is seven words or fewer.
 
+## A long session
+
+Once a question is answered, treat the answer as done and work on the current one. Do not reopen a
+settled decision in a later turn unless the maintainer does.
+
+A scout's report is a lead, not a fact. Check a file-and-line claim in the file before it goes into a
+recommendation.
+
 ## Eligibility
 
 Eligible issues are the open ones that are **not** `tabled`, **not** `phase`, **not** `design`, and
@@ -46,11 +54,10 @@ you recommend. Starting the work is a different session — yours is the one tha
 
 ## Output
 
-One recommendation, not a survey. The issue, its model and effort, and the launch line:
-
-```
-claude -n "#105" --model sonnet --effort medium "Fix #105."
-```
+One recommendation, not a survey: the issue, and its model and effort. No launch line — the Stream
+Deck's Issue key starts the session with `/issue-worker` and reads the model and effort from
+`.claude/triage-state.json`. Where the issue you recommend has no row there, say so: the key would
+start it on `sonnet`/`medium`, and `/triage` has to run again first.
 
 One line on why it is next. If the honest answer is that two are equally good, say that in one
 sentence and pick one anyway — the maintainer asked for a decision, not a comparison.

@@ -63,6 +63,14 @@ cost rather than routing around it.
 The layering rule is what makes the headless replay harness possible — game logic running against
 journal fixtures with no game, device or network. Weigh a design that erodes it against losing that.
 
+## A long session
+
+Once a question is answered, treat the answer as done and work on the current one. Do not reopen a
+settled decision in a later turn unless the maintainer does.
+
+A scout's report is a lead, not a fact. Check each file-and-line claim in the file before it goes
+into a proposal or an issue body.
+
 ## Say when it is not ready
 
 The most useful thing you do is refuse to settle an underspecified design and name **the one

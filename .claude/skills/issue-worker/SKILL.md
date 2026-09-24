@@ -154,6 +154,9 @@ when the fix ended up touching the tick loop, a trust boundary, the layering rul
 asset names.
 Otherwise the build and the filtered tests are the check.
 
+Act on a review's findings only where you would block the commit for them, and for each one state
+the file, the line, why it is wrong, and how to show it fails. Drop the rest.
+
 `/prose` is worth a pass when the change added comments or a changelog entry of any length.
 
 ## When it is bigger than it looked

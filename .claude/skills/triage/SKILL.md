@@ -161,11 +161,9 @@ Markdown, and short. Three parts:
 3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
    why. Omit the section when there is nothing.
 
-For the first group only, end with a copyable launch line per issue:
-
-```
-claude -n "#105" --model sonnet --effort medium "Fix #105."
-```
+No launch lines. The Stream Deck's Issue key starts a session from the grid below, with
+`/issue-worker` as its opening command, so the finish line that skill defines is in its first
+message. A pasted line would bypass the skill.
 
 No preamble, no summary of what triage is, no restating the rules above. The maintainer ran this to
 find out what to do next.
