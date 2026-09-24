@@ -76,16 +76,20 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
         Assert.Null(TimersAndAlarms.Create(paths, NullLoggerFactory.Instance));
     }
 
-    /// <summary>Off: no stores, and no date or reminder list for the game-state block.</summary>
+    /// <summary>Off: no stores, and the game-state block still carries both dates with no reminder list.</summary>
     [Fact]
-    public void OffNothingIsComposedAndTheGameStateCarriesNoDate()
+    public void OffNothingIsComposedAndTheGameStateStillCarriesTheDate()
     {
         TimersAndAlarms.ReadCommandLine([]);
 
         var clocks = TimersAndAlarms.Create(Paths(), NullLoggerFactory.Instance);
+        var live = TimersAndAlarms.Live(clocks, new DateTimeOffset(2026, 8, 17, 21, 4, 0, TimeSpan.Zero), TimeZoneInfo.Utc);
 
         Assert.Null(clocks);
-        Assert.Null(TimersAndAlarms.Live(clocks, DateTimeOffset.UnixEpoch.AddYears(56), TimeZoneInfo.Utc));
+        Assert.NotNull(live);
+        Assert.StartsWith("Date: ", live, StringComparison.Ordinal);
+        Assert.Contains("The Commander's own clock reads", live, StringComparison.Ordinal);
+        Assert.DoesNotContain("Running:", live, StringComparison.Ordinal);
     }
 
     /// <summary>On: the game-state block carries both dates and what is running, as it always has.</summary>

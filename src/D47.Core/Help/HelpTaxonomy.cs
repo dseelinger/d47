@@ -261,10 +261,17 @@ public static class HelpTaxonomy
                 "Headset",
                 "Show D47 in the headset as an overlay, over Elite, in your own cockpit.",
                 "vr"),
-            HelpNode.Leaf(
+            HelpNode.Category(
                 "Clocks and timers",
-                "Say the date in both worlds, and set timers and alarms that say their own name.",
-                "utilities")),
+                "The date in both worlds, and reminders that say their own name.",
+                HelpNode.Leaf(
+                    "Clock",
+                    "Say the date and time in both worlds.",
+                    "clock"),
+                HelpNode.Leaf(
+                    "Timers and alarms",
+                    "Set timers and alarms that say their own name.",
+                    "utilities"))),
     ];
 
     /// <summary>Every leaf in the tree, depth first.</summary>

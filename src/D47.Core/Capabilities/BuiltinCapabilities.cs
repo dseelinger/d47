@@ -166,8 +166,8 @@ public static class BuiltinCapabilities
         // The loop itself, so the diagnostics card can name a subscriber it has paused (#58).
         Ticking.TickLoop? ticking = null,
 
-        // Whether timers and alarms register at all (#90). The app passes its startup flag; the default is the
-        // registry the documentation gate numbers its pages from.
+        // Whether timers and alarms register at all (#90); the clock registers either way. The app passes its
+        // startup flag; the default is the registry the documentation gate numbers its pages from.
         bool timersAndAlarms = true,
 
         // The same instance TurnLoop reads, so the offer the drill opens is one TurnLoop can answer (#168).
@@ -275,6 +275,7 @@ public static class BuiltinCapabilities
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
+        ClockCapability.Create(now, zone),
         .. Optional(timersAndAlarms, () => UtilitiesCapability.Create(timekeeper, now, zone)),
 
         // Beside Privacy rather than anywhere near the game capabilities, and immediately before it so that

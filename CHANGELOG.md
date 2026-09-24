@@ -20,6 +20,11 @@ once more. If that also produces no scan, it says "The honk did not take". A hon
 while d47 is waiting counts, and nothing is repeated. When d47 switched to analysis mode for the
 honk, it now switches back after the scan, or after the second attempt.
 
+"What time is it", "what's the date" and "what day is it" now work in every run, not only with
+`--utilities`. d47 answers them itself with the date in the game and on your own clock, and the
+ship's AI is given both dates with every question. Timers and alarms still need the switch. The
+help pages are now split into Clock and Timers and alarms.
+
 On a curved headset panel, the ring cursor and presses now land where the panel is drawn, out to its
 left and right edges. Before, d47 treated the panel as curving away from you rather than toward you,
 so the cursor sat partly behind the panel and buttons near either edge could not be pressed.

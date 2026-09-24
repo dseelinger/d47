@@ -1947,7 +1947,7 @@ public sealed class AppHost : IDisposable
 
                             Join(
                                 // Both dates, already worked out, below the cache breakpoint where a per-turn
-                                // value costs nothing (Phase 24). Absent without the switch (#90).
+                                // value costs nothing (Phase 24).
                                 Timekeeping.TimersAndAlarms.Live(
                                     timersAndAlarms, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
 

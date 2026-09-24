@@ -3,7 +3,7 @@ using D47.Core.Utilities;
 
 namespace D47.Core.Capabilities.Builtin;
 
-/// <summary>Clocks, timers and alarms (Phase 24, "Utilities").</summary>
+/// <summary>Timers and alarms (Phase 24, "Utilities").</summary>
 public static class UtilitiesCapability
 {
     public const string Id = "utilities";
@@ -11,11 +11,6 @@ public static class UtilitiesCapability
     private static readonly IReadOnlyDictionary<string, string> Nothing =
         new Dictionary<string, string>(StringComparer.Ordinal);
 
-    /// <summary>
-    /// <param name="timekeeper"> The Commander's timers and alarms, or null under the designer and in
-    /// tests that are not about them — the capability still registers, so its documentation page
-    /// exists, and every tool answers that there is nothing keeping time rather than throwing.
-    /// </summary>
     /// <param name="timekeeper">
     /// The Commander's timers and alarms, or null under the designer and in tests that are not about
     /// them — the capability still registers, so its documentation page exists, and every tool answers
@@ -35,44 +30,14 @@ public static class UtilitiesCapability
         {
             Id = Id,
             Group = "Interface",
-            Name = "Clocks and timers",
-            Summary = "The date in both worlds, and timers and alarms that say their own name.",
-            Examples = ["what's the date", "set a timer for forty minutes", "cancel the mining timer"],
-            Display = new CapabilityDisplay { PanelTitle = "Clocks and timers", Order = 41 },
-
-            // Phrases, never bare words. "time" alone would hijack any sentence containing it, which is the
-            // failure the router's whole-phrase rule exists against.
-            Keywords =
-            [
-                new("what is the date", "say_the_time"),
-                new("what's the date", "say_the_time"),
-                new("what time is it", "say_the_time"),
-            ],
+            Name = "Timers and alarms",
+            Summary = "Timers and alarms that say their own name.",
+            Examples = ["set a timer for forty minutes", "wake me at 07:00", "cancel the mining timer"],
+            Display = new CapabilityDisplay { PanelTitle = "Timers and alarms", Order = 41 },
 
             Tools =
             [
-                // Protected, so it is never advertised and costs nothing per turn.
-                new ToolDefinition
-                {
-                    Name = "say_the_time",
-                    Description =
-                        "The date and time in both worlds. Answered by D47 itself rather than by the "
-                        + "model: no turn, no provider, no tokens.",
-                    Protected = true,
-                    Commands =
-                    [
-                        new ToolCommandPhrase("what is the date", Nothing),
-                        new ToolCommandPhrase("what's the date", Nothing),
-                        new ToolCommandPhrase("what is the time", Nothing),
-                        new ToolCommandPhrase("what's the time", Nothing),
-                        new ToolCommandPhrase("what time is it", Nothing),
-                        new ToolCommandPhrase("what day is it", Nothing),
-                    ],
-                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(
-                        GalacticTime.Read(clock(), where()).Say())),
-                },
-
-                // Advertised, unlike the rest of this capability, and the asymmetry is the point.
+                // Advertised, unlike the rest of this capability.
                 new ToolDefinition
                 {
                     Name = "set_timer",
@@ -156,34 +121,6 @@ public static class UtilitiesCapability
                 },
             ],
         };
-    }
-
-    /// <summary>The two dates, and what is keeping time, for the game-state block (prompt position 7).</summary>
-    public static string? Live(Timekeeper? timekeeper, DateTimeOffset now, TimeZoneInfo zone)
-    {
-        if (now == DateTimeOffset.MinValue)
-        {
-            return null;
-        }
-
-        var clocks = GalacticTime.Read(now, zone);
-
-        var said =
-            $"Date: {clocks.GalacticDate}, {clocks.GalacticTimeOfDay} in the galaxy. "
-            + $"The Commander's own clock reads {clocks.LocalTimeOfDay} on {clocks.LocalDate}. "
-            + "Both are given here already worked out; do not calculate either from the other.";
-
-        var running = timekeeper?.Running ?? [];
-
-        if (running.Count == 0)
-        {
-            return said;
-        }
-
-        var names = string.Join(", ", running.Select(reminder =>
-            $"{reminder.Name} ({reminder.Describe(now, zone)})"));
-
-        return said + $" Running: {names}. D47 cannot cancel these; the Commander does.";
     }
 
     private static ToolResult StartTimer(

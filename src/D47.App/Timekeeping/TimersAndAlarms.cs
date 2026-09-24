@@ -65,7 +65,7 @@ public sealed class TimersAndAlarms
         return new TimersAndAlarms(alarms);
     }
 
-    /// <summary>Both dates and the running reminders for the game-state block; null when there are no clocks.</summary>
+    /// <summary>Both dates for the game-state block, and the running reminders when the switch is on.</summary>
     public static string? Live(TimersAndAlarms? clocks, DateTimeOffset now, TimeZoneInfo zone) =>
-        clocks is null ? null : UtilitiesCapability.Live(clocks.Timekeeper, now, zone);
+        ClockCapability.Live(clocks?.Timekeeper, now, zone);
 }

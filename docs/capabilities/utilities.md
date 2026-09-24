@@ -1,7 +1,7 @@
 ---
-title: Clocks and timers
+title: Timers and alarms
 group: Interface
-nav_order: 139
+nav_order: 140
 ---
 
 <!--
@@ -19,19 +19,9 @@ nav_order: 139
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Off unless D47 is started with --utilities. Then two steps to timers that say their own name.</p>
+<p class="intro">Off unless D47 is started with --utilities. Then one step to timers that say their own name.</p>
 <section>
-<h2><span class="num">1</span> Ask what time it is, in either world.</h2>
-<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what time is it</text>
- <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what is the time in game" — "how long until my shift"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It answers in both when they differ, so you never have to convert.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">2</span> Set a timer, and give it a name.</h2>
+<h2><span class="num">1</span> Set a timer, and give it a name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">set a timer for twenty minutes called fuel scoop</text>
@@ -59,24 +49,9 @@ nav_order: 139
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">What time it is in both worlds at once, and timers and alarms that say their own name.</p>
+<p class="intro">Timers and alarms that say their own name.</p>
 <section>
-<h2><span class="num">1</span> Two dates. One instant.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="The same moment written twice, 1286 years apart">
- <rect x="30" y="40" width="360" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="210" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">17 Aug 3312</text>
- <text x="210" y="116" text-anchor="middle" font-size="16" fill="var(--text-muted)">out there</text>
- <text x="440" y="86" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">+1286</text>
- <text x="440" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">years</text>
- <rect x="490" y="40" width="360" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="670" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">17 Aug 2026</text>
- <text x="670" y="116" text-anchor="middle" font-size="16" fill="var(--text-muted)">where you are</text>
- <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">One moment presented twice, not two clocks.</text>
- <text x="440" y="228" text-anchor="middle" font-size="16" fill="var(--text-muted)">Which is why they can never drift apart, and why D47 never asks a model to add 1286.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">2</span> A timer is a stretch. An alarm is a moment.</h2>
+<h2><span class="num">1</span> A timer is a stretch. An alarm is a moment.</h2>
 <svg viewBox="0 0 880 288" role="img" aria-label="Timers measure a stretch and do not survive a restart; alarms name a moment and do">
  <rect x="20" y="20" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="62" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">TIMER</text>
@@ -97,7 +72,7 @@ nav_order: 139
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> One it could not sound, it owns up to.</h2>
+<h2><span class="num">2</span> One it could not sound, it owns up to.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="An alarm that came due while D47 was closed is reported at the next start rather than sounded late">
  <rect x="20" y="26" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="64" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">07:00</text>
@@ -120,6 +95,7 @@ nav_order: 139
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
+<a class="card" href="clock.html"><span class="ct">Clock →</span><span class="cd">The date and time in both worlds, which works without the switch.</span></a>
 <a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">The other thing on the panel that remembers what you are in the middle of.</span></a>
 <a class="card" href="speech.html"><span class="ct">Speech →</span><span class="cd">The voice that says the name, and the cues around it.</span></a>
 <a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Where the file these live in sits, and everything else D47 writes.</span></a>
@@ -129,48 +105,26 @@ nav_order: 139
 
 ## The details
 
-What time it is, in both worlds at once, and timers and alarms that say their own name.
+Timers and alarms that say their own name.
 
 ### Off unless you turn it on
 
-Clocks and timers are not part of a normal run. Start Directive 47 with `--utilities` on the
+Timers and alarms are not part of a normal run. Start Directive 47 with `--utilities` on the
 command line, or with the environment variable `D47_UTILITIES=1` set, and everything on this page
 is there for that run. Nothing is saved to settings, so the next run without the switch is back
 to off.
 
 Without the switch none of it exists: no Utilities tab on the desktop, in the headset or on the
 overlay strip, no timer or alarm tools, none of the phrases below, and `alarms.json` is not read.
-Directive 47 does not know the date either, and says so when asked rather than working one out.
+Asking the date or the time works either way; that is the [Clock](clock.html).
 
 ### Ask for it
 
-> "what's the date"
-> "what time is it"
 > "set a timer for forty minutes for the mining run"
 > "wake me at 07:00"
 > "cancel the mining timer"
 
-The first two need no AI configured at all. So does cancelling.
-
-### Two clocks, one instant
-
-Elite Dangerous runs **1286 years ahead**, so today is also a date in 3312. That is arithmetic
-over the same moment rather than a second clock — one instant presented twice, which is why the
-two can never drift out of step with each other.
-
-```text
-21:04 on 17 August 3312 out here, and 21:04 on Monday 17 August 2026 where you are.
-```
-
-The galactic date is written the same way for everybody, because the galaxy's calendar is not a
-regional format and a date that reads as 08/17 in one place and 17/08 in another reads as two
-different days. Your own clock is written the way your computer writes dates.
-
-**Directive 47 answers this itself.** No turn is taken, no provider is needed, and nothing is
-spent — it works with no key configured and no network. Both dates also go into the block of live
-game state that rides along with every conversation, already worked out, so the ship's AI can
-mention the date without asking for it. It is never asked to add 1286 to anything: that is
-arithmetic, and a model doing arithmetic in prose is wrong occasionally and confidently.
+Cancelling needs no AI configured at all.
 
 ### Timers and alarms
 
@@ -235,19 +189,6 @@ the wrong alarm of two is worse than being asked which.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
-
-#### `say_the_time`
-
-The date and time in both worlds. Answered by D47 itself rather than by the model: no turn, no
-provider, no tokens.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-**Protected**, which here is about cost as much as about safety: the advertised tool surface is
-paid for on every turn whether or not anybody asks the time, and this question does not need the
-model at all. The keyword router reaches it; the model never sees it.
 
 #### `set_timer`
 
