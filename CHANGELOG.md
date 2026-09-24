@@ -18,6 +18,11 @@ Engineers tab, an on-foot referrer's note reads "unlocking them opens …" rathe
 modifications, and says whether the referrer is unlocked. Ship engineers are judged on rank as
 before.
 
+Suit and weapon modifications now name the Colonia engineers who offer them: Baltanos, Eleanor
+Bresa, Rosa Dayette and Yi Shen. A suit plan with Night Vision lists Yi Shen beside Oden Geiger in
+its Engineers block, and the route counts them too. A Night Vision checklist item no longer names
+Oden Geiger as the only engineer.
+
 ## 1.13.4 — Settings controls fit their values
 
 The Hearing provider and Voice provider rows, and each voice's provider row, now show just the

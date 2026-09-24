@@ -109,6 +109,8 @@ MATERIALS = ROOT / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 
 SPECIFICATIONS = ROOT / "src" / "D47.Core" / "Knowledge" / "EliteSpecifications.tsv"
 
+ENGINEERS = ROOT / "src" / "D47.Core" / "Knowledge" / "Engineers.tsv"
+
 OUTPUT = ROOT / "src" / "D47.Core" / "Knowledge" / "Blueprints.tsv"
 
 COLUMNS = ["kind", "module", "name", "grade", "engineers", "ingredients", "effects", "guid",
@@ -287,6 +289,45 @@ def materials() -> tuple[dict[str, str], set[str]]:
         by_name[key] = (symbol, ledger)
 
     return {name: symbol for name, (symbol, _ledger) in by_name.items()}, ambiguous
+
+
+def on_foot_specialists() -> list[tuple[str, str]]:
+    """(engineer, speciality) for every on-foot engineer, read from the committed Engineers.tsv.
+
+    EDEngineer's recipe rows name the bubble engineers only; its engineer list, which
+    gen-engineers.py writes into that table, also names Colonia's. On-foot ids start at 400000,
+    as `EngineerDirectory.IsOnFoot` has it.
+    """
+    if not ENGINEERS.exists():
+        raise SystemExit(f"{ENGINEERS} is missing — run tools/gen-engineers.py first")
+
+    lines = [line for line in ENGINEERS.read_text(encoding="utf-8").splitlines()
+             if line and not line.startswith("#")]
+    header = lines[0].split("\t")
+    pairs = []
+
+    for line in lines[1:]:
+        row = dict(zip(header, line.split("\t")))
+
+        if int(row["id"]) < 400000:
+            continue
+
+        for item in row["specialities"].split(","):
+            if item:
+                pairs.append((row["name"], item.rsplit(":", 1)[0].strip()))
+
+    return pairs
+
+
+def unsuffixed(name: str) -> str:
+    """The modification name without its manufacturer or weapon-class suffix, casefolded."""
+    return re.sub(r"\s*\([^)]*\)$", "", name).strip().casefold()
+
+
+def covers(speciality: str, recipe: str) -> bool:
+    """Whether an engineer's speciality covers a recipe. A suffixed speciality names one
+    variant; an unsuffixed one names them all."""
+    return speciality.casefold() in (recipe.casefold(), unsuffixed(recipe))
 
 
 def restate(kind: str, size: int, entry: dict, name: str, unpriced: list[str]) -> int:
@@ -660,6 +701,26 @@ def main() -> None:
         )
 
     disagreements = compare(entries, blueprints, specials, by_name)
+
+    # Every on-foot engineer whose specialities name a modification is added to its recipe.
+    unmatched = []
+
+    for engineer, speciality in on_foot_specialists():
+        rows = [row for row in built if row[0] in ON_FOOT.values() and covers(speciality, row[2])]
+
+        if not rows:
+            unmatched.append(f"{engineer}: {speciality}")
+
+        for row in rows:
+            names = [name for name in row[4].split(",") if name]
+
+            if engineer not in names:
+                row[4] = ",".join(names + [engineer])
+
+    if unmatched:
+        raise SystemExit(
+            f"{len(unmatched)} on-foot specialities in Engineers.tsv name no suit or weapon "
+            "recipe:\n  " + "\n  ".join(unmatched))
 
     built.sort(key=lambda row: (row[0], row[1], row[2], row[3]))
 

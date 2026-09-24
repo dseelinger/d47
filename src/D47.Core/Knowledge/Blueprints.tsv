@@ -1011,20 +1011,20 @@ modification	Wake Scanner	Wide Angle Scanner	2	Etienne Dorn,Tiana Fortune,Bill T
 modification	Wake Scanner	Wide Angle Scanner	3	Etienne Dorn,Tiana Fortune,Bill Turner,Lori Jameson	mechanicalscrap*1,germanium*1,scandatabanks*1	Scan Angle|+120%|good;Scan Time|+30%|bad;Mass|+60%|bad	d2b0776c-9e74-4fe9-be1c-e49e104dcad6	Sensor_WideAngle	ufsws
 modification	Wake Scanner	Wide Angle Scanner	4	Etienne Dorn,Tiana Fortune	mechanicalequipment*1,niobium*1,encodedscandata*1	Scan Angle|+160%|good;Scan Time|+40%|bad;Mass|+80%|bad	a00e7425-0828-41ea-9e11-e44bc391dd6f	Sensor_WideAngle	ufsws
 modification	Wake Scanner	Wide Angle Scanner	5	Etienne Dorn,Tiana Fortune	mechanicalcomponents*1,tin*1,classifiedscandata*1	Scan Angle|+200%|good;Scan Time|+50%|bad;Mass|+100%|bad	7835c40b-1612-49ac-9a41-230cfff63daa	Sensor_WideAngle	ufsws
-suit	Suit	Added melee damage		Kit Fowler,Jude Navarro	combattrainingmaterial*5,combatantperformance*5,epinephrine*5,microthrusters*8	Weapon melee damage multiplier|+150%|good;Fists melee damage multiplier|+150%|good			
-suit	Suit	Combat Movement Speed		Terra Velasquez,Yarden Bond	evacuationprotocols*5,geneticresearch*3,epinephrine*5,phneutraliser*8				
-suit	Suit	Damage resistance		Jude Navarro,Uma Laszlo	weaponinventory*5,ballisticsdata*5,titaniumplating*3,carbonfibreplating*3,epoxyadhesive*8	Explosive damage multiplier|+10%|good;Plasma damage multiplier|+10%|good;Thermic damage multiplier|+10%|good;Kinetic damage multiplier|+10%|good			
-suit	Suit	Enhanced tracking		Domino Green,Oden Geiger	topographicalsurveys*5,stellaractivitylogs*5,spectralanalysisdata*5,transmitter*3,circuitboard*3	Analysis time|+10%|good;Analysis range|+100%|good			
-suit	Suit	Extra ammo capacity		Kit Fowler,Jude Navarro	recyclinglogs*8,weapontestdata*5,productionreports*5,weaponcomponent*3	Ammo capacity multiplier|+50%|good			
-suit	Suit	Extra backpack capacity		Domino Green,Wellington Beck	weaponinventory*5,chemicalinventory*5,digitaldesigns*5,epoxyadhesive*5,memorychip*3	Backpack data capacity|+100%|good;Backpack component capacity|+100%|good;Backpack item capacity|+100%|good			
-suit	Suit	Faster shield regen		Kit Fowler,Uma Laszlo	reactoroutputreview*5,ionbattery*3,microtransformer*8,electricalwiring*8	Shield health|+33%|good			
-suit	Suit	Improved battery capacity		Wellington Beck,Oden Geiger	reactoroutputreview*5,maintenancelogs*8,ionbattery*3,microsupercapacitor*5,electricalwiring*5				
-suit	Suit	Improved jump assist		Hero Ferrari,Yarden Bond	gmeds*5,topographicalsurveys*5,microthrusters*3,motor*5				
-suit	Suit	Increased air reserves		Hero Ferrari,Terra Velasquez	pharmaceuticalpatents*3,airqualityreports*8,oxygenicbacteria*5,phneutraliser*8				
-suit	Suit	Increased sprint duration		Hero Ferrari,Terra Velasquez	troopdeploymentrecords*3,genesequencingdata*3,medicaltrialrecords*3,oxygenicbacteria*5,chemicalcatalyst*8				
-suit	Suit	Night vision		Oden Geiger	surveillanceequipment*5,surveilleancelogs*3,radioactivitydata*3,nocdata*3,circuitswitch*5				
-suit	Suit	Quieter footsteps		Yarden Bond	settlementassaultplans*3,tacticalplans*5,patrolroutes*5,microhydraulics*3,viscoelasticpolymer*8				
-suit	Suit	Reduced tool battery consumption		Domino Green,Wellington Beck	reactoroutputreview*5,electricalfuse*3,microtransformer*5,electricalwiring*8	Tool energy drain multiplier|+100%|good			
+suit	Suit	Added melee damage		Kit Fowler,Jude Navarro,Eleanor Bresa	combattrainingmaterial*5,combatantperformance*5,epinephrine*5,microthrusters*8	Weapon melee damage multiplier|+150%|good;Fists melee damage multiplier|+150%|good			
+suit	Suit	Combat Movement Speed		Terra Velasquez,Yarden Bond,Baltanos	evacuationprotocols*5,geneticresearch*3,epinephrine*5,phneutraliser*8				
+suit	Suit	Damage resistance		Jude Navarro,Uma Laszlo,Eleanor Bresa	weaponinventory*5,ballisticsdata*5,titaniumplating*3,carbonfibreplating*3,epoxyadhesive*8	Explosive damage multiplier|+10%|good;Plasma damage multiplier|+10%|good;Thermic damage multiplier|+10%|good;Kinetic damage multiplier|+10%|good			
+suit	Suit	Enhanced tracking		Domino Green,Oden Geiger,Rosa Dayette	topographicalsurveys*5,stellaractivitylogs*5,spectralanalysisdata*5,transmitter*3,circuitboard*3	Analysis time|+10%|good;Analysis range|+100%|good			
+suit	Suit	Extra ammo capacity		Kit Fowler,Jude Navarro,Eleanor Bresa	recyclinglogs*8,weapontestdata*5,productionreports*5,weaponcomponent*3	Ammo capacity multiplier|+50%|good			
+suit	Suit	Extra backpack capacity		Domino Green,Wellington Beck,Rosa Dayette	weaponinventory*5,chemicalinventory*5,digitaldesigns*5,epoxyadhesive*5,memorychip*3	Backpack data capacity|+100%|good;Backpack component capacity|+100%|good;Backpack item capacity|+100%|good			
+suit	Suit	Faster shield regen		Kit Fowler,Uma Laszlo,Eleanor Bresa	reactoroutputreview*5,ionbattery*3,microtransformer*8,electricalwiring*8	Shield health|+33%|good			
+suit	Suit	Improved battery capacity		Wellington Beck,Oden Geiger,Rosa Dayette	reactoroutputreview*5,maintenancelogs*8,ionbattery*3,microsupercapacitor*5,electricalwiring*5				
+suit	Suit	Improved jump assist		Hero Ferrari,Yarden Bond,Baltanos	gmeds*5,topographicalsurveys*5,microthrusters*3,motor*5				
+suit	Suit	Increased air reserves		Hero Ferrari,Terra Velasquez,Baltanos	pharmaceuticalpatents*3,airqualityreports*8,oxygenicbacteria*5,phneutraliser*8				
+suit	Suit	Increased sprint duration		Hero Ferrari,Terra Velasquez,Baltanos	troopdeploymentrecords*3,genesequencingdata*3,medicaltrialrecords*3,oxygenicbacteria*5,chemicalcatalyst*8				
+suit	Suit	Night vision		Oden Geiger,Yi Shen	surveillanceequipment*5,surveilleancelogs*3,radioactivitydata*3,nocdata*3,circuitswitch*5				
+suit	Suit	Quieter footsteps		Yarden Bond,Yi Shen	settlementassaultplans*3,tacticalplans*5,patrolroutes*5,microhydraulics*3,viscoelasticpolymer*8				
+suit	Suit	Reduced tool battery consumption		Domino Green,Wellington Beck,Rosa Dayette	reactoroutputreview*5,electricalfuse*3,microtransformer*5,electricalwiring*8	Tool energy drain multiplier|+100%|good			
 synthesis	AFM Refill	+100% Repair Speed	3		zinc*2,chromium*4,vanadium*6,zirconium*2,tellurium*1,ruthenium*1				
 synthesis	AFM Refill	+50% Repair Speed	2		tin*1,manganese*2,vanadium*6,molybdenum*1,zirconium*1				
 synthesis	AFM Refill	None	1		nickel*2,zinc*2,chromium*2,vanadium*3				
@@ -1163,26 +1163,26 @@ unlock	Unlock	The Sarge		The Sarge	shieldpatternanalysis*50
 unlock	Unlock	Tiana Fortune		Tiana Fortune	decodedemissiondata*50				
 unlock	Unlock	Uma Laszlo		Wellington Beck	insightentertainmentsuite*5				
 unlock	Unlock	Zacariah Nemo		Zacariah Nemo	xihecompanions*25				
-weapon	Weapon	Audio Masking		Yarden Bond	audiologs*3,patrolroutes*5,scrambler*5,transmitter*8,circuitboard*3				
-weapon	Weapon	Faster handling		Hero Ferrari,Yarden Bond	operationalmanual*5,combatantperformance*5,combattrainingmaterial*5,viscoelasticpolymer*3				
-weapon	Weapon	Greater range (Kinematic kinetic)		Domino Green,Wellington Beck	ballisticsdata*5,topographicalsurveys*5,metalcoil*5,rdx*5,weaponcomponent*3				
-weapon	Weapon	Greater range (Manticore plasma)		Domino Green,Wellington Beck	chemicalformulae*5,mineralsurvey*8,motor*3,electromagnet*5,electricalfuse*3				
-weapon	Weapon	Greater range (Takada laser)		Domino Green,Wellington Beck	stellaractivitylogs*5,riskassessments*8,microtransformer*8,opticallens*3,circuitboard*3				
-weapon	Weapon	Headshot damage (Kinematic kinetic)		Uma Laszlo	weapontestdata*5,medicalrecords*3,chemicalcatalyst*5,rdx*8,weaponcomponent*3				
-weapon	Weapon	Headshot damage (Manticore plasma)		Uma Laszlo	chemicalexperimentdata*5,bloodtestresults*3,ionbattery*5,electromagnet*5,microsupercapacitor*8				
-weapon	Weapon	Headshot damage (Takada laser)		Uma Laszlo	spectralanalysisdata*5,biometricdata*3,ionbattery*5,opticallens*3,scrambler*5				
+weapon	Weapon	Audio Masking		Yarden Bond,Yi Shen	audiologs*3,patrolroutes*5,scrambler*5,transmitter*8,circuitboard*3				
+weapon	Weapon	Faster handling		Hero Ferrari,Yarden Bond,Baltanos	operationalmanual*5,combatantperformance*5,combattrainingmaterial*5,viscoelasticpolymer*3				
+weapon	Weapon	Greater range (Kinematic kinetic)		Domino Green,Wellington Beck,Rosa Dayette	ballisticsdata*5,topographicalsurveys*5,metalcoil*5,rdx*5,weaponcomponent*3				
+weapon	Weapon	Greater range (Manticore plasma)		Domino Green,Wellington Beck,Rosa Dayette	chemicalformulae*5,mineralsurvey*8,motor*3,electromagnet*5,electricalfuse*3				
+weapon	Weapon	Greater range (Takada laser)		Domino Green,Wellington Beck,Rosa Dayette	stellaractivitylogs*5,riskassessments*8,microtransformer*8,opticallens*3,circuitboard*3				
+weapon	Weapon	Headshot damage (Kinematic kinetic)		Uma Laszlo,Yi Shen	weapontestdata*5,medicalrecords*3,chemicalcatalyst*5,rdx*8,weaponcomponent*3				
+weapon	Weapon	Headshot damage (Manticore plasma)		Uma Laszlo,Yi Shen	chemicalexperimentdata*5,bloodtestresults*3,ionbattery*5,electromagnet*5,microsupercapacitor*8				
+weapon	Weapon	Headshot damage (Takada laser)		Uma Laszlo,Yi Shen	spectralanalysisdata*5,biometricdata*3,ionbattery*5,opticallens*3,scrambler*5				
 weapon	Weapon	Higher Accuracy (Kinetic Weapons)		Yarden Bond	extractionyielddata*5,biometricdata*3,combatantperformance*5,viscoelasticpolymer*5,rdx*5				
 weapon	Weapon	Higher Accuracy (Plasma Weapons)		Yarden Bond	chemicalpatents*3,combatantperformance*5,chemicalcatalyst*5,electromagnet*5,metalcoil*5				
 weapon	Weapon	Higher Accuracy (Thermal Weapons)		Yarden Bond	radioactivitydata*3,combatantperformance*5,metalcoil*5,opticallens*3,electricalwiring*8				
-weapon	Weapon	Improved Hip Fire Accuracy (Kinematic kinetic)		Terra Velasquez,Yarden Bond	extractionyielddata*5,biometricdata*3,combatantperformance*5,viscoelasticpolymer*5,rdx*5				
-weapon	Weapon	Improved Hip Fire Accuracy (Manticore plasma)		Terra Velasquez,Yarden Bond	chemicalpatents*3,combatantperformance*5,chemicalcatalyst*5,electromagnet*5,metalcoil*5				
-weapon	Weapon	Improved Hip Fire Accuracy (Takada laser)		Terra Velasquez,Yarden Bond	radioactivitydata*3,combatantperformance*5,metalcoil*5,opticallens*3,electricalwiring*8				
-weapon	Weapon	Magazine size		Kit Fowler,Jude Navarro	weapontestdata*5,securityexpenses*3,weaponcomponent*3,tungstencarbide*3,metalcoil*5				
-weapon	Weapon	Noise suppressor		Hero Ferrari,Terra Velasquez	atmosphericdata*5,mininganalytics*5,viscoelasticpolymer*8,weaponcomponent*3				
-weapon	Weapon	Reload speed		Jude Navarro,Uma Laszlo	operationalmanual*5,productionreports*5,combattrainingmaterial*5,microhydraulics*5,electromagnet*5				
-weapon	Weapon	Scope		Wellington Beck,Oden Geiger	spectralanalysisdata*5,biometricdata*3,opticallens*5,opticalfibre*3				
-weapon	Weapon	Stability		Domino Green,Oden Geiger	mininganalytics*5,riskassessments*8,viscoelasticpolymer*5,microhydraulics*5	Stability|+30%|good			
-weapon	Weapon	Stowed reloading		Kit Fowler,Uma Laszlo	digitaldesigns*5,operationalmanual*5,productionschedule*5,circuitboard*3,encryptedmemorychip*8				
+weapon	Weapon	Improved Hip Fire Accuracy (Kinematic kinetic)		Terra Velasquez,Yarden Bond,Baltanos	extractionyielddata*5,biometricdata*3,combatantperformance*5,viscoelasticpolymer*5,rdx*5				
+weapon	Weapon	Improved Hip Fire Accuracy (Manticore plasma)		Terra Velasquez,Yarden Bond,Baltanos	chemicalpatents*3,combatantperformance*5,chemicalcatalyst*5,electromagnet*5,metalcoil*5				
+weapon	Weapon	Improved Hip Fire Accuracy (Takada laser)		Terra Velasquez,Yarden Bond,Baltanos	radioactivitydata*3,combatantperformance*5,metalcoil*5,opticallens*3,electricalwiring*8				
+weapon	Weapon	Magazine size		Kit Fowler,Jude Navarro,Eleanor Bresa	weapontestdata*5,securityexpenses*3,weaponcomponent*3,tungstencarbide*3,metalcoil*5				
+weapon	Weapon	Noise suppressor		Hero Ferrari,Terra Velasquez,Baltanos	atmosphericdata*5,mininganalytics*5,viscoelasticpolymer*8,weaponcomponent*3				
+weapon	Weapon	Reload speed		Jude Navarro,Uma Laszlo,Eleanor Bresa	operationalmanual*5,productionreports*5,combattrainingmaterial*5,microhydraulics*5,electromagnet*5				
+weapon	Weapon	Scope		Wellington Beck,Oden Geiger,Rosa Dayette	spectralanalysisdata*5,biometricdata*3,opticallens*5,opticalfibre*3				
+weapon	Weapon	Stability		Domino Green,Oden Geiger,Rosa Dayette	mininganalytics*5,riskassessments*8,viscoelasticpolymer*5,microhydraulics*5	Stability|+30%|good			
+weapon	Weapon	Stowed reloading		Kit Fowler,Uma Laszlo,Eleanor Bresa	digitaldesigns*5,operationalmanual*5,productionschedule*5,circuitboard*3,encryptedmemorychip*8				
 [mtypes]
 mtype	blueprints
 cbh	Armour_Advanced,Armour_Explosive,Armour_HeavyDuty,Armour_Kinetic,Armour_Thermic,special_armour_chunky,special_armour_explosive,special_armour_kinetic,special_armour_thermic

@@ -188,14 +188,11 @@ public class OnFootEngineeringTests
         }
     }
 
-    /// <summary>
-    /// The two routing-critical modifications: one Bubble source each, so where they come from decides
-    /// the trip rather than decorating it.
-    /// </summary>
+    /// <summary>Night Vision and Quieter Footsteps have one Bubble source each, and Yi Shen in Colonia.</summary>
     [Fact]
     public void NightVisionAndQuieterFootstepsHaveOneBubbleSourceEach()
     {
-        Assert.Equal(["Oden Geiger"], Modification("Night vision").Engineers);
-        Assert.Equal(["Yarden Bond"], Modification("Quieter footsteps").Engineers);
+        Assert.Equal(["Oden Geiger", "Yi Shen"], Modification("Night vision").Engineers);
+        Assert.Equal(["Yarden Bond", "Yi Shen"], Modification("Quieter footsteps").Engineers);
     }
 }

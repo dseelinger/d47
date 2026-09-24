@@ -63,12 +63,20 @@ public class OnFootPlanTests
     }
 
     [Fact]
-    public void ARoutingCriticalModificationCarriesItsOneEngineer()
+    public void AModificationOneEngineerOffersCarriesThatEngineer()
+    {
+        var weapon = ChecklistScope.Weapon(1845879835891145);
+        var items = OnFootPlan.Items(weapon, new OnFootRequest("Karma C-44", null, ["Higher Accuracy (Kinetic Weapons)"]));
+
+        Assert.Equal("Yarden Bond", Assert.Single(items).Intent?.Engineer);
+    }
+
+    [Fact]
+    public void NightVisionNamesNoEngineerBecauseColoniaOffersItToo()
     {
         var items = OnFootPlan.Items(Suit, new OnFootRequest("Maverick", null, ["Night vision"]));
 
-        // One Bubble source, so naming it is a routing fact rather than a preference.
-        Assert.Equal("Oden Geiger", Assert.Single(items).Intent?.Engineer);
+        Assert.Null(Assert.Single(items).Intent?.Engineer);
     }
 
     [Fact]
