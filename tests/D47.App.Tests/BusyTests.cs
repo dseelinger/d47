@@ -205,16 +205,19 @@ public class BusyTests
         var row = CoreRow(host);
 
         Assert.Contains(row.GetVisualDescendants().OfType<BusyGlyph>(), glyph => glyph.IsVisible);
-        Assert.False(row.GetVisualDescendants().OfType<D47.App.Controls.Stepper>().First().IsEnabled);
+        Assert.False(Tile(row).IsEffectivelyEnabled);
 
         host.View.ShowBusy(D47.Core.Capabilities.Builtin.PersonaCapability.PersonaKey, busy: false);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(row.GetVisualDescendants().OfType<BusyGlyph>(), glyph => glyph.IsVisible);
-        Assert.True(row.GetVisualDescendants().OfType<D47.App.Controls.Stepper>().First().IsEnabled);
+        Assert.True(Tile(row).IsEffectivelyEnabled);
 
         host.Close();
     }
+
+    private static Button Tile(Grid row) =>
+        row.GetVisualDescendants().OfType<Button>().First(button => button.Name == "DropdownTile");
 
     private static Grid CoreRow(SettingsHost host) =>
         host.View.GetVisualDescendants().OfType<Grid>()

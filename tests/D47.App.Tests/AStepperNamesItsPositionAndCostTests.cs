@@ -34,13 +34,13 @@ public class AStepperNamesItsPositionAndCostTests
     }
 
     [AvaloniaFact]
-    public void APersonaStepperNamesItsPositionAloneWhenNoChoiceHasACostToName()
+    public void AProviderStepperNamesItsPositionAloneWhenNoChoiceHasACostToName()
     {
         var host = Open();
-        host.View.Reveal(PersonaCapability.Id);
+        host.View.Reveal(SpeechCapability.Id);
         Dispatcher.UIThread.RunJobs();
 
-        var stepper = Row(host, "Persona").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = Row(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
 
         Assert.Matches(@"^\d+ / \d+$", Position(stepper).Text);
         Assert.True(string.IsNullOrEmpty(Consequence(stepper).Text));

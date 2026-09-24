@@ -2424,10 +2424,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             case SettingKind.Toggle:
                 return BuildToggle(row, message);
 
-            case SettingKind.Choice when row.AllowsFreeText:
-                // Free text: the searchable picker, which stays usable when the list is empty because the
-                // value can be typed (Phase 4).
-                return BuildPickerButton(row, message);
+            // Free text, or a list too long to step through: a tile that opens the picker page, which stays
+            // usable when the list is empty because the value can be typed.
+            case SettingKind.Choice when row.AllowsFreeText || IsLongList(row):
+                return BuildDropdownTile(row, message);
 
             case SettingKind.Choice:
                 // Segment or stepper, by option count — always a stepper when the list comes from
@@ -3407,44 +3407,71 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         message.IsVisible = true;
     }
 
-    private (Control, Action) BuildPickerButton(SettingRow row, TextBlock message)
+    /// <summary>More options than this and a Choice row opens the picker page rather than stepping.</summary>
+    public const int LongListThreshold = 7;
+
+    /// <summary>
+    /// A list judged when the page is built. A row that stages its choice or downloads one keeps its stepper,
+    /// since the picker page commits on the press.
+    /// </summary>
+    private bool IsLongList(SettingRow row) =>
+        row.ConfirmLabel is null
+        && row.FetchChoiceAsync is null
+        && !string.Equals(row.Key, ListeningCapability.ModelKey, StringComparison.Ordinal)
+        && row.ChoicesFor(_settings!.Current).Count > LongListThreshold;
+
+    private (Control, Action) BuildDropdownTile(SettingRow row, TextBlock message)
     {
-        // Trimmed, because the column is a fifth of a row and a voice name is whatever the provider's account
-        // calls it — "Bill - Wise, Mature, Balanced — male, american" is one of 473 real ones.
         var value = new TextBlock
         {
             FontSize = TypeScale.Body,
-            VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        var chevron = new TextBlock { Text = "▾", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        var status = new TextBlock
+        {
+            Name = "DropdownStatus",
+            FontSize = TypeScale.Caption,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            IsVisible = false,
+        };
+
+        var chevron = new TextBlock
+        {
+            Text = "▼",
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0),
+        };
+        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(chevron, Dock.Right);
         layout.Children.Add(chevron);
-        layout.Children.Add(value);
+        layout.Children.Add(new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { value, status },
+        });
 
         var button = new Button
         {
+            Name = "DropdownTile",
             Content = layout,
-
-            // On the button, not on the panel inside it: the floor is what the control stands at beside a
-            // combo box, and a floor set inside the padding made the narrowest picker button 212 wide against
-            // the combo's 190.
-            MinWidth = StandardControlWidth,
-            HorizontalAlignment = HorizontalAlignment.Right,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 4),
+            BorderThickness = new Thickness(0),
+            FontSize = TypeScale.Body,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
-
-        DressAsAChoice(button);
+        Themed(button, Button.BackgroundProperty, ThemeManager.SlabKey);
+        AutomationProperties.SetName(button, row.Label);
 
         // The button's own tip, carrying what the column clipped — only while it actually did (#382).
         TruncationTip.Watch(value, () => value.Text, button);
 
-        // Said rather than left to be guessed at.
         var busy = new BusyGlyph
         {
             IsVisible = false,
@@ -3455,13 +3482,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
-        // A DockPanel rather than a horizontal StackPanel, which is the other half of the same bug: a
-        // StackPanel measures along its own direction with no limit at all, so the button was told it could
-        // be as wide as it liked and believed it.
-        var withBusy = new DockPanel { HorizontalAlignment = HorizontalAlignment.Right };
+        // A DockPanel, not a horizontal StackPanel, which measures with no width limit and let the button run
+        // past the column. The fixed width is capped to the control column by the row.
+        var withBusy = new DockPanel { Width = Stepper.MaximumWidth };
         DockPanel.SetDock(busy, Dock.Left);
         withBusy.Children.Add(busy);
         withBusy.Children.Add(button);
+
+        IDisposable? statusInk = null;
 
         return (withBusy, () =>
         {
@@ -3470,7 +3498,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 ? $"({row.BareDefaultFor(_settings.Current) ?? "not set"})"
                 : row.LabelForChoice(current, _settings.Current);
 
-            Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.AKey);
+            Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
+
+            statusInk?.Dispose();
+            statusInk = null;
+
+            if (current is not null && row.StatusFor(current, _settings.Current) is { } line)
+            {
+                status.Text = line.Text;
+                status.IsVisible = true;
+                statusInk = status.Bind(TextBlock.ForegroundProperty, Stepper.Ink(line.Tone));
+            }
+            else
+            {
+                status.IsVisible = false;
+            }
         });
     }
 

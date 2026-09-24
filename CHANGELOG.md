@@ -16,6 +16,12 @@ position, such as 1 / 5, is now inside its value box, and a stepper is at most 4
 four options that does not fit on one line is two rows of two equal tiles, with long labels wrapped
 inside them.
 
+A choice with more than seven options, such as Persona or a Microphone list on a machine with many
+input devices, is now a filled tile showing the current value with ▼ at the right, the same as the
+Voice and Output device rows. Pressing it opens the list as a page of the panel, with a filter and
+"Use the default" where the row has one, on the desktop and in the headset. The Local voice model
+build row keeps its arrows, because it asks before downloading.
+
 ## 1.13.3 — Spend and the transcript
 
 The Transcript's footer is rearranged. SPEND has moved from the turn line to the right end of the

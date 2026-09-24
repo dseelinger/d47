@@ -60,14 +60,14 @@ public class ASettingPickerIsAPageOfThePanelTests
         return host;
     }
 
-    /// <summary>The row's picker button, found by the row's label.</summary>
+    /// <summary>The row's dropdown tile, found by the row's label.</summary>
     private static Button PickerButton(SettingsView view, string label) =>
         view.GetVisualDescendants().OfType<Grid>()
             .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
             .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label))
             .GetVisualDescendants().OfType<Button>()
             .First(button => button.Content is DockPanel panel
-                && panel.Children.OfType<TextBlock>().Any(text => text.Text == "▾"));
+                && panel.Children.OfType<TextBlock>().Any(text => text.Text == "▼"));
 
     private static void Press(Button button)
     {
@@ -193,7 +193,7 @@ public class ASettingPickerIsAPageOfThePanelTests
         Assert.Equal("voice-07", settings.Read(SpeechCapability.VoiceKey));
 
         var shown = PickerButton(host.View, "Voice").GetVisualDescendants().OfType<TextBlock>()
-            .First(text => text.Text != "▾");
+            .First(text => text.Text != "▼");
 
         Assert.Contains("Voice number 7", shown.Text, StringComparison.Ordinal);
 

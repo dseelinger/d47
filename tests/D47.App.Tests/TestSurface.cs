@@ -58,7 +58,8 @@ public static class TestSurface
 
         // Appended, like every optional here: the composition root passes these positionally.
         Func<string>? resetVoices = null,
-        Func<string, VoiceRole, CancellationToken, Task>? audition = null)
+        Func<string, VoiceRole, CancellationToken, Task>? audition = null,
+        IReadOnlyList<string>? inputDevices = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -110,7 +111,7 @@ public static class TestSurface
             () => built!,
             new ListeningCapability.ListeningSurface
             {
-                InputDevices = () => [],
+                InputDevices = () => inputDevices ?? [],
                 DeviceLabel = id => id,
                 CaptureState = () => (false, "No microphone in a headless test."),
                 TranscriberState = () => (false, null, "No transcriber in a headless test."),
@@ -177,10 +178,12 @@ public static class TestSurface
         D47.Core.Diagnostics.Recording.RecordingLog? recording = null,
         LongPress? rescan = null,
         Func<string>? resetVoices = null,
-        Func<string, VoiceRole, CancellationToken, Task>? audition = null)
+        Func<string, VoiceRole, CancellationToken, Task>? audition = null,
+        IReadOnlyList<string>? inputDevices = null)
     {
         var (settings, viewState, paths, _, _) = CreateFull(
-            coverage, personas, voices, localVoice, recording, rescan, resetVoices: resetVoices, audition: audition);
+            coverage, personas, voices, localVoice, recording, rescan,
+            resetVoices: resetVoices, audition: audition, inputDevices: inputDevices);
         return (settings, viewState, paths);
     }
 

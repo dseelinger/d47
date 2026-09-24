@@ -45,11 +45,11 @@ public class AStepperOnlyTipsWhatItClipsTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.Reveal(PersonaCapability.Id);
+        host.View.Reveal(SpeechCapability.Id);
         Dispatcher.UIThread.RunJobs();
 
-        // Persona names are single words, well short of the column — nothing here should ever clip.
-        var stepper = Row(host, "Persona").GetVisualDescendants().OfType<Stepper>().First();
+        // Provider names are a word or two, well short of the column — nothing here should ever clip.
+        var stepper = Row(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
         var value = Value(stepper);
 
         Assert.Null(ToolTip.GetTip(value));

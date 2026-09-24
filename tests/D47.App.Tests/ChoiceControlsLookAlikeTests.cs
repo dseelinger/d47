@@ -13,41 +13,22 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The segment and the picker button (#274) share one look. The stepper is left out: it draws its
-/// own 44px frame with a line under it (#349). The segment's height is left out too: it grows to
-/// fit its buttons, wrapped lines included, rather than clipping them (#408).
+/// Every segment row shares one look. The stepper and the dropdown tile are left out: each draws its own
+/// 44px filled frame (#349, #439). The segment's height is left out too: it grows to fit its buttons,
+/// wrapped lines included, rather than clipping them (#408).
 /// </summary>
 public class ChoiceControlsLookAlikeTests
 {
-    [AvaloniaFact]
-    public void TheSegmentAndThePickerButtonAreDressedTheSame()
-    {
-        var host = Open();
-
-        var segment = Row(host, "Provider").GetVisualDescendants().OfType<Segment>().First();
-        var button = PickerButtons(Row(host, "Model")).First();
-
-        foreach (var difference in Differences(segment, button))
-        {
-            Assert.Fail($"the Provider segment and the Model picker button differ: {difference}");
-        }
-    }
-
     /// <summary>
-    /// Every one of them, so the next row added cannot reintroduce this by being dressed in a fourth
-    /// place.
+    /// Every one of them, so the next row added cannot reintroduce this by being dressed in another place.
     /// </summary>
     [AvaloniaFact]
     public void EveryChoiceControlOnTheSurfaceIsDressedTheSame()
     {
         var host = Open();
 
-        var segments = host.View.GetVisualDescendants().OfType<Segment>()
-            .Where(control => control.Bounds.Height > 0).Cast<TemplatedControl>();
-
-        var buttons = PickerButtons(host.View).Where(control => control.Bounds.Height > 0);
-
-        var all = segments.Concat(buttons).ToList();
+        var all = host.View.GetVisualDescendants().OfType<Segment>()
+            .Where(control => control.Bounds.Height > 0).Cast<TemplatedControl>().ToList();
 
         Assert.NotEmpty(all);
 
@@ -62,19 +43,23 @@ public class ChoiceControlsLookAlikeTests
         }
     }
 
+    /// <summary>The dropdown tile stands as tall as a stepper, the other filled choice control.</summary>
+    [AvaloniaFact]
+    public void TheDropdownTileStandsAsTallAsAStepper()
+    {
+        var host = Open();
+
+        var tile = Row(host, "Model").GetVisualDescendants().OfType<Button>().First(button => button.Name == "DropdownTile");
+
+        Assert.Equal(TypeScale.MinimumTarget, tile.Bounds.Height);
+    }
+
     /// <summary>
-    /// What the two have to agree about: shape and size at rest. Not fill, border colour or
-    /// corner radius — each keeps its own theme's for those, rather than DressAsAChoice forcing
-    /// one across all three (#289). Not height either, when either side is a Segment: it grows to
-    /// fit its buttons rather than holding to the picker button's fixed 32px (#408).
+    /// What segments have to agree about at rest. Not fill, border colour or corner radius, which come from
+    /// the theme (#289), and not height, which grows to fit wrapped labels (#408).
     /// </summary>
     private static IEnumerable<string> Differences(TemplatedControl a, TemplatedControl b)
     {
-        if (a is not Segment && b is not Segment && a.Bounds.Height != b.Bounds.Height)
-        {
-            yield return $"height {a.Bounds.Height:0.#} against {b.Bounds.Height:0.#}";
-        }
-
         if (a.FontSize != b.FontSize)
         {
             yield return $"font size {a.FontSize:0.#} against {b.FontSize:0.#}";
@@ -95,15 +80,6 @@ public class ChoiceControlsLookAlikeTests
             yield return $"minimum width {a.MinWidth:0.#} against {b.MinWidth:0.#}";
         }
     }
-
-    /// <summary>
-    /// The buttons that open the picker, told from the ordinary ones — Store, Clear, CLEAR — by the
-    /// chevron they carry, which is the same thing that tells the Commander.
-    /// </summary>
-    private static IEnumerable<Button> PickerButtons(Visual within) =>
-        within.GetVisualDescendants().OfType<Button>()
-            .Where(button => button.Content is DockPanel panel
-                && panel.Children.OfType<TextBlock>().Any(text => text.Text == "▾"));
 
     private static SettingsHost Open()
     {
