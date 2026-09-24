@@ -230,6 +230,82 @@ public class OnFootLoadoutTabTests
     }
 
     /// <summary>
+    /// A kit grade is one press on a row of 2 to 5, or said as a word — never typed (#434).
+    /// </summary>
+    [AvaloniaFact]
+    public void AKitGradeIsPickedFromButtonsOrSaid()
+    {
+        using var look = AppLook.Put();
+
+        var surface = Open();
+
+        var build = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
+
+        surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
+
+        surface.Window.Width = 1024;
+        surface.Window.Height = 640;
+
+        var slot = new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.GradeSlot}", "Grade");
+
+        void AskForTheGrade()
+        {
+            surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+            surface.Panel.Nav.GoTo(new NavCrumb(OnFootMode.KitPrefix + build.Id, "Maverick Suit"), slot);
+            Dispatcher.UIThread.RunJobs();
+
+            surface.Panel.GetVisualDescendants().OfType<Button>()
+                .First(button => button.Content as string == "Change the plan")
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        int? Planned() => surface.Kit.Entry(build.Id)?.Build?.PlannedGrade;
+
+        AskForTheGrade();
+
+        var page = surface.Panel.GetVisualDescendants().OfType<Control>()
+            .First(control => control.GetType().Name == "ButtonPage");
+
+        var grades = page.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.Content is string label && int.TryParse(label, out _))
+            .ToList();
+
+        Assert.Equal(["2", "3", "4", "5"], grades.Select(button => (string)button.Content!));
+        Assert.Empty(page.GetVisualDescendants().OfType<TextBox>());
+
+        // The planned grade is marked, and only that one.
+        Assert.Equal(["5"], grades.Where(button => button.BorderThickness.Top == 2).Select(button => (string)button.Content!));
+
+        surface.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-grade.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        // One press commits and goes back to the slot.
+        grades.Single(button => (string)button.Content! == "4").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(4, Planned());
+        Assert.Equal(slot.Key, surface.Panel.Nav.Trail[^1].Key);
+
+        // Off the row, nothing is committed and the range is said.
+        AskForTheGrade();
+
+        surface.Panel.Prompts.Hear(new Heard("seven", 1, Final: true));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(4, Planned());
+        Assert.Contains(Text(surface.Panel), line => line.Contains("2 to 5", StringComparison.Ordinal));
+
+        surface.Panel.Prompts.Hear(new Heard("Grade three.", 1, Final: true));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(3, Planned());
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
     /// Promoting from the page proposes rather than writing, which is the boundary the whole
     /// arrangement turns on: the plan owns what, the checklist owns when.
     /// </summary>

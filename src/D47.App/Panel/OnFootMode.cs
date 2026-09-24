@@ -432,10 +432,11 @@ public sealed class OnFootMode(
                     "2 to 5, bought at Pioneer Supplies. It is the first step of the plan, because "
                     + "a grade 1 item has no modification slots.",
                     build.PlannedGrade?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
-                    EntrySurface.Keyboard,
+                    EntrySurface.Voice,
                     value => int.TryParse(value.Trim(), out var grade) && grade is >= 2 and <= 5
                         ? EntryVerdict.Ok
-                        : EntryVerdict.No("A grade to buy is 2 to 5.")),
+                        : EntryVerdict.No("A grade to buy is 2 to 5."),
+                    Buttons: EntryButton.Range(2, 5)),
                 grade =>
                 {
                     kit.Plan(

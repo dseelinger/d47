@@ -51,6 +51,10 @@ public sealed record EntryVerdict(bool Accepted, string? Complaint = null)
 /// What the button that takes the highlighted suggestion says it will do — "Plan this hull". Read only
 /// with <paramref name="Suggestions"/>.
 /// </param>
+/// <param name="Buttons">
+/// A small fixed set of values drawn as one button each, where a press commits. Takes precedence over
+/// <paramref name="Suggestions"/>; the button whose value is <paramref name="Initial"/> is marked.
+/// </param>
 public sealed record EntryRequest(
     string Key,
     string Word,
@@ -60,7 +64,53 @@ public sealed record EntryRequest(
     EntrySurface Surface,
     Func<string, EntryVerdict>? Validate = null,
     IReadOnlyList<string>? Suggestions = null,
-    string? CommitLabel = null);
+    string? CommitLabel = null,
+    IReadOnlyList<EntryButton>? Buttons = null);
+
+/// <summary>One value offered as a button: what it says, and what pressing it commits.</summary>
+public sealed record EntryButton(string Label, string Value)
+{
+    /// <summary>A button for each number from <paramref name="first"/> to <paramref name="last"/>.</summary>
+    public static IReadOnlyList<EntryButton> Range(int first, int last) =>
+    [
+        .. Enumerable.Range(first, last - first + 1)
+            .Select(n => n.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Select(n => new EntryButton(n, n)),
+    ];
+
+    /// <summary>
+    /// The button an utterance names, or null. The request's word may come first ("grade four"), and a
+    /// digit may be said as its word ("four") or written ("4").
+    /// </summary>
+    public static EntryButton? Named(string? said, string word, IReadOnlyList<EntryButton> buttons)
+    {
+        var value = Reduce(said, word);
+
+        return value.Length == 0
+            ? null
+            : buttons.FirstOrDefault(button =>
+                string.Equals(button.Value, value, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(button.Label, value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// An utterance with punctuation, case and the request's word taken off, and a digit word turned into
+    /// its digit: "Grade four." is "4".
+    /// </summary>
+    public static string Reduce(string? said, string word)
+    {
+        var words = (said ?? string.Empty)
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(part => part.Trim('.', ',', '!', '?', '"', '\'').ToLowerInvariant())
+            .Where(part => part.Length > 0 && !string.Equals(part, word, StringComparison.OrdinalIgnoreCase))
+            .Select(part => Spelling.Figures.FirstOrDefault(figure => figure.Value == part) is
+                { Value: not null } figure
+                ? figure.Key.ToString()
+                : part);
+
+        return string.Join(' ', words);
+    }
+}
 
 /// <summary>What d47 heard, and how sure it was (Phase 25).</summary>
 /// <param name="Text">The transcription.</param>

@@ -6,6 +6,14 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.7 — Grades picked, not typed
+
+A grade is now chosen from a row of buttons, and one press sets it. For a suit or weapon the row
+is 2, 3, 4 and 5, with the grade already planned outlined. For a ship slot on a hull d47 has no
+layout for, the row is 1 to 5 and Any. There is no text box or keyboard on either. Saying "four",
+"grade four" or "4" while the row is showing sets grade 4. A grade outside the row sets nothing, and
+d47 says which grades it takes.
+
 ## 1.13.6 — Engineering Frontier added in September
 
 The Ships tab now lists the blueprints Frontier added this month among what a module can be

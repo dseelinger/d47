@@ -1993,8 +1993,7 @@ public sealed class ShipsMode(
     }
 
     /// <summary>
-    /// The way in for a hull the table has no layout for: a blueprint said, and a grade typed, as it
-    /// was for every slot before there was anything to list.
+    /// The way in for a hull the table has no layout for: a blueprint said, and a grade picked.
     /// </summary>
     private void Spell(ShipBuild build, string slot, PanelPrompts prompts, Action done) =>
         prompts.Enter(
@@ -2010,14 +2009,14 @@ public sealed class ShipsMode(
                     "loadout.grade",
                     "Grade",
                     $"Which grade of {blueprint}?",
-                    "1 to 5, or leave it empty for any grade — which is a real answer rather than "
-                    + "an unknown.",
+                    "1 to 5, or any grade — which is a real answer rather than an unknown.",
                     string.Empty,
-                    EntrySurface.Keyboard,
+                    EntrySurface.Voice,
                     value => value.Trim().Length == 0
                              || (int.TryParse(value.Trim(), out var grade) && grade is >= 1 and <= 5)
                         ? EntryVerdict.Ok
-                        : EntryVerdict.No("A grade is 1 to 5.")),
+                        : EntryVerdict.No("A grade is 1 to 5, or any."),
+                    Buttons: [.. EntryButton.Range(1, 5), new EntryButton("Any", string.Empty)]),
                 grade =>
                 {
                     ships.Plan(build.Id, new SlotPlan(

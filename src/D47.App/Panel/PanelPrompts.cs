@@ -102,13 +102,15 @@ public sealed class PanelPrompts : IHearsText
     }
 
     /// <summary>
-    /// The page that takes the answer: a picker where the caller could name every value it would
-    /// accept, and the box-and-keyboard everywhere else (#282).
+    /// The page that takes the answer: a row of buttons for a small fixed set, a picker where the caller
+    /// could name every value it would accept, and the box-and-keyboard everywhere else (#282).
     /// </summary>
-    private Control Answering(EntryRequest request, Action<string> done) =>
-        request.Suggestions is { Count: > 0 }
-            ? new PickPage(this, request, done)
-            : new EntryPage(this, request, done);
+    private Control Answering(EntryRequest request, Action<string> done) => request switch
+    {
+        { Buttons.Count: > 0 } => new ButtonPage(this, request, done),
+        { Suggestions.Count: > 0 } => new PickPage(this, request, done),
+        _ => new EntryPage(this, request, done),
+    };
 
     /// <summary>Hands the panel what was heard, for whichever prompt is listening.</summary>
     public void Hear(Heard heard) => _listening?.Invoke(heard);
@@ -1035,6 +1037,111 @@ public sealed class PanelPrompts : IHearsText
                 return;
             }
 
+            _host.Attend(null);
+            _done(value);
+        }
+    }
+
+    /// <summary>
+    /// One value from a small fixed set, one button each, where a press or saying the value commits it.
+    /// </summary>
+    private sealed class ButtonPage : UserControl
+    {
+        private readonly PanelPrompts _host;
+        private readonly EntryRequest _request;
+        private readonly Action<string> _done;
+        private readonly TextBlock _state;
+
+        public ButtonPage(PanelPrompts host, EntryRequest request, Action<string> done)
+        {
+            _host = host;
+            _request = request;
+            _done = done;
+
+            var row = new WrapPanel { Orientation = Orientation.Horizontal };
+
+            foreach (var choice in request.Buttons!)
+            {
+                var button = new Button
+                {
+                    Content = choice.Label,
+                    MinWidth = 64,
+                    MinHeight = 56,
+                    Margin = new Thickness(0, 0, 8, 8),
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                };
+
+                AutomationProperties.SetName(button, choice.Label);
+
+                // The value already planned, outlined in Cyan.
+                if (request.Initial.Length > 0
+                    && string.Equals(choice.Value, request.Initial, StringComparison.OrdinalIgnoreCase))
+                {
+                    button.BorderThickness = new Thickness(2);
+                    button.Bind(
+                        BorderBrushProperty,
+                        App.Current!.GetResourceObservable(ThemeManager.CyanKey));
+                }
+
+                button.Click += (_, _) => Commit(choice.Value);
+                row.Children.Add(button);
+            }
+
+            _state = new TextBlock
+            {
+                Text = "Press one, or say it.",
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 6, 0, 0),
+            };
+
+            _state.Bind(
+                TextBlock.ForegroundProperty,
+                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+
+            var body = new StackPanel { Children = { row, _state } };
+
+            Content = Frame(
+                request.Title,
+                request.Context,
+                body,
+                () => _host.Dismiss(request.Key, ChoiceSurface.Page));
+
+            _host.Attend(OnHeard);
+        }
+
+        private void OnHeard(Heard heard)
+        {
+            if (!heard.Final)
+            {
+                _state.Text = heard.Text;
+                return;
+            }
+
+            if (TextEntryLoop.Judge(heard, validate: null, out _) is { } fallback)
+            {
+                _state.Text = TextEntryLoop.Explain(fallback, complaint: null);
+                return;
+            }
+
+            if (EntryButton.Named(heard.Text, _request.Word, _request.Buttons!) is { } named)
+            {
+                Commit(named.Value);
+                return;
+            }
+
+            var reduced = EntryButton.Reduce(heard.Text, _request.Word);
+
+            _state.Text = TextEntryLoop.Explain(
+                EntryFallback.DidNotResolve,
+                _request.Validate?.Invoke(reduced).Complaint
+                ?? $"Say one of {string.Join(", ", _request.Buttons!.Select(button => button.Label))}.");
+        }
+
+        /// <summary>Takes the value, once.</summary>
+        private void Commit(string value)
+        {
             _host.Attend(null);
             _done(value);
         }
