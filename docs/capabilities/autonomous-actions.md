@@ -157,7 +157,8 @@ fire group. So this holds **your** fire button, for the six seconds the scan tak
 Three things have to be true, and it tells you when they are not:
 
 - **Analysis mode.** If you arrive in combat mode in supercruise, where your hardpoints are
-  stowed, it switches the HUD to analysis mode, honks, and switches back to combat mode. It holds
+  stowed, it switches the HUD to analysis mode, honks, and switches back to combat mode once the
+  honk is over. It holds
   fire only once the game reports analysis mode; if that has not happened within two seconds, it
   says so and holds nothing. In normal space holding fire could fire a weapon, so there it does not
   switch and says this instead:
@@ -165,8 +166,8 @@ Three things have to be true, and it tells you when they are not:
   ```text
   I did not honk: the discovery scanner only fires in analysis mode, and you are in combat mode.
   ```
-- **The scanner in your current fire group.** Directive 47 cannot see your fire groups. If the
-  honk seems to do nothing, this is the reason.
+- **The scanner in your current fire group.** Directive 47 cannot see your fire groups. If you
+  hear "The honk did not take" after every jump, this is the likely reason.
 - **A fire button it can press.** On Elite's default keyboard preset that is `Mouse_1`, which
   works. On a stick it does not, and you get told which device it is on.
 
@@ -174,7 +175,16 @@ It arms on the jump and fires once the tunnel ends, because during the witchspac
 game has the controls and a held button goes nowhere. If thirty seconds pass without that
 happening, the arm expires rather than waiting to surprise you later.
 
-It fires once per jump. It never fires for jumps that happened before Directive 47 started, which
+It checks that the honk worked: Elite records a discovery scan when one completes. If none arrives
+within three seconds of the hold ending, and you are still flying in analysis mode, it holds fire
+once more. If that also produces no scan, it says so:
+
+```text
+The honk did not take
+```
+
+A honk you make by hand while it is waiting counts, and nothing is repeated. Apart from that one
+retry, it fires once per jump. It never fires for jumps that happened before Directive 47 started, which
 would otherwise mean a honk for every system you visited that afternoon.
 
 ### Turning it on

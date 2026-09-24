@@ -14,6 +14,12 @@ mode. If the HUD does not change within two seconds, d47 says "I could not switc
 to honk" and holds nothing. In normal space it still refuses, because there holding fire could fire
 a weapon. When the HUD mode has no key d47 can press, the refusal now says that.
 
+d47 now checks that the arrival honk scanned the system. If Elite does not record a discovery scan
+within three seconds of the hold ending, and you are still flying in analysis mode, d47 holds fire
+once more. If that also produces no scan, it says "The honk did not take". A honk you make by hand
+while d47 is waiting counts, and nothing is repeated. When d47 switched to analysis mode for the
+honk, it now switches back after the scan, or after the second attempt.
+
 ## 1.13.1 — The checklist stays quiet at login
 
 Starting d47, or loading into the game, no longer reads out finished checklist items as newly done.

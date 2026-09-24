@@ -27,14 +27,20 @@ public class CombatModeInSupercruiseSwitchesToHonkTests
 
     private static readonly StatusFlags AnalysisInSupercruise = CombatInSupercruise | StatusFlags.AnalysisMode;
 
-    private static CalloutContext At(StatusFlags flags, TimeSpan after, bool jump = false) =>
+    private static CalloutContext At(StatusFlags flags, TimeSpan after, bool jump = false, bool scan = false) =>
         new(
             Start + after,
             false,
             null,
             new GameStatus { Flags = flags, ReadAt = Start + after },
             NavRoute.None,
-            jump ? [new JournalEvent(Start, "FSDJump", JsonDocument.Parse("{}").RootElement.Clone())] : []);
+            [
+                .. jump ? [Event("FSDJump", after)] : Array.Empty<JournalEvent>(),
+                .. scan ? [Event("FSSDiscoveryScan", after)] : Array.Empty<JournalEvent>(),
+            ]);
+
+    private static JournalEvent Event(string kind, TimeSpan after) =>
+        new(Start + after, kind, JsonDocument.Parse("{}").RootElement.Clone());
 
     private static HonkOnArrival Armed(EliteBinds? binds = null)
     {
@@ -66,6 +72,7 @@ public class CombatModeInSupercruiseSwitchesToHonkTests
 
         // Not while the scanner is still charging.
         Assert.False(honk.Examine(At(AnalysisInSupercruise, TimeSpan.FromSeconds(4))).Acts);
+        Assert.False(honk.Examine(At(AnalysisInSupercruise, TimeSpan.FromSeconds(6), scan: true)).Acts);
 
         var back = honk.Examine(At(
             AnalysisInSupercruise, TimeSpan.FromSeconds(1.2) + HonkOnArrival.Charge + HonkOnArrival.Settle));
@@ -80,8 +87,9 @@ public class CombatModeInSupercruiseSwitchesToHonkTests
         var honk = Armed();
 
         Assert.True(IsHoldOfFire(honk.Examine(At(AnalysisInSupercruise, TimeSpan.FromSeconds(1)))));
+        Assert.False(honk.Examine(At(AnalysisInSupercruise, TimeSpan.FromSeconds(6.5), scan: true)).Acts);
 
-        for (var second = 2; second < 30; second++)
+        for (var second = 7; second < 30; second++)
         {
             Assert.False(honk.Examine(At(AnalysisInSupercruise, TimeSpan.FromSeconds(second))).Acts);
         }

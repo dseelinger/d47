@@ -22,13 +22,26 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
     /// <summary>Allowance past the charge before switching back, for the hold to start and finish.</summary>
     public static readonly TimeSpan Settle = TimeSpan.FromSeconds(0.5);
 
+    /// <summary>How long after the hold ends an <c>FSSDiscoveryScan</c> is waited for before the honk counts as missed.</summary>
+    public static readonly TimeSpan Confirmation = TimeSpan.FromSeconds(3);
+
+    /// <summary>Said when neither hold for an arrival produced an <c>FSSDiscoveryScan</c>.</summary>
+    public const string DidNotTake = "The honk did not take";
+
     private DateTimeOffset? _armedAt;
 
     /// <summary>When d47 pressed the HUD toggle to reach analysis mode, until the status shows it.</summary>
     private DateTimeOffset? _switchedAt;
 
-    /// <summary>When the hold was issued after a switch d47 made, until the switch back.</summary>
+    /// <summary>When the latest hold was issued, until its <c>FSSDiscoveryScan</c> arrives or the wait ends.</summary>
     private DateTimeOffset? _heldAt;
+
+    private bool _retried;
+
+    private bool _scanned;
+
+    /// <summary>d47 switched to analysis mode for this honk, so switches back when it is over.</summary>
+    private bool _returnToCombat;
 
     public string Id => "honk-on-arrival";
 
@@ -43,6 +56,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         {
             _armedAt = context.IsPriming ? null : context.Now;
             _switchedAt = null;
+            _heldAt = null;
         }
 
         if (context.IsPriming)
@@ -52,7 +66,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
 
         if (_heldAt is { } held)
         {
-            return SwitchBack(context, held);
+            return Confirm(context, held);
         }
 
         if (_switchedAt is { } switched)
@@ -68,6 +82,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         if (context.Now - armed > Window)
         {
             _armedAt = null;
+            _returnToCombat = false;
             return AutonomousDecision.Nothing;
         }
 
@@ -80,6 +95,10 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         }
 
         _armedAt = null;
+
+        // Carried over a jump made while d47 had switched to analysis mode; used only if this arrival holds.
+        var returnToCombat = _returnToCombat;
+        _returnToCombat = false;
 
         if (GameActions.Find("primary_fire") is not { } fire)
         {
@@ -96,7 +115,8 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
 
         if (context.Status.Has(StatusFlags.AnalysisMode))
         {
-            return new AutonomousDecision(InputSequence.Hold(reach.Binding!, Charge));
+            _returnToCombat = returnToCombat;
+            return Hold(context, reach.Binding!, retry: false);
         }
 
         // The scanner only fires in analysis mode. Switched only in supercruise, where the hardpoints are stowed.
@@ -117,6 +137,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         }
 
         _switchedAt = context.Now;
+        _returnToCombat = true;
         return new AutonomousDecision(InputSequence.Tap(toggle.Binding!));
     }
 
@@ -131,6 +152,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
             }
 
             _switchedAt = null;
+            _returnToCombat = false;
             return new AutonomousDecision([], "I could not switch to analysis mode to honk");
         }
 
@@ -140,23 +162,64 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         if (GameActions.Find("primary_fire") is not { } fire
             || ActionReachability.Resolve(fire, binds(), where) is not { IsOffered: true } reach)
         {
-            return ReturnToCombat(context);
+            return Finish(context, null);
         }
 
-        _heldAt = context.Now;
-        return new AutonomousDecision(InputSequence.Hold(reach.Binding!, Charge));
+        return Hold(context, reach.Binding!, retry: false);
     }
 
-    /// <summary>Returns to combat mode once the hold is over, if the ship is still in supercruise and analysis mode.</summary>
-    private AutonomousDecision SwitchBack(CalloutContext context, DateTimeOffset held)
+    private AutonomousDecision Hold(CalloutContext context, EliteBinding fire, bool retry)
     {
-        if (context.Now - held < Charge + Settle)
+        _heldAt = context.Now;
+        _retried = retry;
+        _scanned = false;
+        return new AutonomousDecision(InputSequence.Hold(fire, Charge));
+    }
+
+    /// <summary>
+    /// Waits for the <c>FSSDiscoveryScan</c> that shows the hold worked, holds once more if it does not come
+    /// while the ship is still flying in analysis mode, and says so if the second hold misses too.
+    /// </summary>
+    private AutonomousDecision Confirm(CalloutContext context, DateTimeOffset held)
+    {
+        // Includes a scan from the Commander honking by hand.
+        if (context.Events.Any(e => e.Kind is "FSSDiscoveryScan"))
+        {
+            _scanned = true;
+        }
+
+        if (_scanned)
+        {
+            return context.Now - held < Charge + Settle ? AutonomousDecision.Nothing : Finish(context, null);
+        }
+
+        if (context.Now - held < Charge + Confirmation)
         {
             return AutonomousDecision.Nothing;
         }
 
+        // Read again on this tick: the Commander may have changed HUD mode since the first hold.
+        var where = ControlContexts.Of(context.Status);
+
+        if (!_retried
+            && (where & ControlContext.Flying) != 0
+            && context.Status.Has(StatusFlags.AnalysisMode)
+            && GameActions.Find("primary_fire") is { } fire
+            && ActionReachability.Resolve(fire, binds(), where) is { IsOffered: true } reach)
+        {
+            return Hold(context, reach.Binding!, retry: true);
+        }
+
+        return Finish(context, DidNotTake);
+    }
+
+    /// <summary>Ends the honk for this arrival, switching back to combat mode if d47 left it.</summary>
+    private AutonomousDecision Finish(CalloutContext context, string? say)
+    {
         _heldAt = null;
-        return ReturnToCombat(context);
+        var back = _returnToCombat ? ReturnToCombat(context) : AutonomousDecision.Nothing;
+        _returnToCombat = false;
+        return new AutonomousDecision(back.Steps, say);
     }
 
     /// <summary>Presses the HUD toggle only while the ship is still in supercruise and analysis mode.</summary>
