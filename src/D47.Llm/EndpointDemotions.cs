@@ -2,7 +2,10 @@ using System.Collections.Concurrent;
 
 namespace D47.Llm;
 
-/// <summary>Which optional parts of a request an endpoint has refused, this session (Phase 29).</summary>
+/// <summary>
+/// Which optional parts of a request an endpoint has refused, and the context size it has reported, this
+/// session (Phase 29).
+/// </summary>
 internal static class EndpointDemotions
 {
     /// <summary>One endpoint, one model.</summary>
@@ -24,6 +27,8 @@ internal static class EndpointDemotions
     private static readonly ConcurrentDictionary<Key, ConcurrentDictionary<Demotable, bool>> Refused =
         new(KeyComparer.Instance);
 
+    private static readonly ConcurrentDictionary<Key, int> Contexts = new(KeyComparer.Instance);
+
     /// <summary>
     /// Whether <paramref name="what"/> may still be sent to <paramref name="endpoint"/> for <paramref
     /// name="model"/>.
@@ -39,8 +44,20 @@ internal static class EndpointDemotions
     public static IReadOnlyCollection<Demotable> RefusedBy(string endpoint, string model = "") =>
         Refused.TryGetValue(new Key(endpoint, model), out var refused) ? [.. refused.Keys] : [];
 
+    /// <summary>Records the context size an overflow refusal named.</summary>
+    public static void RecordContext(string endpoint, string model, int tokens) =>
+        Contexts[new Key(endpoint, model)] = tokens;
+
+    /// <summary>The context size recorded for this endpoint and model, or null when none has been.</summary>
+    public static int? ContextOf(string endpoint, string model) =>
+        Contexts.TryGetValue(new Key(endpoint, model), out var tokens) ? tokens : null;
+
     /// <summary>Forgets everything.</summary>
-    internal static void Clear() => Refused.Clear();
+    internal static void Clear()
+    {
+        Refused.Clear();
+        Contexts.Clear();
+    }
 }
 
 /// <summary>The parts of a request that can be dropped and still leave a turn worth having.</summary>

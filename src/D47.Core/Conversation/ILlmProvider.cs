@@ -33,6 +33,9 @@ public sealed record LlmProviderCapabilities
     /// model finds. When false, a turn advertises its mode's tool list.
     /// </summary>
     public bool SupportsToolSearch { get; init; }
+
+    /// <summary>The model's whole context in tokens, prompt and reply together, or null when unknown.</summary>
+    public int? ContextTokens { get; init; }
 }
 
 public sealed record LlmUsage(

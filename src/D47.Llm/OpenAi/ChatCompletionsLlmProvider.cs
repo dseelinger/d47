@@ -43,6 +43,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // No local server has one, and this protocol cannot reach the hosted ones' — xAI moved its search
         // tools to Responses and deprecated the Chat Completions parameter that used to carry them.
         SupportsWebSearch = false,
+        ContextTokens = EndpointDemotions.ContextOf(_endpoint.BaseUrl, model),
     };
 
     /// <summary>The models this endpoint says it serves, or nothing if it will not say.</summary>
@@ -61,7 +62,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // not accept.
         for (var attempt = 0; ; attempt++)
         {
-            var sent = await SendAsync("/chat/completions", BuildBody(request), cancellationToken).ConfigureAwait(false);
+            var sent = await SendAsync("/chat/completions", request.Model, BuildBody(request), cancellationToken).ConfigureAwait(false);
 
             if (sent.Refusal is { } rejected && attempt == 0 && EndpointDemotions.Demote(_endpoint.BaseUrl, rejected))
             {
@@ -81,7 +82,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         using (response)
         {
             // Straight through from here.
-            await foreach (var step in DecodeAsync(response!, cancellationToken).ConfigureAwait(false))
+            await foreach (var step in DecodeAsync(response!, request.Model, cancellationToken).ConfigureAwait(false))
             {
                 yield return step;
             }
@@ -97,7 +98,11 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         LlmStreamEvent.Failed? Failure,
         Demotable? Refusal);
 
-    private async Task<Attempt> SendAsync(string path, ReadOnlyMemory<byte> body, CancellationToken cancellationToken)
+    private async Task<Attempt> SendAsync(
+        string path,
+        string model,
+        ReadOnlyMemory<byte> body,
+        CancellationToken cancellationToken)
     {
         HttpResponseMessage response;
 
@@ -123,7 +128,9 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
         using (response)
         {
-            var detail = await ReadDetailAsync(response, cancellationToken).ConfigureAwait(false);
+            var (detail, context) = await ReadDetailAsync(response, cancellationToken).ConfigureAwait(false);
+            RecordContext(model, context);
+
             var (message, transient) = _endpoint.Describe(response.StatusCode, detail);
 
             return new Attempt(
@@ -136,6 +143,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
     /// <summary>The stream, turned into seam events.</summary>
     private async IAsyncEnumerable<LlmStreamEvent> DecodeAsync(
         HttpResponseMessage response,
+        string model,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -169,6 +177,8 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             // once they have already sent 200 and started the body.
             if (chunk.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
             {
+                RecordContext(model, EndpointError.ContextSize(error));
+
                 yield return new LlmStreamEvent.Failed(
                     EndpointError.Describe(error, _endpoint.Host) ?? "The endpoint reported an error mid-stream.",
                     Transient: false);
@@ -292,13 +302,17 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
             json.WriteEndArray();
 
+            var maxOutput = EndpointDemotions.ContextOf(_endpoint.BaseUrl, request.Model) is { } context
+                ? Math.Min(request.MaxOutputTokens, Math.Max(context / 4, 1))
+                : request.MaxOutputTokens;
+
             if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ModernTokenLimit))
             {
-                json.WriteNumber("max_completion_tokens", request.MaxOutputTokens);
+                json.WriteNumber("max_completion_tokens", maxOutput);
             }
             else
             {
-                json.WriteNumber("max_tokens", request.MaxOutputTokens);
+                json.WriteNumber("max_tokens", maxOutput);
             }
 
             if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ReasoningEffort))
@@ -447,8 +461,19 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         };
     }
 
-    /// <summary>The error body, reduced to what the endpoint actually said.</summary>
-    private static async Task<string?> ReadDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    private void RecordContext(string model, int? context)
+    {
+        if (context is { } tokens)
+        {
+            EndpointDemotions.RecordContext(_endpoint.BaseUrl, model, tokens);
+        }
+    }
+
+    /// <summary>
+    /// The error body, reduced to what the endpoint actually said, and the context size it named if it
+    /// refused the prompt as too long.
+    /// </summary>
+    private static async Task<(string? Detail, int? Context)> ReadDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         string raw;
 
@@ -458,12 +483,12 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
-            return null;
+            return (null, null);
         }
 
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return null;
+            return (null, null);
         }
 
         try
@@ -475,7 +500,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             {
                 if (error.ValueKind == JsonValueKind.String)
                 {
-                    return error.GetString();
+                    return (error.GetString(), null);
                 }
 
                 if (error.ValueKind == JsonValueKind.Object)
@@ -483,9 +508,11 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                     var message = Text(error, "message");
                     var param = Text(error, "param");
 
-                    return param is { Length: > 0 } && message is { Length: > 0 }
+                    var detail = param is { Length: > 0 } && message is { Length: > 0 }
                         ? $"{message} ({param})"
                         : message ?? param;
+
+                    return (detail, EndpointError.ContextSize(error));
                 }
             }
         }
@@ -494,7 +521,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // Not JSON.
         }
 
-        return raw.Length > 400 ? raw[..400] : raw;
+        return (raw.Length > 400 ? raw[..400] : raw, null);
     }
 
     /// <summary>Usage, if the endpoint sent any.</summary>

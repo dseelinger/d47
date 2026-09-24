@@ -12,7 +12,7 @@ namespace D47.Llm.Tests;
 public class AContextOverflowSaysHowToFixItTests
 {
     /// <summary>Captured from LM Studio 0.4.25 on 2026-09-23.</summary>
-    private const string LmStudioOverflow =
+    internal const string LmStudioOverflow =
         "event: error\n"
         + """data: {"error":{"message":"Engine protocol predict request returned 400: {\"error\":{\"code\":400,\"message\":\"request (20016 tokens) exceeds the available context size (16384 tokens), try increasing it\",\"type\":\"exceed_context_size_error\",\"n_prompt_tokens\":20016,\"n_ctx\":16384}}"},"message":"Engine protocol predict request returned 400: ..."}"""
         + "\n\n";

@@ -14,27 +14,51 @@ internal static class EndpointError
     /// </summary>
     public static string? Describe(JsonElement error, string host)
     {
-        var current = error;
         string? message = null;
 
-        for (var depth = 0; depth < MaxDepth; depth++)
+        foreach (var layer in Layers(error))
         {
-            if (Overflow(current, host) is { } overflow)
+            if (Overflow(layer, host) is { } overflow)
             {
                 return overflow;
             }
 
-            message = Text(current, "message") ?? message;
+            message = Text(layer, "message") ?? message;
+        }
 
-            if (Nested(message) is not { } inner)
+        return message;
+    }
+
+    /// <summary>The context size an overflow refusal names, following the same nesting as <see cref="Describe"/>.</summary>
+    public static int? ContextSize(JsonElement error)
+    {
+        foreach (var layer in Layers(error))
+        {
+            if (IsOverflow(layer) && Number(layer, "n_ctx") is > 0 and <= int.MaxValue and var context)
             {
-                break;
+                return (int)context;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary><paramref name="error"/>, then each error object embedded in the one before's <c>message</c>.</summary>
+    private static IEnumerable<JsonElement> Layers(JsonElement error)
+    {
+        var current = error;
+
+        for (var depth = 0; depth < MaxDepth; depth++)
+        {
+            yield return current;
+
+            if (Nested(Text(current, "message")) is not { } inner)
+            {
+                yield break;
             }
 
             current = inner;
         }
-
-        return message;
     }
 
     /// <summary>The error object embedded in <paramref name="message"/> after a prefix, if there is one.</summary>
@@ -73,7 +97,7 @@ internal static class EndpointError
         var context = Number(error, "n_ctx");
         var needed = Number(error, "n_prompt_tokens");
 
-        if (Text(error, "type") != "exceed_context_size_error" || context <= 0 || needed <= 0)
+        if (!IsOverflow(error) || context <= 0 || needed <= 0)
         {
             return null;
         }
@@ -90,6 +114,8 @@ internal static class EndpointError
             $"The model at {host} has a context of {context:N0} tokens and this request needed {needed:N0}. "
             + $"Raise the model's context length in your server's settings — {suggested:N0} or more.");
     }
+
+    private static bool IsOverflow(JsonElement error) => Text(error, "type") == "exceed_context_size_error";
 
     private static string? Text(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
