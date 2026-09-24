@@ -1067,7 +1067,7 @@ public sealed class AppHost : IDisposable
 
             // Before the callouts and inside this subscriber, so a verdict recomputed from this tick's events
             // is announced on this tick rather than the next.
-            checklists.Poll(announce: !context.IsFirst);
+            checklists.Poll(announce: !context.IsFirst, events);
 
             // Before the callouts, so the sale callout reads a total that includes the sale it is announcing
             // (#296).

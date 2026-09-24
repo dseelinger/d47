@@ -13,6 +13,11 @@ In the few seconds before Elite reports the ship's modules, d47 saw an empty shi
 engineering item on it as not done, then announced each one as finished when the modules arrived.
 It now waits for the modules, and a module that really has changed is still reported.
 
+A checklist item is now announced as done only when you have just finished it: an engineer's roll
+on that module, or a grade upgrade on that suit or weapon. Everything else ticks the item on the
+Checklist page without a word, including engineering finished in an earlier session, a module fitted
+in outfitting, and an engineer unlocked or ranked up.
+
 ## 1.13.0 — Settings pages drawn on one grid
 
 Each place in the Settings sidebar is now a page of its own. Clicking Voice Input shows Voice Input

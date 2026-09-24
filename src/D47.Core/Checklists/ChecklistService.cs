@@ -285,6 +285,33 @@ public sealed class ChecklistService(
 
     // ------------------------------------------------------------- reading
 
+    /// <summary>Whether this tick's events hold the engineering that finished the item (#446).</summary>
+    private static bool Worked(ChecklistItem item, IReadOnlyCollection<JournalEvent> events, CommanderGameState state)
+    {
+        switch (item.Intent?.Kind)
+        {
+            case ChecklistIntentKind.Blueprint or ChecklistIntentKind.Experimental:
+                return ChecklistEvaluator.IsActive(item.Scope, state.Ship)
+                    && events.Any(journalEvent =>
+                        journalEvent.Kind == "EngineerCraft"
+                        && string.Equals(
+                            journalEvent.String("Slot"), item.Intent.Subject, StringComparison.OrdinalIgnoreCase));
+
+            case ChecklistIntentKind.Grade:
+                return events.Any(journalEvent => (item.Scope.Group, journalEvent.Kind) switch
+                {
+                    (ChecklistGroup.Suit, "UpgradeSuit") => Same(journalEvent.Long("SuitID")),
+                    (ChecklistGroup.Weapon, "UpgradeWeapon") => Same(journalEvent.Long("SuitModuleID")),
+                    _ => false,
+                });
+
+            default:
+                return false;
+        }
+
+        bool Same(long? id) => id?.ToString(CultureInfo.InvariantCulture) == item.Scope.Key;
+    }
+
     /// <summary>News waiting to be spoken.</summary>
     private readonly Queue<ChecklistNews> _news = new();
 
@@ -308,7 +335,10 @@ public sealed class ChecklistService(
     /// <param name="announce">
     /// False on the priming tick, which replays the whole journal backlog.
     /// </param>
-    public IReadOnlyList<ChecklistNews> Poll(bool announce = true)
+    /// <param name="events">
+    /// This tick's journal events. An item is said to be done only when one of them did the work.
+    /// </param>
+    public IReadOnlyList<ChecklistNews> Poll(bool announce = true, IReadOnlyCollection<JournalEvent>? events = null)
     {
         // A document that arrived from outside is silent too, reported 2026-08-23 as a stream of "X is
         // done" for work finished while d47 was not running.
@@ -372,7 +402,7 @@ public sealed class ChecklistService(
                     $"checklist.undone.{item.Id}",
                     $"\"{said}\" is no longer done. {verdict.Says}"));
             }
-            else if (verdict.State == ChecklistState.Done)
+            else if (verdict.State == ChecklistState.Done && Worked(item, events ?? [], state))
             {
                 // One way of saying it, and the shorter one — asked for 2026-08-23 against "Grade 5
                 // Reinforced Shields on 5C Bi-Weave Shield Generator on Tulimiekka (smallcombat01_nx)" is

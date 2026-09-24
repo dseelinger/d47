@@ -234,7 +234,16 @@ public class ChecklistStoreTests
             },
         ]);
 
-        checklists.Poll();
+        Assert.True(JournalEvent.TryParse(
+            """
+            { "timestamp":"2026-08-16T10:00:00Z", "event":"EngineerCraft", "Slot":"MainEngines",
+              "Module":"int_engine_size5_class5", "BlueprintName":"Engine_Dirty", "Level":5, "Quality":1.0 }
+            """,
+            NullLogger.Instance,
+            out var craft));
+        gameState.Apply(craft!);
+
+        checklists.Poll(events: [craft!]);
 
  // One way of saying it, and the shorter one.
         var done = Assert.Single(checklists.Drain());
