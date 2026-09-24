@@ -57,12 +57,11 @@ public static class ChecklistEvaluator
 
     private static ChecklistVerdict? Ship(ChecklistItem item, ChecklistIntent intent, CommanderGameState state)
     {
-        var aboard = IsActive(item.Scope, state.Ship);
+        // Between LoadGame and Loadout the ship aboard has an id and no modules, so it is read like a ship
+        // in another dock: from the remembered loadout, or not at all (#452).
+        var aboard = IsActive(item.Scope, state.Ship) && state.Ship.IsKnown;
 
-        // A ship in another dock is diffed from the loadout d47 remembers. The comment that stood here
-        // said it "cannot be diffed at all", and that was true until Phase 37 started remembering them —
-        // after which a line about a parked ship read out its module by name, from the remembered loadout,
-        // over a verdict that had refused to look at the same place.
+        // A ship in another dock is diffed from the loadout d47 remembers.
         var remembered = aboard ? null : Remembered(item, state);
         var loadout = aboard ? state.Ship : remembered?.Loadout;
 

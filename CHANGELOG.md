@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.1 — The checklist stays quiet at login
+
+Starting d47, or loading into the game, no longer reads out finished checklist items as newly done.
+In the few seconds before Elite reports the ship's modules, d47 saw an empty ship and marked every
+engineering item on it as not done, then announced each one as finished when the modules arrived.
+It now waits for the modules, and a module that really has changed is still reported.
+
 ## 1.13.0 — Settings pages drawn on one grid
 
 Each place in the Settings sidebar is now a page of its own. Clicking Voice Input shows Voice Input
