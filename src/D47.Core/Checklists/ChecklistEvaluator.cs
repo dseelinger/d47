@@ -312,6 +312,12 @@ public static class ChecklistEvaluator
         var wanted = intent.Grade ?? 1;
         var rank = standing.Rank ?? 0;
 
+        if (wanted <= 1)
+        {
+            // Unlocked is enough; on-foot engineers stay at rank 0 once unlocked.
+            return new ChecklistVerdict(ChecklistState.Done, $"{engineer.Name} is unlocked.");
+        }
+
         if (rank >= wanted)
         {
             return new ChecklistVerdict(ChecklistState.Done, $"{engineer.Name} is at rank {rank}.");

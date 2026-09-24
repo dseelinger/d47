@@ -209,9 +209,11 @@ public sealed record EngineerEntry
             ? null
             : string.Join(
                 "; ",
-                Gate.GroupBy(dependant => dependant.ReferralGrade ?? EngineeringRules.ReferralGrade)
-                    .Select(group => $"grade {group.Key.ToString(CultureInfo.InvariantCulture)} opens "
-                                      + EngineerSay.List([.. group.Select(dependant => dependant.Name)])));
+                Gate.GroupBy(dependant => (dependant.IsOnFoot, Grade: EngineerAccess.ReferralGradeFor(dependant)))
+                    .Select(group => (group.Key.IsOnFoot
+                                         ? "unlocking them opens "
+                                         : $"grade {group.Key.Grade.ToString(CultureInfo.InvariantCulture)} opens ")
+                                     + EngineerSay.List([.. group.Select(dependant => dependant.Name)])));
 
     /// <summary>What is still to be done to reach them.</summary>
     public UnlockChain Chain { get; init; } = UnlockChain.Done;
@@ -270,7 +272,7 @@ public static class EngineerAccess
     public static IReadOnlyList<ChecklistItem> UnmetPrerequisites(Engineer engineer, UnlockEvidence evidence)
     {
         var criteria = CriteriaFor(engineer, evidence);
-        var wanted = engineer.ReferralGrade ?? EngineeringRules.ReferralGrade;
+        var wanted = ReferralGradeFor(engineer);
         var items = new List<ChecklistItem>();
 
         for (var index = 0; index < criteria.Count; index++)
@@ -342,21 +344,24 @@ public static class EngineerAccess
         var unlocked = standing?.IsUnlocked == true;
         var criteria = new List<UnlockCriterion>();
 
+        var anyReferralMet = engineer.ReferredBy
+            .Any(referrer => EngineerDirectory.ByName(referrer) is { } known
+                             && ReferralMet(engineer, evidence.Progress?.For(known.Id)));
+
         foreach (var referrer in engineer.ReferredBy)
         {
-            var wanted = engineer.ReferralGrade ?? EngineeringRules.ReferralGrade;
+            var wanted = ReferralGradeFor(engineer);
             var held = EngineerDirectory.ByName(referrer) is { } known
                 ? evidence.Progress?.For(known.Id)
                 : null;
 
-            var met = unlocked
-                      || (held is { IsUnlocked: true } && (held.Rank ?? 0) >= wanted);
+            var met = unlocked || ReferralMet(engineer, held) || (engineer.IsOnFoot && anyReferralMet);
+            var ask = engineer.IsOnFoot
+                ? $"Unlock {referrer}"
+                : $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer}";
 
             criteria.Add(new UnlockCriterion(
-                engineer.ReferredBy.Count > 1
-                    ? $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer} "
-                      + "(any one of the referrals will do)."
-                    : $"Grade {wanted.ToString(CultureInfo.InvariantCulture)} with {referrer}.",
+                engineer.ReferredBy.Count > 1 ? $"{ask} (any one of the referrals will do)." : $"{ask}.",
                 met));
         }
 
@@ -475,14 +480,22 @@ public static class EngineerAccess
                 .Where(dependant => dependant.ReferredBy
                     .Any(name => EngineerDirectory.ByName(name)?.Id == engineer.Id))
                 .Where(dependant => planned.Any(work => EngineerDirectory.IsNamedIn(work.Engineers, dependant)))
-                .Where(dependant => !GateMet(standing, dependant.ReferralGrade ?? EngineeringRules.ReferralGrade))
+                .Where(dependant => !ReferralMet(dependant, standing))
                 .OrderBy(dependant => dependant.Name, StringComparer.Ordinal),
         ];
     }
 
-    /// <summary>Whether the Commander already holds at least the wanted grade with a referrer.</summary>
-    private static bool GateMet(EngineerStanding? standing, int wanted) =>
-        standing is { IsUnlocked: true } && (standing.Rank ?? 0) >= wanted;
+    /// <summary>
+    /// The grade a referrer must hold to introduce this engineer: 1 for an on-foot engineer, whose
+    /// referrers have no rank and refer on being unlocked.
+    /// </summary>
+    public static int ReferralGradeFor(Engineer dependant) =>
+        dependant.IsOnFoot ? 1 : dependant.ReferralGrade ?? EngineeringRules.ReferralGrade;
+
+    /// <summary>Whether the Commander's standing with one referrer earns this engineer's referral.</summary>
+    public static bool ReferralMet(Engineer dependant, EngineerStanding? referrer) =>
+        referrer is { IsUnlocked: true }
+        && (dependant.IsOnFoot || (referrer.Rank ?? 0) >= ReferralGradeFor(dependant));
 
     /// <summary>Whether the Commander can act on this engineer today, from their journal and the table.</summary>
     public static EngineerReach ReachOf(Engineer engineer, EngineerProgressState? progress)
@@ -565,7 +578,7 @@ public static class EngineerAccess
                 .ThenBy(referrer => referrer!.Name, StringComparer.Ordinal)
                 .FirstOrDefault();
 
-            wanted = at.ReferralGrade ?? EngineeringRules.ReferralGrade;
+            wanted = ReferralGradeFor(at);
             at = next;
         }
 

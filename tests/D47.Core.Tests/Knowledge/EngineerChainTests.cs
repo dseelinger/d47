@@ -49,7 +49,7 @@ public class EngineerChainTests
     [Fact]
     public void ShipReferralsStateAGradeAndOnFootOnesDoNot()
     {
-        // Odyssey engineers unlock on a count of modifications, and no source states a grade for them.
+        // On-foot engineers have no rank, so no source states a grade for their referrals.
         var shipSide = EngineerDirectory.ByName("Broo Tarquin");
         var onFoot = EngineerDirectory.ByName("Kit Fowler");
 

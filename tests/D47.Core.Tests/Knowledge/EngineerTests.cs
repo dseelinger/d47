@@ -392,14 +392,34 @@ public class EngineerTests
     }
 
     [Fact]
-    public async Task AnOnFootReferralSaysNoGradeIsStatedRatherThanInventingOne()
+    public async Task AnOnFootReferralIsAnUnlockWithNoGradeInIt()
     {
         var answer = await Ask(Registry(), ("engineer", "Yi Shen"));
 
-        // Defaulting to the ship chain's grade 3 would state a requirement the game does not have: the
-        // Odyssey engineers unlock on a count of modifications instead.
-        Assert.Contains("No grade is stated for that referral", answer, StringComparison.Ordinal);
-        Assert.DoesNotContain("at grade 3", answer, StringComparison.Ordinal);
+        Assert.Contains("unlocking the referrer is the referral", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("at grade", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("count of modifications", answer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnUnlockedOnFootReferrerEarnsTheReferralAtRankZero()
+    {
+        var gameState = new GameStateStore();
+        gameState.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
+        gameState.Apply(Event(
+            """
+            {"timestamp":"3311-01-01T00:01:00Z","event":"EngineerProgress","Engineers":[
+              { "Engineer":"Jude Navarro", "EngineerID":400001, "Progress":"Unlocked", "RankProgress":0, "Rank":0 },
+              { "Engineer":"Terra Velasquez", "EngineerID":400006, "Progress":"Known" }]}
+            """));
+
+        var answer = await Ask(
+            CapabilityRegistry.Build([EngineerCapability.Create(() => gameState.Active)]),
+            ("engineer", "Terra Velasquez"));
+
+        Assert.Contains("The Commander has unlocked Jude Navarro, so that referral is earned.", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("is grade", answer, StringComparison.Ordinal);
+        Assert.DoesNotContain("at grade", answer, StringComparison.Ordinal);
     }
 
     [Fact]

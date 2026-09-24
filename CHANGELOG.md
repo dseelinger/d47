@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.5 — Engineers judged the way Elite judges them
+
+A referral into an on-foot engineer is now met once the referrer is unlocked. On-foot engineers have
+no rank, and d47 was asking for grade 3 with them: Terra Velasquez's first step read "Grade 3 with
+Jude Navarro." and was never met, the route added a stop to rank Jude up, and the checklist item
+"Rank 3 with Jude Navarro" was never done. The step now reads "Unlock Jude Navarro." and is met when
+Jude is unlocked; Yi Shen's is met when any one of Baltanos, Eleanor Bresa or Rosa Dayette is. On the
+Engineers tab, an on-foot referrer's note reads "unlocking them opens …" rather than "grade 3 opens
+…". Asked how to unlock an on-foot engineer, d47 no longer mentions a grade or a count of
+modifications, and says whether the referrer is unlocked. Ship engineers are judged on rank as
+before.
+
 ## 1.13.4 — Settings controls fit their values
 
 The Hearing provider and Voice provider rows, and each voice's provider row, now show just the

@@ -554,7 +554,7 @@ public static class EngineerCapability
 
         var through = engineer.ReferredBy;
 
-        var at = engineer.ReferralGrade is { } grade
+        var at = !engineer.IsOnFoot && engineer.ReferralGrade is { } grade
             ? $" at grade {grade}"
             : string.Empty;
 
@@ -562,11 +562,9 @@ public static class EngineerCapability
             ? $"Reached through {through[0]}{at}."
             : $"Reached through any of {Join(through)}{at}.");
 
-        if (engineer.ReferralGrade is null)
+        if (engineer.IsOnFoot)
         {
-            report.AppendLine(
-                "No grade is stated for that referral — the on-foot engineers unlock on a count of "
-                + "modifications rather than on a grade.");
+            report.AppendLine("On-foot engineers have no grade; unlocking the referrer is the referral.");
         }
 
         if (progress is not { IsKnown: true })
@@ -601,7 +599,11 @@ public static class EngineerCapability
 
         var rank = best.Standing.Rank ?? 0;
 
-        if (engineer.ReferralGrade is not { } needed)
+        if (engineer.IsOnFoot)
+        {
+            report.AppendLine($"The Commander has unlocked {best.Name}, so that referral is earned.");
+        }
+        else if (engineer.ReferralGrade is not { } needed)
         {
             report.AppendLine($"The Commander is grade {rank} with {best.Name}.");
         }
