@@ -121,6 +121,62 @@ public class VrRayTests
         Assert.Equal(0.5f, hit.Value.V, 2);
     }
 
+    /// <summary>
+    /// A point on the curved surface as SteamVR draws it — wrapping toward the viewer — at a signed arc
+    /// length from the centre line.
+    /// </summary>
+    private static Vector3 OnTheWrappedSurface(float curvature, float arc)
+    {
+        var r = VrRay.RadiusFor(Extent.WidthMetres, curvature);
+        var angle = arc / r;
+        var local = new Vector3(r * MathF.Sin(angle), 0f, r - (r * MathF.Cos(angle)));
+
+        return Vector3.Transform(local, Panel.ToMatrix());
+    }
+
+    [Theory]
+    [InlineData(0.25f, 0f)]
+    [InlineData(0.25f, 0.9f)]
+    [InlineData(0.25f, -0.9f)]
+    [InlineData(0.5f, 0f)]
+    [InlineData(0.5f, 0.9f)]
+    [InlineData(0.5f, -0.9f)]
+    public void ACurvedPanelIsHitWhereItIsDrawnOutToItsEdges(float curvature, float ofHalfWidth)
+    {
+        var halfWidth = Extent.WidthMetres / 2f;
+        var target = OnTheWrappedSurface(curvature, ofHalfWidth * halfWidth);
+
+        var hit = VrRay.Hit(Panel, Extent, curvature, AimingAt(target).Aim);
+
+        Assert.NotNull(hit);
+        Assert.InRange(hit!.Value.U, ((1f + ofHalfWidth) / 2f) - 0.01f, ((1f + ofHalfWidth) / 2f) + 0.01f);
+    }
+
+    [Theory]
+    [InlineData(0.25f, 1.05f)]
+    [InlineData(0.25f, -1.05f)]
+    [InlineData(0.5f, 1.05f)]
+    [InlineData(0.5f, -1.05f)]
+    public void ACurvedPanelIsMissedJustPastItsEdge(float curvature, float ofHalfWidth)
+    {
+        var target = OnTheWrappedSurface(curvature, ofHalfWidth * Extent.WidthMetres / 2f);
+
+        Assert.Null(VrRay.Hit(Panel, Extent, curvature, AimingAt(target).Aim));
+    }
+
+    /// <summary>The hit distance puts the cursor on the drawn surface, not behind it.</summary>
+    [Fact]
+    public void ACurvedHitLiesOnTheDrawnSurface()
+    {
+        var target = OnTheWrappedSurface(0.3f, 0.4f);
+        var hand = AimingAt(target);
+
+        var hit = VrRay.Hit(Panel, Extent, 0.3f, hand.Aim);
+
+        Assert.NotNull(hit);
+        Assert.Equal(Vector3.Distance(hand.Aim.Position, target), hit!.Value.DistanceMetres, 3);
+    }
+
     /// <summary>Nearest hit wins, and the hand that wins is the one that gets to carry the panel.</summary>
     [Fact]
     public void TheNearerHandIsTheOnePointing()

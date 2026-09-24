@@ -71,14 +71,14 @@ public static class VrRay
     }
 
     /// <summary>
-    /// Ray against a vertical cylinder section whose axis sits <c>radius</c> behind the panel centre,
-    /// so the surface still passes through the origin — which is what makes the flat and curved paths
-    /// agree exactly as curvature goes to zero.
+    /// Ray against a vertical cylinder section whose axis sits <c>radius</c> in front of the panel centre,
+    /// on the viewer's side, so the edges wrap toward the Commander as SteamVR draws them. The surface
+    /// still passes through the origin, so the flat and curved paths agree as curvature goes to zero.
     /// </summary>
     private static VrHit? CurvedHit(Vector3 o, Vector3 d, VrExtent extent, float curvature)
     {
         var r = RadiusFor(extent.WidthMetres, curvature);
-        var cz = -r;
+        var cz = r;
 
         // The axis is vertical, so Y drops out of the quadratic entirely.
         var ox = o.X;
@@ -112,18 +112,18 @@ public static class VrRay
 
             var p = o + (d * t);
 
-            // The outward normal points away from the axis, so a front-face arrival is one where the ray
-            // travels against it.
+            // The viewer faces the inside of the cylinder, so a front-face arrival travels with the
+            // outward normal.
             var nx = p.X;
             var nz = p.Z - cz;
 
-            if ((d.X * nx) + (d.Z * nz) >= 0f)
+            if ((d.X * nx) + (d.Z * nz) <= 0f)
             {
                 continue;
             }
 
             // Arc length from the panel's centre line, signed.
-            if (Land(MathF.Atan2(p.X, nz) * r, p.Y, t, extent) is { } hit)
+            if (Land(MathF.Atan2(p.X, -nz) * r, p.Y, t, extent) is { } hit)
             {
                 return hit;
             }

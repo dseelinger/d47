@@ -20,6 +20,10 @@ once more. If that also produces no scan, it says "The honk did not take". A hon
 while d47 is waiting counts, and nothing is repeated. When d47 switched to analysis mode for the
 honk, it now switches back after the scan, or after the second attempt.
 
+On a curved headset panel, the ring cursor and presses now land where the panel is drawn, out to its
+left and right edges. Before, d47 treated the panel as curving away from you rather than toward you,
+so the cursor sat partly behind the panel and buttons near either edge could not be pressed.
+
 ## 1.13.1 — The checklist stays quiet at login
 
 Starting d47, or loading into the game, no longer reads out finished checklist items as newly done.
