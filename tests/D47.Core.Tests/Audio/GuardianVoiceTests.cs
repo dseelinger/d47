@@ -15,6 +15,9 @@ public class GuardianVoiceTests
 
     private static readonly string[] EachTreatment = [.. GuardianVoice.Table.Select(effect => effect.Id)];
 
+    /// <summary>The effects that add to the clip's length.</summary>
+    internal static readonly string[] Lengthening = ["stutter", "reverseReverb", "shimmer", "reverb"];
+
     /// <summary>These effects ticked, in the default order, at default levels.</summary>
     internal static IReadOnlyList<GuardianVoiceEffect> Ticking(params string[] ids) =>
         [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = ids.Contains(effect.Id) })];
@@ -359,11 +362,11 @@ public class GuardianVoiceTests
     }
 
     [Fact]
-    public void EveryTreatmentButReverbAndStutterKeepsTheLength()
+    public void EveryTreatmentButStutterAndTheReverbsKeepsTheLength()
     {
         var line = Voiced(150, seconds: 2.0);
 
-        foreach (var treatment in EachTreatment.Where(t => t != "reverb" && t != "stutter"))
+        foreach (var treatment in EachTreatment.Where(t => !Lengthening.Contains(t)))
         {
             Assert.Equal(line.Pcm.Length, GuardianVoice.Apply(line, Ticking(treatment), BasePitch).Pcm.Length);
         }

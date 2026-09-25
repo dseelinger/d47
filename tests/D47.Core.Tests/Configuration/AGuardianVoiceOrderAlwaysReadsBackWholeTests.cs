@@ -46,9 +46,9 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
 
         Assert.Equal(
             [
-                "stutter", "monotone", "steppedPitch", "reverb", "chorus", "flanger", "phaser", "wah", "comb",
-                "ringMod", "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch", "cylon", "pitchDown",
-                "octaveDown",
+                "stutter", "monotone", "steppedPitch", "reverb", "chorus", "hive", "flanger", "phaser", "wah",
+                "comb", "ringMod", "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch", "reverseReverb",
+                "shimmer", "cylon", "whisper", "pitchDown", "octaveDown",
             ],
             effects.Select(effect => effect.Id));
 
@@ -78,8 +78,8 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         surface.Settings.Apply(SpeechCapability.GuardianOrderKey, "reverb, nonsense, cylon", SettingsCaller.Panel);
 
         Assert.Equal(
-            "stutter,monotone,steppedPitch,reverb,cylon,pitchDown,octaveDown,chorus,flanger,phaser,wah,comb,ringMod,deepRingMod,"
-            + "tremolo,overdrive,bitcrusher,glitch",
+            "stutter,monotone,steppedPitch,reverb,cylon,whisper,pitchDown,octaveDown,chorus,hive,flanger,phaser,wah,comb,"
+            + "ringMod,deepRingMod,tremolo,overdrive,bitcrusher,glitch,reverseReverb,shimmer",
             surface.Settings.Read(SpeechCapability.GuardianOrderKey));
 
         // Reordering keeps what was ticked and the level it was set to.

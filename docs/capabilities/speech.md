@@ -633,6 +633,9 @@ The four built-ins tick their effects at the default order and default levels:
 | Stutter host | Stutter, Chorus |
 | Flat robot | Monotone, Metallic resonance |
 | Stepped synth | Stepped pitch, Chorus |
+| Hive chorus | Hive, Reverb |
+| Ghost | Whisper, Reverse reverb |
+| Shimmer core | Chorus, Shimmer |
 
 A saved preset is the Commander's own: its ticks, order and every level, saved under a name.
 Choosing a built-in or a saved preset writes its effects over whatever is set now; choosing Custom
@@ -663,6 +666,12 @@ sets the pitch and Stepped pitch is skipped.
 A channel vocoder onto a fixed-pitch carrier, so the words come out toneless. Depth is how much of
 the vocoded voice replaces the dry one: 5% a level, and the default, 20, replaces all of it.
 
+##### Whisper: mix {#guardian-voice-whisper}
+
+The voice's spectrum kept and its tone taken away, so the words come out breathed rather than
+voiced. Mix is the whispered voice's share of the output, the rest being the dry voice: 5% a level,
+and the default, 20, is all whisper.
+
 ##### Pitch down: pitch {#guardian-voice-pitch-down}
 
 The voice lowered, with the sentence's length unchanged. Half a semitone a level; the default, 8, is
@@ -677,6 +686,12 @@ voice: 5% a level, 60% at the default of 12.
 
 Three delayed copies, each swept, mixed in under the dry voice. Depth is the copies' volume: 5% a
 level, 80% at the default of 16.
+
+##### Hive: mix {#guardian-voice-hive}
+
+Three copies of the voice, shifted 5 and 2 semitones down and 3 up and delayed 13, 23 and 37 ms,
+mixed in under the dry voice so it speaks as several. Mix is each copy's volume: 5% a level, 60% at
+the default of 12.
 
 ##### Flanger: rate {#guardian-voice-flanger}
 
@@ -726,6 +741,17 @@ level 20, 5 at the default of 16.
 
 Short damaged stretches at irregular intervals. Rate is how often they come: at 20 they come twice as
 often as at the default of 10, and at 5 half as often.
+
+##### Reverse reverb: mix {#guardian-voice-reverse-reverb}
+
+A reverb run backwards, so its tail swells up into each word instead of trailing after it. Every
+line starts 0.3 seconds later, to make room for the swell before its first word. Mix is the
+reverb's volume against the dry voice: 5% a level, 45% at the default of 9.
+
+##### Shimmer: shimmer {#guardian-voice-shimmer}
+
+A reverb whose tail also rings an octave higher, adding half a second after the sentence ends.
+Shimmer is the octave layer's volume within the tail: 5% a level, 50% at the default of 10.
 
 ##### Reverb: mix {#guardian-voice-reverb}
 

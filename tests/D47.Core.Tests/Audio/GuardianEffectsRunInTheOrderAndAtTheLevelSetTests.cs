@@ -94,7 +94,7 @@ public class GuardianEffectsRunInTheOrderAndAtTheLevelSetTests
         {
             var treated = GuardianVoice.Apply(line, At(id, level), BasePitch);
 
-            if (id != "reverb" && id != "stutter")
+            if (!GuardianVoiceTests.Lengthening.Contains(id))
             {
                 Assert.Equal(line.Pcm.Length, treated.Pcm.Length);
             }

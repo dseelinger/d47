@@ -61,6 +61,9 @@ public static class GuardianPresets
         {
             Id = "stepped-synth", Label = "Stepped synth", TickedIds = ["steppedPitch", "chorus"],
         },
+        new GuardianBuiltinPreset { Id = "hive-chorus", Label = "Hive chorus", TickedIds = ["hive", "reverb"] },
+        new GuardianBuiltinPreset { Id = "ghost", Label = "Ghost", TickedIds = ["whisper", "reverseReverb"] },
+        new GuardianBuiltinPreset { Id = "shimmer-core", Label = "Shimmer core", TickedIds = ["shimmer", "chorus"] },
     ];
 
     /// <summary>The built-in with this id, or null.</summary>

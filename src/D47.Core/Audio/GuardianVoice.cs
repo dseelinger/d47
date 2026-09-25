@@ -94,6 +94,17 @@ public static class GuardianVoice
         },
         new GuardianEffect
         {
+            Id = "whisper",
+            Label = "Whisper",
+            Help = "Each frame's spectrum kept and its phase replaced with random values, so the voice is breath; mix is its share of the output.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 20,
+            Value = level => level / 20.0,
+            Run = (signal, wet, _, rate) => Mix(signal, 1 - wet, Whisper(signal, rate), wet),
+        },
+        new GuardianEffect
+        {
             Id = "pitchDown",
             Label = "Pitch down",
             Help = "The voice lowered, duration kept; pitch is how many semitones.",
@@ -124,6 +135,17 @@ public static class GuardianVoice
             DefaultLevel = 16,
             Value = level => level / 20.0,
             Run = (signal, depth, _, rate) => Chorus(signal, depth, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "hive",
+            Label = "Hive",
+            Help = "Three pitch-shifted, delayed copies mixed under the dry voice; mix is how loud each copy is.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 12,
+            Value = level => level / 20.0,
+            Run = (signal, gain, _, rate) => Hive(signal, gain, rate),
         },
         new GuardianEffect
         {
@@ -237,6 +259,28 @@ public static class GuardianVoice
         },
         new GuardianEffect
         {
+            Id = "reverseReverb",
+            Label = "Reverse reverb",
+            Help = "Reverb run backwards, so its tail swells into each word; mix is how loud the reverb is.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 9,
+            Value = level => level / 20.0,
+            Run = (signal, wet, _, rate) => ReverseReverb(signal, wet, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "shimmer",
+            Label = "Shimmer",
+            Help = "Reverb with an octave-up copy in its tail; shimmer is how loud the octave layer is.",
+            Parameter = "Shimmer",
+            Unit = "%",
+            DefaultLevel = 10,
+            Value = level => level / 20.0,
+            Run = (signal, layer, _, rate) => Shimmer(signal, layer, rate),
+        },
+        new GuardianEffect
+        {
             Id = "reverb",
             Label = "Reverb",
             Help = "Schroeder reverb, adding a half-second tail; mix is how loud the reverb is.",
@@ -322,6 +366,22 @@ public static class GuardianVoice
     private const double ReverbLowPassHz = 5_000;
     private const double ReverbDry = 0.75;
     private const double ReverbTailSeconds = 0.5;
+
+    /// <summary>(semitones, delay ms) per copy.</summary>
+    private static readonly (double Semitones, double DelayMs)[] HiveCopies =
+    [
+        (-5, 13),
+        (-2, 23),
+        (3, 37),
+    ];
+
+    private const uint WhisperSeed = 0x3C6EF372u;
+
+    /// <summary>The reversed reverb's tail, added at the front of the clip; every line's first word waits this long.</summary>
+    private const double ReverseTailSeconds = 0.3;
+
+    /// <summary>The shimmer reverb's share of the output, fixed at Reverb's default mix.</summary>
+    private const double ShimmerWet = 0.45;
 
     /// <summary>An onset window's RMS relative to the clip's peak, −30 dB, below which it counts as quiet.</summary>
     private const double StutterOnsetThreshold = 0.031_622_776_601_683_79;
@@ -1426,6 +1486,152 @@ public static class GuardianVoice
     {
         var tail = (int)Math.Round(ReverbTailSeconds * rate);
         var total = signal.Length + tail;
+        var low = ReverbWet(signal, total, rate);
+        var output = new double[total];
+
+        for (var index = 0; index < total; index++)
+        {
+            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0)) + (mix * low[index]);
+
+            if (index >= signal.Length)
+            {
+                sample *= (double)(total - 1 - index) / tail;
+            }
+
+            output[index] = sample;
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Reverb on the clip reversed, reversed back, so the tail comes before each sound and swells into it. The
+    /// clip gains <see cref="ReverseTailSeconds"/> at the front, faded in from zero.
+    /// </summary>
+    private static double[] ReverseReverb(double[] signal, double mix, int rate)
+    {
+        var tail = (int)Math.Round(ReverseTailSeconds * rate);
+        var total = signal.Length + tail;
+        var reversed = (double[])signal.Clone();
+        Array.Reverse(reversed);
+
+        var low = ReverbWet(reversed, total, rate);
+        var output = new double[total];
+
+        for (var index = 0; index < total; index++)
+        {
+            var source = total - 1 - index;
+            var wet = mix * low[source];
+
+            if (source >= signal.Length)
+            {
+                wet *= (double)(total - 1 - source) / tail;
+            }
+
+            output[index] = (ReverbDry * (index >= tail ? signal[index - tail] : 0)) + wet;
+        }
+
+        return output;
+    }
+
+    /// <summary>Reverb whose wet signal has a copy an octave up mixed in at <paramref name="layer"/>, with Reverb's faded tail.</summary>
+    private static double[] Shimmer(double[] signal, double layer, int rate)
+    {
+        var tail = (int)Math.Round(ReverbTailSeconds * rate);
+        var total = signal.Length + tail;
+        var low = ReverbWet(signal, total, rate);
+        var octave = Shift(low, 2, rate);
+        var output = new double[total];
+
+        for (var index = 0; index < total; index++)
+        {
+            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0))
+                + (ShimmerWet * (low[index] + (layer * octave[index])));
+
+            if (index >= signal.Length)
+            {
+                sample *= (double)(total - 1 - index) / tail;
+            }
+
+            output[index] = sample;
+        }
+
+        return output;
+    }
+
+    /// <summary>The dry voice with a pitch-shifted, delayed copy per <see cref="HiveCopies"/> row under it, each at <paramref name="gain"/>.</summary>
+    private static double[] Hive(double[] signal, double gain, int rate)
+    {
+        var output = (double[])signal.Clone();
+
+        foreach (var (semitones, delayMs) in HiveCopies)
+        {
+            var copy = Shift(signal, Math.Pow(2, semitones / 12), rate);
+            var delay = Samples(delayMs, rate);
+
+            for (var index = delay; index < output.Length; index++)
+            {
+                output[index] += gain * copy[index - delay];
+            }
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Each frame's magnitude spectrum kept and its phase replaced with values from a fixed seed, overlap-added
+    /// at a quarter-frame hop; the same clip whispers the same way every time.
+    /// </summary>
+    private static double[] Whisper(double[] signal, int rate)
+    {
+        var length = signal.Length;
+        var frame = FrameLength(rate);
+        var hop = frame / 4;
+        var bins = frame / 2;
+        var padded = length + (2 * frame);
+        var output = new double[padded];
+        var window = Hann(frame);
+        var re = new double[frame];
+        var im = new double[frame];
+        var random = new Noise(WhisperSeed);
+
+        for (var start = 0; start + frame <= padded; start += hop)
+        {
+            for (var index = 0; index < frame; index++)
+            {
+                var source = start + index - frame;
+                re[index] = (source >= 0 && source < length ? signal[source] : 0) * window[index];
+                im[index] = 0;
+            }
+
+            Fourier(re, im, inverse: false);
+
+            for (var bin = 0; bin <= bins; bin++)
+            {
+                var magnitude = Math.Sqrt((re[bin] * re[bin]) + (im[bin] * im[bin]));
+                var phase = random.Next(-Math.PI, Math.PI);
+                re[bin] = magnitude * Math.Cos(phase);
+                im[bin] = magnitude * Math.Sin(phase);
+            }
+
+            Mirror(re, im);
+            Fourier(re, im, inverse: true);
+
+            for (var index = 0; index < frame; index++)
+            {
+                output[start + index] += re[index] * window[index] / OverlapGain;
+            }
+        }
+
+        return output.AsSpan(frame, length).ToArray();
+    }
+
+    /// <summary>
+    /// The low-passed wet signal of four parallel combs averaged and two allpasses in series, run for
+    /// <paramref name="total"/> samples and not faded.
+    /// </summary>
+    private static double[] ReverbWet(double[] signal, int total, int rate)
+    {
         var wet = new double[total];
 
         foreach (var (delayMs, feedback) in ReverbCombs)
@@ -1445,23 +1651,14 @@ public static class GuardianVoice
 
         var smoothing = Math.Exp(-2 * Math.PI * ReverbLowPassHz / rate);
         var low = 0.0;
-        var output = new double[total];
 
         for (var index = 0; index < total; index++)
         {
             low = ((1 - smoothing) * wet[index]) + (smoothing * low);
-
-            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0)) + (mix * low);
-
-            if (index >= signal.Length)
-            {
-                sample *= (double)(total - 1 - index) / tail;
-            }
-
-            output[index] = sample;
+            wet[index] = low;
         }
 
-        return output;
+        return wet;
     }
 
     /// <summary><c>y[n] = x[n] + g·y[n−D]</c>, run for <paramref name="length"/> samples.</summary>

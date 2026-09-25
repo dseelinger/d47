@@ -40,6 +40,9 @@ public class GuardianPresetsTests
     [InlineData("stutter-host", "stutter", "chorus")]
     [InlineData("flat-robot", "monotone", "comb")]
     [InlineData("stepped-synth", "steppedPitch", "chorus")]
+    [InlineData("hive-chorus", "hive", "reverb")]
+    [InlineData("ghost", "whisper", "reverseReverb")]
+    [InlineData("shimmer-core", "chorus", "shimmer")]
     public void WritingABuiltinTicksExactlyItsEffectsAtDefaultOrderAndLevels(string id, params string[] ticked)
     {
         var builtin = GuardianPresets.Find(id)!;

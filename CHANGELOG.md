@@ -19,6 +19,11 @@ Two new effects keep the voice and change only its pitch: Monotone holds it at t
 pitch, and Stepped pitch moves it to the nearest semitone so it jumps rather than glides. Two new
 presets use them: Flat robot and Stepped synth.
 
+Four more effects: Hive layers three pitch-shifted copies under the voice, Whisper takes the tone
+out of it, Reverse reverb swells a backwards tail into each word, and Shimmer adds a reverb that
+rings an octave up. With Reverse reverb ticked, every line starts 0.3 seconds later. Three new
+presets use them: Hive chorus, Ghost and Shimmer core.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
