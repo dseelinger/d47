@@ -1,3 +1,5 @@
+using System.Globalization;
+using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
@@ -18,6 +20,24 @@ public sealed record PlannedWork(
     int? Grade,
     IReadOnlyList<string> Engineers)
 {
+    /// <summary>The build that plans it, by its store id.</summary>
+    public string? Build { get; init; }
+
+    /// <summary>The module kind it is rolled on, or null where the plan leaves that open.</summary>
+    public string? Module { get; init; }
+
+    /// <summary>
+    /// What makes two slots the same job: blueprint, grade and module kind — an experimental has no grade.
+    /// </summary>
+    public string Job => string.Join(
+        '|',
+        Wants.Trim().ToUpperInvariant(),
+        Grade?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+        Module?.Trim().ToUpperInvariant() ?? string.Empty);
+
+    /// <summary>The job without the slot — "grade 5 Long Range Weapon".</summary>
+    public string DescribeJob() => Grade is { } grade ? $"grade {grade} {Wants}" : Wants;
+
     /// <summary>The rank the roll needs, which is the grade — grade N cannot be rolled below rank N.</summary>
     public int Rank => Math.Clamp(Grade ?? 1, 1, 5);
 
@@ -54,7 +74,8 @@ public static class PlannedNeeds
         {
             foreach (var slot in build.Slots.Where(slot => !slot.IsEmpty))
             {
-                var slotName = EliteSpecifications.Slot(build.Hull, slot.Slot)?.Describe() ?? slot.Slot;
+                var shipSlot = EliteSpecifications.Slot(build.Hull, slot.Slot);
+                var slotName = shipSlot?.Describe() ?? slot.Slot;
                 var what = $"{build.Describe()} · {slotName}";
 
                 if (slot.Blueprint is { Length: > 0 } blueprint)
@@ -63,7 +84,11 @@ public static class PlannedNeeds
                         what,
                         blueprint,
                         slot.Grade,
-                        Rollers(blueprint, slot.Module, slot.Grade)));
+                        Rollers(blueprint, slot.Module, slot.Grade))
+                    {
+                        Build = build.Id,
+                        Module = ModuleOf(blueprint, slot.Module, shipSlot),
+                    });
                 }
 
                 if (slot.Experimental is { Length: > 0 } experimental)
@@ -72,7 +97,11 @@ public static class PlannedNeeds
                         what,
                         experimental,
                         null,
-                        Rollers(experimental, slot.Module, null)));
+                        Rollers(experimental, slot.Module, null))
+                    {
+                        Build = build.Id,
+                        Module = ModuleOf(experimental, slot.Module, shipSlot),
+                    });
                 }
             }
         }
@@ -92,12 +121,23 @@ public static class PlannedNeeds
                     $"{build.Describe()} · {slot.Slot}",
                     modification,
                     null,
-                    Rollers(modification, build.Equipment, null)));
+                    Rollers(modification, build.Equipment, null))
+                {
+                    Build = build.Id,
+                    Module = build.Equipment,
+                });
             }
         }
 
         return work;
     }
+
+    /// <summary>
+    /// The module kind a planned blueprint resolves to, else the module the plan names, else null.
+    /// </summary>
+    private static string? ModuleOf(string blueprint, string? planned, ShipSlot? slot) =>
+        PlannedModule.Kind(PlannedModule.Candidates(blueprint, planned, null, slot))
+        ?? (planned is { Length: > 0 } ? planned : null);
 
     /// <summary>Everybody who can roll one blueprint at one grade.</summary>
     public static IReadOnlyList<string> Rollers(

@@ -326,7 +326,7 @@ public class UnlockPlannerTests
         Assert.Contains("1 step", said);
         Assert.Contains("131 ly", said);
         Assert.Contains("about 5 jumps", said);
-        Assert.Contains("1 planned thing covered", said);
+        Assert.Contains("1 planned job covered", said);
 
         var working = best.Working();
 
@@ -360,8 +360,8 @@ public class UnlockPlannerTests
     }
 
     /// <summary>
-    /// With nothing planned the first key is dead, and the answer collapses to who is nearest — which
-    /// is the right answer to a question with no plans behind it.
+    /// With nothing planned there is no value to weigh, and within each tier the answer is who is
+    /// nearest.
     /// </summary>
     [Fact]
     public void WithNothingPlannedItRanksByDistance()
@@ -371,9 +371,16 @@ public class UnlockPlannerTests
         Assert.NotEmpty(report.Route);
         Assert.All(report.Route, candidate => Assert.Empty(candidate.Covers));
 
-        var jumps = report.Route.Select(candidate => candidate.Chain.Jumps ?? int.MaxValue).ToList();
+        var tiers = report.Route.Select(candidate => candidate.Tier).ToList();
 
-        Assert.Equal(jumps.OrderBy(count => count), jumps);
+        Assert.Equal(tiers.Order(), tiers);
+
+        foreach (var tier in report.Route.GroupBy(candidate => candidate.Tier))
+        {
+            var jumps = tier.Select(candidate => candidate.Chain.Jumps ?? int.MaxValue).ToList();
+
+            Assert.Equal(jumps.Order(), jumps);
+        }
     }
 
     /// <summary>

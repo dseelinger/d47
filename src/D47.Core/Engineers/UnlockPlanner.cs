@@ -18,8 +18,15 @@ public sealed record UnlockCandidate
 
     public required UnlockChain Chain { get; init; }
 
-    /// <summary>The planned things this unlock would make rollable that nobody rollable can do now.</summary>
+    /// <summary>
+    /// The planned slots this unlock would make rollable that nobody unlocked and no better-ranked unlock
+    /// covers.
+    /// </summary>
     public IReadOnlyList<PlannedWork> Covers { get; init; } = [];
+
+    /// <summary>The same slots grouped into jobs — one blueprint at one grade on one module kind.</summary>
+    public IReadOnlyList<IReadOnlyList<PlannedWork>> Jobs =>
+        [.. Covers.GroupBy(work => work.Job, StringComparer.Ordinal).Select(job => (IReadOnlyList<PlannedWork>)[.. job])];
 
     /// <summary>
     /// What it takes to reach the engineer this chain ends at, with the parts already done marked
@@ -28,8 +35,17 @@ public sealed record UnlockCandidate
     public IReadOnlyList<UnlockCriterion> Criteria { get; init; } = [];
 
     /// <summary>
-    /// The trip, in the one unit everything else converted into: jumps per planned thing covered, or
-    /// light years where no jump range is known.
+    /// 0 where the chain is travel and rolling only, 1 where a hand-over is still to gather, 2 where an
+    /// invitation requirement is not met.
+    /// </summary>
+    public int Tier { get; init; }
+
+    /// <summary>What the covered work is worth: jobs, plus slots on a log scale, plus the share of each build.</summary>
+    public double Value { get; init; }
+
+    /// <summary>
+    /// Value per trip: <see cref="Value"/> over one plus the jumps, or the light years where no jump
+    /// range is known.
     /// </summary>
     public double Score { get; init; }
 
@@ -37,8 +53,7 @@ public sealed record UnlockCandidate
     public bool ScoredInJumps { get; init; }
 
     /// <summary>
-    /// The ranking in one sentence — "One step, 84 ly, about 3 jumps, and 4 other planned things
-    /// covered."
+    /// The ranking in one sentence — "One step, 84 ly, about 3 jumps, and 4 planned jobs covered."
     /// </summary>
     public string Summary()
     {
@@ -56,11 +71,13 @@ public sealed record UnlockCandidate
             said.Append(CultureInfo.InvariantCulture, $", {EngineerSay.Jumps(jumps)}");
         }
 
-        said.Append(Covers.Count switch
+        var jobs = Jobs.Count;
+
+        said.Append(jobs switch
         {
             0 => ", covering nothing you have planned",
-            1 => ", and 1 planned thing covered",
-            _ => $", and {Covers.Count.ToString(CultureInfo.InvariantCulture)} planned things covered",
+            1 => ", and 1 planned job covered",
+            _ => $", and {jobs.ToString(CultureInfo.InvariantCulture)} planned jobs covered",
         });
 
         return said.Append('.').ToString();
@@ -93,9 +110,11 @@ public sealed record UnlockCandidate
             }
         }
 
-        foreach (var covered in Covers)
+        foreach (var job in Jobs)
         {
-            lines.Add($"    covers: {covered.Describe()}");
+            lines.Add(job.Count > 1
+                ? $"    covers: {job[0].DescribeJob()} ×{job.Count.ToString(CultureInfo.InvariantCulture)}"
+                : $"    covers: {job[0].DescribeJob()}");
         }
 
         return lines;
@@ -183,7 +202,7 @@ public static class UnlockPlanner
         return new EngineerReport
         {
             Directory = directory,
-            Route = Rank(directory, outstanding, progress, from, range),
+            Route = Rank(directory, outstanding, state, evidence),
             Planned = planned,
             Waiting = planned.Count(work => work.WaitingOnAStranger(progress)),
             ProgressKnown = progress is { IsKnown: true },
@@ -238,58 +257,145 @@ public static class UnlockPlanner
         return items;
     }
 
-    /// <summary>The best unlocks to make next.</summary>
+    private const double JobWeight = 1;
+    private const double SlotWeight = 1;
+    private const double BuildWeight = 1;
+
+    /// <summary>
+    /// The best unlocks to make next, taken one at a time: each pick's work leaves the outstanding set
+    /// before the rest are valued again.
+    /// </summary>
     private static IReadOnlyList<UnlockCandidate> Rank(
         IReadOnlyList<EngineerEntry> directory,
         IReadOnlyList<PlannedWork> outstanding,
-        EngineerProgressState? progress,
-        StarPosition? from,
-        double? range)
+        CommanderGameState? state,
+        UnlockEvidence evidence)
     {
-        var candidates = new List<UnlockCandidate>();
+        var left = outstanding.ToList();
+        var pending = directory.ToList();
+        var ranked = new List<UnlockCandidate>();
 
-        // Everybody, not only the ones still locked.
-        foreach (var entry in directory)
+        while (true)
         {
-            var covers = outstanding
-                .Where(work => EngineerDirectory.IsNamedIn(work.Engineers, entry.Engineer))
+            var valued = pending
+                .Select(entry => Candidate(entry, left, state, evidence))
+                .OfType<UnlockCandidate>()
                 .ToList();
 
-            // The grade to aim for is the highest any covered plan asks of them.
-            var grade = covers.Count == 0 ? 1 : covers.Max(work => work.Rank);
-            var chain = EngineerAccess.ChainTo(entry.Engineer, grade, progress, from, range);
+            var best = Order(valued.Where(candidate => candidate.Covers.Count > 0)).FirstOrDefault();
 
-            if (chain.IsDone)
+            if (best is null)
             {
-                continue;
+                return [.. ranked, .. Order(valued)];
             }
 
-            var cost = chain.Jumps is { } jumps ? jumps : chain.LightYears;
+            ranked.Add(best);
+            pending.RemoveAll(entry => entry.Engineer.Id == best.Engineer.Id);
+            var freed = best.Covers.ToHashSet(ReferenceEqualityComparer.Instance);
+            left.RemoveAll(freed.Contains);
+        }
+    }
 
-            candidates.Add(new UnlockCandidate
-            {
-                Engineer = entry.Engineer,
-                Chain = chain,
-                Covers = covers,
-                Criteria = entry.Criteria,
-                Score = cost is { } known ? known / Math.Max(covers.Count, 1) : double.MaxValue,
-                ScoredInJumps = chain.Jumps is not null,
-            });
+    private static IOrderedEnumerable<UnlockCandidate> Order(IEnumerable<UnlockCandidate> candidates) =>
+        candidates
+            .OrderByDescending(candidate => candidate.Covers.Count > 0)
+            .ThenBy(candidate => candidate.Tier)
+            .ThenByDescending(candidate => candidate.Chain.Jumps is not null || candidate.Chain.LightYears is not null)
+            .ThenByDescending(candidate => candidate.Score)
+
+            // Among candidates of equal score, which is all of those covering nothing, the nearer first.
+            .ThenBy(candidate => (candidate.Chain.Jumps is { } jumps ? jumps : candidate.Chain.LightYears) ?? double.MaxValue)
+            .ThenBy(candidate => candidate.Chain.Steps.Count)
+
+            // Jumps round up, so two candidates a real distance apart tie on them all the time — 62 light
+            // years and 73 are both three jumps at 30.
+            .ThenBy(candidate => candidate.Chain.LightYears ?? double.MaxValue)
+            .ThenBy(candidate => candidate.Engineer.Name, StringComparer.Ordinal);
+
+    /// <summary>One engineer valued against what is still outstanding, or null when there is nothing to do.</summary>
+    private static UnlockCandidate? Candidate(
+        EngineerEntry entry,
+        IReadOnlyList<PlannedWork> outstanding,
+        CommanderGameState? state,
+        UnlockEvidence evidence)
+    {
+        var covers = outstanding
+            .Where(work => EngineerDirectory.IsNamedIn(work.Engineers, entry.Engineer))
+            .ToList();
+
+        // The grade to aim for is the highest any covered plan asks of them.
+        var grade = covers.Count == 0 ? 1 : covers.Max(work => work.Rank);
+        var chain = EngineerAccess.ChainTo(
+            entry.Engineer, grade, evidence.Progress, state?.Location.StarPos, state?.Ship.MaxJumpRange);
+
+        if (chain.IsDone)
+        {
+            return null;
         }
 
-        return
-        [
-            .. candidates
-                .OrderByDescending(candidate => candidate.Covers.Count > 0)
-                .ThenBy(candidate => candidate.Score)
-                .ThenBy(candidate => candidate.Chain.OpenEnded)
-                .ThenBy(candidate => candidate.Chain.Steps.Count)
+        var value = ValueOf(covers, outstanding);
+        var cost = chain.Jumps is { } jumps ? jumps : chain.LightYears;
 
-                // Jumps round up, so two candidates a real distance apart tie on them all the time — 62 light
-                // years and 73 are both three jumps at 30.
-                .ThenBy(candidate => candidate.Chain.LightYears ?? double.MaxValue)
-                .ThenBy(candidate => candidate.Engineer.Name, StringComparer.Ordinal),
-        ];
+        return new UnlockCandidate
+        {
+            Engineer = entry.Engineer,
+            Chain = chain,
+            Covers = covers,
+            Criteria = entry.Criteria,
+            Tier = chain.Steps.Max(step => TierOf(step, evidence, state)),
+            Value = value,
+            Score = value / (1 + (cost ?? 0)),
+            ScoredInJumps = chain.Jumps is not null,
+        };
+    }
+
+    /// <summary>
+    /// J + log2(1 + S) + B: distinct jobs freed, slots freed, and for each build the share of its blocked
+    /// jobs freed.
+    /// </summary>
+    private static double ValueOf(IReadOnlyList<PlannedWork> covers, IReadOnlyList<PlannedWork> outstanding)
+    {
+        if (covers.Count == 0)
+        {
+            return 0;
+        }
+
+        var jobs = covers.Select(work => work.Job).Distinct(StringComparer.Ordinal).Count();
+
+        var builds = covers
+            .GroupBy(work => work.Build ?? string.Empty, StringComparer.Ordinal)
+            .Sum(build =>
+            {
+                var freed = build.Select(work => work.Job).Distinct(StringComparer.Ordinal).Count();
+                var blocked = outstanding
+                    .Where(work => string.Equals(work.Build ?? string.Empty, build.Key, StringComparison.Ordinal))
+                    .Select(work => work.Job)
+                    .Distinct(StringComparer.Ordinal)
+                    .Count();
+
+                return (double)freed / blocked;
+            });
+
+        return (JobWeight * jobs) + (SlotWeight * Math.Log2(1 + covers.Count)) + (BuildWeight * builds);
+    }
+
+    /// <summary>
+    /// 2 where the invitation task is not known to be met, 1 where the hand-over is not held, 0 where the
+    /// stop is travel and rolling only.
+    /// </summary>
+    private static int TierOf(UnlockStep step, UnlockEvidence evidence, CommanderGameState? state)
+    {
+        if (step.Held > 0)
+        {
+            return 0;
+        }
+
+        if (step.Engineer.Meeting is { Length: > 0 } && EngineerAccess.MeetingMet(step.Engineer, evidence) != true)
+        {
+            return 2;
+        }
+
+        return EngineerAccess.HandOverHeld(step.Engineer, evidence, state?.Hold, state?.Materials) ? 0 : 1;
     }
 
     private static EngineerEntry Entry(

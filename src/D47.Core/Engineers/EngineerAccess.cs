@@ -386,6 +386,51 @@ public static class EngineerAccess
         return criteria;
     }
 
+    /// <summary>
+    /// Whether an engineer's invitation task is done: true once invited or unlocked, the test's reading
+    /// otherwise, and null where there is nothing to read it from.
+    /// </summary>
+    public static bool? MeetingMet(Engineer engineer, UnlockEvidence evidence) =>
+        evidence.Progress?.For(engineer.Id) is { IsUnlocked: true } or { IsInvited: true }
+            ? true
+            : Evaluate(engineer.MeetingTest, engineer, evidence).Met;
+
+    /// <summary>
+    /// Whether what the invitation asks to be handed over is already aboard or handed over. A bond, a
+    /// bounty or a tribute with no test cannot be read, and is never held.
+    /// </summary>
+    public static bool HandOverHeld(
+        Engineer engineer,
+        UnlockEvidence evidence,
+        CargoHold? hold,
+        MaterialsInventory? materials)
+    {
+        if (evidence.Progress?.For(engineer.Id) is { IsUnlocked: true })
+        {
+            return true;
+        }
+
+        if (engineer.UnlockTest is null)
+        {
+            return engineer.Unlock is not { Length: > 0 } && engineer.UnlockCost is not { Length: > 0 };
+        }
+
+        if (engineer.UnlockTest is not UnlockTest.Contribution { Symbol: { Length: > 0 } symbol } test)
+        {
+            return false;
+        }
+
+        var aboard = test.Type switch
+        {
+            "Commodity" => hold?.Of(symbol) ?? 0,
+            "Materials" => materials?.CountOf(symbol) ?? 0,
+            _ => (long?)null,
+        };
+
+        return aboard is { } count
+               && count + (evidence.Contributions?.Total(engineer.Id, test.Type, symbol) ?? 0) >= test.Quantity;
+    }
+
     /// <summary>One structured test read against the evidence, and d47's own words about the reading.</summary>
     private static (bool? Met, string? Reading, UnlockMeasure? Measure) Evaluate(
         UnlockTest? test, Engineer engineer, UnlockEvidence evidence) => test switch

@@ -238,7 +238,7 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains(shown, line => line.Contains("Measured from Sol", StringComparison.Ordinal));
-        Assert.Contains(shown, line => line.Contains("planned thing covered", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.Contains("planned job covered", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.Contains("hand over:", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.Contains("first:", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.Contains("covers:", StringComparison.Ordinal));

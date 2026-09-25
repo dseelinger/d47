@@ -15,6 +15,14 @@ counts and lists twice instead of once. A weapon modification with a different r
 manufacturer now counts under "no material total" rather than under the rank line, since it is not
 a rank problem.
 
+The Engineers Route, and the voice answer about which engineer to unlock next, now put engineers
+you only have to fly to ahead of ones whose hand-over is still to gather, and those ahead of ones
+whose invitation requirement is not met. Within that, they rank by planned work freed per jump,
+counted in jobs: grade 5 Long Range on twenty multi-cannons is one job, not twenty. Work that two
+engineers can both roll is credited to the higher-ranked one only. Each candidate now says "N
+planned jobs covered", and its working lists one `covers:` line per job, with a count such as ×20
+where the job spans several slots.
+
 When you are promoted, the ship's AI now makes one remark about it in its own voice. This covers
 Combat, Trade, Exploration, Mercenary, Exobiology and CQC, the Empire and Federation navies, and
 Powerplay rank. It keeps the career and the rank name as Elite gives them, for example "Trade,

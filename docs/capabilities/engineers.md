@@ -138,7 +138,7 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">4</span> The Route picks the one unlock that helps most.</h2>
-<svg viewBox="0 0 880 290" role="img" aria-label="The solver takes your planned modifications and names the unlock covering the most of them">
+<svg viewBox="0 0 880 290" role="img" aria-label="The solver takes your planned modifications and names the unlock that is easiest to reach and does the most per jump">
  <text x="30" y="40" font-size="15" font-weight="700" fill="var(--text-muted)">WHAT YOU PLANNED</text>
  <rect x="30" y="56" width="250" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="88" text-anchor="middle" font-size="16" fill="var(--text)">Dirty Drive Tuning</text>
@@ -151,14 +151,14 @@ nav_order: 108
  <rect x="332" y="86" width="228" height="116" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="446" y="130" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">ROUTE</text>
  <text x="446" y="160" text-anchor="middle" font-size="16" fill="var(--text-muted)">which single unlock</text>
- <text x="446" y="184" text-anchor="middle" font-size="16" fill="var(--text-muted)">covers the most of these?</text>
+ <text x="446" y="184" text-anchor="middle" font-size="16" fill="var(--text-muted)">does the most per jump?</text>
  <line x1="572" y1="144" x2="588" y2="144" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
  <polygon points="602,144 586,136 586,152" fill="var(--accent-muted)"/>
  <rect x="612" y="86" width="238" height="116" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="731" y="126" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">PROFESSOR PALIN</text>
  <text x="731" y="154" text-anchor="middle" font-size="16" fill="var(--text-muted)">3 steps, about 18 jumps</text>
  <text x="731" y="182" text-anchor="middle" font-size="16" fill="var(--accent)">covers 2 of the 3</text>
- <text x="440" y="252" text-anchor="middle" font-size="16" fill="var(--text-muted)">Not the shortest chain — the one that covers the most of what you planned.</text>
+ <text x="440" y="252" text-anchor="middle" font-size="16" fill="var(--text-muted)">Easiest to reach first, then the most planned jobs per jump.</text>
  <text x="440" y="278" text-anchor="middle" font-size="16" fill="var(--text-muted)">Counted in jumps, at your ship's range, from where you are standing.</text>
 </svg>
 <p class="body">Every step of the working is on the page on purpose. A ranking you cannot inspect is an oracle — and when it is wrong, or when you would simply rather go somewhere else, you could not tell a bad answer from a bug.</p>
@@ -329,14 +329,14 @@ second column beside it would only repeat them.
 #### How do I get everything my plans need
 
 ```text
-Felicity Farseer — 1 step, 131 ly, about 5 jumps, and 1 planned thing covered.
+Felicity Farseer — 1 step, 131 ly, about 5 jumps, and 1 planned job covered.
   Felicity Farseer at Farseer Inc in Deciat — 131 ly, about 5 jumps
       first: Gain exploration rank Scout or higher.
       hand over: Meta-alloys ×1
       grade 3 with them takes 2,000,000 cr of profit sold there
-      covers: Long Way (Krait MkII) · FrameShiftDrive — grade 3 Increased FSD Range
+      covers: grade 3 Increased FSD Range
 
-Professor Palin — 3 steps, 466 ly, about 18 jumps, and 2 planned things covered.
+Professor Palin — 3 steps, 466 ly, about 18 jumps, and 1 planned job covered.
   Elvira Martuuk at Long Sight Base in Khun — 182 ly, about 7 jumps
       first: Attain a maximum distance from your career start location of at least 300 light years.
       hand over: Soontill Relics ×3
@@ -346,8 +346,7 @@ Professor Palin — 3 steps, 466 ly, about 18 jumps, and 2 planned things covere
   Professor Palin at Abel Laboratory in Arque — 98 ly, about 4 jumps
       first: Attain a maximum distance from your career start location of at least 5,000 light years.
       hand over: Sensor Fragment ×25
-      covers: Bad Idea (Python) · MainEngines — grade 5 Dirty Drive Tuning
-      covers: Long Way (Krait MkII) · FrameShiftDrive — grade 3 Increased FSD Range
+      covers: grade 5 Dirty Drive Tuning
 ```
 
 **A solver rather than a display.** Walking one engineer's referral chain is exact and cheap, and it
@@ -356,21 +355,37 @@ plans. Marsha Hicks crafts multi-cannons, cannons, fragment cannons, fuel scoops
 limpet controllers, all at grade 5. So the best next unlock is the one that satisfies the most of
 what you have planned, not the shortest chain.
 
-**One unit, and it is jumps.** Distance converts at the range of the ship you are actually flying,
-and each stop carries its own leg, so a long chain of short hops and one long haul are compared on
-the same scale instead of being balanced by a tuning constant. **Colonia needs no rule of its own**:
-22,000 light years is hundreds of jumps and swamps any step count — and because the distance is
-measured from where you are standing, being in Colonia flips it automatically.
+**Effort first.** Each candidate gets a tier from the hardest stop in its chain: 0 when every stop
+is travel and rolling (already invited, already unlocked with rank to earn, or every requirement met
+and the hand-over aboard), 1 when a hand-over is still to gather, 2 when an invitation requirement is
+not met or cannot be read. A lower tier always ranks first. A commodity or material hand-over counts
+as held when the hold or the material lockers carry enough, plus what has already been handed over;
+bonds, bounty vouchers and on-foot tributes cannot be read, so they count as still to gather.
 
-**What is not a trip is not turned into one.** A tribute of fifty units is a shopping run to a system
-you know, and it is already inside the leg that reaches it. A combat rank is not a trip at all, so it
-is printed in Frontier's own words, breaks ties, and never becomes a number. That is also why the
-whole working is on the page: a ranking nobody can inspect is an oracle, and when it is wrong — or
-when you would simply rather go somewhere else — you cannot tell a bad answer from a bug.
+**Then value per jump.** Work is counted in jobs — one blueprint at one grade on one module kind —
+so grade 5 Long Range on twenty multi-cannons is one job over twenty slots:
 
-Distance stays the primary key deliberately. Making "you can just go and do it" a class above it
-would put an already-invited Colonia engineer ahead of one in the Bubble, and undo the thing Colonia
-needed no rule for.
+```text
+V = J + log2(1 + S) + B
+
+J = distinct jobs freed
+S = slots freed
+B = for each build, the jobs freed there over the jobs still blocked there
+```
+
+The score is `V / (1 + jumps)`, or light years where no jump range is known. Distance converts at the
+range of the ship you are actually flying, and each stop carries its own leg, so a long chain of
+short hops and one long haul are compared on the same scale. **Colonia needs no rule of its own**:
+22,000 light years is hundreds of jumps, and because the distance is measured from where you are
+standing, being in Colonia flips it automatically.
+
+**One at a time.** The best candidate is taken, what it frees leaves the outstanding set, and the
+rest are valued again. Two engineers who roll the same job do not both get credit for it; the one
+ranked lower lists only what nobody above it covers, and one left covering nothing joins the
+candidates that cover nothing, ranked by tier and then distance.
+
+The whole working is on the page: a ranking nobody can inspect is an oracle, and when it is wrong —
+or when you would rather go somewhere else — you cannot tell a bad answer from a bug.
 
 ### Distance is arithmetic, and that is deliberate
 
