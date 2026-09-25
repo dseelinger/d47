@@ -13,6 +13,10 @@ Power you are pledged to and your rank with it, from the Powerplay event Elite w
 you leave a Power it answers that you are not pledged. After you join or defect, the rank is given
 as not yet known until Elite next reports it.
 
+It also tells the model your merit total with that Power, from the same login event, and keeps it
+current each time Elite reports merits earned. Joining, defecting or leaving clears the total until
+Elite next reports it.
+
 ## 1.14.0 — The carrier balance counts its upkeep
 
 Elite takes your fleet carrier's upkeep at the Thursday weekly tick and writes nothing to the

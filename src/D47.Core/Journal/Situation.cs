@@ -329,7 +329,11 @@ public static class Situation
         // Joining or defecting carries no rank; 0 means not yet reported, not rank 0.
         var rank = pledge.Rank > 0 ? $"rank {pledge.Rank}" : "rank not yet known";
 
-        lines.Add($"Powerplay: pledged to {pledge.Power}, {rank}.");
+        var merits = pledge.Merits is { } total
+            ? $", {total:N0} merits"
+            : "";
+
+        lines.Add($"Powerplay: pledged to {pledge.Power}, {rank}{merits}.");
     }
 
     private static void AppendSession(CommanderGameState state, List<string> lines)

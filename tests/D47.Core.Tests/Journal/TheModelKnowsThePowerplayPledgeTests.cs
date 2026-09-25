@@ -33,7 +33,7 @@ public class TheModelKnowsThePowerplayPledgeTests
     [Fact]
     public void TheSnapshotNamesThePowerAndTheRank()
     {
-        Assert.Contains("Powerplay: pledged to Li Yong-Rui, rank 8.", Block(Snapshot));
+        Assert.Contains("Powerplay: pledged to Li Yong-Rui, rank 8, 45,263 merits.", Block(Snapshot));
     }
 
     [Fact]

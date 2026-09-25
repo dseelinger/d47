@@ -17,6 +17,9 @@ public sealed record PowerplayPledge(string? Power, int Rank = 0)
     /// <summary>Whether a Powerplay event has said either way.</summary>
     public bool IsKnown { get; init; }
 
+    /// <summary>The Commander's merit total with this Power; null until the journal reports it.</summary>
+    public long? Merits { get; init; }
+
     /// <summary>Whether this system's controlling Power is somebody else's.</summary>
     public bool IsRival(string? controllingPower) =>
         IsPledged
@@ -28,12 +31,20 @@ public sealed record PowerplayPledge(string? Power, int Rank = 0)
     {
         "PowerplayLeave" => Unpledged,
 
-        // Only the Powerplay snapshot carries a rank. Joining and defecting do not, and both start the
-        // ladder again under the new Power, so the rank goes back to nothing until the next snapshot.
+        // Only the Powerplay snapshot carries a rank and merits. Joining and defecting do not, and both
+        // start the ladder again under the new Power, so both go back to nothing until the next snapshot.
         "Powerplay" or "PowerplayJoin" or "PowerplayDefect" =>
             Named(journalEvent) is { } power
-                ? new PowerplayPledge(power, journalEvent.Int("Rank") ?? 0) { IsKnown = true }
+                ? new PowerplayPledge(power, journalEvent.Int("Rank") ?? 0)
+                {
+                    IsKnown = true,
+                    Merits = journalEvent.Kind == "Powerplay" ? journalEvent.Long("Merits") : null,
+                }
                 : this,
+
+        "PowerplayMerits" when IsPledged
+            && string.Equals(journalEvent.String("Power"), Power, StringComparison.OrdinalIgnoreCase) =>
+            journalEvent.Long("TotalMerits") is { } total ? this with { Merits = total } : this,
 
         "PowerplayRank" when IsPledged =>
             journalEvent.Int("Rank") is { } promoted ? this with { Rank = promoted } : this,
