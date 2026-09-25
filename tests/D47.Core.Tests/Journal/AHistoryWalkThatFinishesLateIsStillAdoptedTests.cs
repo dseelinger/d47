@@ -1,3 +1,4 @@
+using System.Globalization;
 using D47.Core.Journal;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -80,6 +81,76 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         store.RestoreLate();
 
         Assert.Equal("Colonia", store.Active!.Carrier.StarSystem);
+    }
+
+    /// <summary>
+    /// Elite writes a CarrierLocation with no callsign right after LoadGame, so the live state knows a
+    /// system before the walk finishes (#460).
+    /// </summary>
+    [Fact]
+    public void ALiveLocationWithNoCallsignTakesTheRecoveredCarrierAndKeepsItsSystem()
+    {
+        using var install = new TempInstall();
+        Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
+
+        var backfill = Backfill(install);
+        var store = StoreOver(backfill);
+
+        store.Apply(Event(LoadGame));
+        store.Apply(Event(LiveCarrierLocation("Giryak")));
+
+        backfill.Run(TestContext.Current.CancellationToken);
+        store.RestoreLate();
+
+        var carrier = store.Active!.Carrier;
+
+        Assert.True(carrier.Owned);
+        Assert.Equal("BNH-T2F", carrier.CallSign);
+        Assert.Equal("Sacred Fire", carrier.Name);
+        Assert.Equal(12345, carrier.Balance);
+        Assert.Equal(25000, carrier.Capacity);
+        Assert.Equal("Giryak", carrier.StarSystem);
+        Assert.Equal(DateTimeOffset.Parse("2026-09-24T17:07:14Z", CultureInfo.InvariantCulture), carrier.SeenAt);
+    }
+
+    [Fact]
+    public void LiveStatsBeforeAdoptionKeepTheLiveCarrierWhole()
+    {
+        using var install = new TempInstall();
+        Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
+
+        var backfill = Backfill(install);
+        var store = StoreOver(backfill);
+
+        store.Apply(Event(LoadGame));
+        store.Apply(Event(LiveCarrierLocation("Giryak")));
+        store.Apply(Event(LiveCarrierStats));
+        var live = store.Active!.Carrier;
+
+        backfill.Run(TestContext.Current.CancellationToken);
+        store.RestoreLate();
+
+        Assert.Same(live, store.Active!.Carrier);
+        Assert.Equal(777, store.Active!.Carrier.Balance);
+    }
+
+    [Fact]
+    public void ALiveLocationWithNoCarrierInHistoryStillHasNoCallsign()
+    {
+        using var install = new TempInstall();
+        Write(install, "Journal.2026-09-05T100000.01.log", LoadGame);
+
+        var backfill = Backfill(install);
+        var store = StoreOver(backfill);
+
+        store.Apply(Event(LoadGame));
+        store.Apply(Event(LiveCarrierLocation("Giryak")));
+
+        backfill.Run(TestContext.Current.CancellationToken);
+        store.RestoreLate();
+
+        Assert.False(store.Active!.Carrier.Owned);
+        Assert.Equal("Giryak", store.Active!.Carrier.StarSystem);
     }
 
     /// <summary>
@@ -221,6 +292,12 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
 
     private static string CarrierLocation(string system) =>
         $$"""{"timestamp":"2026-09-05T16:36:00Z","event":"CarrierLocation","CarrierID":3715429376,"CarrierType":"FleetCarrier","StarSystem":"{{system}}"}""";
+
+    private const string LiveCarrierStats =
+        """{"timestamp":"2026-09-24T17:08:00Z","event":"CarrierStats","CarrierID":3715429376,"Callsign":"BNH-T2F","Name":"Sacred Fire","Finance":{"CarrierBalance":777}}""";
+
+    private static string LiveCarrierLocation(string system) =>
+        $$"""{"timestamp":"2026-09-24T17:07:14Z","event":"CarrierLocation","CarrierID":3715429376,"CarrierType":"FleetCarrier","StarSystem":"{{system}}"}""";
 
     private static string Loadout(int shipId, string type) =>
         $$"""{"timestamp":"2026-09-05T12:00:00Z","event":"Loadout","ShipID":{{shipId}},"Ship":"{{type}}","Modules":[]}""";

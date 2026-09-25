@@ -114,6 +114,35 @@ public sealed record CarrierState
     public bool JumpScheduled => DestinationSystem is not null;
 
     /// <summary>
+    /// This recovered state with what <paramref name="newer"/> has set laid over it. A newer state that
+    /// holds a callsign is taken whole.
+    /// </summary>
+    public CarrierState With(CarrierState newer)
+    {
+        ArgumentNullException.ThrowIfNull(newer);
+
+        if (newer.Owned)
+        {
+            return newer;
+        }
+
+        return this with
+        {
+            Name = newer.Name ?? Name,
+            DisplayName = newer.DisplayName ?? DisplayName,
+            CarrierId = newer.CarrierId ?? CarrierId,
+            StarSystem = newer.StarSystem ?? StarSystem,
+            SeenAt = newer.SeenAt ?? SeenAt,
+            DestinationSystem = newer.DestinationSystem ?? DestinationSystem,
+            DepartureTime = newer.DepartureTime ?? DepartureTime,
+            DestinationBody = newer.DestinationBody ?? DestinationBody,
+            FuelLevel = newer.FuelLevel ?? FuelLevel,
+            TritiumInHold = newer.TritiumInHold ?? TritiumInHold,
+            TritiumInHoldUncertain = newer.TritiumInHoldUncertain || TritiumInHoldUncertain,
+        };
+    }
+
+    /// <summary>
     /// Whether an event is about the Commander's own fleet carrier rather than a squadron's (reported
     /// 2026-08-21: "That's not where my Fleet Carrier is").
     /// </summary>

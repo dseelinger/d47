@@ -111,9 +111,10 @@ public sealed class GameStateStore
                 state.Fleet = fleet;
             }
 
-            if (!state.Carrier.IsKnown && RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
+            // A CarrierLocation after LoadGame gives the live state a system but never a callsign.
+            if (!state.Carrier.Owned && RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
             {
-                state.Carrier = carrier;
+                state.Carrier = carrier.With(state.Carrier);
             }
 
             // Merged rather than taken or refused: a ship boarded this session is in the live set and every

@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.8 — Your carrier after a restart
+
+Fleet > Carrier shows your fleet carrier again when d47 starts while Elite is already running. It
+read "No carrier has turned up in the journal yet" because the carrier's location, written at login
+without a callsign, stopped d47 taking the callsign, name and stats from older journals. It now takes
+them and keeps the location from this session.
+
 ## 1.13.7 — Grades picked, not typed
 
 A grade is now chosen from a row of buttons, and one press sets it. For a suit or weapon the row
