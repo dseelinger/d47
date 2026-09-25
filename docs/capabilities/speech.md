@@ -627,6 +627,9 @@ The four built-ins tick their effects at the default order and default levels:
 | Vocoder | Cylon, Chorus, Reverb |
 | Deep core | Pitch down, Octave-down layer, Reverb |
 | Damaged core | Metallic resonance, Ring modulation, Glitch |
+| Ring-mod rasp | Deep ring mod |
+| 8-bit computer | Bitcrusher |
+| Flanged vocoder | Cylon, Flanger |
 
 A saved preset is the Commander's own: its ticks, order and every level, saved under a name.
 Choosing a built-in or a saved preset writes its effects over whatever is set now; choosing Custom
@@ -654,6 +657,21 @@ voice: 5% a level, 60% at the default of 12.
 Three delayed copies, each swept, mixed in under the dry voice. Depth is the copies' volume: 5% a
 level, 80% at the default of 16.
 
+##### Flanger: rate {#guardian-voice-flanger}
+
+One delayed copy with feedback, its 1–5 ms delay swept. Rate is how fast the sweep runs: a
+twentieth of a hertz a level, 0.25 Hz at the default of 5.
+
+##### Phaser: rate {#guardian-voice-phaser}
+
+Six allpass stages with their corner swept together between 300 and 3,000 Hz. Rate is how fast the
+sweep runs: a twentieth of a hertz a level, 0.4 Hz at the default of 8.
+
+##### Wah: mix {#guardian-voice-wah}
+
+A band-pass whose centre follows the speech's own loudness, between 400 and 2,200 Hz. Mix is its
+share of the output: 5% a level, 70% at the default of 14.
+
 ##### Metallic resonance: amount {#guardian-voice-comb}
 
 A short feedback comb filter. Amount is its share of the output, the rest being the voice as it came
@@ -663,6 +681,25 @@ in: 5% a level, 60% at the default of 12.
 
 A slow ring modulator blended with the dry voice. Mix is its share of the output: 5% a level, 35% at
 the default of 7.
+
+##### Deep ring mod: freq {#guardian-voice-deep-ring-mod}
+
+A ring modulator well below speech pitch, with no dry signal left in. Freq is the carrier: 5 Hz a
+level, 30 Hz at the default of 6.
+
+##### Tremolo: rate {#guardian-voice-tremolo}
+
+Amplitude modulation. Rate is how fast the volume pulses: half a hertz a level, 6 Hz at the default
+of 12.
+
+##### Overdrive: drive {#guardian-voice-overdrive}
+
+Soft clipping through tanh. Drive is the gain going into it: half a level, 4 at the default of 8.
+
+##### Bitcrusher: bits {#guardian-voice-bitcrusher}
+
+Sample-and-hold to 8 kHz, then bit reduction. Bits is how many survive: 16 at level 1 down to 2 at
+level 20, 5 at the default of 16.
 
 ##### Glitch: rate {#guardian-voice-glitch}
 

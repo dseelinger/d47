@@ -34,6 +34,9 @@ public class GuardianPresetsTests
     [InlineData("vocoder", "cylon", "chorus", "reverb")]
     [InlineData("deep-core", "pitchDown", "octaveDown", "reverb")]
     [InlineData("damaged-core", "comb", "ringMod", "glitch")]
+    [InlineData("ring-mod-rasp", "deepRingMod")]
+    [InlineData("8-bit-computer", "bitcrusher")]
+    [InlineData("flanged-vocoder", "cylon", "flanger")]
     public void WritingABuiltinTicksExactlyItsEffectsAtDefaultOrderAndLevels(string id, params string[] ticked)
     {
         var builtin = GuardianPresets.Find(id)!;

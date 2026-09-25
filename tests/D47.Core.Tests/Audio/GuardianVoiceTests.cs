@@ -46,7 +46,7 @@ public class GuardianVoiceTests
                 .Sum(n => Math.Sin(2 * Math.PI * hertz * n * index / Rate) / n) * amplitude)
             .ToArray());
 
-    private static AudioClip WhiteNoise(double seconds = 2.0)
+    private static AudioClip WhiteNoise(double seconds = 2.0, double amplitude = 0.2)
     {
         var state = 12345u;
 
@@ -54,9 +54,25 @@ public class GuardianVoiceTests
             .Select(_ =>
             {
                 state = (state * 1664525u) + 1013904223u;
-                return (((state >> 8) / 16777215.0 * 2) - 1) * 0.2;
+                return (((state >> 8) / 16777215.0 * 2) - 1) * amplitude;
             })
             .ToArray());
+    }
+
+    /// <summary>The magnitude-weighted mean frequency across the given bins.</summary>
+    private static double Centroid(double[] samples, IEnumerable<double> bins)
+    {
+        var weighted = 0.0;
+        var total = 0.0;
+
+        foreach (var hertz in bins)
+        {
+            var magnitude = Magnitude(samples, hertz);
+            weighted += hertz * magnitude;
+            total += magnitude;
+        }
+
+        return total > 0 ? weighted / total : 0;
     }
 
     internal static double[] Samples(AudioClip clip)
@@ -217,6 +233,105 @@ public class GuardianVoiceTests
 
         Assert.True(Rms(tail) > 0.001, $"the tail is at {Rms(tail):F4} RMS");
         Assert.Equal(0, samples[^1]);
+    }
+
+    [Fact]
+    public void DeepRingModPutsSidebandsThirtyHertzEitherSideWellAboveTheCarrier()
+    {
+        var treated = Middle(GuardianVoice.Apply(Tone(1_000), Ticking("deepRingMod"), BasePitch));
+
+        var carrier = Magnitude(treated, 1_000);
+        var lower = Magnitude(treated, 970);
+        var upper = Magnitude(treated, 1_030);
+
+        Assert.True(lower > carrier * 31.6, $"970 Hz is only {20 * Math.Log10(lower / carrier):F1} dB above 1 kHz");
+        Assert.True(upper > carrier * 31.6, $"1030 Hz is only {20 * Math.Log10(upper / carrier):F1} dB above 1 kHz");
+    }
+
+    [Fact]
+    public void OverdriveAddsAThirdHarmonic()
+    {
+        var line = Tone(440);
+        var dry = Middle(line);
+        var treated = Middle(GuardianVoice.Apply(line, Ticking("overdrive"), BasePitch));
+
+        Assert.True(Magnitude(dry, 1_320) < Magnitude(dry, 440) * 0.02, "the dry tone already had a 1320 Hz component");
+        Assert.True(
+            Magnitude(treated, 1_320) > Magnitude(dry, 440) * 0.02,
+            $"1320 Hz came out at {Magnitude(treated, 1_320):F5}, no louder than the dry tone's noise floor");
+    }
+
+    [Fact]
+    public void TremoloMakesRmsRiseAndFallSixTimesASecond()
+    {
+        var treated = Samples(GuardianVoice.Apply(Tone(1_000, seconds: 1.0), Ticking("tremolo"), BasePitch));
+        var windowSamples = (int)(0.02 * Rate);
+        var windows = treated.Length / windowSamples;
+
+        var rms = Enumerable.Range(0, windows)
+            .Select(w => Rms(treated.AsSpan(w * windowSamples, windowSamples)))
+            .ToArray();
+
+        var minima = 0;
+
+        for (var index = 1; index < rms.Length - 1; index++)
+        {
+            if (rms[index] < rms[index - 1] && rms[index] < rms[index + 1])
+            {
+                minima++;
+            }
+        }
+
+        Assert.InRange(minima, 5, 7);
+    }
+
+    [Fact]
+    public void BitcrusherHoldsSixSampleRunsWithAtMostThirtyTwoDistinctValues()
+    {
+        var treated = Samples(GuardianVoice.Apply(Tone(2, seconds: 1.0, amplitude: 0.9), Ticking("bitcrusher"), BasePitch));
+
+        Assert.True(treated.Distinct().Count() <= 32, $"{treated.Distinct().Count()} distinct values came out");
+
+        var runStart = 0;
+
+        for (var index = 1; index <= treated.Length; index++)
+        {
+            if (index == treated.Length || treated[index] != treated[runStart])
+            {
+                Assert.True((index - runStart) % 6 == 0, $"a run of {index - runStart} samples starting at {runStart}");
+                runStart = index;
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("flanger")]
+    [InlineData("phaser")]
+    public void SweepsMoveTheNotchOverASecond(string treatment)
+    {
+        var treated = Samples(GuardianVoice.Apply(WhiteNoise(seconds: 2.0), Ticking(treatment), BasePitch));
+        var candidates = Enumerable.Range(4, 56).Select(step => step * 50.0).ToArray();
+
+        var early = treated.AsSpan(0, (int)(0.1 * Rate)).ToArray();
+        var late = treated.AsSpan(Rate, (int)(0.1 * Rate)).ToArray();
+
+        var earlyNotch = candidates.MinBy(hertz => Magnitude(early, hertz));
+        var lateNotch = candidates.MinBy(hertz => Magnitude(late, hertz));
+
+        Assert.NotEqual(earlyNotch, lateNotch);
+    }
+
+    [Fact]
+    public void WahsCentreFollowsLoudness()
+    {
+        var bins = Enumerable.Range(4, 19).Select(step => step * 100.0).ToArray();
+
+        var loud = Middle(GuardianVoice.Apply(WhiteNoise(seconds: 1.0, amplitude: 0.8), Ticking("wah"), BasePitch));
+        var quiet = Middle(GuardianVoice.Apply(WhiteNoise(seconds: 1.0, amplitude: 0.008), Ticking("wah"), BasePitch));
+
+        Assert.True(
+            Centroid(loud, bins) > Centroid(quiet, bins),
+            $"the loud burst centred at {Centroid(loud, bins):F0} Hz, the quiet one at {Centroid(quiet, bins):F0} Hz");
     }
 
     [Fact]

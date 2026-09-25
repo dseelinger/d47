@@ -49,6 +49,12 @@ public static class GuardianPresets
         {
             Id = "damaged-core", Label = "Damaged core", TickedIds = ["comb", "ringMod", "glitch"],
         },
+        new GuardianBuiltinPreset { Id = "ring-mod-rasp", Label = "Ring-mod rasp", TickedIds = ["deepRingMod"] },
+        new GuardianBuiltinPreset { Id = "8-bit-computer", Label = "8-bit computer", TickedIds = ["bitcrusher"] },
+        new GuardianBuiltinPreset
+        {
+            Id = "flanged-vocoder", Label = "Flanged vocoder", TickedIds = ["cylon", "flanger"],
+        },
     ];
 
     /// <summary>The built-in with this id, or null.</summary>

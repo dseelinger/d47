@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.18.0 — Seven more effects join the Guardian voice chain
+
+Flanger, phaser and wah now run after Chorus; deep ring mod after Ring modulation; tremolo,
+overdrive and bitcrusher before Glitch. Each has its own level, the same as every other Guardian
+voice effect. Three new presets use them: Ring-mod rasp, 8-bit computer and Flanged vocoder.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

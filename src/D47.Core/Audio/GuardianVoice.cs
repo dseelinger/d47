@@ -90,6 +90,39 @@ public static class GuardianVoice
         },
         new GuardianEffect
         {
+            Id = "flanger",
+            Label = "Flanger",
+            Help = "One delayed copy, its delay swept with feedback; rate is how fast the sweep runs.",
+            Parameter = "Rate",
+            Unit = "Hz",
+            DefaultLevel = 5,
+            Value = level => level / 20.0,
+            Run = (signal, hertz, _, rate) => Flanger(signal, hertz, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "phaser",
+            Label = "Phaser",
+            Help = "Six allpass stages with their corner swept together; rate is how fast the sweep runs.",
+            Parameter = "Rate",
+            Unit = "Hz",
+            DefaultLevel = 8,
+            Value = level => level / 20.0,
+            Run = (signal, hertz, _, rate) => Phaser(signal, hertz, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "wah",
+            Label = "Wah",
+            Help = "A band-pass whose centre follows the speech's loudness; mix is its share of the output.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 14,
+            Value = level => level / 20.0,
+            Run = (signal, wet, _, rate) => Wah(signal, wet, rate),
+        },
+        new GuardianEffect
+        {
             Id = "comb",
             Label = "Metallic resonance",
             Help = "A 9 ms feedback comb filter; amount is its share of the output.",
@@ -108,7 +141,51 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 7,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => RingMod(signal, wet, rate),
+            Run = (signal, wet, _, rate) => RingMod(signal, wet, RingHz, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "deepRingMod",
+            Label = "Deep ring mod",
+            Help = "A ring modulator with no dry signal, well below speech pitch; freq sets the carrier.",
+            Parameter = "Freq",
+            Unit = "Hz",
+            DefaultLevel = 6,
+            Value = level => 5.0 * level,
+            Run = (signal, hertz, _, rate) => RingMod(signal, 1, hertz, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "tremolo",
+            Label = "Tremolo",
+            Help = "Amplitude modulation; rate is how fast the volume pulses.",
+            Parameter = "Rate",
+            Unit = "Hz",
+            DefaultLevel = 12,
+            Value = level => level / 2.0,
+            Run = (signal, hertz, _, rate) => Tremolo(signal, hertz, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "overdrive",
+            Label = "Overdrive",
+            Help = "Soft clipping through tanh; drive is the gain going into it.",
+            Parameter = "Drive",
+            Unit = "×",
+            DefaultLevel = 8,
+            Value = level => level / 2.0,
+            Run = (signal, drive, _, rate) => Overdrive(signal, drive, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "bitcrusher",
+            Label = "Bitcrusher",
+            Help = "Sample-and-hold to 8 kHz, then bit reduction; bits is how many survive.",
+            Parameter = "Bits",
+            Unit = "bit",
+            DefaultLevel = 16,
+            Value = level => Math.Round(16 + ((2.0 - 16.0) * (level - 1) / 19.0)),
+            Run = (signal, bits, _, rate) => Bitcrusher(signal, bits, rate),
         },
         new GuardianEffect
         {
@@ -165,6 +242,35 @@ public static class GuardianVoice
     private const double CombFeedback = 0.7;
 
     private const double RingHz = 45;
+
+    private const double FlangerMinMs = 1;
+    private const double FlangerMaxMs = 5;
+    private const double FlangerFeedback = 0.6;
+    private const double FlangerDry = 0.7;
+    private const double FlangerWet = 0.7;
+
+    private const int PhaserStages = 6;
+    private const double PhaserMinHz = 300;
+    private const double PhaserMaxHz = 3_000;
+    private const double PhaserFeedback = 0.5;
+    private const double PhaserDry = 0.5;
+    private const double PhaserWet = 0.5;
+
+    private const double WahMinHz = 400;
+    private const double WahMaxHz = 2_200;
+    private const double WahQ = 4;
+    private const double WahAttackSeconds = 0.010;
+    private const double WahReleaseSeconds = 0.120;
+
+    /// <summary>How often the band-pass centre is recomputed; more often than this buzzes rather than sweeps.</summary>
+    private const double WahControlSeconds = 0.005;
+
+    private const double TremoloDepth = 0.5;
+
+    private const double OverdriveDry = 0.5;
+    private const double OverdriveWet = 0.5;
+
+    private const double BitcrusherSampleHz = 8_000;
 
     private static readonly (double DelayMs, double Feedback)[] ReverbCombs =
     [
@@ -600,15 +706,150 @@ public static class GuardianVoice
         return Mix(signal, 1 - wet, fed, wet);
     }
 
-    private static double[] RingMod(double[] signal, double wet, int rate)
+    private static double[] RingMod(double[] signal, double wet, double hertz, int rate)
     {
         var output = new double[signal.Length];
         var dry = 1 - wet;
 
         for (var index = 0; index < signal.Length; index++)
         {
-            var carrier = Math.Sin(2 * Math.PI * RingHz * index / rate);
+            var carrier = Math.Sin(2 * Math.PI * hertz * index / rate);
             output[index] = (dry * signal[index]) + (wet * signal[index] * carrier);
+        }
+
+        return output;
+    }
+
+    /// <summary>One delayed copy read from a feedback line whose delay is swept sinusoidally.</summary>
+    private static double[] Flanger(double[] signal, double rateHz, int rate)
+    {
+        var output = new double[signal.Length];
+        var buffer = new double[signal.Length];
+        var center = (FlangerMinMs + FlangerMaxMs) / 2;
+        var depth = (FlangerMaxMs - FlangerMinMs) / 2;
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            var seconds = (double)index / rate;
+            var delayMs = center + (depth * Math.Sin(2 * Math.PI * rateHz * seconds));
+            var delayed = Read(buffer, index - (delayMs / 1000 * rate));
+
+            buffer[index] = signal[index] + (FlangerFeedback * delayed);
+            output[index] = (FlangerDry * signal[index]) + (FlangerWet * delayed);
+        }
+
+        return output;
+    }
+
+    /// <summary><see cref="PhaserStages"/> first-order allpass stages in series, their corner swept together.</summary>
+    private static double[] Phaser(double[] signal, double rateHz, int rate)
+    {
+        var output = new double[signal.Length];
+        var x1 = new double[PhaserStages];
+        var y1 = new double[PhaserStages];
+        var feedback = 0.0;
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            var seconds = (double)index / rate;
+            var sweep = (Math.Sin(2 * Math.PI * rateHz * seconds) + 1) / 2;
+            var corner = PhaserMinHz + ((PhaserMaxHz - PhaserMinHz) * sweep);
+            var tan = Math.Tan(Math.PI * corner / rate);
+            var a = (tan - 1) / (tan + 1);
+
+            var stage = signal[index] + (PhaserFeedback * feedback);
+
+            for (var s = 0; s < PhaserStages; s++)
+            {
+                var y = (a * stage) + x1[s] - (a * y1[s]);
+                x1[s] = stage;
+                y1[s] = y;
+                stage = y;
+            }
+
+            feedback = stage;
+            output[index] = (PhaserDry * signal[index]) + (PhaserWet * stage);
+        }
+
+        return output;
+    }
+
+    /// <summary>A band-pass biquad whose centre tracks an envelope follower on the input's loudness.</summary>
+    private static double[] Wah(double[] signal, double wet, int rate)
+    {
+        var dry = 1 - wet;
+        var output = new double[signal.Length];
+        var envelope = 0.0;
+        var attack = Math.Exp(-1.0 / (WahAttackSeconds * rate));
+        var release = Math.Exp(-1.0 / (WahReleaseSeconds * rate));
+        var filter = new Biquad();
+        var controlSamples = Math.Max(1, (int)Math.Round(WahControlSeconds * rate));
+        filter.SetBandPass(WahMinHz, WahQ, rate);
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            var x = signal[index];
+            var level = Math.Abs(x);
+            envelope = level > envelope
+                ? (attack * envelope) + ((1 - attack) * level)
+                : (release * envelope) + ((1 - release) * level);
+
+            if (index % controlSamples == 0)
+            {
+                var frequency = WahMinHz + ((WahMaxHz - WahMinHz) * Math.Clamp(envelope, 0, 1));
+                filter.SetBandPass(frequency, WahQ, rate);
+            }
+
+            output[index] = (dry * x) + (wet * filter.Next(x));
+        }
+
+        return output;
+    }
+
+    private static double[] Tremolo(double[] signal, double hertz, int rate)
+    {
+        var output = new double[signal.Length];
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            var gain = 1 - (TremoloDepth * 0.5 * (1 - Math.Cos(2 * Math.PI * hertz * index / rate)));
+            output[index] = signal[index] * gain;
+        }
+
+        return output;
+    }
+
+    private static double[] Overdrive(double[] signal, double drive, int rate)
+    {
+        var output = new double[signal.Length];
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            output[index] = (OverdriveDry * signal[index]) + (OverdriveWet * Math.Tanh(drive * signal[index]));
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Sample-and-hold to <see cref="BitcrusherSampleHz"/>, then a mid-tread quantiser at <paramref name="bits"/>
+    /// bits either side of zero, so silence stays silent.
+    /// </summary>
+    private static double[] Bitcrusher(double[] signal, double bits, int rate)
+    {
+        var half = Math.Pow(2, Math.Round(bits) - 1);
+        var step = Math.Max(1, (int)Math.Round(rate / BitcrusherSampleHz));
+        var output = new double[signal.Length];
+        var held = 0.0;
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            if (index % step == 0)
+            {
+                held = signal[index];
+            }
+
+            output[index] = Math.Clamp(Math.Round(held * half) / half, -1, 1);
         }
 
         return output;
@@ -961,6 +1202,39 @@ public static class GuardianVoice
                 re[index] /= length;
                 im[index] /= length;
             }
+        }
+    }
+
+    /// <summary>A second-order band-pass section, direct form 1, recomputed for a new centre each sample.</summary>
+    private struct Biquad
+    {
+        private double _b0, _b2, _a1, _a2;
+        private double _x1, _x2, _y1, _y2;
+
+        /// <summary>Cookbook constant-skirt-gain band-pass coefficients for a centre frequency and Q.</summary>
+        public void SetBandPass(double frequency, double q, int rate)
+        {
+            var actualRate = rate > 0 ? rate : AudioFormat.Standard.SampleRate;
+            var w0 = 2 * Math.PI * Math.Clamp(frequency, 1, actualRate * 0.45) / actualRate;
+            var alpha = Math.Sin(w0) / (2 * q);
+            var a0 = 1 + alpha;
+
+            _b0 = alpha / a0;
+            _b2 = -alpha / a0;
+            _a1 = -2 * Math.Cos(w0) / a0;
+            _a2 = (1 - alpha) / a0;
+        }
+
+        public double Next(double x)
+        {
+            var y = (_b0 * x) + (_b2 * _x2) - (_a1 * _y1) - (_a2 * _y2);
+
+            _x2 = _x1;
+            _x1 = x;
+            _y2 = _y1;
+            _y1 = y;
+
+            return y;
         }
     }
 
