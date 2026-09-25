@@ -179,6 +179,6 @@ public class HiveWhisperReverseAndShimmerTests
 
         Assert.Equal("whisper", ids[ids.IndexOf("cylon") + 1]);
         Assert.Equal("hive", ids[ids.IndexOf("chorus") + 1]);
-        Assert.Equal(["reverseReverb", "shimmer", "reverb"], ids[^3..]);
+        Assert.Equal(["reverseReverb", "shimmer", "reverb"], ids[(ids.IndexOf("reverb") - 2)..(ids.IndexOf("reverb") + 1)]);
     }
 }

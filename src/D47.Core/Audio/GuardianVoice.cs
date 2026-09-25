@@ -1106,13 +1106,21 @@ public static class GuardianVoice
 
     /// <summary>
     /// Sample-and-hold to <see cref="BitcrusherSampleHz"/>, then a mid-tread quantiser at <paramref name="bits"/>
-    /// bits either side of zero, so silence stays silent.
+    /// bits either side of zero, scaled to the clip's peak so a quiet clip keeps its levels and silence stays
+    /// silent.
     /// </summary>
     private static double[] Bitcrusher(double[] signal, double bits, int rate)
     {
-        var half = Math.Pow(2, Math.Round(bits) - 1);
-        var step = Math.Max(1, (int)Math.Round(rate / BitcrusherSampleHz));
+        var peak = signal.Length == 0 ? 0 : signal.Max(Math.Abs);
         var output = new double[signal.Length];
+
+        if (peak == 0)
+        {
+            return output;
+        }
+
+        var half = (Math.Pow(2, Math.Round(bits) - 1) - 1) / peak;
+        var step = Math.Max(1, (int)Math.Round(rate / BitcrusherSampleHz));
         var held = 0.0;
 
         for (var index = 0; index < signal.Length; index++)
