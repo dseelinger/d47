@@ -30,6 +30,10 @@ puts it through at whatever strength the level sets, losing stretches of the voi
 the weaker it gets. Respirator adds a synthesised breath after each sentence. Three new presets
 use them: Helmet comms, Respirator and Hologram.
 
+Pressing **Test** under Guardian Voice Effects closed D47 when the voice service returned no audio.
+It now says under the row that the test could not be done, and why. The same applies to every other
+setting with a button that speaks.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

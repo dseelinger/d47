@@ -359,6 +359,24 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     }
 
     [AvaloniaFact]
+    public void ATestTheVoiceCannotSayIsNotedRatherThanThrown()
+    {
+        var (host, _) = OpenVoice(guardianTest: _ =>
+            Task.FromException<string?>(new TtsException("Edge Neural returned no audio for \"Commander.\".")));
+        var test = (Button)host.View.ControlFor(SpeechCapability.GuardianTestKey)!;
+
+        Press(test);
+        Jobs();
+
+        Assert.Equal("Test", test.Content);
+        Assert.Contains(
+            Page(host.View).GetVisualDescendants().OfType<TextBlock>(),
+            text => text.IsVisible && (text.Text ?? string.Empty).Contains("returned no audio", StringComparison.Ordinal));
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
     public void NoEffectIsATileInAGrid()
     {
         var (host, settings) = OpenVoice();

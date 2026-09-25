@@ -3105,7 +3105,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 Note(message, said);
             }
         }
-        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+        catch (Exception ex) when (ex is D47.Core.Audio.TtsException or HttpRequestException or IOException
+                                       or TaskCanceledException)
         {
             Note(message, $"{row.Label} could not be done: {ex.Message}");
         }

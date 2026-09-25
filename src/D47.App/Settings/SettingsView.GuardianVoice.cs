@@ -1020,7 +1020,7 @@ public partial class SettingsView
                 Note(message, said);
             }
         }
-        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+        catch (Exception ex) when (ex is TtsException or HttpRequestException or IOException or TaskCanceledException)
         {
             Note(message, $"{row.Label} could not be done: {ex.Message}");
         }
