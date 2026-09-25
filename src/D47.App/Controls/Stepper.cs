@@ -35,6 +35,10 @@ public sealed class Stepper : ContentControl, IChoiceControl
     public static readonly StyledProperty<IReadOnlyList<ChoiceStatus?>> StatusesProperty =
         AvaloniaProperty.Register<Stepper, IReadOnlyList<ChoiceStatus?>>(nameof(Statuses), []);
 
+    /// <summary>Whether a press past either end wraps round; when false, the arrow at that end is disabled.</summary>
+    public static readonly StyledProperty<bool> WrapsProperty =
+        AvaloniaProperty.Register<Stepper, bool>(nameof(Wraps), true);
+
     /// <summary>Raised when the choice changes by a press — never by setting <see cref="SelectedIndex"/>.</summary>
     public event EventHandler? SelectionChanged;
 
@@ -166,6 +170,12 @@ public sealed class Stepper : ContentControl, IChoiceControl
         set => SetValue(StatusesProperty, value);
     }
 
+    public bool Wraps
+    {
+        get => GetValue(WrapsProperty);
+        set => SetValue(WrapsProperty, value);
+    }
+
     public string? SelectedItem =>
         SelectedIndex >= 0 && SelectedIndex < ItemsSource.Count ? ItemsSource[SelectedIndex] : null;
 
@@ -176,7 +186,8 @@ public sealed class Stepper : ContentControl, IChoiceControl
         if (change.Property == ItemsSourceProperty
             || change.Property == SelectedIndexProperty
             || change.Property == ConsequencesProperty
-            || change.Property == StatusesProperty)
+            || change.Property == StatusesProperty
+            || change.Property == WrapsProperty)
         {
             Sync();
         }
@@ -211,6 +222,12 @@ public sealed class Stepper : ContentControl, IChoiceControl
             return;
         }
 
+        if (!Wraps && SelectedIndex >= 0
+            && SelectedIndex + delta is var wanted && (wanted < 0 || wanted >= ItemsSource.Count))
+        {
+            return;
+        }
+
         // From nothing chosen, the first press reveals an end rather than skipping past it: Next lands
         // on the first item, Previous on the last.
         SelectedIndex = SelectedIndex < 0
@@ -241,8 +258,8 @@ public sealed class Stepper : ContentControl, IChoiceControl
         _value.Text = SelectedItem ?? string.Empty;
 
         var few = ItemsSource.Count <= 1;
-        _previous.IsEnabled = !few;
-        _next.IsEnabled = !few;
+        _previous.IsEnabled = !few && (Wraps || SelectedIndex != 0);
+        _next.IsEnabled = !few && (Wraps || SelectedIndex != ItemsSource.Count - 1);
 
         _position.Text = SelectedIndex >= 0 && ItemsSource.Count > 0
             ? $"{SelectedIndex + 1} / {ItemsSource.Count}"

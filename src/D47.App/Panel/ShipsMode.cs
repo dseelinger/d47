@@ -442,7 +442,7 @@ public sealed class ShipsMode(
             () => checklists.Decline(id));
     }
 
-    /// <summary>Power and jump range, live while the build is edited (Phase 38).</summary>
+    /// <summary>Jump range, live while the build is edited (Phase 38).</summary>
     public IReadOnlyList<LoadoutGauge> Gauges(string item)
     {
         if (Resolve(item) is not { } build)
@@ -452,111 +452,25 @@ public sealed class ShipsMode(
 
         var gauges = ShipGauges.Read(build, Picture(build)?.Loadout, LiveDraw(build));
 
-        if (gauges.Silent is { Length: > 0 } why)
-        {
-            return [new LoadoutGauge("Power", why, 0, LoadoutTone.Muted)];
-        }
-
-        var drawn = new List<LoadoutGauge>();
-
-        if (gauges.Power is { } power)
-        {
-            drawn.Add(Gauge(power));
-        }
-
-        if (gauges.Jump is { } jump)
-        {
-            drawn.Add(Gauge(jump, gauges.Unmodelled));
-        }
-
-        return drawn;
+        return gauges.Jump is { } jump ? [Gauge(jump, gauges.Unmodelled)] : [];
     }
 
-    /// <summary>
-    /// The power bar: split into one span per priority group where every drawing slot's group is
-    /// known, and marked where the damaged-plant thresholds and the retracted draw sit (#253).
-    /// </summary>
-    private static LoadoutGauge Gauge(PowerGauge power)
+    /// <summary>The power budget, or why there is none (#469).</summary>
+    public LoadoutPower? Power(string item)
     {
-        var modelled = power.Kind == FigureKind.Modelled;
-
-        if (power.Capacity is not { } made || made <= 0)
+        if (Resolve(item) is not { } build)
         {
-            // A build with no plant d47 can see.
-            return new LoadoutGauge("Power", $"{Megawatts(power.Deployed)} drawn", 0, LoadoutTone.Muted)
-            {
-                Note = "No power plant I can see, so there is nothing to weigh that against.",
-                Modelled = modelled,
-            };
+            return null;
         }
 
-        var reading =
-            $"{Megawatts(power.Deployed)} of {Megawatts(made)} · {Percent(power.DeployedShare)} deployed";
+        var gauges = ShipGauges.Read(build, Picture(build)?.Loadout, LiveDraw(build));
 
-        // The E:D PvE Combat wiki's Power Priorities page, a community source rather than a Frontier one:
-        // malfunctioning (integrity under 80%, at random) gives 40% output, destroyed (0%) gives 50%, and
-        // both together give 20%.
-        var marks = new List<LoadoutMark>
+        if (gauges.Silent is { Length: > 0 } why)
         {
-            new(power.Retracted / made, $"{Percent(power.RetractedShare)} retracted"),
-            new(0.2, "both"),
-            new(0.4, "malfunctioning"),
-            new(0.5, "destroyed"),
-        };
-
-        List<LoadoutSegment> segments;
-        List<LoadoutMark> scale;
-        string? note;
-
-        if (power.Groups is { } groups)
-        {
-            segments = [];
-            scale = [];
-
-            var cumulative = 0.0;
-
-            foreach (var group in groups.OrderBy(pair => pair.Key))
-            {
-                var share = group.Value / made;
-
-                segments.Add(new LoadoutSegment(group.Key, share));
-                cumulative += share;
-
-                scale.Add(new LoadoutMark(
-                    cumulative, $"{group.Key.ToString(CultureInfo.InvariantCulture)}: {Megawatts(group.Value)}"));
-            }
-
-            note = power.Overage is { } over ? $"{Megawatts(over)} over with the hardpoints out." : null;
-        }
-        else
-        {
-            segments = [];
-
-            // **Three figures under the points they belong to** (the Commander's instruction, 2026-09-01).
-            scale =
-            [
-                new LoadoutMark(power.Retracted / made, Percent(power.RetractedShare)),
-                new LoadoutMark(1, "100%"),
-                new LoadoutMark(power.Deployed / made, Percent(power.DeployedShare)),
-            ];
-
-            note = power.Overage is { } over
-                ? $"{Megawatts(over)} over with the hardpoints out."
-                : "Board this ship once to read its priority groups.";
+            return new LoadoutPower(null, why);
         }
 
-        return new LoadoutGauge(
-            "Power",
-            reading,
-            power.Deployed / made,
-            power.Fits ? LoadoutTone.Body : LoadoutTone.Danger)
-        {
-            Marks = marks,
-            Scale = scale,
-            Segments = segments,
-            Note = note,
-            Modelled = modelled,
-        };
+        return gauges.Power is { } power ? new LoadoutPower(power, null) : null;
     }
 
     /// <summary>The jump bar, worst to best, with the game's own figure at the far end.</summary>
@@ -592,11 +506,6 @@ public sealed class ShipsMode(
 
     private static string LightYears(double value) =>
         value.ToString("0.0", CultureInfo.InvariantCulture);
-
-    private static string Percent(double? share) =>
-        share is { } fraction
-            ? $"{(fraction * 100).ToString("0", CultureInfo.InvariantCulture)}%"
-            : "—";
 
     /// <summary>
     /// The hull's slots, grouped, whole, and with the cosmetics off them (remediation.md 12, items 1,

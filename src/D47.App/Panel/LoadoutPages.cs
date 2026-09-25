@@ -35,6 +35,9 @@ public static class LoadoutPages
     /// <summary>And a slot's, below it.</summary>
     public const string SlotPrefix = "loadout.slot:";
 
+    /// <summary>And a ship's Power page, beside its slots (#469).</summary>
+    public const string PowerPrefix = "loadout.power:";
+
     /// <summary>The third mode: what every plan needs that the Commander is not carrying.</summary>
     public const string CarrierRoot = "loadout.carrier";
 
@@ -64,6 +67,12 @@ public static class LoadoutPages
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
             return new CarrierPage(carrier, copy: copy, settingsStrip: carrierSettingsStrip?.Invoke());
+        }
+
+        if (crumb.Key.StartsWith(PowerPrefix, StringComparison.Ordinal)
+            && modes.FirstOrDefault(mode => mode.ItemPrefix == ShipPrefix) is { } ships)
+        {
+            return new PowerPage(ships, nav, crumb.Key[PowerPrefix.Length..]);
         }
 
         foreach (var mode in modes)
@@ -97,6 +106,10 @@ public static class LoadoutPages
 
     public static NavCrumb Slot(string buildId, string slot) =>
         new($"{SlotPrefix}{buildId}|{slot}", slot);
+
+    /// <summary>A ship's Power page, which takes the whole strip.</summary>
+    public static NavCrumb Power(string buildId) =>
+        new(PowerPrefix + buildId, "Power") { Level = PowerPrefix, Whole = true };
 
     /// <summary>The crumb for one row of an index, and for one slot below it.</summary>
     public static NavCrumb Crumb(ILoadoutMode mode, LoadoutRow row) =>
@@ -1762,6 +1775,11 @@ public sealed class ItemPage : LoadoutPage
         facts.Children.AddRange(LoadoutPages.Figures(roomy ? Mode.Details(_item) : [], _copy));
 
         // Power and jump range, at the head of the slot list and under the hull's own figures (Phase 38).
+        if (roomy && Mode.Power(_item) is { } power)
+        {
+            facts.Children.Add(PowerView.Block(power, () => _nav.Drill(LoadoutPages.Power(_item))));
+        }
+
         foreach (var gauge in roomy ? Mode.Gauges(_item) : [])
         {
             facts.Children.Add(LoadoutPages.Gauge(gauge));

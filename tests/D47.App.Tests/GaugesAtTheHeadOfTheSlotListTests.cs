@@ -123,13 +123,40 @@ public class GaugesAtTheHeadOfTheSlotListTests
         Assert.Contains(said, text => text == "POWER");
         Assert.Contains(said, text => text == "JUMP RANGE");
 
-        // The figures a Commander was alt-tabbing to Coriolis for: megawatts against the plant, and a range
-        // rather than a number.
-        Assert.Contains(said, text => text.Contains(" MW of ", StringComparison.Ordinal));
+        // A verdict for each of deployed and retracted, and a range rather than a number.
+        Assert.Contains(said, text => text == "DEPLOYED");
+        Assert.Contains(said, text => text == "RETRACTED");
+        Assert.Equal(2, said.Count(text => text == "FITS" || text.StartsWith("OVER ", StringComparison.Ordinal)));
+        Assert.Contains(said, text => text.Contains(" MW · ", StringComparison.Ordinal) && text.EndsWith('%'));
         Assert.Contains(said, text => text.Contains(" ly", StringComparison.Ordinal) && text.Contains('–'));
 
-        // And the retracted figure beside the deployed one, which is the reason for the split.
-        Assert.Contains(said, text => text.Contains("retracted", StringComparison.Ordinal));
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ThePowerBlockOpensItsOwnPageAndTheBreadcrumbComesBack()
+    {
+        var surface = Open();
+
+        OpenTheShip(surface);
+
+        Row(surface.Panel, "Power").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.StartsWith(LoadoutPages.PowerPrefix, surface.Panel.Nav.Trail[^1].Key, StringComparison.Ordinal);
+        Assert.Equal("Power", surface.Panel.Nav.Trail[^1].Word);
+
+        // The whole strip: the ship's page is not drawn beside it.
+        var page = surface.Panel.GetVisualDescendants().OfType<PowerPage>().Single();
+
+        Assert.NotNull(page.View.Chart);
+        Assert.Empty(surface.Panel.GetVisualDescendants().OfType<ItemPage>());
+
+        Assert.True(surface.Panel.GoBack());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(surface.Panel.GetVisualDescendants().OfType<PowerPage>());
+        Assert.NotNull(Row(surface.Panel, "Power Plant"));
 
         surface.Window.Close();
     }
@@ -188,7 +215,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(Said(surface.Panel), text => text == ShipGauges.Unseen);
-        Assert.DoesNotContain(Said(surface.Panel), text => text.Contains(" MW of ", StringComparison.Ordinal));
+        Assert.DoesNotContain(Said(surface.Panel), text => text == "DEPLOYED");
 
         surface.Window.Close();
     }

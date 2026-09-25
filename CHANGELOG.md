@@ -21,6 +21,14 @@ the ship, the pilot and the reward, for example "First kill of the session. Paul
 destroyed, 59,330 credits." If the pilot taunted you in the five minutes before, the reworded remark
 may answer it. The **Notable kills** switch under Flight callouts turns it off.
 
+On a ship's page, POWER now shows two verdicts, DEPLOYED and RETRACTED: whether the build fits
+the power plant, or how many megawatts it is over. Pressing them opens a Power page. The page stacks
+every module by priority, P1 to P5, with lines for full output and for a damaged plant, and opens
+one priority beside the stack so you can see which module each line falls in. Select a priority in
+the stack or with the stepper. Switch between deployed and retracted hardpoints. Drag a module to
+try a different order within its priority; RESET ORDER puts it back. The order you try does not
+change what stays powered, because the game powers a whole priority or none of it.
+
 Say "night vision", "night vision on" or "night vision off" to toggle night vision in the ship, in
 the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
 already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.

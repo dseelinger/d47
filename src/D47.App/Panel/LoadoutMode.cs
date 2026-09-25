@@ -127,6 +127,10 @@ public sealed record LoadoutGauge(string Name, string Reading, double Fill, Load
     public bool Modelled { get; init; }
 }
 
+/// <summary>A ship's power budget for its POWER block and Power page, or why there is none (#469).</summary>
+/// <param name="Gauge">The budget, or null where <paramref name="Silent"/> says why there is none.</param>
+public sealed record LoadoutPower(D47.Core.Ships.PowerGauge? Gauge, string? Silent);
+
 /// <summary>
 /// A question waiting on the Commander, drawn at the head of the tab (Phase 38, "Ask before the plan
 /// and the checklist drift apart").
@@ -307,6 +311,9 @@ public interface ILoadoutMode
     /// The gauges at the head of this item's slot list, or empty for a mode with none (Phase 38).
     /// </summary>
     IReadOnlyList<LoadoutGauge> Gauges(string item) => [];
+
+    /// <summary>The item's power budget, or null for an item with none to show (#469).</summary>
+    LoadoutPower? Power(string item) => null;
 
     /// <summary>The hull symbol behind one item, or null for a mode whose items are not ships (#289).</summary>
     string? HullOf(string item) => null;

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/tokens/palette.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/tokens/type.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/_ds_bundle.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/styles.css">
+<script src="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/_ds_bundle.js"></script>
+<style>body{margin:0;background:#070606}a{color:var(--d47-a)}a:hover{color:var(--d47-white)}</style>
+</helmet>
+<section id="3a" class="d47-root" data-d47-theme="elite" style="padding:48px;display:flex;flex-direction:column;gap:16px;border-bottom:1px solid var(--d47-line2)">
+<div style="display:flex;align-items:center;gap:10px"><span style="background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:13px;padding:3px 8px">3a</span><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--d47-white);white-space:nowrap">Stack + priority drill-in</span></div>
+<div style="font-size:14px;color:var(--d47-grey);max-width:1000px;text-wrap:pretty">Click a priority in the stack, or step through them, to enlarge it on the right. Leader lines tie each module to its place in the full stack. Drag modules to reorder them; hover one to trace it. This is a what-if: the game powers a whole priority or none of it.</div>
+<div style="width:980px;background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--d47-line2);box-sizing:border-box">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--d47-a);padding-bottom:4px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a)">POWER</span><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey);white-space:nowrap">{{ prov }}</span></div>
+<div style="display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+<div style="background:var(--d47-slab);padding:10px 12px;display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">DEPLOYED</span><span style="font-family:var(--d47-font-chrome);font-size:20px;font-weight:600;letter-spacing:0.06em;color:{{ v3d.color }}">{{ v3d.txt }}</span><span style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-white)">{{ v3dSub }}</span></div>
+<div style="background:var(--d47-slab);padding:10px 12px;display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">RETRACTED</span><span style="font-family:var(--d47-font-chrome);font-size:20px;font-weight:600;letter-spacing:0.06em;color:{{ v3r.color }}">{{ v3r.txt }}</span><span style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-white)">{{ v3rSub }}</span></div>
+</div>
+<div class="d47-segmented cols-2">
+<button class="d47-segment {{ depCls }}" onClick="{{ setDep }}"><span class="d47-segment__label">DEPLOYED</span></button>
+<button class="d47-segment {{ retCls }}" onClick="{{ setRet }}"><span class="d47-segment__label">RETRACTED</span></button>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div class="d47-stepper" style="flex:1">
+<button class="d47-stepper__arrow {{ prevCls }}" onClick="{{ prev3 }}">‹</button>
+<div class="d47-stepper__value"><span class="d47-stepper__text">PRIORITY {{ selName }}</span><span class="d47-stepper__count" style="white-space:nowrap">{{ selCount }}</span></div>
+<button class="d47-stepper__arrow {{ nextCls }}" onClick="{{ next3 }}">›</button>
+</div>
+<button class="d47-tile-button compact" onClick="{{ reset3 }}" style="white-space:nowrap;flex:none">RESET ORDER</button>
+</div>
+<div style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white)">{{ dHead }}</div>
+</div>
+</div>
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:6px">
+<div style="position:relative;width:705px;height:500px;flex:none">
+<sc-for list="{{ segs3 }}" as="s" hint-placeholder-count="20">
+<div onClick="{{ s.click }}" style="position:absolute;left:205px;width:90px;bottom:{{ s.b }};height:{{ s.h }};background:{{ s.bg }};opacity:{{ s.op }};cursor:pointer"></div>
+</sc-for>
+<sc-for list="{{ plabels3 }}" as="pl" hint-placeholder-count="5">
+<div onClick="{{ pl.click }}" style="position:absolute;left:205px;width:90px;bottom:{{ pl.b }};text-align:center;font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:0.08em;color:var(--d47-knock);transform:translateY(50%);cursor:pointer">{{ pl.name }}</div>
+</sc-for>
+<sc-for list="{{ lines3 }}" as="ln" hint-placeholder-count="4">
+<div style="position:absolute;left:0;width:295px;bottom:{{ ln.b }};height:{{ ln.t }};background:var(--d47-white);opacity:{{ ln.o }};pointer-events:none"></div>
+<div style="position:absolute;left:0;width:196px;bottom:{{ ln.lb }};display:flex;flex-direction:column;align-items:flex-end;gap:1px;pointer-events:none;text-align:right"><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:{{ ln.color }}">{{ ln.name }}</span><span style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-white)">{{ ln.meta }}</span></div>
+</sc-for>
+<div style="position:absolute;left:0;top:0;width:705px;height:500px;pointer-events:none">{{ conn3 }}</div>
+<div style="position:absolute;left:425px;width:280px;bottom:{{ dTopB }};text-align:right;font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ dTop }} MW</div>
+<div style="position:absolute;left:425px;width:280px;bottom:-8px;text-align:right;font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ dBot }} MW</div>
+<sc-if value="{{ noMods }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:425px;width:280px;top:10px;bottom:10px;display:flex;align-items:center;justify-content:center;background:var(--d47-slab);font-size:14px;color:var(--d47-grey)">Nothing draws power in this priority.</div></sc-if>
+<sc-for list="{{ drill }}" as="d" hint-placeholder-count="6">
+<div draggable="true" onDragStart="{{ d.start }}" onDragOver="{{ d.over }}" onDrop="{{ d.dropH }}" onDragEnd="{{ end3 }}" onMouseEnter="{{ d.enter }}" onMouseLeave="{{ leave3 }}" style="position:absolute;left:425px;width:280px;bottom:{{ d.b }};height:{{ d.h }};background:{{ d.bg }};opacity:{{ d.op }};display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;box-sizing:border-box;cursor:grab;overflow:hidden">
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--d47-knock);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span><sc-if value="{{ d.hp }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--d47-font-chrome);font-size:10px;letter-spacing:0.1em;color:var(--d47-brown)">HARDPOINT</span></sc-if></span>
+<span style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-knock)">{{ d.mw }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ hasInd }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:419px;width:292px;bottom:{{ ind.b }};height:3px;background:var(--d47-cyan);pointer-events:none"></div></sc-if>
+<sc-for list="{{ dlines }}" as="ln" hint-placeholder-count="1">
+<div style="position:absolute;left:425px;width:290px;bottom:{{ ln.b }};height:{{ ln.t }};background:var(--d47-white);opacity:{{ ln.o }};pointer-events:none"></div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;width:215px;flex:none">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey);padding-bottom:4px;border-bottom:1px solid var(--d47-line)">LINES IN {{ selName }}</span>
+<sc-if value="{{ noLines }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:var(--d47-grey);padding:6px 0">No line crosses this priority.</span></sc-if>
+<sc-for list="{{ dlines }}" as="ln" hint-placeholder-count="1">
+<div style="background:var(--d47-slab);padding:8px 10px;display:flex;flex-direction:column;gap:2px"><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:var(--d47-white)">{{ ln.name }}</span><span style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-grey)">{{ ln.meta }}</span></div>
+</sc-for>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey);padding:12px 0 4px;border-bottom:1px solid var(--d47-line)">{{ selName }} POWERED AT</span>
+<sc-for list="{{ dLadder }}" as="l" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 56px;gap:2px;height:40px">
+<div style="background:var(--d47-slab);display:flex;flex-direction:column;justify-content:center;padding:0 10px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.06em;color:var(--d47-white)">{{ l.name }}</span><span style="font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ l.meta }}</span></div>
+<div style="background:{{ l.c.bg }};color:{{ l.c.fg }};display:flex;align-items:center;justify-content:center;font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:0.1em">{{ l.c.label }}</div>
+</div>
+</sc-for>
+<sc-if value="{{ hasStowed }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--d47-grey);padding-top:10px">{{ stowedTxt }}</div></sc-if>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;margin-top:10px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--d47-a);padding-bottom:4px;margin-bottom:4px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a);white-space:nowrap">D47 CHECK</span><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey);white-space:nowrap">{{ evalHead }}</span></div>
+<sc-if value="{{ evalClean }}" hint-placeholder-val="{{ false }}"><div style="background:var(--d47-slab);padding:10px 12px;font-size:14px;color:var(--d47-white)">Nothing a fight needs loses power when deployed.</div></sc-if>
+<sc-for list="{{ evalRows }}" as="e" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:200px 44px 72px minmax(0,1fr) 130px;gap:2px;height:44px">
+<div style="background:var(--d47-slab);display:flex;align-items:center;padding:0 12px;font-size:14px;color:var(--d47-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</div>
+<div style="background:var(--d47-slab);display:flex;align-items:center;justify-content:center;font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:var(--d47-grey)">{{ e.pri }}</div>
+<div style="background:{{ e.bg }};color:{{ e.fg }};display:flex;align-items:center;justify-content:center;font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:0.1em">{{ e.tag }}</div>
+<div style="background:var(--d47-slab);display:flex;align-items:center;padding:0 12px;font-size:13px;color:var(--d47-grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ e.why }}</div>
+<sc-if value="{{ e.hasAct }}" hint-placeholder-val="{{ false }}"><button class="d47-tile-button compact" onClick="{{ e.onAct }}" style="height:44px;width:100%">{{ e.act }}</button></sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ hasPri3 }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:flex-end;padding-top:6px"><button class="d47-tile-button compact" onClick="{{ resetPri3 }}">UNDO MOVES</button></div></sc-if>
+</div>
+<div style="font-size:12px;color:var(--d47-grey2)">Damage levels from the community wiki, not checked against the game.</div>
+</div>
+</section>
+<section id="2a" class="d47-root" data-d47-theme="elite" style="padding:48px;display:flex;flex-direction:column;gap:16px;border-bottom:1px solid var(--d47-line2)">
+<div style="display:flex;align-items:center;gap:10px"><span style="background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:13px;padding:3px 8px">2a</span><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--d47-white)">Priority planner — <a href="#1b">1b</a> rebuilt + <a href="#1c">1c</a></span></div>
+<div style="font-size:14px;color:var(--d47-grey);max-width:1100px;text-wrap:pretty">Rows are modules, columns are priorities. Drag a module's bar to another column (or click the cell). The footer rows and the stack on the right recompute. A priority is powered only if it and every priority before it fit, so a whole column turns red when it doesn't. Hover a row to find the module in the stack.</div>
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+<div style="width:820px;background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--d47-line2)">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--d47-a);padding-bottom:4px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a)">POWER</span><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">{{ prov }}</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+<div style="background:var(--d47-slab);padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">HARDPOINTS DEPLOYED</span>
+<span style="font-family:var(--d47-font-chrome);font-size:26px;font-weight:600;letter-spacing:0.06em;color:{{ vd.color }}">{{ vd.txt }}</span>
+<span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white)">{{ vd.sub }}</span>
+</div>
+<div style="background:var(--d47-slab);padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">HARDPOINTS RETRACTED</span>
+<span style="font-family:var(--d47-font-chrome);font-size:26px;font-weight:600;letter-spacing:0.06em;color:{{ vr.color }}">{{ vr.txt }}</span>
+<span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white)">{{ vr.sub }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:200px 60px repeat(5,minmax(0,1fr));gap:2px;padding-bottom:4px;border-bottom:1px solid var(--d47-line);align-items:end">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">MODULE</span>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey);text-align:right;padding-right:8px">MW</span>
+<sc-for list="{{ pcols }}" as="pc" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;gap:1px;padding:0 6px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;color:{{ pc.color }}">{{ pc.name }}</span><span style="font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ pc.sub }}</span></div>
+</sc-for>
+</div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="19">
+<div onMouseEnter="{{ r.enter }}" onMouseLeave="{{ leave }}" style="display:grid;grid-template-columns:200px 60px repeat(5,minmax(0,1fr));gap:2px;height:44px;border-bottom:1px solid var(--d47-line2);background:{{ r.bg }}">
+<div style="display:flex;align-items:center;gap:8px;padding-left:4px;min-width:0"><span style="font-size:14px;color:var(--d47-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><sc-if value="{{ r.hp }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--d47-font-chrome);font-size:10px;letter-spacing:0.1em;color:var(--d47-grey);background:var(--d47-slab);padding:1px 5px">HARDPOINT</span></sc-if></div>
+<span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white);text-align:right;padding-right:8px;align-self:center">{{ r.mw }}</span>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5">
+<div onDragOver="{{ c.over }}" onDrop="{{ c.drop }}" onClick="{{ c.click }}" style="display:flex;align-items:center;padding:0 6px;cursor:pointer;background:{{ c.bg }}">
+<sc-if value="{{ c.here }}" hint-placeholder-val="{{ false }}">
+<div draggable="true" onDragStart="{{ c.start }}" onDragEnd="{{ end }}" style="flex:1;height:26px;background:var(--d47-tile);position:relative;cursor:grab"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ c.w }};background:{{ c.fill }}"></div></div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<sc-for list="{{ conds }}" as="k" hint-placeholder-count="5">
+<div style="display:grid;grid-template-columns:262px repeat(5,minmax(0,1fr));gap:2px;height:44px;margin-top:2px">
+<div style="display:flex;flex-direction:column;justify-content:center;gap:1px;padding-left:4px"><span style="font-family:var(--d47-font-chrome);font-size:13px;letter-spacing:0.06em;color:var(--d47-white)">{{ k.name }}</span><span style="font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ k.meta }}</span></div>
+<sc-for list="{{ k.cells }}" as="c" hint-placeholder-count="5">
+<div style="background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;justify-content:center;font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:0.1em">{{ c.label }}</div>
+</sc-for>
+</div>
+</sc-for>
+<div style="font-size:12px;color:var(--d47-grey2);padding-top:8px">Damage levels from the community wiki, not checked against the game.</div>
+</div>
+</div>
+<div style="width:380px;background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--d47-line2)">
+<div style="border-bottom:1px solid var(--d47-a);padding-bottom:4px;font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a)">PRIORITY STACK</div>
+<div style="position:relative;height:460px;margin-top:10px">
+<sc-for list="{{ segs }}" as="s" hint-placeholder-count="19">
+<div style="position:absolute;left:34px;width:90px;bottom:{{ s.b }};height:{{ s.h }};background:{{ s.bg }}"></div>
+</sc-for>
+<sc-for list="{{ plabels }}" as="pl" hint-placeholder-count="5">
+<div style="position:absolute;left:0;width:28px;bottom:{{ pl.b }};font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:0.06em;color:{{ pl.color }};transform:translateY(50%)">{{ pl.name }}</div>
+</sc-for>
+<sc-for list="{{ lines }}" as="ln" hint-placeholder-count="4">
+<div style="position:absolute;left:28px;right:0;bottom:{{ ln.b }};height:{{ ln.t }};background:var(--d47-white);opacity:{{ ln.o }}"></div>
+<div style="position:absolute;left:136px;bottom:{{ ln.lb }};display:flex;flex-direction:column;gap:1px"><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:{{ ln.color }}">{{ ln.name }}</span><span style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-white)">{{ ln.meta }}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+<section class="d47-root" data-d47-theme="elite" style="padding:48px;display:flex;flex-direction:column;gap:28px;min-height:100vh;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;gap:6px;max-width:1100px">
+<div style="font-family:var(--d47-font-chrome);font-size:28px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--d47-white)">Power gauge — three directions</div>
+<div style="font-size:16px;color:var(--d47-grey);text-wrap:pretty">All three split the one bar into two jobs: a verdict (questions 1–2, read at a glance) and a diagnosis (questions 3–4, read together). Same ship in each: 25.04 MW deployed, 22.47 MW retracted, 22.93 MW plant.</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+<!-- 1a -->
+<div id="1a" style="width:600px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px"><span style="background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:13px;padding:3px 8px">1a</span><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--d47-white)">Verdict tiles + labelled stack</span></div>
+<div style="font-size:14px;color:var(--d47-grey);text-wrap:pretty">Two yes/no tiles on top. The stack below gets room for its labels: each damage level drops to its own row and names the groups it keeps powered.</div>
+<div style="background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--d47-line2)">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--d47-a);padding-bottom:4px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a)">POWER</span><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">{{ prov }}</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+<div style="background:var(--d47-slab);padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">HARDPOINTS DEPLOYED</span>
+<span style="font-family:var(--d47-font-chrome);font-size:26px;font-weight:600;letter-spacing:0.06em;color:var(--d47-red)">OVER {{ t }}2.11 MW</span>
+<span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white)">{{ t }}25.04 / 22.93 MW · 109%</span>
+</div>
+<div style="background:var(--d47-slab);padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">HARDPOINTS RETRACTED</span>
+<span style="font-family:var(--d47-font-chrome);font-size:26px;font-weight:600;letter-spacing:0.06em;color:var(--d47-blue)">FITS</span>
+<span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white)">{{ t }}22.47 / 22.93 MW · 98%</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:6px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">PRIORITY GROUPS · DEPLOYED</span><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.08em;color:var(--d47-white)">PLANT 22.93 MW</span></div>
+<div style="position:relative;height:32px;margin-top:4px">
+<div style="position:absolute;left:0;width:calc(15% - 2px);top:0;bottom:0;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;padding-left:6px;box-sizing:border-box">1 · 3.90</div>
+<div style="position:absolute;left:15%;width:calc(21.54% - 2px);top:0;bottom:0;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;padding-left:6px;box-sizing:border-box">2 · 5.60</div>
+<div style="position:absolute;left:36.54%;width:calc(19.61% - 2px);top:0;bottom:0;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;padding-left:6px;box-sizing:border-box">3 · 5.10</div>
+<div style="position:absolute;left:56.15%;width:calc(29.62% - 2px);top:0;bottom:0;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;padding-left:6px;box-sizing:border-box">4 · 7.70</div>
+<div style="position:absolute;left:85.77%;width:2.42%;top:0;bottom:0;background:var(--d47-a)"></div>
+<div style="position:absolute;left:88.19%;width:8.11%;top:0;bottom:0;background:var(--d47-red);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;padding-left:6px;box-sizing:border-box">5</div>
+<div style="position:absolute;left:88.19%;top:-8px;bottom:-4px;width:2px;background:var(--d47-white)"></div>
+</div>
+<div style="position:relative;height:86px">
+<div style="position:absolute;left:17.65%;top:-36px;height:56px;width:1px;background:var(--d47-white);opacity:0.7"></div>
+<div style="position:absolute;left:calc(17.65% + 8px);top:10px;font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:var(--d47-grey);white-space:nowrap">BOTH 20% · <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">4.59 MW</span> · <span style="color:var(--d47-a)">P1</span></div>
+<div style="position:absolute;left:35.27%;top:-36px;height:78px;width:1px;background:var(--d47-white);opacity:0.7"></div>
+<div style="position:absolute;left:calc(35.27% + 8px);top:32px;font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:var(--d47-grey);white-space:nowrap">MALFUNCTIONING 40% · <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">9.17 MW</span> · <span style="color:var(--d47-a)">P1</span></div>
+<div style="position:absolute;left:44.12%;top:-36px;height:100px;width:1px;background:var(--d47-white);opacity:0.7"></div>
+<div style="position:absolute;left:calc(44.12% + 8px);top:54px;font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.06em;color:var(--d47-grey);white-space:nowrap">DESTROYED 50% · <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">11.47 MW</span> · <span style="color:var(--d47-a)">P1–2</span></div>
+</div>
+<div style="font-size:12px;color:var(--d47-grey2)">Damage levels from the community wiki, not checked against the game.</div>
+</div>
+</div>
+</div>
+
+<!-- 1b -->
+<div id="1b" style="width:600px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px"><span style="background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:13px;padding:3px 8px">1b</span><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--d47-white)">Verdict rows + survival matrix</span></div>
+<div style="font-size:14px;color:var(--d47-grey);text-wrap:pretty">Drops the bar. Questions 3 and 4 become one table: plant condition down the side, groups across, powered or not in each cell. No positions to decode.</div>
+<div style="background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--d47-line2)">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--d47-a);padding-bottom:4px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a)">POWER</span><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">{{ prov }}</span></div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="display:grid;grid-template-columns:130px minmax(0,1fr) 120px;align-items:center;gap:12px;background:var(--d47-slab);padding:10px 14px">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">DEPLOYED</span>
+<span style="font-family:var(--d47-font-mono);font-size:14px;color:var(--d47-white)">{{ t }}25.04 / 22.93 MW · 109%</span>
+<span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;color:var(--d47-red);text-align:right">OVER 2.11</span>
+</div>
+<div style="display:grid;grid-template-columns:130px minmax(0,1fr) 120px;align-items:center;gap:12px;background:var(--d47-slab);padding:10px 14px">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">RETRACTED</span>
+<span style="font-family:var(--d47-font-mono);font-size:14px;color:var(--d47-white)">{{ t }}22.47 / 22.93 MW · 98%</span>
+<span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;color:var(--d47-blue);text-align:right">FITS</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding-top:6px">
+<div style="display:grid;grid-template-columns:170px repeat(5,minmax(0,1fr));gap:2px;padding-bottom:4px;border-bottom:1px solid var(--d47-line)">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">PLANT · DEPLOYED</span>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.08em;color:var(--d47-grey);text-align:center">P1 <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">3.90</span></span>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.08em;color:var(--d47-grey);text-align:center">P2 <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">5.60</span></span>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.08em;color:var(--d47-grey);text-align:center">P3 <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">5.10</span></span>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.08em;color:var(--d47-grey);text-align:center">P4 <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">7.70</span></span>
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.08em;color:var(--d47-grey);text-align:center">P5 <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">2.74</span></span>
+</div>
+<sc-for list="{{ matrix }}" as="r" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:170px repeat(5,minmax(0,1fr));gap:2px;height:44px">
+<div style="display:flex;flex-direction:column;justify-content:center;gap:1px"><span style="font-family:var(--d47-font-chrome);font-size:13px;letter-spacing:0.06em;color:var(--d47-white)">{{ r.name }}</span><span style="font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ r.meta }}</span></div>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5">
+<div style="background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;justify-content:center;font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:0.1em">{{ c.label }}</div>
+</sc-for>
+</div>
+</sc-for>
+<div style="font-size:12px;color:var(--d47-grey2);padding-top:6px">Damage levels from the community wiki, not checked against the game.</div>
+</div>
+</div>
+</div>
+
+<!-- 1c -->
+<div id="1c" style="width:460px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px"><span style="background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:13px;padding:3px 8px">1c</span><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--d47-white)">Vertical column</span></div>
+<div style="font-size:14px;color:var(--d47-grey);text-wrap:pretty">Stands the stack up, like a fill level. Each plant condition is a horizontal line with the full label beside it, so nothing collides.</div>
+<div style="background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--d47-line2)">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--d47-a);padding-bottom:4px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.1em;color:var(--d47-a)">POWER</span><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">{{ prov }}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--d47-font-chrome);font-size:22px;font-weight:600;letter-spacing:0.06em;color:var(--d47-red)">OVER {{ t }}2.11 MW</span><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">DEPLOYED · 109%</span></div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--d47-font-chrome);font-size:22px;font-weight:600;letter-spacing:0.06em;color:var(--d47-blue)">FITS</span><span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">RETRACTED · 98%</span></div>
+</div>
+<div style="position:relative;height:290px;margin-top:10px">
+<div style="position:absolute;left:0;width:84px;bottom:0;height:40px;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;justify-content:center">1 · 3.90</div>
+<div style="position:absolute;left:0;width:84px;bottom:42px;height:58px;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;justify-content:center">2 · 5.60</div>
+<div style="position:absolute;left:0;width:84px;bottom:102px;height:53px;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;justify-content:center">3 · 5.10</div>
+<div style="position:absolute;left:0;width:84px;bottom:157px;height:81px;background:var(--d47-a);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;justify-content:center">4 · 7.70</div>
+<div style="position:absolute;left:0;width:84px;bottom:240px;height:7px;background:var(--d47-a)"></div>
+<div style="position:absolute;left:0;width:84px;bottom:247px;height:23px;background:var(--d47-red);color:var(--d47-knock);font-family:var(--d47-font-mono);font-size:11px;display:flex;align-items:center;justify-content:center">5 · 2.74</div>
+<div style="position:absolute;left:-6px;right:0;bottom:246px;height:2px;background:var(--d47-white)"></div>
+<div style="position:absolute;left:100px;bottom:250px;font-family:var(--d47-font-chrome);font-size:13px;letter-spacing:0.06em;color:var(--d47-white)">FULL OUTPUT · <span style="font-family:var(--d47-font-mono)">22.93 MW</span> · <span style="color:var(--d47-a)">P1–4</span></div>
+<div style="position:absolute;left:-6px;right:0;bottom:123px;height:1px;background:var(--d47-white);opacity:0.6"></div>
+<div style="position:absolute;left:100px;bottom:126px;font-family:var(--d47-font-chrome);font-size:13px;letter-spacing:0.06em;color:var(--d47-grey)">DESTROYED 50% · <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">11.47 MW</span> · <span style="color:var(--d47-a)">P1–2</span></div>
+<div style="position:absolute;left:-6px;right:0;bottom:99px;height:1px;background:var(--d47-white);opacity:0.6"></div>
+<div style="position:absolute;left:100px;bottom:83px;font-family:var(--d47-font-chrome);font-size:13px;letter-spacing:0.06em;color:var(--d47-grey)">MALFUNCTIONING 40% · <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">9.17 MW</span> · <span style="color:var(--d47-a)">P1</span></div>
+<div style="position:absolute;left:-6px;right:0;bottom:49px;height:1px;background:var(--d47-white);opacity:0.6"></div>
+<div style="position:absolute;left:100px;bottom:52px;font-family:var(--d47-font-chrome);font-size:13px;letter-spacing:0.06em;color:var(--d47-grey)">BOTH 20% · <span style="font-family:var(--d47-font-mono);color:var(--d47-white)">4.59 MW</span> · <span style="color:var(--d47-a)">P1</span></div>
+</div>
+<div style="font-size:12px;color:var(--d47-grey2)">Damage levels from the community wiki, not checked against the game.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;max-width:1300px">
+<div style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--d47-white);border-bottom:1px solid var(--d47-a);padding-bottom:4px">Cases with less to show · <a href="#1a">1a</a> style</div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div style="width:380px;background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--d47-line2)">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">GROUPS NOT READ</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+<div style="background:var(--d47-slab);padding:10px 12px;display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">DEPLOYED</span><span style="font-family:var(--d47-font-chrome);font-size:20px;font-weight:600;color:var(--d47-red)">OVER 2.11</span></div>
+<div style="background:var(--d47-slab);padding:10px 12px;display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">RETRACTED</span><span style="font-family:var(--d47-font-chrome);font-size:20px;font-weight:600;color:var(--d47-blue)">FITS</span></div>
+</div>
+<div style="background:var(--d47-slab);padding:10px 12px;font-size:14px;color:var(--d47-grey)">Board this ship once to read its priority groups.</div>
+</div>
+<div style="width:380px;background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--d47-line2)">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">NO PLANT VISIBLE</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+<div style="background:var(--d47-slab);padding:10px 12px;display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">DRAW DEPLOYED</span><span style="font-family:var(--d47-font-mono);font-size:18px;color:var(--d47-white)">25.04 MW</span></div>
+<div style="background:var(--d47-slab);padding:10px 12px;display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--d47-font-chrome);font-size:11px;letter-spacing:0.1em;color:var(--d47-grey)">DRAW RETRACTED</span><span style="font-family:var(--d47-font-mono);font-size:18px;color:var(--d47-white)">22.47 MW</span></div>
+</div>
+<div style="font-size:14px;color:var(--d47-grey)">No power plant visible, so there is nothing to compare the draw against.</div>
+</div>
+<div style="width:380px;background:var(--d47-bg);padding:20px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--d47-line2)">
+<span style="font-family:var(--d47-font-chrome);font-size:12px;letter-spacing:0.1em;color:var(--d47-grey)">NEVER BOARDED</span>
+<div style="font-size:16px;color:var(--d47-white)">No power figures yet: board this ship once and d47 will read them.</div>
+</div>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;modelled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const MODS = [
+  ['pd','Power Distributor',0.97,0,1],['ls','Life Support',0.67,0,1],['fsd','Frame Shift Drive',0.75,0,1],['sen','Sensors',0.69,0,1],
+  ['thr','Thrusters',6.70,0,2],['sg','Shield Generator',4.30,0,3],['scb','Shield Cell Bank',1.18,0,3],
+  ['gfb','Guardian FSD Booster',0.75,0,4],['fs','Fuel Scoop',0.52,0,4],['afm','Auto Field-Maintenance',0.94,0,5],['ch','Cargo Hatch',0.60,0,5],
+  ['sb1','Shield Booster',1.20,0,4],['sb2','Shield Booster',1.20,0,4],['sb3','Shield Booster',1.20,0,4],
+  ['hs','Heat Sink Launcher',0.20,0,5],['pdt','Point Defence',0.20,0,5],['cf','Chaff Launcher',0.20,0,5],['ws','Wake Scanner',0.20,0,5],
+  ['bl1','Beam Laser',0.80,1,4],['bl2','Beam Laser',0.85,1,4],['mc1','Multi-Cannon',0.46,1,4],['mc2','Multi-Cannon',0.46,1,4],
+].map(([id,name,mw,hp,p]) => ({id,name,mw,hp:!!hp,p}));
+const PLANT = 22.93, PS = [1,2,3,4,5];
+const ROLE = { pd:'core', ls:'life', fsd:'core', sen:'core', thr:'core', sg:'keep', scb:'keep', sb1:'keep', sb2:'keep', sb3:'keep', bl1:'keep', bl2:'keep', mc1:'keep', mc2:'keep', pdt:'keep', cf:'keep', ws:'keep', hs:'depends', gfb:'depends', fs:'shed', ch:'shed', afm:'shed' };
+class Component extends DCLogic {
+  state = { pri: Object.fromEntries(MODS.map(m => [m.id, m.p])), drag: null, overP: null, hl: null };
+  move(id, p) { if (id) this.setState(s => ({ pri: { ...s.pri, [id]: p }, drag: null, overP: null })); }
+  v2(t) {
+    const { pri, drag, overP, hl } = this.state, f = x => x.toFixed(2);
+    const tot = PS.map(p => MODS.filter(m => pri[m.id] === p).reduce((a, m) => a + m.mw, 0));
+    const totR = PS.map(p => MODS.filter(m => pri[m.id] === p && !m.hp).reduce((a, m) => a + m.mw, 0));
+    const cum = [], cumR = []; tot.reduce((a, x, i) => (cum[i] = a + x), 0); totR.reduce((a, x, i) => (cumR[i] = a + x), 0);
+    const dep = cum[4], ret = cumR[4], maxMw = Math.max(...MODS.map(m => m.mw));
+    const fits = (c, L) => c <= L + 1e-9;
+    const surv = (arr, L) => { let n = 0; while (n < 5 && fits(arr[n], L)) n++; return n === 0 ? 'NONE' : n === 1 ? 'P1' : 'P1–' + n; };
+    const verdict = d => d > PLANT + 1e-9
+      ? { txt: `OVER ${t}${f(d - PLANT)} MW`, color: 'var(--d47-red)', sub: `${t}${f(d)} / ${f(PLANT)} MW · ${Math.round(d / PLANT * 100)}%` }
+      : { txt: 'FITS', color: 'var(--d47-blue)', sub: `${t}${f(d)} / ${f(PLANT)} MW · ${Math.round(d / PLANT * 100)}%` };
+    const onFull = PS.map((p, i) => fits(cum[i], PLANT));
+    const cell = (ok, overFull) => ok ? { bg: 'var(--d47-tile2)', fg: 'var(--d47-a)', label: 'ON' } : overFull ? { bg: 'var(--d47-red)', fg: 'var(--d47-knock)', label: 'OVER' } : { bg: 'var(--d47-slab)', fg: 'var(--d47-grey2)', label: 'OFF' };
+    const levels = [['FULL OUTPUT', 1], ['DESTROYED 50%', 0.5], ['MALFUNCTIONING 40%', 0.4], ['BOTH 20%', 0.2]];
+    const conds = [
+      { name: 'FULL · DEPLOYED', meta: f(PLANT) + ' MW', cells: PS.map((p, i) => cell(fits(cum[i], PLANT), true)) },
+      { name: 'FULL · RETRACTED', meta: f(PLANT) + ' MW', cells: PS.map((p, i) => cell(fits(cumR[i], PLANT), true)) },
+      ...levels.slice(1).map(([n, k]) => ({ name: n, meta: f(PLANT * k) + ' MW · deployed', cells: PS.map((p, i) => cell(fits(cum[i], PLANT * k), false)) })),
+    ];
+    const H = 460, scale = H / (Math.max(PLANT, dep) * 1.06), px = v => Math.round(v * scale);
+    const segs = [], plabels = []; let base = 0;
+    PS.forEach((p, i) => {
+      const start = base;
+      MODS.filter(m => pri[m.id] === p).sort((a, b) => b.mw - a.mw).forEach(m => {
+        const b = px(base), top = px(base + m.mw);
+        segs.push({ b: b + 'px', h: Math.max(1, top - b - 1) + 'px', bg: hl === m.id ? 'var(--d47-white)' : onFull[i] ? 'var(--d47-a)' : 'var(--d47-red)' });
+        base += m.mw;
+      });
+      if (px(base) - px(start) >= 14) if (px(cum[i]) - px(start[i]) >= 16) plabels.push({ name: 'P' + p, b: px((start + base) / 2) + 'px', color: onFull[i] ? 'var(--d47-a)' : 'var(--d47-red)' });
+    });
+    const lines = levels.map(([n, k], j) => ({ name: n, meta: `${f(PLANT * k)} MW · ${surv(cum, PLANT * k)}`, b: px(PLANT * k) + 'px', lb: (px(PLANT * k) + 4) + 'px', t: j ? '1px' : '2px', o: j ? 0.6 : 1, color: j ? 'var(--d47-grey)' : 'var(--d47-white)' }));
+    return {
+      vd: verdict(dep), vr: verdict(ret),
+      pcols: PS.map((p, i) => ({ name: 'P' + p, sub: `${f(tot[i])} · Σ${f(cum[i])}`, color: onFull[i] ? 'var(--d47-a)' : 'var(--d47-red)' })),
+      rows: MODS.map(m => ({
+        name: m.name, hp: m.hp, mw: f(m.mw), bg: hl === m.id ? 'var(--d47-bar)' : 'transparent',
+        enter: () => this.state.hl !== m.id && this.setState({ hl: m.id }),
+        cells: PS.map((p, i) => ({
+          here: pri[m.id] === p, w: Math.max(3, m.mw / maxMw * 100) + '%',
+          fill: onFull[i] ? 'var(--d47-a)' : 'var(--d47-red)',
+          bg: drag && overP === p ? 'var(--d47-tile)' : 'transparent',
+          start: e => { e.dataTransfer.setData('text/plain', m.id); e.dataTransfer.effectAllowed = 'move'; this.setState({ drag: m.id }); },
+          over: e => { if (this.state.drag) { e.preventDefault(); if (this.state.overP !== p) this.setState({ overP: p }); } },
+          drop: e => { e.preventDefault(); this.move(this.state.drag, p); },
+          click: () => this.move(m.id, p),
+        })),
+      })),
+      conds, segs, plabels, lines,
+      leave: () => this.setState({ hl: null }),
+      end: () => this.setState({ drag: null, overP: null }),
+    };
+  }
+  conn(dsegs, ovMid, dl, ob, ot, dtop, hl, CH) {
+    const e = React.createElement, X1 = 295, X2 = 425, xm = (X1 + X2) / 2, Y = b => CH - b;
+    const curve = (y1, y2) => `M${X1} ${Y(y1)} C${xm} ${Y(y1)} ${xm} ${Y(y2)} ${X2} ${Y(y2)}`;
+    const kids = [e('path', { key: 'f', d: `M${X1} ${Y(ot)} C${xm} ${Y(ot)} ${xm} ${Y(dtop)} ${X2} ${Y(dtop)} L${X2} ${Y(10)} C${xm} ${Y(10)} ${xm} ${Y(ob)} ${X1} ${Y(ob)} Z`, style: { fill: 'var(--d47-tile)', opacity: 0.35 } })];
+    dsegs.forEach(g => { const on = hl === g.m.id; kids.push(e('path', { key: g.m.id, d: curve(ovMid[g.m.id], g.b + g.h / 2 - 1), style: { fill: 'none', stroke: on ? 'var(--d47-white)' : 'var(--d47-a)', strokeWidth: on ? 2 : 1, opacity: on ? 1 : 0.7 } })); });
+    dl.forEach(l => kids.push(e('path', { key: 'l' + l.j, d: curve(Math.round(l.L * 0) + this._px(l.L), l.yy), style: { fill: 'none', stroke: 'var(--d47-white)', strokeWidth: 1, strokeDasharray: '4 3' } })));
+    return e('svg', { width: 705, height: CH, style: { overflow: 'visible', display: 'block' } }, ...kids);
+  }
+  v3(t) {
+    const s = this.state, f = x => x.toFixed(2);
+    const order = s.order3 || MODS.map(m => m.id), sel = s.sel3 || 5, ret = s.mode3 === 'ret';
+    const byId = Object.fromEntries(MODS.map(m => [m.id, m]));
+    const P3 = s.pri3 || {}, pOf = m => P3[m.id] ?? m.p;
+    const inP = p => order.map(id => byId[id]).filter(m => pOf(m) === p);
+    const active = m => !(ret && m.hp);
+    const tot = PS.map(p => inP(p).filter(active).reduce((a, m) => a + m.mw, 0));
+    const cum = [], start = []; tot.reduce((a, x, i) => (start[i] = a, cum[i] = a + x), 0);
+    const depTot = MODS.reduce((a, m) => a + m.mw, 0), retTot = MODS.filter(m => !m.hp).reduce((a, m) => a + m.mw, 0);
+    const fits = (c, L) => c <= L + 1e-9, onFull = PS.map((p, i) => fits(cum[i], PLANT));
+    const surv = L => { let n = 0; while (n < 5 && fits(cum[n], L)) n++; return n === 0 ? 'NONE' : n === 1 ? 'P1' : 'P1–' + n; };
+    const verdict = d => d > PLANT + 1e-9 ? { txt: `OVER ${t}${f(d - PLANT)}`, color: 'var(--d47-red)' } : { txt: 'FITS', color: 'var(--d47-blue)' };
+    const levels = [['FULL OUTPUT', 1], ['DESTROYED 50%', 0.5], ['MALFUNCTIONING 40%', 0.4], ['BOTH 20%', 0.2]];
+    const H = 480, BASE = 10, CH = 500, scale = H / (Math.max(PLANT, depTot) * 1.06), px = v => Math.round(v * scale) + BASE;
+    this._px = px;
+    const segs = [], plabels = [], ovMid = {};
+    PS.forEach((p, i) => {
+      let base = start[i];
+      inP(p).filter(active).forEach(m => {
+        const b = px(base), top = px(base + m.mw);
+        ovMid[m.id] = (b + top) / 2;
+        segs.push({ b: b + 'px', h: Math.max(1, top - b - 1) + 'px', bg: s.hl3 === m.id ? 'var(--d47-white)' : onFull[i] ? 'var(--d47-a)' : 'var(--d47-red)', op: p === sel ? 1 : 0.45, click: () => this.setState({ sel3: p }) });
+        base += m.mw;
+      });
+      const mid = px((start[i] + cum[i]) / 2);
+      plabels.push({ name: 'P' + p, b: mid + 'px', color: p === sel ? 'var(--d47-white)' : onFull[i] ? 'var(--d47-a)' : 'var(--d47-red)', click: () => this.setState({ sel3: p }) });
+    });
+    const bracket = { b: px(start[sel - 1]) + 'px', h: Math.max(2, px(cum[sel - 1]) - px(start[sel - 1])) + 'px' };
+    const lines = levels.map(([n, k], j) => ({ name: n, meta: `${f(PLANT * k)} MW · ${surv(PLANT * k)}`, b: px(PLANT * k) + 'px', lb: (px(PLANT * k) + 4) + 'px', t: j ? '1px' : '2px', o: j ? 0.6 : 1, color: j ? 'var(--d47-grey)' : 'var(--d47-white)' }));
+    // drill
+    const si = sel - 1, mods = inP(sel), act = mods.filter(active), stowed = mods.filter(m => !active(m));
+    const DH = 480, MIN = 24, DB = 10, ptot = tot[si] || 1, spare = Math.max(0, DH - MIN * act.length);
+    let y = DB, mw0 = start[si];
+    const dsegs = act.map(m => {
+      const h = MIN + (m.mw / ptot) * spare, seg = { m, b: y, h, s: mw0, e: mw0 + m.mw };
+      y += h; mw0 += m.mw; return seg;
+    });
+    const yAt = L => { const g = dsegs.find(g => L >= g.s - 1e-9 && L <= g.e + 1e-9); return g ? g.b + (L - g.s) / g.m.mw * g.h : null; };
+    const dl0 = levels.map(([n, k], j) => ({ n, L: PLANT * k, j })).filter(l => l.L > start[si] + 1e-9 && l.L < cum[si] - 1e-9)
+      .map(l => ({ ...l, yy: Math.round(yAt(l.L)) }));
+    const dlines = dl0.map(l => ({ name: l.n, meta: f(l.L) + ' MW', b: l.yy + 'px', lb: (l.yy + 4) + 'px', t: l.j ? '1px' : '2px', o: l.j ? 0.7 : 1 }));
+    const drop = s.drop3;
+    const reorder = (dragId, targetId, after) => {
+      if (!dragId || dragId === targetId) return this.setState({ drag3: null, drop3: null });
+      const o = order.filter(id => id !== dragId); let idx = o.indexOf(targetId) + (after ? 1 : 0);
+      o.splice(idx, 0, dragId); this.setState({ order3: o, drag3: null, drop3: null });
+    };
+    const drill = dsegs.map(g => ({
+      name: g.m.name, mw: f(g.m.mw), hp: g.m.hp, b: Math.round(g.b) + 'px', h: Math.round(g.h - 2) + 'px',
+      bg: fits(g.e, PLANT) ? 'var(--d47-a)' : 'var(--d47-red)',
+      op: s.drag3 === g.m.id ? 0.4 : 1,
+      enter: () => this.state.hl3 !== g.m.id && this.setState({ hl3: g.m.id }),
+      start: e => { e.dataTransfer.setData('text/plain', g.m.id); e.dataTransfer.effectAllowed = 'move'; this.setState({ drag3: g.m.id }); },
+      over: e => { if (!this.state.drag3) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientY < r.top + r.height / 2; const d = this.state.drop3; if (!d || d.id !== g.m.id || d.after !== after) this.setState({ drop3: { id: g.m.id, after } }); },
+      dropH: e => { e.preventDefault(); const d = this.state.drop3; reorder(this.state.drag3, g.m.id, d ? d.after : true); },
+    }));
+    const dg = drop && dsegs.find(g => g.m.id === drop.id);
+    const ind = dg ? { b: Math.round(drop.after ? dg.b + dg.h - 2 : dg.b - 1) + 'px' } : null;
+    const totD = PS.map(p => inP(p).reduce((a, m) => a + m.mw, 0)), cumD = []; totD.reduce((a, x, i) => (cumD[i] = a + x), 0);
+    const onD = PS.map((p, i) => fits(cumD[i], PLANT)), over = cumD[4] > PLANT + 1e-9;
+    const lastOn = onD.lastIndexOf(true) + 1, fixes = [], goods = [];
+    const mv = (id, p) => () => this.setState(st => ({ pri3: { ...(st.pri3 || {}), [id]: p } }));
+    const flag = (m, tag, tone, why, to) => ({ name: m.name, pri: 'P' + pOf(m), tag, why, bg: tone === 'red' ? 'var(--d47-red)' : tone === 'a' ? 'var(--d47-tile2)' : tone === 'blue' ? 'var(--d47-slab)' : 'var(--d47-slab)', fg: tone === 'red' ? 'var(--d47-knock)' : tone === 'a' ? 'var(--d47-a)' : tone === 'blue' ? 'var(--d47-blue)' : 'var(--d47-white)', hasAct: !!to, act: to ? 'MOVE TO P' + to : '', onAct: to ? mv(m.id, to) : null });
+    MODS.forEach(m => {
+      const r = ROLE[m.id], i = pOf(m) - 1, on = onD[i];
+      if (r === 'life' && !fits(cumD[i], PLANT * 0.2)) fixes.push(flag(m, 'AT RISK', 'red', 'Off if the plant is damaged at all.', 1));
+      else if ((r === 'keep' || r === 'core') && !on) fixes.push(flag(m, 'OFF', 'red', r === 'core' ? 'Core module. Unpowered when deployed.' : 'Needed in a fight. Unpowered when deployed.', lastOn || 1));
+      else if (r === 'depends' && !on) fixes.push(flag(m, 'CHECK', 'grey', 'Unpowered when deployed. Depends on the build.', null));
+      else if (r === 'shed' && on && over) fixes.push(flag(m, 'SHED', 'a', 'Not needed in a fight. Shed it before anything else.', 5));
+      else if (r === 'shed' && !on) goods.push(flag(m, 'OK', 'blue', 'Not needed in a fight. Shed first.', null));
+    });
+    const evalRows = [...fixes, ...goods];
+    const cell = (ok, overFull) => ok ? { bg: 'var(--d47-tile2)', fg: 'var(--d47-a)', label: 'ON' } : overFull ? { bg: 'var(--d47-red)', fg: 'var(--d47-knock)', label: 'OVER' } : { bg: 'var(--d47-slab)', fg: 'var(--d47-grey2)', label: 'OFF' };
+    return {
+      v3d: verdict(depTot), v3r: verdict(retTot),
+      v3dSub: `${t}${f(depTot)} MW · ${Math.round(depTot / PLANT * 100)}%`, v3rSub: `${t}${f(retTot)} MW · ${Math.round(retTot / PLANT * 100)}%`,
+      depCls: ret ? '' : 'selected', retCls: ret ? 'selected' : '',
+      setDep: () => this.setState({ mode3: 'dep', drop3: null }), setRet: () => this.setState({ mode3: 'ret', drop3: null }),
+      segs3: segs, plabels3: plabels, bracket3: bracket, lines3: lines,
+      selName: 'P' + sel, selCount: `${sel} of 5`,
+      prev3: () => this.setState({ sel3: Math.max(1, sel - 1), drop3: null }), next3: () => this.setState({ sel3: Math.min(5, sel + 1), drop3: null }),
+      prevCls: sel === 1 ? 'disabled' : '', nextCls: sel === 5 ? 'disabled' : '',
+      dHead: `${f(tot[si])} MW · ${f(start[si])} → ${f(cum[si])} MW`,
+      dTop: f(cum[si]), dBot: f(start[si]), dTopB: (y + 4) + 'px', conn3: this.conn(dsegs, ovMid, dl0, px(start[si]), px(cum[si]), y, s.hl3, CH),
+      leave3: () => this.setState({ hl3: null }),
+      drill, dlines, hasInd: !!ind, ind: ind || { b: '0px' },
+      noLines: dlines.length === 0, noMods: act.length === 0,
+      stowedTxt: stowed.length ? 'Stowed: ' + stowed.map(m => `${m.name} ${f(m.mw)}`).join(' · ') : '',
+      hasStowed: stowed.length > 0,
+      dLadder: levels.map(([n, k], j) => ({ name: n, meta: f(PLANT * k) + ' MW', c: cell(fits(cum[si], PLANT * k), j === 0) })),
+      evalRows, evalClean: fixes.length === 0, evalHead: over ? (lastOn + 1 === 5 ? 'DEPLOYED · P5 UNPOWERED' : `DEPLOYED · P${lastOn + 1}–5 UNPOWERED`) : 'DEPLOYED · EVERYTHING POWERED',
+      resetPri3: () => this.setState({ pri3: null }), hasPri3: !!s.pri3,
+      end3: () => this.setState({ drag3: null, drop3: null }),
+      reset3: () => this.setState({ order3: null, drop3: null }),
+    };
+  }
+  renderVals() {
+    const modelled = this.props.modelled ?? true;
+    const on = { bg: 'var(--d47-tile2)', fg: 'var(--d47-a)', label: 'ON' };
+    const off = { bg: 'var(--d47-slab)', fg: 'var(--d47-grey2)', label: 'OFF' };
+    const over = { bg: 'var(--d47-red)', fg: 'var(--d47-knock)', label: 'OVER' };
+    const row = (name, meta, n, last) => ({ name, meta, cells: [0,1,2,3,4].map(i => i < n ? on : (last && i === 4 ? over : off)) });
+    return {
+      ...this.v2(modelled ? '~' : ''),
+      ...this.v3(modelled ? '~' : ''),
+      t: modelled ? '~' : '',
+      prov: modelled ? '~ MODELLED FROM PLAN' : 'MEASURED IN GAME',
+      matrix: [
+        row('FULL OUTPUT', '22.93 MW', 4, true),
+        row('DESTROYED 50%', '11.47 MW', 2),
+        row('MALFUNCTIONING 40%', '9.17 MW', 1),
+        row('BOTH 20%', '4.59 MW', 1),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

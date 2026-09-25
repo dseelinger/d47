@@ -61,6 +61,9 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     /// anybody would do (#231).
     /// </summary>
     public IReadOnlyList<string> Spoken { get; init; } = [];
+
+    /// <summary>Whether this level takes the whole strip rather than sharing it with the levels above (#469).</summary>
+    public bool Whole { get; init; }
 }
 
 /// <summary>One place a surface can be sent to: a root, and the tab it is a root of (Phase 46).</summary>

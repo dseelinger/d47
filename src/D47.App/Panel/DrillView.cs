@@ -145,7 +145,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome
             return;
         }
 
-        var window = Math.Min(_panes, trail.Count);
+        var window = trail[^1].Whole ? 1 : Math.Min(_panes, trail.Count);
 
         var visible = trail.Skip(trail.Count - window).ToList();
         var keys = visible.Select(crumb => crumb.Key).ToList();
