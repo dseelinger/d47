@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Sintony:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#101010;}
+input::placeholder{color:#6E6A65;opacity:1;}
+a{color:#FF7A1A;} a:hover{color:#EDE9E3;}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:safe center;padding:24px;box-sizing:border-box;overflow:auto">
+<div ref="{{ rootRef }}" data-screen-label="D47 window" style="--bar:#0F0D0C;--glowT:0 0 12px color-mix(in oklab, var(--a) 55%, transparent);--glowD:0 0 6px var(--a), 0 0 16px color-mix(in oklab, var(--a) 60%, transparent);--a:#FF7A1A;--bg:#070606;--white:#EDE9E3;--grey:#A09B94;--grey2:#6E6A65;--slab:#232120;--slab2:#2E2B29;--tile:color-mix(in oklab, var(--a) 20%, var(--bg));--tile2:color-mix(in oklab, var(--a) 30%, var(--bg));--line:color-mix(in oklab, var(--a) 55%, var(--bg));--line2:color-mix(in oklab, var(--a) 28%, var(--bg));--knock:#140800;--glowC:0 0 6px var(--cyan), 0 0 14px color-mix(in oklab, var(--cyan) 50%, transparent);--brown:#6B2F00;--cyan:#33D6E8;--blue:#1FA8F5;--red:#F0343F;--yellow:#F5D426;position:relative;width:1280px;flex:none;height:860px;background:var(--bg);border:1px solid var(--line);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;font-family:'Sintony',sans-serif;color:var(--a)">
+
+  <div style="height:44px;flex:none;display:flex;align-items:center;gap:14px;padding-left:18px;background:var(--bar);border-bottom:1px solid var(--line2)">
+    <div style="width:11px;height:11px;background:var(--a);transform:rotate(45deg);box-shadow:var(--glowD);flex:none"></div>
+    <div style="font-family:'Saira',sans-serif;font-size:19px;font-weight:600;letter-spacing:0.12em;color:var(--white);text-shadow:var(--glowT)">DIRECTIVE 47</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--grey2)">1.6.3</div>
+    <div style="margin-left:auto;display:flex">
+      <div style="width:46px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--grey);cursor:pointer" style-hover="background:var(--tile);color:var(--a)">—</div>
+      <div style="width:46px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--grey);cursor:pointer" style-hover="background:var(--tile);color:var(--a)">□</div>
+      <div style="width:46px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--grey);cursor:pointer" style-hover="background:var(--red);color:var(--white)">✕</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:20px 28px 24px">
+
+    <div style="display:flex;gap:2px;align-items:stretch;flex:none;flex-wrap:wrap;row-gap:2px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="7">
+        <div onClick="{{ t.go }}" style="height:40px;padding:0 20px;display:flex;align-items:center;background:{{ t.bg }};color:{{ t.fg }};font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;cursor:pointer;white-space:nowrap;box-shadow:{{ t.glow }}" style-hover="background:var(--a);color:var(--knock)">{{ t.label }}</div>
+      </sc-for>
+      <div style="margin-left:auto;display:flex;gap:2px">
+        <div style="height:40px;padding:0 18px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">HELP</div>
+        <div onMouseEnter="{{ cp.loop.on }}" onMouseLeave="{{ cpOff }}" style="position:relative;flex:none"><sc-if value="{{ cp.loop.show }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:100%;top:0;height:40px;padding:0 10px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--a);box-sizing:border-box;color:var(--white);font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;white-space:nowrap;z-index:3">LOOP STATE · LISTENING FOR THE GAME</div></sc-if><div style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;background:{{ cp.loop.bg }};cursor:pointer">
+          <div style="width:16px;height:16px;border-radius:50%;border:2px solid {{ cp.loop.fg }};display:flex;align-items:center;justify-content:center"><div style="width:6px;height:6px;border-radius:50%;background:{{ cp.loop.fg }}"></div></div>
+        </div></div>
+      </div>
+    </div>
+    <div style="height:2px;background:var(--a);flex:none"></div>
+
+    <sc-if value="{{ isTranscript }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Transcript" style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:24px;padding:14px 0 12px;border-bottom:1px solid var(--line2);flex:none">
+          <div style="display:flex;gap:22px">
+            <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--white);padding:6px 0 5px;border-bottom:2px solid var(--a);cursor:pointer">IN SHIP</div>
+            <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--a);padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">LOG FILE</div>
+            <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--a);padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">JOURNAL FILE</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:2px;align-items:center">
+            <div onMouseEnter="{{ cp.page.on }}" onMouseLeave="{{ cpOff }}" onClick="{{ cp.page.click }}" style="position:relative;flex:none;"><sc-if value="{{ cp.page.show }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:100%;top:0;height:36px;padding:0 10px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--a);box-sizing:border-box;color:var(--white);font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;white-space:nowrap;z-index:3">{{ cp.page.label }}</div></sc-if><div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:{{ cp.page.bg }};cursor:pointer"><div style="position:relative;width:14px;height:14px"><div style="position:absolute;left:0;top:0;width:10px;height:10px;border:2px solid {{ cp.page.fg }};box-sizing:border-box"></div><div style="position:absolute;right:0;bottom:0;width:10px;height:10px;border:2px solid {{ cp.page.fg }};background:{{ cp.page.bg }};box-sizing:border-box"></div></div></div></div>
+            <div style="width:340px;height:36px;border:1px solid var(--line);box-sizing:border-box;display:flex;align-items:center">
+              <input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search this page" style="flex:1;min-width:0;height:100%;background:transparent;border:none;outline:none;padding:0 12px;font-family:'Sintony',sans-serif;font-size:14px;color:var(--white);caret-color:var(--a)">
+            </div>
+          </div>
+        </div>
+
+        <div ref="{{ listRef }}" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 0;scrollbar-color:var(--line) transparent;scrollbar-width:thin">
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:4px">
+            <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="4">
+              <div style="align-self:{{ m.align }};max-width:72%;box-sizing:border-box;display:flex;gap:14px;padding:10px 14px 12px 12px;border-left:3px solid {{ m.barL }};border-right:3px solid {{ m.barR }};background:{{ m.ground }}" style-hover="background:var(--slab)">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                    <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;color:{{ m.who }}">{{ m.name }}</span>
+                    <sc-if value="{{ m.intent }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--grey)">{{ m.intent }}</span></sc-if>
+                    <sc-if value="{{ m.delivery }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--grey2);font-style:italic">{{ m.delivery }}</span></sc-if>
+                    <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--line)">{{ m.time }}</span>
+                  </div>
+                  <div style="font-size:16px;line-height:1.5;color:var(--white);text-wrap:pretty;max-width:76ch">{{ m.text }}</div>
+                  <sc-if value="{{ m.chip }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:2px;margin-top:4px">
+                      <div style="height:32px;padding:0 12px;display:flex;align-items:center;gap:8px;background:var(--slab);color:{{ m.chipC }};font-family:'Saira',sans-serif;font-weight:500;font-size:14px">{{ m.chip }}</div>
+                      <div onMouseEnter="{{ cp.chip.on }}" onMouseLeave="{{ cpOff }}" onClick="{{ cp.chip.click }}" style="position:relative;flex:none;"><sc-if value="{{ cp.chip.show }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:100%;top:0;height:32px;padding:0 10px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--a);box-sizing:border-box;color:var(--white);font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;white-space:nowrap;z-index:3">{{ cp.chip.label }}</div></sc-if><div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:{{ cp.chip.bg }};cursor:pointer"><div style="position:relative;width:14px;height:14px"><div style="position:absolute;left:0;top:0;width:10px;height:10px;border:2px solid {{ cp.chip.fg }};box-sizing:border-box"></div><div style="position:absolute;right:0;bottom:0;width:10px;height:10px;border:2px solid {{ cp.chip.fg }};background:{{ cp.chip.bg }};box-sizing:border-box"></div></div></div></div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.showCost }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--grey2);display:flex;gap:8px;flex-wrap:wrap"><span>ANSWERED VIA MODEL</span><span>·</span><span>EFFORT {{ m.effort }}</span><span>·</span><span style="color:var(--a)">{{ m.cost }}</span></div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="flex:none;border-top:1px solid var(--line2);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;height:28px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:var(--glowC)"></div>
+            <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;color:var(--cyan)">PTT READY</div>
+            <div style="margin-left:auto;font-family:'Saira',sans-serif;font-size:13px;font-weight:500;color:var(--grey)">SESSION <span style="color:var(--a)">$0.1432</span></div>
+            <div onClick="{{ openSpend }}" style="height:28px;padding:0 14px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">SPEND</div>
+          </div>
+          <div style="display:flex;gap:2px;height:44px">
+            <div style="flex:1;min-width:0;border:1px solid {{ askBorder }};box-sizing:border-box;display:flex;align-items:center;padding:0 12px;gap:8px">
+              <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;white-space:nowrap">TO [D47]:</span>
+              <input value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onKey }}" onFocus="{{ askFocus }}" onBlur="{{ askBlur }}" placeholder="What can you do?" style="flex:1;min-width:0;height:100%;background:transparent;border:none;outline:none;font-family:'Sintony',sans-serif;font-size:16px;color:var(--white);caret-color:var(--a)">
+            </div>
+            <div onClick="{{ send }}" style="width:120px;display:flex;align-items:center;justify-content:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.08em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">SEND</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCarrier }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Fleet · Carrier" style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div style="display:flex;gap:22px;padding:14px 0 12px;border-bottom:1px solid var(--line2);flex:none">
+          <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--a);padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">SHIPS</div>
+          <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--a);padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">SUITS</div>
+          <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--a);padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">MATERIALS</div>
+          <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--white);padding:6px 0 5px;border-bottom:2px solid var(--a);cursor:pointer">CARRIER</div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:20px 0 0;display:flex;flex-direction:column;gap:28px;scrollbar-color:var(--line) transparent;scrollbar-width:thin">
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:flex-end;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--a)">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em">FLEET CARRIER · BNH-T2F</div>
+                <div style="font-family:'Saira',sans-serif;font-size:28px;font-weight:500;letter-spacing:0.04em;color:var(--white);line-height:1.1">SACRED FIRE</div>
+              </div>
+              <div style="margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:2px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">CARRIER BALANCE</div>
+                <div style="font-family:'Saira',sans-serif;font-size:18px;font-weight:500;color:var(--white)">990,302,661 CR</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:2px">
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">CURRENT SYSTEM</div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500;color:var(--cyan)">GIRYAK</span><div onMouseEnter="{{ cp.cur.on }}" onMouseLeave="{{ cpOff }}" onClick="{{ cp.cur.click }}" style="position:relative;flex:none;margin-left:auto;"><sc-if value="{{ cp.cur.show }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:100%;top:0;height:32px;padding:0 10px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--a);box-sizing:border-box;color:var(--white);font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;white-space:nowrap;z-index:3">{{ cp.cur.label }}</div></sc-if><div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:{{ cp.cur.bg }};cursor:pointer"><div style="position:relative;width:14px;height:14px"><div style="position:absolute;left:0;top:0;width:10px;height:10px;border:2px solid {{ cp.cur.fg }};box-sizing:border-box"></div><div style="position:absolute;right:0;bottom:0;width:10px;height:10px;border:2px solid {{ cp.cur.fg }};background:{{ cp.cur.bg }};box-sizing:border-box"></div></div></div></div></div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">TRITIUM IN TANK</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">967 T</div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">JUMP RANGE</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">500 LY</div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">RANGE ON THIS TANK</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">~6,500 LY · 13 JUMPS</div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;gap:8px"><span style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">CAPACITY</span><span style="margin-left:auto;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:var(--yellow)">1,110 / 25,000 T</span></div>
+                <div style="height:6px;background:color-mix(in oklab, var(--yellow) 22%, var(--slab))"><div style="width:4.4%;height:100%;background:var(--yellow)"></div></div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">CARGO</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">180 T</div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">DOCKING ACCESS</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">ALL</div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px;grid-column:span 2">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">SERVICES</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">CAPTAIN · REFUEL · REPAIR · REARM · COMMODITIES · CARRIER FUEL</div>
+              </div>
+            </div>
+            <div style="font-size:14px;color:var(--grey);text-wrap:pretty">Figures as of 19 minutes ago. They refresh when you open carrier management in the game.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:flex-end;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--a)">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em">YOUR SQUADRON'S CARRIER · OV40</div>
+                <div style="font-family:'Saira',sans-serif;font-size:22px;font-weight:500;letter-spacing:0.04em;color:var(--white);line-height:1.1">GBD FORMIDINE DREAMS</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:2px">
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">SYSTEM</div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">SYNUEFE AB-U D4-41</span><div onMouseEnter="{{ cp.sq.on }}" onMouseLeave="{{ cpOff }}" onClick="{{ cp.sq.click }}" style="position:relative;flex:none;margin-left:auto;"><sc-if value="{{ cp.sq.show }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:100%;top:0;height:32px;padding:0 10px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--a);box-sizing:border-box;color:var(--white);font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;white-space:nowrap;z-index:3">{{ cp.sq.label }}</div></sc-if><div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:{{ cp.sq.bg }};cursor:pointer"><div style="position:relative;width:14px;height:14px"><div style="position:absolute;left:0;top:0;width:10px;height:10px;border:2px solid {{ cp.sq.fg }};box-sizing:border-box"></div><div style="position:absolute;right:0;bottom:0;width:10px;height:10px;border:2px solid {{ cp.sq.fg }};background:{{ cp.sq.bg }};box-sizing:border-box"></div></div></div></div></div>
+              </div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">TRITIUM</div>
+                <div style="font-family:'Saira',sans-serif;font-size:17px;font-weight:500">588 T</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;gap:16px;padding-top:14px;border-top:1px solid var(--line2)">
+          <div style="height:36px;padding:0 16px;display:flex;align-items:center;gap:10px;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">▸ SETTINGS FOR THIS PAGE · 4</div>
+          <div style="font-size:14px;color:var(--grey)">Say: “where is my carrier”</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Engineers · Detail" style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:22px;padding:14px 0 12px;border-bottom:1px solid var(--line2);flex:none">
+          <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--white);padding:6px 0 5px;border-bottom:2px solid var(--a);cursor:pointer">DIRECTORY</div>
+          <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--a);padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">ROUTE</div>
+          <div style="margin-left:auto;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.04em;color:var(--white)">13 <span style="color:var(--grey)">OF 38 UNLOCKED ·</span> 18 <span style="color:var(--grey)">IN PROGRESS ·</span> 7 <span style="color:var(--grey)">NOT STARTED</span></div>
+        </div>
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0, 400px) minmax(0, 1fr);gap:24px;padding-top:16px">
+
+          <div style="min-height:0;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:2px;flex-wrap:wrap">
+              <sc-for list="{{ boxes }}" as="b" hint-placeholder-count="2">
+                <div onClick="{{ b.toggle }}" style="flex:1 1 100%;height:36px;padding:0 10px;display:flex;align-items:center;gap:10px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)">
+                  <div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:8px;height:8px;background:{{ b.fill }}"></div></div>
+                  <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.04em;white-space:nowrap">{{ b.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-right:6px;scrollbar-color:var(--line) transparent;scrollbar-width:thin">
+              <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+                <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;padding:10px 0 6px;border-bottom:1px solid var(--line);margin-bottom:2px">{{ g.title }}</div>
+                <sc-for list="{{ g.rows }}" as="e" hint-placeholder-count="4">
+                  <div onClick="{{ e.pick }}" style="min-height:50px;padding:6px 12px;display:flex;align-items:center;gap:12px;background:{{ e.bg }};cursor:pointer" style-hover="background:{{ e.hover }}">
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+                      <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.03em;color:{{ e.nameC }}">{{ e.name }}</div>
+                      <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;color:{{ e.subC }}">{{ e.mods }}</div>
+                    </div>
+                    <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;color:{{ e.subC }};text-align:right;white-space:nowrap">{{ e.dist }}</div>
+                  </div>
+                </sc-for>
+              </sc-for>
+            </div>
+            <div style="font-size:14px;color:var(--grey)">Say: “who should I unlock next”</div>
+          </div>
+
+          <div style="min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding-right:8px;scrollbar-color:var(--line) transparent;scrollbar-width:thin">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em">DIRECTORY › {{ sel.name }}</div>
+              <div style="display:flex;align-items:flex-end;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--a)">
+                <div style="font-family:'Saira',sans-serif;font-size:28px;font-weight:500;letter-spacing:0.04em;color:var(--white);line-height:1.1">{{ sel.name }}</div>
+                <div style="margin-left:auto;display:flex;gap:2px">
+                  <div onMouseEnter="{{ cp.eng.on }}" onMouseLeave="{{ cpOff }}" onClick="{{ cp.eng.click }}" style="position:relative;flex:none;"><sc-if value="{{ cp.eng.show }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;right:100%;top:0;height:36px;padding:0 10px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--a);box-sizing:border-box;color:var(--white);font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;white-space:nowrap;z-index:3">{{ cp.eng.label }}</div></sc-if><div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:{{ cp.eng.bg }};cursor:pointer"><div style="position:relative;width:14px;height:14px"><div style="position:absolute;left:0;top:0;width:10px;height:10px;border:2px solid {{ cp.eng.fg }};box-sizing:border-box"></div><div style="position:absolute;right:0;bottom:0;width:10px;height:10px;border:2px solid {{ cp.eng.fg }};background:{{ cp.eng.bg }};box-sizing:border-box"></div></div></div></div>
+                  <div style="height:36px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">ADD TO CHECKLIST</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:2px">
+                <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                  <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">WORKSHOP</div>
+                  <div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500">{{ sel.base }}</div>
+                </div>
+                <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                  <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">DISTANCE FROM GIRYAK</div>
+                  <div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500">{{ sel.dist }}</div>
+                </div>
+                <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px">
+                  <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">WHERE YOU STAND</div>
+                  <div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500;color:var(--white)">KNOWN · NO INVITATION</div>
+                </div>
+              </div>
+              <div onClick="{{ togglePin }}" style="align-self:flex-start;height:36px;padding:0 14px 0 10px;display:flex;align-items:center;gap:10px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)">
+                <div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;background:{{ pinFill }}"></div></div>
+                <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.04em">PIN A BLUEPRINT WITH THEM</span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white);padding-bottom:6px;border-bottom:1px solid var(--a)">UNLOCK PREREQUISITES</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:grid;grid-template-columns:120px minmax(0, 1fr);align-items:center;gap:12px;background:var(--slab);padding:10px 14px">
+                  <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;color:var(--blue)">✓ MET</div>
+                  <div style="font-size:15px;color:var(--white)">Grade 3 with Hera Tani.</div>
+                </div>
+                <div style="display:grid;grid-template-columns:120px minmax(0, 1fr);align-items:center;gap:6px 12px;background:var(--slab);padding:10px 14px">
+                  <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em">IN PROGRESS</div>
+                  <div style="display:flex;align-items:baseline;gap:12px"><span style="font-size:15px;color:var(--white)">Gain combat rank Competent or higher.</span><span style="margin-left:auto;font-family:'Saira',sans-serif;font-size:13px;font-weight:500">MOSTLY HARMLESS · 34%</span></div>
+                  <div></div>
+                  <div style="height:6px;background:var(--tile);display:flex"><div style="width:34%;height:100%;background:var(--a)"></div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:120px minmax(0, 1fr);align-items:center;gap:12px;background:var(--slab);padding:10px 14px">
+                  <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;color:var(--white)">? UNKNOWN</div>
+                  <div style="font-size:15px;color:var(--white)">Provide 50 units of Fujin Tea.</div>
+                </div>
+              </div>
+              <div style="font-size:13px;color:var(--grey)">Unknown means the journal hasn't said yet. It confirms once you hand the goods over.</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:baseline;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">WHAT UNLOCKING BUYS</div>
+                <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500">28 PLANNED ITEMS</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ buys }}" as="u" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr);gap:12px;align-items:center;min-height:36px;padding:0 14px;background:var(--tile)" style-hover="background:var(--tile2)">
+                    <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;color:var(--white)">{{ u.ship }}</div>
+                    <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500">{{ u.slot }}</div>
+                    <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500">{{ u.mod }}</div>
+                  </div>
+                </sc-for>
+                <div style="height:36px;padding:0 14px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer;align-self:flex-start" style-hover="background:var(--a);color:var(--knock)">SHOW 23 MORE</div>
+              </div>
+            </div>
+            <div style="font-size:14px;color:var(--grey);padding-bottom:8px">Say: “where is {{ sel.name }}”</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ spendOpen }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Spend popup" onClick="{{ closeSpend }}" style="position:absolute;inset:44px 0 0 0;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;z-index:5">
+      <div onClick="{{ stop }}" style="width:640px;max-height:740px;background:var(--bar);border:1px solid var(--a);box-sizing:border-box;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:flex-end;gap:16px;padding:18px 20px 10px;border-bottom:1px solid var(--a);flex:none">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em">ESTIMATED FROM PUBLISHED RATES</div>
+            <div style="font-family:'Saira',sans-serif;font-size:24px;font-weight:500;letter-spacing:0.04em;color:var(--white);line-height:1.1">WHAT THIS HAS COST</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:2px">
+            <div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">TODAY</div>
+            <div style="font-family:'Saira',sans-serif;font-size:20px;font-weight:500;color:var(--a)">$0.4208</div>
+          </div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:18px;scrollbar-color:var(--line) transparent;scrollbar-width:thin">
+          <div style="font-size:14px;line-height:1.5;color:var(--grey);text-wrap:pretty">D47 knows each provider's published rates, not what your account is billed. Bundled credits can make the real cost higher, or nothing at all.</div>
+          <sc-for list="{{ spendGroups }}" as="sg" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;color:var(--white);padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px">{{ sg.title }}</div>
+              <sc-for list="{{ sg.rows }}" as="sr" hint-placeholder-count="3">
+                <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;align-items:baseline;gap:12px">
+                    <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">{{ sr.label }}</div>
+                    <div style="margin-left:auto;font-family:'Saira',sans-serif;font-size:18px;font-weight:500;color:var(--a)">{{ sr.total }}</div>
+                  </div>
+                  <sc-for list="{{ sr.parts }}" as="p" hint-placeholder-count="2">
+                    <div style="display:grid;grid-template-columns:minmax(0, 1fr) auto 88px;gap:12px;align-items:baseline">
+                      <div style="font-size:14px;color:var(--white)">{{ p.name }}</div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--grey);text-align:right">{{ p.use }}</div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:{{ p.costC }};text-align:right">{{ p.cost }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;color:var(--white);padding-bottom:6px;border-bottom:1px solid var(--line)">BY PROVIDER</div>
+            <div style="display:flex;align-items:center;gap:2px;height:40px">
+              <div onClick="{{ provPrev }}" style="width:52px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--tile);gap:4px;font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">◄</div>
+              <div style="flex:1;min-width:0;height:40px;display:flex;align-items:center;justify-content:center;background:var(--slab);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.04em;color:var(--white)">{{ prov.name }}</div>
+              <div onClick="{{ provNext }}" style="width:52px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">►</div>
+            </div>
+            <div style="display:flex;justify-content:center;font-family:'Saira',sans-serif;font-size:12px;font-weight:500;color:var(--grey)">{{ prov.pos }}</div>
+            <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:2px">
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px"><div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">TODAY</div><div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500">{{ prov.today }}</div></div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px"><div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">THIS MONTH</div><div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500">{{ prov.month }}</div></div>
+              <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px"><div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">USAGE · 30 DAYS</div><div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500;color:var(--white)">{{ prov.use }}</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:2px;padding:12px 20px 16px;border-top:1px solid var(--line2);flex:none">
+          <div onClick="{{ closeSpend }}" style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">CLOSE</div>
+          <div style="margin-left:auto;align-self:center;font-size:14px;color:var(--grey)">Say: “what has this cost today”</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg, rgba(0,0,0,0.3) 0 1px, transparent 1px 3px);opacity:{{ scanOpacity }}"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1330,&quot;height&quot;:910},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Transcript&quot;,&quot;Fleet · Carrier&quot;,&quot;Engineers · Detail&quot;],&quot;default&quot;:&quot;Transcript&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Elite default&quot;,&quot;Dark (VS Code)&quot;,&quot;Light&quot;,&quot;Match my Elite colours&quot;],&quot;default&quot;:&quot;Elite default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;matrix&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;0.1,0.4,1 | 0,1,0 | 1,0,0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Match my Elite colours&quot;},&quot;scanlines&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  listRef = React.createRef();
+  rootRef = React.createRef();
+  themes = {
+    'Elite default': { glow: true, scan: true, v: {} },
+    'Dark (VS Code)': { glow: false, scan: false, v: { '--a': '#3794FF', '--bg': '#1E1E1E', '--bar': '#2D2D2D', '--white': '#D4D4D4', '--grey': '#9D9D9D', '--grey2': '#6E6E6E', '--slab': '#252526', '--slab2': '#2D2D2D', '--knock': '#0B1F33', '--brown': '#0E3A66', '--cyan': '#4EC9B0', '--blue': '#569CD6', '--red': '#F48771', '--yellow': '#DCDCAA' } },
+    'Light': { glow: false, scan: false, v: { '--a': '#B84E00', '--bg': '#F4F1EB', '--bar': '#E6E1D8', '--white': '#1C1917', '--grey': '#5E5852', '--grey2': '#8A847C', '--slab': '#E4DFD6', '--slab2': '#D9D3C8', '--knock': '#FFFFFF', '--brown': '#FFE3CC', '--cyan': '#007C8A', '--blue': '#0B6BCB', '--red': '#C8192B', '--yellow': '#8A6D00' } },
+    'Match my Elite colours': { glow: true, scan: true, matrix: true, v: {} }
+  };
+  base = { '--a': '#FF7A1A', '--knock': '#140800', '--brown': '#6B2F00', '--cyan': '#33D6E8', '--blue': '#1FA8F5', '--red': '#F0343F', '--yellow': '#F5D426' };
+  theme() { return this.themes[this.props.theme] || this.themes['Elite default']; }
+  mx(hex) {
+    const rows = String(this.props.matrix || '0.1,0.4,1 | 0,1,0 | 1,0,0').split('|').map(r => r.split(',').map(Number));
+    const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const o = [0, 1, 2].map(k => Math.max(0, Math.min(1, c[0] * (rows[0]?.[k] || 0) + c[1] * (rows[1]?.[k] || 0) + c[2] * (rows[2]?.[k] || 0))));
+    return '#' + o.map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
+  }
+  applyTheme() {
+    const el = this.rootRef.current; if (!el) return;
+    const t = this.theme();
+    const defaults = { '--bar': '#0F0D0C', '--bg': '#070606', '--white': '#EDE9E3', '--grey': '#A09B94', '--grey2': '#6E6A65', '--slab': '#232120', '--slab2': '#2E2B29', ...this.base };
+    const v = { ...defaults, ...t.v };
+    if (t.matrix) Object.keys(this.base).forEach(k => { v[k] = this.mx(this.base[k]); });
+    Object.entries(v).forEach(([k, val]) => el.style.setProperty(k, val));
+    el.style.setProperty('--glowT', t.glow ? '0 0 12px color-mix(in oklab, var(--a) 55%, transparent)' : 'none');
+    el.style.setProperty('--glowD', t.glow ? '0 0 6px var(--a), 0 0 16px color-mix(in oklab, var(--a) 60%, transparent)' : 'none');
+    el.style.setProperty('--glowC', t.glow ? '0 0 6px var(--cyan), 0 0 14px color-mix(in oklab, var(--cyan) 50%, transparent)' : 'none');
+  }
+  state = {
+    screen: null, q: '', draft: '', spend: true, hideColonia: true, hideFoot: true, pin: false, selEng: 'Broo Tarquin',
+    msgs: [
+      { who: 'd47', time: '19:41', intent: 'continuity.resume', text: 'Good evening, Commander. Ready to go.' },
+      { who: 'cmdr', time: '19:41', text: 'How are you this evening?' },
+      { who: 'd47', time: '19:42', delivery: 'calm', text: 'Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.', chip: 'Giryak', effort: 'HIGH', cost: '$0.1075' }
+    ]
+  };
+  engineers = [
+    { g: 'READY FOR UNLOCK', name: 'Broo Tarquin', mods: '14 MODULES', dist: '230 LY · ~6 JUMPS', base: "BROO'S LEGACY · MUANG" },
+    { g: 'READY FOR UNLOCK', name: 'Tiana Fortune', mods: '9 MODULES', dist: '177 LY · ~4 JUMPS', base: "FORTUNE'S LOSS · ACHENAR" },
+    { g: 'READY FOR UNLOCK', name: 'Lori Jameson', mods: '4 MODULES', dist: '92 LY · ~3 JUMPS', base: 'JAMESON BASE · SHINRARTA DEZHRA' },
+    { g: 'READY FOR UNLOCK', name: 'The Sarge', mods: '3 MODULES', dist: '120 LY · ~3 JUMPS', base: 'THE BEACH · BETA-3 TUCANI' },
+    { g: 'READY FOR UNLOCK', name: 'Bill Turner', mods: '3 MODULES', dist: '145 LY · ~4 JUMPS', base: "TURNER METALLICS · ALIOTH" },
+    { g: 'UNLOCKED', name: 'Lei Cheung', mods: '19 MODULES', dist: '50 LY · ~2 JUMPS', base: "THE CLOSE · LAKSAK" },
+    { g: 'UNLOCKED', name: 'Didi Vatermann', mods: '17 MODULES', dist: '74 LY · ~2 JUMPS', base: "VATERMANN LLC · LEESTI" },
+    { g: 'UNLOCKED', name: 'Felicity Farseer', mods: '14 MODULES', dist: '192 LY · ~5 JUMPS', base: "FARSEER INC · DECIAT" }
+  ];
+  buys = [
+    { ship: 'DEFENDER', slot: 'SMALL HARDPOINT 3', mod: 'G5 LONG RANGE WEAPON' },
+    { ship: 'DEFENDER', slot: 'SMALL HARDPOINT 3', mod: 'THERMAL VENT' },
+    { ship: 'OXEN', slot: 'LARGE HARDPOINT 1', mod: 'G5 LONG RANGE WEAPON' },
+    { ship: 'OXEN', slot: 'LARGE HARDPOINT 1', mod: 'FLOW CONTROL' },
+    { ship: 'OXEN', slot: 'LARGE HARDPOINT 2', mod: 'G5 LONG RANGE WEAPON' }
+  ];
+  providers = [
+    { name: 'ANTHROPIC', today: '$0.2674', month: '$19.3820', use: 'CLAUDE-SONNET-5' },
+    { name: 'ELEVENLABS', today: '$0.1534', month: '$11.7972', use: '242,705 CHARS' },
+    { name: 'OPENAI', today: '$0.0000', month: '$0.0665', use: 'GPT-5.4-NANO' },
+    { name: 'EDGE NEURAL', today: 'FREE', month: 'FREE', use: '10,926 CHARS' },
+    { name: 'KOKORO', today: 'FREE', month: 'FREE', use: '6,611 CHARS' },
+    { name: 'AZURE', today: '$0.0000', month: '$0.0000', use: 'UNUSED' },
+    { name: 'GOOGLE', today: '$0.0000', month: '$0.0000', use: 'UNUSED' },
+    { name: 'LOCAL WHISPER', today: 'FREE', month: 'FREE', use: '5 H 12 MIN' }
+  ];
+  provView() { const i = this.state.prov || 0; return { ...this.providers[i], pos: (i + 1) + ' / ' + this.providers.length }; }
+  spendGroups() {
+    const P = (name, use, cost) => ({ name, use, cost, costC: cost === 'FREE' ? 'var(--grey)' : 'var(--a)' });
+    return [
+      { title: 'NOW', rows: [
+        { label: 'THIS TURN', total: '$0.0106', parts: [P('claude-sonnet-5', '2,715 in · 84 out · 1,531 written', '$0.0106')] },
+        { label: 'THIS SESSION', total: '$0.1432', parts: [P('claude-sonnet-5', '5 turns', '$0.1057'), P('ElevenLabs', '749 chars', '$0.0375')] },
+        { label: 'TODAY', total: '$0.4208', parts: [P('claude-sonnet-5', '', '$0.2674'), P('ElevenLabs', '3,067 chars', '$0.1534')] }
+      ] },
+      { title: 'RUNNING TOTALS', rows: [
+        { label: 'THIS WEEK', total: '$1.9118', parts: [P('claude-sonnet-5', '', '$1.2294'), P('ElevenLabs', '13,649 chars', '$0.6825')] },
+        { label: 'LAST 7 DAYS', total: '$4.6152', parts: [P('claude-sonnet-5', '', '$2.6288'), P('ElevenLabs', '39,729 chars', '$1.9865')] },
+        { label: 'THIS MONTH', total: '$31.1791', parts: [P('claude-sonnet-5', '', '$19.3820'), P('ElevenLabs', '235,943 chars', '$11.7972')] },
+        { label: 'LAST 30 DAYS', total: '$31.8576', parts: [P('claude-sonnet-5', '', '$19.6558'), P('ElevenLabs', '242,705 chars', '$12.1353'), P('gpt-5.4-nano', '', '$0.0665'), P('Edge Neural', '10,926 chars', 'FREE'), P('Kokoro', '6,611 chars', 'FREE')] }
+      ] }
+    ];
+  }
+  componentDidMount() { this.applyTheme(); this.scrollEnd(); }
+  componentDidUpdate() { this.applyTheme(); if (this._m !== this.state.msgs) { this._m = this.state.msgs; this.scrollEnd(); } }
+  scrollEnd() { const el = this.listRef.current; if (el) el.scrollTop = el.scrollHeight; }
+  now() { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  send = () => {
+    const text = this.state.draft.trim(); if (!text) return;
+    this.setState(s => ({ draft: '', msgs: [...s.msgs, { who: 'cmdr', time: this.now(), text }] }));
+    setTimeout(() => this.setState(s => ({ msgs: [...s.msgs, { who: 'd47', time: this.now(), text: 'Copy that, Commander. Standing by.', effort: 'MEDIUM', cost: '$0.0187' }] })), 900);
+  };
+  renderVals() {
+    const map = { Transcript: 'transcript', 'Fleet · Carrier': 'carrier', 'Engineers · Detail': 'engineer' };
+    const screen = this.state.screen || map[this.props.screen] || 'transcript';
+    const go = s => () => this.setState({ screen: s });
+    const tabDefs = [['TRANSCRIPT', 'transcript'], ['FLEET', 'carrier'], ['ENGINEERS', 'engineer'], ['CHECKLIST'], ['ROUTING'], ['ADVENTURES'], ['SETTINGS']];
+    const tabs = tabDefs.map(([label, s]) => {
+      const on = s === screen;
+      return { label, go: s ? go(s) : () => {}, bg: on ? 'var(--a)' : 'var(--tile)', fg: on ? 'var(--knock)' : 'var(--a)', glow: on && this.theme().glow ? '0 0 10px color-mix(in oklab, var(--a) 55%, transparent)' : 'none' };
+    });
+    const q = this.state.q.trim().toLowerCase();
+    const shown = this.state.msgs.filter(m => !q || m.text.toLowerCase().includes(q));
+    const msgs = shown.map((m, i) => {
+      const d = m.who === 'd47';
+      return {
+        name: d ? 'D47' : 'CMDR JOHN DEPARAGON', who: d ? 'var(--a)' : 'var(--cyan)',
+        align: d ? 'flex-start' : 'flex-end', barL: d ? 'var(--a)' : 'transparent', barR: d ? 'transparent' : 'var(--cyan)',
+        ground: d ? 'transparent' : 'color-mix(in oklab, var(--cyan) 7%, var(--bg))', intent: m.intent || '', delivery: m.delivery || '', time: m.time, text: m.text,
+        chip: (m.chip || '').toUpperCase(), chipC: m.chip === 'Giryak' ? 'var(--cyan)' : 'var(--a)', showCost: !!m.cost, effort: m.effort, cost: m.cost
+      };
+    });
+    const hide = this.state;
+    const sel = this.engineers.find(e => e.name === this.state.selEng) || this.engineers[0];
+    const groupsMap = {};
+    this.engineers.forEach(e => {
+      const on = e.name === sel.name;
+      (groupsMap[e.g] = groupsMap[e.g] || []).push({
+        name: e.name.toUpperCase(), mods: e.mods, dist: e.dist,
+        bg: on ? 'var(--a)' : 'var(--tile)', hover: on ? 'var(--a)' : 'var(--tile2)',
+        nameC: on ? 'var(--knock)' : 'var(--white)', subC: on ? 'var(--brown)' : 'var(--a)',
+        pick: () => this.setState({ selEng: e.name })
+      });
+    });
+    const groups = Object.keys(groupsMap).map(t => ({ title: t, rows: groupsMap[t] }));
+    const fill = on => on ? 'var(--a)' : 'transparent';
+    return {
+      tabs, listRef: this.listRef,
+      isTranscript: screen === 'transcript', isCarrier: screen === 'carrier', isEngineer: screen === 'engineer',
+      msgs, q: this.state.q, onQ: e => this.setState({ q: e.target.value }),
+      draft: this.state.draft, onDraft: e => this.setState({ draft: e.target.value }),
+      onKey: e => { if (e.key === 'Enter') this.send(); }, send: this.send,
+      cp: ['page','chip','cur','sq','eng','loop'].reduce((o, id) => { const hov = this.state.cpHover === id; const done = this.state.cpDone === id; o[id] = { on: () => this.setState({ cpHover: id }), click: () => this.setState({ cpHover: id, cpDone: id }), show: hov, label: done ? 'COPIED' : (id === 'page' ? 'COPY TRANSCRIPT' : 'COPY SYSTEM NAME'), bg: hov ? 'var(--a)' : 'var(--tile)', fg: hov ? 'var(--knock)' : 'var(--a)' }; return o; }, {}),
+      cpOff: () => this.setState({ cpHover: null, cpDone: null }),
+      askBorder: this.state.askFocus ? 'var(--cyan)' : 'var(--a)',
+      askFocus: () => this.setState({ askFocus: true }), askBlur: () => this.setState({ askFocus: false }),
+      spendOpen: !!this.state.spendOpen,
+      openSpend: () => this.setState({ spendOpen: true }), closeSpend: () => this.setState({ spendOpen: false }),
+      stop: e => e.stopPropagation(),
+      spendGroups: this.spendGroups(),
+      prov: this.provView(),
+      provPrev: () => this.setState(s => ({ prov: ((s.prov || 0) + this.providers.length - 1) % this.providers.length })),
+      provNext: () => this.setState(s => ({ prov: ((s.prov || 0) + 1) % this.providers.length })),
+      boxes: [
+        { label: 'HIDE THE COLONIA EIGHT', fill: fill(hide.hideColonia), toggle: () => this.setState(s => ({ hideColonia: !s.hideColonia })) },
+        { label: 'HIDE ON-FOOT ENGINEERS', fill: fill(hide.hideFoot), toggle: () => this.setState(s => ({ hideFoot: !s.hideFoot })) }
+      ],
+      groups, sel: { name: sel.name.toUpperCase(), base: sel.base, dist: sel.dist },
+      pinFill: fill(this.state.pin), togglePin: () => this.setState(s => ({ pin: !s.pin })),
+      buys: this.buys,
+      rootRef: this.rootRef,
+      scanOpacity: this.theme().scan && (this.props.scanlines ?? true) ? 0.5 : 0
+    };
+  }
+}
+</script>
+</body>
+</html>

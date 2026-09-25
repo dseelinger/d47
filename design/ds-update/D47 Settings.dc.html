@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Sintony:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#101010;}
+input::placeholder{color:#6E6A65;opacity:1;}
+a{color:#FF7A1A;} a:hover{color:#EDE9E3;}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:safe center;padding:24px;box-sizing:border-box;overflow:auto">
+<div data-screen-label="D47 Settings" style="--bar:#0F0D0C;--a:#FF7A1A;--bg:#070606;--white:#EDE9E3;--grey:#A09B94;--grey2:#6E6A65;--slab:#232120;--tile:color-mix(in oklab, var(--a) 20%, var(--bg));--tile2:color-mix(in oklab, var(--a) 30%, var(--bg));--line:color-mix(in oklab, var(--a) 55%, var(--bg));--line2:color-mix(in oklab, var(--a) 28%, var(--bg));--knock:#140800;--brown:#6B2F00;--cyan:#33D6E8;--red:#F0343F;--yellow:#F5D426;--glowD:0 0 6px var(--a), 0 0 16px color-mix(in oklab, var(--a) 60%, transparent);position:relative;width:1280px;flex:none;height:860px;background:var(--bg);border:1px solid var(--line);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;font-family:'Sintony',sans-serif;color:var(--a)">
+
+  <div style="height:44px;flex:none;display:flex;align-items:center;gap:14px;padding-left:18px;background:var(--bar);border-bottom:1px solid var(--line2)">
+    <div style="width:11px;height:11px;background:var(--a);transform:rotate(45deg);box-shadow:var(--glowD);flex:none"></div>
+    <div style="font-family:'Saira',sans-serif;font-size:19px;font-weight:600;letter-spacing:0.12em;color:var(--white)">DIRECTIVE 47</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--grey2)">0.1.0</div>
+    <div style="margin-left:auto;display:flex">
+      <div style="width:46px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--grey)">—</div>
+      <div style="width:46px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--grey)">□</div>
+      <div style="width:46px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--grey)">✕</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:20px 28px 0">
+    <div style="display:flex;gap:2px;flex:none">
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">TRANSCRIPT</div>
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">FLEET</div>
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">ENGINEERS</div>
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">CHECKLIST</div>
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">ROUTING</div>
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">ADVENTURES</div>
+      <div style="height:40px;padding:0 20px;display:flex;align-items:center;background:var(--a);color:var(--knock);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;box-shadow:0 0 10px color-mix(in oklab, var(--a) 55%, transparent)">SETTINGS</div>
+      <div style="margin-left:auto;height:40px;padding:0 18px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em">HELP</div>
+    </div>
+    <div style="height:2px;background:var(--a);flex:none"></div>
+
+    <div style="display:flex;align-items:center;gap:24px;padding:12px 0;border-bottom:1px solid var(--line2);flex:none">
+      <div style="display:flex;gap:22px">
+        <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--white);padding:6px 0 5px;border-bottom:2px solid var(--a)">SETTINGS</div>
+        <div style="font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;padding:6px 0 5px;border-bottom:2px solid transparent;cursor:pointer" style-hover="color:var(--white)">LEARNED PHRASES</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:2px;align-items:center">
+        <div onClick="{{ all.toggle }}" style="height:36px;padding:0 14px 0 10px;display:flex;align-items:center;gap:10px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)">
+          <div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;background:{{ all.fill }}"></div></div>
+          <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.04em">SHOW EVERY SETTING</span>
+        </div>
+        <div style="width:340px;height:36px;border:1px solid var(--line2);box-sizing:border-box;display:flex;align-items:center">
+          <input placeholder="Search settings" style="flex:1;min-width:0;height:100%;background:transparent;border:none;outline:none;padding:0 12px;font-family:'Sintony',sans-serif;font-size:14px;color:var(--white);caret-color:var(--a)">
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:230px minmax(0, 1fr);gap:28px">
+
+      <div style="border-right:1px solid var(--line2);padding:16px 16px 0 0;display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:13px;color:var(--grey);padding:0 0 12px">Changes apply as you make them.</div>
+        <div style="height:40px;padding:0 12px;display:flex;align-items:center;background:var(--slab);border-left:3px solid var(--a);font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;color:var(--white)">VOICE AND HEARING</div>
+        <sc-for list="{{ subs }}" as="s" hint-placeholder-count="3">
+          <div onClick="{{ s.go }}" style="height:38px;padding:0 12px 0 27px;display:flex;align-items:center;background:{{ s.bg }};color:{{ s.fg }};font-family:'Saira',sans-serif;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:var(--tile2);color:var(--white)">{{ s.label }}</div>
+        </sc-for>
+        <sc-for list="{{ sections }}" as="x" hint-placeholder-count="5">
+          <div style="height:40px;padding:0 12px 0 15px;display:flex;align-items:center;font-family:'Saira',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" style-hover="background:var(--tile)">{{ x }}</div>
+        </sc-for>
+      </div>
+
+      <div style="min-height:0;overflow-y:auto;padding:16px 12px 40px 0;scrollbar-color:var(--line) transparent;scrollbar-width:thin">
+        <div style="max-width:900px;display:flex;flex-direction:column;gap:28px">
+
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-family:'Saira',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em">VOICE AND HEARING ›</div>
+            <div style="font-family:'Saira',sans-serif;font-size:28px;font-weight:500;letter-spacing:0.04em;color:var(--white);line-height:1.1">{{ pageTitle }}</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--grey)"><div style="width:3px;height:16px;background:var(--a)"></div>Protected. D47 won't change these just because you ask it to.</div>
+          </div>
+
+          <sc-if value="{{ isInput }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:28px">
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">MICROPHONE</div>
+                  <div style="font-size:14px;color:var(--grey)">The input device, and how D47 knows you're talking to it.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.mic.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ g.mic.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent">
+                  <div style="font-size:15px;color:var(--white)">Microphone</div>
+                  <div style="position:relative">
+                    <div onClick="{{ dd.mic.toggle }}" style="height:40px;padding:0 12px;display:flex;align-items:center;gap:10px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:var(--white)">{{ dd.mic.value }}</span><span style="font-size:11px">▼</span></div>
+                    <sc-if value="{{ dd.mic.open }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;top:42px;left:0;right:0;z-index:4;background:var(--bar);border:1px solid var(--a);padding:2px;display:flex;flex-direction:column;gap:2px"><sc-for list="{{ dd.mic.opts }}" as="o" hint-placeholder-count="5"><div onClick="{{ o.go }}" style="min-height:36px;padding:0 12px;display:flex;align-items:center;background:{{ o.bg }};color:{{ o.fg }};font-family:'Saira',sans-serif;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:var(--tile2)">{{ o.label }}</div></sc-for></div></sc-if>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.mic.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.mic.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid var(--a);border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">Push-to-talk</div>
+                  <div style="display:flex;gap:2px;flex-wrap:wrap">
+                    <div style="height:40px;padding:0 14px;display:flex;align-items:center;background:var(--slab);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white);white-space:nowrap">{{ v.ptt }}</div>
+                    <div style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">BIND</div>
+                    <div onClick="{{ clr.ptt }}" style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">CLEAR</div>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.ptt.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ r.ptt.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid var(--a);border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">Cancel</div>
+                  <div style="display:flex;gap:2px;flex-wrap:wrap">
+                    <div style="height:40px;padding:0 14px;display:flex;align-items:center;background:var(--slab);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white);white-space:nowrap">{{ v.cancel }}</div>
+                    <div style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">BIND</div>
+                    <div onClick="{{ clr.cancel }}" style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">CLEAR</div>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.cancel.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ r.cancel.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:8px 0 8px 12px;border-left:3px solid var(--a);border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">How D47 knows you're talking to it</div>
+                  <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:2px">
+                    <sc-for list="{{ seg.mode }}" as="o" hint-placeholder-count="4">
+                      <div onClick="{{ o.go }}" style="height:40px;padding:0 12px;display:flex;align-items:center;justify-content:center;background:{{ o.bg }};color:{{ o.fg }};font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;cursor:pointer;text-align:center" style-hover="background:var(--a);color:var(--knock)">{{ o.label }}</div>
+                    </sc-for>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.mode.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.mode.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">Capture before the key</div>
+                  <div style="display:flex;gap:2px;height:40px;width:220px">
+                    <div onClick="{{ num.pre.dn }}" style="width:44px;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">◄</div>
+                    <div style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--slab);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white)">{{ num.pre.value }}</div>
+                    <div onClick="{{ num.pre.up }}" style="width:44px;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">►</div>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.pre.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.pre.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:2px;padding:10px 60px 10px 15px;border-top:1px solid var(--line2)">
+                  <sc-for list="{{ cbs.mic }}" as="c" hint-placeholder-count="2">
+                    <div onClick="{{ c.toggle }}" style="min-height:44px;padding:0 12px;display:flex;align-items:center;gap:12px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)">
+                      <div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:8px;height:8px;background:{{ c.fill }}"></div></div>
+                      <span style="font-size:15px;color:var(--white)">{{ c.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">SPEECH RECOGNITION</div>
+                  <div style="font-size:14px;color:var(--grey)">Who turns your speech into words, and where it runs.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.hear.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ g.hear.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:8px 0 8px 12px;border-left:3px solid transparent">
+                  <div style="font-size:15px;color:var(--white)">Hearing provider</div>
+                  <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:2px">
+                    <sc-for list="{{ seg.hear }}" as="o" hint-placeholder-count="4">
+                      <div onClick="{{ o.go }}" style="height:52px;padding:0 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{ o.bg }};cursor:pointer" style-hover="background:var(--tile2)">
+                        <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;color:{{ o.fg }}">{{ o.label }}</span>
+                        <span style="font-family:'Saira',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.05em;color:{{ o.subC }}">{{ o.sub }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.hear.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ r.hear.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <sc-if value="{{ hearKey.show }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                    <div style="font-size:15px;color:var(--white)">{{ hearKey.label }}</div>
+                    <div style="display:flex;gap:2px;align-items:center">
+                      <sc-if value="{{ hearKey.editing }}" hint-placeholder-val="{{ false }}">
+                        <input placeholder="Paste the new key" style="flex:1;min-width:0;height:40px;box-sizing:border-box;background:transparent;border:1px solid var(--a);outline:none;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white);caret-color:var(--a)">
+                        <div onClick="{{ hearKey.done }}" style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">SAVE</div>
+                        <div onClick="{{ hearKey.done }}" style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">CANCEL</div>
+                      </sc-if>
+                      <sc-if value="{{ hearKey.idle }}" hint-placeholder-val="{{ true }}">
+                        <div style="height:40px;padding:0 14px;display:flex;align-items:center;gap:14px;background:var(--slab)"><span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white)">••••••••7Q2F</span><span style="font-family:'Saira',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;color:var(--yellow)">KEY STORED</span></div>
+                        <div onClick="{{ hearKey.edit }}" style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">REPLACE</div>
+                      </sc-if>
+                    </div>
+                    <div></div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">CORRECTIONS</div>
+                  <div style="font-size:14px;color:var(--grey)">Names D47 has learned to hear correctly.</div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:8px 0 8px 12px;border-left:3px solid transparent">
+                  <div style="font-size:15px;color:var(--white)">Names it has learned</div>
+                  <div style="display:flex;gap:2px;align-items:stretch">
+                    <div style="flex:1;min-width:0;background:var(--slab);padding:10px 14px;font-size:14px;line-height:1.45;color:var(--grey);text-wrap:pretty">None yet. D47 only learns a name when you correct one it misheard.</div>
+                    <div style="padding:0 16px;display:flex;align-items:center;background:color-mix(in oklab, var(--red) 22%, var(--bg));color:var(--red);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer;white-space:nowrap" style-hover="background:var(--red);color:var(--white)">FORGET THEM ALL</div>
+                  </div>
+                  <div></div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isVoice }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:28px">
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">SHIP'S VOICE</div>
+                  <div style="font-size:14px;color:var(--grey)">Where D47 speaks from, and who voices it.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.voice.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ g.voice.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent">
+                  <div style="font-size:15px;color:var(--white)">Output device</div>
+                  <div style="position:relative">
+                    <div onClick="{{ dd.out.toggle }}" style="height:40px;padding:0 12px;display:flex;align-items:center;gap:10px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:var(--white)">{{ dd.out.value }}</span><span style="font-size:11px">▼</span></div>
+                    <sc-if value="{{ dd.out.open }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;top:42px;left:0;right:0;z-index:4;background:var(--bar);border:1px solid var(--a);padding:2px;display:flex;flex-direction:column;gap:2px"><sc-for list="{{ dd.out.opts }}" as="o" hint-placeholder-count="3"><div onClick="{{ o.go }}" style="min-height:36px;padding:0 12px;display:flex;align-items:center;background:{{ o.bg }};color:{{ o.fg }};font-family:'Saira',sans-serif;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:var(--tile2)">{{ o.label }}</div></sc-for></div></sc-if>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.out.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.out.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">Voice provider</div>
+                  <div style="display:flex;gap:2px;height:40px;max-width:420px">
+                    <div onClick="{{ st.vprov.prev }}" style="width:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">◄</div>
+                    <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--slab)"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:var(--white)">{{ st.vprov.value }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--grey2)">{{ st.vprov.pos }}</span></div>
+                    <div onClick="{{ st.vprov.next }}" style="width:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">►</div>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.vprov.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ r.vprov.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">ElevenLabs key</div>
+                  <div style="display:flex;gap:2px;align-items:center">
+                    <div style="height:40px;padding:0 14px;display:flex;align-items:center;gap:14px;background:var(--slab)"><span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white)">••••••••a91C</span><span style="font-family:'Saira',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;color:var(--yellow)">KEY STORED</span></div>
+                    <div style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">REPLACE</div>
+                    <div style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">VERIFY</div>
+                  </div>
+                  <div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">Voice</div>
+                  <div style="position:relative">
+                    <div onClick="{{ dd.voice.toggle }}" style="height:40px;padding:0 12px;display:flex;align-items:center;gap:10px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:var(--white)">{{ dd.voice.value }}</span><span style="font-size:11px">▼</span></div>
+                    <sc-if value="{{ dd.voice.open }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;top:42px;left:0;right:0;z-index:4;background:var(--bar);border:1px solid var(--a);padding:2px;display:flex;flex-direction:column;gap:2px"><sc-for list="{{ dd.voice.opts }}" as="o" hint-placeholder-count="4"><div onClick="{{ o.go }}" style="min-height:36px;padding:0 12px;display:flex;align-items:center;background:{{ o.bg }};color:{{ o.fg }};font-family:'Saira',sans-serif;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:var(--tile2)">{{ o.label }}</div></sc-for></div></sc-if>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.voice.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ r.voice.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:8px 0 8px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">ElevenLabs model</div>
+                  <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:2px">
+                    <sc-for list="{{ seg.model }}" as="o" hint-placeholder-count="2">
+                      <div onClick="{{ o.go }}" style="height:52px;padding:0 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{ o.bg }};cursor:pointer" style-hover="background:var(--tile2)">
+                        <span style="font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;color:{{ o.fg }}">{{ o.label }}</span>
+                        <span style="font-family:'Saira',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.05em;color:{{ o.subC }}">{{ o.sub }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.model.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.model.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">OTHER VOICES</div>
+                  <div style="font-size:14px;color:var(--grey)">Anyone who isn't the ship can use a different provider.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.src.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ g.src.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <sc-for list="{{ srcRows }}" as="s" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:52px;padding:4px 0 4px 12px;border-left:3px solid transparent;border-bottom:1px solid var(--line2)">
+                    <div style="font-size:15px;color:var(--white)">{{ s.label }}</div>
+                    <div style="display:flex;gap:2px;height:40px;max-width:420px">
+                      <div onClick="{{ s.prev }}" style="width:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">◄</div>
+                      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--slab)"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:{{ s.valC }}">{{ s.value }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--grey2)">{{ s.pos }}</span></div>
+                      <div onClick="{{ s.next }}" style="width:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">►</div>
+                    </div>
+                    <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ s.rs }}" hint-placeholder-val="{{ true }}"><div onClick="{{ s.reset }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                  </div>
+                </sc-for>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:8px 0 8px 12px;border-left:3px solid transparent">
+                  <div style="font-size:15px;color:var(--white)">Pair every voice again</div>
+                  <div style="display:flex;gap:2px;align-items:stretch">
+                    <div style="flex:1;min-width:0;background:var(--slab);padding:10px 14px;font-size:14px;color:var(--white)">10 of 11 cores on their paired voice <span style="color:var(--grey)">· 1 changed by hand</span></div>
+                    <div style="padding:0 16px;display:flex;align-items:center;background:color-mix(in oklab, var(--red) 22%, var(--bg));color:var(--red);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer;white-space:nowrap" style-hover="background:var(--red);color:var(--white)">FORGET AND PAIR AGAIN</div>
+                  </div>
+                  <div></div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">GUARDIAN VOICE</div>
+                  <div style="font-size:14px;color:var(--grey)">Treatments for the ship AI's voice. Off by default, and they apply to every core.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.fx.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ g.fx.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:2px;padding:0 60px 0 15px">
+                  <sc-for list="{{ cbs.fx }}" as="c" hint-placeholder-count="8">
+                    <div onClick="{{ c.toggle }}" style="min-height:44px;padding:0 12px;display:flex;align-items:center;gap:12px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)">
+                      <div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:8px;height:8px;background:{{ c.fill }}"></div></div>
+                      <span style="font-size:15px;color:var(--white)">{{ c.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;padding-left:15px">
+                  <div style="height:40px;padding:0 18px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">TEST</div>
+                  <div style="font-size:14px;color:var(--grey)">Hear these treatments without paying for them.</div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">WHAT IT COSTS</div>
+                  <div style="font-size:14px;color:var(--grey)">What this session has spent, and the rate it was priced at.</div>
+                  <div style="margin-left:auto;width:44px;height:32px"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:2px;padding:10px 60px 10px 15px">
+                  <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px"><div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">SPOKEN THIS SESSION</div><div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500;color:var(--white)">115 CHARS · <span style="color:var(--a)">$0.0058</span></div></div>
+                  <div style="background:var(--slab);padding:10px 14px;display:flex;flex-direction:column;gap:3px;grid-column:span 2"><div style="font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">BY VOICE</div><div style="font-family:'Saira',sans-serif;font-size:16px;font-weight:500;color:var(--white)">ABOARD · 115 VIA ELEVENLABS · <span style="color:var(--a)">$0.0058</span></div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">Price per 1,000 characters</div>
+                  <div style="display:flex;gap:2px;height:40px;width:220px">
+                    <div onClick="{{ num.price.dn }}" style="width:44px;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">◄</div>
+                    <div style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--slab);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--white)">{{ num.price.value }}</div>
+                    <div onClick="{{ num.price.up }}" style="width:44px;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">►</div>
+                  </div>
+                  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.price.show }}" hint-placeholder-val="{{ true }}"><div onClick="{{ r.price.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:56px;padding:6px 0 6px 12px;border-left:3px solid transparent;border-top:1px solid var(--line2)">
+                  <div style="font-size:15px;color:var(--white)">What the voice provider receives</div>
+                  <div style="display:flex"><div style="height:40px;padding:0 16px;display:flex;align-items:center;background:var(--tile);font-family:'Saira',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">SHOW</div></div>
+                  <div></div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isLevels }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:28px">
+
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">CUES</div>
+                  <div style="font-size:14px;color:var(--grey)">Sounds D47 makes while it listens and thinks.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.cues.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ g.cues.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:2px;padding:0 60px 0 15px">
+                  <sc-for list="{{ cbs.cues }}" as="c" hint-placeholder-count="2">
+                    <div onClick="{{ c.toggle }}" style="min-height:44px;padding:0 12px;display:flex;align-items:center;gap:12px;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)">
+                      <div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:8px;height:8px;background:{{ c.fill }}"></div></div>
+                      <span style="font-size:15px;color:var(--white)">{{ c.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ v.bed }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:240px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:52px;padding:0 0 0 12px;border-left:3px solid transparent">
+                    <div style="font-size:15px;color:var(--white)">Thinking bed sound</div>
+                    <div style="display:flex;gap:2px;height:40px;max-width:420px">
+                      <div onClick="{{ st.bedSound.prev }}" style="width:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">◄</div>
+                      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--slab)"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Saira',sans-serif;font-size:14px;font-weight:500;color:var(--white)">{{ st.bedSound.value }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--grey2)">{{ st.bedSound.pos }}</span></div>
+                      <div onClick="{{ st.bedSound.next }}" style="width:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--tile);font-size:12px;cursor:pointer" style-hover="background:var(--a);color:var(--knock)">►</div>
+                    </div>
+                    <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ r.bedSound.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.bedSound.go }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">LEVELS</div>
+                  <div style="font-size:14px;color:var(--grey)">Level, mute and duck for every channel.</div>
+                  <div style="margin-left:auto;width:44px;height:32px;display:flex;justify-content:center"><sc-if value="{{ g.lv.show }}" hint-placeholder-val="{{ false }}"><div onClick="{{ g.lv.go }}" title="Reset this group" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                </div>
+                <div style="display:grid;grid-template-columns:170px minmax(0, 1fr) 56px minmax(0, 1fr) 44px;gap:16px;align-items:center;height:34px;padding-left:15px;font-family:'Saira',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.06em;color:var(--grey)">
+                  <div>CHANNEL</div><div>LEVEL</div><div style="text-align:center">MUTE</div><div>DUCK WHILE D47 SPEAKS</div><div></div>
+                </div>
+                <sc-for list="{{ mixer }}" as="m" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:170px minmax(0, 1fr) 56px minmax(0, 1fr) 44px;gap:16px;align-items:center;min-height:52px;padding-left:15px;border-top:1px solid var(--line2)">
+                    <div style="font-size:15px;color:var(--white)">{{ m.name }}</div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div style="flex:1;display:grid;grid-template-columns:repeat(20, minmax(0, 1fr));gap:2px;height:22px">
+                        <sc-for list="{{ m.level.segs }}" as="x" hint-placeholder-count="20"><div onClick="{{ x.go }}" style="background:{{ x.bg }};cursor:pointer"></div></sc-for>
+                      </div>
+                      <div style="width:36px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;color:{{ m.valC }}">{{ m.level.val }}</div>
+                    </div>
+                    <div style="display:flex;justify-content:center"><div onClick="{{ m.toggleMute }}" style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer" style-hover="background:var(--tile2)"><div style="width:16px;height:16px;border:2px solid var(--a);box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;background:{{ m.muteFill }}"></div></div></div></div>
+                    <div>
+                      <sc-if value="{{ m.hasDuck }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <div style="flex:1;display:grid;grid-template-columns:repeat(20, minmax(0, 1fr));gap:2px;height:22px">
+                            <sc-for list="{{ m.duck.segs }}" as="x" hint-placeholder-count="20"><div onClick="{{ x.go }}" style="background:{{ x.bg }};cursor:pointer"></div></sc-for>
+                          </div>
+                          <div style="width:36px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--white)">{{ m.duck.val }}</div>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ m.noDuck }}" hint-placeholder-val="{{ false }}"><div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--grey2)">—</div></sc-if>
+                    </div>
+                    <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><sc-if value="{{ m.rs }}" hint-placeholder-val="{{ false }}"><div onClick="{{ m.reset }}" title="Reset to default" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--tile);cursor:pointer;font-size:16px" style-hover="background:var(--a);color:var(--knock)">↺</div></sc-if></div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--a)">
+                  <div style="font-family:'Saira',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.06em;color:var(--white)">YOUR OWN AUDIO</div>
+                  <div style="font-size:14px;color:var(--grey)">Sound files you've dropped in for D47 to use.</div>
+                </div>
+                <div style="padding:10px 60px 0 15px"><div style="background:var(--slab);padding:12px 14px;font-size:14px;color:var(--grey)">Nothing dropped in yet.</div></div>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg, rgba(0,0,0,0.3) 0 1px, transparent 1px 3px);opacity:0.5"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1330,&quot;height&quot;:910}}">
+class Component extends DCLogic {
+  D = { mic: 0, ptt: 'UNBOUND', cancel: 'UNBOUND', mode: 0, echo: true, room: true, pre: 500, hear: 0,
+    out: 0, vprov: 0, voice: 1, model: 0, src_carrier: 0, src_npc: 0, src_known: 0, src_dm: 0, src_range: 0,
+    fx_cylon: false, fx_pitch: false, fx_oct: false, fx_chorus: false, fx_metal: false, fx_ring: false, fx_glitch: false, fx_reverb: false,
+    price: 0.03, cues: true, bed: true, bedSound: 0,
+    lv0_l: 1, lv0_m: false, lv0_d: 0.35, lv1_l: 0.5, lv1_m: false, lv1_d: 0.2, lv2_l: 1, lv2_m: false, lv2_d: 1, lv3_l: 1, lv3_m: false, lv4_l: 1, lv4_m: false };
+  state = { page: 'input', open: null, keyEdit: false, all: false,
+    v: { ...this.D, ptt: 'BUTTON 11', cancel: 'BUTTON 9', hear: 3, vprov: 2, voice: 0, src_carrier: 3, src_npc: 3, src_known: 3, src_dm: 3, src_range: 3, fx_chorus: true, price: 0.05 } };
+  L = {
+    mic: ['System default · Logi 4K Stream Edition', 'Logi 4K Stream Edition', 'Headset microphone (Index)', 'Line in (Realtek)', 'Stereo mix'],
+    out: ['System default · Headphones (Logi Z407)', 'Headphones (Logi Z407)', 'Index headset'],
+    vprov: ['Edge Neural · free', 'Kokoro · free, this computer', 'ElevenLabs · paid', 'Azure · paid', 'Google · paid', 'OpenAI · paid'],
+    voice: ['Ellis · clear, professional storyteller · male, British', 'Rachel · calm narrator · female, American', 'Adam · deep · male, American', 'Charlotte · warm · female, British'],
+    src: ['Same as the ship', 'Edge Neural · free', 'Kokoro · free', 'ElevenLabs · paid', 'Azure · paid', 'Google · paid', 'OpenAI · paid'],
+    bedSound: ['thinking-hum (default)', 'soft-pulse', 'none-quiet']
+  };
+  set = (k, val) => this.setState(s => ({ v: { ...s.v, [k]: val } }));
+  reset = keys => () => this.setState(s => { const v = { ...s.v }; keys.forEach(k => { v[k] = this.D[k]; }); return { v }; });
+  dirty = keys => keys.some(k => this.state.v[k] !== this.D[k]);
+  renderVals() {
+    const v = this.state.v, page = this.state.page;
+    const r = {}; Object.keys(this.D).forEach(k => { r[k] = { show: v[k] !== this.D[k], go: this.reset([k]) }; });
+    const G = { mic: ['mic', 'ptt', 'cancel', 'mode', 'echo', 'room', 'pre'], hear: ['hear'], voice: ['out', 'vprov', 'voice', 'model'],
+      src: ['src_carrier', 'src_npc', 'src_known', 'src_dm', 'src_range'], fx: Object.keys(this.D).filter(k => k.startsWith('fx_')),
+      cues: ['cues', 'bed', 'bedSound'], lv: Object.keys(this.D).filter(k => k.startsWith('lv')) };
+    const g = {}; Object.keys(G).forEach(k => { g[k] = { show: this.dirty(G[k]), go: this.reset(G[k]) }; });
+    const seg = (k, opts) => opts.map(([label, sub, kind], i) => { const on = v[k] === i; return { label, sub, go: () => this.set(k, i), bg: on ? 'var(--a)' : 'var(--tile)', fg: on ? 'var(--knock)' : 'var(--a)', subC: on ? 'var(--brown)' : kind === 'stored' ? 'var(--yellow)' : 'var(--grey)' }; });
+    const step = (k, list) => { const n = list.length; return { value: list[v[k]], pos: (v[k] + 1) + ' / ' + n, prev: () => this.set(k, (v[k] + n - 1) % n), next: () => this.set(k, (v[k] + 1) % n) }; };
+    const dd = k => ({ value: this.L[k][v[k]], open: this.state.open === k, toggle: () => this.setState(s => ({ open: s.open === k ? null : k })),
+      opts: this.L[k].map((label, i) => ({ label, bg: v[k] === i ? 'var(--a)' : 'var(--tile)', fg: v[k] === i ? 'var(--knock)' : 'var(--white)', go: () => this.setState(s => ({ open: null, v: { ...s.v, [k]: i } })) })) });
+    const cb = (k, label) => ({ label, fill: v[k] ? 'var(--a)' : 'transparent', toggle: () => this.set(k, !v[k]) });
+    const num = (k, d, min, max, fmt) => ({ value: fmt(v[k]), dn: () => this.set(k, Math.max(min, +(v[k] - d).toFixed(3))), up: () => this.set(k, Math.min(max, +(v[k] + d).toFixed(3))) });
+    const bar = (k, dim) => ({ val: v[k].toFixed(2), segs: Array.from({ length: 20 }, (_, i) => ({ bg: (i + 1) / 20 <= v[k] + 1e-6 ? (dim ? 'var(--grey2)' : 'var(--a)') : 'var(--tile)', go: () => this.set(k, (i + 1) / 20) })) });
+    const chans = [['D47', true], ['Other voices', true], ['Game audio', true], ['Cues', false], ['Thinking bed', false]];
+    const mixer = chans.map(([name, duck], i) => {
+      const p = 'lv' + i + '_', keys = [p + 'l', p + 'm'].concat(duck ? [p + 'd'] : []), muted = v[p + 'm'];
+      return { name, level: bar(p + 'l', muted), valC: muted ? 'var(--grey2)' : 'var(--white)', muteFill: muted ? 'var(--a)' : 'transparent', toggleMute: () => this.set(p + 'm', !muted),
+        hasDuck: duck, noDuck: !duck, duck: duck ? bar(p + 'd') : null, rs: this.dirty(keys), reset: this.reset(keys) };
+    });
+    const srcDefs = [['src_carrier', 'Carrier'], ['src_npc', 'NPCs'], ['src_known', 'People you know'], ['src_dm', 'Direct messages'], ['src_range', 'Anyone in range']];
+    const srcRows = srcDefs.map(([k, label]) => ({ label, ...step(k, this.L.src), valC: v[k] === 0 ? 'var(--grey)' : 'var(--white)', rs: v[k] !== this.D[k], reset: this.reset([k]) }));
+    const names = ['WHISPER', 'GROQ', 'OPENAI', 'DEEPGRAM'];
+    const subsDef = [['Voice input', 'input'], ['Its voice', 'voice'], ['Sounds and levels', 'levels']];
+    return {
+      v, r, g, isInput: page === 'input', isVoice: page === 'voice', isLevels: page === 'levels',
+      pageTitle: { input: 'VOICE INPUT', voice: 'ITS VOICE', levels: 'SOUNDS AND LEVELS' }[page],
+      subs: subsDef.map(([label, id]) => ({ label, go: () => this.setState({ page: id, open: null }), bg: page === id ? 'var(--a)' : 'transparent', fg: page === id ? 'var(--knock)' : 'var(--a)' })),
+      sections: ["THE SHIP'S AI", 'SPEAKING UP', 'ACTING ON THE GAME', 'SCREENS', 'PRIVACY AND THIS INSTALL'],
+      all: { fill: this.state.all ? 'var(--a)' : 'transparent', toggle: () => this.setState(s => ({ all: !s.all })) },
+      dd: { mic: dd('mic'), out: dd('out'), voice: dd('voice') },
+      clr: { ptt: () => this.set('ptt', 'UNBOUND'), cancel: () => this.set('cancel', 'UNBOUND') },
+      seg: {
+        mode: seg('mode', [['PRESS TO TALK (PTT)'], ['TOGGLE ON AND OFF'], ['LISTEN WHENEVER I SPEAK'], ['LISTEN WHEN I SAY ITS NAME']]),
+        hear: seg('hear', [['WHISPER', 'THIS COMPUTER · FREE'], ['GROQ', 'PAID · NEEDS KEY'], ['OPENAI', 'PAID · NEEDS KEY'], ['DEEPGRAM', 'PAID · KEY STORED', 'stored']]),
+        model: seg('model', [['V3 CONVERSATIONAL', 'MORE EXPRESSIVE · ABOUT 2 S'], ['FLASH 2.5', 'FASTEST · ABOUT 0.3 S']])
+      },
+      hearKey: { show: v.hear !== 0, label: names[v.hear].charAt(0) + names[v.hear].slice(1).toLowerCase() + ' key', editing: this.state.keyEdit, idle: !this.state.keyEdit,
+        edit: () => this.setState({ keyEdit: true }), done: () => this.setState({ keyEdit: false }) },
+      num: { pre: num('pre', 50, 0, 2000, x => x + ' MS'), price: num('price', 0.01, 0, 1, x => '$' + x.toFixed(2)) },
+      st: { vprov: step('vprov', this.L.vprov), bedSound: step('bedSound', this.L.bedSound) },
+      cbs: {
+        mic: [cb('echo', "Cancel D47's own voice out of the mic"), cb('room', 'Take the room out of what D47 hears')],
+        fx: [cb('fx_cylon', 'Cylon'), cb('fx_pitch', 'Pitch down'), cb('fx_oct', 'Octave-down layer'), cb('fx_chorus', 'Chorus'), cb('fx_metal', 'Metallic resonance'), cb('fx_ring', 'Ring modulation'), cb('fx_glitch', 'Glitch'), cb('fx_reverb', 'Reverb')],
+        cues: [cb('cues', 'Loop-state cues'), cb('bed', 'Thinking bed')]
+      },
+      srcRows, mixer
+    };
+  }
+}
+</script>
+</body>
+</html>
