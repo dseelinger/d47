@@ -21,6 +21,10 @@ the ship, the pilot and the reward, for example "First kill of the session. Paul
 destroyed, 59,330 credits." If the pilot taunted you in the five minutes before, the reworded remark
 may answer it. The **Notable kills** switch under Flight callouts turns it off.
 
+Say "night vision", "night vision on" or "night vision off" to toggle night vision in the ship, in
+the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
+already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification

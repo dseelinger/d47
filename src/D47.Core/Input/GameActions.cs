@@ -40,6 +40,9 @@ public sealed record GameAction
     /// </summary>
     public bool ReportsInverted { get; init; }
 
+    /// <summary>The modes in which <see cref="Reports"/> can be trusted; null means every mode.</summary>
+    public ControlContext? ReportsIn { get; init; }
+
     /// <summary>
     /// Whole utterances that reach this action without a model, each with the state it asks for.
     /// </summary>
@@ -57,6 +60,11 @@ public sealed record GameAction
     public bool? AlreadyIn(DesiredState wanted, GameStatus status)
     {
         if (wanted == DesiredState.Toggle || Reports is not { } flag || !status.IsKnown)
+        {
+            return null;
+        }
+
+        if (ReportsIn is { } trusted && (ControlContexts.Of(status) & trusted) == 0)
         {
             return null;
         }
@@ -119,6 +127,28 @@ public static class GameActions
             ],
             Reports = StatusFlags.LightsOn,
             Phrases = [("lights on", DesiredState.On), ("lights off", DesiredState.Off), ("ship lights", DesiredState.Toggle)],
+        },
+
+        new()
+        {
+            Id = "night_vision",
+            Label = "night vision",
+            Group = Flight,
+            Variants =
+            [
+                new ActionVariant("NightVisionToggle", ControlContext.AnyShip | ControlContext.Srv),
+                new ActionVariant("HumanoidToggleNightVisionButton", ControlContext.OnFoot),
+            ],
+            Reports = StatusFlags.NightVision,
+
+            // Whether Elite sets the flag on foot is unverified, so on foot "on" and "off" press the toggle.
+            ReportsIn = ControlContext.AnyShip | ControlContext.Srv,
+            Phrases =
+            [
+                ("night vision", DesiredState.Toggle),
+                ("night vision on", DesiredState.On),
+                ("night vision off", DesiredState.Off),
+            ],
         },
 
         new()
