@@ -108,12 +108,10 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
 
     /// <summary>
     /// Writes every Commander's ships through <see cref="AtomicFile"/>, and keeps what it wrote so <see
-    /// cref="For"/> and <see cref="All"/> answer with it afterwards.
+    /// cref="For"/> and <see cref="All"/> answer with it afterwards. A Commander whose loadouts are not
+    /// <see cref="ShipLoadouts.IsWhole"/> is written over the ships the file held, less the ones they
+    /// forgot, rather than in place of them (#475).
     /// </summary>
-    /// <paramref name="commanders"/>
-    /// at all, and writing only what this session has seen would delete their ships from the file —
-    /// silently, and permanently once the journals scrolled past the catch-up window.
-    /// </paramref>
     public void Save(IEnumerable<CommanderGameState> commanders, DateTimeOffset foldedThrough)
     {
         ArgumentNullException.ThrowIfNull(commanders);
@@ -134,7 +132,9 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
 
         foreach (var commander in states)
         {
-            merged[commander.Identity.FrontierId] = commander.Loadouts;
+            var fid = commander.Identity.FrontierId;
+
+            merged[fid] = merged.TryGetValue(fid, out var onFile) ? onFile.With(commander.Loadouts) : commander.Loadouts;
         }
 
         // Never backwards.

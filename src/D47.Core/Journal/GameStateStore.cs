@@ -94,7 +94,7 @@ public sealed class GameStateStore
 
         foreach (var (fid, state) in _byFrontierId)
         {
-            state.Loadouts = loadouts.TryGetValue(fid, out var ships) ? ships : ShipLoadouts.Empty;
+            state.Loadouts = loadouts.TryGetValue(fid, out var ships) ? ships with { IsWhole = true } : ShipLoadouts.NoShips;
         }
     }
 

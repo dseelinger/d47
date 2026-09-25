@@ -13,8 +13,23 @@ public sealed record ShipLoadouts
 {
     public static readonly ShipLoadouts Empty = new();
 
+    /// <summary>Known to hold no ships, so a save removes whatever the file held.</summary>
+    public static readonly ShipLoadouts NoShips = new() { IsWhole = true };
+
     public IReadOnlyDictionary<int, RememberedShip> Ships { get; init; } =
         new Dictionary<int, RememberedShip>();
+
+    /// <summary>
+    /// Whether this is every ship the Commander has, rather than only what this session has seen. A
+    /// save replaces the file's ships with a whole set and writes over them with any other (#475).
+    /// </summary>
+    public bool IsWhole { get; init; }
+
+    /// <summary>
+    /// Ship ids forgotten by a sale or purchase. An entry in <see cref="Ships"/> under the same id is the
+    /// hull that took the id afterwards.
+    /// </summary>
+    public IReadOnlySet<int> Forgotten { get; init; } = new HashSet<int>();
 
     public bool IsKnown => Ships.Count > 0;
 
@@ -52,24 +67,37 @@ public sealed record ShipLoadouts
         };
     }
 
-    /// <summary>These ships with <paramref name="newer"/>'s written over them, matched on ShipID.</summary>
+    /// <summary>
+    /// These ships without the ones <paramref name="newer"/> forgot, and with its ships written over them,
+    /// matched on ShipID. A whole <paramref name="newer"/> is taken as it is.
+    /// </summary>
     public ShipLoadouts With(ShipLoadouts newer)
     {
         ArgumentNullException.ThrowIfNull(newer);
 
-        if (newer.Ships.Count == 0)
+        if (newer.IsWhole)
+        {
+            return newer;
+        }
+
+        if (newer.Ships.Count == 0 && newer.Forgotten.Count == 0)
         {
             return this;
         }
 
         var merged = new Dictionary<int, RememberedShip>(Ships);
 
+        foreach (var id in newer.Forgotten)
+        {
+            _ = merged.Remove(id);
+        }
+
         foreach (var (id, ship) in newer.Ships)
         {
             merged[id] = ship;
         }
 
-        return this with { Ships = merged };
+        return this with { Ships = merged, Forgotten = new HashSet<int>(Forgotten.Union(newer.Forgotten)) };
     }
 
     /// <summary>
@@ -100,14 +128,22 @@ public sealed record ShipLoadouts
             _ => null,
         };
 
-        if (gone is not { } sold || !Ships.ContainsKey(sold))
+        if (gone is not { } sold)
         {
             return this;
+        }
+
+        // Recorded even for a ship this set never held, so a save still takes it out of the file.
+        var forgotten = Forgotten.Contains(sold) ? Forgotten : new HashSet<int>(Forgotten) { sold };
+
+        if (!Ships.ContainsKey(sold))
+        {
+            return ReferenceEquals(forgotten, Forgotten) ? this : this with { Forgotten = forgotten };
         }
 
         var remaining = new Dictionary<int, RememberedShip>(Ships);
         _ = remaining.Remove(sold);
 
-        return this with { Ships = remaining };
+        return this with { Ships = remaining, Forgotten = forgotten };
     }
 }

@@ -41,6 +41,12 @@ public sealed class HistoryBackfill
     /// <summary>What the loadout file already holds, and how far it has been folded.</summary>
     public LoadoutStore? LoadoutFile { get; init; }
 
+    /// <summary>
+    /// The owned ships the Commander's builds name, which the loadout walk looks further back for when it
+    /// has not found them (#475).
+    /// </summary>
+    public Func<IReadOnlyCollection<(string Fid, int ShipId)>>? WantedShips { get; init; }
+
     /// <summary>The same for suits and weapons (#294).</summary>
     public KitStore? KitFile { get; init; }
 
@@ -112,6 +118,7 @@ public sealed class HistoryBackfill
                     Loggers.CreateLogger(nameof(LoadoutBackfill)),
                     LoadoutFile?.All,
                     LoadoutFile?.FoldedThrough,
+                    WantedShips?.Invoke(),
                     cancellation));
 
             Kits = Timed(

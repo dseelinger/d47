@@ -751,6 +751,13 @@ public sealed class AppHost : IDisposable
 
         learnedPhrases.Load();
 
+        // The Commander's ship builds (Phase 26), before the history walk that looks for the ships they name.
+        var shipBuilds = new ShipBuildStore(
+            Path.Combine(paths.Data, "ships.json"),
+            loggerFactory.CreateLogger<ShipBuildStore>());
+
+        shipBuilds.Poll();
+
         // The five walks back through older journal files, run together and after the window is up (#148): on
         // a data folder with no watermark the names walk reads every file in the folder, which is every first
         // run of a fresh install. Nothing here reads a journal until WarmUp asks it to.
@@ -759,6 +766,12 @@ public sealed class AppHost : IDisposable
             Directory = journalDirectory,
             Loggers = loggerFactory,
             LoadoutFile = loadouts,
+            WantedShips = () =>
+            [
+                .. shipBuilds.Builds
+                    .Where(build => build.ShipId is not null)
+                    .Select(build => (build.CommanderFid, build.ShipId.GetValueOrDefault())),
+            ],
             KitFile = kit,
             NameFile = heardNames,
             Step = StartupTimer.Step,
@@ -1169,13 +1182,6 @@ public sealed class AppHost : IDisposable
 
         // Clocks, timers and alarms (Phase 24): null unless this run was started with the switch (#90).
         var timersAndAlarms = Timekeeping.TimersAndAlarms.Create(paths, loggerFactory);
-
-        // The Commander's ship builds (Phase 26).
-        var shipBuilds = new ShipBuildStore(
-            Path.Combine(paths.Data, "ships.json"),
-            loggerFactory.CreateLogger<ShipBuildStore>());
-
-        shipBuilds.Poll();
 
         // The fleet joined to the builds.
         var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);

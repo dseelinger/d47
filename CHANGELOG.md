@@ -74,6 +74,12 @@ Say "night vision", "night vision on" or "night vision off" to toggle night visi
 the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
 already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.
 
+D47 no longer forgets your parked ships' modules when it starts. A save made before D47 had finished
+reading older journals replaced every remembered ship with the one you were flying. A ship is now
+removed only when the journal says it was sold or replaced. When a ship you have a build for is not
+in the recent journals, D47 now looks further back for its last loadout at startup, so you no longer
+need to rescan to recover it.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification
