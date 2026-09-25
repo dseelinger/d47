@@ -55,12 +55,14 @@ public class GuardianEffectsRunInTheOrderAndAtTheLevelSetTests
     [MemberData(nameof(EachEffect))]
     public void ChangingATickedEffectsLevelChangesTheOutput(string id)
     {
+        // Stepped pitch's hold changes nothing on a line of one pitch; a glide checks it instead.
+        var line = id == "steppedPitch" ? MonotoneAndSteppedPitchMoveOnlyThePitchTests.Glide() : Line;
         var standard = GuardianVoice.Find(id)!.DefaultLevel;
-        var atDefault = Treated(At(id, standard));
+        var atDefault = GuardianVoice.Apply(line, At(id, standard), BasePitch).Pcm.ToArray();
 
         foreach (var level in new[] { GuardianVoice.LowestLevel, GuardianVoice.HighestLevel }.Where(l => l != standard))
         {
-            Assert.NotEqual(atDefault, Treated(At(id, level)));
+            Assert.NotEqual(atDefault, GuardianVoice.Apply(line, At(id, level), BasePitch).Pcm.ToArray());
         }
     }
 

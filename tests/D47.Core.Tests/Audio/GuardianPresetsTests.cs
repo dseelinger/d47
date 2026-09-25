@@ -38,6 +38,8 @@ public class GuardianPresetsTests
     [InlineData("8-bit-computer", "bitcrusher")]
     [InlineData("flanged-vocoder", "cylon", "flanger")]
     [InlineData("stutter-host", "stutter", "chorus")]
+    [InlineData("flat-robot", "monotone", "comb")]
+    [InlineData("stepped-synth", "steppedPitch", "chorus")]
     public void WritingABuiltinTicksExactlyItsEffectsAtDefaultOrderAndLevels(string id, params string[] ticked)
     {
         var builtin = GuardianPresets.Find(id)!;

@@ -28,6 +28,9 @@ public sealed record GuardianEffect
 
     /// <summary>The signal, the parameter's value, the core's base pitch and the sample rate, to the treated signal.</summary>
     public required Func<double[], double, double, int, double[]> Run { get; init; }
+
+    /// <summary>The id of an effect that, when ticked, skips this one.</summary>
+    public string? SkippedBy { get; init; }
 }
 
 /// <summary>
@@ -53,6 +56,29 @@ public static class GuardianVoice
             DefaultLevel = 7,
             Value = level => level / 20.0,
             Run = (signal, chance, _, rate) => Stutter(signal, chance, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "monotone",
+            Label = "Monotone",
+            Help = "Every voiced stretch moved to the core's base pitch; amount is how far of the way it moves.",
+            Parameter = "Amount",
+            Unit = "%",
+            DefaultLevel = 20,
+            Value = level => level / 20.0,
+            Run = (signal, amount, basePitchHz, rate) => Monotone(signal, amount, basePitchHz, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "steppedPitch",
+            Label = "Stepped pitch",
+            Help = "Every voiced stretch moved to the nearest semitone, so the pitch jumps rather than glides; hold is the shortest step.",
+            Parameter = "Hold",
+            Unit = "ms",
+            DefaultLevel = 12,
+            Value = level => level * 10.0,
+            Run = (signal, holdMs, _, rate) => SteppedPitch(signal, holdMs, rate),
+            SkippedBy = "monotone",
         },
         new GuardianEffect
         {
@@ -310,6 +336,22 @@ public static class GuardianVoice
     private const double StutterCrossfadeMs = 10;
     private const uint StutterSeed = 0x1B873593u;
 
+    private const double PitchFrameMs = 40;
+    private const double PitchHopMs = 10;
+    private const double PitchLowestHz = 60;
+    private const double PitchHighestHz = 500;
+
+    /// <summary>The rate the pitch is measured at: the clip is averaged down by a whole factor to about this.</summary>
+    private const int PitchAnalysisHz = 12_000;
+
+    /// <summary>The YIN threshold: a frame whose normalised difference never falls below it is unvoiced.</summary>
+    private const double PitchVoicing = 0.2;
+
+    /// <summary>A frame's RMS relative to the clip's peak, −40 dB, below which it is unvoiced.</summary>
+    private const double PitchSilence = 0.01;
+
+    private const double SemitoneReferenceHz = 440;
+
     /// <summary>The highest peak the levelled result may reach.</summary>
     private const double Ceiling = 0.98;
 
@@ -318,8 +360,8 @@ public static class GuardianVoice
 
     /// <summary>
     /// The clip with the ticked effects applied in list order, each at its level; an id this build does not know
-    /// is skipped. <paramref name="basePitchHz"/> is the core's fixed pitch, which the Cylon carrier is derived
-    /// from; it is not measured per clip.
+    /// is skipped. <paramref name="basePitchHz"/> is the core's fixed pitch, which the Cylon carrier and Monotone
+    /// are derived from; it is not measured per clip.
     /// </summary>
     public static AudioClip Apply(AudioClip clip, IReadOnlyList<GuardianVoiceEffect> effects, double basePitchHz)
     {
@@ -431,14 +473,18 @@ public static class GuardianVoice
         return clip => Apply(clip, effects, basePitch);
     }
 
-    /// <summary>The ticked effects this build knows, in list order, with their parameter values.</summary>
+    /// <summary>
+    /// The ticked effects this build knows, in list order, with their parameter values; an effect whose
+    /// <see cref="GuardianEffect.SkippedBy"/> is ticked is left out.
+    /// </summary>
     private static List<(GuardianEffect Effect, double Value)> Ticked(IReadOnlyList<GuardianVoiceEffect> effects)
     {
         var chain = new List<(GuardianEffect Effect, double Value)>();
 
         foreach (var effect in effects)
         {
-            if (effect.Ticked && Find(effect.Id) is { } known)
+            if (effect.Ticked && Find(effect.Id) is { } known
+                && (known.SkippedBy is not { } skipper || !effects.Any(e => e.Ticked && e.Id == skipper)))
             {
                 chain.Add((known, known.Value(effect.Level)));
             }
@@ -1110,6 +1156,270 @@ public static class GuardianVoice
 
         return output;
     }
+
+    /// <summary>Each voiced frame's pitch moved <paramref name="amount"/> of the way to <paramref name="basePitchHz"/>, on a log scale.</summary>
+    private static double[] Monotone(double[] signal, double amount, double basePitchHz, int rate)
+    {
+        var track = PitchTrack(signal, rate);
+        var pitch = PerSample(track, signal.Length, rate);
+        var target = new double[signal.Length];
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            target[index] = pitch[index] > 0 ? pitch[index] * Math.Pow(basePitchHz / pitch[index], amount) : 0;
+        }
+
+        return Resynthesise(signal, track, pitch, target, rate);
+    }
+
+    /// <summary>
+    /// Each voiced frame's pitch moved to the nearest equal-tempered semitone, a new semitone taken only once the
+    /// current one has been held for <paramref name="holdMs"/>.
+    /// </summary>
+    private static double[] SteppedPitch(double[] signal, double holdMs, int rate)
+    {
+        var track = PitchTrack(signal, rate);
+        var pitch = PerSample(track, signal.Length, rate);
+        var notes = new double[track.Length];
+        var holdFrames = (int)Math.Ceiling(holdMs / PitchHopMs);
+        int? current = null;
+        var held = 0;
+
+        for (var frame = 0; frame < track.Length; frame++)
+        {
+            if (track[frame] > 0)
+            {
+                var nearest = (int)Math.Round(12 * Math.Log2(track[frame] / SemitoneReferenceHz));
+
+                if (current is null || (nearest != current && held >= holdFrames))
+                {
+                    current = nearest;
+                    held = 0;
+                }
+
+                notes[frame] = SemitoneReferenceHz * Math.Pow(2, current.Value / 12.0);
+            }
+
+            held++;
+        }
+
+        var hop = Samples(PitchHopMs, rate);
+        var target = new double[signal.Length];
+
+        for (var index = 0; index < signal.Length; index++)
+        {
+            if (pitch[index] <= 0)
+            {
+                continue;
+            }
+
+            var below = Math.Min(track.Length - 1, index / hop);
+            var above = Math.Min(track.Length - 1, below + 1);
+            var (near, far) = index - (below * hop) < hop / 2 ? (below, above) : (above, below);
+            target[index] = notes[near] > 0 ? notes[near] : notes[far];
+        }
+
+        return Resynthesise(signal, track, pitch, target, rate);
+    }
+
+    /// <summary>
+    /// The pitch of each 40 ms frame by YIN on the clip averaged down to about 12 kHz, frame k centred on k × 10 ms,
+    /// or 0 where the frame is quiet or aperiodic.
+    /// </summary>
+    private static double[] PitchTrack(double[] signal, int rate)
+    {
+        var track = new double[(signal.Length / Samples(PitchHopMs, rate)) + 1];
+        var factor = Math.Max(1, rate / PitchAnalysisHz);
+        var analysisRate = (double)rate / factor;
+        var decimated = new double[signal.Length / factor];
+
+        for (var index = 0; index < decimated.Length; index++)
+        {
+            var total = 0.0;
+
+            for (var offset = 0; offset < factor; offset++)
+            {
+                total += signal[(index * factor) + offset];
+            }
+
+            decimated[index] = total / factor;
+        }
+
+        signal = decimated;
+
+        var frame = (int)Math.Round(PitchFrameMs / 1000 * analysisRate);
+        var minLag = Math.Max(2, (int)(analysisRate / PitchHighestHz));
+        var maxLag = (int)Math.Ceiling(analysisRate / PitchLowestHz);
+        var width = Math.Max(1, frame - maxLag - 1);
+        var normalised = new double[maxLag + 2];
+        var peak = 0.0;
+
+        foreach (var sample in signal)
+        {
+            peak = Math.Max(peak, Math.Abs(sample));
+        }
+
+        for (var k = 0; k < track.Length; k++)
+        {
+            var start = (int)Math.Round(k * PitchHopMs / 1000 * analysisRate) - (frame / 2);
+            var squared = 0.0;
+
+            for (var index = 0; index < frame; index++)
+            {
+                var sample = Sample(signal, start + index);
+                squared += sample * sample;
+            }
+
+            if (peak == 0 || Math.Sqrt(squared / frame) < peak * PitchSilence)
+            {
+                continue;
+            }
+
+            var running = 0.0;
+            normalised[0] = 1;
+
+            for (var lag = 1; lag <= maxLag + 1; lag++)
+            {
+                var difference = 0.0;
+
+                for (var index = 0; index < width; index++)
+                {
+                    var delta = Sample(signal, start + index) - Sample(signal, start + index + lag);
+                    difference += delta * delta;
+                }
+
+                running += difference;
+                normalised[lag] = running > 0 ? difference * lag / running : 1;
+            }
+
+            var found = 0;
+
+            for (var lag = minLag; lag <= maxLag; lag++)
+            {
+                if (normalised[lag] < PitchVoicing)
+                {
+                    while (lag < maxLag && normalised[lag + 1] < normalised[lag])
+                    {
+                        lag++;
+                    }
+
+                    found = lag;
+                    break;
+                }
+            }
+
+            if (found == 0)
+            {
+                continue;
+            }
+
+            var before = normalised[found - 1];
+            var after = normalised[found + 1];
+            var curve = before - (2 * normalised[found]) + after;
+
+            track[k] = analysisRate / (found + (curve > 0 ? (before - after) / (2 * curve) : 0));
+        }
+
+        return track;
+    }
+
+    /// <summary>
+    /// The frame track as a pitch per sample: linear between two voiced frames, the voiced one's pitch beside an
+    /// unvoiced frame, and 0 between two unvoiced ones.
+    /// </summary>
+    private static double[] PerSample(double[] track, int length, int rate)
+    {
+        var hop = Samples(PitchHopMs, rate);
+        var pitch = new double[length];
+
+        for (var index = 0; index < length; index++)
+        {
+            var k = Math.Min(track.Length - 1, index / hop);
+            var left = track[k];
+            var right = track[Math.Min(track.Length - 1, k + 1)];
+            var fraction = (double)(index - (k * hop)) / hop;
+
+            pitch[index] = (left > 0, right > 0) switch
+            {
+                (true, true) => left + ((right - left) * fraction),
+                (true, false) => left,
+                (false, true) => right,
+                _ => 0,
+            };
+        }
+
+        return pitch;
+    }
+
+    /// <summary>
+    /// TD-PSOLA: two-period Hann grains cut one analysis period apart at <paramref name="pitch"/> and laid one
+    /// synthesis period apart at <paramref name="target"/>, keeping the length. The result is blended with the dry
+    /// signal by how voiced the neighbouring frames are, so unvoiced stretches pass unchanged.
+    /// </summary>
+    private static double[] Resynthesise(double[] signal, double[] track, double[] pitch, double[] target, int rate)
+    {
+        var length = signal.Length;
+        var hop = Samples(PitchHopMs, rate);
+        var marks = new List<int>();
+
+        for (var position = 0.0; position < length;)
+        {
+            marks.Add((int)position);
+            position += pitch[(int)position] > 0 ? rate / pitch[(int)position] : hop;
+        }
+
+        var sum = new double[length];
+        var weight = new double[length];
+        var mark = 0;
+
+        for (var time = 0.0; time < length;)
+        {
+            var at = (int)Math.Round(time);
+
+            while (mark + 1 < marks.Count && Math.Abs(marks[mark + 1] - time) <= Math.Abs(marks[mark] - time))
+            {
+                mark++;
+            }
+
+            var centre = marks[mark];
+            var half = Math.Max(1, (int)Math.Round(pitch[centre] > 0 ? rate / pitch[centre] : hop));
+
+            for (var offset = -half; offset < half; offset++)
+            {
+                var source = centre + offset;
+                var destination = at + offset;
+
+                if (source >= 0 && source < length && destination >= 0 && destination < length)
+                {
+                    var window = 0.5 + (0.5 * Math.Cos(Math.PI * offset / half));
+                    sum[destination] += window * signal[source];
+                    weight[destination] += window;
+                }
+            }
+
+            var place = Math.Min(length - 1, at);
+            time += target[place] > 0 ? rate / target[place] : pitch[place] > 0 ? rate / pitch[place] : hop;
+        }
+
+        var output = new double[length];
+
+        for (var index = 0; index < length; index++)
+        {
+            var k = Math.Min(track.Length - 1, index / hop);
+            var fraction = (double)(index - (k * hop)) / hop;
+            var voiced = ((track[k] > 0 ? 1 : 0) * (1 - fraction))
+                + ((track[Math.Min(track.Length - 1, k + 1)] > 0 ? 1 : 0) * fraction);
+            var moved = weight[index] > 1e-9 ? sum[index] / weight[index] : 0;
+
+            output[index] = (voiced * moved) + ((1 - voiced) * signal[index]);
+        }
+
+        return output;
+    }
+
+    /// <summary>The sample at <paramref name="index"/>, zero outside the signal.</summary>
+    private static double Sample(double[] signal, int index) =>
+        index >= 0 && index < signal.Length ? signal[index] : 0;
 
     /// <summary>Four parallel combs averaged, two allpasses in series, a low-pass on the wet, and a faded tail.</summary>
     private static double[] Reverb(double[] signal, double mix, int rate)

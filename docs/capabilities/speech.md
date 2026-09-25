@@ -631,6 +631,8 @@ The four built-ins tick their effects at the default order and default levels:
 | 8-bit computer | Bitcrusher |
 | Flanged vocoder | Cylon, Flanger |
 | Stutter host | Stutter, Chorus |
+| Flat robot | Monotone, Metallic resonance |
+| Stepped synth | Stepped pitch, Chorus |
 
 A saved preset is the Commander's own: its ticks, order and every level, saved under a name.
 Choosing a built-in or a saved preset writes its effects over whatever is set now; choosing Custom
@@ -642,6 +644,19 @@ change which voice is speaking.
 
 Word starts repeated two or three times, and whole phrases occasionally pitch-shifted. Chance is
 how often a word start repeats: 5% a level, 35% at the default of 7.
+
+##### Monotone: amount {#guardian-voice-monotone}
+
+The voice kept, its pitch moved to the core's base pitch so it no longer rises and falls. Consonants,
+breath and silence pass unchanged. Amount is how far of the way to the base pitch it moves: 5% a
+level, and the default, 20, moves all the way.
+
+##### Stepped pitch: hold {#guardian-voice-stepped-pitch}
+
+The voice kept, its pitch moved to the nearest semitone, so it jumps from note to note rather than
+gliding. Consonants, breath and silence pass unchanged. Hold is the shortest time a note is held
+before the next: 10 ms a level, 120 ms at the default of 12. With Monotone also ticked, Monotone
+sets the pitch and Stepped pitch is skipped.
 
 ##### Cylon: depth {#guardian-voice-cylon}
 

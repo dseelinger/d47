@@ -46,8 +46,9 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
 
         Assert.Equal(
             [
-                "stutter", "reverb", "chorus", "flanger", "phaser", "wah", "comb", "ringMod",
-                "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch", "cylon", "pitchDown", "octaveDown",
+                "stutter", "monotone", "steppedPitch", "reverb", "chorus", "flanger", "phaser", "wah", "comb",
+                "ringMod", "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch", "cylon", "pitchDown",
+                "octaveDown",
             ],
             effects.Select(effect => effect.Id));
 
@@ -77,7 +78,7 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         surface.Settings.Apply(SpeechCapability.GuardianOrderKey, "reverb, nonsense, cylon", SettingsCaller.Panel);
 
         Assert.Equal(
-            "stutter,reverb,cylon,pitchDown,octaveDown,chorus,flanger,phaser,wah,comb,ringMod,deepRingMod,"
+            "stutter,monotone,steppedPitch,reverb,cylon,pitchDown,octaveDown,chorus,flanger,phaser,wah,comb,ringMod,deepRingMod,"
             + "tremolo,overdrive,bitcrusher,glitch",
             surface.Settings.Read(SpeechCapability.GuardianOrderKey));
 

@@ -15,6 +15,10 @@ voice effect. Three new presets use them: Ring-mod rasp, 8-bit computer and Flan
 A new Stutter effect, first in the chain by default, repeats a word's start two or three times and
 occasionally pitch-shifts whole phrases. A new Stutter host preset ticks it with Chorus.
 
+Two new effects keep the voice and change only its pitch: Monotone holds it at the core's base
+pitch, and Stepped pitch moves it to the nearest semitone so it jumps rather than glides. Two new
+presets use them: Flat robot and Stepped synth.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
