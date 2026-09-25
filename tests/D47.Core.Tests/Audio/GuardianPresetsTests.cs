@@ -37,6 +37,7 @@ public class GuardianPresetsTests
     [InlineData("ring-mod-rasp", "deepRingMod")]
     [InlineData("8-bit-computer", "bitcrusher")]
     [InlineData("flanged-vocoder", "cylon", "flanger")]
+    [InlineData("stutter-host", "stutter", "chorus")]
     public void WritingABuiltinTicksExactlyItsEffectsAtDefaultOrderAndLevels(string id, params string[] ticked)
     {
         var builtin = GuardianPresets.Find(id)!;

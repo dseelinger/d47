@@ -45,6 +45,17 @@ public static class GuardianVoice
     [
         new GuardianEffect
         {
+            Id = "stutter",
+            Label = "Stutter",
+            Help = "Word starts repeated two or three times, with phrases occasionally pitch-shifted; chance is how often a word start repeats.",
+            Parameter = "Chance",
+            Unit = "%",
+            DefaultLevel = 7,
+            Value = level => level / 20.0,
+            Run = (signal, chance, _, rate) => Stutter(signal, chance, rate),
+        },
+        new GuardianEffect
+        {
             Id = "cylon",
             Label = "Cylon",
             Help = "Channel vocoder onto a fixed-pitch carrier; depth is how much of the vocoded voice replaces the dry one.",
@@ -285,6 +296,19 @@ public static class GuardianVoice
     private const double ReverbLowPassHz = 5_000;
     private const double ReverbDry = 0.75;
     private const double ReverbTailSeconds = 0.5;
+
+    /// <summary>An onset window's RMS relative to the clip's peak, −30 dB, below which it counts as quiet.</summary>
+    private const double StutterOnsetThreshold = 0.031_622_776_601_683_79;
+
+    private const double StutterOnsetWindowMs = 10;
+    private const double StutterOnsetMinQuietMs = 80;
+    private const double StutterRepeatMinMs = 60;
+    private const double StutterRepeatMaxMs = 120;
+    private const double StutterShiftChance = 0.4;
+    private const double StutterShiftMinSemitones = 2;
+    private const double StutterShiftMaxSemitones = 5;
+    private const double StutterCrossfadeMs = 10;
+    private const uint StutterSeed = 0x1B873593u;
 
     /// <summary>The highest peak the levelled result may reach.</summary>
     private const double Ceiling = 0.98;
@@ -908,6 +932,180 @@ public static class GuardianVoice
 
             kind++;
             at += random.Next(0.7, 1.6) * rate * spacing;
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Repeats each word's start with a seeded chance, and shifts whole phrases with another. Onsets split the
+    /// clip into phrases; the schedule comes from a fixed seed, so the same clip stutters the same way every
+    /// time. Lengthens the clip by the repeats it adds.
+    /// </summary>
+    private static double[] Stutter(double[] signal, double chance, int rate)
+    {
+        var onsets = Onsets(signal, rate);
+
+        if (onsets.Count == 0)
+        {
+            return (double[])signal.Clone();
+        }
+
+        var random = new Noise(StutterSeed ^ (uint)Math.Round(chance * 1_000_000));
+        var crossfade = Samples(StutterCrossfadeMs, rate);
+        var frame = FrameLength(rate);
+        var segments = new List<double[]>();
+
+        if (onsets[0] > 0)
+        {
+            segments.Add(signal[..onsets[0]]);
+        }
+
+        for (var index = 0; index < onsets.Count; index++)
+        {
+            var start = onsets[index];
+            var end = index + 1 < onsets.Count ? onsets[index + 1] : signal.Length;
+            var phrase = signal[start..end];
+
+            if (phrase.Length >= frame && random.Next(0, 1) < StutterShiftChance)
+            {
+                var semitones = random.Next(StutterShiftMinSemitones, StutterShiftMaxSemitones);
+
+                if (random.Next(0, 1) < 0.5)
+                {
+                    semitones = -semitones;
+                }
+
+                phrase = Shift(phrase, Math.Pow(2, semitones / 12), rate);
+            }
+
+            if (random.Next(0, 1) < chance)
+            {
+                phrase = Repeat(phrase, ref random, crossfade, rate);
+            }
+
+            segments.Add(phrase);
+        }
+
+        return Join(segments, crossfade);
+    }
+
+    /// <summary>The first 60–120 ms of <paramref name="phrase"/> played two or three times before it continues.</summary>
+    private static double[] Repeat(double[] phrase, ref Noise random, int crossfade, int rate)
+    {
+        var burstMs = random.Next(StutterRepeatMinMs, StutterRepeatMaxMs);
+        var burstLength = Math.Min(phrase.Length, (int)Math.Round(burstMs / 1000 * rate));
+
+        if (burstLength == 0)
+        {
+            return phrase;
+        }
+
+        var repeats = random.Next(0, 1) < 0.5 ? 2 : 3;
+        var burst = phrase[..burstLength];
+        var pieces = new List<double[]>();
+
+        for (var copy = 0; copy < repeats; copy++)
+        {
+            pieces.Add(burst);
+        }
+
+        pieces.Add(phrase[burstLength..]);
+
+        return Join(pieces, crossfade);
+    }
+
+    /// <summary>
+    /// Onset sample indices: a 10 ms window's RMS rising to within 30 dB of the clip's peak after at least
+    /// 80 ms below it. The clip's first sound is an onset.
+    /// </summary>
+    private static List<int> Onsets(double[] signal, int rate)
+    {
+        var window = Samples(StutterOnsetWindowMs, rate);
+        var peak = 0.0;
+
+        foreach (var sample in signal)
+        {
+            peak = Math.Max(peak, Math.Abs(sample));
+        }
+
+        var threshold = peak * StutterOnsetThreshold;
+        var onsets = new List<int>();
+        var quietMs = double.PositiveInfinity;
+        var above = false;
+
+        for (var start = 0; start < signal.Length; start += window)
+        {
+            var length = Math.Min(window, signal.Length - start);
+            var loud = Rms(signal.AsSpan(start, length)) >= threshold;
+
+            if (loud)
+            {
+                if (!above && quietMs >= StutterOnsetMinQuietMs)
+                {
+                    onsets.Add(start);
+                }
+
+                above = true;
+                quietMs = 0;
+            }
+            else
+            {
+                above = false;
+                quietMs += 1_000.0 * length / rate;
+            }
+        }
+
+        return onsets;
+    }
+
+    /// <summary>The RMS of a stretch of signal.</summary>
+    private static double Rms(ReadOnlySpan<double> signal)
+    {
+        var squared = 0.0;
+
+        foreach (var sample in signal)
+        {
+            squared += sample * sample;
+        }
+
+        return signal.Length == 0 ? 0 : Math.Sqrt(squared / signal.Length);
+    }
+
+    /// <summary>Concatenates the segments, each join a <paramref name="crossfade"/>-sample linear crossfade.</summary>
+    private static double[] Join(List<double[]> segments, int crossfade)
+    {
+        if (segments.Count == 1)
+        {
+            return segments[0];
+        }
+
+        var total = segments.Sum(segment => segment.Length);
+
+        for (var index = 1; index < segments.Count; index++)
+        {
+            total -= Math.Min(crossfade, Math.Min(segments[index - 1].Length, segments[index].Length));
+        }
+
+        var output = new double[total];
+        Array.Copy(segments[0], output, segments[0].Length);
+        var at = segments[0].Length;
+
+        for (var index = 1; index < segments.Count; index++)
+        {
+            var next = segments[index];
+            var fade = Math.Min(crossfade, Math.Min(at, next.Length));
+            var overlapStart = at - fade;
+
+            for (var sample = 0; sample < fade; sample++)
+            {
+                var t = (sample + 1.0) / (fade + 1);
+                output[overlapStart + sample] = (output[overlapStart + sample] * (1 - t)) + (next[sample] * t);
+            }
+
+            var remain = next.Length - fade;
+            Array.Copy(next, fade, output, at, remain);
+            at += remain;
         }
 
         return output;

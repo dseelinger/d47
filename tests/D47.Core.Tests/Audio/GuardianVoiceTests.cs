@@ -19,6 +19,10 @@ public class GuardianVoiceTests
     internal static IReadOnlyList<GuardianVoiceEffect> Ticking(params string[] ids) =>
         [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = ids.Contains(effect.Id) })];
 
+    /// <summary>One effect ticked at a level, everything else off at its default.</summary>
+    private static IReadOnlyList<GuardianVoiceEffect> TickingAt(string id, int level) =>
+        [.. GuardianVoice.Defaults.Select(effect => effect.Id == id ? effect with { Ticked = true, Level = level } : effect)];
+
     private static AudioClip Clip(double[] samples, string name = "line")
     {
         var pcm = new byte[samples.Length * 2];
@@ -57,6 +61,26 @@ public class GuardianVoiceTests
                 return (((state >> 8) / 16777215.0 * 2) - 1) * amplitude;
             })
             .ToArray());
+    }
+
+    /// <summary><paramref name="count"/> tone bursts, each <paramref name="burstMs"/> long, separated by silence.</summary>
+    private static AudioClip ToneBursts(int count, double hertz, double burstMs, double gapMs)
+    {
+        var burst = (int)(Rate * burstMs / 1000);
+        var gap = (int)(Rate * gapMs / 1000);
+        var samples = new double[(count * burst) + ((count - 1) * gap)];
+
+        for (var b = 0; b < count; b++)
+        {
+            var at = b * (burst + gap);
+
+            for (var index = 0; index < burst; index++)
+            {
+                samples[at + index] = Math.Sin(2 * Math.PI * hertz * index / Rate) * 0.3;
+            }
+        }
+
+        return Clip(samples);
     }
 
     /// <summary>The magnitude-weighted mean frequency across the given bins.</summary>
@@ -335,11 +359,11 @@ public class GuardianVoiceTests
     }
 
     [Fact]
-    public void EveryTreatmentButReverbKeepsTheLength()
+    public void EveryTreatmentButReverbAndStutterKeepsTheLength()
     {
         var line = Voiced(150, seconds: 2.0);
 
-        foreach (var treatment in EachTreatment.Where(t => t != "reverb"))
+        foreach (var treatment in EachTreatment.Where(t => t != "reverb" && t != "stutter"))
         {
             Assert.Equal(line.Pcm.Length, GuardianVoice.Apply(line, Ticking(treatment), BasePitch).Pcm.Length);
         }
@@ -364,6 +388,65 @@ public class GuardianVoiceTests
         var treated = GuardianVoice.Apply(line, Ticking("glitch"), BasePitch);
 
         Assert.NotEqual(line.Pcm.ToArray(), treated.Pcm.ToArray());
+    }
+
+    [Fact]
+    public void StutterAtFullChanceChangesTheLine()
+    {
+        var line = ToneBursts(3, 440, burstMs: 300, gapMs: 200);
+        var treated = GuardianVoice.Apply(line, TickingAt("stutter", GuardianVoice.HighestLevel), BasePitch);
+
+        Assert.NotEqual(line.Pcm.ToArray(), treated.Pcm.Span[..line.Pcm.Length].ToArray());
+    }
+
+    /// <summary>
+    /// A repeated word start adds (repeats − 1) × the 60–120 ms burst, less a 10 ms crossfade at each of
+    /// the <c>repeats</c> joins it makes.
+    /// </summary>
+    private static (double Min, double Max) StutterAdditionRange(int onsets) =>
+        (onsets * (((2 - 1) * 0.060 * Rate) - (2 * 0.010 * Rate)),
+         onsets * (((3 - 1) * 0.120 * Rate) - (3 * 0.010 * Rate)));
+
+    [Fact]
+    public void StutterAtFullChanceLengthensThreeSeparateBursts()
+    {
+        var line = ToneBursts(3, 440, burstMs: 300, gapMs: 200);
+        var treated = GuardianVoice.Apply(line, TickingAt("stutter", GuardianVoice.HighestLevel), BasePitch);
+
+        Assert.True(treated.Pcm.Length > line.Pcm.Length, "the repeats should have lengthened the clip");
+
+        var addedSamples = (treated.Pcm.Length - line.Pcm.Length) / 2;
+        var (min, max) = StutterAdditionRange(onsets: 3);
+
+        // Generous margin either side for the crossfades the three word-to-word joins add on top.
+        Assert.InRange(addedSamples, min - (3 * 0.010 * Rate), max);
+    }
+
+    [Fact]
+    public void OneContinuousToneStuttersOnlyOnceAtFullChance()
+    {
+        var line = Tone(440, seconds: 1.0);
+        var treated = GuardianVoice.Apply(line, TickingAt("stutter", GuardianVoice.HighestLevel), BasePitch);
+
+        var addedSamples = (treated.Pcm.Length - line.Pcm.Length) / 2;
+        var (min, max) = StutterAdditionRange(onsets: 1);
+
+        Assert.InRange(addedSamples, min, max);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(7)]
+    [InlineData(20)]
+    public void StutterKeepsTheLineWithinADecibelOfItsLoudness(int level)
+    {
+        var line = Voiced(150, seconds: 3.0);
+        var dry = Samples(line);
+
+        var wet = Samples(GuardianVoice.Apply(line, TickingAt("stutter", level), BasePitch)).AsSpan(0, dry.Length);
+        var decibels = 20 * Math.Log10(Rms(wet) / Rms(dry));
+
+        Assert.True(Math.Abs(decibels) < 1, $"level {level} moved the level {decibels:F2} dB");
     }
 
     [Fact]

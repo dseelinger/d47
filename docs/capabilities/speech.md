@@ -630,12 +630,18 @@ The four built-ins tick their effects at the default order and default levels:
 | Ring-mod rasp | Deep ring mod |
 | 8-bit computer | Bitcrusher |
 | Flanged vocoder | Cylon, Flanger |
+| Stutter host | Stutter, Chorus |
 
 A saved preset is the Commander's own: its ticks, order and every level, saved under a name.
 Choosing a built-in or a saved preset writes its effects over whatever is set now; choosing Custom
 changes nothing, because nothing else reads as Custom. Saved presets and the preset last loaded,
 saved or renamed are install scope, the same as the effects they save — a Commander switch does not
 change which voice is speaking.
+
+##### Stutter: chance {#guardian-voice-stutter}
+
+Word starts repeated two or three times, and whole phrases occasionally pitch-shifted. Chance is
+how often a word start repeats: 5% a level, 35% at the default of 7.
 
 ##### Cylon: depth {#guardian-voice-cylon}
 

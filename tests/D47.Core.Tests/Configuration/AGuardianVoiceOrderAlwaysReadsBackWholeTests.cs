@@ -45,7 +45,10 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         var effects = Read(Effect("reverb", ticked: true), Effect("chorus", ticked: true), Effect("cylon"));
 
         Assert.Equal(
-            ["reverb", "chorus", "comb", "ringMod", "glitch", "cylon", "pitchDown", "octaveDown"],
+            [
+                "stutter", "reverb", "chorus", "flanger", "phaser", "wah", "comb", "ringMod",
+                "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch", "cylon", "pitchDown", "octaveDown",
+            ],
             effects.Select(effect => effect.Id));
 
         var comb = effects.Single(effect => effect.Id == "comb");
@@ -74,7 +77,8 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         surface.Settings.Apply(SpeechCapability.GuardianOrderKey, "reverb, nonsense, cylon", SettingsCaller.Panel);
 
         Assert.Equal(
-            "reverb,cylon,pitchDown,octaveDown,chorus,comb,ringMod,glitch",
+            "stutter,reverb,cylon,pitchDown,octaveDown,chorus,flanger,phaser,wah,comb,ringMod,deepRingMod,"
+            + "tremolo,overdrive,bitcrusher,glitch",
             surface.Settings.Read(SpeechCapability.GuardianOrderKey));
 
         // Reordering keeps what was ticked and the level it was set to.

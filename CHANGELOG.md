@@ -12,6 +12,9 @@ Flanger, phaser and wah now run after Chorus; deep ring mod after Ring modulatio
 overdrive and bitcrusher before Glitch. Each has its own level, the same as every other Guardian
 voice effect. Three new presets use them: Ring-mod rasp, 8-bit computer and Flanged vocoder.
 
+A new Stutter effect, first in the chain by default, repeats a word's start two or three times and
+occasionally pitch-shifts whole phrases. A new Stutter host preset ticks it with Chorus.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

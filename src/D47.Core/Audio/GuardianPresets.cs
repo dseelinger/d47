@@ -55,6 +55,7 @@ public static class GuardianPresets
         {
             Id = "flanged-vocoder", Label = "Flanged vocoder", TickedIds = ["cylon", "flanger"],
         },
+        new GuardianBuiltinPreset { Id = "stutter-host", Label = "Stutter host", TickedIds = ["stutter", "chorus"] },
     ];
 
     /// <summary>The built-in with this id, or null.</summary>
