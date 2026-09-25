@@ -453,20 +453,23 @@ same protocol may want one.
 and can replace it; nothing — not the panel, not the model, not the logs — can show you the key
 again. If you lose it, paste a new one.
 
-The row says which state it is in, and the box changes with it: `No key` and "Paste a key to
-store it", or `Key stored` and "Paste a new key to replace it".
+The row says which state it is in. With `No key` it shows the box and **Save**. With `Key stored`
+it shows eight bullets — always eight, and never any character of the key — then **Replace**,
+**Verify** and **Forget key**, and no box. **Replace** brings the box back with **Save** and
+**Cancel**; **Cancel** leaves the stored key as it was. **Forget key** asks before it deletes the
+stored key, and is not offered on the headset, which cannot open the question.
 
-**Show** unmasks what you are typing, on the way in only — a stored key is still never shown back.
+**Show key** unmasks what you are typing, on the way in only — a stored key is still never shown back.
 It exists because the commonest reason a key does not work is that it was pasted wrong, and you
 cannot see that through bullets. What you paste is **trimmed** before it is stored: a key copied
 from a browser arrives with a trailing newline more often than not, and a newline fails at the
 provider in a way that reads as a wrong key rather than as a bad paste.
 
-**Verify Key** proves it. It is shut until you have pasted something — on an empty box the only
-answer it could give is that an empty key is not a valid one — and pressing it stores what you
-typed and then checks *that*, so it is never answering about the key you have just replaced. The
-check is the smallest real call the provider offers — one token, no tools, no persona — and it
-says what came back:
+**Verify** proves it. Beside a stored key it checks that key. Beside the box it is shut until you
+have pasted something — on an empty box the only answer it could give is that an empty key is not
+a valid one — and pressing it stores what you typed and then checks *that*, so it is never
+answering about the key you have just replaced. The check is the smallest real call the provider
+offers — one token, no tools, no persona — and it says what came back:
 
 ```text
 Anthropic accepted the key.

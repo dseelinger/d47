@@ -61,7 +61,8 @@ public static class TestSurface
         Func<string, VoiceRole, CancellationToken, Task>? audition = null,
         IReadOnlyList<string>? inputDevices = null,
         SpeechSpend? speechSpend = null,
-        Action? forgetCorrections = null)
+        Action? forgetCorrections = null,
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -99,6 +100,7 @@ public static class TestSurface
                 // Supplied rather than left null, for the same reason as the local voice download above.
                 ResetVoices = () => (_, _) => Task.FromResult<string?>(resetVoices?.Invoke() ?? string.Empty),
                 SpeechSpend = speechSpend is null ? null : () => speechSpend,
+                VerifyKey = verifyKey,
             },
             new ShipsCapability.ShipsSurface
             {
@@ -185,12 +187,13 @@ public static class TestSurface
         Func<string, VoiceRole, CancellationToken, Task>? audition = null,
         IReadOnlyList<string>? inputDevices = null,
         SpeechSpend? speechSpend = null,
-        Action? forgetCorrections = null)
+        Action? forgetCorrections = null,
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null)
     {
         var (settings, viewState, paths, _, _) = CreateFull(
             coverage, personas, voices, localVoice, recording, rescan,
             resetVoices: resetVoices, audition: audition, inputDevices: inputDevices,
-            speechSpend: speechSpend, forgetCorrections: forgetCorrections);
+            speechSpend: speechSpend, forgetCorrections: forgetCorrections, verifyKey: verifyKey);
         return (settings, viewState, paths);
     }
 

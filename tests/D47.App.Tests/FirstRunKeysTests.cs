@@ -73,7 +73,7 @@ public class FirstRunKeysTests
         window.Close();
     }
 
-    /// <summary>The key row with its two glyphs in it, for a human to look at.</summary>
+    /// <summary>The key row, masked and revealed, for a human to look at.</summary>
     [AvaloniaFact]
     public void TheKeyRowGlyphsAreDrawnForLookingAt()
     {
@@ -82,8 +82,7 @@ public class FirstRunKeysTests
 
         settings.Apply(ConversationCapability.ProviderKey, provider.Id, SettingsCaller.Panel);
 
-        // The glyphs take their colour from a theme resource, so a capture with no theme manager is a capture
-        // of two unpainted paths.
+        // The row takes its colours from theme resources, so a capture with no theme manager is unpainted.
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
@@ -97,8 +96,6 @@ public class FirstRunKeysTests
         var editor = window.GetVisualDescendants().OfType<SecretEditor>().First();
         var box = editor.GetVisualDescendants().OfType<TextBox>().First();
 
-        // Something in the box, or the clear glyph is correctly hidden and the capture shows one control
-        // where the point is to see both.
         box.Text = "sk-ant-api03-not-a-real-key";
 
         Capture(window, "secret-row-masked");

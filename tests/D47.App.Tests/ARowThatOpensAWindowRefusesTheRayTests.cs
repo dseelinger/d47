@@ -238,7 +238,7 @@ public class ARowThatOpensAWindowRefusesTheRayTests
     /// <summary>What this host builds, by name, so the two press tests state what they covered.</summary>
     private static readonly string[] Built =
     [
-        "Clear the key",
+        "FORGET KEY",
         "OpenAudioRecorder",
         "OpenCoverage",
         "OpenMacros",
@@ -246,7 +246,7 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         "OpenSwitches",
     ];
 
-    /// <summary>The same, less the one that is not on the page until there is a key to clear.</summary>
+    /// <summary>The same, less the one that is not on the page until there is a key to forget.</summary>
     private static readonly string[] Shown = [.. Built.Skip(1)];
 
     /// <summary>Every one of them carries the class, on the surface as it is actually built.</summary>

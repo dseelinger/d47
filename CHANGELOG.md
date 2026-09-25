@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.13 — API keys stay hidden until you replace them
+
+In Settings, a stored API key now shows as eight bullets with KEY STORED, REPLACE and a red FORGET
+KEY, and VERIFY where the provider can check a key. There is no input box until you press REPLACE,
+which opens the box with SAVE and CANCEL. CANCEL leaves the stored key as it was. With no key
+stored, the box and SAVE show straight away. FORGET KEY asks before it deletes the key, as the undo
+arrow inside the box did before; that arrow is gone. VERIFY beside a stored key checks that key
+without anything typed. This applies to every key row: Voice input, Its voice and Language model.
+
 ## 1.13.12 — The levels are one mixer
 
 On Settings > Sounds and levels, the Levels group is now one table with a row for each channel:

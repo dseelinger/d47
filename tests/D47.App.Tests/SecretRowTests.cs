@@ -44,10 +44,8 @@ public class SecretRowTests
         Assert.Contains("KEY STORED", Texts(host));
         Assert.Equal(Ink(ThemeManager.YellowKey), Badge(host, "KEY STORED"));
 
-        // And the box stops inviting a first key once there is one to replace.
-        Assert.Contains(
-            host.View.GetVisualDescendants().OfType<TextBox>(),
-            box => box.PlaceholderText == "Paste a new key to replace it");
+        // And the box goes, leaving the masked block in its place.
+        Assert.Contains(SecretEditor.Mask, Texts(host));
 
         host.Close();
     }
@@ -76,12 +74,13 @@ public class SecretRowTests
 
         Assert.True(verify.IsEnabled);
 
-        // And a stored key does not bring it back on its own.
+        // A stored key needs nothing typed: VERIFY checks it as it is.
         settings.Apply("llm.anthropic.apiKey", "sk-ant-api03-also-not-real", SettingsCaller.Panel);
         Box(editor).Text = string.Empty;
+        editor.Refresh();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.False(verify.IsEnabled);
+        Assert.True(verify.IsEnabled);
 
         window.Close();
     }
@@ -104,9 +103,9 @@ public class SecretRowTests
         Assert.Equal(1, checks);
         Assert.True(secrets.Has(SecretName(settings)), "the typed key was checked without being stored.");
 
-        // Stored means emptied, and an emptied box means the button is shut again.
+        // Stored means emptied, and the box gives way to the stored line.
         Assert.Empty(Box(editor).Text ?? string.Empty);
-        Assert.False(Verify(editor).IsEnabled);
+        Assert.False(Box(editor).IsVisible);
 
         window.Close();
     }
@@ -155,7 +154,7 @@ public class SecretRowTests
 
     private static Button Verify(SecretEditor editor) =>
         editor.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Content as string == "Verify Key");
+            .First(button => button.Content as string == "VERIFY");
 
     private static TextBox Box(SecretEditor editor) =>
         editor.GetVisualDescendants().OfType<TextBox>().First();

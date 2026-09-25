@@ -183,7 +183,7 @@ Fixture is in Fixture Reach.
 
 D47 keeps API keys in a DPAPI-encrypted store scoped to your Windows account. Set one in
 **Settings → Language model → API key**: the row is write-only, so D47 will never show a key
-back to you, and **Verify Key** proves it works before you close the window rather than leaving
+back to you, and **Verify** proves it works before you close the window rather than leaving
 you to find out on the first turn.
 
 For Anthropic only, a conventional `ANTHROPIC_API_KEY` environment variable is honoured as

@@ -1,49 +1,68 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Shapes;
-using Avalonia.Input;
 using Avalonia.Layout;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 
-// The shape, not the file-system helper.
-using Path = Avalonia.Controls.Shapes.Path;
-
 namespace D47.App.Settings;
 
-/// <summary>One key: paste it, store it, prove it works, clear it (Phase 16).</summary>
+/// <summary>
+/// One key. Stored: a masked block, REPLACE, VERIFY and FORGET KEY, with no field. Not stored, or being
+/// replaced: the field and SAVE, with CANCEL while replacing.
+/// </summary>
 public sealed class SecretEditor : UserControl
 {
     private readonly SettingRow _row;
     private readonly SettingsService _settings;
+    private readonly Border _masked;
     private readonly TextBox _box;
     private readonly CheckBox _reveal;
-    private readonly Button _clear;
     private readonly Button _store;
+    private readonly Button _cancel;
+    private readonly Button _replace;
     private readonly Button _check;
+    private readonly Button _forget;
     private readonly TextBlock _state;
     private readonly Border _badge;
     private readonly TextBlock _verdict;
     private readonly TextBlock _message;
 
     private SecretCheck _result = SecretCheck.Untested;
+    private bool _replacing;
 
-    /// <summary>Marks the glyph control that lives inside the field rather than beside it.</summary>
-    private const string InBoxClass = "in-box";
+    /// <summary>Drawn in place of a stored key: a fixed count, whatever the key's length.</summary>
+    public const string Mask = "••••••••";
 
-    /// <summary>Raised after a key is stored or cleared, so a host can advance or re-read state.</summary>
+    /// <summary>Raised after a key is stored or forgotten, so a host can advance or re-read state.</summary>
     public event Action? Changed;
 
     public SecretEditor(SettingRow row, SettingsService settings)
     {
         _row = row;
         _settings = settings;
+
+        // Drawn without reading the key.
+        var bullets = new TextBlock
+        {
+            Text = Mask,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Themed(bullets, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        _masked = new Border
+        {
+            Padding = new Thickness(12, 8),
+            MinHeight = TypeScale.MinimumTarget - 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = bullets,
+        };
+        Themed(_masked, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         _box = new TextBox
         {
@@ -63,21 +82,6 @@ public sealed class SecretEditor : UserControl
 
             AutomationProperties.SetName(_reveal, shown ? "Hide the key" : "Show the key");
         };
-
-        // An undo arrow, and deliberately the one control here that asks before it acts: it blanks the box,
-        // and if a key is stored it deletes that too.
-        _clear = new Button
-        {
-            Content = Glyph(
-                16,
-                Filled(Geometry.Parse("M 3.4,9 L 9.4,4.6 L 9.4,13.4 Z")),
-                Stroked("M 8.2,9 L 14,9 A 5.5,5.5 0 0 1 14,20 L 10.4,20")),
-        };
-
-        InTheBox(_clear, "Clear the key");
-
-        // Asking means a dialog, which the headset's copy of this surface must not open.
-        Panel.OffscreenSurface.OpensAWindow(_clear);
 
         _state = D47.App.Panel.RoutingKit.Tag(string.Empty, ThemeManager.GreyKey);
 
@@ -104,27 +108,35 @@ public sealed class SecretEditor : UserControl
 
         Themed(_message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
-        // The clear glyph rides inside the field; the reveal switch sits beside it (#223).
-        _box.InnerRightContent = _clear;
-
-        // "Save" with nothing behind it, "Overwrite" once there is: the second warns that a stored key is
-        // about to be replaced, which "Store" said either way.
-        _store = new Button();
-        _check = new Button { Content = "Verify Key", IsVisible = row.Verify is not null };
+        _store = new Button { Content = "SAVE" };
+        _cancel = new Button { Content = "CANCEL" };
+        _replace = new Button { Content = "REPLACE" };
+        _check = new Button { Content = "VERIFY", IsVisible = row.Verify is not null };
+        _forget = new Button { Content = "FORGET KEY", Classes = { SettingsView.DestructiveClass } };
         ToolTip.SetShowOnDisabled(_check, true);
 
+        // Asking means a dialog, which the headset's copy of this surface must not open.
+        Panel.OffscreenSurface.OpensAWindow(_forget);
+
         _store.Click += (_, _) => Store();
-        _clear.Click += async (_, _) => await ClearAsync();
+        _cancel.Click += (_, _) => Cancel();
+        _replace.Click += (_, _) => Replace();
         _check.Click += async (_, _) => await CheckAsync();
+        _forget.Click += async (_, _) => await ForgetAsync();
 
-        _box.TextChanged += (_, _) => RefreshBox();
+        _box.TextChanged += (_, _) => RefreshCheck();
 
+        // Both states share one line; Refresh shows the controls that belong to the current one.
         var controls = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+        controls.Children.Add(_masked);
         controls.Children.Add(_box);
         controls.Children.Add(_reveal);
-        controls.Children.Add(_store);
-        controls.Children.Add(_check);
         controls.Children.Add(_badge);
+        controls.Children.Add(_store);
+        controls.Children.Add(_cancel);
+        controls.Children.Add(_replace);
+        controls.Children.Add(_check);
+        controls.Children.Add(_forget);
 
         var stack = new StackPanel { Spacing = 4 };
         stack.Children.Add(controls);
@@ -140,6 +152,9 @@ public sealed class SecretEditor : UserControl
 
     /// <summary>The last real check, or <see cref="SecretCheck.Untested"/>.</summary>
     public SecretCheck Result => _result;
+
+    /// <summary>Whether the field is showing: no key is stored, or one is being replaced.</summary>
+    private bool Entering => !IsStored || _replacing;
 
     /// <summary>Takes what is in the box into the store.</summary>
     private bool Store()
@@ -166,6 +181,7 @@ public sealed class SecretEditor : UserControl
         // Never held in a control after it is stored.
         _box.Text = string.Empty;
         _reveal.IsChecked = false;
+        _replacing = false;
 
         // A new key makes any previous verdict a statement about a value that is gone.
         _result = SecretCheck.Untested;
@@ -176,37 +192,54 @@ public sealed class SecretEditor : UserControl
         return true;
     }
 
-    /// <summary>Asks first, then clears.</summary>
-    private async Task ClearAsync()
+    /// <summary>Opens the field over a stored key.</summary>
+    private void Replace()
     {
-        if (IsStored)
-        {
-            if (TopLevel.GetTopLevel(this) is not Window owner)
-            {
-                return;
-            }
+        _replacing = true;
+        _message.IsVisible = false;
 
-            var wanted = await new ConfirmWindow(
-                "Delete stored key",
-                $"Delete the stored {_row.Label}? Directive 47 cannot show a stored key back, so "
-                + "this cannot be undone — you would have to paste it again, or reissue it at the "
-                + "provider if you no longer have a copy.",
-                confirmLabel: "Delete key",
-                declineLabel: "Keep it").AskAsync(owner);
-
-            if (!wanted)
-            {
-                return;
-            }
-        }
-
-        Clear();
+        Refresh();
+        _box.Focus();
     }
 
-    private void Clear()
+    /// <summary>Back to the stored line, with the field emptied and the store untouched.</summary>
+    private void Cancel()
     {
         _box.Text = string.Empty;
         _reveal.IsChecked = false;
+        _replacing = false;
+        _message.IsVisible = false;
+
+        Refresh();
+    }
+
+    /// <summary>Asks first, then deletes the stored key.</summary>
+    private async Task ForgetAsync()
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+        {
+            return;
+        }
+
+        var wanted = await new ConfirmWindow(
+            "Delete stored key",
+            $"Delete the stored {_row.Label}? Directive 47 cannot show a stored key back, so "
+            + "this cannot be undone — you would have to paste it again, or reissue it at the "
+            + "provider if you no longer have a copy.",
+            confirmLabel: "Delete key",
+            declineLabel: "Keep it").AskAsync(owner);
+
+        if (wanted)
+        {
+            Forget();
+        }
+    }
+
+    private void Forget()
+    {
+        _box.Text = string.Empty;
+        _reveal.IsChecked = false;
+        _replacing = false;
         _result = SecretCheck.Untested;
 
         var result = _settings.Apply(_row.Key, null, SettingsCaller.Panel);
@@ -217,7 +250,7 @@ public sealed class SecretEditor : UserControl
         Changed?.Invoke();
     }
 
-    /// <summary>Proves the key in the box, which means storing it first.</summary>
+    /// <summary>Proves the stored key, or the key in the field, which means storing it first.</summary>
     private async Task CheckAsync()
     {
         if (_row.Verify is not { } verify)
@@ -225,7 +258,7 @@ public sealed class SecretEditor : UserControl
             return;
         }
 
-        if (!Store())
+        if (Entering && !Store())
         {
             return;
         }
@@ -246,8 +279,6 @@ public sealed class SecretEditor : UserControl
         }
         finally
         {
-            // Refresh decides whether the button comes back, because by now the box has emptied into the
-            // store and a shut button is the correct answer to that.
             Refresh();
         }
     }
@@ -262,8 +293,16 @@ public sealed class SecretEditor : UserControl
     public void Refresh()
     {
         var stored = IsStored;
+        var entering = Entering;
 
-        _store.Content = stored ? "Overwrite" : "Save";
+        _masked.IsVisible = !entering;
+        _replace.IsVisible = !entering;
+        _forget.IsVisible = !entering;
+
+        _box.IsVisible = entering;
+        _reveal.IsVisible = entering;
+        _store.IsVisible = entering;
+        _cancel.IsVisible = entering && stored;
 
         _state.Text = (stored ? "Key stored" : "No key").ToUpperInvariant();
 
@@ -273,7 +312,7 @@ public sealed class SecretEditor : UserControl
             TextBlock.ForegroundProperty,
             stored ? ThemeManager.YellowKey : ThemeManager.GreyKey);
 
-        RefreshBox();
+        RefreshCheck();
 
         _box.PlaceholderText = stored ? "Paste a new key to replace it" : "Paste a key to store it";
 
@@ -291,80 +330,14 @@ public sealed class SecretEditor : UserControl
             });
     }
 
-    /// <summary>The two controls that answer to what is in the box rather than to what is in the store.</summary>
-    private void RefreshBox()
+    /// <summary>VERIFY checks a stored key as it is, and a typed one once something is typed.</summary>
+    private void RefreshCheck()
     {
-        var typed = !string.IsNullOrWhiteSpace(_box.Text);
-
-        _clear.IsVisible = IsStored || !string.IsNullOrEmpty(_box.Text);
-
-        _check.IsEnabled = typed && _row.Verify is not null;
+        _check.IsEnabled = _row.Verify is not null && (!Entering || !string.IsNullOrWhiteSpace(_box.Text));
 
         ToolTip.SetTip(_check, _check.IsEnabled ? null : "Paste a key first — there is nothing here to check yet");
     }
 
     private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, this.GetResourceObservable(key));
-
-    /// <summary>
-    /// A control that lives inside the text box rather than beside it: no chrome of its own, so the
-    /// field's border stays the only box drawn, and a tooltip and an automation name because dropping
-    /// the label is what buys the space and a glyph alone tells a screen reader nothing.
-    /// </summary>
-    private static void InTheBox(TemplatedControl control, string name)
-    {
-        control.Classes.Add(InBoxClass);
-        control.Background = Brushes.Transparent;
-        control.BorderThickness = new Thickness(0);
-        control.Padding = new Thickness(4, 0);
-        control.MinWidth = 0;
-        control.VerticalAlignment = VerticalAlignment.Center;
-        control.Cursor = new Cursor(StandardCursorType.Hand);
-
-        ToolTip.SetTip(control, name);
-        AutomationProperties.SetName(control, name);
-    }
-
-    /// <summary>
-    /// Several paths drawn as one figure, in repo rather than taken from a font — the same rule the
-    /// send glyph and the help mark follow.
-    /// </summary>
-    private static Viewbox Glyph(double size, params Path[] parts)
-    {
-        var canvas = new Canvas { Width = 24, Height = 24 };
-
-        foreach (var part in parts)
-        {
-            canvas.Children.Add(part);
-        }
-
-        return new Viewbox { Width = size, Height = size, Child = canvas };
-    }
-
-    /// <summary>
-    /// Themed through a dynamic resource rather than a literal brush, so a glyph repaints with the rest
-    /// of the app on a theme change (Phase 4, "Themes").
-    /// </summary>
-    private static Path Stroked(string data)
-    {
-        var path = new Path
-        {
-            Data = Geometry.Parse(data),
-            StrokeThickness = 1.7,
-            StrokeJoin = PenLineJoin.Round,
-            StrokeLineCap = PenLineCap.Round,
-        };
-
-        path[!Shape.StrokeProperty] = new DynamicResourceExtension(ThemeManager.GreyKey);
-        return path;
-    }
-
-    private static Path Filled(Geometry data)
-    {
-        var path = new Path { Data = data };
-
-        path[!Shape.FillProperty] = new DynamicResourceExtension(ThemeManager.GreyKey);
-
-        return path;
-    }
 }
