@@ -15,6 +15,13 @@ counts and lists twice instead of once. A weapon modification with a different r
 manufacturer now counts under "no material total" rather than under the rank line, since it is not
 a rank problem.
 
+The Materials page's engineer-rank gate now names who to go and see. Pressing it answers four
+questions in order: who covers something you have planned and where you stand with them, which one
+to go to first and why, that engineer's route in flying order with the "Add to checklist" control,
+and what is still blocked — one line per job, such as "Grade 5 Long Range Weapon · Multi-cannon
+×10", rather than one line per slot. The button's own count is in jobs too, and the blocked set
+matches what the Engineers Route ranks.
+
 The Engineers Route, and the voice answer about which engineer to unlock next, now put engineers
 you only have to fly to ahead of ones whose hand-over is still to gather, and those ahead of ones
 whose invitation requirement is not met. Within that, they rank by planned work freed per jump,

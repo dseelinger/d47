@@ -15,7 +15,9 @@ using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Engineers;
 using D47.Core.Interface;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 
@@ -63,7 +65,10 @@ public static class LoadoutPages
         Func<Control?>? settingsStrip = null,
 
         // The captain and tower's own settings (#218, #305), drawn only on CarrierRoot.
-        Func<Control?>? carrierSettingsStrip = null)
+        Func<Control?>? carrierSettingsStrip = null,
+
+        // Who to go and unlock next, so the Materials page can name them rather than only gate them (#477).
+        EngineerSource? engineers = null)
     {
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
@@ -92,7 +97,7 @@ public static class LoadoutPages
 
         if (crumb.Key == GapRoot && gap is not null)
         {
-            return new GapPage(gap);
+            return new GapPage(gap, engineers);
         }
 
         var root = modes.FirstOrDefault(mode => mode.RootKey == crumb.Key) ?? modes[0];
@@ -2145,6 +2150,7 @@ public sealed class GapPage : UserControl
     private const double CardGap = 16;
 
     private readonly GapSource _gap;
+    private readonly EngineerSource? _engineers;
     private readonly Segment _switch;
     private readonly StackPanel _notes = new() { Spacing = IndexPage.ListGap, Margin = new Thickness(0, 0, 0, 8) };
     private readonly ContentControl _cards = new();
@@ -2153,9 +2159,10 @@ public sealed class GapPage : UserControl
 
     private bool _onFoot;
 
-    public GapPage(GapSource gap)
+    public GapPage(GapSource gap, EngineerSource? engineers = null)
     {
         _gap = gap;
+        _engineers = engineers;
 
         gap.Changed += OnChanged;
 
@@ -2205,13 +2212,7 @@ public sealed class GapPage : UserControl
 
         if (report.Gates.Count > 0)
         {
-            var n = report.Gates.Count;
-
-            _notes.Children.Add(NoteLine(
-                $"{n.ToString(CultureInfo.InvariantCulture)} planned grade{(n == 1 ? string.Empty : "s")} "
-                + (n == 1 ? "needs" : "need") + " a higher engineer rank",
-                "No unlocked engineer offers these grades yet — costed at five rolls",
-                report.Gates));
+            _notes.Children.Add(GatesNote(report));
         }
 
         if (report.Uncovered.Count > 0)
@@ -2221,8 +2222,7 @@ public sealed class GapPage : UserControl
             _notes.Children.Add(NoteLine(
                 $"{n.ToString(CultureInfo.InvariantCulture)} planned slot{(n == 1 ? string.Empty : "s")} "
                 + (n == 1 ? "has" : "have") + " no material total",
-                "No material total — the reason is on each line",
-                report.Uncovered));
+                () => OpenList("No material total — the reason is on each line", report.Uncovered)));
         }
 
         if (report.Assumed.Count > 0)
@@ -2232,8 +2232,7 @@ public sealed class GapPage : UserControl
             _notes.Children.Add(NoteLine(
                 $"{n.ToString(CultureInfo.InvariantCulture)} planned slot{(n == 1 ? string.Empty : "s")} "
                 + (n == 1 ? "is" : "are") + " costed at the most expensive module",
-                "Costed at the most expensive module",
-                report.Assumed));
+                () => OpenList("Costed at the most expensive module", report.Assumed)));
         }
 
         // Each card as tall as its own rows, in as many columns as fit; the page scrolls, not the card.
@@ -2258,14 +2257,130 @@ public sealed class GapPage : UserControl
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 
-    /// <summary>A gates-or-uncovered summary line, toned danger, opening the full list.</summary>
-    private Control NoteLine(string text, string title, IReadOnlyList<string> lines)
+    /// <summary>A gates-or-uncovered summary line, toned danger, opening what <paramref name="open"/> shows.</summary>
+    private Control NoteLine(string text, Action open)
     {
-        var button = LoadoutPages.Press(text, () => OpenList(title, lines));
+        var button = LoadoutPages.Press(text, open);
 
         button.Classes.Add("destructive");
 
         return button;
+    }
+
+    /// <summary>
+    /// The Gates note: counted and named by job where an <see cref="EngineerSource"/> can say who unblocks
+    /// them, the same set the Engineers page ranks (#477) — the raw per-slot lines otherwise.
+    /// </summary>
+    private Control GatesNote(GapReport report)
+    {
+        if (_engineers is { } source)
+        {
+            var jobs = BlockedJobs(source.Read());
+            var n = jobs.Count;
+
+            return NoteLine(
+                $"{n.ToString(CultureInfo.InvariantCulture)} planned grade{(n == 1 ? string.Empty : "s")} "
+                + (n == 1 ? "is" : "are") + " beyond your engineers' ranks",
+                () => OpenEngineerGates(source));
+        }
+
+        var slots = report.Gates.Count;
+
+        return NoteLine(
+            $"{slots.ToString(CultureInfo.InvariantCulture)} planned slot{(slots == 1 ? string.Empty : "s")} "
+            + (slots == 1 ? "needs" : "need") + " a higher engineer rank",
+            () => OpenList("No unlocked engineer offers these grades yet — costed at five rolls", report.Gates));
+    }
+
+    /// <summary>
+    /// Every outstanding job the ranked route covers, across every candidate — the same union the
+    /// Engineers page's route claims from, so the two pages never disagree about what is blocked (#477).
+    /// </summary>
+    private static IReadOnlyList<IReadOnlyList<PlannedWork>> BlockedJobs(EngineerReport report) =>
+        [.. report.Route
+            .SelectMany(candidate => candidate.Covers)
+            .GroupBy(work => work.Job, StringComparer.Ordinal)
+            .Select(job => (IReadOnlyList<PlannedWork>)[.. job])];
+
+    /// <summary>One blocked job, readable and counted — "Grade 5 Long Range Weapon · Multi-cannon ×10".</summary>
+    private static string DescribeBlockedJob(IReadOnlyList<PlannedWork> job)
+    {
+        var described = job[0].DescribeJob();
+        var capitalised = char.ToUpperInvariant(described[0]) + described[1..];
+        var named = job[0].Module is { Length: > 0 } module ? $"{capitalised} · {module}" : capitalised;
+
+        return job.Count > 1 ? $"{named} ×{job.Count.ToString(CultureInfo.InvariantCulture)}" : named;
+    }
+
+    /// <summary>Where the Commander stands with one engineer — not started, invited, or unlocked at grade N.</summary>
+    private static string Standing(EngineerStanding? standing, int needed)
+    {
+        if (standing is { IsUnlocked: true })
+        {
+            var rank = standing.Rank ?? 1;
+
+            return $"unlocked at grade {rank.ToString(CultureInfo.InvariantCulture)} of "
+                   + $"{needed.ToString(CultureInfo.InvariantCulture)} needed";
+        }
+
+        return standing is { IsInvited: true } ? "invited" : "not started";
+    }
+
+    /// <summary>
+    /// The four questions the Materials page's engineer gate answers, in order: who is needed, which one
+    /// first, how to get them, and what is still blocked (#477).
+    /// </summary>
+    private void OpenEngineerGates(EngineerSource source)
+    {
+        var report = source.Read();
+        var route = report.Route.Where(candidate => candidate.Covers.Count > 0).ToList();
+        var body = new List<Control>();
+
+        if (route.Count == 0)
+        {
+            body.Add(LoadoutPages.Muted("Nobody left to unlock covers this."));
+        }
+        else
+        {
+            body.Add(LoadoutPages.Section("Who you need"));
+
+            foreach (var candidate in route)
+            {
+                var needed = candidate.Covers.Max(work => work.Rank);
+                var entry = report.Directory.FirstOrDefault(e => e.Engineer.Id == candidate.Engineer.Id);
+
+                body.Add(LoadoutPages.Muted($"{candidate.Engineer.Name} — {Standing(entry?.Standing, needed)}"));
+            }
+
+            var first = route[0];
+
+            body.Add(LoadoutPages.Section("Which one first"));
+            body.Add(LoadoutPages.Muted($"{first.Engineer.Name}: {first.Summary()}"));
+
+            body.Add(LoadoutPages.Section("How to get them"));
+
+            foreach (var line in first.Working())
+            {
+                body.Add(LoadoutPages.Muted(line));
+            }
+
+            if (EngineersPages.AddPrerequisitesControl(
+                    first.Engineer, first.Criteria, source, () => OpenEngineerGates(source)) is { } button)
+            {
+                body.Add(button);
+            }
+        }
+
+        body.Add(LoadoutPages.Section("What is blocked"));
+
+        foreach (var job in BlockedJobs(report))
+        {
+            body.Add(LoadoutPages.Muted(DescribeBlockedJob(job)));
+        }
+
+        body.Add(LoadoutPages.Muted("Material totals count these at the most rolls their grade can take."));
+
+        OpenDetail("Beyond your engineers' ranks", body);
     }
 
     private Control Card(MaterialCard card)

@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Checklists;
+using D47.Core.Engineers;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -55,6 +56,41 @@ public class OnFootLoadoutTabTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableLoadout(ships, checklists, () => state, kit);
+
+        var window = new Window { Content = panel, Width = 900, Height = 700 };
+        window.Show();
+
+        panel.Tab = PanelTab.Loadout;
+        Dispatcher.UIThread.RunJobs();
+
+        return new Surface(window, panel, ships, kit, checklists);
+    }
+
+    /// <summary>The same surface, with the Engineers tab enabled too, so the Materials gate can name a route.</summary>
+    private static Surface OpenWithEngineers()
+    {
+        var root = TempFolders.Create("d47-onfoot-loadout-tests");
+
+        var state = OnFoot();
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(root, "checklist-proposals.json"),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => state);
+
+        var shipStore = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var onFootStore = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+
+        var ships = new ShipPlanService(shipStore, checklists, () => state);
+        var kit = new OnFootPlanService(onFootStore, checklists, () => state);
+        var unlocks = new EngineerPlanService(shipStore, onFootStore, checklists, () => state);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableLoadout(ships, checklists, () => state, kit);
+        panel.EnableEngineers(unlocks, ships, () => state, kit);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
@@ -649,6 +685,53 @@ public class OnFootLoadoutTabTests
         Assert.DoesNotContain(
             Text(surface.Panel),
             line => line.Contains("Held: 20", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// The engineer gate answers the four questions the issue asked for, one line per job rather than one
+    /// per slot, names nobody by their journal slot, and blocks the same set the Engineers page's own route
+    /// claims (#477).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheEngineerGateNamesWhoToSeeAndWhatIsBlocked()
+    {
+        var surface = OpenWithEngineers();
+
+        var build = surface.Ships.BuildFor(12, "krait_mkii", "Bad Idea");
+
+        // Two utility mounts, the same job — Shield Booster grade 5 Heavy Duty — which neither Mel Brandon
+        // nor Didi Vatermann is unlocked for in OnFoot()'s state.
+        surface.Ships.Plan(build.Id, new SlotPlan("TinyHardpoint4") { Blueprint = "Heavy Duty", Grade = 5, Module = "Shield Booster" });
+        surface.Ships.Plan(build.Id, new SlotPlan("TinyHardpoint5") { Blueprint = "Heavy Duty", Grade = 5, Module = "Shield Booster" });
+
+        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        // Counted in jobs — one job on two slots — not in the two lines the old per-slot gate wrote.
+        var gate = Row(surface.Panel, "1 planned grade is beyond your engineers' ranks");
+
+        gate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("WHO YOU NEED", shown);
+        Assert.Contains("WHICH ONE FIRST", shown);
+        Assert.Contains("HOW TO GET THEM", shown);
+        Assert.Contains("WHAT IS BLOCKED", shown);
+
+        Assert.Contains(shown, line => line.Contains("not started", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.Contains("Grade 5 Heavy Duty", StringComparison.Ordinal)
+                                       && line.Contains("Shield Booster", StringComparison.Ordinal)
+                                       && line.Contains("×2", StringComparison.Ordinal));
+
+        Assert.Contains(
+            shown,
+            line => line.Contains("Material totals count these at the most rolls their grade can take.", StringComparison.Ordinal));
+
+        Assert.DoesNotContain(shown, line => line.Contains("TinyHardpoint", StringComparison.Ordinal));
 
         surface.Window.Close();
     }

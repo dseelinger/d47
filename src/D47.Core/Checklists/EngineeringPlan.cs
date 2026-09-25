@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -242,7 +243,7 @@ public static class EngineeringPlan
                 continue;
             }
 
-            var rank = RankFor(recipe, intent, state);
+            var rank = RankFor(intent, state);
 
             if (rank is { } known && recipe.TotalFor(known) is { } total)
             {
@@ -274,17 +275,20 @@ public static class EngineeringPlan
         + $"{grade.ToString(CultureInfo.InvariantCulture)} yet; counted at the most rolls it can take.";
 
     /// <summary>
-    /// The highest rank among the engineers who could craft this, unlocked ones only — the recipe's own
-    /// list, or just the one the item names where it names one.
+    /// The highest rank among the engineers who could craft this, unlocked ones only — every roller
+    /// <see cref="PlannedNeeds.Rollers"/> finds, the same reach <see cref="PlannedWork.CanBeRolled"/> uses,
+    /// or just the one the item names where it names one.
     /// </summary>
-    private static int? RankFor(Blueprint recipe, ChecklistIntent intent, CommanderGameState? state)
+    private static int? RankFor(ChecklistIntent intent, CommanderGameState? state)
     {
         if (state is null)
         {
             return null;
         }
 
-        IReadOnlyList<string> candidates = Blank(intent.Engineer) is { } named ? [named] : recipe.Engineers;
+        IReadOnlyList<string> candidates = Blank(intent.Engineer) is { } named
+            ? [named]
+            : PlannedNeeds.Rollers(intent.Detail!, Blank(intent.Module), intent.Grade);
 
         int? best = null;
 

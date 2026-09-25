@@ -709,8 +709,11 @@ public partial class PanelView : UserControl
 
         Furnish(
             PanelTab.Loadout,
+
+            // _engineers is read lazily, on whichever draw first opens Materials — EnableEngineers is always
+            // called too, just not necessarily first (#477).
             crumb => LoadoutPages.Build(
-                crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip),
+                crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers),
             [.. roots]);
     }
 
