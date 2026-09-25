@@ -34,6 +34,10 @@ Pressing **Test** under Guardian Voice Effects closed D47 when the voice service
 It now says under the row that the test could not be done, and why. The same applies to every other
 setting with a button that speaks.
 
+A ship voice the selected speech provider does not offer, such as an OpenAI voice stored while Edge
+Neural is selected, is now replaced by one of that provider's voices once its list arrives, for
+every core. A voice in the list, including one you chose, is left as it is.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

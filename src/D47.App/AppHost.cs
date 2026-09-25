@@ -3004,6 +3004,26 @@ public sealed class AppHost : IDisposable
         ApplySpeechSettings();
     }
 
+    /// <summary>
+    /// Removes every ship voice the aboard provider's list does not offer, so the pairing that follows
+    /// gives those cores a voice from the list.
+    /// </summary>
+    private void ForgetVoicesNotListed()
+    {
+        var list = AboardVoices;
+
+        if (ReferenceEquals(SpeechCapability.WithoutVoicesNotIn(Settings.Current, list), Settings.Current))
+        {
+            return;
+        }
+
+        _logger.LogInformation(
+            "Removing ship voices {Provider}'s list does not offer",
+            VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard));
+
+        Settings.Replace("persona.voices", current => SpeechCapability.WithoutVoicesNotIn(current, list));
+    }
+
     /// <summary>Serialises pairing passes, which read and write the same settings.</summary>
     private readonly SemaphoreSlim _pairing = new(1, 1);
 
@@ -3024,6 +3044,7 @@ public sealed class AppHost : IDisposable
         {
             if (!forgetFirst && AboardVoices.Count > 0)
             {
+                ForgetVoicesNotListed();
                 await RepairMiscastVoicesAsync().ConfigureAwait(false);
             }
 
@@ -4032,6 +4053,14 @@ public sealed class AppHost : IDisposable
             {
                 _ = LoadVoicesAsync(client);
             }
+        }
+
+        // A ship moved to a provider whose list is already held gets no fetch, so its voices are checked here.
+        if (plan.Rewire.Contains(VoiceGroup.Aboard)
+            && !plan.RefetchVoices.Contains(VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard), StringComparer.OrdinalIgnoreCase)
+            && AboardVoices.Count > 0)
+        {
+            _ = PairVoicesAsync();
         }
 
         Voice.Tts = Speaker(VoiceGroup.Aboard);

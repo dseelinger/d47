@@ -1289,6 +1289,37 @@ public static class SpeechCapability
         },
     };
 
+    /// <summary>
+    /// The same settings with every core voice and <see cref="SpeechSettings.Voice"/> that
+    /// <paramref name="list"/> does not offer removed, or the same instance when nothing is removed or
+    /// the list did not arrive.
+    /// </summary>
+    public static D47Settings WithoutVoicesNotIn(D47Settings settings, VoiceCatalogue list)
+    {
+        if (list.Listing != VoiceListing.Listed || list.Count == 0)
+        {
+            return settings;
+        }
+
+        var offered = list.Voices.Select(voice => voice.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var voice = settings.Speech.Voice is { } held && !offered.Contains(held) ? null : settings.Speech.Voice;
+        var kept = settings.Persona.Voices.Where(pair => offered.Contains(pair.Value)).ToArray();
+
+        if (voice == settings.Speech.Voice && kept.Length == settings.Persona.Voices.Count)
+        {
+            return settings;
+        }
+
+        return settings with
+        {
+            Speech = settings.Speech with { Voice = voice },
+            Persona = settings.Persona with
+            {
+                Voices = kept.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal),
+            },
+        };
+    }
+
     private static string? Unless(string? held, string? unwanted) =>
         string.Equals(held, unwanted, StringComparison.Ordinal) ? null : held;
 
