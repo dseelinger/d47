@@ -767,25 +767,8 @@ public sealed record SpeechSettings
     /// <summary>Which bed.</summary>
     public string? ThinkingBed { get; init; }
 
-    /// <summary>
-    /// The eight Guardian voice treatments, all off by default and global to every core rather than
-    /// per persona (#225).
-    /// </summary>
-    public bool GuardianVoiceCylon { get; init; }
-
-    public bool GuardianVoicePitchDown { get; init; }
-
-    public bool GuardianVoiceOctaveDown { get; init; }
-
-    public bool GuardianVoiceChorus { get; init; }
-
-    public bool GuardianVoiceComb { get; init; }
-
-    public bool GuardianVoiceRingMod { get; init; }
-
-    public bool GuardianVoiceGlitch { get; init; }
-
-    public bool GuardianVoiceReverb { get; init; }
+    /// <summary>The Guardian voice effects, global to every core rather than per persona (#225).</summary>
+    public GuardianVoiceSettings GuardianVoice { get; init; } = new();
 
     /// <summary>Cancel (Phase 5 as "Shut up"; widened by #221).</summary>
     public string? ShutUpHotkey { get; init; } = "Ctrl+Alt+X";
@@ -807,6 +790,36 @@ public sealed record SpeechSettings
 
     /// <summary>How long one attempt may run before it counts as a failure worth reporting.</summary>
     public double TurnTimeoutSeconds { get; init; } = 45;
+}
+
+/// <summary>Which Guardian voice effects run on the ship AI's voice, in what order and how strongly.</summary>
+public sealed record GuardianVoiceSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>
+    /// Every effect in chain order. Read through <see cref="Audio.GuardianVoice.Effects"/>, which normalises
+    /// it; null means every effect off, in the default order, at its default level.
+    /// </summary>
+    public IReadOnlyList<GuardianVoiceEffect>? Effects { get; init; }
+}
+
+/// <summary>One effect's place in the Guardian voice chain.</summary>
+public sealed record GuardianVoiceEffect
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>An <see cref="Audio.GuardianEffect.Id"/>.</summary>
+    public string Id { get; init; } = "";
+
+    public bool Ticked { get; init; }
+
+    /// <summary>1 to 20.</summary>
+    public int Level { get; init; }
 }
 
 public sealed record LoggingSettings

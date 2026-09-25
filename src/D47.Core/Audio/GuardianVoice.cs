@@ -2,43 +2,148 @@ using D47.Core.Configuration;
 
 namespace D47.Core.Audio;
 
-/// <summary>The treatments a Guardian core's voice can be given, in any combination.</summary>
-[Flags]
-public enum GuardianTreatment
+/// <summary>One effect a Guardian core's voice can be given, and what its level sets.</summary>
+public sealed record GuardianEffect
 {
-    None = 0,
+    /// <summary>The effect's key in settings: <c>speech.guardianVoice.&lt;id&gt;</c>.</summary>
+    public required string Id { get; init; }
 
-    /// <summary>Channel vocoder onto a fixed-pitch sawtooth.</summary>
-    Cylon = 1 << 0,
+    public required string Label { get; init; }
 
-    /// <summary>Four semitones down, duration kept.</summary>
-    PitchDown = 1 << 1,
+    public required string Help { get; init; }
 
-    /// <summary>The line an octave lower, mixed under the dry voice.</summary>
-    OctaveDown = 1 << 2,
+    /// <summary>What the level sets, as the Commander reads it: "Depth", "Pitch", "Mix".</summary>
+    public required string Parameter { get; init; }
 
-    /// <summary>Three swept delayed copies.</summary>
-    Chorus = 1 << 3,
+    /// <summary>
+    /// What <see cref="Value"/> is counted in: "%" for a share from 0 to 1, "st" for semitones, "×" for a
+    /// multiplier.
+    /// </summary>
+    public required string Unit { get; init; }
 
-    /// <summary>A 9 ms feedback comb.</summary>
-    Comb = 1 << 4,
+    public required int DefaultLevel { get; init; }
 
-    /// <summary>A 45 Hz ring modulator blended with the dry voice.</summary>
-    RingMod = 1 << 5,
+    /// <summary>The parameter's value at a level from 1 to 20.</summary>
+    public required Func<int, double> Value { get; init; }
 
-    /// <summary>Short damaged stretches at irregular intervals.</summary>
-    Glitch = 1 << 6,
-
-    /// <summary>Schroeder reverb, adding a half-second tail.</summary>
-    Reverb = 1 << 7,
+    /// <summary>The signal, the parameter's value, the core's base pitch and the sample rate, to the treated signal.</summary>
+    public required Func<double[], double, double, int, double[]> Run { get; init; }
 }
 
 /// <summary>
-/// Speech made to sound like a Guardian core. Treatments run in the order the flags are declared, whatever is
-/// switched on, and the result is brought back to the dry clip's loudness.
+/// Speech made to sound like a Guardian core. The ticked effects run in the order the Commander set, each at its
+/// level, and the result is brought back to the dry clip's loudness.
 /// </summary>
 public static class GuardianVoice
 {
+    public const int LowestLevel = 1;
+
+    public const int HighestLevel = 20;
+
+    /// <summary>Every effect, in the default order.</summary>
+    public static readonly IReadOnlyList<GuardianEffect> Table =
+    [
+        new GuardianEffect
+        {
+            Id = "cylon",
+            Label = "Cylon",
+            Help = "Channel vocoder onto a fixed-pitch carrier; depth is how much of the vocoded voice replaces the dry one.",
+            Parameter = "Depth",
+            Unit = "%",
+            DefaultLevel = 20,
+            Value = level => level / 20.0,
+            Run = (signal, depth, basePitchHz, rate) =>
+                Mix(signal, 1 - depth, Cylon(signal, basePitchHz * CarrierShare, rate), depth),
+        },
+        new GuardianEffect
+        {
+            Id = "pitchDown",
+            Label = "Pitch down",
+            Help = "The voice lowered, duration kept; pitch is how many semitones.",
+            Parameter = "Pitch",
+            Unit = "st",
+            DefaultLevel = 8,
+            Value = level => -level / 2.0,
+            Run = (signal, semitones, _, rate) => Shift(signal, Math.Pow(2, semitones / 12), rate),
+        },
+        new GuardianEffect
+        {
+            Id = "octaveDown",
+            Label = "Octave-down layer",
+            Help = "The line an octave lower, mixed under the dry voice; mix is how loud the layer is.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 12,
+            Value = level => level / 20.0,
+            Run = (signal, mix, _, rate) => Mix(signal, 1, Shift(signal, 0.5, rate), mix),
+        },
+        new GuardianEffect
+        {
+            Id = "chorus",
+            Label = "Chorus",
+            Help = "Three swept delayed copies mixed under the dry voice; depth is how loud the copies are.",
+            Parameter = "Depth",
+            Unit = "%",
+            DefaultLevel = 16,
+            Value = level => level / 20.0,
+            Run = (signal, depth, _, rate) => Chorus(signal, depth, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "comb",
+            Label = "Metallic resonance",
+            Help = "A 9 ms feedback comb filter; amount is its share of the output.",
+            Parameter = "Amount",
+            Unit = "%",
+            DefaultLevel = 12,
+            Value = level => level / 20.0,
+            Run = (signal, wet, _, rate) => Comb(signal, wet, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "ringMod",
+            Label = "Ring modulation",
+            Help = "A 45 Hz ring modulator blended with the dry voice; mix is its share of the output.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 7,
+            Value = level => level / 20.0,
+            Run = (signal, wet, _, rate) => RingMod(signal, wet, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "glitch",
+            Label = "Glitch",
+            Help = "Short damaged stretches at irregular intervals; rate is how often they come.",
+            Parameter = "Rate",
+            Unit = "×",
+            DefaultLevel = 10,
+            Value = level => level / 10.0,
+            Run = (signal, often, _, rate) => Glitch(signal, often, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "reverb",
+            Label = "Reverb",
+            Help = "Schroeder reverb, adding a half-second tail; mix is how loud the reverb is.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 9,
+            Value = level => level / 20.0,
+            Run = (signal, wet, _, rate) => Reverb(signal, wet, rate),
+        },
+    ];
+
+    private static readonly Dictionary<string, GuardianEffect> ById =
+        Table.ToDictionary(effect => effect.Id, StringComparer.Ordinal);
+
+    /// <summary>Every effect unticked, in the default order, at its default level.</summary>
+    public static IReadOnlyList<GuardianVoiceEffect> Defaults { get; } =
+        [.. Table.Select(effect => new GuardianVoiceEffect { Id = effect.Id, Level = effect.DefaultLevel })];
+
+    /// <summary>The effect with this id, or null for an id this build does not know.</summary>
+    public static GuardianEffect? Find(string id) => ById.GetValueOrDefault(id);
+
     /// <summary>The vocoder's carrier, as a share of the core's base pitch.</summary>
     private const double CarrierShare = 0.85;
 
@@ -47,12 +152,6 @@ public static class GuardianVoice
 
     /// <summary>How far either side of a bin the speech envelope is averaged over.</summary>
     private const double EnvelopeHalfWidthHz = 280;
-
-    private const double PitchDownSemitones = -4;
-
-    private const double OctaveLayer = 0.6;
-
-    private const double ChorusLayer = 0.8;
 
     /// <summary>(base ms, depth ms, rate Hz, phase) per copy.</summary>
     private static readonly (double Base, double Depth, double Rate, double Phase)[] ChorusCopies =
@@ -64,12 +163,8 @@ public static class GuardianVoice
 
     private const double CombDelayMs = 9;
     private const double CombFeedback = 0.7;
-    private const double CombDry = 0.4;
-    private const double CombWet = 0.6;
 
     private const double RingHz = 45;
-    private const double RingDry = 0.65;
-    private const double RingWet = 0.35;
 
     private static readonly (double DelayMs, double Feedback)[] ReverbCombs =
     [
@@ -83,7 +178,6 @@ public static class GuardianVoice
     private const double ReverbAllpassGain = 0.7;
     private const double ReverbLowPassHz = 5_000;
     private const double ReverbDry = 0.75;
-    private const double ReverbWet = 0.45;
     private const double ReverbTailSeconds = 0.5;
 
     /// <summary>The highest peak the levelled result may reach.</summary>
@@ -93,15 +187,17 @@ public static class GuardianVoice
     private const double FrameSeconds = 2048.0 / 48_000;
 
     /// <summary>
-    /// The clip with the chosen treatments applied. <paramref name="basePitchHz"/> is the core's fixed pitch,
-    /// which the <see cref="GuardianTreatment.Cylon"/> carrier is derived from; it is not measured per clip.
+    /// The clip with the ticked effects applied in list order, each at its level; an id this build does not know
+    /// is skipped. <paramref name="basePitchHz"/> is the core's fixed pitch, which the Cylon carrier is derived
+    /// from; it is not measured per clip.
     /// </summary>
-    public static AudioClip Apply(AudioClip clip, GuardianTreatment treatments, double basePitchHz)
+    public static AudioClip Apply(AudioClip clip, IReadOnlyList<GuardianVoiceEffect> effects, double basePitchHz)
     {
         var channels = Math.Max(1, clip.Format.Channels);
         var frames = clip.Pcm.Length / (2 * channels);
+        var chain = Ticked(effects);
 
-        if (treatments == GuardianTreatment.None || frames == 0)
+        if (chain.Count == 0 || frames == 0)
         {
             return clip;
         }
@@ -112,7 +208,7 @@ public static class GuardianVoice
 
         for (var channel = 0; channel < channels; channel++)
         {
-            treated[channel] = Chain(dry[channel], treatments, basePitchHz, rate);
+            treated[channel] = Chain(dry[channel], chain, basePitchHz, rate);
         }
 
         return clip with
@@ -122,52 +218,61 @@ public static class GuardianVoice
         };
     }
 
-    /// <summary>Every treatment switched on in settings, combined (#225).</summary>
-    public static GuardianTreatment TreatmentsFrom(SpeechSettings speech)
+    /// <summary>
+    /// Every effect in chain order: unknown and repeated ids dropped, a level outside 1 to 20 at its default, and
+    /// a missing effect inserted unticked at its default level straight after the nearest effect that precedes
+    /// it in the default order.
+    /// </summary>
+    public static IReadOnlyList<GuardianVoiceEffect> Effects(GuardianVoiceSettings settings)
     {
-        var treatments = GuardianTreatment.None;
-
-        if (speech.GuardianVoiceCylon)
+        if (settings.Effects is not { } stored)
         {
-            treatments |= GuardianTreatment.Cylon;
+            return Defaults;
         }
 
-        if (speech.GuardianVoicePitchDown)
+        var effects = new List<GuardianVoiceEffect>(Table.Count);
+
+        foreach (var effect in stored)
         {
-            treatments |= GuardianTreatment.PitchDown;
+            if (effect is null || Find(effect.Id) is not { } known || effects.Exists(e => e.Id == known.Id))
+            {
+                continue;
+            }
+
+            effects.Add(new GuardianVoiceEffect
+            {
+                Id = known.Id,
+                Ticked = effect.Ticked,
+                Level = effect.Level is >= LowestLevel and <= HighestLevel ? effect.Level : known.DefaultLevel,
+            });
         }
 
-        if (speech.GuardianVoiceOctaveDown)
+        for (var index = 0; index < Table.Count; index++)
         {
-            treatments |= GuardianTreatment.OctaveDown;
+            var missing = Table[index];
+
+            if (effects.Exists(e => e.Id == missing.Id))
+            {
+                continue;
+            }
+
+            var at = 0;
+
+            for (var before = index - 1; before >= 0; before--)
+            {
+                var found = effects.FindIndex(e => e.Id == Table[before].Id);
+
+                if (found >= 0)
+                {
+                    at = found + 1;
+                    break;
+                }
+            }
+
+            effects.Insert(at, new GuardianVoiceEffect { Id = missing.Id, Level = missing.DefaultLevel });
         }
 
-        if (speech.GuardianVoiceChorus)
-        {
-            treatments |= GuardianTreatment.Chorus;
-        }
-
-        if (speech.GuardianVoiceComb)
-        {
-            treatments |= GuardianTreatment.Comb;
-        }
-
-        if (speech.GuardianVoiceRingMod)
-        {
-            treatments |= GuardianTreatment.RingMod;
-        }
-
-        if (speech.GuardianVoiceGlitch)
-        {
-            treatments |= GuardianTreatment.Glitch;
-        }
-
-        if (speech.GuardianVoiceReverb)
-        {
-            treatments |= GuardianTreatment.Reverb;
-        }
-
-        return treatments;
+        return effects;
     }
 
     /// <summary>
@@ -181,62 +286,43 @@ public static class GuardianVoice
         _ => 165,
     };
 
-    /// <summary>The ship AI's treatment for the settings in force, or null when every toggle is off (#225).</summary>
+    /// <summary>The ship AI's treatment for the settings in force, or null when no effect is ticked (#225).</summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
     {
-        var treatments = TreatmentsFrom(speech);
+        var effects = Effects(speech.GuardianVoice);
 
-        if (treatments == GuardianTreatment.None)
+        if (Ticked(effects).Count == 0)
         {
             return null;
         }
 
         var basePitch = BasePitchHz(gender);
 
-        return clip => Apply(clip, treatments, basePitch);
+        return clip => Apply(clip, effects, basePitch);
     }
 
-    private static double[] Chain(double[] signal, GuardianTreatment treatments, double basePitchHz, int rate)
+    /// <summary>The ticked effects this build knows, in list order, with their parameter values.</summary>
+    private static List<(GuardianEffect Effect, double Value)> Ticked(IReadOnlyList<GuardianVoiceEffect> effects)
     {
-        if (treatments.HasFlag(GuardianTreatment.Cylon))
+        var chain = new List<(GuardianEffect Effect, double Value)>();
+
+        foreach (var effect in effects)
         {
-            signal = Cylon(signal, basePitchHz * CarrierShare, rate);
+            if (effect.Ticked && Find(effect.Id) is { } known)
+            {
+                chain.Add((known, known.Value(effect.Level)));
+            }
         }
 
-        if (treatments.HasFlag(GuardianTreatment.PitchDown))
-        {
-            signal = Shift(signal, Math.Pow(2, PitchDownSemitones / 12), rate);
-        }
+        return chain;
+    }
 
-        if (treatments.HasFlag(GuardianTreatment.OctaveDown))
+    private static double[] Chain(
+        double[] signal, List<(GuardianEffect Effect, double Value)> chain, double basePitchHz, int rate)
+    {
+        foreach (var (effect, value) in chain)
         {
-            var layer = Shift(signal, 0.5, rate);
-            signal = Mix(signal, 1, layer, OctaveLayer);
-        }
-
-        if (treatments.HasFlag(GuardianTreatment.Chorus))
-        {
-            signal = Chorus(signal, rate);
-        }
-
-        if (treatments.HasFlag(GuardianTreatment.Comb))
-        {
-            signal = Comb(signal, rate);
-        }
-
-        if (treatments.HasFlag(GuardianTreatment.RingMod))
-        {
-            signal = RingMod(signal, rate);
-        }
-
-        if (treatments.HasFlag(GuardianTreatment.Glitch))
-        {
-            signal = Glitch(signal, rate);
-        }
-
-        if (treatments.HasFlag(GuardianTreatment.Reverb))
-        {
-            signal = Reverb(signal, rate);
+            signal = effect.Run(signal, value, basePitchHz, rate);
         }
 
         return signal;
@@ -485,7 +571,7 @@ public static class GuardianVoice
         }
     }
 
-    private static double[] Chorus(double[] signal, int rate)
+    private static double[] Chorus(double[] signal, double depth, int rate)
     {
         var output = new double[signal.Length];
 
@@ -500,28 +586,29 @@ public static class GuardianVoice
                 copies += Read(signal, index - (delayMs / 1000 * rate));
             }
 
-            output[index] = signal[index] + (ChorusLayer * copies);
+            output[index] = signal[index] + (depth * copies);
         }
 
         return output;
     }
 
-    private static double[] Comb(double[] signal, int rate)
+    private static double[] Comb(double[] signal, double wet, int rate)
     {
         var delay = Samples(CombDelayMs, rate);
         var fed = FeedbackComb(signal, delay, CombFeedback, signal.Length);
 
-        return Mix(signal, CombDry, fed, CombWet);
+        return Mix(signal, 1 - wet, fed, wet);
     }
 
-    private static double[] RingMod(double[] signal, int rate)
+    private static double[] RingMod(double[] signal, double wet, int rate)
     {
         var output = new double[signal.Length];
+        var dry = 1 - wet;
 
         for (var index = 0; index < signal.Length; index++)
         {
             var carrier = Math.Sin(2 * Math.PI * RingHz * index / rate);
-            output[index] = (RingDry * signal[index]) + (RingWet * signal[index] * carrier);
+            output[index] = (dry * signal[index]) + (wet * signal[index] * carrier);
         }
 
         return output;
@@ -529,13 +616,15 @@ public static class GuardianVoice
 
     /// <summary>
     /// Damages one short stretch at a time, rotating through sample-and-hold, bit reduction and stutter. The
-    /// schedule comes from a fixed seed, so the same clip is damaged the same way every time.
+    /// schedule comes from a fixed seed, so the same clip is damaged the same way every time. The gaps between
+    /// stretches are divided by <paramref name="often"/>.
     /// </summary>
-    private static double[] Glitch(double[] signal, int rate)
+    private static double[] Glitch(double[] signal, double often, int rate)
     {
         var output = (double[])signal.Clone();
         var random = new Noise(0xBB67AE85u);
-        var at = random.Next(0.4, 0.9) * rate;
+        var spacing = 1 / often;
+        var at = random.Next(0.4, 0.9) * rate * spacing;
         var kind = 0;
 
         while (at < signal.Length)
@@ -577,14 +666,14 @@ public static class GuardianVoice
             }
 
             kind++;
-            at += random.Next(0.7, 1.6) * rate;
+            at += random.Next(0.7, 1.6) * rate * spacing;
         }
 
         return output;
     }
 
     /// <summary>Four parallel combs averaged, two allpasses in series, a low-pass on the wet, and a faded tail.</summary>
-    private static double[] Reverb(double[] signal, int rate)
+    private static double[] Reverb(double[] signal, double mix, int rate)
     {
         var tail = (int)Math.Round(ReverbTailSeconds * rate);
         var total = signal.Length + tail;
@@ -613,7 +702,7 @@ public static class GuardianVoice
         {
             low = ((1 - smoothing) * wet[index]) + (smoothing * low);
 
-            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0)) + (ReverbWet * low);
+            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0)) + (mix * low);
 
             if (index >= signal.Length)
             {

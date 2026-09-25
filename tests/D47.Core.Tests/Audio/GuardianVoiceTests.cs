@@ -13,8 +13,11 @@ public class GuardianVoiceTests
     /// <summary>A neutral core's base pitch.</summary>
     private const double BasePitch = 200;
 
-    private static readonly GuardianTreatment[] EachTreatment =
-        Enum.GetValues<GuardianTreatment>().Where(t => t != GuardianTreatment.None).ToArray();
+    private static readonly string[] EachTreatment = [.. GuardianVoice.Table.Select(effect => effect.Id)];
+
+    /// <summary>These effects ticked, in the default order, at default levels.</summary>
+    internal static IReadOnlyList<GuardianVoiceEffect> Ticking(params string[] ids) =>
+        [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = ids.Contains(effect.Id) })];
 
     private static AudioClip Clip(double[] samples, string name = "line")
     {
@@ -37,7 +40,7 @@ public class GuardianVoiceTests
             .ToArray());
 
     /// <summary>A voiced sound: every harmonic of a fundamental up to 4 kHz, falling off as 1/n.</summary>
-    private static AudioClip Voiced(double hertz, double seconds = 1.0, double amplitude = 0.1) =>
+    internal static AudioClip Voiced(double hertz, double seconds = 1.0, double amplitude = 0.1) =>
         Clip(Enumerable.Range(0, (int)(Rate * seconds))
             .Select(index => Enumerable.Range(1, (int)(4_000 / hertz))
                 .Sum(n => Math.Sin(2 * Math.PI * hertz * n * index / Rate) / n) * amplitude)
@@ -56,7 +59,7 @@ public class GuardianVoiceTests
             .ToArray());
     }
 
-    private static double[] Samples(AudioClip clip)
+    internal static double[] Samples(AudioClip clip)
     {
         var pcm = clip.Pcm.Span;
         var samples = new double[pcm.Length / 2];
@@ -93,7 +96,7 @@ public class GuardianVoiceTests
         return Math.Sqrt(Math.Max(0, (previous * previous) + (older * older) - (coefficient * previous * older)));
     }
 
-    private static double Rms(ReadOnlySpan<double> samples)
+    internal static double Rms(ReadOnlySpan<double> samples)
     {
         var squared = 0.0;
 
@@ -110,7 +113,7 @@ public class GuardianVoiceTests
     {
         var line = Tone(440);
 
-        Assert.Same(line, GuardianVoice.Apply(line, GuardianTreatment.None, BasePitch));
+        Assert.Same(line, GuardianVoice.Apply(line, GuardianVoice.Defaults, BasePitch));
     }
 
     [Fact]
@@ -120,7 +123,7 @@ public class GuardianVoiceTests
 
         foreach (var treatment in EachTreatment)
         {
-            Assert.Same(empty, GuardianVoice.Apply(empty, treatment, BasePitch));
+            Assert.Same(empty, GuardianVoice.Apply(empty, Ticking(treatment), BasePitch));
         }
     }
 
@@ -128,7 +131,7 @@ public class GuardianVoiceTests
     public void PitchDownLowersAToneFourSemitonesAndKeepsItsLength()
     {
         var line = Tone(440);
-        var treated = GuardianVoice.Apply(line, GuardianTreatment.PitchDown, BasePitch);
+        var treated = GuardianVoice.Apply(line, Ticking("pitchDown"), BasePitch);
 
         Assert.Equal(line.Pcm.Length, treated.Pcm.Length);
 
@@ -143,7 +146,7 @@ public class GuardianVoiceTests
     public void OctaveDownAddsTheOctaveBelowAndKeepsTheNote()
     {
         var line = Tone(440);
-        var treated = GuardianVoice.Apply(line, GuardianTreatment.OctaveDown, BasePitch);
+        var treated = GuardianVoice.Apply(line, Ticking("octaveDown"), BasePitch);
 
         var dry = Middle(line);
         var wet = Middle(treated);
@@ -161,7 +164,7 @@ public class GuardianVoiceTests
     public void RingModAddsSidebandsFortyFiveHertzEitherSide()
     {
         var line = Tone(1_000);
-        var treated = Middle(GuardianVoice.Apply(line, GuardianTreatment.RingMod, BasePitch));
+        var treated = Middle(GuardianVoice.Apply(line, Ticking("ringMod"), BasePitch));
         var carrier = Magnitude(treated, 1_000);
 
         Assert.True(Magnitude(Middle(line), 955) < Magnitude(Middle(line), 1_000) * 0.05);
@@ -173,7 +176,7 @@ public class GuardianVoiceTests
     [Fact]
     public void CombPutsPeaksInNoiseEveryHundredAndElevenHertz()
     {
-        var treated = Samples(GuardianVoice.Apply(WhiteNoise(), GuardianTreatment.Comb, BasePitch));
+        var treated = Samples(GuardianVoice.Apply(WhiteNoise(), Ticking("comb"), BasePitch));
         var spacing = 1_000.0 / 9;
 
         var peaks = Enumerable.Range(3, 30).Average(k => Magnitude(treated, k * spacing));
@@ -189,7 +192,7 @@ public class GuardianVoiceTests
 
         foreach (var pitch in new[] { 120.0, 260.0 })
         {
-            var treated = Middle(GuardianVoice.Apply(Voiced(pitch), GuardianTreatment.Cylon, BasePitch));
+            var treated = Middle(GuardianVoice.Apply(Voiced(pitch), Ticking("cylon"), BasePitch));
             var atCarrier = Magnitude(treated, carrier);
 
             Assert.True(
@@ -205,7 +208,7 @@ public class GuardianVoiceTests
     public void ReverbAddsAHalfSecondTailThatRingsAndEndsAtZero()
     {
         var line = Tone(440);
-        var treated = GuardianVoice.Apply(line, GuardianTreatment.Reverb, BasePitch);
+        var treated = GuardianVoice.Apply(line, Ticking("reverb"), BasePitch);
 
         Assert.Equal(line.Pcm.Length + (Rate / 2 * 2), treated.Pcm.Length);
 
@@ -221,18 +224,16 @@ public class GuardianVoiceTests
     {
         var line = Voiced(150, seconds: 2.0);
 
-        foreach (var treatment in EachTreatment.Where(t => t != GuardianTreatment.Reverb))
+        foreach (var treatment in EachTreatment.Where(t => t != "reverb"))
         {
-            Assert.Equal(line.Pcm.Length, GuardianVoice.Apply(line, treatment, BasePitch).Pcm.Length);
+            Assert.Equal(line.Pcm.Length, GuardianVoice.Apply(line, Ticking(treatment), BasePitch).Pcm.Length);
         }
     }
 
     [Fact]
     public void TheSameLineTreatedTwiceIsTheSameBytes()
     {
-        var all = EachTreatment.Aggregate(GuardianTreatment.None, (sum, t) => sum | t);
-
-        foreach (var treatment in EachTreatment.Append(all))
+        foreach (var treatment in EachTreatment.Select(id => Ticking(id)).Append(Ticking(EachTreatment)))
         {
             var first = GuardianVoice.Apply(Voiced(150, seconds: 3.0), treatment, BasePitch);
             var second = GuardianVoice.Apply(Voiced(150, seconds: 3.0), treatment, BasePitch);
@@ -245,7 +246,7 @@ public class GuardianVoiceTests
     public void GlitchChangesTheLine()
     {
         var line = Voiced(150, seconds: 3.0);
-        var treated = GuardianVoice.Apply(line, GuardianTreatment.Glitch, BasePitch);
+        var treated = GuardianVoice.Apply(line, Ticking("glitch"), BasePitch);
 
         Assert.NotEqual(line.Pcm.ToArray(), treated.Pcm.ToArray());
     }
@@ -258,7 +259,7 @@ public class GuardianVoiceTests
 
         foreach (var treatment in EachTreatment)
         {
-            var wet = Samples(GuardianVoice.Apply(line, treatment, BasePitch)).AsSpan(0, dry.Length);
+            var wet = Samples(GuardianVoice.Apply(line, Ticking(treatment), BasePitch)).AsSpan(0, dry.Length);
             var decibels = 20 * Math.Log10(Rms(wet) / Rms(dry));
 
             Assert.True(Math.Abs(decibels) < 1, $"{treatment} moved the level {decibels:F2} dB");
@@ -285,7 +286,7 @@ public class GuardianVoiceTests
 
         foreach (var treatment in EachTreatment)
         {
-            var span = GuardianVoice.Apply(stereo, treatment, BasePitch).Pcm.Span;
+            var span = GuardianVoice.Apply(stereo, Ticking(treatment), BasePitch).Pcm.Span;
             var left = 0;
             var right = 0;
 
@@ -298,37 +299,6 @@ public class GuardianVoiceTests
             Assert.True(left > 1_000, $"{treatment} silenced the left channel");
             Assert.True(right < 32, $"{treatment} put {right} into the silent channel");
         }
-    }
-
-    [Fact]
-    public void EveryToggleOffCombinesToNoTreatment() =>
-        Assert.Equal(GuardianTreatment.None, GuardianVoice.TreatmentsFrom(new SpeechSettings()));
-
-    [Fact]
-    public void EveryToggleOnCombinesToEveryTreatment()
-    {
-        var speech = new SpeechSettings
-        {
-            GuardianVoiceCylon = true,
-            GuardianVoicePitchDown = true,
-            GuardianVoiceOctaveDown = true,
-            GuardianVoiceChorus = true,
-            GuardianVoiceComb = true,
-            GuardianVoiceRingMod = true,
-            GuardianVoiceGlitch = true,
-            GuardianVoiceReverb = true,
-        };
-
-        Assert.Equal(
-            GuardianTreatment.Cylon
-                | GuardianTreatment.PitchDown
-                | GuardianTreatment.OctaveDown
-                | GuardianTreatment.Chorus
-                | GuardianTreatment.Comb
-                | GuardianTreatment.RingMod
-                | GuardianTreatment.Glitch
-                | GuardianTreatment.Reverb,
-            GuardianVoice.TreatmentsFrom(speech));
     }
 
     [Theory]
@@ -345,7 +315,7 @@ public class GuardianVoiceTests
     [Fact]
     public void OneToggleTreatsTheClip()
     {
-        var speech = new SpeechSettings { GuardianVoiceCylon = true };
+        var speech = new SpeechSettings { GuardianVoice = new GuardianVoiceSettings { Effects = Ticking("cylon") } };
 
         var colour = GuardianVoice.ColourFor(speech, VoiceGender.Male);
 

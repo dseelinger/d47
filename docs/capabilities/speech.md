@@ -598,47 +598,60 @@ else wrote and can write as much of as they like.
 
 #### Guardian voice {#guardian-voice}
 
-Eight optional treatments for the ship AI's voice, each off by default. They apply to what the ship
-AI says — turn replies, its own callouts, and a persona's introduction or return — and to nothing
-else: your crew, the carrier and every over-the-air voice are unchanged. Any combination can be
-switched on at once, and they run in the same fixed order regardless of which ones are on:
+Optional effects for the ship AI's voice, each off by default. They apply to what the ship AI says —
+turn replies, its own callouts, and a persona's introduction or return — and to nothing else: your
+crew, the carrier and every over-the-air voice are unchanged. Any combination can be ticked at once,
+and the ticked effects run top to bottom in the order set, each feeding the next. The order starts as
+listed here.
 
-##### Cylon {#guardian-voice-cylon}
+Each effect also has a level from 1 to 20, which sets the parameter named in its heading. The level
+is kept while the effect is off. At the default levels the effects sound as they did before levels
+existed.
 
-A channel vocoder onto a fixed-pitch carrier, so the words come out toneless.
+##### Cylon: depth {#guardian-voice-cylon}
 
-##### Pitch down {#guardian-voice-pitch-down}
+A channel vocoder onto a fixed-pitch carrier, so the words come out toneless. Depth is how much of
+the vocoded voice replaces the dry one: 5% a level, and the default, 20, replaces all of it.
 
-Four semitones lower, with the sentence's length unchanged.
+##### Pitch down: pitch {#guardian-voice-pitch-down}
 
-##### Octave-down layer {#guardian-voice-octave-down}
+The voice lowered, with the sentence's length unchanged. Half a semitone a level; the default, 8, is
+four semitones down.
 
-The line an octave lower, mixed in under the dry voice.
+##### Octave-down layer: mix {#guardian-voice-octave-down}
 
-##### Chorus {#guardian-voice-chorus}
+The line an octave lower, mixed in under the dry voice. Mix is the layer's volume against the dry
+voice: 5% a level, 60% at the default of 12.
 
-Three delayed copies, each swept, mixed in under the dry voice.
+##### Chorus: depth {#guardian-voice-chorus}
 
-##### Metallic resonance {#guardian-voice-comb}
+Three delayed copies, each swept, mixed in under the dry voice. Depth is the copies' volume: 5% a
+level, 80% at the default of 16.
 
-A short feedback comb filter.
+##### Metallic resonance: amount {#guardian-voice-comb}
 
-##### Ring modulation {#guardian-voice-ring-mod}
+A short feedback comb filter. Amount is its share of the output, the rest being the voice as it came
+in: 5% a level, 60% at the default of 12.
 
-A slow ring modulator blended with the dry voice.
+##### Ring modulation: mix {#guardian-voice-ring-mod}
 
-##### Glitch {#guardian-voice-glitch}
+A slow ring modulator blended with the dry voice. Mix is its share of the output: 5% a level, 35% at
+the default of 7.
 
-Short damaged stretches at irregular intervals.
+##### Glitch: rate {#guardian-voice-glitch}
 
-##### Reverb {#guardian-voice-reverb}
+Short damaged stretches at irregular intervals. Rate is how often they come: at 20 they come twice as
+often as at the default of 10, and at 5 half as often.
 
-A Schroeder reverb, adding a short tail after the sentence ends.
+##### Reverb: mix {#guardian-voice-reverb}
+
+A Schroeder reverb, adding a short tail after the sentence ends. Mix is the reverb's volume against
+the dry voice: 5% a level, 45% at the default of 9.
 
 ##### Test {#guardian-voice-test}
 
-Plays a line through whichever of the eight treatments above are switched on, and never bills a
-provider. Which clip it plays depends on what the selected provider offers, checked in this
+Plays a line through whichever effects above are ticked, in their order and at their levels, and
+never bills a provider. Which clip it plays depends on what the selected provider offers, checked in this
 order:
 
 1. The provider costs nothing (Edge, Kokoro): a fresh line in the ship AI's own voice.
@@ -648,12 +661,12 @@ order:
 4. Nothing free is available — including when no voice provider is selected at all: a bundled
    stand-in voice, and the row says so.
 
-The clip itself is cached untreated; toggling a treatment and pressing Test again applies the new
-combination to the same clip rather than fetching another one.
+The clip itself is cached untreated; changing an effect and pressing Test again applies the new
+chain to the same clip rather than fetching another one.
 
 They are global settings — one set for every core, not one per persona — because it is your
 choice of how the cockpit sounds rather than a character trait of whichever Guardian is currently
-aboard. Switching one on or off takes effect from the next sentence; nothing needs a restart.
+aboard. A change takes effect from the next sentence; nothing needs a restart.
 
 #### What the voices cost {#voice-cost}
 

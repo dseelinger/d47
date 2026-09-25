@@ -61,16 +61,14 @@ public static class SpeechCapability
     public const string SpeakSquadronKey = "speech.speakSquadronChat";
     public const string SpeakDirectMessagesKey = "speech.speakDirectMessages";
 
-    /// <summary>The eight Guardian voice toggles (#225), global to every core and off by default.</summary>
-    public const string GuardianCylonKey = "speech.guardianVoice.cylon";
+    /// <summary>A Guardian voice effect's toggle (#225), global to every core and off by default.</summary>
+    public static string GuardianEffectKey(string id) => $"speech.guardianVoice.{id}";
 
-    public const string GuardianPitchDownKey = "speech.guardianVoice.pitchDown";
-    public const string GuardianOctaveDownKey = "speech.guardianVoice.octaveDown";
-    public const string GuardianChorusKey = "speech.guardianVoice.chorus";
-    public const string GuardianCombKey = "speech.guardianVoice.comb";
-    public const string GuardianRingModKey = "speech.guardianVoice.ringMod";
-    public const string GuardianGlitchKey = "speech.guardianVoice.glitch";
-    public const string GuardianReverbKey = "speech.guardianVoice.reverb";
+    /// <summary>A Guardian voice effect's level, 1 to 20.</summary>
+    public static string GuardianLevelKey(string id) => $"speech.guardianVoice.{id}.level";
+
+    /// <summary>The Guardian voice chain order: every effect id, separated by commas.</summary>
+    public const string GuardianOrderKey = "speech.guardianVoice.order";
 
     /// <summary>Plays the currently toggled treatments without billing anything (#226).</summary>
     public const string GuardianTestKey = "speech.guardianVoice.test";
@@ -909,166 +907,6 @@ public static class SpeechCapability
             },
             new SettingRow
             {
-                Key = GuardianCylonKey,
-                Advanced = true,
-                Label = "Cylon",
-                Help = "Channel vocoder onto a fixed-pitch carrier. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-cylon",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceCylon ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceCylon = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianPitchDownKey,
-                Advanced = true,
-                Label = "Pitch down",
-                Help = "Four semitones lower, duration kept. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-pitch-down",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoicePitchDown ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoicePitchDown = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianOctaveDownKey,
-                Advanced = true,
-                Label = "Octave-down layer",
-                Help = "The line an octave lower, mixed under the dry voice. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-octave-down",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceOctaveDown ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceOctaveDown = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianChorusKey,
-                Advanced = true,
-                Label = "Chorus",
-                Help = "Three swept delayed copies mixed under the dry voice. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-chorus",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceChorus ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceChorus = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianCombKey,
-                Advanced = true,
-                Label = "Metallic resonance",
-                Help = "A 9 ms feedback comb filter. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-comb",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceComb ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceComb = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianRingModKey,
-                Advanced = true,
-                Label = "Ring modulation",
-                Help = "A 45 Hz ring modulator blended with the dry voice. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-ring-mod",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceRingMod ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceRingMod = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianGlitchKey,
-                Advanced = true,
-                Label = "Glitch",
-                Help = "Short damaged stretches at irregular intervals. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-glitch",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceGlitch ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceGlitch = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
-                Key = GuardianReverbKey,
-                Advanced = true,
-                Label = "Reverb",
-                Help = "Schroeder reverb, adding a half-second tail. Off by default.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
-                DocsAnchor = "guardian-voice-reverb",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.GuardianVoiceReverb ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { GuardianVoiceReverb = v is not "false" and not null },
-                    },
-                },
-            },
-            new SettingRow
-            {
                 Key = GuardianTestKey,
                 Advanced = true,
                 Label = "Test",
@@ -1350,6 +1188,8 @@ public static class SpeechCapability
                 },
             });
 
+        rows.InsertRange(rows.FindIndex(row => row.Key == GuardianTestKey), GuardianRows());
+
         return rows;
     }
 
@@ -1564,6 +1404,117 @@ public static class SpeechCapability
         }
 
         return settings with { Speech = settings.Speech with { ProviderRates = rates } };
+    }
+
+    /// <summary>A toggle and a level row per Guardian voice effect, from its table, then the chain order.</summary>
+    private static IEnumerable<SettingRow> GuardianRows()
+    {
+        foreach (var effect in GuardianVoice.Table)
+        {
+            var id = effect.Id;
+            var anchor = "guardian-voice-" + string.Concat(
+                id.Select(c => char.IsUpper(c) ? $"-{char.ToLowerInvariant(c)}" : c.ToString()));
+
+            yield return new SettingRow
+            {
+                Key = GuardianEffectKey(id),
+                Advanced = true,
+                Label = effect.Label,
+                Help = $"{effect.Help} Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = anchor,
+                Binding = new SettingBinding
+                {
+                    Read = s => StoredGuardianEffect(s, id).Ticked ? "true" : "false",
+                    Write = (s, v) => WithGuardianEffect(s, id, e => e with { Ticked = v is not "false" and not null }),
+                },
+            };
+
+            yield return new SettingRow
+            {
+                Key = GuardianLevelKey(id),
+                Advanced = true,
+                Label = $"{effect.Label} level",
+                Help =
+                    $"How strong {effect.Label} is, from {GuardianVoice.LowestLevel} to {GuardianVoice.HighestLevel}: "
+                    + $"it sets the effect's {effect.Parameter.ToLowerInvariant()}. Kept when the effect is off.",
+                Kind = SettingKind.Number,
+                Step = 1,
+                Minimum = GuardianVoice.LowestLevel,
+                Maximum = GuardianVoice.HighestLevel,
+                DefaultDisplay = effect.DefaultLevel.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Guardian voice",
+                DocsAnchor = anchor,
+                DrawnElsewhere = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => StoredGuardianEffect(s, id).Level.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    Write = (s, v) => WithGuardianEffect(
+                        s,
+                        id,
+                        e => e with { Level = ParseInt(v, e.Level, GuardianVoice.LowestLevel, GuardianVoice.HighestLevel) }),
+                },
+            };
+        }
+
+        yield return new SettingRow
+        {
+            Key = GuardianOrderKey,
+            Advanced = true,
+            Label = "Guardian voice order",
+            Help =
+                "The order the Guardian voice effects run in, first to last, as their ids separated by commas. "
+                + "An effect left out keeps its place after the one it follows by default.",
+            Kind = SettingKind.Text,
+            DefaultDisplay = string.Join(",", GuardianVoice.Table.Select(effect => effect.Id)),
+            AppliesWhen = s => s.Speech.Provider != NoneId,
+            Group = "Guardian voice",
+            DocsAnchor = "guardian-voice",
+            PageOnly = true,
+            DrawnElsewhere = true,
+            Binding = new SettingBinding
+            {
+                Read = s => string.Join(",", GuardianVoice.Effects(s.Speech.GuardianVoice).Select(effect => effect.Id)),
+                Write = WriteGuardianOrder,
+            },
+        };
+    }
+
+    private static GuardianVoiceEffect StoredGuardianEffect(D47Settings settings, string id) =>
+        GuardianVoice.Effects(settings.Speech.GuardianVoice).First(effect => effect.Id == id);
+
+    private static D47Settings WithGuardianEffect(
+        D47Settings settings, string id, Func<GuardianVoiceEffect, GuardianVoiceEffect> change) =>
+        WithGuardianEffects(
+            settings,
+            [.. GuardianVoice.Effects(settings.Speech.GuardianVoice).Select(effect => effect.Id == id ? change(effect) : effect)]);
+
+    private static D47Settings WithGuardianEffects(D47Settings settings, IReadOnlyList<GuardianVoiceEffect> effects) =>
+        settings with
+        {
+            Speech = settings.Speech with
+            {
+                GuardianVoice = settings.Speech.GuardianVoice with { Effects = effects },
+            },
+        };
+
+    /// <summary>The named effects first, in the order named; each keeps whether it is ticked and its level.</summary>
+    private static D47Settings WriteGuardianOrder(D47Settings settings, string? value)
+    {
+        var current = GuardianVoice.Effects(settings.Speech.GuardianVoice);
+        var named = (value ?? string.Empty)
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(id => current.FirstOrDefault(effect => string.Equals(effect.Id, id, StringComparison.OrdinalIgnoreCase)))
+            .OfType<GuardianVoiceEffect>()
+            .ToList();
+
+        var order = GuardianVoice.Effects(new GuardianVoiceSettings { Effects = named });
+
+        return WithGuardianEffects(settings, [.. order.Select(placed => current.First(effect => effect.Id == placed.Id))]);
     }
 
     private static double ParseDouble(string? value, double fallback, double min, double max) =>

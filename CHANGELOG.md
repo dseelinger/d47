@@ -95,6 +95,12 @@ removed only when the journal says it was sold or replaced. When a ship you have
 in the recent journals, D47 now looks further back for its last loadout at startup, so you no longer
 need to rescan to recover it.
 
+Each Guardian voice effect now has a level from 1 to 20, and the ticked effects run in an order that
+is saved with them. The Settings page does not show the levels or the order yet. At the default
+levels and in the default order the effects sound exactly as before, and a settings file from an
+earlier version keeps the effects you had ticked. The Guardian voice help names the parameter each
+level sets.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification

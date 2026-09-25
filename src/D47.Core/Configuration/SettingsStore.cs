@@ -70,6 +70,8 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
             throw new SettingsLoadException(paths.SettingsFile, "the file contained only null");
         }
 
+        settings = settings with { Speech = GuardianVoiceFromBools(settings.Speech) };
+
         // Named, not refused (#368).
         var kept = new List<string>();
         var bags = new List<IDictionary<string, JsonElement>>();
@@ -232,6 +234,64 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
         logger.LogInformation("Loaded settings from {Path}", paths.SettingsFile);
         return settings;
+    }
+
+    /// <summary>The Guardian voice effects that were saved as a bool apiece, by id.</summary>
+    private static readonly string[] GuardianVoiceBools =
+        ["cylon", "pitchDown", "octaveDown", "chorus", "comb", "ringMod", "glitch", "reverb"];
+
+    /// <summary>
+    /// The Guardian voice bools, which now arrive in <see cref="SpeechSettings.Extra"/>, as the effects they
+    /// ticked in the default order at default levels where the file has no effect list; removed either way.
+    /// </summary>
+    private SpeechSettings GuardianVoiceFromBools(SpeechSettings speech)
+    {
+        if (speech.Extra is not { Count: > 0 } extra)
+        {
+            return speech;
+        }
+
+        var ticked = new HashSet<string>(StringComparer.Ordinal);
+        var found = false;
+
+        foreach (var id in GuardianVoiceBools)
+        {
+            var key = $"guardianVoice{char.ToUpperInvariant(id[0])}{id[1..]}";
+
+            if (extra.Remove(key, out var value))
+            {
+                found = true;
+
+                if (value.ValueKind == JsonValueKind.True)
+                {
+                    ticked.Add(id);
+                }
+            }
+        }
+
+        if (!found)
+        {
+            return speech;
+        }
+
+        speech = speech with { Extra = extra.Count > 0 ? extra : null };
+
+        if (speech.GuardianVoice.Effects is not null)
+        {
+            return speech;
+        }
+
+        logger.LogInformation(
+            "The Guardian voice effects are now one ordered list; ticked: {Ticked}",
+            ticked.Count > 0 ? string.Join(", ", ticked) : "none");
+
+        return speech with
+        {
+            GuardianVoice = speech.GuardianVoice with
+            {
+                Effects = [.. Audio.GuardianVoice.Defaults.Select(effect => effect with { Ticked = ticked.Contains(effect.Id) })],
+            },
+        };
     }
 
     /// <summary>Which revision of the shared-opacity repair this build performs.</summary>
