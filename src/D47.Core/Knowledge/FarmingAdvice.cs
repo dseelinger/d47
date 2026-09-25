@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace D47.Core.Knowledge;
@@ -102,6 +103,163 @@ public static class FarmingAdvice
 
         return (report.ToString(), donorSite.System);
     }
+
+    /// <summary>How to obtain a material, one step per line, best first, ending in the table's other origins.</summary>
+    public static IReadOnlyList<string> HowToObtain(MaterialEntry material)
+    {
+        var steps = new List<string>();
+
+        if (material.Line is null && FarmingSites.DirectSite(material.Symbol) is { } direct)
+        {
+            steps.Add(SiteStep(direct));
+        }
+        else
+        {
+            switch (material.Category)
+            {
+                case "Raw":
+                    RawSteps(material, steps);
+                    break;
+
+                case "Manufactured":
+                    ManufacturedSteps(material, steps);
+                    break;
+
+                case "Encoded":
+                    EncodedSteps(material, steps);
+                    break;
+            }
+        }
+
+        if (material.Origins.Count > 0)
+        {
+            steps.Add((steps.Count > 0 ? "Otherwise: " : string.Empty) + string.Join(", ", material.Origins));
+        }
+
+        return steps;
+    }
+
+    private static void RawSteps(MaterialEntry material, List<string> steps)
+    {
+        if (material.Line is not { } line || FarmingSites.FastestFor(line) is not { } site)
+        {
+            return;
+        }
+
+        steps.Add(SiteStep(site));
+
+        if (TradeDownStep(site.MaterialSymbol, material) is { } trade)
+        {
+            steps.Add(trade);
+        }
+    }
+
+    private static void ManufacturedSteps(MaterialEntry material, List<string> steps)
+    {
+        var top = TopOf(material.Line);
+
+        if (top is not null && EmissionRules.Holding(top.Symbol) is { } group)
+        {
+            var search = new List<string> { group.Allegiance };
+
+            if (group.States.Count > 0)
+            {
+                search.Add(string.Join(" or ", group.States.Select(Spaced)));
+            }
+
+            search.Add(
+                $"population over {EmissionRules.MinimumPopulation.ToString("N0", CultureInfo.InvariantCulture)}");
+
+            steps.Add($"High Grade Emission — search for {string.Join(" · ", search)}.");
+
+            if (TradeDownStep(top.Symbol, material) is { } trade)
+            {
+                steps.Add(trade);
+            }
+        }
+        else if (material.Grade is { } grade && EngineeringRules.TradeRate(5, grade, sameLine: false) is { } exchange)
+        {
+            steps.Add(
+                $"Trade across: {exchange.Paid} of any grade 5 manufactured material for {exchange.Received} "
+                + $"{material.Name}.");
+        }
+
+        if (material.Grade is <= 4)
+        {
+            steps.Add(SiteStep(FarmingSites.DavsHope));
+        }
+    }
+
+    private static void EncodedSteps(MaterialEntry material, List<string> steps)
+    {
+        if (FarmingSites.FastestFor("encoded-encryption-files") is not { } jameson
+            || MaterialCatalogue.Find(jameson.MaterialSymbol) is not { } donor)
+        {
+            return;
+        }
+
+        var site = material.Line is { } line && FarmingSites.FastestFor(line) is { } own ? own : jameson;
+
+        steps.Add(SiteStep(site));
+
+        if (site != jameson)
+        {
+            if (TradeDownStep(site.MaterialSymbol, material) is { } ownTrade)
+            {
+                steps.Add(ownTrade);
+            }
+
+            return;
+        }
+
+        if (TradeDownStep(donor.Symbol, material) is { } trade)
+        {
+            steps.Add(trade);
+        }
+        else if (!string.Equals(material.Line, donor.Line, StringComparison.Ordinal)
+                 && material.Grade is { } grade
+                 && EngineeringRules.TradeRate(donor.Grade ?? 5, grade, sameLine: false) is { } exchange)
+        {
+            steps.Add($"Trade across: {exchange.Paid} {donor.Name} for {exchange.Received} {material.Name}.");
+        }
+    }
+
+    /// <summary>Trading a same-line material down into this one, or null where it is the same material.</summary>
+    private static string? TradeDownStep(string fromSymbol, MaterialEntry material)
+    {
+        if (MaterialCatalogue.Find(fromSymbol) is not { } from
+            || string.Equals(from.Symbol, material.Symbol, StringComparison.Ordinal)
+            || from.Grade is not { } fromGrade
+            || material.Grade is not { } grade
+            || EngineeringRules.TradeRate(fromGrade, grade, sameLine: true) is not { } exchange)
+        {
+            return null;
+        }
+
+        return $"Trade down: {exchange.Paid} {from.Name} for {exchange.Received} {material.Name}.";
+    }
+
+    private static string SiteStep(FarmingSite site)
+    {
+        var step = new StringBuilder(
+            $"{char.ToUpperInvariant(site.Method[0])}{site.Method[1..]} — {site.System} {site.Body}, {site.Coordinates}.");
+
+        step.Append(site.RespawnsOnRelog ? " A relog respawns it." : " Does not reliably respawn on a relog.");
+
+        if (site.JumpRangeWarning)
+        {
+            step.Append(
+                " Longest jump on the confirmed route: "
+                + $"{FarmingSites.LongestConfirmedJump.ToString("0.##", CultureInfo.InvariantCulture)} ly.");
+        }
+
+        return step.ToString();
+    }
+
+    /// <summary>A journal state as a Commander reads it — "CivilWar" as "Civil War".</summary>
+    private static string Spaced(string state) =>
+        string.Concat(state.Select((letter, at) =>
+            at > 0 && char.IsUpper(letter) ? $" {letter}" : letter.ToString()));
 
     /// <summary>The topmost-grade material in a trade group, or null for a group nothing is written for.</summary>
     private static MaterialEntry? TopOf(string? line) =>

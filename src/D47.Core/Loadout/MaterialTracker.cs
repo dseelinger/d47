@@ -6,6 +6,9 @@ namespace D47.Core.Loadout;
 /// <summary>The same-line material one grade up, and what it trades for at the fixed rate.</summary>
 public sealed record MaterialTradeDown(MaterialEntry From, MaterialExchange Rate);
 
+/// <summary>One module and blueprint grade a material is needed for, and how many units.</summary>
+public sealed record MaterialPurpose(string What, int Units);
+
 /// <summary>How many rows in a card carry one origin.</summary>
 public sealed record MaterialOriginCount(string Origin, int Rows);
 
@@ -22,6 +25,17 @@ public sealed record MaterialRow(MaterialEntry Material, int Held, int Needed)
     public MaterialTradeDown? TradeDown { get; init; }
 
     public int Short => Math.Max(0, Needed - Held);
+
+    /// <summary>
+    /// What it is needed for, by module and blueprint grade with no ship named; the same purpose from
+    /// two builds is one line, units summed. Most units first.
+    /// </summary>
+    public IReadOnlyList<MaterialPurpose> NeededFor =>
+        [.. Wanted
+            .GroupBy(demand => demand.Purpose(), StringComparer.Ordinal)
+            .Select(group => new MaterialPurpose(group.Key, group.Sum(demand => demand.Units)))
+            .OrderByDescending(purpose => purpose.Units)
+            .ThenBy(purpose => purpose.What, StringComparer.Ordinal)];
 
     /// <summary>The per-grade cap, for ship materials only.</summary>
     public int? Capacity =>

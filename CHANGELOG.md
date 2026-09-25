@@ -44,6 +44,16 @@ stack now have a clear gap between them, and every priority is labelled; a label
 inside its block sits beside the stack. An empty priority shows as a dashed slot, so it can take a
 drop too.
 
+A material's detail on the Materials page now says what kind it is under its name, for example "Raw
+material", and opens with **How to obtain**, the fastest method first. Raw materials name the
+crystalline shard or brain tree site for their trade group, with its coordinates, then the trade
+down from it. Manufactured materials say which High Grade Emission to search for (allegiance, state
+and population), then the trade down, then Dav's Hope. Encoded materials name Jameson's crash site
+and the trade from there. **Capacity** lists the most that can be stored, how many you hold and how
+many are needed. **Needed for** lists each module and blueprint grade with its count, for example
+"Thrusters · Dirty Drive Tuning 5 — 12", without naming ships. The trade that would cover a
+shortfall is under **Potential trades**.
+
 Say "night vision", "night vision on" or "night vision off" to toggle night vision in the ship, in
 the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
 already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.

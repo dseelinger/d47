@@ -16,6 +16,19 @@ public sealed record GapDemand(string What, int Units)
     /// </summary>
     public string? Blueprint { get; init; }
 
+    /// <summary>The module kind the blueprint is fitted to — "Thrusters", "Multi-cannon", "Maverick Suit".</summary>
+    public string? Module { get; init; }
+
+    /// <summary>The module and blueprint, with no ship or slot — "Thrusters · Dirty Drive Tuning 5".</summary>
+    public string Purpose() =>
+        (Module, Blueprint) switch
+        {
+            ({ Length: > 0 } module, { Length: > 0 } blueprint) => $"{module} · {blueprint}",
+            ({ Length: > 0 } module, _) => module,
+            (_, { Length: > 0 } blueprint) => blueprint,
+            _ => What,
+        };
+
     public string Describe() =>
         $"{What} — {Units.ToString(CultureInfo.InvariantCulture)}";
 
@@ -161,6 +174,7 @@ public static class PlanGap
                     EngineeringPlan.Cost(items, state),
                     $"{build.Describe()} · {slotName}",
                     Named(slot.Blueprint, slot.Grade),
+                    ModuleOf(slot, slotName),
                     needed,
                     held,
                     wanted,
@@ -205,6 +219,7 @@ public static class PlanGap
                     OnFootPlan.Cost(items, state),
                     $"{build.Describe()} · {slot.Slot}",
                     Named(slot.Modification, slot.Grade ?? 0),
+                    build.Equipment,
                     needed,
                     held,
                     wanted,
@@ -258,10 +273,30 @@ public static class PlanGap
                 ? $"{ChecklistNaming.Readable(named)} {grade.ToString(CultureInfo.InvariantCulture)}"
                 : ChecklistNaming.Readable(named);
 
+    /// <summary>
+    /// The planned module, else the one module the blueprint is offered for, else the slot's own name —
+    /// which for a core slot is the module.
+    /// </summary>
+    private static string ModuleOf(SlotPlan slot, string slotName)
+    {
+        if (slot.Module is { Length: > 0 } module)
+        {
+            return module;
+        }
+
+        var offered = BlueprintCatalogue.Named(slot.Blueprint)
+            .Select(blueprint => blueprint.Module)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        return offered.Count == 1 ? offered[0] : slotName;
+    }
+
     private static void Fold(
         PlanCosting costing,
         string who,
         string? blueprint,
+        string? module,
         Dictionary<string, int> needed,
         Dictionary<string, int> held,
         Dictionary<string, List<GapDemand>> wanted,
@@ -289,7 +324,7 @@ public static class PlanGap
             }
             else
             {
-                asked.Add(new GapDemand(who, ingredient.Needed) { Blueprint = blueprint });
+                asked.Add(new GapDemand(who, ingredient.Needed) { Blueprint = blueprint, Module = module });
             }
         }
 

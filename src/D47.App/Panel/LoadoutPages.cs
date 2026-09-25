@@ -16,6 +16,7 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
+using D47.Core.Knowledge;
 using D47.Core.Loadout;
 
 namespace D47.App.Panel;
@@ -2282,13 +2283,13 @@ public sealed class GapPage : UserControl
 
         foreach (var row in card.Rows)
         {
-            rows.Children.Add(Row(row));
+            rows.Children.Add(Row(row, card.Name));
         }
 
         return new StackPanel { Children = { TitleText.GroupRow(header), rows } };
     }
 
-    private Control Row(MaterialRow row)
+    private Control Row(MaterialRow row, string cardName)
     {
         var grid = new Grid
         {
@@ -2352,65 +2353,70 @@ public sealed class GapPage : UserControl
             Padding = new Thickness(10, 6),
         });
 
-        button.Click += (_, _) => OpenRow(row);
+        button.Click += (_, _) => OpenRow(row, cardName);
 
         return button;
     }
 
-    private void OpenRow(MaterialRow row)
+    private void OpenRow(MaterialRow row, string cardName)
     {
-        var body = new List<Control>
-        {
-            LoadoutPages.Toned(
-                row.Needed > 0
-                    ? $"Held {row.Held.ToString(CultureInfo.InvariantCulture)} of "
-                      + $"{row.Needed.ToString(CultureInfo.InvariantCulture)}."
-                    : $"Held {row.Held.ToString(CultureInfo.InvariantCulture)}. Nothing planned wants it.",
-                ThemeManager.AKey),
-        };
+        var body = new List<Control>();
 
-        if (row.Wanted.Count > 0)
-        {
-            body.Add(LoadoutPages.Section("Wanted by"));
+        var steps = FarmingAdvice.HowToObtain(row.Material);
 
-            foreach (var demand in row.Wanted)
+        if (steps.Count > 0)
+        {
+            body.Add(LoadoutPages.Section("How to obtain"));
+
+            foreach (var step in steps)
             {
-                body.Add(LoadoutPages.Muted(
-                    $"{demand.Fully()} — {demand.Units.ToString(CultureInfo.InvariantCulture)}"));
+                body.Add(LoadoutPages.Muted(step));
             }
         }
 
-        if (row.Material.Origins.Count > 0)
+        body.Add(LoadoutPages.Section("Capacity"));
+
+        if (row.Capacity is { } capacity)
         {
-            body.Add(LoadoutPages.Section("Origins"));
-            body.Add(LoadoutPages.Muted(string.Join(", ", row.Material.Origins)));
+            body.Add(LoadoutPages.Muted($"Most that can be stored: {capacity.ToString(CultureInfo.InvariantCulture)}"));
         }
 
-        if (row.TradeDown is { } down)
+        body.Add(LoadoutPages.Muted($"Held: {row.Held.ToString(CultureInfo.InvariantCulture)}"));
+        body.Add(LoadoutPages.Muted($"Needed: {row.Needed.ToString(CultureInfo.InvariantCulture)}"));
+
+        if (row.ExceedsCapacity)
         {
-            body.Add(LoadoutPages.Section("Trade down"));
-            body.Add(LoadoutPages.Muted(
-                $"{down.Rate.Paid.ToString(CultureInfo.InvariantCulture)} {down.From.Name} trades down for "
-                + $"{down.Rate.Received.ToString(CultureInfo.InvariantCulture)} {row.Material.Name}."));
+            body.Add(LoadoutPages.Toned(
+                "More is needed than can be stored. That is at least two trips whatever happens.",
+                ThemeManager.YellowKey));
+        }
+
+        if (row.NeededFor.Count > 0)
+        {
+            body.Add(LoadoutPages.Section("Needed for"));
+
+            foreach (var purpose in row.NeededFor)
+            {
+                body.Add(LoadoutPages.Muted(
+                    $"{purpose.What} — {purpose.Units.ToString(CultureInfo.InvariantCulture)}"));
+            }
         }
 
         // Trade second and never instead: the headline stays the raw shortfall.
         if (row.Trade is { } trade)
         {
-            body.Add(LoadoutPages.Section("Closing the shortfall"));
+            body.Add(LoadoutPages.Section("Potential trades"));
             body.Add(LoadoutPages.Muted(trade.Describe()));
         }
 
-        if (row.ExceedsCapacity)
-        {
-            body.Add(LoadoutPages.Toned(
-                $"You can only hold {row.Capacity?.ToString(CultureInfo.InvariantCulture)}. That is at "
-                + "least two trips whatever happens.",
-                ThemeManager.YellowKey));
-        }
-
-        OpenDetail(row.Material.Name, body);
+        OpenDetail(row.Material.Name, body, KindOf(row.Material, cardName));
     }
+
+    /// <summary>"Raw material", "Guardian material", "On-foot component".</summary>
+    private string KindOf(MaterialEntry material, string cardName) =>
+        _onFoot
+            ? $"On-foot {(material.Category ?? cardName).ToLowerInvariant()}"
+            : $"{cardName} material";
 
     private void OpenSources(MaterialCard card)
     {
@@ -2428,7 +2434,7 @@ public sealed class GapPage : UserControl
         OpenDetail(title, lines.Select(line => (Control)LoadoutPages.Muted(line)).ToList());
 
     /// <summary>Opens the detail panel, replacing whatever was open — one is open at a time.</summary>
-    private void OpenDetail(string title, IReadOnlyList<Control> body)
+    private void OpenDetail(string title, IReadOnlyList<Control> body, string? subtitle = null)
     {
         var content = new StackPanel { Spacing = 4 };
 
@@ -2444,7 +2450,8 @@ public sealed class GapPage : UserControl
             MaxHeight = 420,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Child = Modal.Build("Materials", title, content, [LoadoutPages.Press("Close", CloseDetail)]),
+            Child = Modal.Build(
+                "Materials", title, content, [LoadoutPages.Press("Close", CloseDetail)], subtitle: subtitle),
         };
 
         LoadoutPages.Themed(panel, Border.BorderBrushProperty, ThemeManager.AKey);

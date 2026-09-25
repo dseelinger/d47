@@ -108,6 +108,15 @@ public static class FarmingSites
             RespawnsOnRelog: false, JumpRangeWarning: true, IsAlternate: true),
     ];
 
+    /// <summary>
+    /// Dav's Hope, a general manufactured site: scattered salvage of grades 1 to 4 across many lines, so it
+    /// names no material and is kept out of <see cref="All"/>.
+    /// </summary>
+    public static readonly FarmingSite DavsHope = new(
+        "Hyades Sector DR-V c2-23", new StarPosition(-104.625, -0.8125, -151.90625), "A 5", "Dav's Hope",
+        MaterialSymbol: string.Empty, TopsGroup: null, 50.52, 137.48,
+        RespawnsOnRelog: true, JumpRangeWarning: false);
+
     /// <summary>The one site named as the fastest way to the top grade of a trade group.</summary>
     public static FarmingSite? FastestFor(string? tradeGroup) =>
         tradeGroup is null

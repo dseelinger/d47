@@ -624,9 +624,13 @@ public class OnFootLoadoutTabTests
         Row(surface.Panel, "Iron").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(
-            Text(surface.Panel),
-            line => line.Contains("Held 20", StringComparison.Ordinal));
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("Held: 20", shown);
+        Assert.Contains("Raw material", shown);
+        Assert.Contains("HOW TO OBTAIN", shown);
+        Assert.Contains("CAPACITY", shown);
+        Assert.DoesNotContain(shown, line => line is "ORIGINS" or "WANTED BY" or "CLOSING THE SHORTFALL");
 
         var backdrop = surface.Panel.GetVisualDescendants().OfType<Border>()
             .First(border => border.Name == GapPage.DetailBackdropName);
@@ -644,7 +648,31 @@ public class OnFootLoadoutTabTests
 
         Assert.DoesNotContain(
             Text(surface.Panel),
-            line => line.Contains("Held 20", StringComparison.Ordinal));
+            line => line.Contains("Held: 20", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>The material detail dialog for Polonium, for a human to look at (#472).</summary>
+    [AvaloniaFact]
+    public void TheMaterialDetailRendersToACapture()
+    {
+        using var look = AppLook.Put();
+
+        var surface = Open();
+
+        surface.Window.Width = 1024;
+        surface.Window.Height = 760;
+
+        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        Row(surface.Panel, "Polonium").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        surface.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "loadout-material-detail.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
         surface.Window.Close();
     }

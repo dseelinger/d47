@@ -21,7 +21,7 @@ public static class Modal
     /// The layout. <paramref name="figure"/> is a key figure the dialog already shows, set at the top right
     /// of the header; <paramref name="buttons"/> are laid right-aligned in the footer in the order given.
     /// A body that does its own scrolling passes <paramref name="scrolls"/> false and is given the height
-    /// between the header and the footer.
+    /// between the header and the footer. <paramref name="subtitle"/> is a Grey line under the title.
     /// </summary>
     public static DockPanel Build(
         string context,
@@ -29,12 +29,13 @@ public static class Modal
         Control body,
         IReadOnlyList<Control> buttons,
         Control? figure = null,
-        bool scrolls = true)
+        bool scrolls = true,
+        string? subtitle = null)
     {
         var layout = new DockPanel { Name = "Modal" };
         Themed(layout, Avalonia.Controls.Panel.BackgroundProperty, ThemeManager.BarKey);
 
-        var header = Header(context, title, figure);
+        var header = Header(context, title, figure, subtitle);
         DockPanel.SetDock(header, Dock.Top);
         layout.Children.Add(header);
 
@@ -90,7 +91,7 @@ public static class Modal
             }
         };
 
-    private static Control Header(string context, string title, Control? figure)
+    private static Control Header(string context, string title, Control? figure, string? subtitle)
     {
         var line = new TextBlock
         {
@@ -108,6 +109,19 @@ public static class Modal
         name.TextWrapping = TextWrapping.Wrap;
 
         var words = new StackPanel { Spacing = 4, Children = { line, name } };
+
+        if (subtitle is { Length: > 0 })
+        {
+            var under = new TextBlock
+            {
+                Name = "ModalSubtitle",
+                Text = subtitle,
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+            };
+            Themed(under, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            words.Children.Add(under);
+        }
 
         var top = new DockPanel();
 
