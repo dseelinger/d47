@@ -608,6 +608,10 @@ Each effect also has a level from 1 to 20, which sets the parameter named in its
 is kept while the effect is off. At the default levels the effects sound as they did before levels
 existed.
 
+On the Its voice page each effect is one line, in chain order: its position, its box, a 20-segment
+level, and − and + buttons that move the level one step and show the parameter in its own units.
+The preset list opens in the page rather than over it.
+
 ##### Preset {#guardian-voice-preset}
 
 The built-in or saved combination of ticks, order and levels the current effects match, or Custom

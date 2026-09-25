@@ -96,10 +96,9 @@ in the recent journals, D47 now looks further back for its last loadout at start
 need to rescan to recover it.
 
 Each Guardian voice effect now has a level from 1 to 20, and the ticked effects run in an order that
-is saved with them. The Settings page does not show the levels or the order yet. At the default
-levels and in the default order the effects sound exactly as before, and a settings file from an
-earlier version keeps the effects you had ticked. The Guardian voice help names the parameter each
-level sets.
+is saved with them. At the default levels and in the default order the effects sound exactly as
+before, and a settings file from an earlier version keeps the effects you had ticked. The Guardian
+voice help names the parameter each level sets.
 
 Guardian Voice Effects — renamed from Guardian voice — now has a Preset row at the top, and every
 row in the group is shown rather than folded. Four built-ins are offered: Off, Vocoder, Deep core
@@ -107,6 +106,13 @@ and Damaged core, each ticking its own effects at the default order and levels. 
 your own combination of ticks, order and levels under a name, load it back, update it, rename it or
 delete it; the row reads Custom the moment anything about the current combination stops matching a
 preset.
+
+Guardian Voice Effects on the Its voice page is now one block. The Preset list opens inside the page
+and pushes the effects down, with your own presets in cyan under "Your presets", and Custom reads
+"Custom · changed from <name>" after you change one of them. Under it every effect is one line in
+the order it runs: its number, its box, a 20-segment level you can click or drag, and − and +
+buttons showing the value in its own units. Test reads PLAYING while the sample plays, and the
+group's reset turns every effect off and sets the order and levels back to their defaults.
 
 ## 1.16.0 — On-foot modifications say what they do
 

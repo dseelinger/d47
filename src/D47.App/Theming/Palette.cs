@@ -65,6 +65,9 @@ public sealed record Palette
     /// <summary><see cref="Cyan"/> at 7% onto <see cref="Bg"/>, in OKLab: the ground of the Commander's own turns.</summary>
     public Color CyanGround => Mix(Bg, Cyan, 0.07);
 
+    /// <summary><see cref="Red"/> at 22% onto <see cref="Bg"/>, in OKLab: a destructive tile at rest.</summary>
+    public Color RedTile => Mix(Bg, Red, 0.22);
+
     /// <summary>Passes the coloured tokens through Elite's HUD matrix, leaving the neutrals as they are.</summary>
     public Palette RecolouredBy(GuiColourMatrix matrix) => this with
     {

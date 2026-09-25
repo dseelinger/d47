@@ -323,6 +323,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         NavItems.Children.Clear();
         _sections.Clear();
         _rows.Clear();
+        _drawnByGroup.Clear();
         _revealedSections.Clear();
         _navAreas.Clear();
         _activeSection = -1;
@@ -641,7 +642,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // view-state directly, since VrHost is the anchors' only owner (#162).
         reset.Click += (_, _) =>
         {
-            _settings!.ResetGroup(placeId, inPlace, SettingsCaller.Panel);
+            if (group.Entries.Any(entry => entry.Key == SpeechCapability.GuardianPresetKey))
+            {
+                ResetGuardianVoice();
+            }
+            else
+            {
+                _settings!.ResetGroup(placeId, inPlace, SettingsCaller.Panel);
+            }
 
             if (slot is not null)
             {
@@ -2173,7 +2181,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var (control, refresh) = BuildControl(row, message);
-
+        var underRow = _underRow;
+        _underRow = null;
 
         // The settings key, shown only when it is the reason this row survived a filter.
         var keyLine = new TextBlock
@@ -2205,7 +2214,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // however wide the caption or the control run (#279).
         Button? resetButton = null;
 
-        if (row is { Kind: not SettingKind.Secret, Binding.Write: not null })
+        // A row drawing its whole group leaves resetting to the group head.
+        if (row is { Kind: not SettingKind.Secret, Binding.Write: not null } && underRow is null)
         {
             var back = new Button
             {
@@ -2334,7 +2344,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         caption.VerticalAlignment = VerticalAlignment.Center;
         control.VerticalAlignment = VerticalAlignment.Center;
-        control.HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+
+        // A group's control grows downward as it opens; its label stays level with the control's first line.
+        if (underRow is not null)
+        {
+            caption.VerticalAlignment = VerticalAlignment.Top;
+            control.VerticalAlignment = VerticalAlignment.Top;
+            caption.Margin = new Thickness(0, 10, 0, 0);
+        }
+
+        control.HorizontalAlignment = row.PageTop
+            ? HorizontalAlignment.Right
+            : underRow is null ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
         grid.Children.Add(caption);
         grid.Children.Add(control);
 
@@ -2398,10 +2419,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var container = new StackPanel();
         container.Children.Add(line);
+
+        if (underRow is { Block: { } block })
+        {
+            container.Children.Add(block);
+        }
+
         container.Children.Add(message);
 
         return new RowView(row, container, refresh)
         {
+            Heading = underRow?.Words,
             Control = control,
             Body = body,
             Label = label,
@@ -2433,6 +2461,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// </summary>
     internal Control? ControlFor(string key) =>
         _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))?.Control
+        ?? _drawnByGroup.GetValueOrDefault(key)
         ?? _barToolControls.GetValueOrDefault(key);
 
     /// <summary>The row's own label, which carries its help as a tooltip on hover and focus (#333).</summary>
@@ -2543,6 +2572,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             case SettingKind.Toggle:
                 return BuildToggle(row, message);
+
+            // The whole Guardian Voice Effects group, drawn from its preset row.
+            case SettingKind.Choice when row.Key == SpeechCapability.GuardianPresetKey:
+                return BuildGuardianVoice(row, message);
 
             // Free text, or a list too long to step through: a tile that opens the picker page, which stays
             // usable when the list is empty because the value can be typed.

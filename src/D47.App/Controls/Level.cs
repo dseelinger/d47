@@ -9,8 +9,9 @@ namespace D47.App.Controls;
 
 /// <summary>
 /// A settable 0–1 value drawn as a bar of segments 2px apart, one per <see cref="Step"/>, with the value
-/// in mono beside it. Clicking segment <c>n</c> sets <c>n × Step</c>; segments below
-/// <see cref="Minimum"/> are dim and set <see cref="Minimum"/>. Left and Right step by one segment.
+/// in mono beside it. Clicking segment <c>n</c> sets <c>n × Step</c>, and dragging across the bar sets
+/// each segment it passes; segments below <see cref="Minimum"/> are dim and set <see cref="Minimum"/>.
+/// Left and Right step by one segment.
 /// </summary>
 public sealed class Level : ContentControl
 {
@@ -25,6 +26,15 @@ public sealed class Level : ContentControl
 
     public static readonly StyledProperty<double> ValueProperty =
         AvaloniaProperty.Register<Level, double>(nameof(Value));
+
+    public static readonly StyledProperty<bool> MutedProperty =
+        AvaloniaProperty.Register<Level, bool>(nameof(Muted));
+
+    public static readonly StyledProperty<bool> ShowsReadoutProperty =
+        AvaloniaProperty.Register<Level, bool>(nameof(ShowsReadout), true);
+
+    public static readonly StyledProperty<bool> OnTileProperty =
+        AvaloniaProperty.Register<Level, bool>(nameof(OnTile));
 
     /// <summary>The width a level is drawn at on a settings row, bar and readout together.</summary>
     public const double CompactWidth = 280;
@@ -76,7 +86,22 @@ public sealed class Level : ContentControl
             var x = e.GetPosition(_bar).X;
             e.Handled = true;
             Focus();
+            e.Pointer.Capture(target);
             Set(ValueAt(SegmentAt(x, _bar.Bounds.Width, _segments.Count), Step, Minimum, Maximum));
+        };
+        target.PointerMoved += (_, e) =>
+        {
+            if (!e.GetCurrentPoint(target).Properties.IsLeftButtonPressed)
+            {
+                return;
+            }
+
+            var dragged = ValueAt(SegmentAt(e.GetPosition(_bar).X, _bar.Bounds.Width, _segments.Count), Step, Minimum, Maximum);
+
+            if (Math.Abs(dragged - Value) > 1e-9)
+            {
+                Set(dragged);
+            }
         };
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
@@ -117,6 +142,27 @@ public sealed class Level : ContentControl
         set => SetValue(ValueProperty, value);
     }
 
+    /// <summary>Lit segments in Grey2 rather than A: the value is kept but not in use.</summary>
+    public bool Muted
+    {
+        get => GetValue(MutedProperty);
+        set => SetValue(MutedProperty, value);
+    }
+
+    /// <summary>Whether the value is drawn in mono beside the bar.</summary>
+    public bool ShowsReadout
+    {
+        get => GetValue(ShowsReadoutProperty);
+        set => SetValue(ShowsReadoutProperty, value);
+    }
+
+    /// <summary>Unlit segments in Bg rather than Tile, for a bar drawn on a Tile ground.</summary>
+    public bool OnTile
+    {
+        get => GetValue(OnTileProperty);
+        set => SetValue(OnTileProperty, value);
+    }
+
     /// <summary>Which segment, counted from 1, a point <paramref name="x"/> along a bar falls in.</summary>
     public static int SegmentAt(double x, double width, int count) =>
         count <= 0 || width <= 0 ? 0 : Math.Clamp((int)Math.Ceiling(x / width * count), 1, count);
@@ -137,9 +183,14 @@ public sealed class Level : ContentControl
         {
             Rebuild();
         }
-        else if (change.Property == MinimumProperty || change.Property == ValueProperty)
+        else if (change.Property == MinimumProperty || change.Property == ValueProperty
+                 || change.Property == MutedProperty || change.Property == OnTileProperty)
         {
             Sync();
+        }
+        else if (change.Property == ShowsReadoutProperty)
+        {
+            _readout.IsVisible = ShowsReadout;
         }
     }
 
@@ -197,12 +248,14 @@ public sealed class Level : ContentControl
             var worth = (i + 1) * Step;
             var filled = worth <= Value + tolerance;
             var below = worth < Minimum - tolerance;
+            var lit = Muted ? Theming.ThemeManager.Grey2Key : Theming.ThemeManager.AKey;
+            var unlit = OnTile ? Theming.ThemeManager.BgKey : Theming.ThemeManager.TileKey;
 
             _inks[i]?.Dispose();
             _inks[i] = _segments[i].Bind(
                 Border.BackgroundProperty,
                 Application.Current!.Resources.GetResourceObservable(
-                    filled ? Theming.ThemeManager.AKey : Theming.ThemeManager.TileKey));
+                    filled ? lit : unlit));
             _segments[i].Opacity = below && !filled ? 0.4 : 1;
         }
 

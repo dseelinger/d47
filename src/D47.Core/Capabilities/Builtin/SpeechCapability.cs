@@ -920,6 +920,7 @@ public static class SpeechCapability
                 Kind = SettingKind.Info,
                 Group = "Guardian Voice Effects",
                 DocsAnchor = "guardian-voice-test",
+                DrawnElsewhere = true,
                 PressLabel = "Test",
                 PressAsync = surface.GuardianTest is null
                     ? null
@@ -1450,6 +1451,7 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Guardian Voice Effects",
                 DocsAnchor = anchor,
+                DrawnElsewhere = true,
                 Binding = new SettingBinding
                 {
                     Read = s => StoredGuardianEffect(s, id).Ticked ? "true" : "false",

@@ -25,8 +25,6 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-    private static TextBox Box(SettingsHost host) => (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
-
     /// <summary>The grid holding the tile with this label.</summary>
     private static TileGrid Grid(SettingsView view, string label) =>
         Page(view).GetVisualDescendants().OfType<TileGrid>()
@@ -35,11 +33,6 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
     private static List<CheckBox> Tiles(TileGrid grid) =>
         [.. grid.Children.Where(child => child.IsVisible)
             .Select(child => child.GetVisualDescendants().OfType<CheckBox>().Single())];
-
-    private static Button GroupReset(SettingsView view, string title) =>
-        Page(view).GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == SettingsView.GroupResetName
-                              && AutomationProperties.GetName(button) == $"Reset {title}");
 
     [AvaloniaFact]
     public void TheMicrophoneGroupEndsWithItsTwoTogglesSideBySide()
@@ -91,63 +84,12 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
     }
 
     [AvaloniaFact]
-    public void GuardianVoiceIsTwoRowsOfFourThenTheTest()
-    {
-        var (settings, viewState, paths) = TestSurface.Create();
-        var host = SettingsHost.Open(settings, viewState, paths);
-
-        Open(host.View, "voice");
-
-        var grid = Grid(host.View, "Cylon");
-        var tiles = Tiles(grid);
-
-        Assert.Equal(8, tiles.Count);
-        double Top(CheckBox tile) => tile.TranslatePoint(default, grid)!.Value.Y;
-
-        Assert.Single(tiles.Take(4).Select(Top).Distinct());
-        Assert.Single(tiles.Skip(4).Select(Top).Distinct());
-        Assert.True(Top(tiles[4]) > Top(tiles[0]));
-
-        var testRow = host.View.ControlFor(SpeechCapability.GuardianTestKey)!;
-        Assert.True(testRow.TranslatePoint(default, grid)!.Value.Y > grid.Bounds.Height);
-
-        host.Close();
-    }
-
-    [AvaloniaFact]
-    public void ChangingATreatmentEnablesTheGroupResetAndPressingItPutsItBack()
-    {
-        var (settings, viewState, paths) = TestSurface.Create();
-        var host = SettingsHost.Open(settings, viewState, paths);
-
-        Open(host.View, "voice");
-
-        var reset = GroupReset(host.View, "Guardian Voice Effects");
-        Assert.False(reset.IsEnabled);
-
-        ((CheckBox)host.View.ControlFor(SpeechCapability.GuardianEffectKey("reverb"))!).IsChecked = true;
-        Jobs();
-
-        Assert.True(settings.IsChanged(SpeechCapability.GuardianEffectKey("reverb")));
-        Assert.True(reset.IsEnabled);
-
-        reset.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Jobs();
-
-        Assert.False(settings.IsChanged(SpeechCapability.GuardianEffectKey("reverb")));
-        Assert.False(((CheckBox)host.View.ControlFor(SpeechCapability.GuardianEffectKey("reverb"))!).IsChecked);
-        Assert.False(reset.IsEnabled);
-
-        host.Close();
-    }
-
-    [AvaloniaFact]
     public void AtTheNarrowWidthNoTileIsUnder150AndNoLabelIsClipped()
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths, width: 924, height: 640);
 
-        foreach (var placeId in new[] { "voice-input", "voice", "sounds" })
+        foreach (var placeId in new[] { "voice-input", "sounds" })
         {
             Open(host.View, placeId);
 
@@ -164,24 +106,6 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
                 }
             }
         }
-
-        host.Close();
-    }
-
-    [AvaloniaFact]
-    public void FilteringByReverbLeavesOneTileInTheGuardianGrid()
-    {
-        var (settings, viewState, paths) = TestSurface.Create();
-        var host = SettingsHost.Open(settings, viewState, paths);
-
-        Box(host).Text = "reverb";
-        Jobs();
-        Open(host.View, "voice");
-
-        var tiles = Tiles(Grid(host.View, "Reverb"));
-
-        Assert.Single(tiles);
-        Assert.True(tiles[0].IsEffectivelyVisible);
 
         host.Close();
     }
@@ -212,15 +136,11 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths, width: width, height: height);
 
-        foreach (var placeId in new[] { "voice-input", "voice", "sounds" })
+        foreach (var placeId in new[] { "voice-input", "sounds" })
         {
             Open(host.View, placeId);
 
-            if (placeId == "voice")
-            {
-                ScrollTo(Grid(host.View, "Cylon"));
-            }
-            else if (placeId == "voice-input")
+            if (placeId == "voice-input")
             {
                 ScrollTo(Grid(host.View, "Cancel D47's own voice out of the microphone"));
             }

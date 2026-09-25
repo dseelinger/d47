@@ -74,19 +74,17 @@ public static class SettingsLayout
     /// <summary>
     /// Place ids where <see cref="MostShownPerPlace"/> is exceeded today: <c>updates</c> holds every row
     /// <see cref="Capabilities.Builtin.AboutCapability"/> declares, which the issue's own arrangement table
-    /// names only 8 of but the acceptance rule requires all of (11 entries, none Advanced, so 11 shown);
-    /// <c>voice</c> holds the preset row, the eight Guardian voice toggles and the Test row, none of
-    /// which are Advanced any more (#237), so calm mode still shows all ten.
+    /// names only 8 of but the acceptance rule requires all of (11 entries, none Advanced, so 11 shown).
     /// </summary>
-    public static readonly IReadOnlyList<string> ShownLimitExceptions = ["updates", "voice"];
+    public static readonly IReadOnlyList<string> ShownLimitExceptions = ["updates"];
 
     /// <summary>
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
-    /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the preset row and the eight Guardian
-    /// voice toggles rather than collapsing them into one family entry (24 entries with the Test row)
-    /// (#225, #226, #237); <c>persona</c> spells out a humor level and frequency for each of three
-    /// groups (17 entries, the six humor rows Advanced); <c>voice-input</c> holds the hearing provider
+    /// entries, all Advanced, so 0 shown); <c>voice</c> holds nine ship's voice rows, the provider slot
+    /// family, the Guardian Voice Effects preset row and five cost rows (16 entries); <c>persona</c>
+    /// spells out a humor level and frequency for each of three groups (17 entries, the six humor rows
+    /// Advanced); <c>voice-input</c> holds the hearing provider
     /// beside the microphone, wake word and corrections rows (16 entries, the hosted providers' keys one
     /// family entry of which at most one row applies at a time, and every speech-recognition row
     /// Advanced).
@@ -206,12 +204,7 @@ public static class SettingsLayout
                         G(
                             "Guardian Voice Effects",
                             "Optional treatments for the ship AI's voice, all off by default and global to every core.",
-                            [
-                                E("speech.guardianVoice.preset"),
-                                .. Audio.GuardianVoice.Table.Select(effect => E($"speech.guardianVoice.{effect.Id}")),
-                                E("speech.guardianVoice.test"),
-                            ],
-                            toggleColumns: 4),
+                            [E("speech.guardianVoice.preset")]),
                         G(
                             "What it costs",
                             "What this session has spent, and the rates it was priced at.",

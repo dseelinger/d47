@@ -62,7 +62,8 @@ public static class TestSurface
         IReadOnlyList<string>? inputDevices = null,
         SpeechSpend? speechSpend = null,
         Action? forgetCorrections = null,
-        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null)
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
+        Func<CancellationToken, Task<string?>>? guardianTest = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -101,6 +102,7 @@ public static class TestSurface
                 ResetVoices = () => (_, _) => Task.FromResult<string?>(resetVoices?.Invoke() ?? string.Empty),
                 SpeechSpend = speechSpend is null ? null : () => speechSpend,
                 VerifyKey = verifyKey,
+                GuardianTest = guardianTest,
             },
             new ShipsCapability.ShipsSurface
             {
