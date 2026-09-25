@@ -804,6 +804,28 @@ public sealed record GuardianVoiceSettings
     /// it; null means every effect off, in the default order, at its default level.
     /// </summary>
     public IReadOnlyList<GuardianVoiceEffect>? Effects { get; init; }
+
+    /// <summary>The Commander's own presets, in creation order (#237).</summary>
+    public IReadOnlyList<GuardianVoicePreset>? SavedPresets { get; init; }
+
+    /// <summary>
+    /// The name of the saved preset last loaded, saved or renamed — valid only while that preset still
+    /// exists (#237).
+    /// </summary>
+    public string? Basis { get; init; }
+}
+
+/// <summary>One of the Commander's own Guardian voice presets: a name and the chain it saves (#237).</summary>
+public sealed record GuardianVoicePreset
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    public string Name { get; init; } = "";
+
+    /// <summary>Every effect, ticked or not, in chain order — read through <see cref="Audio.GuardianVoice.Effects"/>.</summary>
+    public IReadOnlyList<GuardianVoiceEffect> Effects { get; init; } = [];
 }
 
 /// <summary>One effect's place in the Guardian voice chain.</summary>

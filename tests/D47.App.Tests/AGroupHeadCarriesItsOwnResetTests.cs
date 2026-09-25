@@ -139,7 +139,7 @@ public sealed class AGroupHeadCarriesItsOwnResetTests
         host.View.Filter("guardian voice");
         Jobs();
 
-        Assert.True(OnPage(host.View, Head(host.View, "Guardian voice")));
+        Assert.True(OnPage(host.View, Head(host.View, "Guardian Voice Effects")));
         Assert.False(OnPage(host.View, Head(host.View, "What it costs")));
 
         host.Close();

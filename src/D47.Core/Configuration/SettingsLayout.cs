@@ -74,20 +74,22 @@ public static class SettingsLayout
     /// <summary>
     /// Place ids where <see cref="MostShownPerPlace"/> is exceeded today: <c>updates</c> holds every row
     /// <see cref="Capabilities.Builtin.AboutCapability"/> declares, which the issue's own arrangement table
-    /// names only 8 of but the acceptance rule requires all of (11 entries, none Advanced, so 11 shown).
+    /// names only 8 of but the acceptance rule requires all of (11 entries, none Advanced, so 11 shown);
+    /// <c>voice</c> holds the preset row, the eight Guardian voice toggles and the Test row, none of
+    /// which are Advanced any more (#237), so calm mode still shows all ten.
     /// </summary>
-    public static readonly IReadOnlyList<string> ShownLimitExceptions = ["updates"];
+    public static readonly IReadOnlyList<string> ShownLimitExceptions = ["updates", "voice"];
 
     /// <summary>
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
-    /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the eight Guardian voice toggles
-    /// rather than collapsing them into one family entry (23 entries with the Test row, all Advanced,
-    /// so 0 shown beyond what already applied) (#225, #226); <c>persona</c> spells out a humor level and
-    /// frequency for each of three groups (17 entries, the six humor rows Advanced); <c>voice-input</c>
-    /// holds the hearing provider beside the microphone, wake word and corrections rows (16 entries, the
-    /// hosted providers' keys one family entry of which at most one row applies at a time, and every
-    /// speech-recognition row Advanced).
+    /// entries, all Advanced, so 0 shown); <c>voice</c> spells out the preset row and the eight Guardian
+    /// voice toggles rather than collapsing them into one family entry (24 entries with the Test row)
+    /// (#225, #226, #237); <c>persona</c> spells out a humor level and frequency for each of three
+    /// groups (17 entries, the six humor rows Advanced); <c>voice-input</c> holds the hearing provider
+    /// beside the microphone, wake word and corrections rows (16 entries, the hosted providers' keys one
+    /// family entry of which at most one row applies at a time, and every speech-recognition row
+    /// Advanced).
     /// </summary>
     public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input"];
 
@@ -202,9 +204,10 @@ public static class SettingsLayout
                             "Every voice that is not the ship's own can come from a different provider.",
                             [F(IsVoiceProviderSlotFamily)]),
                         G(
-                            "Guardian voice",
+                            "Guardian Voice Effects",
                             "Optional treatments for the ship AI's voice, all off by default and global to every core.",
                             [
+                                E("speech.guardianVoice.preset"),
                                 .. Audio.GuardianVoice.Table.Select(effect => E($"speech.guardianVoice.{effect.Id}")),
                                 E("speech.guardianVoice.test"),
                             ],

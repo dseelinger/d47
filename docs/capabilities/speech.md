@@ -596,7 +596,7 @@ ElevenLabs that gives you two paid options for a re-voiced slot — and the warn
 any of them is unchanged, because a paid provider there bills you per character for text somebody
 else wrote and can write as much of as they like.
 
-#### Guardian voice {#guardian-voice}
+#### Guardian Voice Effects {#guardian-voice}
 
 Optional effects for the ship AI's voice, each off by default. They apply to what the ship AI says —
 turn replies, its own callouts, and a persona's introduction or return — and to nothing else: your
@@ -607,6 +607,26 @@ listed here.
 Each effect also has a level from 1 to 20, which sets the parameter named in its heading. The level
 is kept while the effect is off. At the default levels the effects sound as they did before levels
 existed.
+
+##### Preset {#guardian-voice-preset}
+
+The built-in or saved combination of ticks, order and levels the current effects match, or Custom
+when they match none of them.
+
+The four built-ins tick their effects at the default order and default levels:
+
+| Preset | Ticks |
+| --- | --- |
+| Off | none |
+| Vocoder | Cylon, Chorus, Reverb |
+| Deep core | Pitch down, Octave-down layer, Reverb |
+| Damaged core | Metallic resonance, Ring modulation, Glitch |
+
+A saved preset is the Commander's own: its ticks, order and every level, saved under a name.
+Choosing a built-in or a saved preset writes its effects over whatever is set now; choosing Custom
+changes nothing, because nothing else reads as Custom. Saved presets and the preset last loaded,
+saved or renamed are install scope, the same as the effects they save — a Commander switch does not
+change which voice is speaking.
 
 ##### Cylon: depth {#guardian-voice-cylon}
 

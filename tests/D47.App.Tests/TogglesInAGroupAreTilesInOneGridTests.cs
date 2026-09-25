@@ -122,7 +122,7 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
 
         Open(host.View, "voice");
 
-        var reset = GroupReset(host.View, "Guardian voice");
+        var reset = GroupReset(host.View, "Guardian Voice Effects");
         Assert.False(reset.IsEnabled);
 
         ((CheckBox)host.View.ControlFor(SpeechCapability.GuardianEffectKey("reverb"))!).IsChecked = true;

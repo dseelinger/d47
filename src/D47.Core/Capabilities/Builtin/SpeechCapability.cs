@@ -73,6 +73,9 @@ public static class SpeechCapability
     /// <summary>Plays the currently toggled treatments without billing anything (#226).</summary>
     public const string GuardianTestKey = "speech.guardianVoice.test";
 
+    /// <summary>The built-in or saved preset the current effects match, or "custom" (#237).</summary>
+    public const string GuardianPresetKey = "speech.guardianVoice.preset";
+
     /// <summary>The secret row key for a voice provider's API key.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
@@ -908,7 +911,6 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = GuardianTestKey,
-                Advanced = true,
                 Label = "Test",
                 Help =
                     "Plays a line in the ship AI's voice through whichever treatments above are "
@@ -916,7 +918,7 @@ public static class SpeechCapability
                     + "is free, the provider's free sample where it has one, an audition already paid "
                     + "for this session where there is one, or a bundled stand-in voice.",
                 Kind = SettingKind.Info,
-                Group = "Guardian voice",
+                Group = "Guardian Voice Effects",
                 DocsAnchor = "guardian-voice-test",
                 PressLabel = "Test",
                 PressAsync = surface.GuardianTest is null
@@ -1406,9 +1408,32 @@ public static class SpeechCapability
         return settings with { Speech = settings.Speech with { ProviderRates = rates } };
     }
 
-    /// <summary>A toggle and a level row per Guardian voice effect, from its table, then the chain order.</summary>
+    /// <summary>
+    /// The preset row, then a toggle and a level row per Guardian voice effect from its table, then the
+    /// chain order (#237).
+    /// </summary>
     private static IEnumerable<SettingRow> GuardianRows()
     {
+        yield return new SettingRow
+        {
+            Key = GuardianPresetKey,
+            Label = "Preset",
+            Help =
+                "A built-in or your own saved combination of ticks, order and levels. Changing any of "
+                + "them after picking one reads as Custom.",
+            Kind = SettingKind.Choice,
+            ChoiceSource = s => GuardianPresets.Choices(s.Speech),
+            ChoiceLabelSource = _ => GuardianPresets.Label,
+            AppliesWhen = s => s.Speech.Provider != NoneId,
+            Group = "Guardian Voice Effects",
+            DocsAnchor = "guardian-voice-preset",
+            Binding = new SettingBinding
+            {
+                Read = s => GuardianPresets.Preset(s.Speech),
+                Write = (s, v) => s with { Speech = GuardianPresets.Select(s.Speech, v) },
+            },
+        };
+
         foreach (var effect in GuardianVoice.Table)
         {
             var id = effect.Id;
@@ -1418,13 +1443,12 @@ public static class SpeechCapability
             yield return new SettingRow
             {
                 Key = GuardianEffectKey(id),
-                Advanced = true,
                 Label = effect.Label,
                 Help = $"{effect.Help} Off by default.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
+                Group = "Guardian Voice Effects",
                 DocsAnchor = anchor,
                 Binding = new SettingBinding
                 {
@@ -1436,7 +1460,6 @@ public static class SpeechCapability
             yield return new SettingRow
             {
                 Key = GuardianLevelKey(id),
-                Advanced = true,
                 Label = $"{effect.Label} level",
                 Help =
                     $"How strong {effect.Label} is, from {GuardianVoice.LowestLevel} to {GuardianVoice.HighestLevel}: "
@@ -1447,7 +1470,7 @@ public static class SpeechCapability
                 Maximum = GuardianVoice.HighestLevel,
                 DefaultDisplay = effect.DefaultLevel.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
-                Group = "Guardian voice",
+                Group = "Guardian Voice Effects",
                 DocsAnchor = anchor,
                 DrawnElsewhere = true,
                 Binding = new SettingBinding
@@ -1464,7 +1487,6 @@ public static class SpeechCapability
         yield return new SettingRow
         {
             Key = GuardianOrderKey,
-            Advanced = true,
             Label = "Guardian voice order",
             Help =
                 "The order the Guardian voice effects run in, first to last, as their ids separated by commas. "
@@ -1472,7 +1494,7 @@ public static class SpeechCapability
             Kind = SettingKind.Text,
             DefaultDisplay = string.Join(",", GuardianVoice.Table.Select(effect => effect.Id)),
             AppliesWhen = s => s.Speech.Provider != NoneId,
-            Group = "Guardian voice",
+            Group = "Guardian Voice Effects",
             DocsAnchor = "guardian-voice",
             PageOnly = true,
             DrawnElsewhere = true,

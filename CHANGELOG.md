@@ -101,6 +101,13 @@ levels and in the default order the effects sound exactly as before, and a setti
 earlier version keeps the effects you had ticked. The Guardian voice help names the parameter each
 level sets.
 
+Guardian Voice Effects — renamed from Guardian voice — now has a Preset row at the top, and every
+row in the group is shown rather than folded. Four built-ins are offered: Off, Vocoder, Deep core
+and Damaged core, each ticking its own effects at the default order and levels. You can also save
+your own combination of ticks, order and levels under a name, load it back, update it, rename it or
+delete it; the row reads Custom the moment anything about the current combination stops matching a
+preset.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification
