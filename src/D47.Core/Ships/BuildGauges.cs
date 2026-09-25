@@ -56,6 +56,9 @@ public sealed record PowerGauge(
     /// not boarded since (#253).
     /// </summary>
     public IReadOnlyDictionary<int, double>? Groups { get; init; }
+
+    /// <summary>Each slot in <see cref="Draw"/>, in slot-layout order (#467).</summary>
+    public IReadOnlyList<PowerModule> Modules { get; init; } = [];
 }
 
 /// <summary>A jump range at three masses, because a Commander flies at all three (Phase 38).</summary>
@@ -210,6 +213,7 @@ public static class ShipGauges
         double? capacity = null;
         var draws = new Dictionary<string, SlotDraw>(StringComparer.OrdinalIgnoreCase);
         var groups = new Dictionary<int, double>();
+        var modules = new List<PowerModule>();
         var everyGroupKnown = true;
 
         foreach (var part in parts)
@@ -232,7 +236,9 @@ public static class ShipGauges
 
             deployed += draw ?? 0;
 
-            if (part.Spec.Type is not { Length: > 0 } type || char.ToLowerInvariant(type[0]) != 'h')
+            var hardpoint = part.Spec.Type is { Length: > 0 } type && char.ToLowerInvariant(type[0]) == 'h';
+
+            if (!hardpoint)
             {
                 retracted += draw ?? 0;
             }
@@ -245,6 +251,9 @@ public static class ShipGauges
                 // A planned slot counts in its plan's group; a fitted, unplanned slot counts in the
                 // game's own group (#253).
                 var group = part.IsPlanned ? part.Plan!.Priority : part.Fitted?.Priority;
+
+                modules.Add(new PowerModule(
+                    part.Slot, part.Spec.Name, megawatts, hardpoint, group, PowerModule.RoleOf(part.Spec.Type)));
 
                 if (group is { } known)
                 {
@@ -262,6 +271,7 @@ public static class ShipGauges
             : new PowerGauge(retracted, deployed, capacity, kind, draws)
             {
                 Groups = everyGroupKnown ? groups : null,
+                Modules = modules,
             };
     }
 
