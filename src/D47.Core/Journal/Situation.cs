@@ -37,6 +37,7 @@ public static class Situation
         AppendDrive(status, now, lines);
         AppendCredits(status, now, lines);
         AppendCarrier(state, lines);
+        AppendPowerplay(state, lines);
         AppendSession(state, lines);
 
         if (lines.Count == 0)
@@ -306,6 +307,29 @@ public static class Situation
         }
 
         lines.Add(description.ToString());
+    }
+
+    /// <summary>Which Power the Commander is pledged to, once a Powerplay event has said.</summary>
+    private static void AppendPowerplay(CommanderGameState state, List<string> lines)
+    {
+        var pledge = state.Pledge;
+
+        if (!pledge.IsKnown)
+        {
+            return;
+        }
+
+        if (!pledge.IsPledged)
+        {
+            lines.Add("Powerplay: not pledged to any Power.");
+
+            return;
+        }
+
+        // Joining or defecting carries no rank; 0 means not yet reported, not rank 0.
+        var rank = pledge.Rank > 0 ? $"rank {pledge.Rank}" : "rank not yet known";
+
+        lines.Add($"Powerplay: pledged to {pledge.Power}, {rank}.");
     }
 
     private static void AppendSession(CommanderGameState state, List<string> lines)

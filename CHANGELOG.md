@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.15.0 — The model knows your Powerplay standing
+
+Asked "who am I pledged to in Powerplay?", D47 said it did not know. It now tells the model which
+Power you are pledged to and your rank with it, from the Powerplay event Elite writes at login. After
+you leave a Power it answers that you are not pledged. After you join or defect, the rank is given
+as not yet known until Elite next reports it.
+
 ## 1.14.0 — The carrier balance counts its upkeep
 
 Elite takes your fleet carrier's upkeep at the Thursday weekly tick and writes nothing to the

@@ -6,9 +6,16 @@ namespace D47.Core.Journal;
 /// </summary>
 public sealed record PowerplayPledge(string? Power, int Rank = 0)
 {
+    /// <summary>No Powerplay event read yet.</summary>
     public static readonly PowerplayPledge None = new((string?)null);
 
+    /// <summary>Read from the journal as pledged to no Power.</summary>
+    public static readonly PowerplayPledge Unpledged = new((string?)null) { IsKnown = true };
+
     public bool IsPledged => Power is { Length: > 0 };
+
+    /// <summary>Whether a Powerplay event has said either way.</summary>
+    public bool IsKnown { get; init; }
 
     /// <summary>Whether this system's controlling Power is somebody else's.</summary>
     public bool IsRival(string? controllingPower) =>
@@ -19,13 +26,13 @@ public sealed record PowerplayPledge(string? Power, int Rank = 0)
     /// <summary>Folds one event.</summary>
     public PowerplayPledge Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
-        "PowerplayLeave" => None,
+        "PowerplayLeave" => Unpledged,
 
         // Only the Powerplay snapshot carries a rank. Joining and defecting do not, and both start the
         // ladder again under the new Power, so the rank goes back to nothing until the next snapshot.
         "Powerplay" or "PowerplayJoin" or "PowerplayDefect" =>
             Named(journalEvent) is { } power
-                ? new PowerplayPledge(power, journalEvent.Int("Rank") ?? 0)
+                ? new PowerplayPledge(power, journalEvent.Int("Rank") ?? 0) { IsKnown = true }
                 : this,
 
         "PowerplayRank" when IsPledged =>
