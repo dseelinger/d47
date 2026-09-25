@@ -197,6 +197,24 @@ public static class FlavourBriefs
             };
         }
 
+        // The Commander has been promoted (#453).
+        if (announcement.Key.StartsWith(PromotionCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "The Commander has just been promoted. Make one short remark about it in your own "
+                    + $"voice, from this: \"{announcement.Text}\" Keep the career or Power and the rank "
+                    + "exactly as given. Add no facts: nothing about what the rank unlocks, what it took "
+                    + "or what comes next. One or two sentences. Do not ask a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+
+                // The sheet, so it is addressed to somebody.
+                NeedsAboutMe = true,
+            };
+        }
+
         // Phase 31's opening line.
         if (string.Equals(announcement.Key, ContinuityCallout.Key, StringComparison.Ordinal))
         {

@@ -350,6 +350,22 @@ list that Coriolis and EDEngineer use, rather than from anyone's memory. A mater
 that table still announces your first unit; the percentages stay quiet rather than being counted
 against a number nobody checked.
 
+#### Promotions {#promotion}
+
+When you are promoted, your core makes one remark about it in its own voice. That covers the six
+career ladders (Combat, Trade, Exploration, Mercenary, Exobiology and CQC), both navies and your
+Powerplay rank. It keeps the career and the rank name as Elite gives them and adds nothing else.
+With personality off, or no model, the plain line is spoken:
+
+```text
+Promoted. Trade, Elite IV.
+Promoted. Empire, Serf.
+Powerplay rank 8 with Li Yong-Rui.
+```
+
+Joining a Power is not a promotion, and nothing is said about it. Start Directive 47 partway
+through a session and it says nothing about promotions already in the journal.
+
 #### Rival Power territory {#rival-territory}
 
 If you fly for a Power, Directive 47 tells you when you drop into normal space somewhere another

@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.17.0 — The ship remarks on promotions
+
+When you are promoted, the ship's AI now makes one remark about it in its own voice. This covers
+Combat, Trade, Exploration, Mercenary, Exobiology and CQC, the Empire and Federation navies, and
+Powerplay rank. It keeps the career and the rank name as Elite gives them, for example "Trade,
+Elite IV". With personality off, or no model, it says the plain line: "Promoted. Trade, Elite IV."
+Joining a Power is not announced, and promotions already in the journal when D47 starts are not
+announced either.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification

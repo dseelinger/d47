@@ -2484,6 +2484,7 @@ public sealed class AppHost : IDisposable
 
             // Capacity comes from the derived grade table.
             .Add(new MaterialMilestoneCallout { Capacity = MaterialGrades.CapacityOf })
+            .Add(new PromotionCallout())
 
             // Phase 40, and the same capacity for the opposite purpose: the milestone callout needs it to
             // work out how far along a stock is, and this one needs it to say nothing about a stock that is
