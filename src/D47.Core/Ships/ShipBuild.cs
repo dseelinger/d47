@@ -129,6 +129,13 @@ public sealed record ShipBuild(
     /// </summary>
     public string? Settled { get; init; }
 
+    /// <summary>
+    /// Priority groups the Commander has moved slots to, 1 to 5, keyed by slot. Remembered and counted
+    /// by the power gauge; not a <see cref="SlotPlan"/>, so it plans nothing and is never enforced.
+    /// </summary>
+    public IReadOnlyDictionary<string, int> PriorityMoves { get; init; } =
+        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Whether the Commander owns this hull, or merely intends to.</summary>
     public bool IsOwned => ShipId is not null;
 
@@ -167,6 +174,15 @@ public sealed record ShipBuild(
     {
         Slots = [.. Slots.Where(plan =>
             !string.Equals(plan.Slot, slot, StringComparison.OrdinalIgnoreCase))],
+    };
+
+    /// <summary>The build with one slot moved to a priority group.</summary>
+    public ShipBuild Move(string slot, int priority) => this with
+    {
+        PriorityMoves = new Dictionary<string, int>(PriorityMoves, StringComparer.OrdinalIgnoreCase)
+        {
+            [slot] = priority,
+        },
     };
 
     /// <summary>

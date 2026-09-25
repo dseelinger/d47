@@ -162,6 +162,9 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                     Variant = plan.Variant,
                     Priority = plan.Priority,
                 })],
+                Moves = build.PriorityMoves.Count > 0
+                    ? build.PriorityMoves.ToDictionary(move => move.Key, move => move.Value)
+                    : null,
             })],
         };
 
@@ -297,10 +300,34 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                 });
             }
 
+            var moves = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (slot, priority) in line.Moves ?? [])
+            {
+                var name = slot.Trim();
+
+                if (name.Length == 0)
+                {
+                    problems.Add(new ShipBuildProblem(hull, "a priority move names no slot."));
+                    continue;
+                }
+
+                if (priority is < 1 or > 5)
+                {
+                    problems.Add(new ShipBuildProblem(
+                        hull, $"{name} is moved to priority {priority}, and priorities run 1 to 5."));
+
+                    continue;
+                }
+
+                moves[name] = priority;
+            }
+
             builds.Add(new ShipBuild(fid, id, hull, line.ShipId, Blank(line.Name), slots)
             {
                 CommanderName = Blank(line.CommanderName),
                 Settled = Blank(line.Settled),
+                PriorityMoves = moves,
             });
         }
 
@@ -341,6 +368,10 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
         public string? Settled { get; init; }
 
         public IReadOnlyList<SlotLine> Slots { get; init; } = [];
+
+        /// <summary>Priority groups slots have been moved to, keyed by slot; absent when there are none.</summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, int>? Moves { get; init; }
     }
 
     private sealed record SlotLine

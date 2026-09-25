@@ -128,7 +128,7 @@ public static class ShipGauges
         var kind = modelled ? FigureKind.Modelled : FigureKind.Measured;
 
         return new BuildGauges(
-            Power(parts, kind, measured),
+            Power(parts, kind, measured, build.PriorityMoves),
             Jump(build, parts, seen, kind, modelled),
             parts.Count(part => part.IsVague),
             null);
@@ -207,7 +207,10 @@ public static class ShipGauges
     /// Draw summed twice — with the hardpoints in and with them out — against what the plant makes.
     /// </summary>
     private static PowerGauge? Power(
-        List<Part> parts, FigureKind kind, IReadOnlyDictionary<string, double>? measured)
+        List<Part> parts,
+        FigureKind kind,
+        IReadOnlyDictionary<string, double>? measured,
+        IReadOnlyDictionary<string, int> moves)
     {
         double retracted = 0, deployed = 0;
         double? capacity = null;
@@ -248,9 +251,11 @@ public static class ShipGauges
             {
                 draws[part.Slot] = new SlotDraw(megawatts, part.IsPlanned ? FigureKind.Modelled : FigureKind.Measured);
 
-                // A planned slot counts in its plan's group; a fitted, unplanned slot counts in the
-                // game's own group (#253).
-                var group = part.IsPlanned ? part.Plan!.Priority : part.Fitted?.Priority;
+                // A moved slot counts in the group it was moved to; otherwise a planned slot counts in its
+                // plan's group and a fitted, unplanned slot in the game's own group (#253).
+                var group = moves.TryGetValue(part.Slot, out var moved)
+                    ? moved
+                    : part.IsPlanned ? part.Plan!.Priority : part.Fitted?.Priority;
 
                 modules.Add(new PowerModule(
                     part.Slot, part.Spec.Name, megawatts, hardpoint, group, PowerModule.RoleOf(part.Spec.Type)));

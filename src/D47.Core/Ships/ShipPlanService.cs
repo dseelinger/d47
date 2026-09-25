@@ -268,6 +268,33 @@ public sealed class ShipPlanService(
         return true;
     }
 
+    /// <summary>
+    /// Remembers a slot moved to a priority group, 1 to 5. Changes no slot plan, so nothing reaches the
+    /// checklist.
+    /// </summary>
+    public bool Move(string buildId, string slot, int priority)
+    {
+        if (store.Find(buildId) is not { } build || string.IsNullOrWhiteSpace(slot) || priority is < 1 or > 5)
+        {
+            return false;
+        }
+
+        Replace(build.Move(slot.Trim(), priority));
+        return true;
+    }
+
+    /// <summary>Forgets every priority move on one build.</summary>
+    public bool ClearMoves(string buildId)
+    {
+        if (store.Find(buildId) is not { } build || build.PriorityMoves.Count == 0)
+        {
+            return false;
+        }
+
+        Replace(build with { PriorityMoves = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) });
+        return true;
+    }
+
     /// <summary>Drops a build, and cleans up whatever it put on the checklist.</summary>
     public string Delete(string buildId)
     {
