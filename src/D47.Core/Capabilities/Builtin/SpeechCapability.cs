@@ -631,6 +631,7 @@ public static class SpeechCapability
                 {
                     Read = s => surface.SpeechSpend?.Invoke()?.Describe(s) ?? "Nothing spoken yet.",
                 },
+                Tiles = s => surface.SpeechSpend?.Invoke()?.Tiles(s),
             },
             new SettingRow
             {
@@ -648,6 +649,7 @@ public static class SpeechCapability
                 {
                     Read = s => surface.SpeechSpend?.Invoke()?.DescribeSlots(s) ?? "Nothing spoken yet.",
                 },
+                Tiles = s => surface.SpeechSpend?.Invoke()?.SlotTiles(s),
             },
             new SettingRow
             {
@@ -750,10 +752,11 @@ public static class SpeechCapability
                     + "d47 matches from what the list says about each voice, or picks at random.",
                 Kind = SettingKind.Info,
                 ConfirmPress = true,
+                Destructive = true,
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "reset-voices",
                 Group = "Other voices",
-                PressLabel = "Pair every voice again",
+                PressLabel = "Forget and pair again",
                 PressAsync = surface.ResetVoices is null
                     ? null
                     : (progress, cancellationToken) =>

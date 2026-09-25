@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.11 — Read-only values on grey
+
+In Settings, every read-only value now sits on a dark grey block in white text, not in orange beside
+a thin bar. Under Its voice > What it costs, each figure has its own block: "Spoken this session"
+shows the characters and the cost, and "Spoken by each voice" shows one block per voice, such as
+"115 via ElevenLabs · $0.0058". On Privacy and egress, the full detail of each entry opens from a
+SHOW button that reads HIDE while it is open. FORGET THEM ALL under Voice input > Corrections and
+FORGET AND PAIR AGAIN under Its voice are red. The second was labelled "Pair every voice again". Both
+do what they did before.
+
 ## 1.13.10 — Step a suit's grade on its page
 
 On Fleet > Suits, a planned grade on a suit or weapon now has ▲ and ▼ buttons beside it, as a

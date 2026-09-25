@@ -761,6 +761,7 @@ public static class ListeningCapability
                 Kind = SettingKind.Info,
                 DocsAnchor = "corrections",
                 PressLabel = surface.ForgetCorrections is null ? null : "Forget them all",
+                Destructive = true,
                 Press = surface.ForgetCorrections,
                 Binding = new SettingBinding
                 {

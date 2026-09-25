@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Configuration;
 
 namespace D47.Core.Audio;
@@ -203,6 +203,60 @@ public sealed class SpeechSpend
             charges.Select(charge =>
                 $"{SlotName(charge.Group)} {charge.Characters.ToString("N0", CultureInfo.CurrentCulture)} "
                 + $"through {Name(charge.ProviderId)} ({Cost(settings, charge)})"));
+    }
+
+    /// <summary>The session's characters and cost as figures: the total, then one per provider when there are several.</summary>
+    public IReadOnlyList<Capabilities.DataTile> Tiles(D47Settings settings)
+    {
+        var charges = Charges;
+
+        if (charges.Count == 0)
+        {
+            return [];
+        }
+
+        var total = charges.Count == 1
+            ? TileCost(settings, charges[0])
+            : charges.All(charge => Priced(settings, charge.ProviderId))
+                ? Dollars(settings).ToString("C4", CultureInfo.CurrentCulture)
+                : "part unpriced";
+
+        var tiles = new List<Capabilities.DataTile>
+        {
+            new("Spoken this session", $"{Count(TotalCharacters)} chars · {total}"),
+        };
+
+        if (charges.Count > 1)
+        {
+            tiles.AddRange(charges.Select(charge => new Capabilities.DataTile(
+                Name(charge.ProviderId),
+                $"{Count(charge.Characters)} chars · {TileCost(settings, charge)}")));
+        }
+
+        return tiles;
+    }
+
+    /// <summary>One figure per voice slot that has spoken.</summary>
+    public IReadOnlyList<Capabilities.DataTile> SlotTiles(D47Settings settings) =>
+        [.. BySlot.Select(charge => new Capabilities.DataTile(
+            SlotName(charge.Group),
+            $"{Count(charge.Characters)} via {Name(charge.ProviderId)} · {TileCost(settings, charge)}"))];
+
+    private static string Count(long characters) => characters.ToString("N0", CultureInfo.CurrentCulture);
+
+    /// <summary>What one provider's characters came to, as a figure.</summary>
+    private static string TileCost(D47Settings settings, SpeechCharge charge)
+    {
+        var provider = TtsProviderCatalog.Selected(charge.ProviderId);
+
+        if (!provider.Billed)
+        {
+            return "free";
+        }
+
+        return DollarsFor(settings, charge) is { } dollars
+            ? dollars.ToString("C4", CultureInfo.CurrentCulture)
+            : "no rate set";
     }
 
     /// <summary>What a slot is called.</summary>

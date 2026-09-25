@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -17,6 +17,9 @@ public enum StatInk
 
     /// <summary>The Commander's current system, in Cyan.</summary>
     Here,
+
+    /// <summary>A figure read from a setting — money, a count — in White mono.</summary>
+    Figure,
 }
 
 /// <summary>A read-only label and value on Slab, and the grid that holds a row of them.</summary>
@@ -47,7 +50,7 @@ public static class StatTile
         var figure = new TextBlock
         {
             Text = value,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontFamily = new FontFamily(ink == StatInk.Figure ? Fonts.MonoFamily : Fonts.ChromeFamily),
             FontSize = ValueSize,
             FontWeight = FontWeight.Medium,
             TextWrapping = TextWrapping.Wrap,
@@ -82,7 +85,7 @@ public static class StatTile
 
     public static string InkKey(StatInk ink) => ink switch
     {
-        StatInk.Name => ThemeManager.WhiteKey,
+        StatInk.Name or StatInk.Figure => ThemeManager.WhiteKey,
         StatInk.Here => ThemeManager.CyanKey,
         _ => ThemeManager.AKey,
     };

@@ -2559,33 +2559,72 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
     }
 
-    /// <summary>The read-out an Info row shows: no box, a 2px rule on the left edge, so it cannot be
-    /// mistaken for a field (#335).</summary>
+    /// <summary>Marks the data block an Info row's value is drawn on.</summary>
+    public const string DataBlockClass = "data-block";
+
+    /// <summary>
+    /// The read-out an Info row shows: a data block on Slab, or one tile per figure where the row reads
+    /// its value as <see cref="SettingRow.Tiles"/>.
+    /// </summary>
     private (Control, Action) BuildInfo(SettingRow row)
     {
         var (inset, text) = Report();
+
+        if (row.Tiles is { } tiles)
+        {
+            var holder = new ContentControl { Content = inset };
+
+            void RefreshTiles()
+            {
+                var current = _settings!.Current;
+                var figures = tiles(current);
+
+                if (figures is not { Count: > 0 })
+                {
+                    text.Text = row.Binding?.Read(current);
+                    holder.Content = inset;
+                    return;
+                }
+
+                var built = figures
+                    .Select(figure =>
+                    {
+                        var tile = Controls.StatTile.Build(figure.Label, figure.Value, Controls.StatInk.Figure);
+                        tile.Classes.Add(DataBlockClass);
+                        return (Control)tile;
+                    })
+                    .ToList();
+
+                holder.Content = Controls.StatTile.Grid(built, maxColumns: 3);
+            }
+
+            return (holder, RefreshTiles);
+        }
 
         return row.Binding?.Read is { } read
             ? (inset, () => text.Text = read(_settings!.Current))
             : (inset, () => { });
     }
 
-    /// <summary>A Report: its value in A on a 2px left rule, with no box around it.</summary>
+    /// <summary>A Report: its value in White on a Slab data block.</summary>
     internal static (Border Inset, SelectableTextBlock Text) Report()
     {
         var text = new SelectableTextBlock { FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
-        text[!SelectableTextBlock.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.AKey);
+        text[!SelectableTextBlock.ForegroundProperty] = new DynamicResourceExtension(ThemeManager.WhiteKey);
 
         var inset = new Border
         {
-            BorderThickness = new Thickness(2, 0, 0, 0),
-            Padding = new Thickness(12),
+            Padding = new Thickness(14, 10),
             Child = text,
+            Classes = { DataBlockClass },
         };
-        inset[!Border.BorderBrushProperty] = new DynamicResourceExtension(ThemeManager.Line2Key);
+        inset[!Border.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.SlabKey);
 
         return (inset, text);
     }
+
+    /// <summary>The button class the kit draws red, for a press that destroys something.</summary>
+    public const string DestructiveClass = "destructive";
 
     /// <summary>Marks a binding chip, so a test can read what a bind row shows.</summary>
     public const string BindingChipClass = "binding-chip";
@@ -2617,8 +2656,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>
-    /// The two-line summary <see cref="BuildInfo"/> already draws, plus the full text behind a "Show
-    /// more" press (#339).
+    /// The summary <see cref="BuildInfo"/> already draws, plus the full text behind a SHOW tile that
+    /// reads HIDE while it is open (#339).
     /// </summary>
     private (Control, Action) BuildEgressDisclosure(SettingRow row)
     {
@@ -2629,30 +2668,27 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
-            Margin = new Thickness(12, 0, 12, 8),
         };
         Themed(detail, SelectableTextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
+        var block = new Border { Padding = new Thickness(14, 10), Child = detail, Classes = { DataBlockClass } };
+        Themed(block, Border.BackgroundProperty, ThemeManager.SlabKey);
+        block[!IsVisibleProperty] = detail[!IsVisibleProperty];
+
         var toggle = new Button
         {
-            Content = "Show more",
-            FontSize = TypeScale.Secondary,
-            Padding = new Thickness(0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
+            Name = $"Disclose_{row.Key.Replace('.', '_')}",
+            Content = "Show",
             HorizontalAlignment = HorizontalAlignment.Left,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            Margin = new Thickness(12, 4, 0, 8),
         };
-        Themed(toggle, ForegroundProperty, ThemeManager.AKey);
 
         toggle.Click += (_, _) =>
         {
             detail.IsVisible = !detail.IsVisible;
-            toggle.Content = detail.IsVisible ? "Show less" : "Show more";
+            toggle.Content = detail.IsVisible ? "Hide" : "Show";
         };
 
-        var stack = new StackPanel { Children = { summary, toggle, detail } };
+        var stack = new StackPanel { Spacing = 8, Children = { summary, toggle, block } };
 
         void Refresh()
         {
@@ -2873,6 +2909,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+
+        if (row.Destructive)
+        {
+            press.Classes.Add(DestructiveClass);
+        }
 
         // A label computed from state discovered after the row was built — a pending update's version —
         // has to be re-read on every refresh, not only when the button is first drawn (#193).

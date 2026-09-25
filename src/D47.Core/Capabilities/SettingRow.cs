@@ -294,6 +294,15 @@ public sealed record SettingRow
     /// </summary>
     public bool ConfirmPress { get; init; }
 
+    /// <summary>Whether the press destroys something the Commander cannot get back; drawn red.</summary>
+    public bool Destructive { get; init; }
+
+    /// <summary>
+    /// An <see cref="SettingKind.Info"/> row's value as separate figures, each drawn as its own data
+    /// block; null or empty falls back to <see cref="SettingBinding.Read"/>.
+    /// </summary>
+    public Func<D47Settings, IReadOnlyList<DataTile>?>? Tiles { get; init; }
+
     /// <summary>
     /// A <see cref="SettingKind.Choice"/> row whose choices have to be fetched before they can be
     /// selected (#139).
@@ -392,3 +401,6 @@ public sealed record SettingRow
     public bool IsClearable =>
         Binding is { Write: not null } binding && binding.Read(D47Settings.Defaults) is null;
 }
+
+/// <summary>One labelled figure on a read-only row.</summary>
+public sealed record DataTile(string Label, string Value);

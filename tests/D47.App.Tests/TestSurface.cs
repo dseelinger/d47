@@ -59,7 +59,9 @@ public static class TestSurface
         // Appended, like every optional here: the composition root passes these positionally.
         Func<string>? resetVoices = null,
         Func<string, VoiceRole, CancellationToken, Task>? audition = null,
-        IReadOnlyList<string>? inputDevices = null)
+        IReadOnlyList<string>? inputDevices = null,
+        SpeechSpend? speechSpend = null,
+        Action? forgetCorrections = null)
     {
         var root = TempFolders.Create("d47-app-tests");
         var paths = new AppPaths(root);
@@ -96,6 +98,7 @@ public static class TestSurface
 
                 // Supplied rather than left null, for the same reason as the local voice download above.
                 ResetVoices = () => (_, _) => Task.FromResult<string?>(resetVoices?.Invoke() ?? string.Empty),
+                SpeechSpend = speechSpend is null ? null : () => speechSpend,
             },
             new ShipsCapability.ShipsSurface
             {
@@ -117,6 +120,7 @@ public static class TestSurface
                 TranscriberState = () => (false, null, "No transcriber in a headless test."),
                 Binds = () => EliteBinds.None,
                 InstalledModels = () => [],
+                ForgetCorrections = forgetCorrections,
             },
             new VrCapability.HeadsetSurface
             {
@@ -179,11 +183,14 @@ public static class TestSurface
         LongPress? rescan = null,
         Func<string>? resetVoices = null,
         Func<string, VoiceRole, CancellationToken, Task>? audition = null,
-        IReadOnlyList<string>? inputDevices = null)
+        IReadOnlyList<string>? inputDevices = null,
+        SpeechSpend? speechSpend = null,
+        Action? forgetCorrections = null)
     {
         var (settings, viewState, paths, _, _) = CreateFull(
             coverage, personas, voices, localVoice, recording, rescan,
-            resetVoices: resetVoices, audition: audition, inputDevices: inputDevices);
+            resetVoices: resetVoices, audition: audition, inputDevices: inputDevices,
+            speechSpend: speechSpend, forgetCorrections: forgetCorrections);
         return (settings, viewState, paths);
     }
 
