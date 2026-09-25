@@ -956,7 +956,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
                 "Edit this line",
                 "Your own words. The line keeps its place, its tick and whatever it came from.",
                 item.Text,
-                EntrySurface.Keyboard,
+                EntrySurface.Voice,
                 value => string.IsNullOrWhiteSpace(value)
                     ? EntryVerdict.No("A line with nothing written on it is not a line.")
                     : EntryVerdict.Ok),

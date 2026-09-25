@@ -271,7 +271,7 @@ public sealed class UtilitiesPage : UserControl
                     $"How long for \"{name}\"?",
                     "Minutes, from now.",
                     string.Empty,
-                    EntrySurface.Keyboard,
+                    EntrySurface.Voice,
                     value => Minutes(value) is null
                         ? EntryVerdict.No("That is not a number of minutes.")
                         : EntryVerdict.Ok),
@@ -309,7 +309,7 @@ public sealed class UtilitiesPage : UserControl
                     $"When should \"{name}\" go off?",
                     "Your own clock, as 24-hour HH:mm.",
                     string.Empty,
-                    EntrySurface.Keyboard,
+                    EntrySurface.Voice,
                     value => At(value) is null
                         ? EntryVerdict.No("I need a time as 24-hour HH:mm.")
                         : EntryVerdict.Ok),

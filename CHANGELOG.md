@@ -57,7 +57,13 @@ read "No carrier has turned up in the journal yet" because the carrier's locatio
 without a callsign, stopped d47 taking the callsign, name and stats from older journals. It now takes
 them and keeps the location from this session.
 
-## 1.13.7 — Grades picked, not typed
+## 1.13.7 — Grades picked, entries heard first
+
+Every prompt that asks for a value now opens listening, with the text box focused and the Keyboard
+checkbox unticked. Timer minutes, alarm time, editing a checklist line, and an adventure's name,
+chapter title and rank used to open with the drawn keyboard up. The keyboard appears when Keyboard
+is ticked, or when d47 did not catch what was said. Its keys were too small for their padding and
+showed only fragments of each character; every key now shows its whole label.
 
 A grade is now chosen from a row of buttons, and one press sets it. For a suit or weapon the row
 is 2, 3, 4 and 5, with the grade already planned outlined. For a ship slot on a hull d47 has no

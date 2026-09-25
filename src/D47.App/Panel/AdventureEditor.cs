@@ -59,7 +59,7 @@ public sealed class AdventureEditor : UserControl
         _page.Children.Add(RoutingKit.Title(_isNew ? "Write an adventure" : $"Edit {_draft.Name}").Row);
 
         _page.Children.Add(Field("Name", string.IsNullOrWhiteSpace(_draft.Name) ? null : _draft.Name, "unnamed", () => Enter(
-            "adventure.name", "Name", "What is it called?", null, _draft.Name, EntrySurface.Keyboard,
+            "adventure.name", "Name", "What is it called?", null, _draft.Name, EntrySurface.Voice,
             value => _draft = _draft with { Name = value.Trim(), Key = _isNew ? AdventureValidation.Key(value) : _draft.Key },
             value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("An adventure needs a name.") : EntryVerdict.Ok)));
 
@@ -194,7 +194,7 @@ public sealed class AdventureEditor : UserControl
         buttons.Margin = new Thickness(0, 4, 0, 0);
 
         buttons.Children.Add(Small("Title", () => Enter(
-            "adventure.beat.title", "Title", "The chapter's name", "A name, never a number.", beat.Title, EntrySurface.Keyboard,
+            "adventure.beat.title", "Title", "The chapter's name", "A name, never a number.", beat.Title, EntrySurface.Voice,
             value => ReplaceBeat(index, beat with { Title = value.Trim() }),
             value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("A beat needs a title.") : EntryVerdict.Ok)));
 
@@ -433,7 +433,7 @@ public sealed class AdventureEditor : UserControl
 
                 Enter("adventure.rank", "Rank", $"Which {Careers.Word(option.Key)} rank?", $"1 to 8. You hold {held}.",
                     (beat.Trigger.Rank ?? Math.Min(held + 1, RankStanding.Elite)).ToString(CultureInfo.InvariantCulture),
-                    EntrySurface.Keyboard,
+                    EntrySurface.Voice,
                     value =>
                     {
                         var rank = int.Parse(value.Trim(), CultureInfo.InvariantCulture);

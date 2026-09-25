@@ -477,6 +477,9 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>
     /// The drawn keyboard, as a control rather than as a method on the page that first needed one.
     /// </summary>
+    /// <summary>A key's width and height; its padding is zero so the glyph gets the whole key.</summary>
+    private const double KeySize = 46;
+
     private static BoardKeys Board(Action<char> pressed, Action back, Action clear)
     {
         var board = new StackPanel { Spacing = 6 };
@@ -498,8 +501,10 @@ public sealed class PanelPrompts : IHearsText
                 var button = new Button
                 {
                     Content = character == ' ' ? "space" : character.ToString(),
-                    Width = character == ' ' ? 220 : 46,
-                    Height = 40,
+                    Width = character == ' ' ? 220 : KeySize,
+                    Height = KeySize,
+                    MinHeight = KeySize,
+                    Padding = new Thickness(0),
                     HorizontalContentAlignment = HorizontalAlignment.Center,
                     VerticalContentAlignment = VerticalAlignment.Center,
                 };
@@ -513,8 +518,8 @@ public sealed class PanelPrompts : IHearsText
             board.Children.Add(line);
         }
 
-        var erase = new Button { Content = "delete", Height = 40, Padding = new Thickness(16, 0) };
-        var empty = new Button { Content = "clear", Height = 40, Padding = new Thickness(16, 0) };
+        var erase = new Button { Content = "delete", Height = KeySize, MinHeight = KeySize, Padding = new Thickness(16, 0) };
+        var empty = new Button { Content = "clear", Height = KeySize, MinHeight = KeySize, Padding = new Thickness(16, 0) };
 
         erase.Click += (_, _) => back();
         empty.Click += (_, _) => clear();
