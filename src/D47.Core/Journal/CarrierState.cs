@@ -79,8 +79,20 @@ public sealed record CarrierState
     /// <summary>When the stats above were reported.</summary>
     public DateTimeOffset? StatsSeenAt { get; init; }
 
-    /// <summary>The rest of what <c>CarrierStats</c> says, for the page that draws it (#230).</summary>
+    /// <summary>The balance last recorded, by <c>CarrierStats</c> or <c>CarrierBankTransfer</c>.</summary>
     public long? Balance { get; init; }
+
+    /// <summary>When <see cref="Balance"/> was recorded.</summary>
+    public DateTimeOffset? BalanceSeenAt { get; init; }
+
+    /// <summary>
+    /// The upkeep Elite takes at each weekly tick, from the latest interval between two recorded balances
+    /// that held a tick, a fall, and no spending (#447).
+    /// </summary>
+    public long? WeeklyUpkeep { get; init; }
+
+    /// <summary>Whether something besides upkeep has been spent since <see cref="Balance"/> was recorded.</summary>
+    public bool SpentSinceBalance { get; init; }
 
     /// <summary>Total capacity in tonnes, from <c>SpaceUsage.TotalCapacity</c>.</summary>
     public int? Capacity { get; init; }
@@ -277,7 +289,8 @@ public sealed record CarrierState
             SeenAt = Stamped(journalEvent, journalEvent.String("Location")),
         },
 
-        "CarrierStats" => this with
+        "CarrierStats" => Recorded(
+            journalEvent.Object("Finance")?.Long("CarrierBalance"), journalEvent.Timestamp) with
         {
             CallSign = journalEvent.String("Callsign") ?? CallSign,
             Name = journalEvent.String("Name") ?? Name,
@@ -288,7 +301,6 @@ public sealed record CarrierState
             StatsSeenAt = journalEvent.Timestamp,
 
             // The figures the carrier page draws (#230).
-            Balance = journalEvent.Object("Finance")?.Long("CarrierBalance") ?? Balance,
             Capacity = journalEvent.Object("SpaceUsage")?.Int("TotalCapacity") ?? Capacity,
             FreeSpace = journalEvent.Object("SpaceUsage")?.Int("FreeSpace") ?? FreeSpace,
             JumpRange = journalEvent.Double("JumpRangeCurr") ?? JumpRange,
@@ -354,10 +366,60 @@ public sealed record CarrierState
         // Another Commander can fill the order and the journal never says by how much.
         "CarrierTradeOrder" when journalEvent.Long("CarrierID") == CarrierId
             && NamesTritium(journalEvent.String("Commodity"))
-            && !journalEvent.Bool("CancelTrade") => this with { TritiumInHoldUncertain = true },
+            && !journalEvent.Bool("CancelTrade") => this with
+            {
+                TritiumInHoldUncertain = true,
+                SpentSinceBalance = true,
+            },
+
+        // The measured drop is the balance before the transfer, so a deposit is not read as upkeep.
+        "CarrierBankTransfer" when CarrierId is null || journalEvent.Long("CarrierID") == CarrierId =>
+            Recorded(
+                journalEvent.Long("CarrierBalance"),
+                journalEvent.Timestamp,
+                journalEvent.Long("CarrierBalance") is { } after
+                    ? after - (journalEvent.Long("Deposit") ?? 0) + (journalEvent.Long("Withdraw") ?? 0)
+                    : null),
+
+        "CarrierTradeOrder" or "CarrierCrewServices" or "CarrierModulePack" or "CarrierShipPack"
+            when journalEvent.Long("CarrierID") == CarrierId => this with { SpentSinceBalance = true },
 
         _ => this,
     };
+
+    /// <summary>
+    /// A newly recorded balance, taking a new <see cref="WeeklyUpkeep"/> from the drop since the last one
+    /// where the interval allows it. <paramref name="measured"/> is the balance to compare, where it
+    /// differs from the one recorded.
+    /// </summary>
+    private CarrierState Recorded(long? balance, DateTimeOffset at, long? measured = null)
+    {
+        if (balance is not { } recorded)
+        {
+            return this;
+        }
+
+        var weekly = WeeklyUpkeep;
+        var compared = measured ?? recorded;
+
+        if (!IsSquadron
+            && !SpentSinceBalance
+            && Balance is { } before
+            && BalanceSeenAt is { } since
+            && CarrierUpkeep.TicksBetween(since, at) is var ticks and > 0
+            && compared < before)
+        {
+            weekly = (before - compared) / ticks;
+        }
+
+        return this with
+        {
+            Balance = recorded,
+            BalanceSeenAt = at,
+            WeeklyUpkeep = weekly,
+            SpentSinceBalance = false,
+        };
+    }
 
     /// <summary>Whether a commodity symbol, cased however Elite wrote it, names tritium.</summary>
     private static bool NamesTritium(string? symbol) =>

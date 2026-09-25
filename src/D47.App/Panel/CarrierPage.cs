@@ -166,9 +166,24 @@ public sealed class CarrierPage : UserControl
             tiles.Add(StatTile.Build("Cargo", $"{cargo:N0} t"));
         }
 
-        if (carrier.Balance is { } balance)
+        var upkept = CarrierUpkeep.Now(carrier, _now());
+
+        if (upkept is { } balance)
         {
-            tiles.Add(StatTile.Build("Balance", balance.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
+            tiles.Add(StatTile.Build(
+                "Balance",
+                (balance.Adjusted ? "about " : string.Empty)
+                + balance.Balance.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
+
+            if (balance.Weekly is { } weekly)
+            {
+                tiles.Add(StatTile.Build("Upkeep", weekly.ToString("N0", CultureInfo.CurrentCulture) + " cr a week"));
+                tiles.Add(StatTile.Build("Covers", $"{balance.WeeksCovered:N0} weeks"));
+            }
+        }
+        else if (carrier.Balance is { } recorded)
+        {
+            tiles.Add(StatTile.Build("Balance", recorded.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
         }
 
         if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
@@ -181,6 +196,14 @@ public sealed class CarrierPage : UserControl
         _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
 
         Tritium(carrier);
+
+        if (upkept is { Adjusted: true } adjusted)
+        {
+            var note = LoadoutPages.Muted($"Balance adjusted: {adjusted.Explained} cr.");
+            note.Margin = new Thickness(0, 6, 0, 0);
+
+            _body.Children.Add(note);
+        }
 
         if (carrier.StatsSeenAt is { } seen)
         {

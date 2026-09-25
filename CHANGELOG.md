@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.14.0 — The carrier balance counts its upkeep
+
+Elite takes your fleet carrier's upkeep at the Thursday weekly tick and writes nothing to the
+journal when it does. D47 now works out the weekly upkeep from the balances the journal has
+recorded, and takes it off the last recorded balance for each tick since. The Carrier page shows
+the balance as "about" that figure, with Upkeep and Covers tiles and a line giving the recorded
+balance and its date. "How is my carrier" says the same. Until two recorded balances with a tick
+between them are available, the page and the report show the recorded balance only. Income from
+sell orders that other Commanders fill is not in the journal, so it is not counted. The squadron
+carrier is not adjusted.
+
 ## 1.13.13 — API keys stay hidden until you replace them
 
 In Settings, a stored API key now shows as eight bullets with KEY STORED, REPLACE and a red FORGET

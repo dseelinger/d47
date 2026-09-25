@@ -35,7 +35,7 @@ public class CarrierCapabilityTests
         Apply(gameState, """{"timestamp":"2026-09-05T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
         Apply(gameState, CarrierStats);
 
-        var registry = CapabilityRegistry.Build([CarrierCapability.Create(() => gameState.Active)]);
+        var registry = CapabilityRegistry.Build([CarrierCapability.Create(() => gameState.Active, () => DateTimeOffset.MinValue)]);
         var result = await registry.InvokeAsync(
             "describe_carrier", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
@@ -52,7 +52,7 @@ public class CarrierCapabilityTests
     [Fact]
     public async Task AnUnseenCarrierIsNotAnErrorAndDoesNotClaimThereIsNone()
     {
-        var registry = CapabilityRegistry.Build([CarrierCapability.Create(() => null)]);
+        var registry = CapabilityRegistry.Build([CarrierCapability.Create(() => null, () => DateTimeOffset.MinValue)]);
         var result = await registry.InvokeAsync(
             "describe_carrier", ToolArguments.Empty, TestContext.Current.CancellationToken);
 

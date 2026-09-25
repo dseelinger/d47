@@ -8,7 +8,7 @@ public static class CarrierCapability
 {
     public const string Id = "carrier";
 
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> state) => new()
+    public static CapabilityDescriptor Create(Func<CommanderGameState?> state, Func<DateTimeOffset> now) => new()
     {
         Id = Id,
         Group = "Ship",
@@ -33,12 +33,12 @@ public static class CarrierCapability
                     "Report the Commander's fleet carrier: the system it is in, a booked jump, fuel, cargo "
                     + "against capacity, balance, jump range, docking access, the decommission flag and every "
                     + "service with its state and crew.",
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(state()))),
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(state(), now()))),
             },
         ],
     };
 
-    public static string Describe(CommanderGameState? state)
+    public static string Describe(CommanderGameState? state, DateTimeOffset now)
     {
         var carrier = state?.Carrier ?? CarrierState.None;
 
@@ -119,9 +119,21 @@ public static class CarrierCapability
             report.AppendLine(".");
         }
 
-        if (carrier.Balance is { } balance)
+        if (CarrierUpkeep.Now(carrier, now) is { } balance)
         {
-            report.AppendLine($"Balance {balance:N0} cr.");
+            report.AppendLine(balance.Adjusted
+                ? $"Balance about {balance.Balance:N0} cr ({balance.Explained})."
+                : $"Balance {balance.Balance:N0} cr.");
+
+            if (balance.Weekly is { } weekly)
+            {
+                report.AppendLine(
+                    $"Upkeep {weekly:N0} cr a week, which the balance covers for {balance.WeeksCovered} weeks.");
+            }
+        }
+        else if (carrier.Balance is { } recorded)
+        {
+            report.AppendLine($"Balance {recorded:N0} cr.");
         }
 
         if (carrier.JumpRange is { } range)

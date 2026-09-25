@@ -190,7 +190,7 @@ public static class BuiltinCapabilities
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
         JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route),
         CrewCapability.Create(() => gameState.Active),
-        CarrierCapability.Create(() => gameState.Active),
+        CarrierCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue)),
         GalaxyCapability.Create(
             galaxy,
             () => gameState.Active?.Location.StarSystem,
