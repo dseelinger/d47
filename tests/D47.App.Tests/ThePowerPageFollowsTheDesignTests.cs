@@ -484,13 +484,16 @@ public class ThePowerPageFollowsTheDesignTests
         var from = host.On(host.View.Chart.CentreOfBar("ws")!.Value);
         var to = host.On(host.View.Chart.CentreOfBar("afm")!.Value + new Point(0, 20));
 
-        host.Window.MouseDown(from, MouseButton.Left);
-        host.Window.MouseMove(from + new Point(0, 10));
-        host.Window.MouseMove(to);
-        host.Window.MouseUp(to, MouseButton.Left);
-        Dispatcher.UIThread.RunJobs();
+        var asked = 0;
+
+        host.View.MoveAsked += (_, _) => asked++;
+
+        Drag(host, from, to);
 
         Assert.True(host.View.Chart!.CentreOfBar("ws")!.Value.Y > host.View.Chart.CentreOfBar("afm")!.Value.Y);
+
+        // A drop inside the column is a what-if and asks for no move.
+        Assert.Equal(0, asked);
 
         var reset = host.View.GetVisualDescendants().OfType<Button>()
             .First(button => Equals(button.Content, "Reset order"));
@@ -499,5 +502,223 @@ public class ThePowerPageFollowsTheDesignTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(host.View.Chart!.CentreOfBar("ws")!.Value.Y < host.View.Chart.CentreOfBar("afm")!.Value.Y);
+    }
+
+    private static void Drag(Hosted host, Point from, Point to, bool release = true)
+    {
+        host.Window.MouseDown(from, MouseButton.Left);
+        host.Window.MouseMove(from + new Point(0, 10));
+        host.Window.MouseMove(to);
+
+        if (release)
+        {
+            host.Window.MouseUp(to, MouseButton.Left);
+        }
+
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>A view that records each move it is asked for and redraws with it, as the page does through the store.</summary>
+    private static (PowerView View, Dictionary<string, int> Moves) Moving(IReadOnlyDictionary<string, int>? start = null)
+    {
+        var moves = new Dictionary<string, int>(start ?? new Dictionary<string, int>(), StringComparer.OrdinalIgnoreCase);
+        var view = new PowerView();
+
+        view.MoveAsked += (slot, priority) =>
+        {
+            moves[slot] = priority;
+            view.Show(Power(moves: moves));
+        };
+
+        view.Show(Power(moves: moves));
+
+        return (view, moves);
+    }
+
+    /// <summary>Drags a drill-in bar onto a priority's block of the stack and lets go.</summary>
+    private static void DropOn(Hosted host, string slot, int priority)
+    {
+        // A redraw puts in a new chart, which has no place in the window until it is laid out.
+        host.Window.UpdateLayout();
+
+        Drag(host, host.On(host.View.Chart!.CentreOfBar(slot)!.Value), host.On(host.View.Chart.CentreOf(priority)!.Value));
+    }
+
+    /// <summary>P4 and P5 emptied into P3.</summary>
+    private static readonly Dictionary<string, int> EmptyTop = Prototype
+        .Where(module => module.Priority >= 4)
+        .ToDictionary(module => module.Slot, _ => 3);
+
+    /// <summary>P3 emptied into P2, leaving it between two used priorities.</summary>
+    private static readonly Dictionary<string, int> EmptyMiddle = new() { ["sg"] = 2, ["scb"] = 2 };
+
+    /// <summary>P1 left holding Life Support alone, under the 16px a label needs inside.</summary>
+    private static readonly Dictionary<string, int> ShortP1 = new() { ["pd"] = 2, ["fsd"] = 2, ["sen"] = 2 };
+
+    [AvaloniaFact]
+    public void DroppingGuardianFsdBoosterOnP2InTheStackMovesItToTheTopOfP2()
+    {
+        var (view, moves) = Moving();
+
+        view.Selected = 4;
+
+        using var host = Host(view);
+
+        DropOn(host, "gfb", 2);
+
+        Assert.Equal(new Dictionary<string, int> { ["gfb"] = 2 }, moves);
+
+        var chart = view.Chart!;
+        var booster = chart.SliceOf("gfb")!.Value;
+
+        Assert.True(chart.BlockOf(2)!.Value.Contains(booster.Center));
+        Assert.True(booster.Y < chart.SliceOf("thr")!.Value.Y);
+
+        view.Selected = 2;
+
+        Assert.True(view.Chart!.CentreOfBar("gfb")!.Value.Y < view.Chart.CentreOfBar("thr")!.Value.Y);
+    }
+
+    [AvaloniaFact]
+    public void DroppingOnTheBarsOwnPriorityAsksForNoMove()
+    {
+        var (view, moves) = Moving();
+
+        view.Selected = 4;
+
+        using var host = Host(view);
+
+        DropOn(host, "gfb", 4);
+
+        Assert.Empty(moves);
+    }
+
+    [AvaloniaFact]
+    public void EmptyPrioritiesAreLabelledSlotsAboveP3ThatTakeADrop()
+    {
+        var (view, moves) = Moving(EmptyTop);
+
+        view.Selected = 3;
+
+        using var host = Host(view);
+
+        var chart = view.Chart!;
+        var p3 = chart.BlockOf(3)!.Value;
+        var p4 = chart.BlockOf(4)!.Value;
+        var p5 = chart.BlockOf(5)!.Value;
+
+        Assert.Equal(20, p4.Height);
+        Assert.Equal(20, p5.Height);
+
+        // Each block's top pixel is left blank, so 3 more make the 4px between priorities.
+        Assert.Equal(3, p3.Y - p4.Bottom);
+        Assert.Equal(3, p4.Y - p5.Bottom);
+
+        Assert.Contains(chart.PriorityLabels(), label => label is { Priority: 4, Inside: true });
+        Assert.Contains(chart.PriorityLabels(), label => label is { Priority: 5, Inside: true });
+
+        DropOn(host, "sb1", 5);
+
+        Assert.Equal(5, moves["sb1"]);
+
+        view.Selected = 3;
+        DropOn(host, "sb2", 4);
+
+        Assert.Equal(4, moves["sb2"]);
+    }
+
+    [AvaloniaFact]
+    public void AnEmptyPriorityKeepsItsPlaceBetweenTwoUsedOnes()
+    {
+        var (view, _) = Moving(EmptyMiddle);
+
+        using var host = Host(view);
+
+        var chart = view.Chart!;
+
+        Assert.True(chart.BlockOf(3)!.Value.Bottom < chart.BlockOf(2)!.Value.Y);
+        Assert.True(chart.BlockOf(4)!.Value.Bottom < chart.BlockOf(3)!.Value.Y);
+        Assert.Equal(20, chart.BlockOf(3)!.Value.Height);
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EveryLineFallsInsideTheModuleItCrosses(bool retracted)
+    {
+        foreach (var moves in new[] { new Dictionary<string, int>(), EmptyTop, EmptyMiddle, ShortP1 })
+        {
+            var view = new PowerView();
+
+            view.Show(Power(moves: moves));
+            view.Retracted = retracted;
+
+            var chart = view.Chart!;
+            var priorities = PowerPriorities.Of(Power(moves: moves).Gauge!.Modules, Plant, retracted);
+            var crossed = 0;
+
+            for (var priority = 1; priority <= PowerPriorities.Lowest; priority++)
+            {
+                foreach (var crossing in priorities.Drill(priority).Crossings)
+                {
+                    var line = chart.LineAt(priorities.Lines.ToList().IndexOf(crossing.Line))!.Value;
+                    var slice = chart.SliceOf(crossing.Module.Slot)!.Value;
+
+                    Assert.InRange(line, slice.Y, slice.Bottom);
+                    crossed++;
+                }
+            }
+
+            Assert.True(crossed > 0);
+        }
+    }
+
+    [AvaloniaFact]
+    public void AShortPriorityIsLabelledBesideTheStack()
+    {
+        var view = new PowerView();
+
+        view.Show(Power(moves: ShortP1));
+
+        var chart = view.Chart!;
+        var labels = chart.PriorityLabels();
+        var p1 = chart.BlockOf(1)!.Value;
+
+        Assert.Equal([1, 2, 3, 4, 5], labels.Select(label => label.Priority));
+        Assert.True(p1.Height < 16);
+
+        Assert.False(labels[0].Inside);
+        Assert.True(labels[0].At.X > p1.Right);
+        Assert.InRange(labels[0].At.Center.Y, p1.Y - 8, p1.Bottom + 8);
+        Assert.All(labels.Skip(1), label => Assert.True(label.Inside));
+    }
+
+    [AvaloniaFact]
+    public void TheDropStatesAreCaptured()
+    {
+        var paths = new[]
+        {
+            Capture(() => Moving(EmptyTop).View, "power-empty-p4-p5.png").Path,
+            Capture(() => Moving(EmptyMiddle).View, "power-empty-p3.png").Path,
+            Capture(() => Moving(ShortP1).View, "power-short-p1.png").Path,
+        };
+
+        var (view, _) = Moving();
+        var dragging = Path.Combine(TestSurface.CaptureDirectory, "power-dragging-onto-p2.png");
+
+        using (var host = Host(view))
+        {
+            // Redrawn under the look, since Segment and Stepper take their control themes when they are made.
+            view.Selected = 4;
+            host.Window.UpdateLayout();
+
+            Drag(host, host.On(view.Chart!.CentreOfBar("gfb")!.Value), host.On(view.Chart.CentreOf(2)!.Value), release: false);
+
+            using var frame = host.Window.CaptureRenderedFrame()!;
+
+            frame.Save(dragging, new PngBitmapEncoderOptions());
+        }
+
+        Assert.All([.. paths, dragging], path => Assert.True(File.Exists(path)));
     }
 }

@@ -37,6 +37,13 @@ over the plant's output, and the page shows it. Moves are saved with the ship's 
 MOVES puts every moved module back. The moves are D47's own record: they do not change priorities
 in the game.
 
+To move any module to another priority, drag its bar out of the opened priority and drop it on a
+priority in the stack. The priority under the pointer is outlined while you drag. The module goes to
+the top of that priority, and the move is saved with the build like MOVE TO Pn. Priorities in the
+stack now have a clear gap between them, and every priority is labelled; a label that does not fit
+inside its block sits beside the stack. An empty priority shows as a dashed slot, so it can take a
+drop too.
+
 Say "night vision", "night vision on" or "night vision off" to toggle night vision in the ship, in
 the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
 already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.

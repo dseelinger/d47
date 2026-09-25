@@ -32,6 +32,11 @@ public sealed class PowerChart : Control
     private const double LeastBar = 24;
     private const double DragStart = 4;
 
+    // This and the 1px every slice leaves at its top put priorities 4px apart.
+    private const double PriorityGap = 3;
+    private const double EmptySlot = 20;
+    private const double LeastLabel = 16;
+
     private PowerPriorities? _power;
     private int _selected = PowerPriorities.Lowest;
     private double _deployed;
@@ -41,6 +46,7 @@ public sealed class PowerChart : Control
     private Point _pressedAt;
     private string? _dragging;
     private (string Slot, bool After)? _drop;
+    private int? _move;
 
     public PowerChart()
     {
@@ -58,6 +64,9 @@ public sealed class PowerChart : Control
     /// <summary>Raised when a bar is dropped on another: the dragged slot, the target slot, and whether it lands above it.</summary>
     public event Action<string, string, bool>? Reordered;
 
+    /// <summary>Raised when a bar is dropped on another priority's block in the stack: the slot and that priority.</summary>
+    public event Action<string, int>? Moved;
+
     /// <summary>Draws <paramref name="power"/> with <paramref name="selected"/> opened up.</summary>
     /// <param name="deployed">The deployed draw, which sets the scale in both modes.</param>
     public void Show(PowerPriorities power, int selected, double deployed)
@@ -66,6 +75,7 @@ public sealed class PowerChart : Control
         _selected = Math.Clamp(selected, 1, PowerPriorities.Lowest);
         _deployed = deployed;
         _drop = null;
+        _move = null;
         _dragging = null;
         _pressed = null;
 
@@ -82,12 +92,41 @@ public sealed class PowerChart : Control
         public double Middle => Bottom + (Height / 2);
     }
 
+    /// <summary>One priority's block of the stack, linear in megawatts from its own bottom edge.</summary>
+    private sealed record Block(PriorityBand Band, double Bottom, double Top, double Scale)
+    {
+        public bool IsEmpty => Band.Total <= 0;
+
+        public double Middle => (Bottom + Top) / 2;
+
+        public double At(double megawatts) => Bottom + Math.Round((megawatts - Band.Start) * Scale);
+    }
+
     private sealed record Layout(
-        Func<double, double> At,
+        IReadOnlyList<Block> Blocks,
         IReadOnlyList<Slice> Slices,
         PriorityDrill Drill,
         IReadOnlyList<Bar> Bars,
-        double Top);
+        double Top)
+    {
+        public Block Selected => Blocks[Drill.Band.Priority - 1];
+
+        /// <summary>Where <paramref name="megawatts"/> falls on the stack: in the first block that reaches it, or above them all.</summary>
+        public double At(double megawatts)
+        {
+            foreach (var block in Blocks.Where(block => !block.IsEmpty))
+            {
+                if (megawatts <= block.Band.Cumulative + 1e-9)
+                {
+                    return block.At(megawatts);
+                }
+            }
+
+            var last = Blocks[^1];
+
+            return last.Top + Math.Round((megawatts - last.Band.Cumulative) * last.Scale);
+        }
+    }
 
     private Layout? Lay()
     {
@@ -97,13 +136,25 @@ public sealed class PowerChart : Control
         }
 
         var reach = Math.Max(power.Output, _deployed) * 1.06;
-        var scale = reach > 0 ? Column / reach : 0;
+        var empties = power.Bands.Count(band => band.Total <= 0);
+        var room = Math.Max(0, Column - (PriorityGap * (PowerPriorities.Lowest - 1)) - (EmptySlot * empties));
+        var scale = reach > 0 ? room / reach : 0;
 
-        double At(double megawatts) => Math.Round(megawatts * scale) + Floor;
+        var blocks = new List<Block>();
+        var bottom = Floor;
 
-        var slices = power.Bands
-            .SelectMany(band => power.Drill(band.Priority).Spans
-                .Select(span => new Slice(span, band.Priority, At(span.Start), At(span.End))))
+        foreach (var band in power.Bands)
+        {
+            var height = band.Total <= 0 ? EmptySlot : Math.Round(band.Total * scale);
+
+            blocks.Add(new Block(band, bottom, bottom + height, scale));
+            bottom += height + PriorityGap;
+        }
+
+        var slices = blocks
+            .Where(block => !block.IsEmpty)
+            .SelectMany(block => power.Drill(block.Band.Priority).Spans
+                .Select(span => new Slice(span, block.Band.Priority, block.At(span.Start), block.At(span.End))))
             .ToList();
 
         var drill = power.Drill(_selected);
@@ -117,7 +168,7 @@ public sealed class PowerChart : Control
             y += heights[index];
         }
 
-        return new Layout(At, slices, drill, bars, y);
+        return new Layout(blocks, slices, drill, bars, y);
     }
 
     /// <summary>
@@ -195,21 +246,33 @@ public sealed class PowerChart : Control
             }
         }
 
-        foreach (var band in bands)
+        foreach (var block in layout.Blocks.Where(block => block.IsEmpty))
         {
-            var bottom = layout.At(band.Start);
-            var top = layout.At(band.Cumulative);
+            var height = block.Top - block.Bottom - 1;
 
-            if (top - bottom < 16)
+            using (context.PushOpacity(block.Band.Priority == _selected ? 1 : 0.45))
             {
-                continue;
+                context.DrawRectangle(
+                    null,
+                    new Pen(Brush(ThemeManager.GreyKey), 1, new DashStyle([4, 3], 0)),
+                    new Rect(StackLeft + 0.5, Flip(block.Bottom + height) + 0.5, StackRight - StackLeft - 1, height - 1));
             }
+        }
 
-            var label = Text($"P{band.Priority}", Fonts.ChromeFamily, 13, ThemeManager.KnockKey, FontWeight.SemiBold);
+        foreach (var (label, at) in Labels(layout))
+        {
+            context.DrawText(label, at);
+        }
 
-            context.DrawText(
-                label,
-                new Point((StackLeft + StackRight - label.Width) / 2, Flip((bottom + top) / 2) - (label.Height / 2)));
+        if (_move is { } move)
+        {
+            var block = layout.Blocks[move - 1];
+            var height = block.Top - block.Bottom - 1;
+
+            context.DrawRectangle(
+                null,
+                new Pen(Brush(ThemeManager.CyanKey), 2),
+                new Rect(StackLeft - 2, Flip(block.Bottom + height) - 2, StackRight - StackLeft + 4, height + 4));
         }
 
         // The output lines, each labelled just above itself.
@@ -289,9 +352,9 @@ public sealed class PowerChart : Control
     /// <summary>The funnel, a curve per module, and a dashed curve per output line inside the priority.</summary>
     private void Leaders(DrawingContext context, Layout layout)
     {
-        var band = layout.Drill.Band;
-        var top = layout.At(band.Cumulative);
-        var bottom = layout.At(band.Start);
+        var block = layout.Selected;
+        var top = block.Top;
+        var bottom = block.Bottom;
         const double middle = (StackRight + DrillLeft) / 2;
 
         var funnel = new StreamGeometry();
@@ -315,7 +378,7 @@ public sealed class PowerChart : Control
         foreach (var bar in layout.Bars)
         {
             var slot = bar.Span.Module.Slot;
-            var from = (layout.At(bar.Span.Start) + layout.At(bar.Span.End)) / 2;
+            var from = (block.At(bar.Span.Start) + block.At(bar.Span.End)) / 2;
             var on = slot == _hover;
 
             using (context.PushOpacity(on ? 1 : 0.7))
@@ -337,7 +400,7 @@ public sealed class PowerChart : Control
             context.DrawGeometry(
                 null,
                 new Pen(Brush(ThemeManager.WhiteKey), 1, new DashStyle([4, 3], 0)),
-                Curve(layout.At(crossing.Line.Megawatts), Math.Round(at)));
+                Curve(block.At(crossing.Line.Megawatts), Math.Round(at)));
         }
     }
 
@@ -412,6 +475,8 @@ public sealed class PowerChart : Control
                     ? (target.Span.Module.Slot, point.Y < Flip(target.Middle))
                     : null;
 
+                _move = PriorityAt(point) is { } priority && priority != _selected ? priority : null;
+
                 InvalidateVisual();
                 return;
             }
@@ -470,15 +535,21 @@ public sealed class PowerChart : Control
 
         var dragged = _dragging;
         var drop = _drop;
+        var move = _move;
 
         _pressed = null;
         _dragging = null;
         _drop = null;
+        _move = null;
         e.Pointer.Capture(null);
 
         if (dragged is not null && drop is { } target)
         {
             Reordered?.Invoke(dragged, target.Slot, target.After);
+        }
+        else if (dragged is not null && move is { } priority)
+        {
+            Moved?.Invoke(dragged, priority);
         }
 
         InvalidateVisual();
@@ -491,6 +562,7 @@ public sealed class PowerChart : Control
         _pressed = null;
         _dragging = null;
         _drop = null;
+        _move = null;
         InvalidateVisual();
     }
 
@@ -507,32 +579,78 @@ public sealed class PowerChart : Control
         return layout.Bars.FirstOrDefault(bar => up >= bar.Bottom && up < bar.Bottom + bar.Height);
     }
 
-    /// <summary>The priority whose block of the stack is under <paramref name="point"/>, or null.</summary>
+    /// <summary>The priority whose block of the stack, or the gap above it, is under <paramref name="point"/>, or null.</summary>
     internal int? PriorityAt(Point point)
     {
-        if (point.X < StackLeft || point.X > StackRight || Lay() is not { } layout || _power is not { } power)
+        if (point.X < StackLeft || point.X > StackRight || Lay() is not { } layout)
         {
             return null;
         }
 
         var up = Flip(point.Y);
 
-        return power.Bands.FirstOrDefault(band =>
-            band.Total > 0 && up >= layout.At(band.Start) && up < layout.At(band.Cumulative))?.Priority;
+        return layout.Blocks
+            .FirstOrDefault(block => up >= block.Bottom && up < block.Top + PriorityGap)?.Band.Priority;
     }
 
     /// <summary>The middle of a priority's block of the stack, in this control's coordinates.</summary>
-    internal Point? CentreOf(int priority)
+    internal Point? CentreOf(int priority) =>
+        Lay() is { } layout
+            ? new Point((StackLeft + StackRight) / 2, Flip(layout.Blocks[priority - 1].Middle))
+            : null;
+
+    /// <summary>A priority's block of the stack, in this control's coordinates.</summary>
+    internal Rect? BlockOf(int priority) =>
+        Lay()?.Blocks[priority - 1] is { } block
+            ? new Rect(StackLeft, Flip(block.Top), StackRight - StackLeft, block.Top - block.Bottom)
+            : null;
+
+    /// <summary>A module's slice of the stack, in this control's coordinates.</summary>
+    internal Rect? SliceOf(string slot) =>
+        Lay()?.Slices.FirstOrDefault(slice => slice.Span.Module.Slot == slot) is { } slice
+            ? new Rect(StackLeft, Flip(slice.Top), StackRight - StackLeft, slice.Top - slice.Bottom)
+            : null;
+
+    /// <summary>The height of an output line across the stack, in this control's coordinates.</summary>
+    internal double? LineAt(int index) =>
+        Lay() is { } layout && _power is { } power ? Flip(layout.At(power.Lines[index].Megawatts)) : null;
+
+    /// <summary>Each priority's P-label and where it is drawn, in this control's coordinates.</summary>
+    internal IReadOnlyList<(int Priority, Rect At, bool Inside)> PriorityLabels() =>
+        Lay() is { } layout
+            ? [.. Labels(layout).Select((label, index) => (
+                index + 1, new Rect(label.At, new Size(label.Text.Width, label.Text.Height)), label.At.X < StackRight))]
+            : [];
+
+    /// <summary>
+    /// A P-label per priority: centred in its block when the block holds it, otherwise just right of the
+    /// stack and raised clear of the label below.
+    /// </summary>
+    private List<(FormattedText Text, Point At)> Labels(Layout layout)
     {
-        if (Lay() is not { } layout || _power is not { } power)
+        var labels = new List<(FormattedText, Point)>();
+        var clear = double.NegativeInfinity;
+
+        foreach (var block in layout.Blocks)
         {
-            return null;
+            var inside = block.Top - block.Bottom - 1 >= LeastLabel;
+            var key = !inside || block.IsEmpty ? ThemeManager.GreyKey : ThemeManager.KnockKey;
+            var label = Text($"P{block.Band.Priority}", Fonts.ChromeFamily, 13, key, FontWeight.SemiBold);
+
+            if (inside)
+            {
+                labels.Add((label, new Point(
+                    (StackLeft + StackRight - label.Width) / 2, Flip(block.Middle) - (label.Height / 2))));
+                continue;
+            }
+
+            var bottom = Math.Max(block.Middle - (label.Height / 2), clear);
+
+            clear = bottom + label.Height;
+            labels.Add((label, new Point(StackRight + 6, Flip(bottom + label.Height))));
         }
 
-        var band = power.Bands[priority - 1];
-
-        return new Point(
-            (StackLeft + StackRight) / 2, Flip((layout.At(band.Start) + layout.At(band.Cumulative)) / 2));
+        return labels;
     }
 
     /// <summary>The middle of a drill-in bar, in this control's coordinates.</summary>

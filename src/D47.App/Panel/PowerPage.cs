@@ -84,7 +84,7 @@ public sealed class PowerView : UserControl
 
     public PowerView() => Content = _view;
 
-    /// <summary>MOVE TO Pn was pressed: the slot, and the priority to move it to.</summary>
+    /// <summary>A move was asked for, by MOVE TO Pn or a drop on the stack: the slot, and the priority to move it to.</summary>
     public event Action<string, int>? MoveAsked;
 
     /// <summary>UNDO MOVES was pressed.</summary>
@@ -189,6 +189,7 @@ public sealed class PowerView : UserControl
             Redraw();
         };
         chart.Reordered += Reorder;
+        chart.Moved += Move;
         Chart = chart;
 
         body.Children.Add(new StackPanel
@@ -495,6 +496,13 @@ public sealed class PowerView : UserControl
         _order = order;
 
         Redraw();
+    }
+
+    /// <summary>Asks for <paramref name="slot"/> to move to <paramref name="priority"/>, placed at the top of it.</summary>
+    private void Move(string slot, int priority)
+    {
+        _order = [.. (_order ?? _slots).Where(other => other != slot), slot];
+        MoveAsked?.Invoke(slot, priority);
     }
 
     /// <summary>The POWER block on a ship's page: the verdicts, pressed to open the Power page.</summary>
