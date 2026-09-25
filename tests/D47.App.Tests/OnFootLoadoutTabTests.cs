@@ -330,6 +330,110 @@ public class OnFootLoadoutTabTests
         surface.Window.Close();
     }
 
+    /// <summary>
+    /// The modification picker draws what each modification does under its name, the filter still
+    /// narrows on the name, and what is committed is the name (#466).
+    /// </summary>
+    [AvaloniaFact]
+    public void AModificationPickerSaysWhatEachDoes()
+    {
+        using var look = AppLook.Put();
+
+        var surface = Open();
+
+        var build = surface.Kit.BuildFor(OnFootKind.Weapon, 9, "Karma AR-50");
+
+        surface.Window.Width = 1024;
+        surface.Window.Height = 900;
+
+        void AskForMod1()
+        {
+            surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+            surface.Panel.Nav.GoTo(
+                new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
+                new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.ModSlot(1)}", OnFootBuild.ModSlot(1)));
+            Dispatcher.UIThread.RunJobs();
+
+            surface.Panel.GetVisualDescendants().OfType<Button>()
+                .First(button => button.Content as string is "Plan this slot" or "Change the plan")
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        string? Planned() => surface.Kit.Entry(build.Id)?.Build?.For(OnFootBuild.ModSlot(1))?.Modification;
+
+        AskForMod1();
+
+        var row = surface.Panel.GetVisualDescendants().OfType<ListBoxItem>()
+            .Single(item => item.Content as string == "Stowed reloading");
+
+        Assert.Equal(
+            ["Stowed reloading", "Automatically reloads a stowed weapon after 5 seconds"],
+            row.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text));
+
+        surface.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-mod-picker.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        var filter = surface.Panel.GetVisualDescendants().OfType<TextBox>()
+            .Single(box => AutomationProperties.GetName(box) == "Filter");
+
+        filter.Text = "reload";
+        Dispatcher.UIThread.RunJobs();
+
+        var list = surface.Panel.GetVisualDescendants().OfType<ListBox>().Single();
+
+        Assert.Equal(["Reload speed", "Stowed reloading"], list.ItemsSource!.Cast<string>());
+
+        surface.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-mod-picker-filtered.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        list.SelectedItem = "Stowed reloading";
+        surface.Panel.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Content as string == "Plan this")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Stowed reloading", Planned());
+
+        AskForMod1();
+
+        surface.Panel.Prompts.Hear(new Heard("Reload speed", 1, Final: true));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Reload speed", Planned());
+
+        surface.Window.Close();
+    }
+
+    /// <summary>A planned modification's slot page says what it does under its name (#466).</summary>
+    [AvaloniaFact]
+    public void APlannedModificationSaysWhatItDoes()
+    {
+        var surface = Open();
+
+        var build = surface.Kit.BuildFor(OnFootKind.Weapon, 9, "Karma AR-50");
+
+        surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Stowed reloading"));
+
+        var planned = surface.Kit.Entry(build.Id)!.Build!.For(OnFootBuild.ModSlot(1))!.Describe();
+
+        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.GoTo(
+            new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
+            new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.ModSlot(1)}", OnFootBuild.ModSlot(1)));
+        Dispatcher.UIThread.RunJobs();
+
+        var block = Text(surface.Panel).SkipWhile(line => line != "PLANNED").ToList();
+
+        Assert.Equal(
+            [planned, "Automatically reloads a stowed weapon after 5 seconds"],
+            block.Skip(1).Take(2));
+
+        surface.Window.Close();
+    }
+
     private static IReadOnlyList<Button> Nudges(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<Button>().Where(button => button.Content is "▲" or "▼")];
 

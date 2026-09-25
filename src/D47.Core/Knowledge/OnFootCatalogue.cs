@@ -39,7 +39,10 @@ public sealed record OnFootEntry
     /// <summary>1 to 5 for a suit.</summary>
     public int? Grade { get; init; }
 
-    /// <summary>Weapon slots and the tool for a suit; damage type and shape for a weapon.</summary>
+    /// <summary>
+    /// Weapon slots and the tool for a suit; damage type and shape for a weapon; one sentence on what
+    /// it does for a modification.
+    /// </summary>
     public string? Detail { get; init; }
 
     /// <summary>The grade 1 price, where a journal was ever seen paying it.</summary>
@@ -149,6 +152,20 @@ public static class OnFootCatalogue
     /// <summary>What a fitted modification is called, or null when nothing d47 ships joins the spelling.</summary>
     public static string? ModificationName(string? symbol) =>
         Find(symbol) is { IsModification: true } entry ? entry.Name : null;
+
+    /// <summary>
+    /// What a modification does, by its name or a recipe name carrying the manufacturer in brackets, or
+    /// null.
+    /// </summary>
+    public static string? WhatItDoes(string? name)
+    {
+        var asked = Checklists.ChecklistKeys.Compact(Bare(name ?? string.Empty));
+
+        return asked.Length == 0
+            ? null
+            : Loaded.Value.FirstOrDefault(entry =>
+                entry.IsModification && Checklists.ChecklistKeys.Compact(entry.Name) == asked)?.Detail;
+    }
 
     /// <summary>
     /// The recipes for a fitted modification: the family it names, and every per-manufacturer variant

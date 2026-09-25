@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.16.0 — On-foot modifications say what they do
+
+Each suit and weapon modification now has one sentence saying what it does. The modification
+picker shows it under each name, a slot's Planned block shows it under the planned modification,
+and asking about a modification, for example "what does stowed reloading do?", includes it in the
+answer. The sentences come from Odyssey Materials Helper. They say what a modification does and
+give no figures.
+
+Asking about a modification that exists in several versions, such as "Higher Accuracy", now
+gets a question back, "Kinetic, Plasma, or Thermal weapons?", instead of "I have no on-foot
+modification called ...".
+
 ## 1.15.0 — The model knows your Powerplay standing
 
 Asked "who am I pledged to in Powerplay?", D47 said it did not know. It now tells the model which

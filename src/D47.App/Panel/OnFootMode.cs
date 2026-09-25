@@ -364,6 +364,11 @@ public sealed class OnFootMode(
             new(plan.Describe(withGrade: step is null), LoadoutTone.Body) { Step = step },
         };
 
+        if (!IsGrade(slot) && OnFootCatalogue.WhatItDoes(plan.Modification) is { } does)
+        {
+            lines.Add(new LoadoutLine(does));
+        }
+
         if (build.Scope is not { } scope)
         {
             lines.Add(new LoadoutLine(
@@ -482,7 +487,8 @@ public sealed class OnFootMode(
                     ? EntryVerdict.Ok
                     : EntryVerdict.No($"I have no on-foot modification called “{value}”."),
                 ModificationsFor(build, slot),
-                "Plan this"),
+                "Plan this",
+                Descriptions: Descriptions(build)),
             modification =>
             {
                 kit.Plan(build.Id, new KitPlan(slot, Modification: modification.Trim()));
@@ -513,6 +519,17 @@ public sealed class OnFootMode(
                 .Where(name => !takenElsewhere.Contains(name))
                 .Order(StringComparer.OrdinalIgnoreCase),
         ];
+    }
+
+    /// <summary>What each modification this build's kind takes does, keyed on its name.</summary>
+    private static IReadOnlyDictionary<string, string> Descriptions(OnFootBuild build)
+    {
+        var kind = build.IsWeapon ? OnFootKind.WeaponModification : OnFootKind.SuitModification;
+
+        return OnFootCatalogue.All
+            .Where(entry => entry.Kind == kind && entry.Detail is { Length: > 0 })
+            .DistinctBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(entry => entry.Name, entry => entry.Detail!, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>What this plan costs.</summary>

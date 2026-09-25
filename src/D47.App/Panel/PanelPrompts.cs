@@ -875,6 +875,8 @@ public sealed class PanelPrompts : IHearsText
                 // panel is never told its viewport and realizes no rows there.
                 ItemsPanel = new Avalonia.Controls.Templates.FuncTemplate<Avalonia.Controls.Panel?>(() => new StackPanel()),
 
+                ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((value, _) => Row(value, request)),
+
                 // Opens on what was already said or typed, and on nothing otherwise.
                 SelectedItem = _suggestions.FirstOrDefault(value =>
                     string.Equals(value, request.Initial, StringComparison.OrdinalIgnoreCase)),
@@ -979,6 +981,23 @@ public sealed class PanelPrompts : IHearsText
                 App.Current!.GetResourceObservable(ThemeManager.GreyKey));
 
             return block;
+        }
+
+        /// <summary>A suggestion, with its description under it where the request carries one.</summary>
+        private static Control Row(string? value, EntryRequest request)
+        {
+            var stack = new StackPanel
+            {
+                Spacing = 1,
+                Children = { new TextBlock { Text = value, TextWrapping = TextWrapping.Wrap } },
+            };
+
+            if (value is not null && request.Descriptions?.GetValueOrDefault(value) is { Length: > 0 } description)
+            {
+                stack.Children.Add(Muted(description));
+            }
+
+            return stack;
         }
 
         /// <summary>Shows only the suggestions holding the filter's text, keeping the highlight where it is still shown.</summary>

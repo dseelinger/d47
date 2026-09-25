@@ -252,6 +252,41 @@ public class PressingAControlThatOpensSomethingTests
         Assert.Equal("Anaconda", answered);
     }
 
+    /// <summary>A pick page's descriptions are drawn in the headset too (#466).</summary>
+    [AvaloniaFact]
+    public void APickPageInTheHeadsetDrawsEachDescription()
+    {
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        using var surface = new OffscreenSurface(panel, Quad);
+
+        panel.Prompts.Enter(
+            new D47.Core.Interface.EntryRequest(
+                "test.pick",
+                "Modification",
+                "What do you want on Mod 1?",
+                null,
+                string.Empty,
+                D47.Core.Interface.EntrySurface.Voice,
+                Suggestions: ["Reload speed", "Stowed reloading"],
+                CommitLabel: "Plan this",
+                Descriptions: new Dictionary<string, string>
+                {
+                    ["Stowed reloading"] = "Automatically reloads a stowed weapon after 5 seconds",
+                }),
+            _ => { });
+
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        surface.Render();
+
+        var row = surface.Root.GetVisualDescendants().OfType<ListBoxItem>()
+            .Single(item => (item.Content as string) == "Stowed reloading");
+
+        var description = row.GetVisualDescendants().OfType<TextBlock>()
+            .Single(block => block.Text == "Automatically reloads a stowed weapon after 5 seconds");
+
+        Assert.True(description.Bounds.Height > 0, "the description is laid out");
+    }
+
     private static Point Centre(Control control, OffscreenSurface surface)
     {
         var at = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), surface.View);

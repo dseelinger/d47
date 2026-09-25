@@ -60,7 +60,9 @@ that provenance and a symbol d47 has never had to read is never silently trusted
 Note on the data: game data is Frontier's, used under their media usage rules. See `NOTICE`.
 """
 
+import csv
 import datetime
+import io
 import re
 import urllib.request
 from pathlib import Path
@@ -73,6 +75,15 @@ EDDISCOVERY_COMMIT = "459d01dc2bccf688019c2f8e45c3909277a4e316"
 EDDISCOVERY = (
     f"https://raw.githubusercontent.com/EDDiscovery/EliteDangerousCore/{EDDISCOVERY_COMMIT}"
     "/EliteDangerous/FrontierData/Items/{file}"
+)
+
+# Odyssey Materials Helper (MIT): one English sentence per modification, column `en`, keyed
+# `blueprint.description.<key>`. Pinned for the same reason as above.
+OMH_COMMIT = "804571b4a914960b8ac76323328af3151e01412e"
+
+OMH_DESCRIPTIONS = (
+    f"https://raw.githubusercontent.com/jixxed/ed-odyssey-materials-helper/{OMH_COMMIT}"
+    "/application/src/main/resources/locale/blueprint/odyssey/description.csv"
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -143,6 +154,42 @@ MODIFICATIONS = [
     ("weapon_scope",                       "Scope",                         "weaponmod", "derived"),
 ]
 
+# The OMH description key for each modification. OMH keys follow its recipe names, and three
+# families have one key per manufacturer with the same text; the `_kinetic` one stands for all.
+DESCRIPTION_KEYS = {
+    "suit_improvedjumpassist":            "improved_jump_assist",
+    "suit_quieterfootsteps":              "quieter_footsteps",
+    "suit_nightvision":                   "night_vision",
+    "suit_increasedsprintduration":       "increased_sprint_duration",
+    "suit_increasedbatterycapacity":      "improved_battery_capacity",
+    "suit_increasedammoreserves":         "extra_ammo_capacity",
+    "suit_increasedshieldregen":          "faster_shield_regen",
+    "suit_improvedarmourrating":          "damage_resistance",
+    "suit_increasedmeleedamage":          "added_melee_damage",
+    "suit_adsmovementspeed":              "combat_movement_speed",
+    "suit_improvedradar":                 "enhanced_tracking",
+    "suit_backpackcapacity":              "extra_backpack_capacity",
+    "suit_increasedo2capacity":           "increased_air_reserves",
+    "suit_reducedtoolbatteryconsumption": "reduced_tool_battery_consumption",
+    "weapon_stability":                   "stability",
+    "weapon_handling":                    "faster_handling",
+    "weapon_clipsize":                    "magazine_size",
+    "weapon_backpackreloading":           "stowed_reloading",
+    "weapon_suppression_unpressurised":   "noise_suppressor",
+    "weapon_audiomasking":                "audio_masking",
+    "weapon_range":                       "greater_range_kinetic",
+    "weapon_headshotdamage":              "headshot_damage_kinetic",
+    "weapon_accuracy":                    "higher_accuracy_kinetic",
+    "weapon_reloadspeed":                 "reload_speed",
+    "weapon_scope":                       "scope",
+}
+
+# Corrections to OMH's wording, applied after the fetch. Faster handling makes drawing faster,
+# so it reduces the draw/stow time rather than the speed.
+DESCRIPTION_OVERRIDES = {
+    "faster_handling": ("draw/stow speed", "draw/stow time"),
+}
+
 # The game names 25, and this table has to name all of them or a Commander's fitted mod comes
 # back as a raw symbol. Read from the Fandom category page, 2026-08-16.
 EXPECTED_MODIFICATIONS = 25
@@ -173,6 +220,44 @@ def fetch(file: str) -> str:
         return response.read().decode("utf-8-sig")
 
 
+def descriptions() -> dict[str, str]:
+    """Each modification's sentence, keyed on its journal symbol. Stops if any is missing."""
+    request = urllib.request.Request(OMH_DESCRIPTIONS, headers={"User-Agent": "d47-gen-onfoot"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        text = response.read().decode("utf-8-sig")
+
+    prefix = "blueprint.description."
+    english = {
+        row["messageKey"][len(prefix):]: row["en"].strip()
+        for row in csv.DictReader(io.StringIO(text))
+        if (row.get("messageKey") or "").startswith(prefix) and row.get("en")
+    }
+
+    found: dict[str, str] = {}
+
+    for symbol, key in DESCRIPTION_KEYS.items():
+        sentence = english.get(key, "")
+
+        if key in DESCRIPTION_OVERRIDES:
+            before, after = DESCRIPTION_OVERRIDES[key]
+            if before not in sentence:
+                raise SystemExit(f"the override for {key} no longer matches OMH's text: {sentence!r}")
+            sentence = sentence.replace(before, after)
+
+        if "\t" in sentence or "\n" in sentence:
+            raise SystemExit(f"the description for {key} would break the table: {sentence!r}")
+
+        if sentence:
+            found[symbol] = sentence
+
+    missing = [symbol for symbol, _n, _k, _s in MODIFICATIONS if symbol not in found]
+
+    if missing:
+        raise SystemExit(f"no description for these modifications: {missing}")
+
+    return found
+
+
 def price_of(symbol: str, grade: str) -> str:
     """The grade 1 price, and only on the grade 1 row.
 
@@ -196,6 +281,7 @@ def price_of(symbol: str, grade: str) -> str:
 def main() -> None:
     suits_source = fetch("Suits.cs")
     hand_source = fetch("HandItems.cs")
+    described = descriptions()
 
     built: list[list[str]] = []
 
@@ -238,7 +324,7 @@ def main() -> None:
         built.append(["tool", match["symbol"], match["name"], "", match["shape"].lower(), "", ""])
 
     for symbol, name, kind, seen in MODIFICATIONS:
-        built.append([kind, symbol, name, "", "", "", seen])
+        built.append([kind, symbol, name, "", described[symbol], "", seen])
 
     check(len(suits), EXPECTED_SUITS, "wearable suits")
     check(len(npc), EXPECTED_NPC_SUITS, "NPC suits")
@@ -267,6 +353,8 @@ def main() -> None:
         "# reconciliation, not game data: nothing published carries both the journal's symbol",
         f"# and the recipe's name. seen=corpus means observed in a real journal ({corpus} of",
         f"# {len(MODIFICATIONS)}); seen=derived means it follows the convention and has not been.",
+        "# A modification's detail is what it does, from jixxed/ed-odyssey-materials-helper",
+        "# description.csv (MIT), with the overrides named in the generator.",
         "# Game data is Frontier's, used under their media usage rules; see NOTICE.",
         f"# Rows: {len(built)} (suits {len(suits)}, weapons {len(weapons)}, tools {len(tools)}, "
         f"modifications {len(MODIFICATIONS)}). Built: {stamp}.",

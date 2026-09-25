@@ -55,6 +55,9 @@ public sealed record EntryVerdict(bool Accepted, string? Complaint = null)
 /// A small fixed set of values drawn as one button each, where a press commits. Takes precedence over
 /// <paramref name="Suggestions"/>; the button whose value is <paramref name="Initial"/> is marked.
 /// </param>
+/// <param name="Descriptions">
+/// A line drawn under a suggestion, keyed on the suggestion. Read only with <paramref name="Suggestions"/>.
+/// </param>
 public sealed record EntryRequest(
     string Key,
     string Word,
@@ -65,7 +68,8 @@ public sealed record EntryRequest(
     Func<string, EntryVerdict>? Validate = null,
     IReadOnlyList<string>? Suggestions = null,
     string? CommitLabel = null,
-    IReadOnlyList<EntryButton>? Buttons = null);
+    IReadOnlyList<EntryButton>? Buttons = null,
+    IReadOnlyDictionary<string, string>? Descriptions = null);
 
 /// <summary>One value offered as a button: what it says, and what pressing it commits.</summary>
 public sealed record EntryButton(string Label, string Value)

@@ -364,6 +364,11 @@ public static class OnFootCapability
 
         if (Catalogue.Match(names, wanted) is not { } name)
         {
+            if (WhichVariant(names, wanted) is { } question)
+            {
+                return question;
+            }
+
             var near = Catalogue.Near(names, wanted);
 
             return near.Count == 0
@@ -372,12 +377,19 @@ public static class OnFootCapability
         }
 
         var report = new StringBuilder();
+        var does = OnFootCatalogue.WhatItDoes(name);
 
         foreach (var recipe in recipes.Where(blueprint => blueprint.Name == name))
         {
             report.Append(CultureInfo.InvariantCulture,
                 $"{recipe.Name} — a {(recipe.Kind == BlueprintKind.Suit ? "suit" : "weapon")} modification.");
             report.AppendLine();
+
+            if (does is not null)
+            {
+                report.AppendLine(CultureInfo.InvariantCulture, $"  Does: {does}");
+                does = null;
+            }
 
             report.AppendLine(CultureInfo.InvariantCulture, $"  Costs: {Ingredients(recipe, active)}");
 
@@ -599,6 +611,51 @@ public static class OnFootCapability
 
     private static int? Number(ToolArguments arguments, string name) =>
         arguments.TryGetInt32(name, out var value) ? value : null;
+
+    /// <summary>
+    /// Which one is meant, when what was asked names several recipes of one modification that differ
+    /// only in the bracket: "Higher Accuracy — Kinetic, Plasma, or Thermal weapons?". Null otherwise.
+    /// </summary>
+    private static string? WhichVariant(IReadOnlyList<string> names, string wanted)
+    {
+        var asked = Catalogue.Relax(wanted);
+
+        if (asked.Length == 0)
+        {
+            return null;
+        }
+
+        var variants = names
+            .Where(name => name.Contains('(', StringComparison.Ordinal))
+            .Where(name => Catalogue.Relax(name).Contains(asked, StringComparison.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        var family = variants.Select(name => name[..name.IndexOf('(', StringComparison.Ordinal)].TrimEnd())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (variants.Length < 2 || family.Length != 1)
+        {
+            return null;
+        }
+
+        var kinds = variants
+            .Select(name => name[(name.IndexOf('(', StringComparison.Ordinal) + 1)..].TrimEnd(')').Trim())
+            .ToList();
+
+        // "Kinetic Weapons", "Plasma Weapons" are said once, as "Kinetic, Plasma, or ... weapons".
+        var last = kinds.Select(kind => kind.Split(' ')[^1]).Distinct(StringComparer.Ordinal).ToArray();
+        var suffix = string.Empty;
+
+        if (last.Length == 1 && kinds.All(kind => kind.Contains(' ', StringComparison.Ordinal)))
+        {
+            suffix = " " + last[0].ToLowerInvariant();
+            kinds = [.. kinds.Select(kind => kind[..kind.LastIndexOf(' ')])];
+        }
+
+        return $"{family[0]} — {string.Join(", ", kinds.Take(kinds.Count - 1))}, or {kinds[^1]}{suffix}?";
+    }
 
     private static string Join(IReadOnlyList<string> values) =>
         values.Count switch
