@@ -129,7 +129,11 @@ public sealed record LoadoutGauge(string Name, string Reading, double Fill, Load
 
 /// <summary>A ship's power budget for its POWER block and Power page, or why there is none (#469).</summary>
 /// <param name="Gauge">The budget, or null where <paramref name="Silent"/> says why there is none.</param>
-public sealed record LoadoutPower(D47.Core.Ships.PowerGauge? Gauge, string? Silent);
+public sealed record LoadoutPower(D47.Core.Ships.PowerGauge? Gauge, string? Silent)
+{
+    /// <summary>Whether the build carries priority moves made from the D47 check (#470).</summary>
+    public bool HasMoves { get; init; }
+}
 
 /// <summary>
 /// A question waiting on the Commander, drawn at the head of the tab (Phase 38, "Ask before the plan
@@ -314,6 +318,12 @@ public interface ILoadoutMode
 
     /// <summary>The item's power budget, or null for an item with none to show (#469).</summary>
     LoadoutPower? Power(string item) => null;
+
+    /// <summary>Moves one of the item's slots to a power priority, 1 to 5, and remembers it (#470).</summary>
+    bool MovePriority(string item, string slot, int priority) => false;
+
+    /// <summary>Forgets every priority move on the item.</summary>
+    bool ClearPriorityMoves(string item) => false;
 
     /// <summary>The hull symbol behind one item, or null for a mode whose items are not ships (#289).</summary>
     string? HullOf(string item) => null;

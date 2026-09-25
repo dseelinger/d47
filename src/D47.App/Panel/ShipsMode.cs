@@ -470,8 +470,16 @@ public sealed class ShipsMode(
             return new LoadoutPower(null, why);
         }
 
-        return gauges.Power is { } power ? new LoadoutPower(power, null) : null;
+        return gauges.Power is { } power
+            ? new LoadoutPower(power, null) { HasMoves = build.PriorityMoves.Count > 0 }
+            : null;
     }
+
+    public bool MovePriority(string item, string slot, int priority) =>
+        Resolve(item) is { } build && ships.Move(build.Id, slot, priority);
+
+    public bool ClearPriorityMoves(string item) =>
+        Resolve(item) is { } build && ships.ClearMoves(build.Id);
 
     /// <summary>The jump bar, worst to best, with the game's own figure at the far end.</summary>
     private static LoadoutGauge Gauge(JumpGauge jump, int unmodelled)

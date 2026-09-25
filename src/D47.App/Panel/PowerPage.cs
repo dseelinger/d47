@@ -40,6 +40,9 @@ public sealed class PowerPage : LoadoutPage
             }
         };
 
+        View.MoveAsked += (slot, priority) => Mode.MovePriority(item, slot, priority);
+        View.UndoAsked += () => Mode.ClearPriorityMoves(item);
+
         Refresh();
     }
 
@@ -49,7 +52,8 @@ public sealed class PowerPage : LoadoutPage
 }
 
 /// <summary>
-/// The verdicts, the stack of every module, and one priority opened up beside it (#469). Drawn at the
+/// The verdicts, the stack of every module, one priority opened up beside it (#469), and the D47 check
+/// (#470). Drawn at the
 /// design's fixed width and scaled down, never up, to fit the window.
 /// </summary>
 public sealed class PowerView : UserControl
@@ -61,6 +65,8 @@ public sealed class PowerView : UserControl
     public const string NoGroups = "Board this ship once to read its priority groups.";
 
     public const string Footnote = "Damage levels from the community wiki, not checked against the game.";
+
+    public const string Clean = "Nothing a fight needs loses power when deployed.";
 
     private readonly Viewbox _view = new()
     {
@@ -77,6 +83,12 @@ public sealed class PowerView : UserControl
     private IReadOnlyList<string> _slots = [];
 
     public PowerView() => Content = _view;
+
+    /// <summary>MOVE TO Pn was pressed: the slot, and the priority to move it to.</summary>
+    public event Action<string, int>? MoveAsked;
+
+    /// <summary>UNDO MOVES was pressed.</summary>
+    public event Action? UndoAsked;
 
     /// <summary>The chart as last drawn, or null in a reduced state.</summary>
     internal PowerChart? Chart { get; private set; }
@@ -139,12 +151,12 @@ public sealed class PowerView : UserControl
 
         if (power?.Gauge is not { } gauge)
         {
-            body.Children.Add(Head(null));
+            body.Children.Add(Head("POWER", null));
             body.Children.Add(Prose(power?.Silent ?? "There is no power budget for this ship.", 14, ThemeManager.GreyKey));
             return frame;
         }
 
-        body.Children.Add(Head(gauge.Kind == FigureKind.Modelled ? "~ MODELLED FROM PLAN" : "MEASURED IN GAME"));
+        body.Children.Add(Head("POWER", gauge.Kind == FigureKind.Modelled ? "~ MODELLED FROM PLAN" : "MEASURED IN GAME"));
 
         if (gauge.Capacity is not { } made || made <= 0)
         {
@@ -187,9 +199,123 @@ public sealed class PowerView : UserControl
             Children = { chart, Side(priorities, drill, selected) },
         });
 
+        body.Children.Add(Check(priorities, power.HasMoves));
         body.Children.Add(Prose(Footnote, 12, ThemeManager.Grey2Key));
 
         return frame;
+    }
+
+    /// <summary>The modules probably in the wrong priority, judged deployed, each with its fix.</summary>
+    private StackPanel Check(PowerPriorities priorities, bool moved)
+    {
+        var check = new StackPanel { Spacing = 2, Margin = new Thickness(0, 10, 0, 0) };
+
+        var head = Head("D47 CHECK", priorities.CheckHead);
+
+        head.Margin = new Thickness(0, 0, 0, 4);
+        check.Children.Add(head);
+
+        if (!priorities.Checks.Any(row => row.IsProblem))
+        {
+            check.Children.Add(Slab(Clean));
+        }
+
+        foreach (var row in priorities.Checks)
+        {
+            check.Children.Add(CheckLine(row));
+        }
+
+        if (moved)
+        {
+            var undo = new Button
+            {
+                Content = "Undo moves",
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 6, 0, 0),
+            };
+
+            undo.Click += (_, _) => UndoAsked?.Invoke();
+            check.Children.Add(undo);
+        }
+
+        return check;
+    }
+
+    /// <summary>One check row: name, priority, tag, reason, and MOVE TO Pn where there is a fix.</summary>
+    private Grid CheckLine(CheckRow row)
+    {
+        var line = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("200,44,72,*,130"),
+            ColumnSpacing = 2,
+            Height = 44,
+        };
+
+        var (ground, ink) = row.Tag switch
+        {
+            CheckTag.AtRisk or CheckTag.Off => (ThemeManager.RedKey, ThemeManager.KnockKey),
+            CheckTag.Check => (ThemeManager.SlabKey, ThemeManager.WhiteKey),
+            _ => (ThemeManager.SlabKey, ThemeManager.BlueKey),
+        };
+
+        var cells = new Control[]
+        {
+            Cell(Trimmed(Prose(row.Module.Name, 14, ThemeManager.WhiteKey)), ThemeManager.SlabKey),
+            Cell(Chrome($"P{row.Module.Priority}", 12, ThemeManager.GreyKey, tracking: 0.72), ThemeManager.SlabKey, centred: true),
+            Cell(Chrome(row.Label, 12, ink, FontWeight.SemiBold, 1.2), ground, centred: true),
+            Cell(Trimmed(Prose(row.Reason, 13, ThemeManager.GreyKey)), ThemeManager.SlabKey),
+        };
+
+        for (var column = 0; column < cells.Length; column++)
+        {
+            Grid.SetColumn(cells[column], column);
+            line.Children.Add(cells[column]);
+        }
+
+        if (row.MoveTo is { } to)
+        {
+            var slot = row.Module.Slot;
+
+            var move = new Button
+            {
+                Content = $"Move to P{to}",
+                Padding = new Thickness(8, 0),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+            };
+
+            AutomationProperties.SetName(move, $"Move {row.Module.Name} to P{to}");
+            move.Click += (_, _) => MoveAsked?.Invoke(slot, to);
+
+            Grid.SetColumn(move, 4);
+            line.Children.Add(move);
+        }
+
+        return line;
+    }
+
+    private static Border Cell(TextBlock text, string ground, bool centred = false)
+    {
+        text.VerticalAlignment = VerticalAlignment.Center;
+
+        if (centred)
+        {
+            text.HorizontalAlignment = HorizontalAlignment.Center;
+        }
+
+        var cell = new Border { Padding = new Thickness(centred ? 0 : 12, 0), Child = text };
+
+        LoadoutPages.Themed(cell, Border.BackgroundProperty, ground);
+
+        return cell;
+    }
+
+    private static TextBlock Trimmed(TextBlock block)
+    {
+        block.TextWrapping = TextWrapping.NoWrap;
+        block.TextTrimming = TextTrimming.CharacterEllipsis;
+
+        return block;
     }
 
     /// <summary>The verdicts and the mode switch on the left; the priority stepper and its figures on the right.</summary>
@@ -468,16 +594,16 @@ public sealed class PowerView : UserControl
         return tile;
     }
 
-    /// <summary>POWER over a rule in A, with where the figures came from on the right.</summary>
-    private static Border Head(string? provenance)
+    /// <summary>A section title over a rule in A, with a note on the right.</summary>
+    private static Border Head(string title, string? note)
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
 
-        row.Children.Add(Chrome("POWER", 15, ThemeManager.AKey, FontWeight.SemiBold, 1.5));
+        row.Children.Add(Chrome(title, 15, ThemeManager.AKey, FontWeight.SemiBold, 1.5));
 
-        if (provenance is not null)
+        if (note is not null)
         {
-            var right = Chrome(provenance, 11, ThemeManager.GreyKey, tracking: 1.1);
+            var right = Chrome(note, 11, ThemeManager.GreyKey, tracking: 1.1);
 
             right.VerticalAlignment = VerticalAlignment.Bottom;
             Grid.SetColumn(right, 1);

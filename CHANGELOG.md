@@ -29,6 +29,14 @@ the stack or with the stepper. Switch between deployed and retracted hardpoints.
 try a different order within its priority; RESET ORDER puts it back. The order you try does not
 change what stays powered, because the game powers a whole priority or none of it.
 
+Under the stack, D47 CHECK lists the modules that are probably in the wrong priority, judged with
+hardpoints deployed: life support that a damaged plant would turn off, core modules and modules
+needed in a fight that are unpowered, and modules that depend on the build. Where there is a fix,
+MOVE TO Pn moves the module to that priority and the page recalculates. A move can push a priority
+over the plant's output, and the page shows it. Moves are saved with the ship's build, and UNDO
+MOVES puts every moved module back. The moves are D47's own record: they do not change priorities
+in the game.
+
 Say "night vision", "night vision on" or "night vision off" to toggle night vision in the ship, in
 the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
 already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.

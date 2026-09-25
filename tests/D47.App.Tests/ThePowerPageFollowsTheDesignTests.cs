@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -24,6 +25,9 @@ namespace D47.App.Tests;
 public class ThePowerPageFollowsTheDesignTests
 {
     private const double Plant = 22.93;
+
+    /// <summary>Tall enough for the whole panel at 1:1, the D47 check included.</summary>
+    private const double WindowHeight = 1200;
 
     /// <summary>The prototype's 22 modules, in its order: slot, name, MW, hardpoint, priority, role.</summary>
     private static readonly PowerModule[] Prototype =
@@ -52,10 +56,17 @@ public class ThePowerPageFollowsTheDesignTests
         new("mc2", "Multi-Cannon", 0.46, true, 4, PowerRole.Keep),
     ];
 
-    private static LoadoutPower Power(bool groups = true, double? plant = Plant)
+    private static LoadoutPower Power(
+        bool groups = true, double? plant = Plant, IReadOnlyDictionary<string, int>? moves = null)
     {
-        var deployed = Prototype.Sum(module => module.Megawatts);
-        var retracted = Prototype.Where(module => !module.IsHardpoint).Sum(module => module.Megawatts);
+        var modules = Prototype
+            .Select(module => moves is not null && moves.TryGetValue(module.Slot, out var moved)
+                ? module with { Priority = moved }
+                : module)
+            .ToArray();
+
+        var deployed = modules.Sum(module => module.Megawatts);
+        var retracted = modules.Where(module => !module.IsHardpoint).Sum(module => module.Megawatts);
 
         return new LoadoutPower(
             new PowerGauge(
@@ -63,15 +74,18 @@ public class ThePowerPageFollowsTheDesignTests
                 deployed,
                 plant,
                 FigureKind.Modelled,
-                Prototype.ToDictionary(module => module.Slot, module => new SlotDraw(module.Megawatts, FigureKind.Modelled)))
+                modules.ToDictionary(module => module.Slot, module => new SlotDraw(module.Megawatts, FigureKind.Modelled)))
             {
                 Groups = groups
-                    ? Prototype.GroupBy(module => module.Priority!.Value)
+                    ? modules.GroupBy(module => module.Priority!.Value)
                         .ToDictionary(group => group.Key, group => group.Sum(module => module.Megawatts))
                     : null,
-                Modules = Prototype,
+                Modules = modules,
             },
-            null);
+            null)
+        {
+            HasMoves = moves is { Count: > 0 },
+        };
     }
 
     private static PowerView View(bool retracted = false, int? selected = null)
@@ -122,7 +136,7 @@ public class ThePowerPageFollowsTheDesignTests
         using var theirs = new Bitmap(Path.Combine(Screenshots(), reference));
 
         // Where the POWER panel sits in the reference, which also carries the design page's header above it.
-        var panel = new Rect(48, 143, PowerView.ViewWidth + 1, 740);
+        var panel = new Rect(48, 143, PowerView.ViewWidth + 1, 1135);
         var size = new PixelSize((int)(ours.Size.Width + panel.Width + 20), (int)Math.Max(ours.Size.Height, panel.Height));
 
         using var frame = new RenderTargetBitmap(size);
@@ -151,7 +165,7 @@ public class ThePowerPageFollowsTheDesignTests
         using var look = AppLook.Put(theme);
 
         var view = build();
-        var window = new Window { Content = view, Width = 1000, Height = 820 };
+        var window = new Window { Content = view, Width = 1000, Height = WindowHeight };
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -195,6 +209,126 @@ public class ThePowerPageFollowsTheDesignTests
         // P3 holds the destroyed line.
         Assert.Contains("LINES IN P3", Said(states[2].View));
         Assert.Contains("DESTROYED 50%", Said(states[2].View));
+
+        // The check judges the deployed build in every state.
+        Assert.All(states, state => Assert.Contains("DEPLOYED · P5 UNPOWERED", Said(state.View)));
+    }
+
+    /// <summary>Each check row as its cells read: name, priority, tag, reason, and the action where there is one.</summary>
+    private static IReadOnlyList<string> Checks(PowerView view) =>
+        [.. view.GetLogicalDescendants().OfType<Grid>()
+            .Where(grid => grid.ColumnDefinitions.Count == 5)
+            .Select(grid => string.Join(
+                " | ",
+                grid.Children.Select(cell => cell switch
+                {
+                    Button button => AutomationProperties.GetName(button) ?? string.Empty,
+                    Border { Child: TextBlock text } => text.Text ?? string.Empty,
+                    _ => string.Empty,
+                })))];
+
+    private static Button? Pressable(PowerView view, string name) =>
+        view.GetLogicalDescendants().OfType<Button>()
+            .FirstOrDefault(button => AutomationProperties.GetName(button) == name || Equals(button.Content, name));
+
+    private static void Press(Button button)
+    {
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void TheCheckListsTheDesignsRowsWithFuelScoopAmongTheOkRows()
+    {
+        var view = View();
+
+        Assert.Contains("D47 CHECK", Said(view));
+        Assert.Contains("DEPLOYED · P5 UNPOWERED", Said(view));
+        Assert.DoesNotContain(PowerView.Clean, Said(view));
+        Assert.Contains(PowerView.Footnote, Said(view));
+
+        Assert.Equal(
+            [
+                "Heat Sink Launcher | P5 | CHECK | Unpowered when deployed. Depends on the build.",
+                "Point Defence | P5 | OFF | Needed in a fight. Unpowered when deployed. | Move Point Defence to P4",
+                "Chaff Launcher | P5 | OFF | Needed in a fight. Unpowered when deployed. | Move Chaff Launcher to P4",
+                "Wake Scanner | P5 | OFF | Needed in a fight. Unpowered when deployed. | Move Wake Scanner to P4",
+                "Fuel Scoop | P4 | OK | Not needed in a fight. Shed first.",
+                "Auto Field-Maintenance | P5 | OK | Not needed in a fight. Shed first.",
+                "Cargo Hatch | P5 | OK | Not needed in a fight. Shed first.",
+            ],
+            Checks(view));
+
+        // Nothing has been moved, so there is nothing to undo.
+        Assert.Null(Pressable(view, "Undo moves"));
+    }
+
+    [AvaloniaFact]
+    public void MoveToP4TakesAModuleThereAndUndoMovesPutsItBack()
+    {
+        var moves = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var view = new PowerView();
+
+        view.MoveAsked += (slot, priority) =>
+        {
+            moves[slot] = priority;
+            view.Show(Power(moves: moves));
+        };
+
+        view.UndoAsked += () =>
+        {
+            moves.Clear();
+            view.Show(Power(moves: moves));
+        };
+
+        view.Show(Power());
+
+        using var host = Host(view);
+
+        Press(Pressable(view, "Move Point Defence to P4")!);
+
+        // P1–4 still fits with Point Defence in it, so it is powered and leaves the check.
+        Assert.Equal(4, moves["pdt"]);
+        Assert.DoesNotContain(Checks(view), row => row.StartsWith("Point Defence", StringComparison.Ordinal));
+        Assert.Contains("DEPLOYED · P5 UNPOWERED", Said(view));
+        Assert.NotNull(Pressable(view, "Undo moves"));
+
+        view.Selected = 4;
+        Assert.NotNull(view.Chart!.CentreOfBar("pdt"));
+
+        // A second move pushes P4 over the line, and Point Defence comes back reading its moved priority.
+        Press(Pressable(view, "Move Chaff Launcher to P4")!);
+
+        Assert.Contains("DEPLOYED · P4–5 UNPOWERED", Said(view));
+        Assert.Contains(
+            "Point Defence | P4 | OFF | Needed in a fight. Unpowered when deployed. | Move Point Defence to P3",
+            Checks(view));
+
+        Press(Pressable(view, "Undo moves")!);
+
+        Assert.Empty(moves);
+        Assert.Null(Pressable(view, "Undo moves"));
+        Assert.Contains(
+            "Point Defence | P5 | OFF | Needed in a fight. Unpowered when deployed. | Move Point Defence to P4",
+            Checks(view));
+
+        view.Selected = 5;
+        Assert.NotNull(view.Chart!.CentreOfBar("pdt"));
+    }
+
+    [AvaloniaFact]
+    public void ABuildWithNoProblemsSaysSoAboveTheOkRows()
+    {
+        var view = new PowerView();
+
+        view.Show(Power(plant: 30));
+
+        var said = Said(view).ToList();
+
+        Assert.Contains("DEPLOYED · EVERYTHING POWERED", said);
+        Assert.Contains(PowerView.Clean, said);
+        Assert.True(said.IndexOf(PowerView.Clean) < said.IndexOf("Fuel Scoop"));
+        Assert.All(Checks(view), row => Assert.Contains(" | OK | ", row));
     }
 
     [AvaloniaTheory]
@@ -304,7 +438,7 @@ public class ThePowerPageFollowsTheDesignTests
     private static Hosted Host(PowerView view)
     {
         var look = AppLook.Put();
-        var window = new Window { Content = view, Width = 1000, Height = 820 };
+        var window = new Window { Content = view, Width = 1000, Height = WindowHeight };
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
