@@ -11,6 +11,7 @@ using D47.App.Theming;
 using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 
 namespace D47.App.Settings;
 
@@ -40,6 +41,15 @@ public partial class SettingsView
 
     /// <summary>Marks the RENAME button, for a test to find it.</summary>
     public const string GuardianRenameName = "GuardianRename";
+
+    /// <summary>Marks the UPDATE button, for a test to find it.</summary>
+    public const string GuardianUpdateName = "GuardianUpdate";
+
+    /// <summary>Marks the DELETE button, for a test to find it.</summary>
+    public const string GuardianDeleteName = "GuardianDelete";
+
+    /// <summary>Marks the UNDO button in the notice, for a test to find it.</summary>
+    public const string GuardianUndoName = "GuardianUndo";
 
     /// <summary>Marks the name row, shown only while creating or renaming a preset.</summary>
     public const string GuardianNameRowName = "GuardianNameRow";
@@ -154,14 +164,27 @@ public partial class SettingsView
         var nameMode = GuardianNameMode.None;
         string? nameRowOldName = null;
         DispatcherTimer? noticeTimer = null;
+        Action? currentUndo = null;
         IDisposable? saveAsFill = null;
         IDisposable? saveAsInk = null;
         IDisposable? renameFill = null;
         IDisposable? renameInk = null;
 
-        var notice = GuardianNotice(out var noticeText);
+        var notice = GuardianNotice(out var noticeText, out var undo);
+        undo.Click += (_, _) =>
+        {
+            currentUndo?.Invoke();
+            HideNotice();
+            Refresh();
+        };
 
         var (nameRow, nameLabel, nameField, nameAction, nameMessage, nameCancel) = GuardianNameRow();
+
+        var update = GuardianTileButton("Update");
+        update.Name = GuardianUpdateName;
+        update.VerticalAlignment = VerticalAlignment.Top;
+        AutomationProperties.SetName(update, "Update");
+        update.Click += (_, _) => CommitUpdate();
 
         var saveAs = GuardianTileButton("Save as");
         saveAs.Name = GuardianSaveAsName;
@@ -175,7 +198,17 @@ public partial class SettingsView
         AutomationProperties.SetName(rename, "Rename");
         rename.Click += (_, _) => OpenNameRow(GuardianNameMode.Rename);
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { test, saveAs, rename } };
+        var delete = GuardianTileButton("Delete");
+        delete.Name = GuardianDeleteName;
+        delete.VerticalAlignment = VerticalAlignment.Top;
+        delete.Classes.Add(DestructiveClass);
+        AutomationProperties.SetName(delete, "Delete");
+        delete.Click += (_, _) => CommitDelete();
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal, Spacing = 2, Children = { test, update, saveAs, rename, delete },
+        };
 
         var control = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 2 };
         Grid.SetColumn(buttons, 1);
@@ -215,16 +248,19 @@ public partial class SettingsView
 
         _underRow = (list, string.Join(" ", GuardianVoice.Table.Select(effect => $"{effect.Label} {effect.Parameter}")));
 
-        void ShowNotice(string text)
+        void ShowNotice(string text, Action? undoAction = null)
         {
             noticeTimer?.Stop();
             noticeText.Text = text;
+            currentUndo = undoAction;
+            undo.IsVisible = undoAction is not null;
             notice.IsVisible = true;
             noticeTimer = new DispatcherTimer { Interval = GuardianNoticeDuration };
             noticeTimer.Tick += (_, _) =>
             {
                 noticeTimer!.Stop();
                 notice.IsVisible = false;
+                currentUndo = null;
             };
             noticeTimer.Start();
         }
@@ -233,7 +269,45 @@ public partial class SettingsView
         {
             noticeTimer?.Stop();
             notice.IsVisible = false;
+            currentUndo = null;
         }
+
+        void CommitUpdate()
+        {
+            var speech = _settings!.Current.Speech;
+            var name = speech.GuardianVoice.Basis;
+            var snapshot = speech.GuardianVoice;
+            var result = GuardianPresets.Update(speech);
+
+            if (result.Settings is not { } updated)
+            {
+                return;
+            }
+
+            _settings!.Replace("Update Guardian voice preset", s => s with { Speech = updated });
+            ShowNotice($"Updated {name} with the current effects.", () => RestoreGuardianVoice(snapshot));
+            Refresh();
+        }
+
+        void CommitDelete()
+        {
+            var speech = _settings!.Current.Speech;
+            var name = GuardianPresets.Label(GuardianPresets.Preset(speech));
+            var snapshot = speech.GuardianVoice;
+            var result = GuardianPresets.Delete(speech);
+
+            if (result.Settings is not { } updated)
+            {
+                return;
+            }
+
+            _settings!.Replace("Delete Guardian voice preset", s => s with { Speech = updated });
+            ShowNotice($"Deleted {name}.", () => RestoreGuardianVoice(snapshot));
+            Refresh();
+        }
+
+        void RestoreGuardianVoice(GuardianVoiceSettings snapshot) =>
+            _settings!.Replace("Undo Guardian voice preset change", s => s with { Speech = s.Speech with { GuardianVoice = snapshot } });
 
         void OpenNameRow(GuardianNameMode mode)
         {
@@ -321,9 +395,17 @@ public partial class SettingsView
             var isBuiltin = GuardianPresets.Find(preset) is not null;
             var isSavedPreset = saved.Contains(preset);
 
+            var basis = speech.GuardianVoice.Basis is { } named
+                ? (speech.GuardianVoice.SavedPresets ?? [])
+                    .FirstOrDefault(p => string.Equals(p.Name, named, StringComparison.OrdinalIgnoreCase))?.Name
+                : null;
+            var changedFromBasis = preset == GuardianPresets.CustomId && basis is not null;
+
             saveAs.IsVisible = !isSavedPreset;
             saveAs.IsEnabled = !isBuiltin;
+            update.IsVisible = changedFromBasis;
             rename.IsVisible = isSavedPreset;
+            delete.IsVisible = isSavedPreset;
 
             saveAsFill?.Dispose();
             saveAsInk?.Dispose();
@@ -345,17 +427,12 @@ public partial class SettingsView
             entries.Add(new InlinePickerSpace(8));
             entries.Add(new InlinePickerOption(GuardianPresets.CustomId, GuardianPresets.Label(GuardianPresets.CustomId), ThemeManager.WhiteKey));
 
-            var basis = speech.GuardianVoice.Basis is { } named
-                ? (speech.GuardianVoice.SavedPresets ?? [])
-                    .FirstOrDefault(p => string.Equals(p.Name, named, StringComparison.OrdinalIgnoreCase))?.Name
-                : null;
-
             picker.Show(
                 entries,
                 preset,
                 GuardianPresets.Label(preset),
                 saved.Contains(preset) ? ThemeManager.CyanKey : ThemeManager.WhiteKey,
-                preset == GuardianPresets.CustomId && basis is not null ? $"  · changed from {basis}" : null);
+                changedFromBasis ? $"  · changed from {basis}" : null);
 
             var effects = GuardianVoice.Effects(speech.GuardianVoice);
 
@@ -807,8 +884,12 @@ public partial class SettingsView
         VerticalContentAlignment = VerticalAlignment.Center,
     };
 
-    /// <summary>The notice shown below the preset row after a save or rename, hidden until then.</summary>
-    private Border GuardianNotice(out TextBlock text)
+    /// <summary>
+    /// The notice shown below the preset row after a preset action, hidden until then. Save and rename
+    /// carry no undo; update and delete offer <paramref name="undo"/>, which shows only while the notice
+    /// is up.
+    /// </summary>
+    private Border GuardianNotice(out TextBlock text, out Button undo)
     {
         text = new TextBlock
         {
@@ -819,6 +900,20 @@ public partial class SettingsView
         };
         Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
+        undo = new Button
+        {
+            Name = GuardianUndoName,
+            Content = "Undo",
+            IsVisible = false,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        AutomationProperties.SetName(undo, "Undo");
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        Grid.SetColumn(undo, 1);
+        row.Children.Add(text);
+        row.Children.Add(undo);
+
         var notice = new Border
         {
             Name = GuardianNoticeName,
@@ -826,7 +921,7 @@ public partial class SettingsView
             Padding = new Thickness(15, 0, 12, 0),
             BorderThickness = new Thickness(3, 0, 0, 0),
             IsVisible = false,
-            Child = text,
+            Child = row,
         };
         Themed(notice, Border.BackgroundProperty, ThemeManager.SlabKey);
         Themed(notice, Border.BorderBrushProperty, ThemeManager.CyanKey);

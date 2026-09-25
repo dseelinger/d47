@@ -124,6 +124,12 @@ presets. Enter confirms, Esc or CANCEL closes it without writing, and a rejected
 reason in red. A save or rename lands straight away and a notice under the preset row says "Saved
 <name>." or "Renamed <old> to <new>.", clearing itself after six seconds.
 
+The preset row now also offers UPDATE and DELETE. UPDATE appears once Custom reads "changed from
+<name>" and writes the current effects into that preset straight away. DELETE appears on one of
+your own presets, unchanged, and removes it with one press — there is no confirmation step. Both
+notices carry an UNDO button that puts the preset, the effects and the basis back exactly as they
+were, for as long as the notice is showing.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification
