@@ -38,6 +38,7 @@ public static class CalloutCapability
     public const string TradingModeKey = "callouts.tradingMode";
     public const string TradingModeMinHoldKey = "callouts.tradingModeMinHold";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
+    public const string KillsKey = "callouts.kills";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
@@ -296,6 +297,16 @@ public static class CalloutCapability
                 "announced attacks",
                 s => s.Callouts.AnnouncedAttack,
                 (s, v) => s with { Callouts = s.Callouts with { AnnouncedAttack = v } }),
+
+            Toggle(
+                KillsKey,
+                "Notable kills",
+                "The first kill of the session, the best reward so far, two kills inside thirty seconds, "
+                + "and every fifth kill.",
+                "kills",
+                "kills",
+                s => s.Callouts.Kills,
+                (s, v) => s with { Callouts = s.Callouts with { Kills = v } }),
 
             Toggle(
                 RivalTerritoryKey,

@@ -92,6 +92,12 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>The raw <c>$</c>-key of a Frontier-canned message from the Commander's own carrier, or null.</summary>
     public string? MessageKey { get; init; }
 
+    /// <summary>
+    /// A Frontier-written line the subject of this announcement said, for a flavour brief to refer back
+    /// to, or null. Never spoken as written.
+    /// </summary>
+    public string? Callback { get; init; }
+
     /// <summary>The line the conversation page should carry, or null when this belongs on another page.</summary>
     public string? ConversationLine =>
         Transcript is null && Voice == Audio.VoiceRole.ShipAi ? Text : null;

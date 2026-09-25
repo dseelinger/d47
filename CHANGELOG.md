@@ -6,7 +6,7 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 1.17.0 — The ship remarks on promotions
+## 1.17.0 — The ship remarks on promotions and notable kills
 
 When you are promoted, the ship's AI now makes one remark about it in its own voice. This covers
 Combat, Trade, Exploration, Mercenary, Exobiology and CQC, the Empire and Federation navies, and
@@ -14,6 +14,12 @@ Powerplay rank. It keeps the career and the rank name as Elite gives them, for e
 Elite IV". With personality off, or no model, it says the plain line: "Promoted. Trade, Elite IV."
 Joining a Power is not announced, and promotions already in the journal when D47 starts are not
 announced either.
+
+When you destroy a ship, the ship's AI now remarks on it if the kill is notable: the first of the
+session, the best reward so far, a second kill within thirty seconds, or every fifth kill. It names
+the ship, the pilot and the reward, for example "First kill of the session. Paul Curnow's Eagle
+destroyed, 59,330 credits." If the pilot taunted you in the five minutes before, the reworded remark
+may answer it. The **Notable kills** switch under Flight callouts turns it off.
 
 ## 1.16.0 — On-foot modifications say what they do
 

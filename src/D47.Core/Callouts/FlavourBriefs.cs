@@ -215,6 +215,27 @@ public static class FlavourBriefs
             };
         }
 
+        // A notable kill.
+        if (announcement.Key.StartsWith(KillCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "The Commander has just destroyed a ship. Make one short remark about it in your own "
+                    + $"voice, from this: \"{announcement.Text}\" Keep the ship, the pilot's name and the "
+                    + "credits exactly as given. Add no facts. One or two sentences. Do not ask a question."
+                    + (announcement.Callback is { } callback
+                        ? " Shortly before, that pilot said this to the Commander: "
+                          + $"\"{callback}\" You may refer back to it once."
+                        : string.Empty),
+                NeedsPersona = true,
+                NeedsGameState = false,
+
+                // The sheet, so it is addressed to somebody.
+                NeedsAboutMe = true,
+            };
+        }
+
         // Phase 31's opening line.
         if (string.Equals(announcement.Key, ContinuityCallout.Key, StringComparison.Ordinal))
         {

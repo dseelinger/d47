@@ -419,6 +419,7 @@ public static class SettingsLayout
                                 E("callouts.longJumpRemark"),
                                 E("callouts.longJumpSeconds", under: true),
                                 E("callouts.announcedAttack"),
+                                E("callouts.kills"),
                                 E("callouts.rivalTerritory"),
                             ]),
                     ]),

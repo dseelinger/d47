@@ -2476,6 +2476,7 @@ public sealed class AppHost : IDisposable
 
             // Above everything except danger itself (Phase 15).
             .Add(new AnnouncedAttackCallout())
+            .Add(new KillCallout())
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
             .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
             .Add(new RouteCallout(loggers.CreateLogger<RouteCallout>()))
@@ -2601,6 +2602,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("emissions", callouts.Emissions, now);
         engine.SetEnabled("limpets", callouts.Limpets, now);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack, now);
+        engine.SetEnabled("kills", callouts.Kills, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);

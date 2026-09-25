@@ -451,6 +451,9 @@ public sealed record CalloutSettings
     /// <summary>An attack an NPC has announced but not yet made (Phase 15).</summary>
     public bool AnnouncedAttack { get; init; } = true;
 
+    /// <summary>A notable kill.</summary>
+    public bool Kills { get; init; } = true;
+
     /// <summary>Flying in a rival Power's space (Phase 15).</summary>
     public bool RivalTerritory { get; init; } = true;
 

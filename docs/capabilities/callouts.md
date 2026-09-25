@@ -243,6 +243,30 @@ text would mean matching on a string somebody else chose. The ids come from a fi
 chatter is considered, and **nothing the message says is repeated, shown, or passed to the language
 model** — the spoken line is chosen by which id arrived and is otherwise a constant.
 
+#### Notable kills {#kills}
+
+When you destroy a ship, your core remarks on it if the kill is a notable one:
+
+- the first kill of the game session
+- a reward bigger than any other this session
+- a kill within thirty seconds of the one before
+- every fifth kill
+
+Other kills pass without a word. The line names the ship, the pilot when Elite gives one, and the
+reward. A combat bond names the faction instead, because Elite writes no pilot or ship for it. A kill
+on foot names the person, not a ship. Another player is called "A Commander", because their name is
+one they chose and it is not passed to the language model. When
+it is not reworded in your core's voice, it is said like this:
+
+```text
+First kill of the session. Paul Curnow's Eagle destroyed, 59,330 credits.
+Two kills inside thirty seconds. KazDav Cain's Eagle destroyed, 60,602 credits.
+```
+
+If the pilot sent you a message in the five minutes before the kill, the remark may refer back to
+it. Only NPC messages that Elite wrote are remembered, and the fixed line never quotes one. The
+count, the best reward and the last kill's time start again when you load the game.
+
 #### Fuel and range {#fuel}
 
 Three separate warnings, each answering a different question.
