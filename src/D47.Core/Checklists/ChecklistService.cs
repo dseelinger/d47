@@ -612,6 +612,7 @@ public sealed class ChecklistService(
             .OrderBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)],
         Gates = [.. ship.Gates.Concat(foot.Gates)],
         Uncovered = [.. ship.Uncovered.Concat(foot.Uncovered)],
+        Assumed = [.. ship.Assumed.Concat(foot.Assumed)],
     };
 
     public string Shortfall()
@@ -636,6 +637,11 @@ public sealed class ChecklistService(
         foreach (var gate in costing.Gates)
         {
             report.AppendLine(gate);
+        }
+
+        foreach (var guess in costing.Assumed)
+        {
+            report.AppendLine(guess);
         }
 
         foreach (var ledger in costing.Shortfall.GroupBy(ingredient => ingredient.Material.Ledger))

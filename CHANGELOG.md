@@ -54,6 +54,15 @@ many are needed. **Needed for** lists each module and blueprint grade with its c
 "Thrusters · Dirty Drive Tuning 5 — 12", without naming ships. The trade that would cover a
 shortfall is under **Potential trades**.
 
+The Materials page now costs a planned blueprint when D47 does not know which module is in the slot.
+Some blueprint names belong to more than one module, such as Heavy Duty, which is on both Armour and
+Shield Boosters. D47 now works out the module from the module the plan names, then the blueprint,
+then the module fitted in that ship's slot, then what the slot can hold, so Heavy Duty on a utility
+mount is costed as a Shield Booster without the ship's loadout. Plans that name a bulkhead, such as
+"Anaconda Lightweight Alloy", are costed as Armour. Where more than one module is still possible, the
+slot is costed at the most expensive of them, and a note says so. **Can't be costed** now lists only
+blueprints or grades D47 has no recipe for, and plans with no grade.
+
 Say "night vision", "night vision on" or "night vision off" to toggle night vision in the ship, in
 the SRV and on foot. In the ship and the SRV, "night vision on" presses nothing if night vision is
 already on. On foot, "on" and "off" both toggle it, because D47 cannot yet tell whether it is on.

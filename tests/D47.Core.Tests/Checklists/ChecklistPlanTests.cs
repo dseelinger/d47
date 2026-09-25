@@ -150,7 +150,7 @@ public class ChecklistPlanTests
               "Engineers":[ {"Engineer":"Didi Vatermann","EngineerID":300000,"Progress":"Unlocked","Rank":5} ] }
             """;
 
-        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("TinyHardpoint5", "Heavy Duty", 5)]);
+        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("TinyHardpoint4", "Heavy Duty", 5)]);
 
         var costing = EngineeringPlan.Cost(items, State(ShieldBoosterFitted, didiVatermann));
 
@@ -194,16 +194,17 @@ public class ChecklistPlanTests
     }
 
     [Fact]
-    public void AnUnresolvableModuleWithTwoOwnersIsUncoveredRatherThanGuessed()
+    public void AnUnfittedUtilityMountSettlesHeavyDutyAsAShieldBooster()
     {
-        // No slot is fitted and the plan names no module, and Heavy Duty grade 5 belongs to both a Shield
-        // Booster and Armour — so nothing is costed rather than one being picked arbitrarily.
-        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("TinyHardpoint5", "Heavy Duty", 5)]);
+        // No slot is fitted and the plan names no module; Heavy Duty belongs to a Shield Booster and to
+        // Armour, and only one of those goes on a utility mount.
+        var items = EngineeringPlan.Items(Krait, "krait_mkii", [new BuildRequest("TinyHardpoint4", "Heavy Duty", 5)]);
 
         var costing = EngineeringPlan.Cost(items, State());
 
-        Assert.Empty(costing.Ingredients);
-        Assert.Contains(costing.Uncovered, line => line.Contains("I don't know which module is in that slot", StringComparison.Ordinal));
+        Assert.Contains(costing.Ingredients, i => i.Material.Symbol == "antimony");
+        Assert.Empty(costing.Uncovered);
+        Assert.Empty(costing.Assumed);
     }
 
     [Fact]

@@ -154,6 +154,11 @@ public static class GapCapability
             said.AppendLine(gate);
         }
 
+        foreach (var guess in report.Assumed)
+        {
+            said.AppendLine(guess);
+        }
+
         foreach (var ledger in report.Ledgers)
         {
             said.AppendLine();

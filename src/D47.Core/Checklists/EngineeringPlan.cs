@@ -48,6 +48,9 @@ public sealed record PlanCosting
     /// <summary>Requests no shipped table covers.</summary>
     public IReadOnlyList<string> Uncovered { get; init; } = [];
 
+    /// <summary>Requests costed at the most expensive module kind they could be on.</summary>
+    public IReadOnlyList<string> Assumed { get; init; } = [];
+
     public IReadOnlyList<PlanIngredient> Shortfall =>
         [.. Ingredients.Where(ingredient => ingredient.Short > 0)
             .OrderByDescending(ingredient => ingredient.Short)];
@@ -158,6 +161,7 @@ public static class EngineeringPlan
         var needed = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var gates = new List<string>();
         var uncovered = new List<string>();
+        var assumed = new List<string>();
 
         foreach (var item in items)
         {
@@ -198,35 +202,23 @@ public static class EngineeringPlan
                 ? BlueprintKind.Experimental
                 : BlueprintKind.Modification;
 
-            // The recipe belongs to a module kind, and the same blueprint name can belong to several — Heavy
-            // Duty on a Shield Booster is not Heavy Duty on Armour. Resolve by what the plan itself says goes
-            // there, else by what is actually fitted (EngineerAtHand.Ceiling narrows the same way).
-            var moduleName = Blank(intent.Module);
-            var fitted = moduleName is null ? FittedModule.Of(item, state) : null;
+            // The fitted module speaks only for a line about one ship: anything else would read whatever
+            // hull is being flown.
+            var fitted = item.Scope.Group == ChecklistGroup.Ship ? FittedModule.Of(item, state) : null;
 
-            IEnumerable<Blueprint> options = moduleName is { Length: > 0 }
-                ? BlueprintCatalogue.Named(intent.Detail, moduleName)
-                : fitted is not null
-                    ? BlueprintCatalogue.Named(intent.Detail, fitted)
-                    : named;
-
-            options = options.Where(recipe => recipe.Kind == wanted);
+            var options = PlannedModule.Candidates(
+                    intent.Detail,
+                    Blank(intent.Module),
+                    fitted,
+                    EliteSpecifications.Slot(item.Hull, intent.Subject))
+                .Where(recipe => recipe.Kind == wanted);
 
             if (grade is { } wantedGrade)
             {
                 options = options.Where(recipe => recipe.Grade == wantedGrade);
             }
 
-            var candidates = options.ToList();
-
-            if (moduleName is not { Length: > 0 } && fitted is null
-                && candidates.Select(recipe => recipe.Module).Distinct(StringComparer.Ordinal).Count() > 1)
-            {
-                uncovered.Add($"{item.Text} — I don't know which module is in that slot.");
-                continue;
-            }
-
-            var recipe = candidates.FirstOrDefault();
+            var recipe = PlannedModule.Choose([.. options], out var guessed);
 
             if (recipe is null)
             {
@@ -236,6 +228,12 @@ public static class EngineeringPlan
                 }
 
                 continue;
+            }
+
+            if (guessed)
+            {
+                assumed.Add($"{item.Text} — I can't tell which module that is, so it is counted as a {recipe.Module}, "
+                            + "the most expensive it could be.");
             }
 
             if (intent.Kind == ChecklistIntentKind.Experimental)
@@ -268,7 +266,7 @@ public static class EngineeringPlan
             .OrderBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)
             .ToList();
 
-        return new PlanCosting { Ingredients = ingredients, Gates = gates, Uncovered = uncovered };
+        return new PlanCosting { Ingredients = ingredients, Gates = gates, Uncovered = uncovered, Assumed = assumed };
     }
 
     private static string Gate(string what, int grade) =>

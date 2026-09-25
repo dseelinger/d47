@@ -1991,6 +1991,11 @@ public sealed class ShipsMode(
             lines.Add(new LoadoutLine(gate, LoadoutTone.Danger));
         }
 
+        foreach (var guess in costing.Assumed)
+        {
+            lines.Add(new LoadoutLine(guess, LoadoutTone.Warn));
+        }
+
         if (costing.Ingredients.Count == 0)
         {
             return lines;

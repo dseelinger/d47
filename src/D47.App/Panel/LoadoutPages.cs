@@ -2225,6 +2225,17 @@ public sealed class GapPage : UserControl
                 report.Uncovered));
         }
 
+        if (report.Assumed.Count > 0)
+        {
+            var n = report.Assumed.Count;
+
+            _notes.Children.Add(NoteLine(
+                $"{n.ToString(CultureInfo.InvariantCulture)} planned slot{(n == 1 ? string.Empty : "s")} "
+                + (n == 1 ? "is" : "are") + " costed at the most expensive module",
+                "Costed at the most expensive module",
+                report.Assumed));
+        }
+
         // Each card as tall as its own rows, in as many columns as fit; the page scrolls, not the card.
         _cards.Content = Reflow.Grid([.. cards.Select(Card)], SmallestCard, CardGap, CardGap, maxColumns: 5);
     }

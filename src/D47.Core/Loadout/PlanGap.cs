@@ -88,6 +88,9 @@ public sealed record GapReport
     /// <summary>Requests no shipped table covers.</summary>
     public IReadOnlyList<string> Uncovered { get; init; } = [];
 
+    /// <summary>Requests costed at the most expensive module kind they could be on.</summary>
+    public IReadOnlyList<string> Assumed { get; init; } = [];
+
     /// <summary>How many plans were read, so a page can say what an empty answer means.</summary>
     public int Plans { get; init; }
 
@@ -134,6 +137,7 @@ public static class PlanGap
         var wanted = new Dictionary<string, List<GapDemand>>(StringComparer.OrdinalIgnoreCase);
         var gates = new List<string>();
         var uncovered = new List<string>();
+        var assumed = new List<string>();
 
         var plans = 0;
         var intended = 0;
@@ -168,18 +172,23 @@ public static class PlanGap
                     [slot.ToRequest()],
                     canonicalSlot);
 
-                var slotName = EliteSpecifications.Slot(build.Hull, slot.Slot)?.Describe() ?? slot.Slot;
+                var shipSlot = EliteSpecifications.Slot(build.Hull, slot.Slot);
+                var slotName = shipSlot?.Describe() ?? slot.Slot;
+
+                // Only an owned build's own ship has a fitted module worth reading.
+                var fitted = build.IsOwned && items.FirstOrDefault() is { } item ? FittedModule.Of(item, state) : null;
 
                 Fold(
                     EngineeringPlan.Cost(items, state),
                     $"{build.Describe()} · {slotName}",
                     Named(slot.Blueprint, slot.Grade),
-                    ModuleOf(slot, slotName),
+                    ModuleOf(slot, slotName, fitted, shipSlot),
                     needed,
                     held,
                     wanted,
                     gates,
-                    uncovered);
+                    uncovered,
+                    assumed);
             }
         }
 
@@ -224,7 +233,8 @@ public static class PlanGap
                     held,
                     wanted,
                     gates,
-                    uncovered);
+                    uncovered,
+                    assumed);
             }
         }
 
@@ -259,6 +269,7 @@ public static class PlanGap
             Ledgers = ledgers,
             Gates = gates,
             Uncovered = uncovered,
+            Assumed = assumed,
             Plans = plans,
             Intended = intended,
             IncludesIntended = includeIntended,
@@ -274,22 +285,25 @@ public static class PlanGap
                 : ChecklistNaming.Readable(named);
 
     /// <summary>
-    /// The planned module, else the one module the blueprint is offered for, else the slot's own name —
+    /// The planned module, else the module kind the blueprint is costed against, else the slot's own name —
     /// which for a core slot is the module.
     /// </summary>
-    private static string ModuleOf(SlotPlan slot, string slotName)
+    private static string ModuleOf(SlotPlan slot, string slotName, ModuleSpecification? fitted, ShipSlot? shipSlot)
     {
         if (slot.Module is { Length: > 0 } module)
         {
             return module;
         }
 
-        var offered = BlueprintCatalogue.Named(slot.Blueprint)
-            .Select(blueprint => blueprint.Module)
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
+        var costed = PlannedModule.Choose(
+            [
+                .. PlannedModule.Candidates(slot.Blueprint, null, fitted, shipSlot)
+                    .Where(recipe => recipe.Kind == BlueprintKind.Modification)
+                    .Where(recipe => slot.Grade == 0 || recipe.Grade == slot.Grade),
+            ],
+            out _);
 
-        return offered.Count == 1 ? offered[0] : slotName;
+        return costed?.Module ?? slotName;
     }
 
     private static void Fold(
@@ -301,7 +315,8 @@ public static class PlanGap
         Dictionary<string, int> held,
         Dictionary<string, List<GapDemand>> wanted,
         List<string> gates,
-        List<string> uncovered)
+        List<string> uncovered,
+        List<string> assumed)
     {
         foreach (var ingredient in costing.Ingredients)
         {
@@ -336,6 +351,11 @@ public static class PlanGap
         foreach (var unknown in costing.Uncovered.Where(line => !uncovered.Contains(line, StringComparer.Ordinal)))
         {
             uncovered.Add(unknown);
+        }
+
+        foreach (var guess in costing.Assumed.Where(line => !assumed.Contains(line, StringComparer.Ordinal)))
+        {
+            assumed.Add(guess);
         }
     }
 
