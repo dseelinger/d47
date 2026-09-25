@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/tokens/palette.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/tokens/type.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/_ds_bundle.css">
+<link rel="stylesheet" href="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/styles.css">
+<script src="_ds/d47-29844a40-ce9a-463a-8ee1-3cc3d4fd5b52/_ds_bundle.js"></script>
+<style>body{margin:0;background:#070606}a{color:#FF7A1A}a:hover{color:#fff}</style>
+</helmet>
+<div class="d47-root" data-d47-theme="elite" style="padding:32px 24px;min-height:100vh;box-sizing:border-box">
+<div style="width:100%;max-width:960px;display:flex;flex-direction:column">
+<div class="d47-group">
+<div class="d47-group-head"><span class="d47-group-head__name">Guardian voice effects</span><span class="d47-group-head__desc" style="white-space:nowrap">Optional, off by default, applies to every core.</span><span class="d47-group-head__reset"><span class="d47-glyph" onClick="{{ reset }}"><span class="d47-glyph__face">↺</span><span class="d47-glyph__tip">Reset group</span></span></span></div>
+
+<div class="d47-row">
+<span class="d47-row__label">Preset</span>
+<div class="d47-row__control" style="align-items:flex-start">
+<div class="d47-dropdown inline">
+<button class="{{ btnCls }}" onClick="{{ toggleOpen }}"><span class="d47-dropdown__value" style="color:{{ presetColor }}">{{ preset }}<span style="color:var(--d47-grey);font-weight:500">{{ presetSuffix }}</span></span><span class="d47-dropdown__caret">▼</span></button>
+<sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+<div class="d47-dropdown__list">
+<sc-for list="{{ builtIn }}" as="o" hint-placeholder-count="7"><div class="{{ o.cls }}" onClick="{{ o.pick }}">{{ o.name }}</div></sc-for>
+<div style="padding:10px 12px 4px;font-family:var(--d47-font-chrome);font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--d47-grey)">Your presets</div>
+<sc-if value="{{ noSaved }}" hint-placeholder-val="{{ false }}"><div style="min-height:36px;display:flex;align-items:center;padding:0 12px;background:var(--d47-slab);color:var(--d47-grey);font-size:14px">None yet. Set up the effects, then press SAVE AS.</div></sc-if>
+<sc-for list="{{ saved }}" as="o" hint-placeholder-count="1"><div class="{{ o.cls }}" style="color:{{ o.color }}" onClick="{{ o.pick }}">{{ o.name }}</div></sc-for>
+<div style="height:8px"></div>
+<div class="{{ customCls }}" onClick="{{ pickCustom }}">Custom</div>
+</div>
+</sc-if>
+</div>
+<button class="{{ testCls }}" style="width:120px;flex:none" onClick="{{ test }}">{{ testLabel }}</button>
+<sc-if value="{{ showUpdate }}" hint-placeholder-val="{{ false }}"><button class="{{ updateCls }}" style="width:120px;flex:none" onClick="{{ update }}">{{ updateLabel }}</button></sc-if>
+<sc-if value="{{ showSave }}" hint-placeholder-val="{{ true }}"><button class="{{ saveAsCls }}" style="width:120px;flex:none" onClick="{{ startSave }}">Save as</button></sc-if>
+<sc-if value="{{ showManage }}" hint-placeholder-val="{{ false }}"><button class="{{ renameCls }}" style="width:120px;flex:none" onClick="{{ startRename }}">Rename</button><button class="{{ deleteCls }}" style="width:120px;flex:none" onClick="{{ del }}">{{ deleteLabel }}</button></sc-if>
+</div>
+<span class="d47-row__reset"></span>
+</div>
+
+<sc-if value="{{ notice }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:36px;display:flex;align-items:center;gap:12px;padding:0 12px 0 15px;border-left:3px solid var(--d47-cyan);background:var(--d47-slab)"><span style="font-size:14px;color:var(--d47-white);flex:1">{{ notice }}</span><sc-if value="{{ canUndo }}" hint-placeholder-val="{{ false }}"><button class="d47-tile-button compact" onClick="{{ undo }}">Undo</button></sc-if></div>
+</sc-if>
+<sc-if value="{{ naming }}" hint-placeholder-val="{{ false }}">
+<div class="d47-row" style="align-items:start;padding-top:10px;padding-bottom:10px;border-left-color:var(--d47-cyan)">
+<span class="d47-row__label" style="padding-top:12px">{{ nameLabel }}</span>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<div class="d47-row__control">
+<label class="d47-field" style="flex:1;min-width:0"><input autoFocus="{{ true }}" maxLength="32" placeholder="Name this preset" value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onDraftKey }}"></label>
+<button class="{{ confirmCls }}" style="width:120px;flex:none;height:44px" onClick="{{ save }}">{{ confirmLabel }}</button>
+<button class="d47-tile-button" style="width:120px;flex:none;height:44px" onClick="{{ cancelSave }}">Cancel</button>
+</div>
+<span style="font-size:12px;color:{{ msgColor }}">{{ msg }}</span>
+</div>
+<span class="d47-row__reset"></span>
+</div>
+</sc-if>
+
+<div style="border-top:1px solid var(--d47-line2);padding:12px 0 12px 15px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:12px"><span class="d47-row__label">Effects</span><span style="font-size:12px;color:var(--d47-grey)">Applied top to bottom. Drag to reorder.</span></div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ effects }}" as="e" hint-placeholder-count="15">
+<div data-fx="{{ e.id }}" style="display:flex;align-items:center;min-height:44px;background:{{ e.cardBg }};opacity:{{ e.opacity }}">
+<span tabIndex="0" title="Drag to reorder. Arrow keys also move it." onPointerDown="{{ e.grab }}" onKeyDown="{{ e.key }}" style="width:24px;align-self:stretch;flex:none;display:grid;grid-template-columns:repeat(2,3px);grid-auto-rows:3px;gap:3px;align-content:center;justify-content:center;background:{{ e.handleBg }};cursor:grab;outline:none;touch-action:none" style-hover="background:var(--d47-tile2)"><span style="background:{{ e.dot }}"></span><span style="background:{{ e.dot }}"></span><span style="background:{{ e.dot }}"></span><span style="background:{{ e.dot }}"></span><span style="background:{{ e.dot }}"></span><span style="background:{{ e.dot }}"></span></span>
+<span style="width:24px;flex:none;font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey);text-align:right">{{ e.num }}</span>
+<div class="{{ e.cls }}" style="width:200px;flex:none;background:transparent" style-hover="background:var(--d47-tile2)" onClick="{{ e.toggle }}"><span class="d47-checkbox__box"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</span></div>
+<div class="{{ e.levelCls }}" style="flex:1;min-width:0;padding:0 12px 0 4px"><span style="width:48px;flex:none;font-family:var(--d47-font-chrome);font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--d47-grey)">{{ e.param }}</span><div class="d47-level__track" style="height:14px;min-width:180px" onPointerLeave="{{ e.stopPaint }}"><sc-for list="{{ e.segs }}" as="s" hint-placeholder-count="20"><span class="d47-level__seg" style="background:{{ s.bg }}" onPointerDown="{{ s.down }}" onPointerEnter="{{ s.enter }}"></span></sc-for></div></div>
+<div class="d47-number-stepper" style="width:156px;height:44px;flex:none"><button class="d47-stepper__arrow" style="background:var(--d47-tile2)" onClick="{{ e.dec }}">−</button><span class="d47-stepper__value" style="color:{{ e.valColor }}">{{ e.value }}</span><button class="d47-stepper__arrow" style="background:var(--d47-tile2)" onClick="{{ e.inc }}">+</button></div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const r = (lo, hi, unit, dp = 0) => n => (lo + (hi - lo) * n / 20).toFixed(dp) + unit;
+const pct = n => (n * 5) + '%';
+const FX = [
+  ['Cylon', 'Depth', pct, 10], ['Pitch down', 'Pitch', n => '−' + (n * 0.6).toFixed(1) + ' st', 5],
+  ['Octave-down layer', 'Mix', pct, 8], ['Chorus', 'Depth', pct, 10], ['Flanger', 'Rate', r(0.1, 5, ' Hz', 1), 6],
+  ['Phaser', 'Rate', r(0.1, 5, ' Hz', 1), 6], ['Wah', 'Rate', r(0.2, 8, ' Hz', 1), 6], ['Metallic resonance', 'Amount', pct, 10],
+  ['Ring modulation', 'Freq', r(20, 2000, ' Hz'), 6], ['Deep ring mod', 'Freq', r(5, 200, ' Hz'), 6], ['Tremolo', 'Rate', r(1, 20, ' Hz'), 6],
+  ['Overdrive', 'Drive', pct, 8], ['Bitcrusher', 'Bits', n => Math.round(16 - n * 0.7) + ' bit', 12], ['Glitch', 'Rate', pct, 6], ['Reverb', 'Mix', pct, 6],
+].map(([name, param, fmt, def]) => ({ id: name, name, param, fmt, def }));
+const BY = Object.fromEntries(FX.map(f => [f.id, f]));
+const CANON = FX.map(f => f.id);
+const DEFAULTS = Object.fromEntries(FX.map(f => [f.id, f.def]));
+// Placeholder preset contents — the app owns the real ones.
+const BUILT_IN = [
+  ['Off', []],
+  ['Vocoder', ['Ring modulation','Chorus','Metallic resonance']],
+  ['Deep core', ['Pitch down','Octave-down layer','Reverb']],
+  ['Damaged core', ['Pitch down','Tremolo','Bitcrusher','Glitch']],
+  ['Ring-mod rasp', ['Deep ring mod','Overdrive']],
+  ['8-bit computer', ['Ring modulation','Bitcrusher']],
+  ['Flanged vocoder', ['Chorus','Flanger','Metallic resonance','Ring modulation']],
+].map(([name, on]) => ({ name, on, order: CANON, levels: DEFAULTS }));
+const sig = c => [[...c.on].sort().join(','), c.order.join(','), CANON.map(id => c.levels[id]).join(',')].join('|');
+const SEED = { name: 'Hull breach', on: ['Glitch', 'Pitch down', 'Reverb'], order: ['Glitch', ...CANON.filter(x => x !== 'Glitch')], levels: { ...DEFAULTS, Glitch: 14, Reverb: 12 } };
+class Component extends DCLogic {
+  state = { on: [], order: CANON, levels: DEFAULTS, saved: [SEED], open: false, testing: false, drag: null, mode: null, draft: '', tried: false, basis: null, notice: null, undoSnap: null };
+  snap() { const s = this.state; return { on: s.on, order: s.order, levels: s.levels, saved: s.saved, basis: s.basis }; }
+  say(notice, withUndo) { clearTimeout(this.nt); this.setState({ notice, undoSnap: withUndo || null }); this.nt = setTimeout(() => this.setState({ notice: null, undoSnap: null }), 6000); }
+  componentDidMount() {
+    this.onMove = e => {
+      const dr = this.state.drag;
+      if (!dr) return;
+      const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-fx]')?.getAttribute('data-fx');
+      if (!t || t === dr) return;
+      const cur = this.state.order, order = cur.filter(x => x !== dr);
+      order.splice(cur.indexOf(t), 0, dr);
+      this.setState({ order, confirmDel: false });
+    };
+    this.onUp = () => { this.painting = false; if (this.state.drag) this.setState({ drag: null }); };
+    document.addEventListener('pointermove', this.onMove);
+    document.addEventListener('pointerup', this.onUp);
+  }
+  componentWillUnmount() {
+    document.removeEventListener('pointermove', this.onMove);
+    document.removeEventListener('pointerup', this.onUp);
+  }
+  current() {
+    const s = sig(this.state);
+    const b = BUILT_IN.find(p => sig(p) === s);
+    if (b) return { name: b.name, user: false };
+    const u = this.state.saved.find(p => sig(p) === s);
+    if (u) return { name: u.name, user: true };
+    return { name: 'Custom', user: false, custom: true };
+  }
+  apply(p, user) { this.setState({ on: [...p.on], order: [...p.order], levels: { ...p.levels }, open: false, mode: null, basis: user ? p.name : null }); }
+  move(id, d) {
+    const order = [...this.state.order], i = order.indexOf(id), j = i + d;
+    if (j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    this.setState({ order, confirmDel: false });
+  }
+  lvl(id, n) { this.setState(s => ({ levels: { ...s.levels, [id]: Math.max(1, Math.min(20, n)) }, confirmDel: false })); }
+  validate() {
+    const name = this.state.draft.trim();
+    if (!name) return 'Enter a name.';
+    const own = this.state.mode === 'rename' ? this.state.basis : null;
+    if (own && name === own) return 'That is already its name.';
+    const taken = [...BUILT_IN.map(p => p.name), ...this.state.saved.map(p => p.name).filter(n => n !== own), 'Custom'].some(n => n.toLowerCase() === name.toLowerCase());
+    if (taken) return 'A preset with that name already exists.';
+    return null;
+  }
+  save = () => {
+    const err = this.validate();
+    if (err) return this.setState({ tried: true });
+    const s = this.state, name = s.draft.trim();
+    if (s.mode === 'rename') {
+      this.setState({ saved: s.saved.map(p => p.name === s.basis ? { ...p, name } : p), basis: name, mode: null, draft: '', tried: false });
+      this.say('Renamed ' + s.basis + ' to ' + name + '.');
+    } else {
+      this.setState({ saved: [...s.saved, { name, on: [...s.on], order: [...s.order], levels: { ...s.levels } }], basis: name, mode: null, draft: '', tried: false });
+      this.say('Saved ' + name + '.');
+    }
+  };
+  renderVals() {
+    const s = this.state, cur = this.current(), err = this.validate();
+    const basisLive = !!s.basis && s.saved.some(p => p.name === s.basis);
+    return {
+      preset: cur.name,
+      presetColor: cur.user ? 'var(--d47-cyan)' : 'var(--d47-white)',
+      open: s.open,
+      btnCls: 'd47-dropdown__button' + (s.open ? ' is-hover' : ''),
+      toggleOpen: () => this.setState({ open: !s.open }),
+      builtIn: BUILT_IN.map(p => ({ name: p.name, cls: 'd47-dropdown__option' + (p.name === cur.name ? ' selected' : ''), pick: () => this.apply(p, false) })),
+      saved: s.saved.map(p => ({ name: p.name, color: p.name === cur.name ? 'var(--d47-knock)' : 'var(--d47-cyan)', cls: 'd47-dropdown__option' + (p.name === cur.name ? ' selected' : ''), pick: () => this.apply(p, true) })),
+      noSaved: s.saved.length === 0,
+      customCls: 'd47-dropdown__option' + (cur.custom ? ' selected' : ''),
+      pickCustom: () => this.setState({ open: false }),
+      testLabel: s.testing ? 'Playing' : 'Test',
+      testCls: 'd47-tile-button tall' + (s.testing ? ' selected' : ''),
+      test: () => { this.setState({ testing: true }); clearTimeout(this.t); this.t = setTimeout(() => this.setState({ testing: false }), 1600); },
+      presetSuffix: cur.custom && basisLive ? '  · changed from ' + s.basis : '',
+      showUpdate: cur.custom && basisLive,
+      updateLabel: 'Update',
+      updateCls: 'd47-tile-button tall',
+      update: () => {
+        const before = this.snap();
+        this.setState({ saved: s.saved.map(p => p.name === s.basis ? { ...p, on: [...s.on], order: [...s.order], levels: { ...s.levels } } : p), mode: null });
+        this.say('Updated ' + s.basis + ' with the current effects.', before);
+      },
+      showSave: !cur.user,
+      saveAsCls: 'd47-tile-button tall' + (cur.custom ? (s.mode === 'create' ? ' selected' : '') : ' disabled'),
+      startSave: () => { if (cur.custom) this.setState({ mode: 'create', open: false, draft: '', tried: false }); },
+      showManage: cur.user,
+      renameCls: 'd47-tile-button tall' + (s.mode === 'rename' ? ' selected' : ''),
+      startRename: () => this.setState({ mode: 'rename', basis: cur.name, open: false, draft: cur.name, tried: false }),
+      deleteLabel: 'Delete',
+      deleteCls: 'd47-tile-button tall destructive',
+      del: () => {
+        const before = this.snap();
+        this.setState({ saved: s.saved.filter(p => p.name !== cur.name), basis: null, mode: null });
+        this.say('Deleted ' + cur.name + '.', before);
+      },
+      notice: s.notice,
+      canUndo: !!s.undoSnap,
+      undo: () => { clearTimeout(this.nt); this.setState({ ...s.undoSnap, notice: null, undoSnap: null }); },
+      naming: (s.mode === 'create' && cur.custom) || (s.mode === 'rename' && cur.user),
+      nameLabel: s.mode === 'rename' ? 'New name' : 'Preset name',
+      confirmLabel: s.mode === 'rename' ? 'Rename' : 'Save',
+      draft: s.draft,
+      onDraft: e => this.setState({ draft: e.target.value, tried: false }),
+      onDraftKey: e => { if (e.key === 'Enter') this.save(); if (e.key === 'Escape') this.setState({ mode: null }); },
+      save: this.save,
+      cancelSave: () => this.setState({ mode: null, draft: '', tried: false }),
+      confirmCls: 'd47-tile-button' + (err ? ' disabled' : ''),
+      msg: s.tried && err ? err : 'Saves the ticked effects, their order and levels. Your presets are listed under Your presets.',
+      msgColor: s.tried && err ? 'var(--d47-red)' : 'var(--d47-grey)',
+      reset: () => this.setState({ on: [], order: CANON, levels: DEFAULTS, open: false, mode: null, basis: null }),
+      effects: s.order.map((id, i) => {
+        const f = BY[id], checked = s.on.includes(id), lvl = s.levels[id], dragging = s.drag === id;
+        return {
+          id, name: f.name, param: f.param, value: f.fmt(lvl), num: String(i + 1).padStart(2, '0'),
+          cls: 'd47-checkbox' + (checked ? ' checked' : ''),
+          levelCls: 'd47-level' + (checked ? '' : ' muted'),
+          valColor: checked ? 'var(--d47-white)' : 'var(--d47-grey2)',
+          opacity: dragging ? '0.55' : '1',
+          cardBg: dragging ? 'var(--d47-tile2)' : 'var(--d47-tile)',
+          handleBg: dragging ? 'var(--d47-a)' : 'transparent',
+          dot: dragging ? 'var(--d47-knock)' : 'var(--d47-a)',
+          grab: e => { e.preventDefault(); this.setState({ drag: id }); },
+          key: e => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); this.move(id, -1); }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); this.move(id, 1); }
+          },
+          toggle: () => this.setState(s2 => ({ on: s2.on.includes(id) ? s2.on.filter(x => x !== id) : [...s2.on, id], confirmDel: false })),
+          dec: () => this.lvl(id, lvl - 1), inc: () => this.lvl(id, lvl + 1),
+          stopPaint: () => { this.painting = false; },
+          segs: Array.from({ length: 20 }, (_, j) => ({
+            bg: j < lvl ? (checked ? 'var(--d47-a)' : 'var(--d47-grey2)') : 'var(--d47-bg)',
+            down: e => { e.preventDefault(); this.painting = true; this.lvl(id, j + 1); },
+            enter: () => { if (this.painting) this.lvl(id, j + 1); },
+          })),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>
