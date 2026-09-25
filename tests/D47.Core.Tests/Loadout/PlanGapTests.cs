@@ -212,6 +212,55 @@ public class PlanGapTests
         Assert.False(report.IsEmpty);
     }
 
+    /// <summary>
+    /// The same plan on two ships is not one gate silently folded into the other: each ship gets its own
+    /// line, naming itself, and the count follows.
+    /// </summary>
+    [Fact]
+    public void TheSameGateOnTwoShipsCountsTwiceAndNamesEachShip()
+    {
+        var store = new GameStateStore();
+
+        foreach (var line in new[]
+                 {
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":2}]}""",
+                 })
+        {
+            store.Apply(Event(line));
+        }
+
+        var first = Ship();
+        var second = Ship() with { Id = "ship-2", ShipId = 13, Name = "Second Ship" };
+
+        var report = PlanGap.Of([first, second], [], store.Active);
+
+        Assert.Equal(2, report.Gates.Count);
+        Assert.Contains(report.Gates, gate => gate.StartsWith("Bad Idea (Python) · Thrusters:", StringComparison.Ordinal));
+        Assert.Contains(report.Gates, gate => gate.StartsWith("Second Ship (Python) · Thrusters:", StringComparison.Ordinal));
+        Assert.DoesNotContain(report.Gates, gate => gate.Contains("MainEngines", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// A weapon modification with a different recipe per manufacturer cannot be totalled at all, which is
+    /// what Uncovered means — not that the Commander's rank falls short, which is what Gates means.
+    /// </summary>
+    [Fact]
+    public void APerManufacturerOnFootLineIsUncoveredNotGated()
+    {
+        var build = new OnFootBuild(
+            "kit-2",
+            "Manticore Executioner",
+            OnFootKind.Weapon,
+            1845880282772980,
+            [new KitPlan(OnFootBuild.ModSlot(1), Modification: "Greater range")]);
+
+        var report = PlanGap.Of([], [build], State());
+
+        Assert.Empty(report.Gates);
+        Assert.Contains(report.Uncovered, line => line.Contains("per manufacturer", StringComparison.Ordinal));
+    }
+
     /// <summary>A wildcard grade is a real intent and an uncostable one.</summary>
     [Fact]
     public void AnUncostableLineIsKeptAndMarked()

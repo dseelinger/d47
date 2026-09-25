@@ -96,7 +96,6 @@ public static class OnFootPlan
     public static PlanCosting Cost(IEnumerable<ChecklistItem> items, CommanderGameState? state)
     {
         var needed = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var blocked = new List<string>();
         var uncovered = new List<string>();
 
         foreach (var item in items)
@@ -113,7 +112,7 @@ public static class OnFootPlan
                     break;
 
                 case ChecklistIntentKind.Modification:
-                    Modification(item, intent, needed, uncovered, blocked);
+                    Modification(item, intent, needed, uncovered);
                     break;
 
                 default:
@@ -131,7 +130,7 @@ public static class OnFootPlan
             .OrderBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)
             .ToList();
 
-        return new PlanCosting { Ingredients = ingredients, Gates = blocked, Uncovered = uncovered };
+        return new PlanCosting { Ingredients = ingredients, Uncovered = uncovered };
     }
 
     private static void Grade(
@@ -186,8 +185,7 @@ public static class OnFootPlan
         ChecklistItem item,
         ChecklistIntent intent,
         Dictionary<string, int> needed,
-        List<string> uncovered,
-        List<string> blocked)
+        List<string> uncovered)
     {
         var recipes = BlueprintCatalogue.All
             .Where(blueprint => blueprint.Kind is BlueprintKind.Suit or BlueprintKind.Weapon)
@@ -205,7 +203,7 @@ public static class OnFootPlan
         {
             // Three modifications have a different recipe per weapon manufacturer, and the plan names the
             // item rather than the manufacturer.
-            blocked.Add(
+            uncovered.Add(
                 $"{item.Text}: {intent.Detail} has a different recipe per manufacturer "
                 + $"({string.Join(", ", recipes.Select(recipe => recipe.Name))}), so I cannot total it "
                 + "until the plan names which weapon.");

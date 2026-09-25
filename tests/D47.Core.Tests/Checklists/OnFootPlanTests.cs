@@ -131,7 +131,7 @@ public class OnFootPlanTests
         var costing = OnFootPlan.Cost(items, Wearing("utilitysuit_class5"));
 
         Assert.Empty(costing.Ingredients);
-        Assert.Contains(costing.Gates, gate => gate.Contains("per manufacturer", StringComparison.Ordinal));
+        Assert.Contains(costing.Uncovered, line => line.Contains("per manufacturer", StringComparison.Ordinal));
     }
 
     // ---- What the journal says about it -----------------------------------------------------

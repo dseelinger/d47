@@ -8,6 +8,13 @@
 
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
+On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
+grades need a higher engineer rank" and "N planned slots have no material total". Each opened
+list names the ship or on-foot build a line is for, so the same blueprint planned on two ships now
+counts and lists twice instead of once. A weapon modification with a different recipe per
+manufacturer now counts under "no material total" rather than under the rank line, since it is not
+a rank problem.
+
 When you are promoted, the ship's AI now makes one remark about it in its own voice. This covers
 Combat, Trade, Exploration, Mercenary, Exobiology and CQC, the Empire and Federation navies, and
 Powerplay rank. It keeps the career and the rank name as Elite gives them, for example "Trade,

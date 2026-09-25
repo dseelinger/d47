@@ -2209,8 +2209,8 @@ public sealed class GapPage : UserControl
 
             _notes.Children.Add(NoteLine(
                 $"{n.ToString(CultureInfo.InvariantCulture)} planned grade{(n == 1 ? string.Empty : "s")} "
-                + (n == 1 ? "is" : "are") + " beyond your engineers' ranks",
-                "Beyond your engineers' ranks",
+                + (n == 1 ? "needs" : "need") + " a higher engineer rank",
+                "No unlocked engineer offers these grades yet — costed at five rolls",
                 report.Gates));
         }
 
@@ -2220,8 +2220,8 @@ public sealed class GapPage : UserControl
 
             _notes.Children.Add(NoteLine(
                 $"{n.ToString(CultureInfo.InvariantCulture)} planned slot{(n == 1 ? string.Empty : "s")} "
-                + "can't be costed",
-                "Can't be costed",
+                + (n == 1 ? "has" : "have") + " no material total",
+                "No material total — the reason is on each line",
                 report.Uncovered));
         }
 

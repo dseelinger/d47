@@ -178,9 +178,12 @@ public static class PlanGap
                 // Only an owned build's own ship has a fitted module worth reading.
                 var fitted = build.IsOwned && items.FirstOrDefault() is { } item ? FittedModule.Of(item, state) : null;
 
+                var who = $"{build.Describe()} · {slotName}";
+
                 Fold(
                     EngineeringPlan.Cost(items, state),
-                    $"{build.Describe()} · {slotName}",
+                    who,
+                    $" on {slot.Slot}",
                     Named(slot.Blueprint, slot.Grade),
                     ModuleOf(slot, slotName, fitted, shipSlot),
                     needed,
@@ -227,6 +230,7 @@ public static class PlanGap
                 Fold(
                     OnFootPlan.Cost(items, state),
                     $"{build.Describe()} · {slot.Slot}",
+                    $" on {build.Equipment}",
                     Named(slot.Modification, slot.Grade ?? 0),
                     build.Equipment,
                     needed,
@@ -309,6 +313,7 @@ public static class PlanGap
     private static void Fold(
         PlanCosting costing,
         string who,
+        string tail,
         string? blueprint,
         string? module,
         Dictionary<string, int> needed,
@@ -343,21 +348,39 @@ public static class PlanGap
             }
         }
 
-        foreach (var gate in costing.Gates.Where(gate => !gates.Contains(gate, StringComparer.Ordinal)))
+        foreach (var gate in costing.Gates)
         {
-            gates.Add(gate);
+            var line = $"{who}: {Reason(gate, tail)}";
+
+            if (!gates.Contains(line, StringComparer.Ordinal))
+            {
+                gates.Add(line);
+            }
         }
 
-        foreach (var unknown in costing.Uncovered.Where(line => !uncovered.Contains(line, StringComparer.Ordinal)))
+        foreach (var unknown in costing.Uncovered)
         {
-            uncovered.Add(unknown);
+            var line = $"{who}: {Reason(unknown, tail)}";
+
+            if (!uncovered.Contains(line, StringComparer.Ordinal))
+            {
+                uncovered.Add(line);
+            }
         }
 
-        foreach (var guess in costing.Assumed.Where(line => !assumed.Contains(line, StringComparer.Ordinal)))
+        foreach (var guess in costing.Assumed)
         {
-            assumed.Add(guess);
+            var line = $"{who}: {Reason(guess, tail)}";
+
+            if (!assumed.Contains(line, StringComparer.Ordinal))
+            {
+                assumed.Add(line);
+            }
         }
     }
+
+    /// <summary>A costing line with its own slot name stripped, so the ship or build carries it instead.</summary>
+    private static string Reason(string line, string tail) => line.Replace(tail, string.Empty, StringComparison.Ordinal);
 
     /// <summary>The cheapest trade that would close a shortfall outright, or null when none would.</summary>
     private static TradeOffer? Trades(
