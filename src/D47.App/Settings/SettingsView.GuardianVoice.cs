@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Audio;
@@ -33,6 +34,36 @@ public partial class SettingsView
 
     /// <summary>Marks the drag handle on a strip.</summary>
     public const string GuardianHandleName = "GuardianHandle";
+
+    /// <summary>Marks the SAVE AS button, for a test to find it.</summary>
+    public const string GuardianSaveAsName = "GuardianSaveAs";
+
+    /// <summary>Marks the RENAME button, for a test to find it.</summary>
+    public const string GuardianRenameName = "GuardianRename";
+
+    /// <summary>Marks the name row, shown only while creating or renaming a preset.</summary>
+    public const string GuardianNameRowName = "GuardianNameRow";
+
+    /// <summary>Marks the name row's label: "Preset name" or "New name".</summary>
+    public const string GuardianNameLabelName = "GuardianNameLabel";
+
+    /// <summary>Marks the name row's text box.</summary>
+    public const string GuardianNameFieldName = "GuardianNameField";
+
+    /// <summary>Marks the name row's SAVE or RENAME button.</summary>
+    public const string GuardianNameActionName = "GuardianNameAction";
+
+    /// <summary>Marks the name row's CANCEL button.</summary>
+    public const string GuardianNameCancelName = "GuardianNameCancel";
+
+    /// <summary>Marks the name row's message line.</summary>
+    public const string GuardianNameMessageName = "GuardianNameMessage";
+
+    /// <summary>Marks the notice shown after a preset action.</summary>
+    public const string GuardianNoticeName = "GuardianNotice";
+
+    /// <summary>How long the notice stays up before it hides itself.</summary>
+    public static readonly TimeSpan GuardianNoticeDuration = TimeSpan.FromSeconds(6);
 
     private const double GuardianHandleWidth = 24;
 
@@ -100,6 +131,14 @@ public partial class SettingsView
         public int To { get; set; }
     }
 
+    /// <summary>Whether the name row is closed, saving a new preset or renaming the loaded one.</summary>
+    private enum GuardianNameMode
+    {
+        None,
+        Create,
+        Rename,
+    }
+
     private (Control, Action) BuildGuardianVoice(SettingRow row, TextBlock message)
     {
         var picker = new InlinePicker { Label = row.Label };
@@ -112,10 +151,36 @@ public partial class SettingsView
         test.IsEnabled = testRow?.PressAsync is not null;
         test.Click += async (_, _) => await PlayGuardianTestAsync(testRow!, test, message);
 
+        var nameMode = GuardianNameMode.None;
+        string? nameRowOldName = null;
+        DispatcherTimer? noticeTimer = null;
+        IDisposable? saveAsFill = null;
+        IDisposable? saveAsInk = null;
+        IDisposable? renameFill = null;
+        IDisposable? renameInk = null;
+
+        var notice = GuardianNotice(out var noticeText);
+
+        var (nameRow, nameLabel, nameField, nameAction, nameMessage, nameCancel) = GuardianNameRow();
+
+        var saveAs = GuardianTileButton("Save as");
+        saveAs.Name = GuardianSaveAsName;
+        saveAs.VerticalAlignment = VerticalAlignment.Top;
+        AutomationProperties.SetName(saveAs, "Save as");
+        saveAs.Click += (_, _) => OpenNameRow(GuardianNameMode.Create);
+
+        var rename = GuardianTileButton("Rename");
+        rename.Name = GuardianRenameName;
+        rename.VerticalAlignment = VerticalAlignment.Top;
+        AutomationProperties.SetName(rename, "Rename");
+        rename.Click += (_, _) => OpenNameRow(GuardianNameMode.Rename);
+
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { test, saveAs, rename } };
+
         var control = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 2 };
-        Grid.SetColumn(test, 1);
+        Grid.SetColumn(buttons, 1);
         control.Children.Add(picker);
-        control.Children.Add(test);
+        control.Children.Add(buttons);
 
         var strips = new StackPanel { Spacing = 2 };
         var byId = new Dictionary<string, GuardianStrip>(StringComparer.Ordinal);
@@ -145,10 +210,106 @@ public partial class SettingsView
             Name = GuardianEffectsName,
             Spacing = 10,
             Margin = new Thickness(RowBarWidth + RowHorizontalPadding, 12, 0, 12),
-            Children = { head, strips },
+            Children = { notice, nameRow, head, strips },
         };
 
         _underRow = (list, string.Join(" ", GuardianVoice.Table.Select(effect => $"{effect.Label} {effect.Parameter}")));
+
+        void ShowNotice(string text)
+        {
+            noticeTimer?.Stop();
+            noticeText.Text = text;
+            notice.IsVisible = true;
+            noticeTimer = new DispatcherTimer { Interval = GuardianNoticeDuration };
+            noticeTimer.Tick += (_, _) =>
+            {
+                noticeTimer!.Stop();
+                notice.IsVisible = false;
+            };
+            noticeTimer.Start();
+        }
+
+        void HideNotice()
+        {
+            noticeTimer?.Stop();
+            notice.IsVisible = false;
+        }
+
+        void OpenNameRow(GuardianNameMode mode)
+        {
+            picker.IsOpen = false;
+            HideNotice();
+            nameMode = mode;
+
+            var preset = GuardianPresets.Preset(_settings!.Current.Speech);
+            var current = mode == GuardianNameMode.Rename ? GuardianPresets.Label(preset) : null;
+            nameRowOldName = current;
+
+            nameLabel.Text = mode == GuardianNameMode.Rename ? "New name" : "Preset name";
+            nameField.Text = current ?? string.Empty;
+            nameAction.Content = mode == GuardianNameMode.Rename ? "Rename" : "Save";
+            AutomationProperties.SetName(nameAction, mode == GuardianNameMode.Rename ? "Rename" : "Save");
+            nameMessage.IsVisible = false;
+            nameRow.IsVisible = true;
+            nameField.Focus();
+            nameField.SelectAll();
+        }
+
+        void CloseNameRow()
+        {
+            nameMode = GuardianNameMode.None;
+            nameRow.IsVisible = false;
+            nameMessage.IsVisible = false;
+        }
+
+        void Commit()
+        {
+            if (nameMode == GuardianNameMode.None)
+            {
+                return;
+            }
+
+            var speech = _settings!.Current.Speech;
+            var result = nameMode == GuardianNameMode.Rename
+                ? GuardianPresets.Rename(speech, nameField.Text)
+                : GuardianPresets.Save(speech, nameField.Text);
+
+            if (result.Refusal is { } refusal)
+            {
+                nameMessage.Text = refusal;
+                nameMessage.IsVisible = true;
+                return;
+            }
+
+            var trimmed = nameField.Text!.Trim();
+            var said = nameMode == GuardianNameMode.Rename ? $"Renamed {nameRowOldName} to {trimmed}." : $"Saved {trimmed}.";
+            var reason = nameMode == GuardianNameMode.Rename ? "Rename Guardian voice preset" : "Save Guardian voice preset";
+
+            _settings!.Replace(reason, s => s with { Speech = result.Settings! });
+
+            CloseNameRow();
+            ShowNotice(said);
+            Refresh();
+        }
+
+        nameAction.Click += (_, _) => Commit();
+        nameCancel.Click += (_, _) => CloseNameRow();
+
+        nameField.KeyDown += (_, e) =>
+        {
+            switch (e.Key)
+            {
+                case Key.Enter:
+                    e.Handled = true;
+                    Commit();
+                    break;
+
+                case Key.Escape:
+                    e.Handled = true;
+                    CloseNameRow();
+                    break;
+            }
+        };
 
         return (control, () =>
         {
@@ -156,6 +317,23 @@ public partial class SettingsView
             var preset = GuardianPresets.Preset(speech);
             var choices = GuardianPresets.Choices(speech);
             var saved = choices.Where(id => GuardianPresets.Find(id) is null && id != GuardianPresets.CustomId).ToList();
+
+            var isBuiltin = GuardianPresets.Find(preset) is not null;
+            var isSavedPreset = saved.Contains(preset);
+
+            saveAs.IsVisible = !isSavedPreset;
+            saveAs.IsEnabled = !isBuiltin;
+            rename.IsVisible = isSavedPreset;
+
+            saveAsFill?.Dispose();
+            saveAsInk?.Dispose();
+            saveAsFill = nameMode == GuardianNameMode.Create ? Themed(saveAs, Button.BackgroundProperty, ThemeManager.AKey) : null;
+            saveAsInk = nameMode == GuardianNameMode.Create ? Themed(saveAs, Button.ForegroundProperty, ThemeManager.KnockKey) : null;
+
+            renameFill?.Dispose();
+            renameInk?.Dispose();
+            renameFill = nameMode == GuardianNameMode.Rename ? Themed(rename, Button.BackgroundProperty, ThemeManager.AKey) : null;
+            renameInk = nameMode == GuardianNameMode.Rename ? Themed(rename, Button.ForegroundProperty, ThemeManager.KnockKey) : null;
 
             var entries = new List<InlinePickerEntry>();
             entries.AddRange(GuardianPresets.Builtins.Select(builtin =>
@@ -628,6 +806,99 @@ public partial class SettingsView
         HorizontalContentAlignment = HorizontalAlignment.Center,
         VerticalContentAlignment = VerticalAlignment.Center,
     };
+
+    /// <summary>The notice shown below the preset row after a save or rename, hidden until then.</summary>
+    private Border GuardianNotice(out TextBlock text)
+    {
+        text = new TextBlock
+        {
+            Name = "GuardianNoticeText",
+            FontFamily = Fonts.ProseFamily,
+            FontSize = TypeScale.Secondary,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var notice = new Border
+        {
+            Name = GuardianNoticeName,
+            MinHeight = 36,
+            Padding = new Thickness(15, 0, 12, 0),
+            BorderThickness = new Thickness(3, 0, 0, 0),
+            IsVisible = false,
+            Child = text,
+        };
+        Themed(notice, Border.BackgroundProperty, ThemeManager.SlabKey);
+        Themed(notice, Border.BorderBrushProperty, ThemeManager.CyanKey);
+
+        return notice;
+    }
+
+    /// <summary>
+    /// The name row: "Preset name"/"New name", a text field, SAVE or RENAME, CANCEL and the refusal
+    /// message line. Hidden until a preset button opens it.
+    /// </summary>
+    private (StackPanel Row, TextBlock Label, TextBox Field, Button Action, TextBlock Message, Button Cancel) GuardianNameRow()
+    {
+        var label = new TextBlock
+        {
+            Name = GuardianNameLabelName,
+            FontFamily = Fonts.ProseFamily,
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            Width = LabelColumnWidth,
+        };
+        Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var field = new TextBox
+        {
+            Name = GuardianNameFieldName,
+            MaxLength = 32,
+            PlaceholderText = "Name this preset",
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        var action = GuardianTileButton("Save");
+        action.Name = GuardianNameActionName;
+
+        var cancel = GuardianTileButton("Cancel");
+        cancel.Name = GuardianNameCancelName;
+        AutomationProperties.SetName(cancel, "Cancel preset name");
+
+        var controls = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 2 };
+        Grid.SetColumn(field, 0);
+        Grid.SetColumn(action, 1);
+        Grid.SetColumn(cancel, 2);
+        controls.Children.Add(field);
+        controls.Children.Add(action);
+        controls.Children.Add(cancel);
+
+        var head = new Grid { ColumnDefinitions = new ColumnDefinitions($"{LabelColumnWidth},{RowColumnGap},*") };
+        Grid.SetColumn(label, 0);
+        Grid.SetColumn(controls, 2);
+        head.Children.Add(label);
+        head.Children.Add(controls);
+
+        var message = new TextBlock
+        {
+            Name = GuardianNameMessageName,
+            FontSize = TypeScale.Secondary,
+            Margin = new Thickness(0, 4, 0, 0),
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = false,
+        };
+        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+
+        var row = new StackPanel
+        {
+            Name = GuardianNameRowName,
+            IsVisible = false,
+            Spacing = 6,
+            Children = { head, message },
+        };
+
+        return (row, label, field, action, message, cancel);
+    }
 
     /// <summary>Presses the Test row's action, the button solid A and reading PLAYING while it runs.</summary>
     private async Task PlayGuardianTestAsync(SettingRow row, Button test, TextBlock message)

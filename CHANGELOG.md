@@ -118,6 +118,12 @@ The Guardian effects can now be put in a different order. Drag an effect by the 
 the left of its line: the other lines move aside and renumber as you drag, and the new order is saved
 when you let go. With the handle focused, Up and Down move the effect one place.
 
+The Guardian Voice Effects preset row now has SAVE AS and RENAME buttons after TEST. SAVE AS is
+disabled on a built-in preset and opens a name row on Custom; RENAME opens it on one of your own
+presets. Enter confirms, Esc or CANCEL closes it without writing, and a rejected name shows the
+reason in red. A save or rename lands straight away and a notice under the preset row says "Saved
+<name>." or "Renamed <old> to <new>.", clearing itself after six seconds.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification
