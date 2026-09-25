@@ -611,6 +611,8 @@ existed.
 On the Its voice page each effect is one line, in chain order: its position, its box, a 20-segment
 level, and − and + buttons that move the level one step and show the parameter in its own units.
 The preset list opens in the page rather than over it.
+Drag an effect by the handle at the left of its line to move it in the chain, or focus the handle
+and press Up or Down to move it one place.
 
 ##### Preset {#guardian-voice-preset}
 

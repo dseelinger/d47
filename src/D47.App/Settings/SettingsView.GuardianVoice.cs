@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Controls;
@@ -30,7 +31,7 @@ public partial class SettingsView
     /// <summary>Marks the value a strip's stepper shows.</summary>
     public const string GuardianValueName = "GuardianValue";
 
-    /// <summary>Marks the reserved drag-handle column on a strip.</summary>
+    /// <summary>Marks the drag handle on a strip.</summary>
     public const string GuardianHandleName = "GuardianHandle";
 
     private const double GuardianHandleWidth = 24;
@@ -59,15 +60,44 @@ public partial class SettingsView
     /// </summary>
     private (Control Block, string Words)? _underRow;
 
+    /// <summary>The handle's tooltip.</summary>
+    public const string GuardianHandleTip = "Drag to reorder. Arrow keys also move it.";
+
+    private const double GuardianDraggedOpacity = 0.55;
+
     private sealed record GuardianStrip(
         string Id,
         Border Strip,
+        Border Handle,
+        IReadOnlyList<Border> Dots,
         TextBlock Number,
         CheckBox Box,
         Level Level,
         TextBlock Value)
     {
         public IDisposable? ValueInk { get; set; }
+
+        public IDisposable? StripInk { get; set; }
+
+        public IDisposable? HandleInk { get; set; }
+
+        public List<IDisposable> DotInks { get; } = [];
+
+        public bool Hovered { get; set; }
+
+        public bool Dragging { get; set; }
+    }
+
+    /// <summary>A drag in progress: the strip's place when it started, where the pointer began, and where it would drop.</summary>
+    private sealed class GuardianDrag
+    {
+        public required int From { get; init; }
+
+        public required double StartY { get; init; }
+
+        public required double Pitch { get; init; }
+
+        public int To { get; set; }
     }
 
     private (Control, Action) BuildGuardianVoice(SettingRow row, TextBlock message)
@@ -95,6 +125,7 @@ public partial class SettingsView
             var strip = BuildGuardianStrip(effect, message);
             byId[effect.Id] = strip;
             strips.Children.Add(strip.Strip);
+            WireGuardianHandle(strip, strips, byId, message);
             _drawnByGroup[SpeechCapability.GuardianEffectKey(effect.Id)] = strip.Box;
             _drawnByGroup[SpeechCapability.GuardianLevelKey(effect.Id)] = strip.Level;
         }
@@ -104,7 +135,7 @@ public partial class SettingsView
         var title = new TextBlock { Text = "Effects", FontFamily = Fonts.ProseFamily, FontSize = TypeScale.Secondary };
         Themed(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var hint = new TextBlock { Text = "Applied top to bottom.", FontSize = TypeScale.Meta, VerticalAlignment = VerticalAlignment.Bottom };
+        var hint = new TextBlock { Text = "Applied top to bottom. Drag to reorder.", FontSize = TypeScale.Meta, VerticalAlignment = VerticalAlignment.Bottom };
         Themed(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { title, hint } };
@@ -183,7 +214,35 @@ public partial class SettingsView
     {
         var levelKey = SpeechCapability.GuardianLevelKey(effect.Id);
 
-        var handle = new Border { Name = GuardianHandleName, Width = GuardianHandleWidth };
+        var dots = new List<Border>();
+        var pattern = new Canvas
+        {
+            Width = 9,
+            Height = 15,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        for (var i = 0; i < 6; i++)
+        {
+            var dot = new Border { Width = 3, Height = 3 };
+            Canvas.SetLeft(dot, i % 2 * 6);
+            Canvas.SetTop(dot, i / 2 * 6);
+            pattern.Children.Add(dot);
+            dots.Add(dot);
+        }
+
+        var handle = new Border
+        {
+            Name = GuardianHandleName,
+            Width = GuardianHandleWidth,
+            Focusable = true,
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.SizeNorthSouth),
+            Child = pattern,
+        };
+        ToolTip.SetTip(handle, GuardianHandleTip);
+        AutomationProperties.SetName(handle, $"Move {effect.Label}");
 
         var number = new TextBlock
         {
@@ -293,9 +352,11 @@ public partial class SettingsView
 
         var strip = new Border { MinHeight = TypeScale.MinimumTarget, Child = columns, Tag = effect.Id };
         strip.Classes.Add(GuardianStripClass);
-        Themed(strip, Border.BackgroundProperty, ThemeManager.TileKey);
 
-        return new GuardianStrip(effect.Id, strip, number, box, level, value);
+        var made = new GuardianStrip(effect.Id, strip, handle, dots, number, box, level, value);
+        PaintGuardianHandle(made);
+
+        return made;
 
         int Stored() =>
             int.TryParse(_settings!.Read(levelKey), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
@@ -319,6 +380,213 @@ public partial class SettingsView
             arrow.Click += (_, _) => WriteGuardianLevel(levelKey, next(), message);
 
             return arrow;
+        }
+    }
+
+    /// <summary>
+    /// Dragging the handle moves the other strips aside and renumbers them as the pointer moves, and writes the
+    /// order once, on drop. Up and Down on the focused handle move the effect one place and keep focus on it.
+    /// </summary>
+    private void WireGuardianHandle(
+        GuardianStrip strip, StackPanel strips, Dictionary<string, GuardianStrip> byId, TextBlock message)
+    {
+        var handle = strip.Handle;
+        GuardianDrag? drag = null;
+
+        handle.PointerEntered += (_, _) => Hover(true);
+        handle.PointerExited += (_, _) => Hover(false);
+        handle.GotFocus += (_, _) => PaintGuardianHandle(strip);
+        handle.LostFocus += (_, _) => PaintGuardianHandle(strip);
+
+        handle.PointerPressed += (_, e) =>
+        {
+            if (!e.GetCurrentPoint(handle).Properties.IsLeftButtonPressed)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            handle.Focus();
+            e.Pointer.Capture(handle);
+
+            var from = strips.Children.IndexOf(strip.Strip);
+            drag = new GuardianDrag
+            {
+                From = from,
+                To = from,
+                StartY = e.GetPosition(strips).Y,
+                Pitch = strip.Strip.Bounds.Height + strips.Spacing,
+            };
+
+            strip.Dragging = true;
+            strip.Strip.ZIndex = 1;
+            strip.Strip.Opacity = GuardianDraggedOpacity;
+            PaintGuardianHandle(strip);
+        };
+
+        handle.PointerMoved += (_, e) =>
+        {
+            if (drag is null)
+            {
+                return;
+            }
+
+            var dy = e.GetPosition(strips).Y - drag.StartY;
+            var last = strips.Children.Count - 1;
+            drag.To = drag.Pitch > 0 ? Math.Clamp(drag.From + (int)Math.Round(dy / drag.Pitch), 0, last) : drag.From;
+            strip.Strip.RenderTransform = new TranslateTransform(0, dy);
+
+            for (var j = 0; j <= last; j++)
+            {
+                var other = strips.Children[j];
+
+                if (other == strip.Strip)
+                {
+                    continue;
+                }
+
+                var shift = drag.From < drag.To && j > drag.From && j <= drag.To ? -1
+                    : drag.To < drag.From && j >= drag.To && j < drag.From ? 1
+                    : 0;
+
+                other.RenderTransform = shift == 0 ? null : new TranslateTransform(0, shift * drag.Pitch);
+
+                if (other.Tag is string id && byId.TryGetValue(id, out var shifted))
+                {
+                    Number(shifted, j + shift);
+                }
+            }
+
+            Number(strip, drag.To);
+        };
+
+        handle.PointerReleased += (_, e) =>
+        {
+            if (drag is not { } done)
+            {
+                return;
+            }
+
+            drag = null;
+            e.Pointer.Capture(null);
+            Settle();
+
+            if (done.To != done.From)
+            {
+                WriteGuardianOrder(strips, done.From, done.To, message);
+            }
+        };
+
+        handle.PointerCaptureLost += (_, _) =>
+        {
+            if (drag is not null)
+            {
+                drag = null;
+                Settle();
+            }
+        };
+
+        handle.KeyDown += (_, e) =>
+        {
+            var by = e.Key switch
+            {
+                Key.Up => -1,
+                Key.Down => 1,
+                _ => 0,
+            };
+
+            if (by == 0 || drag is not null)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            var from = strips.Children.IndexOf(strip.Strip);
+            var to = from + by;
+
+            if (to < 0 || to >= strips.Children.Count)
+            {
+                return;
+            }
+
+            WriteGuardianOrder(strips, from, to, message);
+            handle.Focus(NavigationMethod.Directional);
+        };
+
+        void Hover(bool on)
+        {
+            strip.Hovered = on;
+            PaintGuardianHandle(strip);
+        }
+
+        void Settle()
+        {
+            strip.Dragging = false;
+            strip.Strip.ZIndex = 0;
+            strip.Strip.Opacity = 1;
+
+            for (var j = 0; j < strips.Children.Count; j++)
+            {
+                strips.Children[j].RenderTransform = null;
+
+                if (strips.Children[j].Tag is string id && byId.TryGetValue(id, out var placed))
+                {
+                    Number(placed, j);
+                }
+            }
+
+            PaintGuardianHandle(strip);
+        }
+
+        static void Number(GuardianStrip strip, int index) =>
+            strip.Number.Text = (index + 1).ToString("00", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>Writes the order shown, with the effect at <paramref name="from"/> moved to <paramref name="to"/>.</summary>
+    private void WriteGuardianOrder(StackPanel strips, int from, int to, TextBlock message)
+    {
+        var ids = strips.Children.Select(child => (string)child.Tag!).ToList();
+        var moved = ids[from];
+        ids.RemoveAt(from);
+        ids.Insert(to, moved);
+
+        Apply(SpeechCapability.GuardianOrderKey, string.Join(",", ids), message);
+    }
+
+    /// <summary>
+    /// Paints a strip and its handle: the handle clear at rest and tile2 on hover or focus; while dragging, the
+    /// handle solid A with knock dots on a tile2 strip.
+    /// </summary>
+    private void PaintGuardianHandle(GuardianStrip strip)
+    {
+        strip.StripInk?.Dispose();
+        strip.StripInk = Themed(
+            strip.Strip, Border.BackgroundProperty, strip.Dragging ? ThemeManager.Tile2Key : ThemeManager.TileKey);
+
+        strip.HandleInk?.Dispose();
+        strip.HandleInk = null;
+        strip.Handle.Background = Brushes.Transparent;
+
+        if (strip.Dragging)
+        {
+            strip.HandleInk = Themed(strip.Handle, Border.BackgroundProperty, ThemeManager.AKey);
+        }
+        else if (strip.Hovered || strip.Handle.IsFocused)
+        {
+            strip.HandleInk = Themed(strip.Handle, Border.BackgroundProperty, ThemeManager.Tile2Key);
+        }
+
+        foreach (var ink in strip.DotInks)
+        {
+            ink.Dispose();
+        }
+
+        strip.DotInks.Clear();
+
+        foreach (var dot in strip.Dots)
+        {
+            strip.DotInks.Add(
+                Themed(dot, Border.BackgroundProperty, strip.Dragging ? ThemeManager.KnockKey : ThemeManager.AKey));
         }
     }
 

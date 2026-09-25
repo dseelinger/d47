@@ -114,6 +114,10 @@ the order it runs: its number, its box, a 20-segment level you can click or drag
 buttons showing the value in its own units. Test reads PLAYING while the sample plays, and the
 group's reset turns every effect off and sets the order and levels back to their defaults.
 
+The Guardian effects can now be put in a different order. Drag an effect by the dotted handle at
+the left of its line: the other lines move aside and renumber as you drag, and the new order is saved
+when you let go. With the handle focused, Up and Down move the effect one place.
+
 ## 1.16.0 — On-foot modifications say what they do
 
 Each suit and weapon modification now has one sentence saying what it does. The modification
