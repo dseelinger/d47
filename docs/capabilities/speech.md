@@ -636,6 +636,9 @@ The four built-ins tick their effects at the default order and default levels:
 | Hive chorus | Hive, Reverb |
 | Ghost | Whisper, Reverse reverb |
 | Shimmer core | Chorus, Shimmer |
+| Helmet comms | Helmet |
+| Respirator | Pitch down, Respirator, Reverb |
+| Hologram | Hologram, Glitch |
 
 A saved preset is the Commander's own: its ticks, order and every level, saved under a name.
 Choosing a built-in or a saved preset writes its effects over whatever is set now; choosing Custom
@@ -742,6 +745,18 @@ level 20, 5 at the default of 16.
 Short damaged stretches at irregular intervals. Rate is how often they come: at 20 they come twice as
 often as at the default of 10, and at 5 half as often.
 
+##### Helmet: mix {#guardian-voice-helmet}
+
+The line put through a comms link at full strength, with a click at the start and end, as if it
+were said inside a sealed helmet. Mix is the treated share against the dry voice: 5% a level, and
+the default, 20, is all treated.
+
+##### Hologram: signal {#guardian-voice-hologram}
+
+The line put through a comms link, as if it arrived as a projection rather than in the room.
+Signal is the link's strength: 5% a level, 30% at the default of 6; a weaker link narrows the band,
+raises the static and loses stretches of the voice.
+
 ##### Reverse reverb: mix {#guardian-voice-reverse-reverb}
 
 A reverb run backwards, so its tail swells up into each word instead of trailing after it. Every
@@ -757,6 +772,11 @@ Shimmer is the octave layer's volume within the tail: 5% a level, 50% at the def
 
 A Schroeder reverb, adding a short tail after the sentence ends. Mix is the reverb's volume against
 the dry voice: 5% a level, 45% at the default of 9.
+
+##### Respirator: breath {#guardian-voice-respirator}
+
+A breath synthesised and added after the sentence, rather than a bundled recording. Breath is how
+long it runs: 50 ms a level, half a second at the default of 10.
 
 ##### Test {#guardian-voice-test}
 

@@ -24,6 +24,12 @@ out of it, Reverse reverb swells a backwards tail into each word, and Shimmer ad
 rings an octave up. With Reverse reverb ticked, every line starts 0.3 seconds later. Three new
 presets use them: Hive chorus, Ghost and Shimmer core.
 
+Three more effects reuse the comms-link sound over-the-air voices already have: Helmet puts the
+ship AI's own voice through it at full strength with a click at the start and end, and Hologram
+puts it through at whatever strength the level sets, losing stretches of the voice under static
+the weaker it gets. Respirator adds a synthesised breath after each sentence. Three new presets
+use them: Helmet comms, Respirator and Hologram.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

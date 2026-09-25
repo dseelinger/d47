@@ -35,8 +35,8 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
             Effect("reverb", ticked: false));
 
         Assert.Equal(DefaultOrder.Length, effects.Count);
-        Assert.Equal("reverb", effects[^1].Id);
-        Assert.True(effects[^1].Ticked);
+        Assert.Equal(1, effects.Count(effect => effect.Id == "reverb"));
+        Assert.True(effects.Single(effect => effect.Id == "reverb").Ticked);
     }
 
     [Fact]
@@ -46,9 +46,9 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
 
         Assert.Equal(
             [
-                "stutter", "monotone", "steppedPitch", "reverb", "chorus", "hive", "flanger", "phaser", "wah",
-                "comb", "ringMod", "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch", "reverseReverb",
-                "shimmer", "cylon", "whisper", "pitchDown", "octaveDown",
+                "stutter", "monotone", "steppedPitch", "reverb", "respirator", "chorus", "hive", "flanger",
+                "phaser", "wah", "comb", "ringMod", "deepRingMod", "tremolo", "overdrive", "bitcrusher", "glitch",
+                "helmet", "hologram", "reverseReverb", "shimmer", "cylon", "whisper", "pitchDown", "octaveDown",
             ],
             effects.Select(effect => effect.Id));
 
@@ -78,8 +78,9 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         surface.Settings.Apply(SpeechCapability.GuardianOrderKey, "reverb, nonsense, cylon", SettingsCaller.Panel);
 
         Assert.Equal(
-            "stutter,monotone,steppedPitch,reverb,cylon,whisper,pitchDown,octaveDown,chorus,hive,flanger,phaser,wah,comb,"
-            + "ringMod,deepRingMod,tremolo,overdrive,bitcrusher,glitch,reverseReverb,shimmer",
+            "stutter,monotone,steppedPitch,reverb,respirator,cylon,whisper,pitchDown,octaveDown,chorus,hive,flanger,"
+            + "phaser,wah,comb,ringMod,deepRingMod,tremolo,overdrive,bitcrusher,glitch,helmet,hologram,reverseReverb,"
+            + "shimmer",
             surface.Settings.Read(SpeechCapability.GuardianOrderKey));
 
         // Reordering keeps what was ticked and the level it was set to.

@@ -16,7 +16,14 @@ public class GuardianVoiceTests
     private static readonly string[] EachTreatment = [.. GuardianVoice.Table.Select(effect => effect.Id)];
 
     /// <summary>The effects that add to the clip's length.</summary>
-    internal static readonly string[] Lengthening = ["stutter", "reverseReverb", "shimmer", "reverb"];
+    internal static readonly string[] Lengthening =
+        ["stutter", "reverseReverb", "shimmer", "reverb", "helmet", "hologram", "respirator"];
+
+    /// <summary>
+    /// The effects that put static onto a silent channel of their own accord, rather than leaking it
+    /// from another channel, because a comms link has a noise floor whatever the input is.
+    /// </summary>
+    private static readonly string[] AlwaysAudible = ["helmet", "hologram", "respirator"];
 
     /// <summary>These effects ticked, in the default order, at default levels.</summary>
     internal static IReadOnlyList<GuardianVoiceEffect> Ticking(params string[] ids) =>
@@ -498,7 +505,11 @@ public class GuardianVoiceTests
             }
 
             Assert.True(left > 1_000, $"{treatment} silenced the left channel");
-            Assert.True(right < 32, $"{treatment} put {right} into the silent channel");
+
+            if (!AlwaysAudible.Contains(treatment))
+            {
+                Assert.True(right < 32, $"{treatment} put {right} into the silent channel");
+            }
         }
     }
 

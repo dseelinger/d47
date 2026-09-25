@@ -259,6 +259,28 @@ public static class GuardianVoice
         },
         new GuardianEffect
         {
+            Id = "helmet",
+            Label = "Helmet",
+            Help = "The line put through a comms link at full strength, with a click at the start and end; mix is the treated share over dry.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 20,
+            Value = level => level / 20.0,
+            Run = (signal, mix, _, rate) => Helmet(signal, mix, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "hologram",
+            Label = "Hologram",
+            Help = "The line put through a comms link; signal is the link's strength, weaker links losing stretches of the voice under static.",
+            Parameter = "Signal",
+            Unit = "%",
+            DefaultLevel = 6,
+            Value = level => level / 20.0,
+            Run = (signal, strength, _, rate) => Radio(signal, strength, rate),
+        },
+        new GuardianEffect
+        {
             Id = "reverseReverb",
             Label = "Reverse reverb",
             Help = "Reverb run backwards, so its tail swells into each word; mix is how loud the reverb is.",
@@ -289,6 +311,17 @@ public static class GuardianVoice
             DefaultLevel = 9,
             Value = level => level / 20.0,
             Run = (signal, wet, _, rate) => Reverb(signal, wet, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "respirator",
+            Label = "Respirator",
+            Help = "A breath added after the sentence, synthesised rather than a bundled sound; breath is how long it runs.",
+            Parameter = "Breath",
+            Unit = "ms",
+            DefaultLevel = 10,
+            Value = level => level * 50.0,
+            Run = (signal, breathMs, _, rate) => Respirator(signal, breathMs, rate),
         },
     ];
 
@@ -352,6 +385,25 @@ public static class GuardianVoice
     private const double OverdriveWet = 0.5;
 
     private const double BitcrusherSampleHz = 8_000;
+
+    /// <summary>How long each of Helmet's two clicks runs.</summary>
+    private const double HelmetClickMs = 12;
+
+    /// <summary>The click's band-pass centre and width, chosen for a hard comms-key snap rather than speech.</summary>
+    private const double HelmetClickHz = 1_800;
+
+    private const double HelmetClickQ = 0.9;
+
+    private const uint HelmetClickSeed = 0x85EBCA6Bu;
+
+    /// <summary>Breath noise's band-pass centre and width, chosen for the hiss of air rather than a tone.</summary>
+    private const double RespiratorHz = 700;
+
+    private const double RespiratorQ = 0.5;
+
+    private const uint RespiratorSeed = 0xC2B2AE35u;
+
+    private const double RespiratorAmplitude = 0.6;
 
     private static readonly (double DelayMs, double Feedback)[] ReverbCombs =
     [
@@ -845,6 +897,97 @@ public static class GuardianVoice
         {
             var carrier = Math.Sin(2 * Math.PI * hertz * index / rate);
             output[index] = (dry * signal[index]) + (wet * signal[index] * carrier);
+        }
+
+        return output;
+    }
+
+    /// <summary>The line run through <see cref="RadioVoice"/> at <paramref name="strength"/>, mono, at this rate.</summary>
+    private static double[] Radio(double[] signal, double strength, int rate)
+    {
+        var pcm = Encode([signal], 1);
+        var clip = new AudioClip("segment", pcm, new AudioFormat(rate, 1));
+        var treated = RadioVoice.Apply(clip, strength);
+        var frames = treated.Pcm.Length / 2;
+
+        return Decode(treated.Pcm.Span, 1, frames)[0];
+    }
+
+    /// <summary>
+    /// The line put through <see cref="RadioVoice"/> at full strength, blended with the dry line by
+    /// <paramref name="mix"/>, with a click added before the first sample and after the last.
+    /// </summary>
+    private static double[] Helmet(double[] signal, double mix, int rate)
+    {
+        var treated = Radio(signal, 1, rate);
+        var body = new double[treated.Length];
+
+        for (var index = 0; index < treated.Length; index++)
+        {
+            var dry = index < signal.Length ? signal[index] : 0;
+            body[index] = (mix * treated[index]) + ((1 - mix) * dry);
+        }
+
+        var open = Click(rate, rising: false);
+        var close = Click(rate, rising: true);
+        var output = new double[open.Length + body.Length + close.Length];
+
+        Array.Copy(open, output, open.Length);
+        Array.Copy(body, 0, output, open.Length, body.Length);
+        Array.Copy(close, 0, output, open.Length + body.Length, close.Length);
+
+        return output;
+    }
+
+    /// <summary>
+    /// A short band-passed noise burst: loudest at the first sample and fading out when
+    /// <paramref name="rising"/> is false, or the reverse when it is true.
+    /// </summary>
+    private static double[] Click(int rate, bool rising)
+    {
+        var length = Samples(HelmetClickMs, rate);
+        var noise = new Noise(HelmetClickSeed);
+        var filter = new Biquad();
+        filter.SetBandPass(HelmetClickHz, HelmetClickQ, rate);
+        var output = new double[length];
+
+        for (var index = 0; index < length; index++)
+        {
+            var filtered = filter.Next(noise.Next(-1, 1));
+            var envelope = rising ? (index + 1.0) / length : 1.0 - ((double)index / length);
+            output[index] = filtered * envelope;
+        }
+
+        return output;
+    }
+
+    /// <summary>The line with a synthesised breath, <paramref name="breathMs"/> long, added after it.</summary>
+    private static double[] Respirator(double[] signal, double breathMs, int rate)
+    {
+        var breath = Breath(breathMs, rate);
+        var output = new double[signal.Length + breath.Length];
+
+        Array.Copy(signal, output, signal.Length);
+        Array.Copy(breath, 0, output, signal.Length, breath.Length);
+
+        return output;
+    }
+
+    /// <summary>Band-passed noise under a rise-and-fall envelope, so it reads as an inhale and exhale.</summary>
+    private static double[] Breath(double milliseconds, int rate)
+    {
+        var length = Samples(milliseconds, rate);
+        var noise = new Noise(RespiratorSeed);
+        var filter = new Biquad();
+        filter.SetBandPass(RespiratorHz, RespiratorQ, rate);
+        var output = new double[length];
+
+        for (var index = 0; index < length; index++)
+        {
+            var filtered = filter.Next(noise.Next(-1, 1));
+            var t = length > 1 ? (double)index / (length - 1) : 0;
+            var envelope = Math.Sin(Math.PI * t);
+            output[index] = filtered * envelope * RespiratorAmplitude;
         }
 
         return output;
