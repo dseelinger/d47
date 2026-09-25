@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.12 — The levels are one mixer
+
+On Settings > Sounds and levels, the Levels group is now one table with a row for each channel:
+Thinking bed, Ambient music, Sound cues, Speech and Alerts. Each row has the channel's level bar, a
+Mute checkbox and, for the three channels that duck, a "Duck while D47 speaks" bar. Speech and Alerts
+show a dash there. The page used to repeat Level, Mute and Duck on thirteen rows without saying which
+channel each row set. A row's ↺ resets that channel's level, mute and duck together. Hovering a
+channel's name says what the channel is. Filtering by a channel's name, such as "music", leaves that
+channel's row.
+
 ## 1.13.11 — Read-only values on grey
 
 In Settings, every read-only value now sits on a dark grey block in white text, not in orange beside

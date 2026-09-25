@@ -522,6 +522,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             content.Children.Add(groupView.Container);
             _groups.Add(groupView);
 
+            if (group.Layout == SettingsGroupLayout.Mixer)
+            {
+                var mixed = group.Entries.SelectMany(settings.RowsForEntry).ToList();
+
+                content.Children.Add(BuildMixer(mixed, index, groupIndex));
+                rows.AddRange(mixed);
+                continue;
+            }
+
             // The group's toggles, as one grid of tiles where its first toggle falls.
             TileGrid? tiles = null;
 
@@ -1533,6 +1542,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 var shown = applies
                             && (!isFolded || revealed)
                             && (Matches(row.Row)
+                                || (row.Heading is { } heading
+                                    && heading.Contains(_query, StringComparison.OrdinalIgnoreCase))
                                 || (row.Section >= 0 && named[row.Section])
                                 || (row.GroupIndex >= 0 && groupNamed[row.GroupIndex]));
 
@@ -1621,6 +1632,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             tiles.IsVisible = tiles.Children.Any(tile => tile.IsVisible);
         }
+
+        RefreshMixers();
 
         UpdateOtherTabs();
         ApplyFilterToNav(showing, exists);
@@ -4278,5 +4291,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         /// <summary>The settings key, drawn only when it is why this row survived.</summary>
         public TextBlock? KeyLine { get; init; }
+
+        /// <summary>A name the row is drawn under, which a query also matches: a mixer's channel.</summary>
+        public string? Heading { get; init; }
     }
 }

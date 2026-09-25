@@ -106,8 +106,10 @@ public class SearchSettingsByAreaAndSectionNamesTests
 
         SettingsPageReading.Open(host.View, "sounds");
 
-        Assert.Contains("Level", VisibleRowLabels(host));
-        Assert.Contains("Mute", VisibleRowLabels(host));
+        Assert.Equal(
+            5,
+            host.View.GetVisualDescendants().OfType<Grid>()
+                .Count(grid => grid.Classes.Contains(SettingsView.MixerRowClass) && grid.IsEffectivelyVisible));
 
         host.Close();
     }

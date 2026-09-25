@@ -25,11 +25,11 @@ public static class AudioCapability
     /// </summary>
     private static (string Name, string What) Describe(AudioChannel channel) => channel switch
     {
-        AudioChannel.Bed => ("Thinking bed", "the loop that plays underneath a response while D47 works"),
-        AudioChannel.Music => ("Ambient music", "the background layer that follows what you are doing"),
-        AudioChannel.Cue => ("Sound cues", "the short markers for listening, thinking and answering"),
-        AudioChannel.Speech => ("Speech", "everything D47 says out loud"),
-        _ => ("Alerts", "the danger callouts, which are the one thing that cuts in mid-sentence"),
+        AudioChannel.Bed => ("Thinking bed", "The loop that plays underneath a response while D47 works."),
+        AudioChannel.Music => ("Ambient music", "The background layer that follows what you are doing."),
+        AudioChannel.Cue => ("Sound cues", "The short markers for listening, thinking and answering."),
+        AudioChannel.Speech => ("Speech", "Everything D47 says out loud."),
+        _ => ("Alerts", "The danger callouts, which are the one thing that cuts in mid-sentence."),
     };
 
     private static string Slug(AudioChannel channel) => channel.ToString().ToLowerInvariant();
@@ -97,6 +97,7 @@ public static class AudioCapability
             Minimum = 0,
             Maximum = 1,
             Group = group,
+            GroupHelp = what,
             // The page explains the five categories together and has no heading per channel, so this points
             // at the section rather than at a heading that would have to be written to satisfy a link (#123).
             DocsAnchor = "the-five-categories",
@@ -112,6 +113,7 @@ public static class AudioCapability
                    + "different things.",
             Kind = SettingKind.Toggle,
             Group = group,
+            GroupHelp = what,
             DocsAnchor = "the-five-categories",
             Binding = Bind(
                 channel,
@@ -129,7 +131,7 @@ public static class AudioCapability
         {
             Key = DuckKey(channel),
             Advanced = true,
-            Label = "Duck while speaking",
+            Label = "Duck while D47 speaks",
             Help = "What this drops to while D47 is talking, as a fraction of its level. 1 does not duck "
                    + "at all; 0 goes silent until the sentence ends.",
             Kind = SettingKind.Number,
@@ -137,6 +139,7 @@ public static class AudioCapability
             Minimum = 0,
             Maximum = 1,
             Group = group,
+            GroupHelp = what,
             DocsAnchor = "ducking",
             Binding = Bind(
                 channel,

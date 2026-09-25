@@ -223,7 +223,7 @@ truncate the cue that announced it, every single turn.
 ### Ducking
 
 Speech and alerts are what everything else gets out of the way of, so the other three carry a
-**Duck while speaking** number as well. It is a fraction of that category's level rather than a
+**Duck while D47 speaks** number as well. It is a fraction of that category's level rather than a
 level of its own — turn music down and its ducked form goes down with it.
 
 `1` does not duck at all. `0` goes silent until the sentence ends. Out of the box the thinking

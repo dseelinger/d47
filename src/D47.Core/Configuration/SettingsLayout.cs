@@ -8,8 +8,26 @@ public sealed record SettingsEntry(string? Key, Func<string, bool>? Family = nul
 /// <param name="ToggleColumns">
 /// How many across the group's toggles are drawn, as one grid of tiles; 0 draws them as rows.
 /// </param>
+/// <param name="Layout">Whether the group's rows are drawn one per setting or as a mixer table.</param>
 public sealed record SettingsPlaceGroup(
-    string Title, string Help, IReadOnlyList<SettingsEntry> Entries, int ToggleColumns = 2);
+    string Title,
+    string Help,
+    IReadOnlyList<SettingsEntry> Entries,
+    int ToggleColumns = 2,
+    SettingsGroupLayout Layout = SettingsGroupLayout.Rows);
+
+/// <summary>How a group's rows are drawn.</summary>
+public enum SettingsGroupLayout
+{
+    /// <summary>One row per setting.</summary>
+    Rows,
+
+    /// <summary>
+    /// One table row per <see cref="Capabilities.SettingRow.Group"/>, with a column per setting label, in the
+    /// order the rows resolve.
+    /// </summary>
+    Mixer,
+}
 
 /// <summary>One card on the settings page, gathering rows from any number of capabilities by key.</summary>
 public sealed record SettingsPlace(
@@ -225,7 +243,10 @@ public static class SettingsLayout
                                 E("speech.thinkingBed"),
                                 E("speech.thinkingBedSound", under: true),
                             ]),
-                        G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0),
+                        G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
+                        {
+                            Layout = SettingsGroupLayout.Mixer,
+                        },
                         G("Your own audio", "Sound files you've dropped in for D47 to use.", [E("audio.drops")]),
                     ]),
             ]),
