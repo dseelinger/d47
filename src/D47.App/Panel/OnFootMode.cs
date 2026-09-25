@@ -99,6 +99,7 @@ public sealed class OnFootMode(
                 : entry.IsOwned
                     ? LoadoutStanding.Owned
                     : LoadoutStanding.Wanted,
+            Badge = entry.IsWeapon ? "CURRENT LOADOUT" : "CURRENT SUIT",
         }),
     ];
 
@@ -114,7 +115,8 @@ public sealed class OnFootMode(
 
     private static string Kind(KitEntry entry) => entry.IsWeapon ? "Weapon" : "Suit";
 
-    private static string WhereLine(KitEntry entry)
+    /// <summary>Null for a carried item, whose card badge already says so.</summary>
+    private static string? WhereLine(KitEntry entry)
     {
         if (!entry.IsOwned)
         {
@@ -123,7 +125,7 @@ public sealed class OnFootMode(
 
         if (entry.IsCarried)
         {
-            return "on you";
+            return null;
         }
 
         return entry.SeenAt is { } seen

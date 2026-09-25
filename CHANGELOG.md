@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.9 — Your suit is not a ship
+
+On Fleet > Suits, the suit you are wearing now carries a CURRENT SUIT badge and each weapon you are
+carrying carries CURRENT LOADOUT. Both said CURRENT SHIP before. The "on you" line under them is
+gone, since the badge says the same thing. Ship cards still say CURRENT SHIP.
+
 ## 1.13.8 — Your carrier after a restart
 
 Fleet > Carrier shows your fleet carrier again when d47 starts while Elite is already running. It

@@ -260,7 +260,8 @@ public static class LoadoutPages
         string? hull = null,
         bool drawings = false,
         bool showing = false,
-        string? headline = null)
+        string? headline = null,
+        string badgeText = "CURRENT SHIP")
     {
         headline ??= text;
 
@@ -311,7 +312,7 @@ public static class LoadoutPages
             // in the corner and backed so it reads over any hull's own colours (#278).
             if (standing == LoadoutStanding.Active)
             {
-                var badge = Pill("CURRENT SHIP", overArt: true);
+                var badge = Pill(badgeText, overArt: true);
 
                 Grid.SetRow(badge, 0);
                 body.Children.Add(badge);
@@ -320,7 +321,7 @@ public static class LoadoutPages
         else if (standing == LoadoutStanding.Active)
         {
             // No hull cell to carry it, so the badge sits on the card itself instead.
-            var badge = Pill("CURRENT SHIP");
+            var badge = Pill(badgeText);
 
             Grid.SetRow(badge, 0);
             body.Children.Add(badge);
@@ -1518,7 +1519,8 @@ public sealed class IndexPage : LoadoutPage
                 row.Hull,
                 Drawings,
                 showing,
-                headline: row.Word);
+                headline: row.Word,
+                badgeText: row.Badge);
 
             if (showing)
             {

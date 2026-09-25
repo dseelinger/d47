@@ -145,10 +145,35 @@ public class OnFootLoadoutTabTests
 
         Assert.Contains("MAVERICK SUIT", shown);
         Assert.Contains(shown, line => line.Contains("Suit, grade 3", StringComparison.Ordinal));
-        Assert.Contains("on you", shown);
+
+        // Carried kit is badged as the fleet's current ship is, and the badge replaces the "on you" line (#459).
+        Assert.Contains("CURRENT SUIT", shown);
+        Assert.Contains("CURRENT LOADOUT", shown);
+        Assert.DoesNotContain("CURRENT SHIP", shown);
+        Assert.DoesNotContain("on you", shown);
 
         // And the say-line, on this level as on every other.
         Assert.Contains(shown, line => line.StartsWith("Say:", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>A suit or weapon the Commander is not carrying has no badge and says where it stands.</summary>
+    [AvaloniaFact]
+    public void KitYouAreNotCarryingHasNoBadge()
+    {
+        var surface = Open();
+
+        surface.Kit.Intend("Dominator");
+
+        Assert.True(surface.Panel.Nav.SelectRoot(OnFootMode.Root));
+        Dispatcher.UIThread.RunJobs();
+
+        var row = Row(surface.Panel, "Dominator Suit");
+        var shown = row.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty).ToList();
+
+        Assert.Contains(shown, line => line.Contains("not bought yet", StringComparison.Ordinal));
+        Assert.DoesNotContain(shown, line => line.StartsWith("CURRENT", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -410,6 +435,8 @@ public class OnFootLoadoutTabTests
     [AvaloniaFact]
     public void TheSuitsAndGapPagesRenderToACapture()
     {
+        using var look = AppLook.Put();
+
         var surface = Open();
 
         var suit = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");

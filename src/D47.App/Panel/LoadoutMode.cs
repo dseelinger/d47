@@ -159,6 +159,9 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
     /// <summary>Whether the Commander actually has this thing, and whether they are in it right now.</summary>
     public LoadoutStanding Standing { get; init; }
 
+    /// <summary>The badge a card draws when <see cref="Standing"/> is active.</summary>
+    public string Badge { get; init; } = "CURRENT SHIP";
+
     /// <summary>
     /// The hull symbol this row is about, lower case as the journal writes it, or null for a row that
     /// is not a ship.
