@@ -442,13 +442,9 @@ public static class OnFootCapability
 
         // The upgrade cost from where the Commander actually is, where that is known, because "grade 5 costs
         // X" and "grade 5 from here costs X" are different numbers.
-        var from = entry.Grade ?? 1;
-
-        if (OnFootRules.UpgradeCost(OnFootCatalogue.BasePrice(entry), from, target) is { } credits)
+        if (OnFootCatalogue.UpgradeCredits(entry, entry.Grade, target) is { } credits)
         {
-            report.Append(CultureInfo.InvariantCulture,
-                $"  Credits from grade {from}: {credits.ToString("N0", CultureInfo.InvariantCulture)}.");
-            report.AppendLine();
+            report.AppendLine(CultureInfo.InvariantCulture, $"  {credits.Describe()}.");
         }
         else
         {

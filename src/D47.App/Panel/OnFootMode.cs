@@ -353,7 +353,16 @@ public sealed class OnFootMode(
             ];
         }
 
-        var lines = new List<LoadoutLine> { new(plan.Describe(), LoadoutTone.Body) };
+        // The grade, steppable in place, as a planned ship slot's is.
+        var step = IsGrade(slot) && plan.Grade is { } planned
+            ? new LoadoutStep(planned, GradesOffered, grade =>
+                kit.Plan(build.Id, plan with { Grade = grade }))
+            : null;
+
+        var lines = new List<LoadoutLine>
+        {
+            new(plan.Describe(withGrade: step is null), LoadoutTone.Body) { Step = step },
+        };
 
         if (build.Scope is not { } scope)
         {
@@ -383,10 +392,17 @@ public sealed class OnFootMode(
                     : LoadoutTone.Muted));
         }
 
-        lines.AddRange(Cost(items));
+        var credits = IsGrade(slot) && plan.Grade is { } target
+            ? OnFootCatalogue.UpgradeCredits(OnFootCatalogue.Named(build.Equipment), Current(build), target)
+            : null;
+
+        lines.AddRange(Cost(items, credits));
 
         return lines;
     }
+
+    /// <summary>The grades Pioneer Supplies sells, highest first as a stepper offers them.</summary>
+    private static IReadOnlyList<int> GradesOffered { get; } = [5, 4, 3, 2];
 
     public IReadOnlyList<LoadoutLine> Engineers(string item, string slot)
     {
@@ -500,7 +516,7 @@ public sealed class OnFootMode(
     }
 
     /// <summary>What this plan costs.</summary>
-    private IReadOnlyList<LoadoutLine> Cost(IReadOnlyList<ChecklistItem> items)
+    private IReadOnlyList<LoadoutLine> Cost(IReadOnlyList<ChecklistItem> items, UpgradeCredits? credits)
     {
         var costing = OnFootPlan.Cost(items, state());
         var lines = new List<LoadoutLine>();
@@ -515,12 +531,17 @@ public sealed class OnFootMode(
             lines.Add(new LoadoutLine(unknown));
         }
 
-        if (costing.Ingredients.Count == 0)
+        if (costing.Ingredients.Count == 0 && credits is null)
         {
             return lines;
         }
 
         lines.Add(new LoadoutLine("What it costs", LoadoutTone.Heading));
+
+        if (credits is not null)
+        {
+            lines.Add(new LoadoutLine(credits.Describe(), LoadoutTone.Body));
+        }
 
         foreach (var ingredient in costing.Ingredients.OrderByDescending(entry => entry.Short))
         {

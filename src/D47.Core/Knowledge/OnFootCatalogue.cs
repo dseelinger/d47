@@ -103,6 +103,19 @@ public static class OnFootCatalogue
                     && string.Equals(other.Family, entry.Family, StringComparison.OrdinalIgnoreCase)
                     && other.Price is not null)?.Price;
 
+    /// <summary>
+    /// Credits to take an item from <paramref name="from"/>, grade 1 when not known, to <paramref name="to"/>,
+    /// or null when its price is not known or the grades are not a climb.
+    /// </summary>
+    public static UpgradeCredits? UpgradeCredits(OnFootEntry? entry, int? from, int to)
+    {
+        var start = from ?? 1;
+
+        return OnFootRules.UpgradeCost(BasePrice(entry), start, to) is { } credits
+            ? new UpgradeCredits(start, credits)
+            : null;
+    }
+
     /// <summary>Suits and weapons a Commander could name, each family once.</summary>
     public static IReadOnlyList<string> Equipment =>
         [.. Loaded.Value
@@ -221,4 +234,12 @@ public static class OnFootCatalogue
         Text(cells, index) is { } text && int.TryParse(text, CultureInfo.InvariantCulture, out var value)
             ? value
             : null;
+}
+
+/// <summary>What a Pioneer Supplies upgrade costs in credits, and the grade it is priced from.</summary>
+public sealed record UpgradeCredits(int From, long Credits)
+{
+    public string Describe() =>
+        $"Credits from grade {From.ToString(CultureInfo.InvariantCulture)}: "
+        + Credits.ToString("N0", CultureInfo.InvariantCulture);
 }

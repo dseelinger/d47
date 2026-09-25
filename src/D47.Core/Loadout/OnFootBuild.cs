@@ -18,17 +18,25 @@ public sealed record KitPlan(string Slot, int? Grade = null, string? Modificatio
     /// <summary>Whether anything is actually wanted here, or the line is an empty shell.</summary>
     public bool IsEmpty => Grade is null && string.IsNullOrWhiteSpace(Modification);
 
-    /// <summary>One line, as the slot index shows it and as d47 says it.</summary>
-    public string Describe()
+    /// <summary>
+    /// One line, as the slot index shows it and as d47 says it. Without the grade where a stepper
+    /// beside the line carries it.
+    /// </summary>
+    public string Describe(bool withGrade = true)
     {
         if (Modification is { Length: > 0 } modification)
         {
             return modification;
         }
 
-        return Grade is { } grade
+        if (Grade is not { } grade)
+        {
+            return "nothing planned";
+        }
+
+        return withGrade
             ? $"grade {grade.ToString(CultureInfo.InvariantCulture)}, at Pioneer Supplies"
-            : "nothing planned";
+            : "At Pioneer Supplies";
     }
 }
 

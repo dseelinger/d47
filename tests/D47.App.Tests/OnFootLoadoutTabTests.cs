@@ -243,7 +243,7 @@ public class OnFootLoadoutTabTests
 
         // What it is now, and what is wanted, each on its own.
         Assert.Contains("Grade 3", shown);
-        Assert.Contains(shown, line => line.Contains("grade 5", StringComparison.Ordinal));
+        Assert.Contains("Grade 5", shown);
 
         // And what the two upgrade steps cost, exactly - nothing on foot is rolled.
         Assert.Contains("WHAT IT COSTS", shown);
@@ -326,6 +326,120 @@ public class OnFootLoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(3, Planned());
+
+        surface.Window.Close();
+    }
+
+    private static IReadOnlyList<Button> Nudges(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<Button>().Where(button => button.Content is "▲" or "▼")];
+
+    private static void OpenGrade(Surface surface, OnFootBuild build)
+    {
+        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.GoTo(
+            new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
+            new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.GradeSlot}", "Grade"));
+
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>
+    /// A planned suit grade is stepped on the plan line, as a planned ship slot's is, and the line under
+    /// "What it costs" prices the climb from the grade the suit is at now (#464).
+    /// </summary>
+    [AvaloniaFact]
+    public void APlannedSuitGradeStepsInPlace()
+    {
+        using var look = AppLook.Put();
+
+        var surface = Open();
+
+        surface.Window.Width = 1024;
+        surface.Window.Height = 640;
+
+        var build = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
+
+        surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
+
+        OpenGrade(surface, build);
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("At Pioneer Supplies", shown);
+        Assert.Contains("Grade 5", shown);
+
+        var price = OnFootCatalogue.UpgradeCredits(OnFootCatalogue.Named("Maverick Suit"), 3, 5);
+
+        Assert.NotNull(price);
+        Assert.Contains(price.Describe(), shown);
+        Assert.True(shown.ToList().IndexOf("WHAT IT COSTS") < shown.ToList().IndexOf(price.Describe()));
+
+        surface.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-grade-step.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        // Grade 5 is the top of the offer, so only down is live.
+        var nudges = Nudges(surface.Panel);
+
+        Assert.False(nudges.Single(button => (string)button.Content! == "▲").IsEnabled);
+
+        nudges.Single(button => (string)button.Content! == "▼").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(4, surface.Kit.Entry(build.Id)?.Build?.PlannedGrade);
+
+        shown = Text(surface.Panel);
+
+        Assert.Contains("Grade 4", shown);
+        Assert.Contains(OnFootCatalogue.UpgradeCredits(OnFootCatalogue.Named("Maverick Suit"), 3, 4)!.Describe(), shown);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>The same stepper on a weapon's plan, priced from the weapon's own grade (#464).</summary>
+    [AvaloniaFact]
+    public void APlannedWeaponGradeStepsInPlaceToo()
+    {
+        var surface = Open();
+
+        var build = surface.Kit.BuildFor(OnFootKind.Weapon, 9, "Karma AR-50");
+
+        surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 4));
+
+        OpenGrade(surface, build);
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains("At Pioneer Supplies", shown);
+        Assert.Contains("Grade 4", shown);
+        Assert.Equal(2, Nudges(surface.Panel).Count);
+
+        var price = OnFootCatalogue.UpgradeCredits(OnFootCatalogue.Named("Karma AR-50"), 2, 4);
+
+        Assert.NotNull(price);
+        Assert.Contains(price.Describe(), shown);
+
+        Nudges(surface.Panel).Single(button => (string)button.Content! == "▲")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(5, surface.Kit.Entry(build.Id)?.Build?.PlannedGrade);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>The first grade is picked through the prompt, so an unplanned grade has no stepper (#464).</summary>
+    [AvaloniaFact]
+    public void AnUnplannedGradeHasNoStepper()
+    {
+        var surface = Open();
+
+        var build = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
+
+        OpenGrade(surface, build);
+
+        Assert.Empty(Nudges(surface.Panel));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Credits from grade", StringComparison.Ordinal));
 
         surface.Window.Close();
     }

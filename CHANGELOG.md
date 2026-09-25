@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.13.10 — Step a suit's grade on its page
+
+On Fleet > Suits, a planned grade on a suit or weapon now has ▲ and ▼ buttons beside it, as a
+planned ship slot's grade does. Pressing one changes the plan to the next grade between 2 and 5, and
+what it costs follows. The plan line reads "At Pioneer Supplies", with the grade beside it. The first
+grade is still chosen from the row of buttons. Under "What it costs", a line such as "Credits from
+grade 3: 12,000,000" gives the credits for the upgrade from the item's current grade, the same
+figure d47 says when asked. It is left out when d47 does not know the item's price.
+
 ## 1.13.9 — Your suit is not a ship
 
 On Fleet > Suits, the suit you are wearing now carries a CURRENT SUIT badge and each weapon you are

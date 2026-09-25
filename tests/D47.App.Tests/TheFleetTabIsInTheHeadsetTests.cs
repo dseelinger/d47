@@ -53,7 +53,7 @@ public class TheFleetTabIsInTheHeadsetTests
     }
 
     /// <summary>The headset's own copy of the panel, on the Fleet tab, every mode wired.</summary>
-    private static (VrPanelSurface Panel, VrPixels Pixels) Headset()
+    private static (VrPanelSurface Panel, VrPixels Pixels) Headset(Action<OnFootPlanService>? plan = null)
     {
         var (settings, _, paths) = TestSurface.Create();
 
@@ -79,6 +79,8 @@ public class TheFleetTabIsInTheHeadsetTests
             new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance),
             checklists,
             state);
+
+        plan?.Invoke(onFoot);
 
         var panel = new VrPanelSurface(
             new PanelViewModel(),
@@ -326,5 +328,59 @@ public class TheFleetTabIsInTheHeadsetTests
         Assert.DoesNotContain(
             methods,
             method => method.GetParameters().Any(parameter => parameter.ParameterType == typeof(KeyModifiers)));
+    }
+
+    /// <summary>A planned suit grade is stepped in place on the headset as in the window (#464).</summary>
+    [AvaloniaFact]
+    public void APlannedSuitGradeStepsInPlaceOnTheHeadset()
+    {
+        using var look = AppLook.Put();
+
+        string? id = null;
+
+        var (panel, pixels) = Headset(onFoot =>
+        {
+            var build = onFoot.BuildFor(D47.Core.Knowledge.OnFootKind.Suit, 7, "Maverick Suit");
+            onFoot.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
+            id = build.Id;
+        });
+
+        Draw(panel, pixels, OnFootMode.Root);
+
+        panel.Nav.GoTo(
+            new NavCrumb(OnFootMode.KitPrefix + id, "Maverick Suit"),
+            new NavCrumb($"{OnFootMode.KitSlotPrefix}{id}|{OnFootBuild.GradeSlot}", "Grade"));
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Invalidate();
+        panel.Draw(pixels.Address, pixels.RowBytes);
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = panel.Board.View.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains("At Pioneer Supplies", shown);
+        Assert.Contains("Grade 5", shown);
+        Assert.Contains(shown, line => line.StartsWith("Credits from grade 3: ", StringComparison.Ordinal));
+
+        var down = Pressable(panel, control => control is Button { Content: "▼" });
+
+        Assert.NotNull(down);
+
+        panel.Board.Render().Save(
+            Path.Combine(TestSurface.CaptureDirectory, "headset-kit-grade-step.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        Assert.True(Press(panel, pixels, down!));
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Invalidate();
+        panel.Draw(pixels.Address, pixels.RowBytes);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(
+            "Grade 4",
+            panel.Board.View.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text));
     }
 }
