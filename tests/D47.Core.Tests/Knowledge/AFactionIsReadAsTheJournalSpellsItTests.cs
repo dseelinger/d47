@@ -109,4 +109,37 @@ public class AFactionIsReadAsTheJournalSpellsItTests
 
         Assert.DoesNotContain("misspelled", result.Content, StringComparison.Ordinal);
     }
+
+    private static readonly GalaxySearchResult Controlled = new("Eurybia", 1,
+    [
+        new SystemSummary
+        {
+            Name = "LPM 173",
+            Distance = 9.4,
+            ControllingFaction = "Eurybia Blue Mafia",
+            Factions = [new FactionPresence("Booty Bay Butchers", 0.202557), new FactionPresence("Eurybia Blue Mafia", 0.67355)],
+            ReportedAt = new DateTimeOffset(2026, 9, 25, 23, 59, 57, TimeSpan.Zero),
+        },
+    ]);
+
+    [Fact]
+    public async Task AFactionSearchNamesTheControllerTheInfluenceAndTheReportDate()
+    {
+        var (result, _) = await Search("faction", "Eurybia Blue Mafia", Controlled);
+
+        Assert.Contains(
+            "controlled by Eurybia Blue Mafia; Eurybia Blue Mafia at 67.4% influence; reported 2026-09-25",
+            result.Content,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASearchWithoutAFactionLeavesFactionsOut()
+    {
+        var (result, _) = await Search("allegiance", "Independent", Controlled);
+
+        Assert.DoesNotContain("controlled by", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("influence", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("reported", result.Content, StringComparison.Ordinal);
+    }
 }

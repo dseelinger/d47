@@ -348,6 +348,11 @@ journals name, and sent in the journal's spelling when one matches. The service 
 name, so a name that matches none is sent as given, and an empty result then says the name may be
 misspelled rather than that the faction is absent.
 
+On a faction search, each system in the answer also names its controlling faction, the named
+faction's influence there, and the date the system was last reported. The service sends influence
+as a fraction of 1, and the answer gives it as a percentage. Searches without a faction filter
+leave these out.
+
 #### `distance_between`
 
 The straight-line distance in light years between two star systems.

@@ -528,6 +528,15 @@ internal static class SpanshResponse
                        && stations.ValueKind == JsonValueKind.Array
             ? stations.GetArrayLength()
             : null,
+
+        ControllingFaction = String(element, "controlling_minor_faction"),
+        Factions = element.TryGetProperty("minor_faction_presences", out var presences)
+                   && presences.ValueKind == JsonValueKind.Array
+            ? [.. presences.EnumerateArray()
+                .Where(presence => presence.ValueKind == JsonValueKind.Object && String(presence, "name") is not null)
+                .Select(presence => new FactionPresence(String(presence, "name")!, Number(presence, "influence")))]
+            : [],
+        ReportedAt = Timestamp(element, "updated_at"),
     };
 
     /// <summary>Where the search measured from, in galactic coordinates.</summary>

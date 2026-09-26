@@ -25,7 +25,18 @@ public sealed record SystemSummary
 
     /// <summary>How many stations the service knows about.</summary>
     public int? StationCount { get; init; }
+
+    public string? ControllingFaction { get; init; }
+
+    /// <summary>The minor factions present, as last reported.</summary>
+    public IReadOnlyList<FactionPresence> Factions { get; init; } = [];
+
+    /// <summary>When the service last had a report of this system.</summary>
+    public DateTimeOffset? ReportedAt { get; init; }
 }
+
+/// <summary>A minor faction present in a system, and its influence there as a fraction of 1.</summary>
+public sealed record FactionPresence(string Name, double? Influence);
 
 /// <summary>What a galaxy search produced, and how much of it was left behind.</summary>
 /// <param name="Reference">

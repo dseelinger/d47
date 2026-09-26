@@ -51,6 +51,11 @@ from part of its name or a different capitalisation, and the answer says what it
 example "Read as Eurybia Blue Mafia." Any other name is sent as you said it; if nothing matches, the
 answer says the name may be misspelled and suggests close names from your journals.
 
+Each system a faction search finds now says who controls it, how much influence the faction you
+named has there and when the system was last reported, for example "controlled by Eurybia Blue
+Mafia; Eurybia Blue Mafia at 67.4% influence; reported 2026-09-25". Searches that name no faction
+are unchanged.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

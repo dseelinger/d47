@@ -601,7 +601,7 @@ public static class GalaxyCapability
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
             return ToolResult.Ok(FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known)
-                + Describe(result));
+                + Describe(result, query));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1800,8 +1800,14 @@ public static class GalaxyCapability
         "Galaxy search is switched off, so I can't look that up. The Commander can turn it on in settings.";
 
     /// <summary>The result as prose.</summary>
-    private static string Describe(GalaxySearchResult result)
+    private static string Describe(GalaxySearchResult result, GalaxyQuery query)
     {
+        // Only a faction search names factions, so other answers stay short.
+        var asked = query.Criteria
+            .Where(criterion => criterion.Filter.Kind == GalaxyFilterKind.Name)
+            .SelectMany(criterion => criterion.Choices)
+            .FirstOrDefault();
+
         if (result.Systems.Count == 0)
         {
             return "Nothing matched that search.";
@@ -1870,6 +1876,26 @@ public static class GalaxyCapability
             if (facts.Count > 0)
             {
                 report.Append($"; {string.Join(", ", facts)}");
+            }
+
+            if (asked is not null)
+            {
+                if (system.ControllingFaction is not null)
+                {
+                    report.Append($"; controlled by {system.ControllingFaction}");
+                }
+
+                if (system.Factions.FirstOrDefault(faction =>
+                        string.Equals(faction.Name, asked, StringComparison.OrdinalIgnoreCase)) is { Influence: { } influence } present)
+                {
+                    report.Append(
+                        $"; {present.Name} at {(influence * 100).ToString("0.0", CultureInfo.InvariantCulture)}% influence");
+                }
+
+                if (system.ReportedAt is not null)
+                {
+                    report.Append($"; reported {system.ReportedAt.Value:yyyy-MM-dd}");
+                }
             }
         }
 
