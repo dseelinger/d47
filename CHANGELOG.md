@@ -88,6 +88,12 @@ music no longer grows with the number or length of the tracks in `data/audio/mus
 reloading the folder no longer reads every track. A track that cannot be read is logged and the
 next one starts.
 
+Audio dropped into `data/audio/` can now be `.mp3`, `.m4a`, `.aac`, `.wma`, `.flac` or `.wav`, at
+any sample rate and channel count. d47 converts each file to 48 kHz mono when it loads it, so a
+stereo 44.1 kHz file no longer shows as "Skipped" on the **Your own audio** row. A file Windows
+cannot decode is still skipped, and the row says so; on a Windows N edition, MP3 and AAC need the
+Media Feature Pack.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

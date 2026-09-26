@@ -139,7 +139,7 @@ nav_order: 123
  <text x="440" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--danger)">no combat folder, and no exploring folder</text>
  <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">Neither is something the game reports, and a situation it has to infer plays the wrong music at the worst moment.</text>
 </svg>
-<p class="body">Directive 47 ships with no music of its own — drop 16-bit mono 48 kHz <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files.</p>
+<p class="body">Directive 47 ships with no music of its own — drop your own <code>.mp3</code>, <code>.m4a</code>, <code>.flac</code> or <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files.</p>
 </section>
 <section>
 <h2><span class="num">4</span> There is no tool here at all.</h2>
@@ -260,15 +260,20 @@ only way to set a level by ear.
 
 ### Your own sounds
 
-Drop 16-bit mono 48 kHz `.wav` files into `data/audio` beside the executable. The folders are
-made for you on first run, so opening the data folder is enough to find out what goes where:
+Drop audio files into `data/audio` beside the executable. `.mp3`, `.m4a`, `.aac`, `.wma`,
+`.flac` and `.wav` are read, at any sample rate and channel count; D47 converts them to 48 kHz
+mono as it loads them. The folders are made for you on first run, so opening the data folder is
+enough to find out what goes where:
 
 ```text
 data/audio/
-  cues/<loop-state>.wav      replaces a shipped sound cue
-  beds/<name>.wav            adds a thinking bed to the picker
-  music/<situation>/*.wav    ambience — see below
+  cues/<loop-state>.mp3      replaces a shipped sound cue
+  beds/<name>.mp3            adds a thinking bed to the picker
+  music/<situation>/*.mp3    ambience — see below
 ```
+
+Windows does the decoding. A Windows N edition has no MP3 or AAC decoder until the Media Feature
+Pack is installed; `.wav` works without it.
 
 A cue file is named for the loop state it belongs to: `idle`, `listening`, `transcribing`,
 `thinking`, `speaking`, `answered`, `unsure`, `failed`. A bed file is named whatever you like, and
@@ -279,16 +284,16 @@ restart, and a reload never cuts a clip that is already playing.
 
 A file that will not load is skipped rather than fatal, and the **Your own audio** row says which
 one and why — a skipped file is silent in exactly the way a missing one is, so without that the
-only symptom of a wrong sample rate is a cue that never plays:
+only symptom of a file Windows cannot read is a cue that never plays:
 
 ```text
 2 files picked up from data/audio.
-Skipped: stereo-bed: it is 48000 Hz / 2ch; audio must be 48000 Hz mono 16-bit.
+Skipped: engine-room: Windows has no decoder for this file. On a Windows N edition, install the Media Feature Pack.
 ```
 
 ### Ambience
 
-`music/<situation>/*.wav` is a background layer of its own, with its own level and its own
+`music/<situation>/` is a background layer of its own, with its own level and its own
 ducking, separate from the cues and the thinking bed. There are five situations, and they are the
 five Elite's `Status.json` can state without anyone guessing:
 

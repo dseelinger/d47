@@ -71,9 +71,9 @@ public static class AudioCapability
         Key = DropsKey,
         Advanced = true,
         Label = "Your own audio",
-        Help = "Drop 16-bit mono 48 kHz .wav files into data/audio: cues/<state>.wav replaces a "
-               + "sound cue, beds/<name>.wav adds a thinking bed, and music/<situation>/*.wav is "
-               + "ambience. They are picked up without a restart.",
+        Help = "Drop .mp3, .m4a, .aac, .wma, .flac or .wav files into data/audio: cues/<state> "
+               + "replaces a sound cue, beds/<name> adds a thinking bed, and music/<situation>/ is "
+               + "ambience. Any sample rate and channel count. They are picked up without a restart.",
         Kind = SettingKind.Info,
         Group = "Your own audio",
         DocsAnchor = "your-own-sounds",

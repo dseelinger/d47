@@ -67,17 +67,6 @@ public class MusicIsReadFromDiskAsItPlaysTests : IDisposable
         Assert.Contains(library.Skipped, reason => reason.StartsWith("noise:", StringComparison.Ordinal));
     }
 
-    [Fact]
-    public void AMusicFileAtTheWrongRateIsSkipped()
-    {
-        Write("general", "slow", Pcm(1, 2), new AudioFormat(44_100, 1));
-
-        var library = Load();
-
-        Assert.Empty(library.Music(Situations.General));
-        Assert.Contains(library.Skipped, reason => reason.Contains("44100 Hz", StringComparison.Ordinal));
-    }
-
     /// <summary>A file removed after the folder was read fails when the track opens, which ends that track.</summary>
     [Fact]
     public void ATrackWhoseFileHasGoneFailsToOpen()

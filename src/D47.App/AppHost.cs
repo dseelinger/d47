@@ -1278,7 +1278,7 @@ public sealed class AppHost : IDisposable
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
         // and the device list from it.
         var dropsLogger = loggerFactory.CreateLogger<FolderAudioSource>();
-        var drops = new FolderAudioSource(paths.Audio, dropsLogger);
+        var drops = new FolderAudioSource(paths.Audio, dropsLogger, new MediaFoundationDecoder());
         var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
         var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
 
@@ -3987,7 +3987,7 @@ public sealed class AppHost : IDisposable
     /// <summary>Re-reads <c>data/audio/</c> and replaces <see cref="Cues"/>. Runs on the thread pool.</summary>
     private void RebuildAudio(string folder, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
     {
-        var drops = new FolderAudioSource(folder, dropsLogger);
+        var drops = new FolderAudioSource(folder, dropsLogger, new MediaFoundationDecoder());
         var cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
 
         _cues = cues;

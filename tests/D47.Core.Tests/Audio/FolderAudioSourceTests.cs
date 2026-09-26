@@ -113,26 +113,6 @@ public class FolderAudioSourceTests : IDisposable
         Assert.False(library.IsCustom(CueLibrary.DefaultBed));
     }
 
-    /// <summary>
-    /// A Commander's file that will not load is a file to tell them about, not a reason d47 does not
-    /// start.
-    /// </summary>
-    [Fact]
-    public void AMalformedDropInIsSkippedAndNamedRatherThanTakingTheLibraryDown()
-    {
-        Write($"{FolderAudioSource.BedsFolder}/stereo-bed.wav", channels: 2);
-        Write($"{FolderAudioSource.BedsFolder}/wrong-rate.wav", sampleRate: 44100);
-
-        var library = Load();
-
-        Assert.DoesNotContain("stereo-bed", library.BedNames);
-        Assert.DoesNotContain("wrong-rate", library.BedNames);
-
-        Assert.Equal(2, library.Skipped.Count);
-        Assert.Contains(library.Skipped, reason => reason.Contains("stereo-bed", StringComparison.Ordinal));
-        Assert.Contains(library.Skipped, reason => reason.Contains("44100", StringComparison.Ordinal));
-    }
-
     /// <summary>A cue named for no loop state is the same kind of mistake, and the same answer.</summary>
     [Fact]
     public void ACueNamedForNothingIsReportedRatherThanFatal()

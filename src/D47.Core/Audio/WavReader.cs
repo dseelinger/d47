@@ -20,6 +20,15 @@ public static class WavReader
         return new AudioClip(name, pcm, format);
     }
 
+    /// <summary>The whole file, converted to <see cref="AudioFormat.Standard"/>.</summary>
+    public static AudioClip ReadStandard(Stream stream, string name) => PcmConverter.ToStandard(Read(stream, name));
+
+    /// <summary>
+    /// The file read on demand, converted to <see cref="AudioFormat.Standard"/>. Takes ownership of
+    /// <paramref name="stream"/>, which must be seekable.
+    /// </summary>
+    public static IPcmStream OpenStandard(Stream stream, string name) => PcmConverter.ToStandard(Open(stream, name));
+
     /// <summary>
     /// Parses the header and returns the sample data as a stream read on demand. Takes ownership of
     /// <paramref name="stream"/>, which must be seekable.
@@ -85,6 +94,11 @@ public static class WavReader
                     {
                         throw new WavFormatException(
                             $"{name} is {bitsPerSample}-bit; only 16-bit is supported.");
+                    }
+
+                    if (channels == 0 || sampleRate <= 0)
+                    {
+                        throw new WavFormatException($"{name} declares {channels} channels at {sampleRate} Hz.");
                     }
 
                     format = new AudioFormat(sampleRate, channels);

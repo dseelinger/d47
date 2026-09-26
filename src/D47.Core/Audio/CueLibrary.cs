@@ -15,6 +15,23 @@ public interface ICueSource
 
     /// <summary>Whether a clip that will not load takes the library down with it.</summary>
     bool Required => true;
+
+    /// <summary>The whole clip in <see cref="AudioFormat.Standard"/>.</summary>
+    AudioClip Decode(string name, string clipName)
+    {
+        using var stream = Open(name);
+
+        // Copied because WavReader seeks, and a manifest resource stream is seekable but the clip outlives
+        // the stream either way.
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        buffer.Position = 0;
+
+        return WavReader.ReadStandard(buffer, clipName);
+    }
+
+    /// <summary>The clip in <see cref="AudioFormat.Standard"/>, read on demand.</summary>
+    IPcmStream Stream(string name, string clipName) => WavReader.OpenStandard(Open(name), clipName);
 }
 
 /// <summary>The real one: the cues embedded in this assembly at build time.</summary>
@@ -117,7 +134,7 @@ public sealed class CueLibrary
                     else
                     {
                         skipped.Add(
-                            $"{folder}/{stem}.wav matches no {subject} — expected one of "
+                            $"{folder}/{stem} matches no {subject} — expected one of "
                             + $"{string.Join(", ", Enum.GetNames<TKey>().Select(name => name.ToLowerInvariant()))}.");
                     }
 
@@ -168,7 +185,7 @@ public sealed class CueLibrary
                     if (!Situations.All.Contains(situation, StringComparer.OrdinalIgnoreCase))
                     {
                         skipped.Add(
-                            $"music/{situation}/{stem}.wav is in no situation D47 knows — expected one of "
+                            $"music/{situation}/{stem} is in no situation D47 knows — expected one of "
                             + $"{string.Join(", ", Situations.All)}.");
                         continue;
                     }
@@ -274,14 +291,14 @@ public sealed class CueLibrary
     {
         if (source.Required)
         {
-            return ReadResource(source, resource, name);
+            return source.Decode(resource, name);
         }
 
         try
         {
-            return ReadResource(source, resource, name);
+            return source.Decode(resource, name);
         }
-        catch (Exception ex) when (ex is CueSetException or IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (IsSkippable(ex))
         {
             skipped.Add($"{name}: {ex.Message}");
             return null;
@@ -296,33 +313,19 @@ public sealed class CueLibrary
     {
         try
         {
-            OpenTrack(source, resource, name).Dispose();
+            source.Stream(resource, name).Dispose();
         }
-        catch (Exception ex) when (!source.Required && ex is CueSetException or WavFormatException or IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (!source.Required && IsSkippable(ex))
         {
             skipped.Add($"{name}: {ex.Message}");
             return null;
         }
 
-        return new MusicTrack(name, () => OpenTrack(source, resource, name));
+        return new MusicTrack(name, () => source.Stream(resource, name));
     }
 
-    private static WavPcmStream OpenTrack(ICueSource source, string resource, string name)
-    {
-        var stream = WavReader.Open(source.Open(resource), name);
-
-        if (stream.Format != AudioFormat.Standard)
-        {
-            stream.Dispose();
-            throw WrongFormat(stream.Format);
-        }
-
-        return stream;
-    }
-
-    private static CueSetException WrongFormat(AudioFormat format) =>
-        new($"it is {format.SampleRate} Hz / {format.Channels}ch; " +
-            $"audio must be {AudioFormat.Standard.SampleRate} Hz mono 16-bit.");
+    private static bool IsSkippable(Exception ex) =>
+        ex is CueSetException or WavFormatException or AudioDecodeException or IOException or UnauthorizedAccessException;
 
     /// <summary>
     /// Records that a clip came from somewhere other than the build — or that it no longer does, which
@@ -338,25 +341,5 @@ public sealed class CueLibrary
         {
             custom.Add(name);
         }
-    }
-
-    private static AudioClip ReadResource(ICueSource source, string resource, string name)
-    {
-        using var stream = source.Open(resource);
-
-        // Copied because WavReader seeks, and a manifest resource stream is seekable but the clip outlives
-        // the stream either way.
-        using var buffer = new MemoryStream();
-        stream.CopyTo(buffer);
-        buffer.Position = 0;
-
-        var clip = WavReader.Read(buffer, name);
-
-        if (clip.Format != AudioFormat.Standard)
-        {
-            throw WrongFormat(clip.Format);
-        }
-
-        return clip;
     }
 }

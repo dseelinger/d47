@@ -40,6 +40,25 @@ public class CueLibraryTests
         Assert.Contains("hyperspace", error.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>The loader converts drop-ins; a shipped clip in another format is a generator fault.</summary>
+    [Fact]
+    public void EveryShippedFileIsAlreadyInTheStandardFormat()
+    {
+        var assembly = typeof(CueLibrary).Assembly;
+        var shipped = assembly.GetManifestResourceNames()
+            .Where(name => new[] { "D47.Core.Cues.", "D47.Core.Alerts.", "D47.Core.Beds.", "D47.Core.Music." }
+                .Any(prefix => name.StartsWith(prefix, StringComparison.Ordinal)))
+            .ToList();
+
+        Assert.NotEmpty(shipped);
+
+        foreach (var name in shipped)
+        {
+            using var stream = WavReader.Open(assembly.GetManifestResourceStream(name)!, name);
+            Assert.True(stream.Format == AudioFormat.Standard, $"{name} is {stream.Format}; regenerate it with tools/gen-cues.py");
+        }
+    }
+
     [Fact]
     public void EveryShippedClipIsInTheOneFormatTheQueueCarries()
     {
