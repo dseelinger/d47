@@ -145,6 +145,7 @@ public static class TestSurface
                     Path.Combine(paths.Data, "checklist-proposals.json"),
                     NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
                 () => null),
+            audioDrops: () => "Nothing in the audio folder in a headless test.",
             coverage: coverage,
 
             // A real store over a real (empty) file, for the reason the two above are real: the documentation

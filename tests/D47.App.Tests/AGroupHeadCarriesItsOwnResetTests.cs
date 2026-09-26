@@ -146,6 +146,21 @@ public sealed class AGroupHeadCarriesItsOwnResetTests
     }
 
     [AvaloniaFact]
+    public void AGroupWithNothingToResetHasNoReset()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        Open(host.View, "sounds");
+
+        Assert.True(OnPage(host.View, Head(host.View, "Your own audio")));
+        Assert.False(Reset(Head(host.View, "Your own audio")!).IsVisible);
+        Assert.True(Reset(Head(host.View, "Cues")!).IsVisible);
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
     public void EveryHeadsetGroupHasOneReset()
     {
         var (settings, viewState, paths) = TestSurface.Create();

@@ -106,6 +106,9 @@ longer read: move it into the folder for its state. The **Thinking bed sound** s
 The **Your own audio** row under Audio mixer has an **Open audio folder** button that opens
 `data\audio` in Explorer. With nothing in the folder, the row reads "Nothing in data\audio yet."
 
+A settings group with nothing that can be reset, such as **Your own audio**, no longer shows a
+reset button in its heading.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
