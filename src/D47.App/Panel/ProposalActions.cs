@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using D47.App.Theming;
 
 namespace D47.App.Panel;
 
@@ -27,7 +28,7 @@ internal static class ProposalActions
                 new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
-                    Spacing = 8,
+                    Spacing = Gaps.Tile,
                     Children = { acceptButton, declineButton },
                 },
             },

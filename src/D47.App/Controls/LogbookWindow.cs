@@ -22,7 +22,7 @@ public sealed class LogbookWindow : Window
     private readonly Button _estimate;
     private readonly Button _write;
     private readonly TextBlock _quote;
-    private readonly StackPanel _entries = new() { Spacing = 6 };
+    private readonly StackPanel _entries = new() { Spacing = Gaps.Tile };
 
     private CancellationTokenSource? _running;
 
@@ -97,8 +97,8 @@ public sealed class LogbookWindow : Window
                     + "one of those facts, and the ones that do not are marked in the file."),
                 _span,
                 _exact,
-                new WrapPanel { ItemSpacing = 10, LineSpacing = 10, Children = { _from, _to } },
-                new WrapPanel { ItemSpacing = 10, LineSpacing = 10, Children = { _estimate, _write } },
+                new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _from, _to } },
+                new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _estimate, _write } },
                 _quote,
                 Modal.Section("What you have written"),
                 _entries,
@@ -226,7 +226,9 @@ public sealed class LogbookWindow : Window
 
         if (entries.Count > 20)
         {
-            _entries.Children.Add(Muted($"and {entries.Count - 20} more in the folder"));
+            var more = Muted($"and {entries.Count - 20} more in the folder");
+            more.Margin = new Thickness(0, 4, 0, 0);
+            _entries.Children.Add(more);
         }
     }
 

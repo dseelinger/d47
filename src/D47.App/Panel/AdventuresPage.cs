@@ -740,7 +740,7 @@ public sealed class AdventuresPage : UserControl
     /// <summary>A row of buttons that wraps rather than clips.</summary>
     internal static WrapPanel Buttons(params Control[] buttons)
     {
-        var panel = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+        var panel = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 
         foreach (var button in buttons)
         {

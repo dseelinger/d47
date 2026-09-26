@@ -153,8 +153,8 @@ public static class Modal
         var row = new WrapPanel
         {
             HorizontalAlignment = HorizontalAlignment.Right,
-            ItemSpacing = Segment.Gap,
-            LineSpacing = Segment.Gap,
+            ItemSpacing = Gaps.Tile,
+            LineSpacing = Gaps.Tile,
             Margin = new Thickness(0, 14, 0, 18),
         };
 

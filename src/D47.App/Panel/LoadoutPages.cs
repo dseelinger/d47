@@ -721,7 +721,7 @@ public static class LoadoutPages
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            Spacing = Gaps.Tile,
         };
 
         buttons.Children.Add(Press("Yes, revise my checklist", () => answered(notice.Yes())));
@@ -1637,7 +1637,7 @@ public sealed class ItemPage : LoadoutPage
         var actions = new StackPanel
         {
             Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 8,
+            Spacing = Gaps.Tile,
             Margin = new Thickness(0, 0, 0, 10),
             Children = { promote },
         };
@@ -2113,7 +2113,7 @@ public sealed class SlotPage : LoadoutPage
         var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            Spacing = Gaps.Tile,
             Margin = new Thickness(0, 12, 0, 0),
             Children =
             {

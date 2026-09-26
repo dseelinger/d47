@@ -85,7 +85,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// The bar's controls, held so the one above can be taken out of the tree entirely rather than
     /// hidden.
     /// </summary>
-    private readonly WrapPanel _controls = new() { ItemSpacing = 8, LineSpacing = 8 };
+    private readonly WrapPanel _controls = new() { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 
     private readonly Button _suggestions = new()
     {
@@ -198,7 +198,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var right = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            Spacing = Gaps.Tile,
             Children = { _suggestions, add },
         };
 
@@ -683,7 +683,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             TextWrapping = TextWrapping.Wrap,
         }));
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
 
         if (step is { CanPropose: true })
         {
@@ -904,8 +904,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var movers = new WrapPanel
         {
-            ItemSpacing = 4,
-            LineSpacing = 4,
+            ItemSpacing = Gaps.Tile,
+            LineSpacing = Gaps.Tile,
             Children = { top, up, down, bottom },
         };
 

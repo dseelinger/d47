@@ -65,8 +65,8 @@ public sealed class UtilitiesPage : UserControl
 
         var actions = new WrapPanel
         {
-            ItemSpacing = 8,
-            LineSpacing = 8,
+            ItemSpacing = Gaps.Tile,
+            LineSpacing = Gaps.Tile,
             Margin = new Thickness(0, 0, 0, 10),
             Children = { timer, alarm },
         };

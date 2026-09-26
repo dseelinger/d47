@@ -286,8 +286,8 @@ public sealed class AudioRecorderWindow : Window
 
         _detail.Children.Add(new WrapPanel
         {
-            ItemSpacing = 8,
-            LineSpacing = 8,
+            ItemSpacing = Gaps.Tile,
+            LineSpacing = Gaps.Tile,
             Margin = new Thickness(0, 6, 0, 0),
             Children = { play, expected, keep },
         });

@@ -152,7 +152,7 @@ internal static class RoutingKit
     /// <summary>Buttons in a row that wraps rather than clips.</summary>
     public static WrapPanel Actions(params Control[] buttons)
     {
-        var row = new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Margin = new Thickness(0, 4, 0, 0) };
+        var row = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 4, 0, 0) };
 
         foreach (var button in buttons)
         {

@@ -232,8 +232,8 @@ public sealed class DebriefWindow : Window
 
         stack.Children.Add(new WrapPanel
         {
-            ItemSpacing = 8,
-            LineSpacing = 8,
+            ItemSpacing = Gaps.Tile,
+            LineSpacing = Gaps.Tile,
             Children = { take, takeForCore, discard },
         });
 

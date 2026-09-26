@@ -159,7 +159,7 @@ public sealed class MacroWindow : Window
             Spacing = 4,
             Children =
             {
-                new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Children = { name, remove } },
+                new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { name, remove } },
                 steps,
                 addStep,
             },
@@ -212,8 +212,8 @@ public sealed class MacroWindow : Window
 
         return new WrapPanel
         {
-            ItemSpacing = 6,
-            LineSpacing = 6,
+            ItemSpacing = Gaps.Tile,
+            LineSpacing = Gaps.Tile,
             Children = { actionView, stateView, pause, up, down, drop },
         };
     }

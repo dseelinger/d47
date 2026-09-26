@@ -119,7 +119,7 @@ public sealed class SwitchWindow : Window
                 Children =
                 {
                     _walkSays,
-                    new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Children = { _finish, _export, cancel } },
+                    new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _finish, _export, cancel } },
                 },
             },
         };
@@ -376,7 +376,7 @@ public sealed class SwitchWindow : Window
                 Spacing = 4,
                 Children =
                 {
-                    new WrapPanel { ItemSpacing = 8, LineSpacing = 8, Children = { name, remove, resume } },
+                    new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { name, remove, resume } },
                     device,
                     positions,
                     health,

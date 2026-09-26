@@ -141,6 +141,12 @@ Hovering a button, a stepper arrow or a top tab now lightens its background and 
 unchanged, instead of filling it with the theme's highlight colour. The solid fill is kept for a
 pressed button, a button reached with Tab, and the selected tab. A destructive button still fills red on hover.
 
+Buttons, fields and chips that sit next to each other are now 2 pixels apart, instead of 4 to 10:
+Send and the message box, proposal Accept and Decline, Update now and Later, Help beside the tabs,
+the key-binding row, the API key controls, the on-screen keyboards, the checklist bar and movers,
+and the button rows in the Logbook, Debrief, Spend, Switch, Macro, route and loadout pages. Space
+between buttons and text is unchanged.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

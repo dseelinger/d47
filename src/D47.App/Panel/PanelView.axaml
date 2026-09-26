@@ -176,7 +176,7 @@
       <DockPanel>
         <StackPanel DockPanel.Dock="Right"
                     Orientation="Horizontal"
-                    Spacing="8"
+                    Spacing="{x:Static theming:Gaps.Tile}"
                     IsVisible="{Binding UpdateActionable}">
           <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNowClick" />
           <Button x:Name="UpdateLaterButton" Content="Later" Click="OnUpdateLaterClick" />
@@ -303,7 +303,7 @@
         <DockPanel x:Name="AskRow" Margin="0,0,16,16">
           <Button x:Name="AskButton"
                   DockPanel.Dock="Right"
-                  Margin="10,0,0,0"
+                  Margin="{x:Static theming:Gaps.TileBefore}"
                   VerticalAlignment="Bottom"
                   VerticalContentAlignment="Center"
                   Content="SEND"
@@ -338,7 +338,7 @@
                   DockPanel.Dock="Right"
                   Orientation="Horizontal"
                   VerticalAlignment="Bottom"
-                  Margin="6,0,0,0">
+                  Margin="{x:Static theming:Gaps.TileBefore}">
         <Button x:Name="HelpButton"
                 IsVisible="False"
                 VerticalAlignment="Center"

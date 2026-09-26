@@ -3100,8 +3100,8 @@ public partial class PanelView : UserControl
             var strip = turn.Marker || known is null || _copy is null ? null : new WrapPanel
             {
                 Margin = new Thickness(0, mini ? 2 : 4, 0, 0),
-                ItemSpacing = mini ? 6 : 8,
-                LineSpacing = 4,
+                ItemSpacing = Theming.Gaps.Tile,
+                LineSpacing = Theming.Gaps.Tile,
             };
 
             FillStrip(strip, turn, known, current);

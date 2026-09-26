@@ -35,7 +35,7 @@ public sealed class SpendWindow : Window
     private readonly StackPanel _body = new() { Spacing = 18 };
 
     /// <summary>The footer's buttons, rebuilt with the sections.</summary>
-    private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = 10 };
+    private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
 
     /// <summary>The session's running total, at the top right of the header.</summary>
     private readonly TextBlock _figure = new()

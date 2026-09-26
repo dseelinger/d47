@@ -482,7 +482,7 @@ public sealed class PanelPrompts : IHearsText
 
     private static BoardKeys Board(Action<char> pressed, Action back, Action clear)
     {
-        var board = new StackPanel { Spacing = 6 };
+        var board = new StackPanel { Spacing = Gaps.Tile };
         var characters = new Dictionary<char, Button>();
 
         foreach (var row in Keys)
@@ -490,7 +490,7 @@ public sealed class PanelPrompts : IHearsText
             var line = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = Gaps.Tile,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
 
@@ -527,7 +527,7 @@ public sealed class PanelPrompts : IHearsText
         board.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 6,
+            Spacing = Gaps.Tile,
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 4, 0, 0),
             Children = { erase, empty },
@@ -634,7 +634,7 @@ public sealed class PanelPrompts : IHearsText
             var actions = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 8,
+                Spacing = Gaps.Tile,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 12, 0, 0),
                 Children = { _swap, _accept },

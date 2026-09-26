@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Data.Converters;
 using Avalonia.Styling;
+using D47.App.Theming;
 using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
@@ -27,7 +28,7 @@ public sealed class Segment : ContentControl, IChoiceControl
         AvaloniaProperty.Register<Segment, IReadOnlyList<ChoiceStatus?>>(nameof(Statuses), []);
 
     /// <summary>The space between options, across and down.</summary>
-    public const double Gap = 2;
+    public const double Gap = Gaps.Tile;
 
     /// <summary>An option's label as drawn; the option's Content keeps the caller's text.</summary>
     public static readonly IValueConverter Uppercase =

@@ -965,7 +965,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             return null;
         }
 
-        var strip = new StackPanel { Name = BarToolName, Orientation = Orientation.Horizontal, Spacing = 8 };
+        var strip = new StackPanel { Name = BarToolName, Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
 
         foreach (var row in rows)
         {
@@ -3895,7 +3895,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             }
         };
 
-        var wrap = new WrapPanel { ItemSpacing = 8, LineSpacing = 8, HorizontalAlignment = HorizontalAlignment.Right };
+        var wrap = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, HorizontalAlignment = HorizontalAlignment.Right };
         foreach (var (chip, _) in chips)
         {
             wrap.Children.Add(chip);

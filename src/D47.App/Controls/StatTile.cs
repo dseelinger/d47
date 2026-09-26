@@ -26,7 +26,7 @@ public enum StatInk
 public static class StatTile
 {
     /// <summary>The gap between tiles in a grid.</summary>
-    public const double Gap = 2;
+    public const double Gap = Gaps.Tile;
 
     /// <summary>The narrowest a tile in a grid is laid out before the grid drops a column.</summary>
     public const double MinWidth = 150;

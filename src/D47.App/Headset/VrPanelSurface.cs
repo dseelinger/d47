@@ -469,7 +469,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Orientation = Avalonia.Layout.Orientation.Horizontal,
         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom,
-        Spacing = 8,
+        Spacing = Theming.Gaps.Tile,
         IsVisible = false,
         Children =
         {

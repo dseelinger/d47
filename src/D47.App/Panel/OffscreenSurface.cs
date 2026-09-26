@@ -328,12 +328,12 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
         Painted(state, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
-        var board = new StackPanel { Spacing = 6 };
+        var board = new StackPanel { Spacing = Theming.Gaps.Tile };
         var characters = new Dictionary<char, Button>();
 
         foreach (var row in Keys)
         {
-            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
+            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theming.Gaps.Tile, HorizontalAlignment = HorizontalAlignment.Center };
 
             foreach (var key in row)
             {
@@ -396,7 +396,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         var actions = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 6,
+            Spacing = Theming.Gaps.Tile,
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 10, 0, 0),
             Children = { back, clear, cancel, done },

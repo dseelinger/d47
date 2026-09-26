@@ -127,7 +127,7 @@ public sealed class SecretEditor : UserControl
         _box.TextChanged += (_, _) => RefreshCheck();
 
         // Both states share one line; Refresh shows the controls that belong to the current one.
-        var controls = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+        var controls = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
         controls.Children.Add(_masked);
         controls.Children.Add(_box);
         controls.Children.Add(_reveal);

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using D47.App.Theming;
 
 namespace D47.App.Controls;
 
@@ -11,7 +12,7 @@ namespace D47.App.Controls;
 public sealed class TileGrid : Avalonia.Controls.Panel
 {
     /// <summary>The space between tiles, across and down.</summary>
-    public const double Gap = 2;
+    public const double Gap = Gaps.Tile;
 
     /// <summary>The narrowest a tile is drawn before the grid drops a column.</summary>
     public const double MinTileWidth = 150;
