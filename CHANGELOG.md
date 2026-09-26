@@ -188,6 +188,11 @@ and asking about a modification, for example "what does stowed reloading do?", i
 answer. The sentences come from Odyssey Materials Helper. They say what a modification does and
 give no figures.
 
+Reopening the picker on a slot that already has a plan marks that modification "planned now", as
+the ship blueprint picker does. The highlighted row's description is now dark on the orange
+highlight, where it was grey and hard to read. On a slot's page the sentence is shown in the same
+colour as a planned ship blueprint's effect.
+
 Asking about a modification that exists in several versions, such as "Higher Accuracy", now
 gets a question back, "Kinetic, Plasma, or Thermal weapons?", instead of "I have no on-foot
 modification called ...".

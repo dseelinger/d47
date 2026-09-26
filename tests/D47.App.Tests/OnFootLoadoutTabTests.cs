@@ -443,10 +443,69 @@ public class OnFootLoadoutTabTests
         surface.Window.Close();
     }
 
-    /// <summary>A planned modification's slot page says what it does under its name (#466).</summary>
+    /// <summary>
+    /// Reopening the modification picker marks what is planned on the slot "planned now", and nothing
+    /// else, and the selected row's description is inked to be read on its ground (#463).
+    /// </summary>
+    [AvaloniaFact]
+    public void TheModificationPlannedNowIsMarkedInThePicker()
+    {
+        using var look = AppLook.Put();
+
+        var surface = Open();
+
+        surface.Window.Width = 1024;
+        surface.Window.Height = 900;
+
+        var build = surface.Kit.BuildFor(OnFootKind.Weapon, 9, "Karma AR-50");
+
+        surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Stowed reloading"));
+
+        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.GoTo(
+            new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
+            new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.ModSlot(1)}", OnFootBuild.ModSlot(1)));
+        Dispatcher.UIThread.RunJobs();
+
+        surface.Panel.GetVisualDescendants().OfType<Button>()
+            .First(button => button.Content as string == "Change the plan")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var marked = surface.Panel.GetVisualDescendants().OfType<ListBoxItem>()
+            .Where(item => item.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "planned now"))
+            .Select(item => item.Content as string);
+
+        Assert.Equal(["Stowed reloading"], marked);
+
+        TextBlock Description(string sentence) =>
+            surface.Panel.GetVisualDescendants().OfType<ListBoxItem>()
+                .SelectMany(item => item.GetVisualDescendants().OfType<TextBlock>())
+                .Single(block => block.Text == sentence);
+
+        Assert.Equal(
+            Avalonia.Application.Current!.Resources[D47.App.Theming.ThemeManager.BrownKey],
+            Description("Automatically reloads a stowed weapon after 5 seconds").Foreground);
+        Assert.Equal(
+            Avalonia.Application.Current!.Resources[D47.App.Theming.ThemeManager.GreyKey],
+            Description("Shortens the weapon’s reload time").Foreground);
+
+        surface.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-mod-picker-planned-now.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        surface.Window.Close();
+    }
+
+    /// <summary>
+    /// A planned modification's slot page says what it does on the line after the plan, in the engineered
+    /// tone a planned ship blueprint's effect uses (#466, #463).
+    /// </summary>
     [AvaloniaFact]
     public void APlannedModificationSaysWhatItDoes()
     {
+        using var look = AppLook.Put();
+
         var surface = Open();
 
         var build = surface.Kit.BuildFor(OnFootKind.Weapon, 9, "Karma AR-50");
@@ -466,6 +525,11 @@ public class OnFootLoadoutTabTests
         Assert.Equal(
             [planned, "Automatically reloads a stowed weapon after 5 seconds"],
             block.Skip(1).Take(2));
+
+        var does = surface.Panel.GetVisualDescendants().OfType<TextBlock>()
+            .Single(line => line.Text == "Automatically reloads a stowed weapon after 5 seconds");
+
+        Assert.Equal(Avalonia.Application.Current!.Resources[D47.App.Theming.ThemeManager.AKey], does.Foreground);
 
         surface.Window.Close();
     }

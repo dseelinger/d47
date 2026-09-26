@@ -958,4 +958,15 @@
     <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Grey}" />
   </Style>
 
+  <!--
+    A description under a list item's name (ListRow.DetailClass): Grey at rest, Brown on the selected
+    row, where Grey on A cannot be read.
+  -->
+  <Style Selector="ListBoxItem TextBlock.d47-row-detail">
+    <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
+  </Style>
+  <Style Selector="ListBoxItem:selected TextBlock.d47-row-detail">
+    <Setter Property="Foreground" Value="{DynamicResource D47.Brown}" />
+  </Style>
+
 </Styles>

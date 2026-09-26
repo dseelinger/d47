@@ -17,6 +17,9 @@ public static class ListRow
     /// <summary>Marks the row as the chosen one; set and cleared by the screen that owns it.</summary>
     public const string SelectedClass = "selected";
 
+    /// <summary>Marks a list item's description line, inked Grey at rest and Brown when selected.</summary>
+    public const string DetailClass = "d47-row-detail";
+
     public static readonly AttachedProperty<IBrush?> NameBrushProperty =
         AvaloniaProperty.RegisterAttached<Control, IBrush?>("NameBrush", typeof(ListRow), inherits: true);
 

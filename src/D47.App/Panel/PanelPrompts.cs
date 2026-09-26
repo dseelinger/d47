@@ -983,7 +983,8 @@ public sealed class PanelPrompts : IHearsText
             return block;
         }
 
-        /// <summary>A suggestion, with its description under it where the request carries one.</summary>
+        /// <summary>A suggestion, with its description under it where the request carries one, and the current
+        /// word where it is the current value.</summary>
         private static Control Row(string? value, EntryRequest request)
         {
             var stack = new StackPanel
@@ -994,7 +995,21 @@ public sealed class PanelPrompts : IHearsText
 
             if (value is not null && request.Descriptions?.GetValueOrDefault(value) is { Length: > 0 } description)
             {
-                stack.Children.Add(Muted(description));
+                var detail = new TextBlock
+                {
+                    Text = description,
+                    FontSize = TypeScale.Secondary,
+                    TextWrapping = TextWrapping.Wrap,
+                };
+
+                detail.Classes.Add(ListRow.DetailClass);
+                stack.Children.Add(detail);
+            }
+
+            if (request.CurrentWord is { Length: > 0 } word
+                && string.Equals(value, request.Initial, StringComparison.OrdinalIgnoreCase))
+            {
+                stack.Children.Add(ListRow.Secondary(new TextBlock { Text = word, FontSize = TypeScale.Small }));
             }
 
             return stack;

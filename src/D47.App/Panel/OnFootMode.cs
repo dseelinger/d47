@@ -366,7 +366,7 @@ public sealed class OnFootMode(
 
         if (!IsGrade(slot) && OnFootCatalogue.WhatItDoes(plan.Modification) is { } does)
         {
-            lines.Add(new LoadoutLine(does));
+            lines.Add(new LoadoutLine(does, LoadoutTone.Engineered));
         }
 
         if (build.Scope is not { } scope)
@@ -488,7 +488,10 @@ public sealed class OnFootMode(
                     : EntryVerdict.No($"I have no on-foot modification called “{value}”."),
                 ModificationsFor(build, slot),
                 "Plan this",
-                Descriptions: Descriptions(build)),
+                Descriptions: Descriptions(build))
+            {
+                CurrentWord = "planned now",
+            },
             modification =>
             {
                 kit.Plan(build.Id, new KitPlan(slot, Modification: modification.Trim()));

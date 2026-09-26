@@ -69,7 +69,14 @@ public sealed record EntryRequest(
     IReadOnlyList<string>? Suggestions = null,
     string? CommitLabel = null,
     IReadOnlyList<EntryButton>? Buttons = null,
-    IReadOnlyDictionary<string, string>? Descriptions = null);
+    IReadOnlyDictionary<string, string>? Descriptions = null)
+{
+    /// <summary>
+    /// What the suggestion equal to <see cref="Initial"/> is marked with — "planned now" — or null to mark
+    /// nothing. Read only with <see cref="Suggestions"/>.
+    /// </summary>
+    public string? CurrentWord { get; init; }
+}
 
 /// <summary>One value offered as a button: what it says, and what pressing it commits.</summary>
 public sealed record EntryButton(string Label, string Value)
