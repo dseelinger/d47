@@ -6,7 +6,7 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 1.18.0 — Seven more effects join the Guardian voice chain, and a rebuy warning
+## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
 Flanger, phaser and wah now run after Chorus; deep ring mod after Ring modulation; tremolo,
 overdrive and bitcrusher before Glitch. Each has its own level, the same as every other Guardian
@@ -55,6 +55,13 @@ Each system a faction search finds now says who controls it, how much influence 
 named has there and when the system was last reported, for example "controlled by Eurybia Blue
 Mafia; Eurybia Blue Mafia at 67.4% influence; reported 2026-09-25". Searches that name no faction
 are unchanged.
+
+You can now bookmark a destination. With a system, or a station in the system you are in, targeted,
+say "bookmark this" and it is saved under the destination's name: "Bookmarked Jameson Memorial, in
+Shinrarta Dezhra. Say 'set course for Jameson Memorial' to go there." Saying "set course for" the
+name later plots the course. "What are my bookmarks" lists them, "rename bookmark Jameson Memorial
+to Home" renames one, and "delete bookmark Home" deletes one. Bookmarks are kept per Commander and
+are d47's own, not the galaxy map's.
 
 ## 1.17.0 — The ship remarks on promotions and notable kills
 

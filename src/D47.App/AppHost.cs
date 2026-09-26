@@ -1855,6 +1855,7 @@ public sealed class AppHost : IDisposable
                 timersAndAlarms: timersAndAlarms is not null,
                 offers: offers,
                 learnedPhrases: learnedPhrases,
+                bookmarks: bookmarks,
                 phraseBook: () => builtRouter?.Book ?? throw new InvalidOperationException(
                     "The phrase book was asked for before the router finished building."),
                 contextNote: () => self?.ContextNote));
@@ -1917,6 +1918,11 @@ public sealed class AppHost : IDisposable
                 // And "set course for Current CG" (#488), one set of spellings per bookmark the flying
                 // Commander has made.
                 .Concat(BookmarkCourse.Phrases(
+                    bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
+
+                // And "delete bookmark Current CG" / "forget bookmark Current CG" (#489), one pair per
+                // bookmark the flying Commander has made.
+                .Concat(BookmarksCapability.Phrases(
                     bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty));
 
         var router = new KeywordRouter(

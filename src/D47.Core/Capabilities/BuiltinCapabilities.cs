@@ -178,6 +178,9 @@ public static class BuiltinCapabilities
         // forgotten on its own panel page (#171).
         Conversation.LearnedPhrasesStore? learnedPhrases = null,
 
+        // Where a Commander has named a system so they can return to it by voice (#489).
+        Conversation.BookmarkStore? bookmarks = null,
+
         // The whole phrase book the model-free router accepts, macros and learned phrases included, so
         // the model can be told what actually works rather than guess (#229). Null builds one with no
         // dynamic commands, for a caller — a test — with no router of its own.
@@ -273,6 +276,13 @@ public static class BuiltinCapabilities
         .. ActionCapabilities.All(actions, shipCommands, navigation, lastFoundSystem),
         AutonomousCapability.Create(autonomous),
         NavigationCapability.Create(navigation),
+        BookmarksCapability.Create(
+            bookmarks,
+            () => gameState.Active?.Identity.FrontierId ?? string.Empty,
+            gameStatus,
+            () => gameState.Active,
+            phraseBook ?? (() => PhraseBook.From(registry(), [])),
+            now ?? (() => DateTimeOffset.MinValue)),
         CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
