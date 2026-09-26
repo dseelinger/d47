@@ -4025,7 +4025,7 @@ public sealed class AppHost : IDisposable
 
         if (_ambience.Next(Cues) is { } track)
         {
-            Audio.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = track });
+            Audio.PlayMusic(track);
         }
     }
 

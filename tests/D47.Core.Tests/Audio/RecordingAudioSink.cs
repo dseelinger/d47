@@ -31,7 +31,7 @@ public sealed class RecordingAudioSink : IAudioSink
     public void Play(PlaybackRequest request)
     {
         Started.Add(request);
-        _log.Add($"play {request.Id} {request.Clip.Name}{(request.Loop ? " loop" : "")} gain={request.Gain:0.##}");
+        _log.Add($"play {request.Id} {request.Name}{(request.Loop ? " loop" : "")} gain={request.Gain:0.##}");
     }
 
     public void Stop(long playbackId)

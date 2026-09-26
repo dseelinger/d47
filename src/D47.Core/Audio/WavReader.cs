@@ -13,6 +13,34 @@ public static class WavReader
 
     public static AudioClip Read(Stream stream, string name)
     {
+        var (format, length) = ReadHeader(stream, name);
+        var pcm = new byte[length];
+        stream.ReadExactly(pcm);
+
+        return new AudioClip(name, pcm, format);
+    }
+
+    /// <summary>
+    /// Parses the header and returns the sample data as a stream read on demand. Takes ownership of
+    /// <paramref name="stream"/>, which must be seekable.
+    /// </summary>
+    public static WavPcmStream Open(Stream stream, string name)
+    {
+        try
+        {
+            var (format, length) = ReadHeader(stream, name);
+            return new WavPcmStream(stream, format, length);
+        }
+        catch
+        {
+            stream.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>The format and data length, leaving the stream at the first sample.</summary>
+    private static (AudioFormat Format, int Length) ReadHeader(Stream stream, string name)
+    {
         using var reader = new BinaryReader(stream, System.Text.Encoding.ASCII, leaveOpen: true);
 
         if (new string(reader.ReadChars(4)) != "RIFF")
@@ -73,7 +101,8 @@ public static class WavReader
                         throw new WavFormatException($"{name} has a data chunk before its fmt chunk.");
                     }
 
-                    return new AudioClip(name, reader.ReadBytes((int)chunkSize), format);
+                    // A data size larger than the file is a writer that never went back to fill it in.
+                    return (format, (int)Math.Min(chunkSize, stream.Length - stream.Position));
                 }
 
                 default:
@@ -98,4 +127,40 @@ public static class WavReader
             stream.Seek(count, SeekOrigin.Current);
         }
     }
+}
+
+/// <summary>The sample data of one WAV file, read as it is asked for.</summary>
+public sealed class WavPcmStream : IPcmStream
+{
+    private readonly Stream _stream;
+    private int _remaining;
+
+    internal WavPcmStream(Stream stream, AudioFormat format, int length)
+    {
+        _stream = stream;
+        _remaining = length;
+        Format = format;
+    }
+
+    public AudioFormat Format { get; }
+
+    /// <summary>Reads whole frames only.</summary>
+    public int Read(Span<byte> buffer)
+    {
+        var wanted = Math.Min(buffer.Length, _remaining);
+        wanted -= wanted % Format.BytesPerFrame;
+
+        if (wanted <= 0)
+        {
+            return 0;
+        }
+
+        var read = _stream.ReadAtLeast(buffer[..wanted], wanted, throwOnEndOfStream: false);
+        read -= read % Format.BytesPerFrame;
+        _remaining = read < wanted ? 0 : _remaining - read;
+
+        return read;
+    }
+
+    public void Dispose() => _stream.Dispose();
 }

@@ -123,7 +123,7 @@ public class AnAddressedSpeakerUsesTheirVoiceTests
 
         public void Play(PlaybackRequest request)
         {
-            Played.Add(request.Clip);
+            Played.Add(request.Clip!);
             _ = Finished;
         }
 

@@ -8,7 +8,7 @@ public enum AudioChannel
     /// <summary>The looping bed under a working turn (Phase 5, #18).</summary>
     Bed = 0,
 
-    /// <summary>Situational ambience (Phase 12, "Ambient music").</summary>
+    /// <summary>Situational ambience (Phase 12, "Ambient music"), started with <see cref="AudioArbiter.PlayMusic"/>.</summary>
     Music = 1,
 
     /// <summary>A short non-speech marker.</summary>
@@ -69,7 +69,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private long _nextId = 1;
     private Playing? _current;
     private Playing? _bed;
-    private Playing? _music;
+    private long? _music;
     private bool _subscribed;
     private AudioMix _mix = AudioMix.Default;
 
@@ -167,8 +167,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
             else if (request.Channel == AudioChannel.Music)
             {
-                StartMusic(request);
-                activity = Snapshot();
+                throw new ArgumentException("Music is streamed; start it with PlayMusic.", nameof(request));
             }
             else
             {
@@ -313,6 +312,27 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>Streams one ambience track in the music slot, replacing whatever was in it.</summary>
+    public void PlayMusic(MusicTrack track)
+    {
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            if (_music is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            var id = _nextId++;
+            _music = id;
+            sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Music)));
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+    }
+
     /// <summary>Stops the ambience without touching anything else.</summary>
     public void StopMusic()
     {
@@ -320,12 +340,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
-            if (_music is null)
+            if (_music is not { } playing)
             {
                 return;
             }
 
-            sink.Stop(_music.Id);
+            sink.Stop(playing);
             _music = null;
             activity = Snapshot();
         }
@@ -362,19 +382,6 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         var id = _nextId++;
         _bed = new Playing(id, request);
         sink.Play(new PlaybackRequest(id, request.Clip, Loop: true, Gain: GainFor(AudioChannel.Bed)));
-    }
-
-    /// <summary>One track, in the music slot.</summary>
-    private void StartMusic(AudioRequest request)
-    {
-        if (_music is not null)
-        {
-            sink.Stop(_music.Id);
-        }
-
-        var id = _nextId++;
-        _music = new Playing(id, request);
-        sink.Play(new PlaybackRequest(id, request.Clip, Loop: false, Gain: GainFor(AudioChannel.Music)));
     }
 
     /// <summary>Start the head of the queue if nothing is playing, and re-level the rest either way.</summary>
@@ -435,7 +442,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         if (_music is { } music)
         {
-            sink.SetGain(music.Id, GainFor(AudioChannel.Music));
+            sink.SetGain(music, GainFor(AudioChannel.Music));
         }
 
         if (_current is { } playing)
@@ -463,7 +470,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
-            if (_music?.Id == playbackId)
+            if (_music == playbackId)
             {
                 _music = null;
                 trackEnded = true;

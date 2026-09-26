@@ -59,7 +59,7 @@ public sealed class Ambience(Random? shuffle = null)
 {
     private readonly Random _shuffle = shuffle ?? Random.Shared;
 
-    private readonly List<AudioClip> _order = [];
+    private readonly List<MusicTrack> _order = [];
 
     /// <summary>Null until the first <see cref="Enter"/>, so the first one is always a change.</summary>
     private string? _situation;
@@ -87,8 +87,8 @@ public sealed class Ambience(Random? shuffle = null)
         return true;
     }
 
-    /// <summary>The next clip, or null when there is nothing to play.</summary>
-    public AudioClip? Next(CueLibrary library)
+    /// <summary>The next track, or null when there is nothing to play.</summary>
+    public MusicTrack? Next(CueLibrary library)
     {
         if (_order.Count == 0 || _next >= _order.Count)
         {

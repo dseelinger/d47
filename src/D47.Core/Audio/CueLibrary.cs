@@ -41,14 +41,14 @@ public sealed class CueLibrary
     private readonly IReadOnlyDictionary<LoopState, AudioClip> _cues;
     private readonly IReadOnlyDictionary<AlertCue, AudioClip> _alerts;
     private readonly IReadOnlyDictionary<string, AudioClip> _beds;
-    private readonly IReadOnlyDictionary<string, IReadOnlyList<AudioClip>> _music;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> _music;
     private readonly IReadOnlySet<string> _custom;
 
     private CueLibrary(
         IReadOnlyDictionary<LoopState, AudioClip> cues,
         IReadOnlyDictionary<AlertCue, AudioClip> alerts,
         IReadOnlyDictionary<string, AudioClip> beds,
-        IReadOnlyDictionary<string, IReadOnlyList<AudioClip>> music,
+        IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> music,
         IReadOnlySet<string> custom,
         IReadOnlyList<string> skipped)
     {
@@ -92,7 +92,7 @@ public sealed class CueLibrary
         var cues = new Dictionary<LoopState, AudioClip>();
         var alerts = new Dictionary<AlertCue, AudioClip>();
         var beds = new Dictionary<string, AudioClip>(StringComparer.OrdinalIgnoreCase);
-        var music = new Dictionary<string, List<AudioClip>>(StringComparer.OrdinalIgnoreCase);
+        var music = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
         var custom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var skipped = new List<string>();
         var unclaimed = new List<string>();
@@ -173,7 +173,7 @@ public sealed class CueLibrary
                         continue;
                     }
 
-                    if (TryRead(source, resource, stem, skipped) is { } track)
+                    if (TryReference(source, resource, stem, skipped) is { } track)
                     {
                         if (!music.TryGetValue(situation, out var tracks))
                         {
@@ -230,7 +230,7 @@ public sealed class CueLibrary
             beds,
             music.ToDictionary(
                 entry => entry.Key,
-                entry => (IReadOnlyList<AudioClip>)entry.Value,
+                entry => (IReadOnlyList<MusicTrack>)entry.Value,
                 StringComparer.OrdinalIgnoreCase),
             custom,
             skipped);
@@ -260,7 +260,7 @@ public sealed class CueLibrary
     public AudioClip For(AlertCue alert) => _alerts[alert];
 
     /// <summary>The ambience tracks for one situation, in the order the folder was read.</summary>
-    public IReadOnlyList<AudioClip> Music(string situation) =>
+    public IReadOnlyList<MusicTrack> Music(string situation) =>
         _music.TryGetValue(situation, out var tracks) ? tracks : [];
 
     /// <summary>Every situation that actually has something in it.</summary>
@@ -287,6 +287,42 @@ public sealed class CueLibrary
             return null;
         }
     }
+
+    /// <summary>
+    /// A track whose header was checked and whose samples are left on disk, or null with the reason
+    /// recorded.
+    /// </summary>
+    private static MusicTrack? TryReference(ICueSource source, string resource, string name, List<string> skipped)
+    {
+        try
+        {
+            OpenTrack(source, resource, name).Dispose();
+        }
+        catch (Exception ex) when (!source.Required && ex is CueSetException or WavFormatException or IOException or UnauthorizedAccessException)
+        {
+            skipped.Add($"{name}: {ex.Message}");
+            return null;
+        }
+
+        return new MusicTrack(name, () => OpenTrack(source, resource, name));
+    }
+
+    private static WavPcmStream OpenTrack(ICueSource source, string resource, string name)
+    {
+        var stream = WavReader.Open(source.Open(resource), name);
+
+        if (stream.Format != AudioFormat.Standard)
+        {
+            stream.Dispose();
+            throw WrongFormat(stream.Format);
+        }
+
+        return stream;
+    }
+
+    private static CueSetException WrongFormat(AudioFormat format) =>
+        new($"it is {format.SampleRate} Hz / {format.Channels}ch; " +
+            $"audio must be {AudioFormat.Standard.SampleRate} Hz mono 16-bit.");
 
     /// <summary>
     /// Records that a clip came from somewhere other than the build — or that it no longer does, which
@@ -318,9 +354,7 @@ public sealed class CueLibrary
 
         if (clip.Format != AudioFormat.Standard)
         {
-            throw new CueSetException(
-                $"it is {clip.Format.SampleRate} Hz / {clip.Format.Channels}ch; " +
-                $"audio must be {AudioFormat.Standard.SampleRate} Hz mono 16-bit.");
+            throw WrongFormat(clip.Format);
         }
 
         return clip;

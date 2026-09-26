@@ -120,7 +120,7 @@ public class AmbienceTests : IDisposable
     {
         var (arbiter, sink) = Arbiter();
 
-        arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = Clip("track") });
+        arbiter.PlayMusic(Track("track"));
         arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Bed, Clip = Clip("bed"), Loop = true });
         arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Speech, Clip = Clip("reply") });
 
@@ -138,7 +138,7 @@ public class AmbienceTests : IDisposable
     {
         var (arbiter, sink) = Arbiter();
 
-        arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = Clip("track") });
+        arbiter.PlayMusic(Track("track"));
         var music = sink.Started[0].Id;
 
         // Half level out of the box, so the undisturbed gain is the level itself.
@@ -157,7 +157,7 @@ public class AmbienceTests : IDisposable
     {
         var (arbiter, sink) = Arbiter();
 
-        arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = Clip("track") });
+        arbiter.PlayMusic(Track("track"));
         Assert.True(arbiter.Activity.MusicPlaying);
 
         arbiter.Silence();
@@ -174,7 +174,7 @@ public class AmbienceTests : IDisposable
         var asked = 0;
         arbiter.MusicFinished += () => asked++;
 
-        arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = Clip("track") });
+        arbiter.PlayMusic(Track("track"));
         sink.CompletePlayback(sink.Started[0].Id);
 
         Assert.Equal(1, asked);
@@ -190,7 +190,7 @@ public class AmbienceTests : IDisposable
         var asked = 0;
         arbiter.MusicFinished += () => asked++;
 
-        arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Music, Clip = Clip("track") });
+        arbiter.PlayMusic(Track("track"));
         arbiter.StopMusic();
 
         Assert.Equal(0, asked);
@@ -207,6 +207,9 @@ public class AmbienceTests : IDisposable
         Assert.Contains("in-combat", library.Skipped[0], StringComparison.Ordinal);
         Assert.Contains(Situations.Supercruise, library.Skipped[0], StringComparison.Ordinal);
     }
+
+    private static MusicTrack Track(string name) =>
+        new(name, () => WavReader.Open(new MemoryStream(WavWriter.ToBytes(new byte[480], AudioFormat.Standard)), name));
 
     private static AudioClip Clip(string name) =>
         new(name, new byte[AudioFormat.Standard.SampleRate / 5 * 2], AudioFormat.Standard);

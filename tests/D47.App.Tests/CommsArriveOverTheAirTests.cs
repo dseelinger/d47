@@ -35,7 +35,7 @@ public class CommsArriveOverTheAirTests
 
         await voice.AnnounceAsync(announcement);
 
-        return new Spoken(Assert.Single(sink.Started).Clip, caption);
+        return new Spoken(Assert.Single(sink.Started).Clip!, caption);
     }
 
     private static async Task<AudioClip> RawAsync(string text) =>

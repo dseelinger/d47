@@ -49,8 +49,8 @@ public class AudioMixTests
         arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Bed, Clip = Clip("bed"), Loop = true });
         arbiter.Enqueue(On(AudioChannel.Cue, "cue"));
 
-        var bed = sink.Started.First(request => request.Clip.Name == "bed");
-        var cue = sink.Started.First(request => request.Clip.Name == "cue");
+        var bed = sink.Started.First(request => request.Name == "bed");
+        var cue = sink.Started.First(request => request.Name == "cue");
 
         Assert.Equal(0f, sink.GainOf(bed.Id)!.Value);
         Assert.Equal(1f, sink.GainOf(cue.Id)!.Value);

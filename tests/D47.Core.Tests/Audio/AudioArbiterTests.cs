@@ -30,12 +30,12 @@ public class AudioArbiterTests
         arbiter.Enqueue(Speech("second"));
 
         Assert.Single(sink.Started);
-        Assert.Equal("first", sink.Started[0].Clip.Name);
+        Assert.Equal("first", sink.Started[0].Name);
 
         sink.CompleteCurrent();
 
         Assert.Equal(2, sink.Started.Count);
-        Assert.Equal("second", sink.Started[1].Clip.Name);
+        Assert.Equal("second", sink.Started[1].Name);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class AudioArbiterTests
 
         Assert.Equal(
             ["one", "two", "three", "four"],
-            sink.Started.Select(request => request.Clip.Name));
+            sink.Started.Select(request => request.Name));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class AudioArbiterTests
         arbiter.Enqueue(new AudioRequest { Channel = AudioChannel.Alert, Clip = Clip("interdiction") });
 
         Assert.Contains(speechId, sink.Stopped);
-        Assert.Equal("interdiction", sink.Started[1].Clip.Name);
+        Assert.Equal("interdiction", sink.Started[1].Name);
 
         // The interrupted sentence is gone, not parked.
         sink.CompleteCurrent();
@@ -99,7 +99,7 @@ public class AudioArbiterTests
 
         sink.CompleteCurrent();
 
-        Assert.Equal("queued alert", sink.Started[1].Clip.Name);
+        Assert.Equal("queued alert", sink.Started[1].Name);
     }
 
     /// <summary>The point of closing rather than dropping: what was still being synthesised.</summary>
@@ -133,7 +133,7 @@ public class AudioArbiterTests
         arbiter.OpenGroup("chatter");
         arbiter.Enqueue(Speech("taken", group: "chatter"));
 
-        Assert.Equal("taken", Assert.Single(sink.Started).Clip.Name);
+        Assert.Equal("taken", Assert.Single(sink.Started).Name);
     }
 
     /// <summary>Closing one group is not a way of quietening anything else.</summary>
@@ -147,13 +147,13 @@ public class AudioArbiterTests
         arbiter.Enqueue(Speech("docking request granted", group: "announcement"));
         arbiter.Enqueue(Speech("one jump remaining"));
 
-        Assert.Equal("docking request granted", sink.Started[0].Clip.Name);
+        Assert.Equal("docking request granted", sink.Started[0].Name);
 
         // A different group follows: a gap comes first (#44), then the line itself.
         sink.CompleteCurrent();
         sink.CompleteCurrent();
 
-        Assert.Equal("one jump remaining", sink.Started[2].Clip.Name);
+        Assert.Equal("one jump remaining", sink.Started[2].Name);
     }
 
     /// <summary>
@@ -171,12 +171,12 @@ public class AudioArbiterTests
 
         sink.CompleteCurrent();
 
-        Assert.Equal("spoken-gap", sink.Started[1].Clip.Name);
+        Assert.Equal("spoken-gap", sink.Started[1].Name);
         Assert.Null(arbiter.Activity.Caption);
 
         sink.CompleteCurrent();
 
-        Assert.Equal("Gliese 9539 could be running high grade emissions", sink.Started[2].Clip.Name);
+        Assert.Equal("Gliese 9539 could be running high grade emissions", sink.Started[2].Name);
     }
 
     /// <summary>Sentences of the same reply are one continuous thought and never split by a gap.</summary>
@@ -190,7 +190,7 @@ public class AudioArbiterTests
 
         sink.CompleteCurrent();
 
-        Assert.Equal("second", sink.Started[1].Clip.Name);
+        Assert.Equal("second", sink.Started[1].Name);
     }
 
     /// <summary>Ranking decides who goes next, not who gets cut off.</summary>
@@ -208,7 +208,7 @@ public class AudioArbiterTests
         Assert.Single(sink.Started);
 
         sink.CompleteCurrent();
-        Assert.Equal("here is your answer", sink.Started[1].Clip.Name);
+        Assert.Equal("here is your answer", sink.Started[1].Name);
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public class AudioArbiterTests
 
         arbiter.EnterState(LoopState.Answered, Cues);
 
-        Assert.Equal("answered", sink.Started[0].Clip.Name);
+        Assert.Equal("answered", sink.Started[0].Name);
     }
 
     [Fact]
@@ -334,7 +334,7 @@ public class AudioArbiterTests
 
         arbiter.DropGroup("turn-1");
 
-        Assert.Equal("hull damage", sink.Started[^1].Clip.Name);
+        Assert.Equal("hull damage", sink.Started[^1].Name);
         Assert.True(arbiter.IsSpeaking);
     }
 

@@ -35,7 +35,8 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     private string? _openEndpointId;
     private bool _disposed;
 
-    private sealed record Input(VolumeSampleProvider Volume, ISampleProvider Root);
+    /// <summary>One playing input; <paramref name="Owned"/> is released when it stops or ends.</summary>
+    private sealed record Input(VolumeSampleProvider Volume, ISampleProvider Root, IDisposable? Owned);
 
     public WasapiAudioSink(ILogger<WasapiAudioSink> logger)
         : this(logger, new WasapiEndpointEnumerator())
@@ -120,7 +121,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             ObjectDisposedException.ThrowIf(_disposed, this);
 
             _mixer.RemoveAllMixerInputs();
-            _inputs.Clear();
+            ReleaseAll();
             _output?.Dispose();
             _output = null;
         }
@@ -152,7 +153,21 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
                 return;
             }
 
-            ISampleProvider source = new ClipSampleProvider(request.Clip, request.Loop);
+            ISampleProvider source;
+            IDisposable? owned = null;
+
+            if (request.Track is { } track)
+            {
+                var stream = new StreamSampleProvider(track, _logger);
+                source = stream;
+                owned = stream;
+            }
+            else
+            {
+                source = new ClipSampleProvider(
+                    request.Clip ?? throw new ArgumentException("A request carries a clip or a track.", nameof(request)),
+                    request.Loop);
+            }
 
             if (source.WaveFormat.Channels != MixFormat.Channels)
             {
@@ -162,7 +177,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             var volume = new VolumeSampleProvider(source) { Volume = request.Gain };
             var tracked = new TrackedSampleProvider(request.Id, volume);
 
-            _inputs[request.Id] = new Input(volume, tracked);
+            _inputs[request.Id] = new Input(volume, tracked, owned);
             _mixer.AddMixerInput(tracked);
         }
     }
@@ -175,6 +190,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             {
                 // Removing the input is the stop.
                 _mixer.RemoveMixerInput(input.Root);
+                input.Owned?.Dispose();
             }
         }
     }
@@ -184,7 +200,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
         lock (_gate)
         {
             _mixer.RemoveAllMixerInputs();
-            _inputs.Clear();
+            ReleaseAll();
         }
     }
 
@@ -205,8 +221,9 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
 
         lock (_gate)
         {
-            if (e.SampleProvider is TrackedSampleProvider tracked && _inputs.Remove(tracked.Id))
+            if (e.SampleProvider is TrackedSampleProvider tracked && _inputs.Remove(tracked.Id, out var input))
             {
+                input.Owned?.Dispose();
                 ended = tracked.Id;
             }
         }
@@ -215,6 +232,16 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
         {
             Finished?.Invoke(id);
         }
+    }
+
+    private void ReleaseAll()
+    {
+        foreach (var input in _inputs.Values)
+        {
+            input.Owned?.Dispose();
+        }
+
+        _inputs.Clear();
     }
 
     private MMDevice? Resolve(string? deviceId)
@@ -252,7 +279,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             _mixer.MixerInputEnded -= OnMixerInputEnded;
             _output?.Dispose();
             _output = null;
-            _inputs.Clear();
+            ReleaseAll();
         }
 
         _follower.Dispose();

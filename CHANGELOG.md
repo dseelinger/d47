@@ -83,6 +83,11 @@ Audio dropped into `data/audio/` no longer holds up push-to-talk and callouts wh
 now waits until nothing in the folder has changed for three seconds, then reloads it in the
 background, once, however many files were copied in.
 
+Ambient music is read from disk while it plays instead of being loaded whole. Memory used for
+music no longer grows with the number or length of the tracks in `data/audio/music/`, and
+reloading the folder no longer reads every track. A track that cannot be read is logged and the
+next one starts.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

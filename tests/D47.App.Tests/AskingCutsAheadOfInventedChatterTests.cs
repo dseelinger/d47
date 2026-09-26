@@ -134,7 +134,7 @@ public class AskingCutsAheadOfInventedChatterTests
         // The thinking cue, queued by entering the state and still playing when the words arrived.
         var cue = sink.Started[0];
 
-        Assert.False(cue.Clip.Name.StartsWith(Answer, StringComparison.Ordinal));
+        Assert.False(cue.Name.StartsWith(Answer, StringComparison.Ordinal));
         Assert.DoesNotContain(cue.Id, sink.Stopped);
     }
 
@@ -279,7 +279,7 @@ public class AskingCutsAheadOfInventedChatterTests
         /// renamed by the treatment applied to it.
         /// </summary>
         public bool Played(string text) =>
-            Started.Exists(request => request.Clip.Name.StartsWith(text, StringComparison.Ordinal));
+            Started.Exists(request => request.Name.StartsWith(text, StringComparison.Ordinal));
 
         /// <summary>Drains the queue, so what was never started can be told apart from what was.</summary>
         public void FinishEverything()

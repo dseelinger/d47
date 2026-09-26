@@ -31,7 +31,7 @@ public class SpeechPipelineTests
         pipeline.Push("You are in Sol. ");
         await pipeline.CompleteAsync();
 
-        Assert.Equal("You are in Sol.", sink.Started[0].Clip.Name);
+        Assert.Equal("You are in Sol.", sink.Started[0].Name);
         Assert.Equal([("en-US-RogerNeural"), null], tts.Voices);
     }
 
@@ -127,7 +127,7 @@ public class SpeechPipelineTests
         await tts.WaitForRequest("You are in Sol.");
         await pipeline.CompleteAsync();
 
-        Assert.Equal("You are in Sol.", sink.Started[0].Clip.Name);
+        Assert.Equal("You are in Sol.", sink.Started[0].Name);
     }
 
     /// <summary>
@@ -155,7 +155,7 @@ public class SpeechPipelineTests
 
         Assert.Equal(
             ["First.", "Second.", "Third."],
-            sink.Started.Select(request => request.Clip.Name));
+            sink.Started.Select(request => request.Name));
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public class SpeechPipelineTests
         pipeline.Push("Docking granted.");
         await pipeline.CompleteAsync();
 
-        Assert.Equal(["Docking granted."], sink.Started.Select(request => request.Clip.Name));
+        Assert.Equal(["Docking granted."], sink.Started.Select(request => request.Name));
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class SpeechPipelineTests
         Assert.Single(reported);
         Assert.Equal(
             ["The first one.", "The third one."],
-            sink.Started.Select(request => request.Clip.Name));
+            sink.Started.Select(request => request.Name));
     }
 
     [Fact]
