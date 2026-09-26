@@ -100,7 +100,7 @@ public class TheTabsCanRunDownTheLeftTests
         Assert.Same(strip, chrome.Parent);
         Assert.Same(chrome, strip.Children[0]);
         Assert.False(panel.FindControl<Control>("CrumbBar")!.IsVisible);
-        Assert.Equal(40, panel.FindControl<RadioButton>("TranscriptTab")!.Bounds.Height);
+        Assert.Equal(44, panel.FindControl<RadioButton>("TranscriptTab")!.Bounds.Height);
 
         window.Close();
     }

@@ -77,8 +77,6 @@ public static class EngineersPages
             Background = Brushes.Transparent,
             Padding = new Thickness(0, 2),
             HorizontalAlignment = HorizontalAlignment.Left,
-
-            // Tall enough for a ray at a metre, which is the floor every pressable thing on this surface has.
             MinHeight = 30,
         };
 

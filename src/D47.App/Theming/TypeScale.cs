@@ -30,6 +30,9 @@ public static class TypeScale
     /// <summary>A tooltip's own prose (#381).</summary>
     public const double Tip = 14;
 
+    /// <summary>A tile's label.</summary>
+    public const double Control = 13;
+
     /// <summary>A badge, or a count beside something else.</summary>
     public const double Small = 13;
 

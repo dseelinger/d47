@@ -917,8 +917,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             var edit = new Button
             {
                 Content = "Edit",
-                Padding = new Thickness(10, 2),
-                MinHeight = TouchTarget,
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -926,8 +924,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             var drop = new Button
             {
                 Content = "Delete",
-                Padding = new Thickness(10, 2),
-                MinHeight = TouchTarget,
                 MinWidth = 0,
                 VerticalAlignment = VerticalAlignment.Center,
                 Classes = { "destructive" },
@@ -1058,12 +1054,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var button = new Button
         {
             Content = glyph,
-            Padding = new Thickness(8, 2),
-
-            // <see cref="TouchTarget"/> rather than whatever the padding came to, which was about twenty
-            // pixels: these are the only controls on the page that were below the floor, and they went back
-            // into a headset with the tab (Phase 39).
-            MinHeight = TouchTarget,
             MinWidth = 0,
             VerticalAlignment = VerticalAlignment.Center,
         };

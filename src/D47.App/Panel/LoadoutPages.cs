@@ -674,8 +674,6 @@ public static class LoadoutPages
         var button = new Button
         {
             Content = label,
-            Padding = new Thickness(12, 4),
-            MinHeight = 30,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 

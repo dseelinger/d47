@@ -10,15 +10,12 @@ namespace D47.App.Panel;
 /// </summary>
 internal static class ProposalActions
 {
-    /// <summary>The floor under anything on this row a ray has to hit, in pixels.</summary>
-    private const double TouchTarget = 30;
-
     public static Control Build(Action accept, Action decline, string footer)
     {
-        var acceptButton = new Button { Content = "Accept", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
+        var acceptButton = new Button { Content = "Accept" };
         acceptButton.Click += (_, _) => accept();
 
-        var declineButton = new Button { Content = "Decline", Padding = new Thickness(14, 4), MinHeight = TouchTarget };
+        var declineButton = new Button { Content = "Decline" };
         declineButton.Click += (_, _) => decline();
 
         return new StackPanel

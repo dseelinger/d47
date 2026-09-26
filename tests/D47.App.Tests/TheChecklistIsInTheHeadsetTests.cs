@@ -189,6 +189,13 @@ public class TheChecklistIsInTheHeadsetTests
     [AvaloniaFact]
     public void EveryTargetARayHasToHitClearsTheFloor()
     {
+        // The tiles take their height from the control kit, which HeadlessApp leaves out.
+        Application.Current!.Styles.Add(
+            new Avalonia.Markup.Xaml.Styling.StyleInclude((Uri?)null)
+            {
+                Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
+            });
+
         var (panel, view, _, _) = Headset(lines: 4);
         using var _disposable = panel;
 

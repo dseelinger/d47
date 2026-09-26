@@ -471,8 +471,6 @@ public static class HelpPageView
         {
             Content = Stacked(title, blurb),
             HorizontalAlignment = HorizontalAlignment.Stretch,
-
-            // The ray floor, as everything pressable on this surface has.
             MinHeight = 30,
         });
 

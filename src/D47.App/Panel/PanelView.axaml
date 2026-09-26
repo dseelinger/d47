@@ -304,7 +304,6 @@
           <Button x:Name="AskButton"
                   DockPanel.Dock="Right"
                   Margin="10,0,0,0"
-                  Padding="34,0"
                   VerticalAlignment="Bottom"
                   VerticalContentAlignment="Center"
                   Content="SEND"

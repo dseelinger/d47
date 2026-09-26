@@ -17,11 +17,11 @@
     -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
-      <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Control}" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="LetterSpacing" Value="0.9" />
+      <Setter Property="LetterSpacing" Value="0.78" />
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Padding" Value="20,11" />
+      <Setter Property="Padding" Value="16,0" />
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />

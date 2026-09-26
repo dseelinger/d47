@@ -2933,8 +2933,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             Name = $"Press_{row.Key.Replace('.', '_')}",
             Content = row.PressLabel,
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -3385,7 +3383,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Name = "ApplyStaged",
             IsVisible = false,
             HorizontalAlignment = HorizontalAlignment.Right,
-            MinHeight = 36,
             VerticalContentAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 4, 0, 0),
         };

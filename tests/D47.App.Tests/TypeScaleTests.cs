@@ -55,6 +55,7 @@ public partial class TypeScaleTests
             ["D47.Type.Body"] = TypeScale.Body,
             ["D47.Type.Secondary"] = TypeScale.Secondary,
             ["D47.Type.Tip"] = TypeScale.Tip,
+            ["D47.Type.Control"] = TypeScale.Control,
             ["D47.Type.Small"] = TypeScale.Small,
             ["D47.Type.Meta"] = TypeScale.Meta,
             ["D47.Type.Caption"] = TypeScale.Caption,

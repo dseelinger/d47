@@ -888,8 +888,6 @@ public sealed class PanelPrompts : IHearsText
             _commit = new Button
             {
                 Content = request.CommitLabel ?? "Use this",
-                MinHeight = 40,
-                Padding = new Thickness(18, 0),
                 VerticalContentAlignment = VerticalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Bottom,
                 Margin = new Thickness(14, 0, 0, 0),

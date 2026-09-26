@@ -131,6 +131,12 @@ Asking "how many merc coins do I have" reads out your bank account statistics, i
 Coin balance, without going to the model. Merc Coin figures in your career statistics are given in
 Merc Coins; they used to be given in credits, under names such as "Merccoins Total Spent".
 
+Every button is now 44 pixels tall with a 13-pixel label and 16 pixels of padding each side. The
+tabs along the top are 44 tall too. Buttons that were drawn smaller are now full size: the Fleet,
+Engineers and hull picture buttons, Checklist Edit, Delete and the move arrows, proposal Accept and
+Decline, the chooser's commit button, Settings' confirm and press-row buttons, Guardian Save and
+Rename, and Send.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

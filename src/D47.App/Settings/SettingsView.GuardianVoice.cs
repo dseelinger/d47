@@ -90,8 +90,6 @@ public partial class SettingsView
 
     private const double GuardianTileButtonWidth = 120;
 
-    private const double GuardianTileButtonHeight = 40;
-
     /// <summary>Controls a group's own builder draws for rows that have none of their own, by key.</summary>
     private readonly Dictionary<string, Control> _drawnByGroup = new(StringComparer.Ordinal);
 
@@ -872,13 +870,11 @@ public partial class SettingsView
             "Guardian voice reset",
             settings => GuardianPresets.Reset(settings.Speech).Settings is { } speech ? settings with { Speech = speech } : settings);
 
-    /// <summary>A 120 × 40 tile button, the preset row's size for TEST and the preset buttons.</summary>
+    /// <summary>A 120-wide tile button, the preset row's size for TEST and the preset buttons.</summary>
     private static Button GuardianTileButton(string label) => new()
     {
         Content = label,
         Width = GuardianTileButtonWidth,
-        Height = GuardianTileButtonHeight,
-        MinHeight = GuardianTileButtonHeight,
         Padding = new Thickness(0),
         HorizontalContentAlignment = HorizontalAlignment.Center,
         VerticalContentAlignment = VerticalAlignment.Center,

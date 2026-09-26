@@ -3,7 +3,7 @@
                     xmlns:theming="clr-namespace:D47.App.Theming">
 
   <!--
-    A tab: a flat Tile with A ink, 40 tall, 2px from its neighbour. Solid A with Knock ink on hover
+    A tab: a flat Tile with A ink, 44 tall, 2px from its neighbour. Solid A with Knock ink on hover
     or keyboard focus, and when selected, where it also glows. The strip sits on a 2px A rule.
 
     Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
@@ -18,7 +18,7 @@
     <Setter Property="LetterSpacing" Value="0.9" />
     <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
     <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
-    <Setter Property="Height" Value="40" />
+    <Setter Property="Height" Value="44" />
     <Setter Property="Padding" Value="26,0" />
     <Setter Property="Margin" Value="0,0,2,0" />
     <Setter Property="FocusAdorner" Value="{x:Null}" />
