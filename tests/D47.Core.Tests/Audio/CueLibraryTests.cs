@@ -69,10 +69,7 @@ public class CueLibraryTests
             Assert.Equal(AudioFormat.Standard, library.For(state).Format);
         }
 
-        foreach (var bed in library.BedNames)
-        {
-            Assert.Equal(AudioFormat.Standard, library.Bed(bed).Format);
-        }
+        Assert.Equal(AudioFormat.Standard, library.Bed().Format);
     }
 
     [Fact]
@@ -80,7 +77,7 @@ public class CueLibraryTests
     {
         var library = CueLibrary.Load();
 
-        var bed = library.Bed(CueLibrary.DefaultBed);
+        var bed = library.Bed();
 
         Assert.Equal(CueLibrary.DefaultBed, bed.Name);
         Assert.True(
@@ -89,10 +86,11 @@ public class CueLibraryTests
     }
 
     [Fact]
-    public void AnUnknownBedNameFallsBackToTheDefaultRatherThanGoingSilent()
+    public void OnlyOneBedShips()
     {
-        var library = CueLibrary.Load();
+        var error = Assert.Throws<CueSetException>(() => CueLibrary.Load(new EditedCueSource(names =>
+            names.Concat(["D47.Core.Beds.thinking-pulse"]))));
 
-        Assert.Equal(CueLibrary.DefaultBed, library.Bed("no-such-bed").Name);
+        Assert.Contains("beds/thinking-pulse", error.Message, StringComparison.Ordinal);
     }
 }

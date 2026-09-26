@@ -608,7 +608,9 @@ public class SearchTheTabTests
 
         SettingsPageReading.Open(host.View, "sounds");
 
-        Assert.NotEmpty(VisibleRowLabels(host));
+        Assert.Contains(
+            host.View.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(Words),
+            words => words == "Thinking bed");
         Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Sounds and levels");
 
         box.Text = string.Empty;

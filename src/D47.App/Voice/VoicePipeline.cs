@@ -70,8 +70,6 @@ public sealed class VoicePipeline(
 
     public bool BedEnabled { get; set; } = true;
 
-    public string? Bed { get; set; }
-
     /// <summary>The ship AI's Guardian treatment for the settings in force, or null with every toggle off (#225).</summary>
     public Func<AudioClip, AudioClip>? GuardianColour { get; set; }
 
@@ -343,7 +341,7 @@ public sealed class VoicePipeline(
             arbiter.OpenGroup(SpokenGroup.InventedChatter);
         }
 
-        arbiter.EnterState(state, cues(), Bed, CuesEnabled && cue, BedEnabled);
+        arbiter.EnterState(state, cues(), CuesEnabled && cue, BedEnabled);
 
         // Settle may have moved the loop on while that ran.
         if (_state == state)

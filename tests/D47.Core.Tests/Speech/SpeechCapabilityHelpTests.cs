@@ -10,7 +10,7 @@ namespace D47.Core.Tests.Speech;
 public class SpeechCapabilityTests
 {
     private static SpeechCapability.SpeechSurface Surface() =>
-        new() { Silence = () => { }, Beds = () => [] };
+        new() { Silence = () => { } };
 
     [Theory]
     [InlineData(SpeechCapability.SpeakSystemChatKey, "System")]

@@ -26,7 +26,6 @@ public sealed class EveryRowSitsOnOneGridTests
     [AvaloniaTheory]
     [InlineData("voice-input")]
     [InlineData("voice")]
-    [InlineData("sounds")]
     public void LabelsControlsAndResetGuttersEachShareOneX(string placeId)
     {
         var host = OpenOn(placeId, 1400);
@@ -105,7 +104,6 @@ public sealed class EveryRowSitsOnOneGridTests
     [AvaloniaTheory]
     [InlineData("voice-input")]
     [InlineData("voice")]
-    [InlineData("sounds")]
     public void AtNineHundredTwentyFourEveryRowFitsWithoutAHorizontalScroll(string placeId)
     {
         var host = OpenOn(placeId, 924);

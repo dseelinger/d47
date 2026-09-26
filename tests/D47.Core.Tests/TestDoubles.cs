@@ -324,7 +324,6 @@ public sealed class TestSurface
         Action? onSilence = null) => new()
     {
         Silence = onSilence ?? (() => { }),
-        Beds = () => [.. D47.Core.Audio.CueLibrary.Load().BedNames],
     };
 
  /// <summary>The fleet surface, every member supplied and none of them doing anything.</summary>

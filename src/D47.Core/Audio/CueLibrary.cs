@@ -45,9 +45,15 @@ public sealed class EmbeddedCueSource(Assembly assembly) : ICueSource
 }
 
 /// <summary>
-/// The cues, beds and ambience d47 can play: what it ships with, plus whatever the Commander has
-/// dropped into <c>data/audio/</c> (Phase 5 #20, Phase 12 "Custom Sound Cues").
+/// The cues, bed and ambience d47 can play: what it ships with, plus whatever the Commander has
+/// dropped into <c>data/audio/</c>. A cue, alert or bed with files of the Commander's plays one of
+/// those, picked at call time; one with none plays the shipped sound.
 /// </summary>
+/// <remarks>
+/// Shipped clips are named <c>&lt;prefix&gt;&lt;member&gt;</c>. Pool clips are named
+/// <c>&lt;prefix&gt;&lt;folder&gt;.&lt;file&gt;</c> for cues and alerts, and
+/// <c>&lt;prefix&gt;&lt;file&gt;</c> for beds from a source that is not <see cref="ICueSource.Required"/>.
+/// </remarks>
 public sealed class CueLibrary
 {
     internal const string CuePrefix = "D47.Core.Cues.";
@@ -55,30 +61,38 @@ public sealed class CueLibrary
     internal const string BedPrefix = "D47.Core.Beds.";
     internal const string MusicPrefix = "D47.Core.Music.";
 
+    /// <summary>The shipped bed, played while a turn runs when <c>beds/</c> is empty.</summary>
+    public const string DefaultBed = "thinking-hum";
+
     private readonly IReadOnlyDictionary<LoopState, AudioClip> _cues;
     private readonly IReadOnlyDictionary<AlertCue, AudioClip> _alerts;
-    private readonly IReadOnlyDictionary<string, AudioClip> _beds;
+    private readonly AudioClip _bed;
+    private readonly IReadOnlyDictionary<LoopState, ClipPool> _cuePools;
+    private readonly IReadOnlyDictionary<AlertCue, ClipPool> _alertPools;
+    private readonly ClipPool? _bedPool;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> _music;
-    private readonly IReadOnlySet<string> _custom;
 
     private CueLibrary(
         IReadOnlyDictionary<LoopState, AudioClip> cues,
         IReadOnlyDictionary<AlertCue, AudioClip> alerts,
-        IReadOnlyDictionary<string, AudioClip> beds,
+        AudioClip bed,
+        IReadOnlyDictionary<LoopState, ClipPool> cuePools,
+        IReadOnlyDictionary<AlertCue, ClipPool> alertPools,
+        ClipPool? bedPool,
         IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> music,
-        IReadOnlySet<string> custom,
+        int customCount,
         IReadOnlyList<string> skipped)
     {
         _cues = cues;
         _alerts = alerts;
-        _beds = beds;
+        _bed = bed;
+        _cuePools = cuePools;
+        _alertPools = alertPools;
+        _bedPool = bedPool;
         _music = music;
-        _custom = custom;
+        CustomCount = customCount;
         Skipped = skipped;
     }
-
-    /// <summary>Bed names, shipped and dropped in.</summary>
-    public IReadOnlyCollection<string> BedNames => (IReadOnlyCollection<string>)_beds.Keys;
 
     /// <summary>
     /// Drop-in files that would not load, each with the reason, in words a Commander can act on.
@@ -86,65 +100,105 @@ public sealed class CueLibrary
     public IReadOnlyList<string> Skipped { get; }
 
     /// <summary>How many clips came from the Commander's folder rather than from the build.</summary>
-    public int CustomCount => _custom.Count;
+    public int CustomCount { get; }
 
-    /// <summary>
-    /// Whether this clip is the Commander's own — a bed name, or a loop state's name for a cue they
-    /// have overridden.
-    /// </summary>
-    public bool IsCustom(string name) => _custom.Contains(name);
+    /// <summary>The folder under <c>cues/</c> or <c>alerts/</c> that holds one member's files: lower kebab case.</summary>
+    public static string FolderName<TKey>(TKey member)
+        where TKey : struct, Enum
+    {
+        var name = member.ToString();
+        var folder = new System.Text.StringBuilder(name.Length + 4);
 
-    /// <summary>The bed played while a turn runs (Phase 5, #18).</summary>
-    public const string DefaultBed = "thinking-hum";
+        for (var index = 0; index < name.Length; index++)
+        {
+            if (index > 0 && char.IsUpper(name[index]))
+            {
+                folder.Append('-');
+            }
+
+            folder.Append(char.ToLowerInvariant(name[index]));
+        }
+
+        return folder.ToString();
+    }
 
     public static CueLibrary Load() => Load(new EmbeddedCueSource(typeof(CueLibrary).Assembly));
 
     /// <summary>One source, which is the shipped set and every test that is about it.</summary>
     public static CueLibrary Load(ICueSource source) => Load(logger: null, source);
 
-    /// <summary>Loads from every source in order, later sources winning by name.</summary>
+    /// <summary>Loads from every source in order; a later shipped clip replaces an earlier one.</summary>
     /// <param name="logger">Where a skipped drop-in is reported.</param>
-    public static CueLibrary Load(ILogger? logger, params ICueSource[] sources)
+    public static CueLibrary Load(ILogger? logger, params ICueSource[] sources) => Load(logger, random: null, sources);
+
+    /// <param name="logger">Where a skipped drop-in is reported.</param>
+    /// <param name="random">Shuffles the pools; <see cref="Random.Shared"/> when null.</param>
+    public static CueLibrary Load(ILogger? logger, Random? random, params ICueSource[] sources)
     {
         var cues = new Dictionary<LoopState, AudioClip>();
         var alerts = new Dictionary<AlertCue, AudioClip>();
-        var beds = new Dictionary<string, AudioClip>(StringComparer.OrdinalIgnoreCase);
+        AudioClip? bed = null;
+        var cuePools = new Dictionary<LoopState, List<AudioClip>>();
+        var alertPools = new Dictionary<AlertCue, List<AudioClip>>();
+        var bedPool = new List<AudioClip>();
         var music = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
-        var custom = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var custom = 0;
         var skipped = new List<string>();
         var unclaimed = new List<string>();
 
         foreach (var source in sources)
         {
-            // Two families are keyed by an enum — loop states and alerts — and the rule binding a filename to
-            // a member is the same for both, so it is written once.
-            void ReadInto<TKey>(Dictionary<TKey, AudioClip> into, string resource, string prefix, string folder, string subject)
+            // Loop states and alerts are both keyed by an enum, with the same rule binding a name to a member.
+            void ReadInto<TKey>(
+                Dictionary<TKey, AudioClip> shipped,
+                Dictionary<TKey, List<AudioClip>> pools,
+                string resource,
+                string prefix,
+                string folder,
+                string subject)
                 where TKey : struct, Enum
             {
-                var stem = resource[prefix.Length..];
+                var rest = resource[prefix.Length..];
+                var dot = rest.IndexOf('.', StringComparison.Ordinal);
+                var member = dot > 0 ? rest[..dot] : rest;
+                var stem = dot > 0 ? rest[(dot + 1)..] : rest;
 
-                if (!Enum.TryParse<TKey>(stem, ignoreCase: true, out var key))
+                if (Member<TKey>(member) is not { } key)
                 {
                     // A shipped clip named for nothing is usually a member that was renamed while its file
                     // was not, and it fails the build.
                     if (source.Required)
                     {
-                        unclaimed.Add($"{folder}/{stem}");
+                        unclaimed.Add($"{folder}/{rest}");
                     }
                     else
                     {
                         skipped.Add(
-                            $"{folder}/{stem} matches no {subject} — expected one of "
-                            + $"{string.Join(", ", Enum.GetNames<TKey>().Select(name => name.ToLowerInvariant()))}.");
+                            $"{folder}/{member}/{stem} is in no {subject} folder — expected one of "
+                            + $"{string.Join(", ", Enum.GetValues<TKey>().Select(FolderName))}.");
                     }
 
                     return;
                 }
 
-                if (TryRead(source, resource, stem, skipped) is { } clip)
+                if (TryRead(source, resource, stem, skipped) is not { } clip)
                 {
-                    into[key] = clip;
-                    Claim(custom, stem, source);
+                    return;
+                }
+
+                if (dot > 0)
+                {
+                    if (!pools.TryGetValue(key, out var pool))
+                    {
+                        pools[key] = pool = [];
+                    }
+
+                    pool.Add(clip);
+                    custom++;
+                }
+                else
+                {
+                    shipped[key] = clip;
                 }
             }
 
@@ -152,20 +206,31 @@ public sealed class CueLibrary
             {
                 if (resource.StartsWith(CuePrefix, StringComparison.Ordinal))
                 {
-                    ReadInto(cues, resource, CuePrefix, "cues", "loop state");
+                    ReadInto(cues, cuePools, resource, CuePrefix, "cues", "loop state");
                 }
                 else if (resource.StartsWith(AlertPrefix, StringComparison.Ordinal))
                 {
-                    ReadInto(alerts, resource, AlertPrefix, "alerts", "alert");
+                    ReadInto(alerts, alertPools, resource, AlertPrefix, "alerts", "alert");
                 }
                 else if (resource.StartsWith(BedPrefix, StringComparison.Ordinal))
                 {
                     var stem = resource[BedPrefix.Length..];
 
-                    if (TryRead(source, resource, stem, skipped) is { } bed)
+                    if (source.Required && !stem.Equals(DefaultBed, StringComparison.OrdinalIgnoreCase))
                     {
-                        beds[stem] = bed;
-                        Claim(custom, stem, source);
+                        unclaimed.Add($"beds/{stem}");
+                    }
+                    else if (TryRead(source, resource, stem, skipped) is { } clip)
+                    {
+                        if (source.Required)
+                        {
+                            bed = clip;
+                        }
+                        else
+                        {
+                            bedPool.Add(clip);
+                            custom++;
+                        }
                     }
                 }
                 else if (resource.StartsWith(MusicPrefix, StringComparison.Ordinal))
@@ -198,7 +263,11 @@ public sealed class CueLibrary
                         }
 
                         tracks.Add(track);
-                        Claim(custom, $"{situation}/{stem}", source);
+
+                        if (!source.Required)
+                        {
+                            custom++;
+                        }
                     }
                 }
             }
@@ -213,9 +282,8 @@ public sealed class CueLibrary
                 "and regenerate with tools/gen-cues.py.");
         }
 
-        // The same rule for alerts, and it matters more: a loop state with no cue is a turn that sounds
-        // wrong, while an alert with no cue is a warning that arrives with nothing to mark it — and a warning
-        // that did not fire sounds exactly like one whose cue would not load.
+        // An alert with no cue is a warning that arrives with nothing to mark it, which sounds exactly like
+        // a warning that did not fire.
         var silent = Enum.GetValues<AlertCue>().Where(alert => !alerts.ContainsKey(alert)).ToList();
 
         if (silent.Count > 0)
@@ -228,10 +296,10 @@ public sealed class CueLibrary
         if (unclaimed.Count > 0)
         {
             throw new CueSetException(
-                $"Shipped clips match no loop state or alert: {string.Join(", ", unclaimed)}.");
+                $"Shipped clips match no loop state, alert or bed: {string.Join(", ", unclaimed)}.");
         }
 
-        if (beds.Count == 0 || !beds.ContainsKey(DefaultBed))
+        if (bed is null)
         {
             throw new CueSetException($"No bed named {DefaultBed} shipped.");
         }
@@ -241,10 +309,15 @@ public sealed class CueLibrary
             logger?.LogWarning("Skipped a drop-in audio file: {Reason}", reason);
         }
 
+        var shuffle = random ?? Random.Shared;
+
         return new CueLibrary(
             cues,
             alerts,
-            beds,
+            bed,
+            cuePools.ToDictionary(entry => entry.Key, entry => new ClipPool(entry.Value, shuffle)),
+            alertPools.ToDictionary(entry => entry.Key, entry => new ClipPool(entry.Value, shuffle)),
+            bedPool.Count > 0 ? new ClipPool(bedPool, shuffle) : null,
             music.ToDictionary(
                 entry => entry.Key,
                 entry => (IReadOnlyList<MusicTrack>)entry.Value,
@@ -271,10 +344,13 @@ public sealed class CueLibrary
             : $"{picked}{Environment.NewLine}Skipped: {string.Join($"{Environment.NewLine}Skipped: ", Skipped)}";
     }
 
-    public AudioClip For(LoopState state) => _cues[state];
+    /// <summary>The cue for one loop state, picked from the Commander's pool on each call.</summary>
+    public AudioClip For(LoopState state) =>
+        _cuePools.TryGetValue(state, out var pool) ? pool.Next() : _cues[state];
 
-    /// <summary>The marker played ahead of one warning (Phase 15).</summary>
-    public AudioClip For(AlertCue alert) => _alerts[alert];
+    /// <summary>The marker played ahead of one warning, picked from the Commander's pool on each call.</summary>
+    public AudioClip For(AlertCue alert) =>
+        _alertPools.TryGetValue(alert, out var pool) ? pool.Next() : _alerts[alert];
 
     /// <summary>The ambience tracks for one situation, in the order the folder was read.</summary>
     public IReadOnlyList<MusicTrack> Music(string situation) =>
@@ -283,8 +359,25 @@ public sealed class CueLibrary
     /// <summary>Every situation that actually has something in it.</summary>
     public IReadOnlyCollection<string> MusicSituations => (IReadOnlyCollection<string>)_music.Keys;
 
-    public AudioClip Bed(string? name) =>
-        name is not null && _beds.TryGetValue(name, out var clip) ? clip : _beds[DefaultBed];
+    /// <summary>The bed for one turn, picked from the Commander's pool on each call.</summary>
+    public AudioClip Bed() => _bedPool?.Next() ?? _bed;
+
+    /// <summary>The member a folder or shipped file names: hyphens ignored, case ignored.</summary>
+    private static TKey? Member<TKey>(string name)
+        where TKey : struct, Enum
+    {
+        var bare = name.Replace("-", "", StringComparison.Ordinal);
+
+        foreach (var member in Enum.GetValues<TKey>())
+        {
+            if (member.ToString().Equals(bare, StringComparison.OrdinalIgnoreCase))
+            {
+                return member;
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>A clip from a source that is allowed to fail, or null with the reason recorded.</summary>
     private static AudioClip? TryRead(ICueSource source, string resource, string name, List<string> skipped)
@@ -326,20 +419,49 @@ public sealed class CueLibrary
 
     private static bool IsSkippable(Exception ex) =>
         ex is CueSetException or WavFormatException or AudioDecodeException or IOException or UnauthorizedAccessException;
+}
 
-    /// <summary>
-    /// Records that a clip came from somewhere other than the build — or that it no longer does, which
-    /// is what a shipped source listed after a drop-in would mean.
-    /// </summary>
-    private static void Claim(HashSet<string> custom, string name, ICueSource source)
+/// <summary>
+/// Clips dealt in shuffled order: every clip once before any repeats, and never the same clip twice
+/// in a row across a reshuffle. Safe to call from any thread.
+/// </summary>
+internal sealed class ClipPool(IReadOnlyList<AudioClip> clips, Random random)
+{
+    private readonly Lock _gate = new();
+    private readonly Queue<int> _order = new();
+    private int _last = -1;
+
+    public AudioClip Next()
     {
-        if (source.Required)
+        lock (_gate)
         {
-            custom.Remove(name);
+            if (_order.Count == 0)
+            {
+                Deal();
+            }
+
+            _last = _order.Dequeue();
+            return clips[_last];
         }
-        else
+    }
+
+    private void Deal()
+    {
+        var order = Enumerable.Range(0, clips.Count).ToArray();
+
+        lock (random)
         {
-            custom.Add(name);
+            random.Shuffle(order);
+        }
+
+        if (order.Length > 1 && order[0] == _last)
+        {
+            (order[0], order[^1]) = (order[^1], order[0]);
+        }
+
+        foreach (var index in order)
+        {
+            _order.Enqueue(index);
         }
     }
 }

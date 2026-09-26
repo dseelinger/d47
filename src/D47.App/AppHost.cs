@@ -1510,8 +1510,6 @@ public sealed class AppHost : IDisposable
                         ? null
                         : (progress, cancellationToken) =>
                             self.SwitchLocalVoiceBuild(build, progress, cancellationToken),
-                    Beds = () => [.. (self?.Cues ?? cues).BedNames],
-                    BedLabel = name => (self?.Cues ?? cues).IsCustom(name) ? $"{name} (yours)" : name,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
@@ -3997,8 +3995,7 @@ public sealed class AppHost : IDisposable
             cues.CustomCount,
             cues.Skipped.Count);
 
-        // The rows that read the library — the bed picker's choices and the row saying what was found — have
-        // no other way to know.
+        // The row saying what was found has no other way to know.
         AudioReloaded?.Invoke();
     }
 
@@ -4124,7 +4121,6 @@ public sealed class AppHost : IDisposable
         Voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
-        Voice.Bed = speech.ThinkingBed;
         Voice.GuardianColour = GuardianVoice.ColourFor(speech, Personas.Current.VoiceHint.Gender);
 
         Turns.Retry = SpeechCapability.RetryFrom(speech);

@@ -72,7 +72,6 @@ public class VoicesAreProviderScopedTests
                 OutputDevice = "Headphones",
                 CuesEnabled = false,
                 ThinkingBedEnabled = true,
-                ThinkingBed = "thinking-hum",
             },
         };
 
@@ -82,7 +81,6 @@ public class VoicesAreProviderScopedTests
         Assert.Equal(before.Speech.OutputDevice, after.Speech.OutputDevice);
         Assert.Equal(before.Speech.CuesEnabled, after.Speech.CuesEnabled);
         Assert.Equal(before.Speech.ThinkingBedEnabled, after.Speech.ThinkingBedEnabled);
-        Assert.Equal(before.Speech.ThinkingBed, after.Speech.ThinkingBed);
 
         // And nothing outside speech and the pairings.
         Assert.Equal(before.Ui, after.Ui);

@@ -767,9 +767,6 @@ public sealed record SpeechSettings
     /// <summary>The bed under a working turn (#18).</summary>
     public bool ThinkingBedEnabled { get; init; } = true;
 
-    /// <summary>Which bed.</summary>
-    public string? ThinkingBed { get; init; }
-
     /// <summary>The Guardian voice effects, global to every core rather than per persona (#225).</summary>
     public GuardianVoiceSettings GuardianVoice { get; init; } = new();
 

@@ -34,7 +34,7 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
 
         Assert.Empty(library.Skipped);
 
-        var bed = library.Bed("stereo-bed");
+        var bed = library.Bed();
         Assert.Equal("stereo-bed", bed.Name);
         Assert.Equal(AudioFormat.Standard, bed.Format);
         Assert.InRange(bed.Duration.TotalMilliseconds, 99, 101);
@@ -111,7 +111,7 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
         var library = LoadWith(decoder);
 
         Assert.Empty(library.Skipped);
-        Assert.Equal(FakeDecoder.Pcm, library.Bed("song").Pcm.ToArray());
+        Assert.Equal(FakeDecoder.Pcm, library.Bed().Pcm.ToArray());
 
         using var stream = Assert.Single(library.Music(Situations.Docked)).Open();
         Assert.Equal(FakeDecoder.Pcm, ReadAll(stream, chunk: 64));
@@ -126,7 +126,7 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
 
         var library = LoadWith(new FakeDecoder { Refuse = true });
 
-        Assert.DoesNotContain("broken", library.BedNames);
+        Assert.Equal(CueLibrary.DefaultBed, library.Bed().Name);
         Assert.Empty(library.Music(Situations.General));
         Assert.Equal(2, library.Skipped.Count);
         Assert.All(library.Skipped, reason => Assert.Contains(FakeDecoder.Reason, reason, StringComparison.Ordinal));
@@ -141,7 +141,7 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
         var library = LoadWith(new FakeDecoder { Refuse = true });
 
         Assert.Empty(library.Skipped);
-        Assert.Equal(TimeSpan.FromMilliseconds(10), library.Bed("plain").Duration);
+        Assert.Equal(TimeSpan.FromMilliseconds(10), library.Bed().Duration);
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
 
         var library = Load();
 
-        Assert.DoesNotContain("noise", library.BedNames);
+        Assert.Equal(CueLibrary.DefaultBed, library.Bed().Name);
         Assert.Contains("noise", Assert.Single(library.Skipped), StringComparison.Ordinal);
     }
 

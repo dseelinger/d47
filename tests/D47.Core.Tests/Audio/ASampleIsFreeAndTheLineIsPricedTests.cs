@@ -12,7 +12,6 @@ public class ASampleIsFreeAndTheLineIsPricedTests
         SpeechCapability.Create(new SpeechCapability.SpeechSurface
         {
             Silence = () => { },
-            Beds = () => [],
             Audition = (_, _, _) => Task.CompletedTask,
             Preview = (_, _, _) => Task.CompletedTask,
             HasPreview = (_, id) => id == "sampled",

@@ -86,7 +86,6 @@ public static class TestSurface
             new SpeechCapability.SpeechSurface
             {
                 Silence = () => { },
-                Beds = () => [.. CueLibrary.Load().BedNames],
                 Voices = _ => [.. (voices ?? []).Select(voice => voice.Id)],
                 VoiceLabel = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Label ?? id,
                 VoiceGender = (_, id) => (voices ?? []).FirstOrDefault(voice => voice.Id == id)?.Gender,

@@ -38,22 +38,22 @@ public class AudioRescanTests : IDisposable
     [Fact]
     public void AFileAddedBeforeAScanAppearsInTheLibrary()
     {
-        Assert.DoesNotContain("engine-room", Load(Source()).BedNames);
+        Assert.Equal(CueLibrary.DefaultBed, Load(Source()).Bed().Name);
 
         WriteWav(BedPath("engine-room"));
 
-        Assert.Contains("engine-room", Load(Source()).BedNames);
+        Assert.Equal("engine-room", Load(Source()).Bed().Name);
     }
 
     [Fact]
     public void AFileRemovedBeforeAScanDisappears()
     {
         WriteWav(BedPath("engine-room"));
-        Assert.Contains("engine-room", Load(Source()).BedNames);
+        Assert.Equal("engine-room", Load(Source()).Bed().Name);
 
         File.Delete(BedPath("engine-room"));
 
-        Assert.DoesNotContain("engine-room", Load(Source()).BedNames);
+        Assert.Equal(CueLibrary.DefaultBed, Load(Source()).Bed().Name);
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public class AudioRescanTests : IDisposable
         WriteWav(BedPath("hangar"));
         var second = Source();
 
-        Assert.DoesNotContain("hangar", Load(first).BedNames);
-        Assert.Contains("hangar", Load(second).BedNames);
+        Assert.Equal(1, Load(first).CustomCount);
+        Assert.Equal(2, Load(second).CustomCount);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class AudioRescanTests : IDisposable
         arbiter.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Bed,
-            Clip = library.Bed("engine-room"),
+            Clip = library.Bed(),
             Loop = true,
         });
 
@@ -94,7 +94,7 @@ public class AudioRescanTests : IDisposable
 
         var reloaded = Load(Source());
 
-        Assert.Contains("hangar", reloaded.BedNames);
+        Assert.Equal(2, reloaded.CustomCount);
         Assert.NotSame(library, reloaded);
 
         // Still going, and never stopped.

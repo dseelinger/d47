@@ -24,7 +24,6 @@ public static class SpeechCapability
     public const string OutputDeviceKey = "speech.outputDevice";
     public const string CuesKey = "speech.cues";
     public const string BedEnabledKey = "speech.thinkingBed";
-    public const string BedKey = "speech.thinkingBedSound";
     public const string RetryAttemptsKey = "speech.retryAttempts";
     public const string RetryWaitKey = "speech.retryWait";
     public const string RetryBackoffKey = "speech.retryBackoff";
@@ -292,12 +291,6 @@ public static class SpeechCapability
         /// says nothing (#146).
         /// </summary>
         public Func<VoiceGroup, string, string?>? VoiceGender { get; init; }
-
-        /// <summary>Bed names — shipped and dropped in.</summary>
-        public required Func<IReadOnlyList<string>> Beds { get; init; }
-
-        /// <summary>How a bed reads on the row.</summary>
-        public Func<string, string>? BedLabel { get; init; }
     }
 
     public static CapabilityDescriptor Create(SpeechSurface surface) => new()
@@ -959,29 +952,6 @@ public static class SpeechCapability
                 {
                     Read = s => s.Speech.ThinkingBedEnabled ? "true" : "false",
                     Write = (s, v) => s with { Speech = s.Speech with { ThinkingBedEnabled = v != "false" } },
-                },
-            },
-            new SettingRow
-            {
-                Key = BedKey,
-                Advanced = true,
-                Label = "Thinking bed sound",
-                Help = "Which loop plays while D47 works.",
-                Kind = SettingKind.Choice,
-
-                // Read from the library rather than listed here, which would be a second place for a name to
-                // be wrong (Phase 5, #20) — and asked for each time it is opened rather than captured, so a
-                // bed dropped into data/audio/beds is offered without a restart (Phase 12).
-                ChoiceSource = _ => surface.Beds(),
-                ChoiceLabel = surface.BedLabel,
-                DefaultDisplay = CueLibrary.DefaultBed,
-                AppliesWhen = s => s.Speech.ThinkingBedEnabled,
-                Group = "While thinking",
-                DocsAnchor = "thinking-bed",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.ThinkingBed,
-                    Write = (s, v) => s with { Speech = s.Speech with { ThinkingBed = v } },
                 },
             },
             new SettingRow

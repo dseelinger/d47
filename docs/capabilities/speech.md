@@ -1018,7 +1018,8 @@ A quiet loop while a turn runs, so a slow answer sounds like Directive 47 workin
 Directive 47 ignoring you. It drops under the speech instead of stopping, and it ends the moment
 the first words arrive rather than when the turn does.
 
-Two are included: `thinking-hum` and `thinking-pulse`.
+One is included, `thinking-hum`. Files in `data/audio/beds/` replace it: one of them is picked
+at random when a turn starts — see **Your own sounds** in [Audio mixer](audio.md).
 
 #### When a turn fails {#retry}
 
@@ -1135,10 +1136,9 @@ cues/answered.wav                             0.40s
 cues/unsure.wav                               0.44s
 cues/failed.wav                               0.51s
 beds/thinking-hum.wav                         3.00s
-beds/thinking-pulse.wav                       2.40s
 ```
 
-Both beds loop seamlessly, which is arithmetic rather than luck: the carrier and its amplitude
+The bed loops seamlessly, which is arithmetic rather than luck: the carrier and its amplitude
 modulation each complete a whole number of cycles over the buffer, so the last sample joins the
 first with no step. Getting that wrong produces a tick once per loop, which sounds like a broken
 sound card rather than a broken table of numbers.

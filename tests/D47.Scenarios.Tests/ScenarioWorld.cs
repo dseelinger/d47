@@ -58,7 +58,6 @@ public sealed class ScenarioWorld : IDisposable
             new SpeechCapability.SpeechSurface
             {
                 Silence = () => { },
-                Beds = () => [],
                 Voices = _ => [],
                 VoiceLabel = (_, id) => id,
             },

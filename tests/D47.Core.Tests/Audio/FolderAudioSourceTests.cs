@@ -82,50 +82,51 @@ public class FolderAudioSourceTests : IDisposable
 
         Assert.Equal(0, library.CustomCount);
         Assert.Empty(library.Skipped);
-        Assert.Contains(CueLibrary.DefaultBed, library.BedNames);
+        Assert.Equal(CueLibrary.DefaultBed, library.Bed().Name);
     }
 
     [Fact]
-    public void AFolderCueOverridesTheEmbeddedOneOfTheSameName()
+    public void AFileInAStatesFolderReplacesItsShippedCue()
     {
-        var shipped = CueLibrary.Load().For(LoopState.Thinking);
+        Write($"{FolderAudioSource.CuesFolder}/thinking/any-name.wav");
 
+        var library = Load();
+
+        Assert.Equal("any-name", library.For(LoopState.Thinking).Name);
+        Assert.Equal(1, library.CustomCount);
+    }
+
+    [Fact]
+    public void AFileLooseInTheCuesFolderIsNotRead()
+    {
         Write($"{FolderAudioSource.CuesFolder}/thinking.wav");
+        Write($"{FolderAudioSource.AlertsFolder}/underfire.wav");
 
-        var library = Load();
-
-        Assert.NotEqual(shipped.Pcm.Length, library.For(LoopState.Thinking).Pcm.Length);
-        Assert.True(library.IsCustom("thinking"), "an overridden cue is not marked as the Commander's");
+        Assert.Empty(Source().Names);
+        Assert.Equal("thinking", Load().For(LoopState.Thinking).Name);
     }
 
+    /// <summary>A folder named for no loop state is reported rather than fatal.</summary>
     [Fact]
-    public void AFolderBedAppearsInTheRowsChoices()
+    public void ACueFolderNamedForNothingIsReportedRatherThanFatal()
     {
-        Write($"{FolderAudioSource.BedsFolder}/engine-room.wav");
-
-        var library = Load();
-
-        Assert.Contains("engine-room", library.BedNames);
-        Assert.True(library.IsCustom("engine-room"));
-
-        // And the shipped ones are still there and still not theirs.
-        Assert.Contains(CueLibrary.DefaultBed, library.BedNames);
-        Assert.False(library.IsCustom(CueLibrary.DefaultBed));
-    }
-
-    /// <summary>A cue named for no loop state is the same kind of mistake, and the same answer.</summary>
-    [Fact]
-    public void ACueNamedForNothingIsReportedRatherThanFatal()
-    {
-        Write($"{FolderAudioSource.CuesFolder}/pondering.wav");
+        Write($"{FolderAudioSource.CuesFolder}/pondering/hmm.wav");
 
         var library = Load();
 
         Assert.Single(library.Skipped);
         Assert.Contains("pondering", library.Skipped[0], StringComparison.Ordinal);
 
-        // And it names what would have worked, because "no" without "instead try" is a dead end.
+        // And it names what would have worked.
         Assert.Contains("thinking", library.Skipped[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnAlertFolderNamedForNothingNamesTheKebabCaseFolders()
+    {
+        Write($"{FolderAudioSource.AlertsFolder}/ambush/boom.wav");
+
+        Assert.Contains("bounty-hunter", Assert.Single(Load().Skipped), StringComparison.Ordinal);
     }
 
     /// <summary>A file loose in music/ has not said when it should play.</summary>
@@ -137,7 +138,7 @@ public class FolderAudioSourceTests : IDisposable
         Assert.DoesNotContain(Source().Names, name => name.Contains("loose", StringComparison.Ordinal));
     }
 
-    /// <summary>The three folders exist whether or not anything is in them.</summary>
+    /// <summary>The folders exist whether or not anything is in them.</summary>
     [Fact]
     public void TheConventionFoldersAreMadeAtStartup()
     {
@@ -146,16 +147,22 @@ public class FolderAudioSourceTests : IDisposable
 
         paths.EnsureCreated();
 
-        foreach (var folder in new[]
-                 {
-                     FolderAudioSource.CuesFolder,
-                     FolderAudioSource.BedsFolder,
-                     FolderAudioSource.MusicFolder,
-                 })
+        string[] folders =
+        [
+            .. Enum.GetValues<LoopState>().Select(state => $"{FolderAudioSource.CuesFolder}/{CueLibrary.FolderName(state)}"),
+            .. Enum.GetValues<AlertCue>().Select(alert => $"{FolderAudioSource.AlertsFolder}/{CueLibrary.FolderName(alert)}"),
+            FolderAudioSource.BedsFolder,
+            FolderAudioSource.MusicFolder,
+        ];
+
+        foreach (var folder in folders)
         {
             Assert.True(
                 Directory.Exists(Path.Combine(paths.Audio, folder)),
                 $"data/audio/{folder} was not created, so the convention is invisible");
         }
+
+        Assert.True(Directory.Exists(Path.Combine(paths.Audio, "alerts", "under-fire")));
+        Assert.True(Directory.Exists(Path.Combine(paths.Audio, "cues", "listening")));
     }
 }

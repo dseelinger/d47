@@ -28,7 +28,6 @@ public class ARateThatWouldDoNothingIsNotOfferedTests
         SpeechCapability.Create(new SpeechCapability.SpeechSurface
         {
             Silence = () => { },
-            Beds = () => [],
         }).Settings.First(row => row.Key == SpeechCapability.RateKey);
 
     [Fact]

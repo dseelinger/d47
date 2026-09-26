@@ -94,6 +94,15 @@ stereo 44.1 kHz file no longer shows as "Skipped" on the **Your own audio** row.
 cannot decode is still skipped, and the row says so; on a Windows N edition, MP3 and AAC need the
 Media Feature Pack.
 
+Sound cues, alerts and the thinking bed can each have several files of your own, and d47 picks one
+at random each time. Put them in `data/audio/cues/<state>/` (for example `cues/listening/`),
+`data/audio/alerts/<alert>/` (for example `alerts/under-fire/`) or `data/audio/beds/`, under any
+file name. Each folder plays every file once before any repeats. A folder with nothing in it plays
+the sound d47 ships with, and the folders are created empty on first run. Alerts can now be
+replaced for the first time. A file directly in `cues/`, such as `cues/listening.wav`, is no
+longer read: move it into the folder for its state. The **Thinking bed sound** setting and the
+`thinking-pulse` bed are removed.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

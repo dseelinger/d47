@@ -26,7 +26,6 @@ public class TheVoiceFilterAgreesWithTheCastingTests
     private static SpeechCapability.SpeechSurface Surface(params VoiceInfo[] voices) => new()
     {
         Silence = () => { },
-        Beds = () => [],
         Voices = _ => [.. voices.Select(voice => voice.Id)],
         VoiceGender = (_, id) => voices.FirstOrDefault(voice =>
             string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))?.Gender,

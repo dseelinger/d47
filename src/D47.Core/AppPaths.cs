@@ -109,8 +109,17 @@ public sealed class AppPaths
         Directory.CreateDirectory(Data);
         Directory.CreateDirectory(Logs);
 
-        // The three drop-in folders by name, empty.
-        Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.CuesFolder));
+        // The drop-in folders by name, empty: one per loop state and per alert.
+        foreach (var state in Enum.GetValues<LoopState>())
+        {
+            Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.CuesFolder, CueLibrary.FolderName(state)));
+        }
+
+        foreach (var alert in Enum.GetValues<AlertCue>())
+        {
+            Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.AlertsFolder, CueLibrary.FolderName(alert)));
+        }
+
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.BedsFolder));
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.MusicFolder));
         Directory.CreateDirectory(Ships);

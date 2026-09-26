@@ -9,6 +9,7 @@ namespace D47.Core.Audio;
 public sealed class FolderAudioSource : ICueSource
 {
     public const string CuesFolder = "cues";
+    public const string AlertsFolder = "alerts";
     public const string BedsFolder = "beds";
     public const string MusicFolder = "music";
 
@@ -119,13 +120,13 @@ public sealed class FolderAudioSource : ICueSource
         return files;
     }
 
-    /// <summary>Every readable file under the three folders, sorted.</summary>
+    /// <summary>Every readable file under the four folders, sorted.</summary>
     private List<string> AudioFiles()
     {
         var paths = new List<string>();
         var extensions = new HashSet<string>(_decoder?.Extensions ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase) { Wav };
 
-        foreach (var folder in new[] { CuesFolder, BedsFolder, MusicFolder })
+        foreach (var folder in new[] { CuesFolder, AlertsFolder, BedsFolder, MusicFolder })
         {
             var directory = Path.Combine(_root, folder);
 
@@ -159,25 +160,28 @@ public sealed class FolderAudioSource : ICueSource
     {
         var relative = Path.GetRelativePath(_root, path).Replace('\\', '/');
         var stem = Path.GetFileNameWithoutExtension(path);
+        var parts = relative.Split('/');
 
-        if (relative.StartsWith($"{CuesFolder}/", StringComparison.OrdinalIgnoreCase))
-        {
-            return CueLibrary.CuePrefix + stem;
-        }
-
-        if (relative.StartsWith($"{BedsFolder}/", StringComparison.OrdinalIgnoreCase))
+        if (parts[0].Equals(BedsFolder, StringComparison.OrdinalIgnoreCase))
         {
             return CueLibrary.BedPrefix + stem;
         }
 
-        if (!relative.StartsWith($"{MusicFolder}/", StringComparison.OrdinalIgnoreCase))
+        // cues/<state>/<file>, alerts/<alert>/<file>, music/<situation>/<file>; a file loose in the folder
+        // has not said what it is for.
+        if (parts.Length < 3)
         {
             return null;
         }
 
-        // music/<situation>/<file>.
-        var parts = relative.Split('/');
+        var prefix = parts[0].ToLowerInvariant() switch
+        {
+            CuesFolder => CueLibrary.CuePrefix,
+            AlertsFolder => CueLibrary.AlertPrefix,
+            MusicFolder => CueLibrary.MusicPrefix,
+            _ => null,
+        };
 
-        return parts.Length >= 3 ? $"{CueLibrary.MusicPrefix}{parts[1]}.{stem}" : null;
+        return prefix is null ? null : $"{prefix}{parts[1]}.{stem}";
     }
 }

@@ -176,9 +176,8 @@ def main():
     _write("alerts/timerelapsed.wav", _sequence([("A4", 0.10), ("D5", 0.10), ("A5", 0.26)], 0.52, peak=0.38))
 
     # Beds loop for as long as the state lasts, so they are quiet, low, and seamless.
-    # 440 carrier cycles and 3 AM cycles over 3.00 s; 264 and 3 over 2.40 s.
+    # 440 carrier cycles and 3 AM cycles over 3.00 s.
     _write("beds/thinking-hum.wav", _bed(440 / 3, 3.00, cycles_am=3), fade_tail=False)
-    _write("beds/thinking-pulse.wav", _bed(110.0, 2.40, cycles_am=3), fade_tail=False)
 
 
 if __name__ == "__main__":

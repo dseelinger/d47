@@ -20,7 +20,6 @@ public class TheLocalVoiceRowOffersItsButtonTests
         var surface = new SpeechCapability.SpeechSurface
         {
             Silence = () => { },
-            Beds = () => [],
             LocalVoiceState = () => host is null ? "Not available." : "Not downloaded. About 350 MB.",
             DownloadLocalVoice = () => host is null
                 ? null
@@ -84,7 +83,7 @@ public class TheLocalVoiceRowOffersItsButtonTests
     [Fact]
     public void NoDownloaderMeansNoButtonAndStillARow()
     {
-        var row = Row(new SpeechCapability.SpeechSurface { Silence = () => { }, Beds = () => [] });
+        var row = Row(new SpeechCapability.SpeechSurface { Silence = () => { } });
 
         Assert.Null(row.Press);
         Assert.Null(row.PressAsync);

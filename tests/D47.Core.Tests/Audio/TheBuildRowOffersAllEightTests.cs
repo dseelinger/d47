@@ -23,7 +23,6 @@ public class TheBuildRowOffersAllEightTests
         new()
         {
             Silence = () => { },
-            Beds = () => [],
             InstalledLocalVoiceBuild = () => installed,
             SwitchLocalVoiceBuild = build => (_, _) =>
             {
@@ -152,7 +151,7 @@ public class TheBuildRowOffersAllEightTests
     [Fact]
     public void NoSurfaceMeansNoSwapAndStillARow()
     {
-        var row = Row(new SpeechCapability.SpeechSurface { Silence = () => { }, Beds = () => [] });
+        var row = Row(new SpeechCapability.SpeechSurface { Silence = () => { } });
 
         Assert.NotNull(row);
         Assert.Null(row!.FetchChoiceAsync);

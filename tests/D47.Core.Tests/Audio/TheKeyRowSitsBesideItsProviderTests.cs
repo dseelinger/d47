@@ -11,7 +11,6 @@ public class TheKeyRowSitsBesideItsProviderTests
         [.. SpeechCapability.Create(new SpeechCapability.SpeechSurface
         {
             Silence = () => { },
-            Beds = () => [],
         }).Settings.Select(row => row.Key)];
 
     [Fact]

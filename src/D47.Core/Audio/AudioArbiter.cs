@@ -288,7 +288,6 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     public void EnterState(
         LoopState state,
         CueLibrary cues,
-        string? bedName = null,
         bool cueEnabled = true,
         bool bedEnabled = true)
     {
@@ -302,7 +301,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             Enqueue(new AudioRequest
             {
                 Channel = AudioChannel.Bed,
-                Clip = cues.Bed(bedName),
+                Clip = cues.Bed(),
                 Loop = true,
             });
         }

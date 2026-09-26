@@ -230,7 +230,6 @@ public static class SettingsLayout
                             [
                                 E("speech.cues"),
                                 E("speech.thinkingBed"),
-                                E("speech.thinkingBedSound", under: true),
                             ]),
                         G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
                         {

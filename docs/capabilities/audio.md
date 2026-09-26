@@ -267,20 +267,24 @@ enough to find out what goes where:
 
 ```text
 data/audio/
-  cues/<loop-state>.mp3      replaces a shipped sound cue
-  beds/<name>.mp3            adds a thinking bed to the picker
-  music/<situation>/*.mp3    ambience — see below
+  cues/<state>/        idle, listening, transcribing, thinking, speaking, answered, unsure, failed
+  alerts/<alert>/      interdiction, piracy, bounty-hunter, under-fire, overheating,
+                       rival-territory, timer-elapsed
+  beds/                the loop under a working turn
+  music/<situation>/   ambience — see below
 ```
 
 Windows does the decoding. A Windows N edition has no MP3 or AAC decoder until the Media Feature
 Pack is installed; `.wav` works without it.
 
-A cue file is named for the loop state it belongs to: `idle`, `listening`, `transcribing`,
-`thinking`, `speaking`, `answered`, `unsure`, `failed`. A bed file is named whatever you like, and
-the name is what appears in the **Thinking bed sound** picker, marked as yours.
+A sound goes in the folder for where it is used, under any file name. A cue or alert folder with
+files in it plays only those, one picked each time the cue plays; an empty one plays the shipped
+sound. `beds/` works the same way, with one file picked when a turn starts and looped for that
+turn. Each folder plays every file once, in shuffled order, before any repeats, and never the same
+file twice in a row. A file loose in `cues/` or `alerts/`, outside a named folder, is not read.
 
-Files are picked up while D47 is running. Drop one in and it appears in the picker without a
-restart, and a reload never cuts a clip that is already playing.
+Files are picked up while D47 is running, without a restart, and a reload never cuts a clip that
+is already playing.
 
 A file that will not load is skipped rather than fatal, and the **Your own audio** row says which
 one and why — a skipped file is silent in exactly the way a missing one is, so without that the
