@@ -6,16 +6,17 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Capabilities;
 using D47.Core.Interface;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A segment's options: Tile cells 2px apart with no frame, and their states (#348, #394).</summary>
+/// <summary>A segment's options: Tile cells 2px apart with no frame, their states and metrics (#348, #394, #511).</summary>
 public class SegmentOptionsAreTilesThatWrapTests
 {
-    private static (Window Window, Segment Segment) Open(double width = 900)
+    private static (Window Window, Segment Segment) Open(double width = 900, IReadOnlyList<ChoiceStatus?>? statuses = null)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
@@ -30,6 +31,8 @@ public class SegmentOptionsAreTilesThatWrapTests
         var segment = new Segment
         {
             ItemsSource = ["Reach: near here", "Reach: a session's flying", "Reach: anywhere", "Reach: the edge"],
+            Statuses = statuses ?? [],
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
             SelectedIndex = 0,
         };
         var window = new Window { Content = segment, Width = width, Height = 200 };
@@ -126,6 +129,90 @@ public class SegmentOptionsAreTilesThatWrapTests
 
         Assert.True(rows > 1, "a four-option group at 512px should wrap onto more than one row");
     }
+
+    [AvaloniaFact]
+    public void AnOptionIsFortyFourTallWithItsLabelInThirteenPixelSaira()
+    {
+        var (_, segment) = Open();
+
+        foreach (var button in segment.GetVisualDescendants().OfType<RadioButton>())
+        {
+            Assert.Equal(TypeScale.MinimumTarget, button.Bounds.Height, 3);
+            Assert.Equal(new Thickness(12, 0), button.Padding);
+            Assert.Equal(TypeScale.Control, button.FontSize);
+            Assert.Equal(Avalonia.Media.FontWeight.SemiBold, button.FontWeight);
+            Assert.Equal(0.65, button.LetterSpacing, 3);
+        }
+    }
+
+    [AvaloniaFact]
+    public void AStatusLineIsElevenPixelCapitalsAndMakesTheOptionFiftySixTall()
+    {
+        var (_, segment) = Open(statuses:
+        [
+            new ChoiceStatus("free", ChoiceTone.Grey),
+            new ChoiceStatus("key stored", ChoiceTone.Yellow),
+            new ChoiceStatus("needs key", ChoiceTone.Grey),
+            null,
+        ]);
+
+        var buttons = segment.GetVisualDescendants().OfType<RadioButton>().ToList();
+
+        Assert.All(buttons, button => Assert.Equal(Segment.StatusHeight, button.Bounds.Height, 3));
+
+        var line = StatusLine(buttons[1], "KEY STORED");
+        Assert.Equal(TypeScale.MetaSmall, line.FontSize);
+        Assert.Equal(Avalonia.Media.FontWeight.Medium, line.FontWeight);
+        Assert.Equal(0.55, line.LetterSpacing, 3);
+    }
+
+    [AvaloniaFact]
+    public void AStatusLineIsGreyAtRestYellowWhenStoredAndBrownWhenChosen()
+    {
+        var (_, segment) = Open(statuses:
+        [
+            new ChoiceStatus("free", ChoiceTone.Grey),
+            new ChoiceStatus("key stored", ChoiceTone.Yellow),
+            new ChoiceStatus("needs key", ChoiceTone.Grey),
+        ]);
+
+        var buttons = segment.GetVisualDescendants().OfType<RadioButton>().ToList();
+
+        Assert.Equal(Resource(ThemeManager.BrownKey), StatusLine(buttons[0], "FREE").Foreground);
+        Assert.Equal(Resource(ThemeManager.YellowKey), StatusLine(buttons[1], "KEY STORED").Foreground);
+        Assert.Equal(Resource(ThemeManager.GreyKey), StatusLine(buttons[2], "NEEDS KEY").Foreground);
+
+        segment.SelectedIndex = 1;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(Resource(ThemeManager.GreyKey), StatusLine(buttons[0], "FREE").Foreground);
+        Assert.Equal(Resource(ThemeManager.BrownKey), StatusLine(buttons[1], "KEY STORED").Foreground);
+    }
+
+    [AvaloniaFact]
+    public void TheSegmentsAreCaptured()
+    {
+        var (window, _) = Open(width: 640, statuses:
+        [
+            new ChoiceStatus("this computer · free", ChoiceTone.Grey),
+            new ChoiceStatus("paid · key stored", ChoiceTone.Yellow),
+            new ChoiceStatus("paid · needs key", ChoiceTone.Grey),
+        ]);
+        window.Background = (Avalonia.Media.IBrush?)Resource(ThemeManager.BgKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var path = Path.Combine(TestSurface.CaptureDirectory, "segment-with-status.png");
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        }
+
+        Assert.True(File.Exists(path));
+    }
+
+    private static TextBlock StatusLine(RadioButton button, string text) =>
+        button.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == text);
 
     [AvaloniaFact]
     public void ArrowKeysStillMoveTheSelection()

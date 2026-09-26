@@ -20,5 +20,6 @@
   <sys:Double x:Key="D47.Type.Small">13</sys:Double>
   <sys:Double x:Key="D47.Type.Meta">12</sys:Double>
   <sys:Double x:Key="D47.Type.Caption">12</sys:Double>
+  <sys:Double x:Key="D47.Type.MetaSmall">11</sys:Double>
 
 </ResourceDictionary>

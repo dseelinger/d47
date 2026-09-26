@@ -39,6 +39,9 @@ public static class TypeScale
     /// <summary>Mono text about a control rather than in it: a stepper's position and its cost.</summary>
     public const double Meta = 12;
 
-    /// <summary>The smallest d47 will draw: unit labels, machine captions.</summary>
+    /// <summary>Unit labels, machine captions.</summary>
     public const double Caption = 12;
+
+    /// <summary>The smallest d47 will draw: a status line under a control's label.</summary>
+    public const double MetaSmall = 11;
 }

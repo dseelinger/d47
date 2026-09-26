@@ -59,6 +59,7 @@ public partial class TypeScaleTests
             ["D47.Type.Small"] = TypeScale.Small,
             ["D47.Type.Meta"] = TypeScale.Meta,
             ["D47.Type.Caption"] = TypeScale.Caption,
+            ["D47.Type.MetaSmall"] = TypeScale.MetaSmall,
         };
 
         foreach (var (key, size) in expected)
@@ -83,6 +84,7 @@ public partial class TypeScaleTests
         Assert.True(TypeScale.Secondary > TypeScale.Small);
         Assert.True(TypeScale.Small > TypeScale.Meta);
         Assert.True(TypeScale.Meta >= TypeScale.Caption);
+        Assert.True(TypeScale.Caption > TypeScale.MetaSmall);
     }
 
     private static IEnumerable<string> Sources()

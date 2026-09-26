@@ -30,9 +30,15 @@ public sealed class Segment : ContentControl, IChoiceControl
     /// <summary>The space between options, across and down.</summary>
     public const double Gap = Gaps.Tile;
 
+    /// <summary>The height of an option that carries a status line.</summary>
+    public const double StatusHeight = 56;
+
     /// <summary>An option's label as drawn; the option's Content keeps the caller's text.</summary>
     public static readonly IValueConverter Uppercase =
         new FuncValueConverter<object?, string?>(value => value?.ToString()?.ToUpperInvariant());
+
+    /// <summary>Presents a label built in code as it is, instead of through the theme's uppercase text template.</summary>
+    private static readonly Avalonia.Controls.Templates.FuncDataTemplate<Control> Itself = new((control, _) => control);
 
     /// <summary>Raised when the choice changes by a press — never by setting <see cref="SelectedIndex"/>.</summary>
     public event EventHandler? SelectionChanged;
@@ -114,6 +120,12 @@ public sealed class Segment : ContentControl, IChoiceControl
                 Content = status is null ? ItemsSource[i] : Labelled(ItemsSource[i], status, out line),
             };
 
+            if (status is not null)
+            {
+                button.MinHeight = StatusHeight;
+                button.ContentTemplate = Itself;
+            }
+
             _statusLines.Add(line is null ? null : (line, status!.Tone));
 
             button.IsCheckedChanged += (_, _) =>
@@ -140,9 +152,10 @@ public sealed class Segment : ContentControl, IChoiceControl
     {
         line = new TextBlock
         {
-            Text = status.Text,
-            FontSize = Theming.TypeScale.Caption,
-            FontWeight = Avalonia.Media.FontWeight.Normal,
+            Text = status.Text.ToUpperInvariant(),
+            FontSize = Theming.TypeScale.MetaSmall,
+            FontWeight = Avalonia.Media.FontWeight.Medium,
+            LetterSpacing = 0.55,
             HorizontalAlignment = HorizontalAlignment.Center,
         };
 
@@ -205,7 +218,7 @@ public sealed class Segment : ContentControl, IChoiceControl
 
         _syncing = false;
 
-        // A chosen tile's status takes the tile's own dark ink; the tone is for the dim tiles.
+        // A chosen tile's status is Brown; the tone is for the tiles not chosen.
         foreach (var ink in _statusInk)
         {
             ink.Dispose();
@@ -220,14 +233,11 @@ public sealed class Segment : ContentControl, IChoiceControl
                 continue;
             }
 
-            if (i == SelectedIndex)
-            {
-                status.Line.ClearValue(TextBlock.ForegroundProperty);
-            }
-            else
-            {
-                _statusInk.Add(status.Line.Bind(TextBlock.ForegroundProperty, Stepper.Ink(status.Tone)));
-            }
+            _statusInk.Add(status.Line.Bind(
+                TextBlock.ForegroundProperty,
+                i == SelectedIndex
+                    ? Application.Current!.Resources.GetResourceObservable(ThemeManager.BrownKey)
+                    : Stepper.Ink(status.Tone)));
         }
     }
 

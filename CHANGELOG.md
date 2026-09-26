@@ -157,6 +157,12 @@ buttons beside them, and the checklist toggles are the same height as those butt
 checkbox labels are 13 pixels rather than 14. A checkbox that cannot be changed now has a grey
 background.
 
+Segmented choices — the rows of side-by-side options in Settings and on the Macro, Spend, Switch,
+Logbook, Adventures, Fleet and Power pages — are now 44 pixels tall with 13-pixel capital labels.
+An option with a status line under its name is 56 tall, and the status line is now drawn: small
+capitals, grey, yellow when a key is stored, and brown on the selected option. Previously the
+status line was replaced by the text "AVALONIA.CONTROLS.STACKPANEL".
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
