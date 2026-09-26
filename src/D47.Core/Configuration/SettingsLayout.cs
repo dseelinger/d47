@@ -403,6 +403,7 @@ public static class SettingsLayout
                             [
                                 E("callouts.danger"),
                                 E("callouts.fuel"),
+                                E("callouts.rebuy"),
                                 E("callouts.routeProgress"),
                                 E("callouts.routeEveryNJumps", under: true),
                                 E("callouts.longJumpRemark"),

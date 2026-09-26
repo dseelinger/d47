@@ -318,6 +318,21 @@ and the fuel-reach warning still speak, because they are about your fuel. Leavin
 out needs a loadout Directive 47 can see, and it remembers what every ship of yours was last carrying, so joining a
 session already in flight still counts. A ship it has never watched you fly hears all three.
 
+#### Rebuy cover {#rebuy}
+
+When your balance drops below the rebuy on the ship you are flying, your core says so once, with
+both figures and nothing else:
+
+```text
+Rebuy on this ship is 3.2 million credits. You have 1.1 million.
+```
+
+It is said on the first moment it becomes true: after buying or outfitting a ship, after spending
+down, or when D47 starts and you are already short. It is not said again until your balance covers
+the rebuy and then falls short once more, or you change ship. Nothing is said while you are crewing
+on another Commander's ship or riding in a taxi. The line is never reworded, so the figures are
+always the ones Elite wrote.
+
 #### Route progress {#route}
 
 Jumps remaining, what is next, and what is coming:

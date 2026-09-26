@@ -6,7 +6,7 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
-## 1.18.0 — Seven more effects join the Guardian voice chain
+## 1.18.0 — Seven more effects join the Guardian voice chain, and a rebuy warning
 
 Flanger, phaser and wah now run after Chorus; deep ring mod after Ring modulation; tremolo,
 overdrive and bitcrusher before Glitch. Each has its own level, the same as every other Guardian
@@ -37,6 +37,12 @@ setting with a button that speaks.
 A ship voice the selected speech provider does not offer, such as an OpenAI voice stored while Edge
 Neural is selected, is now replaced by one of that provider's voices once its list arrives, for
 every core. A voice in the list, including one you chose, is left as it is.
+
+When your balance drops below the rebuy on the ship you are flying, your core now says so once, for
+example "Rebuy on this ship is 3.2 million credits. You have 1.1 million." It says it again only
+after your balance has covered the rebuy and fallen short again, or when you change ship, and says
+nothing while you are in multicrew or a taxi. The **Rebuy cover** switch under Flight callouts turns
+it off.
 
 ## 1.17.0 — The ship remarks on promotions and notable kills
 

@@ -2485,6 +2485,7 @@ public sealed class AppHost : IDisposable
             .Add(new KillCallout())
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
             .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
+            .Add(new RebuyCallout())
             .Add(new RouteCallout(loggers.CreateLogger<RouteCallout>()))
             .Add(new LongJumpCallout())
             .Add(new ArrivalCallout())
@@ -2609,6 +2610,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("limpets", callouts.Limpets, now);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack, now);
         engine.SetEnabled("kills", callouts.Kills, now);
+        engine.SetEnabled("rebuy", callouts.Rebuy, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);

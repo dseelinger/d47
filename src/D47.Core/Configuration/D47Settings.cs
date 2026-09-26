@@ -423,6 +423,9 @@ public sealed record CalloutSettings
     /// <summary>Low fuel, and the unscoopable-next-star case that strands a Commander.</summary>
     public bool Fuel { get; init; } = true;
 
+    /// <summary>A balance that will not cover the rebuy on the ship being flown.</summary>
+    public bool Rebuy { get; init; } = true;
+
     public bool Route { get; init; } = true;
 
     public bool LongJump { get; init; } = true;

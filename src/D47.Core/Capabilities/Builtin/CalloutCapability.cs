@@ -16,6 +16,7 @@ public static class CalloutCapability
     public const string EnabledKey = "callouts.enabled";
     public const string DangerKey = "callouts.danger";
     public const string FuelKey = "callouts.fuel";
+    public const string RebuyKey = "callouts.rebuy";
     public const string RouteKey = "callouts.routeProgress";
     public const string LongJumpKey = "callouts.longJumpRemark";
     public const string ArrivalKey = "callouts.arrival";
@@ -152,6 +153,15 @@ public static class CalloutCapability
                 "fuel",
                 s => s.Callouts.Fuel,
                 (s, v) => s with { Callouts = s.Callouts with { Fuel = v } }),
+
+            Toggle(
+                RebuyKey,
+                "Rebuy cover",
+                "Once, when your balance will not cover the rebuy on the ship you are flying.",
+                "rebuy",
+                "rebuy",
+                s => s.Callouts.Rebuy,
+                (s, v) => s with { Callouts = s.Callouts with { Rebuy = v } }),
 
             Toggle(
                 RouteKey,
