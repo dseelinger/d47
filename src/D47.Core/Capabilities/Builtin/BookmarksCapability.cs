@@ -40,7 +40,7 @@ public static class BookmarksCapability
         Name = "Bookmarks",
         Summary = "Name the current destination, so 'set course for' the name returns to it later.",
         Examples = ["bookmark this", "what are my bookmarks", "set course for Jameson Memorial"],
-        Display = new CapabilityDisplay { PanelTitle = "Bookmarks", Order = 51 },
+        Display = new CapabilityDisplay { PanelTitle = "Bookmarks", Order = 66 },
         Tools =
         [
             new ToolDefinition

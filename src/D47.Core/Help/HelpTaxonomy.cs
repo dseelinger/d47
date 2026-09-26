@@ -65,6 +65,10 @@ public static class HelpTaxonomy
                     "Put a system name on your clipboard, and try to plot a course to it.",
                     "navigation"),
                 HelpNode.Leaf(
+                    "Bookmarks",
+                    "Name the destination you have targeted, and set a course back to it by that name later.",
+                    "bookmarks"),
+                HelpNode.Leaf(
                     "Focus the game",
                     "Bring Elite Dangerous to the front, so flight commands can be sent again.",
                     "focus"),
