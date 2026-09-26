@@ -37,13 +37,9 @@ public static class AudioCapability
     /// <summary>The drop-in folder row's key.</summary>
     public const string DropsKey = "audio.drops";
 
-    /// <summary>
-    /// <param name="drops"> What was picked up from <c>data/audio/</c> and what was skipped, in words.
-    /// </summary>
-    /// <param name="drops">
-    /// What was picked up from <c>data/audio/</c> and what was skipped, in words.
-    /// </param>
-    public static CapabilityDescriptor Create(Func<string>? drops = null) => new()
+    /// <param name="drops">What was picked up from <c>data/audio/</c> and what was skipped, in words.</param>
+    /// <param name="openFolder">Opens that folder, or null where there is no shell to open it with.</param>
+    public static CapabilityDescriptor Create(Func<string>? drops = null, Action? openFolder = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -59,24 +55,26 @@ public static class AudioCapability
         Settings =
         [
             .. Enum.GetValues<AudioChannel>().SelectMany(RowsFor),
-            .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops)],
+            .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
         ],
     };
 
     /// <summary>
     /// What d47 found in the Commander's own folder — and, more to the point, what it could not use.
     /// </summary>
-    private static SettingRow DropsRow(Func<string> drops) => new()
+    private static SettingRow DropsRow(Func<string> drops, Action? openFolder) => new()
     {
         Key = DropsKey,
         Advanced = true,
         Label = "Your own audio",
-        Help = "Drop .mp3, .m4a, .aac, .wma, .flac or .wav files into data/audio: cues/<state> "
+        Help = "Drop .mp3, .m4a, .aac, .wma, .flac or .wav files into data\\audio, beside d47.exe: cues/<state> "
                + "replaces a sound cue, beds/<name> adds a thinking bed, and music/<situation>/ is "
                + "ambience. Any sample rate and channel count. They are picked up without a restart.",
         Kind = SettingKind.Info,
         Group = "Your own audio",
         DocsAnchor = "your-own-sounds",
+        PressLabel = openFolder is null ? null : "Open audio folder",
+        Press = openFolder,
         Binding = new SettingBinding { Read = _ => drops() },
     };
 

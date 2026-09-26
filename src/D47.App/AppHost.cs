@@ -1873,7 +1873,9 @@ public sealed class AppHost : IDisposable
                 bookmarks: bookmarks,
                 phraseBook: () => builtRouter?.Book ?? throw new InvalidOperationException(
                     "The phrase book was asked for before the router finished building."),
-                contextNote: () => self?.ContextNote));
+                contextNote: () => self?.ContextNote,
+                openAudioFolder: () => System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true })));
 
         buildingRegistry.Dispose();
 

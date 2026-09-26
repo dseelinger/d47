@@ -187,7 +187,10 @@ public static class BuiltinCapabilities
         Func<PhraseBook>? phraseBook = null,
 
         // Why a small-context model is offered fewer tools, for the model row (#423).
-        Func<string?>? contextNote = null) =>
+        Func<string?>? contextNote = null,
+
+        // Opens the audio folder from its row; null where there is no shell to open it with.
+        Action? openAudioFolder = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -266,7 +269,7 @@ public static class BuiltinCapabilities
             contextNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops),
+        AudioCapability.Create(audioDrops, openAudioFolder),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),

@@ -262,8 +262,8 @@ only way to set a level by ear.
 
 Drop audio files into `data/audio` beside the executable. `.mp3`, `.m4a`, `.aac`, `.wma`,
 `.flac` and `.wav` are read, at any sample rate and channel count; D47 converts them to 48 kHz
-mono as it loads them. The folders are made for you on first run, so opening the data folder is
-enough to find out what goes where:
+mono as it loads them. The folders are made for you on first run, and **Open audio folder** on
+the **Your own audio** row opens `data\audio` in Explorer:
 
 ```text
 data/audio/

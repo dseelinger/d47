@@ -334,7 +334,7 @@ public sealed class CueLibrary
     {
         var picked = CustomCount switch
         {
-            0 => "Nothing dropped in yet.",
+            0 => @"Nothing in data\audio yet.",
             1 => "1 file picked up from data/audio.",
             _ => $"{CustomCount} files picked up from data/audio.",
         };
