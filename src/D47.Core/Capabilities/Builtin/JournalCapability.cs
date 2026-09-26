@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -10,7 +11,7 @@ namespace D47.Core.Capabilities.Builtin;
 /// Everything d47 knows about the game from the journal (Phase 2, "TheApp knows where you are"; Phase
 /// 7, "Knowing the game").
 /// </summary>
-public static class JournalCapability
+public static partial class JournalCapability
 {
     public const string Id = "journal";
 
@@ -224,7 +225,7 @@ public static class JournalCapability
                     Name = "get_commander_statistics",
                     Description =
                         "Report the Commander's career statistics from the journal's Statistics event — bank "
-                        + "balance, combat, crime, smuggling, trading, mining, exploration, passengers, search "
+                        + "balance and Merc Coin balance, combat, crime, smuggling, trading, mining, exploration, passengers, search "
                         + "and rescue, squadron, crafting, crew, multicrew, material trading, fleet carrier and "
                         + "exobiology. Set section to one group; omit it to report every section.",
                     Parameters =
@@ -238,6 +239,7 @@ public static class JournalCapability
                             AllowedValues = StatisticsSections,
                         },
                     ],
+                    Commands = Asking(MercCoins, BankAccount),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStatistics(gameState, arguments))),
                 },
                 new ToolDefinition
@@ -328,6 +330,15 @@ public static class JournalCapability
         "how have i done this session", "how have i done", "session summary",
         "how has this session gone", "what have i done this session",
     ];
+
+    private static readonly string[] MercCoins =
+    [
+        "how many merc coins do i have", "how many merc coins have i got", "my merc coins",
+        "my merc coin balance", "what's my merc coin balance", "what is my merc coin balance",
+    ];
+
+    private static readonly IReadOnlyDictionary<string, string> BankAccount =
+        new Dictionary<string, string>(StringComparer.Ordinal) { ["section"] = "Bank_Account" };
 
     private static readonly string[] Standing =
     [
@@ -1412,22 +1423,32 @@ public static class JournalCapability
 
     /// <summary>
     /// A section or figure name in words — the table above where a key reads badly split on its
-    /// underscores, the split itself otherwise, so a key Frontier adds later is still reported (#263).
+    /// underscores and at each lower-to-upper case change otherwise, so a key Frontier adds later is
+    /// still reported (#263).
     /// </summary>
     private static string ReadableStatistic(string key) =>
         ReadableStatisticNames.TryGetValue(key, out var name)
             ? name
             : string.Join(
                 ' ',
-                key.Split('_', StringSplitOptions.RemoveEmptyEntries)
+                CamelBoundary().Replace(key, "_").Split('_', StringSplitOptions.RemoveEmptyEntries)
                     .Select(word => char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant()));
 
+    [GeneratedRegex("(?<=[a-z])(?=[A-Z])")]
+    private static partial Regex CamelBoundary();
+
     /// <summary>
-    /// A figure in its unit, guessed from what the key names: credits for a profit, a spend or a
-    /// wealth figure; light years for a distance; hours and minutes for a time (#263).
+    /// A figure in its unit, guessed from what the key names: Merc Coins for a <c>MercCoins_</c> figure;
+    /// credits for a profit, a spend or a wealth figure; light years for a distance; hours and minutes
+    /// for a time (#263).
     /// </summary>
     private static string FormatStatistic(string key, double value)
     {
+        if (key.StartsWith("MercCoins", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{value:N0} Merc Coins";
+        }
+
         if (key.Contains("Distance", StringComparison.OrdinalIgnoreCase))
         {
             return $"{value:0.##} ly";

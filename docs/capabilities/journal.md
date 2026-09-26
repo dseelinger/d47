@@ -140,6 +140,7 @@ from a model that will produce a plausible one.
 > "what materials am I carrying"
 > "how have I done this session"
 > "what are my career statistics"
+> "how many merc coins do I have"
 > "what's my reputation with the Empire"
 
 **Every one of those reaches the thing it names.** This capability has six answers and used to be
@@ -301,8 +302,8 @@ Every figure is a sum of amounts Elite reported. Nothing comes from a price tabl
 lookup, so the numbers are the ones you would recognise.
 
 **Your career statistics**, from the journal's `Statistics` event — every section Elite writes, or
-one section named, with each figure under a readable name and in its unit — credits, light years,
-or hours and minutes:
+one section named, with each figure under a readable name and in its unit — credits, Merc Coins,
+light years, or hours and minutes:
 
 ```text
 Career statistics, as of 2026-09-05 16:36 UTC:
@@ -318,6 +319,22 @@ Name one section and only that one comes back — *"what have I earned from exob
 Exobiology, as of 2026-09-05 16:36 UTC:
   Organic Data Profits: 4,204,000 cr
 ```
+
+*"How many merc coins do I have"* reads out the bank account section, where Elite keeps the Merc
+Coin ledger beside the credit balance:
+
+```text
+Bank Account, as of 2026-09-26 10:00 UTC:
+  Current Wealth: 1,234,567 cr
+  Merc Coins Current: 46 Merc Coins
+  Merc Coins Total Earned: 1,046 Merc Coins
+  Merc Coins Total Spent: 1,000 Merc Coins
+  Merc Coins Spent On Merc Gear: 750 Merc Coins
+  Merc Coins Spent On Engineering: 250 Merc Coins
+```
+
+The journal carries no weekly earning allowance and no cap, so d47 does not say how many Merc Coins
+are left to earn this week.
 
 `Statistics` is written about 30 seconds after `LoadGame`, once per session:
 

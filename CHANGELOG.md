@@ -127,6 +127,10 @@ used last, so with Spotify also open they may go there instead.
 When an ambient music track ends, two seconds of silence now play before the next one starts; the
 two used to run together. A change of situation, unmuting and next track still start music at once.
 
+Asking "how many merc coins do I have" reads out your bank account statistics, including the Merc
+Coin balance, without going to the model. Merc Coin figures in your career statistics are given in
+Merc Coins; they used to be given in credits, under names such as "Merccoins Total Spent".
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
