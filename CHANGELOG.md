@@ -124,6 +124,9 @@ paused, a change of situation starts nothing until you resume. Pause lasts until
 restart d47 and does not change the Mute setting. Windows sends the keys to whichever player was
 used last, so with Spotify also open they may go there instead.
 
+When an ambient music track ends, two seconds of silence now play before the next one starts; the
+two used to run together. A change of situation, unmuting and next track still start music at once.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

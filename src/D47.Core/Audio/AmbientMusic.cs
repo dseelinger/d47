@@ -81,7 +81,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
             if (!_paused)
             {
-                StartNext();
+                StartNext(afterGap: true);
             }
         }
 
@@ -177,8 +177,11 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
     private const string NothingToPlay = "There is no music to play. Drop tracks into data\\audio\\music.";
 
-    /// <summary>Starts the next track unless muted. False when there is nothing to play.</summary>
-    private bool StartNext()
+    /// <summary>
+    /// Starts the next track unless muted, after <see cref="AudioArbiter.MusicGap"/> when it follows a
+    /// finished one. False when there is nothing to play.
+    /// </summary>
+    private bool StartNext(bool afterGap = false)
     {
         if (audio.Mix.Music.Muted)
         {
@@ -192,7 +195,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             return false;
         }
 
-        audio.PlayMusic(_current);
+        audio.PlayMusic(_current, afterGap);
         return true;
     }
 

@@ -62,6 +62,14 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         new byte[(int)(AudioFormat.Standard.SampleRate * Gap.TotalSeconds) * AudioFormat.Standard.BytesPerFrame],
         AudioFormat.Standard);
 
+    /// <summary>The silence between two ambience tracks, the Red Book CD pause (#522).</summary>
+    public static readonly TimeSpan MusicGap = TimeSpan.FromSeconds(2);
+
+    private static readonly AudioClip MusicGapClip = new(
+        "music-gap",
+        new byte[(int)(AudioFormat.Standard.SampleRate * MusicGap.TotalSeconds) * AudioFormat.Standard.BytesPerFrame],
+        AudioFormat.Standard);
+
     private readonly Lock _gate = new();
     private readonly List<Pending> _queue = [];
     private readonly HashSet<string> _closed = new(StringComparer.Ordinal);
@@ -71,6 +79,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private Playing? _bed;
     private long? _music;
     private bool _musicHeld;
+
+    /// <summary>The track to stream once the gap in the music slot finishes, or null when no gap is playing.</summary>
+    private MusicTrack? _musicAfterGap;
     private bool _subscribed;
     private AudioMix _mix = AudioMix.Default;
 
@@ -269,6 +280,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             // Silence is silence.
             _music = null;
+            _musicAfterGap = null;
             sink.StopAll();
             activity = Snapshot();
         }
@@ -312,8 +324,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
-    /// <summary>Streams one ambience track in the music slot, replacing whatever was in it.</summary>
-    public void PlayMusic(MusicTrack track)
+    /// <summary>
+    /// Streams one ambience track in the music slot, replacing whatever was in it. With
+    /// <paramref name="afterGap"/>, <see cref="MusicGap"/> of silence plays in the slot first.
+    /// </summary>
+    public void PlayMusic(MusicTrack track, bool afterGap = false)
     {
         AudioActivity activity;
 
@@ -327,7 +342,18 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             var id = _nextId++;
             _music = id;
             _musicHeld = false;
-            sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Music)));
+
+            if (afterGap)
+            {
+                _musicAfterGap = track;
+                sink.Play(new PlaybackRequest(id, MusicGapClip, Loop: false, GainFor(AudioChannel.Music)));
+            }
+            else
+            {
+                _musicAfterGap = null;
+                sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Music)));
+            }
+
             activity = Snapshot();
         }
 
@@ -349,6 +375,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             sink.Stop(playing);
             _music = null;
             _musicHeld = false;
+            _musicAfterGap = null;
             activity = Snapshot();
         }
 
@@ -516,7 +543,15 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
-            if (_music == playbackId)
+            if (_music == playbackId && _musicAfterGap is { } next)
+            {
+                var id = _nextId++;
+                _music = id;
+                _musicAfterGap = null;
+                sink.Play(PlaybackRequest.Stream(id, next, GainFor(AudioChannel.Music)));
+                activity = Snapshot();
+            }
+            else if (_music == playbackId)
             {
                 _music = null;
                 trackEnded = true;

@@ -337,7 +337,8 @@ To hear this music rather than Elite's, set Elite's music volume to zero (Option
 
 Tracks are shuffled within a folder and the whole folder plays before any of them repeats — you
 did not number your files, and hearing the same one every time you dock is what happens if D47
-plays them in name order. A situation with nothing in it falls back to `general`; `general` with
+plays them in name order. Two seconds of silence separate a track that ends from the next one,
+the pause a CD puts between tracks. A situation with nothing in it falls back to `general`; `general` with
 nothing in it is quiet, which is what every Commander gets until they drop something in. D47
 ships with no music of its own.
 
