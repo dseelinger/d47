@@ -246,7 +246,7 @@ public partial class SettingsView
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
+            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph),
             IsVisible = false,
         };
 

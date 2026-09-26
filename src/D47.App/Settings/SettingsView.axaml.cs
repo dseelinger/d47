@@ -633,7 +633,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             VerticalContentAlignment = VerticalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
-            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
+            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph),
         };
 
         AutomationProperties.SetName(reset, $"Reset {group.Title}");
@@ -2238,7 +2238,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 IsVisible = false,
             };
 
-            back.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary);
+            back.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph);
             AutomationProperties.SetName(back, $"Reset {row.Label}");
 
             back.Click += (_, _) =>

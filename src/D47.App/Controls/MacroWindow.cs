@@ -223,7 +223,7 @@ public sealed class MacroWindow : Window
         var button = new Button
         {
             Theme = Avalonia.Application.Current?.FindResource("D47.GlyphButton") as Avalonia.Styling.ControlTheme,
-            Content = Glyphs.Text(glyph, TypeScale.Body),
+            Content = Glyphs.Text(glyph, TypeScale.Glyph),
         };
 
         ToolTip.SetTip(button, says);

@@ -53,6 +53,7 @@ public partial class TypeScaleTests
             ["D47.Type.Heading"] = TypeScale.Heading,
             ["D47.Type.Subheading"] = TypeScale.Subheading,
             ["D47.Type.Body"] = TypeScale.Body,
+            ["D47.Type.Glyph"] = TypeScale.Glyph,
             ["D47.Type.Secondary"] = TypeScale.Secondary,
             ["D47.Type.ControlLarge"] = TypeScale.ControlLarge,
             ["D47.Type.Tip"] = TypeScale.Tip,

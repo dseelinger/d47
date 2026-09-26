@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Interface;
@@ -179,6 +180,66 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
             Assert.True(button.Bounds.Width >= 44, $"{AutomationProperties.GetName(button)} is {button.Bounds.Width} wide");
             Assert.True(button.Bounds.Height >= 44, $"{AutomationProperties.GetName(button)} is {button.Bounds.Height} tall");
         });
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheFaceIs32InA44TargetAndItsLabelOpensFlushToTheLeft()
+    {
+        using var kit = AppLook.ControlKit();
+        Manager().Apply(ThemeCatalog.Elite);
+
+        var button = GlyphButton("Reset ship voices");
+        button.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        var window = Open(button);
+
+        window.MouseMove(button.TranslatePoint(new Point(22, 22), window)!.Value);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(new Size(44, 44), button.Bounds.Size);
+        Assert.Equal(new Rect(6, 6, 32, 32), Tile(button).Bounds);
+
+        var label = Label(button);
+        Assert.True(label.IsOpen);
+        Assert.Equal(PlacementMode.Left, label.Placement);
+        Assert.Same(Tile(button), label.PlacementTarget);
+
+        var tip = (Border)label.Child!;
+        var text = LabelText(button);
+        var colour = (string key) => ((ISolidColorBrush)Application.Current!.Resources[key]!).Color;
+
+        Assert.Equal(32, tip.Height);
+        Assert.Equal(new Thickness(10, 0), tip.Padding);
+        Assert.Equal(new Thickness(1), tip.BorderThickness);
+        Assert.Equal(colour(ThemeManager.AKey), ((ISolidColorBrush)tip.BorderBrush!).Color);
+        Assert.Equal(colour(ThemeManager.BgKey), ((ISolidColorBrush)tip.Background!).Color);
+        Assert.Equal(colour(ThemeManager.WhiteKey), ((ISolidColorBrush)text.Foreground!).Color);
+        Assert.Equal(TypeScale.Meta, text.FontSize);
+        Assert.Equal(FontWeight.Medium, text.FontWeight);
+        Assert.Equal(0.48, text.LetterSpacing, 3);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void EveryResetGlyphInSettingsIs16()
+    {
+        using var kit = AppLook.ControlKit();
+        var (settings, viewState, paths) = TestSurface.Create();
+        Manager().FollowSettings(settings);
+        var host = SettingsHost.Open(settings, viewState, paths);
+        var theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!;
+
+        var resets = host.View.GetVisualDescendants().OfType<Button>()
+            .Where(button => ReferenceEquals(button.Theme, theme))
+            .Select(button => button.Content)
+            .OfType<TextBlock>()
+            .Where(glyph => glyph.Text == Glyphs.ResetText)
+            .ToList();
+
+        Assert.NotEmpty(resets);
+        Assert.All(resets, glyph => Assert.Equal(16, glyph.FontSize));
 
         host.Close();
     }

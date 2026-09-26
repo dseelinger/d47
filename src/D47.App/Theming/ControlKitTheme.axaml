@@ -125,9 +125,9 @@
     </ControlTheme>
 
     <!--
-      A button whose only content is a glyph: a 34-square Tile holding an A glyph, centred in a hit
+      A button whose only content is a glyph: a 32-square Tile holding an A glyph, centred in a hit
       target of at least 44 x 44. Hover or keyboard focus turns the tile solid A with a Knock glyph and
-      opens a label flush beside it (GlyphLabel) naming the button, taken from
+      opens a label flush to its left (GlyphLabel) naming the button, taken from
       AutomationProperties.Name, so every glyph button must set one. Disabled, the glyph is Grey2 and no label opens. No glow. Applies to
       RepeatButton, which derives from Button.
     -->
@@ -145,8 +145,8 @@
         <ControlTemplate>
           <Panel Background="Transparent">
             <Border x:Name="Tile"
-                    Width="34"
-                    Height="34"
+                    Width="32"
+                    Height="32"
                     Background="{TemplateBinding Background}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
@@ -158,13 +158,13 @@
             </Border>
             <Popup x:Name="Label"
                    PlacementTarget="{Binding ElementName=Tile}"
-                   Placement="Right"
+                   Placement="Left"
                    IsLightDismissEnabled="False"
                    IsOpen="False">
               <Border Background="{DynamicResource D47.Bg}"
                       BorderBrush="{DynamicResource D47.A}"
                       BorderThickness="1"
-                      Height="34"
+                      Height="32"
                       Padding="10,0"
                       IsHitTestVisible="False">
                 <TextBlock x:Name="LabelText"
@@ -172,7 +172,8 @@
                            Foreground="{DynamicResource D47.White}"
                            FontFamily="{StaticResource D47.Font.Chrome}"
                            FontSize="{StaticResource D47.Type.Meta}"
-                           FontWeight="SemiBold"
+                           FontWeight="Medium"
+                           LetterSpacing="0.48"
                            VerticalAlignment="Center" />
               </Border>
             </Popup>

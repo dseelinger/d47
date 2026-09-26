@@ -18,6 +18,9 @@ public static class TypeScale
     /// <summary>Ordinary text.</summary>
     public const double Body = 16;
 
+    /// <summary>The glyph on a glyph button's face.</summary>
+    public const double Glyph = 16;
+
     /// <summary>A section heading: upper-case Saira over a rule.</summary>
     public const double Section = 15;
 

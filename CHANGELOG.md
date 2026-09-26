@@ -168,6 +168,11 @@ rather than centred in 16-pixel Sintony, with its position ("3 / 6") smaller and
 between arrows, such as **Capture before the key**, is 14 pixels rather than 16. Level bars have
 taller segments, 22 pixels rather than 16, and a 13-pixel value beside them rather than 16.
 
+Buttons that show only a symbol, such as ↺ to reset a setting or the ↑ ↓ ✕ step buttons on the
+Macro page, are 32 pixels square rather than 34, and ↺ is 16 pixels rather than 15. The name that
+appears on hover now opens to the left of the button rather than the right, 32 pixels tall, in
+lighter letters spaced slightly apart.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

@@ -14,6 +14,7 @@
   <sys:Double x:Key="D47.Type.Heading">21</sys:Double>
   <sys:Double x:Key="D47.Type.Subheading">17</sys:Double>
   <sys:Double x:Key="D47.Type.Body">16</sys:Double>
+  <sys:Double x:Key="D47.Type.Glyph">16</sys:Double>
   <sys:Double x:Key="D47.Type.Secondary">15</sys:Double>
   <sys:Double x:Key="D47.Type.ControlLarge">14</sys:Double>
   <sys:Double x:Key="D47.Type.Tip">14</sys:Double>

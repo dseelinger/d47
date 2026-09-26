@@ -287,7 +287,7 @@ public sealed class SubsystemLevelTrack : ContentControl
         var reset = new Button
         {
             Theme = Application.Current?.FindResource("D47.GlyphButton") as ControlTheme,
-            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Secondary),
+            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph),
             Width = TypeScale.MinimumTarget,
             Height = TypeScale.MinimumTarget,
             IsVisible = false,
