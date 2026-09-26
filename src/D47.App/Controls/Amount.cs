@@ -30,7 +30,7 @@ public sealed class Amount : ContentControl
         VerticalAlignment = VerticalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
-        FontSize = Theming.TypeScale.Body,
+        FontSize = Theming.TypeScale.ControlLarge,
     };
 
     private readonly TextBox _editor = new()
@@ -41,7 +41,7 @@ public sealed class Amount : ContentControl
         VerticalAlignment = VerticalAlignment.Stretch,
         VerticalContentAlignment = VerticalAlignment.Center,
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
-        FontSize = Theming.TypeScale.Body,
+        FontSize = Theming.TypeScale.ControlLarge,
     };
 
     private readonly RepeatButton _previous;

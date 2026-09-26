@@ -163,6 +163,11 @@ An option with a status line under its name is 56 tall, and the status line is n
 capitals, grey, yellow when a key is stored, and brown on the selected option. Previously the
 status line was replaced by the text "AVALONIA.CONTROLS.STACKPANEL".
 
+A choice stepped through with ◄ and ► arrows now shows its value left-aligned in 14-pixel Saira
+rather than centred in 16-pixel Sintony, with its position ("3 / 6") smaller and dimmer. A number
+between arrows, such as **Capture before the key**, is 14 pixels rather than 16. Level bars have
+taller segments, 22 pixels rather than 16, and a 13-pixel value beside them rather than 16.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

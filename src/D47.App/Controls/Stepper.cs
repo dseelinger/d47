@@ -50,18 +50,17 @@ public sealed class Stepper : ContentControl, IChoiceControl
     private readonly TextBlock _value = new()
     {
         Name = "StepperValue",
-        HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
-        TextAlignment = TextAlignment.Center,
-        FontFamily = new FontFamily(Theming.Fonts.ProseFamily),
-        FontSize = Theming.TypeScale.Body,
+        TextAlignment = TextAlignment.Left,
+        FontFamily = new FontFamily(Theming.Fonts.ChromeFamily),
+        FontSize = Theming.TypeScale.ControlLarge,
+        FontWeight = FontWeight.Medium,
     };
 
     private readonly TextBlock _status = new()
     {
         Name = "StepperStatus",
-        HorizontalAlignment = HorizontalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
         FontSize = Theming.TypeScale.Caption,
         IsVisible = false,
@@ -72,9 +71,9 @@ public sealed class Stepper : ContentControl, IChoiceControl
         Name = "StepperPosition",
         HorizontalAlignment = HorizontalAlignment.Right,
         VerticalAlignment = VerticalAlignment.Center,
-        Margin = new Thickness(8, 0, 0, 0),
+        Margin = new Thickness(10, 0, 0, 0),
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
-        FontSize = Theming.TypeScale.Meta,
+        FontSize = Theming.TypeScale.MetaSmall,
     };
 
     private readonly TextBlock _consequence = new()
@@ -98,7 +97,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
         _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
-        _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
+        _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.Grey2Key));
         _consequence.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
 
         _previous = Arrow("◄", "Previous", -1);
@@ -121,7 +120,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
 
         var valueCell = new Border
         {
-            Padding = new Thickness(14, 0),
+            Padding = new Thickness(12, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Child = inside,
         };

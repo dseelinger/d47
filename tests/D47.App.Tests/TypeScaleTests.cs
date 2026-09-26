@@ -54,6 +54,7 @@ public partial class TypeScaleTests
             ["D47.Type.Subheading"] = TypeScale.Subheading,
             ["D47.Type.Body"] = TypeScale.Body,
             ["D47.Type.Secondary"] = TypeScale.Secondary,
+            ["D47.Type.ControlLarge"] = TypeScale.ControlLarge,
             ["D47.Type.Tip"] = TypeScale.Tip,
             ["D47.Type.Control"] = TypeScale.Control,
             ["D47.Type.Small"] = TypeScale.Small,
@@ -81,7 +82,8 @@ public partial class TypeScaleTests
         Assert.True(TypeScale.Subheading > TypeScale.Body);
         Assert.True(TypeScale.Body > TypeScale.Section);
         Assert.True(TypeScale.Section >= TypeScale.Secondary);
-        Assert.True(TypeScale.Secondary > TypeScale.Small);
+        Assert.True(TypeScale.Secondary > TypeScale.ControlLarge);
+        Assert.True(TypeScale.ControlLarge > TypeScale.Small);
         Assert.True(TypeScale.Small > TypeScale.Meta);
         Assert.True(TypeScale.Meta >= TypeScale.Caption);
         Assert.True(TypeScale.Caption > TypeScale.MetaSmall);

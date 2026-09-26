@@ -39,7 +39,8 @@ public sealed class Level : ContentControl
     /// <summary>The width a level is drawn at on a settings row, bar and readout together.</summary>
     public const double CompactWidth = 280;
 
-    private const double SegmentHeight = 16;
+    /// <summary>The height a segment is drawn at.</summary>
+    public const double SegmentHeight = 22;
 
     /// <summary>Raised when a click or a key moves the value — never by setting <see cref="Value"/> directly.</summary>
     public event EventHandler? ValueChanged;
@@ -55,7 +56,7 @@ public sealed class Level : ContentControl
     {
         Name = "LevelReadout",
         FontFamily = new FontFamily(Theming.Fonts.MonoFamily),
-        FontSize = Theming.TypeScale.Body,
+        FontSize = Theming.TypeScale.Small,
         MinWidth = 44,
         Margin = new Thickness(12, 0, 0, 0),
         TextAlignment = TextAlignment.Right,
@@ -64,15 +65,12 @@ public sealed class Level : ContentControl
 
     private readonly List<Border> _segments = [];
     private readonly List<IDisposable?> _inks = [];
+    private IDisposable? _readoutInk;
 
     public Level()
     {
         Focusable = true;
         Cursor = new Cursor(StandardCursorType.Hand);
-
-        _readout.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
 
         // Transparent rather than null, so the gaps and the height around the segments take the click too.
         var target = new Border
@@ -142,7 +140,7 @@ public sealed class Level : ContentControl
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>Lit segments in Grey2 rather than A: the value is kept but not in use.</summary>
+    /// <summary>Lit segments and the readout in Grey2: the value is kept but not in use.</summary>
     public bool Muted
     {
         get => GetValue(MutedProperty);
@@ -260,5 +258,10 @@ public sealed class Level : ContentControl
         }
 
         _readout.Text = Value.ToString("0.00", CultureInfo.InvariantCulture);
+        _readoutInk?.Dispose();
+        _readoutInk = _readout.Bind(
+            TextBlock.ForegroundProperty,
+            Application.Current!.Resources.GetResourceObservable(
+                Muted ? Theming.ThemeManager.Grey2Key : Theming.ThemeManager.WhiteKey));
     }
 }

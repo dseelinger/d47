@@ -27,6 +27,9 @@ public static class TypeScale
     /// </summary>
     public const double Secondary = 15;
 
+    /// <summary>The value inside a stepper or an amount.</summary>
+    public const double ControlLarge = 14;
+
     /// <summary>A tooltip's own prose (#381).</summary>
     public const double Tip = 14;
 
