@@ -1,0 +1,7 @@
+{ "timestamp":"2026-09-26T12:00:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.2.0.0", "build":"r000000/r0 " }
+{ "timestamp":"2026-09-26T12:00:01Z", "event":"Commander", "FID":"F1000001", "Name":"Fixture One" }
+{ "timestamp":"2026-09-26T12:00:02Z", "event":"Music", "MusicTrack":"MainMenu" }
+{ "timestamp":"2026-09-26T12:01:00Z", "event":"Music", "MusicTrack":"Supercruise" }
+{ "timestamp":"2026-09-26T12:02:00Z", "event":"Interdicted", "Submitted":false, "Interdictor":"Fixture Pirate", "IsPlayer":false }
+{ "timestamp":"2026-09-26T12:02:05Z", "event":"Music", "MusicTrack":"Combat_Dogfight" }
+{ "timestamp":"2026-09-26T12:02:30Z", "event":"ReceiveText", "From":"Fixture Pirate", "Message":"", "Channel":"npc" }

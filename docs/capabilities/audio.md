@@ -118,26 +118,22 @@ nav_order: 123
 <p class="body">Speech and alerts have no duck row, because there is nothing for them to duck under. A row that does not apply is absent rather than greyed out. And moving a level re-levels whatever is playing at that moment, because setting a level by ear is the only way to set one.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Ambience follows only what the game actually states.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Five ambience folders matching states Elite reports, with no combat or exploring folder">
- <rect x="21" y="40" width="158" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="100" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">docked</text>
- <text x="100" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a station</text>
- <rect x="191" y="40" width="158" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="270" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">supercruise</text>
- <text x="270" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">in supercruise</text>
- <rect x="361" y="40" width="158" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">normal-space</text>
- <text x="440" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">and landed too</text>
- <rect x="531" y="40" width="158" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="610" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">on-foot</text>
- <text x="610" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">out of the ship</text>
- <rect x="701" y="40" width="158" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="780" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">general</text>
- <text x="780" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">and the fallback</text>
- <rect x="20" y="150" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--danger)">no combat folder, and no exploring folder</text>
- <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">Neither is something the game reports, and a situation it has to infer plays the wrong music at the worst moment.</text>
+<h2><span class="num">3</span> Ambience follows the music Elite is playing.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Elite's music track picks the folder; an empty folder falls back to the Status.json situation, then general">
+ <rect x="21" y="40" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="146" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">Elite's music track</text>
+ <text x="146" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">combat-dogfight, galaxy-map…</text>
+ <rect x="315" y="40" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">where you are</text>
+ <text x="440" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">docked, supercruise, on-foot…</text>
+ <rect x="609" y="40" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="734" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">general</text>
+ <text x="734" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the last fallback</text>
+ <text x="293" y="90" text-anchor="middle" font-size="18" fill="var(--text-muted)">→</text>
+ <text x="587" y="90" text-anchor="middle" font-size="18" fill="var(--text-muted)">→</text>
+ <rect x="20" y="150" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2.5"/>
+ <text x="440" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">an empty folder changes nothing</text>
+ <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">Set Elite's music volume to zero (Options, Audio) to hear yours instead of the game's.</text>
 </svg>
 <p class="body">Directive 47 ships with no music of its own — drop your own <code>.mp3</code>, <code>.m4a</code>, <code>.flac</code> or <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files.</p>
 </section>
@@ -298,19 +294,46 @@ Skipped: engine-room: Windows has no decoder for this file. On a Windows N editi
 ### Ambience
 
 `music/<situation>/` is a background layer of its own, with its own level and its own
-ducking, separate from the cues and the thinking bed. There are five situations, and they are the
-five Elite's `Status.json` can state without anyone guessing:
+ducking, separate from the cues and the thinking bed. Elite writes a `Music` event naming the
+situation it is scoring, and D47 plays from the folder for that track:
 
-| Folder | When |
-|---|---|
-| `docked` | Docked at a station or an outpost. |
-| `supercruise` | In supercruise. |
-| `normal-space` | In a ship, a fighter or an SRV, and neither of the above — including landed. |
-| `on-foot` | Out of the ship. |
-| `general` | Anything else, and the fallback for a situation with no files of its own. |
+| Folder | Elite track | Without a track, from Status.json |
+|---|---|---|
+| `docked` | `Starport` | Docked at a station or an outpost. |
+| `supercruise` | `Supercruise` | In supercruise. |
+| `normal-space` | `Exploration` | In a ship, a fighter or an SRV, and neither of the above — including landed. |
+| `on-foot` | `OnFoot` | Out of the ship. |
+| `general` | — | Anything else, and the last fallback. |
+| `main-menu` | `MainMenu` |  |
+| `docking-computer` | `DockingComputer` |  |
+| `galaxy-map` | `GalaxyMap` |  |
+| `system-map` | `SystemMap` |  |
+| `scanner` | `SystemAndSurfaceScanner` |  |
+| `codex` | `Codex` |  |
+| `combat-dogfight` | `Combat_Dogfight` |  |
+| `combat-large` | `Combat_LargeDogFight` |  |
+| `combat-srv` | `Combat_SRV` |  |
+| `combat-unknown` | `Combat_Unknown` |  |
+| `interdiction` | `Interdiction` |  |
+| `capital-ship` | `CapitalShip` |  |
+| `unknown-encounter` | `Unknown_Encounter` |  |
+| `unknown-exploration` | `Unknown_Exploration` |  |
+| `unknown-settlement` | `Unknown_Settlement` |  |
+| `guardian-sites` | `GuardianSites` |  |
+| `fog-cloud` | `Lifeform_FogCloud` |  |
+| `arrival-from-supercruise` | `DestinationFromSupercruise` |  |
+| `arrival-from-hyperspace` | `DestinationFromHyperspace` |  |
+| `fleet-carrier` | `FleetCarrier_Managment` |  |
+| `squadrons` | `Squadrons` |  |
+| `powerplay` | `GalacticPowers` |  |
+| `cqc-menu` | `CQCMenu` |  |
+| `cqc` | `CQC` |  |
 
-There is no `combat` folder and no `exploring` folder. Neither is something the game reports, and
-a situation D47 has to infer is a situation that plays the wrong music at the worst moment.
+When Elite's track has a folder with files in it, that folder plays. Otherwise the folder comes
+from what `Status.json` states — the five in the last column — and then `general`. An empty
+folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have no folder.
+
+To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 
 Tracks are shuffled within a folder and the whole folder plays before any of them repeats — you
 did not number your files, and hearing the same one every time you dock is what happens if D47

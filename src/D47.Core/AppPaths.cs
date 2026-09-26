@@ -109,7 +109,7 @@ public sealed class AppPaths
         Directory.CreateDirectory(Data);
         Directory.CreateDirectory(Logs);
 
-        // The drop-in folders by name, empty: one per loop state and per alert.
+        // The drop-in folders by name, empty: one per loop state, per alert and per music folder.
         foreach (var state in Enum.GetValues<LoopState>())
         {
             Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.CuesFolder, CueLibrary.FolderName(state)));
@@ -121,7 +121,11 @@ public sealed class AppPaths
         }
 
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.BedsFolder));
-        Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.MusicFolder));
+        foreach (var situation in Situations.All)
+        {
+            Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.MusicFolder, situation));
+        }
+
         Directory.CreateDirectory(Ships);
     }
 }

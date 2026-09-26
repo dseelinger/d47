@@ -3,8 +3,8 @@ using D47.Core.Journal;
 namespace D47.Core.Audio;
 
 /// <summary>
-/// Which of the five situations the Commander is in, from what Status.json actually says (Phase 12,
-/// "Ambient music").
+/// The music folders, and which one the Commander is in: Elite's own music track where it has a folder
+/// with tracks, otherwise what Status.json says (Phase 12, "Ambient music").
 /// </summary>
 public static class Situations
 {
@@ -14,9 +14,61 @@ public static class Situations
     public const string NormalSpace = "normal-space";
     public const string OnFoot = "on-foot";
 
-    /// <summary>All five, in the order the documentation lists them.</summary>
+    /// <summary>
+    /// The folder each Elite <c>MusicTrack</c> plays from. <c>NoTrack</c>, <c>NoInGameMusic</c> and values
+    /// not listed have none.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> ByTrack =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Starport"] = Docked,
+            ["Exploration"] = NormalSpace,
+            ["Supercruise"] = Supercruise,
+            ["OnFoot"] = OnFoot,
+            ["MainMenu"] = "main-menu",
+            ["DockingComputer"] = "docking-computer",
+            ["GalaxyMap"] = "galaxy-map",
+            ["Combat_Dogfight"] = "combat-dogfight",
+            ["FleetCarrier_Managment"] = "fleet-carrier",
+            ["SystemMap"] = "system-map",
+            ["SystemAndSurfaceScanner"] = "scanner",
+            ["Combat_LargeDogFight"] = "combat-large",
+            ["CombatLargeDogFight"] = "combat-large",
+            ["Squadrons"] = "squadrons",
+            ["DestinationFromSupercruise"] = "arrival-from-supercruise",
+            ["GalacticPowers"] = "powerplay",
+            ["GuardianSites"] = "guardian-sites",
+            ["DestinationFromHyperspace"] = "arrival-from-hyperspace",
+            ["Combat_SRV"] = "combat-srv",
+            ["Unknown_Exploration"] = "unknown-exploration",
+            ["Codex"] = "codex",
+            ["CQCMenu"] = "cqc-menu",
+            ["Interdiction"] = "interdiction",
+            ["Lifeform_FogCloud"] = "fog-cloud",
+            ["CQC"] = "cqc",
+            ["Combat_Unknown"] = "combat-unknown",
+            ["Unknown_Encounter"] = "unknown-encounter",
+            ["CapitalShip"] = "capital-ship",
+            ["Unknown_Settlement"] = "unknown-settlement",
+        };
+
+    /// <summary>Every music folder: the five Status.json situations first, then the rest of the track folders.</summary>
     public static readonly IReadOnlyList<string> All =
-        [General, Docked, Supercruise, NormalSpace, OnFoot];
+        new[] { General, Docked, Supercruise, NormalSpace, OnFoot }
+            .Concat(ByTrack.Values)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+    /// <summary>
+    /// The folder for Elite's current music track when that folder has tracks, otherwise
+    /// <see cref="For(GameStatus)"/>.
+    /// </summary>
+    public static string For(GameStatus status, string? musicTrack, CueLibrary library) =>
+        musicTrack is not null
+        && ByTrack.TryGetValue(musicTrack, out var folder)
+        && library.Music(folder).Count > 0
+            ? folder
+            : For(status);
 
     /// <summary>A pure function of the state Elite last wrote — no clock, no thread, no history.</summary>
     public static string For(GameStatus status)
@@ -48,6 +100,24 @@ public static class Situations
                || status.Has(StatusFlags.InSrv)
             ? NormalSpace
             : General;
+    }
+}
+
+/// <summary>The <c>MusicTrack</c> of the latest <c>Music</c> event, kept across polls.</summary>
+public sealed class EliteMusic
+{
+    /// <summary>Null until a <c>Music</c> event has been read.</summary>
+    public string? Track { get; private set; }
+
+    public void Observe(IEnumerable<JournalEvent> events)
+    {
+        foreach (var journalEvent in events)
+        {
+            if (journalEvent.Kind == "Music")
+            {
+                Track = journalEvent.String("MusicTrack");
+            }
+        }
     }
 }
 

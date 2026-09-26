@@ -109,6 +109,13 @@ The **Your own audio** row under Audio mixer has an **Open audio folder** button
 A settings group with nothing that can be reset, such as **Your own audio**, no longer shows a
 reset button in its heading.
 
+Ambient music now follows the music Elite itself is playing. `data/audio/music/` has a folder for
+each of Elite's music tracks, among them `combat-dogfight`, `galaxy-map`, `docking-computer`,
+`main-menu` and `interdiction`, all created empty on first run. When the folder for Elite's current
+track has files, d47 plays from it; otherwise it plays from `docked`, `supercruise`,
+`normal-space`, `on-foot` or `general` as before. Set Elite's music volume to zero (Options, Audio)
+to hear your music instead of the game's. The Audio help page lists every folder.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

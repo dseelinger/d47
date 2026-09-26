@@ -1062,9 +1062,9 @@ public sealed class AppHost : IDisposable
         // built before the instance exists (#51).
         var journalLog = new D47.Core.Journal.JournalLog();
 
-        // The journal's own witness that the galaxy map is showing (#365).
-        var tracingInput = Diagnostics.InputTraceWriter.Enabled;
-        string? musicTrack = null;
+        // Elite's own music track: the journal's witness that the galaxy map is showing (#365), and what
+        // ambience follows.
+        var eliteMusic = new EliteMusic();
 
         // The journal's own witness that a docking request went in (#150): counted on the tick thread, read
         // by the wait the contacts walk ends on.
@@ -1078,11 +1078,7 @@ public sealed class AppHost : IDisposable
 
             arrived = events;
 
-            if (tracingInput
-                && events.LastOrDefault(journalEvent => journalEvent.Kind == "Music") is { } playing)
-            {
-                musicTrack = playing.String("MusicTrack");
-            }
+            eliteMusic.Observe(events);
 
             if (events.Any(journalEvent => journalEvent.Kind == "DockingRequested"))
             {
@@ -1362,7 +1358,7 @@ public sealed class AppHost : IDisposable
             paths,
             () => DateTimeOffset.Now,
             () => status.Current,
-            () => musicTrack,
+            () => eliteMusic.Track,
             () => new Diagnostics.EliteWindowCapture(
                 () => eliteWindow.Handle,
                 Diagnostics.InputTraceWriter.StillWidth,
@@ -2467,10 +2463,9 @@ public sealed class AppHost : IDisposable
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
-        // Ambience follows the situation Status.json states, sampled on the tick rather than hooked to a
-        // journal event: docked, supercruise and on foot are conditions rather than things that happen, and
-        // the file is already being read here every tick.
-        tick.Add("ambience", _ => host.FollowSituation(status.Current));
+        // Ambience follows Elite's music track where its folder has tracks, and otherwise the situation
+        // Status.json states, sampled on the tick after the journal has been read.
+        tick.Add("ambience", _ => host.FollowSituation(status.Current, eliteMusic.Track));
 
         // The folder those tracks came from, which the Commander can add to while d47 is running.
         host._audioWatch = new AudioFolderWatch(
@@ -4002,9 +3997,9 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>The ambience layer, following what the Commander is doing (Phase 12).</summary>
-    private void FollowSituation(D47.Core.Journal.GameStatus status)
+    private void FollowSituation(D47.Core.Journal.GameStatus status, string? musicTrack)
     {
-        if (!_ambience.Enter(Situations.For(status)))
+        if (!_ambience.Enter(Situations.For(status, musicTrack, Cues)))
         {
             return;
         }
