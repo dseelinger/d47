@@ -150,7 +150,7 @@ nav_order: 123
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">and from the Settings tab</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Those are the two things that would make it harder to hear exactly when hearing it matters.</text>
 </svg>
-<p class="body">“By voice” never silently means “by the language model”. Every row here is reachable through the model-free keyword router, which is a different path with a different caller. The one tool, <code>control_music</code>, only pauses, resumes and skips the ambient music.</p>
+<p class="body">“By voice” never silently means “by the language model”. Every row here is reachable through the model-free keyword router, which is a different path with a different caller. The one tool, <code>manage_music</code>, only pauses, resumes and skips the ambient music.</p>
 </section>
 </div></div>
 </details>
@@ -364,7 +364,7 @@ Windows sends the media keys to whichever media session was used last. With Spot
 player also open, the keys may go to that player instead.
 
 The same three actions work by voice — "pause the music", "resume the music", "next track" or
-"skip track" — through `control_music`, which the model can also call:
+"skip track" — through `manage_music`, which the model can also call:
 
 ```json
 {"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next"]}},"required":["action"],"additionalProperties":false}
@@ -372,7 +372,7 @@ The same three actions work by voice — "pause the music", "resume the music", 
 
 ### Not reachable by the model
 
-No tool sets a level or a mute; `control_music` only pauses, resumes and skips the music.
+No tool sets a level or a mute; `manage_music` only pauses, resumes and skips the music.
 Directive 47 cannot turn its own voice down, and it cannot turn the danger callouts down either — those are the two things that would make it harder to hear exactly when
 hearing it matters, and no request needs them.
 

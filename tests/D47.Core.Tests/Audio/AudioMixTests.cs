@@ -145,7 +145,7 @@ public class AudioMixTests
     public void TheModelCannotReachTheMixer()
     {
         var tool = Assert.Single(AudioCapability.Create().Tools);
-        Assert.Equal(AudioCapability.ControlMusicTool, tool.Name);
+        Assert.Equal(AudioCapability.ManageMusicTool, tool.Name);
     }
 
     /// <summary>The defaults are what d47 sounded like before there was a mixer.</summary>

@@ -64,10 +64,10 @@ public static class AudioCapability
             .. Enum.GetValues<AudioChannel>().SelectMany(RowsFor),
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
         ],
-        Tools = [ControlMusic(music)],
+        Tools = [ManageMusic(music)],
     };
 
-    public const string ControlMusicTool = "control_music";
+    public const string ManageMusicTool = "manage_music";
 
     private static readonly Dictionary<string, MusicAction> Actions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -77,9 +77,9 @@ public static class AudioCapability
     };
 
     /// <summary>Pause, resume and skip for the ambient music. Levels and mutes stay out of the model's reach.</summary>
-    private static ToolDefinition ControlMusic(Func<MusicAction, string>? music) => new()
+    private static ToolDefinition ManageMusic(Func<MusicAction, string>? music) => new()
     {
-        Name = ControlMusicTool,
+        Name = ManageMusicTool,
         Description = "Pauses, resumes or skips D47's ambient music. Pause holds the track where it is; next "
                       + "starts another track from the same folder.",
         Parameters =

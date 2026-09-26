@@ -7,7 +7,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-/// <summary>The media keys and <c>control_music</c>: pause, resume and next on the ambient music (#497).</summary>
+/// <summary>The media keys and <c>manage_music</c>: pause, resume and next on the ambient music (#497).</summary>
 public class PauseHoldsTheMusicWhereItIsTests : IDisposable
 {
     private readonly string _root = Path.Combine(
@@ -148,18 +148,18 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
     [InlineData("resume the music", "resume")]
     [InlineData("next track", "next")]
     [InlineData("skip track", "next")]
-    public void ThePhrasesReachControlMusic(string phrase, string action)
+    public void ThePhrasesReachManageMusic(string phrase, string action)
     {
-        var tool = AudioCapability.Create().Tools.Single(t => t.Name == AudioCapability.ControlMusicTool);
+        var tool = AudioCapability.Create().Tools.Single(t => t.Name == AudioCapability.ManageMusicTool);
 
         var command = Assert.Single(tool.Commands, c => c.Phrase == phrase);
         Assert.Equal(action, command.Arguments["action"]);
     }
 
     [Fact]
-    public void TheModelCanCallControlMusic()
+    public void TheModelCanCallManageMusic()
     {
-        var tool = AudioCapability.Create().Tools.Single(t => t.Name == AudioCapability.ControlMusicTool);
+        var tool = AudioCapability.Create().Tools.Single(t => t.Name == AudioCapability.ManageMusicTool);
 
         Assert.False(tool.Protected);
     }
