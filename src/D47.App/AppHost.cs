@@ -751,6 +751,13 @@ public sealed class AppHost : IDisposable
 
         learnedPhrases.Load();
 
+        // The systems this Commander has named, so they can be said back as a course (#488).
+        var bookmarks = new BookmarkStore(
+            Path.Combine(paths.Data, "bookmarks.json"),
+            loggerFactory.CreateLogger<BookmarkStore>());
+
+        bookmarks.Load();
+
         // The Commander's ship builds (Phase 26), before the history walk that looks for the ships they name.
         var shipBuilds = new ShipBuildStore(
             Path.Combine(paths.Data, "ships.json"),
@@ -1905,7 +1912,12 @@ public sealed class AppHost : IDisposable
                 // And "forget 'set focus on elite'" (#171), one per phrase the flying Commander has taught
                 // d47 stands for a declared phrase.
                 .Concat(LearnedPhrasesCapability.Phrases(
-                    learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty));
+                    learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
+
+                // And "set course for Current CG" (#488), one set of spellings per bookmark the flying
+                // Commander has made.
+                .Concat(BookmarkCourse.Phrases(
+                    bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty));
 
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));
