@@ -507,7 +507,7 @@ public partial class SettingsView
         };
         Themed(number, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var (box, label) = LabeledCheckBox.Build(effect.Label, labelFirst: false);
+        var (box, label) = LabeledCheckBox.Build(effect.Label);
         label.FontSize = TypeScale.Secondary;
         label.TextTrimming = TextTrimming.CharacterEllipsis;
         box.Width = GuardianCheckWidth;

@@ -172,8 +172,8 @@ public sealed class ControlKitWindow : Window
         var (report, reportText) = SettingsView.Report();
         reportText.Text = "11 ships, the oldest last seen about a day ago.";
 
-        var (sentence, _) = LabeledCheckBox.Build("Include journal history", labelFirst: false);
-        var (disabled, _) = LabeledCheckBox.Build("Unavailable here", labelFirst: false);
+        var (sentence, _) = LabeledCheckBox.Build("Include journal history");
+        var (disabled, _) = LabeledCheckBox.Build("Unavailable here");
         disabled.IsChecked = true;
         disabled.IsEnabled = false;
 

@@ -310,8 +310,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         _memory = memory;
         _summary.Margin = new Thickness(0, 0, 0, 10);
 
-        (_colonia, _) = LabeledCheckBox.Build("Hide the Colonia eight");
-        (_onFoot, _) = LabeledCheckBox.Build("Hide on-foot engineers");
+        _colonia = LabeledCheckBox.Caps("Hide the Colonia eight");
+        _onFoot = LabeledCheckBox.Caps("Hide on-foot engineers");
 
         _colonia.IsChecked = memory?.HideColonia ?? false;
         _onFoot.IsChecked = memory?.HideOnFoot ?? false;

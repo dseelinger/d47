@@ -4,17 +4,13 @@ using Avalonia.Layout;
 namespace D47.App.Controls;
 
 /// <summary>
-/// A <see cref="CheckBox"/> carrying its label as a sentence, the shape every two-state control in the
-/// app takes. The box and label are one row and the whole row toggles.
+/// A <see cref="CheckBox"/> carrying its label, the shape every two-state control in the app takes. The box
+/// comes first, the box and label are one row and the whole row toggles.
 /// </summary>
 public static class LabeledCheckBox
 {
-    /// <summary>
-    /// <paramref name="labelFirst"/> follows where the control sits in its containing panel: true for a
-    /// right-hand or middle cluster and a row spanning the whole panel, false for a cluster on the
-    /// panel's left.
-    /// </summary>
-    public static (CheckBox Box, TextBlock Label) Build(string label, bool labelFirst = true)
+    /// <summary>A checkbox whose label is a sentence, in prose.</summary>
+    public static (CheckBox Box, TextBlock Label) Build(string label)
     {
         var text = new TextBlock
         {
@@ -30,11 +26,14 @@ public static class LabeledCheckBox
 
         box.Classes.Add("sentence");
 
-        if (labelFirst)
-        {
-            box.Classes.Add("box-last");
-        }
-
         return (box, text);
     }
+
+    /// <summary>A checkbox whose label is a control's name, in uppercase; set <see cref="ContentControl.Content"/> to change it.</summary>
+    public static CheckBox Caps(string label) =>
+        new()
+        {
+            Content = label,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 }

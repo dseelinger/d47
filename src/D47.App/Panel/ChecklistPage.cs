@@ -51,9 +51,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         IsVisible = false,
     };
 
-    /// <summary>The goals band, opened and closed (#203). A left cluster, so the checkbox leads its label.</summary>
+    /// <summary>The goals band, opened and closed (#203).</summary>
     private readonly CheckBox _arcsToggle;
-    private readonly TextBlock _arcsLabel;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly TextBlock _problems = new()
@@ -153,14 +152,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _backfill = backfill;
         _now = now ?? (() => DateTimeOffset.Now);
 
-        (_arcsToggle, _arcsLabel) = LabeledCheckBox.Build(string.Empty, labelFirst: false);
-        _arcsToggle.MinHeight = TouchTarget;
-        _arcsToggle.VerticalAlignment = VerticalAlignment.Top;
+        _arcsToggle = LabeledCheckBox.Caps(string.Empty);
         _arcsToggle.IsVisible = false;
 
-        (_partial, _) = LabeledCheckBox.Build("Include Partial Grades", labelFirst: false);
-        _partial.MinHeight = TouchTarget;
-        _partial.VerticalAlignment = VerticalAlignment.Top;
+        _partial = LabeledCheckBox.Caps("Include Partial Grades");
 
         Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
@@ -553,7 +548,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _arcsToggle.IsVisible = true;
 
         // The count, whichever way the box is set (#203).
-        _arcsLabel.Text = $"Goals ({running} running)";
+        _arcsToggle.Content = $"Goals ({running} running)";
         _band.IsVisible = _showArcs;
 
         if (!_showArcs)

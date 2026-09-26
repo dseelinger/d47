@@ -100,8 +100,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         var list = Save(surface.Window, $"checklist-{themeId}-{width}x{height}.png");
 
         var band = panel.GetVisualDescendants().OfType<CheckBox>()
-            .First(box => box.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text?.StartsWith("Goals", StringComparison.Ordinal) == true));
+            .First(box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal));
 
         band.IsChecked = true;
         Dispatcher.UIThread.RunJobs();

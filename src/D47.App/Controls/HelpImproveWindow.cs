@@ -258,7 +258,7 @@ public sealed class HelpImproveWindow : Window
         _sendCorpus = sendCorpus;
         _forget = forget;
 
-        (_includeHistory, _) = LabeledCheckBox.Build("Include journal history", labelFirst: false);
+        (_includeHistory, _) = LabeledCheckBox.Build("Include journal history");
         _includeHistory.Name = "IncludeHistory";
 
         (_mySpeech, _) = LabeledCheckBox.Build("Include what I said out loud");

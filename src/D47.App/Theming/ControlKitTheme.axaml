@@ -295,23 +295,22 @@
 
     <!--
       Elite's checkbox: a 16px square with a 2px A outline, an 8px solid A square centred in it when
-      checked, a Grey2 outline when disabled. The box and its label are one Tile row, 44 tall, and the
-      whole row is the hit target; Tile2 on hover or keyboard focus. A string label is a control's
-      name, in uppercase Saira and A ink; the "sentence" class sets the label in Sintony and White.
-      The "box-last" class puts the box after the label. A checkbox with no label draws the box alone
-      on a clear ground.
+      checked. The box, then its label, are one Tile row, 44 tall, and the whole row is the hit target;
+      Tile2 on hover or keyboard focus, Slab with a Grey2 box when disabled. A string label is a
+      control's name, in uppercase Saira and A ink; the "sentence" class sets the label in Sintony and
+      White. A checkbox with no label draws the box alone on a clear ground.
     -->
     <ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="IsThreeState" Value="False" />
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
-      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontSize" Value="{StaticResource D47.Type.Control}" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="LetterSpacing" Value="0.84" />
+      <Setter Property="LetterSpacing" Value="0.52" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
       <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
-      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="Padding" Value="10,0,14,0" />
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="MinWidth" Value="44" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -340,7 +339,7 @@
               <ContentPresenter x:Name="PART_ContentPresenter"
                                 Content="{TemplateBinding Content}"
                                 Foreground="{TemplateBinding Foreground}"
-                                Margin="12,0,0,0"
+                                Margin="10,0,0,0"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                 IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </DockPanel>
@@ -373,14 +372,12 @@
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="LetterSpacing" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
+        <Setter Property="Padding" Value="12,0" />
+      </Style>
+      <Style Selector="^.sentence /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Margin" Value="12,0,0,0" />
       </Style>
 
-      <Style Selector="^.box-last /template/ Border#Box">
-        <Setter Property="DockPanel.Dock" Value="Right" />
-      </Style>
-      <Style Selector="^.box-last /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Margin" Value="0,0,12,0" />
-      </Style>
 
       <Style Selector="^:not(:pointerover):not(:focus-visible).bare">
         <Setter Property="Background" Value="Transparent" />
@@ -389,6 +386,9 @@
         <Setter Property="Padding" Value="14,0" />
       </Style>
 
+      <Style Selector="^:disabled:not(.bare)">
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+      </Style>
       <Style Selector="^:disabled">
         <Setter Property="BorderBrush" Value="{DynamicResource D47.Grey2}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />

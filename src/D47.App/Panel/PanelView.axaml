@@ -634,7 +634,6 @@
                       IsVisible="False">
             <CheckBox x:Name="RawToggle"
                       Content="Raw"
-                      Classes="box-last"
                       VerticalAlignment="Center"
                       IsCheckedChanged="OnRawToggled" />
           </StackPanel>

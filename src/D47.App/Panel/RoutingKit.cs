@@ -179,7 +179,7 @@ internal static class RoutingKit
     /// <summary>A switch sized to its label, with the box first.</summary>
     public static CheckBox Switch(string label)
     {
-        var (box, _) = D47.App.Controls.LabeledCheckBox.Build(label, labelFirst: false);
+        var (box, _) = D47.App.Controls.LabeledCheckBox.Build(label);
         box.HorizontalAlignment = HorizontalAlignment.Left;
 
         return box;

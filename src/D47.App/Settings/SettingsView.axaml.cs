@@ -700,7 +700,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// </summary>
     private RowView BuildToggleTile(SettingRow row)
     {
-        var (box, label) = LabeledCheckBox.Build(row.Label, labelFirst: false);
+        var (box, label) = LabeledCheckBox.Build(row.Label);
         label.TextWrapping = TextWrapping.Wrap;
         box.HorizontalAlignment = HorizontalAlignment.Stretch;
         box.VerticalAlignment = VerticalAlignment.Stretch;

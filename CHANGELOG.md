@@ -151,6 +151,12 @@ the key-binding row, the API key controls, the on-screen keyboards, the checklis
 and the button rows in the Logbook, Debrief, Spend, Switch, Macro, route and loadout pages. Space
 between buttons and text is unchanged.
 
+Every checkbox now has its box before its label; some had it after. The Engineers filters, the
+checklist's **Goals** and **Include Partial Grades** toggles are written in capitals like the other
+buttons beside them, and the checklist toggles are the same height as those buttons. Capitalised
+checkbox labels are 13 pixels rather than 14. A checkbox that cannot be changed now has a grey
+background.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

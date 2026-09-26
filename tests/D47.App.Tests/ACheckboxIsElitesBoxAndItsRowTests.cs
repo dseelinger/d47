@@ -110,16 +110,59 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
     }
 
     [AvaloniaFact]
-    public void LabelFirstPutsTheBoxAfterTheLabel()
+    public void TheBoxComesBeforeItsLabel()
     {
         using var look = AppLook.Put();
-        var (box, window) = Shown("Keyboard", labelFirst: true);
+        var (box, window) = Shown("Keyboard");
         var label = (TextBlock)box.Content!;
 
         var boxLeft = Part<Border>(box, "Box").TranslatePoint(default, box)!.Value.X;
         var labelLeft = label.TranslatePoint(default, box)!.Value.X;
 
-        Assert.True(boxLeft > labelLeft, $"box at {boxLeft}, label at {labelLeft}");
+        Assert.True(boxLeft < labelLeft, $"box at {boxLeft}, label at {labelLeft}");
+
+        window.Close();
+    }
+
+    /// <summary>The design's caps tile (#512): Saira 13/600 at 0.04em, padding 0 14 0 10, 10 between box and label.</summary>
+    [AvaloniaFact]
+    public void ACapsTileTakesTheDesignsMeasures()
+    {
+        using var look = AppLook.Put();
+        var box = LabeledCheckBox.Caps("Hide on-foot engineers");
+        box.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        var window = new Window { Content = box, Width = 400, Height = 120 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain("sentence", box.Classes);
+        Assert.Equal(13, box.FontSize);
+        Assert.Equal(FontWeight.SemiBold, box.FontWeight);
+        Assert.Equal(0.52, box.LetterSpacing, 3);
+        Assert.Equal(new Thickness(10, 0, 14, 0), box.Padding);
+        Assert.True(box.Bounds.Height >= 44);
+
+        var mark = Part<Border>(box, "Box");
+        var label = Part<Avalonia.Controls.Presenters.ContentPresenter>(box, "PART_ContentPresenter");
+        var boxRight = mark.TranslatePoint(new Point(mark.Bounds.Width, 0), box)!.Value.X;
+        var labelLeft = label.TranslatePoint(default, box)!.Value.X;
+
+        Assert.Equal(10, mark.TranslatePoint(default, box)!.Value.X);
+        Assert.Equal(10, labelLeft - boxRight);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ADisabledTileSitsOnSlab()
+    {
+        using var look = AppLook.Put();
+        var (box, window) = Shown("Unavailable");
+
+        box.IsEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(Colour(ThemeManager.SlabKey), Solid(Part<Border>(box, "Row").Background));
 
         window.Close();
     }
@@ -156,11 +199,11 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
     [InlineData(ThemeCatalog.ElitePaletteId)]
     public void EveryStateOnEveryTheme(string themeId)
     {
-        var (on, _) = LabeledCheckBox.Build("Include journal history", labelFirst: false);
+        var (on, _) = LabeledCheckBox.Build("Include journal history");
         on.IsChecked = true;
-        var (off, _) = LabeledCheckBox.Build("Hide on-foot engineers", labelFirst: false);
-        var (focused, _) = LabeledCheckBox.Build("Tabbed to", labelFirst: false);
-        var (disabled, _) = LabeledCheckBox.Build("Disabled and checked", labelFirst: false);
+        var (off, _) = LabeledCheckBox.Build("Hide on-foot engineers");
+        var (focused, _) = LabeledCheckBox.Build("Tabbed to");
+        var (disabled, _) = LabeledCheckBox.Build("Disabled and checked");
         disabled.IsChecked = true;
         disabled.IsEnabled = false;
 
@@ -189,9 +232,9 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
         Assert.True(File.Exists(path));
     }
 
-    private static (CheckBox Box, Window Window) Shown(string label, bool labelFirst = false)
+    private static (CheckBox Box, Window Window) Shown(string label)
     {
-        var (box, _) = LabeledCheckBox.Build(label, labelFirst);
+        var (box, _) = LabeledCheckBox.Build(label);
         box.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
 
         var window = new Window { Content = box, Width = 400, Height = 120 };
