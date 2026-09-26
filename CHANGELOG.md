@@ -137,6 +137,10 @@ Engineers and hull picture buttons, Checklist Edit, Delete and the move arrows, 
 Decline, the chooser's commit button, Settings' confirm and press-row buttons, Guardian Save and
 Rename, and Send.
 
+Hovering a button, a stepper arrow or a top tab now lightens its background and leaves its label
+unchanged, instead of filling it with the theme's highlight colour. The solid fill is kept for a
+pressed button, a button reached with Tab, and the selected tab. A destructive button still fills red on hover.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

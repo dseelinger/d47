@@ -3,8 +3,8 @@
                     xmlns:theming="clr-namespace:D47.App.Theming">
 
   <!--
-    A tab: a flat Tile with A ink, 44 tall, 2px from its neighbour. Solid A with Knock ink on hover
-    or keyboard focus, and when selected, where it also glows. The strip sits on a 2px A rule.
+    A tab: a flat Tile with A ink, 44 tall, 2px from its neighbour. Tile2 on hover. Solid A with
+    Knock ink on keyboard focus or press, and when selected, where it also glows. The strip sits on a 2px A rule.
 
     Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
     mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
@@ -47,8 +47,7 @@
     </Setter>
 
     <Style Selector="^:pointerover">
-      <Setter Property="Background" Value="{DynamicResource D47.A}" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
     </Style>
     <Style Selector="^:focus-visible">
       <Setter Property="Background" Value="{DynamicResource D47.A}" />
