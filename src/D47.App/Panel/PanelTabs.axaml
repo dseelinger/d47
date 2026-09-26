@@ -75,6 +75,83 @@
   </ControlTheme>
 
   <!--
+    A tab in the rail down the left: a Tile at least 44 tall, 2px above its neighbour, its label
+    left-aligned and cut off with an ellipsis rather than wrapped. Tile2 on hover or keyboard focus;
+    solid A with Knock ink when selected, when the 3px bar on its right edge also glows. The rail is
+    a vertical WrapPanel, which gives every tab in it the width of the widest.
+  -->
+  <ControlTheme x:Key="D47.RailTab" TargetType="RadioButton">
+    <Setter Property="ClipToBounds" Value="False" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
+    <Setter Property="FontSize" Value="{StaticResource D47.Type.Secondary}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="0.9" />
+    <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+    <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+    <Setter Property="MinHeight" Value="44" />
+    <Setter Property="Padding" Value="14,0" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border x:Name="Shape" Background="{TemplateBinding Background}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              Foreground="{TemplateBinding Foreground}"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Center">
+              <ContentPresenter.ContentTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                </DataTemplate>
+              </ContentPresenter.ContentTemplate>
+            </ContentPresenter>
+          </Border>
+          <theming:BloomStack x:Name="Glow"
+                              Tier="Normal"
+                              IsLit="False"
+                              Width="3"
+                              HorizontalAlignment="Right">
+            <Border x:Name="Edge" Background="Transparent" />
+          </theming:BloomStack>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover">
+      <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+    </Style>
+    <Style Selector="^:focus-visible">
+      <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+    </Style>
+    <Style Selector="^:pressed">
+      <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+    </Style>
+
+    <Style Selector="^:checked">
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      <Style Selector="^ /template/ Border#Edge">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+      </Style>
+      <Style Selector="^ /template/ theming|BloomStack#Glow">
+        <Setter Property="IsLit" Value="True" />
+      </Style>
+    </Style>
+
+    <Style Selector="^:disabled">
+      <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
+    </Style>
+
+  </ControlTheme>
+
+  <!--
     One crumb of the breadcrumb (list.md Phase 25, "Drill in, and find your way back").
 
     It is both the back affordance and the you-are-here, because a headset has no title bar to

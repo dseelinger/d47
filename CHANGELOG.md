@@ -74,6 +74,11 @@ The ask box takes more than one line. Shift+Enter starts a new line, Enter still
 line breaks are kept. Up and Down walk what you have sent from the box's first and last line; on
 any other line they move the caret instead.
 
+A new Tabs setting, under Interface → Window, puts the panel's tabs down the left-hand side
+instead of along the top, on the window and the headset panel alike. Help, the avatar and the
+other controls from the tab row move to the right-hand end of the row above the page. Up and Down
+move between the tabs in the rail.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

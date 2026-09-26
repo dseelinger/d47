@@ -280,6 +280,17 @@ and the transcript does not.
 
 It applies to the settings window too, and the level survives a restart like the theme does.
 
+#### Tabs {#tabs}
+
+Where the panel's tabs are drawn: **Along the top**, the default, or **Down the left**. One
+setting covers the desktop window and the headset's big panel; the mini panel has no tabs either
+way.
+
+Down the left, the tabs stack in a rail beside the page, and help, the avatar and the other
+controls from the tab row move to the right-hand end of the row above the page. The top strip
+uses height, which the transcript is short of; the rail uses width, which a long paragraph is
+short of.
+
 #### Window size and position
 
 Not something to set. The window opens at a size that fits the screen it opens on, and after

@@ -99,14 +99,14 @@ public class ThePanelIsAPlaceTests
         panel.Tab = PanelTab.Loadout;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(panel.GetControl<StackPanel>("CrumbRow").IsVisible);
+        Assert.False(panel.GetControl<DockPanel>("CrumbBar").IsVisible);
 
         panel.Nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
         Dispatcher.UIThread.RunJobs();
 
         var crumbs = panel.GetControl<StackPanel>("CrumbRow");
 
-        Assert.True(crumbs.IsVisible);
+        Assert.True(panel.GetControl<DockPanel>("CrumbBar").IsVisible);
 
         var words = crumbs.Children.OfType<Button>()
             .Select(button => button.Content as string ?? string.Empty)
@@ -377,7 +377,7 @@ public class ThePanelIsAPlaceTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(panel.GetControl<DockPanel>("TabStrip").IsVisible);
-        Assert.False(panel.GetControl<StackPanel>("CrumbRow").IsVisible);
+        Assert.False(panel.GetControl<DockPanel>("CrumbBar").IsVisible);
     }
 
     /// <summary>

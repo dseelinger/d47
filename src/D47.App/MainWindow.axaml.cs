@@ -463,8 +463,15 @@ public partial class MainWindow : Window
         // they were kept off the conversation with in the first place: a station and a police interceptor are
         // not talking to the Commander's companion, and a station approach brings a lot of them.
 
+        Panel.SetTabsDownTheLeft(_host.Settings.Current.Ui.Tabs == InterfaceCapability.TabsLeft);
+
         _host.Settings.Changed += change => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
+            if (change.Key == InterfaceCapability.TabsKey)
+            {
+                Panel.SetTabsDownTheLeft(change.Settings.Ui.Tabs == InterfaceCapability.TabsLeft);
+            }
+
             if (change.Key == ListeningCapability.CancelHotkeyKey)
             {
                 BindShutUp();

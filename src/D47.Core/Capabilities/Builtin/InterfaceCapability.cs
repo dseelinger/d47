@@ -15,6 +15,13 @@ public static class InterfaceCapability
 
     public const string ZoomKey = "ui.zoom";
 
+    /// <summary>Where the panel's tabs are drawn.</summary>
+    public const string TabsKey = "ui.tabs";
+
+    public const string TabsTop = "top";
+
+    public const string TabsLeft = "left";
+
     /// <summary>How wide the panel's glow halos draw. Dark themes only (#378).</summary>
     public const string BloomKey = "ui.bloom";
 
@@ -117,6 +124,22 @@ public static class InterfaceCapability
                     {
                         Ui = s.Ui with { ZoomPercent = ZoomLadder.Snap(Parse(v)) },
                     },
+                },
+            },
+            new SettingRow
+            {
+                Key = TabsKey,
+                Label = "Tabs",
+                Help = "Where the panel's tabs are drawn: along the top, or down the left-hand side. "
+                       + "Applies to the window and the headset panel alike.",
+                Kind = SettingKind.Choice,
+                Choices = [TabsTop, TabsLeft],
+                ChoiceLabel = value => value == TabsLeft ? "Down the left" : "Along the top",
+                DocsAnchor = "tabs",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.Tabs == TabsLeft ? TabsLeft : TabsTop,
+                    Write = (s, v) => s with { Ui = s.Ui with { Tabs = v == TabsLeft ? TabsLeft : TabsTop } },
                 },
             },
             HotkeyRow(

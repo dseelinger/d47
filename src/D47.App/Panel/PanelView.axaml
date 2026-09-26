@@ -475,7 +475,7 @@
 
     </DockPanel>
 
-    <!-- The rule under the tab strip: 2px A, full width, with no glow. -->
+    <!-- The rule under the tab strip, or down the rail's right edge: 2px A, with no glow. -->
     <Border x:Name="TabStripRule"
             DockPanel.Dock="Top"
             Height="2"
@@ -495,12 +495,20 @@
       spoken "open the third weapon slot on the Corsair" lands three levels down and the row has
       to be right the first time it is drawn.
     -->
-    <StackPanel x:Name="CrumbRow"
-                DockPanel.Dock="Top"
-                Orientation="Horizontal"
-                IsVisible="False"
-                Margin="0,10,0,0"
-                Spacing="0" />
+    <!--
+      With the tabs down the left, ChromeRow moves into ChromeSlot, and this row is drawn on every
+      page. ChromeRow keeps its width; the crumbs are cut off at the slot's edge instead.
+    -->
+    <DockPanel x:Name="CrumbBar"
+               DockPanel.Dock="Top"
+               IsVisible="False"
+               Margin="0,10,0,0">
+      <Border x:Name="ChromeSlot" DockPanel.Dock="Right" VerticalAlignment="Center" />
+      <StackPanel x:Name="CrumbRow"
+                  Orientation="Horizontal"
+                  ClipToBounds="True"
+                  Spacing="0" />
+    </DockPanel>
 
     <!--
       One slot, every page. The transcript and each furnished tab occupy the same place under

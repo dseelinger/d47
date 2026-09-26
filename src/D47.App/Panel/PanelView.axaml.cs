@@ -196,6 +196,8 @@ public partial class PanelView : UserControl
         // caret on Up/Down.
         AskBox.AddHandler(InputElement.KeyDownEvent, OnAskBoxKeyDown, RoutingStrategies.Tunnel);
 
+        Tabs.KeyDown += OnTabsKeyDown;
+
         Controls.Glyphs.Quiet(CopyButton, Controls.CopyWord.Word, "Copy this whole page to the clipboard");
         Controls.Glyphs.Quiet(TurnDetails, "SPEND", "Tokens, cost, and what this has come to over time");
         Controls.Glyphs.Quiet(ResizeButton, "RESIZE", "Resize the panel");
@@ -1499,6 +1501,77 @@ public partial class PanelView : UserControl
         ShowResizeButton();
     }
 
+    /// <summary>Draws the tabs in a rail down the left, or in the strip along the top. False when already so.</summary>
+    public bool SetTabsDownTheLeft(bool left)
+    {
+        if (_tabsDownTheLeft == left)
+        {
+            return false;
+        }
+
+        _tabsDownTheLeft = left;
+
+        var theme = this.FindResource(left ? "D47.RailTab" : "D47.Tab") as ControlTheme;
+
+        foreach (var tab in Tabs.Children)
+        {
+            tab.Theme = theme;
+        }
+
+        DockPanel.SetDock(TabStrip, left ? Dock.Left : Dock.Top);
+        Tabs.Orientation = left ? Orientation.Vertical : Orientation.Horizontal;
+        Tabs.VerticalAlignment = left ? VerticalAlignment.Top : VerticalAlignment.Bottom;
+
+        DockPanel.SetDock(TabStripRule, left ? Dock.Left : Dock.Top);
+        TabStripRule.Width = left ? 2 : double.NaN;
+        TabStripRule.Height = left ? double.NaN : 2;
+        TabStripRule.Margin = left ? new Thickness(0, 16, 16, 0) : default;
+
+        if (left)
+        {
+            TabStrip.Children.Remove(ChromeRow);
+            ChromeSlot.Child = ChromeRow;
+        }
+        else
+        {
+            ChromeSlot.Child = null;
+            TabStrip.Children.Insert(0, ChromeRow);
+        }
+
+        ChromeRow.VerticalAlignment = left ? VerticalAlignment.Center : VerticalAlignment.Bottom;
+
+        ApplyChrome();
+        return true;
+    }
+
+    /// <summary>In the rail, Up and Down move focus to the tab above or below, skipping hidden tabs.</summary>
+    private void OnTabsKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!_tabsDownTheLeft || e.Key is not (Key.Up or Key.Down))
+        {
+            return;
+        }
+
+        var shown = Tabs.Children.Where(tab => tab.IsVisible).ToList();
+        var at = shown.FindIndex(tab => tab.IsFocused);
+
+        if (at < 0)
+        {
+            return;
+        }
+
+        var next = at + (e.Key == Key.Down ? 1 : -1);
+
+        if (next >= 0 && next < shown.Count)
+        {
+            shown[next].Focus(NavigationMethod.Directional);
+        }
+
+        e.Handled = true;
+    }
+
+    private bool _tabsDownTheLeft;
+
     /// <summary>Whether resizing by hand is possible right now, read from the headset's own settings.</summary>
     public void SetControllersOn(bool on)
     {
@@ -2084,7 +2157,7 @@ public partial class PanelView : UserControl
         // control, the breadcrumb and the search box go with the rest of the chrome.
         TabStrip.IsVisible = full;
         TabStripRule.IsVisible = full;
-        CrumbRow.IsVisible = full && CrumbRow.Children.Count > 0;
+        CrumbBar.IsVisible = full && (_tabsDownTheLeft || CrumbRow.Children.Count > 0);
 
         var modal = ModalPane.Child is not null;
 

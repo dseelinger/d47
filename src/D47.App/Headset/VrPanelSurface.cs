@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using D47.App.Panel;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Vr;
@@ -589,6 +590,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // Commander can switch the controllers off with no other way to tell this surface (#190). A
         // no-op once it agrees with what is already shown.
         _view.SetControllersOn(_settings.Current.Vr.Controllers);
+
+        if (_view.SetTabsDownTheLeft(_settings.Current.Ui.Tabs == InterfaceCapability.TabsLeft))
+        {
+            _dirty = true;
+        }
 
         // Two levers, both read here and both only marking dirty when they actually moved: this runs on every
         // tick of a live session, and a surface held dirty for a setting nobody touched re-renders the whole
