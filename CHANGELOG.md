@@ -63,6 +63,13 @@ name later plots the course. "What are my bookmarks" lists them, "rename bookmar
 to Home" renames one, and "delete bookmark Home" deletes one. Bookmarks are kept per Commander and
 are d47's own, not the galaxy map's.
 
+The Routing tab has a new Bookmarks page listing each bookmark with its system and the date it was
+made, with Rename and Delete buttons.
+
+A value refused in a typed prompt, in the adventure editor or when renaming a bookmark, now shows
+why it was refused. The reason used to be replaced by the spelling instructions as soon as it
+appeared.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

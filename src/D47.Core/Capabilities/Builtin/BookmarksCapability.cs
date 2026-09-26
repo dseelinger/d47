@@ -16,14 +16,16 @@ public static class BookmarksCapability
 
     public const string DeleteTool = "delete_bookmark";
 
-    private const string NoCommander = "Nobody is flying, so there is nothing to bookmark.";
+    /// <summary>What a caller is told when no Commander is known — the tool's own answer and the panel page's (#490).</summary>
+    public const string NoCommander = "Nobody is flying, so there is nothing to bookmark.";
 
     private const string NothingTargeted = "Nothing is targeted. Select a system or a station first.";
 
     private const string AnotherSystem =
         "That is in another system, and Elite does not name the system. Target the system itself.";
 
-    private const string HowToMakeOne = "Say 'bookmark this' with a system or station targeted.";
+    /// <summary>How to make the first bookmark — shared by <see cref="ListTool"/> and the panel page (#490).</summary>
+    public const string HowToMakeOne = "Say 'bookmark this' with a system or station targeted.";
 
     public static CapabilityDescriptor Create(
         BookmarkStore? store,
@@ -302,8 +304,11 @@ public static class BookmarksCapability
             : ToolResult.Error($"There is no bookmark called \"{trimmed}\".");
     }
 
-    /// <summary>Every phrase already in use, so a new bookmark cannot take one (#489).</summary>
-    private static IReadOnlyCollection<string> TakenPhrases(PhraseBook phraseBook) =>
+    /// <summary>
+    /// Every phrase already in use, so a new bookmark cannot take one (#489). Also read by the panel page's
+    /// rename prompt (#490).
+    /// </summary>
+    public static IReadOnlyCollection<string> TakenPhrases(PhraseBook phraseBook) =>
         [.. phraseBook.Entries
             .Where(entry => entry.Source != PhraseSource.SpokenKeyword)
             .Select(entry => entry.Phrase)];

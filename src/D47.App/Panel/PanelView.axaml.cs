@@ -934,6 +934,7 @@ public partial class PanelView : UserControl
         bool market = true,
         bool communityGoal = true,
         bool trade = true,
+        bool bookmarks = true,
 
         // Community Goal's own settings, on the tab they only affect (#218).
         Func<Control?>? settingsStrip = null)
@@ -961,6 +962,15 @@ public partial class PanelView : UserControl
             roots.Add(new NavCrumb(RoutingPages.CourseRoot, "Course")
             {
                 Help = D47.Core.Capabilities.Builtin.NavigationCapability.Id,
+            });
+        }
+
+        // Beside Course, because a bookmark is a place to plot to (#490).
+        if (bookmarks && surface.Bookmarks is not null)
+        {
+            roots.Add(new NavCrumb(RoutingPages.BookmarksRoot, "Bookmarks")
+            {
+                Help = D47.Core.Capabilities.Builtin.BookmarksCapability.Id,
             });
         }
 
@@ -1019,7 +1029,7 @@ public partial class PanelView : UserControl
             PanelTab.Routing,
             crumb =>
             {
-                var page = RoutingPages.Build(crumb, surface, Nav, settingsStrip);
+                var page = RoutingPages.Build(crumb, surface, Nav, Prompts, settingsStrip);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;

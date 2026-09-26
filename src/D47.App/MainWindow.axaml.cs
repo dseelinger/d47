@@ -256,7 +256,13 @@ public partial class MainWindow : Window
                 Clipboard: host.Clipboard,
 
                 // The Trade route page's own saved values (#311).
-                Settings: host.Settings);
+                Settings: host.Settings,
+
+                // The Bookmarks page's own needs (#490): the store, the flying Commander, and the phrases a
+                // rename may not take.
+                Bookmarks: host.Bookmarks,
+                Commander: () => host.GameState.Active,
+                BookmarkPhrasesTaken: host.BookmarkPhrasesTaken);
 
             Panel.EnableRouting(
                 Routing, settingsStrip: () => BuildSettingsStrip(RoutingPages.CommunityGoalRoot));

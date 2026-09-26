@@ -457,6 +457,16 @@ public sealed class AppHost : IDisposable
     /// <summary>The same store, for the panel page that lists and forgets a learned phrase (#171).</summary>
     public LearnedPhrasesStore? LearnedPhrases => _learnedPhrases;
 
+    /// <summary>The systems this Commander has named (#488), for the panel page that lists, renames and
+    /// deletes one (#490).</summary>
+    private BookmarkStore? _bookmarks;
+
+    /// <summary>The same store, for the panel page that lists, renames and deletes a bookmark (#490).</summary>
+    public BookmarkStore? Bookmarks => _bookmarks;
+
+    /// <summary>Every phrase already in use, for the panel page's rename prompt (#490).</summary>
+    public Func<IReadOnlyCollection<string>> BookmarkPhrasesTaken { get; private set; } = () => [];
+
     /// <summary>The one name a lookup is waiting to be corrected about.</summary>
     private readonly MishearingWatch _mishearings = new();
 
@@ -2179,6 +2189,12 @@ public sealed class AppHost : IDisposable
         host._loadouts = loadouts;
         host._heardNames = heardNames;
         host._learnedPhrases = learnedPhrases;
+        host._bookmarks = bookmarks;
+
+        host.BookmarkPhrasesTaken = () => builtRouter is null
+            ? []
+            : BookmarksCapability.TakenPhrases(builtRouter.Book);
+
         host.Plans = planBook;
 
         // Every system name d47 already holds, for the finder that picks them out of text (#156).

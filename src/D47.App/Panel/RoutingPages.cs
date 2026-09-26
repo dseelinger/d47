@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -41,7 +42,13 @@ public sealed record RoutingSurface(
     D47.Core.Capabilities.Builtin.IClipboard? Clipboard = null,
 
     // The Trade route page's own saved values, read and written through this (#311).
-    SettingsService? Settings = null);
+    SettingsService? Settings = null,
+
+    // The Bookmarks page's own needs (#490): the store, the flying Commander, and the phrases a rename
+    // may not take.
+    BookmarkStore? Bookmarks = null,
+    Func<CommanderGameState?>? Commander = null,
+    Func<IReadOnlyCollection<string>>? BookmarkPhrasesTaken = null);
 
 /// <summary>What the Community Goal page reads and drives (#296).</summary>
 /// <param name="Search">The saved query — its commodity is the one field the page edits.</param>
@@ -83,6 +90,9 @@ public static class RoutingPages
     /// <summary>The Trade route page: the plotter's saved hops, jumps and switches (#311).</summary>
     public const string TradeRoot = "routing.trade";
 
+    /// <summary>The systems a Commander has named, so "set course for" the name returns to them (#490).</summary>
+    public const string BookmarksRoot = "routing.bookmarks";
+
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
     public const string ResultPrefix = "routing.result:";
 
@@ -92,7 +102,11 @@ public static class RoutingPages
 
     /// <summary>Draws whichever root or level a crumb names.</summary>
     public static Control Build(
-        NavCrumb crumb, RoutingSurface surface, PanelNavigator nav, Func<Control?>? settingsStrip = null)
+        NavCrumb crumb,
+        RoutingSurface surface,
+        PanelNavigator nav,
+        PanelPrompts prompts,
+        Func<Control?>? settingsStrip = null)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
@@ -106,6 +120,7 @@ public static class RoutingPages
             MarketRoot => Market(surface),
             CommunityGoalRoot => CommunityGoal(surface, settingsStrip),
             TradeRoot => Trade(surface, nav),
+            BookmarksRoot => Bookmarks(surface, prompts),
 
             // Progress is the fallback rather than Plan, because it is the mode that works with nothing
             // switched on and nothing typed.
@@ -152,6 +167,11 @@ public static class RoutingPages
                 settings,
                 surface.OpenSettings)
             : Missing("The Trade route page is not available on this surface.");
+
+    private static Control Bookmarks(RoutingSurface surface, PanelPrompts prompts) =>
+        surface is { Bookmarks: { } store, Commander: { } commander }
+            ? new BookmarksPage(store, commander, surface.BookmarkPhrasesTaken ?? (() => []), prompts)
+            : Missing("Bookmarks are not available on this surface.");
 
     private static Control CommunityGoal(RoutingSurface surface, Func<Control?>? settingsStrip) =>
         surface is { Registry: { } registry, Commodities: { } board, CommunityGoal: { } goal }

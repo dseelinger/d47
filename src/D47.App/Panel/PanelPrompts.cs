@@ -793,10 +793,7 @@ public sealed class PanelPrompts : IHearsText
         {
             if (_request.Validate?.Invoke(value) is { Accepted: false } refused)
             {
-                _state.Text = TextEntryLoop.Explain(
-                    EntryFallback.DidNotResolve, refused.Complaint);
-
-                Show(keyboard: true);
+                Show(keyboard: true, TextEntryLoop.Explain(EntryFallback.DidNotResolve, refused.Complaint));
                 return;
             }
 
