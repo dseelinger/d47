@@ -46,6 +46,8 @@ public partial class MainWindow : Window
 
     private readonly PanelViewModel _model;
 
+    private Media.MediaSession? _mediaSession;
+
     private AvailableUpdate? _availableUpdate;
     private bool _turnInFlight;
 
@@ -429,6 +431,17 @@ public partial class MainWindow : Window
         BindShutUp();
         BindOverlayKeys();
         BindHeadsetZoomAndResizeKeys();
+
+        // The media keys, through Windows' media sessions rather than a hotkey that would take them from
+        // every other player.
+        if (TryGetPlatformHandle()?.Handle is { } window && window != IntPtr.Zero)
+        {
+            _mediaSession = Media.MediaSession.Attach(
+                window,
+                _host.Music,
+                _host.Loggers.CreateLogger<Media.MediaSession>());
+            Closed += (_, _) => _mediaSession?.Dispose();
+        }
 
         // Spoken input runs the same turn as typed input, deliberately.
         _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>

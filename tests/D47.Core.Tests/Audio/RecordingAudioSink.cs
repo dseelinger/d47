@@ -46,6 +46,20 @@ public sealed class RecordingAudioSink : IAudioSink
         _log.Add("stopAll");
     }
 
+    public HashSet<long> Paused { get; } = [];
+
+    public void Pause(long playbackId)
+    {
+        Paused.Add(playbackId);
+        _log.Add($"pause {playbackId}");
+    }
+
+    public void Resume(long playbackId)
+    {
+        Paused.Remove(playbackId);
+        _log.Add($"resume {playbackId}");
+    }
+
     public void SetGain(long playbackId, float gain)
     {
         GainChanges.Add((playbackId, gain));

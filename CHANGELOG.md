@@ -116,6 +116,14 @@ track has files, d47 plays from it; otherwise it plays from `docked`, `supercrui
 `normal-space`, `on-foot` or `general` as before. Set Elite's music volume to zero (Options, Audio)
 to hear your music instead of the game's. The Audio help page lists every folder.
 
+The keyboard's play/pause and next-track keys now control d47's ambient music. Pause holds the
+track where it is and a second press resumes it from that point; next track starts another track
+from the same folder. d47 appears in the Windows volume flyout with the track's file name and
+working buttons. Saying "pause the music", "resume the music" or "next track" does the same. While
+paused, a change of situation starts nothing until you resume. Pause lasts until you resume or
+restart d47 and does not change the Mute setting. Windows sends the keys to whichever player was
+used last, so with Spotify also open they may go there instead.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

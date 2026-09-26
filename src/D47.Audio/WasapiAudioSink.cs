@@ -36,7 +36,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     private bool _disposed;
 
     /// <summary>One playing input; <paramref name="Owned"/> is released when it stops or ends.</summary>
-    private sealed record Input(VolumeSampleProvider Volume, ISampleProvider Root, IDisposable? Owned);
+    private sealed record Input(VolumeSampleProvider Volume, TrackedSampleProvider Root, IDisposable? Owned);
 
     public WasapiAudioSink(ILogger<WasapiAudioSink> logger)
         : this(logger, new WasapiEndpointEnumerator())
@@ -201,6 +201,21 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
         {
             _mixer.RemoveAllMixerInputs();
             ReleaseAll();
+        }
+    }
+
+    public void Pause(long playbackId) => Hold(playbackId, paused: true);
+
+    public void Resume(long playbackId) => Hold(playbackId, paused: false);
+
+    private void Hold(long playbackId, bool paused)
+    {
+        lock (_gate)
+        {
+            if (_inputs.TryGetValue(playbackId, out var input))
+            {
+                input.Root.Paused = paused;
+            }
         }
     }
 

@@ -140,11 +140,12 @@ public class AudioMixTests
         }
     }
 
-    /// <summary>No tool surface.</summary>
+    /// <summary>The one tool is the music transport; no tool sets a level or a mute.</summary>
     [Fact]
     public void TheModelCannotReachTheMixer()
     {
-        Assert.Empty(AudioCapability.Create().Tools);
+        var tool = Assert.Single(AudioCapability.Create().Tools);
+        Assert.Equal(AudioCapability.ControlMusicTool, tool.Name);
     }
 
     /// <summary>The defaults are what d47 sounded like before there was a mixer.</summary>

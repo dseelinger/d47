@@ -130,6 +130,14 @@ public class OnlyTheShipIsInTheRoomTests
         {
         }
 
+        public void Pause(long playbackId)
+        {
+        }
+
+        public void Resume(long playbackId)
+        {
+        }
+
         public void SetGain(long playbackId, float gain)
         {
         }

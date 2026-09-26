@@ -35,6 +35,12 @@ public interface IAudioSink
 
     void StopAll();
 
+    /// <summary>Holds one playback at its position, rendering silence without reading from it.</summary>
+    void Pause(long playbackId);
+
+    /// <summary>Continues a paused playback from where it was held.</summary>
+    void Resume(long playbackId);
+
     /// <summary>Live gain change, used to duck the bed under speech rather than restart it.</summary>
     void SetGain(long playbackId, float gain);
 

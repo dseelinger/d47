@@ -46,15 +46,32 @@ internal sealed class ClipSampleProvider(AudioClip clip, bool loop) : ISamplePro
 
 /// <summary>
 /// A pass-through that carries the arbiter's playback id, so <c>MixerInputEnded</c> can be attributed
-/// back to the request that started it.
+/// back to the request that started it. While paused it renders silence and reads nothing.
 /// </summary>
 internal sealed class TrackedSampleProvider(long id, ISampleProvider source) : ISampleProvider
 {
+    private volatile bool _paused;
+
     public long Id { get; } = id;
 
     public WaveFormat WaveFormat => source.WaveFormat;
 
-    public int Read(float[] buffer, int offset, int count) => source.Read(buffer, offset, count);
+    public bool Paused
+    {
+        get => _paused;
+        set => _paused = value;
+    }
+
+    public int Read(float[] buffer, int offset, int count)
+    {
+        if (!_paused)
+        {
+            return source.Read(buffer, offset, count);
+        }
+
+        Array.Clear(buffer, offset, count);
+        return count;
+    }
 }
 
 /// <summary>

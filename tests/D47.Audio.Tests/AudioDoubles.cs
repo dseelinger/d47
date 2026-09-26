@@ -45,6 +45,14 @@ internal sealed class FakeAudioSink : IAudioSink
 
     public void StopAll() => StoppedAll = true;
 
+    public void Pause(long playbackId)
+    {
+    }
+
+    public void Resume(long playbackId)
+    {
+    }
+
     public void SetGain(long playbackId, float gain)
     {
     }

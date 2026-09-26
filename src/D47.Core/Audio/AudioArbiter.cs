@@ -70,6 +70,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private Playing? _current;
     private Playing? _bed;
     private long? _music;
+    private bool _musicHeld;
     private bool _subscribed;
     private AudioMix _mix = AudioMix.Default;
 
@@ -325,6 +326,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             var id = _nextId++;
             _music = id;
+            _musicHeld = false;
             sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Music)));
             activity = Snapshot();
         }
@@ -346,10 +348,55 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             sink.Stop(playing);
             _music = null;
+            _musicHeld = false;
             activity = Snapshot();
         }
 
         ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>Holds the ambience track at its position. False when there is no track to hold.</summary>
+    public bool PauseMusic()
+    {
+        lock (_gate)
+        {
+            if (_music is not { } playing)
+            {
+                return false;
+            }
+
+            sink.Pause(playing);
+            _musicHeld = true;
+            return true;
+        }
+    }
+
+    /// <summary>Continues a held ambience track. False when there is no track to continue.</summary>
+    public bool ResumeMusic()
+    {
+        lock (_gate)
+        {
+            if (_music is not { } playing)
+            {
+                return false;
+            }
+
+            sink.Resume(playing);
+            _musicHeld = false;
+            return true;
+        }
+    }
+
+    /// <summary>Whether an ambience track is held by <see cref="PauseMusic"/>.</summary>
+    public bool MusicHeld
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _music is not null && _musicHeld;
+            }
+        }
     }
 
     public void StopBed()

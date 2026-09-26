@@ -138,7 +138,7 @@ nav_order: 123
 <p class="body">Directive 47 ships with no music of its own — drop your own <code>.mp3</code>, <code>.m4a</code>, <code>.flac</code> or <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files.</p>
 </section>
 <section>
-<h2><span class="num">4</span> There is no tool here at all.</h2>
+<h2><span class="num">4</span> No tool sets a level or a mute.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="The model cannot lower Directive 47's own voice or the danger callouts, though you still can">
  <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">IT CANNOT TURN DOWN</text>
@@ -150,7 +150,7 @@ nav_order: 123
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">and from the Settings tab</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Those are the two things that would make it harder to hear exactly when hearing it matters.</text>
 </svg>
-<p class="body">“By voice” never silently means “by the language model”. Every row here is reachable through the model-free keyword router, which is a different path with a different caller.</p>
+<p class="body">“By voice” never silently means “by the language model”. Every row here is reachable through the model-free keyword router, which is a different path with a different caller. The one tool, <code>control_music</code>, only pauses, resumes and skips the ambient music.</p>
 </section>
 </div></div>
 </details>
@@ -346,10 +346,33 @@ the moment the docking music is wanted, not thirty seconds later. Muting the cat
 and unmuting starts one — a switch whose effect waits for the next time you dock is a switch that
 reads as broken.
 
+### Pause, resume and next track
+
+The keyboard's play/pause and next-track keys control the ambient music. D47 registers as a Windows
+media session, so it also appears in the volume flyout with the current track's file name and
+working buttons. Nothing else D47 plays — speech, cues, alerts or the thinking bed — answers to
+these keys.
+
+- **Pause** holds the track where it is. **Resume** continues it from that point.
+- **Next** ends the track and starts the next one in the shuffle. It also ends a pause.
+- While paused, a change of situation starts nothing. Resume starts the new situation's track.
+- Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and
+  unchanged by these keys.
+
+Windows sends the media keys to whichever media session was used last. With Spotify or another
+player also open, the keys may go to that player instead.
+
+The same three actions work by voice — "pause the music", "resume the music", "next track" or
+"skip track" — through `control_music`, which the model can also call:
+
+```json
+{"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next"]}},"required":["action"],"additionalProperties":false}
+```
+
 ### Not reachable by the model
 
-There is no tool here. Directive 47 cannot turn its own voice down, and it cannot turn the danger
-callouts down either — those are the two things that would make it harder to hear exactly when
+No tool sets a level or a mute; `control_music` only pauses, resumes and skips the music.
+Directive 47 cannot turn its own voice down, and it cannot turn the danger callouts down either — those are the two things that would make it harder to hear exactly when
 hearing it matters, and no request needs them.
 
 Every row is still reachable by voice, through the model-free keyword router, and from the

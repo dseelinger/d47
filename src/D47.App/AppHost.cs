@@ -111,6 +111,7 @@ public sealed class AppHost : IDisposable
         SpendLedger = spendLedger;
         _audioSink = audioSink;
         Audio = audio;
+        Music = new AmbientMusic(audio, () => Cues);
         _cues = cues;
         Voice = voice;
         Listening = gate;
@@ -264,6 +265,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The one queue every audible thing goes through.</summary>
     public AudioArbiter Audio { get; }
+
+    /// <summary>The ambience layer and its pause, next and resume (Phase 12).</summary>
+    public AmbientMusic Music { get; }
 
     /// <summary>
     /// The cues, beds and ambience currently loaded — the shipped set plus whatever is in
@@ -1306,7 +1310,7 @@ public sealed class AppHost : IDisposable
         }
 
         // A track ending is how the next one is asked for.
-        audio.MusicFinished += () => self?.PlayNextTrack();
+        audio.MusicFinished += () => self?.Music.TrackFinished();
 
         try
         {
@@ -1871,7 +1875,8 @@ public sealed class AppHost : IDisposable
                     "The phrase book was asked for before the router finished building."),
                 contextNote: () => self?.ContextNote,
                 openAudioFolder: () => System.Diagnostics.Process.Start(
-                    new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true })));
+                    new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
+                controlMusic: action => self?.Music.Control(action) ?? "Ambient music is not available."));
 
         buildingRegistry.Dispose();
 
@@ -2465,7 +2470,7 @@ public sealed class AppHost : IDisposable
 
         // Ambience follows Elite's music track where its folder has tracks, and otherwise the situation
         // Status.json states, sampled on the tick after the journal has been read.
-        tick.Add("ambience", _ => host.FollowSituation(status.Current, eliteMusic.Track));
+        tick.Add("ambience", _ => host.Music.Follow(status.Current, eliteMusic.Track));
 
         // The folder those tracks came from, which the Commander can add to while d47 is running.
         host._audioWatch = new AudioFolderWatch(
@@ -3695,12 +3700,6 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>
-    /// When the core currently aboard became the core currently aboard, and what the ship's ledger
-    /// looked like then.
-    /// </summary>
-    private readonly Ambience _ambience = new();
-
     /// <summary>How often the memory store is checked for entries past their expiry (Phase 31).</summary>
     private static readonly TimeSpan ExpiryEvery = TimeSpan.FromMinutes(10);
 
@@ -3994,33 +3993,6 @@ public sealed class AppHost : IDisposable
 
         // The row saying what was found has no other way to know.
         AudioReloaded?.Invoke();
-    }
-
-    /// <summary>The ambience layer, following what the Commander is doing (Phase 12).</summary>
-    private void FollowSituation(D47.Core.Journal.GameStatus status, string? musicTrack)
-    {
-        if (!_ambience.Enter(Situations.For(status, musicTrack, Cues)))
-        {
-            return;
-        }
-
-        // The old situation's track does not play out over the new one.
-        Audio.StopMusic();
-        PlayNextTrack();
-    }
-
-    /// <summary>Starts the next ambience track, or leaves it quiet.</summary>
-    private void PlayNextTrack()
-    {
-        if (Audio.Mix.Music.Muted)
-        {
-            return;
-        }
-
-        if (_ambience.Next(Cues) is { } track)
-        {
-            Audio.PlayMusic(track);
-        }
     }
 
     private void ApplySpeechSettings()
@@ -6084,17 +6056,7 @@ public sealed class AppHost : IDisposable
                 // Straight onto the arbiter, which re-levels whatever is already playing.
                 Audio.Mix = Settings.Current.Audio;
 
-                // Muting the ambience stops it rather than playing it at nothing, and unmuting it starts a
-                // track rather than waiting for the next time the Commander docks — which could be an hour,
-                // and reads as a switch that did not work.
-                if (Settings.Current.Audio.Music.Muted)
-                {
-                    Audio.StopMusic();
-                }
-                else if (!Audio.Activity.MusicPlaying)
-                {
-                    PlayNextTrack();
-                }
+                Music.MuteChanged(Settings.Current.Audio.Music.Muted);
 
                 break;
 

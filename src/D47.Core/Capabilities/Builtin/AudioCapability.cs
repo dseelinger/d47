@@ -42,7 +42,11 @@ public static class AudioCapability
 
     /// <param name="drops">What was picked up from <c>data/audio/</c> and what was skipped, in words.</param>
     /// <param name="openFolder">Opens that folder, or null where there is no shell to open it with.</param>
-    public static CapabilityDescriptor Create(Func<string>? drops = null, Action? openFolder = null) => new()
+    /// <param name="music">Pauses, resumes or skips the ambient music; null where nothing plays it.</param>
+    public static CapabilityDescriptor Create(
+        Func<string>? drops = null,
+        Action? openFolder = null,
+        Func<MusicAction, string>? music = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -60,7 +64,61 @@ public static class AudioCapability
             .. Enum.GetValues<AudioChannel>().SelectMany(RowsFor),
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
         ],
+        Tools = [ControlMusic(music)],
     };
+
+    public const string ControlMusicTool = "control_music";
+
+    private static readonly Dictionary<string, MusicAction> Actions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["pause"] = MusicAction.Pause,
+        ["resume"] = MusicAction.Resume,
+        ["next"] = MusicAction.Next,
+    };
+
+    /// <summary>Pause, resume and skip for the ambient music. Levels and mutes stay out of the model's reach.</summary>
+    private static ToolDefinition ControlMusic(Func<MusicAction, string>? music) => new()
+    {
+        Name = ControlMusicTool,
+        Description = "Pauses, resumes or skips D47's ambient music. Pause holds the track where it is; next "
+                      + "starts another track from the same folder.",
+        Parameters =
+        [
+            new ToolParameter
+            {
+                Name = "action",
+                Type = ToolParameterType.String,
+                Description = "What to do to the music.",
+                Required = true,
+                AllowedValues = ["pause", "resume", "next"],
+            },
+        ],
+        Commands =
+        [
+            Phrase("pause the music", "pause"),
+            Phrase("pause music", "pause"),
+            Phrase("resume the music", "resume"),
+            Phrase("resume music", "resume"),
+            Phrase("unpause the music", "resume"),
+            Phrase("next track", "next"),
+            Phrase("skip track", "next"),
+            Phrase("skip this track", "next"),
+        ],
+        Handler = (arguments, _) =>
+        {
+            if (!arguments.TryGetString("action", out var said) || !Actions.TryGetValue(said, out var action))
+            {
+                return Task.FromResult(ToolResult.Error("The action is pause, resume or next."));
+            }
+
+            return Task.FromResult(music is null
+                ? ToolResult.Error("Ambient music is not available.")
+                : ToolResult.Ok(music(action)));
+        },
+    };
+
+    private static ToolCommandPhrase Phrase(string phrase, string action) =>
+        new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });
 
     /// <summary>
     /// What d47 found in the Commander's own folder — and, more to the point, what it could not use.
