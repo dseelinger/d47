@@ -15,7 +15,7 @@ public sealed class ConfirmWindow : Window
 {
     private readonly TaskCompletionSource<bool> _answer = new();
 
-    public ConfirmWindow(string title, string question, string confirmLabel, string declineLabel)
+    public ConfirmWindow(string title, string question, string confirmLabel, string declineLabel, bool destructive = false)
     {
         Title = title;
         Width = 520;
@@ -36,6 +36,11 @@ public sealed class ConfirmWindow : Window
 
         var confirm = new Button { Content = confirmLabel, MinWidth = 110 };
         var decline = new Button { Content = declineLabel, MinWidth = 110 };
+
+        if (destructive)
+        {
+            confirm.Classes.Add(Settings.SettingsView.DestructiveClass);
+        }
 
         confirm.Click += (_, _) => Answer(true);
         decline.Click += (_, _) => Answer(false);

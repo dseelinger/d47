@@ -141,6 +141,10 @@ Hovering a button, a stepper arrow or a top tab now lightens its background and 
 unchanged, instead of filling it with the theme's highlight colour. The solid fill is kept for a
 pressed button, a button reached with Tab, and the selected tab. A destructive button still fills red on hover.
 
+A button that deletes or removes something now has a dark red background even when the pointer is
+not over it, so it stands apart from the buttons beside it. The same applies to **Delete key** in the
+dialog that asks before a stored API key is deleted.
+
 Buttons, fields and chips that sit next to each other are now 2 pixels apart, instead of 4 to 10:
 Send and the message box, proposal Accept and Decline, Update now and Later, Help beside the tabs,
 the key-binding row, the API key controls, the on-screen keyboards, the checklist bar and movers,

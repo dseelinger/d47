@@ -227,7 +227,8 @@ public sealed class SecretEditor : UserControl
             + "this cannot be undone — you would have to paste it again, or reissue it at the "
             + "provider if you no longer have a copy.",
             confirmLabel: "Delete key",
-            declineLabel: "Keep it").AskAsync(owner);
+            declineLabel: "Keep it",
+            destructive: true).AskAsync(owner);
 
         if (wanted)
         {

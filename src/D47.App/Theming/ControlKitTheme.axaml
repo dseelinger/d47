@@ -13,7 +13,7 @@
     <!--
       Every button is a flat Tile with A ink in uppercase Saira: Tile2 on hover, solid A with Knock
       ink on keyboard focus or press, Slab with Grey2 ink when disabled. No outline, corner or glow.
-      "destructive" swaps A for Red, with White ink on the solid fill.
+      "destructive" rests on RedTile with Red ink, and fills solid Red with White ink.
     -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
       <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
@@ -62,6 +62,7 @@
       </Style>
 
       <Style Selector="^.destructive">
+        <Setter Property="Background" Value="{DynamicResource D47.RedTile}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Red}" />
       </Style>
       <Style Selector="^.destructive:pointerover">

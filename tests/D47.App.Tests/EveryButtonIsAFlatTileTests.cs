@@ -14,7 +14,8 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Every button class draws a flat Tile with no outline, corner or glow: solid A with Knock ink on
-/// hover or keyboard focus, Slab with Grey2 ink when disabled; a destructive one uses Red (#393).
+/// hover or keyboard focus, Slab with Grey2 ink when disabled; a destructive one rests on RedTile with
+/// Red ink and fills solid Red (#393, #509).
 /// </summary>
 public class EveryButtonIsAFlatTileTests
 {
@@ -68,10 +69,12 @@ public class EveryButtonIsAFlatTileTests
         var shape = Shape(button);
         Assert.Equal(default, shape.BorderThickness);
         Assert.Equal(default, shape.CornerRadius);
-        Assert.Equal(Resource(ThemeManager.TileKey), Colour(shape.Background));
         Assert.Empty(button.GetVisualDescendants().OfType<BloomStack>());
 
-        var ink = weight == "destructive" ? ThemeManager.RedKey : ThemeManager.AKey;
+        var (ground, ink) = weight == "destructive"
+            ? (ThemeManager.RedTileKey, ThemeManager.RedKey)
+            : (ThemeManager.TileKey, ThemeManager.AKey);
+        Assert.Equal(Resource(ground), Colour(shape.Background));
         Assert.Equal(Resource(ink), Colour(button.Foreground));
     }
 

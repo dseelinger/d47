@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -242,6 +243,26 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
         Assert.True(Shown(Field(editor)));
         Assert.Contains("NO KEY", ShownTexts(editor));
 
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheDeleteKeyConfirmTileRestsOnRedTile()
+    {
+        using var kit = AppLook.ControlKit();
+        var host = Open(out _, stored: true);
+        ShowPlace(host, "voice-input");
+
+        Click(Press(Editor(host, DeepgramRow), "FORGET KEY"));
+
+        var ask = Assert.Single(host.Window.OwnedWindows.OfType<ConfirmWindow>());
+        var delete = ask.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Delete key");
+        var red = (ISolidColorBrush)Application.Current!.FindResource(ThemeManager.RedTileKey)!;
+
+        Assert.Contains(SettingsView.DestructiveClass, delete.Classes);
+        Assert.Equal(red.Color, Assert.IsAssignableFrom<ISolidColorBrush>(delete.Background).Color);
+
+        ask.Close();
         host.Close();
     }
 
