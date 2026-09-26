@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Controls.Presenters;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
@@ -190,6 +191,10 @@ public partial class PanelView : UserControl
         Bubbles.AddHandler(PointerMovedEvent, OnBubblesPointerMoved, handledEventsToo: true);
 
         PageBar.SizeChanged += (_, _) => SizeSearchRow();
+
+        // Tunnelling, so this runs before the TextBox's own key handling inserts a newline or moves the
+        // caret on Up/Down.
+        AskBox.AddHandler(InputElement.KeyDownEvent, OnAskBoxKeyDown, RoutingStrategies.Tunnel);
 
         Controls.Glyphs.Quiet(CopyButton, Controls.CopyWord.Word, "Copy this whole page to the clipboard");
         Controls.Glyphs.Quiet(TurnDetails, "SPEND", "Tokens, cost, and what this has come to over time");
@@ -4128,27 +4133,58 @@ public partial class PanelView : UserControl
 
     private void OnAskClick(object? sender, RoutedEventArgs e) => Model?.Ask();
 
-    /// <summary>Enter sends; the arrows walk what has been sent (#224).</summary>
+    /// <summary>
+    /// Enter sends; Shift+Enter is left to the TextBox to insert a newline. Up walks back through what has
+    /// been sent from the box's first visual line, and Down walks forward from its last (#224).
+    /// </summary>
     private void OnAskBoxKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+            {
+                return;
+            }
+
             e.Handled = true;
             Model?.Ask();
 
             return;
         }
 
-        if (e.Key == Key.Up && Model?.WalkBack() == true)
+        if (e.Key != Key.Up && e.Key != Key.Down)
+        {
+            return;
+        }
+
+        var (line, lastLine) = AskBoxCaretLine();
+
+        if (e.Key == Key.Up && line == 0 && Model?.WalkBack() == true)
         {
             e.Handled = true;
             CaretToEnd();
         }
-        else if (e.Key == Key.Down && Model?.WalkForward() == true)
+        else if (e.Key == Key.Down && line == lastLine && Model?.WalkForward() == true)
         {
             e.Handled = true;
             CaretToEnd();
         }
+    }
+
+    /// <summary>
+    /// The caret's visual line in <see cref="AskBox"/> and the box's last one, read from its
+    /// <see cref="TextPresenter"/>. Without one, the box is treated as a single line.
+    /// </summary>
+    private (int Line, int LastLine) AskBoxCaretLine()
+    {
+        if (AskBox.GetVisualDescendants().OfType<TextPresenter>().FirstOrDefault() is not { } presenter)
+        {
+            return (0, 0);
+        }
+
+        var layout = presenter.TextLayout;
+
+        return (layout.GetLineIndexFromCharacterIndex(AskBox.CaretIndex, false), layout.TextLines.Count - 1);
     }
 
     /// <summary>The cursor after a recalled line, which is the end of it.</summary>

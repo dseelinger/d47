@@ -299,7 +299,7 @@
           </DockPanel>
         </Border>
 
-        <!-- Enter sends. The box grows to three lines, then scrolls. -->
+        <!-- Enter sends. Shift+Enter starts a new line. The box grows to three lines, then scrolls. -->
         <DockPanel x:Name="AskRow" Margin="0,0,16,16">
           <Button x:Name="AskButton"
                   DockPanel.Dock="Right"
@@ -314,9 +314,9 @@
           <TextBox x:Name="AskBox"
                    Text="{Binding AskText, Mode=TwoWay}"
                    TextWrapping="Wrap"
+                   AcceptsReturn="True"
                    MaxHeight="{x:Static panel:PanelView.AskBoxMaxHeight}"
-                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                   KeyDown="OnAskBoxKeyDown" />
+                   ScrollViewer.VerticalScrollBarVisibility="Auto" />
         </DockPanel>
       </StackPanel>
     </Border>

@@ -310,6 +310,11 @@ untouched, and scrolling back up shows every line again. New lines arrive in the
 the way a terminal fills after you clear it. The reading takes the chord wherever there is a
 reading, on the first press and whatever has focus; the ask box keeps it on every other tab.
 
+**The keys the box answers to.** Enter sends what is in the box. Shift+Enter starts a new line,
+so a question can span several lines before it is sent. Up walks back through what you have sent,
+and Down walks forward again, each only from the first or last line of the box; on any other line
+the arrows move the caret instead.
+
 #### Show the overlay {#overlay}
 
 **The mini panel, on your monitor.** Off out of the box.

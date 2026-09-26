@@ -70,6 +70,10 @@ A value refused in a typed prompt, in the adventure editor or when renaming a bo
 why it was refused. The reason used to be replaced by the spelling instructions as soon as it
 appeared.
 
+The ask box takes more than one line. Shift+Enter starts a new line, Enter still sends, and pasted
+line breaks are kept. Up and Down walk what you have sent from the box's first and last line; on
+any other line they move the caret instead.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

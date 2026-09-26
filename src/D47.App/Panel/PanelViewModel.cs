@@ -607,7 +607,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Send what is in the box, and remember it (#224).</summary>
     public void Ask()
     {
-        var line = _askText?.Trim();
+        var line = _askText?.Replace("\r\n", "\n").Replace('\r', '\n').Trim();
 
         if (!string.IsNullOrEmpty(line)
             && (_sent.Count == 0 || !string.Equals(_sent[^1], line, StringComparison.Ordinal)))
