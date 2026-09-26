@@ -3,6 +3,7 @@ using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
 using D47.App.Logging;
+using D47.App.Media;
 using D47.App.Panel;
 using D47.App.Ticking;
 using D47.App.Updates;
@@ -110,7 +111,7 @@ public sealed class AppHost : IDisposable
         SpendLedger = spendLedger;
         _audioSink = audioSink;
         Audio = audio;
-        Cues = cues;
+        _cues = cues;
         Voice = voice;
         Listening = gate;
         Echo = echo;
@@ -268,7 +269,12 @@ public sealed class AppHost : IDisposable
     /// The cues, beds and ambience currently loaded — the shipped set plus whatever is in
     /// <c>data/audio/</c>.
     /// </summary>
-    public CueLibrary Cues { get; private set; }
+    public CueLibrary Cues => _cues;
+
+    /// <summary>Replaced whole by the audio folder watch, from the thread pool.</summary>
+    private volatile CueLibrary _cues;
+
+    private AudioFolderWatch? _audioWatch;
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -1271,7 +1277,8 @@ public sealed class AppHost : IDisposable
 
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
         // and the device list from it.
-        var drops = new FolderAudioSource(paths.Audio, loggerFactory.CreateLogger<FolderAudioSource>());
+        var dropsLogger = loggerFactory.CreateLogger<FolderAudioSource>();
+        var drops = new FolderAudioSource(paths.Audio, dropsLogger);
         var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
         var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
 
@@ -2465,9 +2472,11 @@ public sealed class AppHost : IDisposable
         // the file is already being read here every tick.
         tick.Add("ambience", _ => host.FollowSituation(status.Current));
 
-        // And the folder those tracks came from, which the Commander can add to while d47 is running (Phase
-        // 12, "Pick up dropped-in audio without a restart").
-        tick.Add("audio-folder", context => host.RescanAudio(context, drops, cueLogger));
+        // The folder those tracks came from, which the Commander can add to while d47 is running.
+        host._audioWatch = new AudioFolderWatch(
+            paths.Audio,
+            () => host.RebuildAudio(paths.Audio, dropsLogger, cueLogger),
+            loggerFactory.CreateLogger<AudioFolderWatch>());
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
         tick.Add("voice-scope", _ => host.FollowSystemForVoices());
@@ -3697,11 +3706,6 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private readonly Ambience _ambience = new();
 
-    /// <summary>How often the drop-in folder is looked at.</summary>
-    private static readonly TimeSpan AudioScanEvery = TimeSpan.FromSeconds(2);
-
-    private TimeSpan _sinceAudioScan = TimeSpan.Zero;
-
     /// <summary>How often the memory store is checked for entries past their expiry (Phase 31).</summary>
     private static readonly TimeSpan ExpiryEvery = TimeSpan.FromMinutes(10);
 
@@ -3980,29 +3984,18 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>Re-reads <c>data/audio/</c> when something in it has changed.</summary>
-    private void RescanAudio(TickContext context, FolderAudioSource drops, ILogger<CueLibrary> logger)
+    /// <summary>Re-reads <c>data/audio/</c> and replaces <see cref="Cues"/>. Runs on the thread pool.</summary>
+    private void RebuildAudio(string folder, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
     {
-        _sinceAudioScan += context.Since;
+        var drops = new FolderAudioSource(folder, dropsLogger);
+        var cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
 
-        if (_sinceAudioScan < AudioScanEvery)
-        {
-            return;
-        }
-
-        _sinceAudioScan = TimeSpan.Zero;
-
-        if (!drops.Poll())
-        {
-            return;
-        }
-
-        Cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+        _cues = cues;
 
         _logger.LogInformation(
             "Reloaded the audio folder: {Count} file(s) picked up, {Skipped} skipped",
-            Cues.CustomCount,
-            Cues.Skipped.Count);
+            cues.CustomCount,
+            cues.Skipped.Count);
 
         // The rows that read the library — the bed picker's choices and the row saying what was found — have
         // no other way to know.
@@ -6635,6 +6628,7 @@ public sealed class AppHost : IDisposable
         // The loop stops before anything it polls is torn down, so a tick cannot land on a disposed sink or a
         // closed file handle on the way out.
         _ticking?.Dispose();
+        _audioWatch?.Dispose();
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

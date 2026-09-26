@@ -15,17 +15,14 @@ public sealed class FolderAudioSource : ICueSource
     private readonly string _root;
     private readonly ILogger _logger;
 
-    /// <summary>Prefixed name to the file behind it.</summary>
-    private Dictionary<string, string> _files = new(StringComparer.Ordinal);
-
-    /// <summary>Path and last-write time, which is what a rescan compares against.</summary>
-    private Dictionary<string, DateTime> _stamps = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Prefixed name to the file behind it, as found when this was built.</summary>
+    private readonly Dictionary<string, string> _files;
 
     public FolderAudioSource(string root, ILogger logger)
     {
         _root = root;
         _logger = logger;
-        Scan();
+        _files = Scan();
     }
 
     /// <summary>
@@ -36,46 +33,16 @@ public sealed class FolderAudioSource : ICueSource
 
     public IEnumerable<string> Names => _files.Keys;
 
-    /// <summary>How many rebuilds this has done.</summary>
-    public int Rebuilds { get; private set; }
-
     public Stream Open(string name) =>
         _files.TryGetValue(name, out var path)
             ? File.OpenRead(path)
             : throw new CueSetException($"{name} is no longer in {_root}.");
 
-    /// <summary>
-    /// Re-reads the folder if anything in it has changed, and says whether it did (Phase 12, "Pick up
-    /// dropped-in audio without a restart").
-    /// </summary>
-    public bool Poll()
+    private Dictionary<string, string> Scan()
     {
-        var found = Stamps();
-
-        if (Same(found, _stamps))
-        {
-            return false;
-        }
-
-        Scan(found);
-        Rebuilds++;
-
-        return true;
-    }
-
-    private static bool Same(
-        IReadOnlyDictionary<string, DateTime> left,
-        IReadOnlyDictionary<string, DateTime> right) =>
-        left.Count == right.Count
-        && left.All(entry => right.TryGetValue(entry.Key, out var when) && when == entry.Value);
-
-    private void Scan(Dictionary<string, DateTime>? found = null)
-    {
-        _stamps = found ?? Stamps();
-
         var files = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        foreach (var path in _stamps.Keys)
+        foreach (var path in Wavs())
         {
             if (NameOf(path) is { } name)
             {
@@ -86,13 +53,13 @@ public sealed class FolderAudioSource : ICueSource
             }
         }
 
-        _files = files;
+        return files;
     }
 
-    /// <summary>Every wav under the three folders, with its write time.</summary>
-    private Dictionary<string, DateTime> Stamps()
+    /// <summary>Every wav under the three folders, sorted.</summary>
+    private List<string> Wavs()
     {
-        var stamps = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        var paths = new List<string>();
 
         foreach (var folder in new[] { CuesFolder, BedsFolder, MusicFolder })
         {
@@ -105,11 +72,9 @@ public sealed class FolderAudioSource : ICueSource
 
             try
             {
-                foreach (var path in Directory.EnumerateFiles(directory, "*.wav", SearchOption.AllDirectories)
-                             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
-                {
-                    stamps[path] = File.GetLastWriteTimeUtc(path);
-                }
+                paths.AddRange(
+                    Directory.EnumerateFiles(directory, "*.wav", SearchOption.AllDirectories)
+                        .OrderBy(path => path, StringComparer.OrdinalIgnoreCase));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -118,7 +83,7 @@ public sealed class FolderAudioSource : ICueSource
             }
         }
 
-        return stamps;
+        return paths;
     }
 
     /// <summary>

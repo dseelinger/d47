@@ -36,63 +36,37 @@ public class AudioRescanTests : IDisposable
         Path.Combine(_root, FolderAudioSource.BedsFolder, $"{name}.wav");
 
     [Fact]
-    public void AFileAddedBetweenPollsAppearsInTheLibrary()
+    public void AFileAddedBeforeAScanAppearsInTheLibrary()
     {
-        var drops = Source();
-
-        Assert.DoesNotContain("engine-room", Load(drops).BedNames);
+        Assert.DoesNotContain("engine-room", Load(Source()).BedNames);
 
         WriteWav(BedPath("engine-room"));
 
-        Assert.True(drops.Poll(), "the folder changed and the poll said it had not");
-        Assert.Contains("engine-room", Load(drops).BedNames);
+        Assert.Contains("engine-room", Load(Source()).BedNames);
     }
 
     [Fact]
-    public void AFileRemovedBetweenPollsDisappears()
+    public void AFileRemovedBeforeAScanDisappears()
     {
         WriteWav(BedPath("engine-room"));
-
-        var drops = Source();
-        Assert.Contains("engine-room", Load(drops).BedNames);
+        Assert.Contains("engine-room", Load(Source()).BedNames);
 
         File.Delete(BedPath("engine-room"));
 
-        Assert.True(drops.Poll());
-        Assert.DoesNotContain("engine-room", Load(drops).BedNames);
-    }
-
-    /// <summary>
-    /// A file replaced in place is a change too, and the one a name-only comparison would miss — which
-    /// is why the write times travel with the names.
-    /// </summary>
-    [Fact]
-    public void AFileReplacedInPlaceIsNoticed()
-    {
-        WriteWav(BedPath("engine-room"));
-
-        var drops = Source();
-        Assert.False(drops.Poll());
-
-        WriteWav(BedPath("engine-room"), samples: 480);
-        File.SetLastWriteTimeUtc(BedPath("engine-room"), DateTime.UtcNow.AddMinutes(1));
-
-        Assert.True(drops.Poll());
+        Assert.DoesNotContain("engine-room", Load(Source()).BedNames);
     }
 
     [Fact]
-    public void AnUnchangedFolderDoesNoWork()
+    public void AScanDoesNotChangeUnderAnEarlierOne()
     {
         WriteWav(BedPath("engine-room"));
+        var first = Source();
 
-        var drops = Source();
+        WriteWav(BedPath("hangar"));
+        var second = Source();
 
-        for (var i = 0; i < 20; i++)
-        {
-            Assert.False(drops.Poll(), "an unchanged folder reported a change");
-        }
-
-        Assert.Equal(0, drops.Rebuilds);
+        Assert.DoesNotContain("hangar", Load(first).BedNames);
+        Assert.Contains("hangar", Load(second).BedNames);
     }
 
     [Fact]
@@ -100,8 +74,7 @@ public class AudioRescanTests : IDisposable
     {
         WriteWav(BedPath("engine-room"));
 
-        var drops = Source();
-        var library = Load(drops);
+        var library = Load(Source());
 
         var sink = new RecordingAudioSink();
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
@@ -118,9 +91,8 @@ public class AudioRescanTests : IDisposable
 
         // The Commander drops another one in, and the library is rebuilt underneath.
         WriteWav(BedPath("hangar"));
-        Assert.True(drops.Poll());
 
-        var reloaded = Load(drops);
+        var reloaded = Load(Source());
 
         Assert.Contains("hangar", reloaded.BedNames);
         Assert.NotSame(library, reloaded);
@@ -128,21 +100,6 @@ public class AudioRescanTests : IDisposable
         // Still going, and never stopped.
         Assert.Contains(playing, sink.Live);
         Assert.Empty(sink.Stopped);
-    }
-
-    /// <summary>A rebuild is counted, so the throttle above has something to assert against.</summary>
-    [Fact]
-    public void EveryRebuildIsCounted()
-    {
-        var drops = Source();
-
-        WriteWav(BedPath("one"));
-        Assert.True(drops.Poll());
-
-        WriteWav(BedPath("two"));
-        Assert.True(drops.Poll());
-
-        Assert.Equal(2, drops.Rebuilds);
     }
 
     private static void WriteWav(string path, int samples = 240)
