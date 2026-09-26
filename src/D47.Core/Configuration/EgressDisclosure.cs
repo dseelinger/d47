@@ -126,7 +126,7 @@ public static class EgressDisclosure
                 NameOf(GalaxySearch),
                 "spansh.co.uk and api.ardent-insight.com",
                 "System names you ask about, and the filters of a search — an allegiance, a distance, an "
-                + "economy, a module you want to buy, a body type or a mining material. Where you are goes "
+                + "economy, a minor faction's name, a module you want to buy, a body type or a mining material. Where you are goes "
                 + "with it whenever a question is relative to you, because "
                 + "\"the nearest high tech system\" cannot be asked without saying where from. Plotting a "
                 + "route also sends your ship's jump range. A trade route sends the system you are in and "

@@ -26,7 +26,7 @@ internal static class SpanshRequest
                 // matches nothing.
                 writer.WriteStartObject(criterion.Filter.Field);
 
-                if (criterion.Filter.Kind == GalaxyFilterKind.Choice)
+                if (criterion.Filter.Kind is GalaxyFilterKind.Choice or GalaxyFilterKind.Name)
                 {
                     writer.WriteStartArray("value");
 

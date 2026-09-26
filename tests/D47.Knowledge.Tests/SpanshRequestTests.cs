@@ -74,6 +74,25 @@ public class SpanshRequestTests
         Assert.Equal("asc", sort.GetProperty("direction").GetString());
     }
 
+    [Theory]
+    [InlineData("faction", "minor_faction_presences")]
+    [InlineData("controlling_faction", "controlling_minor_faction")]
+    public void AFactionIsSentAsOneNameInTheChoiceShape(string filter, string field)
+    {
+        Assert.True(GalaxyQuery.TryParse(
+            "Sol",
+            new Dictionary<string, string> { [filter] = "  Eurybia Blue Mafia, Ltd " },
+            size: 5,
+            out var query,
+            out var failure), failure);
+
+        Assert.Equal(
+            "{\"filters\":{\"" + field + "\":{\"value\":[\"Eurybia Blue Mafia, Ltd\"]}},"
+            + "\"sort\":[{\"distance\":{\"direction\":\"asc\"}}],\"size\":5,\"page\":0,"
+            + "\"reference_system\":\"Sol\"}",
+            SpanshRequest.Search(query));
+    }
+
     private static JsonElement Bodies(Action<BodyBuilder> configure)
     {
         var builder = new BodyBuilder();

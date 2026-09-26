@@ -170,6 +170,18 @@ public static class GalaxyCapability
                     },
                     new ToolParameter
                     {
+                        Name = "faction",
+                        Type = ToolParameterType.String,
+                        Description = "A minor faction present in the system, by its exact name.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "controlling_faction",
+                        Type = ToolParameterType.String,
+                        Description = "The minor faction controlling the system, by its exact name.",
+                    },
+                    new ToolParameter
+                    {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
                         Description = "How many to return, 1 to 20. Default 5.",

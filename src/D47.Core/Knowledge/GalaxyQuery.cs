@@ -10,6 +10,9 @@ public enum GalaxyFilterKind
 
     /// <summary>A numeric span.</summary>
     Range,
+
+    /// <summary>A free name, sent as one value in the choice shape.</summary>
+    Name,
 }
 
 /// <summary>One filter the galaxy search understands, and the values it accepts.</summary>
@@ -29,6 +32,10 @@ public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyL
         new(name, GalaxyFilterKind.Choice, choices) { Field = field };
 
     public static GalaxyFilter Range(string name) => new(name, GalaxyFilterKind.Range, []);
+
+    /// <summary>A name filter the service keys under a different name.</summary>
+    public static GalaxyFilter NameOf(string name, string field) =>
+        new(name, GalaxyFilterKind.Name, []) { Field = field };
 }
 
 /// <summary>The filter vocabulary, and the local validation that is the reason for it.</summary>
@@ -64,6 +71,10 @@ public static class GalaxyFilters
                 "Expansion", "Famine", "Infrastructure Failure", "Investment", "Lockdown", "Natural Disaster",
                 "None", "Outbreak", "Pirate Attack", "Public Holiday", "Retreat", "Terrorist Attack", "War",
             ]),
+
+        // Measured as silently ignored: minor_faction_presences: {"name":{"value":[…]}}, and a top-level minor_faction.
+        GalaxyFilter.NameOf("faction", "minor_faction_presences"),
+        GalaxyFilter.NameOf("controlling_faction", "controlling_minor_faction"),
     ];
 
     public static GalaxyFilter? Find(string name) =>
@@ -74,9 +85,12 @@ public static class GalaxyFilters
     /// for spoken help.
     /// </summary>
     public static string Describe() =>
-        string.Join(", ", All.Select(filter => filter.Kind == GalaxyFilterKind.Range
-            ? $"{filter.Name} (a range)"
-            : $"{filter.Name} ({string.Join("/", filter.Choices)})"));
+        string.Join(", ", All.Select(filter => filter.Kind switch
+        {
+            GalaxyFilterKind.Range => $"{filter.Name} (a range)",
+            GalaxyFilterKind.Name => $"{filter.Name} (a minor faction's exact name)",
+            _ => $"{filter.Name} ({string.Join("/", filter.Choices)})",
+        }));
 
     /// <summary>The filter names alone, for the tool description.</summary>
     public static string Names() => string.Join(", ", All.Select(filter => filter.Name));
@@ -87,7 +101,7 @@ public sealed record GalaxyCriterion
 {
     public required GalaxyFilter Filter { get; init; }
 
-    /// <summary>Set for <see cref="GalaxyFilterKind.Choice"/>.</summary>
+    /// <summary>Set for <see cref="GalaxyFilterKind.Choice"/> and <see cref="GalaxyFilterKind.Name"/>.</summary>
     public IReadOnlyList<string> Choices { get; init; } = [];
 
     /// <summary>Set for <see cref="GalaxyFilterKind.Range"/>.</summary>
@@ -132,6 +146,12 @@ public sealed record GalaxyQuery
                 failure =
                     $"There is no '{name}' filter. The ones I have are: {GalaxyFilters.Describe()}.";
                 return false;
+            }
+
+            if (filter.Kind == GalaxyFilterKind.Name)
+            {
+                criteria.Add(new GalaxyCriterion { Filter = filter, Choices = [value.Trim()] });
+                continue;
             }
 
             if (filter.Kind == GalaxyFilterKind.Choice)

@@ -44,6 +44,10 @@ after your balance has covered the rebuy and fallen short again, or when you cha
 nothing while you are in multicrew or a taxi. The **Rebuy cover** switch under Flight callouts turns
 it off.
 
+A system search can now name a minor faction: "find systems near me where Eurybia Blue Mafia is
+present", or "which systems does Eurybia Blue Mafia control". It combines with distance,
+allegiance, government, security and state. The faction's name has to be exact.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
