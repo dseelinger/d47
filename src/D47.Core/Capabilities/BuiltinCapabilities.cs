@@ -206,7 +206,8 @@ public static class BuiltinCapabilities
             // Nearest first puts its winner on the clipboard the same way plot_course does, and remembers it
             // for the two voice commands (#325).
             navigation.Clipboard,
-            lastFoundSystem),
+            lastFoundSystem,
+            () => gameState.Active?.Reputation.Factions.Keys.ToArray() ?? []),
         RouteCapability.Create(
             routes,
             trade,

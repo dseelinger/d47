@@ -46,7 +46,10 @@ it off.
 
 A system search can now name a minor faction: "find systems near me where Eurybia Blue Mafia is
 present", or "which systems does Eurybia Blue Mafia control". It combines with distance,
-allegiance, government, security and state. The faction's name has to be exact.
+allegiance, government, security and state. A faction your journals have recorded is matched
+from part of its name or a different capitalisation, and the answer says what it was read as, for
+example "Read as Eurybia Blue Mafia." Any other name is sent as you said it; if nothing matches, the
+answer says the name may be misspelled and suggests close names from your journals.
 
 ## 1.17.0 — The ship remarks on promotions and notable kills
 

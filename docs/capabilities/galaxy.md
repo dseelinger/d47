@@ -343,6 +343,11 @@ Find star systems matching some criteria, nearest first.
 
 A search with no filters is refused rather than run — it would match the whole galaxy.
 
+A `faction` or `controlling_faction` value is matched against the minor factions the Commander's
+journals name, and sent in the journal's spelling when one matches. The service needs the exact
+name, so a name that matches none is sent as given, and an empty result then says the name may be
+misspelled rather than that the faction is absent.
+
 #### `distance_between`
 
 The straight-line distance in light years between two star systems.

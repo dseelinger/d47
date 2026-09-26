@@ -90,7 +90,10 @@ public static class GalaxyCapability
         // Where a nearest-first commodity search puts its winner (#325): on the clipboard, the same way
         // plot_course does, and into `lastFound` so "set a course" has something to mean.
         IClipboard? clipboard = null,
-        Conversation.LastFoundSystem? lastFound = null) => new()
+        Conversation.LastFoundSystem? lastFound = null,
+
+        // The minor factions this Commander's journals name, which a spoken faction is corrected against.
+        Func<IReadOnlyCollection<string>>? factions = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -188,7 +191,7 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    SearchAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
+                    SearchAsync(galaxy, currentSystem, settings, factions, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -529,6 +532,7 @@ public static class GalaxyCapability
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
+        Func<IReadOnlyCollection<string>>? factions,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -538,13 +542,37 @@ public static class GalaxyCapability
         }
 
         var requested = new Dictionary<string, string>(StringComparer.Ordinal);
+        IReadOnlyList<string> known = factions?.Invoke() is { } met ? [.. met] : [];
+        var corrected = new List<string>();
+        var unknown = new List<string>();
 
         foreach (var filter in GalaxyFilters.All)
         {
-            if (arguments.TryGetString(filter.Name, out var value) && !string.IsNullOrWhiteSpace(value))
+            if (!arguments.TryGetString(filter.Name, out var value) || string.IsNullOrWhiteSpace(value))
             {
-                requested[filter.Name] = value;
+                continue;
             }
+
+            if (filter.Kind == GalaxyFilterKind.Name)
+            {
+                var given = value.Trim();
+
+                if (Catalogue.Match(known, given) is { } spelled)
+                {
+                    if (!string.Equals(spelled, given, StringComparison.Ordinal))
+                    {
+                        corrected.Add(spelled);
+                    }
+
+                    value = spelled;
+                }
+                else
+                {
+                    unknown.Add(given);
+                }
+            }
+
+            requested[filter.Name] = value;
         }
 
         var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
@@ -572,12 +600,46 @@ public static class GalaxyCapability
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return ToolResult.Ok(Describe(result));
+            return ToolResult.Ok(FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known)
+                + Describe(result));
         }
         catch (GalaxyUnavailableException ex)
         {
             return ToolResult.Error(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// What a faction filter was read as, and, when nothing matched, that an unmatched name may be misspelled.
+    /// An empty result for an unmatched name says nothing about whether the faction is present.
+    /// </summary>
+    private static string FactionNotes(
+        IReadOnlyList<string> corrected,
+        IReadOnlyList<string> unmatched,
+        IReadOnlyList<string> known)
+    {
+        var notes = new StringBuilder();
+
+        foreach (var name in corrected)
+        {
+            notes.Append($"Read as {name}. ");
+        }
+
+        foreach (var name in unmatched)
+        {
+            notes.Append(
+                $"'{name}' may be misspelled: faction names must match exactly, and your journals hold no "
+                + "faction by that name.");
+
+            if (Catalogue.Near(known, name) is { Count: > 0 } near)
+            {
+                notes.Append($" Did you mean {string.Join(", ", near)}?");
+            }
+
+            notes.Append(' ');
+        }
+
+        return notes.ToString();
     }
 
     /// <summary>A name that will not resolve now asks rather than shrugging (#134).</summary>
