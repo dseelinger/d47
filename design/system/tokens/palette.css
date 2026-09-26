@@ -1,0 +1,110 @@
+/* The four themes. Every coloured token comes from one base palette per theme; tile, tile2, line and
+   line2 are mixed from that theme's accent and ground in OKLab. */
+
+/* Elite. */
+:root,
+[data-d47-theme='elite'] {
+  --d47-bg: #070606;
+  --d47-bar: #0F0D0C;
+  --d47-slab: #232120;
+  --d47-white: #EDE9E3;
+  --d47-grey: #A09B94;
+  --d47-grey2: #6E6A65;
+  --d47-a: #FF7A1A;
+  --d47-knock: #140800;
+  --d47-brown: #6B2F00;
+  --d47-cyan: #33D6E8;
+  --d47-blue: #1FA8F5;
+  --d47-yellow: #F5D426;
+  --d47-red: #F0343F;
+  --d47-warn: #FFA41C;
+  --d47-glow-tab: 0 0 10px color-mix(in oklab, var(--d47-a) 55%, transparent); /* @kind shadow */
+  --d47-glow-title: 0 0 12px color-mix(in oklab, var(--d47-a) 55%, transparent); /* @kind shadow */
+  --d47-glow-mark: 0 0 6px var(--d47-a), 0 0 16px color-mix(in oklab, var(--d47-a) 60%, transparent); /* @kind shadow */
+  --d47-glow-dot: 0 0 6px var(--d47-cyan), 0 0 14px color-mix(in oklab, var(--d47-cyan) 50%, transparent); /* @kind shadow */
+  --d47-scanlines-opacity: 0.5; /* @kind other */
+}
+
+/* Dark. No glow, no scanlines. */
+[data-d47-theme='dark'] {
+  --d47-bg: #1E1E1E;
+  --d47-bar: #2D2D2D;
+  --d47-slab: #252526;
+  --d47-white: #D4D4D4;
+  --d47-grey: #9D9D9D;
+  --d47-a: #3794FF;
+  --d47-knock: #0B1F33;
+  --d47-cyan: #4EC9B0;
+  --d47-blue: #569CD6;
+  --d47-yellow: #DCDCAA;
+  --d47-red: #F48771;
+  --d47-warn: #CCA700;
+  --d47-grey2: #606060;
+  --d47-brown: #1C4A7E;
+  --d47-glow-tab: none; /* @kind shadow */
+  --d47-glow-title: none; /* @kind shadow */
+  --d47-glow-mark: none; /* @kind shadow */
+  --d47-glow-dot: none; /* @kind shadow */
+  --d47-scanlines-opacity: 0; /* @kind other */
+}
+
+/* Light. No glow, no scanlines. */
+[data-d47-theme='light'] {
+  --d47-bg: #F4F1EB;
+  --d47-bar: #E6E1D8;
+  --d47-slab: #E4DFD6;
+  --d47-white: #1C1917;
+  --d47-grey: #5E5852;
+  --d47-a: #B84E00;
+  --d47-knock: #FFFFFF;
+  --d47-cyan: #007C8A;
+  --d47-blue: #0B6BCB;
+  --d47-yellow: #8A6D00;
+  --d47-red: #C8192B;
+  --d47-warn: #A04A00;
+  --d47-grey2: #9E9993;
+  --d47-brown: #E7B9A3;
+  --d47-glow-tab: none; /* @kind shadow */
+  --d47-glow-title: none; /* @kind shadow */
+  --d47-glow-mark: none; /* @kind shadow */
+  --d47-glow-dot: none; /* @kind shadow */
+  --d47-scanlines-opacity: 0; /* @kind other */
+}
+
+/* My HUD colours. Static: drawn in Elite's colours. In the app, the Commander's HUD colour matrix recolours a, knock, brown, cyan, blue, red and yellow; the neutrals stay fixed. */
+[data-d47-theme='elite-palette'] {
+  --d47-bg: #070606;
+  --d47-bar: #0F0D0C;
+  --d47-slab: #232120;
+  --d47-white: #EDE9E3;
+  --d47-grey: #A09B94;
+  --d47-grey2: #6E6A65;
+  --d47-a: #FF7A1A;
+  --d47-knock: #140800;
+  --d47-brown: #6B2F00;
+  --d47-cyan: #33D6E8;
+  --d47-blue: #1FA8F5;
+  --d47-yellow: #F5D426;
+  --d47-red: #F0343F;
+  --d47-warn: #FFA41C;
+  --d47-glow-tab: 0 0 10px color-mix(in oklab, var(--d47-a) 55%, transparent); /* @kind shadow */
+  --d47-glow-title: 0 0 12px color-mix(in oklab, var(--d47-a) 55%, transparent); /* @kind shadow */
+  --d47-glow-mark: 0 0 6px var(--d47-a), 0 0 16px color-mix(in oklab, var(--d47-a) 60%, transparent); /* @kind shadow */
+  --d47-glow-dot: 0 0 6px var(--d47-cyan), 0 0 14px color-mix(in oklab, var(--d47-cyan) 50%, transparent); /* @kind shadow */
+  --d47-scanlines-opacity: 0.5; /* @kind other */
+}
+
+/* Derived. Declared beside the theme so a nested data-d47-theme recomputes them. */
+:root,
+[data-d47-theme] {
+  --d47-tile: color-mix(in oklab, var(--d47-a) 20%, var(--d47-bg));
+  --d47-tile2: color-mix(in oklab, var(--d47-a) 30%, var(--d47-bg));
+  --d47-line: color-mix(in oklab, var(--d47-a) 55%, var(--d47-bg));
+  --d47-line2: color-mix(in oklab, var(--d47-a) 28%, var(--d47-bg));
+  --d47-cyan-ground: color-mix(in oklab, var(--d47-cyan) 7%, var(--d47-bg));
+  --d47-red-tile: color-mix(in oklab, var(--d47-red) 22%, var(--d47-bg));
+  --d47-red-ground: color-mix(in oklab, var(--d47-red) 12%, var(--d47-bg));
+  --d47-warn-ground: color-mix(in oklab, var(--d47-warn) 12%, var(--d47-bg));
+  --d47-yellow-track: color-mix(in oklab, var(--d47-yellow) 22%, var(--d47-slab));
+  --d47-scanlines: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 3px); /* @kind other */
+}

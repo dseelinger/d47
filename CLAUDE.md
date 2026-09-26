@@ -151,6 +151,17 @@ hand when Frontier changes game data. Edit the generator, not the table.
 no page, when a page quotes no real code block, or when a page does not quote the capability's
 current tool schema.
 
+### The design comes from Claude Design
+
+The source of truth for the look is the Claude Design project **D47 Design System**
+(https://claude.ai/design/p/33498e27-9fc4-425e-b580-0425d82e4597). The direction is design →
+code: the app is built to match it, and where the two disagree on look, the design is right.
+Behaviour, strings and data come from the code.
+
+`design/system/` is a read-only snapshot of that project; refresh it by pulling the project again,
+never by editing it. The original D47 project (`29844a40…`) is archived: do not read from it, and
+do not run `/design-sync`. `.design-sync/NOTES.md` has the details.
+
 ### Vendored code is not edited
 
 `src/D47.Vr/vendor/openvr_api.cs` is vendored and pinned by a version-constant test.
@@ -175,3 +186,4 @@ current tool schema.
 | `worker/` | The Cloudflare Worker backing donations. |
 | `installer/` | `d47.iss`, the Inno Setup script. |
 | `assets/` | Cues, alert beds, ship art, icons. |
+| `design/` | `system/`, the Claude Design snapshot; `ds-update/` and `handoff/`, the design packs. |

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SearchField — d47</title>
+<link rel="stylesheet" href="../../../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: #0b0b0d; font-family: 'Sintony', system-ui, sans-serif; color: #e8e2d8; }
+  .card { padding: 20px; }
+  .head { margin: 0 0 4px; font-family: 'Saira', sans-serif; font-weight: 600; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .source { margin: 0 0 10px; font-size: 12px; color: #8a8a94; }
+  .blurb { margin: 0 0 18px; font-size: 13px; line-height: 1.5; color: #b9b4ab; max-width: 76ch; }
+  .band { position: relative; padding: 18px 20px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px; overflow: visible; }
+  .band-name { font-family: 'Saira', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--d47-grey); margin-bottom: 14px; }
+  .band-note { font-size: 12px; color: var(--d47-grey); margin: -8px 0 14px; max-width: 76ch; }
+  .states { display: flex; flex-wrap: wrap; gap: 18px 22px; align-items: flex-end; }
+  .states.col { flex-direction: column; align-items: stretch; }
+  .state { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .state.wide { align-items: stretch; }
+  .cap { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--d47-grey2); }
+  .type { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .type-row { display: flex; align-items: baseline; gap: 14px; }
+  .type-sample { width: 110px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--d47-grey2); }
+  .swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 22px; }
+  .swatch-row { display: grid; grid-template-columns: 30px 70px 72px minmax(0, 1fr); align-items: center; gap: 10px; font-size: 12px; }
+  .swatch { width: 30px; height: 18px; border: 1px solid rgba(128,128,128,0.35); }
+  .swatch-name { font-family: 'JetBrains Mono', monospace; color: var(--d47-white); }
+  .swatch-value { font-family: 'JetBrains Mono', monospace; color: var(--d47-grey); }
+  .swatch-role { color: var(--d47-grey); }
+  .classes { margin-top: 16px; font-size: 12px; color: #b9b4ab; }
+  .classes table { border-collapse: collapse; }
+  .classes td { padding: 3px 14px 3px 0; vertical-align: top; }
+  .classes code { font-family: 'JetBrains Mono', monospace; color: #e8e2d8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 class="head">SearchField</h1>
+  <p class="source">DS-UPDATE.md §6 Search field</p>
+  <p class="blurb">A 340px search field with a line2 border that turns orange on focus. It must not outweigh the message input.</p>
+
+  <section class="band d47-root" data-d47-theme="elite" data-story="Elite">
+    <div class="band-name">Elite</div>
+    <div class="states">
+      <div class="state"><span class="cap">rest</span><div class="d47-search"><input placeholder="Search this page"></div></div>
+      <div class="state"><span class="cap">focus</span><div class="d47-search is-focus"><input value="Giryak"></div></div>
+    </div>
+  </section>
+
+  <section class="band d47-root" data-d47-theme="dark" data-story="Dark">
+    <div class="band-name">Dark</div>
+    <div class="states">
+      <div class="state"><span class="cap">rest</span><div class="d47-search"><input placeholder="Search this page"></div></div>
+      <div class="state"><span class="cap">focus</span><div class="d47-search is-focus"><input value="Giryak"></div></div>
+    </div>
+  </section>
+
+  <section class="band d47-root" data-d47-theme="light" data-story="Light">
+    <div class="band-name">Light</div>
+    <div class="states">
+      <div class="state"><span class="cap">rest</span><div class="d47-search"><input placeholder="Search this page"></div></div>
+      <div class="state"><span class="cap">focus</span><div class="d47-search is-focus"><input value="Giryak"></div></div>
+    </div>
+  </section>
+
+  <section class="band d47-root" data-d47-theme="elite-palette" data-story="My HUD colours">
+    <div class="band-name">My HUD colours</div>
+    <div class="band-note">Static: drawn in Elite's colours. In the app, the Commander's HUD colour matrix recolours a, knock, brown, cyan, blue, red and yellow; the neutrals stay fixed.</div>
+    <div class="states">
+      <div class="state"><span class="cap">rest</span><div class="d47-search"><input placeholder="Search this page"></div></div>
+      <div class="state"><span class="cap">focus</span><div class="d47-search is-focus"><input value="Giryak"></div></div>
+    </div>
+  </section>
+  <div class="classes"><table><tr><td><code>.d47-search</code></td><td>340×36; holds a bare input.</td></tr></table></div>
+</div>
+<script>
+  var story = new URLSearchParams(location.search).get('story');
+  if (story) {
+    document.querySelectorAll('[data-story]').forEach(function (band) {
+      if (band.getAttribute('data-story').toLowerCase() !== story.toLowerCase()) band.remove();
+    });
+    document.querySelectorAll('.head, .source, .blurb, .classes').forEach(function (n) { n.remove(); });
+    document.querySelector('.card').style.padding = '0';
+  }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engineers — d47</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  html, body { margin: 0; background: #101010; font-family: 'Sintony', system-ui, sans-serif; }
+  .stage { padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .pick { display: flex; gap: 6px; font: 12px 'JetBrains Mono', monospace; color: #9a968f; align-items: center; }
+  .pick button { font: inherit; background: #1d1b1a; color: #d8d3cc; border: 1px solid #333; padding: 4px 10px; cursor: pointer; }
+  .pick button[aria-pressed='true'] { background: #d8d3cc; color: #101010; }
+  .d47-window { width: 1280px; height: 860px; flex: none; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="pick">theme
+    <button data-t="elite" aria-pressed="true">Elite</button><button data-t="dark">Dark</button><button data-t="light">Light</button><button data-t="elite-palette">My HUD colours</button>
+  </div>
+  <div class="d47-root d47-window" data-d47-theme="elite" id="win" data-screen-label="Engineers">
+    <div class="d47-titlebar"><span class="d47-brand-mark"></span><span class="d47-brand-name">DIRECTIVE 47</span><span class="d47-version">1.6.3</span>
+      <div class="d47-window-controls"><span class="d47-window-control">—</span><span class="d47-window-control">□</span><span class="d47-window-control close">✕</span></div></div>
+    <div class="d47-window__body" style="padding:20px 28px 24px">
+      <div class="d47-tabs"><span class="d47-tab">Transcript</span><span class="d47-tab">Fleet</span><span class="d47-tab active">Engineers</span><span class="d47-tab">Checklist</span><span class="d47-tab">Routing</span><span class="d47-tab">Adventures</span><span class="d47-tab">Settings</span><div class="d47-tabs__end"><span class="d47-tab">Help</span><span class="d47-glyph" style="height:40px"><span class="d47-glyph__tip">Loop state · listening for the game</span><span class="d47-glyph__face" style="width:44px;height:40px"><span style="width:16px;height:16px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span></span></span></span></div></div><div class="d47-tabs-rule"></div>
+      
+  <div data-screen-label="Engineers · Detail" style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <div class="d47-subbar" style="padding:14px 0 12px;gap:22px"><div class="d47-subtabs"><span class="d47-subtab active">Directory</span><span class="d47-subtab">Route</span></div>
+      <span class="d47-subbar__end d47-chrome" style="font-size:14px;font-weight:500;letter-spacing:0.04em;color:var(--d47-white)">13&nbsp;<span style="color:var(--d47-grey)">of 38 unlocked ·</span>&nbsp;18&nbsp;<span style="color:var(--d47-grey)">in progress ·</span>&nbsp;7&nbsp;<span style="color:var(--d47-grey)">not started</span></span></div>
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:24px;padding-top:16px">
+      <div style="min-height:0;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:2px"><div class="d47-checkbox caps checked" onclick="this.classList.toggle('checked')"><span class="d47-checkbox__box"></span>Hide the Colonia eight</div><div class="d47-checkbox caps checked" onclick="this.classList.toggle('checked')"><span class="d47-checkbox__box"></span>Hide on-foot engineers</div></div>
+        <div class="d47-list d47-scroll" style="flex:1;min-height:0;overflow-y:auto;padding-right:6px"><div class="d47-list-head">Ready for unlock</div><div class="d47-list-row selected"><div class="d47-list-row__main"><span class="d47-list-row__name">Broo Tarquin</span><span class="d47-list-row__sub">14 modules</span></div><span class="d47-list-row__aside">230 LY · ~6 jumps</span></div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">Tiana Fortune</span><span class="d47-list-row__sub">9 modules</span></div><span class="d47-list-row__aside">177 LY · ~4 jumps</span></div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">Lori Jameson</span><span class="d47-list-row__sub">4 modules</span></div><span class="d47-list-row__aside">92 LY · ~3 jumps</span></div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">The Sarge</span><span class="d47-list-row__sub">3 modules</span></div><span class="d47-list-row__aside">120 LY · ~3 jumps</span></div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">Bill Turner</span><span class="d47-list-row__sub">3 modules</span></div><span class="d47-list-row__aside">145 LY · ~4 jumps</span></div><div class="d47-list-head">Unlocked</div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">Lei Cheung</span><span class="d47-list-row__sub">19 modules</span></div><span class="d47-list-row__aside">50 LY · ~2 jumps</span></div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">Didi Vatermann</span><span class="d47-list-row__sub">17 modules</span></div><span class="d47-list-row__aside">74 LY · ~2 jumps</span></div><div class="d47-list-row"><div class="d47-list-row__main"><span class="d47-list-row__name">Felicity Farseer</span><span class="d47-list-row__sub">14 modules</span></div><span class="d47-list-row__aside">192 LY · ~5 jumps</span></div></div>
+        <div class="d47-hint">Say: “who should I unlock next”</div>
+      </div>
+      <div class="d47-scroll" style="min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding-right:8px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span class="d47-crumb">Directory › Broo Tarquin</span>
+          <div class="d47-title-block"><span class="d47-title">Broo Tarquin</span><div style="margin-left:auto;display:flex;gap:2px;align-items:center"><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span><button class="d47-tile-button">Add to checklist</button></div></div>
+          <div class="d47-data-grid"><div class="d47-data"><span class="d47-data__label">Workshop</span><span class="d47-data__value small">BROO'S LEGACY · MUANG</span></div><div class="d47-data"><span class="d47-data__label">Distance from Giryak</span><span class="d47-data__value small">230 LY · ~6 JUMPS</span></div><div class="d47-data"><span class="d47-data__label">Where you stand</span><span class="d47-data__value white small">KNOWN · NO INVITATION</span></div></div>
+          <div class="d47-checkbox caps" style="align-self:flex-start" onclick="this.classList.toggle('checked')"><span class="d47-checkbox__box"></span>Pin a blueprint with them</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="d47-section-head">Unlock prerequisites</div>
+          <div class="d47-ladder">
+            <div class="d47-ladder__row"><span class="d47-ladder__state met">✓ Met</span><span class="d47-ladder__text">Grade 3 with Hera Tani.</span></div>
+            <div class="d47-ladder__row"><span class="d47-ladder__state">In progress</span><div style="display:flex;align-items:baseline;gap:12px"><span class="d47-ladder__text">Gain combat rank Competent or higher.</span><span class="d47-chrome" style="margin-left:auto;font-size:13px;font-weight:500;letter-spacing:0">Mostly harmless · 34%</span></div><span></span><div class="d47-gauge"><div class="d47-gauge__fill" style="width:34%"></div></div></div>
+            <div class="d47-ladder__row"><span class="d47-ladder__state unknown">? Unknown</span><span class="d47-ladder__text">Provide 50 units of Fujin Tea.</span></div>
+          </div>
+          <div class="d47-hint" style="font-size:13px">Unknown means the journal hasn't said yet. It confirms once you hand the goods over.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="d47-section-head">What unlocking buys<span class="d47-section-head__aside">28 planned items</span></div>
+          <div class="d47-list"><div class="d47-list-row compact" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr)"><span class="d47-list-row__name" style="font-size:14px;letter-spacing:0">Defender</span><span class="d47-list-row__aside" style="text-align:left">Small hardpoint 3</span><span class="d47-list-row__aside" style="text-align:left">G5 long range weapon</span></div><div class="d47-list-row compact" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr)"><span class="d47-list-row__name" style="font-size:14px;letter-spacing:0">Defender</span><span class="d47-list-row__aside" style="text-align:left">Small hardpoint 3</span><span class="d47-list-row__aside" style="text-align:left">Thermal vent</span></div><div class="d47-list-row compact" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr)"><span class="d47-list-row__name" style="font-size:14px;letter-spacing:0">Oxen</span><span class="d47-list-row__aside" style="text-align:left">Large hardpoint 1</span><span class="d47-list-row__aside" style="text-align:left">G5 long range weapon</span></div><div class="d47-list-row compact" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr)"><span class="d47-list-row__name" style="font-size:14px;letter-spacing:0">Oxen</span><span class="d47-list-row__aside" style="text-align:left">Large hardpoint 1</span><span class="d47-list-row__aside" style="text-align:left">Flow control</span></div><div class="d47-list-row compact" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr)"><span class="d47-list-row__name" style="font-size:14px;letter-spacing:0">Oxen</span><span class="d47-list-row__aside" style="text-align:left">Large hardpoint 2</span><span class="d47-list-row__aside" style="text-align:left">G5 long range weapon</span></div>
+            <button class="d47-tile-button" style="align-self:flex-start">Show 23 more</button></div>
+        </div>
+        <div class="d47-hint" style="padding-bottom:8px">Say: “where is Broo Tarquin”</div>
+      </div>
+    </div>
+  </div>
+    </div>
+    
+    <div class="d47-scanlines"></div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.pick button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.getElementById('win').setAttribute('data-d47-theme', b.dataset.t);
+      document.querySelectorAll('.pick button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+  });
+  var t = new URLSearchParams(location.search).get('theme');
+  if (t) { var b = document.querySelector('.pick button[data-t="' + t + '"]'); if (b) b.click(); }
+</script>
+</body>
+</html>

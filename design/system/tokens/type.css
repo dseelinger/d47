@@ -1,0 +1,26 @@
+/* Three faces: Saira for chrome, Sintony for prose, JetBrains Mono for numbers, keys, timestamps and costs. */
+:root {
+  --d47-font-chrome: 'Saira', system-ui, sans-serif;
+  --d47-font-prose: 'Sintony', system-ui, sans-serif;
+  --d47-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --d47-type-title: 28px;
+  --d47-type-tab: 15px;
+  --d47-type-group: 15px;
+  --d47-type-row: 15px;
+  --d47-type-body: 16px;
+  --d47-type-control: 13px;
+  --d47-type-control-large: 14px;
+  --d47-type-meta: 12px;
+  --d47-type-meta-small: 11px;
+
+  /* Tracking on uppercase chrome only. Names, values and prose take none. */
+  --d47-track-title: 0.04em;
+  --d47-track-chrome: 0.06em;
+  --d47-track-subtab: 0.08em;
+  --d47-track-brand: 0.12em;
+
+  --d47-gap-tile: 2px;
+  --d47-hit: 44px;
+  --d47-glyph: 32px;
+}

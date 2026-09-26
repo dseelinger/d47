@@ -1,0 +1,64 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcript — d47</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  html, body { margin: 0; background: #101010; font-family: 'Sintony', system-ui, sans-serif; }
+  .stage { padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .pick { display: flex; gap: 6px; font: 12px 'JetBrains Mono', monospace; color: #9a968f; align-items: center; }
+  .pick button { font: inherit; background: #1d1b1a; color: #d8d3cc; border: 1px solid #333; padding: 4px 10px; cursor: pointer; }
+  .pick button[aria-pressed='true'] { background: #d8d3cc; color: #101010; }
+  .d47-window { width: 1280px; height: 860px; flex: none; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="pick">theme
+    <button data-t="elite" aria-pressed="true">Elite</button><button data-t="dark">Dark</button><button data-t="light">Light</button><button data-t="elite-palette">My HUD colours</button>
+  </div>
+  <div class="d47-root d47-window" data-d47-theme="elite" id="win" data-screen-label="Transcript">
+    <div class="d47-titlebar"><span class="d47-brand-mark"></span><span class="d47-brand-name">DIRECTIVE 47</span><span class="d47-version">1.6.3</span>
+      <div class="d47-window-controls"><span class="d47-window-control">—</span><span class="d47-window-control">□</span><span class="d47-window-control close">✕</span></div></div>
+    <div class="d47-window__body" style="padding:20px 28px 24px">
+      <div class="d47-tabs"><span class="d47-tab active">Transcript</span><span class="d47-tab">Fleet</span><span class="d47-tab">Engineers</span><span class="d47-tab">Checklist</span><span class="d47-tab">Routing</span><span class="d47-tab">Adventures</span><span class="d47-tab">Settings</span><div class="d47-tabs__end"><span class="d47-tab">Help</span><span class="d47-glyph" style="height:40px"><span class="d47-glyph__tip">Loop state · listening for the game</span><span class="d47-glyph__face" style="width:44px;height:40px"><span style="width:16px;height:16px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span></span></span></span></div></div><div class="d47-tabs-rule"></div>
+      
+  <div data-screen-label="Transcript" style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <div class="d47-subbar" style="padding:14px 0 12px">
+      <div class="d47-subtabs"><span class="d47-subtab active">In ship</span><span class="d47-subtab">Log file</span><span class="d47-subtab">Journal file</span></div>
+      <div class="d47-subbar__end"><span class="d47-glyph"><span class="d47-glyph__tip">Copy transcript</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span><div class="d47-search"><input placeholder="Search this page"></div></div>
+    </div>
+    <div class="d47-scroll" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 0">
+      <div class="d47-messages" style="margin-top:auto">
+        <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__intent">continuity.resume</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">Good evening, Commander. Ready to go.</div></div>
+        <div class="d47-message cmdr"><div class="d47-message__head"><span class="d47-message__name">CMDR John Deparagon</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">How are you this evening?</div></div>
+        <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__delivery">calm</span><span class="d47-message__time">19:42</span></div><div class="d47-message__body">Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.</div>
+          <div class="d47-message__chips"><span class="d47-message__chip here">Giryak</span><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></div>
+          <div class="d47-message__cost"><span>Answered via claude-sonnet-5</span><span>·</span><span>Effort high</span><span>·</span><span class="d47-message__cost-value">$0.1075</span></div></div>
+      </div>
+    </div>
+    <div style="flex:none;border-top:1px solid var(--d47-line2);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+      <div class="d47-status"><span class="d47-status__dot"></span><span class="d47-status__text">PTT ready</span><span class="d47-status__session">Session <span class="d47-status__cost">$0.1432</span></span><button class="d47-tile-button compact">Spend</button></div>
+      <div class="d47-composer"><div class="d47-field"><span class="d47-field__prefix">TO [D47]:</span><input placeholder="What can you do?"></div><button class="d47-tile-button full">Send</button></div>
+    </div>
+  </div>
+    </div>
+    
+    <div class="d47-scanlines"></div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.pick button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.getElementById('win').setAttribute('data-d47-theme', b.dataset.t);
+      document.querySelectorAll('.pick button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+  });
+  var t = new URLSearchParams(location.search).get('theme');
+  if (t) { var b = document.querySelector('.pick button[data-t="' + t + '"]'); if (b) b.click(); }
+</script>
+</body>
+</html>

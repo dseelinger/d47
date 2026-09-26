@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Message — d47</title>
+<link rel="stylesheet" href="../../../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: #0b0b0d; font-family: 'Sintony', system-ui, sans-serif; color: #e8e2d8; }
+  .card { padding: 20px; }
+  .head { margin: 0 0 4px; font-family: 'Saira', sans-serif; font-weight: 600; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .source { margin: 0 0 10px; font-size: 12px; color: #8a8a94; }
+  .blurb { margin: 0 0 18px; font-size: 13px; line-height: 1.5; color: #b9b4ab; max-width: 76ch; }
+  .band { position: relative; padding: 18px 20px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px; overflow: visible; }
+  .band-name { font-family: 'Saira', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--d47-grey); margin-bottom: 14px; }
+  .band-note { font-size: 12px; color: var(--d47-grey); margin: -8px 0 14px; max-width: 76ch; }
+  .states { display: flex; flex-wrap: wrap; gap: 18px 22px; align-items: flex-end; }
+  .states.col { flex-direction: column; align-items: stretch; }
+  .state { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .state.wide { align-items: stretch; }
+  .cap { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--d47-grey2); }
+  .type { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .type-row { display: flex; align-items: baseline; gap: 14px; }
+  .type-sample { width: 110px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--d47-grey2); }
+  .swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 22px; }
+  .swatch-row { display: grid; grid-template-columns: 30px 70px 72px minmax(0, 1fr); align-items: center; gap: 10px; font-size: 12px; }
+  .swatch { width: 30px; height: 18px; border: 1px solid rgba(128,128,128,0.35); }
+  .swatch-name { font-family: 'JetBrains Mono', monospace; color: var(--d47-white); }
+  .swatch-value { font-family: 'JetBrains Mono', monospace; color: var(--d47-grey); }
+  .swatch-role { color: var(--d47-grey); }
+  .classes { margin-top: 16px; font-size: 12px; color: #b9b4ab; }
+  .classes table { border-collapse: collapse; }
+  .classes td { padding: 3px 14px 3px 0; vertical-align: top; }
+  .classes code { font-family: 'JetBrains Mono', monospace; color: #e8e2d8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 class="head">Message</h1>
+  <p class="source">DS-UPDATE.md §6 Message (SMS)</p>
+  <p class="blurb">The transcript is SMS-shaped. D47 on the left with an orange bar; the Commander on the right with a cyan bar and tint. The header is the name, the intent tags, then the time after a fixed 12px gap. The cost line is mono 12 grey2 uppercase, inside the message it belongs to.</p>
+
+  <section class="band d47-root" data-d47-theme="elite" data-story="Elite">
+    <div class="band-name">Elite</div>
+    <div class="d47-messages" style="width:100%">
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__intent">continuity.resume</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">Good evening, Commander. Ready to go.</div></div>
+      <div class="d47-message cmdr"><div class="d47-message__head"><span class="d47-message__name">CMDR John Deparagon</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">How are you this evening?</div></div>
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__delivery">calm</span><span class="d47-message__time">19:42</span></div><div class="d47-message__body">Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.</div>
+        <div class="d47-message__chips"><span class="d47-message__chip here">Giryak</span><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></div>
+        <div class="d47-message__cost"><span>Answered via claude-sonnet-5</span><span>·</span><span>Effort high</span><span>·</span><span class="d47-message__cost-value">$0.1075</span></div></div>
+    </div>
+  </section>
+
+  <section class="band d47-root" data-d47-theme="dark" data-story="Dark">
+    <div class="band-name">Dark</div>
+    <div class="d47-messages" style="width:100%">
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__intent">continuity.resume</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">Good evening, Commander. Ready to go.</div></div>
+      <div class="d47-message cmdr"><div class="d47-message__head"><span class="d47-message__name">CMDR John Deparagon</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">How are you this evening?</div></div>
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__delivery">calm</span><span class="d47-message__time">19:42</span></div><div class="d47-message__body">Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.</div>
+        <div class="d47-message__chips"><span class="d47-message__chip here">Giryak</span><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></div>
+        <div class="d47-message__cost"><span>Answered via claude-sonnet-5</span><span>·</span><span>Effort high</span><span>·</span><span class="d47-message__cost-value">$0.1075</span></div></div>
+    </div>
+  </section>
+
+  <section class="band d47-root" data-d47-theme="light" data-story="Light">
+    <div class="band-name">Light</div>
+    <div class="d47-messages" style="width:100%">
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__intent">continuity.resume</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">Good evening, Commander. Ready to go.</div></div>
+      <div class="d47-message cmdr"><div class="d47-message__head"><span class="d47-message__name">CMDR John Deparagon</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">How are you this evening?</div></div>
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__delivery">calm</span><span class="d47-message__time">19:42</span></div><div class="d47-message__body">Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.</div>
+        <div class="d47-message__chips"><span class="d47-message__chip here">Giryak</span><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></div>
+        <div class="d47-message__cost"><span>Answered via claude-sonnet-5</span><span>·</span><span>Effort high</span><span>·</span><span class="d47-message__cost-value">$0.1075</span></div></div>
+    </div>
+  </section>
+
+  <section class="band d47-root" data-d47-theme="elite-palette" data-story="My HUD colours">
+    <div class="band-name">My HUD colours</div>
+    <div class="band-note">Static: drawn in Elite's colours. In the app, the Commander's HUD colour matrix recolours a, knock, brown, cyan, blue, red and yellow; the neutrals stay fixed.</div>
+    <div class="d47-messages" style="width:100%">
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__intent">continuity.resume</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">Good evening, Commander. Ready to go.</div></div>
+      <div class="d47-message cmdr"><div class="d47-message__head"><span class="d47-message__name">CMDR John Deparagon</span><span class="d47-message__time">19:41</span></div><div class="d47-message__body">How are you this evening?</div></div>
+      <div class="d47-message"><div class="d47-message__head"><span class="d47-message__name">D47</span><span class="d47-message__delivery">calm</span><span class="d47-message__time">19:42</span></div><div class="d47-message__body">Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.</div>
+        <div class="d47-message__chips"><span class="d47-message__chip here">Giryak</span><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></div>
+        <div class="d47-message__cost"><span>Answered via claude-sonnet-5</span><span>·</span><span>Effort high</span><span>·</span><span class="d47-message__cost-value">$0.1075</span></div></div>
+    </div>
+  </section>
+  <div class="classes"><table><tr><td><code>.d47-messages</code></td><td>The list, 4px apart, pinned to the bottom by its container.</td></tr><tr><td><code>.d47-message, .cmdr</code></td><td>D47 left with an orange bar; .cmdr right with a cyan bar and cyan ground. Max 72% wide.</td></tr><tr><td><code>__head: __name, __intent, __delivery, __time</code></td><td>Name, then tags, then the time 12px after them.</td></tr><tr><td><code>__body, __chips, __chip(.here), __cost</code></td><td>Sintony 16 white; slab chips; the mono cost line.</td></tr></table></div>
+</div>
+<script>
+  var story = new URLSearchParams(location.search).get('story');
+  if (story) {
+    document.querySelectorAll('[data-story]').forEach(function (band) {
+      if (band.getAttribute('data-story').toLowerCase() !== story.toLowerCase()) band.remove();
+    });
+    document.querySelectorAll('.head, .source, .blurb, .classes').forEach(function (n) { n.remove(); });
+    document.querySelector('.card').style.padding = '0';
+  }
+
+</script>
+</body>
+</html>

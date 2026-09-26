@@ -1,0 +1,20 @@
+<!-- @dsCard group="Chrome" viewport="700x180" name="Card" subtitle="Elite theme · all four themes in Card.themes.html" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Card — d47</title>
+<link rel="stylesheet" href="../../../styles.css">
+<style>html,body{margin:0;background:#070606}.card{padding:16px 20px;min-height:100vh}.cap{font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey2)}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+</head><body>
+<div id="root" class="card d47-root" data-d47-theme="elite"></div>
+<script type="text/babel">
+const { Card } = window.D47DesignSystem_33498e;
+const Row = ({ children, pl }) => <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px 20px', alignItems: 'flex-end', paddingLeft: pl ? 150 : 0 }}>{children}</div>;
+const Col = ({ children }) => <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>;
+const S = ({ c, w, children }) => <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: w ? 'stretch' : 'flex-start' }}><span className="cap">{c}</span>{children}</div>;
+function Pick(){const [s,set]=React.useState(false);return <Card context="Mandalay" name="Wanderer" meta="Stored · Giryak" selected={s} onClick={()=>set(!s)} style={{width:200}} />}
+ReactDOM.createRoot(document.getElementById('root')).render(<Row><S c="rest"><Card context="Panther Clipper MkII" name="Campaigner" meta="Muang · docked" style={{width:200}} /></S><S c="selected"><Card context="Type-9 Heavy" name="Hauler" meta="Stored · Leesti" selected style={{width:200}} /></S><S c="click to select"><Pick /></S></Row>);
+</script>
+</body></html>

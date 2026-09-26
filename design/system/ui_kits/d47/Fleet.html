@@ -1,0 +1,75 @@
+<!-- @dsCard group="Screens" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet — d47</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  html, body { margin: 0; background: #101010; font-family: 'Sintony', system-ui, sans-serif; }
+  .stage { padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .pick { display: flex; gap: 6px; font: 12px 'JetBrains Mono', monospace; color: #9a968f; align-items: center; }
+  .pick button { font: inherit; background: #1d1b1a; color: #d8d3cc; border: 1px solid #333; padding: 4px 10px; cursor: pointer; }
+  .pick button[aria-pressed='true'] { background: #d8d3cc; color: #101010; }
+  .d47-window { width: 1280px; height: 860px; flex: none; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="pick">theme
+    <button data-t="elite" aria-pressed="true">Elite</button><button data-t="dark">Dark</button><button data-t="light">Light</button><button data-t="elite-palette">My HUD colours</button>
+  </div>
+  <div class="d47-root d47-window" data-d47-theme="elite" id="win" data-screen-label="Fleet">
+    <div class="d47-titlebar"><span class="d47-brand-mark"></span><span class="d47-brand-name">DIRECTIVE 47</span><span class="d47-version">1.6.3</span>
+      <div class="d47-window-controls"><span class="d47-window-control">—</span><span class="d47-window-control">□</span><span class="d47-window-control close">✕</span></div></div>
+    <div class="d47-window__body" style="padding:20px 28px 24px">
+      <div class="d47-tabs"><span class="d47-tab">Transcript</span><span class="d47-tab active">Fleet</span><span class="d47-tab">Engineers</span><span class="d47-tab">Checklist</span><span class="d47-tab">Routing</span><span class="d47-tab">Adventures</span><span class="d47-tab">Settings</span><div class="d47-tabs__end"><span class="d47-tab">Help</span><span class="d47-glyph" style="height:40px"><span class="d47-glyph__tip">Loop state · listening for the game</span><span class="d47-glyph__face" style="width:44px;height:40px"><span style="width:16px;height:16px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span></span></span></span></div></div><div class="d47-tabs-rule"></div>
+      
+  <div data-screen-label="Fleet · Carrier" style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <div class="d47-subbar" style="padding:14px 0 12px"><div class="d47-subtabs"><span class="d47-subtab">Ships</span><span class="d47-subtab">Suits</span><span class="d47-subtab">Materials</span><span class="d47-subtab active">Carrier</span></div></div>
+    <div class="d47-scroll" style="flex:1;min-height:0;overflow-y:auto;padding:20px 0 0;display:flex;flex-direction:column;gap:28px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Fleet carrier · BNH-T2F</span><span class="d47-title">Sacred Fire</span></div>
+          <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Carrier balance</span><span class="d47-title-block__figure-value">990,302,661 CR</span></div></div>
+        <div class="d47-data-grid">
+          <div class="d47-data"><span class="d47-data__label">Current system</span><div class="d47-data__row"><span class="d47-data__value cyan">GIRYAK</span><span class="d47-data__end"><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></span></div></div>
+          <div class="d47-data"><span class="d47-data__label">Tritium in tank</span><span class="d47-data__value ">967 T</span></div>
+          <div class="d47-data"><span class="d47-data__label">Jump range</span><span class="d47-data__value ">500 LY</span></div>
+          <div class="d47-data"><span class="d47-data__label">Range on this tank</span><span class="d47-data__value ">~6,500 LY · 13 JUMPS</span></div>
+          <div class="d47-data" style="gap:5px"><div class="d47-data__row"><span class="d47-data__label">Capacity</span><span class="d47-data__value yellow small d47-data__end">1,110 / 25,000 T</span></div><div class="d47-gauge capacity"><div class="d47-gauge__fill" style="width:4.4%"></div></div></div>
+          <div class="d47-data"><span class="d47-data__label">Cargo</span><span class="d47-data__value ">180 T</span></div>
+          <div class="d47-data"><span class="d47-data__label">Docking access</span><span class="d47-data__value ">ALL</span></div>
+          <div class="d47-data span-2"><span class="d47-data__label">Services</span><span class="d47-data__value">CAPTAIN · REFUEL · REPAIR · REARM · COMMODITIES · CARRIER FUEL</span></div>
+        </div>
+        <div class="d47-hint">Figures as of 19 minutes ago. They refresh when you open carrier management in the game.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Your squadron's carrier · OV40</span><span class="d47-title" style="font-size:22px">GBD Formidine Dreams</span></div></div>
+        <div class="d47-data-grid">
+          <div class="d47-data"><span class="d47-data__label">System</span><div class="d47-data__row"><span class="d47-data__value">SYNUEFE AB-U D4-41</span><span class="d47-data__end"><span class="d47-glyph"><span class="d47-glyph__tip">Copy system name</span><span class="d47-glyph__face"><span class="d47-copy-icon"></span></span></span></span></div></div>
+          <div class="d47-data"><span class="d47-data__label">Tritium</span><span class="d47-data__value ">588 T</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:none;display:flex;align-items:center;gap:16px;padding-top:14px;border-top:1px solid var(--d47-line2)">
+      <button class="d47-tile-button">▸ Settings for this page · 4</button><span class="d47-hint">Say: “where is my carrier”</span>
+    </div>
+  </div>
+    </div>
+    
+    <div class="d47-scanlines"></div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.pick button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.getElementById('win').setAttribute('data-d47-theme', b.dataset.t);
+      document.querySelectorAll('.pick button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+  });
+  var t = new URLSearchParams(location.search).get('theme');
+  if (t) { var b = document.querySelector('.pick button[data-t="' + t + '"]'); if (b) b.click(); }
+</script>
+</body>
+</html>
