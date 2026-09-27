@@ -25,12 +25,9 @@ gh issue list --state open --limit 300 --json number,title,labels,author,created
 
 Keep an issue only if **all** of these hold:
 
-- It does not carry `tabled`. That label means the work is not part of 1.0.0. It holds back the
-  major version and nothing else; it is not a priority and it does not decide how anything else in
-  the queue is numbered.
-- It does not carry `phase` or `design`. Both label descriptions say so outright — a `phase` is a
-  product description for work not yet built, and a `design` is a promise to discuss that spawns
-  build issues when it settles. Neither is implementable as written.
+- It does not carry `under-speced` or `design`. Both label descriptions say so outright —
+  `under-speced` needs more specification or missing data, and `design` needs Claude Design before
+  it can be built. Neither is implementable as written.
 - Either `dseelinger` opened it, or it carries `ready`. Anything else is unvetted.
 
 Say in one line how many survived and how many each rule removed. Then stop justifying: the point
@@ -69,7 +66,7 @@ cut — the batch guessing 0.110.23 to 0.110.26 went out as `v0.111.0`. Read the
 unreleased, never for what the next number is.
 
 Number a group from what it does. A corrected behaviour is a patch. A user-visible capability
-added or removed is a minor, and the major is 1.0.0, which `tabled` is holding back. A run of
+added or removed is a minor, and the major is 1.0.0. A run of
 patches in the changelog records what has been worked on, not a rule about numbering.
 
 A group is what ships under one version:
@@ -105,7 +102,7 @@ Opus runs at `medium` unless the last row applies. Do not pair `sonnet` with `hi
 more than `sonnet medium` goes to `opus medium`.
 
 `low` only for a change whose diff you could write from the title. `xhigh` or `max` where the issue
-is a design question wearing a bug's clothes — flag those as candidates for the `design` label
+is a design question wearing a bug's clothes — flag those as candidates for the `under-speced` label
 instead of picking an effort for them.
 
 Never go below `medium` on anything in `src/`. `TreatWarningsAsErrors` is on and there is no
@@ -200,5 +197,5 @@ Say it was written in one line at the end of the report, with the issue count. N
 ## What this does not do
 
 It files nothing, labels nothing, closes nothing and starts no work. Applying a `ready` label or
-moving an issue to `tabled` is the maintainer's, and a triage that edits the queue it just read
+moving an issue to `under-speced` is the maintainer's, and a triage that edits the queue it just read
 cannot be run twice.

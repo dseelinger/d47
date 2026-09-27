@@ -29,7 +29,7 @@ Triage is a report. You are the session that stays open after it.
 - **"Is this batch worth cutting?"** A group is ready when its issues are closed, the tree is clean
   on `main`, and `HEAD` matches `origin/main` — `tools/release.ps1` refuses otherwise, and the
   full suite runs on the runner as the gate. Say which of those is not yet true.
-- **"This turned out bigger than it looked."** Recommend splitting it, or moving it to `design` for
+- **"This turned out bigger than it looked."** Recommend splitting it, or moving it to `under-speced` for
   the Architect, rather than pushing on with an effort level that no longer fits. Any title you
   propose for a split-off issue is seven words or fewer.
 
@@ -43,7 +43,7 @@ recommendation.
 
 ## Eligibility
 
-Eligible issues are the open ones that are **not** `tabled`, **not** `phase`, **not** `design`, and
+Eligible issues are the open ones that are **not** `under-speced`, **not** `design`, and
 that the maintainer either opened or labelled `ready`. `/triage` applies this; know it so you can
 answer "why isn't #N on the list" without re-running anything.
 

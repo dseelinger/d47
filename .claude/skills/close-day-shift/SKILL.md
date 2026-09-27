@@ -28,7 +28,7 @@ Run all of them, then report. Don't stop at the first blocked check.
    is blocked. An idle one is ready, with a note: if it starts working again after 1 AM, the run
    skips.
 5. **An issue to work.** `gh issue list --repo dseelinger/d47 --label "Night Shift" --state open
-   --json number,title,labels`, dropping any issue labelled `tabled`. Also read
+   --json number,title,labels`, dropping any issue labelled `under-speced` or `design`. Also read
    `C:\Users\dougs\.claude\night-shift\state.json` if it exists: an issue in progress counts, and
    is the one that goes first. Show the queue in the order the run will take it: the one in
    progress, then the rest, lowest number first.
