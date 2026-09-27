@@ -7,21 +7,19 @@ namespace D47.App.Theming;
 /// corner radius (#288).</summary>
 public static class CardChrome
 {
-    /// <summary>A card: Tile with a 1px Line border. Selected or open:
-    /// Tile2 with a 1px A border.</summary>
+    /// <summary>A card: a filled Tile with no border. Selected: filled A, and the caller inks the name
+    /// Knock and the meta Brown.</summary>
     public static void Card(Border border, bool selected = false) => Card(border, selected, track: null);
 
-    /// <summary>As <see cref="Card(Border, bool)"/>, adding the two binding disposables to
+    /// <summary>As <see cref="Card(Border, bool)"/>, adding the binding disposable to
     /// <paramref name="track"/> for a control whose bindings are torn down on rebuild.</summary>
     public static void Card(Border border, bool selected, List<IDisposable>? track)
     {
-        border.BorderThickness = new Thickness(1);
+        border.BorderThickness = default;
 
-        var background = Themed(border, Border.BackgroundProperty, selected ? ThemeManager.Tile2Key : ThemeManager.TileKey);
-        var borderBrush = Themed(border, Border.BorderBrushProperty, selected ? ThemeManager.AKey : ThemeManager.LineKey);
+        var background = Themed(border, Border.BackgroundProperty, selected ? ThemeManager.AKey : ThemeManager.TileKey);
 
         track?.Add(background);
-        track?.Add(borderBrush);
     }
 
     /// <summary>The current row in a list: Tile2 behind a 3px A bar on the leading edge. Wraps the row's existing child behind the bar.</summary>

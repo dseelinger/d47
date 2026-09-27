@@ -11,6 +11,12 @@
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 
+Badges and cards are filled, with no outline. The Current ship badge on a Fleet card is a cyan
+chip with dark lettering, and the PRE-RELEASE badge is an orange chip. The update banner, the
+startup and switch readouts in the status row, the choice card, the headset overlay card and the
+subsystem level count lose their outlines. An empty priority on the Power page is a filled block
+rather than a dashed box.
+
 Errors and cautions are now drawn as the design's notices: a coloured bar at the left on a tinted
 ground, with a label above the message. Something that failed is red; a caution you can act on is
 amber. This covers the settings error banner at the top of the panel, a failed reply in the

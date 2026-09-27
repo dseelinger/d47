@@ -143,9 +143,7 @@
             IsVisible="{Binding HasUpdate}"
             Margin="0,14,0,0"
             Padding="12"
-            Background="{DynamicResource D47.Slab}"
-            BorderBrush="{DynamicResource D47.Blue}"
-            BorderThickness="1">
+            Background="{DynamicResource D47.Slab}">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right"
                     Orientation="Horizontal"
@@ -221,9 +219,7 @@
                     Margin="10,0,12,0"
                     Padding="7,2"
                     VerticalAlignment="Center"
-                    Background="{DynamicResource D47.Slab}"
-                    BorderBrush="{DynamicResource D47.Grey}"
-                    BorderThickness="1">
+                    Background="{DynamicResource D47.Slab}">
               <TextBlock x:Name="StartupLabel"
                          Text="{Binding StartupText}"
                          VerticalAlignment="Center"
@@ -236,9 +232,7 @@
                     Margin="10,0,0,0"
                     Padding="7,2"
                     VerticalAlignment="Center"
-                    Background="{DynamicResource D47.Slab}"
-                    BorderBrush="{DynamicResource D47.Grey}"
-                    BorderThickness="1">
+                    Background="{DynamicResource D47.Slab}">
               <TextBlock x:Name="SwitchText"
                          Text="{Binding SwitchesText}"
                          VerticalAlignment="Center"
@@ -326,14 +320,12 @@
                 VerticalAlignment="Center"
                 Margin="0,0,6,0"
                 Padding="7,2"
-                Background="Transparent"
-                BorderThickness="1"
-                BorderBrush="{DynamicResource D47.A}">
+                Background="{DynamicResource D47.A}">
           <TextBlock x:Name="PreReleaseBadgeText"
                      Text="PRE-RELEASE"
                      FontSize="{StaticResource D47.Type.Small}"
                      FontWeight="Bold"
-                     Foreground="{DynamicResource D47.A}" />
+                     Foreground="{DynamicResource D47.Knock}" />
         </Border>
 
         <!--

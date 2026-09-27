@@ -329,7 +329,7 @@ public static class LoadoutPages
             // in the corner and backed so it reads over any hull's own colours (#278).
             if (standing == LoadoutStanding.Active)
             {
-                var badge = Pill(badgeText, overArt: true);
+                var badge = Pill(badgeText);
 
                 Grid.SetRow(badge, 0);
                 body.Children.Add(badge);
@@ -434,11 +434,8 @@ public static class LoadoutPages
         return button;
     }
 
-    /// <summary>
-    /// A small Cyan label meaning "yours": on Bg, or on the scrim where it sits over the hull picture so it
-    /// reads over any hull's own colours (#278).
-    /// </summary>
-    private static Control Pill(string said, bool overArt = false)
+    /// <summary>A filled Cyan chip with Knock ink, meaning "yours".</summary>
+    private static Control Pill(string said)
     {
         var text = new TextBlock
         {
@@ -452,15 +449,13 @@ public static class LoadoutPages
         var pill = new Border
         {
             Padding = new Thickness(7, 2),
-            BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
             Child = text,
         };
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
-        Themed(pill, Border.BorderBrushProperty, ThemeManager.CyanKey);
-        Themed(pill, Border.BackgroundProperty, overArt ? ThemeManager.ScrimKey : ThemeManager.BgKey);
+        Themed(text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+        Themed(pill, Border.BackgroundProperty, ThemeManager.CyanKey);
 
         return pill;
     }

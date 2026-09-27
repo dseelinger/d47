@@ -253,9 +253,7 @@ public sealed class PowerChart : Control
             using (context.PushOpacity(block.Band.Priority == _selected ? 1 : 0.45))
             {
                 context.DrawRectangle(
-                    null,
-                    new Pen(Brush(ThemeManager.GreyKey), 1, new DashStyle([4, 3], 0)),
-                    new Rect(StackLeft + 0.5, Flip(block.Bottom + height) + 0.5, StackRight - StackLeft - 1, height - 1));
+                    Brush(ThemeManager.TileKey), null, new Rect(StackLeft, Flip(block.Bottom + height), StackRight - StackLeft, height));
             }
         }
 

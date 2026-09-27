@@ -466,10 +466,9 @@ public sealed class SubsystemLevelTrack : ContentControl
         var chip = new Border
         {
             Padding = new Thickness(6, 1),
-            BorderThickness = new Thickness(1),
             Child = text,
         };
-        Themed(chip, Border.BorderBrushProperty, ThemeManager.LineKey);
+        Themed(chip, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return (chip, text);
     }
