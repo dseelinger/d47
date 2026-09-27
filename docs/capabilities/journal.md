@@ -476,8 +476,8 @@ schema:
 ```
 
 `get_location`, `get_materials` and `get_session_summary`, and the pair for the mapped bodies not
-yet sold: `get_unsold_exploration` answers the total, and `reset_unsold_exploration` sets it to zero.
-The reset is Protected: the keyword phrase, the panel and a hotkey reach it, and the model is
+yet sold: `get_unsold_exploration` answers the total, and `clear_unsold_exploration` sets it to zero.
+The clear is Protected: the keyword phrase, the panel and a hotkey reach it, and the model is
 refused.
 
 `get_ship` answers about the one being flown by default, and about any other ship the Commander

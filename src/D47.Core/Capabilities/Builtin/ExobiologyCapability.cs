@@ -10,7 +10,7 @@ public static class ExobiologyCapability
 {
     public const string Id = "exobiology";
 
-    public const string ResetTool = "reset_unsold_exobiology";
+    public const string ResetTool = "clear_unsold_exobiology";
 
     /// <param name="routes">
     /// Null where nothing composed one — under the designer, and in a test that is not about it.

@@ -15,7 +15,7 @@ public static partial class JournalCapability
 {
     public const string Id = "journal";
 
-    public const string ResetExplorationTool = "reset_unsold_exploration";
+    public const string ResetExplorationTool = "clear_unsold_exploration";
 
     /// <param name="history">
     /// How far the walk over older journals has got, so a fleet question says that rather than reporting

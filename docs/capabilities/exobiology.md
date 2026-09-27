@@ -333,7 +333,7 @@ first footfall bonus, and any left out for want of a value.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-#### `reset_unsold_exobiology`
+#### `clear_unsold_exobiology`
 
 Sets the total to zero from now. Protected: the keyword phrase, the panel and a hotkey reach it, and
 the model is refused.
