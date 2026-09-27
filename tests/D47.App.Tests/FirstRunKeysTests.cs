@@ -20,7 +20,7 @@ namespace D47.App.Tests;
 /// <summary>The guided key setup, on the surface.</summary>
 public class FirstRunKeysTests
 {
-    private static FirstRunWindow Guide(params string[] optionalKeys)
+    private static FirstRunDialog Guide(params string[] optionalKeys)
     {
         var (settings, _, _, registry, secrets) = TestSurface.CreateFull();
         var provider = LlmProviderCatalog.Selected(LlmProviderCatalog.AnthropicId);
@@ -38,7 +38,7 @@ public class FirstRunKeysTests
             ConversationCapability.KeyRowFor(provider),
             optionalKeys);
 
-        return new FirstRunWindow(steps, settings);
+        return new FirstRunDialog(steps, settings);
     }
 
     /// <summary>
@@ -48,29 +48,29 @@ public class FirstRunKeysTests
     [AvaloniaFact]
     public void TheGuideShowsTheSameKeyControlAsSettings()
     {
-        var window = Guide(SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
-        window.Show();
+        var dialog = Guide(SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
+        var host = dialog.Show();
 
-        var editors = window.GetVisualDescendants().OfType<SecretEditor>().ToList();
+        var editors = dialog.GetVisualDescendants().OfType<SecretEditor>().ToList();
 
         Assert.Equal(2, editors.Count);
-        window.Close();
+        host.Close();
     }
 
     /// <summary>Every key says what it sends and where.</summary>
     [AvaloniaFact]
     public void EveryKeyDisclosesWhatLeavesTheMachine()
     {
-        var window = Guide(SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
-        window.Show();
+        var dialog = Guide(SpeechCapability.KeyRowFor(Core.Audio.TtsProviderCatalog.ElevenLabs));
+        var host = dialog.Show();
 
         var text = string.Join(
             "\n",
-            window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? ""));
+            dialog.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? ""));
 
         Assert.Contains("api.anthropic.com", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("elevenlabs", text, StringComparison.OrdinalIgnoreCase);
-        window.Close();
+        host.Close();
     }
 
     /// <summary>The key row, masked and revealed, for a human to look at.</summary>
@@ -90,22 +90,22 @@ public class FirstRunKeysTests
             registry, settings.Current, provider, secrets.Has,
             ConversationCapability.KeyRowFor(provider), []);
 
-        var window = new FirstRunWindow(steps, settings);
-        window.Show();
+        var dialog = new FirstRunDialog(steps, settings);
+        var host = dialog.Show();
 
-        var editor = window.GetVisualDescendants().OfType<SecretEditor>().First();
+        var editor = dialog.GetVisualDescendants().OfType<SecretEditor>().First();
         var box = editor.GetVisualDescendants().OfType<TextBox>().First();
 
         box.Text = "sk-ant-api03-not-a-real-key";
 
-        Capture(window, "secret-row-masked");
+        Capture(host, "secret-row-masked");
 
         var reveal = editor.GetVisualDescendants().OfType<ToggleButton>().First();
         reveal.IsChecked = true;
 
-        Capture(window, "secret-row-revealed");
+        Capture(host, "secret-row-revealed");
 
-        window.Close();
+        host.Close();
     }
 
     private static void Capture(Window window, string name)
@@ -130,10 +130,10 @@ public class FirstRunKeysTests
             registry, settings.Current, provider, secrets.Has,
             ConversationCapability.KeyRowFor(provider), []);
 
-        var window = new FirstRunWindow(steps, settings);
-        window.Show();
+        var dialog = new FirstRunDialog(steps, settings);
+        dialog.Show();
 
-        var done = window.GetVisualDescendants().OfType<Button>()
+        var done = dialog.GetVisualDescendants().OfType<Button>()
             .First(button => (button.Content as string) == "Done");
 
         done.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));

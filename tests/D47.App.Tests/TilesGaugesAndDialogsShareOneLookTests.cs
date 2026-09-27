@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
+using D47.App.Windowing;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Conversation;
@@ -45,14 +46,14 @@ public class TilesGaugesAndDialogsShareOneLookTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static SpendWindow Spend()
+    private static SpendDialog Spend()
     {
         var ledger = new SpendLedger(
             Path.Combine(TempFolders.Create("d47-modal-spend"), "spend.jsonl"), new StoppedClock(), NullLogger.Instance);
         var session = new SpendTracker(ledger);
         session.Record(new TurnCost(new LlmUsage(1_240, 380, 0, 18_400), 0.0231m, true), true, "anthropic", "claude-opus-5");
 
-        return new SpendWindow(
+        return new SpendDialog(
             session.Last, session, new SpeechSpend(), ledger, TestSurface.Settings().Current, TimeZoneInfo.Utc);
     }
 
@@ -145,14 +146,14 @@ public class TilesGaugesAndDialogsShareOneLookTests
         using var look = AppLook.Put();
 
         var owner = Shown(new Border(), 800, 600);
-        var dialog = new ConfirmWindow("Forget this ship?", "Its loadout is removed.", "Forget", "Keep");
+        var dialog = new ConfirmDialog("Forget this ship?", "Its loadout is removed.", "Forget", "Keep");
         var answer = dialog.AskAsync(owner);
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotNull(dialog.GetVisualDescendants().OfType<DockPanel>().SingleOrDefault(panel => panel.Name == "Modal"));
-        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "Forget this ship?");
+        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "FORGET THIS SHIP?");
 
-        PressEscape(dialog);
+        PressEscape(owner);
 
         Assert.True(answer.IsCompleted);
         Assert.False(answer.Result);
@@ -166,7 +167,7 @@ public class TilesGaugesAndDialogsShareOneLookTests
         using var look = AppLook.Put();
 
         var owner = Shown(new Border(), 800, 600);
-        var dialog = new ConfirmWindow("Forget this ship?", "Its loadout is removed.", "Forget", "Keep");
+        var dialog = new ConfirmDialog("Forget this ship?", "Its loadout is removed.", "Forget", "Keep");
         var answer = dialog.AskAsync(owner);
         Dispatcher.UIThread.RunJobs();
 
@@ -188,7 +189,7 @@ public class TilesGaugesAndDialogsShareOneLookTests
         var dialog = Spend();
         var closed = false;
         dialog.Closed += (_, _) => closed = true;
-        dialog.Show();
+        var window = dialog.Show();
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotNull(dialog.GetVisualDescendants().OfType<DockPanel>().SingleOrDefault(panel => panel.Name == "Modal"));
@@ -196,7 +197,7 @@ public class TilesGaugesAndDialogsShareOneLookTests
         var figure = dialog.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Name == "SpendFigure");
         Assert.Equal(0.0231m.ToString("C4"), figure.Text);
 
-        PressEscape(dialog);
+        PressEscape(window);
 
         Assert.True(closed);
     }
@@ -206,19 +207,25 @@ public class TilesGaugesAndDialogsShareOneLookTests
     {
         using var look = AppLook.Put();
 
-        var confirm = new ConfirmWindow(
+        var confirm = new ConfirmDialog(
             "Forget this ship?", "Its loadout is removed from the logbook.", "Forget", "Keep");
-        confirm.Show();
+        var confirmWindow = confirm.Show();
         Dispatcher.UIThread.RunJobs();
-        Save(confirm, "modal-confirm.png");
-        confirm.Close();
+        Save(confirmWindow, "modal-confirm.png");
+        confirmWindow.Close();
 
         var spend = Spend();
-        spend.Height = 700;
-        spend.Show();
+        var spendWindow = spend.Show(height: 700);
         Dispatcher.UIThread.RunJobs();
-        Save(spend, "modal-spend.png");
-        spend.Close();
+        Save(spendWindow, "modal-spend.png");
+        spendWindow.Close();
+
+        var main = new MainWindow(host: null) { Width = 1000, Height = 900 };
+        main.Show();
+        _ = Spend().Over(main);
+        Dispatcher.UIThread.RunJobs();
+        Save(main, "modal-spend-over-main.png");
+        main.Close();
     }
 
 #if DEBUG

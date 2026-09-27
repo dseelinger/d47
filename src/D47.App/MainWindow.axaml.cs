@@ -310,8 +310,8 @@ public partial class MainWindow : Window
             // figures need.
             Panel.EnableTurnDetails(
                 ShowSpendAsync,
-                () => SpendWindow.SessionDollars(host.Spend, host.SpeechSpend, host.Settings.Current),
-                () => SpendWindow.SessionDetail(host.Spend, host.SpeechSpend, host.Settings.Current));
+                () => SpendDialog.SessionDollars(host.Spend, host.SpeechSpend, host.Settings.Current),
+                () => SpendDialog.SessionDetail(host.Spend, host.SpeechSpend, host.Settings.Current));
             host.SpeechSpend.Recorded += Panel.RefreshSessionSpend;
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
@@ -580,7 +580,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        await new FirstRunWindow(steps, host.Settings).Over(this);
+        await new FirstRunDialog(steps, host.Settings).Over(this);
     }
 
     /// <summary>Window-scoped gestures, matched against the bound settings.</summary>
@@ -1099,7 +1099,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        await new SpendWindow(
+        await new SpendDialog(
             _host.Spend.Last,
             _host.Spend,
             _host.SpeechSpend,
@@ -1414,7 +1414,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var wanted = await new ConfirmWindow(
+        var wanted = await new ConfirmDialog(
             "Add to the Start Menu?",
             $"D47 runs from {executable}. A Start Menu entry means "
             + "you can find it by name instead of by remembering where you put it. It is one "

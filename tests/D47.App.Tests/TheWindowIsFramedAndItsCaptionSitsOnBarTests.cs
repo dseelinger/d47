@@ -48,17 +48,12 @@ public class TheWindowIsFramedAndItsCaptionSitsOnBarTests
         Dispatcher.UIThread.RunJobs();
         Save(main, "window-frame-main.png");
 
-        var dialog = new ConfirmWindow("Forget this ship?", "Its loadout is removed from the logbook.", "Forget", "Keep")
-        {
-            Width = 560,
-            Height = 280,
-        };
-        CaptionStrip.Apply(dialog);
-        dialog.Show();
+        var dialog = new ConfirmDialog("Forget this ship?", "Its loadout is removed from the logbook.", "Forget", "Keep");
+        var host = dialog.Show(560, 280);
         Dispatcher.UIThread.RunJobs();
-        Save(dialog, "window-frame-dialog.png");
+        Save(host, "window-frame-dialog.png");
 
-        dialog.Close();
+        host.Close();
         main.Close();
     }
 

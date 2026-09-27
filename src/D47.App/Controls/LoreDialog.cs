@@ -14,7 +14,7 @@ namespace D47.App.Controls;
 /// <summary>
 /// The Commander's own notes about systems, and where one is written (Phase 23, "Commander's Lore").
 /// </summary>
-public sealed class LoreWindow : Window
+public sealed class LoreDialog : ModalDialog
 {
     private readonly LoreEditing _editing;
     private readonly bool _canSearch;
@@ -23,20 +23,18 @@ public sealed class LoreWindow : Window
     private readonly TextBlock _status;
     private readonly Button _add;
 
-    public LoreWindow(LoreEditing editing)
+    public LoreDialog(LoreEditing editing)
     {
         ArgumentNullException.ThrowIfNull(editing);
 
         _editing = editing;
 
-        // Read once, as the window opens.
+        // Read once, as the dialog opens.
         _canSearch = editing.CanSearch();
 
         Title = "What you have told me about systems";
         Width = 620;
-        Height = 560;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
+        MaxHeight = 560;
 
         var place = _editing.Here();
 
@@ -82,7 +80,7 @@ public sealed class LoreWindow : Window
 
         var body = new StackPanel
         {
-            Spacing = 16,
+            Spacing = Modal.BlockGap,
             Children =
             {
                 Modal.Section("Add a note"),

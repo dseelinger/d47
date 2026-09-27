@@ -183,8 +183,8 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         yield return ("Switches", OpenSwitches);
     }
 
-    /// <summary>A dialog page in a window of its own, the way a test of the page alone shows it.</summary>
-    private static Window Hosted(DialogPage page) => new() { Content = page, Width = 720, Height = 720 };
+    /// <summary>A hosted dialog in a window of its own, the way a test of it alone shows it.</summary>
+    private static Window Hosted(HostedDialog dialog) => new() { Content = dialog, Width = 720, Height = 720 };
 
     private static Window OpenAudioRecorder()
     {
@@ -266,7 +266,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             (_, _) => Task.FromResult<string?>(null),
             () => Instant);
 
-        return new LoreWindow(editing);
+        return Hosted(new LoreDialog(editing));
     }
 
     private static Window OpenMacros()
@@ -279,7 +279,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         store.Save([new Macro { Name = "night flight", Steps = [new MacroStep(action, DesiredState.On, 250)] }]);
         store.Poll([]);
 
-        return new MacroWindow(store);
+        return Hosted(new MacroDialog(store));
     }
 
     private static Window OpenMemory()
@@ -291,7 +291,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
 
         book.Remember("Prefers the scenic route.", MemoryArrival.Panel, Instant);
 
-        return new MemoryWindow(book, () => Instant);
+        return Hosted(new MemoryDialog(book, () => Instant));
     }
 
     private static Window OpenPersona()
@@ -373,8 +373,10 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             Assert.Equal(Ink(ThemeManager.AKey), (context.Foreground as ISolidColorBrush)?.Color);
             Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
 
-            // A page leaves by the panel's Esc, which goes back; only a window closes itself.
-            if (window.Content is DialogPage)
+            // A page leaves by the panel's Esc, which goes back; a modal dialog leaves through its
+            // ModalHost, absent here since the window holds it directly for capture. Only a plain
+            // window closes itself on Esc.
+            if (window.Content is DialogPage or ModalDialog)
             {
                 continue;
             }
@@ -436,9 +438,9 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
     [InlineData("Controls/DebriefPage.cs")]
     [InlineData("Controls/HelpImprovePage.cs")]
     [InlineData("Controls/LogbookPage.cs")]
-    [InlineData("Controls/LoreWindow.cs")]
-    [InlineData("Controls/MacroWindow.cs")]
-    [InlineData("Controls/MemoryWindow.cs")]
+    [InlineData("Controls/LoreDialog.cs")]
+    [InlineData("Controls/MacroDialog.cs")]
+    [InlineData("Controls/MemoryDialog.cs")]
     [InlineData("Controls/PersonaPage.cs")]
     [InlineData("Controls/SwitchPage.cs")]
     [InlineData("Controls/PickerPage.axaml")]

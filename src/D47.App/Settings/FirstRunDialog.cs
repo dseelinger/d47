@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Configuration;
 
@@ -11,22 +12,15 @@ namespace D47.App.Settings;
 /// The guided way in for a fresh install (Phase 16, "Ask for the keys on the first run that needs
 /// them").
 /// </summary>
-public sealed class FirstRunWindow : Window
+public sealed class FirstRunDialog : ModalDialog
 {
-    public FirstRunWindow(IReadOnlyList<FirstRunStep> steps, SettingsService settings)
+    public FirstRunDialog(IReadOnlyList<FirstRunStep> steps, SettingsService settings)
     {
         Title = "Set up Directive 47";
         Width = 620;
-        SizeToContent = SizeToContent.Height;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        CanResize = false;
-        ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BgKey);
+        var stack = new StackPanel { Spacing = Modal.BlockGap };
 
-        var stack = new StackPanel { Spacing = 16, Margin = new Thickness(24) };
-
-        stack.Children.Add(Heading("Directive 47 needs a key or two"));
         stack.Children.Add(Body(
             "Everything below is optional. Directive 47 runs without any of it — you will get a "
             + "typed companion that reads your journal and answers from what it can see, rather "
@@ -41,11 +35,11 @@ public sealed class FirstRunWindow : Window
             "You can change any of this later in Settings, and reopen this window from About. "
             + "Keys get rotated and revoked, so this is not a one-time door."));
 
-        var done = new Button { Content = "Done", MinWidth = 110, HorizontalAlignment = HorizontalAlignment.Right };
+        var done = new Button { Content = "Done", MinWidth = 110 };
         done.Click += (_, _) => Close();
-        stack.Children.Add(done);
 
-        Content = new ScrollViewer { Content = stack, MaxHeight = 720 };
+        MaxHeight = 720;
+        Modal.Apply(this, "Set up", "Directive 47 needs a key or two", stack, [done]);
     }
 
     /// <summary>One key: what it is for, what it costs you in privacy, and the control to set it.</summary>
@@ -85,15 +79,6 @@ public sealed class FirstRunWindow : Window
         card.Children.Add(new SecretEditor(step.Row, settings));
 
         return card;
-    }
-
-    /// <summary>The window's Screen title, at Heading size, over a 1px A rule.</summary>
-    private static Control Heading(string text)
-    {
-        var block = TitleText.Build(text, TypeScale.Heading, TitleRank.Screen, sentence: true);
-        block.TextWrapping = TextWrapping.Wrap;
-
-        return TitleText.GroupRow(block);
     }
 
     private TextBlock Body(string text)

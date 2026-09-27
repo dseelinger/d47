@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.App.Controls;
 using D47.App.Theming;
 
 namespace D47.App.Windowing;
@@ -28,6 +29,9 @@ public static class Dialogs
 
         return dialog.ShowDialog<TResult>(owner);
     }
+
+    /// <summary>Draws a modal over <paramref name="owner"/>'s content, and waits.</summary>
+    public static Task Over(this ModalDialog dialog, Window owner) => ModalHost.For(owner).Show(dialog);
 
     private static void Dress(Window dialog, Window owner, string borderKey)
     {

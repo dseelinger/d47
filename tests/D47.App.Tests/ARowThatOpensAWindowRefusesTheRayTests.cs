@@ -371,9 +371,7 @@ public class ARowThatOpensAWindowRefusesTheRayTests
 
         Jobs();
 
-        var opened = Assert.Single(window.OwnedWindows);
-
-        Assert.IsType<D47.App.Controls.MacroWindow>(opened);
+        var opened = Assert.Single(window.Modals().OfType<D47.App.Controls.MacroDialog>());
 
         opened.Close();
         Jobs();

@@ -44,7 +44,7 @@ public class SpeechCountsInTheSessionTotalTests
         return session;
     }
 
-    private static SpendWindow Dialog(SpendTracker session, SpeechSpend speech) =>
+    private static SpendDialog Dialog(SpendTracker session, SpeechSpend speech) =>
         new(
             session.Last,
             session,
@@ -56,8 +56,8 @@ public class SpeechCountsInTheSessionTotalTests
             ElevenAtFiveCents,
             TimeZoneInfo.Utc);
 
-    private static List<string> Blocks(Window window) =>
-        [.. window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+    private static List<string> Blocks(Control control) =>
+        [.. control.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
 
     private static PanelView Panel(SpendTracker session, SpeechSpend speech)
     {
@@ -65,8 +65,8 @@ public class SpeechCountsInTheSessionTotalTests
 
         panel.EnableTurnDetails(
             () => Task.CompletedTask,
-            () => SpendWindow.SessionDollars(session, speech, ElevenAtFiveCents),
-            () => SpendWindow.SessionDetail(session, speech, ElevenAtFiveCents));
+            () => SpendDialog.SessionDollars(session, speech, ElevenAtFiveCents),
+            () => SpendDialog.SessionDetail(session, speech, ElevenAtFiveCents));
         speech.Recorded += panel.RefreshSessionSpend;
 
         new Window { Width = 1280, Height = 860, Content = panel }.Show();
@@ -81,11 +81,11 @@ public class SpeechCountsInTheSessionTotalTests
         var speech = new SpeechSpend();
         speech.Record(TtsProviderCatalog.ElevenLabsId, 749);
 
-        var window = Dialog(OneTurn(), speech);
-        window.Show();
+        var dialog = Dialog(OneTurn(), speech);
+        var window = dialog.Show();
 
         // The header figure and the Session row's money cell.
-        Assert.Equal(2, Blocks(window).Count(text => text == Money(0.1432m)));
+        Assert.Equal(2, Blocks(dialog).Count(text => text == Money(0.1432m)));
 
         window.Close();
     }

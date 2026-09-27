@@ -562,7 +562,7 @@ public sealed class HelpImprovePage : DialogPage
     /// <summary>The exact text, collapsed until <see cref="_disclosureToggle"/> is pressed (#338).</summary>
     private Control DisclosurePane(out Border pane)
     {
-        // Vertical only, for the reason recorded on SpendWindow (#87): a ScrollViewer that may scroll
+        // Vertical only, for the reason recorded on SpendDialog (#87): a ScrollViewer that may scroll
         // horizontally measures its content with unconstrained width, which makes the wrapping above a no-op.
         pane = new Border
         {

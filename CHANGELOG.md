@@ -21,6 +21,12 @@ named in the breadcrumb and drawn at the panel's width, and Back, Esc, the bread
 button returns to where it was opened. The Settings buttons that open them now work in the headset
 panel too, and open the page there.
 
+The remaining dialogs — First run, Spend, Memory, Lore, Macros and every confirmation — are drawn
+inside the main window instead of as separate windows. Each sits centred over a dark scrim that
+covers the panel below the title bar, with an orange frame, an uppercase title and its buttons at
+the left. Esc or a click on the scrim closes it; a confirmation closed that way is a no. The
+dialogs follow the panel's zoom.
+
 Badges and cards are filled, with no outline. The Current ship badge on a Fleet card is a cyan
 chip with dark lettering, and the PRE-RELEASE badge is an orange chip. The update banner, the
 startup and switch readouts in the status row, the choice card, the headset overlay card and the

@@ -27,7 +27,7 @@ public class SpendDialogTests
 
     private static readonly DateTimeOffset Noon = new(2026, 8, 17, 12, 0, 0, TimeSpan.Zero);
 
-    private static SpendWindow Dialog(out SpendTracker session)
+    private static SpendDialog Dialog(out SpendTracker session)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
@@ -70,7 +70,7 @@ public class SpendDialogTests
             Characters = 3_400,
         });
 
-        return new SpendWindow(
+        return new SpendDialog(
             session.Last,
             session,
             speech,
@@ -79,21 +79,21 @@ public class SpendDialogTests
             TimeZoneInfo.Utc);
     }
 
-    private static string Words(Window window) =>
+    private static string Words(Control control) =>
         string.Join(
             "\n",
-            window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
+            control.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
 
     [AvaloniaFact]
     public void NothingInTheWindowScrollsSideways()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
 
-        var scroller = Assert.Single(window.GetVisualDescendants().OfType<ScrollViewer>());
+        var scroller = Assert.Single(dialog.GetVisualDescendants().OfType<ScrollViewer>());
 
         // The window sizes to its content's height, so lay it out before measuring anything.
-        window.UpdateLayout();
+        dialog.UpdateLayout();
 
         Assert.Equal(ScrollBarVisibility.Disabled, scroller.HorizontalScrollBarVisibility);
 
@@ -110,10 +110,10 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void TheWindowSaysOnceThatTheFiguresAreEstimates()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
 
-        var blocks = window.GetVisualDescendants().OfType<TextBlock>()
+        var blocks = dialog.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
             .ToList();
 
@@ -136,14 +136,14 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void TheMoneyColumnCannotBeClipped()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         // Grid.Column is an attached property, not scoped to Row()'s grid: a segment or a stepper has its
         // own internal column 1 for its own reasons (the value between the arrows, here), so their
         // descendants are excluded rather than mistaken for a stray figure.
-        var amounts = window.GetVisualDescendants().OfType<TextBlock>()
+        var amounts = dialog.GetVisualDescendants().OfType<TextBlock>()
             .Where(block => Grid.GetColumn(block) == 1 && block.TextWrapping == TextWrapping.NoWrap)
             .Where(block => block.GetVisualAncestors().OfType<IChoiceControl>().Any() == false)
             .Select(block => block.Text ?? string.Empty)
@@ -169,11 +169,11 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void NoIndividualFigureCarriesAnEstimateSuffix()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
 
-        Assert.DoesNotContain("(est.)", Words(window), StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("est.)", Words(window), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("(est.)", Words(dialog), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("est.)", Words(dialog), StringComparison.OrdinalIgnoreCase);
 
         window.Close();
     }
@@ -182,10 +182,10 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void AllFiveRunningTotalsAreListedInTheirTwoGroups()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
 
-        var blocks = window.GetVisualDescendants().OfType<TextBlock>()
+        var blocks = dialog.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
             .ToList();
 
@@ -224,10 +224,10 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void TheTurnsFiguresSurvivedTheMove()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
 
-        var text = Words(window);
+        var text = Words(dialog);
 
         Assert.Contains(" in,", text, StringComparison.Ordinal);
         Assert.Contains(" out,", text, StringComparison.Ordinal);
@@ -307,11 +307,11 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void ByProviderOffersEveryChargedProviderAndReadsItDownEachWindow()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var combo = window.GetVisualDescendants().OfType<D47.App.Controls.Stepper>()
+        var combo = dialog.GetVisualDescendants().OfType<D47.App.Controls.Stepper>()
             .Single(box => box.Name == "SpendProviderPicker");
 
         Assert.Equal(["Anthropic", "ElevenLabs"], combo.ItemsSource.OrderBy(x => x, StringComparer.Ordinal));
@@ -329,7 +329,7 @@ public class SpendDialogTests
         var root = Path.Combine(TempFolders.Create("d47-spend-dialog-empty"), "spend.jsonl");
         var ledger = new SpendLedger(root, new StoppedClock(Noon), NullLogger.Instance);
 
-        var window = new SpendWindow(
+        var dialog = new SpendDialog(
             null,
             new SpendTracker(ledger),
             new SpeechSpend(),
@@ -337,13 +337,13 @@ public class SpendDialogTests
             TestSurface.Settings().Current,
             TimeZoneInfo.Utc);
 
-        window.Show();
+        var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(
-            window.GetVisualDescendants().OfType<D47.App.Controls.Stepper>(),
+            dialog.GetVisualDescendants().OfType<D47.App.Controls.Stepper>(),
             box => box.Name == "SpendProviderPicker");
-        Assert.Contains("nothing charged yet", Words(window), StringComparison.Ordinal);
+        Assert.Contains("nothing charged yet", Words(dialog), StringComparison.Ordinal);
 
         window.Close();
     }
@@ -351,8 +351,8 @@ public class SpendDialogTests
     [AvaloniaFact]
     public void TheDialogRendersToACapture()
     {
-        var window = Dialog(out _);
-        window.Show();
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         window.CaptureRenderedFrame()!.Save(

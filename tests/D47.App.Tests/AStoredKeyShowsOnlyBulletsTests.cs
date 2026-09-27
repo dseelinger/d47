@@ -229,7 +229,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
 
         Click(forget);
 
-        var ask = Assert.Single(host.Window.OwnedWindows.OfType<ConfirmWindow>());
+        var ask = Assert.Single(host.Window.Modals().OfType<ConfirmDialog>());
 
         // Asked, and nothing deleted while it waits.
         Assert.True(settings.HasSecret(SttProviderCatalog.Deepgram.KeySecretName));
@@ -255,7 +255,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
 
         Click(Press(Editor(host, DeepgramRow), "FORGET KEY"));
 
-        var ask = Assert.Single(host.Window.OwnedWindows.OfType<ConfirmWindow>());
+        var ask = Assert.Single(host.Window.Modals().OfType<ConfirmDialog>());
         var delete = ask.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Delete key");
         var red = (ISolidColorBrush)Application.Current!.FindResource(ThemeManager.RedTileKey)!;
 

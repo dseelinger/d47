@@ -16,7 +16,7 @@ namespace D47.App.Controls;
 /// Everything d47 remembers about the Commander, readable and editable by a person (Phase 31, "It
 /// forgets, and can be read and emptied").
 /// </summary>
-public sealed class MemoryWindow : Window
+public sealed class MemoryDialog : ModalDialog
 {
     private readonly MemoryBook _book;
     private readonly Func<DateTimeOffset> _now;
@@ -25,7 +25,7 @@ public sealed class MemoryWindow : Window
     private readonly TextBlock _status;
     private readonly Button _add;
 
-    public MemoryWindow(MemoryBook book, Func<DateTimeOffset> now)
+    public MemoryDialog(MemoryBook book, Func<DateTimeOffset> now)
     {
         ArgumentNullException.ThrowIfNull(book);
         ArgumentNullException.ThrowIfNull(now);
@@ -35,9 +35,7 @@ public sealed class MemoryWindow : Window
 
         Title = "What D47 remembers about you";
         Width = 620;
-        Height = 560;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
+        MaxHeight = 560;
 
         _fact = new TextBox
         {
@@ -75,7 +73,7 @@ public sealed class MemoryWindow : Window
 
         var body = new StackPanel
         {
-            Spacing = 16,
+            Spacing = Modal.BlockGap,
             Children =
             {
                 Modal.Section("Tell D47 something"),

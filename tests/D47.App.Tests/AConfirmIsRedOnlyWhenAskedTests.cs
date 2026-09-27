@@ -20,8 +20,8 @@ public sealed class AConfirmIsRedOnlyWhenAskedTests
     public void TheConfirmTileIsDestructiveOnlyWhenAsked(bool destructive)
     {
         using var look = AppLook.Put();
-        var ask = new ConfirmWindow("Title", "Question?", "Yes", "No", destructive);
-        ask.Show();
+        var ask = new ConfirmDialog("Title", "Question?", "Yes", "No", destructive);
+        var window = ask.Show();
         Dispatcher.UIThread.RunJobs();
 
         var buttons = ask.GetVisualDescendants().OfType<Button>().ToList();
@@ -31,7 +31,7 @@ public sealed class AConfirmIsRedOnlyWhenAskedTests
         Assert.Equal(destructive, confirm.Classes.Contains(SettingsView.DestructiveClass));
         Assert.DoesNotContain(SettingsView.DestructiveClass, decline.Classes);
 
-        ask.Close();
+        window.Close();
     }
 
     /// <summary>A plain and a destructive tile at rest and hovered, for a human to look at.</summary>

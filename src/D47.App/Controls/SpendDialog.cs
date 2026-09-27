@@ -15,7 +15,7 @@ namespace D47.App.Controls;
 /// What the last turn cost, and what d47 has cost over four running windows
 /// (docs/plans/change-requests.md item 2).
 /// </summary>
-public sealed class SpendWindow : Window
+public sealed class SpendDialog : ModalDialog
 {
     private readonly SpendTracker _session;
     private readonly SpeechSpend _speech;
@@ -28,11 +28,11 @@ public sealed class SpendWindow : Window
     /// </summary>
     private readonly DateTimeOffset? _launchedAt;
 
-    /// <summary>The last turn, kept so the window can be redrawn after a reset.</summary>
+    /// <summary>The last turn, kept so the dialog can be redrawn after a reset.</summary>
     private readonly TurnCost? _turn;
 
-    /// <summary>Where the sections live, so a reset can replace them rather than reopen the window.</summary>
-    private readonly StackPanel _body = new() { Spacing = 18 };
+    /// <summary>Where the sections live, so a reset can replace them rather than reopen the dialog.</summary>
+    private readonly StackPanel _body = new() { Spacing = Modal.BlockGap };
 
     /// <summary>The footer's buttons, rebuilt with the sections.</summary>
     private readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
@@ -52,7 +52,7 @@ public sealed class SpendWindow : Window
     /// <summary>One entry in the provider picker: which kind, which id, and what to call it (#35).</summary>
     private readonly record struct ProviderPick(SpendKind Kind, string ProviderId, string Label);
 
-    public SpendWindow(
+    public SpendDialog(
         TurnCost? turn,
         SpendTracker session,
         SpeechSpend speech,
@@ -74,17 +74,10 @@ public sealed class SpendWindow : Window
         // 640 rather than 560 because the widest line here is a running total that names both providers and
         // both figures, and at 560 it wrapped to three lines in a two-column row.
         Width = 640;
-        SizeToContent = SizeToContent.Height;
 
         // A ledger with five windows in it is taller than some screens, so the height is capped and the
         // scroller takes the rest.
-        MaxHeight = 760;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-
-        // Resizable, unlike ConfirmWindow beside it: that one asks a question and is done, and this one is
-        // read.
-        CanResize = true;
-        ShowInTaskbar = false;
+        MaxHeight = 740;
 
         Themed(_figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
@@ -176,9 +169,14 @@ public sealed class SpendWindow : Window
     /// <summary>Asks, then resets, then redraws.</summary>
     private async Task ResetAsync(SpendPeriod window)
     {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+        {
+            return;
+        }
+
         var standing = _ledger.Total(window);
 
-        var asked = await new ConfirmWindow(
+        var asked = await new ConfirmDialog(
             "Reset the figures",
             standing.Any
                 ? $"Stop counting {window.Name.ToLowerInvariant()} \u2014 {Money(standing)}?\n\n"
@@ -187,7 +185,7 @@ public sealed class SpendWindow : Window
                   + "figures back."
                 : $"There is nothing counted {window.Name.ToLowerInvariant()}. Reset it anyway?",
             "Reset",
-            "Cancel").AskAsync(this);
+            "Cancel").AskAsync(owner);
 
         if (!asked)
         {

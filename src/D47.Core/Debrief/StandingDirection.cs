@@ -73,7 +73,7 @@ public sealed record StandingDirection(string Key, string Text)
 
     /// <summary>
     /// How the pane labels it, which is the same distinction the tier makes, shown rather than implied
-    /// — the rule <c>MemoryWindow</c> follows for the same reason.
+    /// — the rule <c>MemoryDialog</c> follows for the same reason.
     /// </summary>
     public string Label() => (State, Kind) switch
     {

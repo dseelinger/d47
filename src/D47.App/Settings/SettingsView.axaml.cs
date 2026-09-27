@@ -2640,7 +2640,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 return;
             }
 
-            await new Controls.MemoryWindow(memories.Book, memories.Now).Over(owner);
+            await new Controls.MemoryDialog(memories.Book, memories.Now).Over(owner);
 
             // The window writes the file; this is what puts the new count on the row without waiting for
             // something else to notice.
@@ -2707,7 +2707,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 return;
             }
 
-            await new Controls.LoreWindow(editing).Over(owner);
+            await new Controls.LoreDialog(editing).Over(owner);
 
             // The window writes the file; this is what puts the new count on the row without waiting for
             // something else to notice.
@@ -3063,7 +3063,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 return;
             }
 
-            await new Controls.MacroWindow(_macros) { ReservedPhrases = _reserved }.Over(owner);
+            await new Controls.MacroDialog(_macros) { ReservedPhrases = _reserved }.Over(owner);
 
             // The editor writes the file; this is what puts the new summary on the row without waiting for
             // something else to notice.

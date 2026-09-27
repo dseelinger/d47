@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -10,17 +9,25 @@ using D47.App.Theming;
 namespace D47.App.Controls;
 
 /// <summary>
-/// The shared dialog layout on Bar: an orange context line, a White title and an A rule; a scrolling body;
-/// a Line2 rule and the dialog's buttons. The 1px A frame is the native window border, painted by
-/// <see cref="Windowing.Dialogs.Over(Window, Window, string)"/>.
+/// The shared dialog layout on Bar: an A dek, an uppercase White title and an A rule; a scrolling body;
+/// a Line2 rule and the dialog's buttons at the left. A <see cref="ModalDialog"/>'s 1px A frame is drawn by
+/// <see cref="Windowing.ModalHost"/>.
 /// </summary>
 public static class Modal
 {
-    public const double Inset = 24;
+    /// <summary>The widest a modal is drawn.</summary>
+    public const double Width = 640;
+
+    public const double Inset = 20;
+
+    /// <summary>The space between the blocks of a dialog's body.</summary>
+    public const double BlockGap = 18;
+
+    private const double DialogTitle = 24;
 
     /// <summary>
     /// The layout. <paramref name="figure"/> is a key figure the dialog already shows, set at the top right
-    /// of the header; <paramref name="buttons"/> are laid right-aligned in the footer in the order given.
+    /// of the header; <paramref name="buttons"/> are laid left-aligned in the footer in the order given.
     /// A body that does its own scrolling passes <paramref name="scrolls"/> false and is given the height
     /// between the header and the footer. <paramref name="subtitle"/> is a Grey line under the title.
     /// </summary>
@@ -51,33 +58,18 @@ public static class Modal
             VerticalScrollBarVisibility = scrolls
                 ? Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
                 : Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-            Content = new Border { Padding = new Thickness(Inset, 18), Child = body },
+            Content = new Border { Padding = new Thickness(Inset, 14), Child = body },
         });
 
         return layout;
     }
 
-    /// <summary>Dresses <paramref name="window"/> in <see cref="Build"/>'s layout and closes it on Esc.</summary>
-    public static void Apply(
-        Window window,
-        string context,
-        string title,
-        Control body,
-        IReadOnlyList<Control> buttons,
-        Control? figure = null,
-        bool scrolls = true)
-    {
-        Themed(window, Window.BackgroundProperty, ThemeManager.BarKey);
-        window.Content = Build(context, title, body, buttons, figure, scrolls);
-        CloseOnEscape(window);
-    }
-
     /// <summary>
-    /// Dresses <paramref name="page"/> in <see cref="Build"/>'s layout. Esc reaches the panel, which
-    /// goes back.
+    /// Dresses <paramref name="dialog"/> in <see cref="Build"/>'s layout. Esc reaches its host, which
+    /// closes a modal and takes a page back.
     /// </summary>
     public static void Apply(
-        DialogPage page,
+        HostedDialog dialog,
         string context,
         string title,
         Control body,
@@ -85,8 +77,8 @@ public static class Modal
         Control? figure = null,
         bool scrolls = true)
     {
-        Themed(page, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
-        page.Content = Build(context, title, body, buttons, figure, scrolls);
+        Themed(dialog, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
+        dialog.Content = Build(context, title, body, buttons, figure, scrolls);
     }
 
     /// <summary>A section heading inside a dialog's body: uppercase White over a 1px A rule.</summary>
@@ -98,17 +90,6 @@ public static class Modal
         return row;
     }
 
-    /// <summary>Closes <paramref name="window"/> when Esc reaches it unhandled.</summary>
-    public static void CloseOnEscape(Window window) =>
-        window.KeyDown += (_, e) =>
-        {
-            if (e.Key == Key.Escape && !e.Handled)
-            {
-                e.Handled = true;
-                window.Close();
-            }
-        };
-
     private static Control Header(string context, string title, Control? figure, string? subtitle)
     {
         var line = new TextBlock
@@ -116,17 +97,17 @@ public static class Modal
             Name = "ModalContext",
             Text = context.ToUpperInvariant(),
             FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Meta,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            FontSize = TypeScale.Control,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
         };
         Themed(line, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-        var name = TitleText.Build(title, TypeScale.Heading, TitleRank.Screen, sentence: true);
+        var name = TitleText.Build(title, DialogTitle, TitleRank.Screen);
         name.Name = "ModalTitle";
         name.TextWrapping = TextWrapping.Wrap;
 
-        var words = new StackPanel { Spacing = 4, Children = { line, name } };
+        var words = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Bottom, Children = { line, name } };
 
         if (subtitle is { Length: > 0 })
         {
@@ -141,7 +122,7 @@ public static class Modal
             words.Children.Add(under);
         }
 
-        var top = new DockPanel();
+        var top = new DockPanel { Margin = new Thickness(Inset, 18, Inset, 10) };
 
         if (figure is not null)
         {
@@ -153,14 +134,10 @@ public static class Modal
 
         top.Children.Add(words);
 
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 14, 0, 0) };
+        var rule = new Border { Height = 1 };
         Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
-        return new StackPanel
-        {
-            Margin = new Thickness(Inset, 20, Inset, 0),
-            Children = { top, rule },
-        };
+        return new StackPanel { Children = { top, rule } };
     }
 
     private static Control Footer(IReadOnlyList<Control> buttons)
@@ -170,10 +147,10 @@ public static class Modal
 
         var row = new WrapPanel
         {
-            HorizontalAlignment = HorizontalAlignment.Right,
+            HorizontalAlignment = HorizontalAlignment.Left,
             ItemSpacing = Gaps.Tile,
             LineSpacing = Gaps.Tile,
-            Margin = new Thickness(0, 14, 0, 18),
+            Margin = new Thickness(Inset, 12, Inset, 16),
         };
 
         foreach (var button in buttons)
@@ -181,7 +158,7 @@ public static class Modal
             row.Children.Add(button);
         }
 
-        return new StackPanel { Margin = new Thickness(Inset, 0, Inset, 0), Children = { rule, row } };
+        return new StackPanel { Children = { rule, row } };
     }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>

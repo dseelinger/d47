@@ -365,20 +365,4 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         Assert.NotNull(Strip(window));
     }
 
-    // -- A sample of the real windows, not just a synthetic one --
-
-    [AvaloniaFact]
-    public void ConfirmWindowShowsCloseOnly()
-    {
-        var owner = new Window { Content = new TextBlock() };
-        owner.Show();
-
-        var window = new ConfirmWindow("Sure?", "Really?", "Yes", "No");
-        _ = window.Over(owner);
-
-        Assert.Single(Buttons(window));
-
-        window.Close();
-        owner.Close();
-    }
 }

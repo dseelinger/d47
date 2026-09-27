@@ -156,7 +156,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     [InlineData("SecretEditor.cs")]
     [InlineData("SwitchEditing.cs")]
     [InlineData("LoreEditing.cs")]
-    [InlineData("FirstRunWindow.cs")]
+    [InlineData("FirstRunDialog.cs")]
     public void TheSettingsSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Settings", file));

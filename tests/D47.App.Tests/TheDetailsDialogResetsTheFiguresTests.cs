@@ -43,7 +43,7 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private SpendWindow Dialog(out SpendLedger ledger, DateTimeOffset? launchedAt)
+    private SpendDialog Dialog(out SpendLedger ledger, DateTimeOffset? launchedAt)
     {
         ledger = new SpendLedger(
             Path.Combine(_root, "spend.jsonl"),
@@ -60,7 +60,7 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
             Priced = true,
         });
 
-        return new SpendWindow(
+        return new SpendDialog(
             null,
             new SpendTracker(),
             new SpeechSpend(),
@@ -70,21 +70,21 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
             launchedAt);
     }
 
-    private static Button? Reset(Window window) =>
-        window.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "SpendReset");
+    private static Button? Reset(Control control) =>
+        control.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "SpendReset");
 
-    private static string Words(Window window) =>
+    private static string Words(Control control) =>
         string.Join(
             "\n",
-            window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
+            control.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
 
     [AvaloniaFact]
     public void TheButtonIsThereWhenTheWindowKnowsWhenTheProcessStarted()
     {
-        var window = Dialog(out _, Noon.AddHours(-1));
-        window.Show();
+        var dialog = Dialog(out _, Noon.AddHours(-1));
+        var window = dialog.Show();
 
-        Assert.NotNull(Reset(window));
+        Assert.NotNull(Reset(dialog));
 
         window.Close();
     }
@@ -96,10 +96,10 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
     [AvaloniaFact]
     public void AndAbsentOnAWindowThatDoesNot()
     {
-        var window = Dialog(out _, launchedAt: null);
-        window.Show();
+        var dialog = Dialog(out _, launchedAt: null);
+        var window = dialog.Show();
 
-        Assert.Null(Reset(window));
+        Assert.Null(Reset(dialog));
 
         window.Close();
     }
@@ -108,10 +108,10 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
     [AvaloniaFact]
     public void ItOffersTheWindowsTheDialogAlreadyShowsPlusTheSession()
     {
-        var window = Dialog(out _, Noon.AddHours(-1));
-        window.Show();
+        var dialog = Dialog(out _, Noon.AddHours(-1));
+        var window = dialog.Show();
 
-        var flyout = Assert.IsType<MenuFlyout>(Reset(window)!.Flyout);
+        var flyout = Assert.IsType<MenuFlyout>(Reset(dialog)!.Flyout);
 
         var offered = flyout.Items
             .OfType<MenuItem>()
@@ -131,22 +131,22 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
     [AvaloniaFact]
     public void TheFiguresRedrawAfterAReset()
     {
-        var window = Dialog(out var ledger, Noon.AddHours(-1));
-        window.Show();
+        var dialog = Dialog(out var ledger, Noon.AddHours(-1));
+        var window = dialog.Show();
 
-        Assert.Contains("1.4180", Words(window), StringComparison.Ordinal);
+        Assert.Contains("1.4180", Words(dialog), StringComparison.Ordinal);
 
         // The reset itself, without the dialog: what is under test here is that the window notices, and
-        // driving a modal confirmation headlessly would be testing ConfirmWindow.
+        // driving a modal confirmation headlessly would be testing ConfirmDialog.
         ledger.Reset(D47.Core.Conversation.SpendPeriods.Today(Noon, TimeZoneInfo.Utc));
 
-        typeof(SpendWindow)
+        typeof(SpendDialog)
             .GetMethod("Draw", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .Invoke(window, null);
+            .Invoke(dialog, null);
 
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var after = Words(window);
+        var after = Words(dialog);
 
         Assert.DoesNotContain("1.4180", after, StringComparison.Ordinal);
         Assert.Contains("nothing yet", after, StringComparison.Ordinal);
@@ -158,11 +158,11 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
     [AvaloniaFact]
     public void CloseIsStillThereBesideIt()
     {
-        var window = Dialog(out _, Noon.AddHours(-1));
-        window.Show();
+        var dialog = Dialog(out _, Noon.AddHours(-1));
+        var window = dialog.Show();
 
         Assert.Contains(
-            window.GetVisualDescendants().OfType<Button>(),
+            dialog.GetVisualDescendants().OfType<Button>(),
             button => $"{button.Content}" == "Close");
 
         window.Close();

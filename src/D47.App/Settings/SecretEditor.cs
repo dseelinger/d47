@@ -217,7 +217,7 @@ public sealed class SecretEditor : UserControl
             return;
         }
 
-        var wanted = await new ConfirmWindow(
+        var wanted = await new ConfirmDialog(
             "Delete stored key",
             $"Delete the stored {_row.Label}? Directive 47 cannot show a stored key back, so "
             + "this cannot be undone — you would have to paste it again, or reissue it at the "

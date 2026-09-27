@@ -11,18 +11,14 @@ namespace D47.App.Controls;
 /// <summary>
 /// A yes/no question the Commander has to answer before something irreversible or expensive happens.
 /// </summary>
-public sealed class ConfirmWindow : Window
+public sealed class ConfirmDialog : ModalDialog
 {
     private readonly TaskCompletionSource<bool> _answer = new();
 
-    public ConfirmWindow(string title, string question, string confirmLabel, string declineLabel, bool destructive = false)
+    public ConfirmDialog(string title, string question, string confirmLabel, string declineLabel, bool destructive = false)
     {
         Title = title;
         Width = 520;
-        SizeToContent = SizeToContent.Height;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        CanResize = false;
-        ShowInTaskbar = false;
 
         var text = new TextBlock
         {
@@ -47,7 +43,7 @@ public sealed class ConfirmWindow : Window
 
         Modal.Apply(this, "Confirm", title, text, [decline, confirm]);
 
-        // Closing the window without choosing is a no.
+        // Closing it without choosing is a no.
         Closed += (_, _) => _answer.TrySetResult(false);
 
         Opened += (_, _) => decline.Focus();

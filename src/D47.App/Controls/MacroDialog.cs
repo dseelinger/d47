@@ -9,7 +9,7 @@ using D47.Core.Input;
 namespace D47.App.Controls;
 
 /// <summary>Authoring macros (Phase 10, "Macros": invocation is by voice; authoring is not).</summary>
-public sealed class MacroWindow : Window
+public sealed class MacroDialog : ModalDialog
 {
     private static readonly string[] States = ["toggle", "on", "off"];
 
@@ -22,15 +22,14 @@ public sealed class MacroWindow : Window
     private readonly StackPanel _list = new() { Spacing = 12 };
     private readonly Notice _problems = new() { IsVisible = false };
 
-    public MacroWindow(MacroStore store)
+    public MacroDialog(MacroStore store)
     {
         _store = store;
         _macros = [.. store.Macros.Select(MutableMacro.From)];
 
         Title = "Macros";
         Width = 640;
-        Height = 560;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        MaxHeight = 560;
 
         var add = new Button { Content = "Add a macro" };
         add.Click += (_, _) =>
@@ -76,7 +75,7 @@ public sealed class MacroWindow : Window
         ShowProblems();
     }
 
-    /// <summary>Supplied by whoever opened the window.</summary>
+    /// <summary>Supplied by whoever opened the dialog.</summary>
     public IReadOnlyList<string> ReservedPhrases { get; init; } = [];
 
     private void ShowProblems()

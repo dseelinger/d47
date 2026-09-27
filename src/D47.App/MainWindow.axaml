@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:panel="clr-namespace:D47.App.Panel"
+        xmlns:windowing="clr-namespace:D47.App.Windowing"
         x:Class="D47.App.MainWindow"
         Title="Directive 47"
         Icon="/Assets/directive-47.ico"
@@ -13,5 +14,9 @@
        shows lives in PanelView, which the VR overlay instantiates for itself against the same
        view model — and which, since Phase 12, carries the settings surface
        as one of its pages rather than handing it to a second window. -->
-  <panel:PanelView x:Name="Panel" />
+  <Grid>
+    <panel:PanelView x:Name="Panel" />
+    <!-- Modal dialogs, over the panel and inside the zoom (#521). -->
+    <windowing:ModalHost x:Name="Modals" />
+  </Grid>
 </Window>
