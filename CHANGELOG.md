@@ -8,6 +8,11 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+The exobiology route plotter now checks the galaxy search setting before asking Spansh for a
+route, the same as the neutron, Road to Riches and trade plotters. With it off, "plot me an
+exobiology route" gets the same switched-off answer as the other plotters, rather than sending the
+origin system and jump range regardless.
+
 Flanger, phaser and wah now run after Chorus; deep ring mod after Ring modulation; tremolo,
 overdrive and bitcrusher before Glitch. Each has its own level, the same as every other Guardian
 voice effect. Three new presets use them: Ring-mod rasp, 8-bit computer and Flanged vocoder.

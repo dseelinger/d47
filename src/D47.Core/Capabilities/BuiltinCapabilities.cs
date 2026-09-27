@@ -251,7 +251,7 @@ public static class BuiltinCapabilities
             lore,
             () => LoreCapability.PlaceOf(gameState.Active),
             now ?? (() => DateTimeOffset.MinValue)),
-        ExobiologyCapability.Create(routes, () => gameState.Active, gameStatus),
+        ExobiologyCapability.Create(routes, () => gameState.Active, settings, gameStatus),
         CommunityGoalCapability.Create(
             () => gameState.Active,
             communityGoals,

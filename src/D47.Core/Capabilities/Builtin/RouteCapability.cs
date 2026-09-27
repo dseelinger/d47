@@ -318,7 +318,7 @@ public static class RouteCapability
             phrase,
             new Dictionary<string, string>(StringComparer.Ordinal) { ["kind"] = kind }));
 
-    private const string Unavailable =
+    internal const string Unavailable =
         "Route planning is switched off, so I can't plot that. It shares the galaxy search setting, "
         + "which the Commander can turn on in settings.";
 

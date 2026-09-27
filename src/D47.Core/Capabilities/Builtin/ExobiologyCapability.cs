@@ -24,6 +24,7 @@ public static class ExobiologyCapability
     public static CapabilityDescriptor Create(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
+        Configuration.SettingsService settings,
         Func<GameStatus>? status = null) => new()
     {
         Id = Id,
@@ -135,7 +136,7 @@ public static class ExobiologyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotAsync(routes, commander, arguments, cancellationToken),
+                    PlotAsync(routes, commander, settings, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Exobiology", Order = 58 },
@@ -319,9 +320,15 @@ public static class ExobiologyCapability
     private static async Task<ToolResult> PlotAsync(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
+        Configuration.SettingsService settings,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
+        if (!settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(RouteCapability.Unavailable);
+        }
+
         if (routes is null)
         {
             return ToolResult.Ok(
