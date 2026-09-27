@@ -597,46 +597,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (content, rows, foldButton);
     }
 
-    /// <summary>
-    /// A group's head: its title and description on one line, the description wrapping under the title
-    /// only when it cannot fit, the group's reset in a fixed 44px cell on the right, and a 1px accent rule
-    /// under the whole line.
-    /// </summary>
+    /// <summary>A group's head, with a reset that puts the whole group back.</summary>
     private GroupView BuildGroupHeading(int section, string placeId, int inPlace, SettingsPlaceGroup group)
     {
-        var heading = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
-        TitleText.Style(heading, TypeScale.Secondary, TitleRank.Group);
-        TitleText.Show(heading, group.Title);
-
-        var note = new TextBlock
-        {
-            Text = group.Help,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var words = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        words.Children.Add(heading);
-        words.Children.Add(note);
-
         var slot = VrCapability.SlotForPlacementGroup(group.Title);
 
-        var reset = new Button
-        {
-            Name = GroupResetName,
-            Theme = GlyphButtonTheme,
-            Width = TypeScale.MinimumTarget,
-            Height = TypeScale.MinimumTarget,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
-            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph),
-        };
-
-        AutomationProperties.SetName(reset, $"Reset {group.Title}");
+        var reset = ResetGlyph(GroupResetName, $"Reset {group.Title}");
 
         // Absent on a group with nothing it could put back, such as one that only reports.
         reset.IsVisible = slot is not null
@@ -667,20 +633,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         reset.PointerPressed += (_, e) => e.Handled = true;
 
-        var line = new DockPanel { MinHeight = TypeScale.MinimumTarget };
-        DockPanel.SetDock(reset, Dock.Right);
-        line.Children.Add(reset);
-        line.Children.Add(words);
-
-        var rule = new Border { Height = 1 };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
-
-        var container = new StackPanel
-        {
-            Name = GroupHeadName,
-            Margin = new Thickness(0, 16, 0, 4),
-            Children = { line, rule },
-        };
+        var (container, heading, note) = GroupHead(group.Title, group.Help, reset);
 
         return new GroupView(section, group.Title, group.Help, container, heading, note, reset, slot);
     }
@@ -2131,15 +2084,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     {
         var header = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
 
-        var label = new TextBlock
-        {
-            Text = row.Label,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        var label = RowLabel(row.Label);
 
         // This value is the flying Commander's; a second Commander on this machine sees their own (Phase 44).
         if (row.Scope == SettingScope.Commander)
@@ -2203,23 +2148,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // A row drawing its whole group leaves resetting to the group head.
         if (row is { Kind: not SettingKind.Secret, Binding.Write: not null } && underRow is null)
         {
-            var back = new Button
-            {
-                // Named so anything looking for "the control this row is about" can tell this apart from it.
-                Name = RowResetName,
-
-                Theme = GlyphButtonTheme,
-                Width = TypeScale.MinimumTarget,
-                Height = TypeScale.MinimumTarget,
-                HorizontalContentAlignment = HorizontalAlignment.Center,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0),
-                IsVisible = false,
-            };
-
-            back.Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph);
-            AutomationProperties.SetName(back, $"Reset {row.Label}");
+            // Named so anything looking for "the control this row is about" can tell this apart from it.
+            var back = ResetGlyph(RowResetName, $"Reset {row.Label}");
+            back.Margin = new Thickness(8, 0, 0, 0);
+            back.IsVisible = false;
 
             back.Click += (_, _) =>
             {
@@ -2295,39 +2227,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             caption.Background = Brushes.Transparent;
         }
 
-        // Fixed columns on every row, so every label, every control and every reset gutter sits at one x
-        // down the page whichever rows the filter leaves showing. The page-top strip keeps its own shape.
-        var grid = new Grid
-        {
-            ColumnDefinitions = row.PageTop
-                ?
-                [
-                    new ColumnDefinition(GridLength.Auto),
-                    new ColumnDefinition(12, GridUnitType.Pixel),
-                    new ColumnDefinition(GridLength.Auto),
-                ]
-                :
-                [
-                    new ColumnDefinition(LabelColumnWidth, GridUnitType.Pixel),
-                    new ColumnDefinition(RowColumnGap, GridUnitType.Pixel),
-                    new ColumnDefinition(1, GridUnitType.Star),
-                    new ColumnDefinition(RowColumnGap, GridUnitType.Pixel),
-                    new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel),
-                ],
-
-            HorizontalAlignment = row.PageTop ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
-        };
-
-        // Not a styling hook: tests find the rows this view builds by the class rather than by
-        // shape, since a three-column grid is also what Avalonia builds a TextBox out of.
-        if (!row.PageTop)
-        {
-            grid.Classes.Add(CompactRowClass);
-        }
-
-        Grid.SetColumn(caption, 0);
-        Grid.SetColumn(control, 2);
-
         caption.VerticalAlignment = VerticalAlignment.Center;
         control.VerticalAlignment = VerticalAlignment.Center;
 
@@ -2342,66 +2241,49 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         control.HorizontalAlignment = row.PageTop
             ? HorizontalAlignment.Right
             : underRow is null ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
-        grid.Children.Add(caption);
-        grid.Children.Add(control);
 
-        // A control built to a fixed width caps to the control column rather than running past it.
-        if (!row.PageTop && !double.IsNaN(control.Width))
+        Grid grid;
+        Control line;
+
+        if (row.PageTop)
         {
-            grid.SizeChanged += (_, e) => control.MaxWidth = Math.Max(
-                0, e.NewSize.Width - LabelColumnWidth - (2 * RowColumnGap) - ResetGutterWidth);
+            grid = new Grid
+            {
+                ColumnDefinitions =
+                [
+                    new ColumnDefinition(GridLength.Auto),
+                    new ColumnDefinition(12, GridUnitType.Pixel),
+                    new ColumnDefinition(GridLength.Auto),
+                ],
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+
+            Grid.SetColumn(caption, 0);
+            Grid.SetColumn(control, 2);
+            grid.Children.Add(caption);
+            grid.Children.Add(control);
+
+            line = grid;
+
+            // The page-top strip has no gutter column, so its reset docks outside the grid (#279).
+            if (resetButton is not null)
+            {
+                var dock = new DockPanel { LastChildFill = true };
+                DockPanel.SetDock(resetButton, Dock.Right);
+                dock.Children.Add(resetButton);
+                dock.Children.Add(grid);
+                line = dock;
+            }
         }
-
-        // In the row's own gutter column, which stays 44 wide whether or not this row can be reset.
-        if (!row.PageTop && resetButton is not null)
+        else
         {
-            Grid.SetColumn(resetButton, 4);
-            resetButton.HorizontalAlignment = HorizontalAlignment.Center;
-            resetButton.Margin = new Thickness(0);
-            grid.Children.Add(resetButton);
-            resetButton = null;
+            // Fixed columns on every row, so every label, every control and every reset gutter sits at one x
+            // down the page whichever rows the filter leaves showing.
+            grid = RowColumns(caption, control, resetButton);
+            line = RowFrame(grid, row.Protected);
         }
 
         Control body = grid;
-        Control line = body;
-
-        // The page-top strip has no gutter column, so its reset docks outside the grid (#279).
-        if (resetButton is not null)
-        {
-            var dock = new DockPanel { LastChildFill = true };
-            DockPanel.SetDock(resetButton, Dock.Right);
-            dock.Children.Add(resetButton);
-            dock.Children.Add(body);
-            line = dock;
-        }
-
-        if (!row.PageTop)
-        {
-            var ruled = new Border
-            {
-                MinHeight = RowMinHeight,
-                Padding = new Thickness(RowHorizontalPadding, RowVerticalPadding),
-                BorderThickness = new Thickness(0, 0, 0, 1),
-                Child = line,
-            };
-            Themed(ruled, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-            // Every row has the bar, so a protected row's label starts at the same x as the rest. It is drawn
-            // in A only on a protected row (#333); the legend that explains it is drawn once, above the rows.
-            var bar = new Border
-            {
-                BorderThickness = new Thickness(RowBarWidth, 0, 0, 0),
-                BorderBrush = Brushes.Transparent,
-                Child = ruled,
-            };
-
-            if (row.Protected)
-            {
-                Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
-            }
-
-            line = bar;
-        }
 
         var container = new StackPanel();
         container.Children.Add(line);
@@ -2430,7 +2312,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// label is where a Commander already looks to know what the row is (#333). The card heading's own
     /// HELP reaches the capability's page; this tooltip carries text only (#383).
     /// </summary>
-    private void AttachHelp(TextBlock label, TextBlock spoken)
+    private static void AttachHelp(TextBlock label, TextBlock spoken)
     {
         label.Focusable = true;
         ToolTip.SetTip(label, spoken);
@@ -3604,55 +3486,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private (Control, Action) BuildDropdownTile(SettingRow row, StatusLine message)
     {
-        var value = new TextBlock
-        {
-            FontSize = TypeScale.Body,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-
-        var status = new TextBlock
-        {
-            Name = "DropdownStatus",
-            FontSize = TypeScale.Caption,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            IsVisible = false,
-        };
-
-        var chevron = new TextBlock
-        {
-            Text = "▼",
-            FontSize = TypeScale.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
-        };
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        var layout = new DockPanel();
-        DockPanel.SetDock(chevron, Dock.Right);
-        layout.Children.Add(chevron);
-        layout.Children.Add(new StackPanel
-        {
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { value, status },
-        });
-
-        var button = new Button
-        {
-            Name = "DropdownTile",
-            Content = layout,
-            MinHeight = TypeScale.MinimumTarget,
-            Padding = new Thickness(14, 4),
-            BorderThickness = new Thickness(0),
-            FontSize = TypeScale.Body,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            VerticalContentAlignment = VerticalAlignment.Center,
-        };
-        Themed(button, Button.BackgroundProperty, ThemeManager.SlabKey);
-        AutomationProperties.SetName(button, row.Label);
-
-        // The button's own tip, carrying what the column clipped — only while it actually did (#382).
-        TruncationTip.Watch(value, () => value.Text, button);
+        var (button, value, status) = DropdownTile(row.Label);
 
         var busy = new BusyGlyph
         {

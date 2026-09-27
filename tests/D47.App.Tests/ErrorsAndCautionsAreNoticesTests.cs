@@ -175,7 +175,7 @@ public partial class ErrorsAndCautionsAreNoticesTests
         kit.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var first = kit.GetVisualDescendants().OfType<Notice>().First();
+        var first = kit.GetVisualDescendants().OfType<Border>().Single(border => border.Name == ControlKitWindow.CardPrefix + "Notice");
         var scroller = kit.GetVisualDescendants().OfType<ScrollViewer>().First();
         var top = first.TranslatePoint(default, (Visual)scroller.Content!)!.Value.Y;
         scroller.Offset = new Vector(0, Math.Max(0, top - 160));

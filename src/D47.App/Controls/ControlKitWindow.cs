@@ -1,8 +1,6 @@
 #if DEBUG
 using Avalonia;
-using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -15,33 +13,36 @@ using Avalonia.Styling;
 using D47.App.Panel;
 using D47.App.Settings;
 using D47.App.Theming;
+using D47.Core;
+using D47.Core.Capabilities;
+using D47.Core.Configuration;
+using D47.Core.Engineers;
 using D47.Core.Interface;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.App.Controls;
 
 /// <summary>
-/// The control system handoff's sign-off gate (#358), laid out as the reference's Control Kit view
-/// (<c>docs/spikes/reference/D47 Panel v2.dc.html</c>, #374). Every control is drawn from the real
-/// control themes and resource keys rather than copies. Debug-only — <c>Ctrl+Shift+K</c> opens it
-/// from the panel.
+/// One card per component in <c>design/system/components/</c>, each drawn with the app's own controls.
+/// Debug-only — <c>Ctrl+Shift+K</c> opens it from the panel.
 /// </summary>
 public sealed class ControlKitWindow : Window
 {
+    /// <summary>A card's name: this prefix and the component's folder name.</summary>
+    public const string CardPrefix = "KitCard.";
+
     private const double ContentMaxWidth = 1120;
     private const double PanelPadding = 32;
-    private const double SectionGap = 48;
-    private const double HeadingGap = 24;
-    private const double GridGap = 32;
-    private const double GridMinColumn = 310;
-    private const double CardGap = 12;
-    private const double CardMinColumn = 280;
-    private const double BarGap = 2;
-    private const double BarMinWidth = 150;
+    private const double GroupGap = 48;
+    private const double CardGap = 16;
+    private const double StateGap = 24;
     private const double CappedControlWidth = 400;
+    private const double PanelHeight = 560;
+    private const double FootHeight = 120;
 
     private readonly ThemeManager _themeManager = new(Application.Current!, NullLogger<ThemeManager>.Instance);
     private readonly TextBox _field = new() { Text = "Diaguandri" };
+    private readonly string _secretsRoot = Path.Combine(Path.GetTempPath(), $"d47-control-kit-{Guid.NewGuid():N}");
 
     public ControlKitWindow()
     {
@@ -62,22 +63,31 @@ public sealed class ControlKitWindow : Window
 
         var body = new StackPanel
         {
-            Spacing = SectionGap,
+            Spacing = GroupGap,
             Children =
             {
                 Header(),
-                ControlsSection(),
-                ChoosingSection(),
-                ThemeSection(),
-                StatusSection(),
-                NoticesSection(),
-                StatTilesSection(),
-                GaugesSection(),
-                ModalSection(),
-                RampSection(),
-                HeadingRanksSection(),
-                SettingsRowsSection(),
-                NavigationSection(),
+                Group("Foundations", Palette(), Surfaces(), TypeScaleCard()),
+                Group("Layout", GroupHead(), SettingsRow()),
+                Group("Navigation", Tab()),
+                Group(
+                    "Controls",
+                    ApiKey(),
+                    CheckboxTile(),
+                    Dropdown(),
+                    GlyphButton(),
+                    KeyBinding(),
+                    LevelBar(),
+                    ListBoxItem(),
+                    MixerTable(),
+                    NumberStepper(),
+                    SearchField(),
+                    Segmented(),
+                    StepperCard(),
+                    TextBoxCard(),
+                    TileButton()),
+                Group("Data", DataBlock(), Message(), ModalCard(), NoticeCard(), StatusRow()),
+                Group("Chrome", Card()),
             },
         };
 
@@ -94,6 +104,17 @@ public sealed class ControlKitWindow : Window
         };
 
         Content = new Grid { Children = { scroller, Scanlines() } };
+
+        Closed += (_, _) =>
+        {
+            try
+            {
+                Directory.Delete(_secretsRoot, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+        };
     }
 
     protected override void OnOpened(EventArgs e)
@@ -122,281 +143,20 @@ public sealed class ControlKitWindow : Window
         return scanlines;
     }
 
-    // -- Header --
+    // -- Header and the theme --
 
-    private static Control Header()
+    private Control Header()
     {
         var intro = Prose(
-            "Every control says what it is and what it is set to, without being read twice. Reverse video "
-                + "carries state, not outlines — a filled block is the terminal idiom and it is the thing that "
-                + "still reads at arm's length in a headset.",
+            "One card for each component in the design system, drawn with the controls the app uses.",
             TypeScale.Body,
             ThemeManager.GreyKey);
-        intro.MaxWidth = 640;
-        intro.Margin = new Thickness(0, 8, 0, 0);
+        intro.Margin = new Thickness(0, 8, 0, 24);
 
-        var cards = Reflow.Grid(
-            [
-                SpecCard("SPACING", "4 · 8 · 12 · 16 · 24 · 32 · 48. Nothing else."),
-                SpecCard("ROW", "52px settings · 44px minimum target"),
-                SpecCard("COLUMNS", "Label 300px · control next to it · reset gutter fixed"),
-            ],
-            CardMinColumn,
-            CardGap,
-            CardGap,
-            maxColumns: 3);
-        cards.Margin = new Thickness(0, 32, 0, 0);
-
-        return new StackPanel { Children = { TitleText.Screen("CONTROL KIT"), intro, cards } };
+        return new StackPanel { Children = { TitleText.Screen("CONTROL KIT"), intro, ThemeTools() } };
     }
 
-    private static Control SpecCard(string caption, string body)
-    {
-        var label = Caption(caption);
-        label.Margin = new Thickness(0, 0, 0, 6);
-
-        var card = new Border
-        {
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(18, 16),
-            Child = new StackPanel { Children = { label, Prose(body, TypeScale.Secondary, ThemeManager.WhiteKey) } },
-        };
-        Themed(card, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-        return card;
-    }
-
-    // -- Telling things apart --
-
-    private Control ControlsSection()
-    {
-        var (report, reportText) = SettingsView.Report();
-        reportText.Text = "11 ships, the oldest last seen about a day ago.";
-
-        var (sentence, _) = LabeledCheckBox.Build("Include journal history");
-        var (disabled, _) = LabeledCheckBox.Build("Unavailable here");
-        disabled.IsChecked = true;
-        disabled.IsEnabled = false;
-
-        var checkboxes = new StackPanel
-        {
-            Spacing = 2,
-            Children =
-            {
-                new CheckBox { Content = "Raw", IsChecked = true, HorizontalAlignment = HorizontalAlignment.Left },
-                new CheckBox { Content = "Keyboard", IsChecked = false, HorizontalAlignment = HorizontalAlignment.Left },
-                sentence,
-                disabled,
-                new CheckBox { IsChecked = true, Classes = { "bare" }, HorizontalAlignment = HorizontalAlignment.Left },
-            },
-        };
-        sentence.HorizontalAlignment = HorizontalAlignment.Left;
-        disabled.HorizontalAlignment = HorizontalAlignment.Left;
-
-        var cells = new Control[]
-        {
-            Cell("REPORT — READ ONLY", report, Note("No box at all. A box is a promise you can type in it.")),
-            Cell("FIELD — EDITABLE", _field, Note("Inset ground, one lit edge, block caret.")),
-            Cell("ACTIONS — EVERY STATE", Actions(), Note("Every class draws the same tile. Focus fills it; delete is red.")),
-            Cell("CHECKBOX — TWO STATE", checkboxes, Note("A name in capitals, a sentence in prose. The row is the target; hover or focus lights it.")),
-            Cell(
-                "CHOICE — FEW OPTIONS",
-                new Segment
-                {
-                    ItemsSource = ["NONE", "WARN", "INFO", "DEBUG"],
-                    SelectedIndex = 2,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                },
-                Note($"Up to {Choice.SegmentLimit}: show them all. No ComboBox needed, and nothing is hidden behind arrows.")),
-            Cell(
-                "CHOICE — MANY OPTIONS",
-                Capped(new Stepper
-                {
-                    ItemsSource = ["Tiny", "Small", "Medium (English only)", "Medium", "Large", "Large (turbo)"],
-                    Consequences = [null, null, "1.5 GB · runs on the GPU", null, null, null],
-                    SelectedIndex = 2,
-                }),
-                Note("Position shown, consequence shown. The old spinner told you neither."),
-                noteGap: 8),
-            Cell(
-                "AMOUNT — NUMBER + UNIT",
-                new Amount
-                {
-                    Value = 500,
-                    Unit = "ms",
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                },
-                Note("The unit lives in the control, so the label stops saying \"in milliseconds\". Click the value to type one.")),
-            Cell(
-                "LEVEL — SETTABLE",
-                Capped(new Level { Minimum = 0.1, Value = 0.85 }),
-                Note("A segment per 0.05, and the number always present. Segments below the minimum are dim.")),
-            Cell(
-                "GAUGE — REPORTED, NOT SETTABLE",
-                Capped(LoadoutPages.Gauge(new LoadoutGauge("Power", "25.04 / 22.93 MW · 109%", 1.0, LoadoutTone.Danger))),
-                Note("Hatched, capped, no handle — it can never be mistaken for the slider above.")),
-            Cell(
-                "BINDING",
-                Binding("Ctrl+Alt+X", "button 9"),
-                Note("Bindings are machine text, so they are mono — and they wrap instead of colliding.")),
-        };
-
-        return Section("Telling things apart", Reflow.Grid(cells, GridMinColumn, GridGap, GridGap, maxColumns: 3));
-    }
-
-    // -- Choosing among items --
-
-    /// <summary>
-    /// The list row, the segment and the stepper in every state. Hover is shown by setting the
-    /// pseudo-class, so a pointer passing over one of these clears it.
-    /// </summary>
-    private static Control ChoosingSection()
-    {
-        var rows = new StackPanel
-        {
-            Spacing = Segment.Gap,
-            Children =
-            {
-                KitRow("At rest", "tile · white · a"),
-                Hovered(KitRow("Hover", "tile2")),
-                KitRow("Selected", "a · knock · brown", selected: true),
-                Disabled(KitRow("Disabled", "slab · grey")),
-            },
-        };
-
-        var list = new ListBox
-        {
-            ItemsSource = new[] { "Diaguandri", "Shinrarta Dezhra", "Colonia" },
-            SelectedIndex = 1,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-        };
-
-        string[] options = ["NEAR", "SESSION", "ANYWHERE"];
-
-        var segmentHover = new Segment { ItemsSource = options, SelectedIndex = 1 };
-        Hovered(((Avalonia.Controls.Panel)segmentHover.Content!).Children[0]);
-
-        var segments = new StackPanel
-        {
-            Spacing = 12,
-            Children =
-            {
-                segmentHover,
-                Disabled(new Segment { ItemsSource = options, SelectedIndex = 1 }),
-            },
-        };
-
-        string[] models = ["Tiny", "Small", "Medium", "Large", "Large (turbo)", "Base", "Base (English)", "Medium (English)"];
-
-        var stepperHover = new Stepper { ItemsSource = models, SelectedIndex = 2 };
-        Hovered(stepperHover.GetLogicalDescendants().OfType<RepeatButton>().Last());
-
-        var steppers = new StackPanel
-        {
-            Spacing = 16,
-            Children =
-            {
-                Capped(stepperHover),
-                Capped(Disabled(new Stepper { ItemsSource = models, SelectedIndex = 2 })),
-            },
-        };
-
-        var cells = new Control[]
-        {
-            Cell("LIST ROW — THE d47-row CLASS", rows, Note("Rows sit 2px apart. No outline, no bar, no glow.")),
-            Cell("LIST ROW — LISTBOX", list, Note("The same states on a ListBoxItem.")),
-            Cell("SEGMENT — HOVER, CHOSEN, DISABLED", segments, Note("Equal-width tiles, 2px apart. The first option is hovered.")),
-            Cell("STEPPER — HOVER, DISABLED", steppers, Note("The right arrow is hovered. The second stepper is disabled.")),
-        };
-
-        return Section("Choosing among items", Reflow.Grid(cells, GridMinColumn, GridGap, GridGap, maxColumns: 2));
-    }
-
-    private static Border KitRow(string name, string secondary, bool selected = false)
-    {
-        var nameText = ListRow.Name(new TextBlock { Text = name });
-        var secondaryText = ListRow.Sub(new TextBlock { Text = secondary });
-
-        return ListRow.Dress(
-            new Border
-            {
-                Child = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { nameText, secondaryText } },
-            },
-            selected);
-    }
-
-    private static T Hovered<T>(T control) where T : Control
-    {
-        ((IPseudoClasses)control.Classes).Set(":pointerover", true);
-        return control;
-    }
-
-    private static T Disabled<T>(T control) where T : Control
-    {
-        control.IsEnabled = false;
-        return control;
-    }
-
-    /// <summary>Each button class at rest, hovered, focused and disabled. Hover and focus are shown by setting the pseudo-class.</summary>
-    private static Control Actions()
-    {
-        var rows = new StackPanel { Spacing = Segment.Gap };
-
-        foreach (var weight in new[] { "", "destructive" })
-        {
-            var name = weight.Length == 0 ? "normal" : weight;
-            rows.Children.Add(new WrapPanel
-            {
-                ItemSpacing = Segment.Gap,
-                LineSpacing = Segment.Gap,
-                Children =
-                {
-                    Weighted(new Button { Content = name }, weight),
-                    Hovered(Weighted(new Button { Content = "hover" }, weight)),
-                    Focused(Weighted(new Button { Content = "focus" }, weight)),
-                    Disabled(Weighted(new Button { Content = "disabled" }, weight)),
-                },
-            });
-        }
-
-        return rows;
-    }
-
-    private static Button Weighted(Button button, string weight)
-    {
-        if (weight.Length > 0)
-        {
-            button.Classes.Add(weight);
-        }
-
-        return button;
-    }
-
-    private static T Focused<T>(T control) where T : Control
-    {
-        ((IPseudoClasses)control.Classes).Set(":focus-visible", true);
-        return control;
-    }
-
-    private static Control Binding(params string[] keys)
-    {
-        var wrap = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
-
-        foreach (var key in keys)
-        {
-            wrap.Children.Add(SettingsView.BindingChip(key).Chip);
-        }
-
-        wrap.Children.Add(new Button { Content = "BIND" });
-        wrap.Children.Add(new Button { Content = "CLEAR" });
-
-        return wrap;
-    }
-
-    // -- Theme --
-
-    private Control ThemeSection()
+    private Control ThemeTools()
     {
         var picker = new Segment
         {
@@ -416,7 +176,7 @@ public sealed class ControlKitWindow : Window
         var accentBox = new TextBox
         {
             Width = 160,
-            PlaceholderText = Palettes.Elite.A.ToString(),
+            PlaceholderText = "#RRGGBB",
             VerticalAlignment = VerticalAlignment.Stretch,
         };
         var apply = new Button
@@ -451,19 +211,13 @@ public sealed class ControlKitWindow : Window
             Children = { accentBox, apply },
         };
 
-        return Section(
-            "Theme",
-            new StackPanel
-            {
-                Spacing = GridGap,
-                Children = { Cell("THEME", picker), Cell("ACCENT — AS IF A HUD MATRIX SUPPLIED IT", accentRow) },
-            });
+        return States(("theme", picker), ("accent, as if a HUD matrix supplied it", accentRow));
     }
 
     /// <summary>
-    /// A diagonal matrix that scales Elite's own <see cref="Palette.A"/> to <paramref name="target"/> one channel at a
-    /// time — the same shape a Commander's HUD colour matrix takes, so typing an Accent exercises
-    /// <see cref="ThemeManager.Apply"/>'s matrix path rather than a shortcut around it (#358).
+    /// A diagonal matrix that scales Elite's own <see cref="Theming.Palette.A"/> to <paramref name="target"/>
+    /// one channel at a time, the shape a Commander's HUD colour matrix takes, so an accent typed here goes
+    /// through <see cref="ThemeManager.Apply"/>'s matrix path.
     /// </summary>
     private static GuiColourMatrix MatrixFor(Color target)
     {
@@ -477,137 +231,609 @@ public sealed class ControlKitWindow : Window
             0, 0, Scale(source.B, target.B));
     }
 
-    // -- Status --
+    // -- Foundations --
 
-    private static Control StatusSection()
+    private static Control Palette()
     {
-        var intro = Prose(
-            "Each coloured token has one meaning. On the HUD-matrix theme all of them pass through the matrix; "
-                + "the neutrals do not.",
-            TypeScale.Body,
-            ThemeManager.GreyKey);
-        intro.MaxWidth = 680;
+        var ramp = new WrapPanel { ItemSpacing = 20, LineSpacing = 20 };
 
-        var bars = Reflow.Grid(
-            [
-                StatusBar("A · values, rules", ThemeManager.AKey),
-                StatusBar("CYAN · yours, ready", ThemeManager.CyanKey),
-                StatusBar("BLUE · confirmed", ThemeManager.BlueKey),
-                StatusBar("RED · hostile, error", ThemeManager.RedKey),
-                StatusBar("WARN · caution", ThemeManager.WarnKey),
-                StatusBar("YELLOW · stored", ThemeManager.YellowKey),
-            ],
-            BarMinWidth,
-            BarGap,
-            BarGap,
-            maxColumns: 6);
-
-        return Section("Status", new StackPanel { Spacing = 16, Children = { intro, bars } });
-    }
-
-    private static Control NoticesSection()
-    {
-        var retry = new Button { Content = "Retry" };
-
-        return Section(
-            "Notices",
-            new StackPanel
-            {
-                Spacing = 12,
-                Children =
-                {
-                    Note("Red when something failed or is blocked; amber for a caution the Commander can act on. "
-                        + "One notice per problem, at the top of the group it belongs to."),
-                    new Notice
-                    {
-                        Label = "Speech engine offline",
-                        Text = "Groq rejected the key. D47 is using Whisper on this computer until you replace it.",
-                        Detail = "HTTP 401 · Groq",
-                        Actions = { retry },
-                    },
-                    new Notice(NoticeLevel.Warning)
-                    {
-                        Label = "Journal not found",
-                        Text = "D47 can't see the game yet. Start Elite, or point D47 at the journal folder.",
-                    },
-                    new Notice(inline: true) { Text = "Inline, for use inside a row or under a control." },
-                },
-            });
-    }
-
-    private static Control StatusBar(string label, string fillKey)
-    {
-        var text = new TextBlock
+        foreach (var key in ThemeManager.Tokens)
         {
-            Text = label,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Meta,
-            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
-        };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+            var box = new Border { Width = 72, Height = 72, BorderThickness = new Thickness(1) };
+            Themed(box, Border.BackgroundProperty, key);
+            Themed(box, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
-        var bar = new Border { Padding = new Thickness(16, 14), Child = text };
-        Themed(bar, Border.BackgroundProperty, fillKey);
+            ramp.Children.Add(new StackPanel { Spacing = 6, Children = { box, Caption(key["D47.".Length..].ToLowerInvariant()) } });
+        }
 
-        return bar;
+        return Card("Palette", "One palette per theme. Colour carries relationship and state, never decoration.", ramp);
     }
 
-    // -- Stat tiles, gauges and the modal --
+    private static Control Surfaces()
+    {
+        var block = TitleText.Block(
+            TitleText.Build("Sacred Fire", TypeScale.Title, TitleRank.Screen),
+            TitleText.Context("Fleet carrier · BNH-T2F"),
+            TitleText.Figure("Carrier balance", "990,302,661 CR"));
 
-    private static Control StatTilesSection()
+        var head = TitleText.GroupRow(TitleText.Build("Unlock prerequisites", TypeScale.Section, TitleRank.Group));
+
+        var ground = new Border { Padding = new Thickness(20), Child = new StackPanel { Spacing = 24, Children = { block, head } } };
+        Themed(ground, Border.BackgroundProperty, ThemeManager.BgKey);
+
+        return Card(
+            "Surfaces",
+            "The page ground, a screen's title block and a section head on its rule. Scanlines lie over this whole window on a theme that has them.",
+            States(("title block and section head", ground)));
+    }
+
+    private static Control TypeScaleCard()
+    {
+        var mono = new TextBlock
+        {
+            Text = "$0.0412 · 19:42 · CTRL+ALT+X",
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Body,
+        };
+        Themed(mono, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        return Card(
+            "TypeScale",
+            "Chrome, headings and tiles in Saira capitals; prose in Sintony; numbers, keys, times and costs in mono.",
+            States(
+                ("screen title", TitleText.Build("Screen title", TypeScale.Title, TitleRank.Screen)),
+                ("group", TitleText.Build("Group", TypeScale.Section, TitleRank.Group)),
+                ("subgroup", TitleText.Build("Subgroup", TypeScale.Caption, TitleRank.Subgroup)),
+                ("row label", TitleText.Build("Row label, sentence case", TypeScale.Body, TitleRank.Row, sentence: true)),
+                ("body", Prose("Functioning within tolerance, Commander.", TypeScale.Body, ThemeManager.WhiteKey)),
+                ("mono", mono)));
+    }
+
+    // -- Layout --
+
+    private static Control GroupHead()
+    {
+        var legend = Prose(SettingsView.ProtectedLegend, TypeScale.Secondary, ThemeManager.GreyKey);
+
+        var (changed, _, _) = SettingsView.GroupHead(
+            "Microphone",
+            "The input device, and how D47 knows you're talking to it.",
+            SettingsView.ResetGlyph("KitGroupReset", "Reset Microphone"));
+
+        var resetless = SettingsView.ResetGlyph("KitGroupResetHidden", "Reset Corrections");
+        resetless.IsVisible = false;
+        var (untouched, _, _) = SettingsView.GroupHead("Corrections", "Names D47 has learned to hear correctly.", resetless);
+
+        return Card(
+            "GroupHead",
+            "A group's name, one line saying what it holds, and the group reset, on an accent rule. The page legend sits above the groups.",
+            States(("page legend", legend), ("with a reset", changed), ("nothing to reset", untouched)));
+    }
+
+    private static Control SettingsRow()
+    {
+        var (dropdown, value, _) = SettingsView.DropdownTile("Microphone");
+        value.Text = "System default · Logi 4K Stream Edition";
+        Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        dropdown.Width = Stepper.MaximumWidth;
+
+        var reset = SettingsView.ResetGlyph("KitRowReset", "Reset Push-to-talk");
+
+        var rows = new StackPanel
+        {
+            Children =
+            {
+                Row("Microphone", dropdown),
+                Row("Push-to-talk", Binding("BUTTON 11"), reset, protectedRow: true),
+                Row("Capture before the key", new Amount { Value = 500, Unit = "ms" }),
+            },
+        };
+
+        return Card(
+            "SettingsRow",
+            "Label, control and a reserved reset column. A protected row draws its bar in the accent; the reset shows only once the value has changed.",
+            Capped(rows, SettingsView.RowsMaxWidth));
+    }
+
+    private static Control Row(string label, Control control, Button? reset = null, bool protectedRow = false)
+    {
+        var caption = SettingsView.RowLabel(label);
+        control.HorizontalAlignment = HorizontalAlignment.Left;
+        control.VerticalAlignment = VerticalAlignment.Center;
+
+        return SettingsView.RowFrame(SettingsView.RowColumns(caption, control, reset), protectedRow);
+    }
+
+    // -- Navigation --
+
+    private Control Tab()
+    {
+        var tabTheme = this.TryFindResource("D47.Tab", out var resource) ? resource as ControlTheme : null;
+        var group = $"D47KitTabs{Guid.NewGuid():N}";
+        var level1 = new WrapPanel { LineSpacing = Segment.Gap };
+
+        var tabs = new[] { "SELECTED", "REST", "HOVER", "FOCUS" };
+        for (var i = 0; i < tabs.Length; i++)
+        {
+            var tab = new RadioButton
+            {
+                Theme = tabTheme,
+                GroupName = group,
+                Content = tabs[i],
+                IsChecked = i == 0,
+            };
+
+            level1.Children.Add(i switch
+            {
+                2 => Hovered(tab),
+                3 => Focused(tab),
+                _ => tab,
+            });
+        }
+
+        var level1Strip = new Border { BorderThickness = new Thickness(0, 0, 0, 2), Child = level1 };
+        Themed(level1Strip, Border.BorderBrushProperty, ThemeManager.AKey);
+
+        var level2 = new TextChoice { ItemsSource = ["Selected", "Rest", "Hover", "Focus", "Disabled"], SelectedIndex = 0 };
+        var level2Items = level2.GetLogicalDescendants().OfType<RadioButton>().ToList();
+        Hovered(level2Items[2]);
+        Focused(level2Items[3]);
+        Disabled(level2Items[4]);
+
+        return Card(
+            "Tab",
+            "Tabs are tiles on an accent rule; only the selected one glows. Sub-tabs are text, the selected one underlined.",
+            States(("tabs", level1Strip), ("sub-tabs", level2)));
+    }
+
+    // -- Controls --
+
+    /// <summary>A key editor over a secret store of its own in a temporary folder, holding a key that is not real.</summary>
+    private Control ApiKey()
+    {
+        const string SecretName = "kit.example";
+
+        var paths = new AppPaths(_secretsRoot);
+        paths.EnsureCreated();
+
+        var secrets = new SecretStore(paths, new DpapiSecretProtector(), NullLogger<SecretStore>.Instance);
+        secrets.Set(SecretName, "kit-not-a-real-key-a91C");
+
+        var settings = new SettingsService(
+            new SettingsStore(paths, NullLogger<SettingsStore>.Instance),
+            secrets,
+            new D47Settings(),
+            NullLogger<SettingsService>.Instance);
+
+        SettingRow Key(string secretName) => new()
+        {
+            Key = $"kit.{secretName}",
+            Label = "Example key",
+            Help = "A key held only by this window.",
+            Kind = SettingKind.Secret,
+            SecretName = secretName,
+            Verify = _ => Task.FromResult(SecretCheck.Works("The example key is accepted.")),
+        };
+
+        return Card(
+            "ApiKey",
+            "A stored key is a masked block with REPLACE and VERIFY; the field appears only after REPLACE, or when no key is stored.",
+            States(
+                ("stored", new SecretEditor(Key(SecretName), settings)),
+                ("missing", new SecretEditor(Key("kit.missing"), settings))));
+    }
+
+    private static Control CheckboxTile()
+    {
+        static CheckBox Tile(string label, bool isChecked = false, bool enabled = true)
+        {
+            var (box, text) = LabeledCheckBox.Build(label);
+            text.TextWrapping = TextWrapping.Wrap;
+            box.IsChecked = isChecked;
+            box.IsEnabled = enabled;
+            box.HorizontalAlignment = HorizontalAlignment.Stretch;
+            box.VerticalAlignment = VerticalAlignment.Stretch;
+            return box;
+        }
+
+        var two = new TileGrid
+        {
+            Columns = 2,
+            Children =
+            {
+                Tile("Cancel D47's own voice out of the mic", isChecked: true),
+                Tile("Take the room out of what D47 hears"),
+            },
+        };
+
+        var four = new TileGrid
+        {
+            Columns = 4,
+            Children =
+            {
+                Tile("Cylon"),
+                Tile("Pitch down"),
+                Tile("Chorus", isChecked: true),
+                Tile("Reverb", enabled: false),
+            },
+        };
+
+        var hidden = LabeledCheckBox.Caps("Hide the Colonia eight");
+        hidden.IsChecked = true;
+
+        var caps = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Segment.Gap,
+            Children = { hidden, LabeledCheckBox.Caps("Show every setting") },
+        };
+
+        return Card(
+            "CheckboxTile",
+            "Every two-state control: a square box inside a tile the whole of which is the target, grouped in a grid.",
+            StatesOf(("grid of 2", two), ("grid of 4, one disabled", four), ("capitals (filters)", caps)),
+            stacked: true);
+    }
+
+    private static Control Dropdown()
+    {
+        var (tile, value, status) = SettingsView.DropdownTile("Voice");
+        value.Text = "Rachel · ElevenLabs";
+        Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        status.Text = "PAID · KEY STORED";
+        status.IsVisible = true;
+        status.Bind(TextBlock.ForegroundProperty, Stepper.Ink(ChoiceTone.Yellow));
+        tile.Width = Stepper.MaximumWidth;
+
+        var (unset, unsetValue, _) = SettingsView.DropdownTile("Output device");
+        unsetValue.Text = "(System default)";
+        Themed(unsetValue, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
+        unset.Width = Stepper.MaximumWidth;
+
+        return Card(
+            "Dropdown",
+            "For long lists whose length varies: audio devices and voices. A tile that opens a list of choices.",
+            States(("chosen, with status", tile), ("not set", unset)));
+    }
+
+    private static Control GlyphButton()
+    {
+        static Button Copy() => CopyGlyph.For("Diaguandri", _ => Task.FromResult(true));
+
+        return Card(
+            "GlyphButton",
+            "A glyph tile in a full-size target. On hover or keyboard focus the tile fills and names itself beside it.",
+            States(
+                ("copy — hover it for its label", Copy()),
+                ("pressed", Pressed(Copy())),
+                ("reset", SettingsView.ResetGlyph("KitReset", "Reset to default")),
+                ("disabled", Disabled(Copy()))));
+    }
+
+    private static Control KeyBinding() => Card(
+        "KeyBinding",
+        "The bound key in a mono chip, then BIND and CLEAR.",
+        States(("bound", Binding("BUTTON 11")), ("unbound", Binding(null))));
+
+    private static Control Binding(string? key)
+    {
+        var (chip, text) = SettingsView.BindingChip(key ?? "NONE");
+
+        if (key is null)
+        {
+            Themed(text, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
+        }
+
+        var wrap = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
+        wrap.Children.Add(chip);
+        wrap.Children.Add(new Button { Content = "BIND" });
+        wrap.Children.Add(new Button { Content = "CLEAR", IsEnabled = key is not null });
+        return wrap;
+    }
+
+    private static Control LevelBar() => Card(
+        "LevelBar",
+        "A level as clickable segments with its value beside it. Segments under the minimum are dim; a muted channel draws its level in grey.",
+        StatesOf(
+            ("level", Capped(new Level { Minimum = 0.1, Value = 0.85 })),
+            ("muted", Capped(new Level { Value = 1, Muted = true }))),
+        stacked: true);
+
+    /// <summary>The row states are shown by setting the pseudo-class, so a pointer passing over one clears it.</summary>
+    private static Control ListBoxItem()
+    {
+        var rows = new StackPanel
+        {
+            Spacing = Segment.Gap,
+            Children =
+            {
+                ListRow.Head("Systems"),
+                KitRow("At rest", "Muang · 12.4 ly"),
+                Hovered(KitRow("Hover", "Giryak · 30.1 ly")),
+                KitRow("Selected", "Leesti · 44.0 ly", selected: true),
+                Disabled(KitRow("Disabled", "Colonia · 22,000 ly")),
+            },
+        };
+
+        var list = new ListBox
+        {
+            ItemsSource = new[] { "Diaguandri", "Shinrarta Dezhra", "Colonia" },
+            SelectedIndex = 1,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+        };
+
+        return Card(
+            "ListBoxItem",
+            "Rows are filled tiles apart from one another, under a list head. Selection is a solid fill.",
+            States(("rows under a list head", Capped(rows)), ("a ListBox", Capped(list))));
+    }
+
+    private static Border KitRow(string name, string secondary, bool selected = false)
+    {
+        var nameText = ListRow.Name(new TextBlock { Text = name });
+        var secondaryText = ListRow.Sub(new TextBlock { Text = secondary });
+
+        return ListRow.Dress(
+            new Border
+            {
+                Child = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { nameText, secondaryText } },
+            },
+            selected);
+    }
+
+    private static Control MixerTable()
+    {
+        string[] columns = ["Level", "Mute", "Duck others"];
+        bool[] checks = [false, true, false];
+
+        var headings = columns.Select((label, c) => new SettingRow
+        {
+            Key = $"kit.mixer.{c}",
+            Label = label,
+            Help = string.Empty,
+            Kind = checks[c] ? SettingKind.Toggle : SettingKind.Number,
+        }).ToList();
+
+        static CheckBox Mute(bool muted) => new() { IsChecked = muted, Classes = { "bare" } };
+
+        Grid Channel(string name, Control?[] cells, bool changed)
+        {
+            var reset = SettingsView.ResetGlyph(SettingsView.RowResetName, $"Reset {name}");
+            reset.IsVisible = changed;
+            return SettingsView.MixerChannelRow(name, null, columns, cells, checks, new StatusLine(), reset).Row;
+        }
+
+        var table = new StackPanel
+        {
+            Name = SettingsView.MixerName,
+            Spacing = Gaps.Tile,
+            Children =
+            {
+                SettingsView.BuildMixerHeader(headings, columns, checks),
+                Channel("D47", [new Level { Value = 1 }, Mute(false), new Level { Value = 0.35 }], changed: false),
+                Channel("Game audio", [new Level { Value = 0.5, Muted = true }, Mute(true), new Level { Value = 1 }], changed: true),
+                Channel("Cues", [new Level { Value = 1 }, Mute(false), null], changed: false),
+            },
+        };
+
+        return Card(
+            "MixerTable",
+            "One row per channel: its name, a cell per setting, and the reset column. A dash where a channel has no such setting.",
+            Capped(table, SettingsView.RowsMaxWidth));
+    }
+
+    private static Control NumberStepper()
+    {
+        var price = new Amount { Value = 0.05m, Step = 0.01m, Format = "0.00", Unit = "$" };
+        Pressed(price.GetLogicalDescendants().OfType<RepeatButton>().Last());
+
+        return Card(
+            "NumberStepper",
+            "A number with its unit and arrows either side; click the value to type one.",
+            States(("milliseconds", new Amount { Value = 500, Unit = "ms" }), ("price, arrow pressed", price)));
+    }
+
+    private static Control SearchField()
+    {
+        static TextBox Search(string? text = null)
+        {
+            var box = new TextBox
+            {
+                Width = PanelView.TranscriptSearchWidth,
+                PlaceholderText = "Search this page",
+                Text = text,
+            };
+            box.Classes.Add(FieldMessage.SearchClass);
+            return box;
+        }
+
+        return Card(
+            "SearchField",
+            "A search field that turns to the accent on focus, and never outweighs the message input.",
+            States(("rest", Search()), ("with value", Search("Giryak"))));
+    }
+
+    private static Control Segmented()
+    {
+        string[] options = ["NONE", "EDGE", "ELEVENLABS", "OPENAI"];
+
+        var withStatus = new Segment
+        {
+            ItemsSource = options,
+            SelectedIndex = 2,
+            Statuses =
+            [
+                null,
+                new ChoiceStatus("FREE", ChoiceTone.Grey),
+                new ChoiceStatus("PAID · KEY STORED", ChoiceTone.Yellow),
+                new ChoiceStatus("PAID · NO KEY", ChoiceTone.Grey),
+            ],
+        };
+
+        var hover = new Segment { ItemsSource = ["NEAR", "SESSION", "ANYWHERE"], SelectedIndex = 1 };
+        Hovered(((Avalonia.Controls.Panel)hover.Content!).Children[0]);
+
+        var longLabels = new Segment
+        {
+            ItemsSource = ["Press to talk (PTT)", "Toggle on and off", "Listen whenever I speak", "Listen when I say its name"],
+            SelectedIndex = 0,
+        };
+
+        return Card(
+            "Segmented",
+            $"For {Choice.SegmentLimit} or fewer options: equal tiles, the chosen one filled. A status goes on a second line.",
+            StatesOf(
+                ("four, with status", withStatus),
+                ("first option hovered", hover),
+                ("long labels", longLabels),
+                ("disabled", Disabled(new Segment { ItemsSource = ["NEAR", "SESSION", "ANYWHERE"], SelectedIndex = 1 }))),
+            stacked: true);
+    }
+
+    private static Control StepperCard()
+    {
+        string[] models = ["Tiny", "Small", "Medium (English only)", "Medium", "Large", "Large (turbo)"];
+
+        var hover = new Stepper { ItemsSource = models, SelectedIndex = 2 };
+        Hovered(hover.GetLogicalDescendants().OfType<RepeatButton>().Last());
+
+        return Card(
+            "Stepper",
+            "For a handful of fixed options: arrows either side of the value, its position counted, its consequence under it.",
+            StatesOf(
+                ("with a consequence", Capped(new Stepper
+                {
+                    ItemsSource = models,
+                    Consequences = [null, null, "1.5 GB · runs on the GPU", null, null, null],
+                    SelectedIndex = 2,
+                })),
+                ("right arrow hovered", Capped(hover)),
+                ("disabled", Capped(Disabled(new Stepper { ItemsSource = models, SelectedIndex = 2 })))),
+            stacked: true);
+    }
+
+    private Control TextBoxCard()
+    {
+        var error = new TextBox { Text = "sk-12" };
+        FieldMessage.ShowError(error, "That key was rejected. Paste it again.");
+
+        var warning = new TextBox { Text = "Jameson Memorial" };
+        FieldMessage.ShowWarning(warning, "This name isn't in the journal yet. D47 will learn it.");
+
+        return Card(
+            "TextBox",
+            "An outlined field with a block caret; the outline turns cyan on focus. A message under it says what is wrong.",
+            StatesOf(
+                ("rest", Capped(new TextBox { PlaceholderText = "Commander name" })),
+                ("focus", Capped(_field)),
+                ("error", Capped(error)),
+                ("warning", Capped(warning)),
+                ("disabled", Capped(Disabled(new TextBox { PlaceholderText = "Not available" })))),
+            stacked: true);
+    }
+
+    /// <summary>Hover, press and focus are shown by setting the pseudo-class.</summary>
+    private static Control TileButton()
+    {
+        static Button Tile(string text, string? weight = null)
+        {
+            var button = new Button { Content = text };
+
+            if (weight is not null)
+            {
+                button.Classes.Add(weight);
+            }
+
+            return button;
+        }
+
+        const string Destructive = SettingsView.DestructiveClass;
+
+        return Card(
+            "TileButton",
+            "Every button is a flat tile, default or destructive. SEND is a default tile.",
+            States(
+                ("rest", Tile("Add to checklist")),
+                ("hover", Hovered(Tile("Add to checklist"))),
+                ("pressed", Pressed(Tile("Add to checklist"))),
+                ("focus", Focused(Tile("Add to checklist"))),
+                ("disabled", Disabled(Tile("Add to checklist"))),
+                ("destructive", Tile("Forget them all", Destructive)),
+                ("destructive hover", Hovered(Tile("Forget them all", Destructive))),
+                ("send", Tile("SEND"))));
+    }
+
+    // -- Data --
+
+    private static Control DataBlock()
     {
         var grid = StatTile.Grid(
             [
-                StatTile.Build("System", "Diaguandri"),
-                StatTile.Build("Tritium", "1,248 t"),
-                StatTile.Build("Range", "500 ly"),
+                StatTile.Build("Current system", "Giryak", StatInk.Here),
+                StatTile.Build("Tritium in tank", "967 t"),
+                StatTile.Build("Where you stand", "Known · no invitation", StatInk.Name),
                 StatTile.Build("Carrier", "Nautilus Deep", StatInk.Name),
+                StatTile.Build("Range", "500 ly"),
                 StatTile.Build("Docked at", "Ray Gateway", StatInk.Name),
-                StatTile.Build("Current system", "Shinrarta Dezhra", StatInk.Here),
             ]);
         grid.Name = "KitStatGrid";
 
-        return Section(
-            "Stat tiles",
-            new StackPanel
+        var gauges = new StackPanel
+        {
+            Spacing = 16,
+            Children =
             {
-                Spacing = 12,
-                Children =
-                {
-                    Note("Read-only, on slab. A value in orange; a ship, engineer or carrier name in white; "
-                        + "the system you are in, in cyan. The grid drops columns as the width falls."),
-                    grid,
-                },
-            });
-    }
-
-    private static Control GaugesSection()
-    {
-        var gauges = Reflow.Grid(
-            [
                 Gauge.Build("Delivered", "1,860 / 3,000 t · 62%", 0.62),
-                Gauge.Build("Cargo", "28 / 32 t", 28.0 / 32, GaugeFill.Capacity),
+                Gauge.Build("Capacity", "1,110 / 25,000 t", 1110.0 / 25000, GaugeFill.Capacity),
                 Gauge.Build("Power", "25.04 / 22.93 MW · 109%", 1.0, GaugeFill.Over),
-            ],
-            GridMinColumn,
-            GridGap,
-            GridGap,
-            maxColumns: 3);
+            },
+        };
 
-        return Section(
-            "Gauges",
-            new StackPanel
+        var ladder = new StackPanel
+        {
+            Spacing = 8,
+            Children =
             {
-                Spacing = 12,
-                Children = { Note("Progress in orange, capacity in yellow, over its limit in red."), gauges },
-            });
+                EngineersPages.CriterionLine(new UnlockCriterion("Visit the engineer's base", Met: true)),
+                EngineersPages.CriterionLine(new UnlockCriterion("Reach Friendly with the Pilots Federation", Met: false)
+                {
+                    Reading = "Cordial, 40% of the way",
+                    Measure = new UnlockMeasure(40, 100, IsCeiling: false),
+                }),
+                EngineersPages.CriterionLine(new UnlockCriterion("Hold an invitation", Met: null)),
+                EngineersPages.CriterionLine(new UnlockCriterion("Provide 25 units of Modular Terminals", Met: false)),
+            },
+        };
+
+        return Card(
+            "DataBlock",
+            "Read-only data on a neutral slab. A value in the accent; a name in white; where you are in cyan. Capacity gauges are yellow; the prerequisite ladder reads met, in progress, unknown and not met.",
+            StatesOf(("stat grid", grid), ("gauges", Capped(gauges)), ("prerequisite ladder", ladder)),
+            stacked: true);
     }
 
-    /// <summary>
-    /// The modal as a dialog drawn over the panel would show it: the scrim, and the modal inside its 1px A
-    /// frame, which on a separate window is the native border.
-    /// </summary>
-    private static Control ModalSection()
+    /// <summary>The panel itself, drawn over a model holding a short exchange.</summary>
+    private static Control Message()
+    {
+        var model = new PanelViewModel();
+        var at = new DateTimeOffset(2026, 9, 26, 19, 41, 0, TimeSpan.Zero);
+        model.Append("Good evening, Commander. Ready to go.", time: at);
+        model.Append("How are you this evening?", voice: TranscriptVoice.Commander, time: at);
+        model.Append(
+            "Functioning within tolerance, Commander. Docked at Sacred Fire, Giryak, systems quiet.",
+            time: at.AddMinutes(1));
+
+        var panel = new PanelView { DataContext = model, Height = PanelHeight };
+
+        return Card(
+            "Message",
+            "The transcript: D47 on the left with an accent bar, the Commander on the right in cyan.",
+            panel);
+    }
+
+    /// <summary>The modal as a dialog drawn over the panel shows it: the scrim, and the modal inside its frame.</summary>
+    private static Control ModalCard()
     {
         var question = Prose(
             "Its loadout is removed from the logbook. The ship itself is not touched.",
@@ -643,274 +869,144 @@ public sealed class ControlKitWindow : Window
         var ground = new Border { Child = scrim };
         Themed(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
 
-        return Section(
+        return Card(
             "Modal",
-            new StackPanel
-            {
-                Spacing = 12,
-                Children =
+            "A framed dialog over a dark scrim: context, title, a key figure at the right, a scrolling body, and the buttons on a rule. Esc closes it.",
+            ground);
+    }
+
+    private static Control NoticeCard()
+    {
+        var retry = new Button { Content = "Retry" };
+
+        return Card(
+            "Notice",
+            "Red when something failed or is blocked; amber for a caution the Commander can act on. One notice per problem.",
+            StatesOf(
+                ("error, with an action", new Notice
                 {
-                    Note("Context, title and an A rule; a scrolling body; a Line2 rule and the buttons. "
-                        + "Esc closes it. The scrim is black at 72%."),
-                    ground,
-                },
-            });
+                    Label = "Speech engine offline",
+                    Text = "Groq rejected the key. D47 is using Whisper on this computer until you replace it.",
+                    Detail = "HTTP 401 · Groq",
+                    Actions = { retry },
+                }),
+                ("warning", new Notice(NoticeLevel.Warning)
+                {
+                    Label = "Journal not found",
+                    Text = "D47 can't see the game yet. Start Elite, or point D47 at the journal folder.",
+                }),
+                ("inline", new Notice(inline: true) { Text = "Inline, for use inside a row or under a control." })),
+            stacked: true);
     }
 
-    // -- Ramp --
-
-    private static Control RampSection()
+    /// <summary>The foot of the panel itself: the microphone line and the session's spend over the message input.</summary>
+    private static Control StatusRow()
     {
-        var ramp = new WrapPanel { ItemSpacing = 20, LineSpacing = 20 };
-
-        foreach (var key in ThemeManager.Tokens)
+        var model = new PanelViewModel
         {
-            ramp.Children.Add(Swatch(key["D47.".Length..].ToLowerInvariant(), key));
-        }
+            Microphone = D47.Core.Listening.MicrophoneState.Idle,
+            MicrophoneDetail = "Hold BUTTON 11 to talk.",
+        };
 
-        return Section("Ramp", ramp);
+        var panel = new PanelView { DataContext = model };
+        panel.EnableTurnDetails(() => Task.CompletedTask, () => 0.1432m);
+
+        return Card(
+            "StatusRow",
+            "Above the message input: the microphone's state, the session's spend and SPEND at the far right.",
+            PanelFoot(panel));
     }
 
-    private static Control Swatch(string token, string resourceKey)
+    /// <summary>A panel cut to its foot.</summary>
+    private static Control PanelFoot(PanelView panel)
     {
-        var box = new Border { Width = 72, Height = 72, BorderThickness = new Thickness(1) };
-        Themed(box, Border.BackgroundProperty, resourceKey);
-        Themed(box, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        panel.Height = PanelHeight;
+        panel.VerticalAlignment = VerticalAlignment.Bottom;
 
-        var name = new TextBlock
-        {
-            Text = token,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Secondary,
-            FontWeight = FontWeight.SemiBold,
-        };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        var slice = new Border { Height = FootHeight, ClipToBounds = true, Child = panel };
+        Themed(slice, Border.BackgroundProperty, ThemeManager.BgKey);
 
-        var key = new TextBlock
-        {
-            Text = resourceKey,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Caption,
-        };
-        Themed(key, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
-
-        var hex = new TextBlock { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Caption };
-        Themed(hex, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        box.GetResourceObservable(resourceKey).Subscribe(new Avalonia.Reactive.AnonymousObserver<object?>(value =>
-            hex.Text = value is SolidColorBrush { Color: var c } ? $"#{c.R:X2}{c.G:X2}{c.B:X2}" : null));
-
-        return new StackPanel { Spacing = 6, Width = 130, Children = { box, name, hex, key } };
+        return slice;
     }
 
-    // -- Four ranks of heading --
+    // -- Chrome --
 
-    private static Control HeadingRanksSection()
+    private static Control Card()
     {
-        var group = TitleText.Build("GROUP, WITH A RULE", TypeScale.Section, TitleRank.Group);
-        group.Margin = new Thickness(0, 16, 0, 0);
+        static Control Ship(string name, string hull, string where, bool selected) =>
+            LoadoutPages.Card(
+                $"{name} ({hull})", $"{hull}\n{where}", marked: false, () => { }, LoadoutStanding.Owned, showing: selected, headline: name);
 
-        var subgroup = TitleText.Build("SUBGROUP", TypeScale.Caption, TitleRank.Subgroup);
-        subgroup.Margin = new Thickness(0, 16, 0, 0);
-
-        var row = TitleText.Build("Row label, sentence case", TypeScale.Body, TitleRank.Row, sentence: true);
-        row.Margin = new Thickness(0, 12, 0, 0);
-
-        var block = new Border
-        {
-            BorderThickness = new Thickness(2, 0, 0, 0),
-            Padding = new Thickness(24, 0, 0, 0),
-            Child = new StackPanel { Children = { TitleText.Screen("SCREEN TITLE"), group, subgroup, row } },
-        };
-        Themed(block, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-        return Section("Four ranks of heading", block);
-    }
-
-    // -- A settings row: normal, protected, with a reset shown --
-
-    private static Control SettingsRowsSection()
-    {
-        var legend = Prose(SettingsView.ProtectedLegend, TypeScale.Secondary, ThemeManager.GreyKey);
-
-        var rows = new StackPanel
-        {
-            Children =
-            {
-                SettingsRowDemo(
-                    "When it assumes you mean it",
-                    new Segment { ItemsSource = ["NAMED ONLY", "CAUTIOUS", "BALANCED", "EAGER"], SelectedIndex = 2 }),
-                SettingsRowDemo(
-                    "Push to talk",
-                    new CheckBox { IsChecked = true, Classes = { "bare" } },
-                    protectedRow: true),
-                SettingsRowDemo(
-                    "Capture before the key",
-                    new Amount { Value = 500, Unit = "ms" },
-                    showReset: true),
-            },
-        };
-
-        return Section("Settings rows", new StackPanel { Spacing = 16, Children = { legend, rows } });
-    }
-
-    /// <summary>The row layout <c>BuildRow</c> draws — label column, control, reserved reset gutter, the
-    /// protected bar — built here from the same sizes and resource keys rather than a settings row (#333).</summary>
-    private static Control SettingsRowDemo(
-        string label, Control control, bool showReset = false, bool protectedRow = false)
-    {
-        const double RowMinHeight = 52;
-        const double RowVerticalPadding = 8;
-        const double LabelColumnMaxWidth = 300;
-        const double ResetGutterWidth = 44;
-        const double ProtectedBarWidth = 3;
-        const double ProtectedBarPadding = 12;
-
-        var caption = new TextBlock
-        {
-            Text = label,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(caption, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-
-        control.HorizontalAlignment = HorizontalAlignment.Left;
-        control.VerticalAlignment = VerticalAlignment.Center;
-
-        var grid = new Grid
-        {
-            ColumnDefinitions =
+        var cards = Reflow.Grid(
             [
-                new ColumnDefinition(GridLength.Auto) { MaxWidth = LabelColumnMaxWidth },
-                new ColumnDefinition(16, GridUnitType.Pixel),
-                new ColumnDefinition(1, GridUnitType.Star),
-                new ColumnDefinition(16, GridUnitType.Pixel),
-                new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel),
+                Stated("rest", Ship("Campaigner", "Panther Clipper MkII", "Muang · docked", selected: false)),
+                Stated("hover", Hovered(Ship("Wanderer", "Mandalay", "Stored · Giryak", selected: false))),
+                Stated("selected", Ship("Hauler", "Type-9 Heavy", "Stored · Leesti", selected: true)),
             ],
-        };
+            200,
+            StateGap,
+            StateGap,
+            maxColumns: 3);
 
-        Grid.SetColumn(caption, 0);
-        Grid.SetColumn(control, 2);
-        grid.Children.Add(caption);
-        grid.Children.Add(control);
-
-        if (showReset)
-        {
-            var reset = new Button
-            {
-                Theme = Application.Current?.FindResource("D47.GlyphButton") as ControlTheme,
-                Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph),
-                Width = TypeScale.MinimumTarget,
-                Height = TypeScale.MinimumTarget,
-            };
-
-            AutomationProperties.SetName(reset, "Reset to default");
-            Grid.SetColumn(reset, 4);
-            grid.Children.Add(reset);
-        }
-
-        var rowShape = new Border
-        {
-            MinHeight = RowMinHeight,
-            Padding = new Thickness(0, RowVerticalPadding),
-            BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = grid,
-        };
-        Themed(rowShape, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-        Control line = rowShape;
-
-        if (protectedRow)
-        {
-            var bar = new Border
-            {
-                BorderThickness = new Thickness(ProtectedBarWidth, 0, 0, 0),
-                Padding = new Thickness(ProtectedBarPadding, 0, 0, 0),
-                Child = line,
-            };
-            Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
-            line = bar;
-        }
-
-        return line;
-    }
-
-    // -- Level-1 tabs and the level-2 text row --
-
-    private Control NavigationSection()
-    {
-        var tabTheme = this.TryFindResource("D47.Tab", out var resource) ? resource as ControlTheme : null;
-        var group = $"D47KitTabs{Guid.NewGuid():N}";
-        var level1 = new WrapPanel { LineSpacing = Segment.Gap };
-
-        var tabs = new[] { "SELECTED", "REST", "HOVER", "FOCUS" };
-        for (var i = 0; i < tabs.Length; i++)
-        {
-            var tab = new RadioButton
-            {
-                Theme = tabTheme,
-                GroupName = group,
-                Content = tabs[i],
-                IsChecked = i == 0,
-            };
-
-            level1.Children.Add(i switch
-            {
-                2 => Hovered(tab),
-                3 => Focused(tab),
-                _ => tab,
-            });
-        }
-
-        var level1Strip = new Border { BorderThickness = new Thickness(0, 0, 0, 2), Child = level1 };
-        Themed(level1Strip, Border.BorderBrushProperty, ThemeManager.AKey);
-
-        var level2 = new TextChoice { ItemsSource = ["Selected", "Rest", "Hover", "Focus", "Disabled"], SelectedIndex = 0 };
-        var level2Items = level2.GetLogicalDescendants().OfType<RadioButton>().ToList();
-        Hovered(level2Items[2]);
-        Focused(level2Items[3]);
-        Disabled(level2Items[4]);
-
-        return Section(
-            "Navigation",
-            new StackPanel
-            {
-                Spacing = GridGap,
-                Children =
-                {
-                    Cell("LEVEL 1 — TABS", level1Strip, Note("Only the selected tab glows.")),
-                    Cell("LEVEL 2 — TEXT ROW", level2),
-                },
-            });
+        return Card("Card", "A selectable tile for a ship or carrier. Filled, not outlined; selection is a solid fill.", cards);
     }
 
     // -- Shared pieces --
 
-    private static Control Section(string heading, Control content) => new StackPanel
+    private static Control Group(string heading, params Control[] cards) => new StackPanel
     {
-        Spacing = HeadingGap,
-        Children = { TitleText.GroupRow(TitleText.Build(heading, TypeScale.Section, TitleRank.Group)), content },
+        Spacing = CardGap,
+        Children = { TitleText.GroupRow(TitleText.Build(heading, TypeScale.Section, TitleRank.Group)), Stack(CardGap, cards) },
     };
 
-    /// <summary>A grid cell: the caption, the control, and an optional note beneath it.</summary>
-    private static Control Cell(string caption, Control control, TextBlock? note = null, double noteGap = 12)
+    /// <summary>A component's card: its design name, what it is for, and the component drawn beneath.</summary>
+    private static Control Card(string component, string summary, Control content)
     {
-        var label = Caption(caption);
-        label.Margin = new Thickness(0, 0, 0, 12);
+        var name = TitleText.Build(component, TypeScale.Secondary, TitleRank.Subgroup, sentence: true);
 
-        var cell = new StackPanel { Children = { label, control } };
+        var about = Prose(summary, TypeScale.Tip, ThemeManager.GreyKey);
+        about.Margin = new Thickness(0, 4, 0, 16);
 
-        if (note is not null)
+        var card = new Border
         {
-            note.Margin = new Thickness(0, noteGap, 0, 0);
-            cell.Children.Add(note);
-        }
+            Name = CardPrefix + component,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(20, 16),
+            Child = new StackPanel { Children = { name, about, content } },
+        };
+        Themed(card, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
-        return cell;
+        return card;
     }
 
-    /// <summary>A tracked mono caption at caption size. The text is authored in capitals, since the
-    /// tracking is set for them.</summary>
+    private static Control Card(string component, string summary, IEnumerable<Control> states, bool stacked) =>
+        Card(component, summary, stacked ? Stack(StateGap, states) : Across(states));
+
+    private static StackPanel Stack(double spacing, IEnumerable<Control> children)
+    {
+        var stack = new StackPanel { Spacing = spacing };
+        stack.Children.AddRange(children);
+        return stack;
+    }
+
+    /// <summary>Each state under its caption, side by side and wrapping.</summary>
+    private static Control States(params (string Caption, Control Control)[] states) =>
+        Across(states.Select(state => Stated(state.Caption, state.Control)));
+
+    private static IEnumerable<Control> StatesOf(params (string Caption, Control Control)[] states) =>
+        states.Select(state => Stated(state.Caption, state.Control));
+
+    private static Control Across(IEnumerable<Control> states)
+    {
+        var wrap = new WrapPanel { ItemSpacing = StateGap, LineSpacing = StateGap };
+        wrap.Children.AddRange(states);
+        return wrap;
+    }
+
+    private static Control Stated(string caption, Control control) =>
+        new StackPanel { Spacing = 6, Children = { Caption(caption), control } };
+
+    /// <summary>A mono caption naming a state, in lower case as the design writes it.</summary>
     private static TextBlock Caption(string text)
     {
         var label = new TextBlock
@@ -918,13 +1014,10 @@ public sealed class ControlKitWindow : Window
             Text = text,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Caption,
-            LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
         };
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
         return label;
     }
-
-    private static TextBlock Note(string? text) => Prose(text, TypeScale.Tip, ThemeManager.Grey2Key);
 
     private static TextBlock Prose(string? text, double size, string inkKey)
     {
@@ -939,12 +1032,39 @@ public sealed class ControlKitWindow : Window
         return block;
     }
 
-    /// <summary>Fills the column up to <see cref="CappedControlWidth"/>, left-aligned.</summary>
-    private static Control Capped(Control control) => new Grid
+    /// <summary>Fills the column up to <paramref name="width"/>, left-aligned.</summary>
+    private static Control Capped(Control control, double width = CappedControlWidth) => new Grid
     {
-        ColumnDefinitions = [new ColumnDefinition(1, GridUnitType.Star) { MaxWidth = CappedControlWidth }],
+        ColumnDefinitions = [new ColumnDefinition(1, GridUnitType.Star) { MaxWidth = width }],
+        MinWidth = Math.Min(width, CappedControlWidth),
         Children = { control },
     };
+
+    private static T Hovered<T>(T control) where T : Control
+    {
+        ((IPseudoClasses)control.Classes).Set(":pointerover", true);
+        return control;
+    }
+
+    private static T Focused<T>(T control) where T : Control
+    {
+        ((IPseudoClasses)control.Classes).Set(":focus-visible", true);
+        return control;
+    }
+
+    /// <summary>Set once the button is in the tree, since a button clears <c>:pressed</c> as it is attached.</summary>
+    private static T Pressed<T>(T control) where T : Control
+    {
+        control.AttachedToVisualTree += (_, _) =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => ((IPseudoClasses)control.Classes).Set(":pressed", true));
+        return control;
+    }
+
+    private static T Disabled<T>(T control) where T : Control
+    {
+        control.IsEnabled = false;
+        return control;
+    }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target[!property] = new DynamicResourceExtension(key);

@@ -86,7 +86,7 @@ public partial class SettingsView
         grid.ColumnDefinitions.Add(new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel));
     }
 
-    private Grid BuildMixerHeader(IReadOnlyList<SettingRow> rows, IReadOnlyList<string> columns, IReadOnlyList<bool> checks)
+    internal static Grid BuildMixerHeader(IReadOnlyList<SettingRow> rows, IReadOnlyList<string> columns, IReadOnlyList<bool> checks)
     {
         var header = MixerGrid();
         AddMixerColumns(header, checks);
@@ -110,7 +110,7 @@ public partial class SettingsView
         return header;
     }
 
-    private TextBlock MixerHeading(string text, string? help, int column)
+    private static TextBlock MixerHeading(string text, string? help, int column)
     {
         var heading = new TextBlock
         {
@@ -121,7 +121,7 @@ public partial class SettingsView
             Margin = new Thickness(0, 4, 0, 4),
         };
         heading.Classes.Add(MixerHeaderClass);
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        Ink(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         Grid.SetColumn(heading, column);
 
         if (!string.IsNullOrWhiteSpace(help))
@@ -132,7 +132,7 @@ public partial class SettingsView
         return heading;
     }
 
-    private TextBlock HoverText(string text)
+    private static TextBlock HoverText(string text)
     {
         var spoken = new TextBlock
         {
@@ -141,7 +141,7 @@ public partial class SettingsView
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
         };
-        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        Ink(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return spoken;
     }
@@ -154,69 +154,21 @@ public partial class SettingsView
         int section,
         int groupIndex)
     {
-        var grid = MixerGrid();
-        grid.Classes.Add(MixerRowClass);
-        grid.MinHeight = TypeScale.MinimumTarget;
-        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        AddMixerColumns(grid, checks);
-
-        var nameText = new TextBlock
-        {
-            Text = name,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(nameText, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-        grid.Children.Add(nameText);
-
-        if (rows.Select(row => row.GroupHelp).FirstOrDefault(help => !string.IsNullOrWhiteSpace(help)) is { } what)
-        {
-            AttachHelp(nameText, HoverText(what));
-        }
-
         // One line for whichever of the channel's controls last refused a value.
         var message = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
-        Grid.SetRow(message, 1);
-        Grid.SetColumn(message, 2);
-        Grid.SetColumnSpan(message, 2 * columns.Count);
-        grid.Children.Add(message);
 
+        var cells = new Control?[columns.Count];
         var views = new List<RowView>();
 
         for (var c = 0; c < columns.Count; c++)
         {
-            var column = 2 + (2 * c);
-
             if (rows.FirstOrDefault(row => row.Label == columns[c]) is not { } row)
             {
-                var absent = new TextBlock
-                {
-                    Name = MixerAbsentName,
-                    Text = "—",
-                    FontSize = TypeScale.Body,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                Themed(absent, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-                Grid.SetColumn(absent, column);
-                grid.Children.Add(absent);
                 continue;
             }
 
             var (control, refresh) = BuildControl(row, message);
-
-            if (control is Level level)
-            {
-                level.Width = double.NaN;
-            }
-
-            control.HorizontalAlignment = control is CheckBox ? HorizontalAlignment.Center : HorizontalAlignment.Stretch;
-            control.VerticalAlignment = VerticalAlignment.Center;
-            AutomationProperties.SetName(control, $"{name} {row.Label}");
-            Grid.SetColumn(control, column);
-            grid.Children.Add(control);
+            cells[c] = control;
 
             var view = new RowView(row, new Avalonia.Controls.Panel(), refresh)
             {
@@ -230,22 +182,8 @@ public partial class SettingsView
             views.Add(view);
         }
 
-        var reset = new Button
-        {
-            Name = RowResetName,
-            Theme = GlyphButtonTheme,
-            Width = TypeScale.MinimumTarget,
-            Height = TypeScale.MinimumTarget,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Content = Glyphs.Text(Glyphs.ResetText, TypeScale.Glyph),
-            IsVisible = false,
-        };
-
-        AutomationProperties.SetName(reset, $"Reset {name}");
-        Grid.SetColumn(reset, grid.ColumnDefinitions.Count - 1);
-        grid.Children.Add(reset);
+        var reset = ResetGlyph(RowResetName, $"Reset {name}");
+        reset.IsVisible = false;
 
         reset.Click += (_, _) =>
         {
@@ -256,6 +194,9 @@ public partial class SettingsView
 
             Refresh();
         };
+
+        var help = rows.Select(row => row.GroupHelp).FirstOrDefault(help => !string.IsNullOrWhiteSpace(help));
+        var (grid, nameText) = MixerChannelRow(name, help, columns, cells, checks, message, reset);
 
         return new MixerChannel(name, grid, nameText, reset, views);
     }
