@@ -36,7 +36,7 @@ public static class CaptionStrip
     /// <see cref="Window.Content"/> is built.
     /// </summary>
     /// <param name="showMinimize">
-    /// Off for a window that is <c>ShowInTaskbar="False"</c>: minimised, it has no way back (#286).
+    /// Off for every dialog; <see cref="Dialogs.Over(Window, Window, string)"/> passes false.
     /// </param>
     public static void Apply(Window window, bool showMinimize = true)
     {

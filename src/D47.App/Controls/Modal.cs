@@ -11,7 +11,7 @@ namespace D47.App.Controls;
 /// <summary>
 /// The shared dialog layout on Bar: an orange context line, a White title and an A rule; a scrolling body;
 /// a Line2 rule and the dialog's buttons. The 1px A frame is the native window border, painted by
-/// <see cref="Windowing.Dialogs.Over(Window, Window, bool, string)"/>.
+/// <see cref="Windowing.Dialogs.Over(Window, Window, string)"/>.
 /// </summary>
 public static class Modal
 {

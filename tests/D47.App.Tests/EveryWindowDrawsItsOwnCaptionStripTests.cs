@@ -377,12 +377,18 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
     }
 
     [AvaloniaFact]
-    public void ConfirmWindowShowsMinimiseAndCloseOnly()
+    public void ConfirmWindowShowsCloseOnly()
     {
-        var window = new ConfirmWindow("Sure?", "Really?", "Yes", "No");
-        CaptionStrip.Apply(window);
+        var owner = new Window { Content = new TextBlock() };
+        owner.Show();
 
-        Assert.Equal(2, Buttons(window).Count);
+        var window = new ConfirmWindow("Sure?", "Really?", "Yes", "No");
+        _ = window.Over(owner);
+
+        Assert.Single(Buttons(window));
+
+        window.Close();
+        owner.Close();
     }
 
     [AvaloniaFact]

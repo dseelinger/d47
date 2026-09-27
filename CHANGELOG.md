@@ -11,6 +11,10 @@
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 
+A dialog can no longer be minimised. It has no minimise button, and Win+Down and the system menu
+do not minimise it either. A minimised dialog had no taskbar button and left the main window
+unusable until it was found and restored.
+
 Badges and cards are filled, with no outline. The Current ship badge on a Fleet card is a cyan
 chip with dark lettering, and the PRE-RELEASE badge is an orange chip. The update banner, the
 startup and switch readouts in the status row, the choice card, the headset overlay card and the
