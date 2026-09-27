@@ -24,7 +24,7 @@ public enum HistoryState
 }
 
 /// <summary>
-/// The six folds over journals d47 was not running for, run together and off the startup path. Owns no
+/// The folds over journals d47 was not running for, run together and off the startup path. Owns no
 /// thread: a caller runs <see cref="Run"/> on whichever one it wants the walk on (#148).
 /// </summary>
 public sealed class HistoryBackfill
@@ -52,6 +52,9 @@ public sealed class HistoryBackfill
 
     /// <summary>The same for the names, and where this walk's result is written back.</summary>
     public HeardNamesStore? NameFile { get; init; }
+
+    /// <summary>The unsold organic data, which the walk folds into rather than returning (#526).</summary>
+    public ExobiologyLedger? Exobiology { get; init; }
 
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
@@ -146,6 +149,15 @@ public sealed class HistoryBackfill
                     Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
                     cancellation));
 
+            if (Exobiology is { } exobiology)
+            {
+                Timed("exobiology backfill", () =>
+                {
+                    exobiology.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
             State = HistoryState.Done;
         }
         catch (OperationCanceledException)
@@ -185,6 +197,11 @@ public sealed class HistoryBackfill
 
         return found;
     }
+
+    private IReadOnlyList<string> Files() =>
+        System.IO.Directory.Exists(Directory)
+            ? [.. System.IO.Directory.EnumerateFiles(Directory, JournalFolder.FilePattern).OrderBy(Path.GetFileName, StringComparer.Ordinal)]
+            : [];
 
     private T Timed<T>(string name, Func<T> fold)
     {

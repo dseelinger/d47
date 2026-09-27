@@ -7,6 +7,9 @@ public sealed class SamplingCallout : ICallout
 {
     public string Id => "sampling";
 
+    /// <summary>Where an analysis is priced and the unsold total kept; null says nothing about value.</summary>
+    public ExobiologyLedger? Ledger { get; init; }
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         if (context.IsPriming || context.State is not { } state)
@@ -32,11 +35,40 @@ public sealed class SamplingCallout : ICallout
             }
 
             var line = journalEvent.String("ScanType") == "Analyse"
-                ? $"{genus.Species ?? genusName} analysed. That run is complete."
+                ? $"{genus.Species ?? genusName} analysed. That run is complete." + Value(journalEvent, state)
                 : Progress(genus, genusName);
 
             yield return new Announcement($"sampling.{journalEvent.Timestamp.Ticks}", line);
         }
+    }
+
+    private string Value(JournalEvent journalEvent, CommanderGameState state)
+    {
+        if (Ledger?.Price(journalEvent) is not { } analysis)
+        {
+            return string.Empty;
+        }
+
+        var line = analysis switch
+        {
+            { Worth: not { } } => $" I have no value for {analysis.Species}.",
+            { FirstFootfall: true } => $" Worth {BiologyCallout.Credits(analysis.Worth.Value)} with the first footfall bonus.",
+            { FirstFootfall: false } => $" Worth {BiologyCallout.Credits(analysis.Worth.Value)}. No first footfall bonus.",
+            _ => $" Worth {BiologyCallout.Credits(analysis.Worth.Value)}; whether the first footfall bonus applies is not known.",
+        };
+
+        // Only once the older journals are folded, since before then the total leaves out what they hold.
+        if (!Ledger.HistoryFolded)
+        {
+            return line;
+        }
+
+        var unsold = Ledger.Unsold(state.Identity.FrontierId);
+        var unpriced = unsold.Unpriced.Count;
+
+        return line + (unpriced == 0
+            ? $" {BiologyCallout.Credits(unsold.Total)} unsold."
+            : $" {BiologyCallout.Credits(unsold.Total)} unsold, not counting {unpriced} sample{(unpriced == 1 ? "" : "s")} I have no value for.");
     }
 
     private static string Progress(GenusProgress genus, string genusName)

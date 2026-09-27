@@ -10,6 +10,8 @@ public static class ExobiologyCapability
 {
     public const string Id = "exobiology";
 
+    public const string ResetTool = "reset_unsold_exobiology";
+
     /// <param name="routes">
     /// Null where nothing composed one — under the designer, and in a test that is not about it.
     /// </param>
@@ -18,13 +20,15 @@ public static class ExobiologyCapability
     /// — <c>ScanOrganic</c> carries no position at all.
     /// </param>
     /// <param name="plans">Where a plotted route is kept, or null where nothing is drawing them.</param>
+    /// <param name="ledger">The unsold organic data, or null where nothing keeps it.</param>
     public static CapabilityDescriptor Create(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
         Func<GameStatus>? status = null,
         RoutePlanBook? plans = null,
-        Func<DateTimeOffset>? now = null) => new()
+        Func<DateTimeOffset>? now = null,
+        ExobiologyLedger? ledger = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -38,6 +42,8 @@ public static class ExobiologyCapability
             "what biology is on this body",
             "is this body worth landing on",
             "what did the scan find here",
+            "how much exobiology data am I carrying",
+            "reset unsold exobiology",
         ],
         // Each names its tool (#161). "exobiology route" asks for a route and used to be answered with what
         // the scanner found on the body underneath, which is the tool declared first rather than the one the
@@ -48,6 +54,10 @@ public static class ExobiologyCapability
             new("biology on this body", "get_body_biology"),
             new("worth landing on", "get_body_biology"),
             new("what did the scan find", "get_body_biology"),
+            new("exobiology data am i carrying", "get_unsold_exobiology"),
+            new("unsold exobiology", "get_unsold_exobiology"),
+            new("reset unsold exobiology", ResetTool),
+            new("reset the exobiology total", ResetTool),
         ],
         Tools =
         [
@@ -84,6 +94,25 @@ public static class ExobiologyCapability
                     + "no table of it.",
                 Parameters = [],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Sampling(commander(), status))),
+            },
+            new ToolDefinition
+            {
+                Name = "get_unsold_exobiology",
+                Description =
+                    "The organic data the Commander has analysed and not yet sold at Vista Genomics: its "
+                    + "total value, how many analyses, how many carry the first footfall bonus, and any "
+                    + "left out of the total because D47 has no value for the species. Lost on death.",
+                Parameters = [],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Unsold(ledger, commander()))),
+            },
+            new ToolDefinition
+            {
+                Name = ResetTool,
+                Description = "Set the Commander's unsold exobiology total to zero from now.",
+                Parameters = [],
+                Protected = true,
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(
+                    Reset(ledger, commander(), now?.Invoke() ?? DateTimeOffset.UtcNow))),
             },
             new ToolDefinition
             {
@@ -312,6 +341,85 @@ public static class ExobiologyCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    // --------------------------------------------------------- the unsold data
+
+    private static string Unsold(ExobiologyLedger? ledger, CommanderGameState? state)
+    {
+        if (ledger is null)
+        {
+            return "I am not keeping a total of unsold organic data in this build.";
+        }
+
+        if (state is null)
+        {
+            return "No Elite Dangerous journal has been detected yet.";
+        }
+
+        var unsold = ledger.Unsold(state.Identity.FrontierId);
+        var report = new StringBuilder();
+
+        if (!ledger.HistoryFolded)
+        {
+            report.AppendLine("I am still reading your older journals, so this may leave some out.");
+        }
+
+        if (unsold.Held.Count == 0)
+        {
+            report.AppendLine("You are carrying no unsold organic data.");
+            return report.ToString().TrimEnd();
+        }
+
+        var priced = unsold.Held.Count - unsold.Unpriced.Count;
+
+        report.AppendLine(
+            $"{Number(unsold.Total)} credits of organic data unsold, from {priced} "
+            + $"analys{(priced == 1 ? "is" : "es")}. {unsold.WithBonus} of them "
+            + $"{(unsold.WithBonus == 1 ? "carries" : "carry")} the first footfall bonus.");
+
+        if (unsold.BonusUnknown > 0)
+        {
+            report.AppendLine(
+                $"{unsold.BonusUnknown} {(unsold.BonusUnknown == 1 ? "is" : "are")} counted at the base value "
+                + "because no scan of the body said whether anybody had walked there first.");
+        }
+
+        if (unsold.Unpriced.Count > 0)
+        {
+            report.AppendLine(
+                $"Left out of the total, because I have no value for the species: "
+                + $"{string.Join(", ", unsold.Unpriced.GroupBy(analysis => analysis.Species).Select(group => group.Count() == 1 ? group.Key : $"{group.Key} ×{group.Count()}"))}.");
+        }
+
+        report.AppendLine();
+
+        foreach (var group in unsold.Held.Where(analysis => analysis.Worth is not null).GroupBy(analysis => analysis.Species))
+        {
+            var count = group.Count();
+
+            report.AppendLine(
+                $"  {group.Key}{(count > 1 ? $" ×{count}" : string.Empty)} — {Number(group.Sum(analysis => analysis.Worth ?? 0))} cr");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private static string Reset(ExobiologyLedger? ledger, CommanderGameState? state, DateTimeOffset at)
+    {
+        if (ledger is null)
+        {
+            return "I am not keeping a total of unsold organic data in this build.";
+        }
+
+        if (state is not { Identity.FrontierId: { Length: > 0 } fid })
+        {
+            return "No Elite Dangerous journal has been detected yet, so there is no Commander to reset.";
+        }
+
+        ledger.Reset(fid, at);
+
+        return "Unsold exobiology reset to zero. Analyses from now on count towards it.";
     }
 
     // -------------------------------------------------------------- the route

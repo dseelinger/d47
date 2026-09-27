@@ -788,6 +788,13 @@ public sealed class AppHost : IDisposable
         // The five walks back through older journal files, run together and after the window is up (#148): on
         // a data folder with no watermark the names walk reads every file in the folder, which is every first
         // run of a fresh install. Nothing here reads a journal until WarmUp asks it to.
+        // Organic data analysed and not yet sold, rebuilt by the history walk below (#526).
+        var exobiology = new D47.Core.Journal.ExobiologyLedger(
+            Path.Combine(paths.Data, "unsold-data.json"),
+            loggerFactory.CreateLogger<D47.Core.Journal.ExobiologyLedger>());
+
+        exobiology.Load();
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -801,6 +808,7 @@ public sealed class AppHost : IDisposable
             ],
             KitFile = kit,
             NameFile = heardNames,
+            Exobiology = exobiology,
             Step = StartupTimer.Step,
         };
 
@@ -1045,7 +1053,8 @@ public sealed class AppHost : IDisposable
             viewState,
             commodityLedger,
             communityGoalSearch,
-            gameState);
+            gameState,
+            exobiology);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -1108,6 +1117,9 @@ public sealed class AppHost : IDisposable
             // Before the callouts, so the sale callout reads a total that includes the sale it is announcing
             // (#296).
             commodityLedger.Apply(events);
+
+            // Before the callouts too, so an analysis is in the unsold total the sampling callout speaks.
+            exobiology.Apply(events, gameState.Active?.Identity.FrontierId);
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
             planBook.Apply(events);
@@ -1876,7 +1888,8 @@ public sealed class AppHost : IDisposable
                 contextNote: () => self?.ContextNote,
                 openAudioFolder: () => System.Diagnostics.Process.Start(
                     new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
-                controlMusic: action => self?.Music.Control(action) ?? "Ambient music is not available."));
+                controlMusic: action => self?.Music.Control(action) ?? "Ambient music is not available.",
+                exobiology: exobiology));
 
         buildingRegistry.Dispose();
 
@@ -2513,7 +2526,8 @@ public sealed class AppHost : IDisposable
         ViewStateStore viewState,
         D47.Core.Journal.CommodityLedger ledger,
         D47.Core.Knowledge.CommunityGoalSearch communityGoal,
-        GameStateStore gameState)
+        GameStateStore gameState,
+        D47.Core.Journal.ExobiologyLedger exobiology)
     {
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
         var tradingMode = new TradingModeCallout(loggers.CreateLogger<TradingModeCallout>());
@@ -2552,7 +2566,7 @@ public sealed class AppHost : IDisposable
             .Add(new CarrierCallout())
 
             // Phase 17.
-            .Add(new SamplingCallout())
+            .Add(new SamplingCallout { Ledger = exobiology })
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
             .Add(surveyedBiology)

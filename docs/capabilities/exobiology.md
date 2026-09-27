@@ -149,6 +149,8 @@ are at.
 > "what biology is on this body"
 > "is this body worth landing on"
 > "what did the scan find here"
+> "how much exobiology data am I carrying"
+> "reset unsold exobiology"
 
 Two halves, from two different sources, answering two different questions. Keeping them apart is the
 whole design — because one of them can quote money and the other cannot.
@@ -211,7 +213,7 @@ Once you take the first specimen, Directive 47 tracks the run and speaks each on
 
 ```text
 Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go.
-Stratum Paleas analysed. That run is complete.
+Stratum Paleas analysed. That run is complete. Worth 1.8 million. No first footfall bonus. 21.4 million unsold.
 ```
 
 Ask at any point and it will answer from where you are standing right now, which is the question you
@@ -250,6 +252,27 @@ Three things this rests on, all measured:
   original plan, which would have made the distance uncomputable on any body you had not scanned.
   Distances are great-circle, so the same angle is a shorter drive on a small moon than on a large
   planet.
+
+### What you are carrying and have not sold
+
+Every analysis adds to a running total of organic data not yet sold, and the analysis callout says
+what that one is worth and what the total now is. The value is the species' figure from the shipped
+table, five times over where the body's scan said nobody had walked there. Where the scan said
+somebody had, it is the figure alone; where no scan of the body said either way, it is the figure
+alone and the callout says the bonus is not known. When an AutoScan and a Detailed scan of the same
+body disagree, the one that says the body has been walked on is taken, because a footfall is not
+undone.
+
+```text
+Cactoida Cortexum analysed. That run is complete. Worth 18.3 million with the first footfall bonus. 138.2 million unsold.
+```
+
+The total goes down when you sell at Vista Genomics: `SellOrganicData` removes every held analysis
+of each species it lists. It goes to zero when you die, since unsold data is lost, and when you say
+"reset unsold exobiology". It is rebuilt from your journals at every start — each analysis after the
+latest death, reset, or sale that covered it — so it is right after a restart and on the first run.
+A species the table has no value for is named and left out of the total, and the total says how many
+it leaves out.
 
 ### The trade-off nobody should discover after the flight
 
@@ -296,6 +319,24 @@ What your own surface scan found. Names genera; never quotes a value.
 
 How many specimens you have taken on this body, how far you have moved since the last one, and what
 is already finished here. Never says whether the distance was enough.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `get_unsold_exobiology`
+
+The organic data you have analysed and not sold: the total, how many analyses, how many carry the
+first footfall bonus, and any left out for want of a value.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `reset_unsold_exobiology`
+
+Sets the total to zero from now. Protected: the keyword phrase, the panel and a hotkey reach it, and
+the model is refused.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

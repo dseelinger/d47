@@ -19,6 +19,16 @@ Macros, Personas, Switches, Adventures, Checklist, Utilities and Routing pages. 
 could not reach the provider is amber rather than grey. The Materials notes about engineer ranks
 and missing totals are amber notices with a SHOW tile, rather than red buttons.
 
+When you analyse an organism, D47 now says what it is worth and how much organic data you are
+carrying unsold: "Cactoida Cortexum analysed. That run is complete. Worth 18.3 million with the
+first footfall bonus. 138.2 million unsold." The first footfall bonus is applied where the body's
+scan said nobody had walked there, and where no scan said either way the line says the bonus is
+not known. A species D47 has no value for is named and left out of the total. Ask "how much
+exobiology data am I carrying" for the total, the number of analyses and how many carry the bonus.
+The total drops by each species you sell at Vista Genomics, goes to zero when you die, and is
+rebuilt from your journals when D47 starts. "Reset unsold exobiology" sets it to zero; the model
+cannot do this for you.
+
 The exobiology route plotter now checks the galaxy search setting before asking Spansh for a
 route, the same as the neutron, Road to Riches and trade plotters. With it off, "plot me an
 exobiology route" gets the same switched-off answer as the other plotters, rather than sending the

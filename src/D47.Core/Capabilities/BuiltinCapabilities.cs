@@ -193,7 +193,10 @@ public static class BuiltinCapabilities
         Action? openAudioFolder = null,
 
         // Pauses, resumes or skips the ambient music; null where nothing plays it.
-        Func<Audio.MusicAction, string>? controlMusic = null) =>
+        Func<Audio.MusicAction, string>? controlMusic = null,
+
+        // The organic data analysed and not yet sold (#526).
+        ExobiologyLedger? exobiology = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -251,7 +254,7 @@ public static class BuiltinCapabilities
             lore,
             () => LoreCapability.PlaceOf(gameState.Active),
             now ?? (() => DateTimeOffset.MinValue)),
-        ExobiologyCapability.Create(routes, () => gameState.Active, settings, gameStatus, plans, now),
+        ExobiologyCapability.Create(routes, () => gameState.Active, settings, gameStatus, plans, now, exobiology),
         CommunityGoalCapability.Create(
             () => gameState.Active,
             communityGoals,
