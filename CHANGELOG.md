@@ -27,6 +27,11 @@ covers the panel below the title bar, with an orange frame, an uppercase title a
 the left. Esc or a click on the scrim closes it; a confirmation closed that way is a no. The
 dialogs follow the panel's zoom.
 
+Memory, Lore, Macros and the Forget key confirmation now open in the headset panel. Pressing their
+Settings buttons in the headset used to show "Not currently supported in VR". Each is drawn
+over the same scrim, and the ray presses its buttons; a text box in one opens the headset keyboard.
+A press on the scrim or the controller's Back closes it.
+
 Badges and cards are filled, with no outline. The Current ship badge on a Fleet card is a cyan
 chip with dark lettering, and the PRE-RELEASE badge is an orange chip. The update banner, the
 startup and switch readouts in the status row, the choice card, the headset overlay card and the

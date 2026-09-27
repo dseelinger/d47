@@ -110,9 +110,6 @@ public sealed class SecretEditor : UserControl
         _forget = new Button { Content = "FORGET KEY", Classes = { SettingsView.DestructiveClass } };
         ToolTip.SetShowOnDisabled(_check, true);
 
-        // Asking means a dialog, which the headset's copy of this surface must not open.
-        Panel.OffscreenSurface.OpensAWindow(_forget);
-
         _store.Click += (_, _) => Store();
         _cancel.Click += (_, _) => Cancel();
         _replace.Click += (_, _) => Replace();

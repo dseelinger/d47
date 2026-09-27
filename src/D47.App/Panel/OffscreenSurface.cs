@@ -254,8 +254,9 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
     public const string Refusal = "Not currently supported in VR";
 
     /// <summary>
-    /// Marks a control this surface must not press, because pressing it opens a window: a dialog on a
-    /// desktop the Commander is not looking at is a dialog they cannot answer.
+    /// Marks a control this surface must not press: one that opens a window on the desktop, or a modal that
+    /// needs a keyboard the headset does not have. A modal answered by presses and the spelled board opens
+    /// here unmarked (#530).
     /// </summary>
     public static void OpensAWindow(Control control) => control.Classes.Add(DesktopOnly);
 

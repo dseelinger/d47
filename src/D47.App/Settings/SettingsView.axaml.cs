@@ -2631,8 +2631,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
             if (_memories is not { } memories || TopLevel.GetTopLevel(this) is not Window owner)
@@ -2697,8 +2695,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-
-        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {
@@ -3053,8 +3049,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-
-        Panel.OffscreenSurface.OpensAWindow(open);
 
         open.Click += async (_, _) =>
         {

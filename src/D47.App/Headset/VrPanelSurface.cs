@@ -45,6 +45,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private readonly SettingsService _settings;
     private readonly Func<string, (VrPose Placed, VrPose Against)?> _anchor;
     private readonly PanelView _view;
+
+    /// <summary>Where a modal opened from this copy of the panel is drawn (#530).</summary>
+    private readonly Windowing.ModalHost _modals = new();
+
     private readonly ScaleTransform _scale = new();
     private readonly OffscreenSurface _offscreen;
 
@@ -260,8 +264,14 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // mechanism seen from two rooms.
         var pixels = settings.Current.Vr.Panel.Resolution;
 
+        // The modals sit inside the zoom and under the handles and the bar, as they sit inside the window's
+        // zoom and under its caption strip (#521).
+        var zoomed = new Avalonia.Controls.Panel();
+        zoomed.Children.Add(_view);
+        zoomed.Children.Add(_modals);
+
         var framed = new Avalonia.Controls.Panel();
-        framed.Children.Add(new LayoutTransformControl { LayoutTransform = _scale, Child = _view });
+        framed.Children.Add(new LayoutTransformControl { LayoutTransform = _scale, Child = zoomed });
 
         foreach (var edge in new[] { _left, _right, _top, _bottom })
         {
@@ -294,10 +304,22 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public Panel.OffscreenSurface Board => _offscreen;
 
     /// <summary>
-    /// Back one level on this surface, and whether there was anything to go back from — so the
-    /// controller button stays available to whatever else wants it at a root (Phase 25).
+    /// Closes the top modal, or goes back one level on this surface, and says whether there was anything to
+    /// do — so the controller button stays available to whatever else wants it at a root (Phase 25).
     /// </summary>
-    public bool Back() => _view.GoBack();
+    public bool Back()
+    {
+        if (_modals.Top is { } top)
+        {
+            top.Close();
+            return true;
+        }
+
+        return _view.GoBack();
+    }
+
+    /// <summary>The modal on top of this surface, if one is open.</summary>
+    public Controls.ModalDialog? Modal => _modals.Top;
 
     /// <summary>Redraws the clocks, from the headset's own tick.</summary>
     public void TickClocks() => _dirty |= _view.TickClocks();
