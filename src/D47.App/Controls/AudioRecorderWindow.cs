@@ -121,7 +121,7 @@ public sealed class AudioRecorderWindow : Window
 
     private Control Row(RecordingRow row)
     {
-        var mark = ListRow.Secondary(new TextBlock
+        var mark = ListRow.SecondaryInk(new TextBlock
         {
             Text = row.Direction == RecordingDirection.Heard ? "HEARD" : "SAID",
             FontFamily = new FontFamily(Fonts.ChromeFamily),
@@ -136,7 +136,7 @@ public sealed class AudioRecorderWindow : Window
             FontWeight = row.Kept is null ? FontWeight.Normal : FontWeight.Bold,
         });
 
-        var text = ListRow.Name(new TextBlock
+        var text = ListRow.NameInk(new TextBlock
         {
             Text = row.Text is { Length: > 0 } said ? said : "(nothing intelligible)",
             FontSize = TypeScale.Body,
@@ -145,12 +145,11 @@ public sealed class AudioRecorderWindow : Window
             TextTrimming = TextTrimming.CharacterEllipsis,
         });
 
-        var when = ListRow.Secondary(new TextBlock
+        var when = ListRow.Aside(new TextBlock
         {
             Inlines = row.Kept is null
                 ? [Fonts.Mono($"{row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s")]
                 : [new Run("kept  "), Fonts.Mono($"{row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s")],
-            FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
         });

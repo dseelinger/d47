@@ -108,9 +108,9 @@ public sealed class LearnedPhrasesPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                ListRow.Name(Text($"\"{phrase.Said}\"", TypeScale.Body, null)),
+                ListRow.NameInk(Text($"\"{phrase.Said}\"", TypeScale.Body, null)),
                 Text("→", TypeScale.Body, ThemeManager.GreyKey),
-                ListRow.Secondary(Text($"\"{phrase.Phrase}\"", TypeScale.Body, null)),
+                ListRow.SecondaryInk(Text($"\"{phrase.Phrase}\"", TypeScale.Body, null)),
             },
         };
 
@@ -121,7 +121,7 @@ public sealed class LearnedPhrasesPage : UserControl
         row.Children.Add(forget);
         row.Children.Add(words);
 
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
+        return ListRow.Dress(new Border { Child = row });
     }
 
     private static TextBlock Text(string text, double size, string? colourKey, bool wrap = false)

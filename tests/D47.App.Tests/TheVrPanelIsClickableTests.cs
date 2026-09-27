@@ -289,7 +289,7 @@ public class PressingAControlThatOpensSomethingTests
 
         Assert.True(description.Bounds.Height > 0, "the description is laid out");
 
-        var marker = row.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == "planned now");
+        var marker = row.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == "PLANNED NOW");
 
         Assert.True(marker.Bounds.Height > 0, "the current word is laid out");
     }

@@ -114,7 +114,7 @@ public class TheOpenEngineerIsOutlinedTests
         var outlined = Outlined(panel);
 
         Assert.Single(outlined);
-        Assert.Contains("Felicity Farseer", Label(outlined[0]), StringComparison.Ordinal);
+        Assert.Contains("FELICITY FARSEER", Label(outlined[0]), StringComparison.Ordinal);
 
         window.Close();
     }
@@ -144,7 +144,7 @@ public class TheOpenEngineerIsOutlinedTests
         var (window, panel) = Open();
 
         var row = Rows(panel).First(button =>
-            Label(button).Contains("Felicity Farseer", StringComparison.Ordinal));
+            Label(button).Contains("FELICITY FARSEER", StringComparison.Ordinal));
 
         row.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

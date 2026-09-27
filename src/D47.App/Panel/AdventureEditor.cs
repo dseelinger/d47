@@ -226,7 +226,7 @@ public sealed class AdventureEditor : UserControl
         buttons.Children.Add(remove);
 
         row.Children.Add(buttons);
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
+        return ListRow.Dress(new Border { Child = row });
     }
 
     private void ReplaceBeat(int index, AdventureBeat beat)

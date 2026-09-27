@@ -237,7 +237,7 @@ internal static class RoutingKit
 
         layout.Children.Add(body);
 
-        var row = ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = layout });
+        var row = ListRow.Dress(new Border { Child = layout });
 
         if (copy is not null)
         {

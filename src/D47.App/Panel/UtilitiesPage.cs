@@ -206,12 +206,11 @@ public sealed class UtilitiesPage : UserControl
         var name = ListRow.Name(new TextBlock
         {
             Text = reminder.Name,
-            FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         });
 
-        var due = ListRow.Secondary(new TextBlock
+        var due = ListRow.SecondaryInk(new TextBlock
         {
             Text = reminder.Describe(now, zone),
             FontSize = TypeScale.Body,
@@ -247,7 +246,7 @@ public sealed class UtilitiesPage : UserControl
         row.Children.Add(due);
         row.Children.Add(name);
 
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
+        return ListRow.Dress(new Border { Child = row });
     }
 
     /// <summary>A name, then a length.</summary>

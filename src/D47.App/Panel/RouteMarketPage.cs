@@ -331,7 +331,7 @@ public sealed class RouteMarketPage : UserControl
             130,
             offer.IsTheirs ? ThemeManager.CyanKey : ThemeManager.GreyKey));
 
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
+        return ListRow.Dress(new Border { Child = row });
     }
 
     private static string Ago(TimeSpan old) => old switch

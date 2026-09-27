@@ -176,23 +176,14 @@ public sealed class LoreWindow : Window
             Refresh();
         };
 
-        var system = new TextBlock
+        var system = ListRow.Name(new TextBlock
         {
             Text = entry.Name.Length == 0 ? entry.SystemAddress.ToString() : entry.Name,
-            FontSize = TypeScale.Secondary,
-            FontWeight = FontWeight.SemiBold,
-        };
-
-        Themed(system, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        var label = ListRow.Secondary(new TextBlock
-        {
-            Text = Label(entry),
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
         });
 
-        var note = ListRow.Name(new SelectableTextBlock { Text = entry.Note, TextWrapping = TextWrapping.Wrap });
+        var label = ListRow.Sub(new TextBlock { Text = Label(entry), TextWrapping = TextWrapping.Wrap });
+
+        var note = ListRow.NameInk(new SelectableTextBlock { Text = entry.Note, TextWrapping = TextWrapping.Wrap });
 
         var stack = new StackPanel { Spacing = 6, Children = { system, label, note, forget } };
 

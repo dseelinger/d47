@@ -131,8 +131,8 @@ public class TheBookmarksPageTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("Current CG", StringComparison.Ordinal));
-        Assert.DoesNotContain(drawn, text => text.Contains("Somewhere Else", StringComparison.Ordinal));
+        Assert.Contains(drawn, text => text.Contains("CURRENT CG", StringComparison.Ordinal));
+        Assert.DoesNotContain(drawn, text => text.Contains("SOMEWHERE ELSE", StringComparison.Ordinal));
 
         window.Close();
     }
@@ -211,7 +211,7 @@ public class TheBookmarksPageTests
 
         Assert.Null(surface.Store.Find("F1", "Current CG"));
         Assert.NotNull(surface.Store.Find("F1", "New Name"));
-        Assert.Contains(Drawn(surface.Panel), text => text.Contains("New Name", StringComparison.Ordinal));
+        Assert.Contains(Drawn(surface.Panel), text => text.Contains("NEW NAME", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -236,12 +236,12 @@ public class TheBookmarksPageTests
     {
         var surface = Open(seed: false);
 
-        Assert.DoesNotContain(Drawn(surface.Panel), text => text.Contains("Fresh Bookmark", StringComparison.Ordinal));
+        Assert.DoesNotContain(Drawn(surface.Panel), text => text.Contains("FRESH BOOKMARK", StringComparison.Ordinal));
 
         surface.Store.Add("F1", "Fresh Bookmark", "Sol", At);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(Drawn(surface.Panel), text => text.Contains("Fresh Bookmark", StringComparison.Ordinal));
+        Assert.Contains(Drawn(surface.Panel), text => text.Contains("FRESH BOOKMARK", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -260,7 +260,7 @@ public class TheBookmarksPageTests
         surface.Store.Add("F1", "Fresh Bookmark", "Sol", At);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(Drawn(surface.Panel), text => text.Contains("Fresh Bookmark", StringComparison.Ordinal));
+        Assert.Contains(Drawn(surface.Panel), text => text.Contains("FRESH BOOKMARK", StringComparison.Ordinal));
 
         surface.Window.Close();
     }

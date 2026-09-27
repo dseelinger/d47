@@ -136,7 +136,7 @@ public sealed class BookmarksPage : UserControl
             Children =
             {
                 ListRow.Name(Text(bookmark.Name, TypeScale.Body, null)),
-                ListRow.Secondary(Text(bookmark.System, TypeScale.Body, null)),
+                ListRow.Sub(Text(bookmark.System, TypeScale.Body, null)),
                 Text(
                     bookmark.MadeAt.UtcDateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture),
                     TypeScale.Secondary,
@@ -149,7 +149,7 @@ public sealed class BookmarksPage : UserControl
         row.Children.Add(buttons);
         row.Children.Add(words);
 
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
+        return ListRow.Dress(new Border { Child = row });
     }
 
     /// <summary>Opens the rename prompt, refused when the new name collides with a bookmark or a taken phrase.</summary>

@@ -471,7 +471,6 @@ public static class HelpPageView
         {
             Content = Stacked(title, blurb),
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            MinHeight = 30,
         });
 
         button.Click += (_, _) => pressed();
@@ -494,26 +493,20 @@ public static class HelpPageView
         LoadoutPages.Themed(written, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         stack.Children.Add(written);
 
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = stack });
+        return ListRow.Dress(new Border { Child = stack });
     }
 
     private static Control Stacked(string title, string? blurb)
     {
         var stack = new StackPanel { Spacing = 3 };
 
-        var heading = ListRow.Name(new TextBlock
-        {
-            Text = title,
-            FontSize = TypeScale.Body,
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        var heading = ListRow.Name(new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap });
 
         stack.Children.Add(heading);
 
         if (blurb is { Length: > 0 })
         {
-            var line = ListRow.Secondary(new TextBlock
+            var line = ListRow.SecondaryInk(new TextBlock
             {
                 Text = blurb,
                 FontSize = TypeScale.Secondary,

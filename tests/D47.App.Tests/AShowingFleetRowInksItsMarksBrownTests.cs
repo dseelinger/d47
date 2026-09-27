@@ -58,7 +58,7 @@ public class AShowingFleetRowInksItsMarksBrownTests
         var window = Show(row);
 
         var name = Block(row, block => block.Inlines is { Count: > 0 });
-        var note = Block(row, block => block.Text == "Long range");
+        var note = Block(row, block => block.Text == "LONG RANGE");
         var dot = Block(row, block => block.Text == "●");
 
         Assert.Equal(Resource(nameKey), name.Foreground);

@@ -236,12 +236,12 @@ public class OnFootLoadoutTabTests
         // The grade is the first slot, and a grade 3 suit has two modification slots under it.
         var slots = Text(surface.Panel);
 
-        Assert.Contains("Grade", slots);
-        Assert.Contains("Mod 1", slots);
-        Assert.Contains("Mod 2", slots);
-        Assert.DoesNotContain("Mod 3", slots);
+        Assert.Contains("GRADE", slots);
+        Assert.Contains("MOD 1", slots);
+        Assert.Contains("MOD 2", slots);
+        Assert.DoesNotContain("MOD 3", slots);
 
-        Row(surface.Panel, "Grade").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Row(surface.Panel, "GRADE").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
@@ -404,7 +404,7 @@ public class OnFootLoadoutTabTests
             .Single(item => item.Content as string == "Stowed reloading");
 
         Assert.Equal(
-            ["Stowed reloading", "Automatically reloads a stowed weapon after 5 seconds"],
+            ["STOWED RELOADING", "Automatically reloads a stowed weapon after 5 seconds"],
             row.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text));
 
         surface.Window.CaptureRenderedFrame()!.Save(
@@ -473,7 +473,7 @@ public class OnFootLoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         var marked = surface.Panel.GetVisualDescendants().OfType<ListBoxItem>()
-            .Where(item => item.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "planned now"))
+            .Where(item => item.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "PLANNED NOW"))
             .Select(item => item.Content as string);
 
         Assert.Equal(["Stowed reloading"], marked);
@@ -721,7 +721,7 @@ public class OnFootLoadoutTabTests
         Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
-        Row(surface.Panel, "Iron").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Row(surface.Panel, "IRON").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         var shown = Text(surface.Panel);
@@ -814,7 +814,7 @@ public class OnFootLoadoutTabTests
         surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
-        Row(surface.Panel, "Polonium").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Row(surface.Panel, "POLONIUM").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         surface.Window.CaptureRenderedFrame()!.Save(

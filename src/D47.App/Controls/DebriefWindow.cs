@@ -277,14 +277,12 @@ public sealed class DebriefWindow : Window
             Spacing = 6,
             Children =
             {
-                ListRow.Secondary(new TextBlock
+                ListRow.Sub(new TextBlock
                 {
                     Inlines = [new Run($"{entry.Key} — {entry.Label()}{scope}"), .. Stamp(entry.AdoptedAt)],
-                    FontSize = TypeScale.Secondary,
-                    FontWeight = FontWeight.SemiBold,
                     TextWrapping = TextWrapping.Wrap,
                 }),
-                ListRow.Name(new SelectableTextBlock { Text = entry.Text, TextWrapping = TextWrapping.Wrap }),
+                ListRow.NameInk(new SelectableTextBlock { Text = entry.Text, TextWrapping = TextWrapping.Wrap }),
                 withdraw,
             },
         };

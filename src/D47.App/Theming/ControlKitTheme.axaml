@@ -83,14 +83,16 @@
       </Style>
 
       <!--
-        A pressable list row (ListRow.Class on a Button): the d47-row states, with prose type and no
-        tracking. Selected (ListRow.SelectedClass) is solid A with Knock ink, and holds on hover.
+        A pressable list row (ListRow.Class on a Button): the d47-row states, 50 tall, with prose type and
+        no tracking for sentence text. Selected (ListRow.SelectedClass) is solid A with Knock ink, and
+        holds on hover.
       -->
       <Style Selector="^.d47-row">
         <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />
         <Setter Property="FontSize" Value="{StaticResource D47.Type.Body}" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="LetterSpacing" Value="0" />
+        <Setter Property="MinHeight" Value="50" />
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
@@ -506,12 +508,12 @@
     <!--
       A list row, in the same states as the d47-row class below: Tile at rest, Tile2 on hover or
       focus, solid A when selected, Slab when disabled. Foreground is the name's ink, and
-      ListRow.NameBrush and ListRow.SecondaryBrush inherit to the content. 44 tall, 2px apart, no
+      ListRow.NameBrush and ListRow.SecondaryBrush inherit to the content. 50 tall, 2px apart, no
       outline, no bar and no glow.
     -->
     <ControlTheme x:Key="{x:Type ListBoxItem}" TargetType="ListBoxItem">
-      <Setter Property="Padding" Value="10,7" />
-      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Padding" Value="12,6" />
+      <Setter Property="MinHeight" Value="50" />
       <Setter Property="Margin" Value="0,0,0,2" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Cursor" Value="Hand" />
@@ -985,10 +987,11 @@
   <!--
     The list-row class (ListRow.Class) for a hand-built Border row: the ListBoxItem states, with
     ListRow.SelectedClass marking the selected row. The row's text follows ListRow.NameBrush and
-    ListRow.SecondaryBrush through ListRow.Name and ListRow.Secondary.
+    ListRow.SecondaryBrush through ListRow's text helpers.
   -->
   <Style Selector="Border.d47-row">
-    <Setter Property="MinHeight" Value="44" />
+    <Setter Property="MinHeight" Value="50" />
+    <Setter Property="Padding" Value="12,6" />
     <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
     <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.White}" />
     <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.A}" />

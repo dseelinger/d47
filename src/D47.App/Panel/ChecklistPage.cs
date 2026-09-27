@@ -519,7 +519,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         if (done.Count > 0)
         {
             // Below the line and counted, never removed.
-            _list.Children.Add(LoadoutPages.Section($"Done ({done.Count})", compact: _mini));
+            _list.Children.Add(ListRow.Head($"Done ({done.Count})"));
 
             foreach (var item in done)
             {
@@ -595,10 +595,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         var open = standing.Arc.Key == _openArc;
         var body = new StackPanel { Spacing = 2 };
 
-        body.Children.Add(Named(standing.Arc.Name, standing.IsDone ? Met : null));
+        body.Children.Add(Named(standing.Arc.Name, standing.IsDone ? Met : null, sentence: false));
 
         // The figure, then the bar — and no bar at all where the fraction is unknown.
-        body.Children.Add(Secondary(Aside(standing)));
+        body.Children.Add(ListRow.Sub(new TextBlock { Text = Aside(standing), TextWrapping = TextWrapping.Wrap }));
 
         if (standing.Fraction is { } fraction)
         {
@@ -613,7 +613,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             body.Children.Add(Step(standing));
         }
 
-        var card = ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = body }, selected: open);
+        var card = ListRow.Dress(new Border { Child = body }, selected: open);
 
         AutomationProperties.SetName(card, standing.Arc.Name);
 
@@ -671,7 +671,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var step = _goals?.Next(standing.Arc.Key);
 
-        panel.Children.Add(ListRow.Name(new TextBlock
+        panel.Children.Add(ListRow.NameInk(new TextBlock
         {
             Text = step?.Say ?? standing.Arc.Done,
             FontSize = TypeScale.Secondary,
@@ -770,7 +770,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         if (item.TicksByHand)
         {
-            body.Children.Add(Named(said, null));
+            body.Children.Add(Named(said, null, sentence: true));
 
             checkbox = new CheckBox
             {
@@ -795,7 +795,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         else
         {
             // No switch at all, rather than a disabled one.
-            body.Children.Add(Named(said, item.IsComplete ? Met : NotMet));
+            body.Children.Add(Named(said, item.IsComplete ? Met : NotMet, sentence: true));
         }
 
         // Scope on the line rather than as a heading over a group of them, and named rather than numbered:
@@ -876,7 +876,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         row.Children.Add(body);
 
-        var card = ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row }, selected);
+        var card = ListRow.Dress(new Border { Child = row }, selected);
 
         // Selecting is what grows the movers, so the whole card takes the press rather than a handle
         // somewhere on it.
@@ -1166,7 +1166,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             Spacing = 8,
             Children =
             {
-                ListRow.Name(new TextBlock { Text = proposal.Summary, TextWrapping = TextWrapping.Wrap }),
+                ListRow.NameInk(new TextBlock { Text = proposal.Summary, TextWrapping = TextWrapping.Wrap }),
                 actions,
             },
         };
@@ -1255,10 +1255,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     /// <summary>The mark for a derived line not yet met, in Grey.</summary>
     private static readonly (string Glyph, string Key) NotMet = ("•", ThemeManager.GreyKey);
 
-    /// <summary>A row's name in the row's name ink, led by <paramref name="mark"/> where one is given.</summary>
-    private static Control Named(string text, (string Glyph, string Key)? mark)
+    /// <summary>
+    /// A row's name, led by <paramref name="mark"/> where one is given. A sentence, such as a checklist line,
+    /// keeps its own case and prose type.
+    /// </summary>
+    private static Control Named(string text, (string Glyph, string Key)? mark, bool sentence)
     {
-        var name = ListRow.Name(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap });
+        var block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap };
+        var name = sentence ? ListRow.NameInk(block) : ListRow.Name(block);
 
         if (mark is not var (glyph, key))
         {
@@ -1272,9 +1276,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         return new DockPanel { Children = { sign, name } };
     }
 
-    /// <summary>A row's secondary line, in the row's secondary ink.</summary>
+    /// <summary>A line's caption: a sentence, so it keeps its case and prose type in the secondary ink.</summary>
     private static TextBlock Secondary(string text) =>
-        ListRow.Secondary(new TextBlock
+        ListRow.SecondaryInk(new TextBlock
         {
             Text = text,
             FontSize = TypeScale.Body,

@@ -367,7 +367,7 @@ public class HelpInTheHeadsetTests
                 Assert.Contains(
                     view.GetVisualDescendants().OfType<Button>(),
                     button => button.GetVisualDescendants().OfType<TextBlock>()
-                        .Any(text => text.Text == link.Title));
+                        .Any(text => text.Text == link.Title.ToUpperInvariant()));
             }
             else
             {

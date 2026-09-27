@@ -67,7 +67,7 @@ public class CoverageWindowTests
             .Select(block => block.Text)
             .ToList();
 
-        Assert.All(report.Lines, line => Assert.Contains(line.Item.Name, names));
+        Assert.All(report.Lines, line => Assert.Contains(line.Item.Name.ToUpperInvariant(), names));
 
         window.Close();
     }
@@ -117,7 +117,7 @@ public class CoverageWindowTests
 
         var names = window.GetVisualDescendants()
             .OfType<TextBlock>()
-            .Count(block => block.Text == "Probe - broke");
+            .Count(block => block.Text == "PROBE - BROKE");
 
         Assert.Equal(1, names);
 

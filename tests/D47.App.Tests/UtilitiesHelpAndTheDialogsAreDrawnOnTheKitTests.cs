@@ -407,7 +407,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
 
         var name = panel.GetVisualDescendants().OfType<TextBlock>()
-            .Single(block => block.Text == "mining run");
+            .Single(block => block.Text == "MINING RUN");
 
         var row = name.GetVisualAncestors().OfType<Border>()
             .First(border => border.Classes.Contains(ListRow.Class));

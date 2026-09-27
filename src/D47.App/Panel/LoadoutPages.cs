@@ -159,7 +159,6 @@ public static class LoadoutPages
         var label = ListRow.Name(new TextBlock
         {
             Text = text,
-            FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         });
@@ -181,7 +180,6 @@ public static class LoadoutPages
             var note = new TextBlock
             {
                 Text = aside,
-                FontSize = TypeScale.Secondary,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(12, 0, 0, 0),
 
@@ -191,7 +189,7 @@ public static class LoadoutPages
                 TextAlignment = TextAlignment.Right,
             };
 
-            ListRow.Secondary(note);
+            ListRow.Aside(note);
             Grid.SetColumn(note, 2);
             body.Children.Add(note);
 
@@ -210,7 +208,7 @@ public static class LoadoutPages
         {
             label.Inlines =
             [
-                new Run(text),
+                new Run(text.ToUpperInvariant()),
                 Gear(label),
             ];
         }
@@ -230,7 +228,7 @@ public static class LoadoutPages
 
             if (markKey is null)
             {
-                ListRow.Secondary(mark);
+                ListRow.SecondaryInk(mark);
             }
             else
             {
@@ -346,7 +344,7 @@ public static class LoadoutPages
             body.Children.Add(badge);
         }
 
-        var label = ListRow.Name(new TextBlock
+        var label = ListRow.NameInk(new TextBlock
         {
             Text = headline.ToUpperInvariant(),
             FontFamily = Fonts.ChromeFamily,
@@ -379,7 +377,7 @@ public static class LoadoutPages
 
             foreach (var line in aside.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
-                lines.Children.Add(ListRow.Secondary(new TextBlock
+                lines.Children.Add(ListRow.SecondaryInk(new TextBlock
                 {
                     Text = line,
                     FontSize = TypeScale.Secondary,
@@ -979,7 +977,7 @@ public static class LoadoutPages
         };
 
         // The dot: there is work left in this slot.
-        var mark = ListRow.Secondary(new TextBlock
+        var mark = ListRow.SecondaryInk(new TextBlock
         {
             Text = "●",
             FontSize = TypeScale.Secondary,
@@ -992,7 +990,7 @@ public static class LoadoutPages
 
         // The slot, muted: it is what the row is *about* rather than what the row says, and the heading above
         // already names the block it belongs to.
-        var slot = ListRow.Secondary(new TextBlock
+        var slot = ListRow.SecondaryInk(new TextBlock
         {
             Text = parts.Slot,
             FontSize = TypeScale.Body,
@@ -1077,10 +1075,9 @@ public static class LoadoutPages
     /// What this slot draws, right-aligned, with the <c>~</c> prefix the Power gauge uses for a modelled
     /// reading — or a blank cell for a slot with no figure (#252).
     /// </summary>
-    private static Control DrawCell(LoadoutDraw? draw) => ListRow.Secondary(new TextBlock
+    private static Control DrawCell(LoadoutDraw? draw) => ListRow.Aside(new TextBlock
     {
         Text = draw is null ? string.Empty : draw.Modelled ? $"~ {draw.Reading}" : draw.Reading,
-        FontSize = TypeScale.Secondary,
         VerticalAlignment = VerticalAlignment.Center,
         HorizontalAlignment = HorizontalAlignment.Right,
     });
@@ -1112,11 +1109,11 @@ public static class LoadoutPages
         // What is fitted is the row's name; the plan, and a silent side, are secondary.
         if (bold && !side.Silent)
         {
-            ListRow.Name(cell);
+            ListRow.NameInk(cell);
         }
         else
         {
-            ListRow.Secondary(cell);
+            ListRow.SecondaryInk(cell);
         }
 
         if (side.Silent)
@@ -1136,7 +1133,7 @@ public static class LoadoutPages
         {
             cell.Text = head;
             cell.FontSize = TypeScale.Secondary;
-            ListRow.Secondary(cell);
+            ListRow.SecondaryInk(cell);
             Trailing(cell, null, string.Empty, head, side.Effects, bold);
             Hover(cell, side);
 
@@ -1820,7 +1817,7 @@ public sealed class ItemPage : LoadoutPage
             if (row.Group is { Length: > 0 } heading && heading != group)
             {
                 group = heading;
-                _list.Children.Add(LoadoutPages.Section(heading, compact: Mini));
+                _list.Children.Add(ListRow.Head(heading));
             }
 
             // Read off the trail rather than kept as a second piece of state (#110): the last crumb is what
@@ -2428,7 +2425,6 @@ public sealed class GapPage : UserControl
         var name = ListRow.Name(new TextBlock
         {
             Text = row.Material.Name,
-            FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         });
@@ -2436,13 +2432,12 @@ public sealed class GapPage : UserControl
         Grid.SetColumn(name, 0);
         grid.Children.Add(name);
 
-        var held = ListRow.Secondary(new TextBlock
+        var held = ListRow.Aside(new TextBlock
         {
             Text = row.Needed > 0
                 ? $"{row.Held.ToString(CultureInfo.InvariantCulture)} / "
                   + $"{row.Needed.ToString(CultureInfo.InvariantCulture)}"
                 : row.Held.ToString(CultureInfo.InvariantCulture),
-            FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
         });
@@ -2458,10 +2453,9 @@ public sealed class GapPage : UserControl
 
         if (row.Short > 0)
         {
-            var shortfall = ListRow.Secondary(new TextBlock
+            var shortfall = ListRow.Aside(new TextBlock
             {
                 Text = $"{row.Short.ToString(CultureInfo.InvariantCulture)} short",
-                FontSize = TypeScale.Secondary,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 0, 0),
             });
@@ -2474,7 +2468,6 @@ public sealed class GapPage : UserControl
         {
             Content = grid,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Padding = new Thickness(10, 6),
         });
 
         button.Click += (_, _) => OpenRow(row, cardName);

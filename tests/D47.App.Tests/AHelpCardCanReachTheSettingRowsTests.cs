@@ -64,7 +64,7 @@ public class AHelpCardCanReachTheSettingRowsTests
 
         Assert.True(view.Nav.Modal, "help took the panel");
 
-        Click(Press(view, "Listening"));
+        Click(Press(view, "LISTENING"));
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(view.Nav.Modal, "help was dismissed");
@@ -91,7 +91,7 @@ public class AHelpCardCanReachTheSettingRowsTests
         Click(mark);
         Dispatcher.UIThread.RunJobs();
 
-        Click(Press(view, "Listening"));
+        Click(Press(view, "LISTENING"));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("help:listening", view.Nav.Trail[^1].Key);

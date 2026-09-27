@@ -91,9 +91,9 @@ public class UtilitiesTabTests
 
         var shown = Text(panel);
 
-        Assert.Contains("mining run", shown);
+        Assert.Contains("MINING RUN", shown);
         Assert.Contains("40 min", shown);
-        Assert.Contains("wake up", shown);
+        Assert.Contains("WAKE UP", shown);
         Assert.Contains("06:04", shown);
 
         window.Close();

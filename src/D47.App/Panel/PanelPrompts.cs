@@ -985,7 +985,7 @@ public sealed class PanelPrompts : IHearsText
             var stack = new StackPanel
             {
                 Spacing = 1,
-                Children = { new TextBlock { Text = value, TextWrapping = TextWrapping.Wrap } },
+                Children = { ListRow.Name(new TextBlock { Text = value, TextWrapping = TextWrapping.Wrap }) },
             };
 
             if (value is not null && request.Descriptions?.GetValueOrDefault(value) is { Length: > 0 } description)
@@ -1004,7 +1004,7 @@ public sealed class PanelPrompts : IHearsText
             if (request.CurrentWord is { Length: > 0 } word
                 && string.Equals(value, request.Initial, StringComparison.OrdinalIgnoreCase))
             {
-                stack.Children.Add(ListRow.Secondary(new TextBlock { Text = word, FontSize = TypeScale.Small }));
+                stack.Children.Add(ListRow.Sub(new TextBlock { Text = word }));
             }
 
             return stack;

@@ -146,14 +146,12 @@ public sealed class MemoryWindow : Window
             Spacing = 6,
             Children =
             {
-                ListRow.Secondary(new TextBlock
+                ListRow.Sub(new TextBlock
                 {
                     Inlines = [new Run($"{entry.Key} — {Label(entry)}"), .. Stamp(entry)],
-                    FontSize = TypeScale.Secondary,
-                    FontWeight = FontWeight.SemiBold,
                     TextWrapping = TextWrapping.Wrap,
                 }),
-                ListRow.Name(new SelectableTextBlock { Text = entry.Fact, TextWrapping = TextWrapping.Wrap }),
+                ListRow.NameInk(new SelectableTextBlock { Text = entry.Fact, TextWrapping = TextWrapping.Wrap }),
             },
         };
 

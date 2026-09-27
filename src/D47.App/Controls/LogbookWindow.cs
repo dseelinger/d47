@@ -249,11 +249,9 @@ public sealed class LogbookWindow : Window
             }
         };
 
-        var written = ListRow.Secondary(new TextBlock
+        var written = ListRow.Aside(new TextBlock
         {
-            Text = $"{entry.Written.ToLocalTime():d MMM yyyy HH:mm}",
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Secondary,
+            Inlines = [Fonts.Mono($"{entry.Written.ToLocalTime():d MMM yyyy HH:mm}")],
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0),
         });
@@ -272,7 +270,7 @@ public sealed class LogbookWindow : Window
         row.Children.Add(written);
         row.Children.Add(name);
 
-        return ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = row });
+        return ListRow.Dress(new Border { Child = row });
     }
 
     private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)

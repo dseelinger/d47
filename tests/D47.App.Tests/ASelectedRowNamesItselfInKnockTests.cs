@@ -25,7 +25,7 @@ public class ASelectedRowNamesItselfInKnockTests
         });
 
         var name = ListRow.Name(new TextBlock { Text = "Anaconda" });
-        var secondary = ListRow.Secondary(new TextBlock { Text = "Jameson Memorial" });
+        var secondary = ListRow.Sub(new TextBlock { Text = "Jameson Memorial" });
         var row = ListRow.Dress(new Border { Child = new StackPanel { Children = { name, secondary } } });
 
         var window = new Window { Content = row, Width = 400, Height = 200 };
@@ -43,7 +43,7 @@ public class ASelectedRowNamesItselfInKnockTests
         Assert.Equal(Resource(ThemeManager.TileKey), row.Background);
         Assert.Equal(Resource(ThemeManager.WhiteKey), name.Foreground);
         Assert.Equal(Resource(ThemeManager.AKey), secondary.Foreground);
-        Assert.True(row.Bounds.Height >= 44);
+        Assert.True(row.Bounds.Height >= 50);
 
         window.Close();
     }

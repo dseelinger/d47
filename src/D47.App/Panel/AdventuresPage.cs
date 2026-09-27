@@ -732,7 +732,6 @@ public sealed class AdventuresPage : UserControl
     /// <summary>A pressable list row holding a stack.</summary>
     private static Border Row() => ListRow.Dress(new Border
     {
-        Padding = new Thickness(12, 6),
         Child = new StackPanel { Spacing = 2 },
         Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
     });
@@ -750,18 +749,13 @@ public sealed class AdventuresPage : UserControl
         return panel;
     }
 
-    /// <summary>A row's name, in the row's name ink.</summary>
-    internal static TextBlock RowName(string text) => ListRow.Name(new TextBlock
-    {
-        Text = text,
-        FontSize = TypeScale.Body,
-        FontWeight = FontWeight.SemiBold,
-        TextWrapping = TextWrapping.Wrap,
-    });
+    /// <summary>A row's name.</summary>
+    internal static TextBlock RowName(string text) =>
+        ListRow.Name(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap });
 
-    /// <summary>A row's second line, in the row's secondary ink.</summary>
+    /// <summary>A row's sub line.</summary>
     internal static TextBlock RowSecondary(string text) =>
-        ListRow.Secondary(new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap });
+        ListRow.Sub(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap });
 
     /// <summary>Writes a status line in <paramref name="key"/>'s ink.</summary>
     private static void Say(TextBlock status, string text, string key = ThemeManager.GreyKey)

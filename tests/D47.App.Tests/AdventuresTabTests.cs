@@ -169,15 +169,15 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("The Lantern Route"));
-        Assert.Contains(drawn, text => text.Contains("yours") && text.Contains("The Lantern"));
-        Assert.Contains(drawn, text => text.Contains("written by Archivist") && text.Contains("waiting for your yes"));
-        Assert.Contains(drawn, text => text.Contains("Step 1 of 2"));
+        Assert.Contains(drawn, text => text.Contains("THE LANTERN ROUTE"));
+        Assert.Contains(drawn, text => text.Contains("YOURS") && text.Contains("LANTERN"));
+        Assert.Contains(drawn, text => text.Contains("WRITTEN BY ARCHIVIST") && text.Contains("WAITING FOR YOUR YES"));
+        Assert.Contains(drawn, text => text.Contains("STEP 1 OF 2"));
         Assert.Contains(drawn, text => text.Contains("Next: arrive at Ossen's Lantern"));
 
         // A draft has no step: it is not being flown, and "Step 1 of 2" on a story nobody has agreed to reads
         // as one already under way.
-        Assert.DoesNotContain(drawn, text => text.Contains("The Draft") && text.Contains("Step"));
+        Assert.DoesNotContain(drawn, text => text.Contains("THE DRAFT") && text.Contains("STEP"));
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Change something"));
     }
 

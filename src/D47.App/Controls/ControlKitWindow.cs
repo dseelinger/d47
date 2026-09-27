@@ -314,13 +314,12 @@ public sealed class ControlKitWindow : Window
 
     private static Border KitRow(string name, string secondary, bool selected = false)
     {
-        var nameText = ListRow.Name(new TextBlock { Text = name, FontFamily = Fonts.ProseFamily, FontSize = TypeScale.Body });
-        var secondaryText = ListRow.Secondary(new TextBlock { Text = secondary, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta });
+        var nameText = ListRow.Name(new TextBlock { Text = name });
+        var secondaryText = ListRow.Sub(new TextBlock { Text = secondary });
 
         return ListRow.Dress(
             new Border
             {
-                Padding = new Thickness(12, 6),
                 Child = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { nameText, secondaryText } },
             },
             selected);

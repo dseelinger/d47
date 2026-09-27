@@ -107,7 +107,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
             .Select(text => text.Text ?? string.Empty)
             .ToList();
 
-        Assert.Contains("More details online", shown);
+        Assert.Contains("MORE DETAILS ONLINE", shown);
 
         host.Close();
     }

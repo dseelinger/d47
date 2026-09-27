@@ -111,7 +111,6 @@ public sealed class CoverageWindow : Window
         var name = ListRow.Name(new TextBlock
         {
             Text = line.Item.Name,
-            FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -119,11 +118,9 @@ public sealed class CoverageWindow : Window
 
         TruncationTip.Watch(name, () => line.Item.Name);
 
-        var when = ListRow.Secondary(new TextBlock
+        var when = ListRow.Aside(new TextBlock
         {
-            Text = line.LastSeen is { } seen ? seen.ToString("yyyy-MM-dd") : string.Empty,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Small,
+            Inlines = [Fonts.Mono(line.LastSeen is { } seen ? seen.ToString("yyyy-MM-dd") : string.Empty)],
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0),
         });
@@ -133,7 +130,6 @@ public sealed class CoverageWindow : Window
 
         var row = new Border
         {
-            Padding = new Thickness(12, 2),
             Child = new DockPanel
             {
                 Children =

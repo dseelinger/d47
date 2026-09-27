@@ -190,6 +190,14 @@ distance, the community goal totals on the Routing pages, the times in an advent
 price on the Logbook's **Write it** button, and the times and dates in the Audio recorder, Logbook,
 Coverage, Debrief and Memory windows. Names, words and system names stay as they were.
 
+List rows are 50 pixels tall rather than 44. A row's name is in capitals in the heading typeface,
+the line under it smaller capitals in orange, and a figure at its right in capitals too. This
+covers the Engineers, Bookmarks, Utilities, Help, Adventures and on-foot material lists, the
+choosers, and the Coverage, Logbook, Lore, Memory and Debrief windows. Sentences in a row, such as
+a checklist line, a help description or a learned phrase, keep their own case and typeface. The
+group headings in the Fleet slot list, the Engineers list and the Checklist's **Done** section are
+smaller orange capitals over a dim line.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

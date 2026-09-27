@@ -36,9 +36,9 @@ public class InShipHelpCaptureTests
         Assert.Contains("Reads like a chat log.", shown);
         Assert.Contains("Two ways to input your requests.", shown);
         Assert.Contains("Additional controls.", shown);
-        Assert.Contains("Listening", shown);
-        Assert.Contains("Language model", shown);
-        Assert.Contains("Speech", shown);
+        Assert.Contains("LISTENING", shown);
+        Assert.Contains("LANGUAGE MODEL", shown);
+        Assert.Contains("SPEECH", shown);
 
         // Every figure measured to something, rather than collapsing to nothing on a surface with no
         // resources — the failure mode a parse test cannot see.

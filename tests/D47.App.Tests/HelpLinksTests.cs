@@ -65,8 +65,8 @@ public class HelpLinksTests
 
         var before = nav.Trail.Count;
 
-        Press(page, "Engineers").Command?.Execute(null);
-        Press(page, "Engineers").RaiseEvent(
+        Press(page, "ENGINEERS").Command?.Execute(null);
+        Press(page, "ENGINEERS").RaiseEvent(
             new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal(before + 1, nav.Trail.Count);
@@ -94,7 +94,7 @@ public class HelpLinksTests
             Standing(),
             openUrl: opened.Add);
 
-        Press(page, "Elsewhere").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "ELSEWHERE").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal([DocsSite.Capability(bandless)], opened);
 
@@ -109,7 +109,7 @@ public class HelpLinksTests
 
         var (window, page) = Open(Article(), Standing(), openUrl: opened.Add);
 
-        Press(page, "More details online")
+        Press(page, "MORE DETAILS ONLINE")
             .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal([DocsSite.Capability("engineers")], opened);
@@ -154,7 +154,7 @@ public class HelpLinksTests
             Standing(),
             openUrl: opened.Add);
 
-        Press(page, "Talking").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "TALKING").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal([DocsSite.Root + "conversation.html"], opened);
 
@@ -175,7 +175,7 @@ public class HelpLinksTests
         var (window, page) = Open(engineers, nav, openUrl: null);
 
         // Drawn as a control rather than as an address, because this surface can reach it.
-        Press(page, "Checklists").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "CHECKLISTS").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal("help:checklists", nav.Trail[^1].Key);
         Assert.True(nav.Modal);
@@ -223,11 +223,11 @@ public class HelpLinksTests
 
         foreach (var article in illustrated)
         {
-            Assert.Contains(article.Title, shown);
+            Assert.Contains(article.Title.ToUpperInvariant(), shown);
         }
 
         // And pressing one drills into it.
-        Press(page, "Engineers").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "ENGINEERS").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal("help:engineers", nav.Trail[^1].Key);
 
         window.Close();
@@ -252,7 +252,7 @@ public class HelpLinksTests
 
         var before = nav.Trail.Count;
 
-        Press(page, "Speech").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "SPEECH").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal(["speech"], revealed);
         Assert.Equal(before, nav.Trail.Count);
@@ -270,7 +270,7 @@ public class HelpLinksTests
             nav,
             openUrl: null);
 
-        Press(page, "Speech").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(page, "SPEECH").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.True(nav.Modal, "another level of help took the panel");
         Assert.Equal("help:speech", nav.Trail[^1].Key);

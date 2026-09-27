@@ -167,8 +167,8 @@ public class EngineersTabTests
 
         Assert.Contains(
             Text(surface.Panel),
-            line => line.Contains("ly, about", StringComparison.Ordinal)
-                    && line.Contains("jump", StringComparison.Ordinal));
+            line => line.Contains("LY, ABOUT", StringComparison.Ordinal)
+                    && line.Contains("JUMP", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -182,7 +182,7 @@ public class EngineersTabTests
     {
         var surface = Open();
 
-        Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(surface.Panel, "FELICITY FARSEER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
@@ -210,7 +210,7 @@ public class EngineersTabTests
         var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
         var surface = Open(clipboard: clipboard);
 
-        Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(surface.Panel, "FELICITY FARSEER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         // Felicity needs no referral, so her own way-in stop names her own system too — two glyphs
@@ -238,7 +238,7 @@ public class EngineersTabTests
         var shown = Text(surface.Panel);
 
         Assert.Contains(shown, line => line.Contains("Measured from Sol", StringComparison.Ordinal));
-        Assert.Contains(shown, line => line.Contains("planned job covered", StringComparison.Ordinal));
+        Assert.Contains(shown, line => line.Contains("PLANNED JOB COVERED", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.Contains("hand over:", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.Contains("first:", StringComparison.Ordinal));
         Assert.Contains(shown, line => line.Contains("covers:", StringComparison.Ordinal));
@@ -302,10 +302,11 @@ public class EngineersTabTests
         Assert.True(surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot));
         Dispatcher.UIThread.RunJobs();
 
-        var first = Text(surface.Panel)
-            .First(line => EngineerDirectory.All.Any(engineer => engineer.Name == line));
+        var firstDrawn = Text(surface.Panel)
+            .First(line => EngineerDirectory.All.Any(engineer => engineer.Name.ToUpperInvariant() == line));
+        var first = EngineerDirectory.All.First(engineer => engineer.Name.ToUpperInvariant() == firstDrawn).Name;
 
-        Press(surface.Panel, first).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(surface.Panel, firstDrawn).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(first, surface.Panel.Nav.Trail[^1].Word);
@@ -360,12 +361,12 @@ public class EngineersTabTests
 
         // Pressed rather than navigated, because the row in the directory pane beside the open engineer is
         // the control the report is about.
-        Press(surface.Panel, "Liz Ryder").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(surface.Panel, "LIZ RYDER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
 
-        Press(surface.Panel, "Felicity Farseer").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(surface.Panel, "FELICITY FARSEER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Directory", "Felicity Farseer"], surface.Panel.Nav.Trail.Select(c => c.Word));
@@ -375,7 +376,7 @@ public class EngineersTabTests
         surface.Panel.Nav.Back();
         Dispatcher.UIThread.RunJobs();
 
-        Press(surface.Panel, "Liz Ryder").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Press(surface.Panel, "LIZ RYDER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
@@ -396,21 +397,21 @@ public class EngineersTabTests
         var surface = Open();
 
         // StartsWith, because a row carries the count of plans waiting on them after the name.
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("MEL BRANDON", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("FELICITY FARSEER", StringComparison.Ordinal));
 
         Check(surface.Panel, "Hide the Colonia eight").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
-        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Petra Olmanova", StringComparison.Ordinal));
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("MEL BRANDON", StringComparison.Ordinal));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("PETRA OLMANOVA", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("FELICITY FARSEER", StringComparison.Ordinal));
 
         // And back, because a filter that cannot be undone is a setting nobody meant to change.
         Check(surface.Panel, "Hide the Colonia eight").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Mel Brandon", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("MEL BRANDON", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -421,15 +422,15 @@ public class EngineersTabTests
     {
         var surface = Open();
 
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Jude Navarro", StringComparison.Ordinal));
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Domino Green", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("JUDE NAVARRO", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("DOMINO GREEN", StringComparison.Ordinal));
 
         Check(surface.Panel, "Hide on-foot engineers").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Jude Navarro", StringComparison.Ordinal));
-        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("Domino Green", StringComparison.Ordinal));
-        Assert.Contains(Text(surface.Panel), line => line.StartsWith("Felicity Farseer", StringComparison.Ordinal));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("JUDE NAVARRO", StringComparison.Ordinal));
+        Assert.DoesNotContain(Text(surface.Panel), line => line.StartsWith("DOMINO GREEN", StringComparison.Ordinal));
+        Assert.Contains(Text(surface.Panel), line => line.StartsWith("FELICITY FARSEER", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -607,8 +608,8 @@ public class EngineersTabTests
 
         Assert.Contains(
             Text(panel),
-            line => line.Contains("Marco Qwent", StringComparison.Ordinal)
-                    && line.Contains("grade 3 opens Chloe Sedesi", StringComparison.Ordinal));
+            line => line.Contains("MARCO QWENT", StringComparison.Ordinal)
+                    && line.Contains("GRADE 3 OPENS CHLOE SEDESI", StringComparison.Ordinal));
 
         panel.Nav.Drill(EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Marco Qwent")));
         Dispatcher.UIThread.RunJobs();

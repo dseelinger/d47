@@ -391,15 +391,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         {
             if (group != entry.Reach)
             {
-                var section = LoadoutPages.Section(Caption(entry.Reach), compact: Mini);
-
-                if (group is null)
-                {
-                    section.Margin = new Thickness(0, 0, 0, 4);
-                }
-
                 group = entry.Reach;
-                _list.Children.Add(section);
+                _list.Children.Add(ListRow.Head(Caption(entry.Reach)));
             }
 
             var line = entry.Engineer.Name;
@@ -556,7 +549,7 @@ public sealed class EngineerPage : EngineerPageBase
 
             foreach (var work in entry.Planned.Take(PlannedShown))
             {
-                _body.Children.Add(Listed(ListRow.Name(new SelectableTextBlock
+                _body.Children.Add(Listed(ListRow.NameInk(new SelectableTextBlock
                 {
                     Text = work.Describe(),
                     FontSize = TypeScale.Body,
@@ -720,7 +713,7 @@ public sealed class EngineerPage : EngineerPageBase
 
     /// <summary>A read-only list row holding <paramref name="content"/>.</summary>
     private static Border Listed(Control content) =>
-        ListRow.Dress(new Border { Padding = new Thickness(12, 6), Child = content });
+        ListRow.Dress(new Border { Child = content });
 }
 
 /// <summary>The solver (Phase 28, "The fastest way in").</summary>
@@ -820,21 +813,9 @@ public sealed class EngineerRoutePage : EngineerPageBase
         var showing = _nav.Trail.Count > 0
                       && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
 
-        var name = ListRow.Name(new TextBlock
-        {
-            Text = candidate.Engineer.Name,
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Body,
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        var name = ListRow.Name(new TextBlock { Text = candidate.Engineer.Name, TextWrapping = TextWrapping.Wrap });
 
-        var summary = ListRow.Secondary(new TextBlock
-        {
-            Text = candidate.Summary(),
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        var summary = ListRow.Sub(new TextBlock { Text = candidate.Summary(), TextWrapping = TextWrapping.Wrap });
 
         var button = ListRow.Dress(
             new Button
