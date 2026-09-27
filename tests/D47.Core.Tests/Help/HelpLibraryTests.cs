@@ -69,12 +69,36 @@ public class HelpLibraryTests
         Assert.Equal(HelpColour.Surface, first.Fill);
         Assert.Equal(HelpColour.Accent, first.Stroke);
         Assert.Equal(2.5, first.StrokeWidth);
-        Assert.Equal(10, first.Radius);
+        Assert.Equal(0, first.Radius);
 
         var label = figure.Shapes.OfType<HelpLabel>().First();
         Assert.Equal("DIRECTORY", label.Text);
         Assert.Equal(HelpAnchor.Middle, label.Anchor);
         Assert.True(label.Bold);
+    }
+
+    /// <summary>A rectangle's corner radius is read from its rx.</summary>
+    [Fact]
+    public void ARectangleCarriesItsCornerRadius()
+    {
+        const string Page = """
+            ---
+            title: One figure
+            ---
+
+            <div class="d47-eli5"><div class="d47-frame">
+            <p class="intro">A figure.</p>
+            <section><h2><span class="num">1</span> One.</h2>
+            <svg viewBox="0 0 100 50" role="img" aria-label="A box">
+             <rect x="10" y="10" width="80" height="30" rx="10" fill="var(--surface)"/>
+            </svg>
+            </section>
+            </div></div>
+            """;
+
+        var figure = HelpLibrary.Parse(Page, "one-figure")!.Sections[0].Figure!;
+
+        Assert.Equal(10, Assert.IsType<HelpRectangle>(figure.Shapes[0]).Radius);
     }
 
     /// <summary>Nothing smaller than 14 in a band.</summary>
