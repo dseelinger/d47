@@ -203,15 +203,15 @@
     </ControlTheme>
 
     <!--
-      A window caption's minimise, maximise or close button: no ground and an A glyph at rest; solid A
-      with a Knock glyph on hover, keyboard focus or press. With the close class, solid Red with a
+      A window caption's minimise, maximise or close button: no ground and a Grey glyph at rest; a Tile
+      ground with an A glyph on hover, keyboard focus or press. With the close class, solid Red with a
       White glyph instead. No outline, corner or glow. The glyph must follow Foreground.
     -->
     <ControlTheme x:Key="D47.CaptionButton" TargetType="Button">
       <Setter Property="Padding" Value="0" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+      <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
       <Setter Property="FocusAdorner" Value="{x:Null}" />
       <Setter Property="Template">
         <ControlTemplate>
@@ -226,16 +226,16 @@
       </Setter>
 
       <Style Selector="^:pointerover">
-        <Setter Property="Background" Value="{DynamicResource D47.A}" />
-        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       </Style>
       <Style Selector="^:focus-visible">
-        <Setter Property="Background" Value="{DynamicResource D47.A}" />
-        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       </Style>
       <Style Selector="^:pressed">
-        <Setter Property="Background" Value="{DynamicResource D47.A}" />
-        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       </Style>
 
       <Style Selector="^.close:pointerover">

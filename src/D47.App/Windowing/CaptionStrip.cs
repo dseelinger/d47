@@ -26,8 +26,9 @@ public static class CaptionStrip
 {
     public const double StripHeight = 44;
     private const double ButtonWidth = 46;
-    private const double TitleSize = 23;
-    private const double TitleTracking = TitleSize * Fonts.ChromeTracking;
+    private const double TitleSize = 19;
+    private const double TitleTracking = TitleSize * Fonts.BrandTracking;
+    private const double VersionSize = 12;
 
     /// <summary>
     /// Wraps the window's existing content under the strip. Called last in a window's constructor,
@@ -84,23 +85,23 @@ public static class CaptionStrip
             VerticalAlignment = VerticalAlignment.Center,
             FontFamily = new FontFamily(Fonts.ChromeFamily),
             FontSize = TitleSize,
-            FontWeight = FontWeight.Bold,
+            FontWeight = FontWeight.SemiBold,
             LetterSpacing = TitleTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        name.Bind(TextBlock.ForegroundProperty, name.GetResourceObservable(TitleText.ColourKey(TitleRank.Window)));
+        name.Bind(TextBlock.ForegroundProperty, name.GetResourceObservable(ThemeManager.WhiteKey));
 
         var version = new TextBlock
         {
             VerticalAlignment = VerticalAlignment.Center,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Secondary,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = VersionSize,
         };
 
         void ShowTitle() => (name.Text, version.Text) = Split(window.Title);
 
         ShowTitle();
-        version.Bind(TextBlock.ForegroundProperty, version.GetResourceObservable(ThemeManager.AKey));
+        version.Bind(TextBlock.ForegroundProperty, version.GetResourceObservable(ThemeManager.Grey2Key));
 
         var diamond = new Path
         {
@@ -108,7 +109,6 @@ public static class CaptionStrip
             Width = 16,
             Height = 16,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0),
         };
         diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AKey));
 
@@ -119,8 +119,8 @@ public static class CaptionStrip
             Child = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 12,
-                Margin = new Thickness(16, 0, 0, 0),
+                Spacing = 14,
+                Margin = new Thickness(18, 0, 0, 0),
                 Children =
                 {
                     new BloomStack { Tier = BloomTier.High, VerticalAlignment = VerticalAlignment.Center, Child = diamond },

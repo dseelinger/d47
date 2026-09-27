@@ -203,6 +203,12 @@ a checklist line, a help description or a learned phrase, keep their own case an
 group headings in the Fleet slot list, the Engineers list and the Checklist's **Done** section are
 smaller orange capitals over a dim line.
 
+The title row at the top of the main window and each dialog is redrawn: the name is white, 19
+pixels rather than 23 and spaced wider apart, and the version beside it is in the monospaced
+typeface, 12 pixels, in grey. The minimise, maximise and close buttons are grey at rest; pointing
+at minimise or maximise now gives a dark tile with an orange symbol rather than a solid orange
+square. Close still turns red. The symbols' lines end square rather than rounded.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

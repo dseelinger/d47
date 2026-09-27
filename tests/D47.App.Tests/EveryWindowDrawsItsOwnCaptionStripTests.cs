@@ -61,6 +61,43 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         Assert.Contains("0.1.0", texts);
     }
 
+    [AvaloniaFact]
+    public void TheNameAndVersionAreSetInTheDesignsTitleBarType()
+    {
+        using var look = AppLook.Put();
+        var window = new Window { Content = new TextBlock(), Title = "Directive 47 — 0.1.0" };
+        CaptionStrip.Apply(window);
+        window.Show();
+
+        var texts = window.GetVisualDescendants().OfType<TextBlock>().Where(t => !BloomStack.IsGhost(t)).ToList();
+        var name = texts.Single(t => t.Text == "DIRECTIVE 47");
+        var version = texts.Single(t => t.Text == "0.1.0");
+
+        Assert.Equal(19, name.FontSize);
+        Assert.Equal(FontWeight.SemiBold, name.FontWeight);
+        Assert.Equal(19 * 0.12, name.LetterSpacing, 3);
+        Assert.Equal(Colour(ThemeManager.WhiteKey), (name.Foreground as ISolidColorBrush)?.Color);
+
+        Assert.Equal(Fonts.MonoFamily, version.FontFamily.ToString());
+        Assert.Equal(12, version.FontSize);
+        Assert.Equal(Colour(ThemeManager.Grey2Key), (version.Foreground as ISolidColorBrush)?.Color);
+    }
+
+    [AvaloniaFact]
+    public void TheRowIsInsetEighteenWithFourteenBetweenItsParts()
+    {
+        var window = new Window { Content = new TextBlock(), Title = "Directive 47 — 0.1.0" };
+        CaptionStrip.Apply(window);
+        window.Show();
+
+        var row = window.GetVisualDescendants().OfType<StackPanel>()
+            .Single(p => p.Children.OfType<TextBlock>().Any(t => t.Text == "0.1.0"));
+
+        Assert.Equal(18, row.Margin.Left);
+        Assert.Equal(14, row.Spacing);
+        Assert.All(row.Children, child => Assert.Equal(0, child.Margin.Right));
+    }
+
     /// <summary>Avalonia 12 draws its own title and caption buttons into an extended client area on
     /// Windows; left in, the title shows twice, one over the other.</summary>
     [AvaloniaFact]
@@ -214,7 +251,7 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         window.MouseMove(button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)!.Value);
 
     [AvaloniaFact]
-    public void AtRestNoCaptionButtonHasAGroundAndEachGlyphIsA()
+    public void AtRestNoCaptionButtonHasAGroundAndEachGlyphIsGrey()
     {
         using var look = AppLook.Put();
         var (_, minimize, maximize, close) = Themed();
@@ -222,12 +259,12 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         Assert.All([minimize, maximize, close], button =>
         {
             Assert.Equal(Colors.Transparent, Ground(button));
-            Assert.Equal(Colour(ThemeManager.AKey), Ink(button));
+            Assert.Equal(Colour(ThemeManager.GreyKey), Ink(button));
         });
     }
 
     [AvaloniaFact]
-    public void MinimiseAndMaximiseHoverToSolidAWithAKnockGlyph()
+    public void MinimiseAndMaximiseHoverToATileGroundWithAnAGlyph()
     {
         using var look = AppLook.Put();
         var (window, minimize, maximize, _) = Themed();
@@ -236,8 +273,8 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         {
             PointAt(window, button);
 
-            Assert.Equal(Colour(ThemeManager.AKey), Ground(button));
-            Assert.Equal(Colour(ThemeManager.KnockKey), Ink(button));
+            Assert.Equal(Colour(ThemeManager.TileKey), Ground(button));
+            Assert.Equal(Colour(ThemeManager.AKey), Ink(button));
         }
 
         Assert.Equal(Colors.Transparent, Ground(minimize));
@@ -262,8 +299,8 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         var (_, minimize, _, close) = Themed();
 
         minimize.Focus(Avalonia.Input.NavigationMethod.Tab);
-        Assert.Equal(Colour(ThemeManager.AKey), Ground(minimize));
-        Assert.Equal(Colour(ThemeManager.KnockKey), Ink(minimize));
+        Assert.Equal(Colour(ThemeManager.TileKey), Ground(minimize));
+        Assert.Equal(Colour(ThemeManager.AKey), Ink(minimize));
 
         close.Focus(Avalonia.Input.NavigationMethod.Tab);
         Assert.Equal(Colour(ThemeManager.RedKey), Ground(close));

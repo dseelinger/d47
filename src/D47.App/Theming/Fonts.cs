@@ -22,4 +22,7 @@ public static class Fonts
     /// <summary>Letter-spacing on upper-case chrome, as a fraction of its font size. Names, values and
     /// prose take none.</summary>
     public const double ChromeTracking = 0.06;
+
+    /// <summary>Letter-spacing on the brand name in the caption, as a fraction of its font size.</summary>
+    public const double BrandTracking = 0.12;
 }

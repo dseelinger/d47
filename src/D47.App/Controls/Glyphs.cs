@@ -47,7 +47,7 @@ public static class Glyphs
             Height = size * bounds.Height / longest,
             Stretch = Stretch.Uniform,
             StrokeThickness = 2,
-            StrokeLineCap = PenLineCap.Round,
+            StrokeLineCap = PenLineCap.Flat,
             StrokeJoin = PenLineJoin.Round,
             Data = geometry,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
