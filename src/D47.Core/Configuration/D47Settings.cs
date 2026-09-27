@@ -481,6 +481,9 @@ public sealed record CalloutSettings
     /// <summary>The first footfall on a body (#203).</summary>
     public bool Footfall { get; init; } = true;
 
+    /// <summary>A body just mapped with the DSS: its estimated value and the unsold total (#527).</summary>
+    public bool Mapping { get; init; } = true;
+
     /// <summary>A landable body whose biology could reach <see cref="BiologyThreshold"/>, said on its scan.</summary>
     public bool Biology { get; init; } = true;
 

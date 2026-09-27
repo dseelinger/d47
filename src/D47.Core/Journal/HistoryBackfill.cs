@@ -56,6 +56,9 @@ public sealed class HistoryBackfill
     /// <summary>The unsold organic data, which the walk folds into rather than returning (#526).</summary>
     public ExobiologyLedger? Exobiology { get; init; }
 
+    /// <summary>The unsold mapped bodies, folded the same way (#527).</summary>
+    public CartographyLedger? Cartography { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -154,6 +157,15 @@ public sealed class HistoryBackfill
                 Timed("exobiology backfill", () =>
                 {
                     exobiology.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Cartography is { } cartography)
+            {
+                Timed("cartography backfill", () =>
+                {
+                    cartography.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

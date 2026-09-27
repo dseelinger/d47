@@ -430,6 +430,7 @@ public static class SettingsLayout
                                 E("callouts.loreCooldownDays", under: true),
                                 E("callouts.discovery"),
                                 E("callouts.footfall"),
+                                E("callouts.mapping"),
                                 E("callouts.biologyValue"),
                                 E("callouts.surveyedBiology"),
                                 E("callouts.biologyThreshold", under: true),

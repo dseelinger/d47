@@ -29,6 +29,17 @@ The total drops by each species you sell at Vista Genomics, goes to zero when yo
 rebuilt from your journals when D47 starts. "Reset unsold exobiology" sets it to zero; the model
 cannot do this for you.
 
+When you finish mapping a body with the surface scanner, D47 now says about what it is worth and
+about how much mapped data you are carrying unsold: "Praea Euq BF-A d95 5 e mapped, efficiently.
+About 2,258 Cr. About 3.3 million unsold." Elite never writes a body's value, so D47 estimates it
+from the body's scan with the formula players have worked out from sales, and says "about" every
+time. The total counts only bodies you mapped, so Universal Cartographics pays more than it for
+the stars and the bodies you scanned without mapping. Ask "how much exploration data am I
+carrying" for the total and each body. The total drops for every system a sale names, goes to zero
+when you die, and is rebuilt from your journals when D47 starts. "Reset unsold exploration" sets it
+to zero; the model cannot do this for you. The callout has its own switch, Mapped body value,
+under Exploring.
+
 The exobiology route plotter now checks the galaxy search setting before asking Spansh for a
 route, the same as the neutron, Road to Riches and trade plotters. With it off, "plot me an
 exobiology route" gets the same switched-off answer as the other plotters, rather than sending the

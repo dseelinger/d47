@@ -142,6 +142,8 @@ from a model that will produce a plausible one.
 > "what are my career statistics"
 > "how many merc coins do I have"
 > "what's my reputation with the Empire"
+> "how much exploration data am I carrying"
+> "reset unsold exploration"
 
 **Every one of those reaches the thing it names.** This capability has six answers and used to be
 reached as a whole, with the first of the six taken by default — which is *where you are*. So
@@ -365,6 +367,28 @@ Mother Gaia: Friendly, 43 of 100, last read on 2026-09-20.
 Part of a name is enough when only one faction you have met matches it. When several do, they
 are listed by name rather than one being picked for you.
 
+**The bodies you have mapped and not sold** — every body you finished mapping with the Detailed
+Surface Scanner since you last sold its system's data, each with about what Universal Cartographics
+will pay for it:
+
+```text
+About 3,277,078 credits of mapped bodies unsold, from 3 bodies. 3 of them were mapped efficiently. This is an estimate, and it leaves out stars and bodies scanned but not mapped, so Universal Cartographics will pay more.
+```
+
+Elite never writes what a body is worth; only a sale carries credits, and only for the whole sale.
+The value is computed from the body's scan with the formula players have worked out from sales —
+a figure per planet class, raised for a terraformable body and for its mass, multiplied for
+mapping, for being first to map it, for being first to discover it, and for mapping it within the
+probe target. It is spoken as an estimate for that reason. The Detailed scan Elite writes straight
+after a mapping can say the body had not been mapped when an earlier scan said it had; a body
+counts as already mapped or already discovered if any scan up to the mapping said so.
+
+When you finish mapping a body, the [Mapped body value](callouts.md#mapping) callout says what it is
+worth and the new total. The total goes down when you sell: `MultiSellExplorationData` removes every
+held body in each system it names, because the sale names systems rather than bodies. It goes to
+zero when you die, and when you say "reset unsold exploration", which the model cannot do for you.
+It is rebuilt from your journals at every start, so it is right after a restart.
+
 ### When it does not know
 
 It says which event it is waiting for rather than shrugging — "Directive 47 started after Elite"
@@ -451,7 +475,10 @@ schema:
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-`get_location`, `get_materials` and `get_session_summary`.
+`get_location`, `get_materials` and `get_session_summary`, and the pair for the mapped bodies not
+yet sold: `get_unsold_exploration` answers the total, and `reset_unsold_exploration` sets it to zero.
+The reset is Protected: the keyword phrase, the panel and a hotkey reach it, and the model is
+refused.
 
 `get_ship` answers about the one being flown by default, and about any other ship the Commander
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):

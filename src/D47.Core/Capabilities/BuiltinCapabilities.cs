@@ -196,11 +196,14 @@ public static class BuiltinCapabilities
         Func<Audio.MusicAction, string>? controlMusic = null,
 
         // The organic data analysed and not yet sold (#526).
-        ExobiologyLedger? exobiology = null) =>
+        ExobiologyLedger? exobiology = null,
+
+        // The bodies mapped and not yet sold (#527).
+        CartographyLedger? cartography = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
-        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route),
+        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now),
         CrewCapability.Create(() => gameState.Active),
         CarrierCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue)),
         GalaxyCapability.Create(

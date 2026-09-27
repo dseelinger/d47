@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using D47.Core.Knowledge;
-using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -40,7 +39,7 @@ public sealed record UnsoldExobiology(IReadOnlyList<HeldAnalysis> Held)
 /// </summary>
 public sealed class ExobiologyLedger(string? path, ILogger logger)
 {
-    private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
+    private const string ResetProperty = "ExobiologyResetAt";
 
     private static readonly Lazy<IReadOnlyDictionary<string, long>> Values = new(() =>
         ExobiologyCatalogue.All
@@ -95,11 +94,11 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
 
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            var resets = UnsoldDataFile.Read(path, ResetProperty);
 
             lock (_gate)
             {
-                foreach (var (fid, at) in document?.ExobiologyResetAt ?? [])
+                foreach (var (fid, at) in resets)
                 {
                     _resets[fid] = at;
                 }
@@ -238,7 +237,7 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(new Document { ExobiologyResetAt = resets }, Json));
+            UnsoldDataFile.Write(path, ResetProperty, resets);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -398,10 +397,5 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
                 yield return line;
             }
         }
-    }
-
-    private sealed class Document
-    {
-        public Dictionary<string, DateTimeOffset>? ExobiologyResetAt { get; set; }
     }
 }

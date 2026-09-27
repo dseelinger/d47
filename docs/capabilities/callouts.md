@@ -619,6 +619,21 @@ Elite writes no event for a first footfall; Directive 47 infers it from `WasFoot
 body's `Scan` and the `Disembark` that follows it. A second `Disembark` on the same body says
 nothing, since the body's scan is marked the moment the first one lands.
 
+#### Mapped body value {#mapping}
+
+When you finish mapping a body with the Detailed Surface Scanner:
+
+```text
+Praea Euq BF-A d95 5 e mapped, efficiently. About 2,258 Cr. About 3.3 million unsold.
+```
+
+"Efficiently" means you used no more probes than the target, which raises the value by a quarter.
+Both figures are estimates: Elite writes no value for a body, so it is computed from the body's
+scan (see [Journal](journal.md) for how), and "about" is said every time. The total counts only
+bodies you have mapped, so Universal Cartographics pays more than it, for the stars and the bodies
+you scanned without mapping. The line waits for the Detailed scan Elite writes straight after the
+mapping, since that is where the body's class and mass come from.
+
 #### High-value biology {#biology}
 
 When you scan a landable body the FSS has already counted biological signals on:

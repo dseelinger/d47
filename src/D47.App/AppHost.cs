@@ -795,6 +795,13 @@ public sealed class AppHost : IDisposable
 
         exobiology.Load();
 
+        // Bodies mapped with the DSS and not yet sold, rebuilt by the same walk (#527).
+        var cartography = new D47.Core.Journal.CartographyLedger(
+            Path.Combine(paths.Data, "unsold-data.json"),
+            loggerFactory.CreateLogger<D47.Core.Journal.CartographyLedger>());
+
+        cartography.Load();
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -809,6 +816,7 @@ public sealed class AppHost : IDisposable
             KitFile = kit,
             NameFile = heardNames,
             Exobiology = exobiology,
+            Cartography = cartography,
             Step = StartupTimer.Step,
         };
 
@@ -1054,7 +1062,8 @@ public sealed class AppHost : IDisposable
             commodityLedger,
             communityGoalSearch,
             gameState,
-            exobiology);
+            exobiology,
+            cartography);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -1120,6 +1129,7 @@ public sealed class AppHost : IDisposable
 
             // Before the callouts too, so an analysis is in the unsold total the sampling callout speaks.
             exobiology.Apply(events, gameState.Active?.Identity.FrontierId);
+            cartography.Apply(events, gameState.Active?.Identity.FrontierId);
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
             planBook.Apply(events);
@@ -1889,7 +1899,8 @@ public sealed class AppHost : IDisposable
                 openAudioFolder: () => System.Diagnostics.Process.Start(
                     new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
                 controlMusic: action => self?.Music.Control(action) ?? "Ambient music is not available.",
-                exobiology: exobiology));
+                exobiology: exobiology,
+                cartography: cartography));
 
         buildingRegistry.Dispose();
 
@@ -2527,7 +2538,8 @@ public sealed class AppHost : IDisposable
         D47.Core.Journal.CommodityLedger ledger,
         D47.Core.Knowledge.CommunityGoalSearch communityGoal,
         GameStateStore gameState,
-        D47.Core.Journal.ExobiologyLedger exobiology)
+        D47.Core.Journal.ExobiologyLedger exobiology,
+        D47.Core.Journal.CartographyLedger cartography)
     {
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
         var tradingMode = new TradingModeCallout(loggers.CreateLogger<TradingModeCallout>());
@@ -2569,6 +2581,7 @@ public sealed class AppHost : IDisposable
             .Add(new SamplingCallout { Ledger = exobiology })
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
+            .Add(new MappingCallout { Ledger = cartography })
             .Add(surveyedBiology)
             .Add(biology)
             .Add(tradingMode)
@@ -2671,6 +2684,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
+        engine.SetEnabled("mapping", callouts.Mapping, now);
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
         engine.SetEnabled("trading-mode", callouts.TradingMode, now);

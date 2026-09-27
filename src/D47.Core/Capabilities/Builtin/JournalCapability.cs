@@ -15,15 +15,20 @@ public static partial class JournalCapability
 {
     public const string Id = "journal";
 
+    public const string ResetExplorationTool = "reset_unsold_exploration";
+
     /// <param name="history">
     /// How far the walk over older journals has got, so a fleet question says that rather than reporting
     /// an absence the walk has not ruled out (#148).
     /// </param>
     /// <param name="route">The plotted route, which is where a jump count comes from (#152).</param>
+    /// <param name="cartography">The mapped bodies not yet sold, or null where nothing keeps them.</param>
     public static CapabilityDescriptor Create(
         GameStateStore gameState,
         Func<HistoryState>? history = null,
-        Func<NavRoute>? route = null)
+        Func<NavRoute>? route = null,
+        CartographyLedger? cartography = null,
+        Func<DateTimeOffset>? now = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -46,6 +51,8 @@ public static partial class JournalCapability
                 "how have I done this session",
                 "what are my career statistics",
                 "what's my reputation with the Empire",
+                "how much exploration data am I carrying",
+                "reset unsold exploration",
             ],
 
             // Phrases, not words. "where" and "system" on their own match "Where is Iran?" and "what's your
@@ -96,6 +103,10 @@ public static partial class JournalCapability
                 new("my navy rank", "get_standing"),
                 new("my naval rank", "get_standing"),
                 new("my navy ranks", "get_standing"),
+                new("exploration data am i carrying", "get_unsold_exploration"),
+                new("unsold exploration", "get_unsold_exploration"),
+                new("reset unsold exploration", ResetExplorationTool),
+                new("reset the exploration total", ResetExplorationTool),
             ],
             Display = new CapabilityDisplay { PanelTitle = "Location", Order = 20 },
             Tools =
@@ -264,8 +275,97 @@ public static partial class JournalCapability
                     Commands = Asking(Standing),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStanding(gameState, arguments))),
                 },
+                new ToolDefinition
+                {
+                    Name = "get_unsold_exploration",
+                    Description =
+                        "The bodies the Commander has mapped with the surface scanner and not yet sold to "
+                        + "Universal Cartographics: an estimate of their total value, how many, and how many "
+                        + "were mapped efficiently. Stars and bodies scanned but not mapped are not counted. "
+                        + "Lost on death.",
+                    Parameters = [],
+                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeUnsoldExploration(cartography, gameState.Active))),
+                },
+                new ToolDefinition
+                {
+                    Name = ResetExplorationTool,
+                    Description = "Set the Commander's unsold exploration total to zero from now.",
+                    Parameters = [],
+                    Protected = true,
+                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(
+                        ResetUnsoldExploration(cartography, gameState.Active, now?.Invoke() ?? DateTimeOffset.UtcNow))),
+                },
             ],
         };
+    }
+
+    private static string DescribeUnsoldExploration(CartographyLedger? ledger, CommanderGameState? state)
+    {
+        if (ledger is null)
+        {
+            return "I am not keeping a total of unsold exploration data in this build.";
+        }
+
+        if (state is null)
+        {
+            return "No Elite Dangerous journal has been detected yet.";
+        }
+
+        var unsold = ledger.Unsold(state.Identity.FrontierId);
+        var report = new StringBuilder();
+
+        if (!ledger.HistoryFolded)
+        {
+            report.AppendLine("I am still reading your older journals, so this may leave some out.");
+        }
+
+        if (unsold.Held.Count == 0)
+        {
+            report.AppendLine("You are carrying no unsold mapped bodies.");
+            return report.ToString().TrimEnd();
+        }
+
+        var priced = unsold.Held.Count - unsold.Unpriced.Count;
+
+        report.AppendLine(
+            $"About {unsold.Total.ToString("N0", CultureInfo.InvariantCulture)} credits of mapped bodies unsold, "
+            + $"from {priced} bod{(priced == 1 ? "y" : "ies")}. {unsold.Efficient} of them "
+            + $"{(unsold.Efficient == 1 ? "was" : "were")} mapped efficiently. This is an estimate, and it "
+            + "leaves out stars and bodies scanned but not mapped, so Universal Cartographics will pay more.");
+
+        if (unsold.Unpriced.Count > 0)
+        {
+            report.AppendLine(
+                $"Left out of the total, because no scan gave their class and mass: "
+                + $"{string.Join(", ", unsold.Unpriced.Select(map => map.BodyName))}.");
+        }
+
+        report.AppendLine();
+
+        foreach (var map in unsold.Held.Where(map => map.Value is not null))
+        {
+            report.AppendLine(
+                $"  {map.BodyName} — about {map.Value!.Value.ToString("N0", CultureInfo.InvariantCulture)} cr");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private static string ResetUnsoldExploration(CartographyLedger? ledger, CommanderGameState? state, DateTimeOffset at)
+    {
+        if (ledger is null)
+        {
+            return "I am not keeping a total of unsold exploration data in this build.";
+        }
+
+        if (state is not { Identity.FrontierId: { Length: > 0 } fid })
+        {
+            return "No Elite Dangerous journal has been detected yet, so there is no Commander to reset.";
+        }
+
+        ledger.Reset(fid, at);
+
+        return "Unsold exploration reset to zero. Bodies mapped from now on count towards it.";
     }
 
     /// <summary>The section names a <c>Statistics</c> event carries (#263).</summary>

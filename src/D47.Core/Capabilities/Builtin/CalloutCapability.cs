@@ -33,6 +33,7 @@ public static class CalloutCapability
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
     public const string FootfallKey = "callouts.footfall";
+    public const string MappingKey = "callouts.mapping";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
@@ -266,6 +267,16 @@ public static class CalloutCapability
                 "first footfall",
                 s => s.Callouts.Footfall,
                 (s, v) => s with { Callouts = s.Callouts with { Footfall = v } }),
+
+            Toggle(
+                MappingKey,
+                "Mapped body value",
+                "When you finish mapping a body with the surface scanner, about what it is worth and the "
+                + "total of mapped bodies not yet sold.",
+                "mapping",
+                "mapped bodies",
+                s => s.Callouts.Mapping,
+                (s, v) => s with { Callouts = s.Callouts with { Mapping = v } }),
 
             Toggle(
                 BiologyKey,
