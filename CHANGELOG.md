@@ -184,6 +184,12 @@ in a red line further down the page. The message goes as soon as you type in the
 fields are 44 pixels tall rather than 30. The search field above a page is outlined in a dim line
 that turns orange while you type in it, with 14-pixel text rather than 16.
 
+Numbers, costs, times and dates are now in the monospaced typeface: the Utilities clocks and their
+dates, the Carrier page's figures and tritium, the Fleet page's ship figures, an engineer's
+distance, the community goal totals on the Routing pages, the times in an adventure's story, the
+price on the Logbook's **Write it** button, and the times and dates in the Audio recorder, Logbook,
+Coverage, Debrief and Memory windows. Names, words and system names stay as they were.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

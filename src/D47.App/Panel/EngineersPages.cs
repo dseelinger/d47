@@ -510,7 +510,7 @@ public sealed class EngineerPage : EngineerPageBase
 
         if (entry.LightYears is not null)
         {
-            tiles.Add(StatTile.Build("Distance", entry.Aside));
+            tiles.Add(StatTile.Build("Distance", entry.Aside, StatInk.Number));
         }
 
         tiles.Add(StatTile.Build("Where you stand", entry.Status));

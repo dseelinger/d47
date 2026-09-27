@@ -1,5 +1,7 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
@@ -202,7 +204,7 @@ public sealed class DebriefWindow : Window
             {
                 Ink(new TextBlock
                 {
-                    Text = $"{entry.Key} — {entry.Label()}{Stamp(entry.ProposedAt)}",
+                    Inlines = [new Run($"{entry.Key} — {entry.Label()}"), .. Stamp(entry.ProposedAt)],
                     FontSize = TypeScale.Secondary,
                     FontWeight = FontWeight.SemiBold,
                     TextWrapping = TextWrapping.Wrap,
@@ -277,7 +279,7 @@ public sealed class DebriefWindow : Window
             {
                 ListRow.Secondary(new TextBlock
                 {
-                    Text = $"{entry.Key} — {entry.Label()}{scope}{Stamp(entry.AdoptedAt)}",
+                    Inlines = [new Run($"{entry.Key} — {entry.Label()}{scope}"), .. Stamp(entry.AdoptedAt)],
                     FontSize = TypeScale.Secondary,
                     FontWeight = FontWeight.SemiBold,
                     TextWrapping = TextWrapping.Wrap,
@@ -290,8 +292,10 @@ public sealed class DebriefWindow : Window
         return ListRow.Dress(new Border { Padding = new Thickness(12, 10), Child = stack });
     }
 
-    private static string Stamp(DateTimeOffset? at) =>
-        at is { } when ? $", {when.ToLocalTime():d MMM yyyy}" : string.Empty;
+    private static Inline[] Stamp(DateTimeOffset? at) =>
+        at is { } when
+            ? [new Run(", "), Fonts.Mono(when.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture))]
+            : [];
 
     private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
     {

@@ -1,5 +1,7 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
@@ -146,7 +148,7 @@ public sealed class MemoryWindow : Window
             {
                 ListRow.Secondary(new TextBlock
                 {
-                    Text = $"{entry.Key} — {Label(entry)}{Stamp(entry)}",
+                    Inlines = [new Run($"{entry.Key} — {Label(entry)}"), .. Stamp(entry)],
                     FontSize = TypeScale.Secondary,
                     FontWeight = FontWeight.SemiBold,
                     TextWrapping = TextWrapping.Wrap,
@@ -184,8 +186,10 @@ public sealed class MemoryWindow : Window
         _ => "written by D47 itself, unverified",
     };
 
-    private static string Stamp(MemoryEntry entry) =>
-        entry.AddedAt is { } at ? $", {at.ToLocalTime():d MMM yyyy}" : string.Empty;
+    private static Inline[] Stamp(MemoryEntry entry) =>
+        entry.AddedAt is { } at
+            ? [new Run(", "), Fonts.Mono(at.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture))]
+            : [];
 
     private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
     {

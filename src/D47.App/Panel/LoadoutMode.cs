@@ -70,7 +70,7 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
 }
 
 /// <summary>One read-only figure on a line, drawn as a stat tile.</summary>
-public sealed record LoadoutStat(string Label, string Value, D47.App.Controls.StatInk Ink = D47.App.Controls.StatInk.Value);
+public sealed record LoadoutStat(string Label, string Value, D47.App.Controls.StatInk Ink = D47.App.Controls.StatInk.Number);
 
 /// <summary>A number on a line that the Commander can move, and what happens when they do.</summary>
 /// <param name="Value">Where it is now.</param>

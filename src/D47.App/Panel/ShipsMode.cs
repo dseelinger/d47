@@ -285,7 +285,7 @@ public sealed class ShipsMode(
             hull.Pad is { Length: > 0 } pad ? $"{made}. Needs a {pad} pad." : $"{made}.")
         {
             Stats = hull.Pad is { Length: > 0 } size
-                ? [new("Hull", made, StatInk.Name), new("Pad", size)]
+                ? [new("Hull", made, StatInk.Name), new("Pad", size, StatInk.Value)]
                 : [new("Hull", made, StatInk.Name)],
         });
 

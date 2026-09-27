@@ -9,8 +9,11 @@ namespace D47.App.Controls;
 /// <summary>What a stat tile's value is, which sets its ink.</summary>
 public enum StatInk
 {
-    /// <summary>A figure or a system name, in A.</summary>
+    /// <summary>A word or a system name, in A.</summary>
     Value,
+
+    /// <summary>A number, cost, time or date, in A mono.</summary>
+    Number,
 
     /// <summary>The name of a ship, engineer or carrier, in White.</summary>
     Name,
@@ -50,7 +53,7 @@ public static class StatTile
         var figure = new TextBlock
         {
             Text = value,
-            FontFamily = new FontFamily(ink == StatInk.Figure ? Fonts.MonoFamily : Fonts.ChromeFamily),
+            FontFamily = new FontFamily(ink is StatInk.Figure or StatInk.Number ? Fonts.MonoFamily : Fonts.ChromeFamily),
             FontSize = ValueSize,
             FontWeight = FontWeight.Medium,
             TextWrapping = TextWrapping.Wrap,

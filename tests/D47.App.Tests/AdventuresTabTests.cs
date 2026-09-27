@@ -123,14 +123,18 @@ public class AdventuresTabTests
     }
 
     private static IReadOnlyList<string> Drawn(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(Said)];
+
+    /// <summary>A block's text, whether it holds it as one string or as runs.</summary>
+    private static string Said(TextBlock block) =>
+        block.Inlines is { Count: > 0 } inlines ? inlines.Text ?? string.Empty : block.Text ?? string.Empty;
 
     /// <summary>What is actually on screen — mini hides the big page rather than unbuilding it.</summary>
     private static IReadOnlyList<string> Visible(PanelView panel) =>
     [
         .. panel.GetVisualDescendants().OfType<TextBlock>()
             .Where(block => block.IsEffectivelyVisible)
-            .Select(block => block.Text ?? string.Empty),
+            .Select(Said),
     ];
 
     private static IReadOnlyList<AdventureThinking> Pulses(PanelView panel) =>

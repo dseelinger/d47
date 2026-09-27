@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
@@ -199,7 +200,7 @@ public sealed class LogbookWindow : Window
 
         if (_book.Armed is { } armed)
         {
-            _write.Content = $"Write it — {armed.Price}";
+            _write.Content = new TextBlock { Inlines = [new Run("WRITE IT — "), Fonts.Mono(armed.Price.ToUpperInvariant())] };
         }
         else
         {
@@ -251,6 +252,7 @@ public sealed class LogbookWindow : Window
         var written = ListRow.Secondary(new TextBlock
         {
             Text = $"{entry.Written.ToLocalTime():d MMM yyyy HH:mm}",
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0),

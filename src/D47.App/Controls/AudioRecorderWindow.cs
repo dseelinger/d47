@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
@@ -146,9 +147,9 @@ public sealed class AudioRecorderWindow : Window
 
         var when = ListRow.Secondary(new TextBlock
         {
-            Text = row.Kept is null
-                ? $"{row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s"
-                : $"kept  {row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s",
+            Inlines = row.Kept is null
+                ? [Fonts.Mono($"{row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s")]
+                : [new Run("kept  "), Fonts.Mono($"{row.When:HH:mm:ss}  {row.Duration.TotalSeconds:0.0}s")],
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),

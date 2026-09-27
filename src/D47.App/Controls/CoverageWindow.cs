@@ -122,6 +122,7 @@ public sealed class CoverageWindow : Window
         var when = ListRow.Secondary(new TextBlock
         {
             Text = line.LastSeen is { } seen ? seen.ToString("yyyy-MM-dd") : string.Empty,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0),

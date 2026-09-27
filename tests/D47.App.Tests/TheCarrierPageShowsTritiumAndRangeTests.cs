@@ -142,6 +142,21 @@ public class TheCarrierPageShowsTritiumAndRangeTests
     }
 
     [AvaloniaFact]
+    public void TheCarriersFiguresAreDrawnInMono()
+    {
+        var (store, _, _) = Commander(shipTritium: 40, carrierHoldTritium: 158);
+        var (window, panel) = Open(() => store.Active);
+
+        TextBlock Block(string text) =>
+            panel.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == text);
+
+        Assert.Equal("JetBrains Mono", Block("1,180 t").FontFamily.Name);
+        Assert.Equal("JetBrains Mono", Block("500 ly").FontFamily.Name);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void TheCarriersHoldRowIsOmittedUntilTritiumIsCounted()
     {
         var (store, _, _) = Commander();

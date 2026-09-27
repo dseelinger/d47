@@ -773,10 +773,13 @@ public sealed class AdventuresPage : UserControl
     /// <summary>The Commander's current system, from the app's own state.</summary>
     private string? Here() => _surface.State()?.Location?.StarSystem;
 
-    private static Control Labelled(string label, string? text, Control? content = null)
+    private static Control Labelled(string label, string? text, Control? content = null) =>
+        Labelled(Text(label, TypeScale.Small, ThemeManager.GreyKey), text, content);
+
+    private static Control Labelled(TextBlock label, string? text, Control? content = null)
     {
         var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 4, 0, 0) };
-        stack.Children.Add(Text(label, TypeScale.Small, ThemeManager.GreyKey));
+        stack.Children.Add(label);
 
         if (text is { Length: > 0 })
         {
@@ -856,10 +859,7 @@ public sealed class AdventuresPage : UserControl
             {
                 var heading = told.Title is { Length: > 0 } title ? title : adventure.Name;
 
-                stack.Children.Add(Text(
-                    $"{heading} — {told.At.ToLocalTime():d MMM HH:mm}",
-                    TypeScale.Small,
-                    ThemeManager.GreyKey));
+                stack.Children.Add(Stamped($"{heading} — ", told.At));
 
                 if (told.Trigger is { Length: > 0 } trigger)
                 {
@@ -870,12 +870,10 @@ public sealed class AdventuresPage : UserControl
             {
                 // The Commander's own words above the answer, so an aside reads as an exchange rather than as
                 // a paragraph of story that arrived from nowhere.
-                stack.Children.Add(Text(
+                stack.Children.Add(
                     told.Asked is { Length: > 0 } asked
-                        ? $"You asked, {told.At.ToLocalTime():d MMM HH:mm} — “{asked}”"
-                        : $"Aside — {told.At.ToLocalTime():d MMM HH:mm}",
-                    TypeScale.Small,
-                    ThemeManager.GreyKey));
+                        ? Stamped("You asked, ", told.At, $" — “{asked}”")
+                        : Stamped("Aside — ", told.At));
             }
 
             stack.Children.Add(Text(told.Text, TypeScale.Body));
@@ -901,9 +899,7 @@ public sealed class AdventuresPage : UserControl
         for (var index = 0; index < shown && index < adventure.Beats.Count; index++)
         {
             var beat = adventure.Beats[index];
-            page.Children.Add(Labelled(
-                $"{beat.Title} — {standing.Fired[index].ToLocalTime():d MMM HH:mm}",
-                beat.Line));
+            page.Children.Add(Labelled(Stamped($"{beat.Title} — ", standing.Fired[index]), beat.Line));
         }
     }
 
@@ -913,6 +909,21 @@ public sealed class AdventuresPage : UserControl
         button.Classes.Set("destructive", destructive);
         button.Click += (_, _) => act();
         return button;
+    }
+
+    /// <summary>A grey caption with its local time in mono between <paramref name="before"/> and <paramref name="after"/>.</summary>
+    private static TextBlock Stamped(string before, DateTimeOffset at, string after = "")
+    {
+        var block = new TextBlock { FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
+        block.Inlines = [new Run(before), Fonts.Mono(at.ToLocalTime().ToString("d MMM HH:mm", CultureInfo.CurrentCulture))];
+
+        if (after.Length > 0)
+        {
+            block.Inlines.Add(new Run(after));
+        }
+
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        return block;
     }
 
     internal static TextBlock Text(string text, double size, string key = ThemeManager.WhiteKey)

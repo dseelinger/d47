@@ -353,7 +353,7 @@ public sealed class UtilitiesPage : UserControl
     /// <summary>A clock's stat tile, with its date under the time; returns the tile and its time.</summary>
     private static (Border Tile, TextBlock Time) Clock(string caption, TextBlock date)
     {
-        var tile = StatTile.Build(caption, string.Empty);
+        var tile = StatTile.Build(caption, string.Empty, StatInk.Number);
         var lines = (StackPanel)tile.Child!;
 
         lines.Children.Add(date);
@@ -363,7 +363,13 @@ public sealed class UtilitiesPage : UserControl
 
     private static TextBlock Dated()
     {
-        var block = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
+        var block = new TextBlock
+        {
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
         Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }

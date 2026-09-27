@@ -150,20 +150,21 @@ public sealed class CarrierPage : UserControl
 
         if (carrier.JumpRange is { } range)
         {
-            tiles.Add(StatTile.Build("Jump range", $"{range:0.#} ly"));
+            tiles.Add(StatTile.Build("Jump range", $"{range:0.#} ly", StatInk.Number));
         }
 
         if (carrier.Capacity is { } capacity && carrier.FreeSpace is { } free)
         {
             tiles.Add(StatTile.Build(
                 "Space",
-                $"{capacity - free:N0} of {capacity:N0} t used, {free:N0} t free"));
+                $"{capacity - free:N0} of {capacity:N0} t used, {free:N0} t free",
+                StatInk.Number));
         }
 
         if (carrier.CargoTonnes is { } cargo)
         {
             // How much, never what.
-            tiles.Add(StatTile.Build("Cargo", $"{cargo:N0} t"));
+            tiles.Add(StatTile.Build("Cargo", $"{cargo:N0} t", StatInk.Number));
         }
 
         var upkept = CarrierUpkeep.Now(carrier, _now());
@@ -173,17 +174,18 @@ public sealed class CarrierPage : UserControl
             tiles.Add(StatTile.Build(
                 "Balance",
                 (balance.Adjusted ? "about " : string.Empty)
-                + balance.Balance.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
+                + balance.Balance.ToString("N0", CultureInfo.CurrentCulture) + " cr",
+                StatInk.Number));
 
             if (balance.Weekly is { } weekly)
             {
-                tiles.Add(StatTile.Build("Upkeep", weekly.ToString("N0", CultureInfo.CurrentCulture) + " cr a week"));
-                tiles.Add(StatTile.Build("Covers", $"{balance.WeeksCovered:N0} weeks"));
+                tiles.Add(StatTile.Build("Upkeep", weekly.ToString("N0", CultureInfo.CurrentCulture) + " cr a week", StatInk.Number));
+                tiles.Add(StatTile.Build("Covers", $"{balance.WeeksCovered:N0} weeks", StatInk.Number));
             }
         }
         else if (carrier.Balance is { } recorded)
         {
-            tiles.Add(StatTile.Build("Balance", recorded.ToString("N0", CultureInfo.CurrentCulture) + " cr"));
+            tiles.Add(StatTile.Build("Balance", recorded.ToString("N0", CultureInfo.CurrentCulture) + " cr", StatInk.Number));
         }
 
         if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
@@ -233,7 +235,7 @@ public sealed class CarrierPage : UserControl
 
         if (carrier.FuelLevel is { } fuel)
         {
-            tiles.Add(StatTile.Build("Tritium", $"{fuel:N0} t"));
+            tiles.Add(StatTile.Build("Tritium", $"{fuel:N0} t", StatInk.Number));
         }
 
         if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
@@ -316,7 +318,7 @@ public sealed class CarrierPage : UserControl
 
         var tiles = new List<Control>
         {
-            StatTile.Build("In the tank", carrier.FuelLevel is { } fuel ? $"{fuel:N0} t" : "not seen"),
+            StatTile.Build("In the tank", carrier.FuelLevel is { } fuel ? $"{fuel:N0} t" : "not seen", StatInk.Number),
         };
 
         if (carrier.TritiumInHold is { } hold)
@@ -325,19 +327,19 @@ public sealed class CarrierPage : UserControl
                 ? "counted, may be off: a tritium order was open"
                 : "counted";
 
-            tiles.Add(StatTile.Build("Carrier's hold", $"{hold:N0} t ({note})"));
+            tiles.Add(StatTile.Build("Carrier's hold", $"{hold:N0} t ({note})", StatInk.Number));
         }
 
         var shipTritium = _carrier.ShipTritium;
 
         if (shipTritium > 0)
         {
-            tiles.Add(StatTile.Build("Your ship's hold", $"{shipTritium:N0} t"));
+            tiles.Add(StatTile.Build("Your ship's hold", $"{shipTritium:N0} t", StatInk.Number));
         }
 
         var total = (carrier.FuelLevel ?? 0) + (carrier.TritiumInHold ?? 0) + shipTritium;
 
-        tiles.Add(StatTile.Build("Total", $"{total:N0} t"));
+        tiles.Add(StatTile.Build("Total", $"{total:N0} t", StatInk.Number));
 
         var usedSpace = carrier.Capacity is { } capacity && carrier.FreeSpace is { } free ? capacity - free : 0;
         var (rangeLy, jumps) = CarrierFuel.RoughRange(total, usedSpace, carrier.JumpRange);
@@ -345,7 +347,8 @@ public sealed class CarrierPage : UserControl
 
         tiles.Add(StatTile.Build(
             "Range, roughly",
-            $"about {RoundToTwoSigFigs(rangeLy):N0} ly — {jumps} jump{(jumps == 1 ? "" : "s")} at {distance:0.#} ly"));
+            $"about {RoundToTwoSigFigs(rangeLy):N0} ly — {jumps} jump{(jumps == 1 ? "" : "s")} at {distance:0.#} ly",
+            StatInk.Number));
 
         _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
     }

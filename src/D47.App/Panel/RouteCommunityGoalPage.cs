@@ -343,7 +343,7 @@ public sealed class RouteCommunityGoalPage : UserControl
     /// <summary>One window's net as a stat tile, with its sales under the figure.</summary>
     private static Border LedgerTile(string label, LedgerTotal total)
     {
-        var tile = StatTile.Build(label, total.Sales == 0 ? "—" : Signed(total.Net));
+        var tile = StatTile.Build(label, total.Sales == 0 ? "—" : Signed(total.Net), StatInk.Number);
 
         ((StackPanel)tile.Child!).Children.Add(RoutingKit.Ink(
             total.Sales == 0 ? "no sales" : $"{total.Sales} sales, {total.Tonnes:N0} t",

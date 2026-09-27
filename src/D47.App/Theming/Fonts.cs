@@ -1,3 +1,6 @@
+using Avalonia.Controls.Documents;
+using Avalonia.Media;
+
 namespace D47.App.Theming;
 
 /// <summary>The three embedded typefaces: Saira for chrome, Sintony for prose, JetBrains Mono for
@@ -12,6 +15,9 @@ public static class Fonts
 
     public const string MonoFamily =
         "avares://d47/Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono";
+
+    /// <summary>A number, time or date inside a line of words, in JetBrains Mono.</summary>
+    public static Run Mono(string text) => new(text) { FontFamily = new FontFamily(MonoFamily) };
 
     /// <summary>Letter-spacing on upper-case chrome, as a fraction of its font size. Names, values and
     /// prose take none.</summary>
