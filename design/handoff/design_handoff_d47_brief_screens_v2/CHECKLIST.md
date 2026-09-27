@@ -7,9 +7,9 @@ Placeholder data doesn't need to match. Structure, order, colour roles, type, si
 Capture artifact: the stepper arrows in 18 and 19 render as odd glyphs. In the app they are `◄` and `►`.
 
 ## 0 Shared
-- [ ] The COMMANDER and EXPLORATION main tabs exist. UTILITIES is kept after ADVENTURES, which makes 10 tabs on one row with tab padding `0 8px` (01).
-- [ ] HELP is a title-bar tile just before the window controls, not in the tab strip.
-- [ ] With #321's TRADING and SEARCH added after ADVENTURES, all 12 tabs still fit on one row at 1280 (00).
+- [ ] The COMMANDER and EXPLORATION main tabs exist. UTILITIES is kept after ADVENTURES, which makes 10 tabs on one row with tab padding `0 7px` (01).
+- [ ] The tab row holds tabs only. In the title bar: the PRE-RELEASE badge right after the version number (pre-release builds only), then, just before the window controls, the avatar (30px + 8px margin) and the HELP tile (00).
+- [ ] With #321's TRADING and SEARCH added after ADVENTURES, all 12 tabs still fit on one row at 1280, with the avatar and badge showing: about 1,198px of 1,224px. Record the measured widths in the commit body (00).
 - [ ] Every new screen has the footer: `Say: “…”` on the left, `KEPT CURRENT BY THE JOURNAL · HH:MM` on the right (time in mono cyan), above a `line2` rule.
 - [ ] Every screen redraws when the journal changes. There is no refresh button anywhere.
 - [ ] Tiles and rows are 44px tall with 2px gaps. Control text is 13px. Hover uses `tile2`. Radius is zero. There are no shadows.

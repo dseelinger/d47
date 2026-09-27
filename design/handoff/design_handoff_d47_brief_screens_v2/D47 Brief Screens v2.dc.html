@@ -25,12 +25,12 @@
   </div>
 
   <div class="d47-window" style="width:1280px;height:860px;flex:none" data-screen-label="{{ screenLabel }}">
-    <div class="d47-titlebar"><span class="d47-brand-mark"></span><span class="d47-brand-name">DIRECTIVE 47</span><span class="d47-version">1.6.3</span>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:2px"><button class="d47-tile-button" style="height:44px;font-size:12px;padding:0 16px">Help</button><div class="d47-window-controls" style="margin-left:0"><span class="d47-window-control">—</span><span class="d47-window-control">□</span><span class="d47-window-control close">✕</span></div></div>
+    <div class="d47-titlebar"><span class="d47-brand-mark"></span><span class="d47-brand-name">DIRECTIVE 47</span><span class="d47-version">1.6.3</span><sc-if value="{{ preRelease }}" hint-placeholder-val="{{ true }}"><span style="margin-left:10px;flex:none;white-space:nowrap;height:22px;display:flex;align-items:center;padding:0 8px;background:color-mix(in oklab, var(--d47-warn) 12%, var(--d47-bar));color:var(--d47-warn);font-family:var(--d47-font-chrome);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase">Pre-release</span></sc-if>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:2px"><span title="CMDR JOHN DEPARAGON" style="width:30px;height:30px;margin-right:8px;display:flex;align-items:center;justify-content:center;background:var(--d47-tile);color:var(--d47-a);font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:.04em">JD</span><button class="d47-tile-button" style="height:44px;font-size:12px;padding:0 16px">Help</button><div class="d47-window-controls" style="margin-left:0"><span class="d47-window-control">—</span><span class="d47-window-control">□</span><span class="d47-window-control close">✕</span></div></div>
     </div>
     <div class="d47-window__body" style="padding:20px 28px 20px">
       <div class="d47-tabs" style="flex-wrap:nowrap">
-        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="9"><span class="d47-tab {{ t.cls }}" style="padding:0 8px;color:{{ t.color }}" onClick="{{ t.go }}">{{ t.label }}</span></sc-for>
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="9"><span class="d47-tab {{ t.cls }}" style="padding:0 7px;color:{{ t.color }}" onClick="{{ t.go }}">{{ t.label }}</span></sc-for>
         
       </div>
       <div class="d47-tabs-rule"></div>
@@ -622,7 +622,7 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;elite&quot;,&quot;dark&quot;,&quot;light&quot;,&quot;elite-palette&quot;],&quot;default&quot;:&quot;elite&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;start&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;commander&quot;,&quot;exploration&quot;,&quot;materials&quot;,&quot;fleet&quot;,&quot;plan&quot;,&quot;phrases&quot;],&quot;default&quot;:&quot;commander&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;galaxy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Settings&quot;},&quot;colonyKnown&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;futureTabs&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;elite&quot;,&quot;dark&quot;,&quot;light&quot;,&quot;elite-palette&quot;],&quot;default&quot;:&quot;elite&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;start&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;commander&quot;,&quot;exploration&quot;,&quot;materials&quot;,&quot;fleet&quot;,&quot;plan&quot;,&quot;phrases&quot;],&quot;default&quot;:&quot;commander&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;galaxy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Settings&quot;},&quot;colonyKnown&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;futureTabs&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;preRelease&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;}}">
 class Component extends DCLogic {
   state = {
     nav: null, stat: 'Combat', statQ: '', mat: 'raw', matSel: null, micro: null, route: 'All',
@@ -753,6 +753,7 @@ class Component extends DCLogic {
     const built = ['standing', 'statistics', 'session', 'ships', 'compare', 'modules', 'crew', 'materials', 'body', 'unsold', 'phrases'];
     const tabs = [['transcript', 'Transcript'], ['commander', 'Commander'], ['fleet', 'Fleet'], ['engineers', 'Engineers'], ['checklist', 'Checklist'], ['routing', 'Routing'], ['exploration', 'Exploration'], ['adventures', 'Adventures']].concat((p.futureTabs ?? false) || st.futureTabs ? [['trading', 'Trading'], ['search', 'Search']] : [], [['utilities', 'Utilities'], ['settings', 'Settings']])
       .map(([id, label]) => ({ label, color: id === 'trading' || id === 'search' ? 'var(--d47-grey2)' : '', cls: nav.tab === id ? 'active' : '', go: SUBS[id] ? this.go(id, SUBS[id].find(s => built.includes(s[0]))[0]) : null }));
+    const preRelease = p.preRelease ?? true;
     const subtabs = (SUBS[nav.tab] || []).map(([id, label]) => ({ label, cls: nav.sub === id ? 'active' : '', go: built.includes(id) ? this.go(nav.tab, id) : null }));
     const is = {}; built.forEach(k => is[k] = nav.sub === k);
     const briefLinks = [['1', 'Commander record', 'commander', 'standing', ['standing', 'statistics', 'session']], ['2', 'Exploration', 'exploration', 'body', ['body', 'unsold']], ['3', 'Materials', 'fleet', 'materials', ['materials']], ['4', 'Fleet', 'fleet', 'compare', ['compare', 'modules', 'crew']], ['5', 'Ship plan', 'fleet', 'ships', ['ships']], ['6', 'Phrases', 'settings', 'phrases', ['phrases']]]
@@ -911,7 +912,7 @@ class Component extends DCLogic {
 
     return {
       theme: p.theme ?? 'elite', galaxy: (p.galaxy ?? true) && !st.noGalaxy, noGalaxy: !(p.galaxy ?? true) || !!st.noGalaxy,
-      briefLinks, tabs, subtabs, is, say: sayMap[nav.sub] || '', screenLabel: nav.tab + ' · ' + nav.sub,
+      briefLinks, tabs, subtabs, preRelease, is, say: sayMap[nav.sub] || '', screenLabel: nav.tab + ' · ' + nav.sub,
       factions, navy, statNav, stat: st.stat, statQ: st.statQ, statSearching: !!q, statBrowsing: !q, statHits, statNoHits: !!q && !statHits.length,
       statFigures: D.S[st.stat].map(([label, value]) => ({ label, value })), onStatQ: e => this.setState({ statQ: e.target.value }),
       sessionTotal: this.f(earnRaw.reduce((a, e) => a + e[1], 0)), sessionFigures, earnings,
