@@ -82,7 +82,7 @@ public class ABodyHoldsOneSpeciesPerGenusTests
         Assert.Null(BiologyPotential.For(TwoGenera() with { SurfaceGravity = null }, 2, []));
 
     // Rocky, ammonia, no volcanism, 0.1 g, 160 K, 0.002 atm: Frutexa Flammasis and Frutexa Flabellum both
-    // admit the conditions, but only Flammasis's regions column carries Inner Scutum-Centaurus Arm (#210).
+    // admit the conditions, but only Flammasis's regions column carries Norma Expanse (#210).
     private static BodyScan FrutexaScan() => new("Fixture 4 c")
     {
         PlanetClass = "Rocky body",
@@ -97,7 +97,7 @@ public class ABodyHoldsOneSpeciesPerGenusTests
     [Fact]
     public void ARegionNarrowsANamedGenusToTheSpeciesThatOccurThere()
     {
-        var estimate = BiologyPotential.For(FrutexaScan(), 1, ["Frutexa"], "Inner Scutum-Centaurus Arm");
+        var estimate = BiologyPotential.For(FrutexaScan(), 1, ["Frutexa"], "Norma Expanse");
 
         Assert.NotNull(estimate);
         Assert.Equal(Value("Frutexa Flammasis"), estimate.Low);

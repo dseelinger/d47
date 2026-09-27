@@ -7,13 +7,11 @@ species — a point of interest"), which is right for the wrecks and settlements
 `landmarks` array. Radicoida Unica fails that test and is still a species: it is also missing
 from spansh's `landmark_subtype` field-values list, the enumeration `candidate_names()` checks
 against, so the generator never asked spansh about it at all. Its four surveyed bodies, all in
-HIP 87621, carry the landmark with `value: 0` when queried directly by name — Frontier's
-Community Goal reward pricing is not what spansh's zero-value filter was built to separate from
-a point of interest. The value below, 119,037, comes from the Commander's own `SellOrganicData`
-entries.
+HIP 87621, carry the landmark with `value: 0` when queried directly by name. The value below,
+119,037, comes from the Commander's own `SellOrganicData` entries.
 
-Each one retires itself: a name here is dropped from the generator's own candidate list the day
-spansh reports a non-zero landmark value for it.
+`gen-exobiology.py` adds every name here to its candidates, uses the curated value where spansh's
+is zero, and prints a notice to drop the entry once spansh reports a non-zero value for it.
 """
 
 # species -> value, for a landmark spansh finds but prices at zero.

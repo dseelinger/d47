@@ -29,6 +29,9 @@ The total drops by each species you sell at Vista Genomics, goes to zero when yo
 rebuilt from your journals when D47 starts. "Reset unsold exobiology" sets it to zero; the model
 cannot do this for you.
 
+Radicoida Unica is now in D47's exobiology table at 119,037 credits a sample, so analysing it is
+valued and counted in the unsold total like any other species.
+
 When you finish mapping a body with the surface scanner, D47 now says about what it is worth and
 about how much mapped data you are carrying unsold: "Praea Euq BF-A d95 5 e mapped, efficiently.
 About 2,258 Cr. About 3.3 million unsold." Elite never writes a body's value, so D47 estimates it

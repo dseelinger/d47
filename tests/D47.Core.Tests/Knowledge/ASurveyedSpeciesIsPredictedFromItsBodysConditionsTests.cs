@@ -75,7 +75,7 @@ public class ASurveyedSpeciesIsPredictedFromItsBodysConditionsTests
     [Fact]
     public void ARegionExcludesASpeciesWhoseRegionsColumnLacksIt()
     {
-        var possible = ExobiologyCatalogue.Possible(FrutexaConditions(), "Inner Scutum-Centaurus Arm");
+        var possible = ExobiologyCatalogue.Possible(FrutexaConditions(), "Norma Expanse");
 
         Assert.Contains(possible, entry => entry.Species == "Frutexa Flammasis");
         Assert.DoesNotContain(possible, entry => entry.Species == "Frutexa Flabellum");

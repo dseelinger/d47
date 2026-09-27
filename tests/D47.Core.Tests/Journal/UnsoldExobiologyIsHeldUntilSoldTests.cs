@@ -41,8 +41,9 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
     private static string Frutexa(string at, int body = 41) =>
         Analyse(at, body, "Frutexa Acus", "$Codex_Ent_Shrubs_02_Name;");
 
-    private static string Radicoida(string at, int body = 41) =>
-        Analyse(at, body, "Radicoida Unica", "$Codex_Ent_Radicoida_01_Name;");
+    /// <summary>A species the table does not carry.</summary>
+    private static string Unpriced(string at, int body = 41) =>
+        Analyse(at, body, "Tessera Nova", "$Codex_Ent_Tessera_01_Name;");
 
     private static string Sale(string at, params string[] symbols) =>
         $$"""
@@ -122,13 +123,13 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
     [Fact]
     public void ASpeciesWithNoValueIsCountedButLeftOutOfTheTotal()
     {
-        var ledger = Ledger(Cactoida("2026-09-26T21:00:00Z"), Radicoida("2026-09-26T21:10:00Z"));
+        var ledger = Ledger(Cactoida("2026-09-26T21:00:00Z"), Unpriced("2026-09-26T21:10:00Z"));
 
         var unsold = ledger.Unsold("F1");
 
         Assert.Equal(2, unsold.Held.Count);
         Assert.Equal(3_667_600, unsold.Total);
-        Assert.Equal("Radicoida Unica", Assert.Single(unsold.Unpriced).Species);
+        Assert.Equal("Tessera Nova", Assert.Single(unsold.Unpriced).Species);
     }
 
     // ------------------------------------------------------ sale, death, reset
@@ -273,11 +274,11 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
     [Fact]
     public void TheCalloutNamesASpeciesItCannotPriceAndSaysWhatTheTotalLeavesOut()
     {
-        var analyse = Radicoida("2026-09-26T22:17:47Z");
+        var analyse = Unpriced("2026-09-26T22:17:47Z");
 
         var said = Said(Ledger(Cactoida("2026-09-26T21:00:00Z"), analyse), analyse);
 
-        Assert.Contains("I have no value for Radicoida Unica.", said, StringComparison.Ordinal);
+        Assert.Contains("I have no value for Tessera Nova.", said, StringComparison.Ordinal);
         Assert.Contains("3.7 million unsold, not counting 1 sample I have no value for.", said, StringComparison.Ordinal);
     }
 
@@ -303,13 +304,13 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
             BodyScan("2026-09-26T20:00:00Z", 41, "Detailed", false),
             Cactoida("2026-09-26T21:00:00Z"),
             Frutexa("2026-09-26T21:10:00Z", body: 7),
-            Radicoida("2026-09-26T21:20:00Z"));
+            Unpriced("2026-09-26T21:20:00Z"));
 
         var answer = (await Ask(ledger, "get_unsold_exobiology")).Content;
 
         Assert.Contains("26,112,700 credits of organic data unsold, from 2 analyses.", answer, StringComparison.Ordinal);
         Assert.Contains("1 of them carries the first footfall bonus.", answer, StringComparison.Ordinal);
-        Assert.Contains("Radicoida Unica", answer, StringComparison.Ordinal);
+        Assert.Contains("Tessera Nova", answer, StringComparison.Ordinal);
     }
 
     [Fact]
