@@ -213,7 +213,7 @@ internal static class RoutingKit
 
         if (copy is not null)
         {
-            var glyph = D47.App.Controls.CopyWord.For(system, copy);
+            var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
             glyph.VerticalAlignment = VerticalAlignment.Center;
             glyph.Margin = new Thickness(10, 0, 0, 0);
 

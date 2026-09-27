@@ -433,15 +433,15 @@ public sealed class CarrierPage : UserControl
 
         tile.Child = null;
 
-        var word = CopyWord.For(target, copy);
-        word.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(word, 1);
+        var glyph = CopyGlyph.For(target, copy);
+        glyph.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(glyph, 1);
 
         tile.Child = new Grid
         {
             ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
             ColumnSpacing = 6,
-            Children = { figures, word },
+            Children = { figures, glyph },
         };
 
         return tile;

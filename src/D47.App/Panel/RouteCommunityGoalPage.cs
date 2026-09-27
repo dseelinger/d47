@@ -424,12 +424,12 @@ public sealed class RouteCommunityGoalPage : UserControl
     /// </summary>
     private Control SystemCell(string system, string? here)
     {
-        // The name takes what the copy word leaves, so a long one trims rather than running under it.
+        // The name takes what the copy glyph leaves, so a long one trims rather than running under it.
         var cells = new DockPanel { Width = SystemColumnWidth };
 
         if (_copy is { } copy)
         {
-            var glyph = D47.App.Controls.CopyWord.For(system, copy);
+            var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
             glyph.VerticalAlignment = VerticalAlignment.Center;
             glyph.Margin = new Thickness(CopyGap, 0, 0, 0);
 

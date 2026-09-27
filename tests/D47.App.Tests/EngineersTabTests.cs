@@ -217,7 +217,7 @@ public class EngineersTabTests
         // that copy the same thing (#256).
         var glyph = surface.Panel.GetVisualDescendants()
             .OfType<Button>()
-            .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
+            .First(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Deciat");
 
         glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -269,8 +269,7 @@ public class EngineersTabTests
 
         var glyph = surface.Panel.GetVisualDescendants()
             .OfType<Button>()
-            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button)
-                == $"Copy {system}");
+            .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == system);
 
         glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

@@ -75,8 +75,8 @@ public class InShipBubblesOfferTheSystemsTheyNameTests
         var chips = Chips(panel);
 
         Assert.Equal(
-            ["Copy Dryafea PO-X d2-0", "Copy Deciat"],
-            chips.Select(AutomationProperties.GetName));
+            ["Dryafea PO-X d2-0", "Deciat"],
+            chips.Select(D47.App.Controls.CopyGlyph.GetCopies));
 
         foreach (var chip in chips)
         {
@@ -101,7 +101,7 @@ public class InShipBubblesOfferTheSystemsTheyNameTests
     {
         var (panel, _) = Open("Deciat is close, Deciat is home.", Known("Deciat"));
 
-        Assert.Equal(["Copy Deciat"], Chips(panel).Select(AutomationProperties.GetName));
+        Assert.Equal(["Deciat"], Chips(panel).Select(D47.App.Controls.CopyGlyph.GetCopies));
     }
 
     /// <summary>A name absent from the shipped table, offered only through the known set.</summary>
@@ -110,7 +110,7 @@ public class InShipBubblesOfferTheSystemsTheyNameTests
     {
         var (panel, _) = Open("Selling this at Farport Reach.", Known("Farport Reach"));
 
-        Assert.Equal(["Copy Farport Reach"], Chips(panel).Select(AutomationProperties.GetName));
+        Assert.Equal(["Farport Reach"], Chips(panel).Select(D47.App.Controls.CopyGlyph.GetCopies));
     }
 
     /// <summary>The Commander's current system is named in cyan; any other system in A.</summary>

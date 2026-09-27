@@ -123,10 +123,7 @@ public class TheTabStripFitsAnyWidthTests
 
         Assert.True(copy.IsVisible);
 
-        Assert.Equal(D47.App.Controls.CopyWord.Word, copy.Content);
-        Assert.Equal(
-            "Copy this whole page to the clipboard",
-            Avalonia.Automation.AutomationProperties.GetName(copy));
+        Assert.Equal(D47.App.Controls.CopyGlyph.Name, Avalonia.Automation.AutomationProperties.GetName(copy));
 
         panel.Tab = PanelTab.Checklist;
         Dispatcher.UIThread.RunJobs();

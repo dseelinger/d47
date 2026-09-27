@@ -68,7 +68,8 @@ nav_order: 4
 <h2><span class="num">3</span> Additional controls.</h2>
 <svg viewBox="0 0 880 320" role="img" aria-label="Copy, Search, Spend, and Clear what is shown">
  <rect x="20" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="155" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">COPY</text>
+ <rect x="143" y="44" width="16" height="16" fill="none" stroke="var(--text)" stroke-width="3"/>
+ <rect x="151" y="52" width="16" height="16" fill="var(--surface)" stroke="var(--text)" stroke-width="3"/>
  <text x="155" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">copies the whole conversation,</text>
  <text x="155" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">not just selected text</text>
  <text x="155" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">— that is Ctrl+C</text>
@@ -119,8 +120,9 @@ The headset's big panel does the same, and so does the mini panel.
 
 ### The controls
 
-**COPY** puts the entire conversation on the clipboard, and says *COPIED* or *COPY FAILED* for two
-seconds after. To copy only part of it, select the text and press Ctrl+C. A search query does not
+**Copy**, the button showing two overlapping squares beside the search box, puts the entire
+conversation on the clipboard. The name that appears when you point at it reads *COPIED* or
+*COPY FAILED* for two seconds after. To copy only part of it, select the text and press Ctrl+C. A search query does not
 narrow what it copies — you asked for the conversation, not for the matches.
 
 **Search** highlights every match, counts them, and steps forward and back through them. **CLEAR**

@@ -20,7 +20,7 @@ namespace D47.App.Tests;
 /// <see cref="D47.Core.Capabilities.Builtin.IClipboard"/> seam, rather than three mechanisms of
 /// their own (#157).
 /// </summary>
-public class OneCopyWordIsTheOnlyClipboardMechanismTests
+public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
 {
     private static string RepositoryRoot()
     {
@@ -38,8 +38,8 @@ public class OneCopyWordIsTheOnlyClipboardMechanismTests
     /// <summary>
     /// The pages that drew a system name never reach for a mechanism of their own: no glyph text, no
     /// bare copy mark, and no clipboard read straight off the
-    /// visual root. The Transcript tab's own "Copy this whole page" button is a different feature
-    /// (Phase 19, copying the whole page rather than a system name) and is not scanned here.
+    /// visual root. The Transcript bar's copy glyph copies the whole page rather than a system name and
+    /// is not scanned here.
     /// </summary>
     [Fact]
     public void NoPageThatDrawsASystemNameReachesForItsOwnClipboardMechanism()
@@ -138,18 +138,23 @@ public class OneCopyWordIsTheOnlyClipboardMechanismTests
 
         Assert.Null(exception);
 
-        // The Transcript tab's own "Copy this whole page to the clipboard" button is a different feature
-        // (Phase 19) and stays in the tree regardless — only a system-name glyph is being asked about here.
-        Assert.DoesNotContain(
-            panel.GetVisualDescendants().OfType<Button>(),
-            button => AutomationProperties.GetName(button) == "Copy Shinrarta Dezhra");
+        Assert.Empty(SystemGlyphs(panel));
 
         window.Close();
     }
 
     /// <summary>
-    /// Clicking <c>COPY</c> says <c>COPY FAILED</c> when the clipboard refuses; two seconds later it says
-    /// <c>COPY</c> again.
+    /// The copy glyphs beside system names. The Transcript bar's own copy glyph copies the whole page
+    /// and stays in the tree regardless.
+    /// </summary>
+    private static List<Button> SystemGlyphs(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null)
+            .ToList();
+
+    /// <summary>
+    /// Clicking the copy glyph names it <c>Copy failed</c> when the clipboard refuses; two seconds later it
+    /// is named <c>Copy</c> again, and its face is the two squares throughout.
     /// </summary>
     [AvaloniaFact]
     public async Task ClickingItSaysWhatHappenedAndThenGoesBack()
@@ -161,20 +166,21 @@ public class OneCopyWordIsTheOnlyClipboardMechanismTests
         Row(panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var copy = panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => AutomationProperties.GetName(button) == "Copy Shinrarta Dezhra");
+        var copy = Assert.Single(SystemGlyphs(panel));
+        var face = copy.Content;
 
-        Assert.Equal(D47.App.Controls.CopyWord.Word, copy.Content);
+        Assert.Equal(D47.App.Controls.CopyGlyph.Name, AutomationProperties.GetName(copy));
 
         copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(D47.App.Controls.CopyWord.Failed, copy.Content);
+        Assert.Equal(D47.App.Controls.CopyGlyph.Failed, AutomationProperties.GetName(copy));
+        Assert.Same(face, copy.Content);
 
         await Task.Delay(2200, TestContext.Current.CancellationToken);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(D47.App.Controls.CopyWord.Word, copy.Content);
+        Assert.Equal(D47.App.Controls.CopyGlyph.Name, AutomationProperties.GetName(copy));
 
         window.Close();
     }

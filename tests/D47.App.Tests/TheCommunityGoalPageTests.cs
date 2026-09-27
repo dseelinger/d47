@@ -170,8 +170,7 @@ public class TheCommunityGoalPageTests
 
         var copyButtons = panel.GetVisualDescendants()
             .OfType<Button>()
-            .Where(button => Equals(
-                Avalonia.Automation.AutomationProperties.GetName(button), "Copy Near system"))
+            .Where(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Near system")
             .ToList();
 
         Assert.Single(copyButtons);

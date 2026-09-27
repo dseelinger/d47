@@ -198,7 +198,7 @@ public partial class PanelView : UserControl
 
         Tabs.KeyDown += OnTabsKeyDown;
 
-        Controls.Glyphs.Quiet(CopyButton, Controls.CopyWord.Word, "Copy this whole page to the clipboard");
+        Controls.CopyGlyph.Dress(CopyButton);
         Controls.Glyphs.Quiet(TurnDetails, "SPEND", "Tokens, cost, and what this has come to over time");
         Controls.Glyphs.Quiet(ResizeButton, "RESIZE", "Resize the panel");
         Controls.Glyphs.Quiet(HelpButton, "HELP", "Open the documentation");
@@ -2892,7 +2892,7 @@ public partial class PanelView : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Children = { text, Controls.CopyWord.For(system, copy) },
+            Children = { text, Controls.CopyGlyph.For(system, copy) },
         };
     }
 
@@ -3165,7 +3165,7 @@ public partial class PanelView : UserControl
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 2,
-                Children = { chip, Controls.CopyWord.For(name, copy) },
+                Children = { chip, Controls.CopyGlyph.For(name, copy) },
             });
         }
 
@@ -4020,7 +4020,7 @@ public partial class PanelView : UserControl
             worked = false;
         }
 
-        Controls.CopyWord.Show(CopyButton, worked);
+        Controls.CopyGlyph.Show(CopyButton, worked);
     }
 
     /// <summary>Whether the page's bar exists at all.</summary>

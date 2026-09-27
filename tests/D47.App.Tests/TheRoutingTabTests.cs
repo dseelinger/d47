@@ -484,7 +484,7 @@ public class TheRoutingTabTests
 
             var glyph = panel.GetVisualDescendants()
                 .OfType<Button>()
-                .Single(button => AutomationProperties.GetName(button) == "Copy Waypoint 0");
+                .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Waypoint 0");
 
             glyph.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();

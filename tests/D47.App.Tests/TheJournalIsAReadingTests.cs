@@ -299,7 +299,7 @@ public sealed class TheJournalIsAReadingTests
         Dispatcher.UIThread.RunJobs();
 
         var glyphs = panel.GetVisualDescendants().OfType<Button>()
-            .Where(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Kusauts")
+            .Where(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Kusauts")
             .ToList();
 
         Assert.Single(glyphs);
@@ -319,7 +319,7 @@ public sealed class TheJournalIsAReadingTests
         Dispatcher.UIThread.RunJobs();
 
         var glyph = panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Kusauts");
+            .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Kusauts");
 
         glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -340,7 +340,7 @@ public sealed class TheJournalIsAReadingTests
 
         Assert.DoesNotContain(
             panel.GetVisualDescendants().OfType<Button>(),
-            button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Kusauts");
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Kusauts");
 
         window.Close();
     }

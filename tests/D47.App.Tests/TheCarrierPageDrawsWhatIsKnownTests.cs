@@ -206,7 +206,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         var glyph = panel.GetVisualDescendants()
             .OfType<Button>()
-            .Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Copy Deciat");
+            .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Deciat");
 
         glyph.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

@@ -173,6 +173,11 @@ Macro page, are 32 pixels square rather than 34, and ↺ is 16 pixels rather tha
 appears on hover now opens to the left of the button rather than the right, 32 pixels tall, in
 lighter letters spaced slightly apart.
 
+The COPY buttons are now square buttons showing two overlapping squares: beside system names on the
+Fleet, Carrier, Engineers and Routing pages, in the journal file and in the conversation, and beside
+the search box for copying the whole page. Pointing at one shows COPY, and COPIED or COPY FAILED for
+two seconds after it is pressed.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

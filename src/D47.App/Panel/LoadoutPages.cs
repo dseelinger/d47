@@ -506,9 +506,9 @@ public static class LoadoutPages
             said.VerticalAlignment = VerticalAlignment.Center;
             copyable.Children.Add(said);
 
-            var word = D47.App.Controls.CopyWord.For(target.Value, copy);
-            Grid.SetColumn(word, 1);
-            copyable.Children.Add(word);
+            var glyph = D47.App.Controls.CopyGlyph.For(target.Value, copy);
+            Grid.SetColumn(glyph, 1);
+            copyable.Children.Add(glyph);
 
             return copyable;
         }

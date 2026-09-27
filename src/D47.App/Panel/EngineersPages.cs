@@ -505,7 +505,7 @@ public sealed class EngineerPage : EngineerPageBase
 
         _body.Children.Add(Title(engineer.Name));
 
-        // The workshop has a row of its own, so its COPY tile does not narrow the name to a third of the pane.
+        // The workshop has a row of its own, so its copy glyph does not narrow the name to a third of the pane.
         var tiles = new List<Control>();
 
         if (entry.LightYears is not null)
@@ -628,7 +628,7 @@ public sealed class EngineerPage : EngineerPageBase
         return title;
     }
 
-    /// <summary>Where the engineer works, Cyan where it is the Commander's system, with COPY inside the tile.</summary>
+    /// <summary>Where the engineer works, Cyan where it is the Commander's system, with the copy glyph inside the tile.</summary>
     private Control Workshop(Engineer engineer, string? here)
     {
         var system = engineer.System;
@@ -642,15 +642,15 @@ public sealed class EngineerPage : EngineerPageBase
 
         tile.Child = null;
 
-        var word = CopyWord.For(target, copy);
-        word.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(word, 1);
+        var glyph = CopyGlyph.For(target, copy);
+        glyph.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(glyph, 1);
 
         tile.Child = new Grid
         {
             ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
             ColumnSpacing = 6,
-            Children = { figures, word },
+            Children = { figures, glyph },
         };
 
         return tile;
@@ -680,7 +680,7 @@ public sealed class EngineerPage : EngineerPageBase
             }
 
             row.Children.Add(named);
-            row.Children.Add(CopyWord.For(split.System, stopCopy));
+            row.Children.Add(CopyGlyph.For(split.System, stopCopy));
             row.Children.Add(Said(split.After));
         }
         else

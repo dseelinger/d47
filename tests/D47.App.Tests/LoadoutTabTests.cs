@@ -1368,7 +1368,7 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         var copy = surface.Panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => AutomationProperties.GetName(button) == "Copy Shinrarta Dezhra");
+            .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Shinrarta Dezhra");
 
         copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
