@@ -94,23 +94,23 @@ public class ALongUploadSaysHowFarItHasGotTests : IDisposable
             await writer.WriteAsync(payload.AsMemory(), cancel);
         };
 
-    private static T Control<T>(Window window, string name)
+    private static T Control<T>(Control window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
     /// <summary>The status line by name, not by what it says.</summary>
-    private static string Status(Window window) =>
+    private static string Status(Control window) =>
         Control<TextBlock>(window, "SendStatus").Text ?? string.Empty;
 
-    private static HelpImproveWindow Shown(
+    private static HelpImprovePage Shown(
         Func<string, IProgress<DonationStep>, CancellationToken, Task<DonationSent>> send)
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 9, 1, 9, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt(string.Empty),
             destination: "https://donate.invalid/donate",
             read: (_, _, _) => Task.FromResult(
-                new HelpImproveWindow.CorpusReading(
+                new HelpImprovePage.CorpusReading(
                     new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []),
                     "### Journal history\nwhat you are agreeing to\n")),
             write: (_, _, _) => Task.CompletedTask,
@@ -127,7 +127,7 @@ public class ALongUploadSaysHowFarItHasGotTests : IDisposable
         return window;
     }
 
-    private static void Press(HelpImproveWindow window, string button) =>
+    private static void Press(HelpImprovePage window, string button) =>
         Control<Button>(window, button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
     private static async Task SettleAsync()

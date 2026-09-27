@@ -14,8 +14,10 @@ using D47.Core.Persona;
 namespace D47.App.Controls;
 
 /// <summary>What the debrief drafted, and the one place a direction can be taken (#162).</summary>
-public sealed class DebriefWindow : Window
+public sealed class DebriefPage : DialogPage
 {
+    public override string Crumb => "Debrief";
+
     private readonly DebriefBook _book;
     private readonly Func<DateTimeOffset> _now;
     private readonly Func<Persona> _core;
@@ -26,7 +28,7 @@ public sealed class DebriefWindow : Window
 
     /// <summary><param name="core"> Which core is aboard, so a direction can be scoped to it.</summary>
     /// <param name="core">Which core is aboard, so a direction can be scoped to it.</param>
-    public DebriefWindow(DebriefBook book, Func<DateTimeOffset> now, Func<Persona> core)
+    public DebriefPage(DebriefBook book, Func<DateTimeOffset> now, Func<Persona> core)
     {
         ArgumentNullException.ThrowIfNull(book);
         ArgumentNullException.ThrowIfNull(now);
@@ -37,17 +39,13 @@ public sealed class DebriefWindow : Window
         _core = core;
 
         Title = "What D47 learned from your last session";
-        Width = 680;
-        Height = 640;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
 
         _status = new TextBlock
         {
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
 
-            // Said before anything is pressed, because it is the one thing about this window that is
+            // Said before anything is pressed, because it is the one thing about this page that is
             // surprising: taking a direction does not change the conversation you are having.
             Text =
                 "D47 drafts these from what you corrected it on, in your own words. Nothing here reaches "

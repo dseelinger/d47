@@ -13,8 +13,10 @@ using D47.Core.Logbook;
 namespace D47.App.Controls;
 
 /// <summary>Writing up a session, and reading back what has been written (Phase 33).</summary>
-public sealed class LogbookWindow : Window
+public sealed class LogbookPage : DialogPage
 {
+    public override string Crumb => "Logbook";
+
     private readonly LogbookBook _book;
     private readonly Segment _span;
     private readonly DatePicker _from;
@@ -27,20 +29,16 @@ public sealed class LogbookWindow : Window
 
     private CancellationTokenSource? _running;
 
-    // The window's own dispatcher, taken on the UI thread at construction.
+    // The page's own dispatcher, taken on the UI thread at construction.
     private readonly Avalonia.Threading.Dispatcher _dispatcher = Avalonia.Threading.Dispatcher.UIThread;
 
-    public LogbookWindow(LogbookBook book)
+    public LogbookPage(LogbookBook book)
     {
         ArgumentNullException.ThrowIfNull(book);
 
         _book = book;
 
         Title = "Your Commander's log";
-        Width = 660;
-        Height = 640;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
 
         _span = new Segment
         {

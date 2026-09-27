@@ -13,17 +13,17 @@ namespace D47.App.Tests;
 /// <summary>The action bar carries one send at a time, for the page that is showing (#338).</summary>
 public sealed class HelpImproveShowsOneSendAtATimeTests
 {
-    private static T Control<T>(Window window, string name)
+    private static T Control<T>(Control window, string name)
         where T : Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static HelpImproveWindow.CorpusReading Reading(string report) =>
+    private static HelpImprovePage.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
     /// <summary>Both halves wired, which is the shape the running app always builds.</summary>
-    private static HelpImproveWindow Full()
+    private static HelpImprovePage Full()
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt("an excerpt"),
             send: (_, _) => Task.FromResult(new DonationSent(DonationOutcome.Stored("k"), null)),
@@ -39,7 +39,7 @@ public sealed class HelpImproveShowsOneSendAtATimeTests
         return window;
     }
 
-    private static IEnumerable<string?> SendsShown(Window window) =>
+    private static IEnumerable<string?> SendsShown(Control window) =>
         window.GetVisualDescendants().OfType<Button>()
             .Where(button => button.IsEffectivelyVisible && button.Name is "SendExcerpt" or "SendCorpus")
             .Select(button => button.Name);
@@ -97,7 +97,7 @@ public sealed class HelpImproveShowsOneSendAtATimeTests
     [AvaloniaFact]
     public void TheFourFiguresReflectTheTallyWithNoPress()
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero),
             _ => ("some text", new ExcerptTally(
                 JournalEvents: 12,

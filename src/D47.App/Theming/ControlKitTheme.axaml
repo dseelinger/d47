@@ -401,8 +401,8 @@
     <!--
       One option of a Segment: a Tile cell with A ink in uppercase Saira, Tile2 on hover or focus,
       solid A with Knock ink when chosen, Slab with Grey2 ink when disabled. No border and no glow.
-      App-wide rather than scoped to the panel, since a desktop-only window (SwitchWindow,
-      MacroWindow, and the rest) needs the same look and carries no merge of PanelTabs.axaml.
+      App-wide rather than scoped to the panel, since a desktop-only window (MacroWindow,
+      MemoryWindow, and the rest) needs the same look and carries no merge of PanelTabs.axaml.
 
       Built on RadioButton for the mutual exclusion, arrow-key movement and accessibility role that
       come with it, the same reason D47.Tab is.

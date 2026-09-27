@@ -6,8 +6,10 @@ using D47.App.Theming;
 namespace D47.App.Controls;
 
 /// <summary>What changed in each release, from inside the build (#50).</summary>
-public sealed class ChangelogWindow : Window
+public sealed class ChangelogPage : DialogPage
 {
+    public override string Crumb => "What changed";
+
     /// <summary>The changelog on GitHub, at the branch rather than at a tag.</summary>
     public const string OnlineUrl = "https://github.com/dseelinger/d47/blob/main/CHANGELOG.md";
 
@@ -17,13 +19,9 @@ public sealed class ChangelogWindow : Window
     /// </summary>
     public const string CommunityUrl = "https://dseelinger.github.io/d47/community.html";
 
-    public ChangelogWindow(string text)
+    public ChangelogPage(string text)
     {
         Title = "What changed";
-        Width = 760;
-        Height = 720;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
 
         var body = new TextBlock
         {

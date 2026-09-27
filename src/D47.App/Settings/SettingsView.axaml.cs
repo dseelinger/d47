@@ -2380,15 +2380,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     {
         switch (row.Kind)
         {
-            // The one row that offers a window instead of a value.
+            // Rows that open a page or a window instead of offering a value: the coverage page.
             case SettingKind.Info when row.Key == DiagnosticsCapability.CoverageKey && _coverage is not null:
                 return BuildCoverage(row);
 
-            // The other row that offers a window instead of a value.
+            // The macro editor window.
             case SettingKind.Info when row.Key == MacroCapability.ListKey && _macros is not null:
                 return BuildMacros(row);
 
-            // And the row that opens the persona editor.
+            // The persona editor page.
             case SettingKind.Info when row.Key == PersonaCapability.OwnKey && _ownPersonas is not null:
                 return BuildOwnPersonas(row);
 
@@ -2396,7 +2396,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             case SettingKind.Info when row.Key == ChecklistCapability.SummaryKey && _checklists is not null:
                 return BuildChecklists(row);
 
-            // The fourth row that offers a window.
+            // The HOTAS switches page.
             case SettingKind.Info when row.Key == SwitchCapability.ListKey && _switches is not null:
                 return BuildSwitches(row);
 
@@ -2414,7 +2414,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             case SettingKind.Info when row.Key == LogbookCapability.StoreKey && _logbook is not null:
                 return BuildLogbook(row);
 
-            // The ninth row that offers a window, and the only one that also clears what the window shows.
+            // The audio recorder page, the only one whose row also clears what the page shows.
             case SettingKind.Info when row.Key == PrivacyCapability.AudioRecordingKey && _recording is not null:
                 return BuildAudioRecording(row);
 
@@ -2666,18 +2666,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
-            if (_debrief is not { } debrief || TopLevel.GetTopLevel(this) is not Window owner)
+            if (_debrief is not { } debrief || this.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
                 return;
             }
 
-            await new Controls.DebriefWindow(debrief.Book, debrief.Now, debrief.Core).Over(owner);
+            await panel.Open(new Controls.DebriefPage(debrief.Book, debrief.Now, debrief.Core));
 
-            // The window writes the file; this is what puts the new count on the row without waiting for
+            // The page writes the file; this is what puts the new count on the row without waiting for
             // something else to notice.
             refresh();
         };
@@ -2735,16 +2733,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
-            if (_logbook is not { } logbook || TopLevel.GetTopLevel(this) is not Window owner)
+            if (_logbook is not { } logbook || this.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
                 return;
             }
 
-            await new Controls.LogbookWindow(logbook).Over(owner);
+            await panel.Open(new Controls.LogbookPage(logbook));
             refresh();
         };
 
@@ -2775,18 +2771,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
-            if (_recording is not { } recording || TopLevel.GetTopLevel(this) is not Window owner)
+            if (_recording is not { } recording || this.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
                 return;
             }
 
-            await new Controls.AudioRecorderWindow(recording.Log, recording.Now).Over(owner);
+            await panel.Open(new Controls.AudioRecorderPage(recording.Log, recording.Now));
 
-            // Keeping a row changes what the summary says, and the window is where keeping happens — so the
+            // Keeping a row changes what the summary says, and the page is where keeping happens — so the
             // row is re-read on the way out rather than left stating what was true when it opened.
             Refresh();
         };
@@ -3002,13 +2996,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
-            if (_coverage is not null && TopLevel.GetTopLevel(this) is Window owner)
+            if (_coverage is not null && this.FindAncestorOfType<Panel.PanelView>() is { } panel)
             {
-                await new Controls.CoverageWindow(_coverage()).Over(owner);
+                await panel.Open(new Controls.CoveragePage(_coverage()));
             }
         };
 
@@ -3031,16 +3023,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
-            if (_ownPersonas is null || TopLevel.GetTopLevel(this) is not Window owner)
+            if (_ownPersonas is null || this.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
                 return;
             }
 
-            await new Controls.PersonaWindow(_ownPersonas).Over(owner);
+            await panel.Open(new Controls.PersonaPage(_ownPersonas));
 
             // The editor writes the file; this is what puts the new summary on the row without waiting for
             // something else to notice.
@@ -3133,23 +3123,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Panel.OffscreenSurface.OpensAWindow(open);
-
         open.Click += async (_, _) =>
         {
-            if (_switches is not { } editing || TopLevel.GetTopLevel(this) is not Window owner)
+            if (_switches is not { } editing || this.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
                 return;
             }
 
-            await new Controls.SwitchWindow(
+            await panel.Open(new Controls.SwitchPage(
                 editing.Store,
                 editing.Reader,
                 editing.Reconciler,
                 editing.Now,
                 editing.ExportPath,
-                editing.Destinations())
-                .Over(owner);
+                editing.Destinations()));
 
             // The editor writes the file; this is what puts the new summary on the row without waiting for
             // something else to notice.

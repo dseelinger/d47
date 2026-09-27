@@ -13,11 +13,11 @@ namespace D47.App.Tests;
 /// <summary>The consent step for a corpus, driven through the drawn window.</summary>
 public class ACorpusReportDescribesWhatWouldLeaveTests
 {
-    private static HelpImproveWindow Shown(
-        Func<CorpusScope, IProgress<int>, CancellationToken, Task<HelpImproveWindow.CorpusReading>> read,
+    private static HelpImprovePage Shown(
+        Func<CorpusScope, IProgress<int>, CancellationToken, Task<HelpImprovePage.CorpusReading>> read,
         Func<Stream, IProgress<int>, CancellationToken, Task>? write = null)
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 8, 31, 14, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt(string.Empty),
             read: read,
@@ -35,20 +35,20 @@ public class ACorpusReportDescribesWhatWouldLeaveTests
     }
 
     /// <summary>By name down the visual tree — a window built in code has no name scope.</summary>
-    private static T Control<T>(HelpImproveWindow window, string name)
+    private static T Control<T>(HelpImprovePage window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static HelpImproveWindow.CorpusReading Reading(string report) =>
+    private static HelpImprovePage.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
     /// <summary>Picks a scope segment by index, the way a press does — never by writing SelectedIndex,
     /// which a segment does not fire its event for (#274).</summary>
-    private static void ChooseScope(HelpImproveWindow window, int index) =>
+    private static void ChooseScope(HelpImprovePage window, int index) =>
         Control<Segment>(window, "Scope")
             .GetVisualDescendants().OfType<RadioButton>().ElementAt(index).IsChecked = true;
 
-    private static async Task PressAsync(HelpImproveWindow window, string button)
+    private static async Task PressAsync(HelpImprovePage window, string button)
     {
         Control<Button>(window, button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 

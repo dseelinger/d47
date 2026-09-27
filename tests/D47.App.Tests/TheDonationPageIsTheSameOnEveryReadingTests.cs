@@ -44,7 +44,7 @@ public class TheDonationPageIsTheSameOnEveryReadingTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static T Control<T>(Window window, string name)
+    private static T Control<T>(Control window, string name)
         where T : Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
@@ -65,11 +65,11 @@ public class TheDonationPageIsTheSameOnEveryReadingTests
     [AvaloniaFact]
     public void ItOpensOnTheExcerptWithTheHistoryOnePressAway()
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 9, 8, 14, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt("an excerpt"),
             read: (_, _, _) => Task.FromResult(
-                new HelpImproveWindow.CorpusReading(
+                new HelpImprovePage.CorpusReading(
                     new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []),
                     "a report")),
             write: (_, _, _) => Task.CompletedTask);

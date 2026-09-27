@@ -15,9 +15,9 @@ public class WhatIsShownIsWhatLeavesTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 8, 28, 12, 0, 0, TimeSpan.Zero);
 
-    private static HelpImproveWindow Shown(Func<ExcerptRequest, string> build)
+    private static HelpImprovePage Shown(Func<ExcerptRequest, string> build)
     {
-        var window = new HelpImproveWindow(Noon, TestSurface.Excerpt(build));
+        var window = new HelpImprovePage(Noon, TestSurface.Excerpt(build));
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -26,7 +26,7 @@ public class WhatIsShownIsWhatLeavesTests
     }
 
     /// <summary>By name, down the visual tree.</summary>
-    private static T Control<T>(HelpImproveWindow window, string name)
+    private static T Control<T>(HelpImprovePage window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 

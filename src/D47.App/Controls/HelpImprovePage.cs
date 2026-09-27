@@ -13,11 +13,13 @@ using D47.Core.Diagnostics.Donation;
 namespace D47.App.Controls;
 
 /// <summary>
-/// One window for sharing what the ship saw, in either of two shapes (#238): an incident excerpt, or —
+/// One page for sharing what the ship saw, in either of two shapes (#238): an incident excerpt, or —
 /// with <c>Include journal history</c> on — the whole journal history.
 /// </summary>
-public sealed class HelpImproveWindow : Window
+public sealed class HelpImprovePage : DialogPage
 {
+    public override string Crumb => "Help improve";
+
     private const string CopyLabel = "Copy for a bug report";
     private const string SendLabel = "Send it";
 
@@ -132,7 +134,7 @@ public sealed class HelpImproveWindow : Window
     private readonly TextBlock _figureFourthValue;
     private readonly TextBlock _figureFourthCaption;
 
-    /// <summary>Collapsed until pressed, so the window opens on the consent rather than the payload.</summary>
+    /// <summary>Collapsed until pressed, so the page opens on the consent rather than the payload.</summary>
     private readonly Button _disclosureToggle = new()
     {
         Name = "DisclosureToggle",
@@ -239,7 +241,7 @@ public sealed class HelpImproveWindow : Window
     /// Asks the store to delete everything this installation ever sent, and answers with the sentence
     /// to show — the same call the <c>Privacy and egress</c> row makes (#295).
     /// </param>
-    public HelpImproveWindow(
+    public HelpImprovePage(
         DateTimeOffset markedAt,
         Func<ExcerptRequest, (string Text, ExcerptTally Tally)> build,
         Func<string, CancellationToken, Task<DonationSent>>? send = null,
@@ -265,13 +267,6 @@ public sealed class HelpImproveWindow : Window
         _mySpeech.Name = "IncludeMySpeech";
 
         Title = "Help improve D47";
-        Width = 900;
-        Height = 720;
-        MinWidth = 560;
-        MinHeight = 420;
-        CanResize = true;
-        ShowInTaskbar = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
         Themed(_preview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         Themed(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
@@ -284,7 +279,7 @@ public sealed class HelpImproveWindow : Window
         _includeHistory.IsVisible = HistoryOffered;
         _includeHistory.IsChecked = false;
 
-        // "Instead" needs a send to be instead of (asked 2026-08-31, from a window with no address set and a
+        // "Instead" needs a send to be instead of (asked 2026-08-31, from a page with no address set and a
         // button that dangled).
         _saveCorpus.Content = sendCorpus is null ? "Save it to a file…" : "Save it instead…";
 
@@ -316,7 +311,7 @@ public sealed class HelpImproveWindow : Window
             _disclosureToggle.Content = _disclosureExpanded ? "Hide the exact text" : "Show the exact text";
         };
 
-        // Help leads the footer, apart from the buttons that act (#252); the reasoning behind the window is in
+        // Help leads the footer, apart from the buttons that act (#252); the reasoning behind the page is in
         // the intro's tooltip (#269).
         var mark = SiteHelpMark.For(DocsSite.Page(HelpPage), "HelpImproveHelp");
 
@@ -656,7 +651,7 @@ public sealed class HelpImproveWindow : Window
 
         var long_ = _text.Length > MostCharacters;
 
-        // Names the real problem and no transport (#165): the yes this window asks for is a yes to something
+        // Names the real problem and no transport (#165): the yes this page asks for is a yes to something
         // read, and that is what stops being true at this size.
         _size.Text = long_
             ? $"{_text.Length:N0} characters — more than a person reads, so a yes to it would not "
@@ -696,9 +691,9 @@ public sealed class HelpImproveWindow : Window
             + "Choose how much of your history to include, then press Read my journals. "
             + "Reading a full history takes a few seconds and happens entirely on this machine.";
 
-        // The question a Commander actually asked at this window (2026-08-31): which button sends?
+        // The question a Commander actually asked on this page (2026-08-31): which button sends?
         _status.Text = _sendCorpus is null
-            ? "No send button: this window was opened with nowhere to send. Save writes the "
+            ? "No send button: this page was opened with nowhere to send. Save writes the "
               + "scrubbed file, and where it goes is yours."
             : string.Empty;
     }
@@ -808,7 +803,7 @@ public sealed class HelpImproveWindow : Window
         }
         catch (OperationCanceledException)
         {
-        // The window closed under it.
+        // The page closed under it.
         }
         finally
         {
@@ -954,7 +949,7 @@ public sealed class HelpImproveWindow : Window
 
         // **A report that arrives after the outcome is dropped.** Progress<T> posts, the send may complete
         // without ever yielding, and the losing order puts "Sending — 30.5 MB of 30.5 MB" and a full bar on
-        // top of "the endpoint refused it" — which is the one thing this window exists not to say.
+        // top of "the endpoint refused it" — which is the one thing this page exists not to say.
         var reporting = true;
 
         var progress = new Progress<DonationStep>(step =>
@@ -1050,7 +1045,7 @@ public sealed class HelpImproveWindow : Window
         }
         catch (OperationCanceledException)
         {
-        // The window closed under it.
+        // The page closed under it.
         }
         finally
         {

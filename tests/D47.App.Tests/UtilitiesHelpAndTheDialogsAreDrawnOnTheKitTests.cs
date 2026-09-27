@@ -183,6 +183,9 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         yield return ("Switches", OpenSwitches);
     }
 
+    /// <summary>A dialog page in a window of its own, the way a test of the page alone shows it.</summary>
+    private static Window Hosted(DialogPage page) => new() { Content = page, Width = 720, Height = 720 };
+
     private static Window OpenAudioRecorder()
     {
         var root = TempFolders.Create("d47-dialogs-recorder");
@@ -197,10 +200,10 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             Text = "set course for Colonel",
         });
 
-        return new AudioRecorderWindow(log, () => Instant);
+        return Hosted(new AudioRecorderPage(log, () => Instant));
     }
 
-    private static Window OpenChangelog() => new ChangelogWindow("- Added a thing\n- Fixed a bug");
+    private static Window OpenChangelog() => Hosted(new ChangelogPage("- Added a thing\n- Fixed a bug"));
 
     private static CoverageReport CoverageReport()
     {
@@ -212,7 +215,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         return ledger.Report([item]);
     }
 
-    private static Window OpenCoverage() => new CoverageWindow(CoverageReport());
+    private static Window OpenCoverage() => Hosted(new CoveragePage(CoverageReport()));
 
     private static Window OpenDebrief()
     {
@@ -224,11 +227,11 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
 
         var book = new DebriefBook(store, () => "F1");
 
-        return new DebriefWindow(book, () => Instant, () => PersonaCatalog.Resolve(null));
+        return Hosted(new DebriefPage(book, () => Instant, () => PersonaCatalog.Resolve(null)));
     }
 
     private static Window OpenHelpImprove() =>
-        new HelpImproveWindow(Instant, TestSurface.Excerpt("an excerpt"));
+        Hosted(new HelpImprovePage(Instant, TestSurface.Excerpt("an excerpt")));
 
     private static Window OpenLogbook()
     {
@@ -244,7 +247,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             () => new LogbookContext(),
             NullLogger<LogbookBook>.Instance);
 
-        return new LogbookWindow(book);
+        return Hosted(new LogbookPage(book));
     }
 
     private static Window OpenLore()
@@ -298,7 +301,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         var store = new OwnPersonaStore(Path.Combine(root, "personas.json"), NullLogger<OwnPersonaStore>.Instance);
         store.Save([new OwnPersona("own.rusty", "Rusty", "You are Rusty. Salvage crew, not a Guardian.")]);
 
-        return new PersonaWindow(store);
+        return Hosted(new PersonaPage(store));
     }
 
     private static Window OpenSwitches()
@@ -315,13 +318,13 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
             Positions = [new SwitchPosition(0, "LandingGearToggle", DesiredState.On, null)],
         }]);
 
-        return new SwitchWindow(
+        return Hosted(new SwitchPage(
             store,
             new FakeHotasReader(),
             new SwitchReconciler(NullLogger<SwitchReconciler>.Instance),
             () => Instant,
             Path.Combine(root, "switch-capture.txt"),
-            []);
+            []));
     }
 
     [AvaloniaTheory]
@@ -369,6 +372,12 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
 
             Assert.Equal(Ink(ThemeManager.AKey), (context.Foreground as ISolidColorBrush)?.Color);
             Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
+
+            // A page leaves by the panel's Esc, which goes back; only a window closes itself.
+            if (window.Content is DialogPage)
+            {
+                continue;
+            }
 
             var closed = false;
             window.Closed += (_, _) => closed = true;
@@ -421,17 +430,17 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
     [InlineData("Panel/UtilitiesPage.cs")]
     [InlineData("Panel/LearnedPhrasesPage.cs")]
     [InlineData("Panel/HelpPageView.cs")]
-    [InlineData("Controls/AudioRecorderWindow.cs")]
-    [InlineData("Controls/ChangelogWindow.cs")]
-    [InlineData("Controls/CoverageWindow.cs")]
-    [InlineData("Controls/DebriefWindow.cs")]
-    [InlineData("Controls/HelpImproveWindow.cs")]
-    [InlineData("Controls/LogbookWindow.cs")]
+    [InlineData("Controls/AudioRecorderPage.cs")]
+    [InlineData("Controls/ChangelogPage.cs")]
+    [InlineData("Controls/CoveragePage.cs")]
+    [InlineData("Controls/DebriefPage.cs")]
+    [InlineData("Controls/HelpImprovePage.cs")]
+    [InlineData("Controls/LogbookPage.cs")]
     [InlineData("Controls/LoreWindow.cs")]
     [InlineData("Controls/MacroWindow.cs")]
     [InlineData("Controls/MemoryWindow.cs")]
-    [InlineData("Controls/PersonaWindow.cs")]
-    [InlineData("Controls/SwitchWindow.cs")]
+    [InlineData("Controls/PersonaPage.cs")]
+    [InlineData("Controls/SwitchPage.cs")]
     [InlineData("Controls/PickerPage.axaml")]
     [InlineData("Controls/PickerPage.axaml.cs")]
     public void TheSourceDrawsOnlyInTheNewTokens(string relative)

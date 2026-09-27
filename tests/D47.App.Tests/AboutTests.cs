@@ -146,6 +146,6 @@ public class AboutTests
     {
         Assert.Equal(
             "https://github.com/dseelinger/d47/blob/main/CHANGELOG.md",
-            Controls.ChangelogWindow.OnlineUrl);
+            Controls.ChangelogPage.OnlineUrl);
     }
 }

@@ -91,25 +91,25 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
             await writer.WriteAsync(payload);
         };
 
-    private static T Control<T>(Window window, string name)
+    private static T Control<T>(Control window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static HelpImproveWindow.CorpusReading Reading(string report) =>
+    private static HelpImprovePage.CorpusReading Reading(string report) =>
         new(new CorpusSurvey(null, null, 0, 0, new CorpusTally(0, 0, 0, 0, 0, 0), []), report);
 
     /// <summary>Picks a scope segment by index, the way a press does — never by writing SelectedIndex,
     /// which a segment does not fire its event for (#274).</summary>
-    private static void ChooseScope(Window window, int index) =>
+    private static void ChooseScope(Control window, int index) =>
         Control<Segment>(window, "Scope")
             .GetVisualDescendants().OfType<RadioButton>().ElementAt(index).IsChecked = true;
 
-    private static HelpImproveWindow Shown(
+    private static HelpImprovePage Shown(
         string report = "### Journal history\nwhat you are agreeing to\n",
         Func<string, IProgress<DonationStep>, CancellationToken, Task<DonationSent>>? send = null,
         string? destination = null)
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 8, 31, 14, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt(string.Empty),
             destination: destination,
@@ -128,7 +128,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
         return window;
     }
 
-    private static async Task PressAsync(HelpImproveWindow window, string button)
+    private static async Task PressAsync(HelpImprovePage window, string button)
     {
         Control<Button>(window, button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 

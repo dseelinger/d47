@@ -11,8 +11,10 @@ using D47.Core.Interface;
 namespace D47.App.Controls;
 
 /// <summary>Assigning HOTAS switches (Phase 21, items 2 and 4).</summary>
-public sealed class SwitchWindow : Window
+public sealed class SwitchPage : DialogPage
 {
+    public override string Crumb => "HOTAS switches";
+
     /// <summary>Fast enough that a flip is never missed between polls.</summary>
     private static readonly TimeSpan Period = TimeSpan.FromMilliseconds(50);
 
@@ -48,7 +50,7 @@ public sealed class SwitchWindow : Window
 
     private SwitchCapture? _capture;
 
-    public SwitchWindow(
+    public SwitchPage(
         SwitchStore store,
         IHotasReader reader,
         SwitchReconciler reconciler,
@@ -82,9 +84,6 @@ public sealed class SwitchWindow : Window
         }
 
         Title = "HOTAS switches";
-        Width = 720;
-        Height = 620;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
         var assign = new Button { Content = "Assign a switch" };
         assign.Click += (_, _) => StartWalk();
@@ -380,7 +379,7 @@ public sealed class SwitchWindow : Window
         Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         // Refreshed on every sample, so a device that has just gone away — a 4x32 mode change, an unplugged
-        // throttle — says so on this card while the window is still open.
+        // throttle — says so on this card while the page is still open.
         card.Tag = new Action(() =>
         {
             var state = _reconciler.States.FirstOrDefault(s =>

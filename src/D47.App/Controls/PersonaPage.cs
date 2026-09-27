@@ -8,22 +8,21 @@ using D47.Core.Persona;
 namespace D47.App.Controls;
 
 /// <summary>Writing a core of your own (remediation.md 11, item 9).</summary>
-public sealed class PersonaWindow : Window
+public sealed class PersonaPage : DialogPage
 {
+    public override string Crumb => "Own cores";
+
     private readonly OwnPersonaStore _store;
     private readonly List<Written> _cores;
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly Notice _problems = new() { IsVisible = false };
 
-    public PersonaWindow(OwnPersonaStore store)
+    public PersonaPage(OwnPersonaStore store)
     {
         _store = store;
         _cores = [.. store.Cores.Select(Written.From)];
 
         Title = "Your own cores";
-        Width = 680;
-        Height = 620;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
         var add = new Button { Content = "Write a core" };
 
@@ -168,7 +167,7 @@ public sealed class PersonaWindow : Window
         head.Children.Add(drop);
         head.Children.Add(FormField.Label("Name", FieldNeed.Required));
 
-        // Voice is the one field on this window that already described the ship-supplied state in prose —
+        // Voice is the one field on this page that already described the ship-supplied state in prose —
         // "left empty, D47 pairs it on the name alone" — which is the same third state as the Neutron
         // Plotter's "this ship's".
         // Ruled rather than a list row: the boxes are Tile, and vanish on a Tile row.

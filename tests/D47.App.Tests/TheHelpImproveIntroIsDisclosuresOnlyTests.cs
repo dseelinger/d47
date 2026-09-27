@@ -21,13 +21,13 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
 
     // The consent reads the destination and nothing else, so a send delegate would only add a button none of
     // these assertions is about.
-    private static HelpImproveWindow Excerpt(string? destination = Destination) =>
+    private static HelpImprovePage Excerpt(string? destination = Destination) =>
         new(new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt("an excerpt"),
             destination: destination);
 
     /// <summary>The history half of the same window, which carries the same consent lines.</summary>
-    private static HelpImproveWindow History(string? destination = Destination) =>
+    private static HelpImprovePage History(string? destination = Destination) =>
         new(new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt("an excerpt"),
             destination: destination,
@@ -36,7 +36,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
 
     /// <summary>Every TextBlock on screen, once the window (and the history toggle, where it exists) has
     /// settled — the disclosures are split across several lines now, not one paragraph (#338).</summary>
-    private static IReadOnlyList<string> TextsOf(HelpImproveWindow window)
+    private static IReadOnlyList<string> TextsOf(HelpImprovePage window)
     {
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -127,7 +127,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     [Fact]
     public void TheHoverHoldsNoDisclosure()
     {
-        var reasoning = HelpImproveWindow.Reasoning;
+        var reasoning = HelpImprovePage.Reasoning;
 
         Assert.DoesNotContain("donor-token", reasoning, StringComparison.Ordinal);
         Assert.DoesNotContain("data\\donations", reasoning, StringComparison.Ordinal);
@@ -178,7 +178,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
 
         Assert.Contains(
             window.GetVisualDescendants().OfType<TextBlock>(),
-            block => Equals(ToolTip.GetTip(block), HelpImproveWindow.Reasoning));
+            block => Equals(ToolTip.GetTip(block), HelpImprovePage.Reasoning));
         Assert.DoesNotContain(
             window.GetVisualDescendants().OfType<Button>(),
             button => button.Name == "HelpImproveInfo");
@@ -212,7 +212,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     {
         var presses = 0;
 
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt("an excerpt"),
             destination: Destination,
@@ -266,7 +266,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
+        TopLevel.GetTopLevel(window)!.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "help-improve-trimmed.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 

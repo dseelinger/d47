@@ -68,16 +68,16 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     private static string Header(HttpRequestMessage request, string name) =>
         request.Headers.GetValues(name).Single();
 
-    private static T Control<T>(Window window, string name)
+    private static T Control<T>(Control window, string name)
         where T : Avalonia.Controls.Control =>
         window.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
-    private static HelpImproveWindow Shown(
+    private static HelpImprovePage Shown(
         Func<ExcerptRequest, string> build,
         Func<string, CancellationToken, Task<DonationSent>>? send = null,
         string? destination = null)
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 8, 29, 14, 0, 0, TimeSpan.Zero), TestSurface.Excerpt(build), send, destination);
 
         window.Show();
@@ -279,7 +279,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         Assert.DoesNotContain("comment", words, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string Words(HelpImproveWindow window) =>
+    private static string Words(HelpImprovePage window) =>
         string.Join(
             "\n",
             window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text)

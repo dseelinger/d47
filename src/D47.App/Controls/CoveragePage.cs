@@ -11,15 +11,13 @@ using D47.Core.Coverage;
 namespace D47.App.Controls;
 
 /// <summary>The whole coverage record, one line per tool and settings row.</summary>
-public sealed class CoverageWindow : Window
+public sealed class CoveragePage : DialogPage
 {
-    public CoverageWindow(CoverageReport report)
+    public override string Crumb => "Coverage";
+
+    public CoveragePage(CoverageReport report)
     {
         Title = "Exercised by hand";
-        Width = 720;
-        Height = 640;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
 
         var summary = new SelectableTextBlock
         {

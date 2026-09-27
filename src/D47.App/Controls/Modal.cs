@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
@@ -69,6 +70,23 @@ public static class Modal
         Themed(window, Window.BackgroundProperty, ThemeManager.BarKey);
         window.Content = Build(context, title, body, buttons, figure, scrolls);
         CloseOnEscape(window);
+    }
+
+    /// <summary>
+    /// Dresses <paramref name="page"/> in <see cref="Build"/>'s layout. Esc reaches the panel, which
+    /// goes back.
+    /// </summary>
+    public static void Apply(
+        DialogPage page,
+        string context,
+        string title,
+        Control body,
+        IReadOnlyList<Control> buttons,
+        Control? figure = null,
+        bool scrolls = true)
+    {
+        Themed(page, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
+        page.Content = Build(context, title, body, buttons, figure, scrolls);
     }
 
     /// <summary>A section heading inside a dialog's body: uppercase White over a 1px A rule.</summary>

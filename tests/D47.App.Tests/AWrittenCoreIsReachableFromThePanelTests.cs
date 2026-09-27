@@ -65,7 +65,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
     [AvaloniaFact]
     public void TheEditorsCardsGetTheWidthOfTheWindow()
     {
-        var editor = new PersonaWindow(Written()) { Width = 680, Height = 620 };
+        var editor = new PersonaPage(Written()) { Width = 680, Height = 620 };
 
         editor.Show();
         Dispatcher.UIThread.RunJobs();

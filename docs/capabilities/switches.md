@@ -39,7 +39,7 @@ nav_order: 139
 </section>
 <section>
 <h2><span class="num">2</span> Press Assign a switch, and walk yours through its positions.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="The HOTAS switches window during a walk, showing the instruction to move the switch to each position and pause">
+<svg viewBox="0 0 880 250" role="img" aria-label="The HOTAS switches page during a walk, showing the instruction to move the switch to each position and pause">
  <rect x="20" y="20" width="840" height="210" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="20" width="840" height="42" fill="var(--surface-alt)"/>
  <text x="44" y="48" font-size="16" font-weight="700" fill="var(--text)">HOTAS switches</text>

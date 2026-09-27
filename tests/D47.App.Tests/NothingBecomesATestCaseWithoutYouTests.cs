@@ -55,12 +55,12 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
     /// A themed window, for the reason the coverage list's tests are themed: without it every dynamic
     /// resource falls back and the surface under test is not the drawn one.
     /// </summary>
-    private static AudioRecorderWindow Open(RecordingLog log)
+    private static AudioRecorderPage Open(RecordingLog log)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(TestSurface.Create().Settings);
 
-        var window = new AudioRecorderWindow(log, () => Noon);
+        var window = new AudioRecorderPage(log, () => Noon);
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
@@ -72,7 +72,7 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         surface.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
     /// <summary>Picks the first row in the list, which is what puts a detail pane on screen.</summary>
-    private static void Select(AudioRecorderWindow window)
+    private static void Select(AudioRecorderPage window)
     {
         window.GetVisualDescendants()
             .OfType<Button>()
@@ -82,7 +82,7 @@ public class NothingBecomesATestCaseWithoutYouTests : IDisposable
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Press(AudioRecorderWindow window, string name)
+    private static void Press(AudioRecorderPage window, string name)
     {
         Named<Button>(window, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

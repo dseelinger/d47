@@ -15,8 +15,10 @@ namespace D47.App.Controls;
 /// The review surface for the audio recorder (#164): every utterance that crossed the audio boundary
 /// this recording, what d47 made of it, and the button that turns one into a regression test.
 /// </summary>
-public sealed class AudioRecorderWindow : Window
+public sealed class AudioRecorderPage : DialogPage
 {
+    public override string Crumb => "Audio recorder";
+
     private readonly RecordingLog _log;
     private readonly Func<DateTimeOffset> _now;
     private readonly StackPanel _list = new() { Spacing = 2 };
@@ -25,7 +27,7 @@ public sealed class AudioRecorderWindow : Window
 
     private RecordingRow? _selected;
 
-    public AudioRecorderWindow(RecordingLog log, Func<DateTimeOffset> now)
+    public AudioRecorderPage(RecordingLog log, Func<DateTimeOffset> now)
     {
         ArgumentNullException.ThrowIfNull(log);
 
@@ -33,10 +35,6 @@ public sealed class AudioRecorderWindow : Window
         _now = now;
 
         Title = "Audio recorder";
-        Width = 860;
-        Height = 700;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        ShowInTaskbar = false;
 
         _summary.Name = "RecordingSummary";
         _summary.FontSize = TypeScale.Body;

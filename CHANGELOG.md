@@ -15,6 +15,12 @@ A dialog can no longer be minimised. It has no minimise button, and Win+Down and
 do not minimise it either. A minimised dialog had no taskbar button and left the main window
 unusable until it was found and restored.
 
+Eight dialogs now open as pages of the panel instead of separate windows: Logbook, Debrief, Your
+own cores, Coverage, HOTAS switches, What changed, the Audio recorder and Help improve D47. Each is
+named in the breadcrumb and drawn at the panel's width, and Back, Esc, the breadcrumb or its Close
+button returns to where it was opened. The Settings buttons that open them now work in the headset
+panel too, and open the page there.
+
 Badges and cards are filled, with no outline. The Current ship badge on a Fleet card is a cyan
 chip with dark lettering, and the PRE-RELEASE badge is an orange chip. The update banner, the
 startup and switch readouts in the status row, the choice card, the headset overlay card and the

@@ -31,7 +31,7 @@ public static class TestSurface
     public static string CaptureDirectory => Captures.Value;
 
     /// <summary>
-    /// A <c>HelpImproveWindow</c> build delegate that renders <paramref name="text"/> and reports an empty
+    /// A <c>HelpImprovePage</c> build delegate that renders <paramref name="text"/> and reports an empty
     /// tally — for a test that is not about the four figures (#338).
     /// </summary>
     public static Func<ExcerptRequest, (string Text, ExcerptTally Tally)> Excerpt(string text) =>

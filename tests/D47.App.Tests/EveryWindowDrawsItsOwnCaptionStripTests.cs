@@ -368,15 +368,6 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
     // -- A sample of the real windows, not just a synthetic one --
 
     [AvaloniaFact]
-    public void ChangelogWindowCarriesTheStrip()
-    {
-        var window = new ChangelogWindow("- did a thing");
-        CaptionStrip.Apply(window);
-
-        Assert.NotNull(Strip(window));
-    }
-
-    [AvaloniaFact]
     public void ConfirmWindowShowsCloseOnly()
     {
         var owner = new Window { Content = new TextBlock() };
@@ -389,17 +380,5 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
 
         window.Close();
         owner.Close();
-    }
-
-    [AvaloniaFact]
-    public void HelpImproveWindowCarriesTheStrip()
-    {
-        var window = new Controls.HelpImproveWindow(
-            new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
-            TestSurface.Excerpt("a line"),
-            destination: "donations.example");
-        CaptionStrip.Apply(window);
-
-        Assert.NotNull(Strip(window));
     }
 }

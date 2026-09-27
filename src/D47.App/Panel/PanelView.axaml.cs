@@ -72,6 +72,11 @@ public partial class PanelView : UserControl
     /// <summary>The drill strip each furnished tab is drawn in, kept.</summary>
     private readonly Dictionary<PanelTab, DrillView> _pages = [];
 
+    /// <summary>The dialogs open as pages, by crumb key, with the tab and root whose trail holds each.</summary>
+    private readonly Dictionary<string, (PanelTab Tab, string Root, Controls.DialogPage Page)> _dialogs = [];
+
+    private int _dialogCount;
+
     /// <summary>The tab buttons, by tab, so a bar can be driven from the navigator.</summary>
     private readonly Dictionary<PanelTab, RadioButton> _tabs = [];
 
@@ -2138,7 +2143,7 @@ public partial class PanelView : UserControl
     private void ApplyChrome()
     {
         var full = Mode == PanelMode.Full;
-        var transcript = Tab == PanelTab.Transcript;
+        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         Header.IsVisible = full;
         Banners.IsVisible = full;
@@ -2234,6 +2239,8 @@ public partial class PanelView : UserControl
 
     private void ApplyNavigation()
     {
+        ReleaseDialogs();
+
         // Before any of the returns below, because every one of them is a way onto or off the log page and
         // none of them used to say so (#294).
         SettleLogFollow();
@@ -2309,6 +2316,13 @@ public partial class PanelView : UserControl
         ModalPane.Child = Nav.Modal ? Modal(Nav.Trail[^1]) : null;
 
         ApplyChrome();
+
+        if (TranscriptDialog is { } dialog)
+        {
+            PagePane.Child = dialog;
+            ShowSearch();
+            return;
+        }
 
         if (tab != PanelTab.Transcript)
         {
@@ -2628,6 +2642,85 @@ public partial class PanelView : UserControl
         });
     }
 
+    /// <summary>
+    /// Opens a dialog as a page on the tab showing, at the panel's width, and completes when the
+    /// Commander leaves it by its breadcrumb, Back or its own Close.
+    /// </summary>
+    public Task Open(Controls.DialogPage page)
+    {
+        var tab = Tab;
+        var key = $"dialog:{++_dialogCount}";
+
+        _dialogs[key] = (tab, Nav.RootKeyOf(tab), page);
+        page.Leave = () => LeaveDialog(key);
+
+        if (!Nav.Drill(new NavCrumb(key, page.Crumb) { Whole = true }))
+        {
+            _dialogs.Remove(key);
+            page.Release();
+        }
+
+        return page.Left;
+    }
+
+    /// <summary>A dialog page on top of the Transcript tab, drawn in the page slot in place of the transcript.</summary>
+    private Controls.DialogPage? TranscriptDialog =>
+        Tab == PanelTab.Transcript
+        && Nav.Trail.Count > 0
+        && _dialogs.TryGetValue(Nav.Trail[^1].Key, out var open)
+            ? open.Page
+            : null;
+
+    /// <summary>Takes a dialog's crumb, and anything drilled under it, off the trail it is showing on.</summary>
+    private void LeaveDialog(string key)
+    {
+        if (!_dialogs.TryGetValue(key, out var open)
+            || Nav.Tab != open.Tab
+            || Nav.RootKeyOf(open.Tab) != open.Root)
+        {
+            return;
+        }
+
+        var trail = Nav.Trail;
+
+        for (var index = trail.Count - 1; index > 0; index--)
+        {
+            if (trail[index].Key == key)
+            {
+                Nav.JumpTo(index - 1);
+                return;
+            }
+        }
+    }
+
+    /// <summary>Releases each dialog page whose crumb is no longer on the trail that held it.</summary>
+    private void ReleaseDialogs()
+    {
+        foreach (var (key, open) in _dialogs.ToList())
+        {
+            if (Nav.Tab != open.Tab
+                || Nav.RootKeyOf(open.Tab) != open.Root
+                || Nav.Trail.Any(crumb => crumb.Key == key))
+            {
+                continue;
+            }
+
+            _dialogs.Remove(key);
+
+            if (_pages.TryGetValue(open.Tab, out var strip))
+            {
+                strip.Forget(key);
+            }
+
+            if (ReferenceEquals(PagePane.Child, open.Page))
+            {
+                PagePane.Child = null;
+            }
+
+            open.Page.Release();
+        }
+    }
+
     /// <summary>Puts a furnished tab's drill strip in the pane, building it the first time.</summary>
     private void BuildPageOnce(PanelTab tab)
     {
@@ -2641,7 +2734,10 @@ public partial class PanelView : UserControl
             // A drill strip rather than the page itself, so drilling in and reflowing are one mechanism for
             // every tab at once: a tab with no levels is a strip of one pane, which is exactly the page, and
             // a tab that grows levels needs nothing added here.
-            page = new DrillView(Nav, tab, build);
+            page = new DrillView(
+                Nav,
+                tab,
+                crumb => _dialogs.TryGetValue(crumb.Key, out var dialog) ? dialog.Page : build(crumb));
 
             // The strip's first draw runs on attachment to the visual tree, which on a cold start happens
             // after this method returns and ShowSearch() has already asked whether the page filters.
@@ -4034,7 +4130,7 @@ public partial class PanelView : UserControl
     /// <summary>Whether the page's bar exists at all.</summary>
     private void ShowSearch()
     {
-        var transcript = Tab == PanelTab.Transcript;
+        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         CopyButton.IsVisible = _searchable && transcript;
 

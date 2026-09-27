@@ -218,7 +218,7 @@ by field list.
 
 The claim is now weaker and still worth stating: **donations from one installation accumulate
 under a random token that identifies an install, not a person.** You read it here, and in the
-*Help improve D47* window, before the first send rather than after
+*Help improve D47* page, before the first send rather than after
 ([#176](https://github.com/dseelinger/d47/issues/176)).
 
 **Withdrawing is one press, and it is no harder than consenting was.** **Forget it, and delete

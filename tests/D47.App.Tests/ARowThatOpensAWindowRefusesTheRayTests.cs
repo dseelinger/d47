@@ -83,15 +83,9 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         Assert.Superset(
             new HashSet<string>
             {
-                "BuildAudioRecording",
-                "BuildCoverage",
-                "BuildDebrief",
-                "BuildLogbook",
                 "BuildLore",
                 "BuildMacros",
                 "BuildMemories",
-                "BuildOwnPersonas",
-                "BuildSwitches",
             },
             handlers.Select(handler => handler.Owner).ToHashSet());
 
@@ -239,11 +233,7 @@ public class ARowThatOpensAWindowRefusesTheRayTests
     private static readonly string[] Built =
     [
         "FORGET KEY",
-        "OpenAudioRecorder",
-        "OpenCoverage",
         "OpenMacros",
-        "OpenOwnPersonas",
-        "OpenSwitches",
     ];
 
     /// <summary>The same, less the one that is not on the page until there is a key to forget.</summary>
@@ -345,14 +335,13 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         var (surface, view) = Headset();
         using var _ = surface;
 
-        // Diagnostics' own place (#220).
-        view.ShowPlaceOf(DiagnosticsCapability.CoverageKey);
+        view.ShowPlaceOf(MacroCapability.ListKey);
         Jobs();
         surface.Render();
 
-        var coverage = Openers(view).Single(button => button.Name == "OpenCoverage");
+        var macros = Openers(view).Single(button => button.Name == "OpenMacros");
 
-        Assert.False(surface.Click(Reach(surface, coverage)));
+        Assert.False(surface.Click(Reach(surface, macros)));
 
         surface.Render();
 
@@ -373,19 +362,18 @@ public class ARowThatOpensAWindowRefusesTheRayTests
         window.Show();
         Jobs();
 
-        // Diagnostics' own place (#220).
-        view.ShowPlaceOf(DiagnosticsCapability.CoverageKey);
+        view.ShowPlaceOf(MacroCapability.ListKey);
         Jobs();
 
         view.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == "OpenCoverage")
+            .Single(button => button.Name == "OpenMacros")
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         Jobs();
 
         var opened = Assert.Single(window.OwnedWindows);
 
-        Assert.IsType<D47.App.Controls.CoverageWindow>(opened);
+        Assert.IsType<D47.App.Controls.MacroWindow>(opened);
 
         opened.Close();
         Jobs();

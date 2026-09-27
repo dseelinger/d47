@@ -1805,11 +1805,11 @@ public sealed class AppHost : IDisposable
                     // running (#92).
                     Channel = () => self?.Channel ?? D47.Core.Updates.ReleaseChannel.Unknown,
 
-                    // Late-bound through the host like the speech surface's three, because the two that open
-                    // a window need an owner and nothing here has one yet.
+                    // Late-bound through the host like the speech surface's three, because the changelog opens on
+                    // a panel and nothing here has one yet.
                     ShowChangelog = () => self?.ShowChangelog?.Invoke(),
                     ShowChangelogOnline = () => System.Diagnostics.Process.Start(
-                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogWindow.OnlineUrl)
+                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogPage.OnlineUrl)
                         {
                             UseShellExecute = true,
                         }),
@@ -1837,7 +1837,7 @@ public sealed class AppHost : IDisposable
                     PendingUpdateVersion = () => self?.PendingUpdateVersion,
 
                     ShowCommunity = () => System.Diagnostics.Process.Start(
-                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogWindow.CommunityUrl)
+                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogPage.CommunityUrl)
                         {
                             UseShellExecute = true,
                         }),

@@ -12,7 +12,7 @@ namespace D47.App.Tests;
 /// <summary>The Transcript's pop-up windows carry a help mark, and it goes to the site.</summary>
 public sealed class PopUpWindowsCarryAHelpMarkTests
 {
-    private static Button Mark(Window window, string name) =>
+    private static Button Mark(Control window, string name) =>
         window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
 
     /// <summary>
@@ -22,7 +22,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
     [AvaloniaFact]
     public void HelpImproveCarriesAMarkForItsOwnPage()
     {
-        var window = new HelpImproveWindow(
+        var window = new HelpImprovePage(
             new DateTimeOffset(2026, 9, 1, 21, 0, 0, TimeSpan.Zero),
             TestSurface.Excerpt("an excerpt"));
 
@@ -34,7 +34,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
         Assert.Equal("HELP", mark.Content);
         Assert.Equal(
             "https://dseelinger.github.io/d47/help-improve.html",
-            DocsSite.Page(HelpImproveWindow.HelpPage));
+            DocsSite.Page(HelpImprovePage.HelpPage));
 
         // The bare glyph names the action rather than the address it opens (#382).
         Assert.Equal("Opens in your browser", ToolTip.GetTip(mark));
@@ -46,7 +46,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
     [Fact]
     public void TheHelpImprovePageExistsAndHasABand()
     {
-        var article = HelpLibrary.For(HelpImproveWindow.HelpPage);
+        var article = HelpLibrary.For(HelpImprovePage.HelpPage);
 
         Assert.NotNull(article);
         Assert.Equal("Help improve D47", article.Title);

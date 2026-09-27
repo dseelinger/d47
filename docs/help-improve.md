@@ -12,8 +12,8 @@ nav_order: 10
 
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 
-  This page is what the ? on the Help improve D47 window opens (#252), and that mark opens the
-  site rather than the in-app band — a dialog has no panel to take to a help level. So this
+  This page is what the ? on the Help improve D47 page opens (#252), and that mark opens the
+  site rather than the in-app band. So this
   band is read in a browser, and everything below it is read in the same tab. Keep the split
   anyway: the band is the concise answer and The details is the nitty-gritty.
 

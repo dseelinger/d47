@@ -762,9 +762,9 @@ public partial class MainWindow : Window
             // the row that says what was found has no other way to know.
             _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
 
-            // The two About rows that need a window to open one over (#50).
+            // The About row that opens the changelog as a page of this panel (#50).
             _host.ShowChangelog = () =>
-                _ = new Controls.ChangelogWindow(D47.Core.Help.Changelog.Text).Over(this);
+                _ = Panel.Open(new Controls.ChangelogPage(D47.Core.Help.Changelog.Text));
 
             _host.SetUpKeys = ShowKeySetupAsync;
 
@@ -1119,7 +1119,7 @@ public partial class MainWindow : Window
             host.Paths, static () => D47.Core.Configuration.DonationSettings.Address, host.Loggers);
 
     /// <summary>
-    /// One window for both shapes of sharing since #238, offered under one button — and the same window
+    /// One page for both shapes of sharing since #238, offered under one button — and the same page
     /// wherever the button is pressed.
     /// </summary>
     private async Task ShowDonationAsync(AppHost host)
@@ -1164,7 +1164,7 @@ public partial class MainWindow : Window
         Pseudonyms? names = null;
         var from = DateTimeOffset.MinValue;
 
-        Func<CorpusScope, IProgress<int>, CancellationToken, Task<Controls.HelpImproveWindow.CorpusReading>> read =
+        Func<CorpusScope, IProgress<int>, CancellationToken, Task<Controls.HelpImprovePage.CorpusReading>> read =
             (scope, progress, cancel) => Task.Run(
                 () =>
                 {
@@ -1176,7 +1176,7 @@ public partial class MainWindow : Window
 
                     var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
 
-                    return new Controls.HelpImproveWindow.CorpusReading(
+                    return new Controls.HelpImprovePage.CorpusReading(
                         survey,
                         CorpusReport.Render(survey, paperwork));
                 },
@@ -1206,7 +1206,7 @@ public partial class MainWindow : Window
 
         // The sends are null where there is nowhere to send, which is what makes each send button appear only
         // when it can work — the same rule the button itself follows.
-        await new Controls.HelpImproveWindow(
+        await Panel.Open(new Controls.HelpImprovePage(
             now,
             build,
             dispatch.CanSend
@@ -1228,7 +1228,7 @@ public partial class MainWindow : Window
                 return forgotten.Receipt is { } receipt
                     ? $"{forgotten.Outcome.Said} A record of it is in {receipt}."
                     : forgotten.Outcome.Said;
-            }).Over(this);
+            }));
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

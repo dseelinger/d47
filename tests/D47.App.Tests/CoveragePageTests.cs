@@ -16,13 +16,13 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The coverage list.</summary>
-public class CoverageWindowTests
+public class CoveragePageTests
 {
     private static readonly DateTimeOffset Monday = new(2026, 8, 10, 9, 0, 0, TimeSpan.Zero);
 
     private readonly ITestOutputHelper _output;
 
-    public CoverageWindowTests(ITestOutputHelper output)
+    public CoveragePageTests(ITestOutputHelper output)
     {
         _output = output;
     }
@@ -174,7 +174,7 @@ public class CoverageWindowTests
 
             var window = Shown(RealisticReport());
 
-            var frame = window.CaptureRenderedFrame();
+            var frame = TopLevel.GetTopLevel(window)!.CaptureRenderedFrame();
             Assert.NotNull(frame);
             frame.Save(
                 Path.Combine(output, $"coverage-{theme.Id}.png"),
@@ -185,7 +185,7 @@ public class CoverageWindowTests
             scroller.ScrollToEnd();
             Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-            window.CaptureRenderedFrame()!.Save(
+            TopLevel.GetTopLevel(window)!.CaptureRenderedFrame()!.Save(
                 Path.Combine(output, $"coverage-{theme.Id}-bottom.png"),
                 new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
@@ -226,15 +226,15 @@ public class CoverageWindowTests
     }
 
     /// <summary>A themed window.</summary>
-    private static CoverageWindow Open(CoverageReport report)
+    private static CoveragePage Open(CoverageReport report)
     {
         Theme();
         return Shown(report);
     }
 
-    private static CoverageWindow Shown(CoverageReport report)
+    private static CoveragePage Shown(CoverageReport report)
     {
-        var window = new CoverageWindow(report);
+        var window = new CoveragePage(report);
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         return window;
