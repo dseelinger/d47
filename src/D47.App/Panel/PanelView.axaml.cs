@@ -2180,9 +2180,7 @@ public partial class PanelView : UserControl
         TranscriptPane.IsVisible = transcript && !modal && !miniStory;
         PagePane.IsVisible = !transcript && !modal && !miniStory;
 
-        // The transcript has no frame of its own: its edge is the window's, and its bar and list sit at the
-        // panel's padding.
-        ContentPane.BorderThickness = transcript ? default : new Thickness(1);
+        // No tab has a frame of its own: the edge is the window's. The page's own bar keeps its inset.
         PageBar.Margin = transcript ? default : new Thickness(14, 12, 14, 0);
 
         // The page's own bar.

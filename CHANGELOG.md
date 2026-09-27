@@ -8,6 +8,9 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+Page content on every tab now runs to the window's edge, with no border drawn around it, matching
+the design.
+
 The exobiology route plotter now checks the galaxy search setting before asking Spansh for a
 route, the same as the neutron, Road to Riches and trade plotters. With it off, "plot me an
 exobiology route" gets the same switched-off answer as the other plotters, rather than sending the

@@ -503,13 +503,10 @@
       add a page of it too, on the same terms.
     -->
     <!--
-      One container for the whole content region. Bordered on every tab but the transcript, whose
-      edge is the window's; ApplyChrome sets it.
+      One container for the whole content region. No frame on any tab; the edge is the window's.
     -->
     <Border x:Name="ContentPane"
-            Background="{DynamicResource D47.Bg}"
-            BorderBrush="{DynamicResource D47.Line2}"
-            BorderThickness="1">
+            Background="{DynamicResource D47.Bg}">
       <DockPanel>
 
       <!--

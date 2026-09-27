@@ -123,6 +123,22 @@ public class SettingsIsATabTests
         window.Close();
     }
 
+    /// <summary>No frame around page content on the Settings tab, matching every other tab (#510).</summary>
+    [AvaloniaFact]
+    public void TheSettingsPageHasNoContentFrame()
+    {
+        var view = Panel(withSettings: true);
+        var window = new Window { Content = view, Width = 900, Height = 700 };
+        window.Show();
+
+        view.Tab = PanelTab.Settings;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(default, ((Border)Named(view, "ContentPane")).BorderThickness);
+
+        window.Close();
+    }
+
     /// <summary>Built on first selection rather than at startup — ninety-odd rows is not free.</summary>
     [AvaloniaFact]
     public void TheSettingsPageIsNotBuiltUntilItIsSelected()
