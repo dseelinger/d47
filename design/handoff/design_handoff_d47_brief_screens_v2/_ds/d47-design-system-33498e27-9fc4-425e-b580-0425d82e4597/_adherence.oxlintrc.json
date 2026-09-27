@@ -1,0 +1,396 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/Chrome/Card/**",
+              "components/Controls/ApiKey/**",
+              "components/Controls/CheckboxTile/**",
+              "components/Controls/Dropdown/**",
+              "components/Controls/GlyphButton/**",
+              "components/Controls/KeyBinding/**",
+              "components/Controls/LevelBar/**",
+              "components/Controls/ListBoxItem/**",
+              "components/Controls/MixerTable/**",
+              "components/Controls/NumberStepper/**",
+              "components/Controls/SearchField/**",
+              "components/Controls/Segmented/**",
+              "components/Controls/Stepper/**",
+              "components/Controls/TextBox/**",
+              "components/Controls/TileButton/**",
+              "components/Data/DataBlock/**",
+              "components/Data/Message/**",
+              "components/Data/Modal/**",
+              "components/Data/Notice/**",
+              "components/Data/StatusRow/**",
+              "components/Foundations/Palette/**",
+              "components/Foundations/Surfaces/**",
+              "components/Foundations/TypeScale/**",
+              "components/Layout/GroupHead/**",
+              "components/Layout/SettingsRow/**",
+              "components/Navigation/Tab/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Saira|Sintony|JetBrains Mono))/i]",
+        "message": "Font not provided by the design system. Available: Saira, Sintony, JetBrains Mono."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ApiKey'] > JSXAttribute > JSXIdentifier[name!=/^(?:last4|stored|status|placeholder|onSave|onVerify|style|key|ref|className|style|children)$/]",
+        "message": "<ApiKey> doesn't accept that prop. Declared props: last4, stored, status, placeholder, onSave, onVerify, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:context|name|meta|selected|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: context, name, meta, selected, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CheckboxTile'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|checked|onChange|caps|disabled|style|key|ref|className|style|children)$/]",
+        "message": "<CheckboxTile> doesn't accept that prop. Declared props: children, checked, onChange, caps, disabled, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DataBlock'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|value|tone|small|span2|prose|gauge|gaugeKind|key|ref|className|style|children)$/]",
+        "message": "<DataBlock> doesn't accept that prop. Declared props: label, value, tone, small, span2, prose, gauge, gaugeKind."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DataBlock'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:orange|white|cyan|yellow)$/]",
+        "message": "<DataBlock> tone must be one of 'orange' | 'white' | 'cyan' | 'yellow'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DataBlock'] > JSXAttribute[name.name='gaugeKind'] > Literal[value!=/^(?:progress|capacity|over)$/]",
+        "message": "<DataBlock> gaugeKind must be one of 'progress' | 'capacity' | 'over'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Dropdown'] > JSXAttribute > JSXIdentifier[name!=/^(?:options|value|onChange|placeholder|inline|defaultOpen|style|key|ref|className|style|children)$/]",
+        "message": "<Dropdown> doesn't accept that prop. Declared props: options, value, onChange, placeholder, inline, defaultOpen, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='GlyphButton'] > JSXAttribute > JSXIdentifier[name!=/^(?:glyph|label|onClick|disabled|key|ref|className|style|children)$/]",
+        "message": "<GlyphButton> doesn't accept that prop. Declared props: glyph, label, onClick, disabled."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='GroupHead'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|description|dirty|onReset|key|ref|className|style|children)$/]",
+        "message": "<GroupHead> doesn't accept that prop. Declared props: name, description, dirty, onReset."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='KeyBinding'] > JSXAttribute > JSXIdentifier[name!=/^(?:binding|onBind|onClear|key|ref|className|style|children)$/]",
+        "message": "<KeyBinding> doesn't accept that prop. Declared props: binding, onBind, onClear."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='LevelBar'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|onChange|muted|segments|style|key|ref|className|style|children)$/]",
+        "message": "<LevelBar> doesn't accept that prop. Declared props: value, onChange, muted, segments, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ListBoxItem'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|sub|aside|selected|disabled|compact|onClick|key|ref|className|style|children)$/]",
+        "message": "<ListBoxItem> doesn't accept that prop. Declared props: name, sub, aside, selected, disabled, compact, onClick."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Message'] > JSXAttribute > JSXIdentifier[name!=/^(?:from|name|intent|delivery|time|children|chips|cost|key|ref|className|style|children)$/]",
+        "message": "<Message> doesn't accept that prop. Declared props: from, name, intent, delivery, time, children, chips, cost."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Message'] > JSXAttribute[name.name='from'] > Literal[value!=/^(?:d47|cmdr)$/]",
+        "message": "<Message> from must be one of 'd47' | 'cmdr'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MixerTable'] > JSXAttribute > JSXIdentifier[name!=/^(?:channels|onChange|onReset|duckLabel|key|ref|className|style|children)$/]",
+        "message": "<MixerTable> doesn't accept that prop. Declared props: channels, onChange, onReset, duckLabel."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Modal'] > JSXAttribute > JSXIdentifier[name!=/^(?:open|dek|title|figureLabel|figureValue|children|footer|onClose|contained|key|ref|className|style|children)$/]",
+        "message": "<Modal> doesn't accept that prop. Declared props: open, dek, title, figureLabel, figureValue, children, footer, onClose, contained."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Notice'] > JSXAttribute > JSXIdentifier[name!=/^(?:level|label|children|detail|actions|inline|style|key|ref|className|style|children)$/]",
+        "message": "<Notice> doesn't accept that prop. Declared props: level, label, children, detail, actions, inline, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Notice'] > JSXAttribute[name.name='level'] > Literal[value!=/^(?:error|warning)$/]",
+        "message": "<Notice> level must be one of 'error' | 'warning'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='NumberStepper'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|onChange|step|min|max|format|key|ref|className|style|children)$/]",
+        "message": "<NumberStepper> doesn't accept that prop. Declared props: value, onChange, step, min, max, format."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Palette'] > JSXAttribute > JSXIdentifier[name!=/^(?:tokens|key|ref|className|style|children)$/]",
+        "message": "<Palette> doesn't accept that prop. Declared props: tokens."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SearchField'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|onChange|placeholder|key|ref|className|style|children)$/]",
+        "message": "<SearchField> doesn't accept that prop. Declared props: value, onChange, placeholder."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Segmented'] > JSXAttribute > JSXIdentifier[name!=/^(?:options|value|onChange|cols|style|key|ref|className|style|children)$/]",
+        "message": "<Segmented> doesn't accept that prop. Declared props: options, value, onChange, cols, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SettingsRow'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|children|protected|dirty|onReset|key|ref|className|style|children)$/]",
+        "message": "<SettingsRow> doesn't accept that prop. Declared props: label, children, protected, dirty, onReset."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusRow'] > JSXAttribute > JSXIdentifier[name!=/^(?:status|cost|onSpend|key|ref|className|style|children)$/]",
+        "message": "<StatusRow> doesn't accept that prop. Declared props: status, cost, onSpend."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Stepper'] > JSXAttribute > JSXIdentifier[name!=/^(?:options|value|onChange|inherited|wrap|style|key|ref|className|style|children)$/]",
+        "message": "<Stepper> doesn't accept that prop. Declared props: options, value, onChange, inherited, wrap, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Surfaces'] > JSXAttribute > JSXIdentifier[name!=/^(?:brand|version|children|scanlines|showControls|style|bodyStyle|key|ref|className|style|children)$/]",
+        "message": "<Surfaces> doesn't accept that prop. Declared props: brand, version, children, scanlines, showControls, style, bodyStyle."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Tab'] > JSXAttribute > JSXIdentifier[name!=/^(?:tabs|value|onChange|variant|key|ref|className|style|children)$/]",
+        "message": "<Tab> doesn't accept that prop. Declared props: tabs, value, onChange, variant."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Tab'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:tabs|subtabs)$/]",
+        "message": "<Tab> variant must be one of 'tabs' | 'subtabs'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TextBox'] > JSXAttribute > JSXIdentifier[name!=/^(?:prefix|value|onChange|onSubmit|placeholder|disabled|error|warning|style|key|ref|className|style|children)$/]",
+        "message": "<TextBox> doesn't accept that prop. Declared props: prefix, value, onChange, onSubmit, placeholder, disabled, error, warning, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TileButton'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|size|selected|disabled|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<TileButton> doesn't accept that prop. Declared props: children, variant, size, selected, disabled, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TileButton'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:default|destructive)$/]",
+        "message": "<TileButton> variant must be one of 'default' | 'destructive'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TileButton'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:default|tall|full|compact)$/]",
+        "message": "<TileButton> size must be one of 'default' | 'tall' | 'full' | 'compact'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TypeScale'] > JSXAttribute > JSXIdentifier[name!=/^(?:samples|key|ref|className|style|children)$/]",
+        "message": "<TypeScale> doesn't accept that prop. Declared props: samples."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "ApiKey": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "CheckboxTile": {
+        "replaces": []
+      },
+      "DataBlock": {
+        "replaces": []
+      },
+      "Dropdown": {
+        "replaces": []
+      },
+      "GlyphButton": {
+        "replaces": []
+      },
+      "GroupHead": {
+        "replaces": []
+      },
+      "KeyBinding": {
+        "replaces": []
+      },
+      "LevelBar": {
+        "replaces": []
+      },
+      "ListBoxItem": {
+        "replaces": []
+      },
+      "Message": {
+        "replaces": []
+      },
+      "MixerTable": {
+        "replaces": []
+      },
+      "Modal": {
+        "replaces": []
+      },
+      "Notice": {
+        "replaces": []
+      },
+      "NumberStepper": {
+        "replaces": []
+      },
+      "Palette": {
+        "replaces": []
+      },
+      "SearchField": {
+        "replaces": []
+      },
+      "Segmented": {
+        "replaces": []
+      },
+      "SettingsRow": {
+        "replaces": []
+      },
+      "StatusRow": {
+        "replaces": []
+      },
+      "Stepper": {
+        "replaces": []
+      },
+      "Surfaces": {
+        "replaces": []
+      },
+      "Tab": {
+        "replaces": []
+      },
+      "TextBox": {
+        "replaces": []
+      },
+      "TileButton": {
+        "replaces": []
+      },
+      "TypeScale": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--d47-a",
+      "--d47-bar",
+      "--d47-bg",
+      "--d47-blue",
+      "--d47-brown",
+      "--d47-cyan",
+      "--d47-cyan-ground",
+      "--d47-font-chrome",
+      "--d47-font-mono",
+      "--d47-font-prose",
+      "--d47-gap-tile",
+      "--d47-glow-dot",
+      "--d47-glow-mark",
+      "--d47-glow-tab",
+      "--d47-glow-title",
+      "--d47-glyph",
+      "--d47-grey",
+      "--d47-grey2",
+      "--d47-hit",
+      "--d47-knock",
+      "--d47-line",
+      "--d47-line2",
+      "--d47-red",
+      "--d47-red-ground",
+      "--d47-red-tile",
+      "--d47-scanlines",
+      "--d47-scanlines-opacity",
+      "--d47-slab",
+      "--d47-tile",
+      "--d47-tile2",
+      "--d47-track-brand",
+      "--d47-track-chrome",
+      "--d47-track-subtab",
+      "--d47-track-title",
+      "--d47-type-body",
+      "--d47-type-control",
+      "--d47-type-control-large",
+      "--d47-type-group",
+      "--d47-type-meta",
+      "--d47-type-meta-small",
+      "--d47-type-row",
+      "--d47-type-tab",
+      "--d47-type-title",
+      "--d47-warn",
+      "--d47-warn-ground",
+      "--d47-white",
+      "--d47-yellow",
+      "--d47-yellow-track"
+    ],
+    "tokenKinds": {
+      "--d47-bg": "color",
+      "--d47-bar": "color",
+      "--d47-slab": "color",
+      "--d47-white": "color",
+      "--d47-grey": "color",
+      "--d47-grey2": "color",
+      "--d47-a": "color",
+      "--d47-knock": "color",
+      "--d47-brown": "color",
+      "--d47-cyan": "color",
+      "--d47-blue": "color",
+      "--d47-yellow": "color",
+      "--d47-red": "color",
+      "--d47-warn": "color",
+      "--d47-glow-tab": "shadow",
+      "--d47-glow-title": "shadow",
+      "--d47-glow-mark": "shadow",
+      "--d47-glow-dot": "shadow",
+      "--d47-scanlines-opacity": "other",
+      "--d47-tile": "color",
+      "--d47-tile2": "color",
+      "--d47-line": "color",
+      "--d47-line2": "color",
+      "--d47-cyan-ground": "color",
+      "--d47-red-tile": "color",
+      "--d47-red-ground": "color",
+      "--d47-warn-ground": "color",
+      "--d47-yellow-track": "color",
+      "--d47-scanlines": "other",
+      "--d47-font-chrome": "font",
+      "--d47-font-prose": "font",
+      "--d47-font-mono": "font",
+      "--d47-type-title": "font",
+      "--d47-type-tab": "font",
+      "--d47-type-group": "font",
+      "--d47-type-row": "font",
+      "--d47-type-body": "font",
+      "--d47-type-control": "font",
+      "--d47-type-control-large": "font",
+      "--d47-type-meta": "font",
+      "--d47-type-meta-small": "font",
+      "--d47-track-title": "spacing",
+      "--d47-track-chrome": "spacing",
+      "--d47-track-subtab": "spacing",
+      "--d47-track-brand": "spacing",
+      "--d47-gap-tile": "spacing",
+      "--d47-hit": "spacing",
+      "--d47-glyph": "spacing"
+    },
+    "fontFamilies": [
+      "JetBrains Mono",
+      "Saira",
+      "Sintony"
+    ]
+  }
+}

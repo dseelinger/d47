@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/d47-design-system-33498e27-9fc4-425e-b580-0425d82e4597/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/d47-design-system-33498e27-9fc4-425e-b580-0425d82e4597/tokens/palette.css">
+<link rel="stylesheet" href="_ds/d47-design-system-33498e27-9fc4-425e-b580-0425d82e4597/tokens/type.css">
+<link rel="stylesheet" href="_ds/d47-design-system-33498e27-9fc4-425e-b580-0425d82e4597/components/kit.css">
+<link rel="stylesheet" href="_ds/d47-design-system-33498e27-9fc4-425e-b580-0425d82e4597/styles.css">
+<script src="_ds/d47-design-system-33498e27-9fc4-425e-b580-0425d82e4597/_ds_bundle.js"></script>
+<style>html,body{margin:0;background:#050404}a{color:#FF7100}a:hover{color:#EDE9E3}</style>
+</helmet>
+<div class="d47-root" data-d47-theme="{{ theme }}" style="min-height:100vh;padding:20px 24px 32px;display:flex;flex-direction:column;align-items:safe center;gap:12px;background:var(--d47-bar);width:max-content;min-width:100%">
+  <div style="width:1280px;display:flex;align-items:center;gap:2px">
+    <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--d47-grey);margin-right:12px">Brief · 2026-09-27</span>
+    <sc-for list="{{ briefLinks }}" as="b" hint-placeholder-count="6">
+      <button class="d47-tile-button {{ b.cls }}" style="height:44px;font-size:13px;padding:0 14px" onClick="{{ b.go }}"><span style="font-family:var(--d47-font-mono)">{{ b.n }}</span>{{ b.label }}</button>
+    </sc-for>
+  </div>
+
+  <div class="d47-window" style="width:1280px;height:860px;flex:none" data-screen-label="{{ screenLabel }}">
+    <div class="d47-titlebar"><span class="d47-brand-mark"></span><span class="d47-brand-name">DIRECTIVE 47</span><span class="d47-version">1.6.3</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:2px"><button class="d47-tile-button" style="height:44px;font-size:12px;padding:0 16px">Help</button><div class="d47-window-controls" style="margin-left:0"><span class="d47-window-control">—</span><span class="d47-window-control">□</span><span class="d47-window-control close">✕</span></div></div>
+    </div>
+    <div class="d47-window__body" style="padding:20px 28px 20px">
+      <div class="d47-tabs" style="flex-wrap:nowrap">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="9"><span class="d47-tab {{ t.cls }}" style="padding:0 8px;color:{{ t.color }}" onClick="{{ t.go }}">{{ t.label }}</span></sc-for>
+        
+      </div>
+      <div class="d47-tabs-rule"></div>
+      <div class="d47-subbar" style="padding:14px 0 12px;min-height:62px">
+        <div class="d47-subtabs"><sc-for list="{{ subtabs }}" as="s" hint-placeholder-count="3"><span class="d47-subtab {{ s.cls }}" onClick="{{ s.go }}">{{ s.label }}</span></sc-for></div>
+        <div class="d47-subbar__end">
+          <sc-if value="{{ is.statistics }}" hint-placeholder-val="{{ false }}"><div class="d47-search"><input placeholder="Find a figure in any section" value="{{ statQ }}" onChange="{{ onStatQ }}"></div></sc-if>
+          <sc-if value="{{ is.modules }}" hint-placeholder-val="{{ false }}"><div class="d47-search"><input placeholder="Filter by module name" value="{{ modQ }}" onChange="{{ onModQ }}"></div></sc-if>
+          <sc-if value="{{ is.phrases }}" hint-placeholder-val="{{ false }}"><div class="d47-search"><input placeholder="Search every phrase" value="{{ phQ }}" onChange="{{ onPhQ }}"></div></sc-if>
+        </div>
+      </div>
+
+      <div class="d47-scroll" style="flex:1;min-height:0;overflow-y:auto;padding:20px 8px 24px 0;display:flex;flex-direction:column;gap:28px">
+
+        <!-- 1 · COMMANDER › STANDING -->
+        <sc-if value="{{ is.standing }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:28px;max-width:900px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Commander record</span><span class="d47-title">CMDR JOHN DEPARAGON</span></div></div>
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">Reputation</span><span class="d47-group-head__desc">Where you stand with each power, from −100 to 100.</span></div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ factions }}" as="f" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:200px 120px 56px minmax(0,1fr);gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                    <span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--d47-white)">{{ f.name }}</span>
+                    <span style="font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:{{ f.bandColor }}">{{ f.band }}</span>
+                    <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ f.numColor }};text-align:right">{{ f.label }}</span>
+                    <div style="position:relative;height:6px;background:var(--d47-line2)"><div style="position:absolute;top:0;bottom:0;left:{{ f.left }}%;width:{{ f.width }}%;background:{{ f.fill }}"></div><div style="position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--d47-grey)"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">Navy ranks</span><span class="d47-group-head__desc">Your rank in each navy and how far you are towards the next one.</span></div>
+              <div class="d47-data-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                <sc-for list="{{ navy }}" as="n" hint-placeholder-count="2">
+                  <div class="d47-data" style="gap:6px">
+                    <span class="d47-data__label">{{ n.navy }}</span>
+                    <div class="d47-data__row"><span class="d47-data__value white">{{ n.rank }}</span><span class="d47-data__end" style="font-family:var(--d47-font-mono);font-size:12px;color:var(--d47-grey)">{{ n.meta }}</span></div>
+                    <div class="d47-gauge"><div class="d47-gauge__fill" style="width:{{ n.pct }}%"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 1 · COMMANDER › STATISTICS -->
+        <sc-if value="{{ is.statistics }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;min-height:100%">
+            <div class="d47-sidebar" style="border-right:1px solid var(--d47-line2);padding-right:16px">
+              <div class="d47-sidebar__note">Sixteen sections, as the game writes them.</div>
+              <sc-for list="{{ statNav }}" as="s" hint-placeholder-count="16">
+                <div class="d47-sidebar__item {{ s.cls }}" onClick="{{ s.go }}" style="height:44px;padding-left:12px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;justify-content:space-between">{{ s.name }}<span style="font-family:var(--d47-font-mono);font-size:11px;opacity:.7">{{ s.count }}</span></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;max-width:900px">
+              <sc-if value="{{ statSearching }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-page-head"><span class="d47-crumb">Career statistics ›</span><span class="d47-title">Figures matching “{{ statQ }}”</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ statHits }}" as="h" hint-placeholder-count="3">
+                    <div class="d47-list-row" onClick="{{ h.go }}" style="min-height:44px;padding:0 14px">
+                      <span style="width:180px;font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-a)">{{ h.section }}</span>
+                      <span style="flex:1;font-size:15px;color:var(--d47-white)">{{ h.label }}</span>
+                      <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-a)">{{ h.value }}</span>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ statNoHits }}" hint-placeholder-val="{{ false }}"><div class="d47-data prose">No figure in any section matches that.</div></sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ statBrowsing }}" hint-placeholder-val="{{ true }}">
+                <div class="d47-page-head"><span class="d47-crumb">Career statistics ›</span><span class="d47-title">{{ stat }}</span></div>
+                <div class="d47-data-grid">
+                  <sc-for list="{{ statFigures }}" as="f" hint-placeholder-count="9">
+                    <div class="d47-data"><span class="d47-data__label">{{ f.label }}</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-size:16px;font-weight:400">{{ f.value }}</span></div>
+                  </sc-for>
+                </div>
+                <div class="d47-hint">Career totals from the game's own record. They change when the game next writes them.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 1 · COMMANDER › THIS SESSION -->
+        <sc-if value="{{ is.session }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:28px;max-width:900px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Commander record · since the game started</span><span class="d47-title">This session</span></div>
+              <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Earned</span><span class="d47-title-block__figure-value" style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ sessionTotal }} CR</span></div></div>
+            <div class="d47-data-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+              <sc-for list="{{ sessionFigures }}" as="f" hint-placeholder-count="8">
+                <div class="d47-data"><span class="d47-data__label">{{ f.label }}</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-size:16px;font-weight:400">{{ f.value }}</span></div>
+              </sc-for>
+            </div>
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">Earnings by source</span><span class="d47-group-head__desc">What each kind of work has paid this session.</span></div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ earnings }}" as="e" hint-placeholder-count="6">
+                  <div style="display:grid;grid-template-columns:200px minmax(0,1fr) 170px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                    <span style="font-size:15px;color:var(--d47-white)">{{ e.label }}</span>
+                    <div class="d47-gauge"><div class="d47-gauge__fill" style="width:{{ e.pct }}%"></div></div>
+                    <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ e.color }};text-align:right">{{ e.value }} CR</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div class="d47-hint">The session starts again by itself when the game starts.</div>
+          </div>
+        </sc-if>
+
+        <!-- 2 · EXPLORATION › ON THIS BODY -->
+        <sc-if value="{{ is.body }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:28px;max-width:900px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">On this body · your scan</span><span class="d47-title" style="color:var(--d47-cyan)">Blae Drye XJ-A d14 7 A</span></div>
+              <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Unmapped · worth if mapped</span><span class="d47-title-block__figure-value" style="font-family:var(--d47-font-mono);color:var(--d47-a)">~1,240,000 CR</span></div></div>
+            <div class="d47-data-grid">
+              <div class="d47-data"><span class="d47-data__label">Biological signals</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-weight:400">4</span></div>
+              <div class="d47-data span-2"><span class="d47-data__label">Genera</span><span class="d47-data__value white small">BACTERIUM · FRUTEXA · STRATUM · OSSEUS</span></div>
+              <div class="d47-data span-2"><span class="d47-data__label">Other signals</span><span class="d47-data__value white small">GEOLOGICAL <span style="font-family:var(--d47-font-mono);color:var(--d47-a)">3</span></span></div>
+              <div class="d47-data"><span class="d47-data__label">Gravity</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-weight:400">0.28 G</span></div>
+            </div>
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">Sampling</span><span class="d47-group-head__desc">Stratum tectonicas · the one you're sampling now.</span></div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px">
+                <sc-for list="{{ samples }}" as="s" hint-placeholder-count="3">
+                  <div style="height:44px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--d47-slab);font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:{{ s.color }}">{{ s.label }}</div>
+                </sc-for>
+              </div>
+              <div class="d47-data" style="gap:8px;padding:14px">
+                <div class="d47-data__row"><span class="d47-data__label">Distance since the last sample</span><span class="d47-data__end" style="font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:{{ distStateColor }}">{{ distState }}</span></div>
+                <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--d47-font-mono);font-size:32px;color:{{ distColor }}">{{ dist }} M</span><span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-grey)">{{ colonyText }}</span></div>
+                <sc-if value="{{ colonyKnown }}" hint-placeholder-val="{{ true }}"><div class="d47-gauge"><div class="d47-gauge__fill" style="width:{{ distPct }}%"></div></div></sc-if>
+              </div>
+              <div class="d47-hint">{{ sampleHint }}</div>
+            </div>
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">On this body</span><span class="d47-group-head__desc">Each genus, and what you've finished.</span></div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ genera }}" as="g" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 150px 150px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                    <span style="font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-white)">{{ g.genus }}</span>
+                    <span style="font-size:15px;color:{{ g.speciesColor }}">{{ g.species }}</span>
+                    <span style="font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:{{ g.color }}">{{ g.state }}</span>
+                    <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-a);text-align:right">{{ g.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 2 · EXPLORATION › UNSOLD -->
+        <sc-if value="{{ is.unsold }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:32px;max-width:900px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Carried, not yet sold</span><span class="d47-title">Unsold data</span></div>
+              <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Together</span><span class="d47-title-block__figure-value" style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ unsoldTotal }} CR</span></div></div>
+            <sc-for list="{{ ledgers }}" as="l" hint-placeholder-count="2">
+              <div class="d47-group spaced">
+                <div class="d47-group-head"><span class="d47-group-head__name">{{ l.name }}</span><span class="d47-group-head__desc">{{ l.desc }}</span></div>
+                <div class="d47-data-grid" style="grid-template-columns:2fr 1fr 1fr 1fr">
+                  <div class="d47-data"><span class="d47-data__label">Estimated value</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-size:22px;font-weight:400">{{ l.value }} CR</span></div>
+                  <sc-for list="{{ l.figures }}" as="f" hint-placeholder-count="3">
+                    <div class="d47-data"><span class="d47-data__label">{{ f.label }}</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-size:16px;font-weight:400;color:{{ f.color }}">{{ f.value }}</span></div>
+                  </sc-for>
+                </div>
+                <div class="d47-row protected" style="border-top:0">
+                  <span class="d47-row__label">Reset the total</span>
+                  <div class="d47-row__control" style="align-items:center;gap:16px"><button class="d47-tile-button destructive" style="height:44px;font-size:13px" onClick="{{ l.askReset }}">Reset</button><span class="d47-hint">{{ l.resetHint }}</span></div>
+                  <span class="d47-row__reset"></span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- 5 · FLEET › SHIPS › SHIP DETAILS WITH PLAN -->
+        <sc-if value="{{ is.ships }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:28px;max-width:1000px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-crumb">Ships › Anaconda · SW-01</span><span class="d47-title">Sacred Wings</span></div>
+              <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Rebuy</span><span class="d47-title-block__figure-value" style="font-family:var(--d47-font-mono)">42,105,700 CR</span></div></div>
+            <div class="d47-data-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+              <div class="d47-data"><span class="d47-data__label">Where</span><span class="d47-data__value cyan small">SHINRARTA DEZHRA</span></div>
+              <div class="d47-data"><span class="d47-data__label">Jump range</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-weight:400;font-size:16px">68.42 LY</span></div>
+              <div class="d47-data"><span class="d47-data__label">Cargo</span><span class="d47-data__value yellow" style="font-family:var(--d47-font-mono);font-weight:400;font-size:16px">128 T</span></div>
+              <div class="d47-data"><span class="d47-data__label">Plans</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-weight:400;font-size:16px">2 LIVE</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:22px">
+              <div class="d47-section-head">Plan<span class="d47-section-head__aside">What the live plans for this ship still need · 2 plans · 1 construction delivery</span></div>
+              <div class="d47-group">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 130px 110px 90px 220px;gap:16px;padding:0 14px 6px;font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)"><span>Material</span><span>Ledger</span><span style="text-align:right">Held / need</span><span style="text-align:right">Short</span><span></span></div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ planRows }}" as="r" hint-placeholder-count="6">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 130px 110px 90px 220px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                      <span style="font-size:15px;color:var(--d47-white)">{{ r.name }}</span>
+                      <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ r.ledger }}</span>
+                      <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white);text-align:right">{{ r.held }} / {{ r.need }}</span>
+                      <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ r.shortColor }};text-align:right">{{ r.short }}</span>
+                      <div class="d47-gauge {{ r.gaugeCls }}"><div class="d47-gauge__fill" style="width:{{ r.pct }}%"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+                <div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">More than one trip</span></div>
+                  <sc-for list="{{ planTrips }}" as="n" hint-placeholder-count="2">
+                    <div class="d47-notice warning"><div class="d47-notice__main"><span class="d47-notice__label">{{ n.label }}</span><span class="d47-notice__text">{{ n.text }}</span><span class="d47-notice__detail">{{ n.detail }}</span></div></div>
+                  </sc-for>
+                </div>
+                <div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">Engineer ranks</span></div>
+                  <sc-for list="{{ planBlocks }}" as="n" hint-placeholder-count="2">
+                    <div class="d47-notice"><div class="d47-notice__main"><span class="d47-notice__label">{{ n.label }}</span><span class="d47-notice__text">{{ n.text }}</span><span class="d47-notice__detail">{{ n.detail }}</span></div></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div class="d47-group spaced">
+                <div class="d47-group-head"><span class="d47-group-head__name">Gather in one trip</span><span class="d47-group-head__desc">Missing materials that come from the same kind of place.</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ planOneTrip }}" as="o" hint-placeholder-count="2">
+                    <div style="display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:center;min-height:44px;padding:8px 14px;background:var(--d47-slab)">
+                      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-family:var(--d47-font-chrome);font-size:15px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--d47-white)">{{ o.site }}</span><span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--d47-a)">{{ o.where }}</span></div>
+                      <span style="font-size:14px;color:var(--d47-white)">{{ o.gives }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div class="d47-hint">Adds up every live plan for this ship, and construction deliveries. Redraws as you collect.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 4 · FLEET › COMPARE -->
+        <sc-if value="{{ is.compare }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Every ship as last seen</span><span class="d47-title">Compare ships</span></div>
+              <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Showing</span><span class="d47-title-block__figure-value" style="font-family:var(--d47-font-mono)">{{ shipCount }}</span></div></div>
+            <div style="display:flex;align-items:center;gap:24px">
+              <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">Order by</span>
+              <div class="d47-segmented cols-2" style="width:300px">
+                <sc-for list="{{ orderOpts }}" as="o" hint-placeholder-count="2"><div class="d47-segment {{ o.cls }}" style="height:44px" onClick="{{ o.go }}"><span class="d47-segment__label">{{ o.label }}</span></div></sc-for>
+              </div>
+              <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey);margin-left:16px">Minimum cargo</span>
+              <div class="d47-number-stepper" style="height:44px"><span class="d47-stepper__arrow" onClick="{{ cargoDown }}">◄</span><span class="d47-stepper__value" style="font-size:13px">{{ minCargoLabel }}</span><span class="d47-stepper__arrow" onClick="{{ cargoUp }}">►</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 80px 90px 100px 70px 140px 120px minmax(0,1.3fr);gap:14px;padding:0 14px 6px;border-bottom:1px solid var(--d47-line);font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">
+                <span>Ship</span><span style="text-align:right;color:{{ cargoHeadColor }}">Cargo{{ cargoArrow }}</span><span style="text-align:right;color:{{ jumpHeadColor }}">Jump{{ jumpArrow }}</span><span style="text-align:right">Unladen</span><span style="text-align:right">Fuel</span><span style="text-align:right">Value</span><span style="text-align:right">Rebuy</span><span>Where</span>
+              </div>
+              <sc-for list="{{ ships }}" as="s" hint-placeholder-count="7">
+                <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 80px 90px 100px 70px 140px 120px minmax(0,1.3fr);gap:14px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab);font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white)">
+                  <div style="display:flex;flex-direction:column;min-width:0"><span style="font-family:var(--d47-font-chrome);font-size:14px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--d47-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</span><span style="font-family:var(--d47-font-chrome);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ s.hull }}</span></div>
+                  <span style="text-align:right;color:var(--d47-yellow)">{{ s.cargo }} T</span>
+                  <span style="text-align:right;color:var(--d47-a)">{{ s.jump }} LY</span>
+                  <span style="text-align:right">{{ s.mass }} T</span>
+                  <span style="text-align:right">{{ s.fuel }} T</span>
+                  <span style="text-align:right;color:var(--d47-a)">{{ s.value }}</span>
+                  <span style="text-align:right;color:var(--d47-a)">{{ s.rebuy }}</span>
+                  <span style="font-family:var(--d47-font-chrome);font-size:13px;font-weight:500;text-transform:uppercase;color:{{ s.whereColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.where }}</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{ noShips }}" hint-placeholder-val="{{ false }}"><div class="d47-data prose">No ship carries that much cargo.</div></sc-if>
+            </div>
+            <div class="d47-hint">Each ship as it was when you last flew it. Values in credits.</div>
+          </div>
+        </sc-if>
+
+        <!-- 4 · FLEET › STORED MODULES -->
+        <sc-if value="{{ is.modules }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:24px;max-width:1000px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">In storage, by where it's stored</span><span class="d47-title">Stored modules</span></div>
+              <div class="d47-title-block__figure"><span class="d47-title-block__figure-label">Modules</span><span class="d47-title-block__figure-value" style="font-family:var(--d47-font-mono)">{{ moduleCount }}</span></div></div>
+            <sc-for list="{{ moduleGroups }}" as="g" hint-placeholder-count="3">
+              <div class="d47-group">
+                <div class="d47-group-head" style="min-height:32px"><span class="d47-group-head__name" style="color:{{ g.color }}">{{ g.system }}</span><span class="d47-group-head__desc">{{ g.meta }}</span></div>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 150px 110px;gap:16px;padding:8px 14px 6px;font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)"><span>Module</span><span>Class</span><span style="text-align:right">Transfer cost</span><span style="text-align:right">Transfer time</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="2">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 150px 110px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab);font-family:var(--d47-font-mono);font-size:13px">
+                      <span style="font-family:var(--d47-font-prose);font-size:15px;color:var(--d47-white)">{{ m.name }}</span>
+                      <span style="color:var(--d47-white)">{{ m.cls }}</span>
+                      <span style="text-align:right;color:var(--d47-a)">{{ m.cost }}</span>
+                      <span style="text-align:right;color:var(--d47-white)">{{ m.time }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noModules }}" hint-placeholder-val="{{ false }}"><div class="d47-data prose">No stored module matches “{{ modQ }}”.</div></sc-if>
+          </div>
+        </sc-if>
+
+        <!-- 4 · FLEET › CREW -->
+        <sc-if value="{{ is.crew }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:20px;max-width:1000px">
+            <div class="d47-title-block"><div class="d47-title-block__text"><span class="d47-title-block__context">Hired pilots</span><span class="d47-title">Crew</span></div></div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) 160px 170px minmax(0,1fr);gap:16px;padding:0 14px 6px;border-bottom:1px solid var(--d47-line);font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)"><span>Pilot</span><span>Combat rank</span><span>Fighter bay</span><span>Posted to</span></div>
+              <sc-for list="{{ crew }}" as="c" hint-placeholder-count="3">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 160px 170px minmax(0,1fr);gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab);font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase">
+                  <span style="font-size:15px;color:var(--d47-white)">{{ c.name }}</span>
+                  <span style="color:var(--d47-a)">{{ c.rank }}</span>
+                  <span style="color:{{ c.dutyColor }}">{{ c.duty }}</span>
+                  <span style="color:{{ c.shipColor }}">{{ c.ship }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 3 · FLEET › MATERIALS -->
+        <sc-if value="{{ is.materials }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;min-height:100%">
+            <div class="d47-sidebar" style="border-right:1px solid var(--d47-line2);padding-right:16px">
+              <sc-for list="{{ matNav }}" as="g" hint-placeholder-count="3">
+                <div class="d47-sidebar__group" style="margin-top:{{ g.gap }}px">{{ g.group }}</div>
+                <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="2">
+                  <div class="d47-sidebar__item {{ i.cls }}" onClick="{{ i.go }}" style="height:44px;padding-left:15px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;justify-content:space-between">{{ i.label }}<span style="font-family:var(--d47-font-mono);font-size:11px;opacity:.7">{{ i.count }}</span></div>
+                </sc-for>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+
+              <sc-if value="{{ matView.ledger }}" hint-placeholder-val="{{ true }}">
+                <div class="d47-page-head"><span class="d47-crumb">Materials ›</span><span class="d47-title">{{ ledgerName }}</span><span class="d47-hint">Each held against the storage cap for its grade. Choose one to see where to find it.</span></div>
+                <sc-for list="{{ ledgerGrades }}" as="g" hint-placeholder-count="4">
+                  <div class="d47-group spaced">
+                    <div class="d47-group-head" style="min-height:30px"><span class="d47-group-head__name">{{ g.head }}</span><span class="d47-group-head__desc" style="font-family:var(--d47-font-mono);font-size:12px">CAP {{ g.cap }}</span></div>
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px">
+                      <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="6">
+                        <div class="d47-list-row" onClick="{{ m.go }}" style="min-height:44px;height:44px;padding:0 12px;gap:10px;position:relative">
+                          <span style="flex:1;min-width:0;font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--d47-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.name }}</span>
+                          <sc-if value="{{ m.needed }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ m.needLabel }}</span></sc-if>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ m.color }}">{{ m.held }}</span>
+                          <div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--d47-yellow-track)"><div style="height:100%;width:{{ m.pct }}%;background:var(--d47-yellow)"></div></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </sc-if>
+
+              <sc-if value="{{ matView.detail }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-page-head"><span class="d47-crumb" style="cursor:pointer" onClick="{{ matBack }}">Materials › {{ ledgerName }} ›</span><span class="d47-title">{{ md.name }}</span></div>
+                <div class="d47-data-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+                  <div class="d47-data"><span class="d47-data__label">Ledger</span><span class="d47-data__value white small">{{ md.ledger }}</span></div>
+                  <div class="d47-data"><span class="d47-data__label">Category</span><span class="d47-data__value white small">{{ md.category }}</span></div>
+                  <div class="d47-data"><span class="d47-data__label">Grade</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-weight:400;font-size:16px">{{ md.grade }}</span></div>
+                  <div class="d47-data" style="gap:6px"><div class="d47-data__row"><span class="d47-data__label">Held</span><span class="d47-data__end" style="font-family:var(--d47-font-mono);font-size:14px;color:var(--d47-yellow)">{{ md.held }} / {{ md.cap }}</span></div><div class="d47-gauge capacity"><div class="d47-gauge__fill" style="width:{{ md.pct }}%"></div></div></div>
+                </div>
+                <sc-if value="{{ md.hasNeeds }}" hint-placeholder-val="{{ false }}">
+                  <div class="d47-group spaced">
+                    <div class="d47-group-head"><span class="d47-group-head__name">Needed by plans</span><span class="d47-group-head__desc">Live plans that still need it.</span></div>
+                    <div style="display:flex;flex-direction:column;gap:2px">
+                      <sc-for list="{{ md.needs }}" as="n" hint-placeholder-count="1">
+                        <div style="display:grid;grid-template-columns:minmax(0,1fr) 110px 90px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                          <span style="font-size:15px;color:var(--d47-white)">{{ n.build }} <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">· {{ n.kind }}</span></span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white);text-align:right">NEED {{ n.need }}</span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ n.shortColor }};text-align:right">{{ n.short }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">How to farm it</span></div>
+                  <div class="d47-data prose white" style="font-size:15px">{{ md.advice }}</div>
+                </div>
+                <div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">Nearest to you</span><span class="d47-group-head__desc">A live search of the galaxy from where you are.</span></div>
+                  <sc-if value="{{ galaxy }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:2px">
+                      <sc-for list="{{ md.nearest }}" as="n" hint-placeholder-count="3">
+                        <div style="display:grid;grid-template-columns:minmax(0,1fr) 200px 110px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                          <span style="font-family:var(--d47-font-chrome);font-size:14px;font-weight:500;text-transform:uppercase;color:var(--d47-a)">{{ n.where }}</span>
+                          <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ n.note }}</span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white);text-align:right">{{ n.ly }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ noGalaxy }}" hint-placeholder-val="{{ false }}">
+                    <div class="d47-data prose">Turn on “Look things up in the galaxy” in Settings and D47 will search for the nearest places it's found.</div>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ md.hasTrades }}" hint-placeholder-val="{{ true }}"><div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">At a material trader</span><span class="d47-group-head__desc">What you give, and what you get.</span></div>
+                  <div style="display:flex;flex-direction:column;gap:2px">
+                    <sc-for list="{{ md.trades }}" as="t" hint-placeholder-count="3">
+                      <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 30px minmax(0,1fr);gap:14px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                        <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ t.kind }}</span>
+                        <span style="font-size:14px;color:var(--d47-white)"><span style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ t.giveN }} ×</span> {{ t.give }}</span>
+                        <span style="color:var(--d47-grey);text-align:center">›</span>
+                        <span style="font-size:14px;color:var(--d47-white)"><span style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ t.getN }} ×</span> {{ t.get }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div></sc-if>
+                <sc-if value="{{ md.noTrades }}" hint-placeholder-val="{{ false }}"><div class="d47-hint">No material trader deals in {{ md.ledger }} materials.</div></sc-if>
+              </sc-if>
+
+              <sc-if value="{{ matView.micro }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-page-head"><span class="d47-crumb">Materials › On foot ›</span><span class="d47-title">{{ microTitle }}</span><span class="d47-hint">{{ microHint }}</span></div>
+                <sc-for list="{{ microGroups }}" as="g" hint-placeholder-count="4">
+                  <div class="d47-group spaced">
+                    <div class="d47-group-head" style="min-height:30px"><span class="d47-group-head__name">{{ g.cat }}</span><span class="d47-group-head__desc" style="font-family:var(--d47-font-mono);font-size:12px">{{ g.meta }}</span></div>
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px">
+                      <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="3">
+                        <div class="d47-list-row" onClick="{{ m.go }}" style="min-height:44px;height:44px;padding:0 12px;gap:10px">
+                          <span style="flex:1;min-width:0;font-family:var(--d47-font-chrome);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--d47-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.name }}</span>
+                          <sc-if value="{{ m.needed }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--d47-font-mono);font-size:11px;color:var(--d47-grey)">{{ m.needLabel }}</span></sc-if>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-a)">{{ m.held }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </sc-if>
+
+              <sc-if value="{{ matView.microDetail }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-page-head"><span class="d47-crumb" style="cursor:pointer" onClick="{{ matBack }}">Materials › {{ microTitle }} ›</span><span class="d47-title">{{ mr.name }}</span></div>
+                <div class="d47-data-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+                  <div class="d47-data"><span class="d47-data__label">Kind</span><span class="d47-data__value white small">{{ mr.cat }}</span></div>
+                  <div class="d47-data"><span class="d47-data__label">In backpack</span><span class="d47-data__value" style="font-family:var(--d47-font-mono);font-weight:400;font-size:16px">{{ mr.backpack }}</span></div>
+                  <div class="d47-data span-2" style="gap:6px"><div class="d47-data__row"><span class="d47-data__label">In ship locker</span><span class="d47-data__end" style="font-family:var(--d47-font-mono);font-size:14px;color:var(--d47-yellow)">{{ mr.locker }} / {{ mr.lockerCap }}</span></div><div class="d47-gauge capacity"><div class="d47-gauge__fill" style="width:{{ mr.pct }}%"></div></div></div>
+                </div>
+                <sc-if value="{{ mr.hasNeeds }}" hint-placeholder-val="{{ false }}">
+                  <div class="d47-group spaced">
+                    <div class="d47-group-head"><span class="d47-group-head__name">Needed by plans</span><span class="d47-group-head__desc">Live plans that still need it.</span></div>
+                    <div style="display:flex;flex-direction:column;gap:2px">
+                      <sc-for list="{{ mr.needs }}" as="n" hint-placeholder-count="1">
+                        <div style="display:grid;grid-template-columns:minmax(0,1fr) 110px 90px;gap:16px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                          <span style="font-size:15px;color:var(--d47-white)">{{ n.build }} <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">· {{ n.kind }}</span></span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white);text-align:right">NEED {{ n.need }}</span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ n.shortColor }};text-align:right">{{ n.short }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">Where it's found</span></div>
+                  <div class="d47-data-grid">
+                    <div class="d47-data"><span class="d47-data__label">Settlements</span><span class="d47-data__value white small">{{ mr.settlements }}</span></div>
+                    <div class="d47-data"><span class="d47-data__label">Buildings</span><span class="d47-data__value white small">{{ mr.buildings }}</span></div>
+                    <div class="d47-data"><span class="d47-data__label">Containers</span><span class="d47-data__value white small">{{ mr.containers }}</span></div>
+                  </div>
+                </div>
+                <div class="d47-group spaced">
+                  <div class="d47-group-head"><span class="d47-group-head__name">At a bartender</span><span class="d47-group-head__desc">What you give, and what you get.</span></div>
+                  <div style="display:flex;flex-direction:column;gap:2px">
+                    <sc-for list="{{ mr.trades }}" as="t" hint-placeholder-count="2">
+                      <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 30px minmax(0,1fr);gap:14px;align-items:center;height:44px;padding:0 14px;background:var(--d47-slab)">
+                        <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ t.kind }}</span>
+                        <span style="font-size:14px;color:var(--d47-white)"><span style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ t.giveN }} ×</span> {{ t.give }}</span>
+                        <span style="color:var(--d47-grey);text-align:center">›</span>
+                        <span style="font-size:14px;color:var(--d47-white)"><span style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ t.getN }} ×</span> {{ t.get }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ matView.needs }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-page-head"><span class="d47-crumb">Materials ›</span><span class="d47-title">Needed by plans</span><span class="d47-hint">What every live plan still needs, for ships, suits and weapons, against what you hold. Choose one to see where to find it.</span></div>
+                <sc-for list="{{ needGroups }}" as="g" hint-placeholder-count="3">
+                  <div class="d47-group">
+                    <div class="d47-group-head" style="min-height:32px"><span class="d47-group-head__name">{{ g.build }}</span><span class="d47-group-head__desc">{{ g.meta }}</span></div>
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 150px 110px 90px 200px;gap:16px;padding:8px 14px 6px;font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)"><span>Material</span><span>Ledger</span><span style="text-align:right">Held / need</span><span style="text-align:right">Short</span><span></span></div>
+                    <div style="display:flex;flex-direction:column;gap:2px">
+                      <sc-for list="{{ g.items }}" as="r" hint-placeholder-count="3">
+                        <div class="d47-list-row" onClick="{{ r.go }}" style="display:grid;grid-template-columns:minmax(0,1fr) 150px 110px 90px 200px;gap:16px;align-items:center;min-height:44px;height:44px;padding:0 14px">
+                          <span style="font-size:15px;color:var(--d47-white)">{{ r.name }}</span>
+                          <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ r.ledger }}</span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:var(--d47-white);text-align:right">{{ r.held }} / {{ r.need }}</span>
+                          <span style="font-family:var(--d47-font-mono);font-size:13px;color:{{ r.shortColor }};text-align:right">{{ r.short }}</span>
+                          <div class="d47-gauge"><div class="d47-gauge__fill" style="width:{{ r.pct }}%"></div></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </sc-if>
+
+              <sc-if value="{{ matView.route }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-page-head"><span class="d47-crumb">Materials ›</span><span class="d47-title">Farming route</span><span class="d47-hint">Known farming sites, nearest to you first.</span></div>
+                <div class="d47-segmented" style="max-width:560px">
+                  <sc-for list="{{ routeOpts }}" as="o" hint-placeholder-count="4"><div class="d47-segment {{ o.cls }}" style="height:44px" onClick="{{ o.go }}"><span class="d47-segment__label">{{ o.label }}</span></div></sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ sites }}" as="s" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px 16px;padding:12px 14px;background:var(--d47-slab)">
+                      <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                        <span style="font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">{{ s.kinds }}</span>
+                        <span style="font-family:var(--d47-font-chrome);font-size:17px;font-weight:600;text-transform:uppercase;color:var(--d47-white)">{{ s.name }}</span>
+                        <span style="font-family:var(--d47-font-chrome);font-size:13px;font-weight:500;text-transform:uppercase;color:{{ s.whereColor }}">{{ s.where }} <span style="font-family:var(--d47-font-mono);color:var(--d47-grey)">· {{ s.coords }}</span></span>
+                      </div>
+                      <span style="font-family:var(--d47-font-mono);font-size:15px;color:{{ s.whereColor }};text-align:right">{{ s.ly }}</span>
+                      <div style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding-top:8px;border-top:1px solid var(--d47-line2)">
+                        <div style="display:flex;flex-direction:column;gap:2px"><span class="d47-data__label">How to collect</span><span style="font-size:14px;color:var(--d47-white);text-wrap:pretty">{{ s.how }}</span></div>
+                        <div style="display:flex;flex-direction:column;gap:2px"><span class="d47-data__label">Respawn</span><span style="font-size:14px;color:var(--d47-white);text-wrap:pretty">{{ s.respawn }}</span></div>
+                        <div style="display:flex;flex-direction:column;gap:2px"><span class="d47-data__label">Trade down</span><span style="font-size:14px;color:var(--d47-white);text-wrap:pretty">{{ s.trade }}</span></div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- 6 · SETTINGS › PHRASES -->
+        <sc-if value="{{ is.phrases }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:32px;max-width:900px">
+            <div class="d47-page-head"><span class="d47-crumb">Settings ›</span><span class="d47-title">Phrases</span><span class="d47-hint">What D47 understands straight away, without asking the model.</span></div>
+
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">Add a phrase</span><span class="d47-group-head__desc">Type a wording or a pattern, then pick the phrase it stands for.</span></div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:2px;align-items:start">
+                <div class="d47-field {{ addFieldCls }}"><span class="d47-field__prefix">Say</span><input style="font-family:var(--d47-font-mono);font-size:14px" placeholder="[boost|get clear] and [jump|engage]" value="{{ addText }}" onChange="{{ onAddText }}" onKeyDown="{{ onAddKey }}"></div>
+                <div class="d47-dropdown">
+                  <button class="d47-dropdown__button" style="height:44px" onClick="{{ toggleDd }}"><span class="d47-dropdown__value" style="font-family:var(--d47-font-prose);color:{{ addTargetColor }}">{{ addTargetLabel }}</span><span class="d47-dropdown__caret">▼</span></button>
+                  <sc-if value="{{ dd }}" hint-placeholder-val="{{ false }}">
+                    <div class="d47-dropdown__list d47-scroll" style="top:46px;max-height:300px;overflow-y:auto">
+                      <sc-for list="{{ ddOptions }}" as="o" hint-placeholder-count="6">
+                        <div class="d47-dropdown__option {{ o.cls }}" style="min-height:44px;font-family:var(--d47-font-prose);font-size:14px;justify-content:space-between;gap:12px" onClick="{{ o.go }}">{{ o.label }}<span style="font-family:var(--d47-font-chrome);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;opacity:.7">{{ o.cap }}</span></div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                <button class="d47-tile-button" style="height:44px;font-size:13px;width:110px" onClick="{{ addPhrase }}">Add</button>
+              </div>
+              <sc-if value="{{ hasClash }}" hint-placeholder-val="{{ false }}">
+                <div class="d47-notice"><div class="d47-notice__main"><span class="d47-notice__label">{{ clash.label }}</span><span class="d47-notice__text">{{ clash.text }}</span><span class="d47-notice__detail">{{ clash.detail }}</span></div></div>
+              </sc-if>
+              <div class="d47-hint">Square brackets give choices: [boost|get clear] hears “boost” or “get clear”. You can also teach one by voice: “teach a phrase”.</div>
+            </div>
+
+            <div class="d47-group spaced">
+              <div class="d47-group-head"><span class="d47-group-head__name">Your phrases</span><span class="d47-group-head__desc" style="font-family:var(--d47-font-mono);font-size:12px">{{ ownCount }}</span></div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ own }}" as="p" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr) 44px;gap:14px;align-items:center;min-height:44px;padding:0 0 0 14px;background:var(--d47-slab)">
+                    <span style="font-family:var(--d47-font-mono);font-size:14px;color:var(--d47-cyan)">{{ p.words }}</span>
+                    <span style="color:var(--d47-grey)">›</span>
+                    <span style="font-size:15px;color:var(--d47-white)">{{ p.target }}</span>
+                    <span class="d47-glyph" onClick="{{ p.forget }}"><span class="d47-glyph__tip">Forget this phrase</span><span class="d47-glyph__face" style="color:var(--d47-red);background:var(--d47-red-tile)">✕</span></span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ noOwn }}" hint-placeholder-val="{{ false }}"><div class="d47-data prose">None of your own yet.</div></sc-if>
+              </div>
+            </div>
+
+            <sc-for list="{{ builtIn }}" as="c" hint-placeholder-count="4">
+              <div class="d47-group spaced">
+                <div class="d47-group-head"><span class="d47-group-head__name">{{ c.cap }}</span><span class="d47-group-head__desc" style="font-family:var(--d47-font-mono);font-size:12px">{{ c.count }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ c.items }}" as="p" hint-placeholder-count="3">
+                    <div style="display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:center;min-height:44px;padding:6px 14px;background:var(--d47-slab)">
+                      <span style="font-size:15px;color:var(--d47-white)">{{ p.words }}</span>
+                      <span style="font-size:14px;color:var(--d47-grey)">{{ p.does }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noPhraseHits }}" hint-placeholder-val="{{ false }}"><div class="d47-data prose">No phrase matches “{{ phQ }}”.</div></sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="flex:none;display:flex;align-items:center;gap:16px;padding-top:12px;border-top:1px solid var(--d47-line2)">
+        <span class="d47-hint" style="white-space:nowrap">Say: “{{ say }}”</span>
+        <span style="margin-left:auto;font-family:var(--d47-font-chrome);font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)">Kept current by the journal · <span style="font-family:var(--d47-font-mono);color:var(--d47-cyan)">19:42</span></span>
+      </div>
+    </div>
+
+    <sc-if value="{{ hasDlg }}" hint-placeholder-val="{{ false }}">
+      <div class="d47-scrim" onClick="{{ closeDlg }}">
+        <div class="d47-modal" style="width:560px" onClick="{{ stop }}">
+          <div class="d47-modal__head"><div style="display:flex;flex-direction:column;gap:2px"><span class="d47-modal__dek">Unsold data · cannot be undone</span><span class="d47-modal__title">Reset {{ dlg.name }}</span></div></div>
+          <div class="d47-modal__body">
+            <div style="font-size:16px;line-height:1.5;color:var(--d47-white);text-wrap:pretty">D47 will count this total from zero from now on. The <span style="font-family:var(--d47-font-mono);color:var(--d47-a)">{{ dlg.value }} CR</span> it holds now can't be brought back.</div>
+            <div class="d47-hint">Use this after you've sold the data somewhere D47 didn't see, or if the total has drifted.</div>
+          </div>
+          <div class="d47-modal__foot"><button class="d47-tile-button destructive" style="height:44px;font-size:13px" onClick="{{ doReset }}">Reset</button><button class="d47-tile-button" style="height:44px;font-size:13px" onClick="{{ closeDlg }}">Cancel</button><span class="d47-hint">Protected. D47 won't do this because you ask it to.</span></div>
+        </div>
+      </div>
+    </sc-if>
+    <div class="d47-scanlines"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;elite&quot;,&quot;dark&quot;,&quot;light&quot;,&quot;elite-palette&quot;],&quot;default&quot;:&quot;elite&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;start&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;commander&quot;,&quot;exploration&quot;,&quot;materials&quot;,&quot;fleet&quot;,&quot;plan&quot;,&quot;phrases&quot;],&quot;default&quot;:&quot;commander&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;galaxy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Settings&quot;},&quot;colonyKnown&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;futureTabs&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data&quot;}}">
+class Component extends DCLogic {
+  state = {
+    nav: null, stat: 'Combat', statQ: '', mat: 'raw', matSel: null, micro: null, route: 'All',
+    order: 'jump', minCargo: 0, modQ: '', phQ: '', addText: 'jump', addTarget: 'boost and jump', dd: false,
+    clash: { label: 'Clash · not added', text: '“jump” already stands for “engage frame shift drive”. Choose another wording, or forget that one first.', detail: 'Built-in phrase · Ship' },
+    own: [
+      { words: '[boost|get clear] and [jump|engage]', target: 'boost and jump' },
+      { words: 'punch it', target: 'engage frame shift drive' },
+      { words: 'gear', target: 'deploy landing gear' },
+      { words: "[what's|what is] down there", target: "what's on this body" }
+    ],
+    dlg: null, cleared: {}, dist: 318
+  };
+  componentDidMount() {
+    window.__d47 = this;
+    this.iv = setInterval(() => { if (this.state.dist < 560) this.setState({ dist: this.state.dist + 3 + Math.floor(Math.random() * 7) }); }, 900);
+  }
+  componentWillUnmount() { clearInterval(this.iv); }
+  f(n) { return Math.round(n).toLocaleString('en-GB'); }
+  h(s) { let x = 7; for (const c of s) x = (x * 31 + c.charCodeAt(0)) % 9973; return x; }
+  expand(p) {
+    let outs = [''];
+    const re = /\[([^\]]+)\]|([^\[]+)/g; let m;
+    while ((m = re.exec(p))) { const alts = m[1] ? m[1].split('|') : [m[2]]; outs = outs.flatMap(o => alts.map(a => o + a)); }
+    return outs.map(s => s.toLowerCase().replace(/\s+/g, ' ').trim());
+  }
+  D() {
+    if (this._d) return this._d;
+    const S = {
+      'Bank Account': [['Current wealth', '5,812,440,120 CR'], ['Spent on ships', '1,204,550,000 CR'], ['Spent on outfitting', '2,880,112,400 CR'], ['Spent on repairs', '41,220,880 CR'], ['Spent on fuel', '2,114,300 CR'], ['Spent on ammo', '18,440,120 CR'], ['Insurance claims', '14'], ['Spent on insurance', '612,004,000 CR'], ['Ships owned', '12'], ['Spent on suits', '18,200,000 CR'], ['Spent on weapons', '9,400,000 CR'], ['Spent on upgrades', '22,880,000 CR']],
+      'Combat': [['Bounties claimed', '1,842'], ['Bounty hunting profit', '2,104,880,400 CR'], ['Combat bonds', '612'], ['Combat bond profits', '380,200,000 CR'], ['Assassinations', '44'], ['Assassination profits', '212,000,000 CR'], ['Highest single reward', '12,400,000 CR'], ['Skimmers killed', '96'], ['On-foot combat bonds', '38'], ['On-foot ships destroyed', '3'], ['Dropships deployed', '21'], ['Settlement conflicts won', '17']],
+      'Crime': [['Notoriety', '0'], ['Fines', '38'], ['Total fines', '1,204,400 CR'], ['Bounties received', '12'], ['Total bounties', '2,880,000 CR'], ['Highest bounty', '400,000 CR'], ['Malware uploaded', '2'], ['Profiles cloned', '4'], ['Settlements shut down', '0']],
+      'Smuggling': [['Black markets traded with', '22'], ['Black market profits', '41,880,000 CR'], ['Resources smuggled', '1,920'], ['Average profit', '21,812 CR'], ['Highest single transaction', '4,800,000 CR']],
+      'Trading': [['Markets traded with', '184'], ['Market profits', '902,440,000 CR'], ['Resources traded', '88,120'], ['Average profit', '10,241 CR'], ['Highest single transaction', '38,400,000 CR'], ['Data sold', '412'], ['Goods sold', '1,210'], ['Assets sold', '88']],
+      'Mining': [['Mining profits', '1,380,220,000 CR'], ['Quantity mined', '24,880'], ['Materials collected', '18,402']],
+      'Exploration': [['Systems visited', '14,822'], ['Exploration profits', '4,120,880,000 CR'], ['Planets scanned to level 2', '22,140'], ['Planets scanned to level 3', '8,412'], ['Efficient scans', '6,904'], ['Highest payout', '48,220,000 CR'], ['Hyperspace distance', '1,284,112 LY'], ['Hyperspace jumps', '31,408'], ['Furthest from start', '65,280.2 LY'], ['Time played', '2,412 H'], ['On-foot distance', '1,204 KM'], ['First footfalls', '408']],
+      'Passengers': [['Missions accepted', '212'], ['Bulk', '88'], ['VIP', '124'], ['Delivered', '204'], ['Ejected', '3']],
+      'Search and Rescue': [['Items traded', '1,404'], ['Profit', '88,120,000 CR'], ['Rescues', '311'], ['Crew rescued', '42']],
+      'Squadron': [['Credits deposited', '400,000,000 CR'], ['Credits withdrawn', '0 CR'], ['Commodities deposited', '1,240'], ['Materials deposited', '612'], ['Leaderboard score', '18,402']],
+      'Crafting': [['Engineers used', '27'], ['Recipes generated', '2,104'], ['Grade 1 recipes', '402'], ['Grade 2 recipes', '388'], ['Grade 3 recipes', '412'], ['Grade 4 recipes', '502'], ['Grade 5 recipes', '400'], ['Suit modifications', '38'], ['Weapon modifications', '44']],
+      'Crew': [['Total wages', '1,404,880,000 CR'], ['Hired', '5'], ['Fired', '2'], ['Died', '1']],
+      'Multicrew': [['Time in multicrew', '41 H'], ['As gunner', '12 H'], ['In a fighter', '18 H'], ['Credits earned', '88,120,000 CR'], ['Fines', '0 CR']],
+      'Material Trader': [['Trades completed', '604'], ['Materials traded', '12,480'], ['Encoded traded', '4,120'], ['Raw traded', '5,008'], ['Manufactured traded', '3,352'], ['Grade 5 traded', '412']],
+      'Fleet Carrier': [['Distance travelled', '402,880 LY'], ['Total jumps', '1,204'], ['Export total', '12,400,000 CR'], ['Import total', '8,120,000 CR'], ['Trade profit', '88,000,000 CR'], ['Refuel profit', '4,204,000 CR'], ['Repair total', '1,880,000 CR'], ['Vouchers redeemed', '14'], ['Ships bought here', '6']],
+      'Exobiology': [['Genera encountered', '21'], ['Species encountered', '118'], ['Variants encountered', '312'], ['Organic data profits', '3,412,880,000 CR'], ['Organic data sold', '1,204'], ['First logged profits', '1,880,220,000 CR'], ['First logged', '408'], ['Systems with life', '402'], ['Planets with life', '881']]
+    };
+    const MAT = {
+      raw: { name: 'Raw', caps: [300, 250, 200, 150], grades: [
+        ['Carbon', 'Iron', 'Lead', 'Nickel', 'Phosphorus', 'Rhenium', 'Sulphur'],
+        ['Arsenic', 'Chromium', 'Germanium', 'Manganese', 'Vanadium', 'Zinc', 'Zirconium'],
+        ['Boron', 'Cadmium', 'Mercury', 'Molybdenum', 'Niobium', 'Tin', 'Tungsten'],
+        ['Antimony', 'Polonium', 'Ruthenium', 'Selenium', 'Technetium', 'Tellurium', 'Yttrium']] },
+      manufactured: { name: 'Manufactured', caps: [300, 250, 200, 150, 100], grades: [
+        ['Basic Conductors', 'Chemical Storage Units', 'Compact Composites', 'Crystal Shards', 'Grid Resistors', 'Heat Conduction Wiring', 'Mechanical Scrap', 'Salvaged Alloys', 'Worn Shield Emitters'],
+        ['Chemical Processors', 'Conductive Components', 'Filament Composites', 'Heat Dispersion Plate', 'Mechanical Equipment', 'Shield Emitters'],
+        ['Chemical Distillery', 'Conductive Ceramics', 'Electrochemical Arrays', 'Focus Crystals', 'Heat Exchangers', 'High Density Composites'],
+        ['Biotech Conductors', 'Polymer Capacitors', 'Military Grade Alloys', 'Proprietary Composites'],
+        ['Core Dynamics Composites', 'Imperial Shielding', 'Improvised Components', 'Military Supercapacitors']] },
+      encoded: { name: 'Encoded', caps: [300, 250, 200, 150, 100], grades: [
+        ['Anomalous Bulk Scan Data', 'Distorted Shield Cycle Recordings', 'Specialised Legacy Firmware', 'Unusual Encrypted Files'],
+        ['Irregular Emission Data', 'Modified Consumer Firmware', 'Tagged Encryption Codes'],
+        ['Divergent Scan Data', 'Open Symmetric Keys', 'Unexpected Emission Data'],
+        ['Atypical Encryption Archives', 'Decoded Emission Data', 'Modified Embedded Firmware'],
+        ['Abnormal Compact Emissions Data', 'Adaptive Encryptors Capture', 'Datamined Wake Exceptions']] }
+    };
+    const MICRO = [
+      { name: 'Suit Schematic', cat: 'Items', b: 1, l: 4 }, { name: 'Power Regulator', cat: 'Items', b: 2, l: 11 }, { name: 'Surveillance Equipment', cat: 'Items', b: 0, l: 7 }, { name: 'Chemical Sample', cat: 'Items', b: 1, l: 3 },
+      { name: 'Graphene', cat: 'Components', b: 6, l: 212 }, { name: 'Carbon Fibre Plating', cat: 'Components', b: 4, l: 180 }, { name: 'Chemical Catalyst', cat: 'Components', b: 3, l: 96 }, { name: 'Optical Lens', cat: 'Components', b: 0, l: 41 }, { name: 'Electrical Wiring', cat: 'Components', b: 2, l: 118 },
+      { name: 'Opinion Polls', cat: 'Data', b: 3, l: 22 }, { name: 'Weapon Schematic', cat: 'Data', b: 1, l: 9 }, { name: 'Genetic Research', cat: 'Data', b: 0, l: 14 },
+      { name: 'Energy Cell', cat: 'Consumables', b: 4, l: 30 }, { name: 'Medkit', cat: 'Consumables', b: 3, l: 24 }, { name: 'E-Breach', cat: 'Consumables', b: 2, l: 12 }
+    ];
+    const SHIPS = [
+      { name: 'Sacred Wings', hull: 'Anaconda · SW-01', cargo: 128, jump: 68.42, mass: 1002.4, fuel: 32, value: 842114000, rebuy: 42105700, where: 'Shinrarta Dezhra · current', here: true },
+      { name: 'Iron Grace', hull: 'Imperial Cutter · IG-07', cargo: 720, jump: 26.8, mass: 1448.1, fuel: 64, value: 1402880000, rebuy: 70144000, where: 'Deciat · Garay Terminal' },
+      { name: 'Deep Hold', hull: 'Type-9 Heavy · DH-09', cargo: 790, jump: 18.4, mass: 1120.6, fuel: 64, value: 412440000, rebuy: 20622000, where: 'LHS 20 · Ohm City' },
+      { name: 'Far Walker', hull: 'Mandalay · FW-22', cargo: 32, jump: 71.8, mass: 318.2, fuel: 32, value: 288120000, rebuy: 14406000, where: 'Colonia · Jaques Station' },
+      { name: 'Talon', hull: 'Python Mk II · TL-02', cargo: 16, jump: 22.1, mass: 512.7, fuel: 16, value: 402880000, rebuy: 20144000, where: 'Shinrarta Dezhra · current', here: true },
+      { name: 'Quiet Lane', hull: 'Krait Mk II · QL-04', cargo: 64, jump: 32.5, mass: 488.9, fuel: 32, value: 198440000, rebuy: 9922000, where: 'Deciat · Garay Terminal' },
+      { name: 'Soft Landing', hull: 'Dolphin · SL-11', cargo: 44, jump: 38.4, mass: 188.4, fuel: 16, value: 48120000, rebuy: 2406000, where: 'Sol · Abraham Lincoln' }
+    ];
+    const MODS = [
+      { system: 'Shinrarta Dezhra', here: true, meta: 'Jameson Memorial · here', items: [['Shield Generator', '6A', 0, '00:00'], ['Frame Shift Drive (SCO)', '7A', 0, '00:00'], ['Guardian FSD Booster', '3H', 0, '00:00']] },
+      { system: 'Deciat', meta: 'Garay Terminal', items: [['Power Distributor', '5A', 212400, '00:14'], ['Multi-cannon (gimballed)', '4E', 68200, '00:14'], ['Detailed Surface Scanner', '1I', 1200, '00:14']] },
+      { system: 'LHS 20', meta: 'Ohm City', items: [['Cargo Rack', '7E', 38800, '00:21'], ['Shield Cell Bank', '5A', 118400, '00:21']] },
+      { system: 'Colonia', meta: 'Jaques Station', items: [['Fuel Scoop', '6A', 4880200, '02:12'], ['Planetary Vehicle Hangar', '4G', 812400, '02:12'], ['Fighter Hangar', '5D', 402100, '02:12']] }
+    ];
+    const SITES = [
+      { name: 'High wake scans', where: 'Shinrarta Dezhra · Jameson Memorial', here: true, coords: 'IN ORBIT', ly: 0, kinds: ['Encoded'], how: 'Wait near the station and scan the high wakes of ships leaving.', respawn: 'Constant while traffic is heavy.', trade: '1 × G5 encoded › 3 × G4' },
+      { name: "Dav's Hope", where: 'Hyades Sector DR-V c2-23 A 5', coords: '44.82, -31.91', ly: 212.4, kinds: ['Manufactured'], how: 'Pick up the components scattered through the settlement.', respawn: 'Log out to the main menu and back.', trade: '1 × G3 manufactured › 3 × G2' },
+      { name: 'Jameson Crash Site', where: 'HIP 12099 1 B', coords: '-54.33, -50.18', ly: 488.2, kinds: ['Manufactured', 'Encoded'], how: 'Scan the four data points, then shoot open the cargo racks.', respawn: 'Log out to the main menu and back.', trade: '1 × G5 manufactured › 3 × G4' },
+      { name: 'Polonium outcrops', where: 'Outotz LS-K d8-3 B 5', coords: '-17.50, 108.30', ly: 1040.8, kinds: ['Raw'], how: 'Drive the SRV among the outcrops and shoot them for fragments.', respawn: 'Drive 2 km away and back.', trade: '1 × G4 raw › 3 × G3' },
+      { name: 'Crystalline shards', where: 'HIP 36601 C 1 D', coords: '-67.49, 2.01', ly: 1860.2, kinds: ['Raw'], how: 'Shoot the crystal spires from the SRV and collect what falls.', respawn: 'Log out to the main menu and back.', trade: '1 × G4 raw › 3 × G3' }
+    ];
+    const PH = [
+      { cap: 'Ship', items: [['jump', 'Charges the frame shift drive and jumps to the next system on your route.'], ['engage frame shift drive', 'Charges the frame shift drive and jumps to the next system on your route.'], ['boost', 'Fires the engine boost once.'], ['boost and jump', 'Boosts clear of the station, then charges the frame shift drive.'], ['deploy landing gear', 'Lowers the landing gear.'], ['retract hardpoints', 'Folds the weapons away.'], ['request docking', 'Asks the station you are targeting for a landing pad.']] },
+      { cap: 'Routing', items: [['plot a route to …', 'Plots a route to the system you name.'], ['next system', 'Says the next system on your route and how far it is.'], ['where is my carrier', 'Says where your fleet carrier is and how much tritium it holds.']] },
+      { cap: 'Commander', items: [['how is my standing', 'Reads your reputation with each power and your navy ranks.'], ['session summary', 'Says what you have earned and done since the game started.']] },
+      { cap: 'Exploration', items: [["what's on this body", 'Reads your scan of the body you are at.'], ['how far since the last sample', 'Says how far you have walked since the last sample.'], ['unsold exploration data', 'Says what your unsold exploration data is worth.']] },
+      { cap: 'Materials', items: [['how many … do I have', 'Says how many of a material you hold against its cap.'], ['where can I find …', 'Says where to farm a material, nearest first.']] },
+      { cap: 'Talking to D47', items: [['cancel', 'Stops what D47 is doing or saying.'], ['say that again', 'Repeats the last thing D47 said.'], ['teach a phrase', 'Starts teaching D47 a phrase of your own by voice.']] }
+    ];
+    MAT.guardian = { name: 'Guardian', noTrade: true, caps: [300, 250, 200, 250, 200], gnum: [1, 2, 3, 3, 4], heads: ['Manufactured · Grade 1', 'Manufactured · Grade 2', 'Manufactured · Grade 3', 'Encoded · Grade 3', 'Encoded · Grade 4'], grades: [
+      ['Guardian Power Cell', 'Guardian Wreckage Components'], ['Guardian Power Conduit'], ['Guardian Sentinel Weapon Parts', 'Guardian Technology Component'],
+      ['Pattern Alpha Obelisk Data', 'Pattern Beta Obelisk Data', 'Pattern Gamma Obelisk Data'], ['Pattern Delta Obelisk Data', 'Pattern Epsilon Obelisk Data', 'Guardian Module Blueprint Fragment']] };
+    MAT.thargoid = { name: 'Thargoid', noTrade: true, caps: [250, 200, 150, 100, 200, 150], gnum: [2, 3, 4, 5, 3, 4], heads: ['Manufactured · Grade 2', 'Manufactured · Grade 3', 'Manufactured · Grade 4', 'Manufactured · Grade 5', 'Encoded · Grade 3', 'Encoded · Grade 4'], grades: [
+      ['Thargoid Carapace'], ['Bio-Mechanical Conduits', 'Wreckage Components'], ['Propulsion Elements', 'Thargoid Technological Components', 'Weapon Parts'], ['Sensor Fragment', 'Phasing Membrane Residue'],
+      ['Thargoid Interdiction Telemetry', 'Thargoid Structural Data'], ['Thargoid Ship Signature', 'Thargoid Residue Data', 'Thargoid Wake Data']] };
+    const HELD = { 'Imperial Shielding': 34, 'Datamined Wake Exceptions': 12, 'Core Dynamics Composites': 4, 'Selenium': 10, 'Polonium': 38, 'Heat Exchangers': 88 };
+    const NEEDS = [
+      { build: 'Sacred Wings', kind: 'Anaconda · 2 plans', items: [['Imperial Shielding', 'manufactured', 130], ['Datamined Wake Exceptions', 'encoded', 30], ['Core Dynamics Composites', 'manufactured', 12], ['Selenium', 'raw', 36], ['Polonium', 'raw', 24], ['Heat Exchangers', 'manufactured', 60]] },
+      { build: 'Dominator suit', kind: 'Suit · grade 5', items: [['Suit Schematic', 'micro', 10], ['Power Regulator', 'micro', 6], ['Graphene', 'micro', 20]] },
+      { build: 'Karma C-44', kind: 'Weapon · grade 5', items: [['Weapon Schematic', 'micro', 8], ['Optical Lens', 'micro', 12], ['Electrical Wiring', 'micro', 40]] }
+    ];
+    return (this._d = { S, MAT, MICRO, SHIPS, MODS, SITES, PH, HELD, NEEDS });
+  }
+  go(tab, sub) { return () => this.setState({ nav: { tab, sub }, matSel: null, micro: null, dd: false }); }
+  renderVals() {
+    const st = this.state, D = this.D(), p = this.props;
+    const starts = { commander: ['commander', 'standing'], exploration: ['exploration', 'body'], materials: ['fleet', 'materials'], fleet: ['fleet', 'compare'], plan: ['fleet', 'ships'], phrases: ['settings', 'phrases'] };
+    const s0 = starts[p.start ?? 'commander'] || starts.commander;
+    const nav = st.nav || { tab: s0[0], sub: s0[1] };
+    const SUBS = {
+      commander: [['standing', 'Standing'], ['statistics', 'Statistics'], ['session', 'This session']],
+      fleet: [['ships', 'Ships'], ['compare', 'Compare'], ['modules', 'Stored modules'], ['crew', 'Crew'], ['suits', 'Suits'], ['materials', 'Materials'], ['carrier', 'Carrier']],
+      exploration: [['body', 'On this body'], ['unsold', 'Unsold data']],
+      settings: [['settings', 'Settings'], ['phrases', 'Phrases']]
+    };
+    const built = ['standing', 'statistics', 'session', 'ships', 'compare', 'modules', 'crew', 'materials', 'body', 'unsold', 'phrases'];
+    const tabs = [['transcript', 'Transcript'], ['commander', 'Commander'], ['fleet', 'Fleet'], ['engineers', 'Engineers'], ['checklist', 'Checklist'], ['routing', 'Routing'], ['exploration', 'Exploration'], ['adventures', 'Adventures']].concat((p.futureTabs ?? false) || st.futureTabs ? [['trading', 'Trading'], ['search', 'Search']] : [], [['utilities', 'Utilities'], ['settings', 'Settings']])
+      .map(([id, label]) => ({ label, color: id === 'trading' || id === 'search' ? 'var(--d47-grey2)' : '', cls: nav.tab === id ? 'active' : '', go: SUBS[id] ? this.go(id, SUBS[id].find(s => built.includes(s[0]))[0]) : null }));
+    const subtabs = (SUBS[nav.tab] || []).map(([id, label]) => ({ label, cls: nav.sub === id ? 'active' : '', go: built.includes(id) ? this.go(nav.tab, id) : null }));
+    const is = {}; built.forEach(k => is[k] = nav.sub === k);
+    const briefLinks = [['1', 'Commander record', 'commander', 'standing', ['standing', 'statistics', 'session']], ['2', 'Exploration', 'exploration', 'body', ['body', 'unsold']], ['3', 'Materials', 'fleet', 'materials', ['materials']], ['4', 'Fleet', 'fleet', 'compare', ['compare', 'modules', 'crew']], ['5', 'Ship plan', 'fleet', 'ships', ['ships']], ['6', 'Phrases', 'settings', 'phrases', ['phrases']]]
+      .map(([n, label, t, s, subs]) => ({ n, label, cls: subs.includes(nav.sub) ? 'selected' : '', go: this.go(t, s) }));
+    const sayMap = { standing: "how's my standing with the Empire", statistics: 'how many bounties have I claimed', session: "how's the session going", body: "what's on this body", unsold: 'how much exploration data am I carrying', ships: 'what does this ship still need', compare: 'which ship jumps furthest', modules: 'where is my fuel scoop', crew: "who's in my crew", materials: 'how much polonium do I have', phrases: 'teach a phrase' };
+
+    // Commander
+    const factions = [['Empire', 'Allied', 100], ['Federation', 'Friendly', 62], ['Alliance', 'Cordial', 18], ['Independents', 'Unfriendly', -34]].map(([name, band, value]) => { const neg = value < 0, hostile = band === 'Hostile' || band === 'Unfriendly'; return { name, band, value, label: neg ? '−' + Math.abs(value) : String(value), bandColor: hostile ? 'var(--d47-red)' : 'var(--d47-a)', numColor: neg ? 'var(--d47-red)' : 'var(--d47-white)', left: neg ? 50 + value / 2 : 50, width: Math.abs(value) / 2, fill: neg ? 'var(--d47-red)' : 'var(--d47-a)' }; });
+    const navy = [{ navy: 'Imperial navy', rank: 'Duke', meta: 'RANK 12 OF 14 · 42% TO PRINCE', pct: 42 }, { navy: 'Federal navy', rank: 'Rear Admiral', meta: 'RANK 12 OF 14 · 70% TO VICE ADMIRAL', pct: 70 }];
+    const statNav = Object.keys(D.S).map(name => ({ name, count: D.S[name].length, cls: st.stat === name ? 'active' : '', go: () => this.setState({ stat: name, statQ: '' }) }));
+    const q = st.statQ.trim().toLowerCase();
+    const statHits = q ? Object.entries(D.S).flatMap(([sec, rows]) => rows.filter(r => r[0].toLowerCase().includes(q) || sec.toLowerCase().includes(q)).map(r => ({ section: sec, label: r[0], value: r[1], go: () => this.setState({ stat: sec, statQ: '' }) }))) : [];
+    const earnRaw = [['Bounties', 48210400], ['Combat bonds', 0], ['Trade', 12904000], ['Exploration', 31550720], ['Missions', 9800000], ['Vouchers', 2110000]];
+    const earnMax = Math.max(...earnRaw.map(e => e[1]));
+    const earnings = earnRaw.map(([label, v]) => ({ label, value: this.f(v), pct: v / earnMax * 100, color: v ? 'var(--d47-a)' : 'var(--d47-grey)' }));
+    const sessionFigures = [['Time played', '3:42:10'], ['Jumps', '38'], ['Distance', '1,412.6 LY'], ['Bodies scanned', '64'], ['Materials gained', '211'], ['Interdictions', '2'], ['Deaths', '0'], ['Balance at start', '4,203,881,002 CR']].map(([label, value]) => ({ label, value }));
+
+    // Exploration
+    const colonyKnown = (p.colonyKnown ?? true) && !st.noColony;
+    const d = Math.min(st.dist, 560), met = colonyKnown && d >= 500;
+    const samples = [['Sample 1 ✓', 'var(--d47-blue)'], ['Sample 2 ✓', 'var(--d47-blue)'], [met ? 'Sample 3 · ready' : 'Sample 3', met ? 'var(--d47-cyan)' : 'var(--d47-grey)']].map(([label, color]) => ({ label, color }));
+    const genera = [
+      { genus: 'Bacterium', species: 'Bacterium acies', state: '✓ Done · 3 / 3', color: 'var(--d47-blue)', speciesColor: 'var(--d47-white)', value: '1,000,000 CR' },
+      { genus: 'Stratum', species: 'Stratum tectonicas', state: 'Sampling · 2 / 3', color: 'var(--d47-cyan)', speciesColor: 'var(--d47-cyan)', value: '19,010,800 CR' },
+      { genus: 'Frutexa', species: 'Not yet sampled', state: 'Not started', color: 'var(--d47-grey)', speciesColor: 'var(--d47-grey)', value: '' },
+      { genus: 'Osseus', species: 'Not yet sampled', state: 'Not started', color: 'var(--d47-grey)', speciesColor: 'var(--d47-grey)', value: '' }
+    ];
+    const cl = st.cleared;
+    const L = [
+      { key: 'exo', name: 'Organic data', desc: 'Species you have sampled and not yet sold at Vista Genomics.', value: 142380500, figures: [['Species', '11'], ['First footfall', '4'], ['No price', '1']] },
+      { key: 'expl', name: 'Exploration data', desc: 'Bodies you have mapped and not yet sold at Universal Cartographics.', value: 38912440, figures: [['Bodies', '27'], ['Mapped efficiently', '21'], ['No price', '2']] }
+    ];
+    const ledgers = L.map(l => {
+      const z = cl[l.key];
+      return { name: l.name, desc: l.desc, value: this.f(z ? 0 : l.value),
+        figures: l.figures.map(([label, value]) => ({ label: label === 'No price' ? 'No price · not in total' : label, value: z ? '0' : value, color: label === 'No price' ? 'var(--d47-white)' : 'var(--d47-a)' })),
+        resetHint: z ? 'Reset at 19:42. Counting from zero.' : 'Zeroes this total from now on. It can’t be undone.',
+        askReset: () => this.setState({ dlg: { key: l.key, name: l.name, value: this.f(l.value) } }) };
+    });
+    const unsoldTotal = this.f((cl.exo ? 0 : 142380500) + (cl.expl ? 0 : 38912440));
+
+    // Ship plan
+    const PR = [['Imperial Shielding', 'Manufactured G5', 34, 130, 100], ['Datamined Wake Exceptions', 'Encoded G5', 12, 30, 100], ['Core Dynamics Composites', 'Manufactured G5', 4, 12, 100], ['Selenium', 'Raw G4', 10, 36, 150], ['Polonium', 'Raw G4', 38, 24, 150], ['Heat Exchangers', 'Manufactured G3', 88, 60, 200], ['Steel · construction', 'Commodity', 0, 420, 128]];
+    const planRows = PR.map(([name, ledger, held, need]) => { const s = Math.max(0, need - held); return { name, ledger, held: this.f(held), need: this.f(need), short: s ? this.f(s) : '✓ MET', shortColor: s ? 'var(--d47-a)' : 'var(--d47-blue)', pct: Math.min(100, held / need * 100), gaugeCls: '' }; });
+    const planTrips = [
+      { label: 'Storage cap · Imperial Shielding', text: 'The plans need 130 and you can hold 100. Spend some before you collect the rest.', detail: 'NEED 130 · CAP 100 · 2 TRIPS' },
+      { label: 'Cargo · Steel', text: 'The construction delivery needs 420 T and this ship carries 128 T.', detail: 'NEED 420 T · HOLD 128 T · 4 TRIPS' }
+    ];
+    const planBlocks = [
+      { label: 'Felicity Farseer · grade 3 of 5', text: 'Increased range at grade 5 needs grade 5 with her. Deliver Meta-Alloys or craft to rank up.', detail: 'BLOCKS · FSD · GRADE 4–5' },
+      { label: 'Professor Palin · not unlocked', text: 'Dirty drive tuning on the thrusters needs Palin. He asks for 25 Unknown Fragments.', detail: 'BLOCKS · THRUSTERS · ALL GRADES' }
+    ];
+    const planOneTrip = [
+      { site: 'High Grade Emissions', where: 'Signal source', gives: 'Imperial Shielding and Core Dynamics Composites' },
+      { site: 'Surface prospecting', where: 'Outcrops and crystals', gives: 'Selenium, with Polonium to spare for trading' }
+    ];
+
+    // Compare
+    const shipsSorted = D.SHIPS.filter(s => s.cargo >= st.minCargo).sort((a, b) => st.order === 'jump' ? b.jump - a.jump : b.cargo - a.cargo);
+    const ships = shipsSorted.map(s => ({ name: s.name, hull: s.hull, cargo: this.f(s.cargo), jump: s.jump.toFixed(2), mass: s.mass.toFixed(1), fuel: s.fuel, value: this.f(s.value), rebuy: this.f(s.rebuy), where: s.where, whereColor: s.here ? 'var(--d47-cyan)' : 'var(--d47-a)' }));
+    const CARGO = [0, 16, 32, 64, 128, 256, 512];
+    const ci = CARGO.indexOf(st.minCargo);
+
+    // Modules
+    const mq = st.modQ.trim().toLowerCase();
+    const moduleGroups = D.MODS.map(g => ({ system: g.system, color: g.here ? 'var(--d47-cyan)' : 'var(--d47-a)', items: g.items.filter(m => !mq || m[0].toLowerCase().includes(mq)).map(([name, cls, cost, time]) => ({ name, cls, cost: cost ? this.f(cost) + ' CR' : 'FREE', time: cost ? time : '—' })) }))
+      .filter(g => g.items.length).map(g => ({ ...g, meta: D.MODS.find(x => x.system === g.system).meta + ' · ' + g.items.length + (g.items.length === 1 ? ' MODULE' : ' MODULES') }));
+    const moduleCount = moduleGroups.reduce((n, g) => n + g.items.length, 0);
+
+    const crew = [
+      { name: 'Samira Voss', rank: 'Dangerous', duty: 'On fighter duty', dutyColor: 'var(--d47-yellow)', ship: 'Sacred Wings · Anaconda', shipColor: 'var(--d47-white)' },
+      { name: 'Oren Make', rank: 'Master', duty: 'Off duty', dutyColor: 'var(--d47-grey)', ship: 'Iron Grace · Imperial Cutter', shipColor: 'var(--d47-white)' },
+      { name: 'Lida Kovac', rank: 'Competent', duty: 'Off duty', dutyColor: 'var(--d47-grey)', ship: 'Not posted', shipColor: 'var(--d47-grey)' }
+    ];
+
+    // Materials
+    const held = (name, cap) => { if (D.HELD[name] != null) return D.HELD[name]; const x = this.h(name); return x % 7 === 0 ? cap : Math.max(1, Math.round(cap * ((x % 97) / 100))); };
+    const ledgerKey = ['raw', 'manufactured', 'encoded', 'guardian', 'thargoid'].includes(st.mat) ? st.mat : null;
+    const microHeld = n => { const m = D.MICRO.find(x => x.name === n); return m ? m.b + m.l : 0; };
+    const matHeld = (k, n) => { if (k === 'micro') return microHeld(n); const M = D.MAT[k], g = M.grades.findIndex(x => x.includes(n)); return held(n, M.caps[g]); };
+    const openMat = (k, n) => () => k === 'micro' ? this.setState({ mat: 'locker', micro: n, matSel: null }) : this.setState({ mat: k, matSel: { k, g: D.MAT[k].grades.findIndex(x => x.includes(n)), n }, micro: null });
+    const needMap = {};
+    D.NEEDS.forEach(b => b.items.forEach(([n, k, need]) => { (needMap[n] = needMap[n] || []).push({ build: b.build, kind: b.kind, need, k }); }));
+    const needsFor = n => { const list = needMap[n] || [], h = list.length ? matHeld(list[0].k, n) : 0; return { hasNeeds: !!list.length, needs: list.map(x => ({ build: x.build, kind: x.kind, need: x.need, short: h >= x.need ? '✓ MET' : 'SHORT ' + (x.need - h), shortColor: h >= x.need ? 'var(--d47-blue)' : 'var(--d47-a)' })) }; };
+    const needTotal = n => (needMap[n] || []).reduce((a, x) => a + x.need, 0);
+    const ledgerLabel = { raw: 'Raw', manufactured: 'Manufactured', encoded: 'Encoded', micro: 'On foot' };
+    const needGroups = D.NEEDS.map(b => { const items = b.items.map(([n, k, need]) => { const h = matHeld(k, n), s = Math.max(0, need - h); return { name: n, ledger: ledgerLabel[k], held: h, need, short: s ? s : '✓ MET', shortColor: s ? 'var(--d47-a)' : 'var(--d47-blue)', pct: Math.min(100, h / need * 100), go: openMat(k, n) }; }); const shortN = items.filter(i => i.short !== '✓ MET').length; return { build: b.build, meta: b.kind + ' · ' + shortN + ' SHORT', items }; });
+    const matCount = k => D.MAT[k].grades.flat().length;
+    const matNav = [
+      { group: 'Plans', gap: 0, items: [{ label: 'Needed by plans', count: Object.keys(needMap).length, cls: st.mat === 'needs' ? 'active' : '', go: () => this.setState({ mat: 'needs', matSel: null, micro: null }) }] },
+      { group: 'Ship materials', gap: 16, items: ['raw', 'manufactured', 'encoded', 'guardian', 'thargoid'].map(k => ({ label: D.MAT[k].name, count: matCount(k), cls: st.mat === k ? 'active' : '', go: () => this.setState({ mat: k, matSel: null, micro: null }) })) },
+      { group: 'On foot', gap: 16, items: [['backpack', 'Backpack', D.MICRO.filter(m => m.b).length], ['locker', 'Ship locker', D.MICRO.length]].map(([k, label, count]) => ({ label, count, cls: st.mat === k ? 'active' : '', go: () => this.setState({ mat: k, matSel: null, micro: null }) })) },
+      { group: 'Farming', gap: 16, items: [{ label: 'Farming route', count: D.SITES.length, cls: st.mat === 'route' ? 'active' : '', go: () => this.setState({ mat: 'route', matSel: null, micro: null }) }] }
+    ];
+    let ledgerGrades = [], md = {}, ledgerName = '';
+    if (ledgerKey) {
+      const M = D.MAT[ledgerKey]; ledgerName = M.name;
+      ledgerGrades = M.grades.map((names, gi) => ({ head: M.heads ? M.heads[gi] : 'Grade ' + (gi + 1), cap: M.caps[gi], items: names.map(n => { const hv = held(n, M.caps[gi]); return { name: n, held: hv, needed: !!needMap[n], needLabel: 'NEED ' + needTotal(n), pct: hv / M.caps[gi] * 100, color: hv >= M.caps[gi] ? 'var(--d47-yellow)' : 'var(--d47-a)', go: () => this.setState({ matSel: { k: ledgerKey, g: gi, n } }) }; }) }));
+      if (st.matSel) {
+        const { k, g, n } = st.matSel, idx = M.grades[g].indexOf(n), cap = M.caps[g], hv = held(n, cap);
+        const pick = (gg, i) => M.grades[gg][Math.min(i, M.grades[gg].length - 1)];
+        const trades = [];
+        if (!M.noTrade) { if (g > 0) trades.push({ kind: 'Trade up', giveN: 6, give: pick(g - 1, idx), getN: 1, get: n });
+        if (g < M.grades.length - 1) trades.push({ kind: 'Trade down', giveN: 1, give: n, getN: 3, get: pick(g + 1, idx) });
+        trades.push({ kind: 'Across categories', giveN: 6, give: pick(g, (idx + 1) % M.grades[g].length), getN: 1, get: n }); }
+        const x = this.h(n);
+        const nearest = ledgerKey === 'guardian'
+          ? [['Synuefe XR-H d11-102 1 B', 'Guardian structure', 780.4], ['Synuefe EU-Q c21-10 A 3', 'Guardian ruins', 812.9], ['HIP 39768 A 1', 'Guardian beacon', 902.1]]
+          : ledgerKey === 'thargoid'
+          ? [['Pleiades Sector IR-W d1-55', 'Thargoid surface site', 388.2], ['HIP 17225', 'Titan wreckage', 412.6], ['Merope', 'Combat zone', 380.1]]
+          : ledgerKey === 'raw'
+          ? [['Outotz LS-K d8-3 B 5', n + ' · ' + (4 + x % 5) + '.' + (x % 9) + '%', 1040.8], ['HIP 36601 C 3 B', n + ' · ' + (3 + x % 4) + '.' + (x % 7) + '%', 1860.2 - x % 300], ['Col 285 Sector ZE-A c16 A 2', n + ' · ' + (2 + x % 3) + '.1%', 88.4 + x % 40]]
+          : ledgerKey === 'manufactured'
+            ? [['Jameson Crash Site · HIP 12099 1 B', 'Crash site', 488.2], ['Deciat', 'War · high-grade signals', 42.1], ['LHS 20', 'Boom · high-grade signals', 64.8]]
+            : [['Shinrarta Dezhra', 'High wakes · here', 0], ['HIP 12099 1 B', 'Data points', 488.2], ['Deciat', 'Busy station', 42.1]];
+        md = { ...needsFor(n), hasTrades: !M.noTrade, noTrades: !!M.noTrade, name: n, ledger: M.name, category: M.heads ? M.heads[g].split(' · ')[0] : 'Category ' + (idx + 1), grade: 'G' + (M.gnum ? M.gnum[g] : g + 1), held: hv, cap, pct: hv / cap * 100,
+          advice: M.noTrade ? `${n} only comes from ${M.name} sites and ships. Collect it from the salvage and data points at the places below. No material trader deals in it.` : ledgerKey === 'raw' ? `Raw materials come from surface prospecting and mining. Look for a body where ${n} is high in the composition, then shoot outcrops from the SRV or collect from crystal fields.`
+            : ledgerKey === 'manufactured' ? `${n} drops from ships you destroy, from signal sources and from crash sites. At grade ${g + 1} it is most common in high-grade emissions in systems in the right state.`
+            : `Encoded data comes from scanning ships, wakes and data points. Grade ${g + 1} is quickest from data points at crash sites, or from scanning high wakes at a busy station.`,
+          nearest: nearest.sort((a, b) => a[2] - b[2]).map(([where, note, ly]) => ({ where, note, ly: ly.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' LY' })), trades };
+      }
+    }
+    const inLocker = st.mat === 'locker';
+    const microGroups = ['Items', 'Components', 'Data', 'Consumables'].map(cat => {
+      const items = D.MICRO.filter(m => m.cat === cat && (inLocker || m.b));
+      const capB = { Items: 15, Components: 30, Data: 10, Consumables: 20 }[cat];
+      const n = items.reduce((a, m) => a + (inLocker ? m.l : m.b), 0);
+      return { cat, meta: inLocker ? n + ' / 1,000' : n + ' HELD', items: items.map(m => ({ name: m.name, held: inLocker ? m.l : m.b, needed: !!needMap[m.name], needLabel: 'NEED ' + needTotal(m.name), go: () => this.setState({ micro: m.name }) })) };
+    }).filter(g => g.items.length);
+    let mr = {};
+    if (st.micro) {
+      const m = D.MICRO.find(x => x.name === st.micro);
+      const where = { Items: ['Industrial · High tech', 'Production · Command', 'Cases · Lockers'], Components: ['Industrial · Extraction', 'Production · Power', 'Industrial crates'], Data: ['Military · Agricultural', 'Admin terminals', 'Data ports'], Consumables: ['Any settlement', 'Habitation · Medical', 'Personal lockers'] }[m.cat];
+      mr = { ...needsFor(m.name), name: m.name, cat: m.cat, backpack: m.b, locker: m.l, lockerCap: '1,000', pct: m.l / 10, settlements: where[0], buildings: where[1], containers: where[2],
+        trades: [{ kind: 'Swap', giveN: 1, give: m.name, getN: 3, get: m.cat === 'Components' ? 'Carbon Fibre Plating' : 'Chemical Catalyst' }, { kind: 'Swap', giveN: 5, give: 'Electrical Wiring', getN: 1, get: m.name }] };
+    }
+    const matView = { ledger: !!ledgerKey && !st.matSel, detail: !!ledgerKey && !!st.matSel, micro: (st.mat === 'backpack' || inLocker) && !st.micro, microDetail: !!st.micro, route: st.mat === 'route', needs: st.mat === 'needs' };
+    const routeOpts = ['All', 'Raw', 'Manufactured', 'Encoded'].map(label => ({ label, cls: st.route === label ? 'selected' : '', go: () => this.setState({ route: label }) }));
+    const sites = D.SITES.filter(s => st.route === 'All' || s.kinds.includes(st.route)).sort((a, b) => a.ly - b.ly).map(s => ({ ...s, kinds: s.kinds.join(' · '), ly: s.ly ? s.ly.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' LY' : 'HERE', whereColor: s.here ? 'var(--d47-cyan)' : 'var(--d47-a)' }));
+
+    // Phrases
+    const pq = st.phQ.trim().toLowerCase();
+    const builtIn = D.PH.map(c => ({ cap: c.cap, items: c.items.filter(i => !pq || (i[0] + ' ' + i[1]).toLowerCase().includes(pq)).map(([words, does]) => ({ words, does })) })).filter(c => c.items.length).map(c => ({ ...c, count: c.items.length + (c.items.length === 1 ? ' PHRASE' : ' PHRASES') }));
+    const own = st.own.filter(o => !pq || (o.words + ' ' + o.target).toLowerCase().includes(pq)).map(o => ({ ...o, forget: () => this.setState(s => ({ own: s.own.filter(x => x !== o) })) }));
+    const allPh = D.PH.flatMap(c => c.items.map(i => ({ words: i[0], cap: c.cap })));
+    const ddOptions = allPh.map(o => ({ label: o.words, cap: o.cap, cls: st.addTarget === o.words ? 'selected' : '', go: () => this.setState({ addTarget: o.words, dd: false, clash: null }) }));
+    const addPhrase = () => {
+      const w = st.addText.trim();
+      if (!w) return this.setState({ clash: { label: 'Nothing to add', text: 'Type a wording or a pattern first.', detail: '' } });
+      if (!st.addTarget) return this.setState({ clash: { label: 'Pick a phrase', text: 'Choose the phrase this wording stands for.', detail: '' } });
+      const mine = this.expand(w);
+      for (const b of allPh) { const hit = mine.find(x => this.expand(b.words).includes(x)); if (hit) { const tgt = D.PH.flatMap(c => c.items).find(i => i[0] === b.words); return this.setState({ clash: { label: 'Clash · not added', text: `“${hit}” is already a phrase D47 knows: ${tgt[1].charAt(0).toLowerCase() + tgt[1].slice(1)} Choose another wording.`, detail: 'Built-in phrase · ' + b.cap } }); } }
+      for (const o of st.own) { const hit = mine.find(x => this.expand(o.words).includes(x)); if (hit) return this.setState({ clash: { label: 'Clash · not added', text: `“${hit}” already stands for “${o.target}”. Choose another wording, or forget that one first.`, detail: 'Your phrase · ' + o.words } }); }
+      this.setState(s => ({ own: [{ words: w, target: s.addTarget }, ...s.own], addText: '', addTarget: null, clash: null }));
+    };
+
+    return {
+      theme: p.theme ?? 'elite', galaxy: (p.galaxy ?? true) && !st.noGalaxy, noGalaxy: !(p.galaxy ?? true) || !!st.noGalaxy,
+      briefLinks, tabs, subtabs, is, say: sayMap[nav.sub] || '', screenLabel: nav.tab + ' · ' + nav.sub,
+      factions, navy, statNav, stat: st.stat, statQ: st.statQ, statSearching: !!q, statBrowsing: !q, statHits, statNoHits: !!q && !statHits.length,
+      statFigures: D.S[st.stat].map(([label, value]) => ({ label, value })), onStatQ: e => this.setState({ statQ: e.target.value }),
+      sessionTotal: this.f(earnRaw.reduce((a, e) => a + e[1], 0)), sessionFigures, earnings,
+      samples, dist: this.f(d), distPct: Math.min(100, d / 5), distColor: met ? 'var(--d47-blue)' : 'var(--d47-white)', distState: !colonyKnown ? 'Colony distance not known' : met ? '✓ Far enough · take the third sample' : 'Keep walking · ' + (500 - d) + ' m to go', distStateColor: !colonyKnown ? 'var(--d47-grey)' : met ? 'var(--d47-blue)' : 'var(--d47-a)',
+      colonyKnown, colonyText: colonyKnown ? 'OF 500 M FOR A NEW COLONY' : '', sampleHint: colonyKnown ? "Measured from the game's position as you walk." : "Measured from the game's position as you walk. D47 has no colony distance for this genus, so it can't say when you're far enough.", genera,
+      ledgers, unsoldTotal, hasDlg: !!st.dlg, dlg: st.dlg || {}, closeDlg: () => this.setState({ dlg: null }), stop: e => e.stopPropagation(),
+      doReset: () => this.setState(s => ({ cleared: { ...s.cleared, [s.dlg.key]: true }, dlg: null })),
+      planRows, planTrips, planBlocks, planOneTrip,
+      ships, noShips: !ships.length, shipCount: ships.length + ' OF ' + D.SHIPS.length,
+      orderOpts: [['jump', 'Jump range'], ['cargo', 'Cargo']].map(([k, label]) => ({ label, cls: st.order === k ? 'selected' : '', go: () => this.setState({ order: k }) })),
+      jumpHeadColor: st.order === 'jump' ? 'var(--d47-a)' : 'var(--d47-grey)', cargoHeadColor: st.order === 'cargo' ? 'var(--d47-a)' : 'var(--d47-grey)', jumpArrow: st.order === 'jump' ? ' ▼' : '', cargoArrow: st.order === 'cargo' ? ' ▼' : '',
+      minCargoLabel: st.minCargo ? st.minCargo + ' T' : 'ANY', cargoDown: () => this.setState({ minCargo: CARGO[Math.max(0, ci - 1)] }), cargoUp: () => this.setState({ minCargo: CARGO[Math.min(CARGO.length - 1, ci + 1)] }),
+      moduleGroups, moduleCount, noModules: !moduleGroups.length, modQ: st.modQ, onModQ: e => this.setState({ modQ: e.target.value }),
+      crew,
+      matNav, matView, needGroups, ledgerName, ledgerGrades, md, mr, microGroups, microTitle: inLocker ? 'Ship locker' : 'Backpack', microHint: inLocker ? 'Everything stored aboard, against the locker cap for each kind.' : 'What you carry on foot right now. The game doesn\u2019t give backpack caps, so these are counts.',
+      matBack: () => this.setState({ matSel: null, micro: null }), routeOpts, sites,
+      phQ: st.phQ, onPhQ: e => this.setState({ phQ: e.target.value }), builtIn, own, ownCount: st.own.length + ' PHRASES', noOwn: !own.length, noPhraseHits: !!pq && !builtIn.length && !own.length,
+      addText: st.addText, onAddText: e => this.setState({ addText: e.target.value, clash: null }), onAddKey: e => { if (e.key === 'Enter') addPhrase(); },
+      addTargetLabel: st.addTarget || 'Pick the phrase it stands for', addTargetColor: st.addTarget ? 'var(--d47-white)' : 'var(--d47-grey2)',
+      dd: st.dd, toggleDd: () => this.setState({ dd: !st.dd }), ddOptions, addPhrase, hasClash: !!st.clash, clash: st.clash || {}, addFieldCls: st.clash && st.clash.label.startsWith('Clash') ? 'invalid' : ''
+    };
+  }
+}
+</script>
+</body>
+</html>
