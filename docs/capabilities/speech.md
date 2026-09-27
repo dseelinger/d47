@@ -23,15 +23,15 @@ nav_order: 122
 <section>
 <h2><span class="num">1</span> Pick a provider and a voice.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Speech">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Speech</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Voice provider</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Kokoro — on this machine</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Voice</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">Daniel</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Cost so far</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">free</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Edge Neural and Kokoro are free. The paid ones ask for a key and show what they cost.</text>
@@ -40,15 +40,15 @@ nav_order: 122
 <section>
 <h2><span class="num">2</span> Audition it before you keep it.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Voice">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Voice</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Daniel</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">press to hear it</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Michael</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)"></text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Emma</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)"></text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Each one speaks a line so you can hear it before choosing.</text>
@@ -57,7 +57,7 @@ nav_order: 122
 <section>
 <h2><span class="num">3</span> Learn the one command that outranks the rest.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"shut up" — "be quiet" — or press Cancel, which also ends the turn</text>
@@ -67,7 +67,7 @@ nav_order: 122
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A voice you cannot hear is usually the wrong output device.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A voice you cannot hear is usually the wrong output device.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The mixer sends to whatever Windows calls the default, and on a VR machine that is often not the headset.</text>
 </svg>
@@ -87,10 +87,10 @@ nav_order: 122
 <section>
 <h2><span class="num">1</span> “Stop” is the one to reach for.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Stop is the shortest interrupt, and it ends the speaking while the turn keeps running">
- <rect x="20" y="44" width="380" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="380" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="210" y="94" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text)">“stop”</text>
  <text x="210" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">one syllable, four letters</text>
- <rect x="460" y="44" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="44" width="400" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS THE TALKING</text>
  <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">the turn keeps running,</text>
  <text x="660" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">and keeps costing</text>
@@ -102,14 +102,14 @@ nav_order: 122
 <section>
 <h2><span class="num">2</span> Free is not the same as private.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Edge Neural is free but sends every line to Microsoft; only the none provider sends nothing">
- <rect x="20" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="270" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EDGE NEURAL</text>
  <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">free</text>
- <rect x="305" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="40" width="270" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ELEVENLABS</text>
  <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">paid, and sent along</text>
  <text x="440" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">with your API key</text>
- <rect x="590" y="40" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="590" y="40" width="270" height="118" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="725" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">NONE</text>
  <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the only setting</text>
  <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">that sends nothing</text>
@@ -121,12 +121,12 @@ nav_order: 122
 <section>
 <h2><span class="num">3</span> Hear it before you choose it.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Every voice row carries a play glyph that speaks the core's own opening line without committing the choice">
- <rect x="20" y="34" width="840" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="840" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="64" text-anchor="start" font-size="15" fill="var(--text-muted)">Play a voice to hear it. This provider costs nothing.</text>
- <rect x="46" y="80" width="788" height="32" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="46" y="80" width="788" height="32" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="64" y="102" text-anchor="start" font-size="15" fill="var(--text-muted)">Bill — Wise, Mature, Balanced</text>
  <polygon points="800,88 800,104 814,96" fill="var(--text-muted)"/>
- <rect x="46" y="120" width="788" height="34" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="46" y="120" width="788" height="34" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="64" y="143" text-anchor="start" font-size="15" fill="var(--text)">George — Warm, Captivating Storyteller</text>
  <polygon points="800,129 800,145 814,137" fill="var(--accent)"/>
  <text x="440" y="210" text-anchor="middle" font-size="16" fill="var(--text)">It speaks the core’s own opening line, not a neutral sample — you are casting a character.</text>
@@ -136,7 +136,7 @@ nav_order: 122
 <section>
 <h2><span class="num">4</span> An empty list may mean different things.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Four different reasons a voice list can be empty, only two of which the Commander can fix">
- <rect x="20" y="30" width="840" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="840" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="62" text-anchor="start" font-size="15" fill="var(--text)">…needs an API key before it will list its voices</text>
  <text x="580" y="62" text-anchor="start" font-size="14" fill="var(--accent)">← yours to fix</text>
  <text x="46" y="94" text-anchor="start" font-size="15" fill="var(--text)">…refused the stored key</text>

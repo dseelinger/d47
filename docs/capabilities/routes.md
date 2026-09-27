@@ -23,12 +23,12 @@ nav_order: 106
 <section>
 <h2><span class="num">1</span> Turn web access on. Routes are worked out elsewhere.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Route planning">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Route planning</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 search the web</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Which sites</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">named on the Privacy page</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">The plotter is somebody else's service. Off, this page does nothing.</text>
@@ -37,7 +37,7 @@ nav_order: 106
 <section>
 <h2><span class="num">2</span> Ask for the kind of route you want.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">plot a neutron route to Colonia</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"find me a Road to Riches loop" — "a trade run for 200 tonnes"</text>
@@ -47,8 +47,8 @@ nav_order: 106
 <section>
 <h2><span class="num">3</span> Accept it, and it becomes a checklist.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Checklist tab">
- <rect x="20" y="16" width="840" height="172" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Checklist</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">1. Jump to Jackson's Lighthouse</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">neutron</text>
@@ -59,7 +59,7 @@ nav_order: 106
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A route is planned for the ship you are in now.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A route is planned for the ship you are in now.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Swap to something with a different jump range and it is the wrong route. Ask again.</text>
 </svg>
@@ -79,15 +79,15 @@ nav_order: 106
 <section>
 <h2><span class="num">1</span> Plotting is not searching. It is a job.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A search is a request and a reply; a plot is submitted and waited on; a trade route is computed locally">
- <rect x="20" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">A SEARCH</text>
  <text x="145" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a request and a reply</text>
  <text x="145" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">waits 15 seconds</text>
- <rect x="315" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="315" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A PLOT</text>
  <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">submitted, queued, waited on</text>
  <text x="440" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">waits 90 seconds</text>
- <rect x="610" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="610" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="735" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A TRADE ROUTE</text>
  <text x="735" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">not a plot at all —</text>
  <text x="735" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">the arithmetic happens here</text>
@@ -98,11 +98,11 @@ nav_order: 106
 <section>
 <h2><span class="num">2</span> Your ship fills in its own numbers. You are not your ship.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Jump range, origin and cargo capacity come from the journal, but the credit balance is always asked for">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">READ FROM THE JOURNAL</text>
  <text x="220" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">jump range · origin · cargo capacity</text>
  <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">all properties of the hull</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ASKED FOR, EVERY TIME</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">your credit balance</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">even though it is in the journal</text>
@@ -113,7 +113,7 @@ nav_order: 106
 <section>
 <h2><span class="num">3</span> The hold does not have to be emptied.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="A trade plan reads as stops rather than legs, and a keep line says what declining to sell is worth">
- <rect x="20" y="30" width="840" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="840" height="140" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="66" text-anchor="start" font-size="16" fill="var(--text)">Abraham Lincoln in Sol</text>
  <text x="76" y="96" text-anchor="start" font-size="15" fill="var(--text-muted)">buy 384 × Gold at 9,400</text>
  <text x="46" y="128" text-anchor="start" font-size="16" fill="var(--text)">Diaz Chemical Holdings in RR Caeli — 20.9 ly</text>
@@ -126,17 +126,17 @@ nav_order: 106
 <section>
 <h2><span class="num">4</span> Efficiency is backwards from how it sounds.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="Lower efficiency values produce fewer jumps, and 100 finds no route at all">
- <rect x="30" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="44" width="190" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="125" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">10</text>
  <text x="125" y="108" text-anchor="middle" font-size="15" fill="var(--text)">156 jumps</text>
- <rect x="240" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="240" y="44" width="190" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="335" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">25</text>
  <text x="335" y="108" text-anchor="middle" font-size="15" fill="var(--text)">157 jumps</text>
- <rect x="450" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="44" width="190" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="545" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">60</text>
  <text x="545" y="106" text-anchor="middle" font-size="15" fill="var(--text)">168 jumps</text>
  <text x="545" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">the default</text>
- <rect x="660" y="44" width="190" height="86" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="660" y="44" width="190" height="86" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="755" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--danger)">100</text>
  <text x="755" y="108" text-anchor="middle" font-size="15" fill="var(--text)">no route at all</text>
  <text x="440" y="180" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Lower lets it wander further, find more neutron stars, and finish in fewer jumps.</text>

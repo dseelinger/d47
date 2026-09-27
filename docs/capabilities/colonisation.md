@@ -23,7 +23,7 @@ nav_order: 114
 <section>
 <h2><span class="num">1</span> Start a build in the game, then ask.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does my build still need</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">D47 reads your construction depot out of the journal. Nothing to set up.</text>
@@ -33,7 +33,7 @@ nav_order: 114
 <section>
 <h2><span class="num">2</span> Read the two numbers that matter.</h2>
 <svg viewBox="0 0 880 210" role="img" aria-label="A commodity line showing what is still needed, what is in the hold, and how many runs remain">
- <rect x="20" y="16" width="840" height="178" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="178" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="56" font-size="17" font-weight="700" fill="var(--text)">Steel</text>
  <text x="836" y="56" text-anchor="end" font-size="17" fill="var(--accent)">3,200 still needed</text>
  <text x="44" y="96" font-size="16" fill="var(--text-muted)">784 in the hold</text>
@@ -46,7 +46,7 @@ nav_order: 114
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="It needs a depot the journal has seen.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs a depot the journal has seen.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">No construction site visited this session means nothing to report. Dock at it once.</text>
 </svg>
@@ -66,20 +66,20 @@ nav_order: 114
 <section>
 <h2><span class="num">1</span> The sum you would otherwise do on paper.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="What the site needs minus what is in your hold is what is left to find, divided by your capacity">
- <rect x="20" y="30" width="240" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="240" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="140" y="70" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">687 t</text>
  <text x="140" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">the site still needs</text>
  <text x="290" y="82" text-anchor="middle" font-size="28" font-weight="800" fill="var(--text-muted)">−</text>
- <rect x="320" y="30" width="240" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="320" y="30" width="240" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="70" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">309 t</text>
  <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">already in your hold</text>
  <text x="590" y="82" text-anchor="middle" font-size="28" font-weight="800" fill="var(--text-muted)">=</text>
- <rect x="620" y="30" width="240" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="620" y="30" width="240" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="740" y="70" text-anchor="middle" font-size="24" font-weight="800" fill="var(--accent)">378 t</text>
  <text x="740" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">left to go and find</text>
- <line x1="740" y1="128" x2="740" y2="152" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="740" y1="128" x2="740" y2="152" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="740,166 732,150 748,150" fill="var(--accent-muted)"/>
- <rect x="320" y="176" width="540" height="58" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="320" y="176" width="540" height="58" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="590" y="212" text-anchor="middle" font-size="18" fill="var(--text)">at 720 t a run, that is 1 more full load</text>
  <text x="440" y="256" text-anchor="middle" font-size="16" fill="var(--text-muted)">Your ship's capacity comes from its own loadout, so the run count is yours rather than generic.</text>
 </svg>
@@ -87,7 +87,7 @@ nav_order: 114
 <section>
 <h2><span class="num">2</span> These figures are from your last visit.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="A site reports its manifest only while you are docked, so the numbers are a record rather than a feed">
- <line x1="60" y1="120" x2="820" y2="120" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="60" y1="120" x2="820" y2="120" stroke="var(--border)" stroke-width="3" stroke-linecap="butt"/>
  <circle cx="200" cy="120" r="11" fill="var(--accent)"/>
  <text x="200" y="88" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">you were docked</text>
  <text x="200" y="158" text-anchor="middle" font-size="16" fill="var(--text-muted)">the site told you everything</text>
@@ -104,15 +104,15 @@ nav_order: 114
 <section>
 <h2><span class="num">3</span> Whose number is whose.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="Your hold is exact, delivered totals are everybody's, and a carrier reports tonnage with no manifest">
- <rect x="30" y="20" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="30" y="20" width="820" height="66" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="66" y="50" font-size="19" font-weight="800" fill="var(--accent)">YOUR HOLD</text>
  <text x="66" y="74" font-size="15" fill="var(--text-muted)">exact, and yours alone</text>
  <text x="820" y="62" text-anchor="end" font-size="17" fill="var(--text)">309 t</text>
- <rect x="30" y="100" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="100" width="820" height="66" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="66" y="130" font-size="19" font-weight="800" fill="var(--text)">DELIVERED SO FAR</text>
  <text x="66" y="154" font-size="15" fill="var(--text-muted)">everybody's, not just yours</text>
  <text x="820" y="142" text-anchor="end" font-size="17" fill="var(--text)">100 of 500</text>
- <rect x="30" y="180" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="180" width="820" height="66" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="66" y="210" font-size="19" font-weight="800" fill="var(--text-muted)">YOUR CARRIER</text>
  <text x="66" y="234" font-size="15" fill="var(--text-muted)">a tonnage and nothing else — Elite never writes what it is</text>
  <text x="820" y="222" text-anchor="end" font-size="17" fill="var(--text)">656 t of something</text>

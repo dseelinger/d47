@@ -23,9 +23,9 @@ nav_order: 132
 <section>
 <h2><span class="num">1</span> Turn on key injection.</h2>
 <svg viewBox="0 0 880 196" role="img" aria-label="Panels">
- <rect x="20" y="16" width="840" height="156" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Panels</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <text x="44" y="166" font-size="15" fill="var(--text-muted)">Every panel command is one of your own Elite bindings, pressed for you.</text>
@@ -34,7 +34,7 @@ nav_order: 132
 <section>
 <h2><span class="num">2</span> Say which panel and where to go in it.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">open the right panel and go to modules</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"internal panel" — "next tab" — "close the panel"</text>
@@ -44,7 +44,7 @@ nav_order: 132
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="D47 cannot see the panel it just opened.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">D47 cannot see the panel it just opened.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It counts presses rather than reading the screen, so if you also press keys it will lose its place.</text>
 </svg>
@@ -64,20 +64,20 @@ nav_order: 132
 <section>
 <h2><span class="num">1</span> It walks a panel with the keys you already use.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Saying down, select and back moves through an open cockpit panel the same way your own UI keys do">
- <rect x="20" y="36" width="300" height="164" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="300" height="164" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LEFT PANEL</text>
- <rect x="44" y="84" width="252" height="32" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="84" width="252" height="32" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="170" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">Navigation</text>
- <rect x="44" y="122" width="252" height="32" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="122" width="252" height="32" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="170" y="144" text-anchor="middle" font-size="15" fill="var(--text)">Transactions</text>
- <rect x="44" y="160" width="252" height="32" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="160" width="252" height="32" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="170" y="182" text-anchor="middle" font-size="15" fill="var(--text-muted)">Contacts</text>
  <text x="450" y="90" text-anchor="middle" font-size="17" fill="var(--text)">“down”</text>
  <text x="450" y="126" text-anchor="middle" font-size="17" fill="var(--text)">“select”</text>
  <text x="450" y="162" text-anchor="middle" font-size="17" fill="var(--text)">“back”</text>
- <line x1="524" y1="124" x2="560" y2="124" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="524" y1="124" x2="560" y2="124" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="574,124 558,116 558,132" fill="var(--accent-muted)"/>
- <rect x="590" y="80" width="270" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="80" width="270" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="118" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THE SAME KEYS</text>
  <text x="725" y="146" text-anchor="middle" font-size="15" fill="var(--text-muted)">your own UI keys send</text>
  <text x="440" y="228" text-anchor="middle" font-size="16" fill="var(--text-muted)">Slower than doing it by hand, and not trying not to be — it is for when both hands are busy.</text>
@@ -86,13 +86,13 @@ nav_order: 132
 <section>
 <h2><span class="num">2</span> Both maps ship unbound, so it says so.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="On Elite's default preset the galaxy and system maps have no binding, and Directive 47 reports that rather than failing silently">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ELITE’S DEFAULT PRESET</text>
  <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">ships both maps unbound</text>
  <text x="220" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">if you never touched your controls</text>
- <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,96 446,88 446,104" fill="var(--accent-muted)"/>
- <rect x="474" y="40" width="386" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="474" y="40" width="386" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="667" y="78" text-anchor="middle" font-size="15" fill="var(--text)">“You have no binding for the</text>
  <text x="667" y="104" text-anchor="middle" font-size="15" fill="var(--text)">galaxy map, so there is no key</text>
  <text x="667" y="130" text-anchor="middle" font-size="15" fill="var(--text)">for me to press.”</text>
@@ -103,10 +103,10 @@ nav_order: 132
 <section>
 <h2><span class="num">3</span> Opening a map is all it does here.</h2>
 <svg viewBox="0 0 880 206" role="img" aria-label="Saying galaxy map opens it; plotting a course inside it belongs to Navigation">
- <rect x="20" y="34" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="34" width="400" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">“GALAXY MAP”</text>
  <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">opens it, and that is all</text>
- <rect x="460" y="34" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="34" width="400" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">PLOTTING IS ELSEWHERE</text>
  <text x="660" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">it depends on where the focus is</text>
  <text x="440" y="180" text-anchor="middle" font-size="16" fill="var(--text-muted)">…and on what language your game is in, which is why Navigation goes by the clipboard.</text>

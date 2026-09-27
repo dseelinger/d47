@@ -23,7 +23,7 @@ nav_order: 117
 <section>
 <h2><span class="num">1</span> Arrive somewhere, or ask by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what happened at Hyades Sector DB-X d1-112</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It ships knowing about twenty systems and needs no network for those.</text>
@@ -33,7 +33,7 @@ nav_order: 117
 <section>
 <h2><span class="num">2</span> Add your own, and it keeps them.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">remember that this is where I lost the Anaconda</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Your own notes sit beside the shipped ones and are never overwritten.</text>
@@ -43,7 +43,7 @@ nav_order: 117
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Twenty systems is twenty, not four hundred billion.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Twenty systems is twenty, not four hundred billion.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">For anywhere else it will say it has nothing rather than make something up about your neighbourhood.</text>
 </svg>
@@ -63,13 +63,13 @@ nav_order: 117
 <section>
 <h2><span class="num">1</span> Once per system per week.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once a week, so a return visit the same evening is silent">
- <rect x="20" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">FIRST ARRIVAL</text>
  <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so, unprompted</text>
- <rect x="310" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="310" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">AGAIN, TONIGHT</text>
  <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">silence</text>
- <rect x="600" y="44" width="260" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="600" y="44" width="260" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A WEEK LATER</text>
  <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so again</text>
  <text x="440" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The difference between a companion and a tour guide who forgot meeting you.</text>
@@ -80,15 +80,15 @@ nav_order: 117
 <section>
 <h2><span class="num">2</span> Three states, not two switches.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Arrival lore can be off, a bare remark, or a remark followed by a web lookup">
- <rect x="20" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER</text>
  <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing on arrival</text>
  <text x="155" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">asking still works</text>
- <rect x="305" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">REMARK ONLY</text>
  <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the bare fact,</text>
  <text x="440" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing further</text>
- <rect x="590" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="590" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="725" y="78" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">REMARK, AND LOOK IT UP</text>
  <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the fact, then whatever</text>
  <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">the search found</text>
@@ -100,7 +100,7 @@ nav_order: 117
 <section>
 <h2><span class="num">3</span> Four ways of knowing, and none is ever promoted.</h2>
 <svg viewBox="0 0 880 264" role="img" aria-label="Four tiers of lore, each read back in its own sentence naming where it came from">
- <rect x="20" y="30" width="840" height="160" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="840" height="160" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="66" text-anchor="start" font-size="16" fill="var(--text)">“Earth is here.”</text>
  <text x="470" y="66" text-anchor="start" font-size="15" fill="var(--accent)">← the shipped table</text>
  <text x="46" y="100" text-anchor="start" font-size="16" fill="var(--text)">“You added this one, and the search agreed at the time…”</text>

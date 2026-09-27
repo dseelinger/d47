@@ -23,12 +23,12 @@ nav_order: 105
 <section>
 <h2><span class="num">1</span> Turn web access on. It is off out of the box.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Web access">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Web access</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 search the web</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Which sites it may reach</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">listed on the Privacy page</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">This is the first thing D47 does that leaves your machine.</text>
@@ -37,7 +37,7 @@ nav_order: 105
 <section>
 <h2><span class="num">2</span> Ask.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">where is the nearest material trader</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what is at Jameson Memorial" — "find me a neutron star"</text>
@@ -47,7 +47,7 @@ nav_order: 105
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Off means off, and the answer says so.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Off means off, and the answer says so.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With web access off D47 refuses the lookup rather than inventing one. That refusal is the feature.</text>
 </svg>
@@ -67,13 +67,13 @@ nav_order: 105
 <section>
 <h2><span class="num">1</span> Off until you turn it on.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Two separate switches, both off by default">
- <rect x="20" y="24" width="410" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="52" y="52" width="66" height="32" rx="16" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="24" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="52" y="52" width="66" height="32" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="69" cy="68" r="10" fill="var(--text-muted)"/>
  <text x="136" y="76" font-size="19" font-weight="800" fill="var(--text)">GALAXY SEARCH</text>
  <text x="52" y="118" font-size="16" fill="var(--text-muted)">asking spansh.co.uk about a system</text>
- <rect x="450" y="24" width="410" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="482" y="52" width="66" height="32" rx="16" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="24" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="482" y="52" width="66" height="32" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="499" cy="68" r="10" fill="var(--text-muted)"/>
  <text x="566" y="76" font-size="19" font-weight="800" fill="var(--text)">NOTABLE PLACES</text>
  <text x="482" y="118" font-size="16" fill="var(--text-muted)">the catalogue an adventure picks stops from</text>
@@ -84,17 +84,17 @@ nav_order: 105
 <section>
 <h2><span class="num">2</span> What actually leaves, when it is on.</h2>
 <svg viewBox="0 0 880 260" role="img" aria-label="The system name, any filters, and where you are — and nothing else">
- <rect x="30" y="24" width="380" height="196" rx="12" fill="none" stroke="var(--accent-muted)" stroke-width="2.5" stroke-dasharray="9 7"/>
+ <rect x="30" y="24" width="380" height="196" fill="none" stroke="var(--accent-muted)" stroke-width="2.5" stroke-dasharray="9 7"/>
  <text x="54" y="52" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
- <rect x="66" y="70" width="310" height="40" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="66" y="70" width="310" height="40" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="221" y="96" text-anchor="middle" font-size="16" fill="var(--text)">the system you asked about</text>
- <rect x="66" y="122" width="310" height="40" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="66" y="122" width="310" height="40" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="221" y="148" text-anchor="middle" font-size="16" fill="var(--text)">your filters — allegiance, distance</text>
- <rect x="66" y="174" width="310" height="40" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="66" y="174" width="310" height="40" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="221" y="200" text-anchor="middle" font-size="16" fill="var(--text)">where you are</text>
- <line x1="420" y1="122" x2="466" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="420" y1="122" x2="466" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="480,122 464,114 464,130" fill="var(--accent-muted)"/>
- <rect x="494" y="86" width="356" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="494" y="86" width="356" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="672" y="118" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">spansh.co.uk</text>
  <text x="672" y="142" text-anchor="middle" font-size="15" fill="var(--text-muted)">no key, no identifier, nothing else</text>
  <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Where you are goes only when the question is relative to you — “the nearest high tech system”</text>
@@ -104,12 +104,12 @@ nav_order: 105
 <section>
 <h2><span class="num">3</span> The other one runs the other way.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The catalogue is downloaded whole and the choosing happens on your machine">
- <rect x="30" y="30" width="330" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="30" width="330" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="195" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">edastro.com</text>
  <text x="195" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">the whole catalogue, about 2 MB</text>
- <line x1="420" y1="74" x2="466" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="420" y1="74" x2="466" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="480,74 464,66 464,82" fill="var(--accent-muted)"/>
- <rect x="494" y="20" width="356" height="108" rx="12" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="9 7"/>
+ <rect x="494" y="20" width="356" height="108" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="9 7"/>
  <text x="518" y="48" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
  <text x="672" y="82" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">the choosing happens here</text>
  <text x="672" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">kept in memory, never written to disk</text>

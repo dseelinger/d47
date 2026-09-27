@@ -44,20 +44,20 @@ nav_order: 4
 <section>
 <h2><span class="num">2</span> Two ways to input your requests.</h2>
 <svg viewBox="0 0 880 288" role="img" aria-label="The ask box sends on Enter; the microphone indicator shows one of three states">
- <rect x="20" y="26" width="620" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="620" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="58" font-size="16" fill="var(--text-muted)">Type here, and Enter sends it</text>
- <rect x="656" y="26" width="204" height="52" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="656" y="26" width="204" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="758" y="58" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">SEND</text>
  <text x="440" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or speak — and the line above the box always shows one of these three states.</text>
- <rect x="20" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="140" width="270" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="60" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
  <text x="82" y="182" font-size="15" fill="var(--text-muted)">PTT READY</text>
  <text x="155" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">holding nothing; press your key</text>
- <rect x="305" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="140" width="270" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="345" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
  <text x="367" y="182" font-size="15" fill="var(--text-muted)">LISTENING</text>
  <text x="440" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">waiting for its name, no key held</text>
- <rect x="590" y="140" width="270" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="140" width="270" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="630" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
  <text x="652" y="182" font-size="15" fill="var(--text-muted)">MIC ON</text>
  <text x="725" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">your voice is being kept</text>
@@ -67,23 +67,23 @@ nav_order: 4
 <section>
 <h2><span class="num">3</span> Additional controls.</h2>
 <svg viewBox="0 0 880 320" role="img" aria-label="Copy, Search, Spend, and Clear what is shown">
- <rect x="20" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <rect x="143" y="44" width="16" height="16" fill="none" stroke="var(--text)" stroke-width="3"/>
  <rect x="151" y="52" width="16" height="16" fill="var(--surface)" stroke="var(--text)" stroke-width="3"/>
  <text x="155" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">copies the whole conversation,</text>
  <text x="155" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">not just selected text</text>
  <text x="155" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">— that is Ctrl+C</text>
- <rect x="305" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="26" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SEARCH</text>
  <text x="440" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">finds every match and</text>
  <text x="440" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">steps you through them</text>
  <text x="440" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">forward or back.</text>
- <rect x="590" y="26" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="590" y="26" width="270" height="126" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="725" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SPEND</text>
  <text x="725" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">tracks how much this and</text>
  <text x="725" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">previous sessions cost,</text>
  <text x="725" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">in detail</text>
- <rect x="20" y="180" width="840" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="180" width="840" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ctrl+L clears the page for less cluttered viewing</text>
  <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">It deletes nothing — scroll back up and it's all still there for the session.</text>
  <text x="440" y="288" text-anchor="middle" font-size="15" fill="var(--text-muted)">Scroll up and a "↓ Newest" button appears to bring you back to the latest.</text>

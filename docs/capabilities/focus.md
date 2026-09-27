@@ -23,7 +23,7 @@ nav_order: 129
 <section>
 <h2><span class="num">1</span> Say it, from anywhere.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">focus the game</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"bring Elite back" — "put the game in front"</text>
@@ -33,12 +33,12 @@ nav_order: 129
 <section>
 <h2><span class="num">2</span> Or press the hotkey.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Hotkeys">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Show or hide the overlay</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Ctrl+Alt+O</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Move the overlay</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+Alt+M</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">These are claimed system-wide, so they work with Elite in front.</text>
@@ -47,7 +47,7 @@ nav_order: 129
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="It cannot start Elite for you.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It cannot start Elite for you.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Focus brings a running game forward. With Elite closed there is nothing to bring.</text>
 </svg>
@@ -67,10 +67,10 @@ nav_order: 129
 <section>
 <h2><span class="num">1</span> The one action that could not be left to the rule.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Keys go out only while Elite is in front, so alt-tabbing away turns every flight command off">
- <rect x="20" y="44" width="380" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="380" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="210" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ELITE IN FRONT</text>
  <text x="210" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">keys go out</text>
- <rect x="460" y="44" width="400" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="44" width="400" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">ANYTHING ELSE IN FRONT</text>
  <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">every flight command is off</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">That check is the one thing standing between a voice command and your browser.</text>
@@ -80,7 +80,7 @@ nav_order: 129
 <section>
 <h2><span class="num">2</span> Windows may refuse, and it says so.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="A background application cannot take the foreground, and Directive 47 reports that rather than going quiet">
- <rect x="20" y="36" width="840" height="90" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">“Windows would not let me bring Elite forward from the background.</text>
  <text x="46" y="104" text-anchor="start" font-size="16" fill="var(--text)">Its taskbar button should be flashing; click that, or alt-tab.”</text>
  <text x="440" y="166" text-anchor="middle" font-size="16" fill="var(--text)">A background application cannot take the foreground. It can only ask.</text>
@@ -92,13 +92,13 @@ nav_order: 129
 <section>
 <h2><span class="num">3</span> Every phrase is more than one word, on purpose.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="A bare Elite would match inside a question about Elite rank, so the phrases are all longer">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="84" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-muted)">“Elite”</text>
  <text x="220" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">would have been convenient</text>
  <text x="220" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">and is not safe</text>
- <line x1="432" y1="86" x2="448" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="432" y1="86" x2="448" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,86 446,78 446,94" fill="var(--accent-muted)"/>
- <rect x="474" y="40" width="386" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="474" y="40" width="386" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="667" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">IT WOULD SWALLOW</text>
  <text x="667" y="110" text-anchor="middle" font-size="15" fill="var(--text)">“what is my Elite rank</text>
  <text x="667" y="134" text-anchor="middle" font-size="15" fill="var(--text)">in combat”</text>

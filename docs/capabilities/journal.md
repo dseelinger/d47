@@ -23,12 +23,12 @@ nav_order: 102
 <section>
 <h2><span class="num">1</span> Nothing. It is already reading.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Journal">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Journal</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Where Elite writes it</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Saved Games\Frontier Developments</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">What D47 reads</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">events, as they are written</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">No setting, no permission, no network. It reads the files the game already writes.</text>
@@ -37,8 +37,8 @@ nav_order: 102
 <section>
 <h2><span class="num">2</span> Open the Journal page to watch events arrive.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Journal tab">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Journal</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">FSDJump — Kuwemaki</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">19:31:04</text>
@@ -52,7 +52,7 @@ nav_order: 102
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="It only knows what the game has written down.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It only knows what the game has written down.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Elite does not journal everything. If a figure looks stale, the event probably never arrived.</text>
 </svg>
@@ -72,13 +72,13 @@ nav_order: 102
 <section>
 <h2><span class="num">1</span> The answer comes off your own disk.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Game state is read from the journal on your disk rather than from a website or produced by a model">
- <rect x="20" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="270" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="155" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR OWN DISK</text>
  <text x="155" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">the files Elite already writes</text>
- <rect x="305" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
+ <rect x="305" y="40" width="270" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
  <text x="440" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--danger)">NOT A WEBSITE</text>
  <text x="440" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing is asked of anybody</text>
- <rect x="590" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
+ <rect x="590" y="40" width="270" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
  <text x="725" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--danger)">NOT A MODEL</text>
  <text x="725" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">which would produce a plausible one</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">And what you are flying comes from your actual outfitting, not a table of hull figures —</text>
@@ -88,7 +88,7 @@ nav_order: 102
 <section>
 <h2><span class="num">2</span> When it does not know, it says what it is waiting for.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Rather than shrugging, it names the journal event that would supply the missing answer">
- <rect x="20" y="34" width="840" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="840" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="72" text-anchor="start" font-size="16" fill="var(--text)">“No Loadout event has been seen yet, so I do not know what you are</text>
  <text x="46" y="98" text-anchor="start" font-size="16" fill="var(--text)">flying. It is written when you enter the game or change your outfitting.”</text>
  <text x="46" y="138" text-anchor="start" font-size="15" fill="var(--text-muted)">“I have no ship list yet — it is written when you dock at a shipyard.”</text>
@@ -99,7 +99,7 @@ nav_order: 102
 <section>
 <h2><span class="num">3</span> It already knows where you are.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A short summary of your situation rides with every question put to the model">
- <rect x="20" y="30" width="840" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="64" text-anchor="start" font-size="15" fill="var(--text-muted)">Location: Deciat, docked at Garay Terminal (Orbis)</text>
  <text x="46" y="92" text-anchor="start" font-size="15" fill="var(--text-muted)">Ship: Bold Endeavour, a Anaconda</text>
  <text x="46" y="120" text-anchor="start" font-size="15" fill="var(--text-muted)">Ship metrics: max jump 52.31 ly, fuel 28.5/32 t</text>

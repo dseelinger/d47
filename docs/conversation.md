@@ -17,28 +17,28 @@ nav_order: 3
 <section>
 <h2><span class="num">1</span> The router gets first refusal.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="A question goes to the keyword router first and only then to the language model">
- <rect x="20" y="118" width="150" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="118" width="150" height="84" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="95" y="155" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">YOUR</text>
  <text x="95" y="177" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">QUESTION</text>
- <line x1="180" y1="160" x2="196" y2="160" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="180" y1="160" x2="196" y2="160" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="210,160 194,152 194,168" fill="var(--accent-muted)"/>
- <rect x="220" y="110" width="196" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="220" y="110" width="196" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="318" y="150" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">KEYWORD</text>
  <text x="318" y="172" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">ROUTER</text>
  <text x="318" y="194" text-anchor="middle" font-size="14" fill="var(--accent)">always first</text>
- <path d="M420 140 Q480 66 520 60" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M420 140 Q480 66 520 60" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="534,58 516,50 519,66" fill="var(--accent)"/>
- <path d="M420 160 L520 160" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M420 160 L520 160" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="534,160 518,152 518,168" fill="var(--accent-muted)"/>
- <path d="M420 180 Q480 254 520 260" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M420 180 Q480 254 520 260" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="534,262 519,254 516,270" fill="var(--accent-muted)"/>
- <rect x="548" y="24" width="312" height="72" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="548" y="24" width="312" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="704" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">ANSWERED RIGHT HERE</text>
  <text x="704" y="80" text-anchor="middle" font-size="14" fill="var(--text-muted)">a keyword matched — no model needed</text>
- <rect x="548" y="124" width="312" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="548" y="124" width="312" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="704" y="156" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">HANDED TO THE MODEL</text>
  <text x="704" y="180" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing matched — anything else</text>
- <rect x="548" y="226" width="312" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="548" y="226" width="312" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="704" y="258" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">“I'M NOT SURE”</text>
  <text x="704" y="282" text-anchor="middle" font-size="14" fill="var(--text-muted)">no match, and no model — a real answer</text>
 </svg>
@@ -47,14 +47,14 @@ nav_order: 3
 <section>
 <h2><span class="num">2</span> No model? Most of it still works.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="What works without a model, and what needs one">
- <rect x="20" y="20" width="412" height="212" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="412" height="212" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="52" y="58" font-size="17" font-weight="700" fill="var(--accent)">STILL WORKS</text>
  <text x="52" y="94" font-size="15" fill="var(--text)">“where am I”</text>
  <text x="52" y="122" font-size="15" fill="var(--text)">“what's your status”</text>
  <text x="52" y="150" font-size="15" fill="var(--text)">“stop talking”</text>
  <text x="52" y="178" font-size="15" fill="var(--text)">“what can you do”</text>
  <text x="52" y="210" font-size="14" fill="var(--text-muted)">…and everything else with a keyword</text>
- <rect x="452" y="20" width="408" height="212" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="452" y="20" width="408" height="212" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="484" y="58" font-size="17" font-weight="700" fill="var(--text-muted)">NEEDS A MODEL</text>
  <text x="484" y="94" font-size="15" fill="var(--text)">questions in your own words</text>
  <text x="484" y="122" font-size="15" fill="var(--text)">anything conversational</text>
@@ -65,7 +65,7 @@ nav_order: 3
 <section>
 <h2><span class="num">3</span> Every answer shows its receipt.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The provenance line inside each answer, explained part by part">
- <rect x="20" y="26" width="840" height="54" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="840" height="54" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="42" y="59" font-size="14" font-family="monospace" fill="var(--text-muted)">ANSWERED VIA CLAUDE-SONNET-5</text>
  <text x="300" y="59" font-size="14" font-family="monospace" fill="var(--text-muted)">· EFFORT MEDIUM</text>
  <text x="450" y="59" font-size="14" font-family="monospace" fill="var(--accent)">· $0.0031</text>
@@ -75,7 +75,7 @@ nav_order: 3
  <text x="160" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">who answered</text>
  <text x="370" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">how hard it thought</text>
  <text x="510" y="132" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">what it cost</text>
- <rect x="130" y="168" width="620" height="58" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
+ <rect x="130" y="168" width="620" height="58" fill="var(--surface)" stroke="var(--danger)" stroke-width="2"/>
  <text x="440" y="194" text-anchor="middle" font-size="14" font-weight="700" fill="var(--danger)">If it ever says “unexplained cold prefix”</text>
  <text x="440" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">caching broke, and that turn was billed at full price</text>
 </svg>
@@ -83,10 +83,10 @@ nav_order: 3
 <section>
 <h2><span class="num">4</span> It decides how hard to think.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="Four effort levels chosen from the shape of the question">
- <rect x="60" y="140" width="150" height="60" rx="6" fill="var(--accent)" opacity=".4"/>
- <rect x="270" y="100" width="150" height="100" rx="6" fill="var(--accent)" opacity=".6"/>
- <rect x="480" y="60" width="150" height="140" rx="6" fill="var(--accent)" opacity=".8"/>
- <rect x="690" y="20" width="150" height="180" rx="6" fill="var(--accent)"/>
+ <rect x="60" y="140" width="150" height="60" fill="var(--accent)" opacity=".4"/>
+ <rect x="270" y="100" width="150" height="100" fill="var(--accent)" opacity=".6"/>
+ <rect x="480" y="60" width="150" height="140" fill="var(--accent)" opacity=".8"/>
+ <rect x="690" y="20" width="150" height="180" fill="var(--accent)"/>
  <text x="135" y="176" text-anchor="middle" font-size="16" font-weight="800" fill="var(--background)">LOW</text>
  <text x="345" y="156" text-anchor="middle" font-size="16" font-weight="800" fill="var(--background)">MEDIUM</text>
  <text x="555" y="136" text-anchor="middle" font-size="16" font-weight="800" fill="var(--background)">HIGH</text>
@@ -104,7 +104,7 @@ nav_order: 3
 <section>
 <h2><span class="num">5</span> Rules it cannot be talked out of.</h2>
 <svg viewBox="0 0 880 316" role="img" aria-label="The guardrails sit above the persona and cannot be switched off">
- <rect x="40" y="20" width="520" height="170" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="40" y="20" width="520" height="170" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="54" font-size="16" font-weight="800" fill="var(--accent)">THE RULES</text>
  <text x="68" y="88" font-size="14" fill="var(--text)">don't invent things about the game</text>
  <text x="68" y="114" font-size="14" fill="var(--text)">don't invent things about yourself</text>
@@ -113,10 +113,10 @@ nav_order: 3
  <line x1="562" y1="100" x2="578" y2="100" stroke="var(--accent)" stroke-width="2"/>
  <text x="590" y="94" font-size="15" font-weight="700" fill="var(--accent)">nothing reaches these</text>
  <text x="590" y="118" font-size="14" fill="var(--text-muted)">no switch, no setting, no code path</text>
- <rect x="40" y="214" width="520" height="80" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="40" y="214" width="520" height="80" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="68" y="250" font-size="16" font-weight="800" fill="var(--text-muted)">THE PERSONALITY</text>
  <text x="68" y="276" font-size="14" fill="var(--text-muted)">the voice it answers in</text>
- <rect x="452" y="236" width="72" height="34" rx="17" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="452" y="236" width="72" height="34" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="470" cy="253" r="11" fill="var(--text-muted)"/>
  <line x1="562" y1="254" x2="578" y2="254" stroke="var(--border)" stroke-width="2"/>
  <text x="590" y="248" font-size="15" font-weight="700" fill="var(--text)">this one turns off</text>

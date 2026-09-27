@@ -23,7 +23,7 @@ nav_order: 137
 <section>
 <h2><span class="num">1</span> Turn on key injection, then say what to send.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell the wing I am on my way</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Comms types into Elite's own chat, so key injection has to be on.</text>
@@ -33,7 +33,7 @@ nav_order: 137
 <section>
 <h2><span class="num">2</span> Check the channel before it goes.</h2>
 <svg viewBox="0 0 880 190" role="img" aria-label="The confirmation showing the channel and the exact text before it is sent">
- <rect x="20" y="16" width="840" height="158" rx="8" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="16" width="840" height="158" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="56" font-size="15" font-weight="700" fill="var(--text-muted)">CHANNEL</text>
  <text x="200" y="56" font-size="17" fill="var(--text)">wing</text>
  <text x="44" y="100" font-size="15" font-weight="700" fill="var(--text-muted)">MESSAGE</text>
@@ -44,7 +44,7 @@ nav_order: 137
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="This is the one thing other people see.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This is the one thing other people see.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Everything else D47 does is private to your machine. A message is not. It is worth reading twice.</text>
 </svg>
@@ -64,11 +64,11 @@ nav_order: 137
 <section>
 <h2><span class="num">1</span> This one leaves your ship.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Every other action affects only your own ship, while a message goes out under your Commander name">
- <rect x="20" y="40" width="390" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="390" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="215" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">EVERYTHING ELSE</text>
  <text x="215" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">acts on your own ship</text>
  <text x="215" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">a mistake costs you a moment</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">A MESSAGE</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">goes out under your name</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">and cannot be recalled</text>
@@ -79,17 +79,17 @@ nav_order: 137
 <section>
 <h2><span class="num">2</span> The stronger reason: it reads those messages too.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="Directive 47 both reads in-game messages and can send them, and a protected switch stands between the two">
- <rect x="20" y="36" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT READS</text>
  <text x="145" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">in-game messages</text>
  <text x="145" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">anyone can write those</text>
- <line x1="282" y1="86" x2="298" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <rect x="310" y="36" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <line x1="282" y1="86" x2="298" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <rect x="310" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="435" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE SWITCH</text>
  <text x="435" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">off, and the AI</text>
  <text x="435" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">cannot reach it</text>
- <line x1="572" y1="86" x2="588" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <rect x="610" y="36" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <line x1="572" y1="86" x2="588" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <rect x="610" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="735" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT SENDS</text>
  <text x="735" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">under your name</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">A capability that both reads those messages and sends new ones</text>
@@ -99,11 +99,11 @@ nav_order: 137
 <section>
 <h2><span class="num">3</span> It reads back what it sent, because it cannot see the chat.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The sent message is read back, and the channel is a prefix typed at the front of it">
- <rect x="20" y="34" width="840" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="34" width="840" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="74" text-anchor="middle" font-size="18" fill="var(--text)">“Sent to wing: docking at Jameson”</text>
  <text x="440" y="134" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 cannot see the chat window, so it cannot check what arrived.</text>
  <text x="440" y="164" text-anchor="middle" font-size="16" fill="var(--text-muted)">Reading it back is how you find out dictation misheard you — ideally first.</text>
- <rect x="20" y="184" width="840" height="48" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="184" width="840" height="48" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text-muted)">A channel is a prefix it types: “/w on my way”. Wrong channel? That is the thing to check.</text>
 </svg>
 <p class="body">Line breaks are flattened to spaces before anything is typed. A newline in the middle of a message would send the first half early and type the second half into the cockpit, where every character is one of your keybinds.</p>

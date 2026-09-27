@@ -23,7 +23,7 @@ nav_order: 118
 <section>
 <h2><span class="num">1</span> Scan a body, then ask what is on it.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what biology is on this body</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Before mapping, it names the possible genera and a best case.</text>
@@ -33,15 +33,15 @@ nav_order: 118
 <section>
 <h2><span class="num">2</span> Read which half the answer came from.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Bacterium Aurasus">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Bacterium Aurasus</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Value</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">1,000,000 cr</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Where it grows</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">from the shipped tables</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Whether anybody has sold one here</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">needs the network</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">The two halves come from two places, and the answer says which.</text>
@@ -50,7 +50,7 @@ nav_order: 118
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="First-footfall bonuses are not in the shipped figure.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">First-footfall bonuses are not in the shipped figure.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The number is the base sale. Being first multiplies it, and D47 says so rather than folding it in.</text>
 </svg>
@@ -70,12 +70,12 @@ nav_order: 118
 <section>
 <h2><span class="num">1</span> Keeping the halves apart is the whole design.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="The scan half names genera and cannot price them; the route half names species and can">
- <rect x="20" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">AFTER THE SCAN</text>
  <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">the game’s own answer</text>
  <text x="220" y="130" text-anchor="middle" font-size="15" fill="var(--text-muted)">names the genus</text>
  <text x="220" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="var(--danger)">so it cannot quote money</text>
- <rect x="460" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">BEFORE YOU GO</text>
  <text x="660" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">an index of what others found</text>
  <text x="660" y="130" text-anchor="middle" font-size="15" fill="var(--text-muted)">names the species</text>
@@ -87,7 +87,7 @@ nav_order: 118
 <section>
 <h2><span class="num">2</span> Elite names the genus and stops there.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A surface scan reports a genus such as Brain Trees, never the species that would set its value">
- <rect x="20" y="36" width="840" height="94" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="840" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">1 biological signal: Brain Trees.</text>
  <text x="46" y="108" text-anchor="start" font-size="15" fill="var(--text-muted)">Also down there: 3 Geological.</text>
  <text x="440" y="170" text-anchor="middle" font-size="16" fill="var(--text)">Every one of the 792 events measured names a genus, and never a species.</text>
@@ -99,7 +99,7 @@ nav_order: 118
 <section>
 <h2><span class="num">3</span> It will not tell you whether you have gone far enough.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Sampling progress reports an upper bound learned from your own play, never the required distance">
- <rect x="20" y="36" width="840" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="72" text-anchor="start" font-size="16" fill="var(--text)">Stratum Paleas — 2 of 3, 1 to go.  341 metres from your last specimen.</text>
  <text x="46" y="102" text-anchor="start" font-size="15" fill="var(--text)">The closest I have seen Stratum accepted is 502 metres, over 4 samples.</text>
  <text x="46" y="130" text-anchor="start" font-size="14" fill="var(--text-muted)">That is an upper bound on what it needs, not the figure — the Codex entry has that.</text>
@@ -112,13 +112,13 @@ nav_order: 118
 <section>
 <h2><span class="num">4</span> A plotted route cannot contain a first footfall.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="An index only holds visited systems while a first footfall only happens where nobody has been">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A PLOTTED ROUTE</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">only holds what somebody</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">has already visited</text>
- <line x1="432" y1="86" x2="448" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>
- <line x1="448" y1="86" x2="432" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>
- <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <line x1="432" y1="86" x2="448" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="448" y1="86" x2="432" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="butt"/>
+ <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A FIRST FOOTFALL</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">only happens where</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">nobody has been</text>

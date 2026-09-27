@@ -20,39 +20,39 @@ nav_order: 205
 <section>
 <h2><span class="num">1</span> Three things are required. The rest is flavour.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="A key, a name and at least one beat are required; the opening line and the five spine questions are optional">
- <rect x="20" y="30" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">REQUIRED</text>
  <text x="225" y="100" text-anchor="middle" font-size="15" fill="var(--text)">a key — its short id</text>
  <text x="225" y="126" text-anchor="middle" font-size="15" fill="var(--text)">a name — what you call it</text>
  <text x="225" y="152" text-anchor="middle" font-size="15" fill="var(--text)">at least one beat</text>
- <rect x="460" y="30" width="400" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="30" width="400" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">OPTIONAL</text>
  <text x="660" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">the opening line</text>
  <text x="660" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">the five spine questions</text>
  <text x="660" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">a title on each beat</text>
- <rect x="20" y="200" width="840" height="46" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="200" width="840" height="46" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="230" text-anchor="middle" font-size="16" fill="var(--text)">Save stays greyed out until all three are there, and says which one is missing.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> A beat waits for one of five things. There is no sixth.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The five triggers a beat can wait for: arrive, dock, land, scan, reach a rank">
- <rect x="20" y="30" width="164" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="102" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ARRIVE</text>
  <text x="102" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a system</text>
- <rect x="196" y="30" width="164" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="196" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="278" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">DOCK</text>
  <text x="278" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a station</text>
- <rect x="372" y="30" width="164" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="372" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="454" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LAND</text>
  <text x="454" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">on a body</text>
- <rect x="548" y="30" width="164" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="548" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="630" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SCAN</text>
  <text x="630" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">a body</text>
- <rect x="724" y="30" width="136" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="724" y="30" width="136" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="792" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">RANK</text>
  <text x="792" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">reach one</text>
- <rect x="20" y="142" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="142" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="172" text-anchor="middle" font-size="16" fill="var(--text)">All five are things your journal already records, which is why they are the whole list.</text>
  <text x="440" y="198" text-anchor="middle" font-size="15" fill="var(--text-muted)">A story cannot wait for something Elite never writes down — so it is not offered.</text>
 </svg>
@@ -60,14 +60,14 @@ nav_order: 205
 <section>
 <h2><span class="num">3</span> The spine is for the core, not for you.</h2>
 <svg viewBox="0 0 880 248" role="img" aria-label="The five spine answers are given to the ship's AI so its improvised lines stay in the same story">
- <rect x="20" y="30" width="330" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="330" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="185" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THE FIVE ANSWERS</text>
  <text x="185" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">about · want · stake</text>
  <text x="185" y="116" text-anchor="middle" font-size="14" fill="var(--text-muted)">turn · what the end means</text>
  <text x="185" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">every one of them optional</text>
- <line x1="362" y1="104" x2="398" y2="104" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="362" y1="104" x2="398" y2="104" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="412,104 396,96 396,112" fill="var(--accent-muted)"/>
- <rect x="422" y="30" width="438" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="422" y="30" width="438" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="641" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THE CORE READS THEM</text>
  <text x="641" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">so when you ask it about the story,</text>
  <text x="641" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">the answer it improvises is in</text>

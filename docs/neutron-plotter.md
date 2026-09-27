@@ -21,25 +21,25 @@ nav_order: 201
 <section>
 <h2><span class="num">1</span> The galaxy map plots this too. Badly, and not very far.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="The galaxy map plots a straight line in short hops; the Neutron Plotter detours through neutron stars and reaches across the galaxy">
- <rect x="20" y="30" width="840" height="94" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="840" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="62" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">GALAXY MAP</text>
  <circle cx="240" cy="92" r="7" fill="var(--text-muted)"/>
  <circle cx="330" cy="92" r="7" fill="var(--text-muted)"/>
  <circle cx="420" cy="92" r="7" fill="var(--text-muted)"/>
  <circle cx="510" cy="92" r="7" fill="var(--text-muted)"/>
  <circle cx="600" cy="92" r="7" fill="var(--text-muted)"/>
- <line x1="240" y1="92" x2="600" y2="92" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round"/>
+ <line x1="240" y1="92" x2="600" y2="92" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="butt"/>
  <text x="730" y="88" text-anchor="middle" font-size="15" fill="var(--text-muted)">a straight line,</text>
  <text x="730" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">in short hops</text>
- <rect x="20" y="138" width="840" height="94" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="138" width="840" height="94" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="120" y="170" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">THIS ONE</text>
  <circle cx="240" cy="200" r="7" fill="var(--text-muted)"/>
  <circle cx="360" cy="176" r="10" fill="var(--accent)"/>
  <circle cx="480" cy="212" r="10" fill="var(--accent)"/>
  <circle cx="600" cy="184" r="10" fill="var(--accent)"/>
- <line x1="240" y1="200" x2="360" y2="176" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="360" y1="176" x2="480" y2="212" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="480" y1="212" x2="600" y2="184" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="round"/>
+ <line x1="240" y1="200" x2="360" y2="176" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="360" y1="176" x2="480" y2="212" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="480" y1="212" x2="600" y2="184" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
  <text x="730" y="196" text-anchor="middle" font-size="15" fill="var(--text)">detours through neutron</text>
  <text x="730" y="218" text-anchor="middle" font-size="15" fill="var(--text)">stars, and reaches</text>
  <text x="440" y="256" text-anchor="middle" font-size="15" fill="var(--text-muted)">A supercharged drive jumps about four times as far, so the longer way round is the shorter way there.</text>
@@ -48,37 +48,37 @@ nav_order: 201
 <section>
 <h2><span class="num">2</span> Efficiency is backwards from how it sounds.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="A lower efficiency number wanders further from the direct line and finishes in fewer jumps; a higher one holds the line and takes more">
- <rect x="20" y="34" width="400" height="132" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="34" width="400" height="132" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="72" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">LOWER — say 25</text>
  <text x="220" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">wanders further off the line</text>
  <text x="220" y="130" text-anchor="middle" font-size="15" fill="var(--text-muted)">finds more neutron stars</text>
  <text x="220" y="154" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">finishes in FEWER jumps</text>
- <rect x="460" y="34" width="400" height="132" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="34" width="400" height="132" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="72" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">HIGHER — say 95</text>
  <text x="660" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">holds the direct line</text>
  <text x="660" y="130" text-anchor="middle" font-size="15" fill="var(--text-muted)">passes neutron stars by</text>
  <text x="660" y="154" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">takes MORE jumps</text>
- <rect x="20" y="184" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="184" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">60 out of the box. It is not a quality dial — it is how much detour you will tolerate.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">3</span> It is a job, not a question. And the answer is the next few stops.</h2>
 <svg viewBox="0 0 880 260" role="img" aria-label="A plot is submitted and queued; a Sol to Colonia route is 131 waypoints, of which the first five are read out">
- <rect x="20" y="30" width="256" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="256" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="148" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SUBMITTED</text>
  <text x="148" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">and queued, not asked</text>
- <line x1="288" y1="78" x2="324" y2="78" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="288" y1="78" x2="324" y2="78" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="338,78 322,70 322,86" fill="var(--accent-muted)"/>
- <rect x="348" y="30" width="256" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="348" y="30" width="256" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="476" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">UP TO 90s</text>
  <text x="476" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">Sol to Colonia took 3</text>
- <line x1="616" y1="78" x2="652" y2="78" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="616" y1="78" x2="652" y2="78" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="666,78 650,70 650,86" fill="var(--accent-muted)"/>
- <rect x="676" y="30" width="184" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="676" y="30" width="184" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="768" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">131 STOPS</text>
  <text x="768" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">168 jumps</text>
- <rect x="20" y="146" width="840" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="146" width="840" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="178" text-anchor="middle" font-size="16" fill="var(--text)">Spoken, you get the totals and the next handful — which is how a route is flown anyway.</text>
  <text x="440" y="206" text-anchor="middle" font-size="15" fill="var(--text-muted)">The whole thing is kept. The Routing tab draws every waypoint, however it was plotted.</text>
 </svg>

@@ -22,25 +22,25 @@ nav_order: 5
 <section>
 <h2><span class="num">1</span> One file, every part of the app at once.</h2>
 <svg viewBox="0 0 880 292" role="img" aria-label="Eight subsystems all writing into one log file, which this reading shows">
- <rect x="20" y="24" width="196" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="24" width="196" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="118" y="52" text-anchor="middle" font-size="14" fill="var(--text-muted)">App</text>
- <rect x="234" y="24" width="196" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="24" width="196" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="332" y="52" text-anchor="middle" font-size="14" fill="var(--text-muted)">Journal</text>
- <rect x="448" y="24" width="196" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="448" y="24" width="196" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="546" y="52" text-anchor="middle" font-size="14" fill="var(--text-muted)">Voice</text>
- <rect x="662" y="24" width="198" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="662" y="24" width="198" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="761" y="52" text-anchor="middle" font-size="14" fill="var(--text-muted)">Llm</text>
- <rect x="20" y="80" width="196" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="80" width="196" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="118" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Capabilities</text>
- <rect x="234" y="80" width="196" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="80" width="196" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="332" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Settings</text>
- <rect x="448" y="80" width="196" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="448" y="80" width="196" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="546" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Vr</text>
- <rect x="662" y="80" width="198" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="662" y="80" width="198" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="761" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Input</text>
- <line x1="440" y1="132" x2="440" y2="160" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="440" y1="132" x2="440" y2="160" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="440,174 432,158 448,158" fill="var(--accent-muted)"/>
- <rect x="20" y="182" width="840" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="182" width="840" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="216" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">LOG FILE</text>
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">today's file on disk, beside the executable in data\logs — never in AppData</text>
 </svg>
@@ -49,19 +49,19 @@ nav_order: 5
 <section>
 <h2><span class="num">2</span> It answers with nothing else working.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="The log file needs no game, no model, no microphone and no headset">
- <rect x="20" y="30" width="200" height="82" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO GAME</text>
  <text x="120" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">running</text>
- <rect x="234" y="30" width="200" height="82" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="334" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO MODEL</text>
  <text x="334" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">configured</text>
- <rect x="448" y="30" width="200" height="82" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="448" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="548" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO MIC</text>
  <text x="548" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">and no headset</text>
- <rect x="662" y="30" width="198" height="82" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="662" y="30" width="198" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="761" y="66" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">STILL READS</text>
  <text x="761" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">every time</text>
- <rect x="20" y="132" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="132" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">It is a file. Nothing has to be working for it to be there and be true.</text>
  <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">This is the first reading to open when something is wrong, not the last.</text>
 </svg>
@@ -69,17 +69,17 @@ nav_order: 5
 <section>
 <h2><span class="num">3</span> Read when you open it, not tailed.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The reading is re-read on opening it, shows a working indicator, and refuses to be cleared">
- <rect x="20" y="26" width="410" height="128" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="26" width="410" height="128" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SWITCH AWAY AND BACK</text>
  <text x="225" y="94" text-anchor="middle" font-size="15" fill="var(--text-muted)">to re-read it. A log nobody is</text>
  <text x="225" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">looking at is not worth a file</text>
  <text x="225" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">read on every tick</text>
- <rect x="450" y="26" width="410" height="128" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="26" width="410" height="128" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">CLEAR IS GREYED</text>
  <text x="655" y="94" text-anchor="middle" font-size="15" fill="var(--text-muted)">this is a file on disk, and a</text>
  <text x="655" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">control that appeared to empty</text>
  <text x="655" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">it would be offering to delete it</text>
- <rect x="20" y="176" width="840" height="52" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="176" width="840" height="52" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="208" text-anchor="middle" font-size="15" fill="var(--text)">A spinner beside the picker while it reads. This is the only reading that has one, because it is the only one that waits.</text>
 </svg>
 </section>

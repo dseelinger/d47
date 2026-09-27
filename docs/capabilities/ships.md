@@ -23,22 +23,22 @@ nav_order: 112
 <section>
 <h2><span class="num">1</span> Open the Ships tab. Your fleet is already there.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="The Ships tab">
- <rect x="20" y="16" width="840" height="264" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="264" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Ships</text>
 
- <rect x="44" y="78" width="256" height="152" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
+ <rect x="44" y="78" width="256" height="152" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
  <path d="M78 130 L214 120 L266 148 L214 166 L112 168 Z" fill="var(--text-muted)"/>
  <path d="M112 168 L214 166 L196 186 L128 184 Z" fill="var(--border)"/>
  <text x="60" y="206" font-size="15" fill="var(--text)">Ptarmigan (Anaconda)</text>
  <text x="60" y="224" font-size="13" fill="var(--text-muted)">Solati</text>
 
- <rect x="312" y="78" width="256" height="152" rx="6" fill="var(--surface)"/>
+ <rect x="312" y="78" width="256" height="152" fill="var(--surface)"/>
  <path d="M346 134 L462 122 L512 146 L462 164 L378 168 Z" fill="var(--text-muted)"/>
  <text x="328" y="206" font-size="15" fill="var(--text)">Sparrow (Krait Mk II)</text>
  <text x="328" y="224" font-size="13" fill="var(--text-muted)">Jameson Memorial</text>
 
- <rect x="580" y="78" width="256" height="152" rx="6" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="2" opacity="0.55"/>
+ <rect x="580" y="78" width="256" height="152" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="2" opacity="0.55"/>
  <path d="M614 132 L730 122 L778 146 L730 164 L646 168 Z" fill="var(--text-muted)" opacity="0.55"/>
  <text x="596" y="206" font-size="15" fill="var(--text-muted)">Python</text>
  <text x="596" y="224" font-size="13" fill="var(--text-muted)">wanted</text>
@@ -49,15 +49,15 @@ nav_order: 112
 <section>
 <h2><span class="num">2</span> Open one and change a module.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Ptarmigan">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Ptarmigan</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Power plant</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">7A Guardian Hybrid</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">FSD</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">6A — dirty drive grade 5</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Jump range</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">62.4 ly</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">The gauges move as you change things, so you see the cost before you commit.</text>
@@ -66,7 +66,7 @@ nav_order: 112
 <section>
 <h2><span class="num">3</span> Accept the plan, and it lands on your checklist.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what do I still need for the Ptarmigan</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">The shortfall goes to the Gap page with everything else.</text>
@@ -76,7 +76,7 @@ nav_order: 112
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite never writes a loadout after engineering.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite never writes a loadout after engineering.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 works your modifications out from the modules themselves, because the game does not tell it.</text>
 </svg>
@@ -96,15 +96,15 @@ nav_order: 112
 <section>
 <h2><span class="num">1</span> The build owns what. The checklist owns when.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="A build and a checklist are separate, and nothing crosses between them unasked">
- <rect x="20" y="20" width="300" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="300" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="170" y="62" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE BUILD</text>
  <text x="170" y="92" text-anchor="middle" font-size="16" fill="var(--text-muted)">what a ship should be</text>
  <text x="170" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">one entry per slot</text>
  <text x="440" y="62" text-anchor="middle" font-size="15" fill="var(--text-muted)">you promote it</text>
- <line x1="336" y1="80" x2="530" y2="80" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="336" y1="80" x2="530" y2="80" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="544,80 528,72 528,88" fill="var(--accent-muted)"/>
  <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">and accept it</text>
- <rect x="560" y="20" width="300" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="560" y="20" width="300" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="710" y="62" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE CHECKLIST</text>
  <text x="710" y="92" text-anchor="middle" font-size="16" fill="var(--text-muted)">what you are doing next</text>
  <text x="710" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">in the order you put it in</text>
@@ -115,19 +115,19 @@ nav_order: 112
 <section>
 <h2><span class="num">2</span> Changing your mind about a slot is an edit.</h2>
 <svg viewBox="0 0 880 272" role="img" aria-label="Replacing a module in a slot edits that slot rather than deleting it and adding another">
- <rect x="20" y="40" width="300" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="300" height="92" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">HARDPOINT 3</text>
  <text x="170" y="108" text-anchor="middle" font-size="16" fill="var(--text-muted)">long range pulse laser</text>
  <text x="448" y="66" text-anchor="middle" font-size="15" fill="var(--text-muted)">you change your mind</text>
- <line x1="336" y1="86" x2="530" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="336" y1="86" x2="530" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="544,86 528,78 528,94" fill="var(--accent-muted)"/>
- <rect x="560" y="40" width="300" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="560" y="40" width="300" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="710" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">HARDPOINT 3</text>
  <text x="710" y="108" text-anchor="middle" font-size="16" fill="var(--text-muted)">overcharged multi cannon</text>
- <rect x="20" y="164" width="410" height="76" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="164" width="410" height="76" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The same slot, edited</text>
  <text x="225" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">it keeps everything it had been through</text>
- <rect x="450" y="164" width="410" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="164" width="410" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">Not a delete and an add</text>
  <text x="655" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">which used to bury the history beside it</text>
  <text x="440" y="266" text-anchor="middle" font-size="16" fill="var(--text-muted)">A slot holds one plan, because a slot holds one module.</text>
@@ -138,20 +138,20 @@ nav_order: 112
 <svg viewBox="0 0 880 250" role="img" aria-label="An intended hull becomes owned and the plan is pointed at it automatically">
  <text x="300" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">you buy one</text>
  <text x="610" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">D47 notices</text>
- <rect x="20" y="40" width="250" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="250" height="92" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">CORSAIR</text>
  <text x="145" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">intended, not bought yet</text>
- <line x1="282" y1="86" x2="304" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="86" x2="304" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="318,86 302,78 302,94" fill="var(--accent-muted)"/>
- <rect x="330" y="40" width="250" height="92" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="330" y="40" width="250" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="455" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">CORSAIR</text>
  <text x="455" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">yours now</text>
- <line x1="592" y1="86" x2="614" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="592" y1="86" x2="614" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="628,86 612,78 612,94" fill="var(--accent-muted)"/>
- <rect x="640" y="40" width="220" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="640" y="40" width="220" height="92" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="750" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">THE PLAN</text>
  <text x="750" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">points at it</text>
- <rect x="20" y="158" width="840" height="56" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="158" width="840" height="56" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="193" text-anchor="middle" font-size="17" fill="var(--text)">“That Corsair is yours now, and the plan you had for one is pointed at it.”</text>
  <text x="440" y="244" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only when exactly one intended build matches. Two planned and one bought is a question.</text>
 </svg>

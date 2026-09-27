@@ -23,15 +23,15 @@ nav_order: 121
 <section>
 <h2><span class="num">1</span> Pick a core.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Persona">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Core</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">one of eleven</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Ship name</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">what you call it</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Personality</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Eleven Guardian cores. Each one behaves as though the other ten do not exist.</text>
@@ -40,12 +40,12 @@ nav_order: 121
 <section>
 <h2><span class="num">2</span> Bind one to a ship, if you want it to follow the hull.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Persona">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">The ship this core flies</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Anaconda — Ptarmigan</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Keep the name across a core change</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">Set on the Settings tab, once per ship. D47 never works one out by watching you.</text>
@@ -54,7 +54,7 @@ nav_order: 121
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="The AI cannot change its own core.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot change its own core.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Nothing the model can call reaches these rows. It can tell you which core is running, and that is all.</text>
 </svg>
@@ -74,24 +74,24 @@ nav_order: 121
 <section>
 <h2><span class="num">1</span> Eleven separate characters, not one with eleven costumes.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Five of the eleven cores, each with its own transcript, all reading one shared instrument panel">
- <rect x="20" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="156" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="98" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WARDEN</text>
  <text x="98" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">stewardship</text>
- <rect x="191" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="191" y="30" width="156" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="269" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">CORA</text>
  <text x="269" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">command</text>
- <rect x="362" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="362" y="30" width="156" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SENTINEL</text>
  <text x="440" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">readiness</text>
- <rect x="533" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="533" y="30" width="156" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="611" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">CHART</text>
  <text x="611" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">correction</text>
- <rect x="704" y="30" width="156" height="64" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="704" y="30" width="156" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="782" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">SEVEN MORE</text>
  <text x="782" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">each with its own quirk</text>
  <text x="440" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">Each keeps its own transcript. Come back to one and it picks up where it left off.</text>
  <text x="440" y="154" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">None of them knows the others are aboard.</text>
- <rect x="20" y="176" width="840" height="56" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="176" width="840" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="200" text-anchor="middle" font-size="15" fill="var(--text-muted)">THE ONE THING THEY ALL SEE</text>
  <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text)">your ship — position, hull, cargo, credits, jumps</text>
 </svg>
@@ -100,21 +100,21 @@ nav_order: 121
 <h2><span class="num">2</span> A ship has its own AI core.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Boarding a bound ship brings its core aboard without remarking on it">
  <text x="155" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">YOU BOARD</text>
- <rect x="20" y="40" width="270" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="80" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">Bad Idea</text>
  <text x="155" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">you bound it to Sentinel</text>
- <line x1="302" y1="90" x2="344" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="302" y1="90" x2="344" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="358,90 342,82 342,98" fill="var(--accent-muted)"/>
- <rect x="370" y="40" width="230" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="370" y="40" width="230" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="485" y="80" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">SENTINEL</text>
  <text x="485" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">comes aboard</text>
- <line x1="612" y1="90" x2="654" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="612" y1="90" x2="654" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="668,90 652,82 652,98" fill="var(--accent-muted)"/>
- <rect x="680" y="40" width="180" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="680" y="40" width="180" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="770" y="76" text-anchor="middle" font-size="16" fill="var(--text)">and says</text>
  <text x="770" y="100" text-anchor="middle" font-size="16" fill="var(--text)">nothing about it</text>
  <text x="770" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">you already asked</text>
- <rect x="20" y="166" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="166" width="840" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="199" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nothing is bound until you say so.</text>
  <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">You set it on the Settings tab, once per ship, and Directive 47 keeps it.</text>
 </svg>
@@ -122,12 +122,12 @@ nav_order: 121
 <section>
 <h2><span class="num">3</span> It only remarks on an absence worth remarking on.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="A core away under a month says nothing; one away a month or more is handed what changed">
- <rect x="20" y="44" width="400" height="176" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="44" width="400" height="176" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">UNDER A MONTH</text>
  <text x="220" y="120" text-anchor="middle" font-size="17" fill="var(--text)">it says nothing at all</text>
  <text x="220" y="156" text-anchor="middle" font-size="15" fill="var(--text-muted)">coming back is the normal case,</text>
  <text x="220" y="184" text-anchor="middle" font-size="15" fill="var(--text-muted)">so it is not an event</text>
- <rect x="460" y="44" width="400" height="176" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="44" width="400" height="176" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">A MONTH OR MORE</text>
  <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">it is handed what changed while it was away</text>
  <text x="660" y="148" text-anchor="middle" font-size="16" fill="var(--text)">14 hyperspace jumps</text>
@@ -139,21 +139,21 @@ nav_order: 121
 <section>
 <h2><span class="num">4</span> Each core is given a voice that suits it.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="A language model reads a core's description against the available voices and pairs them once">
- <rect x="20" y="36" width="210" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="210" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="125" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">CORA</text>
  <text x="125" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">clipped, precise, a woman</text>
- <line x1="242" y1="84" x2="284" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="242" y1="84" x2="284" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="298,84 282,76 282,92" fill="var(--accent-muted)"/>
- <rect x="310" y="36" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="310" y="36" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="435" y="70" text-anchor="middle" font-size="16" fill="var(--text)">the model reads that</text>
  <text x="435" y="94" text-anchor="middle" font-size="16" fill="var(--text)">against your voice list</text>
  <text x="435" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">a judgement, not a guess</text>
- <line x1="572" y1="84" x2="614" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="572" y1="84" x2="614" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="628,84 612,76 612,92" fill="var(--accent-muted)"/>
- <rect x="640" y="36" width="220" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="640" y="36" width="220" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="750" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">A VOICE</text>
  <text x="750" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">chosen once, then kept</text>
- <rect x="20" y="156" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="156" width="840" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">With no language model, or no voices to choose from, nothing is chosen and the core keeps the voice it has.</text>
 </svg>
 <p class="body">Gender is <em>told</em> to the model rather than left to be inferred, because a voice of the wrong gender is not a near miss — it is a different character reading the lines.</p>

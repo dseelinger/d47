@@ -23,7 +23,7 @@ nav_order: 140
 <section>
 <h2><span class="num">1</span> Ask what time it is, in either world.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what time is it</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what's the date" — "what day is it"</text>
@@ -45,12 +45,12 @@ nav_order: 140
 <section>
 <h2><span class="num">1</span> Two dates. One instant.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The same moment written twice, 1286 years apart">
- <rect x="30" y="40" width="360" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="30" y="40" width="360" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="210" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">17 Aug 3312</text>
  <text x="210" y="116" text-anchor="middle" font-size="16" fill="var(--text-muted)">out there</text>
  <text x="440" y="86" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">+1286</text>
  <text x="440" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">years</text>
- <rect x="490" y="40" width="360" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="490" y="40" width="360" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="670" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">17 Aug 2026</text>
  <text x="670" y="116" text-anchor="middle" font-size="16" fill="var(--text-muted)">where you are</text>
  <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">One moment presented twice, not two clocks.</text>

@@ -23,7 +23,7 @@ nav_order: 107
 <section>
 <h2><span class="num">1</span> Ask about a hull or a module by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what is the Python II like</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"how much does a 6A power plant draw" — "compare the Krait and the Python"</text>
@@ -33,15 +33,15 @@ nav_order: 107
 <section>
 <h2><span class="num">2</span> Read the figure and where it came from.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Python II">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Python II</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Hull mass</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">350 t</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Hardpoints</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">2 large, 3 medium</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Where the figures came from</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">shipped tables, generated</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Every table records its provenance, so a wrong figure can be traced rather than argued about.</text>
@@ -50,7 +50,7 @@ nav_order: 107
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="These are stock figures.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">These are stock figures.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">What your own ship does is on the Ships page, where your modules and engineering are taken into account.</text>
 </svg>
@@ -70,7 +70,7 @@ nav_order: 107
 <section>
 <h2><span class="num">1</span> The order of the answer is part of the answer.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="A ship specification leads with pad size, gives slots as sizes, and quotes the hull cost alone">
- <rect x="20" y="30" width="840" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="840" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="66" text-anchor="start" font-size="16" fill="var(--accent)">Python, built by Faulcon DeLacy. Needs a medium pad.</text>
  <text x="46" y="98" text-anchor="start" font-size="16" fill="var(--text)">Speed 230 m/s, boosting to 300.</text>
  <text x="46" y="128" text-anchor="start" font-size="16" fill="var(--text)">Hardpoints: 3 × size 3, 2 × size 2.</text>
@@ -83,19 +83,19 @@ nav_order: 107
 <section>
 <h2><span class="num">2</span> The table is derived, and the join is the check.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Two community sources are joined on Frontier's own ids to build the shipped specification table">
- <rect x="20" y="44" width="280" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="44" width="280" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="160" y="84" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">FDevIDs</text>
  <text x="160" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">the naming authority</text>
  <text x="160" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">no performance figures</text>
- <line x1="312" y1="96" x2="326" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="312" y1="96" x2="326" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="340,96 324,88 324,104" fill="var(--accent-muted)"/>
- <rect x="340" y="44" width="200" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="340" y="44" width="200" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">JOINED ON</text>
  <text x="440" y="102" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FRONTIER’S IDS</text>
  <text x="440" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">the shipped table</text>
- <line x1="568" y1="96" x2="554" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="568" y1="96" x2="554" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="540,96 556,88 556,104" fill="var(--accent-muted)"/>
- <rect x="580" y="44" width="280" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="580" y="44" width="280" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="720" y="84" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">coriolis-data</text>
  <text x="720" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">speed, armour, mass, power</text>
  <text x="720" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">the figures nobody can eyeball</text>
@@ -107,15 +107,15 @@ nav_order: 107
 <section>
 <h2><span class="num">3</span> Three ways of not knowing, kept apart.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="A ship it knows of without figures, a near miss, and a name that is nothing get three different answers">
- <rect x="20" y="36" width="270" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="270" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="155" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">A REAL SHIP, NO FIGURES</text>
  <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">newer than the table</text>
  <text x="155" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">and it says exactly that</text>
  <text x="155" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">it exists; the numbers do not</text>
- <rect x="305" y="36" width="270" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="36" width="270" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">NEARLY A SHIP</text>
  <text x="440" y="112" text-anchor="middle" font-size="15" fill="var(--text)">“did you mean Anaconda?”</text>
- <rect x="590" y="36" width="270" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="36" width="270" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">NOT A SHIP AT ALL</text>
  <text x="725" y="112" text-anchor="middle" font-size="15" fill="var(--text)">it says so, plainly</text>
  <text x="440" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A table that is stale and one that is wrong are different things.</text>

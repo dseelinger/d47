@@ -23,7 +23,7 @@ nav_order: 104
 <section>
 <h2><span class="num">1</span> Own a fleet carrier and let it write a status once.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">carrier report</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Nothing to set up. Open the carrier management screen once and D47 has the figures.</text>
@@ -33,7 +33,7 @@ nav_order: 104
 <section>
 <h2><span class="num">2</span> Ask any of the ways in.</h2>
 <svg viewBox="0 0 880 190" role="img" aria-label="Several phrasings that all reach the same report">
- <rect x="20" y="20" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">how is my carrier</text>
  <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">carrier report · carrier status · carrier services · carrier fuel</text>
  <text x="20" y="166" font-size="16" fill="var(--text-muted)">Any of these reaches the same tool with no model in the loop.</text>
@@ -42,7 +42,7 @@ nav_order: 104
 <section>
 <h2><span class="num">3</span> Say "Captain" to talk to the carrier's captain.</h2>
 <svg viewBox="0 0 880 212" role="img" aria-label="A question opened with Captain, answered by the carrier's captain until the line is ended">
- <rect x="20" y="20" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">Captain, how much fuel have we got</text>
  <text x="836" y="53" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="112" font-size="16" fill="var(--text)">The captain answers, and answers the next question too, until you say "that's all".</text>
@@ -53,7 +53,7 @@ nav_order: 104
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Figures are only as fresh as the last carrier management screen read.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Figures are only as fresh as the last time you opened the screen.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Fuel, cargo and balance carry the date they were reported, because the carrier keeps working while you are away.</text>
 </svg>
@@ -73,11 +73,11 @@ nav_order: 104
 <section>
 <h2><span class="num">1</span> "Where is my carrier" and "how is my carrier" are different questions.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="get_fleet answers position, describe_carrier answers everything else">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">"where is my carrier"</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">system, and when</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">that was last seen</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">"how is my carrier"</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">fuel, cargo, balance,</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">jump range, services</text>
@@ -87,7 +87,7 @@ nav_order: 104
 <section>
 <h2><span class="num">2</span> The figures come from one journal event, and it only writes when you look.</h2>
 <svg viewBox="0 0 880 200" role="img" aria-label="CarrierStats is only written when the Commander opens the carrier management screen">
- <rect x="20" y="36" width="840" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">CarrierStats</text>
  <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">fuel · cargo · balance · jump range · docking access · services</text>
  <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Elite writes it when the carrier management screen opens, not continuously.</text>
@@ -97,7 +97,7 @@ nav_order: 104
 <section>
 <h2><span class="num">3</span> No carrier known is not the same as no carrier.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="An unseen carrier is reported as unseen, never as owning none">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">"I have not seen you own a fleet carrier this session."</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Not "you have no carrier" — D47 only knows what the journal has shown it.</text>
 </svg>
@@ -105,10 +105,10 @@ nav_order: 104
 <section>
 <h2><span class="num">4</span> The captain keeps a separate conversation, and the ship AI overhears it.</h2>
 <svg viewBox="0 0 880 200" role="img" aria-label="The captain answers from their own brief and transcript; the ship AI is told the exchange as overheard">
- <rect x="20" y="36" width="400" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="400" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Captain</text>
  <text x="220" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">own brief, own transcript</text>
- <rect x="460" y="36" width="400" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="36" width="400" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ship AI</text>
  <text x="660" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">hears each exchange as overheard</text>
  <text x="440" y="176" text-anchor="middle" font-size="16" fill="var(--text)">The captain never answers as the ship AI, and the ship AI can still refer to what was said.</text>

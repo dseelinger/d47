@@ -23,21 +23,21 @@ nav_order: 123
 <section>
 <h2><span class="num">1</span> Open the Audio mixer and move the five sliders.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="The five volume sliders: speech, cues, music, ambience and alerts">
- <rect x="20" y="16" width="840" height="236" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="236" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Audio mixer</text>
  <text x="44" y="98" font-size="16" fill="var(--text)">Speech</text>
- <rect x="180" y="86" width="560" height="8" rx="4" fill="var(--border)"/>
- <rect x="180" y="86" width="440" height="8" rx="4" fill="var(--accent)"/>
+ <rect x="180" y="86" width="560" height="8" fill="var(--border)"/>
+ <rect x="180" y="86" width="440" height="8" fill="var(--accent)"/>
  <circle cx="620" cy="90" r="11" fill="var(--accent)"/>
  <text x="770" y="98" font-size="15" fill="var(--text-muted)">80%</text>
  <text x="44" y="142" font-size="16" fill="var(--text)">Cues</text>
- <rect x="180" y="130" width="560" height="8" rx="4" fill="var(--border)"/>
- <rect x="180" y="130" width="336" height="8" rx="4" fill="var(--accent)"/>
+ <rect x="180" y="130" width="560" height="8" fill="var(--border)"/>
+ <rect x="180" y="130" width="336" height="8" fill="var(--accent)"/>
  <circle cx="516" cy="134" r="11" fill="var(--accent)"/>
  <text x="770" y="142" font-size="15" fill="var(--text-muted)">60%</text>
  <text x="44" y="186" font-size="16" fill="var(--text)">Music</text>
- <rect x="180" y="174" width="560" height="8" rx="4" fill="var(--border)"/>
- <rect x="180" y="174" width="224" height="8" rx="4" fill="var(--accent)"/>
+ <rect x="180" y="174" width="560" height="8" fill="var(--border)"/>
+ <rect x="180" y="174" width="224" height="8" fill="var(--accent)"/>
  <circle cx="404" cy="178" r="11" fill="var(--accent)"/>
  <text x="770" y="186" font-size="15" fill="var(--text-muted)">40%</text>
  <text x="44" y="230" font-size="15" fill="var(--text-muted)">Ambience and Alerts sit below these two.</text>
@@ -46,7 +46,7 @@ nav_order: 123
 <section>
 <h2><span class="num">2</span> Set how far everything else drops while D47 talks.</h2>
 <svg viewBox="0 0 880 156" role="img" aria-label="The ducking row, which lowers every other category while Directive 47 speaks">
- <rect x="20" y="20" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">Duck everything else while D47 speaks</text>
  <text x="836" y="57" text-anchor="end" font-size="16" fill="var(--accent)">-12 dB</text>
  <text x="20" y="124" font-size="16" fill="var(--text-muted)">Move a slider while something is playing and you hear the change as you make it.</text>
@@ -56,7 +56,7 @@ nav_order: 123
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="The mixer is unreachable by the model, so asking it to turn something down does nothing">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot touch the mixer.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Asking it to turn itself down does nothing. Move the slider, or use your Windows mixer.</text>
 </svg>
@@ -76,23 +76,23 @@ nav_order: 123
 <section>
 <h2><span class="num">1</span> Five categories, and everything audible is one of them.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Speech, alerts, sound cues, the thinking bed and ambient music, each with its own level and mute">
- <rect x="21" y="40" width="158" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="21" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="100" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SPEECH</text>
  <text x="100" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">everything it</text>
  <text x="100" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">says out loud</text>
- <rect x="191" y="40" width="158" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="191" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="270" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">ALERTS</text>
  <text x="270" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">the one thing that</text>
  <text x="270" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">cuts in mid-sentence</text>
- <rect x="361" y="40" width="158" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="361" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SOUND CUES</text>
  <text x="440" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">listening, thinking,</text>
  <text x="440" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">answering</text>
- <rect x="531" y="40" width="158" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="531" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="610" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">THINKING BED</text>
  <text x="610" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">the loop under</text>
  <text x="610" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">a running turn</text>
- <rect x="701" y="40" width="158" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="701" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="780" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">AMBIENCE</text>
  <text x="780" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">follows what</text>
  <text x="780" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">you are doing</text>
@@ -104,11 +104,11 @@ nav_order: 123
 <section>
 <h2><span class="num">2</span> Ducking is a fraction, not a second level.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="The duck value is a fraction of a category's own level, so lowering the level lowers its ducked form too">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">DUCK IS A FRACTION</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">of that category’s own level</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">not a level of its own</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SO TURNING MUSIC DOWN</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">takes its ducked form</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">down with it</text>
@@ -120,18 +120,18 @@ nav_order: 123
 <section>
 <h2><span class="num">3</span> Ambience follows the music Elite is playing.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Elite's music track picks the folder; an empty folder falls back to the Status.json situation, then general">
- <rect x="21" y="40" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="21" y="40" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="146" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">Elite's music track</text>
  <text x="146" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">combat-dogfight, galaxy-map…</text>
- <rect x="315" y="40" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="315" y="40" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">where you are</text>
  <text x="440" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">docked, supercruise, on-foot…</text>
- <rect x="609" y="40" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="609" y="40" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="734" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">general</text>
  <text x="734" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the last fallback</text>
  <text x="293" y="90" text-anchor="middle" font-size="18" fill="var(--text-muted)">→</text>
  <text x="587" y="90" text-anchor="middle" font-size="18" fill="var(--text-muted)">→</text>
- <rect x="20" y="150" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2.5"/>
+ <rect x="20" y="150" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2.5"/>
  <text x="440" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">an empty folder changes nothing</text>
  <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">Set Elite's music volume to zero (Options, Audio) to hear yours instead of the game's.</text>
 </svg>
@@ -140,11 +140,11 @@ nav_order: 123
 <section>
 <h2><span class="num">4</span> No tool sets a level or a mute.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="The model cannot lower Directive 47's own voice or the danger callouts, though you still can">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">IT CANNOT TURN DOWN</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">its own voice</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">or the danger callouts</text>
- <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOU STILL CAN</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">by voice, through the router</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">and from the Settings tab</text>

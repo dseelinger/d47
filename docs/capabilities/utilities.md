@@ -23,7 +23,7 @@ nav_order: 141
 <section>
 <h2><span class="num">1</span> Set a timer, and give it a name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">set a timer for twenty minutes called fuel scoop</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">When it goes off it says the name rather than beeping.</text>
@@ -33,7 +33,7 @@ nav_order: 141
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Timers live with D47, not with Elite.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Timers live with D47, not with Elite.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Close D47 and a running timer goes with it. They are for this session, not for next week.</text>
 </svg>
@@ -53,20 +53,20 @@ nav_order: 141
 <section>
 <h2><span class="num">1</span> A timer is a stretch. An alarm is a moment.</h2>
 <svg viewBox="0 0 880 288" role="img" aria-label="Timers measure a stretch and do not survive a restart; alarms name a moment and do">
- <rect x="20" y="20" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="410" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="62" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">TIMER</text>
  <text x="225" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">forty minutes for the mining run</text>
- <line x1="70" y1="122" x2="380" y2="122" stroke="var(--accent-muted)" stroke-width="6" stroke-linecap="round"/>
+ <line x1="70" y1="122" x2="380" y2="122" stroke="var(--accent-muted)" stroke-width="6" stroke-linecap="butt"/>
  <text x="225" y="152" text-anchor="middle" font-size="16" fill="var(--text-muted)">a stretch of time</text>
- <rect x="450" y="20" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="20" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="62" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">ALARM</text>
  <text x="655" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">seven in the morning</text>
- <line x1="500" y1="122" x2="810" y2="122" stroke="var(--border)" stroke-width="6" stroke-linecap="round"/>
+ <line x1="500" y1="122" x2="810" y2="122" stroke="var(--border)" stroke-width="6" stroke-linecap="butt"/>
  <circle cx="700" cy="122" r="11" fill="var(--accent)"/>
  <text x="655" y="152" text-anchor="middle" font-size="16" fill="var(--text-muted)">a single moment</text>
- <rect x="20" y="196" width="410" height="58" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="196" width="410" height="58" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="232" text-anchor="middle" font-size="17" fill="var(--text-muted)">gone if D47 restarts</text>
- <rect x="450" y="196" width="410" height="58" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="196" width="410" height="58" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="232" text-anchor="middle" font-size="17" fill="var(--accent)">survives a restart</text>
  <text x="440" y="282" text-anchor="middle" font-size="16" fill="var(--text-muted)">Half of forty minutes through a crash is a question nobody can answer, so it is not asked.</text>
 </svg>
@@ -74,12 +74,12 @@ nav_order: 141
 <section>
 <h2><span class="num">2</span> One it could not sound, it owns up to.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="An alarm that came due while D47 was closed is reported at the next start rather than sounded late">
- <rect x="20" y="26" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="64" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">07:00</text>
  <text x="145" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">due, and D47 was closed</text>
- <line x1="282" y1="69" x2="308" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="69" x2="308" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="322,69 306,61 306,77" fill="var(--accent-muted)"/>
- <rect x="334" y="26" width="526" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="334" y="26" width="526" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="597" y="62" text-anchor="middle" font-size="17" fill="var(--text)">“That alarm was due at 07:00 and I was not running.</text>
  <text x="597" y="88" text-anchor="middle" font-size="17" fill="var(--text)">I have not sounded it since.”</text>
  <text x="440" y="164" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Told at the next start, with when it was due.</text>

@@ -23,12 +23,12 @@ nav_order: 138
 <section>
 <h2><span class="num">1</span> Turn on key injection, then write the macro.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Macros">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Macros</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Name</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">docking prep</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Steps</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">gear down, lights on, hardpoints away</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">A macro is your own named list of the same actions D47 can already take.</text>
@@ -37,7 +37,7 @@ nav_order: 138
 <section>
 <h2><span class="num">2</span> Say the name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">docking prep</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">The name is the whole command. Nothing else has to be said around it.</text>
@@ -47,7 +47,7 @@ nav_order: 138
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A macro is only as good as your Elite bindings.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A macro is only as good as your Elite bindings.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Every step presses your own key. A step whose action is unbound in Elite does nothing at all.</text>
 </svg>
@@ -67,11 +67,11 @@ nav_order: 138
 <section>
 <h2><span class="num">1</span> You write them down, not out loud.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Every other capability has a fixed vocabulary, but composing a new sequence does not, so macros are authored in the panel or the file">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">EVERYTHING ELSE</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">has a fixed list of words</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">behind it</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A NEW SEQUENCE</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">does not, and never can</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">so you author it instead</text>
@@ -82,13 +82,13 @@ nav_order: 138
 <section>
 <h2><span class="num">2</span> It stops before it starts.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Every step is checked before any is sent, so a macro with an unreachable step does not run at all">
- <rect x="20" y="40" width="190" height="70" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="190" height="70" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="115" y="82" text-anchor="middle" font-size="15" fill="var(--text)">gear on</text>
- <rect x="230" y="40" width="190" height="70" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="230" y="40" width="190" height="70" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="325" y="82" text-anchor="middle" font-size="15" fill="var(--text)">lights on</text>
- <rect x="440" y="40" width="190" height="70" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="440" y="40" width="190" height="70" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="535" y="82" text-anchor="middle" font-size="15" fill="var(--text)">cargo scoop on</text>
- <rect x="650" y="40" width="190" height="70" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="650" y="40" width="190" height="70" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="745" y="74" text-anchor="middle" font-size="15" font-weight="700" fill="var(--danger)">hardpoints</text>
  <text x="745" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">on your stick</text>
  <text x="440" y="156" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So none of them is sent.</text>
@@ -99,15 +99,15 @@ nav_order: 138
 <section>
 <h2><span class="num">3</span> A macro can only say what you could already say.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Macros are limited to existing actions, exclude weapons, and cannot take a name that already means something">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">ONLY WHAT IT ALREADY HAS</text>
  <text x="220" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">the same list “gear down” comes from</text>
  <text x="220" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">it cannot express a new key</text>
- <rect x="460" y="40" width="190" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="190" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="555" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">NO WEAPONS</text>
  <text x="555" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">authored text is not</text>
  <text x="555" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">a way around that</text>
- <rect x="670" y="40" width="190" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="670" y="40" width="190" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="765" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">NO TAKING</text>
  <text x="765" y="94" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A USED NAME</text>
  <text x="765" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">“gear down” is refused</text>
@@ -117,7 +117,7 @@ nav_order: 138
 <section>
 <h2><span class="num">4</span> A bad one is refused by name, with the reason.</h2>
 <svg viewBox="0 0 880 214" role="img" aria-label="A macro naming an action that does not exist is reported by name rather than silently dropped">
- <rect x="20" y="36" width="840" height="64" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="64" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="46" y="76" text-anchor="start" font-size="16" fill="var(--danger)">Refused: “combat” uses an action D47 does not have: shields_up.</text>
  <text x="440" y="142" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">One bad macro does not cost you the others.</text>
  <text x="440" y="176" text-anchor="middle" font-size="15" fill="var(--text-muted)">The rest of the file still loads — a silent drop would leave you saying a phrase into the dark.</text>

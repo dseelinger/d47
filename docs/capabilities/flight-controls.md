@@ -23,12 +23,12 @@ nav_order: 130
 <section>
 <h2><span class="num">1</span> Turn on the master switch.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Flight and navigation">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Flight and navigation</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Let a HOTAS switch operate the ship</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">off</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">Off out of the box. The AI cannot turn this on for you.</text>
@@ -37,7 +37,7 @@ nav_order: 130
 <section>
 <h2><span class="num">2</span> Say what you want the ship to do.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">gear up</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"lights on" — "hardpoints out" — "scoop away" — "silent running"</text>
@@ -47,7 +47,7 @@ nav_order: 130
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite must be the window in front.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite must be the window in front.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Keys are never sent into another window. Alt-tab away and nothing is pressed at all.</text>
 </svg>
@@ -67,17 +67,17 @@ nav_order: 130
 <section>
 <h2><span class="num">1</span> It presses your keys, not its own.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Directive 47 reads the bindings you already use and sends those keys to Elite">
- <rect x="20" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR BINDINGS</text>
  <text x="145" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">the keys you already use</text>
- <line x1="282" y1="94" x2="318" y2="94" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="94" x2="318" y2="94" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,94 316,86 316,102" fill="var(--accent-muted)"/>
- <rect x="345" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="345" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="470" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT SENDS THOSE</text>
  <text x="470" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">“gear down” presses yours</text>
- <line x1="607" y1="94" x2="643" y2="94" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="607" y1="94" x2="643" y2="94" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="657,94 641,86 641,102" fill="var(--accent-muted)"/>
- <rect x="670" y="44" width="190" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="670" y="44" width="190" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="765" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ELITE</text>
  <text x="765" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">does the thing</text>
  <text x="440" y="190" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Directive 47 has no keys of its own.</text>
@@ -87,11 +87,11 @@ nav_order: 130
 <section>
 <h2><span class="num">2</span> Two switches stand between it and your keyboard.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Key pressing is off by default and unreachable by the AI, and keys go out only while Elite is in front">
- <rect x="20" y="36" width="410" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="410" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LET DIRECTIVE 47 PRESS KEYS</text>
  <text x="225" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">off until you switch it on</text>
  <text x="225" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">panel, hotkey or voice — never the AI</text>
- <rect x="460" y="36" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="36" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">AND ONLY WHILE ELITE IS IN FRONT</text>
  <text x="660" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">alt-tab mid-command and the rest</text>
  <text x="660" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">is dropped, not typed into a browser</text>
@@ -102,11 +102,11 @@ nav_order: 130
 <section>
 <h2><span class="num">3</span> When it says no, it says which no.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="An action can be inert in the current mode, or bound to a joystick with no key to press">
- <rect x="20" y="40" width="410" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="410" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">IT DOES NOTHING IN THIS MODE</text>
  <text x="225" y="110" text-anchor="middle" font-size="15" fill="var(--text)">“Landing gear does nothing</text>
  <text x="225" y="134" text-anchor="middle" font-size="15" fill="var(--text)">while you are in supercruise.”</text>
- <rect x="460" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">IT IS ON YOUR JOYSTICK</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">“Bind it to a key or a mouse</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">button and I can.”</text>
@@ -118,11 +118,11 @@ nav_order: 130
 <section>
 <h2><span class="num">4</span> Your weapons are deliberately not on the list.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="Everything reachable is listed, and firing weapons is excluded on purpose">
- <rect x="20" y="40" width="520" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="520" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="280" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">WHAT IT CAN REACH</text>
  <text x="280" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">gear · lights · scoop · hardpoints · FSD</text>
  <text x="280" y="132" text-anchor="middle" font-size="15" fill="var(--text-muted)">supercruise · jump · flight assist · boost</text>
- <rect x="580" y="40" width="280" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="580" y="40" width="280" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="720" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--danger)">NOT YOUR WEAPONS</text>
  <text x="720" y="116" text-anchor="middle" font-size="14" fill="var(--text-muted)">deliberately, and for good</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads text from the galaxy that anyone can write.</text>

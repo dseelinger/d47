@@ -23,12 +23,12 @@ nav_order: 124
 <section>
 <h2><span class="num">1</span> Pick a microphone and a speech model.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Listening">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Listening</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Microphone</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text-muted)">whatever Windows is using</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Speech model</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">small.en — downloaded once</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">The model is a download. Nothing is transcribed until one is on disk.</text>
@@ -37,12 +37,12 @@ nav_order: 124
 <section>
 <h2><span class="num">2</span> Hold push-to-talk and speak.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Push-to-talk">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Push-to-talk</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">RightShift</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Cancel</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+Alt+X</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">Bind a key, a stick button, or one of each. Cancel is the row underneath.</text>
@@ -51,7 +51,7 @@ nav_order: 124
 <section>
 <h2><span class="num">3</span> Check it heard you.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">can you hear me</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reports the device, the level and what it last transcribed.</text>
@@ -61,19 +61,19 @@ nav_order: 124
 <section>
 <h2><span class="num">4</span> Spell a value onto a keyboard.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Saying alpha bravo seven done onto a drawn keyboard">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">System name</text>
- <rect x="44" y="70" width="792" height="46" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="101" font-size="18" fill="var(--text)">ab7</text>
  <text x="68" y="152" font-size="16" fill="var(--text-muted)">you said</text>
  <text x="180" y="152" font-size="16" font-weight="700" fill="var(--text)">alpha bravo seven done</text>
- <rect x="44" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="104" y="200" text-anchor="middle" font-size="15" fill="var(--text)">delete</text>
- <rect x="176" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="176" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="236" y="200" text-anchor="middle" font-size="15" fill="var(--text)">clear</text>
- <rect x="308" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="308" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="368" y="200" text-anchor="middle" font-size="15" fill="var(--text)">cancel</text>
- <rect x="440" y="172" width="120" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="440" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="500" y="200" text-anchor="middle" font-size="15" fill="var(--text)">done</text>
  <text x="588" y="200" font-size="15" fill="var(--text-muted)">Say a key and it is pressed. Say anything else and it lands whole.</text>
 </svg>
@@ -81,7 +81,7 @@ nav_order: 124
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Windows picks the default microphone, and it is often wrong.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Windows picks the default microphone, and it is often wrong.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A virtual endpoint from VR or streaming software looks like a working mic and sends digital silence.</text>
 </svg>
@@ -104,19 +104,19 @@ nav_order: 124
 <section>
 <h2><span class="num">1</span> Four ways to open the microphone, and two of them change what is kept.</h2>
 <svg viewBox="0 0 880 296" role="img" aria-label="Four listening modes: hold a key, toggle a key, listen whenever anyone speaks, or listen when you say its name">
- <rect x="20" y="30" width="410" height="102" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="410" height="102" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">HOLD THE KEY</text>
  <text x="225" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">speak, let go. The shipped default,</text>
  <text x="225" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">and nothing is kept unless you held it</text>
- <rect x="450" y="30" width="410" height="102" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="30" width="410" height="102" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TOGGLE THE KEY</text>
  <text x="655" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">press once to start, again to stop.</text>
  <text x="655" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Same rule, no finger held down</text>
- <rect x="20" y="152" width="410" height="102" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="152" width="410" height="102" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="225" y="188" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHENEVER I SPEAK</text>
  <text x="225" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">every stretch of speech in the room</text>
  <text x="225" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">is transcribed to find out if it was for it</text>
- <rect x="450" y="152" width="410" height="102" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="450" y="152" width="410" height="102" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="655" y="188" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHEN I SAY ITS NAME</text>
  <text x="655" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">the same, and then thrown away</text>
  <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">unless it is followed by a request</text>
@@ -127,37 +127,37 @@ nav_order: 124
 <section>
 <h2><span class="num">2</span> One download, and then nothing about your speech goes anywhere, unless you choose a hosted provider.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="The speech model is downloaded once from huggingface.co; after that audio and transcripts stay on your machine">
- <rect x="20" y="34" width="250" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="250" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONCE</text>
  <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">the speech-to-text model, from</text>
  <text x="145" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">huggingface.co</text>
- <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,86 316,78 316,94" fill="var(--accent-muted)"/>
- <rect x="342" y="34" width="518" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="342" y="34" width="518" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="601" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">EVER AFTER</text>
  <text x="601" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">your voice becomes words on this computer.</text>
  <text x="601" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">No audio and no transcript leaves it.</text>
- <rect x="20" y="158" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="158" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A hosted provider needs no model here, and the audio goes to that company with your key.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">3</span> Elite might already be using that key.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="A keyboard key bound in both Elite and Directive 47 simply does nothing in one of them, with no error anywhere">
- <rect x="20" y="34" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONE KEYBOARD KEY</text>
  <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">bound in both places</text>
- <line x1="282" y1="82" x2="318" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="82" x2="318" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,82 316,74 316,90" fill="var(--accent-muted)"/>
- <rect x="342" y="34" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="342" y="34" width="250" height="96" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="467" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONE LOSES</text>
  <text x="467" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">and no error, anywhere</text>
- <line x1="604" y1="82" x2="640" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="604" y1="82" x2="640" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="654,82 638,74 638,90" fill="var(--accent-muted)"/>
- <rect x="664" y="34" width="196" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="664" y="34" width="196" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="762" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SO IT SAYS SO</text>
  <text x="762" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">by name, before you fly</text>
- <rect x="20" y="152" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="152" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="182" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads your Elite bindings and never writes them.</text>
  <text x="440" y="208" text-anchor="middle" font-size="15" fill="var(--text-muted)">It will tell you which Elite action you clashed with. Which of the two to move is your call.</text>
 </svg>
@@ -165,22 +165,22 @@ nav_order: 124
 <section>
 <h2><span class="num">4</span> Five things can stop it hearing you.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="Five separate reasons speech might not reach Directive 47, all reported together in one answer">
- <rect x="20" y="30" width="164" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="102" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO KEY</text>
  <text x="102" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">bound</text>
- <rect x="196" y="30" width="164" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="196" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="278" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO MIC</text>
  <text x="278" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">chosen</text>
- <rect x="372" y="30" width="164" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="372" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="454" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">MIC GONE</text>
  <text x="454" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">unplugged</text>
- <rect x="548" y="30" width="164" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="548" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="630" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">KEY CLASH</text>
  <text x="630" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">with Elite</text>
- <rect x="724" y="30" width="136" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="724" y="30" width="136" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="792" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO MODEL</text>
  <text x="792" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">yet</text>
- <rect x="20" y="138" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="138" width="840" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="170" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ASK "CAN YOU HEAR ME"</text>
  <text x="440" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">All five are tested and tell you the result.</text>
 </svg>

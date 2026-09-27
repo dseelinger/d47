@@ -23,7 +23,7 @@ nav_order: 110
 <section>
 <h2><span class="num">1</span> Ask about what you are wearing.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does grade 3 on my Maverick cost</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Suits, weapons and their mods ship with D47 and need no network.</text>
@@ -33,15 +33,15 @@ nav_order: 110
 <section>
 <h2><span class="num">2</span> Find out where the materials come from.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Grade 3 Maverick">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Grade 3 Maverick</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Manganese</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">10 — settlements</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Chemical Superbase</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">5 — you have 2</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Credits</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">75,000</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">What you are short of lands on the Gap page with everything else.</text>
@@ -50,7 +50,7 @@ nav_order: 110
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="On-foot materials are not ship materials.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">On-foot materials are not ship materials.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">They are a separate set with separate sources. Having a full ship inventory buys you nothing here.</text>
 </svg>
@@ -70,12 +70,12 @@ nav_order: 110
 <section>
 <h2><span class="num">1</span> Two axes, and neither one is the ship model.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="A grade is bought at Pioneer Supplies and can be raised; a modification is applied by an engineer and is permanent">
- <rect x="20" y="40" width="400" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="82" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">GRADE</text>
  <text x="220" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">1 → 5, at Pioneer Supplies</text>
  <text x="220" y="142" text-anchor="middle" font-size="15" fill="var(--text-muted)">no randomness, fixed price</text>
  <text x="220" y="168" text-anchor="middle" font-size="15" fill="var(--text-muted)">undone by buying a higher one</text>
- <rect x="460" y="40" width="400" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="82" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">MODIFICATION</text>
  <text x="660" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">ungraded — present or absent</text>
  <text x="660" y="142" text-anchor="middle" font-size="15" fill="var(--text-muted)">four per item, at an engineer</text>
@@ -88,13 +88,13 @@ nav_order: 110
 <section>
 <h2><span class="num">2</span> The published quantities are wrong, and the game settles it.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="Community sources list five, ten and fifteen ingredients where the game actually charges three, five and eight">
- <rect x="20" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">PUBLISHED EVERYWHERE</text>
  <text x="220" y="120" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text-muted)">5 / 10 / 15</text>
  <text x="220" y="148" text-anchor="middle" font-size="14" fill="var(--text-muted)">for a modification</text>
- <line x1="432" y1="100" x2="448" y2="100" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="432" y1="100" x2="448" y2="100" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,100 446,92 446,108" fill="var(--accent-muted)"/>
- <rect x="474" y="40" width="386" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="474" y="40" width="386" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="667" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">WHAT THE GAME CHARGES</text>
  <text x="667" y="120" text-anchor="middle" font-size="24" font-weight="800" fill="var(--accent)">3 / 5 / 8</text>
  <text x="667" y="148" text-anchor="middle" font-size="14" fill="var(--text-muted)">measured on 16 real upgrades</text>
@@ -106,7 +106,7 @@ nav_order: 110
 <section>
 <h2><span class="num">3</span> The suit's own name is not safe to repeat.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Elite's localisation leaves an unresolved token naming Class1 whatever the real grade is">
- <rect x="20" y="36" width="840" height="94" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="94" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="46" y="74" text-anchor="start" font-size="16" font-weight="700" fill="var(--danger)">$UtilitySuit_Class1_Name;</text>
  <text x="46" y="108" text-anchor="start" font-size="15" fill="var(--text)">269 of 768 real events carry that token — and every one of them says Class1.</text>
  <text x="440" y="170" text-anchor="middle" font-size="16" fill="var(--text)">Speaking that string would give you the wrong grade more than a third of the time.</text>
@@ -117,17 +117,17 @@ nav_order: 110
 <section>
 <h2><span class="num">4</span> The order of the plan is a routing fact.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="A grade 1 item has no modification slots and an engineer's base has no Pioneer Supplies, so upgrading comes first">
- <rect x="20" y="40" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A GRADE 1 ITEM</text>
  <text x="145" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">has zero mod slots</text>
- <line x1="282" y1="90" x2="306" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="90" x2="306" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="320,90 304,82 304,98" fill="var(--accent-muted)"/>
- <rect x="335" y="40" width="270" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="335" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="470" y="80" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">AN ENGINEER’S BASE</text>
  <text x="470" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">has no Pioneer Supplies</text>
- <line x1="617" y1="90" x2="641" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="617" y1="90" x2="641" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="655,90 639,82 639,98" fill="var(--accent-muted)"/>
- <rect x="670" y="40" width="190" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="670" y="40" width="190" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="765" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">UPGRADE FIRST</text>
  <text x="765" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">then make the trip</text>
  <text x="440" y="190" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The upgrade cannot be done when you get there.</text>

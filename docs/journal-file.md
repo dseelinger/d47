@@ -25,20 +25,20 @@ nav_order: 6
 <section>
 <h2><span class="num">1</span> Elite writes it. Directive 47 only reads it.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Elite writes the journal file; the reading shows it as sentences, newest first">
- <rect x="20" y="26" width="250" height="72" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="250" height="72" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="58" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">ELITE DANGEROUS</text>
  <text x="145" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">writes a line per event</text>
- <line x1="278" y1="62" x2="318" y2="62" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="278" y1="62" x2="318" y2="62" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,62 316,54 316,70" fill="var(--accent-muted)"/>
- <rect x="340" y="26" width="250" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="340" y="26" width="250" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="465" y="58" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE JOURNAL FILE</text>
  <text x="465" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">JSON, one event per line</text>
- <line x1="598" y1="62" x2="638" y2="62" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="598" y1="62" x2="638" y2="62" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="652,62 636,54 636,70" fill="var(--accent-muted)"/>
- <rect x="660" y="26" width="200" height="72" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="660" y="26" width="200" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="760" y="58" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THIS READING</text>
  <text x="760" y="82" text-anchor="middle" font-size="14" fill="var(--text-muted)">a sentence per event</text>
- <rect x="20" y="122" width="840" height="94" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="122" width="840" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="152" font-size="15" fill="var(--text)">14:02:11  Docked at Jameson Memorial, Shinrarta Dezhra</text>
  <text x="44" y="178" font-size="15" fill="var(--text)">14:01:47  Evans Port: Docking request granted.</text>
  <text x="44" y="204" font-size="15" fill="var(--text)">13:58:03  Jumped to Shinrarta Dezhra — 29.44 ly</text>
@@ -48,15 +48,15 @@ nav_order: 6
 <section>
 <h2><span class="num">2</span> The line, and the fields behind it.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="A list of sentences on the left, the chosen event's own JSON on the right, and a divider you can drag">
- <rect x="20" y="26" width="370" height="180" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="26" width="370" height="180" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="40" y="58" font-size="14" fill="var(--text-muted)">14:02:11  Docked at Jameson Me…</text>
- <rect x="30" y="70" width="350" height="30" rx="5" fill="var(--accent-muted)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="30" y="70" width="350" height="30" fill="var(--accent-muted)" stroke="var(--accent)" stroke-width="2"/>
  <text x="40" y="90" font-size="14" fill="var(--text)">14:01:47  Evans Port: Docking r…</text>
  <text x="40" y="126" font-size="14" fill="var(--text-muted)">13:58:03  Jumped to Shinrarta D…</text>
  <text x="205" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-muted)">WHAT HAPPENED</text>
- <rect x="404" y="26" width="12" height="180" rx="6" fill="var(--border)"/>
+ <rect x="404" y="26" width="12" height="180" fill="var(--border)"/>
  <text x="410" y="232" text-anchor="middle" font-size="14" fill="var(--text-muted)">drag</text>
- <rect x="430" y="26" width="430" height="180" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="430" y="26" width="430" height="180" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="452" y="58" font-size="14" fill="var(--text-muted)">"event": "ReceiveText",</text>
  <text x="452" y="82" font-size="14" fill="var(--text-muted)">"From_Localised": "Evans Port",</text>
  <text x="452" y="106" font-size="14" fill="var(--text-muted)">"Message_Localised": "Docking …</text>
@@ -68,15 +68,15 @@ nav_order: 6
 <section>
 <h2><span class="num">3</span> The Raw switch is the same events, unread.</h2>
 <svg viewBox="0 0 880 216" role="img" aria-label="The Raw switch beside the picker turns the sentences into the file's own JSON">
- <rect x="20" y="24" width="300" height="46" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="24" width="300" height="46" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="53" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Journal File</text>
  <text x="348" y="53" font-size="16" fill="var(--text-muted)">Raw</text>
- <rect x="392" y="32" width="60" height="30" rx="15" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="392" y="32" width="60" height="30" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
  <circle cx="437" cy="47" r="10" fill="var(--surface)"/>
- <rect x="20" y="94" width="410" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="94" width="410" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">OFF — SENTENCES</text>
  <text x="225" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">what happened, in words</text>
- <rect x="450" y="94" width="410" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="94" width="410" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">ON — RAW JOURNAL</text>
  <text x="655" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">the file itself, one event per line</text>
  <text x="440" y="206" text-anchor="middle" font-size="15" fill="var(--text-muted)">Not an entry in the picker on purpose: it is the same events seen another way, not a fourth subject.</text>

@@ -23,7 +23,7 @@ nav_order: 100
 <section>
 <h2><span class="num">1</span> Ask, in the words you already have.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what can you do about engineering</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"how does the checklist work" — "what is the gap page"</text>
@@ -33,12 +33,12 @@ nav_order: 100
 <section>
 <h2><span class="num">2</span> Or press HELP on any card.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Any settings card">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Any settings card</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Right Shift</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">HELP</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">opens this page at that row</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">HELP takes you to the section for that exact row, not to the top of a page.</text>
@@ -47,7 +47,7 @@ nav_order: 100
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Help is about the page, not the subject.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Help is about the page, not the subject.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It explains D47, not Elite. For what a Guardian beacon does, ask the model instead.</text>
 </svg>
@@ -70,12 +70,12 @@ nav_order: 100
 <section>
 <h2><span class="num">1</span> Two ways to ask, and both mean “this page”.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The mark in the corner and the spoken word both open help for the page you are on">
- <rect x="20" y="26" width="390" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="390" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="120" cy="82" r="26" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="120" y="93" text-anchor="middle" font-size="30" font-weight="800" fill="var(--accent)">?</text>
  <text x="176" y="76" font-size="18" font-weight="700" fill="var(--text)">press the mark</text>
  <text x="176" y="104" font-size="15" fill="var(--text-muted)">top right of the panel</text>
- <rect x="450" y="26" width="410" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="26" width="410" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="70" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">or just say so</text>
  <text x="655" y="100" text-anchor="middle" font-size="16" fill="var(--accent)">“help”  ·  “what is this”</text>
  <text x="655" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">no model needed, no network</text>
@@ -87,16 +87,16 @@ nav_order: 100
 <section>
 <h2><span class="num">2</span> It sits on top, and “back” puts it away.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Help covers the page and back returns to exactly where you were">
- <rect x="20" y="30" width="300" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="300" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="80" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">the page</text>
  <text x="170" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">right where you left it</text>
- <line x1="332" y1="74" x2="358" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="332" y1="74" x2="358" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="372,74 356,66 356,82" fill="var(--accent-muted)"/>
  <text x="415" y="60" text-anchor="middle" font-size="14" fill="var(--text-muted)">help</text>
- <line x1="372" y1="96" x2="346" y2="96" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="372" y1="96" x2="346" y2="96" stroke="var(--accent)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,96 348,88 348,104" fill="var(--accent)"/>
  <text x="415" y="122" text-anchor="middle" font-size="14" fill="var(--accent)">back</text>
- <rect x="460" y="30" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="80" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">help, over the top of it</text>
  <text x="660" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">nothing underneath moves</text>
  <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">“Back” is the same word that leaves anything else.</text>
@@ -106,11 +106,11 @@ nav_order: 100
 <section>
 <h2><span class="num">3</span> The pictures are here. The detail is on the site.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The panel draws the illustrated half and the website carries the reference half">
- <rect x="20" y="26" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="26" width="400" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="68" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">IN HERE</text>
  <text x="220" y="100" text-anchor="middle" font-size="16" fill="var(--text-muted)">the pictures, in your theme</text>
  <text x="220" y="128" text-anchor="middle" font-size="16" fill="var(--text-muted)">offline, and inside the headset</text>
- <rect x="460" y="26" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="26" width="400" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="68" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">ON THE SITE</text>
  <text x="660" y="100" text-anchor="middle" font-size="16" fill="var(--text-muted)">the tables, the settings, the</text>
  <text x="660" y="128" text-anchor="middle" font-size="16" fill="var(--text-muted)">reasoning and the working</text>

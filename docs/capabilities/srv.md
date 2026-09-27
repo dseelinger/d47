@@ -23,9 +23,9 @@ nav_order: 133
 <section>
 <h2><span class="num">1</span> Turn on key injection, and get in an SRV.</h2>
 <svg viewBox="0 0 880 196" role="img" aria-label="SRV">
- <rect x="20" y="16" width="840" height="156" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">SRV</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <text x="44" y="166" font-size="15" fill="var(--text-muted)">The SRV commands are your own Elite bindings, and only apply while you are in one.</text>
@@ -34,7 +34,7 @@ nav_order: 133
 <section>
 <h2><span class="num">2</span> Say what you want.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">turret view</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"handbrake on" — "drive assist off" — "lights"</text>
@@ -44,7 +44,7 @@ nav_order: 133
 <section>
 <h2><span class="num">3</span> And when you want the ship back.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">recall my ship</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It presses the recall binding, once.</text>
@@ -54,7 +54,7 @@ nav_order: 133
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="These do nothing while you are in the ship.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">These do nothing while you are in the ship.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The SRV bindings are a separate set in Elite. In the cockpit there is nothing for them to press.</text>
 </svg>
@@ -74,16 +74,16 @@ nav_order: 133
 <section>
 <h2><span class="num">1</span> Recall and dismiss are the same key.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="One Elite binding both recalls a ship that is away and dismisses one that is here, so the outcome cannot be reported">
- <rect x="20" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="84" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">“RECALL MY SHIP”</text>
  <text x="145" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">one binding in Elite</text>
- <line x1="282" y1="92" x2="330" y2="92" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="92" x2="330" y2="92" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="344,92 328,84 328,100" fill="var(--accent-muted)"/>
- <rect x="360" y="30" width="240" height="60" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="360" y="30" width="240" height="60" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="480" y="66" text-anchor="middle" font-size="15" fill="var(--text)">recalls one that is away</text>
- <rect x="360" y="104" width="240" height="60" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="360" y="104" width="240" height="60" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="480" y="140" text-anchor="middle" font-size="15" fill="var(--text)">dismisses one that is here</text>
- <rect x="640" y="52" width="220" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="640" y="52" width="220" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="750" y="90" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">IT CANNOT SAY</text>
  <text x="750" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">which one you just got</text>
  <text x="440" y="208" text-anchor="middle" font-size="16" fill="var(--text-muted)">Directive 47 presses the key and reports that it did — the game never says which happened.</text>
@@ -92,11 +92,11 @@ nav_order: 133
 <section>
 <h2><span class="num">2</span> Everything here is a switch, and a stick is not one.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Switches can be pressed but axes like steering and turret aim have no press to send">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">SWITCHES</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">turret · handbrake · drive assist</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">throttle direction</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">AXES</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">steering · throttle · turret aim</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">an axis has no press to send</text>
@@ -106,12 +106,12 @@ nav_order: 133
 <section>
 <h2><span class="num">3</span> Boarding is not a binding.</h2>
 <svg viewBox="0 0 880 222" role="img" aria-label="Getting in and out of the SRV goes through the role panel, so there is no key for it">
- <rect x="20" y="36" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="400" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">GETTING IN AND OUT</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">goes through the role panel</text>
- <line x1="432" y1="88" x2="448" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="432" y1="88" x2="448" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,88 446,80 446,96" fill="var(--accent-muted)"/>
- <rect x="474" y="36" width="386" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="474" y="36" width="386" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="667" y="72" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SO THERE IS NOTHING TO PRESS</text>
  <text x="667" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">you get a sentence, not a keystroke</text>
  <text x="667" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">“open the role panel” is the closest thing</text>

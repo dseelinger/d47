@@ -25,24 +25,24 @@ nav_order: 0
 <section>
 <h2><span class="num">1</span> The game keeps a journal. D47 reads it.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Elite Dangerous writes a journal file, which Directive 47 reads">
- <rect x="20" y="45" width="220" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="45" width="220" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <path d="M130 64 L156 116 L130 104 L104 116 Z" fill="var(--accent)"/>
  <text x="130" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">ELITE DANGEROUS</text>
  <text x="130" y="168" text-anchor="middle" font-size="14" fill="var(--text-muted)">you, flying</text>
  <text x="290" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">writes</text>
- <line x1="252" y1="118" x2="316" y2="118" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="252" y1="118" x2="316" y2="118" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="330,118 314,110 314,126" fill="var(--accent-muted)"/>
- <rect x="340" y="45" width="200" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="415" y="62" width="50" height="62" rx="5" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
- <line x1="426" y1="79" x2="454" y2="79" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="426" y1="93" x2="454" y2="93" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="426" y1="107" x2="444" y2="107" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+ <rect x="340" y="45" width="200" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="415" y="62" width="50" height="62" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <line x1="426" y1="79" x2="454" y2="79" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="426" y1="93" x2="454" y2="93" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="426" y1="107" x2="444" y2="107" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="butt"/>
  <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">THE JOURNAL</text>
  <text x="440" y="168" text-anchor="middle" font-size="14" fill="var(--text-muted)">a file, already on your PC</text>
  <text x="585" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">reads</text>
- <line x1="552" y1="118" x2="606" y2="118" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="552" y1="118" x2="606" y2="118" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="620,118 604,110 604,126" fill="var(--accent-muted)"/>
- <rect x="630" y="45" width="220" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="630" y="45" width="220" height="140" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <circle cx="740" cy="92" r="27" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
  <circle cx="740" cy="92" r="16" fill="none" stroke="var(--accent-muted)" stroke-width="2.5"/>
  <circle cx="740" cy="92" r="6" fill="var(--accent)"/>
@@ -55,17 +55,17 @@ nav_order: 0
 <h2><span class="num">2</span> You talk. It talks back.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="You ask Directive 47 a question and it answers out loud">
  <text x="440" y="34" text-anchor="middle" font-size="14" fill="var(--text-muted)">hold a key, or just say its name</text>
- <path d="M250 96 Q440 44 630 96" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M250 96 Q440 44 630 96" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="640,101 620,88 622,104" fill="var(--accent)"/>
- <rect x="40" y="86" width="210" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="40" y="86" width="210" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="145" cy="121" r="13" fill="var(--text-muted)"/>
  <path d="M122 160 Q145 136 168 160 Z" fill="var(--text-muted)"/>
  <text x="145" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU</text>
- <rect x="630" y="86" width="210" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="630" y="86" width="210" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <circle cx="735" cy="127" r="24" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
  <circle cx="735" cy="127" r="6" fill="var(--accent)"/>
  <text x="735" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47</text>
- <path d="M630 186 Q440 238 250 186" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M630 186 Q440 238 250 186" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="240,181 260,194 258,178" fill="var(--accent-muted)"/>
  <text x="440" y="246" text-anchor="middle" font-size="14" fill="var(--text-muted)">it answers, out loud</text>
 </svg>
@@ -73,19 +73,19 @@ nav_order: 0
 <section>
 <h2><span class="num">3</span> One panel. Two places to see it.</h2>
 <svg viewBox="0 0 880 270" role="img" aria-label="One panel is drawn on the monitor and in the headset">
- <rect x="330" y="16" width="220" height="80" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="330" y="16" width="220" height="80" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="440" y="52" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">ONE PANEL</text>
  <text x="440" y="74" text-anchor="middle" font-size="14" fill="var(--text-muted)">built once</text>
- <path d="M380 100 L250 148" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M380 100 L250 148" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="238,153 256,142 258,157" fill="var(--accent-muted)"/>
- <path d="M500 100 L630 148" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M500 100 L630 148" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="642,153 624,142 622,157" fill="var(--accent-muted)"/>
- <rect x="40" y="152" width="200" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="103" y="170" width="74" height="46" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
- <line x1="128" y1="222" x2="152" y2="222" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <rect x="40" y="152" width="200" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="103" y="170" width="74" height="46" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <line x1="128" y1="222" x2="152" y2="222" stroke="var(--accent)" stroke-width="3" stroke-linecap="butt"/>
  <text x="140" y="243" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">YOUR MONITOR</text>
- <rect x="640" y="152" width="200" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="698" y="174" width="84" height="42" rx="14" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="640" y="152" width="200" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="698" y="174" width="84" height="42" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <circle cx="719" cy="195" r="7" fill="var(--accent)"/>
  <circle cx="761" cy="195" r="7" fill="var(--accent)"/>
  <text x="740" y="243" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">YOUR HEADSET</text>

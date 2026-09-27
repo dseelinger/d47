@@ -23,12 +23,12 @@ nav_order: 128
 <section>
 <h2><span class="num">1</span> Start SteamVR first, then D47.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Headset">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Headset</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Draw in the headset</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">SteamVR</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">running</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">D47 draws over Elite as an overlay. It is beside the game, never inside it.</text>
@@ -37,7 +37,7 @@ nav_order: 128
 <section>
 <h2><span class="num">2</span> Put the panel where you want it.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">put the panel down</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"lock it to my head" — "move it left" — "bring it nearer" — "tilt it up"</text>
@@ -47,15 +47,15 @@ nav_order: 128
 <section>
 <h2><span class="num">3</span> Set the size and the distance.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Headset">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Headset</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Distance</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">1.1 m</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Size</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">0.9 m wide</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Opacity</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">85%</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">The tilt is worked out from these, so a panel below eye level faces you without being told.</text>
@@ -64,7 +64,7 @@ nav_order: 128
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="The desktop window can be minimised and the overlay stays.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The desktop window can be minimised and the overlay stays.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">They are independent on purpose. Closing D47 is what takes the quad away, not minimising it.</text>
 </svg>
@@ -84,13 +84,13 @@ nav_order: 128
 <section>
 <h2><span class="num">1</span> It attaches. It never starts anything.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Directive 47 waits for SteamVR and a headset to appear, and never launches SteamVR or hooks Elite">
- <rect x="20" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT ATTACHES</text>
  <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">looks every few seconds</text>
- <rect x="310" y="44" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="310" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER STARTS</text>
  <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">SteamVR, on your behalf</text>
- <rect x="600" y="44" width="260" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="600" y="44" width="260" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER HOOKS</text>
  <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">Elite, or its frame</text>
  <text x="440" y="188" text-anchor="middle" font-size="16" fill="var(--text)">SteamVR first, Directive 47 first, SteamVR restarted halfway through — none of it matters.</text>
@@ -100,10 +100,10 @@ nav_order: 128
 <section>
 <h2><span class="num">2</span> The panel is the same app, drawn a second time.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="The headset panel is a second instantiation of the same view, not a screenshot of the desktop window">
- <rect x="20" y="44" width="380" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="380" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="210" y="84" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">THE SAME APP</text>
  <text x="210" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">drawn a second time</text>
- <rect x="460" y="44" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="44" width="400" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NOT A PICTURE OF IT</text>
  <text x="660" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">no screenshot of a window</text>
  <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the windowed version can never do something the headset version cannot.</text>
@@ -113,15 +113,15 @@ nav_order: 128
 <section>
 <h2><span class="num">3</span> Three levers that all sound like “how big”.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="Resolution decides how much the image holds, size how big it looks, and scale how much layout the pixels carry">
- <rect x="20" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">RESOLUTION</text>
  <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how much the image can hold</text>
  <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">more pixels, more rows</text>
- <rect x="305" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SIZE</text>
  <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how big it looks in the room</text>
  <text x="440" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">metres across</text>
- <rect x="590" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="590" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="725" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SCALE</text>
  <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how much layout those</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">pixels carry — a density</text>
@@ -134,7 +134,7 @@ nav_order: 128
 <section>
 <h2><span class="num">4</span> The captions follow the broadcast standard, not a preference.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Caption limits: 42 characters a line, two lines per utterance, 20 characters a second, timed from when the speech ends">
- <rect x="20" y="34" width="840" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="840" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="60" y="68" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">42 characters</text>
  <text x="270" y="68" text-anchor="start" font-size="15" fill="var(--text-muted)">the most on one line</text>
  <text x="60" y="96" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">2 lines</text>

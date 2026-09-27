@@ -23,9 +23,9 @@ nav_order: 134
 <section>
 <h2><span class="num">1</span> Turn on the arrival honk, if you want it.</h2>
 <svg viewBox="0 0 880 192" role="img" aria-label="The setting that lets Directive 47 fire the discovery scanner on arrival, off out of the box">
- <rect x="20" y="24" width="840" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="24" width="840" height="66" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="63" font-size="17" fill="var(--text)">Honk on arrival</text>
- <rect x="746" y="42" width="68" height="30" rx="15" fill="var(--border)"/>
+ <rect x="746" y="42" width="68" height="30" fill="var(--border)"/>
  <circle cx="761" cy="57" r="11" fill="var(--surface)"/>
  <text x="836" y="63" text-anchor="end" font-size="15" fill="var(--text-muted)">off</text>
  <text x="20" y="132" font-size="16" fill="var(--text-muted)">Off out of the box. This is the only thing D47 does to your ship unasked.</text>
@@ -35,11 +35,11 @@ nav_order: 134
 <section>
 <h2><span class="num">2</span> Jump somewhere. It fires once, after the drop.</h2>
 <svg viewBox="0 0 880 132" role="img" aria-label="After a jump completes, one press of the discovery scanner, and nothing further">
- <rect x="20" y="20" width="270" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="270" height="66" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">JUMP COMPLETES</text>
- <line x1="302" y1="53" x2="326" y2="53" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="302" y1="53" x2="326" y2="53" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="340,53 324,45 324,61" fill="var(--accent-muted)"/>
- <rect x="354" y="20" width="506" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="354" y="20" width="506" height="66" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="607" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">ONE PRESS OF THE DISCOVERY SCANNER</text>
  <text x="440" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">Once per arrival. Never in supercruise, never twice.</text>
 </svg>
@@ -47,7 +47,7 @@ nav_order: 134
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite must be the window in front, and the discovery scanner must be bound to a key">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite must be in front, with the scanner on a key.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 presses your own binding, and never presses anything into another window.</text>
 </svg>
@@ -67,11 +67,11 @@ nav_order: 134
 <section>
 <h2><span class="num">1</span> Nothing said it, so nothing permitted it.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Every other action is permitted by the sentence you said, while an action firing on a journal event has none">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">EVERYTHING ELSE</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">happens because you said so</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">the sentence is the permission</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">AN ACTION ON ITS OWN</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">has no sentence behind it</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">nobody asked, nobody is watching</text>
@@ -82,11 +82,11 @@ nav_order: 134
 <section>
 <h2><span class="num">2</span> One switch per action, not one for the category.</h2>
 <svg viewBox="0 0 880 220" role="img" aria-label="A single toggle for the whole category would enable future actions automatically, so each gets its own">
- <rect x="20" y="36" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="400" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">IF THERE WERE ONE SWITCH</text>
  <text x="220" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">the next thing added here</text>
  <text x="220" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">would arrive already enabled</text>
- <rect x="460" y="36" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="36" width="400" height="118" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SO THERE IS ONE EACH</text>
  <text x="660" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">permission for one thing</text>
  <text x="660" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">is not spent on another</text>
@@ -96,19 +96,19 @@ nav_order: 134
 <section>
 <h2><span class="num">3</span> The arrival honk, and the three things it needs.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The discovery scanner needs analysis mode, which d47 switches to in supercruise, the scanner in your fire group, and a fire button it can press">
- <rect x="20" y="36" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="270" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ANALYSIS MODE</text>
  <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">in supercruise d47 switches</text>
  <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">for you, then switches back</text>
- <rect x="305" y="36" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="36" width="270" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SCANNER IN YOUR</text>
  <text x="440" y="88" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FIRE GROUP</text>
  <text x="440" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">it cannot see your fire groups</text>
- <rect x="590" y="36" width="270" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="36" width="270" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A FIRE BUTTON</text>
  <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Mouse_1 works</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">a stick does not</text>
- <rect x="20" y="178" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="178" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="210" text-anchor="middle" font-size="16" fill="var(--text)">Normal space: “I did not honk: the scanner only fires in analysis mode, and you are in combat mode.”</text>
 </svg>
 <p class="body">Elite has no honk binding, because the discovery scanner is not a button — it is a fire-group weapon. So this holds <em>your</em> fire button for the six seconds the scan takes. It arms on the jump and fires once you are out of the witchspace tunnel, and if thirty seconds pass without that, the arm expires rather than waiting to surprise you later.</p>

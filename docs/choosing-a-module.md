@@ -21,25 +21,25 @@ nav_order: 204
 <section>
 <h2><span class="num">1</span> Nothing on this page changes your ship.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Choosing a module writes to a plan; the plan reaches the checklist only when promoted, and the ship only at a station">
- <rect x="20" y="34" width="196" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="34" width="196" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="118" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">YOU PICK</text>
  <text x="118" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">here, on this list</text>
- <line x1="228" y1="82" x2="264" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="228" y1="82" x2="264" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="278,82 262,74 262,90" fill="var(--accent-muted)"/>
- <rect x="288" y="34" width="196" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="288" y="34" width="196" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="386" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THE BUILD</text>
  <text x="386" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">a plan, written down</text>
- <line x1="496" y1="82" x2="532" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="496" y1="82" x2="532" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="546,82 530,74 530,90" fill="var(--accent-muted)"/>
- <rect x="556" y="34" width="196" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="556" y="34" width="196" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="654" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">PROMOTE IT</text>
  <text x="654" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">and it reaches</text>
  <text x="654" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">your checklist</text>
- <rect x="764" y="34" width="96" height="96" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="764" y="34" width="96" height="96" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="812" y="72" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">YOU</text>
  <text x="812" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">fit it</text>
  <text x="812" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">in game</text>
- <rect x="20" y="154" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="154" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="184" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 never buys, sells, stores or fits anything. It plans, and you go outfitting.</text>
  <text x="440" y="210" text-anchor="middle" font-size="15" fill="var(--text-muted)">Which is why the line at the top says this does not reach your checklist until you promote the build.</text>
 </svg>
@@ -47,16 +47,16 @@ nav_order: 204
 <section>
 <h2><span class="num">2</span> The figures under a name are what it is, at the size that fits.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="A row reads: the module name, the classes that fit this slot, and the numbers that separate one from another">
- <rect x="20" y="30" width="840" height="106" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="840" height="106" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="48" y="66" font-size="19" font-weight="800" fill="var(--text)">Mining Volley Repeater</text>
  <text x="48" y="102" font-size="16" fill="var(--text-muted)">3C  ·  damage per second 6.0  ·  damage type thermal  ·  damage 0.3</text>
- <rect x="20" y="152" width="196" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="152" width="196" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="118" y="182" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">3C</text>
  <text x="118" y="208" text-anchor="middle" font-size="14" fill="var(--text-muted)">size and class</text>
- <rect x="234" y="152" width="290" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="152" width="290" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="379" y="182" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">what it does per second</text>
  <text x="379" y="208" text-anchor="middle" font-size="14" fill="var(--text-muted)">the number that ranks the list</text>
- <rect x="542" y="152" width="318" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="542" y="152" width="318" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="701" y="182" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">thermal, kinetic, explosive</text>
  <text x="701" y="208" text-anchor="middle" font-size="14" fill="var(--text-muted)">what it is good against</text>
 </svg>
@@ -65,10 +65,10 @@ nav_order: 204
 <section>
 <h2><span class="num">3</span> Two badges, and both are refusals rather than warnings.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="A Powerplay module says a pledge is needed and that it cannot say which Power; an engineered module with no recipe says so">
- <rect x="20" y="30" width="840" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="840" height="92" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="48" y="64" font-size="17" font-weight="800" fill="var(--text)">¤  Mining Lance</text>
  <text x="48" y="98" font-size="15" fill="var(--text-muted)">Needs a Powerplay pledge — one Power's, and I cannot tell you which.</text>
- <rect x="20" y="138" width="840" height="92" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="138" width="840" height="92" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="48" y="172" font-size="17" font-weight="800" fill="var(--text)">Keep the 3C Mining Volley Repeater, fixed</text>
  <text x="48" y="206" font-size="15" fill="var(--text-muted)">Frontier engineers this and I have no recipe for it.</text>
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">Both say what is not known rather than guessing. A badge you can act on beats a figure you cannot trust.</text>

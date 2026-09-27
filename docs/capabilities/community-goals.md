@@ -23,7 +23,7 @@ nav_order: 119
 <section>
 <h2><span class="num">1</span> Ask what is running.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what community goals are on</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">This one needs the internet. It is off until you turn web access on.</text>
@@ -33,11 +33,11 @@ nav_order: 119
 <section>
 <h2><span class="num">2</span> Read the tier and your own share.</h2>
 <svg viewBox="0 0 880 200" role="img" aria-label="A community goal showing its tier, the contribution so far and where the Commander sits">
- <rect x="20" y="16" width="840" height="168" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="168" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="54" font-size="17" font-weight="700" fill="var(--text)">Alliance Rescue Effort</text>
  <text x="836" y="54" text-anchor="end" font-size="16" fill="var(--accent)">TIER 4 of 8</text>
- <rect x="44" y="76" width="792" height="14" rx="7" fill="var(--border)"/>
- <rect x="44" y="76" width="396" height="14" rx="7" fill="var(--accent)"/>
+ <rect x="44" y="76" width="792" height="14" fill="var(--border)"/>
+ <rect x="44" y="76" width="396" height="14" fill="var(--accent)"/>
  <text x="44" y="128" font-size="16" fill="var(--text)">You have handed in 1,240 tonnes.</text>
  <text x="44" y="164" font-size="15" fill="var(--text-muted)">Your figure is read from your own journal, so it is right even when the site is slow.</text>
 </svg>
@@ -45,7 +45,7 @@ nav_order: 119
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="It needs the internet, and that is off by default.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs the internet, and that is off by default.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With web access off there is nothing to report. The privacy page says exactly what leaves.</text>
 </svg>
@@ -65,11 +65,11 @@ nav_order: 119
 <section>
 <h2><span class="num">1</span> Your journal already knows most of this.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The journal carries the whole community goal board, and an Inara key only adds goals running where you have not been">
- <rect x="20" y="40" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="118" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
  <text x="220" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the whole board: tier, contributors,</text>
  <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">handed in, and your own share</text>
- <rect x="460" y="40" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHAT A KEY BUYS</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">goals running somewhere</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">you have not been</text>
@@ -81,7 +81,7 @@ nav_order: 119
 <section>
 <h2><span class="num">2</span> The trap: the board is a snapshot, not a list of live goals.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="A board written on 21 January reported a goal that had already ended on the 17th">
- <rect x="20" y="36" width="840" height="100" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="100" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">a board reported on 21 January…</text>
  <text x="46" y="108" text-anchor="start" font-size="16" fill="var(--danger)">…for a goal that ended on the 17th, still carrying “IsComplete: true”</text>
  <text x="440" y="172" text-anchor="middle" font-size="16" fill="var(--text)">It fires every time you dock, so a stale entry is the common case, not the edge one.</text>
@@ -93,11 +93,11 @@ nav_order: 119
 <section>
 <h2><span class="num">3</span> Two sources, never blended.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Journal goals and Inara goals are listed separately and merged only on an exact name match">
- <rect x="20" y="40" width="390" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="390" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="215" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM YOUR JOURNAL</text>
  <text x="215" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">and what you handed in</text>
  <line x1="440" y1="36" x2="440" y2="148" stroke="var(--border)" stroke-width="2"/>
- <rect x="470" y="40" width="390" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="470" y="40" width="390" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="665" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM INARA</text>
  <text x="665" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">and never your standing</text>
  <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A duplicate is visible. A wrong merge is silent.</text>

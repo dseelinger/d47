@@ -23,7 +23,7 @@ nav_order: 116
 <section>
 <h2><span class="num">1</span> Ask about any name, including one nobody has visited.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does Praea Euq XV-B c1-42 tell you</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">This one needs no network at all — it is read off the string.</text>
@@ -33,15 +33,15 @@ nav_order: 116
 <section>
 <h2><span class="num">2</span> Read what the shape of it says.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Praea Euq XV-B c1-42">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Praea Euq XV-B c1-42</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Region</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Praea Euq</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Mass code</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">c — small</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Likely contents</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">few bodies, low value</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">The name encodes the region and the mass code. The rest is inference, and it says so.</text>
@@ -50,7 +50,7 @@ nav_order: 116
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A name is not a scan.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A name is not a scan.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It tells you what kind of system to expect, never what is actually in it. Only honking does that.</text>
 </svg>
@@ -70,11 +70,11 @@ nav_order: 116
 <section>
 <h2><span class="num">1</span> The one thing here that needs nothing at all.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Reading a system name needs no key, account, network or journal, which is the point of it">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">NEEDS NOTHING</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">no key, no account, no network</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">not even a journal</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHICH IS THE POINT</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">first footfall happens where</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">nobody has scanned and uploaded</text>
@@ -84,23 +84,23 @@ nav_order: 116
 <section>
 <h2><span class="num">2</span> Every piece of the name is saying something.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="Dryafea PO-X d2-0 broken into sector, boxel, mass code, boxel number and system number">
- <rect x="21" y="40" width="158" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="21" y="40" width="158" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="100" y="82" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">Dryafea</text>
  <text x="100" y="114" text-anchor="middle" font-size="15" fill="var(--text)">the sector</text>
  <text x="100" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">a 1,280 ly cube</text>
- <rect x="191" y="40" width="158" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="191" y="40" width="158" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="270" y="82" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">PO-X</text>
  <text x="270" y="114" text-anchor="middle" font-size="15" fill="var(--text)">the boxel</text>
  <text x="270" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">within that sector</text>
- <rect x="361" y="40" width="158" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="361" y="40" width="158" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="84" text-anchor="middle" font-size="26" font-weight="800" fill="var(--accent)">d</text>
  <text x="440" y="114" text-anchor="middle" font-size="15" fill="var(--text)">the mass code</text>
  <text x="440" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">a to h, light to heavy</text>
- <rect x="531" y="40" width="158" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="531" y="40" width="158" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="610" y="84" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text)">2</text>
  <text x="610" y="114" text-anchor="middle" font-size="15" fill="var(--text)">boxel number</text>
  <text x="610" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">once letters run out</text>
- <rect x="701" y="40" width="158" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="701" y="40" width="158" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="780" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">-0</text>
  <text x="780" y="114" text-anchor="middle" font-size="15" fill="var(--text)">system number</text>
  <text x="780" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing else</text>
@@ -111,35 +111,35 @@ nav_order: 116
 <section>
 <h2><span class="num">3</span> The ladder was measured, not recited.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Eight mass codes with their box sizes, five of them measured against real coordinates and three not">
- <rect x="25" y="44" width="96" height="86" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="25" y="44" width="96" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="73" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">a</text>
  <text x="73" y="100" text-anchor="middle" font-size="14" fill="var(--text)">10 ly</text>
  <text x="73" y="122" text-anchor="middle" font-size="14" fill="var(--accent)">9.99</text>
- <rect x="130" y="44" width="96" height="86" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="130" y="44" width="96" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="178" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">b</text>
  <text x="178" y="100" text-anchor="middle" font-size="14" fill="var(--text)">20 ly</text>
  <text x="178" y="122" text-anchor="middle" font-size="14" fill="var(--accent)">20.02</text>
- <rect x="235" y="44" width="96" height="86" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="235" y="44" width="96" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="283" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">c</text>
  <text x="283" y="100" text-anchor="middle" font-size="14" fill="var(--text)">40 ly</text>
  <text x="283" y="122" text-anchor="middle" font-size="14" fill="var(--accent)">39.51</text>
- <rect x="340" y="44" width="96" height="86" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="340" y="44" width="96" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="388" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">d</text>
  <text x="388" y="100" text-anchor="middle" font-size="14" fill="var(--text)">80 ly</text>
  <text x="388" y="122" text-anchor="middle" font-size="14" fill="var(--accent)">78.23</text>
- <rect x="445" y="44" width="96" height="86" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="445" y="44" width="96" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="493" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">e</text>
  <text x="493" y="100" text-anchor="middle" font-size="14" fill="var(--text)">160 ly</text>
  <text x="493" y="122" text-anchor="middle" font-size="14" fill="var(--text-muted)">thin</text>
- <rect x="550" y="44" width="96" height="86" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="550" y="44" width="96" height="86" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="598" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-muted)">f</text>
  <text x="598" y="100" text-anchor="middle" font-size="14" fill="var(--text-muted)">320 ly</text>
  <text x="598" y="122" text-anchor="middle" font-size="14" fill="var(--text-muted)">not measured</text>
- <rect x="655" y="44" width="96" height="86" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="655" y="44" width="96" height="86" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="703" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-muted)">g</text>
  <text x="703" y="100" text-anchor="middle" font-size="14" fill="var(--text-muted)">640 ly</text>
  <text x="703" y="122" text-anchor="middle" font-size="14" fill="var(--text-muted)">not measured</text>
- <rect x="760" y="44" width="96" height="86" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="760" y="44" width="96" height="86" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="808" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-muted)">h</text>
  <text x="808" y="100" text-anchor="middle" font-size="14" fill="var(--text-muted)">1,280 ly</text>
  <text x="808" y="122" text-anchor="middle" font-size="14" fill="var(--text-muted)">not measured</text>
@@ -151,13 +151,13 @@ nav_order: 116
 <section>
 <h2><span class="num">4</span> What it will not tell you, however you ask.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The folklore that a heavier boxel pays better is declined every time, because the sample cannot settle it">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">THE FOLKLORE</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">heavier boxel, better payout</text>
  <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and it is asked constantly</text>
- <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,96 446,88 446,104" fill="var(--accent-muted)"/>
- <rect x="474" y="40" width="386" height="112" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="474" y="40" width="386" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="667" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">IT DECLINES, EVERY TIME</text>
  <text x="667" y="110" text-anchor="middle" font-size="15" fill="var(--text)">the sample could not settle it</text>
  <text x="667" y="134" text-anchor="middle" font-size="15" fill="var(--text)">and it says exactly that</text>

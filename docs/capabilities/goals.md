@@ -23,7 +23,7 @@ nav_order: 145
 <section>
 <h2><span class="num">1</span> Say what you are working towards.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">my goal is to buy a Python</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"I want to unlock all the engineers" — "get me to Elite in exploration"</text>
@@ -33,8 +33,8 @@ nav_order: 145
 <section>
 <h2><span class="num">2</span> Open the Goals tab and watch it fill in.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Goals tab">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Goals</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">Buy a Python</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">68%</text>
@@ -48,7 +48,7 @@ nav_order: 145
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A goal you have to update by hand is a goal in the wrong place.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A goal you have to update by hand is a goal in the wrong place.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">If D47 cannot see progress in the journal, put it on the checklist instead.</text>
 </svg>
@@ -68,11 +68,11 @@ nav_order: 145
 <section>
 <h2><span class="num">1</span> Two different questions, kept apart.</h2>
 <svg viewBox="0 0 880 214" role="img" aria-label="The checklist holds what you are doing this week and goals hold what you are doing this year">
- <rect x="20" y="36" width="400" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="400" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">YOUR CHECKLIST</text>
  <text x="220" y="110" text-anchor="middle" font-size="17" fill="var(--text)">what you are doing this week</text>
  <text x="220" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">lines you wrote, in the order you put them</text>
- <rect x="460" y="36" width="400" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="36" width="400" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">GOALS</text>
  <text x="660" y="110" text-anchor="middle" font-size="17" fill="var(--text)">what you are doing this year</text>
  <text x="660" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">ten of them ship, and you can set any aside</text>
@@ -82,18 +82,18 @@ nav_order: 145
 <section>
 <h2><span class="num">2</span> Progress is read off your journal, never ticked.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Rank, engineers and hulls are read from the journal, so an arc has no tick box at all">
- <rect x="20" y="36" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
  <text x="145" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">rank, engineers, hulls</text>
- <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,86 316,78 316,94" fill="var(--accent-muted)"/>
- <rect x="345" y="36" width="250" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="345" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="470" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE FIGURE</text>
  <text x="470" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">a fact, not an opinion</text>
- <rect x="640" y="36" width="220" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="640" y="36" width="220" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="750" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NO TICK BOX</text>
  <text x="750" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">and it offers none</text>
- <rect x="20" y="160" width="840" height="54" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="160" width="840" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="193" text-anchor="middle" font-size="16" fill="var(--text)">Cannot see it right now? It reports as of when it last could — it never resets to nothing.</text>
  <text x="440" y="238" text-anchor="middle" font-size="15" fill="var(--text-muted)">A goal you invented is yours to call done, like a checklist line you wrote yourself.</text>
 </svg>
@@ -101,20 +101,20 @@ nav_order: 145
 <section>
 <h2><span class="num">3</span> The point is the join: what do I do about it today?</h2>
 <svg viewBox="0 0 880 238" role="img" aria-label="An arc names today's concrete step and offers it as a proposal you accept on the checklist">
- <rect x="20" y="40" width="270" height="100" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="155" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EVERY ENGINEER</text>
  <text x="155" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">19 of 53 unlocked</text>
- <line x1="302" y1="90" x2="338" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="302" y1="90" x2="338" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="352,90 336,82 336,98" fill="var(--accent-muted)"/>
- <rect x="365" y="40" width="270" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="365" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="500" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TODAY’S STEP</text>
  <text x="500" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">the unlock solver answers it</text>
- <line x1="647" y1="90" x2="683" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="647" y1="90" x2="683" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="697,90 681,82 681,98" fill="var(--accent-muted)"/>
- <rect x="710" y="40" width="150" height="100" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="710" y="40" width="150" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="785" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A PROPOSAL</text>
  <text x="785" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">you accept</text>
- <rect x="20" y="164" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="164" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Accepting is your act — an arc proposes through the same path everything else does.</text>
  <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">A line that came from an arc says so, so finishing it visibly moves something bigger.</text>
 </svg>
@@ -122,11 +122,11 @@ nav_order: 145
 <section>
 <h2><span class="num">4</span> Except the career arcs, which propose nothing and say why.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="A career arc reports its rank but proposes no step, because rank is earned by doing the career">
- <rect x="20" y="36" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ELITE IN COMBAT</text>
  <text x="220" y="108" text-anchor="middle" font-size="16" fill="var(--text)">Master, 12% into it</text>
  <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">proposes nothing</text>
- <rect x="460" y="36" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="36" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">AND SAYS WHY</text>
  <text x="660" y="108" text-anchor="middle" font-size="16" fill="var(--text)">rank is earned by doing the career</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">there is no route anyone can plot</text>

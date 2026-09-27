@@ -23,7 +23,7 @@ nav_order: 115
 <section>
 <h2><span class="num">1</span> Ask for one, in the Adventures tab or out loud.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for an adventure typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell me a story about this system</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press Adventures in the tab strip and pick one there.</text>
@@ -33,12 +33,12 @@ nav_order: 115
 <section>
 <h2><span class="num">2</span> Fly. The next beat arrives when your journal earns it.</h2>
 <svg viewBox="0 0 880 168" role="img" aria-label="A jump or a docking in the journal moves the story to its next beat">
- <rect x="20" y="24" width="250" height="72" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="24" width="250" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">YOU JUMP</text>
  <text x="145" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">or dock, or scan</text>
- <line x1="282" y1="60" x2="306" y2="60" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="60" x2="306" y2="60" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="320,60 304,52 304,68" fill="var(--accent-muted)"/>
- <rect x="334" y="24" width="526" height="72" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="334" y="24" width="526" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="597" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE NEXT BEAT IS SPOKEN</text>
  <text x="597" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your ship AI's own voice</text>
  <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Say "where am I up to" to hear the story so far.</text>
@@ -47,7 +47,7 @@ nav_order: 115
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A story only moves when Elite writes something to the journal">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A story moves when the game does.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Sitting in the menu, nothing happens. Say "next" if you want it moved on anyway.</text>
 </svg>
@@ -67,20 +67,20 @@ nav_order: 115
 <section>
 <h2><span class="num">1</span> A story, not a list of stops.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="A spine of premise, want, stake, turn and ending, with beats hung on real places">
- <rect x="20" y="20" width="360" height="216" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="360" height="216" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="52" y="58" font-size="19" font-weight="800" fill="var(--accent)">THE SPINE</text>
  <text x="52" y="96" font-size="16" fill="var(--text)">what it is about</text>
  <text x="52" y="126" font-size="16" fill="var(--text)">what you want in it</text>
  <text x="52" y="156" font-size="16" fill="var(--text)">what is really at stake</text>
  <text x="52" y="186" font-size="16" fill="var(--text)">where it turns</text>
  <text x="52" y="216" font-size="16" fill="var(--text)">what the end means</text>
- <line x1="398" y1="128" x2="428" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="398" y1="128" x2="428" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="442,128 426,120 426,136" fill="var(--accent-muted)"/>
- <rect x="458" y="20" width="402" height="60" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="458" y="20" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="484" y="56" font-size="16" fill="var(--text)">a beat, standing on a real place</text>
- <rect x="458" y="92" width="402" height="60" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="458" y="92" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="484" y="128" font-size="16" fill="var(--text)">a beat, standing on a real place</text>
- <rect x="458" y="164" width="402" height="60" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="458" y="164" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="484" y="200" font-size="16" fill="var(--text)">a beat, standing on a real place</text>
  <text x="440" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">The shape is written first. The places are where that shape can stand.</text>
  <text x="440" y="294" text-anchor="middle" font-size="16" fill="var(--text-muted)">Which is why D47 is never asked for five stops — it is asked for a story.</text>
@@ -89,20 +89,20 @@ nav_order: 115
 <section>
 <h2><span class="num">2</span> Your journal moves it. There is nothing to tick.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="A beat fires when you reach its place, and nothing before you began counts">
- <rect x="20" y="30" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="250" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU BEGIN IT</text>
  <text x="145" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">the clock starts here</text>
- <line x1="282" y1="73" x2="308" y2="73" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="73" x2="308" y2="73" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="322,73 306,65 306,81" fill="var(--accent-muted)"/>
- <rect x="334" y="30" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="334" y="30" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="459" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU FLY THERE</text>
  <text x="459" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">arrive, dock, land or scan</text>
- <line x1="596" y1="73" x2="622" y2="73" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="596" y1="73" x2="622" y2="73" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="636,73 620,65 620,81" fill="var(--accent-muted)"/>
- <rect x="648" y="30" width="212" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="648" y="30" width="212" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="754" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">IT SPEAKS</text>
  <text x="754" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">and says where next</text>
- <rect x="20" y="148" width="840" height="60" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="148" width="840" height="60" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="185" text-anchor="middle" font-size="16" fill="var(--text)">Nothing you did before you began counts, and only the current beat can fire.</text>
  <text x="440" y="242" text-anchor="middle" font-size="16" fill="var(--text-muted)">Fly with D47 closed and it catches up when you start it. Wander off and the story waits —</text>
  <text x="440" y="264" text-anchor="middle" font-size="16" fill="var(--text-muted)">going somewhere else is what a sandbox is for.</text>
@@ -111,13 +111,13 @@ nav_order: 115
 <section>
 <h2><span class="num">3</span> It cannot spoil itself.</h2>
 <svg viewBox="0 0 880 274" role="img" aria-label="What the ship's AI is told, and when">
- <rect x="20" y="24" width="840" height="62" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="24" width="840" height="62" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="56" y="62" font-size="18" font-weight="700" fill="var(--accent)">always</text>
  <text x="824" y="62" text-anchor="end" font-size="16" fill="var(--text)">the premise, what you want, what is at stake</text>
- <rect x="20" y="98" width="840" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="98" width="840" height="62" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="56" y="136" font-size="18" font-weight="700" fill="var(--text)">once it has happened</text>
  <text x="824" y="136" text-anchor="end" font-size="16" fill="var(--text)">the turn, and what the ending meant</text>
- <rect x="20" y="172" width="840" height="62" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="172" width="840" height="62" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="56" y="210" font-size="18" font-weight="700" fill="var(--danger)">never</text>
  <text x="824" y="210" text-anchor="end" font-size="16" fill="var(--text)">the beats ahead of you</text>
  <text x="440" y="268" text-anchor="middle" font-size="16" fill="var(--text-muted)">A storyteller who knows the ending leaks it. So the AI is simply never told what is coming.</text>

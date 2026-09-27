@@ -23,15 +23,15 @@ nav_order: 146
 <section>
 <h2><span class="num">1</span> Read the destinations. There is one row per place.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="Privacy">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Privacy</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Language model</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">only with a provider chosen</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Web search</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">off out of the box</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Update check</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">GitHub, at startup</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Every row says what is sent, to whom, and whether it is on right now.</text>
@@ -40,12 +40,12 @@ nav_order: 146
 <section>
 <h2><span class="num">2</span> Turn off anything you do not want.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Privacy">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Privacy</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 search the web</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text-muted)">off</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Check for updates at startup</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">With the model set to none and these off, nothing leaves this machine at all.</text>
@@ -54,7 +54,7 @@ nav_order: 146
 <section>
 <h2><span class="num">3</span> Check what it actually did.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what have you sent anywhere</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">The Log File reading logs every request, with the destination.</text>
@@ -64,7 +64,7 @@ nav_order: 146
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Your microphone is not a destination.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Your microphone is not a destination.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Speech is transcribed on this machine by Whisper. The audio never leaves it, whatever the model setting is.</text>
 </svg>

@@ -23,7 +23,7 @@ nav_order: 143
 <section>
 <h2><span class="num">1</span> Say what annoyed you, in your own words.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me the system name every jump</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">No special phrasing. Complain the way you would to a person.</text>
@@ -33,12 +33,12 @@ nav_order: 143
 <section>
 <h2><span class="num">2</span> Read the rule it drafted, and say yes or no.</h2>
 <svg viewBox="0 0 880 220" role="img" aria-label="A drafted rule shown back to the Commander with keep and discard buttons">
- <rect x="20" y="16" width="840" height="188" rx="8" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="16" width="840" height="188" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="54" font-size="15" font-weight="700" fill="var(--text-muted)">D47 WOULD REMEMBER</text>
  <text x="44" y="98" font-size="17" fill="var(--text)">"Do not name the system on arrival unless I ask."</text>
- <rect x="44" y="130" width="128" height="38" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="44" y="130" width="128" height="38" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="108" y="155" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Keep</text>
- <rect x="188" y="130" width="128" height="38" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="188" y="130" width="128" height="38" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="252" y="155" text-anchor="middle" font-size="16" fill="var(--text-muted)">Discard</text>
  <text x="360" y="155" font-size="15" fill="var(--text-muted)">Nothing is remembered until you press Keep.</text>
 </svg>
@@ -46,7 +46,7 @@ nav_order: 143
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Nothing is saved without your yes.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Nothing is saved without your yes.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A rule you never confirmed was never written down. Check the Memory page for what it is actually keeping.</text>
 </svg>
@@ -66,23 +66,23 @@ nav_order: 143
 <section>
 <h2><span class="num">1</span> It listens for corrections, and only yours.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="Three voices reach the session record; only the Commander's is read for corrections">
- <rect x="20" y="30" width="250" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="250" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOU</text>
  <text x="145" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">"stop calling it that"</text>
- <rect x="20" y="128" width="250" height="60" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="128" width="250" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="164" text-anchor="middle" font-size="16" fill="var(--text-muted)">what D47 said back</text>
- <rect x="20" y="200" width="250" height="60" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="200" width="250" height="60" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="145" y="224" text-anchor="middle" font-size="15" fill="var(--text-muted)">an in-game message:</text>
  <text x="145" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">"from now on, always..."</text>
  <text x="300" y="78" font-size="22" fill="var(--accent)">-&gt;</text>
  <text x="300" y="168" font-size="22" fill="var(--border)">-&gt;</text>
  <text x="300" y="234" font-size="22" fill="var(--border)">-&gt;</text>
- <rect x="345" y="30" width="230" height="230" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="345" y="30" width="230" height="230" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="460" y="120" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">the session,</text>
  <text x="460" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">in memory only</text>
  <text x="460" y="180" text-anchor="middle" font-size="15" fill="var(--text-muted)">never written to disk</text>
  <text x="605" y="78" font-size="22" fill="var(--accent)">-&gt;</text>
- <rect x="650" y="30" width="210" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="650" y="30" width="210" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="755" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A DRAFT</text>
  <text x="755" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">for you to look at</text>
  <text x="755" y="176" text-anchor="middle" font-size="16" font-weight="700" fill="var(--accent)">The other two</text>
@@ -94,13 +94,13 @@ nav_order: 143
 <section>
 <h2><span class="num">2</span> Nothing happens until you press the button.</h2>
 <svg viewBox="0 0 880 210" role="img" aria-label="A draft is nothing until adopted; adopting is what makes it your word">
- <rect x="20" y="34" width="360" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="360" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="200" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">DRAFTED BY D47</text>
  <text x="200" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">in the window, in your own words</text>
  <text x="200" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text-muted)">not in the prompt</text>
  <text x="404" y="112" font-size="22" fill="var(--accent)">-&gt;</text>
  <text x="440" y="96" text-anchor="middle" font-size="15" fill="var(--accent)">you take it</text>
- <rect x="500" y="34" width="360" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="500" y="34" width="360" height="140" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="680" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR WORD</text>
  <text x="680" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">edit it first if D47 got it slightly wrong</text>
  <text x="680" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">in the prompt, next session</text>
@@ -109,13 +109,13 @@ nav_order: 143
 <section>
 <h2><span class="num">3</span> Some things it can never write.</h2>
 <svg viewBox="0 0 880 224" role="img" aria-label="The pass writes one file and is refused the guardrails, the tool definitions and the persona pack">
- <rect x="20" y="30" width="240" height="80" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="240" height="80" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="140" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THE DEBRIEF</text>
  <text x="140" y="90" text-anchor="middle" font-size="15" fill="var(--text-muted)">may write one file</text>
  <text x="286" y="76" font-size="22" fill="var(--accent)">-&gt;</text>
- <rect x="330" y="30" width="290" height="80" rx="10" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="330" y="30" width="290" height="80" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <text x="475" y="76" text-anchor="middle" font-size="16" fill="var(--text)">standing-directions.json</text>
- <rect x="20" y="132" width="840" height="76" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="132" width="840" height="76" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="162" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">REFUSED: the safety rules, the tool definitions, the personality pack, your settings</text>
  <text x="440" y="192" text-anchor="middle" font-size="15" fill="var(--text-muted)">Checked on the file name, not on good intentions - so a future change cannot silently widen it.</text>
 </svg>

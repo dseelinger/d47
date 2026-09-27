@@ -23,8 +23,8 @@ nav_order: 127
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Checklist  Ships  Settings tab">
- <rect x="20" y="16" width="840" height="172" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Checklist  Ships  Settings</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">The page you land on</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">the conversation</text>
@@ -36,12 +36,12 @@ nav_order: 127
 <section>
 <h2><span class="num">2</span> The two hotkeys worth knowing.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Hotkeys">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Open Settings</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Ctrl+comma</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Jump to the ask box — or scroll the reading, on the Transcript tab</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+L</text>
  <text x="44" y="200" font-size="15" fill="var(--text-muted)">Ctrl and the scroll wheel zoom the panel, the way a browser does.</text>
@@ -62,14 +62,14 @@ nav_order: 127
 <section>
 <h2><span class="num">1</span> The tab is the top of the stack, not the first step into it.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="A tab sits above a stack of levels, and pressing the tab you are already on returns to its top">
- <rect x="20" y="30" width="840" height="44" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="840" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="59" text-anchor="start" font-size="16" font-weight="800" fill="var(--accent)">Loadout</text>
  <text x="200" y="59" text-anchor="start" font-size="15" fill="var(--text-muted)">← press it again to come straight back here</text>
- <rect x="60" y="82" width="800" height="44" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="60" y="82" width="800" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="86" y="111" text-anchor="start" font-size="16" fill="var(--text)">Fleet</text>
- <rect x="100" y="134" width="760" height="44" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="100" y="134" width="760" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="126" y="163" text-anchor="start" font-size="16" fill="var(--text)">Corsair</text>
- <rect x="140" y="186" width="720" height="44" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="140" y="186" width="720" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="166" y="215" text-anchor="start" font-size="16" fill="var(--text)">Hardpoint 3</text>
  <text x="440" y="250" text-anchor="middle" font-size="15" fill="var(--text-muted)">The breadcrumb under the bar is both where you are and the way back.</text>
 </svg>
@@ -79,17 +79,17 @@ nav_order: 127
 <h2><span class="num">2</span> Drilling in and reflowing are the same mechanism.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="A narrow surface shows one pane and you drill; a wider one shows two, and a wide one three">
  <text x="110" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">MINI PANEL</text>
- <rect x="20" y="40" width="180" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="34" y="54" width="152" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="20" y="40" width="180" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="34" y="54" width="152" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="400" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">THE WINDOW</text>
- <rect x="240" y="40" width="320" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="254" y="54" width="142" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <rect x="404" y="54" width="142" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="240" y="40" width="320" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="254" y="54" width="142" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="404" y="54" width="142" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="730" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">WIDE, OR ZOOMED OUT</text>
- <rect x="600" y="40" width="260" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <rect x="610" y="54" width="76" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <rect x="694" y="54" width="76" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <rect x="778" y="54" width="76" height="82" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="600" y="40" width="260" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="610" y="54" width="76" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="694" y="54" width="76" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="778" y="54" width="76" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="440" y="194" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It is one question: how many panes fit.</text>
  <text x="440" y="226" text-anchor="middle" font-size="16" fill="var(--text)">Same stack, same breadcrumb, same phrases — one design, not four that have to agree.</text>
 </svg>
@@ -98,12 +98,12 @@ nav_order: 127
 <section>
 <h2><span class="num">3</span> A chooser takes the whole panel.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A whole-panel chooser carries the slot it is choosing for in its header, which a drop-down has nowhere to put">
- <rect x="20" y="34" width="400" height="140" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="34" width="400" height="140" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">A CHOOSER, WHOLE-PANEL</text>
  <text x="220" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">carries the slot, its size,</text>
  <text x="220" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">and what is fitted now</text>
  <text x="220" y="154" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">about sixteen rows, comfortably</text>
- <rect x="460" y="34" width="400" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="34" width="400" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">A DROP-DOWN</text>
  <text x="660" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">has nowhere to put that</text>
  <text x="660" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">and fits fewer rows</text>
@@ -114,12 +114,12 @@ nav_order: 127
 <section>
 <h2><span class="num">4</span> Text entry is voice first, and never your real keyboard.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Voice is the primary text entry with a drawn keyboard as fallback; there is deliberately no physical keyboard route">
- <rect x="20" y="36" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="74" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">VOICE FIRST</text>
  <text x="220" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a system name is far easier said</text>
  <text x="220" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">and it reaches the box once,</text>
  <text x="220" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">when it is done</text>
- <rect x="460" y="36" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="36" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A DRAWN KEYBOARD</text>
  <text x="660" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">for a number — and it comes back</text>
  <text x="660" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">on its own for the three failures</text>

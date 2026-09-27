@@ -23,7 +23,7 @@ nav_order: 135
 <section>
 <h2><span class="num">1</span> Say where you want to go.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">plot a route to Shinrarta Dezhra</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It puts the name on the clipboard, which is the part that always works.</text>
@@ -33,12 +33,12 @@ nav_order: 135
 <section>
 <h2><span class="num">2</span> Let it drive the map, if you want that.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Navigation">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Navigation</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Drive the galaxy map</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">With both on it opens the map, types the name and plots. Without them, you paste.</text>
@@ -47,7 +47,7 @@ nav_order: 135
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="The map macro is a fixed key sequence.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The map macro is a fixed key sequence.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It assumes the default map layout. If yours is different, turn it off and paste the name instead.</text>
 </svg>
@@ -67,10 +67,10 @@ nav_order: 135
 <section>
 <h2><span class="num">1</span> The clipboard is the part that always works.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="The system name always goes on the clipboard first, and driving the map is a convenience on top of it">
- <rect x="20" y="40" width="390" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="390" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="215" y="80" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">THE CLIPBOARD</text>
  <text x="215" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">always first, always works</text>
- <rect x="460" y="40" width="400" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="80" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">DRIVING THE MAP</text>
  <text x="660" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">a convenience on top that can fail</text>
  <text x="440" y="186" text-anchor="middle" font-size="16" fill="var(--text)">Elite’s galaxy map has a search box, and pasting into it works every time —</text>
@@ -80,25 +80,25 @@ nav_order: 135
 <section>
 <h2><span class="num">2</span> Seven steps, two of them scar tissue.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="The seven steps of driving the galaxy map, with the two that exist because of earlier failures picked out">
- <rect x="25" y="40" width="110" height="76" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="25" y="40" width="110" height="76" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="80" y="72" text-anchor="middle" font-size="14" fill="var(--text)">open the</text>
  <text x="80" y="96" text-anchor="middle" font-size="14" fill="var(--text)">map</text>
- <rect x="145" y="40" width="110" height="76" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="145" y="40" width="110" height="76" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="200" y="72" text-anchor="middle" font-size="14" fill="var(--text)">up, then</text>
  <text x="200" y="96" text-anchor="middle" font-size="14" fill="var(--text)">select</text>
- <rect x="265" y="40" width="110" height="76" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="265" y="40" width="110" height="76" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="320" y="72" text-anchor="middle" font-size="14" fill="var(--text)">paste, then</text>
  <text x="320" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">return</text>
- <rect x="385" y="40" width="110" height="76" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="385" y="40" width="110" height="76" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="72" text-anchor="middle" font-size="14" fill="var(--text)">wait 4s for</text>
  <text x="440" y="96" text-anchor="middle" font-size="14" fill="var(--text)">the camera</text>
- <rect x="505" y="40" width="110" height="76" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="505" y="40" width="110" height="76" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="560" y="72" text-anchor="middle" font-size="14" fill="var(--text)">brush the</text>
  <text x="560" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">camera</text>
- <rect x="625" y="40" width="110" height="76" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="625" y="40" width="110" height="76" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="680" y="72" text-anchor="middle" font-size="14" fill="var(--text)">hold select</text>
  <text x="680" y="96" text-anchor="middle" font-size="14" fill="var(--text)">1.2 seconds</text>
- <rect x="745" y="40" width="110" height="76" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="745" y="40" width="110" height="76" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="800" y="72" text-anchor="middle" font-size="14" fill="var(--text)">close the</text>
  <text x="800" y="96" text-anchor="middle" font-size="14" fill="var(--text)">map</text>
  <text x="440" y="152" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">The two picked out exist because of what went wrong without them.</text>
@@ -110,15 +110,15 @@ nav_order: 135
 <section>
 <h2><span class="num">3</span> Three answers, and they mean different things.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Course plotted, assume it did not work, and cannot tell are three distinct outcomes">
- <rect x="20" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="155" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">COURSE PLOTTED</text>
  <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a route to that system</text>
  <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">really is in the file</text>
- <rect x="305" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">ASSUME IT DID NOT</text>
  <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">the file was readable</text>
  <text x="440" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">and no such route appeared</text>
- <rect x="590" y="36" width="270" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">CANNOT TELL</text>
  <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">the file never became</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">readable at all</text>
@@ -129,15 +129,15 @@ nav_order: 135
 <section>
 <h2><span class="num">4</span> It takes all five keys, or none of them.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="Driving the map needs five keys, and the first one it cannot press stops the attempt before anything is sent">
- <rect x="41" y="36" width="150" height="64" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="41" y="36" width="150" height="64" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="116" y="74" text-anchor="middle" font-size="15" fill="var(--text)">galaxy map</text>
- <rect x="203" y="36" width="150" height="64" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="203" y="36" width="150" height="64" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="278" y="74" text-anchor="middle" font-size="15" fill="var(--text)">UI up</text>
- <rect x="365" y="36" width="150" height="64" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="365" y="36" width="150" height="64" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="74" text-anchor="middle" font-size="15" fill="var(--text)">UI select</text>
- <rect x="527" y="36" width="150" height="64" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="527" y="36" width="150" height="64" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="602" y="74" text-anchor="middle" font-size="15" fill="var(--text)">camera right</text>
- <rect x="689" y="36" width="150" height="64" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="689" y="36" width="150" height="64" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="764" y="74" text-anchor="middle" font-size="15" fill="var(--text)">camera left</text>
  <text x="440" y="136" text-anchor="middle" font-size="16" fill="var(--text)">All five, on the keyboard or the mouse. A key on a stick is one it cannot press.</text>
  <text x="440" y="174" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the first one it cannot press stops the whole attempt.</text>

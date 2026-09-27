@@ -23,17 +23,17 @@ nav_order: 126
 <section>
 <h2><span class="num">1</span> Turn callouts on, then pick the ones you want.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The master callouts toggle above a list of individual callout toggles">
- <rect x="20" y="20" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Callouts</text>
- <rect x="746" y="35" width="68" height="30" rx="15" fill="var(--accent)"/>
+ <rect x="746" y="35" width="68" height="30" fill="var(--accent)"/>
  <circle cx="799" cy="50" r="11" fill="var(--background)"/>
- <rect x="60" y="96" width="800" height="48" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="60" y="96" width="800" height="48" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="86" y="126" font-size="16" fill="var(--text)">Arrival</text>
- <rect x="756" y="107" width="60" height="26" rx="13" fill="var(--accent)"/>
+ <rect x="756" y="107" width="60" height="26" fill="var(--accent)"/>
  <circle cx="803" cy="120" r="9" fill="var(--background)"/>
- <rect x="60" y="156" width="800" height="48" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="60" y="156" width="800" height="48" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="86" y="186" font-size="16" fill="var(--text)">Limpets</text>
- <rect x="756" y="167" width="60" height="26" rx="13" fill="var(--border)"/>
+ <rect x="756" y="167" width="60" height="26" fill="var(--border)"/>
  <circle cx="769" cy="180" r="9" fill="var(--surface)"/>
  <text x="60" y="238" font-size="15" fill="var(--text-muted)">The individual rows are not there until the master one is on.</text>
 </svg>
@@ -41,7 +41,7 @@ nav_order: 126
 <section>
 <h2><span class="num">2</span> Or just say it.</h2>
 <svg viewBox="0 0 880 168" role="img" aria-label="Spoken phrases that turn callouts on and off">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me about limpets</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"be quiet about arrivals" — "tell me about limpets again" — "no more callouts"</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Each one names a row. Nothing here needs the panel.</text>
@@ -50,7 +50,7 @@ nav_order: 126
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="A callout that never fires is usually a callout whose own row is off">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Silence usually means its own row is off.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The master switch being on is not enough. Check the row for the one you are missing.</text>
 </svg>
@@ -70,14 +70,14 @@ nav_order: 126
 <section>
 <h2><span class="num">1</span> NPCs announce themselves. It listens.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="An attack warning arrives a median of six seconds before the first shot and is right 88% of the time">
- <rect x="20" y="44" width="300" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="300" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="170" y="80" text-anchor="middle" font-size="16" fill="var(--text)">“Pirate lining up an</text>
  <text x="170" y="104" text-anchor="middle" font-size="16" fill="var(--text)">interdiction. Boost or</text>
  <text x="170" y="128" text-anchor="middle" font-size="16" fill="var(--text)">high-wake now.”</text>
  <text x="425" y="72" text-anchor="middle" font-size="16" font-weight="700" fill="var(--accent)">a median of six seconds</text>
- <line x1="336" y1="96" x2="500" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="336" y1="96" x2="500" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="514,96 498,88 498,104" fill="var(--accent-muted)"/>
- <rect x="530" y="44" width="330" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="530" y="44" width="330" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="695" y="88" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE FIRST SHOT</text>
  <text x="695" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">and the line was right 88% of the time</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">They say what they are about to do before they do it, and there is still time to act.</text>
@@ -87,11 +87,11 @@ nav_order: 126
 <section>
 <h2><span class="num">2</span> It matches on the message id, never on the words.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Matching on hostile-sounding text fires thousands of false alarms, while matching on Elite's message ids does not">
- <rect x="20" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">MATCHING ON THE WORDS</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">2,399 firings to catch</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
- <rect x="460" y="40" width="400" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">MATCHING ON THE ID</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a fixed list, NPC chatter only</text>
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing the message says is</text>
@@ -103,11 +103,11 @@ nav_order: 126
 <section>
 <h2><span class="num">3</span> Urgent cuts in. Everything else waits its turn.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="Danger and fuel speak over whatever is being said; routine lines like a core asteroid wait">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">URGENT CUTS IN</text>
  <text x="220" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">danger and fuel</text>
  <text x="220" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">over whatever is being said</text>
- <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ROUTINE WAITS ITS TURN</text>
  <text x="660" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">a core asteroid is exciting</text>
  <text x="660" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">and is not a safety matter</text>
@@ -118,10 +118,10 @@ nav_order: 126
 <section>
 <h2><span class="num">4</span> The model may ask what it is watching for. It may not switch one off.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Warnings are readable by the model but only changeable from the panel, a key or a spoken phrase">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT CAN BE ASKED</text>
  <text x="220" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">what it is watching for</text>
- <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="660" y="80" text-anchor="middle" font-size="15" font-weight="800" fill="var(--danger)">IT CANNOT SWITCH ONE OFF</text>
  <text x="660" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">not by anything the model calls</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads in-game messages from anyone in range.</text>

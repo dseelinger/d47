@@ -23,7 +23,7 @@ nav_order: 113
 <section>
 <h2><span class="num">1</span> Plan something first. The Gap is the arithmetic on top.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what am I missing</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reads your engineering plans, your builds and your goals together.</text>
@@ -33,15 +33,15 @@ nav_order: 113
 <section>
 <h2><span class="num">2</span> Read it ledger by ledger.</h2>
 <svg viewBox="0 0 880 308" role="img" aria-label="The gap">
- <rect x="20" y="16" width="840" height="268" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">The gap</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Raw materials</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">14 short across 3 plans</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Commodities</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">3,200 t for the build</text>
- <rect x="44" y="182" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Credits</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing outstanding</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">Each ledger says which plan it came from.</text>
@@ -50,7 +50,7 @@ nav_order: 113
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="An empty gap means nothing is planned.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">An empty gap means nothing is planned.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The Gap has nothing of its own. With no plans, no builds and no goals, it is correctly blank.</text>
 </svg>
@@ -70,15 +70,15 @@ nav_order: 113
 <section>
 <h2><span class="num">1</span> Not a wishlist. The arithmetic between two of them.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The gap is your plans minus what is in your hold">
- <rect x="20" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR PLANS</text>
  <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">what your ships should be</text>
  <text x="300" y="102" text-anchor="middle" font-size="24" font-weight="800" fill="var(--accent-muted)">-</text>
- <rect x="330" y="44" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="330" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="455" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR HOLD</text>
  <text x="455" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">what you are carrying</text>
  <text x="610" y="102" text-anchor="middle" font-size="24" font-weight="800" fill="var(--accent-muted)">=</text>
- <rect x="640" y="44" width="220" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="640" y="44" width="220" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="750" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE GAP</text>
  <text x="750" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">what to go and get</text>
  <text x="440" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A wishlist is a list of things you want. This is the arithmetic.</text>
@@ -88,19 +88,19 @@ nav_order: 113
 <section>
 <h2><span class="num">2</span> The ledgers are never totalled together.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="Materials, the ship locker and the cargo hold have separate caps and no exchange between them">
- <rect x="20" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="270" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">MATERIALS</text>
  <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">raw · manufactured · encoded</text>
  <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text)">Zirconium: 8 short</text>
- <line x1="290" y1="86" x2="304" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>
- <line x1="304" y1="86" x2="290" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>
- <rect x="305" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <line x1="290" y1="86" x2="304" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="304" y1="86" x2="290" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="butt"/>
+ <rect x="305" y="40" width="270" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SHIP LOCKER</text>
  <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Opinion Polls ×40 live here</text>
  <text x="440" y="132" text-anchor="middle" font-size="14" fill="var(--text)">Graphene: 2 short</text>
- <line x1="575" y1="86" x2="589" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>
- <line x1="589" y1="86" x2="575" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>
- <rect x="590" y="40" width="270" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <line x1="575" y1="86" x2="589" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="589" y1="86" x2="575" y2="104" stroke="var(--danger)" stroke-width="3" stroke-linecap="butt"/>
+ <rect x="590" y="40" width="270" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">CARGO HOLD</text>
  <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Gold ×200 is 200 tonnes</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">a different thing entirely</text>
@@ -112,7 +112,7 @@ nav_order: 113
 <section>
 <h2><span class="num">3</span> Every shortfall names what wants it.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="A shortfall line names the ships and slots that asked for it, with any trade offered on a second line">
- <rect x="20" y="36" width="840" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">Zirconium: 8 short (2 of 10) — for Bad Idea (Python) · MainEngines.</text>
  <text x="86" y="106" text-anchor="start" font-size="15" fill="var(--accent)">A material trader would take 24 Iron for 8</text>
  <text x="46" y="136" text-anchor="start" font-size="14" fill="var(--text-muted)">every line names the ships and the slots that asked for it</text>

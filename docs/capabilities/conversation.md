@@ -23,14 +23,14 @@ nav_order: 120
 <section>
 <h2><span class="num">1</span> Pick a provider and a model.</h2>
 <svg viewBox="0 0 880 200" role="img" aria-label="The provider and model rows, with a key row under them">
- <rect x="20" y="16" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="16" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="53" font-size="17" fill="var(--text)">Provider</text>
- <rect x="560" y="30" width="278" height="32" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="560" y="30" width="278" height="32" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <text x="580" y="52" font-size="15" fill="var(--text)">Anthropic</text>
  <text x="822" y="52" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="20" y="88" width="840" height="60" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="88" width="840" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="125" font-size="17" fill="var(--text)">Model</text>
- <rect x="560" y="102" width="278" height="32" rx="4" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="560" y="102" width="278" height="32" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="580" y="124" font-size="15" fill="var(--text)">claude-opus-5</text>
  <text x="822" y="124" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
  <text x="20" y="186" font-size="16" fill="var(--text-muted)">Choose "none" and D47 still works — everything it does itself keeps working.</text>
@@ -39,7 +39,7 @@ nav_order: 120
 <section>
 <h2><span class="num">2</span> Put your key in, and ask something.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what is my current cargo worth</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">The key is stored on this machine and never shown again once saved.</text>
@@ -49,7 +49,7 @@ nav_order: 120
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="No key means no answers, and it says so.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No key means no answers, and it says so.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A paid provider with no key stored refuses at the first question rather than at setup time.</text>
 </svg>
@@ -69,23 +69,23 @@ nav_order: 120
 <section>
 <h2><span class="num">1</span> You choose where your turns go — including nowhere.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Four providers: none, Anthropic, OpenAI, or a model you run yourself">
- <rect x="20" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="34" width="195" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="117" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">NONE</text>
  <text x="117" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">nothing leaves</text>
  <text x="117" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">this machine</text>
- <rect x="235" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="235" y="34" width="195" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="332" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ANTHROPIC</text>
  <text x="332" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">your turns go</text>
  <text x="332" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">to Claude</text>
- <rect x="450" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="34" width="195" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="547" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">OPENAI</text>
  <text x="547" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">or xAI, or</text>
  <text x="547" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">OpenRouter</text>
- <rect x="665" y="34" width="195" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="665" y="34" width="195" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="762" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">YOUR OWN</text>
  <text x="762" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">a model you run,</text>
  <text x="762" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">here, priced at zero</text>
- <rect x="20" y="180" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="180" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="212" text-anchor="middle" font-size="16" fill="var(--text)">Picking a provider picks where your turns go — so the panel changes it, and the model never can.</text>
 </svg>
 <p class="body">With <strong>None</strong> you still have a companion: it reads your journal, answers what it recognises on its own, and says so when it cannot. A capability without its key is off, not broken.</p>
@@ -93,12 +93,12 @@ nav_order: 120
 <section>
 <h2><span class="num">2</span> “Stop” and “cancel” are different, and the difference is on your bill.</h2>
 <svg viewBox="0 0 880 266" role="img" aria-label="Stop ends only the speaking while the model keeps costing; cancel ends the model and the spend too">
- <rect x="20" y="40" width="400" height="170" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="170" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="84" text-anchor="middle" font-size="21" font-weight="800" fill="var(--text)">“stop”</text>
  <text x="220" y="122" text-anchor="middle" font-size="16" fill="var(--text)">the speaking stops</text>
  <text x="220" y="152" text-anchor="middle" font-size="16" fill="var(--text-muted)">the model keeps working</text>
  <text x="220" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--danger)">and keeps costing</text>
- <rect x="460" y="40" width="400" height="170" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="170" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="84" text-anchor="middle" font-size="21" font-weight="800" fill="var(--text)">“cancel”</text>
  <text x="660" y="122" text-anchor="middle" font-size="16" fill="var(--text)">the speaking stops</text>
  <text x="660" y="152" text-anchor="middle" font-size="16" fill="var(--text)">the model stops</text>
@@ -110,18 +110,18 @@ nav_order: 120
 <section>
 <h2><span class="num">3</span> Two bills, one answer.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="The model billed per token and the voices billed per character add up to one running total">
- <rect x="20" y="30" width="300" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="300" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE MODEL</text>
  <text x="170" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">per token — $0.0412</text>
- <rect x="20" y="136" width="300" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="136" width="300" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="172" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE VOICES</text>
  <text x="170" y="202" text-anchor="middle" font-size="15" fill="var(--text-muted)">per character — 1,204</text>
- <line x1="332" y1="75" x2="400" y2="75" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <line x1="332" y1="181" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <line x1="400" y1="75" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <line x1="400" y1="128" x2="452" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="332" y1="75" x2="400" y2="75" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="332" y1="181" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="400" y1="75" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="400" y1="128" x2="452" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="466,128 450,120 450,136" fill="var(--accent-muted)"/>
- <rect x="478" y="66" width="382" height="124" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="478" y="66" width="382" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="669" y="106" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ONE ANSWER</text>
  <text x="669" y="136" text-anchor="middle" font-size="16" fill="var(--text)">to “what has this cost”</text>
  <text x="669" y="166" text-anchor="middle" font-size="15" fill="var(--text-muted)">7 days · 30 days · this week · this month</text>

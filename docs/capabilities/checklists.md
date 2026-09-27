@@ -23,7 +23,7 @@ nav_order: 111
 <section>
 <h2><span class="num">1</span> Put something on it, out loud or on the tab.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with something being added to the checklist">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">put "buy a fuel scoop" on my list</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or open the Checklist tab and press + to type one in.</text>
@@ -33,13 +33,13 @@ nav_order: 111
 <section>
 <h2><span class="num">2</span> Tick things off by saying so.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The checklist tab, with items in three groups and one of them ticked">
- <rect x="20" y="16" width="840" height="200" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="200" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="15" font-weight="700" fill="var(--text-muted)">HERE</text>
- <rect x="44" y="66" width="22" height="22" rx="4" fill="var(--accent)"/>
+ <rect x="44" y="66" width="22" height="22" fill="var(--accent)"/>
  <text x="84" y="84" font-size="16" fill="var(--text)">buy a fuel scoop</text>
  <text x="836" y="84" text-anchor="end" font-size="15" fill="var(--text-muted)">done</text>
  <text x="44" y="128" font-size="15" font-weight="700" fill="var(--text-muted)">NEXT STOP</text>
- <rect x="44" y="142" width="22" height="22" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="44" y="142" width="22" height="22" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="84" y="160" font-size="16" fill="var(--text)">grade 3 dirty drive at Farseer</text>
  <text x="44" y="200" font-size="15" fill="var(--text-muted)">Say "tick off the fuel scoop", or press the switch.</text>
 </svg>
@@ -47,7 +47,7 @@ nav_order: 111
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Finishing an item is not removing it, so a finished item stays on the list">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Ticking is not deleting.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A finished item stays, so you can see what you did. Say "remove it" to take it off.</text>
 </svg>
@@ -67,19 +67,19 @@ nav_order: 111
 <section>
 <h2><span class="num">1</span> Everything lands in one list.</h2>
 <svg viewBox="0 0 880 280" role="img" aria-label="Your own lines, your ship builds and your construction sites all arrive in a single list">
- <rect x="20" y="20" width="300" height="64" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="300" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="59" text-anchor="middle" font-size="17" fill="var(--text)">the lines you write</text>
- <rect x="20" y="104" width="300" height="64" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="104" width="300" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="143" text-anchor="middle" font-size="17" fill="var(--text)">your ship builds</text>
- <rect x="20" y="188" width="300" height="64" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="188" width="300" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="227" text-anchor="middle" font-size="17" fill="var(--text)">your construction sites</text>
- <line x1="332" y1="52" x2="408" y2="52" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="332" y1="52" x2="408" y2="52" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="422,52 406,44 406,60" fill="var(--accent-muted)"/>
- <line x1="332" y1="136" x2="408" y2="136" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="332" y1="136" x2="408" y2="136" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="422,136 406,128 406,144" fill="var(--accent-muted)"/>
- <line x1="332" y1="220" x2="408" y2="220" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="332" y1="220" x2="408" y2="220" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="422,220 406,212 406,228" fill="var(--accent-muted)"/>
- <rect x="440" y="20" width="400" height="232" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="440" y="20" width="400" height="232" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="640" y="126" text-anchor="middle" font-size="30" font-weight="800" fill="var(--text)">ONE LIST</text>
  <text x="640" y="162" text-anchor="middle" font-size="16" fill="var(--text-muted)">grouped by everywhere, this ship, this system</text>
  <text x="440" y="274" text-anchor="middle" font-size="16" fill="var(--text-muted)">Because “what am I working on” should have exactly one answer.</text>
@@ -88,20 +88,20 @@ nav_order: 111
 <section>
 <h2><span class="num">2</span> Two kinds of line, and you never pick which.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="Authored items you tick yourself, and derived items D47 works out from your journal">
- <rect x="20" y="20" width="410" height="222" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="410" height="222" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="66" text-anchor="middle" font-size="23" font-weight="800" fill="var(--text)">AUTHORED</text>
  <text x="225" y="96" text-anchor="middle" font-size="16" fill="var(--text-muted)">a sentence you wrote</text>
- <rect x="60" y="118" width="330" height="46" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="60" y="118" width="330" height="46" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="148" text-anchor="middle" font-size="17" fill="var(--text)">buy limpets</text>
- <path d="M92 202 L106 216 L132 188" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M92 202 L106 216 L132 188" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="butt"/>
  <text x="150" y="209" font-size="17" fill="var(--text)">you tick it</text>
- <rect x="450" y="20" width="410" height="222" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="20" width="410" height="222" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="66" text-anchor="middle" font-size="23" font-weight="800" fill="var(--text)">DERIVED</text>
  <text x="655" y="96" text-anchor="middle" font-size="16" fill="var(--text-muted)">worked out from your journal</text>
- <rect x="490" y="118" width="330" height="46" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="490" y="118" width="330" height="46" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="148" text-anchor="middle" font-size="17" fill="var(--text)">grade 5 dirty drives</text>
- <line x1="524" y1="190" x2="552" y2="216" stroke="var(--danger)" stroke-width="4" stroke-linecap="round"/>
- <line x1="552" y1="190" x2="524" y2="216" stroke="var(--danger)" stroke-width="4" stroke-linecap="round"/>
+ <line x1="524" y1="190" x2="552" y2="216" stroke="var(--danger)" stroke-width="4" stroke-linecap="butt"/>
+ <line x1="552" y1="190" x2="524" y2="216" stroke="var(--danger)" stroke-width="4" stroke-linecap="butt"/>
  <text x="574" y="209" font-size="17" fill="var(--text)">it ticks itself — and can untick</text>
  <text x="440" y="284" text-anchor="middle" font-size="16" fill="var(--text-muted)">Which one it is depends on where the line came from, never on a choice you make.</text>
 </svg>
@@ -109,10 +109,10 @@ nav_order: 111
 <section>
 <h2><span class="num">3</span> Finishing something does not remove it.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="Open items above the line, finished items kept below it">
- <rect x="40" y="20" width="800" height="110" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="40" y="20" width="800" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="76" y="62" font-size="21" font-weight="800" fill="var(--accent)">STILL OPEN — 6</text>
  <text x="76" y="98" font-size="16" fill="var(--text-muted)">what you are actually working on</text>
- <rect x="40" y="146" width="800" height="110" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="40" y="146" width="800" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="76" y="188" font-size="21" font-weight="800" fill="var(--text-muted)">FINISHED — 40</text>
  <text x="76" y="224" font-size="16" fill="var(--text-muted)">still here, ticked, below the line</text>
  <text x="806" y="188" text-anchor="end" font-size="16" fill="var(--text)">seeing how far you have come</text>
@@ -123,25 +123,25 @@ nav_order: 111
 <section>
 <h2><span class="num">4</span> D47 proposes. You commit.</h2>
 <svg viewBox="0 0 880 340" role="img" aria-label="D47 writes proposals to its own file and only you can move something into the real list">
- <rect x="30" y="30" width="190" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="30" width="190" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="125" cy="66" r="17" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
  <circle cx="125" cy="66" r="5" fill="var(--accent)"/>
  <text x="125" y="104" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">D47</text>
- <line x1="232" y1="74" x2="258" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="232" y1="74" x2="258" y2="74" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="272,74 256,66 256,82" fill="var(--accent-muted)"/>
- <rect x="286" y="30" width="330" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="286" y="30" width="330" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="451" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">checklist-proposals.json</text>
  <text x="451" y="94" text-anchor="middle" font-size="15" fill="var(--text-muted)">a suggestion — nothing has moved</text>
- <line x1="451" y1="128" x2="451" y2="168" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="451" y1="128" x2="451" y2="168" stroke="var(--accent)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="451,182 443,166 459,166" fill="var(--accent)"/>
  <text x="475" y="160" font-size="17" font-weight="700" fill="var(--accent)">you accept</text>
- <rect x="30" y="190" width="190" height="88" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="190" width="190" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="125" cy="216" r="12" fill="var(--text-muted)"/>
  <path d="M106 248 Q125 228 144 248 Z" fill="var(--text-muted)"/>
  <text x="125" y="270" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">YOU</text>
- <line x1="232" y1="234" x2="258" y2="234" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="232" y1="234" x2="258" y2="234" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="272,234 256,226 256,242" fill="var(--accent-muted)"/>
- <rect x="286" y="190" width="330" height="88" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="286" y="190" width="330" height="88" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="451" y="226" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">checklist.json</text>
  <text x="451" y="254" text-anchor="middle" font-size="15" fill="var(--text-muted)">your actual list</text>
  <text x="650" y="134" font-size="17" font-weight="700" fill="var(--accent)">Accepting is</text>

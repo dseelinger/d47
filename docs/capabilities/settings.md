@@ -23,7 +23,7 @@ nav_order: 147
 <section>
 <h2><span class="num">1</span> Just ask.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">turn your personality off</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"set the speech volume to sixty" — "use the small speech model"</text>
@@ -33,12 +33,12 @@ nav_order: 147
 <section>
 <h2><span class="num">2</span> Or find it on the Settings tab.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Settings">
- <rect x="20" y="16" width="840" height="212" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Settings</text>
- <rect x="44" y="70" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Search</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">type a word, or a key like listening.</text>
- <rect x="44" y="126" width="792" height="42" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Show every setting</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">off — the fold hides the advanced ones</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">The search box matches labels and keys both.</text>
@@ -47,7 +47,7 @@ nav_order: 147
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Some rows refuse the AI, and say so.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Some rows refuse the AI, and say so.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Anything safety-critical — push-to-talk, Cancel, key injection — is yours alone, by design.</text>
 </svg>
@@ -67,7 +67,7 @@ nav_order: 147
 <section>
 <h2><span class="num">1</span> Some settings have a safety catch.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="Some settings are protected: Directive 47's AI cannot change them, and you still can">
- <rect x="20" y="20" width="840" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">Some settings are protected.</text>
  <text x="440" y="96" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47's AI cannot change them — and asking it to will not either.</text>
  <text x="440" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">It is a safety catch, and it is there for you.</text>
@@ -78,12 +78,12 @@ nav_order: 147
 <section>
 <h2><span class="num">2</span> Most settings apply to the installed app. A few belong to each of your CMDRs.</h2>
 <svg viewBox="0 0 880 264" role="img" aria-label="Installation settings are shared; per-Commander settings are separate for each pilot">
- <rect x="20" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="24" width="410" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE APP</text>
  <text x="225" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">keys, devices, theme, zoom, hotkeys</text>
  <text x="225" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">the same whoever is flying</text>
  <text x="225" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">and the running cost, which is one bill</text>
- <rect x="450" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="450" y="24" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">PER COMMANDER</text>
  <text x="655" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">your character sheet, your About Me</text>
  <text x="655" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">which ship each core is bound to</text>
@@ -95,11 +95,11 @@ nav_order: 147
 <section>
 <h2><span class="num">3</span> A value it does not know is answered, not ignored.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="An unrecognised value is met with the list of valid ones">
- <rect x="20" y="24" width="340" height="70" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="24" width="340" height="70" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="190" y="66" text-anchor="middle" font-size="17" fill="var(--text)">“use the chatty theme”</text>
- <line x1="372" y1="59" x2="398" y2="59" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="372" y1="59" x2="398" y2="59" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="412,59 396,51 396,67" fill="var(--accent-muted)"/>
- <rect x="424" y="24" width="436" height="70" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="424" y="24" width="436" height="70" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="642" y="52" text-anchor="middle" font-size="16" fill="var(--text)">“'chatty' is not a valid Theme. Expected one of:</text>
  <text x="642" y="78" text-anchor="middle" font-size="16" fill="var(--text)">elite, dark, light, guardian, elite-palette.”</text>
  <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Never silently ignored, and never guessed at.</text>

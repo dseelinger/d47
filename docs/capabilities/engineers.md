@@ -23,8 +23,8 @@ nav_order: 108
 <section>
 <h2><span class="num">1</span> Open the Engineers tab and read the Directory.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Engineers tab">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Engineers</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">READY FOR UNLOCK</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing in your way</text>
@@ -38,7 +38,7 @@ nav_order: 108
 <section>
 <h2><span class="num">2</span> Press a name to see what unlocking them takes.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">how do I unlock Felicity Farseer</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press the name anywhere it appears — both reach the same page.</text>
@@ -48,8 +48,8 @@ nav_order: 108
 <section>
 <h2><span class="num">3</span> Accept the Route, and it becomes a checklist.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Route tab">
- <rect x="20" y="16" width="840" height="172" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Route</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">1. Felicity Farseer — Deciat</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">48 ly</text>
@@ -61,7 +61,7 @@ nav_order: 108
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="The Route solves for a ship, not for you.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The Route solves for a ship, not for you.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It uses your current jump range. Swap ships and ask again — the order can change.</text>
 </svg>
@@ -90,11 +90,11 @@ nav_order: 108
 <section>
 <h2><span class="num">1</span> Two lists.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The tab has two roots, the Directory and the Route">
- <rect x="30" y="30" width="390" height="160" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="30" y="30" width="390" height="160" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="90" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">DIRECTORY</text>
  <text x="225" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">everybody — all 38 of them</text>
  <text x="225" y="156" text-anchor="middle" font-size="16" fill="var(--text-muted)">nearest and reachable first</text>
- <rect x="460" y="30" width="390" height="160" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="30" width="390" height="160" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="90" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">ROUTE</text>
  <text x="655" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">who to unlock next</text>
  <text x="655" y="156" text-anchor="middle" font-size="16" fill="var(--text-muted)">worked out for you</text>
@@ -104,13 +104,13 @@ nav_order: 108
 <section>
 <h2><span class="num">2</span> The Directory is sorted by what you can do today.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="Three bands: reachable now, already yours, behind somebody else">
- <rect x="40" y="24" width="800" height="68" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="40" y="24" width="800" height="68" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="72" y="66" font-size="21" font-weight="800" fill="var(--accent)">READY FOR UNLOCK</text>
  <text x="808" y="66" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing standing in your way</text>
- <rect x="40" y="110" width="800" height="68" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="40" y="110" width="800" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="72" y="152" font-size="21" font-weight="800" fill="var(--text)">UNLOCKED</text>
  <text x="808" y="152" text-anchor="end" font-size="16" fill="var(--text-muted)">and how far to the next grade</text>
- <rect x="40" y="196" width="800" height="68" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="40" y="196" width="800" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="72" y="238" font-size="21" font-weight="800" fill="var(--text-muted)">NEEDS A REFERRAL</text>
  <text x="808" y="238" text-anchor="end" font-size="16" fill="var(--text-muted)">somebody else has to introduce them</text>
  <text x="440" y="290" text-anchor="middle" font-size="16" fill="var(--text-muted)">Alphabetical order would answer that question for nobody.</text>
@@ -121,16 +121,16 @@ nav_order: 108
 <svg viewBox="0 0 880 262" role="img" aria-label="Twenty-seven of thirty-eight engineers are reached through another engineer">
  <text x="440" y="56" text-anchor="middle" font-size="32" font-weight="800" fill="var(--accent)">27 of the 38</text>
  <text x="440" y="88" text-anchor="middle" font-size="17" fill="var(--text-muted)">are reached through somebody else</text>
- <rect x="40" y="120" width="230" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="40" y="120" width="230" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="172" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">YOU</text>
- <line x1="282" y1="163" x2="302" y2="163" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="282" y1="163" x2="302" y2="163" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="316,163 300,155 300,171" fill="var(--accent-muted)"/>
- <rect x="325" y="120" width="230" height="86" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="325" y="120" width="230" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="158" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">SELENE JEAN</text>
  <text x="440" y="186" text-anchor="middle" font-size="16" fill="var(--accent)">reach grade 3 with her</text>
- <line x1="567" y1="163" x2="587" y2="163" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="567" y1="163" x2="587" y2="163" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="601,163 585,155 585,171" fill="var(--accent-muted)"/>
- <rect x="610" y="120" width="230" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="610" y="120" width="230" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="158" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">BILL TURNER</text>
  <text x="725" y="186" text-anchor="middle" font-size="16" fill="var(--text-muted)">then he invites you</text>
  <text x="440" y="248" text-anchor="middle" font-size="16" fill="var(--text-muted)">D47 tells you how far along that path you already are.</text>
@@ -140,21 +140,21 @@ nav_order: 108
 <h2><span class="num">4</span> The Route picks the one unlock that helps most.</h2>
 <svg viewBox="0 0 880 290" role="img" aria-label="The solver takes your planned modifications and names the unlock that is easiest to reach and does the most per jump">
  <text x="30" y="40" font-size="15" font-weight="700" fill="var(--text-muted)">WHAT YOU PLANNED</text>
- <rect x="30" y="56" width="250" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="56" width="250" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="88" text-anchor="middle" font-size="16" fill="var(--text)">Dirty Drive Tuning</text>
- <rect x="30" y="118" width="250" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="118" width="250" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="150" text-anchor="middle" font-size="16" fill="var(--text)">Increased FSD Range</text>
- <rect x="30" y="180" width="250" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="180" width="250" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="212" text-anchor="middle" font-size="16" fill="var(--text)">Long Range Sensors</text>
- <line x1="292" y1="144" x2="308" y2="144" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="292" y1="144" x2="308" y2="144" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="322,144 306,136 306,152" fill="var(--accent-muted)"/>
- <rect x="332" y="86" width="228" height="116" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="332" y="86" width="228" height="116" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="446" y="130" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">ROUTE</text>
  <text x="446" y="160" text-anchor="middle" font-size="16" fill="var(--text-muted)">which single unlock</text>
  <text x="446" y="184" text-anchor="middle" font-size="16" fill="var(--text-muted)">does the most per jump?</text>
- <line x1="572" y1="144" x2="588" y2="144" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="572" y1="144" x2="588" y2="144" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="602,144 586,136 586,152" fill="var(--accent-muted)"/>
- <rect x="612" y="86" width="238" height="116" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="612" y="86" width="238" height="116" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="731" y="126" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">PROFESSOR PALIN</text>
  <text x="731" y="154" text-anchor="middle" font-size="16" fill="var(--text-muted)">3 steps, about 18 jumps</text>
  <text x="731" y="182" text-anchor="middle" font-size="16" fill="var(--accent)">covers 2 of the 3</text>

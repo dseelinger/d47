@@ -23,9 +23,9 @@ nav_order: 101
 <section>
 <h2><span class="num">1</span> On the Transcript page, step the readings to Log File.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings stepper showing Log File, and the log below it">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="46" rx="8" fill="var(--surface)"/>
- <rect x="32" y="24" width="176" height="30" rx="6" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="46" fill="var(--surface)"/>
+ <rect x="32" y="24" width="176" height="30" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <text x="46" y="45" font-size="16" font-weight="700" fill="var(--accent)">Log File</text>
  <text x="44" y="96" font-size="16" fill="var(--text)">Journal folder C:\Users\...\Elite Dangerous</text>
  <text x="836" y="96" text-anchor="end" font-size="16" fill="var(--text-muted)">tailing</text>
@@ -37,7 +37,7 @@ nav_order: 101
 <section>
 <h2><span class="num">2</span> Ask where the log file is, and open it.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">where are your logs</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It answers with the folder, and you can open it from the same page.</text>
@@ -47,7 +47,7 @@ nav_order: 101
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="This page works when the model does not.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This page works when the model does not.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It reads nothing from the network and needs no key. It is the first thing to look at, not the last.</text>
 </svg>
@@ -73,12 +73,12 @@ nav_order: 101
 <section>
 <h2><span class="num">1</span> Two files, and they are not the same thing.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The Log File reading is what Directive 47 wrote; the Journal File reading is what the game wrote">
- <rect x="20" y="30" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">LOG FILE</text>
  <text x="225" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">what Directive 47 wrote:</text>
  <text x="225" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">startup, the model, the headset,</text>
  <text x="225" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">every part at once</text>
- <rect x="450" y="30" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="30" width="410" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">JOURNAL FILE</text>
  <text x="655" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">what the game wrote:</text>
  <text x="655" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">docking, jumping, damage,</text>
@@ -90,19 +90,19 @@ nav_order: 101
 <section>
 <h2><span class="num">2</span> It answers with nothing else working.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Diagnostics needs no game, no model, no microphone and no headset to answer">
- <rect x="20" y="30" width="200" height="82" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO GAME</text>
  <text x="120" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">running</text>
- <rect x="234" y="30" width="200" height="82" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="334" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO MODEL</text>
  <text x="334" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">configured</text>
- <rect x="448" y="30" width="200" height="82" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="448" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="548" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO MIC</text>
  <text x="548" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">and no headset</text>
- <rect x="662" y="30" width="198" height="82" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="662" y="30" width="198" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="761" y="66" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">STILL ANSWERS</text>
  <text x="761" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">every time</text>
- <rect x="20" y="132" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="132" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">Ask "what's your status" and it names the version and every folder it writes to.</text>
  <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">Those paths are what a bug report needs, which is why they come back without being asked for separately.</text>
 </svg>
@@ -110,23 +110,23 @@ nav_order: 101
 <section>
 <h2><span class="num">3</span> Turn up one part, not the whole thing.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="Eight parts of the application each carry their own log level, changed by voice and taking effect on the next line">
- <rect x="20" y="30" width="200" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="62" text-anchor="middle" font-size="15" fill="var(--text-muted)">App</text>
- <rect x="234" y="30" width="200" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="30" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="334" y="62" text-anchor="middle" font-size="15" fill="var(--text-muted)">Capabilities</text>
- <rect x="448" y="30" width="200" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="448" y="30" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="548" y="62" text-anchor="middle" font-size="15" fill="var(--text-muted)">Settings</text>
- <rect x="662" y="30" width="198" height="52" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="662" y="30" width="198" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="761" y="62" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">Journal · Trace</text>
- <rect x="20" y="94" width="200" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="94" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">Llm</text>
- <rect x="234" y="94" width="200" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="234" y="94" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="334" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">Voice</text>
- <rect x="448" y="94" width="200" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="448" y="94" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="548" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">Vr</text>
- <rect x="662" y="94" width="198" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="662" y="94" width="198" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="761" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">Input</text>
- <rect x="20" y="166" width="840" height="72" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="166" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">"Turn journal logging up to debug" — in effect on the next line written, with no restart.</text>
  <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Name a part that does not exist and it lists the ones that do, rather than doing nothing silently.</text>
 </svg>

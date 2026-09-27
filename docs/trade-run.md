@@ -17,12 +17,12 @@ nav_order: 203
 <section>
 <h2><span class="num">1</span> Your balance is asked for, never taken.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Jump range and cargo capacity come from the journal; the credit balance is typed every time and never saved">
- <rect x="20" y="30" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="400" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM THE JOURNAL</text>
  <text x="220" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">where you are docked</text>
  <text x="220" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">your cargo capacity</text>
  <text x="220" y="148" text-anchor="middle" font-size="15" fill="var(--text-muted)">— both are facts about the ship</text>
- <rect x="460" y="30" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="30" width="400" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">TYPED, EVERY TIME</text>
  <text x="660" y="100" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">what you are worth</text>
  <text x="660" y="130" text-anchor="middle" font-size="15" fill="var(--text-muted)">never read, never saved,</text>
@@ -34,15 +34,15 @@ nav_order: 203
 <section>
 <h2><span class="num">2</span> This one is not a plot at all.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The other planners submit a job to the service; the trade run asks for markets and does the arithmetic on this machine">
- <rect x="20" y="30" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="400" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">THE OTHER TWO</text>
  <text x="220" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">submit a job, wait for it,</text>
  <text x="220" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">and read back the answer</text>
- <rect x="460" y="30" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="30" width="400" height="118" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THIS ONE</text>
  <text x="660" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">asks what the markets hold,</text>
  <text x="660" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">then does the sums here</text>
- <rect x="20" y="168" width="840" height="60" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="168" width="840" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Which is what lets it hold cargo past a poor buyer and still come home.</text>
  <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">A planner that sold everything at every stop would be a simpler planner and a worse one.</text>
 </svg>
@@ -50,19 +50,19 @@ nav_order: 203
 <section>
 <h2><span class="num">3</span> A price is a report, and it has a date on it.</h2>
 <svg viewBox="0 0 880 234" role="img" aria-label="Every trade stop carries when its market was last reported; an old price can make a perfect route worthless">
- <rect x="20" y="30" width="270" height="104" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="270" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="155" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">YESTERDAY</text>
  <text x="155" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">somebody was there</text>
  <text x="155" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">and reported it</text>
- <rect x="305" y="30" width="270" height="104" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="30" width="270" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">LAST MONTH</text>
  <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">the arithmetic still</text>
  <text x="440" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">works perfectly</text>
- <rect x="590" y="30" width="270" height="104" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="590" y="30" width="270" height="104" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="725" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FOUR YEARS AGO</text>
  <text x="725" y="98" text-anchor="middle" font-size="15" font-weight="700" fill="var(--danger)">and is worth nothing</text>
  <text x="725" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">at all</text>
- <rect x="20" y="152" width="840" height="60" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="152" width="840" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="180" text-anchor="middle" font-size="16" fill="var(--text)">So every stop says when its market was last reported, beside what it says the price is.</text>
  <text x="440" y="204" text-anchor="middle" font-size="15" fill="var(--text-muted)">The same reason outfitting stock carries a date. A figure with no date invites you to trust it.</text>
 </svg>

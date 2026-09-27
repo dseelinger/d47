@@ -23,7 +23,7 @@ nav_order: 144
 <section>
 <h2><span class="num">1</span> Fly. Then ask for the log.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">write up my session</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what did I do this week" — "log the last two hours"</text>
@@ -33,8 +33,8 @@ nav_order: 144
 <section>
 <h2><span class="num">2</span> Read it, and keep it if you want it.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Commander's log tab">
- <rect x="20" y="16" width="840" height="210" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="16" width="840" height="42" rx="8" fill="var(--surface)"/>
+ <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Commander's log</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">Left Kuwemaki A 3 at 19:04</text>
  <text x="44" y="130" font-size="16" fill="var(--text)">Sold 42 t of gold at Jameson Memorial</text>
@@ -46,7 +46,7 @@ nav_order: 144
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="It writes up what the journal saw, not what you meant.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It writes up what the journal saw, not what you meant.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A quiet session produces a short log. That is the log being accurate rather than broken.</text>
 </svg>
@@ -66,17 +66,17 @@ nav_order: 144
 <section>
 <h2><span class="num">1</span> The model is never handed your journal.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The journal is computed into a numbered list of facts, and only that list reaches the model">
- <rect x="20" y="40" width="230" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="230" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="135" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
  <text x="135" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">4,812 events</text>
- <line x1="262" y1="88" x2="286" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="262" y1="88" x2="286" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="300,88 284,80 284,96" fill="var(--accent-muted)"/>
- <rect x="312" y="40" width="250" height="96" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="312" y="40" width="250" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="437" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">34 NUMBERED FACTS</text>
  <text x="437" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">computed here, on this machine</text>
- <line x1="574" y1="88" x2="598" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="574" y1="88" x2="598" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="612,88 596,80 596,96" fill="var(--accent-muted)"/>
- <rect x="624" y="40" width="236" height="96" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="624" y="40" width="236" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="742" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE MODEL</text>
  <text x="742" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">sees only the list</text>
  <text x="440" y="178" text-anchor="middle" font-size="16" fill="var(--text)">A model handed your journal will write a better evening than the one you had.</text>
@@ -86,7 +86,7 @@ nav_order: 144
 <section>
 <h2><span class="num">2</span> So every sentence has to cite, and the strays are marked.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="Sentences carry bracketed fact numbers, and a sentence citing nothing is marked in the file">
- <rect x="20" y="34" width="840" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="34" width="840" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="72" text-anchor="start" font-size="16" fill="var(--text)">Left Deciat with a full hold, bound for the rim. [3]</text>
  <text x="46" y="106" text-anchor="start" font-size="16" fill="var(--text)">Sold 640 tonnes across nine sales, mostly Painite. [5]</text>
  <text x="46" y="140" text-anchor="start" font-size="16" fill="var(--danger)">It was a close-run thing.  ← cites nothing, and is marked right here</text>
@@ -98,15 +98,15 @@ nav_order: 144
 <section>
 <h2><span class="num">3</span> Three voices, and they are not interchangeable.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="A log can be written in your voice, in the ship AI's voice, or yours with the AI interjecting">
- <rect x="20" y="36" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">YOU WRITE IT</text>
  <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">your own account,</text>
  <text x="155" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">first person — the default</text>
- <rect x="305" y="36" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="305" y="36" width="270" height="126" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">D47 WRITES ABOUT YOU</text>
  <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the ship’s AI, in the</text>
  <text x="440" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">personality you chose</text>
- <rect x="590" y="36" width="270" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="36" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">YOU WRITE, IT CHIPS IN</text>
  <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">your account, with a</text>
  <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">handful of interjections</text>
@@ -117,12 +117,12 @@ nav_order: 144
 <section>
 <h2><span class="num">4</span> It quotes you before it spends anything.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="Asking for a log returns a price first, and a second sentence is needed to authorise writing it">
- <rect x="20" y="30" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="62" text-anchor="start" font-size="16" fill="var(--text)">you:   write my commander’s log</text>
- <rect x="20" y="96" width="840" height="80" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="96" width="840" height="80" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="128" text-anchor="start" font-size="16" fill="var(--text)">D47:   34 things I can account for, out of 4,812 events. Writing it</text>
  <text x="46" y="156" text-anchor="start" font-size="16" fill="var(--text)">          would cost about $0.04. Say “write the log” and I will.</text>
- <rect x="20" y="190" width="840" height="52" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="190" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="222" text-anchor="start" font-size="16" fill="var(--text)">you:   write the log</text>
 </svg>
 <p class="body">Prose over a long session is the largest single request Directive 47 will ever make, so it never happens by itself: no schedule, no trigger, no callout starts one. Working out that price reads your journals here and sends nothing.</p>

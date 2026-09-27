@@ -38,17 +38,17 @@ nav_order: 10
 <section>
 <h2><span class="num">1</span> Two shapes, and the toggle picks which.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="One incident excerpt, or a scrubbed history of many journals, chosen by the Include journal history toggle">
- <rect x="20" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="24" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ONE INCIDENT</text>
  <text x="225" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">the minutes around a thing</text>
  <text x="225" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">that went wrong: your journal</text>
  <text x="225" y="144" text-anchor="middle" font-size="15" fill="var(--text-muted)">and d47's log, side by side</text>
- <rect x="450" y="24" width="410" height="150" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="450" y="24" width="410" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A HISTORY</text>
  <text x="655" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">many journals at once, as far</text>
  <text x="655" y="120" text-anchor="middle" font-size="15" fill="var(--text-muted)">back as Include says —</text>
  <text x="655" y="144" text-anchor="middle" font-size="15" fill="var(--text-muted)">for finding what nobody reported</text>
- <rect x="20" y="196" width="840" height="52" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="196" width="840" height="52" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="228" text-anchor="middle" font-size="16" fill="var(--text)">Include journal history is the switch between them. Everything else on the window follows from it.</text>
 </svg>
 <p class="body">An incident is for a bug you can point at. A history is for the ones nobody has noticed yet — a callout that fires in a situation no one thought to test.</p>
@@ -56,25 +56,25 @@ nav_order: 10
 <section>
 <h2><span class="num">2</span> You read it before it goes, and it is not the raw file.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Your journals are read, scrubbed, and turned into something you review before anything is sent">
- <rect x="20" y="30" width="180" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="180" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="110" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">READ</text>
  <text x="110" y="88" text-anchor="middle" font-size="14" fill="var(--text-muted)">from your disk</text>
- <line x1="208" y1="68" x2="242" y2="68" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="208" y1="68" x2="242" y2="68" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="256,68 240,60 240,76" fill="var(--accent-muted)"/>
- <rect x="264" y="30" width="180" height="76" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="264" y="30" width="180" height="76" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="354" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">SCRUBBED</text>
  <text x="354" y="88" text-anchor="middle" font-size="14" fill="var(--text-muted)">on this machine</text>
- <line x1="452" y1="68" x2="486" y2="68" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="452" y1="68" x2="486" y2="68" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="500,68 484,60 484,76" fill="var(--accent-muted)"/>
- <rect x="508" y="30" width="180" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="508" y="30" width="180" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="598" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">SHOWN</text>
  <text x="598" y="88" text-anchor="middle" font-size="14" fill="var(--text-muted)">to you, in full</text>
- <line x1="696" y1="68" x2="730" y2="68" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="696" y1="68" x2="730" y2="68" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="744,68 728,60 728,76" fill="var(--accent-muted)"/>
- <rect x="752" y="30" width="108" height="76" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="752" y="30" width="108" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="806" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">YOU</text>
  <text x="806" y="88" text-anchor="middle" font-size="14" fill="var(--text-muted)">press, or don't</text>
- <rect x="20" y="130" width="840" height="86" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="130" width="840" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">The scrub works from a list of fields it keeps, not a list of things to remove.</text>
  <text x="440" y="192" text-anchor="middle" font-size="15" fill="var(--text-muted)">Other fields are removed by default — which is the only way it stays right as Elite adds events.</text>
 </svg>
@@ -82,15 +82,15 @@ nav_order: 10
 <section>
 <h2><span class="num">3</span> A history is offered as a report about itself.</h2>
 <svg viewBox="0 0 880 216" role="img" aria-label="A history is summarised into a report naming each kind of event with one real scrubbed line of each">
- <rect x="20" y="26" width="250" height="82" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="250" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">HUNDREDS OF MB</text>
  <text x="145" y="84" text-anchor="middle" font-size="14" fill="var(--text-muted)">nobody could read this</text>
- <line x1="278" y1="66" x2="318" y2="66" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="278" y1="66" x2="318" y2="66" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,66 316,58 316,74" fill="var(--accent-muted)"/>
- <rect x="340" y="26" width="520" height="82" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="340" y="26" width="520" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="600" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A REPORT YOU CAN ACTUALLY READ</text>
  <text x="600" y="84" text-anchor="middle" font-size="14" fill="var(--text-muted)">every kind of event included, and one real scrubbed line of each</text>
- <rect x="20" y="132" width="840" height="62" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="132" width="840" height="62" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">So consent is possible. Reviewing the thing itself would mean agreeing to something nobody read.</text>
  <text x="440" y="184" text-anchor="middle" font-size="15" fill="var(--text-muted)">The report is what you see; the scrubbed history is what would be sent.</text>
 </svg>

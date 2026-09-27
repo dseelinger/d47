@@ -223,6 +223,9 @@ Glow now shows only on the brand diamond and name in the title bar, the push-to-
 active tab, in the themes that glow at all. The Bloom setting is gone, and every glow is drawn at
 the fixed strength it used to default to.
 
+The figures in Help and the docs site now have square corners and flat line caps, matching every
+other panel.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

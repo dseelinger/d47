@@ -23,7 +23,7 @@ nav_order: 103
 <section>
 <h2><span class="num">1</span> Hire a pilot in the game. D47 reads your roster.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">who is in my fighter bay</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Nothing to set up. Your crew comes out of the journal.</text>
@@ -33,7 +33,7 @@ nav_order: 103
 <section>
 <h2><span class="num">2</span> Address them by name. They stay on the line until you're done.</h2>
 <svg viewBox="0 0 880 212" role="img" aria-label="A question addressed to a named crew member, answered in that crew member's own voice, and the follow-up needs no name">
- <rect x="20" y="20" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">Vasquez, how is the fighter holding up?</text>
  <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">[VASQUEZ]</text>
  <text x="180" y="116" font-size="16" fill="var(--text)">Still flying, Commander. Wing took a knock.</text>
@@ -44,7 +44,7 @@ nav_order: 103
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Only the crew you have actually hired can answer.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Only the crew you have actually hired can answer.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A name that is not on your roster reaches the ship AI, which will say so rather than invent somebody.</text>
 </svg>
@@ -64,11 +64,11 @@ nav_order: 103
 <section>
 <h2><span class="num">1</span> The name has to be at the front.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Opening with a crew member's name sends the turn to them; mentioning them later is a question for your ship's AI">
- <rect x="20" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" fill="var(--text)">“Vance, what’s the fighter</text>
  <text x="220" y="102" text-anchor="middle" font-size="16" fill="var(--text)">looking like?”</text>
  <text x="220" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">→ goes to Vance</text>
- <rect x="460" y="40" width="400" height="110" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" fill="var(--text)">“What does Vance think</text>
  <text x="660" y="102" text-anchor="middle" font-size="16" fill="var(--text)">of the fighter?”</text>
  <text x="660" y="132" text-anchor="middle" font-size="15" fill="var(--text-muted)">→ goes to your ship’s AI</text>
@@ -79,11 +79,11 @@ nav_order: 103
 <section>
 <h2><span class="num">2</span> They are people you hired, not another Guardian core.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="A crew member has no tools, no database and no way to look anything up, unlike a Guardian core">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">A GUARDIAN CORE</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">a million years old,</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">with tools and tables</text>
- <rect x="460" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SOMEBODY YOU HIRED</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">at a station, last week</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">no tools, no database</text>
@@ -94,7 +94,7 @@ nav_order: 103
 <section>
 <h2><span class="num">3</span> The line stays open until you end it.</h2>
 <svg viewBox="0 0 880 212" role="img" aria-label="A pilot keeps the line for every follow-up until dismissed, the ship AI is named, or somebody else is">
- <rect x="20" y="36" width="840" height="90" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">An intercom does not fade</text>
  <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">a pilot's line carries as clearly on the last word as the first</text>
  <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Ends on "that's all" and its kin, on your ship AI's name, or on naming another pilot.</text>
@@ -104,12 +104,12 @@ nav_order: 103
 <section>
 <h2><span class="num">4</span> The roster is short because Elite's is.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Elite records a crew member's name, rating and duty state and nothing else — there is no engineer, gunner or navigator">
- <rect x="20" y="36" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="36" width="400" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">WHAT ELITE WRITES</text>
  <text x="46" y="104" text-anchor="start" font-size="15" fill="var(--text)">name · combat rating</text>
  <text x="46" y="130" text-anchor="start" font-size="15" fill="var(--text)">on duty, or off the books</text>
  <text x="46" y="154" text-anchor="start" font-size="15" fill="var(--text-muted)">and that is all of it</text>
- <rect x="460" y="36" width="400" height="130" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="460" y="36" width="400" height="130" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="660" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">WHAT IT DOES NOT</text>
  <text x="486" y="104" text-anchor="start" font-size="15" fill="var(--text)">no engineer</text>
  <text x="486" y="130" text-anchor="start" font-size="15" fill="var(--text)">no gunner</text>

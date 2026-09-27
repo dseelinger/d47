@@ -17,22 +17,22 @@ nav_order: 202
 <section>
 <h2><span class="num">1</span> It plans stops, not a destination.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The other planners go from here to there; this one draws a circuit of high-value bodies and returns">
- <rect x="20" y="30" width="400" height="120" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="400" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="64" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">THE OTHER TWO</text>
  <circle cx="90" cy="106" r="8" fill="var(--text-muted)"/>
- <line x1="90" y1="106" x2="330" y2="106" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round"/>
+ <line x1="90" y1="106" x2="330" y2="106" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="butt"/>
  <polygon points="350,106 328,96 328,116" fill="var(--text-muted)"/>
  <text x="220" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">here, to there</text>
- <rect x="460" y="30" width="400" height="120" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="460" y="30" width="400" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="64" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">THIS ONE</text>
  <circle cx="560" cy="106" r="8" fill="var(--accent)"/>
  <circle cx="620" cy="88" r="7" fill="var(--accent-muted)"/>
  <circle cx="686" cy="112" r="7" fill="var(--accent-muted)"/>
  <circle cx="748" cy="86" r="7" fill="var(--accent-muted)"/>
- <line x1="560" y1="106" x2="620" y2="88" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="620" y1="88" x2="686" y2="112" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="686" y1="112" x2="748" y2="86" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="round"/>
- <line x1="748" y1="86" x2="560" y2="106" stroke="var(--accent-muted)" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="round"/>
+ <line x1="560" y1="106" x2="620" y2="88" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="620" y1="88" x2="686" y2="112" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="686" y1="112" x2="748" y2="86" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
+ <line x1="748" y1="86" x2="560" y2="106" stroke="var(--accent-muted)" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="butt"/>
  <text x="660" y="138" text-anchor="middle" font-size="15" fill="var(--text)">a circuit of bodies worth scanning</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">The value is in the scanning, so the route exists to put good bodies in front of you.</text>
  <text x="440" y="228" text-anchor="middle" font-size="15" fill="var(--text-muted)">Take a Detailed Surface Scanner. Without one, most of what it sends you to is worth a fraction.</text>
@@ -41,33 +41,33 @@ nav_order: 202
 <section>
 <h2><span class="num">2</span> Three dials, and each one trades against the others.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Stops, radius and the least a body must be worth, and what raising each one does">
- <rect x="20" y="30" width="270" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="270" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS</text>
  <text x="155" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">how many systems</text>
  <text x="155" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">it sends you to</text>
  <text x="155" y="152" text-anchor="middle" font-size="15" fill="var(--text)">10 out of the box</text>
- <rect x="305" y="30" width="270" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="305" y="30" width="270" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">RADIUS</text>
  <text x="440" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far out it may</text>
  <text x="440" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">look for them</text>
  <text x="440" y="152" text-anchor="middle" font-size="15" fill="var(--text)">500 ly out of the box</text>
- <rect x="590" y="30" width="270" height="140" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="590" y="30" width="270" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WORTH STOPPING</text>
  <text x="725" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">the floor a body must</text>
  <text x="725" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">clear to be included</text>
  <text x="725" y="152" text-anchor="middle" font-size="15" fill="var(--text)">500,000 cr out of the box</text>
- <rect x="20" y="188" width="840" height="48" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="188" width="840" height="48" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="218" text-anchor="middle" font-size="16" fill="var(--text)">Raise the floor and you must widen the radius, or there will not be enough bodies left to fill the stops.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">3</span> Coming home is a choice, and it is on by default.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="A looped route returns to where it started; an open one leaves you at the far end">
- <rect x="20" y="30" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="30" width="400" height="118" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">COME BACK</text>
  <text x="220" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">ends where it started, so you</text>
  <text x="220" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">can sell to the same cartographics</text>
- <rect x="460" y="30" width="400" height="118" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="460" y="30" width="400" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">DO NOT</text>
  <text x="660" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">leaves you at the far end,</text>
  <text x="660" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">covering more ground per stop</text>

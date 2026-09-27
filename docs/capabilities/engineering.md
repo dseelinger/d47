@@ -23,7 +23,7 @@ nav_order: 109
 <section>
 <h2><span class="num">1</span> Ask about a blueprint by name.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does a grade 5 dirty drive cost</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">No setup. The tables ship with D47 and need no network.</text>
@@ -33,7 +33,7 @@ nav_order: 109
 <section>
 <h2><span class="num">2</span> Ask what it costs from where you actually are.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
- <rect x="20" y="24" width="840" height="52" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">can I afford it</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Your own materials come out of the journal, so the shortfall is yours.</text>
@@ -43,7 +43,7 @@ nav_order: 109
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 152" role="img" aria-label="Rolls are not grades.">
- <rect x="20" y="20" width="840" height="112" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Rolls are not grades.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A grade takes several rolls, and the cost quoted per roll is the one that surprises people.</text>
 </svg>
@@ -63,17 +63,17 @@ nav_order: 109
 <section>
 <h2><span class="num">1</span> Two halves, and only one of them is about you.</h2>
 <svg viewBox="0 0 880 268" role="img" aria-label="A shipped table and your journal combine into one answer">
- <rect x="30" y="20" width="380" height="98" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="20" width="380" height="98" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="60" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE TABLES</text>
  <text x="220" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">what a grade costs anybody</text>
- <rect x="470" y="20" width="380" height="98" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="470" y="20" width="380" height="98" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="60" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
  <text x="660" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">your rank with the engineer</text>
- <path d="M220 130 L400 168" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M220 130 L400 168" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="414,171 396,161 392,175" fill="var(--accent-muted)"/>
- <path d="M660 130 L480 168" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <path d="M660 130 L480 168" fill="none" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="466,171 488,175 484,161" fill="var(--accent-muted)"/>
- <rect x="250" y="180" width="380" height="62" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="250" y="180" width="380" height="62" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="219" text-anchor="middle" font-size="21" font-weight="800" fill="var(--text)">ONE ANSWER</text>
  <text x="440" y="262" text-anchor="middle" font-size="16" fill="var(--text-muted)">Neither half touches the network. The tables ship with D47.</text>
 </svg>
@@ -81,21 +81,21 @@ nav_order: 109
 <section>
 <h2><span class="num">2</span> A full grade is arithmetic, not a grind.</h2>
 <svg viewBox="0 0 880 276" role="img" aria-label="Rank and grade give an exact craft count, which multiplies the recipe into a shopping list">
- <rect x="20" y="30" width="230" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="30" width="230" height="84" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="135" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOUR RANK</text>
  <text x="135" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">5 with Farseer</text>
  <text x="274" y="80" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text-muted)">+</text>
- <rect x="298" y="30" width="200" height="84" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="298" y="30" width="200" height="84" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="398" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">THE GRADE</text>
  <text x="398" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">5</text>
- <line x1="512" y1="72" x2="536" y2="72" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="512" y1="72" x2="536" y2="72" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="550,72 534,64 534,80" fill="var(--accent-muted)"/>
- <rect x="564" y="30" width="290" height="84" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="564" y="30" width="290" height="84" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="709" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">5 ROLLS</text>
  <text x="709" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">exactly, every time</text>
- <line x1="709" y1="126" x2="709" y2="152" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="709" y1="126" x2="709" y2="152" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="709,166 701,150 717,150" fill="var(--accent-muted)"/>
- <rect x="20" y="176" width="834" height="66" rx="10" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="176" width="834" height="66" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="437" y="216" text-anchor="middle" font-size="17" fill="var(--text)">5 × Arsenic     5 × Chemical Manipulators     5 × Datamined Wake Exceptions</text>
  <text x="440" y="268" text-anchor="middle" font-size="16" fill="var(--text-muted)">Not luck and not a rate. A shopping list you can go and fill.</text>
 </svg>
@@ -103,13 +103,13 @@ nav_order: 109
 <section>
 <h2><span class="num">3</span> Below the rank it is a gate, not a longer grind.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Grade five cannot be crafted below rank five at all">
- <rect x="20" y="26" width="280" height="94" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="26" width="280" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="160" y="64" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU WANT GRADE 5</text>
  <text x="160" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">you are rank 2</text>
- <line x1="360" y1="14" x2="360" y2="132" stroke="var(--danger)" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 10"/>
+ <line x1="360" y1="14" x2="360" y2="132" stroke="var(--danger)" stroke-width="5" stroke-linecap="butt" stroke-dasharray="12 10"/>
  <text x="392" y="62" font-size="17" font-weight="700" fill="var(--danger)">grade 5 needs rank 5</text>
  <text x="392" y="90" font-size="16" fill="var(--text-muted)">not slower — not at all</text>
- <rect x="20" y="152" width="834" height="62" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="152" width="834" height="62" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="437" y="190" text-anchor="middle" font-size="17" fill="var(--text)">So you are told the rank and its price: 16,000,000 cr sold at their workshop.</text>
  <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Never a shopping list for something you could not craft today.</text>
 </svg>
@@ -118,11 +118,11 @@ nav_order: 109
 <h2><span class="num">4</span> 0.85 is finished. Not 1.0.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="A grade counts as finished from 0.85, where the game stops insisting">
  <text x="60" y="46" font-size="16" fill="var(--text-muted)">how far your grade got</text>
- <rect x="60" y="62" width="760" height="48" rx="6" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="60" y="62" width="646" height="48" rx="6" fill="var(--accent-muted)"/>
- <line x1="706" y1="56" x2="706" y2="130" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+ <rect x="60" y="62" width="760" height="48" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="60" y="62" width="646" height="48" fill="var(--accent-muted)"/>
+ <line x1="706" y1="56" x2="706" y2="130" stroke="var(--accent)" stroke-width="3" stroke-linecap="butt"/>
  <text x="706" y="152" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">0.85</text>
- <line x1="820" y1="56" x2="820" y2="130" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round"/>
+ <line x1="820" y1="56" x2="820" y2="130" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="butt"/>
  <text x="820" y="152" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text-muted)">1.0</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Anything from 0.85 up is called finished — that band is where the game stops insisting.</text>
  <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text-muted)">926 of 994 completed grades reach a full 1.0. Of the 68 that stopped short, the 45 you</text>

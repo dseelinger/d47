@@ -24,28 +24,28 @@ nav_order: 139
 <section>
 <h2><span class="num">1</span> Turn on two rows in Settings, then press Assign switches.</h2>
 <svg viewBox="0 0 880 264" role="img" aria-label="Two settings toggles, the second appearing only once the first is on, and an Assign switches button">
- <rect x="30" y="24" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="30" y="24" width="820" height="66" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="56" y="63" font-size="17" fill="var(--text)">Let D47 press keys in Elite</text>
- <rect x="756" y="42" width="68" height="30" rx="15" fill="var(--accent)"/>
+ <rect x="756" y="42" width="68" height="30" fill="var(--accent)"/>
  <circle cx="809" cy="57" r="11" fill="var(--background)"/>
- <rect x="30" y="106" width="820" height="66" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="30" y="106" width="820" height="66" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="56" y="145" font-size="17" fill="var(--text)">Let a HOTAS switch operate the ship</text>
- <rect x="756" y="124" width="68" height="30" rx="15" fill="var(--accent)"/>
+ <rect x="756" y="124" width="68" height="30" fill="var(--accent)"/>
  <circle cx="809" cy="139" r="11" fill="var(--background)"/>
  <text x="56" y="206" font-size="15" fill="var(--text-muted)">The second row is not there until the first one is on.</text>
- <rect x="30" y="220" width="196" height="38" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="30" y="220" width="196" height="38" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <text x="128" y="245" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Assign switches</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Press Assign a switch, and walk yours through its positions.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The HOTAS switches window during a walk, showing the instruction to move the switch to each position and pause">
- <rect x="20" y="20" width="840" height="210" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="20" y="20" width="840" height="42" rx="8" fill="var(--surface-alt)"/>
+ <rect x="20" y="20" width="840" height="210" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="20" width="840" height="42" fill="var(--surface-alt)"/>
  <text x="44" y="48" font-size="16" font-weight="700" fill="var(--text)">HOTAS switches</text>
- <rect x="44" y="82" width="182" height="36" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="44" y="82" width="182" height="36" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
  <text x="135" y="106" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">Assign a switch</text>
- <rect x="242" y="82" width="94" height="36" rx="4" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="242" y="82" width="94" height="36" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="289" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">Finish</text>
  <text x="44" y="156" font-size="17" fill="var(--accent)">Move the switch to each position in turn, and pause at each one.</text>
  <text x="44" y="192" font-size="15" fill="var(--text-muted)">Pause about a second and a half at each one. Then press Finish.</text>
@@ -54,38 +54,38 @@ nav_order: 139
 <section>
 <h2><span class="num">3</span> Give each position an action and a state.</h2>
 <svg viewBox="0 0 880 344" role="img" aria-label="A switch card with three position rows, each showing a button number and four controls: an action, an on or off state, and a page of Directive 47's own panel">
- <rect x="20" y="16" width="840" height="312" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="16" width="840" height="312" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Gear</text>
- <rect x="120" y="32" width="86" height="28" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="120" y="32" width="86" height="28" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="163" y="52" text-anchor="middle" font-size="14" fill="var(--text-muted)">Remove</text>
  <text x="44" y="80" font-size="14" fill="var(--text-muted)">VIRPIL Controls #0 Constellation ALPHA-R</text>
  <text x="44" y="126" font-size="16" fill="var(--text)">button 1</text>
- <rect x="134" y="104" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="134" y="104" width="234" height="34" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="152" y="127" font-size="15" fill="var(--text)">landing gear</text>
  <text x="352" y="127" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="378" y="104" width="96" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="378" y="104" width="96" height="34" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="396" y="127" font-size="15" fill="var(--text)">on</text>
  <text x="458" y="127" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="484" y="104" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="484" y="104" width="234" height="34" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="502" y="127" font-size="15" fill="var(--text-muted)">(nothing)</text>
  <text x="702" y="127" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
  <text x="44" y="182" font-size="16" fill="var(--text)">button 2</text>
- <rect x="134" y="160" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="134" y="160" width="234" height="34" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="152" y="183" font-size="15" fill="var(--text-muted)">(nothing)</text>
  <text x="352" y="183" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="378" y="160" width="96" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="378" y="160" width="96" height="34" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="458" y="183" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="484" y="160" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="484" y="160" width="234" height="34" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="502" y="183" font-size="15" fill="var(--text-muted)">(nothing)</text>
  <text x="702" y="183" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
  <text x="44" y="238" font-size="16" fill="var(--text)">button 3</text>
- <rect x="134" y="216" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="134" y="216" width="234" height="34" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="152" y="239" font-size="15" fill="var(--text)">landing gear</text>
  <text x="352" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="378" y="216" width="96" height="34" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <rect x="378" y="216" width="96" height="34" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="396" y="239" font-size="15" fill="var(--text)">off</text>
  <text x="458" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="484" y="216" width="234" height="34" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+ <rect x="484" y="216" width="234" height="34" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="502" y="239" font-size="15" fill="var(--text-muted)">(nothing)</text>
  <text x="702" y="239" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
  <text x="44" y="286" font-size="15" fill="var(--text-muted)">The state is greyed out until an action is chosen. Leave the middle of a three-position switch as (nothing).</text>
@@ -95,9 +95,9 @@ nav_order: 139
 <section>
 <h2><span class="num">4</span> Press Save.</h2>
 <svg viewBox="0 0 880 120" role="img" aria-label="The Save and Close buttons at the foot of the window, above the path the mappings are written to">
- <rect x="562" y="24" width="130" height="40" rx="4" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="562" y="24" width="130" height="40" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="627" y="50" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Save</text>
- <rect x="708" y="24" width="130" height="40" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="708" y="24" width="130" height="40" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="773" y="50" text-anchor="middle" font-size="16" fill="var(--text-muted)">Close</text>
  <text x="42" y="50" font-size="16" fill="var(--text)">Nothing is watched until you save.</text>
  <text x="42" y="96" font-size="15" fill="var(--text-muted)">Flip the switch with Elite in front, and the ship follows.</text>
@@ -106,7 +106,7 @@ nav_order: 139
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <svg viewBox="0 0 880 190" role="img" aria-label="Elite must already have the action bound to a key, because Directive 47 presses the Commander's own binding">
- <rect x="20" y="20" width="840" height="150" rx="8" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="20" y="20" width="840" height="150" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="var(--danger)">Elite must already have the action bound to a key.</text>
  <text x="440" y="104" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 presses your binding. If landing gear is on a key in Elite, this works.</text>
  <text x="440" y="136" text-anchor="middle" font-size="16" fill="var(--text)">If it is bound only to a joystick button, there is no key to press and nothing happens.</text>
@@ -127,19 +127,19 @@ nav_order: 139
 <section>
 <h2><span class="num">1</span> The switch is a question, not a command.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Flipping a switch asks Elite whether it is already in that state, and presses a key only if it is not">
- <rect x="20" y="44" width="200" height="90" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="44" width="200" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="120" y="82" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOU FLIP IT</text>
  <text x="120" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">gear switch, down</text>
- <line x1="232" y1="88" x2="256" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="232" y1="88" x2="256" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="270,88 254,80 254,96" fill="var(--accent-muted)"/>
- <rect x="284" y="44" width="250" height="90" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="284" y="44" width="250" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="409" y="82" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">IT ASKS ELITE</text>
  <text x="409" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">“is the gear already down?”</text>
- <line x1="546" y1="76" x2="572" y2="58" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <line x1="546" y1="102" x2="572" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
- <rect x="584" y="28" width="276" height="58" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <line x1="546" y1="76" x2="572" y2="58" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <line x1="546" y1="102" x2="572" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <rect x="584" y="28" width="276" height="58" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="722" y="63" text-anchor="middle" font-size="15" fill="var(--text)">already down → nothing at all</text>
- <rect x="584" y="96" width="276" height="58" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="584" y="96" width="276" height="58" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="722" y="131" text-anchor="middle" font-size="15" fill="var(--text)">not down → one press, yours</text>
  <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Between flips it touches nothing.</text>
  <text x="440" y="230" text-anchor="middle" font-size="15" fill="var(--text-muted)">Every other way is edge-triggered: it sends a toggle on the flip and never learns what the game did.</text>
@@ -149,13 +149,13 @@ nav_order: 139
 <section>
 <h2><span class="num">2</span> Elite cannot be told what a position means.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="A maintained switch is held rather than pressed, so Elite reads it as a button held down forever">
- <rect x="20" y="40" width="400" height="112" rx="10" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A MAINTAINED SWITCH</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">is held, not pressed</text>
  <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">sixteen were held on the bench</text>
- <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="round"/>
+ <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,96 446,88 446,104" fill="var(--accent-muted)"/>
- <rect x="474" y="40" width="386" height="112" rx="10" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <rect x="474" y="40" width="386" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="667" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">SO ELITE SEES</text>
  <text x="667" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a button you are leaning on</text>
  <text x="667" y="134" text-anchor="middle" font-size="15" fill="var(--text)">forever</text>
@@ -166,19 +166,19 @@ nav_order: 139
 <h2><span class="num">3</span> It learns your switch by watching you walk it.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="Walking the switch through every position discovers four things that cannot be assumed">
  <text x="440" y="30" text-anchor="middle" font-size="15" fill="var(--text-muted)">“Move the switch to each position in turn, and pause at each one.”</text>
- <rect x="27" y="48" width="196" height="100" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="27" y="48" width="196" height="100" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="125" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">HOW MANY POSITIONS</text>
  <text x="125" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">two, three and four</text>
  <text x="125" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">all exist</text>
- <rect x="237" y="48" width="196" height="100" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="237" y="48" width="196" height="100" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="335" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">WHICH BUTTON EACH</text>
  <text x="335" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">consecutive is a hint,</text>
  <text x="335" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">not a rule</text>
- <rect x="447" y="48" width="196" height="100" rx="8" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+ <rect x="447" y="48" width="196" height="100" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="545" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">WHETHER EACH HOLDS</text>
  <text x="545" y="104" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">ONE AT ALL</text>
  <text x="545" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">a dead detent is legal</text>
- <rect x="657" y="48" width="196" height="100" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="657" y="48" width="196" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="755" y="76" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">WHETHER IT STAYS</text>
  <text x="755" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">a spring-return switch</text>
  <text x="755" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">cannot mean a state</text>
@@ -191,7 +191,7 @@ nav_order: 139
 <section>
 <h2><span class="num">4</span> A switch that disagrees is announced, not corrected.</h2>
 <svg viewBox="0 0 880 230" role="img" aria-label="The panel shows which assigned switches currently disagree with the game's state">
- <rect x="20" y="36" width="840" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <rect x="20" y="36" width="840" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="76" text-anchor="middle" font-size="18" fill="var(--text)">“gear switch: the landing gear is up”</text>
  <text x="440" y="140" text-anchor="middle" font-size="16" fill="var(--text)">A stale switch costs one extra flip — but only if you can see it coming.</text>
  <text x="440" y="176" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the panel shows which switches disagree with the game.</text>
