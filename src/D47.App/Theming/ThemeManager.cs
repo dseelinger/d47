@@ -126,22 +126,17 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         return palette.RecolouredBy(matrix);
     }
 
-    /// <summary>
-    /// Applies the theme and bloom amount named in settings, and re-applies them whenever either
-    /// setting changes.
-    /// </summary>
+    /// <summary>Applies the theme named in settings, and re-applies it whenever the setting changes.</summary>
     public void FollowSettings(SettingsService settings)
     {
-        Apply(settings.Current.Ui.Theme, bloomAmount: settings.Current.Ui.BloomAmount);
+        Apply(settings.Current.Ui.Theme);
 
         // Posted, because a settings change does not arrive on the UI thread.
         settings.Changed += change =>
         {
-            if (change.Key.Equals(InterfaceCapability.ThemeKey, StringComparison.OrdinalIgnoreCase)
-                || change.Key.Equals(InterfaceCapability.BloomKey, StringComparison.OrdinalIgnoreCase))
+            if (change.Key.Equals(InterfaceCapability.ThemeKey, StringComparison.OrdinalIgnoreCase))
             {
-                Dispatcher.UIThread.Post(
-                    () => Apply(change.Settings.Ui.Theme, bloomAmount: change.Settings.Ui.BloomAmount));
+                Dispatcher.UIThread.Post(() => Apply(change.Settings.Ui.Theme));
             }
         };
     }
@@ -150,10 +145,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// Used instead of reading the Commander's own HUD matrix from disk — the Control Kit's Accent
     /// entry drives the recolour path this way (#358).
     /// </param>
-    /// <param name="bloomAmount">
-    /// How wide the glow halos draw, on <see cref="BloomTiers"/>'s scale (#378).
-    /// </param>
-    public void Apply(string? themeId, GuiColourMatrix? matrixOverride = null, double bloomAmount = BloomTiers.DefaultAmount)
+    public void Apply(string? themeId, GuiColourMatrix? matrixOverride = null)
     {
         var theme = ThemeCatalog.Selected(themeId);
         var palette = Resolve(themeId, matrixOverride);
@@ -171,7 +163,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         // Null on a theme that does not glow, which turns both off: an unset Effect or Background paints nothing.
         foreach (var tier in Enum.GetValues<BloomTier>())
         {
-            var stops = palette.Glows ? BloomTiers.Stops(tier, bloomAmount) : [];
+            var stops = palette.Glows ? BloomTiers.Stops(tier) : [];
 
             for (var stop = 0; stop < BloomTiers.Table(tier).Count; stop++)
             {

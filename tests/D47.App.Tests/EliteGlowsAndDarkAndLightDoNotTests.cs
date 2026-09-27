@@ -7,8 +7,6 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
-using D47.Core.Capabilities.Builtin;
-using D47.Core.Configuration;
 using D47.Core.Interface;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -41,20 +39,6 @@ public class EliteGlowsAndDarkAndLightDoNotTests
         }
 
         Assert.IsType<ImageBrush>(resources[ThemeManager.ScanlinesKey]);
-    }
-
-    /// <summary>The Bloom setting is disabled on exactly the themes whose palette does not glow.</summary>
-    [Fact]
-    public void TheBloomRowIsDisabledWhereThePaletteDoesNotGlow()
-    {
-        var row = InterfaceCapability.Create().Settings.Single(r => r.Key == InterfaceCapability.BloomKey);
-
-        foreach (var id in ThemeCatalog.Ids)
-        {
-            var settings = D47Settings.Defaults with { Ui = D47Settings.Defaults.Ui with { Theme = id } };
-
-            Assert.Equal(!Palettes.For(id).Glows, row.DisabledWhen!(settings));
-        }
     }
 
     /// <summary>The bloom tier's widest stop, [38, 22] at amount 1.1, with no offset.</summary>

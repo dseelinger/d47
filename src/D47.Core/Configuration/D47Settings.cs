@@ -884,9 +884,6 @@ public sealed record UiSettings
     /// </summary>
     public bool HullArt { get; init; } = true;
 
-    /// <summary>How wide the panel's glow halos draw, 0 to 2.5. Dark themes only (#378).</summary>
-    public double BloomAmount { get; init; } = D47.Core.Interface.BloomTiers.DefaultAmount;
-
     /// <summary>Where the panel's tabs are drawn, on both the window and the headset: "top" or "left".</summary>
     public string Tabs { get; init; } = Capabilities.Builtin.InterfaceCapability.TabsTop;
 }

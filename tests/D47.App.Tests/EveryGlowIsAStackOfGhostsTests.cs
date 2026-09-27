@@ -144,15 +144,14 @@ public class EveryGlowIsAStackOfGhostsTests
         }
     }
 
-    /// <summary>The panel, a captioned window, and one of each kit control in its glowing state.</summary>
+    /// <summary>The panel and a captioned window, each in its glowing state.</summary>
     private sealed class Scene : IDisposable
     {
-        private Scene(PanelView panel, PanelViewModel model, Window panelWindow, Window kitWindow, Controls kit)
+        private Scene(PanelView panel, PanelViewModel model, Window panelWindow, Window kitWindow)
         {
             Panel = panel;
             Model = model;
             Windows = [panelWindow, kitWindow];
-            Kit = kit;
         }
 
         public PanelView Panel { get; }
@@ -161,8 +160,6 @@ public class EveryGlowIsAStackOfGhostsTests
 
         public IReadOnlyList<Window> Windows { get; }
 
-        private Controls Kit { get; }
-
         public static Scene Open()
         {
             var model = new PanelViewModel { Microphone = MicrophoneState.Idle };
@@ -170,23 +167,19 @@ public class EveryGlowIsAStackOfGhostsTests
             var panelWindow = new Window { Content = panel, Width = 1180, Height = 880 };
             panelWindow.Show();
 
-            var kit = new Controls(
-                TitleText.Screen("Screen title"),
-                new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 });
-
             var kitWindow = new Window
             {
                 Title = "Directive 47 — 0.1.0",
                 Width = 800,
                 Height = 600,
-                Content = new StackPanel { Children = { kit.Title, kit.Level } },
+                Content = new StackPanel { Children = { TitleText.Screen("Screen title") } },
             };
             CaptionStrip.Apply(kitWindow);
             kitWindow.Show();
 
             Dispatcher.UIThread.RunJobs();
 
-            return new Scene(panel, model, panelWindow, kitWindow, kit);
+            return new Scene(panel, model, panelWindow, kitWindow);
         }
 
         /// <summary>Every glow the tier table names, by the element it belongs to.</summary>
@@ -198,8 +191,6 @@ public class EveryGlowIsAStackOfGhostsTests
 
             yield return ("caption diamond", BloomTier.High, caption.Single(stack => stack.Child is Path));
             yield return ("caption name", BloomTier.High, caption.Single(stack => stack.Child is TextBlock));
-            yield return ("level fill", BloomTier.High, Within(Kit.Level, stack => stack.Child is Border));
-            yield return ("level handle", BloomTier.High, Within(Kit.Level, stack => stack.Child is Rectangle));
             yield return ("microphone dot", BloomTier.High, Panel.FindControl<BloomStack>("MicrophoneBloom")!);
             yield return ("active tab", BloomTier.Normal, Within(Panel.FindControl<RadioButton>("TranscriptTab")!, stack => stack.Name == "Glow"));
         }
@@ -215,7 +206,4 @@ public class EveryGlowIsAStackOfGhostsTests
         private static BloomStack Within(Control control, Func<BloomStack, bool>? which = null) =>
             control.GetVisualDescendants().OfType<BloomStack>().Single(stack => which?.Invoke(stack) ?? true);
     }
-
-    private sealed record Controls(
-        Control Title, Slider Level);
 }

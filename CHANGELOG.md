@@ -219,6 +219,10 @@ area name above the title is in the same weight as the title's. The Carrier page
 carrier's balance at the right of its title rather than among the figures below. A group heading's
 orange line sits 6 pixels below it rather than 4.
 
+Glow now shows only on the brand diamond and name in the title bar, the push-to-talk dot and the
+active tab, in the themes that glow at all. The Bloom setting is gone, and every glow is drawn at
+the fixed strength it used to default to.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

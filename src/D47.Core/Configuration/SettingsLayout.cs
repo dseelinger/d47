@@ -565,7 +565,6 @@ public static class SettingsLayout
                             "The window's theme and zoom, and the keys that bring it forward.",
                             [
                                 E("ui.theme"),
-                                E("ui.bloom"),
                                 E("ui.zoom"),
                                 E("ui.tabs"),
                                 E("hotkeys.openSettings"),

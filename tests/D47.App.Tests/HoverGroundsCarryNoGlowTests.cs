@@ -1,14 +1,10 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Shapes;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Avalonia.Input;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -21,10 +17,9 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// A button, a glyph button, a tab and a segment carry no hover glow; only the selected tab glows
-/// (#393, #394, #396). Keyboard focus lights a Low-tier halo behind the focus ring without touching
-/// the ring's own outline (#379).
+/// (#393, #394, #396).
 /// </summary>
-public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
+public class HoverGroundsCarryNoGlowTests
 {
     private static ThemeManager Manager() => new(Application.Current!, NullLogger<ThemeManager>.Instance);
 
@@ -106,36 +101,6 @@ public class HoverGroundsAndFocusRingsTakeTheLowBloomTests
 
         var fill = ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.Tile2Key]!).Color;
         Assert.Equal(fill, Pixel(window, At(segment, window, 3, 3)));
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void FocusLightsALowHaloBehindTheRingWithTheOutlineAtFullStrength()
-    {
-        using var kit = AppLook.ControlKit();
-        Manager().Apply(ThemeCatalog.Elite);
-
-        var slider = new Slider { Minimum = 0, Maximum = 100, Value = 50, Width = 300 };
-        var window = Open(slider);
-
-        slider.Focus(NavigationMethod.Tab);
-        Dispatcher.UIThread.RunJobs();
-
-        var layer = AdornerLayer.GetAdornerLayer(slider)!;
-        var stack = layer.GetVisualDescendants().OfType<BloomStack>().Single();
-
-        Assert.True(stack.IsLit);
-        Assert.Equal(BloomTier.Low, stack.Tier);
-        AssertGlowing(stack);
-
-        var rectangle = Assert.IsType<Rectangle>(stack.Child);
-        Assert.Equal(2, rectangle.StrokeThickness);
-        Assert.Null(rectangle.Fill);
-        Assert.DoesNotContain(rectangle, stack.Ghosts);
-
-        var accent = (ISolidColorBrush)Application.Current!.Resources[ThemeManager.AKey]!;
-        Assert.Equal(accent.Color, ((ISolidColorBrush)rectangle.Stroke!).Color);
 
         window.Close();
     }

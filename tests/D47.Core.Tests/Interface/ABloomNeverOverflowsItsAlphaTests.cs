@@ -5,44 +5,37 @@ namespace D47.Core.Tests.Interface;
 
 public class ABloomNeverOverflowsItsAlphaTests
 {
-    public static TheoryData<BloomTier> Tiers() => [BloomTier.Low, BloomTier.Normal, BloomTier.High];
+    public static TheoryData<BloomTier> Tiers() => [BloomTier.Normal, BloomTier.High];
 
     [Theory]
     [MemberData(nameof(Tiers))]
-    public void AtTwoAndAHalfEveryAlphaIsAtMostOneAndEveryRadiusScales(BloomTier tier)
+    public void AtTheFixedAmountEveryAlphaIsAtMostOneAndEveryRadiusScales(BloomTier tier)
     {
         var table = BloomTiers.Table(tier);
-        var stops = BloomTiers.Stops(tier, 2.5);
+        var stops = BloomTiers.Stops(tier);
 
         Assert.Equal(table.Count, stops.Count);
 
         for (var i = 0; i < stops.Count; i++)
         {
             Assert.InRange(stops[i].Alpha, 0, 1);
-            Assert.Equal(table[i].Radius * 2.5, stops[i].Radius, 9);
+            Assert.Equal(table[i].Radius * 1.1, stops[i].Radius, 9);
         }
     }
 
-    [Theory]
-    [MemberData(nameof(Tiers))]
-    public void AtZeroNoStopIsEmitted(BloomTier tier) => Assert.Empty(BloomTiers.Stops(tier, 0));
-
     [Fact]
-    public void AStrongAmountIsCappedAtOneAndAThirdAgainTheTable()
+    public void TheHighTiersWidestStopIsCappedAtOne()
     {
-        var stops = BloomTiers.Stops(BloomTier.Normal, 2.5);
+        var stops = BloomTiers.Stops(BloomTier.High);
 
-        // 0.22 × 1.35, not 0.22 × 2.5.
-        Assert.Equal(0.297, stops[^1].Alpha, 9);
-
-        // 0.88 × 1.35 would be 1.188.
+        // 0.95 × 1.1 would be 1.045.
         Assert.Equal(1, stops[0].Alpha);
     }
 
     [Fact]
-    public void TheDefaultAmountRaisesTheTableByATenth()
+    public void TheFixedAmountRaisesTheTableByATenth()
     {
-        var stops = BloomTiers.Stops(BloomTier.High, BloomTiers.DefaultAmount);
+        var stops = BloomTiers.Stops(BloomTier.High);
 
         Assert.Equal(112 * 1.1, stops[^1].Radius, 9);
         Assert.Equal(0.20 * 1.1, stops[^1].Alpha, 9);
@@ -53,6 +46,5 @@ public class ABloomNeverOverflowsItsAlphaTests
     {
         Assert.Equal(5, BloomTiers.Table(BloomTier.High).Count);
         Assert.Equal(4, BloomTiers.Table(BloomTier.Normal).Count);
-        Assert.Equal(3, BloomTiers.Table(BloomTier.Low).Count);
     }
 }

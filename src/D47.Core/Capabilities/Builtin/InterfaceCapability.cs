@@ -22,9 +22,6 @@ public static class InterfaceCapability
 
     public const string TabsLeft = "left";
 
-    /// <summary>How wide the panel's glow halos draw. Dark themes only (#378).</summary>
-    public const string BloomKey = "ui.bloom";
-
     public const string OpenSettingsHotkeyKey = "hotkeys.openSettings";
 
     public const string FocusAskHotkeyKey = "hotkeys.focusAsk";
@@ -75,33 +72,6 @@ public static class InterfaceCapability
                 {
                     Read = s => s.Ui.Theme,
                     Write = (s, v) => s with { Ui = s.Ui with { Theme = v ?? ThemeCatalog.Elite } },
-                },
-            },
-            new SettingRow
-            {
-                Key = BloomKey,
-                Label = "Bloom",
-                Help = "How wide the glow halos draw around the panel's edges. 0 turns the glow off; "
-                       + "the top of the range draws the widest halos. Elite and My HUD colours only — "
-                       + "Dark and Light draw no glow at any value.",
-                Kind = SettingKind.Number,
-                Step = 0.1,
-                Minimum = 0,
-                Maximum = 2.5,
-                DocsAnchor = "bloom",
-                DisabledWhen = s => ThemeCatalog.Selected(s.Ui.Theme).Id is ThemeCatalog.Dark or ThemeCatalog.Light,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Ui.BloomAmount.ToString(CultureInfo.InvariantCulture),
-                    Write = (s, v) => s with
-                    {
-                        Ui = s.Ui with
-                        {
-                            BloomAmount = double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out var amount)
-                                ? Math.Clamp(amount, 0, 2.5)
-                                : Configuration.D47Settings.Defaults.Ui.BloomAmount,
-                        },
-                    },
                 },
             },
             new SettingRow
