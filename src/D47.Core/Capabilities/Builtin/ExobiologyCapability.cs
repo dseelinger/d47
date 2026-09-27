@@ -10,10 +10,6 @@ public static class ExobiologyCapability
 {
     public const string Id = "exobiology";
 
-    /// <summary>
-    /// <param name="routes"> Null where nothing composed one — under the designer, and in a test that
-    /// is not about it.
-    /// </summary>
     /// <param name="routes">
     /// Null where nothing composed one — under the designer, and in a test that is not about it.
     /// </param>
@@ -21,11 +17,14 @@ public static class ExobiologyCapability
     /// The live <c>Status.json</c>, which is the only thing that knows where the Commander is standing
     /// — <c>ScanOrganic</c> carries no position at all.
     /// </param>
+    /// <param name="plans">Where a plotted route is kept, or null where nothing is drawing them.</param>
     public static CapabilityDescriptor Create(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
-        Func<GameStatus>? status = null) => new()
+        Func<GameStatus>? status = null,
+        RoutePlanBook? plans = null,
+        Func<DateTimeOffset>? now = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -136,7 +135,7 @@ public static class ExobiologyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotAsync(routes, commander, settings, arguments, cancellationToken),
+                    PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Exobiology", Order = 58 },
@@ -321,6 +320,8 @@ public static class ExobiologyCapability
         IRouteService? routes,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
+        RoutePlanBook? plans,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -366,6 +367,8 @@ public static class ExobiologyCapability
                 + $"at {Number(query.MinimumValue)} credits a body or better. A wider radius or a lower "
                 + "minimum would find something.");
         }
+
+        plans?.Record(route, $"{route.Stops.Count} stops from {query.From}", now?.Invoke() ?? default);
 
         var report = new StringBuilder();
 

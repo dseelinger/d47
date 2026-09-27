@@ -261,6 +261,11 @@ it out somewhere expensive.
 If undiscovered systems are what you are after, [read a system name](system-names.md) instead — that
 works with no network at all, which is the point of it.
 
+A plotted route is kept as the last exobiology plan, the way a Road to Riches loop is. The
+**Exobiology** card on the Routing tab's Plan page plots one and shows it again with **Show most
+recent**; arriving at a stop marks it reached; "plot next exobiology stop" puts the next system in
+the galaxy map through `plot_next_stop` on [route planning](routes.md).
+
 ### Wire notes
 
 The plotter is spansh's `api/exobiology/route`, submitted as a job and polled — the same protocol as

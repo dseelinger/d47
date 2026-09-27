@@ -16,6 +16,9 @@ public enum RoutePlanKind
 
     /// <summary>A chain of buy-and-sell stops.</summary>
     Trade,
+
+    /// <summary>A circuit of systems with surveyed biology.</summary>
+    Exobiology,
 }
 
 /// <summary>The last plan of one kind, as it was answered (Phase 37, "One last plan").</summary>
@@ -37,6 +40,8 @@ public sealed record StoredRoutePlan
     public RichesRoute? Riches { get; init; }
 
     public TradeRoute? Trade { get; init; }
+
+    public ExobiologyRoute? Exobiology { get; init; }
 
     /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
     public int? Reached { get; init; }
@@ -89,6 +94,15 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
             PlottedAt = at,
             Headline = headline,
             Riches = route,
+        });
+
+    public void Record(ExobiologyRoute route, string headline, DateTimeOffset at) =>
+        Keep(new StoredRoutePlan
+        {
+            Kind = RoutePlanKind.Exobiology,
+            PlottedAt = at,
+            Headline = headline,
+            Exobiology = route,
         });
 
     /// <summary>
@@ -183,6 +197,7 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
         RoutePlanKind.Jump => plan.Jump?.Waypoints.Select(waypoint => waypoint.System).ToArray(),
         RoutePlanKind.Riches => plan.Riches?.Stops.Select(stop => stop.System).ToArray(),
         RoutePlanKind.Trade => plan.Trade?.Stops.Select(stop => stop.System).ToArray(),
+        RoutePlanKind.Exobiology => plan.Exobiology?.Stops.Select(stop => stop.System).ToArray(),
         _ => null,
     };
 

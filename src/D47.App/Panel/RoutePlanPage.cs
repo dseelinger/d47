@@ -13,7 +13,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Where a route comes from: the three planners, as forms (Phase 37, "Plan").</summary>
+/// <summary>Where a route comes from: the planners, as forms (Phase 37, "Plan").</summary>
 public sealed class RoutePlanPage : UserControl
 {
     /// <summary>How long a plot may run before it is given up on.</summary>
@@ -83,7 +83,7 @@ public sealed class RoutePlanPage : UserControl
         // forever after they stopped being on screen.
         _supplied.Clear();
 
-        _cards.Children.Add(Reflow.Grid([JumpCard(), RichesCard()], PlannerWidth, 28, 12, 2));
+        _cards.Children.Add(Reflow.Grid([JumpCard(), RichesCard(), ExobiologyCard()], PlannerWidth, 28, 12, 2));
     }
 
     /// <summary>Redraws — after a plot, or after the setting behind the whole page moved.</summary>
@@ -159,6 +159,9 @@ public sealed class RoutePlanPage : UserControl
     /// <inheritdoc cref="NeutronPlotterHelp"/>
     public const string RichesHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "road-to-riches";
 
+    /// <inheritdoc cref="NeutronPlotterHelp"/>
+    public const string ExobiologyHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "exobiology-route";
+
     private Control RichesCard()
     {
         var stops = Field("Stops", "10");
@@ -185,6 +188,34 @@ public sealed class RoutePlanPage : UserControl
                 ("loop", loop.IsChecked == true ? "true" : "false")),
             () => true,
             RichesHelp);
+    }
+
+    private Control ExobiologyCard()
+    {
+        var stops = Field("Stops", "10");
+        var radius = Field("Radius (ly)", "200");
+        var minimum = Field("Least worth stopping for (cr)", "1,000,000");
+        var loop = RoutingKit.Switch("Come back to the start");
+        loop.IsChecked = true;
+
+        var form = new StackPanel
+        {
+            Spacing = 8,
+            Children = { Row(stops, radius), Row(minimum, null), loop },
+        };
+
+        return Plottable(
+            "Exobiology",
+            form,
+            RoutePlanKind.Exobiology,
+            "plot_exobiology_route",
+            () => Arguments(
+                ("max_results", stops.Text),
+                ("radius", radius.Text),
+                ("min_value", minimum.Text),
+                ("loop", loop.IsChecked == true ? "true" : "false")),
+            () => true,
+            ExobiologyHelp);
     }
 
     /// <summary>

@@ -839,7 +839,7 @@ public class TheRoutingTabTests
             .First(button => button.Content as string == "HELP");
     }
 
-    /// <summary>Three planners, three pages.</summary>
+    /// <summary>One page per planner.</summary>
     [Fact]
     public void EachPlannersPageIsItsOwnSubject()
     {
@@ -847,6 +847,7 @@ public class TheRoutingTabTests
         {
             (RoutePlanPage.NeutronPlotterHelp, "Neutron Plotter"),
             (RoutePlanPage.RichesHelp, "Road to Riches"),
+            (RoutePlanPage.ExobiologyHelp, "Exobiology route"),
             (RouteTradePage.TradeHelp, "Trade run"),
         };
 
@@ -861,7 +862,7 @@ public class TheRoutingTabTests
 
         // And they are not three copies of one page, which is what the tab's single mark was.
         Assert.Equal(
-            3,
+            pages.Length,
             pages.Select(page => D47.Core.Help.HelpLibrary.For(page.Item1)!.Intro).Distinct().Count());
     }
 
@@ -872,6 +873,7 @@ public class TheRoutingTabTests
     [AvaloniaTheory]
     [InlineData("Neutron Plotter", "general-neutron-plotter")]
     [InlineData("Road to Riches", "general-road-to-riches")]
+    [InlineData("Exobiology", "general-exobiology-route")]
     public void EachPlannersMarkOpensThatPlannersPage(string heading, string page)
     {
         var folder = Scratch();
@@ -907,6 +909,7 @@ public class TheRoutingTabTests
     [AvaloniaTheory]
     [InlineData("Neutron Plotter")]
     [InlineData("Road to Riches")]
+    [InlineData("Exobiology")]
     public void EachPlannersMarkNamesItsActionOnHover(string heading)
     {
         var folder = Scratch();

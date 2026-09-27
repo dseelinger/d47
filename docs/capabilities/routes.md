@@ -237,12 +237,13 @@ A route can be arithmetically perfect against a four-year-old price and worth no
 #### `plot_next_stop`
 
 Plots the next stop on a stored plan — the Neutron Plotter's waypoints, a Road to Riches loop's
-stops, or a trade run's stops — through the galaxy map, the same way `plot_course` does. "Plot
-next neutron jump", "plot next riches stop" and "plot next trade stop" reach this with no model
-involved, through the keyword router.
+stops, a trade run's stops, or an [exobiology route](exobiology.md)'s systems — through the galaxy
+map, the same way `plot_course` does. "Plot next neutron jump", "plot next riches stop", "plot next
+trade stop" and "plot next exobiology stop" reach this with no model involved, through the keyword
+router.
 
 ```json
-{"type":"object","properties":{"kind":{"type":"string","description":"Which stored plan to plot the next stop from.","enum":["neutron","riches","trade"]}},"required":["kind"],"additionalProperties":false}
+{"type":"object","properties":{"kind":{"type":"string","description":"Which stored plan to plot the next stop from.","enum":["neutron","riches","trade","exobiology"]}},"required":["kind"],"additionalProperties":false}
 ```
 
 The next stop is the first one after the furthest reached (kept by the plan, see

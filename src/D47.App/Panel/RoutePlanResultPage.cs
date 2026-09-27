@@ -91,6 +91,9 @@ public sealed class RoutePlanResultPage : UserControl
         { Trade: { } trade } =>
             $"{Count(trade.Stops.Count, "stop")}, {trade.TotalProfit:N0} credits on {trade.Capital:N0} "
             + $"over {trade.TotalDistance:N0} ly.",
+        { Exobiology: { } exobiology } =>
+            $"{Count(exobiology.Stops.Count, "stop")}, {Count(exobiology.TotalJumps, "jump")}, "
+            + $"{exobiology.TotalValue:N0} credits of biology.",
         _ => plan.Headline,
     };
 
@@ -102,6 +105,11 @@ public sealed class RoutePlanResultPage : UserControl
         var when = plan.PlottedAt == default
             ? "Plotted earlier."
             : $"Plotted {plan.PlottedAt.ToLocalTime():d MMM, HH:mm}.";
+
+        if (plan.Exobiology is not null)
+        {
+            return $"{when} Every stop has already been surveyed by somebody, so none of it is a first footfall.";
+        }
 
         if (plan.Trade is not { } trade)
         {
@@ -129,6 +137,8 @@ public sealed class RoutePlanResultPage : UserControl
         { Jump: { } jump } => jump.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached), here)),
         { Riches: { } riches } => riches.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
         { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+        { Exobiology: { } exobiology } =>
+            exobiology.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
         _ => [],
     };
 
@@ -188,6 +198,39 @@ public sealed class RoutePlanResultPage : UserControl
                     ? $"{body.Name} — {body.Subtype ?? "unknown"}, {value:N0} cr"
                     : $"{body.Name} — {body.Subtype ?? "unknown"}",
                 state.Reached));
+        }
+
+        return RoutingKit.Row(lines, stop.System, _copy);
+    }
+
+    private Control Stop(ExobiologyStop stop, RowState state, string? here)
+    {
+        var lines = new List<Control>
+        {
+            Line(stop.System, stop.System, state, here),
+            RoutingKit.Values(
+                Joined(
+                [
+                    stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps",
+                    stop.Bodies.Count == 1 ? "1 body" : $"{stop.Bodies.Count} bodies",
+                ]),
+                state.Reached),
+        };
+
+        foreach (var body in stop.Bodies.OrderByDescending(body => body.LandmarkValue))
+        {
+            lines.Add(RoutingKit.Values(
+                $"{body.Name} — {body.Subtype ?? "unknown"}, {body.LandmarkValue:N0} cr",
+                state.Reached));
+
+            foreach (var species in body.Species)
+            {
+                var count = species.Count > 1 ? $" ×{species.Count}" : string.Empty;
+                var line = RoutingKit.Values($"{species.Name}{count} — {species.Value:N0} cr", state.Reached);
+                line.Margin = new Thickness(16, 0, 0, 0);
+
+                lines.Add(line);
+            }
         }
 
         return RoutingKit.Row(lines, stop.System, _copy);

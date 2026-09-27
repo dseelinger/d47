@@ -327,6 +327,35 @@ public class ExobiologyCapabilityTests
         Assert.Contains("6,904,100 cr", result.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>A plotted route is kept as the last exobiology plan, headlined the way Road to Riches is.</summary>
+    [Fact]
+    public async Task APlottedRouteIsKeptAsTheLastExobiologyPlan()
+    {
+        using var install = new TempInstall();
+        var settings = TestSurface.For(install).Settings;
+        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
+
+        var plans = new RoutePlanBook(
+            Path.Combine(install.Root, "data", "route-plans.json"),
+            NullLogger<RoutePlanBook>.Instance);
+        var at = new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero);
+        var gameState = Store();
+
+        await CapabilityRegistry
+            .Build([ExobiologyCapability.Create(new FakeRoutes(), () => gameState.Active, settings, null, plans, () => at)])
+            .InvokeAsync(
+                "plot_exobiology_route",
+                ToolArguments.FromJson("""{"from":"Sol"}"""),
+                TestContext.Current.CancellationToken);
+
+        var kept = plans.Last(RoutePlanKind.Exobiology);
+
+        Assert.NotNull(kept);
+        Assert.Equal("1 stops from Sol", kept.Headline);
+        Assert.Equal(at, kept.PlottedAt);
+        Assert.Equal("Frutexa Flabellum", kept.Exobiology!.Stops[0].Bodies[0].Species[0].Name);
+    }
+
     /// <summary>
     /// The structural limit, said in the answer rather than left for the Commander to work out after
     /// the flight: everything an index holds has been visited, so none of it pays the 5× bonus.

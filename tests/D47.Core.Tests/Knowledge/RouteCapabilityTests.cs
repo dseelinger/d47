@@ -931,4 +931,43 @@ public class RouteCapabilityTests
         Assert.False(result.IsError);
         Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task AnExobiologyPlanPlotsItsNextSystem()
+    {
+        using var install = new TempInstall();
+        var plans = PlanBook(install);
+        plans.Record(
+            new ExobiologyRoute([new ExobiologyStop("Opet", 3, []), new ExobiologyStop("Wregoe AC-D d12-8", 2, [])]),
+            "2 stops from Sol",
+            PlottedAt);
+        plans.Apply([Arrival("FSDJump", "Opet", PlottedAt.AddMinutes(10))]);
+
+        var navigation = CopyOnlyNavigation();
+        var (registry, _, _, _) = Build(install, plans: plans, navigation: navigation);
+
+        var result = await registry.InvokeAsync(
+            "plot_next_stop",
+            Args(("kind", "exobiology")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal("Wregoe AC-D d12-8", ((RecordingClipboard)navigation.Clipboard).Last);
+        Assert.Contains("Stop 2 of 2", result.Content, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("plot next exobiology stop")]
+    [InlineData("plot the next exobiology stop")]
+    [InlineData("next exobiology stop")]
+    public void TheNextExobiologyStopIsReachedWithoutTheModel(string said)
+    {
+        using var install = new TempInstall();
+
+        var match = TestSurface.For(install).Router.MatchToolCommand(said);
+
+        Assert.Equal("plot_next_stop", match?.ToolName);
+        Assert.True(match!.Arguments.TryGetString("kind", out var kind));
+        Assert.Equal("exobiology", kind);
+    }
 }

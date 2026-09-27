@@ -24,6 +24,12 @@ route, the same as the neutron, Road to Riches and trade plotters. With it off, 
 exobiology route" gets the same switched-off answer as the other plotters, rather than sending the
 origin system and jump range regardless.
 
+An exobiology route is now kept once it is plotted, the same as a Road to Riches loop. The Routing
+tab's Plan page has an **Exobiology** card with stops, radius, the least a body must be worth and
+coming back to the start, plus **Show most recent** for the last route. Its page lists each stop's
+bodies by value with the species on each and what they pay, marks stops reached as you arrive, and
+"plot next exobiology stop" puts the next system in the galaxy map.
+
 Flanger, phaser and wah now run after Chorus; deep ring mod after Ring modulation; tremolo,
 overdrive and bitcrusher before Glitch. Each has its own level, the same as every other Guardian
 voice effect. Three new presets use them: Ring-mod rasp, 8-bit computer and Flanged vocoder.

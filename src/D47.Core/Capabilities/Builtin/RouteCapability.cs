@@ -271,7 +271,8 @@ public static class RouteCapability
                 Name = "plot_next_stop",
                 Description =
                     "Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a "
-                    + "Road to Riches loop's stops, or a trade run's stops — through the galaxy map. "
+                    + "Road to Riches loop's stops, a trade run's stops, or an exobiology route's "
+                    + "systems — through the galaxy map. "
                     + "Skips a stop whose system is the one the Commander is already in.",
                 Parameters =
                 [
@@ -281,7 +282,7 @@ public static class RouteCapability
                         Type = ToolParameterType.String,
                         Description = "Which stored plan to plot the next stop from.",
                         Required = true,
-                        AllowedValues = ["neutron", "riches", "trade"],
+                        AllowedValues = ["neutron", "riches", "trade", "exobiology"],
                     },
                 ],
                 Commands =
@@ -304,6 +305,11 @@ public static class RouteCapability
                         "plot next trade stop",
                         "plot the next trade stop",
                         "next trade stop"),
+                    .. NextStopPhrases(
+                        "exobiology",
+                        "plot next exobiology stop",
+                        "plot the next exobiology stop",
+                        "next exobiology stop"),
                 ],
                 SendsInput = true,
                 Handler = (arguments, cancellationToken) =>
@@ -890,6 +896,9 @@ public static class RouteCapability
             case "trade":
                 kind = RoutePlanKind.Trade;
                 return true;
+            case "exobiology":
+                kind = RoutePlanKind.Exobiology;
+                return true;
             default:
                 kind = default;
                 return false;
@@ -901,6 +910,7 @@ public static class RouteCapability
         RoutePlanKind.Jump => "neutron",
         RoutePlanKind.Riches => "Road to Riches",
         RoutePlanKind.Trade => "trade",
+        RoutePlanKind.Exobiology => "exobiology",
         _ => "route",
     };
 
@@ -913,6 +923,7 @@ public static class RouteCapability
         RoutePlanKind.Jump => plan.Jump?.Waypoints.Select(w => new PlanStop(w.System, null)).ToArray(),
         RoutePlanKind.Riches => plan.Riches?.Stops.Select(s => new PlanStop(s.System, null)).ToArray(),
         RoutePlanKind.Trade => plan.Trade?.Stops.Select(s => new PlanStop(s.System, s.Station)).ToArray(),
+        RoutePlanKind.Exobiology => plan.Exobiology?.Stops.Select(s => new PlanStop(s.System, null)).ToArray(),
         _ => null,
     };
 

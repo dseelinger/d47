@@ -55,6 +55,19 @@ public class RoutePlanBookTests : IDisposable
         Loop = true,
     };
 
+    private static ExobiologyRoute Exobiology() => new(
+    [
+        new ExobiologyStop("Opet", 3,
+        [
+            new ExobiologyBody("Opet 7 b", "Rocky body")
+            {
+                LandmarkValue = 6_904_100,
+                Species = [new ExobiologySpecies("Frutexa", "Frutexa Flabellum", 1, 1_808_900)],
+            },
+        ]),
+        new ExobiologyStop("Wregoe AC-D d12-8", 2, []),
+    ]);
+
     private static JournalEvent Arrival(string kind, string system, DateTimeOffset at) =>
         JournalEvent.TryParse(
             $$"""{"timestamp":"{{at:O}}","event":"{{kind}}","StarSystem":"{{system}}"}""",
@@ -83,6 +96,7 @@ public class RoutePlanBookTests : IDisposable
         Assert.Null(book.Last(RoutePlanKind.Jump));
         Assert.Null(book.Last(RoutePlanKind.Riches));
         Assert.Null(book.Last(RoutePlanKind.Trade));
+        Assert.Null(book.Last(RoutePlanKind.Exobiology));
     }
 
     [Fact]
@@ -323,5 +337,26 @@ public class RoutePlanBookTests : IDisposable
 
         Assert.NotNull(book.Last(RoutePlanKind.Jump));
         Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void AnExobiologyPlanIsReadBackWholeAndReachedOnArrival()
+    {
+        var written = Book();
+        written.Record(Exobiology(), "2 stops from Sol", At);
+
+        written.Apply([Arrival("FSDJump", "Opet", At.AddMinutes(10))]);
+        Assert.Equal(0, written.Last(RoutePlanKind.Exobiology)?.Reached);
+
+        written.Apply([Arrival("FSDJump", "Wregoe AC-D d12-8", At.AddMinutes(20))]);
+
+        var read = Book();
+        read.Load();
+
+        var kept = read.Last(RoutePlanKind.Exobiology);
+
+        Assert.Equal(1, kept?.Reached);
+        Assert.Equal("Frutexa Flabellum", kept?.Exobiology?.Stops[0].Bodies[0].Species[0].Name);
+        Assert.Equal(6_904_100, kept?.Exobiology?.TotalValue);
     }
 }
