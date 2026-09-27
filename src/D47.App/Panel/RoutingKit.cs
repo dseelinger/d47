@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Reactive;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
 
@@ -116,20 +117,19 @@ internal static class RoutingKit
     }
 
     /// <summary>A status line, hidden until <see cref="Say"/> writes to it.</summary>
-    public static TextBlock Status()
-    {
-        var status = Ink(string.Empty, TypeScale.Secondary, ThemeManager.GreyKey, wrap: true);
-        status.IsVisible = false;
+    public static StatusLine Status() => new();
 
-        return status;
-    }
-
-    /// <summary>Shows <paramref name="text"/> on a status line, in Red where it is an error.</summary>
-    public static void Say(TextBlock status, string text, bool error = false)
+    /// <summary>Shows <paramref name="text"/> on a status line, as a red notice where it is an error.</summary>
+    public static void Say(StatusLine status, string text, bool error = false)
     {
-        status.IsVisible = true;
-        status.Text = text;
-        Themed(status, TextBlock.ForegroundProperty, error ? ThemeManager.RedKey : ThemeManager.GreyKey);
+        if (error)
+        {
+            status.Fail(text);
+        }
+        else
+        {
+            status.Say(text);
+        }
     }
 
     /// <summary>True when <paramref name="box"/> has text; otherwise writes <paramref name="complaint"/> on the box as an error.</summary>

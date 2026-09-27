@@ -3188,7 +3188,14 @@ public partial class PanelView : UserControl
         block.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
         block.TextAlignment = TextAlignment.Left;
 
-        var content = new StackPanel { Spacing = 5, Children = { Head(turn), block } };
+        var failed = turn.Kind == TranscriptRunKind.Error;
+
+        // A failed turn's words sit in a notice; the block keeps its place in the tree for selection.
+        var content = new StackPanel
+        {
+            Spacing = 5,
+            Children = { Head(turn), failed ? new Controls.Notice(inline: true, text: block) : block },
+        };
 
         // The buttons only while the proposal is still waiting — looked up live rather than trusted from
         // whatever this run's own tag last said, so a settlement this surface missed still takes them away
@@ -3225,7 +3232,10 @@ public partial class PanelView : UserControl
 
         row.Bind(
             Border.BorderBrushProperty,
-            this.GetResourceObservable(commander ? Theming.ThemeManager.CyanKey : Theming.ThemeManager.AKey));
+            this.GetResourceObservable(
+                commander ? Theming.ThemeManager.CyanKey
+                : failed ? Theming.ThemeManager.RedKey
+                : Theming.ThemeManager.AKey));
 
         void Rest()
         {

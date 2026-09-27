@@ -36,12 +36,7 @@ public sealed class AdventuresPage : UserControl
     private readonly PanelPrompts _prompts;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
-    private readonly TextBlock _problems = new()
-    {
-        TextWrapping = TextWrapping.Wrap,
-        FontSize = TypeScale.Secondary,
-        IsVisible = false,
-    };
+    private readonly Notice _problems = new() { IsVisible = false };
 
     private readonly Button _ask = new() { Content = "Ask for one" };
 
@@ -59,8 +54,6 @@ public sealed class AdventuresPage : UserControl
         _surface = surface;
         _nav = nav;
         _prompts = prompts;
-
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var write = new Button { Content = "Write an adventure" };
         write.Click += (_, _) => _nav.Drill(new NavCrumb(EditPrefix + NewKey, "Write") { Help = EditHelp });
@@ -467,7 +460,7 @@ public sealed class AdventuresPage : UserControl
 
         var (thisShip, _) = LabeledCheckBox.Build("This ship only");
         var briefButton = new Button { HorizontalAlignment = HorizontalAlignment.Left };
-        var status = Muted(string.Empty);
+        var status = new StatusLine();
         var go = new Button { Content = "Go", HorizontalAlignment = HorizontalAlignment.Left };
 
         void Label()
@@ -510,12 +503,12 @@ public sealed class AdventuresPage : UserControl
         {
             if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
             {
-                Say(status, AskShutBecause());
+                status.Say(AskShutBecause());
                 return;
             }
 
             go.IsEnabled = false;
-            Say(status, "Writing…");
+            status.Say("Writing…");
 
             var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief);
 
@@ -548,7 +541,7 @@ public sealed class AdventuresPage : UserControl
 
         if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
         {
-            status.Text = AskShutBecause();
+            status.Say(AskShutBecause());
             go.IsEnabled = false;
 
             var settings = new Button { Content = "Open settings", HorizontalAlignment = HorizontalAlignment.Left };
@@ -560,11 +553,11 @@ public sealed class AdventuresPage : UserControl
     }
 
     /// <summary>A draft arrives: stored as a draft, the core's reply spoken, the reading level opened.</summary>
-    private void Offer(AdventureOutcome outcome, AdventureAsk ask, TextBlock status)
+    private void Offer(AdventureOutcome outcome, AdventureAsk ask, StatusLine status)
     {
         if (outcome.Draft is not { } draft)
         {
-            Say(status, outcome.Refusal ?? "Nothing came back.", ThemeManager.RedKey);
+            status.Fail(outcome.Refusal ?? "Nothing came back.");
             _surface.Say(outcome.Refusal ?? "I could not write that one.");
             return;
         }
@@ -575,12 +568,12 @@ public sealed class AdventuresPage : UserControl
 
         if (refusal is not null)
         {
-            Say(status, refusal, ThemeManager.RedKey);
+            status.Fail(refusal);
             return;
         }
 
         _asks[key] = ask;
-        Say(status, string.Join(" ", outcome.Notes));
+        status.Say(string.Join(" ", outcome.Notes));
 
         _surface.Say(outcome.Reply ?? $"{stored.Name}. It is yours to accept or send back.");
 
@@ -756,13 +749,6 @@ public sealed class AdventuresPage : UserControl
     /// <summary>A row's sub line.</summary>
     internal static TextBlock RowSecondary(string text) =>
         ListRow.Sub(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap });
-
-    /// <summary>Writes a status line in <paramref name="key"/>'s ink.</summary>
-    private static void Say(TextBlock status, string text, string key = ThemeManager.GreyKey)
-    {
-        status.Text = text;
-        Themed(status, TextBlock.ForegroundProperty, key);
-    }
 
     /// <summary>The Commander's current system, from the app's own state.</summary>
     private string? Here() => _surface.State()?.Location?.StarSystem;

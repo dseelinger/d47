@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
+using D47.App.Controls;
 using D47.Core.Capabilities;
 
 namespace D47.App.Panel;
@@ -23,7 +24,7 @@ public sealed class RouteCoursePage : UserControl
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
-    private readonly TextBlock _status;
+    private readonly StatusLine _status;
 
     public RouteCoursePage(CapabilityRegistry registry, Func<string?>? suggestion = null)
     {
@@ -114,7 +115,7 @@ public sealed class RouteCoursePage : UserControl
         }
         catch (OperationCanceledException)
         {
-            _status.Text = "Stopped.";
+            _status.Say("Stopped.");
         }
     }
 }

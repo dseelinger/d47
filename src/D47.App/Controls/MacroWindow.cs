@@ -20,12 +20,7 @@ public sealed class MacroWindow : Window
     private readonly MacroStore _store;
     private readonly List<MutableMacro> _macros;
     private readonly StackPanel _list = new() { Spacing = 12 };
-    private readonly TextBlock _problems = new()
-    {
-        TextWrapping = TextWrapping.Wrap,
-        FontSize = TypeScale.Secondary,
-        IsVisible = false,
-    };
+    private readonly Notice _problems = new() { IsVisible = false };
 
     public MacroWindow(MacroStore store)
     {
@@ -49,8 +44,6 @@ public sealed class MacroWindow : Window
 
         var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
-
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var header = new TextBlock
         {

@@ -724,14 +724,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             box.LostFocus += (_, _) => ToolTip.SetIsOpen(label, false);
         }
 
-        var message = new TextBlock
-        {
-            FontSize = TypeScale.Secondary,
-            IsVisible = false,
-            Margin = new Thickness(0, 4, 0, 0),
-            TextWrapping = TextWrapping.Wrap,
-        };
-        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+        var message = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
 
         box.IsCheckedChanged += (_, _) =>
         {
@@ -969,7 +962,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             ToolTip.SetTip(box, D47.Core.Interface.HelpLinks.Plain(row.Help));
 
             // Not drawn: a toggle's write does not fail in a way worth a line under the page bar.
-            var message = new TextBlock();
+            var message = new StatusLine();
 
             box.IsCheckedChanged += (_, _) =>
             {
@@ -2171,14 +2164,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         };
         Themed(help, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var message = new TextBlock
-        {
-            FontSize = TypeScale.Secondary,
-            IsVisible = false,
-            Margin = new Thickness(0, 4, 0, 0),
-            TextWrapping = TextWrapping.Wrap,
-        };
-        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+        var message = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
 
         var (control, refresh) = BuildControl(row, message);
         var underRow = _underRow;
@@ -2508,7 +2494,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>The control for a row, and its refresh action.</summary>
-    private (Control Control, Action Refresh) BuildControl(SettingRow row, TextBlock message)
+    private (Control Control, Action Refresh) BuildControl(SettingRow row, StatusLine message)
     {
         switch (row.Kind)
         {
@@ -2941,7 +2927,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (stack, refresh);
     }
 
-    private (Control, Action) BuildPressable(SettingRow row, TextBlock message)
+    private (Control, Action) BuildPressable(SettingRow row, StatusLine message)
     {
         var (inset, baseRefresh) = BuildInfo(row);
 
@@ -3026,7 +3012,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// press, and the ask lapses back to the row's own label on its own if the second press does not
     /// come — pressable exactly like any other row, so the headset ray reaches it too (#85).
     /// </summary>
-    private void WireConfirmPress(SettingRow row, Button press, ProgressBar bar, TextBlock message)
+    private void WireConfirmPress(SettingRow row, Button press, ProgressBar bar, StatusLine message)
     {
         var armed = false;
         DispatcherTimer? lapse = null;
@@ -3080,7 +3066,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         LongPress running,
         Button press,
         ProgressBar bar,
-        TextBlock message)
+        StatusLine message)
     {
         if (_pressing)
         {
@@ -3100,13 +3086,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             if (said is { Length: > 0 })
             {
-                Note(message, said);
+                message.Say(said);
             }
         }
         catch (Exception ex) when (ex is D47.Core.Audio.TtsException or HttpRequestException or IOException
                                        or TaskCanceledException)
         {
-            Note(message, $"{row.Label} could not be done: {ex.Message}");
+            message.Fail($"{row.Label} could not be done: {ex.Message}");
         }
         finally
         {
@@ -3293,7 +3279,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (stack, refresh);
     }
 
-    private (Control, Action) BuildToggle(SettingRow row, TextBlock message)
+    private (Control, Action) BuildToggle(SettingRow row, StatusLine message)
     {
         var toggle = new CheckBox { Margin = new Thickness(0) };
         toggle.Classes.Add("bare");
@@ -3309,7 +3295,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return (toggle, () => toggle.IsChecked = _settings!.Read(row.Key) is "true");
     }
 
-    private (Control, Action) BuildChoice(SettingRow row, TextBlock message)
+    private (Control, Action) BuildChoice(SettingRow row, StatusLine message)
     {
         // Through ChoicesFor, not the bare list.
         var choices = row.ChoicesFor(_settings!.Current);
@@ -3488,7 +3474,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         TemplatedControl view,
         IChoiceControl combo,
         ProgressBar bar,
-        TextBlock message)
+        StatusLine message)
     {
         if (_downloadingModel)
         {
@@ -3519,7 +3505,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         bar.Value = 0;
         bar.IsVisible = true;
 
-        Note(message, $"Fetching {model.Label} - about {model.ApproximateMegabytes} MB.");
+        message.Say($"Fetching {model.Label} - about {model.ApproximateMegabytes} MB.");
 
         try
         {
@@ -3534,18 +3520,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 Apply(row, chosen, message);
 
                 // Nothing left to say.
-                message.IsVisible = false;
-                message.Text = null;
+                message.Clear();
                 return;
             }
 
             Refresh();
-            Note(message, result.Detail ?? $"{model.Id} was not downloaded.");
+            message.Fail(result.Detail ?? $"{model.Id} was not downloaded.");
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
         {
             Refresh();
-            Note(message, $"{model.Id} could not be downloaded: {ex.Message}");
+            message.Fail($"{model.Id} could not be downloaded: {ex.Message}");
         }
         finally
         {
@@ -3562,7 +3547,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         TemplatedControl view,
         IChoiceControl combo,
         ProgressBar bar,
-        TextBlock message,
+        StatusLine message,
         Func<string?, IProgress<double>, CancellationToken, Task<string?>> fetch)
     {
         _downloadingModel = true;
@@ -3571,7 +3556,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         bar.Value = 0;
         bar.IsVisible = true;
 
-        Note(message, $"Fetching {row.LabelForChoice(chosen ?? string.Empty, _settings!.Current)}.");
+        message.Say($"Fetching {row.LabelForChoice(chosen ?? string.Empty, _settings!.Current)}.");
 
         try
         {
@@ -3584,18 +3569,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
                 // Nothing left to say, for the reason the speech model row records: a change that worked is
                 // visible in the control that made it.
-                message.IsVisible = false;
-                message.Text = null;
+                message.Clear();
                 return;
             }
 
             Refresh();
-            Note(message, failure);
+            message.Fail(failure);
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
         {
             Refresh();
-            Note(message, $"That could not be downloaded: {ex.Message}");
+            message.Fail($"That could not be downloaded: {ex.Message}");
         }
         finally
         {
@@ -3603,13 +3587,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             view.IsEnabled = true;
             bar.IsVisible = false;
         }
-    }
-
-    /// <summary>Says something on the row itself.</summary>
-    private static void Note(TextBlock message, string text)
-    {
-        message.Text = text;
-        message.IsVisible = true;
     }
 
     /// <summary>More options than this and a Choice row opens the picker page rather than stepping.</summary>
@@ -3625,7 +3602,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         && !string.Equals(row.Key, ListeningCapability.ModelKey, StringComparison.Ordinal)
         && row.ChoicesFor(_settings!.Current).Count > LongListThreshold;
 
-    private (Control, Action) BuildDropdownTile(SettingRow row, TextBlock message)
+    private (Control, Action) BuildDropdownTile(SettingRow row, StatusLine message)
     {
         var value = new TextBlock
         {
@@ -3725,7 +3702,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     internal static bool IsLevel(SettingRow row) =>
         row.Kind == SettingKind.Number && row.Maximum == 1 && row.Step == 0.05;
 
-    private (Control, Action) BuildNumber(SettingRow row, TextBlock message)
+    private (Control, Action) BuildNumber(SettingRow row, StatusLine message)
     {
         if (IsLevel(row))
         {
@@ -3768,7 +3745,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         });
     }
 
-    private (Control, Action) BuildLevel(SettingRow row, TextBlock message)
+    private (Control, Action) BuildLevel(SettingRow row, StatusLine message)
     {
         var level = new Level
         {
@@ -3804,7 +3781,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         });
     }
 
-    private (Control, Action) BuildText(SettingRow row, TextBlock message)
+    private (Control, Action) BuildText(SettingRow row, StatusLine message)
     {
         var box = new TextBox
         {
@@ -3852,7 +3829,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// The key row, which is <see cref="SecretEditor"/> — the same control the first-run guide shows
     /// (Phase 16).
     /// </summary>
-    private (Control, Action) BuildSecret(SettingRow row, TextBlock message)
+    private (Control, Action) BuildSecret(SettingRow row, StatusLine message)
     {
         // The editor reports its own failures inline, next to the box that caused them, so the row's shared
         // message line stays for everything else.
@@ -3872,7 +3849,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// that wraps (#354). Chips are shown or hidden rather than rebuilt, so a capture in progress keeps its
     /// own control.
     /// </summary>
-    private (Control, Action) BuildBind(SettingRow row, TextBlock message)
+    private (Control, Action) BuildBind(SettingRow row, StatusLine message)
     {
         var chips = row.BoundKeys.Select(_ => BindingChip()).ToList();
 
@@ -3942,7 +3919,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private SettingKind KindOf(string key) => _settings?.Find(key)?.Kind ?? SettingKind.Hotkey;
 
-    private async Task ChooseAsync(SettingRow row, Button button, BusyGlyph busy, TextBlock message)
+    private async Task ChooseAsync(SettingRow row, Button button, BusyGlyph busy, StatusLine message)
     {
         // The surface this view is drawn on, so the page opens there: the window's panel or the headset's.
         if (_settings is null || this.FindAncestorOfType<Panel.PanelView>()?.Prompts is not { } prompts)
@@ -4003,7 +3980,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>Binds by listening for a gesture, rather than by offering a list of key names.</summary>
-    private async Task CaptureBindAsync(SettingRow row, Button button, TextBlock message)
+    private async Task CaptureBindAsync(SettingRow row, Button button, StatusLine message)
     {
         if (TopLevel.GetTopLevel(this) is not { } top || _settings is null)
         {
@@ -4110,24 +4087,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private DispatcherTimer Walk(
         SwitchEditing editing,
         string key,
-        TextBlock message,
+        StatusLine message,
         TaskCompletionSource<(string Key, string? Value)?> captured)
     {
         var capture = new D47.Core.Hotas.ButtonCapture();
         var opened = editing.Now();
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
 
-        void Say(string text)
-        {
-            message.Text = text;
-            message.IsVisible = true;
-        }
-
         timer.Tick += (_, _) =>
         {
             if (editing.Reader.Unavailable is { Length: > 0 } why)
             {
-                Say(why);
+                message.Fail(why);
                 timer.Stop();
                 return;
             }
@@ -4136,13 +4107,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             // three of six devices on the bench (Phase 21, finding 1).
             if (!editing.Reader.IsSettled)
             {
-                Say("Looking for your controllers…");
+                message.Say("Looking for your controllers…");
                 return;
             }
 
             var result = capture.Poll(editing.Reader.Poll(), editing.Now() - opened);
 
-            Say(result.Says);
+            message.Say(result.Says);
 
             if (result.Stage == D47.Core.Hotas.ButtonCaptureStage.Captured)
             {
@@ -4161,14 +4132,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return timer;
     }
 
-    private bool Apply(SettingRow row, string? value, TextBlock message) =>
+    private bool Apply(SettingRow row, string? value, StatusLine message) =>
         Apply(row.Key, value, message);
 
     /// <summary>
     /// By key rather than by row, because one control can hold two of them (#217) and the message line,
     /// the redraw and the refusal are the same for both halves.
     /// </summary>
-    private bool Apply(string key, string? value, TextBlock message)
+    private bool Apply(string key, string? value, StatusLine message)
     {
         if (_settings is null)
         {
@@ -4178,8 +4149,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var result = _settings.Apply(key, value, SettingsCaller.Panel);
 
         // Only failures are worth *saying*.
-        message.IsVisible = !result.Ok;
-        message.Text = result.Message;
+        if (result.Ok)
+        {
+            message.Clear();
+        }
+        else
+        {
+            message.Fail(result.Message);
+        }
 
         // **But every outcome is worth redrawing** (#90).
         Refresh();

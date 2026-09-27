@@ -56,7 +56,7 @@ public sealed class RouteCommunityGoalPage : UserControl
 
     private readonly Button _cancel = new() { Content = "Cancel", IsVisible = false };
 
-    private readonly TextBlock _status = RoutingKit.Status();
+    private readonly StatusLine _status = RoutingKit.Status();
 
     /// <summary>A posting on <see cref="_board"/> to treat as if it were not there.</summary>
     private CommodityPosting? _hidden;

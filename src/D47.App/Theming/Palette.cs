@@ -71,6 +71,12 @@ public sealed record Palette
     /// <summary><see cref="Red"/> at 22% onto <see cref="Bg"/>, in OKLab: a destructive tile at rest.</summary>
     public Color RedTile => Mix(Bg, Red, 0.22);
 
+    /// <summary><see cref="Red"/> at 12% onto <see cref="Bg"/>, in OKLab: the ground of an error notice.</summary>
+    public Color RedGround => Mix(Bg, Red, 0.12);
+
+    /// <summary><see cref="Warn"/> at 12% onto <see cref="Bg"/>, in OKLab: the ground of a warning notice.</summary>
+    public Color WarnGround => Mix(Bg, Warn, 0.12);
+
     /// <summary>Passes the coloured tokens through Elite's HUD matrix, leaving the neutrals as they are.</summary>
     public Palette RecolouredBy(GuiColourMatrix matrix) => this with
     {

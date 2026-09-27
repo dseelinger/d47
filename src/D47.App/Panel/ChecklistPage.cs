@@ -55,12 +55,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly CheckBox _arcsToggle;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
-    private readonly TextBlock _problems = new()
-    {
-        TextWrapping = TextWrapping.Wrap,
-        FontSize = TypeScale.Secondary,
-        IsVisible = false,
-    };
+    private readonly Notice _problems = new() { IsVisible = false };
 
     private readonly Stepper _scopeCombo = new()
     {
@@ -155,8 +150,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         _arcsToggle.IsVisible = false;
 
         _partial = LabeledCheckBox.Caps("Include Partial Grades");
-
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         AutomationProperties.SetName(_scopeCombo, "Checklist scope");
         _scopeCombo.SelectionChanged += (_, _) => OnScopeChanged();
@@ -836,15 +829,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
             aside.Add(read.Says);
         }
 
-        var caption = Secondary(string.Join(" · ", aside));
+        var says = string.Join(" · ", aside);
 
-        // Colour only where something is wrong.
-        if (ChecklistNextAction.IsWrong(item.State))
-        {
-            Themed(caption, TextBlock.ForegroundProperty, ThemeManager.RedKey);
-        }
-
-        body.Children.Add(caption);
+        // A notice only where something is wrong.
+        body.Children.Add(ChecklistNextAction.IsWrong(item.State)
+            ? new Notice(inline: true) { Text = says }
+            : Secondary(says));
 
         // The same measure CriteriaFor reads for the Engineers pages, so the two cannot disagree (#17).
         if (verdict?.Measure is { } measure)

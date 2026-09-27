@@ -11,6 +11,14 @@
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 
+Errors and cautions are now drawn as the design's notices: a coloured bar at the left on a tinted
+ground, with a label above the message. Something that failed is red; a caution you can act on is
+amber. This covers the settings error banner at the top of the panel, a failed reply in the
+transcript, messages under settings rows, stored-key problems, and the problem lines on the
+Macros, Personas, Switches, Adventures, Checklist, Utilities and Routing pages. A VERIFY that
+could not reach the provider is amber rather than grey. The Materials notes about engineer ranks
+and missing totals are amber notices with a SHOW tile, rather than red buttons.
+
 The exobiology route plotter now checks the galaxy search setting before asking Spansh for a
 route, the same as the neutron, Road to Riches and trade plotters. With it off, "plot me an
 exobiology route" gets the same switched-off answer as the other plotters, rather than sending the

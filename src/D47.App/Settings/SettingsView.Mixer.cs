@@ -178,14 +178,7 @@ public partial class SettingsView
         }
 
         // One line for whichever of the channel's controls last refused a value.
-        var message = new TextBlock
-        {
-            FontSize = TypeScale.Secondary,
-            IsVisible = false,
-            Margin = new Thickness(0, 4, 0, 0),
-            TextWrapping = TextWrapping.Wrap,
-        };
-        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+        var message = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
         Grid.SetRow(message, 1);
         Grid.SetColumn(message, 2);
         Grid.SetColumnSpan(message, 2 * columns.Count);

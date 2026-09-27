@@ -27,12 +27,7 @@ public sealed class UtilitiesPage : UserControl
     private readonly TextBlock _localDate = Dated();
 
     private readonly StackPanel _running = new() { Spacing = 2 };
-    private readonly TextBlock _problems = new()
-    {
-        TextWrapping = TextWrapping.Wrap,
-        FontSize = TypeScale.Secondary,
-        IsVisible = false,
-    };
+    private readonly Notice _problems = new() { IsVisible = false };
 
     public UtilitiesPage(
         Timekeeper timekeeper,
@@ -45,8 +40,6 @@ public sealed class UtilitiesPage : UserControl
         _now = now;
         _zone = zone;
         _prompts = prompts;
-
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var timer = new Button { Content = "New timer", VerticalAlignment = VerticalAlignment.Top };
         timer.Click += (_, _) => AddTimer();

@@ -40,6 +40,12 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary><see cref="Palette.RedTile"/>.</summary>
     public const string RedTileKey = "D47.RedTile";
 
+    /// <summary><see cref="Palette.RedGround"/>.</summary>
+    public const string RedGroundKey = "D47.RedGround";
+
+    /// <summary><see cref="Palette.WarnGround"/>.</summary>
+    public const string WarnGroundKey = "D47.WarnGround";
+
     /// <summary>Black at 72% — a layer chooser's dimming behind its card, in every theme.</summary>
     public const string ScrimKey = "D47.Scrim";
 
@@ -63,7 +69,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public static IReadOnlyList<string> Roles { get; } =
     [
         .. Tokens,
-        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, RedTileKey,
+        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, RedTileKey, RedGroundKey, WarnGroundKey,
     ];
 
     /// <summary>Each token key and its colour in <paramref name="palette"/>.</summary>
@@ -159,6 +165,8 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[ScrimKey] = Scrim();
         resources[CyanGroundKey] = new SolidColorBrush(palette.CyanGround);
         resources[RedTileKey] = new SolidColorBrush(palette.RedTile);
+        resources[RedGroundKey] = new SolidColorBrush(palette.RedGround);
+        resources[WarnGroundKey] = new SolidColorBrush(palette.WarnGround);
 
         // Null on a theme that does not glow, which turns both off: an unset Effect or Background paints nothing.
         foreach (var tier in Enum.GetValues<BloomTier>())

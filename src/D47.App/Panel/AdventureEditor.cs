@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Adventures;
 using D47.Core.Interface;
@@ -106,7 +107,7 @@ public sealed class AdventureEditor : UserControl
         _page.Children.Add(add);
 
         // The reasons, printed, never a silently grey button. An unfinished adventure is not a fault,
-        // so this is A, never Red (#280).
+        // so this is a warning, never Red (#280).
         var problems = AdventureValidation.Problems(_draft);
         var notReady = problems.Count == 0 ? AdventureValidation.NotReady(_draft) : [];
 
@@ -116,9 +117,11 @@ public sealed class AdventureEditor : UserControl
         }
         else if (notReady.Count > 0)
         {
-            var reasons = AdventuresPage.Text(string.Join("\n", notReady), TypeScale.Secondary, ThemeManager.AKey);
-            reasons.Margin = new Thickness(0, 8, 0, 0);
-            _page.Children.Add(reasons);
+            _page.Children.Add(new Notice(NoticeLevel.Warning)
+            {
+                Text = string.Join("\n", notReady),
+                Margin = new Thickness(0, 8, 0, 0),
+            });
         }
 
         var bar = AdventuresPage.Buttons();
@@ -140,31 +143,13 @@ public sealed class AdventureEditor : UserControl
         _page.Children.Add(bar);
     }
 
-    /// <summary>The caution banner: an A bar on the leading edge, a CAUTION label, then the sentence.</summary>
-    private static Control Caution(string sentence)
+    /// <summary>The caution banner: a warning notice labelled CAUTION.</summary>
+    private static Notice Caution(string sentence) => new(NoticeLevel.Warning)
     {
-        var bar = new Border { Width = 3 };
-        AdventuresPage.Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
-
-        var label = new TextBlock
-        {
-            Text = "CAUTION",
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Small,
-            FontWeight = FontWeight.SemiBold,
-        };
-        AdventuresPage.Themed(label, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        var content = new StackPanel { Spacing = 2, Margin = new Thickness(8, 0, 0, 0) };
-        content.Children.Add(label);
-        content.Children.Add(AdventuresPage.Text(sentence, TypeScale.Secondary, ThemeManager.AKey));
-
-        var row = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
-        DockPanel.SetDock(bar, Dock.Left);
-        row.Children.Add(bar);
-        row.Children.Add(content);
-        return row;
-    }
+        Label = "Caution",
+        Text = sentence,
+        Margin = new Thickness(0, 8, 0, 0),
+    };
 
     private static string? Blank(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

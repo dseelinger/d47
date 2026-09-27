@@ -2252,14 +2252,14 @@ public sealed class GapPage : UserControl
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 
-    /// <summary>A gates-or-uncovered summary line, toned danger, opening what <paramref name="open"/> shows.</summary>
-    private Control NoteLine(string text, Action open)
+    /// <summary>A gates-or-uncovered summary line as a warning, its SHOW tile opening what <paramref name="open"/> shows.</summary>
+    private static Control NoteLine(string text, Action open)
     {
-        var button = LoadoutPages.Press(text, open);
+        var show = LoadoutPages.Press("Show", open);
 
-        button.Classes.Add("destructive");
+        AutomationProperties.SetName(show, text);
 
-        return button;
+        return new Notice(NoticeLevel.Warning) { Text = text, Actions = { show } };
     }
 
     /// <summary>
@@ -2503,9 +2503,10 @@ public sealed class GapPage : UserControl
 
         if (row.ExceedsCapacity)
         {
-            body.Add(LoadoutPages.Toned(
-                "More is needed than can be stored. That is at least two trips whatever happens.",
-                ThemeManager.YellowKey));
+            body.Add(new Notice(NoticeLevel.Warning, inline: true)
+            {
+                Text = "More is needed than can be stored. That is at least two trips whatever happens.",
+            });
         }
 
         if (row.NeededFor.Count > 0)

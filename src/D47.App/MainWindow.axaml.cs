@@ -970,8 +970,15 @@ public partial class MainWindow : Window
                 _host?.Loggers.CreateLogger<MainWindow>().LogError(ex, "The turn threw");
             }
 
-            // One voice.
-            _model.Append(ending.Conversation);
+            // One voice, and a failure drawn as one.
+            if (ending.Technical is null)
+            {
+                _model.Append(ending.Conversation);
+            }
+            else
+            {
+                _model.AppendError(ending.Conversation);
+            }
         }
         finally
         {

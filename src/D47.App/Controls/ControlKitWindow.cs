@@ -70,6 +70,7 @@ public sealed class ControlKitWindow : Window
                 ChoosingSection(),
                 ThemeSection(),
                 StatusSection(),
+                NoticesSection(),
                 StatTilesSection(),
                 GaugesSection(),
                 ModalSection(),
@@ -493,14 +494,45 @@ public sealed class ControlKitWindow : Window
                 StatusBar("CYAN · yours, ready", ThemeManager.CyanKey),
                 StatusBar("BLUE · confirmed", ThemeManager.BlueKey),
                 StatusBar("RED · hostile, error", ThemeManager.RedKey),
+                StatusBar("WARN · caution", ThemeManager.WarnKey),
                 StatusBar("YELLOW · stored", ThemeManager.YellowKey),
             ],
             BarMinWidth,
             BarGap,
             BarGap,
-            maxColumns: 5);
+            maxColumns: 6);
 
         return Section("Status", new StackPanel { Spacing = 16, Children = { intro, bars } });
+    }
+
+    private static Control NoticesSection()
+    {
+        var retry = new Button { Content = "Retry" };
+
+        return Section(
+            "Notices",
+            new StackPanel
+            {
+                Spacing = 12,
+                Children =
+                {
+                    Note("Red when something failed or is blocked; amber for a caution the Commander can act on. "
+                        + "One notice per problem, at the top of the group it belongs to."),
+                    new Notice
+                    {
+                        Label = "Speech engine offline",
+                        Text = "Groq rejected the key. D47 is using Whisper on this computer until you replace it.",
+                        Detail = "HTTP 401 · Groq",
+                        Actions = { retry },
+                    },
+                    new Notice(NoticeLevel.Warning)
+                    {
+                        Label = "Journal not found",
+                        Text = "D47 can't see the game yet. Start Elite, or point D47 at the journal folder.",
+                    },
+                    new Notice(inline: true) { Text = "Inline, for use inside a row or under a control." },
+                },
+            });
     }
 
     private static Control StatusBar(string label, string fillKey)

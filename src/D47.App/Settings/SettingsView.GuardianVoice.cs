@@ -147,7 +147,7 @@ public partial class SettingsView
         Rename,
     }
 
-    private (Control, Action) BuildGuardianVoice(SettingRow row, TextBlock message)
+    private (Control, Action) BuildGuardianVoice(SettingRow row, StatusLine message)
     {
         var picker = new InlinePicker { Label = row.Label };
         picker.Picked += (_, id) => Apply(row, id, message);
@@ -463,7 +463,7 @@ public partial class SettingsView
     }
 
     /// <summary>One effect's strip: reserved handle, position, checkbox, level and a − value + stepper.</summary>
-    private GuardianStrip BuildGuardianStrip(GuardianEffect effect, TextBlock message)
+    private GuardianStrip BuildGuardianStrip(GuardianEffect effect, StatusLine message)
     {
         var levelKey = SpeechCapability.GuardianLevelKey(effect.Id);
 
@@ -641,7 +641,7 @@ public partial class SettingsView
     /// order once, on drop. Up and Down on the focused handle move the effect one place and keep focus on it.
     /// </summary>
     private void WireGuardianHandle(
-        GuardianStrip strip, StackPanel strips, Dictionary<string, GuardianStrip> byId, TextBlock message)
+        GuardianStrip strip, StackPanel strips, Dictionary<string, GuardianStrip> byId, StatusLine message)
     {
         var handle = strip.Handle;
         GuardianDrag? drag = null;
@@ -796,7 +796,7 @@ public partial class SettingsView
     }
 
     /// <summary>Writes the order shown, with the effect at <paramref name="from"/> moved to <paramref name="to"/>.</summary>
-    private void WriteGuardianOrder(StackPanel strips, int from, int to, TextBlock message)
+    private void WriteGuardianOrder(StackPanel strips, int from, int to, StatusLine message)
     {
         var ids = strips.Children.Select(child => (string)child.Tag!).ToList();
         var moved = ids[from];
@@ -844,7 +844,7 @@ public partial class SettingsView
     }
 
     /// <summary>Writes a level through its row, held between the lowest and highest level.</summary>
-    private void WriteGuardianLevel(string key, int level, TextBlock message) =>
+    private void WriteGuardianLevel(string key, int level, StatusLine message) =>
         Apply(
             key,
             Math.Clamp(level, GuardianVoice.LowestLevel, GuardianVoice.HighestLevel).ToString(CultureInfo.InvariantCulture),
@@ -929,7 +929,7 @@ public partial class SettingsView
     /// The name row: "Preset name"/"New name", a text field, SAVE or RENAME, CANCEL and the refusal
     /// message line. Hidden until a preset button opens it.
     /// </summary>
-    private (StackPanel Row, TextBlock Label, TextBox Field, Button Action, TextBlock Message, Button Cancel) GuardianNameRow()
+    private (StackPanel Row, TextBlock Label, TextBox Field, Button Action, Notice Message, Button Cancel) GuardianNameRow()
     {
         var label = new TextBlock
         {
@@ -970,15 +970,12 @@ public partial class SettingsView
         head.Children.Add(label);
         head.Children.Add(controls);
 
-        var message = new TextBlock
+        var message = new Notice(inline: true)
         {
             Name = GuardianNameMessageName,
-            FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 4, 0, 0),
-            TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var row = new StackPanel
         {
@@ -992,7 +989,7 @@ public partial class SettingsView
     }
 
     /// <summary>Presses the Test row's action, the button solid A and reading PLAYING while it runs.</summary>
-    private async Task PlayGuardianTestAsync(SettingRow row, Button test, TextBlock message)
+    private async Task PlayGuardianTestAsync(SettingRow row, Button test, StatusLine message)
     {
         if (_pressing || row.PressAsync is not { } running)
         {
@@ -1013,12 +1010,12 @@ public partial class SettingsView
 
             if (said is { Length: > 0 })
             {
-                Note(message, said);
+                message.Say(said);
             }
         }
         catch (Exception ex) when (ex is TtsException or HttpRequestException or IOException or TaskCanceledException)
         {
-            Note(message, $"{row.Label} could not be done: {ex.Message}");
+            message.Fail($"{row.Label} could not be done: {ex.Message}");
         }
         finally
         {

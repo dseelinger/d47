@@ -49,8 +49,8 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     private static TextBox NameField(SettingsView view) =>
         Page(view).GetVisualDescendants().OfType<TextBox>().Single(box => box.Name == SettingsView.GuardianNameFieldName);
 
-    private static TextBlock NameMessage(SettingsView view) =>
-        Page(view).GetVisualDescendants().OfType<TextBlock>().Single(text => text.Name == SettingsView.GuardianNameMessageName);
+    private static Notice NameMessage(SettingsView view) =>
+        Page(view).GetVisualDescendants().OfType<Notice>().Single(notice => notice.Name == SettingsView.GuardianNameMessageName);
 
     private static StackPanel NameRow(SettingsView view) =>
         Page(view).GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == SettingsView.GuardianNameRowName);

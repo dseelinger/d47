@@ -13,12 +13,7 @@ public sealed class PersonaWindow : Window
     private readonly OwnPersonaStore _store;
     private readonly List<Written> _cores;
     private readonly StackPanel _list = new() { Spacing = 2 };
-    private readonly TextBlock _problems = new()
-    {
-        TextWrapping = TextWrapping.Wrap,
-        FontSize = TypeScale.Secondary,
-        IsVisible = false,
-    };
+    private readonly Notice _problems = new() { IsVisible = false };
 
     public PersonaWindow(OwnPersonaStore store)
     {
@@ -45,8 +40,6 @@ public sealed class PersonaWindow : Window
         var close = new Button { Content = "Close", MinWidth = 110 };
 
         close.Click += (_, _) => Close();
-
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var header = new TextBlock
         {

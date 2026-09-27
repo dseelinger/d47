@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Knowledge;
@@ -58,7 +59,7 @@ public sealed class RouteMarketPage : UserControl
     /// </summary>
     private readonly CheckBox _surfaceStations;
 
-    private readonly TextBlock _status;
+    private readonly StatusLine _status;
 
     private readonly StackPanel _results = new() { Spacing = 6 };
 

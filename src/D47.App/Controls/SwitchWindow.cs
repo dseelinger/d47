@@ -39,12 +39,7 @@ public sealed class SwitchWindow : Window
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly DispatcherTimer _timer;
 
-    private readonly TextBlock _problems = new()
-    {
-        TextWrapping = TextWrapping.Wrap,
-        FontSize = TypeScale.Secondary,
-        IsVisible = false,
-    };
+    private readonly Notice _problems = new() { IsVisible = false };
 
     private readonly Border _walkCard;
     private readonly TextBlock _walkSays = new() { TextWrapping = TextWrapping.Wrap, FontSize = TypeScale.Body };
@@ -126,8 +121,6 @@ public sealed class SwitchWindow : Window
 
         Themed(_walkCard, Border.BackgroundProperty, ThemeManager.SlabKey);
         Themed(_walkSays, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-        Themed(_problems, TextBlock.ForegroundProperty, ThemeManager.RedKey);
-
         var header = new TextBlock
         {
             Text = $"Saved to {store.Path}. This is the same file you can edit by hand.",

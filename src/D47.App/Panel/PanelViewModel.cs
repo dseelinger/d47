@@ -56,6 +56,9 @@ public enum TranscriptRunKind
 
     /// <summary>A checklist proposal, drawn as a card rather than as a bubble's plain words.</summary>
     Proposal,
+
+    /// <summary>A turn that failed, drawn behind a red bar with its words in a notice.</summary>
+    Error,
 }
 
 /// <summary>A stretch of transcript drawn one way.</summary>
@@ -444,6 +447,26 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         }
 
         // Outside the lock.
+        TranscriptText = transcript;
+
+        TranscriptAppended?.Invoke();
+    }
+
+    /// <summary>Puts a failed turn's words in the conversation, always as a run of its own.</summary>
+    public void AppendError(string text)
+    {
+        string transcript;
+
+        lock (_appendLock)
+        {
+            _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, "D47", null, DateTimeOffset.Now, new StringBuilder(text))
+            {
+                Kind = TranscriptRunKind.Error,
+            });
+
+            transcript = string.Concat(_runs.Select(Flatten));
+        }
+
         TranscriptText = transcript;
 
         TranscriptAppended?.Invoke();

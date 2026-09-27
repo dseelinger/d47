@@ -29,7 +29,8 @@ public sealed class SecretEditor : UserControl
     private readonly TextBlock _state;
     private readonly Border _badge;
     private readonly TextBlock _verdict;
-    private readonly TextBlock _message;
+    private readonly Notice _refused;
+    private readonly Notice _message;
 
     private SecretCheck _result = SecretCheck.Untested;
     private bool _replacing;
@@ -99,14 +100,8 @@ public sealed class SecretEditor : UserControl
             IsVisible = false,
         };
 
-        _message = new TextBlock
-        {
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            IsVisible = false,
-        };
-
-        Themed(_message, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+        _refused = new Notice(inline: true) { IsVisible = false };
+        _message = new Notice(inline: true) { IsVisible = false };
 
         _store = new Button { Content = "SAVE" };
         _cancel = new Button { Content = "CANCEL" };
@@ -141,6 +136,7 @@ public sealed class SecretEditor : UserControl
         var stack = new StackPanel { Spacing = 4 };
         stack.Children.Add(controls);
         stack.Children.Add(_verdict);
+        stack.Children.Add(_refused);
         stack.Children.Add(_message);
 
         Content = stack;
@@ -265,6 +261,7 @@ public sealed class SecretEditor : UserControl
         }
 
         _check.IsEnabled = false;
+        _refused.IsVisible = false;
         _verdict.IsVisible = true;
         _verdict.Text = "Checking…";
         Themed(_verdict, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
@@ -317,18 +314,17 @@ public sealed class SecretEditor : UserControl
 
         _box.PlaceholderText = stored ? "Paste a new key to replace it" : "Paste a key to store it";
 
-        _verdict.IsVisible = _result.Verdict != SecretVerdict.Untested;
-        _verdict.Text = _result.Detail;
+        // A key that works is a line in Blue; one refused is a red notice, and a check that could not be made
+        // is an amber one, since it says nothing about the key.
+        var refused = _result.Verdict is SecretVerdict.Rejected or SecretVerdict.Unreachable;
 
-        Themed(
-            _verdict,
-            TextBlock.ForegroundProperty,
-            _result.Verdict switch
-            {
-                SecretVerdict.Works => ThemeManager.BlueKey,
-                SecretVerdict.Rejected => ThemeManager.RedKey,
-                _ => ThemeManager.GreyKey,
-            });
+        _verdict.IsVisible = _result.Verdict == SecretVerdict.Works;
+        _verdict.Text = _result.Detail;
+        Themed(_verdict, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
+
+        _refused.IsVisible = refused;
+        _refused.Level = _result.Verdict == SecretVerdict.Unreachable ? NoticeLevel.Warning : NoticeLevel.Error;
+        _refused.Text = refused ? _result.Detail : null;
     }
 
     /// <summary>VERIFY checks a stored key as it is, and a typed one once something is typed.</summary>
