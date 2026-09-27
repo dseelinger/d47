@@ -178,6 +178,12 @@ Fleet, Carrier, Engineers and Routing pages, in the journal file and in the conv
 the search box for copying the whole page. Pointing at one shows COPY, and COPIED or COPY FAILED for
 two seconds after it is pressed.
 
+On the Routing pages, pressing **Plot**, **Find it** or **Copy** with a required field empty now
+outlines that field in red and writes what is missing under it, beside a short red bar, rather than
+in a red line further down the page. The message goes as soon as you type in the field. The Routing
+fields are 44 pixels tall rather than 30. The search field above a page is outlined in a dim line
+that turns orange while you type in it, with 14-pixel text rather than 16.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

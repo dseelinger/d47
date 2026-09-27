@@ -36,11 +36,17 @@ public static class TypeScale
     /// <summary>A tooltip's own prose (#381).</summary>
     public const double Tip = 14;
 
+    /// <summary>The text in a search field.</summary>
+    public const double Search = 14;
+
     /// <summary>A tile's label.</summary>
     public const double Control = 13;
 
     /// <summary>A badge, or a count beside something else.</summary>
     public const double Small = 13;
+
+    /// <summary>The error or warning line under a text field.</summary>
+    public const double FieldMessage = 13;
 
     /// <summary>Mono text about a control rather than in it: a stepper's position and its cost.</summary>
     public const double Meta = 12;

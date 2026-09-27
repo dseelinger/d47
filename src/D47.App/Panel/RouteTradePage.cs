@@ -170,9 +170,8 @@ public sealed class RouteTradePage : UserControl
 
         plot.Click += async (_, _) =>
         {
-            if (string.IsNullOrWhiteSpace(capital.Text))
+            if (!RoutingKit.Filled(capital.Box, "Say how many credits to trade with. It is never inferred."))
             {
-                RoutingKit.Say(status, "Say how many credits to trade with. It is never inferred.", error: true);
                 return;
             }
 

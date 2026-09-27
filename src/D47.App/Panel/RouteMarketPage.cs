@@ -38,7 +38,6 @@ public sealed class RouteMarketPage : UserControl
         // nothing.
         PlaceholderText = "which one",
         Width = 190,
-        MinHeight = 30,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
@@ -46,7 +45,6 @@ public sealed class RouteMarketPage : UserControl
     {
         PlaceholderText = "how many",
         Width = 120,
-        MinHeight = 30,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
@@ -140,9 +138,8 @@ public sealed class RouteMarketPage : UserControl
 
         find.Click += async (_, _) =>
         {
-            if (string.IsNullOrWhiteSpace(_commodity.Text))
+            if (!RoutingKit.Filled(_commodity, "Name a commodity first."))
             {
-                RoutingKit.Say(_status, "Name a commodity first.", error: true);
                 return;
             }
 

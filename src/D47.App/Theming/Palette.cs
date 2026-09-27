@@ -47,6 +47,9 @@ public sealed record Palette
     /// <summary>Destructive, hostile, locked, error.</summary>
     public required Color Red { get; init; }
 
+    /// <summary>A caution the Commander can act on.</summary>
+    public required Color Warn { get; init; }
+
     /// <summary>Stored, capacity.</summary>
     public required Color Yellow { get; init; }
 
@@ -77,6 +80,7 @@ public sealed record Palette
         Cyan = Transform(matrix, Cyan),
         Blue = Transform(matrix, Blue),
         Red = Transform(matrix, Red),
+        Warn = Transform(matrix, Warn),
         Yellow = Transform(matrix, Yellow),
     };
 
@@ -113,6 +117,7 @@ public static class Palettes
         Cyan = Color.Parse("#33D6E8"),
         Blue = Color.Parse("#1FA8F5"),
         Red = Color.Parse("#F0343F"),
+        Warn = Color.Parse("#FFA41C"),
         Yellow = Color.Parse("#F5D426"),
     };
 
@@ -128,6 +133,7 @@ public static class Palettes
         cyan: Color.Parse("#4EC9B0"),
         blue: Color.Parse("#569CD6"),
         red: Color.Parse("#F48771"),
+        warn: Color.Parse("#CCA700"),
         yellow: Color.Parse("#DCDCAA"));
 
     public static Palette Light { get; } = Mixed(
@@ -142,6 +148,7 @@ public static class Palettes
         cyan: Color.Parse("#007C8A"),
         blue: Color.Parse("#0B6BCB"),
         red: Color.Parse("#C8192B"),
+        warn: Color.Parse("#A04A00"),
         yellow: Color.Parse("#8A6D00"));
 
     /// <summary>The palette for a theme id, before any HUD matrix is applied.</summary>
@@ -155,7 +162,7 @@ public static class Palettes
     /// <summary>A palette without glow whose <see cref="Palette.Grey2"/> is grey 45% toward bg and <see cref="Palette.Brown"/> is a 60% toward knock.</summary>
     private static Palette Mixed(
         bool isDark, Color bg, Color bar, Color slab, Color white, Color grey,
-        Color a, Color knock, Color cyan, Color blue, Color red, Color yellow) => new()
+        Color a, Color knock, Color cyan, Color blue, Color red, Color warn, Color yellow) => new()
     {
         IsDark = isDark,
         Glows = false,
@@ -171,6 +178,7 @@ public static class Palettes
         Cyan = cyan,
         Blue = blue,
         Red = red,
+        Warn = warn,
         Yellow = yellow,
     };
 }

@@ -27,6 +27,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public const string CyanKey = "D47.Cyan";
     public const string BlueKey = "D47.Blue";
     public const string RedKey = "D47.Red";
+    public const string WarnKey = "D47.Warn";
     public const string YellowKey = "D47.Yellow";
     public const string TileKey = "D47.Tile";
     public const string Tile2Key = "D47.Tile2";
@@ -55,7 +56,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public static IReadOnlyList<string> Tokens { get; } =
     [
         BgKey, BarKey, SlabKey, WhiteKey, GreyKey, Grey2Key, AKey, KnockKey, BrownKey,
-        CyanKey, BlueKey, RedKey, YellowKey, TileKey, Tile2Key, LineKey, Line2Key,
+        CyanKey, BlueKey, RedKey, WarnKey, YellowKey, TileKey, Tile2Key, LineKey, Line2Key,
     ];
 
     /// <summary>Every role a theme defines.</summary>
@@ -80,6 +81,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         [CyanKey] = palette.Cyan,
         [BlueKey] = palette.Blue,
         [RedKey] = palette.Red,
+        [WarnKey] = palette.Warn,
         [YellowKey] = palette.Yellow,
         [TileKey] = palette.Tile,
         [Tile2Key] = palette.Tile2,

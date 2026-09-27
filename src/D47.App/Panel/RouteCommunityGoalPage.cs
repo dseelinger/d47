@@ -49,7 +49,6 @@ public sealed class RouteCommunityGoalPage : UserControl
     {
         PlaceholderText = CommunityGoalSearch.DefaultCommodity,
         Width = 190,
-        MinHeight = 30,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 

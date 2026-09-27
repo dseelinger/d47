@@ -18,8 +18,10 @@
   <sys:Double x:Key="D47.Type.Secondary">15</sys:Double>
   <sys:Double x:Key="D47.Type.ControlLarge">14</sys:Double>
   <sys:Double x:Key="D47.Type.Tip">14</sys:Double>
+  <sys:Double x:Key="D47.Type.Search">14</sys:Double>
   <sys:Double x:Key="D47.Type.Control">13</sys:Double>
   <sys:Double x:Key="D47.Type.Small">13</sys:Double>
+  <sys:Double x:Key="D47.Type.FieldMessage">13</sys:Double>
   <sys:Double x:Key="D47.Type.Meta">12</sys:Double>
   <sys:Double x:Key="D47.Type.Caption">12</sys:Double>
   <sys:Double x:Key="D47.Type.MetaSmall">11</sys:Double>

@@ -35,7 +35,6 @@ public sealed class FormField
 
     private readonly TextBox _box = new()
     {
-        MinHeight = 30,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 

@@ -4042,7 +4042,6 @@ public partial class PanelView : UserControl
 
         SearchInput.IsVisible = field;
         SearchInput.PlaceholderText = filterable?.FilterPlaceholder ?? "Search this page";
-        SearchInput.Classes.Set("filter", filterable?.FilterWidth is not null);
 
         var tool = transcript ? null : (PagePane.Child as IPageChrome)?.BarTool;
 

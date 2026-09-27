@@ -17,7 +17,7 @@ public sealed class NothingRetiredFromTheLookComesBackTests
     private static readonly string[] RetiredKeys =
     [
         "Background", "Surface", "SurfaceAlt", "Border", "Text", "TextMuted", "TextFaint", "Accent",
-        "AccentMuted", "Danger", "Warn", "Good", "Info", "Rule", "FillLow", "FillHigh", "FillHigher",
+        "AccentMuted", "Danger", "Good", "Info", "Rule", "FillLow", "FillHigh", "FillHigher",
         "AccentBorder", "AccentInk", "CardFill", "CardFillSelected", "RowFill", "TagBorder", "PaneFill",
         "PaneBorder", "TagInk",
     ];

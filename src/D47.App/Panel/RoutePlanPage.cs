@@ -148,7 +148,7 @@ public sealed class RoutePlanPage : UserControl
                 ("from", from.Text),
                 ("jump_range", range.Text),
                 ("efficiency", efficiency.Text)),
-            () => string.IsNullOrWhiteSpace(to.Text) ? "Name a destination first." : null,
+            () => RoutingKit.Filled(to.Box, "Name a destination first."),
             NeutronPlotterHelp,
             FormField.Legend(required: true, supplied: true));
     }
@@ -183,7 +183,7 @@ public sealed class RoutePlanPage : UserControl
                 ("radius", radius.Text),
                 ("minimum_value", minimum.Text),
                 ("loop", loop.IsChecked == true ? "true" : "false")),
-            () => null,
+            () => true,
             RichesHelp);
     }
 
@@ -202,7 +202,7 @@ public sealed class RoutePlanPage : UserControl
         RoutePlanKind kind,
         string tool,
         Func<ToolArguments> arguments,
-        Func<string?> validate,
+        Func<bool> validate,
         string help,
         Control? legend = null)
     {
@@ -224,9 +224,8 @@ public sealed class RoutePlanPage : UserControl
 
         plot.Click += async (_, _) =>
         {
-            if (validate() is { } complaint)
+            if (!validate())
             {
-                RoutingKit.Say(status, complaint, error: true);
                 return;
             }
 

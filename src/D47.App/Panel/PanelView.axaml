@@ -70,19 +70,6 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
-    <!-- The search field: line at rest, A while focused. -->
-    <Style Selector="TextBox#SearchInput">
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Line}" />
-    </Style>
-    <Style Selector="TextBox#SearchInput:focus">
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
-    </Style>
-
-    <!-- The field on a page that filters by removing rows (IFilterablePage.FilterWidth). -->
-    <Style Selector="TextBox#SearchInput.filter">
-      <Setter Property="BorderBrush" Value="{DynamicResource D47.Line2}" />
-    </Style>
-
   </UserControl.Styles>
 
   <UserControl.Resources>
@@ -548,6 +535,7 @@
                    VerticalAlignment="Center"
                    Margin="16,0,0,0">
           <TextBox x:Name="SearchInput"
+                   Classes="search"
                    DockPanel.Dock="Right"
                    Width="{x:Static panel:PanelView.TranscriptSearchWidth}"
                    VerticalAlignment="Center"

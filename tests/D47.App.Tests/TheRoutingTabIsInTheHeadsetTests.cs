@@ -150,10 +150,10 @@ public class TheRoutingTabIsInTheHeadsetTests
         return panel.Press((float)(centre!.Value.X / width), (float)(centre.Value.Y / height));
     }
 
-    private static IEnumerable<string> TextOf(VrPanelSurface panel) =>
+    private static IEnumerable<string> FieldMessages(VrPanelSurface panel) =>
         panel.Board.View.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .Select(block => block.Text ?? string.Empty)
+            .OfType<TextBox>()
+            .Select(box => FieldMessage.GetText(box) ?? string.Empty)
             .Where(text => text.Length > 0);
 
     private static TextBox Box(VrPanelSurface panel, string name) =>
@@ -224,7 +224,7 @@ public class TheRoutingTabIsInTheHeadsetTests
         Assert.True(Press(panel, plot!));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(TextOf(panel), text => text.Contains("Name a destination first", StringComparison.Ordinal));
+        Assert.Contains(FieldMessages(panel), text => text.Contains("Name a destination first", StringComparison.Ordinal));
     }
 
     /// <summary>And the errand beside it (Phase 49).</summary>
@@ -241,7 +241,7 @@ public class TheRoutingTabIsInTheHeadsetTests
         Assert.True(Press(panel, find!));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(TextOf(panel), text => text.Contains("Name a commodity first", StringComparison.Ordinal));
+        Assert.Contains(FieldMessages(panel), text => text.Contains("Name a commodity first", StringComparison.Ordinal));
     }
 
     /// <summary>

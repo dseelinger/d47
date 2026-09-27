@@ -17,7 +17,6 @@ public sealed class RouteCoursePage : UserControl
         // required one — read as already answered (#253).
         PlaceholderText = "a system",
         Width = 260,
-        MinHeight = 30,
 
         // A fixed width in a stretching slot centres itself, which puts the box in the middle of the page
         // with its own label off on the left.
@@ -88,11 +87,12 @@ public sealed class RouteCoursePage : UserControl
 
     private async Task RunAsync(string tool, string argument)
     {
-        if (_system.Text is not { Length: > 0 } system)
+        if (!RoutingKit.Filled(_system, "Name a system first."))
         {
-            RoutingKit.Say(_status, "Name a system first.", error: true);
             return;
         }
+
+        var system = _system.Text!;
 
         RoutingKit.Say(_status, "…");
 

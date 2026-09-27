@@ -131,6 +131,20 @@ internal static class RoutingKit
         Themed(status, TextBlock.ForegroundProperty, error ? ThemeManager.RedKey : ThemeManager.GreyKey);
     }
 
+    /// <summary>True when <paramref name="box"/> has text; otherwise writes <paramref name="complaint"/> on the box as an error.</summary>
+    public static bool Filled(TextBox box, string complaint)
+    {
+        if (!string.IsNullOrWhiteSpace(box.Text))
+        {
+            FieldMessage.Clear(box);
+            return true;
+        }
+
+        FieldMessage.ShowError(box, complaint);
+
+        return false;
+    }
+
     /// <summary>A word on a row, uppercase in the ink <paramref name="key"/> names.</summary>
     public static TextBlock Tag(string word, string key)
     {

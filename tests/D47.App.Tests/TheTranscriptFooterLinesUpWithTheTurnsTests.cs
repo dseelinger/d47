@@ -140,7 +140,7 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
     }
 
     [AvaloniaFact]
-    public void TheSearchFieldIsLineAtRest()
+    public void TheSearchFieldIsLine2AtRest()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite);
         var panel = Laid(Conversation());
@@ -148,7 +148,7 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
         var search = panel.GetControl<TextBox>("SearchInput");
         var ask = panel.GetControl<TextBox>("AskBox");
 
-        Assert.Equal(Resource(panel, ThemeManager.LineKey), ((ISolidColorBrush)search.BorderBrush!).Color);
+        Assert.Equal(Resource(panel, ThemeManager.Line2Key), ((ISolidColorBrush)search.BorderBrush!).Color);
         Assert.Equal(PanelView.TranscriptSearchWidth, search.Bounds.Width, 0.5);
         Assert.True(
             search.Bounds.Height <= ask.Bounds.Height + 0.5,
