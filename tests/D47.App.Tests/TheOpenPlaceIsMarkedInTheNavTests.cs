@@ -87,7 +87,7 @@ public class TheOpenPlaceIsMarkedInTheNavTests
             Jobs();
 
             Assert.Equal(i, Active(view));
-            Assert.Equal(Words(Name(items[i])), Words(Title(view)));
+            Assert.Equal(Words(Name(items[i])).ToUpperInvariant(), Words(Title(view)));
         }
 
         window.Close();

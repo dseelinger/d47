@@ -98,7 +98,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
     {
         var text = Shown(Stats);
 
-        Assert.Contains("Sacred Fire (BNH-T2F)", text, StringComparison.Ordinal);
+        Assert.Contains("SACRED FIRE (BNH-T2F)", text, StringComparison.Ordinal);
         Assert.Contains("792", text, StringComparison.Ordinal);
         Assert.Contains("500", text, StringComparison.Ordinal);
         Assert.Contains("23,530", text, StringComparison.Ordinal);
@@ -160,7 +160,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
              "FuelLevel":140,"Finance":{"CarrierBalance":9999}}
             """);
 
-        Assert.Contains("Sacred Fire (BNH-T2F)", text, StringComparison.Ordinal);
+        Assert.Contains("SACRED FIRE (BNH-T2F)", text, StringComparison.Ordinal);
         Assert.Contains("YOUR SQUADRON'S CARRIER", text, StringComparison.Ordinal);
         Assert.Contains("Wandering Home (QRS-11X)", text, StringComparison.Ordinal);
         Assert.Contains("Your squadron's, not yours", text, StringComparison.Ordinal);

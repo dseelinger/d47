@@ -63,7 +63,7 @@ public static class TitleText
             TitleRank.Group => FontWeight.SemiBold,
             _ => FontWeight.Normal,
         };
-        block.LetterSpacing = rank == TitleRank.Row || sentence ? 0 : size * Fonts.ChromeTracking;
+        block.LetterSpacing = Tracking(size, rank, sentence);
         block.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ColourKey(rank)));
 
         if (rank == TitleRank.Group)
@@ -74,11 +74,89 @@ public static class TitleText
         return block;
     }
 
-    /// <summary>A <see cref="TitleRank.Screen"/> title at <see cref="TypeScale.Title"/> over a 1px accent rule.</summary>
-    public static Control Screen(string text) => new StackPanel
+    /// <summary>The letter-spacing a title of this size, rank and case takes.</summary>
+    public static double Tracking(double size, TitleRank rank, bool sentence = false) =>
+        rank == TitleRank.Row || sentence ? 0
+        : rank == TitleRank.Screen ? size * Fonts.TitleTracking
+        : size * Fonts.ChromeTracking;
+
+    /// <summary>A <see cref="TitleRank.Screen"/> title at <see cref="TypeScale.Title"/> as a title block.</summary>
+    public static Control Screen(string text) => Block(Build(text, TypeScale.Title, TitleRank.Screen));
+
+    /// <summary>
+    /// A screen title block: an optional A context line above the title, an optional figure at the right, and
+    /// a 1px A rule 10px under them.
+    /// </summary>
+    public static Control Block(TextBlock title, TextBlock? context = null, Control? figure = null)
     {
-        Children = { Build(text, TypeScale.Title, TitleRank.Screen), Rule(new Thickness(0, 6, 0, 0)) },
-    };
+        var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Bottom };
+
+        if (context is not null)
+        {
+            text.Children.Add(context);
+        }
+
+        text.Children.Add(title);
+
+        var row = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 16,
+            Children = { text },
+        };
+
+        if (figure is not null)
+        {
+            figure.VerticalAlignment = VerticalAlignment.Bottom;
+            Grid.SetColumn(figure, 1);
+            row.Children.Add(figure);
+        }
+
+        return new StackPanel { Children = { row, Rule(new Thickness(0, 10, 0, 0)) } };
+    }
+
+    /// <summary>A title block's context line: 13px upper-case chrome in A, above the title.</summary>
+    public static TextBlock Context(string text = "")
+    {
+        var block = new TextBlock
+        {
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
+            TextWrapping = TextWrapping.Wrap,
+            Text = text.ToUpperInvariant(),
+        };
+        block.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
+        return block;
+    }
+
+    /// <summary>A title block's figure: a Grey 12px label over a White 18px value, right-aligned.</summary>
+    public static Control Figure(string label, string value)
+    {
+        var name = new TextBlock
+        {
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Meta,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Text = label.ToUpperInvariant(),
+        };
+        name.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+
+        var figure = new TextBlock
+        {
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Figure,
+            FontWeight = FontWeight.Medium,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Text = value,
+        };
+        figure.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.WhiteKey));
+
+        return new StackPanel { Spacing = 2, Children = { name, figure } };
+    }
 
     /// <summary>Sets a title's text, upper-cased unless it is a sentence.</summary>
     public static void Show(TextBlock block, string text, bool sentence = false) =>
@@ -98,7 +176,7 @@ public static class TitleText
     /// <summary>Stacks a <see cref="TitleRank.Group"/> heading over a 1px accent rule (#357).</summary>
     public static Control GroupRow(Control heading) => new StackPanel
     {
-        Children = { heading, Rule(new Thickness(0, 4, 0, 0)) },
+        Children = { heading, Rule(new Thickness(0, 6, 0, 0)) },
     };
 
     private static Border Rule(Thickness margin)

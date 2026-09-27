@@ -43,7 +43,7 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
     /// <summary>The open page's "Show N more", once the page is the place titled this.</summary>
     private static Button FoldButton(SettingsView view, string title)
     {
-        Assert.Equal(title, SettingsPageReading.Words(SettingsPageReading.Title(view)));
+        Assert.Equal(title.ToUpperInvariant(), SettingsPageReading.Words(SettingsPageReading.Title(view)));
 
         return SettingsPageReading.Page(view).GetVisualDescendants().OfType<Button>()
             .First(button => button.Content is string text && text.StartsWith("Show", StringComparison.Ordinal));

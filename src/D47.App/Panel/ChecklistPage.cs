@@ -104,8 +104,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
     private readonly SelectableTextBlock _title = TitleText.Style(
         new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
         TypeScale.Title,
-        TitleRank.Screen,
-        sentence: true);
+        TitleRank.Screen);
 
     private readonly Control _titleRow;
 
@@ -210,9 +209,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
-        TitleText.Show(_title, "Checklist", sentence: true);
+        TitleText.Show(_title, "Checklist");
 
-        _titleRow = TitleText.GroupRow(_title);
+        _titleRow = TitleText.Block(_title);
         _titleRow.Margin = new Thickness(0, 0, 0, 10);
 
         DockPanel.SetDock(_titleRow, Dock.Top);
@@ -344,11 +343,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         {
             page.Children.Clear();
 
-            var title = TitleText.GroupRow(TitleText.Style(
-                new SelectableTextBlock { Text = "Suggestions", TextWrapping = TextWrapping.Wrap },
+            var title = TitleText.Block(TitleText.Build(
+                "Suggestions",
                 _mini ? TypeScale.Heading : TypeScale.Title,
-                TitleRank.Screen,
-                sentence: true));
+                TitleRank.Screen));
 
             title.Margin = new Thickness(0, 0, 0, _mini ? 4 : 10);
             page.Children.Add(title);

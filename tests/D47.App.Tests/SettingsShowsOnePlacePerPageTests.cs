@@ -40,7 +40,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         var place = area.Places.Single(p => p.Id == placeId);
 
         Assert.Equal("VOICE AND HEARING ›", Crumb(host.View).Text);
-        Assert.Equal(place.Title, Words(Title(host.View)));
+        Assert.Equal(place.Title.ToUpperInvariant(), Words(Title(host.View)));
 
         Assert.Contains(Keys(settings, place), key => OnPage(host.View, host.View.ControlFor(key)));
 
@@ -70,7 +70,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         Jobs();
 
         Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
-        Assert.Equal("Voice Input", Words(Title(host.View)));
+        Assert.Equal("VOICE INPUT", Words(Title(host.View)));
 
         host.Close();
     }
@@ -88,7 +88,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
 
         Assert.Equal("turn-fails", host.View.SectionIds[host.View.ActiveSection]);
         Assert.Equal("THE SHIP'S AI ›", Crumb(host.View).Text);
-        Assert.Equal("When a turn fails", Words(Title(host.View)));
+        Assert.Equal("WHEN A TURN FAILS", Words(Title(host.View)));
 
         host.Close();
     }
@@ -147,7 +147,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         Jobs();
 
         Assert.Equal("turn-fails", view.SectionIds[view.ActiveSection]);
-        Assert.Equal("When a turn fails", Words(Title(view)));
+        Assert.Equal("WHEN A TURN FAILS", Words(Title(view)));
 
         host.Close();
     }

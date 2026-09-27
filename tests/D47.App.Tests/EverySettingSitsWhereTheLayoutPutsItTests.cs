@@ -78,7 +78,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         host.View.SelectArea(AreaIndex(areaTitle));
         Jobs();
 
-        Assert.Equal(expected[0], SettingsPageReading.Words(SettingsPageReading.Title(host.View)));
+        Assert.Equal(expected[0].ToUpperInvariant(), SettingsPageReading.Words(SettingsPageReading.Title(host.View)));
 
         host.Close();
     }

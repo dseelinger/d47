@@ -209,6 +209,13 @@ typeface, 12 pixels, in grey. The minimise, maximise and close buttons are grey 
 at minimise or maximise now gives a dark tile with an orange symbol rather than a solid orange
 square. Close still turns red. The symbols' lines end square rather than rounded.
 
+Screen titles are in capitals, spaced slightly apart, over an orange line 10 pixels below them:
+Settings, Fleet, Carrier, Engineers, Checklist, Help and the Routing, Adventures, Bookmarks and
+Utilities pages. A route's summary at the top of a Routing page keeps its own case. On Settings the
+area name above the title is in the same weight as the title's. The Carrier page shows the
+carrier's balance at the right of its title rather than among the figures below. A group heading's
+orange line sits 6 pixels below it rather than 4.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

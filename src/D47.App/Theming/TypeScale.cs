@@ -12,6 +12,9 @@ public static class TypeScale
     /// <summary>A group heading.</summary>
     public const double Heading = 21;
 
+    /// <summary>The value of a screen title's figure.</summary>
+    public const double Figure = 18;
+
     /// <summary>A group within a surface: a settings section, a dialog's second rank.</summary>
     public const double Subheading = 17;
 

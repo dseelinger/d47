@@ -884,20 +884,14 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Marks the page head, for a test to find it.</summary>
     public const string PageHeadName = "PageHead";
 
-    /// <summary>The open place's head: its area as a breadcrumb, its title, and the protected-row legend (#333).</summary>
+    /// <summary>The open place's head: a title block with its area's breadcrumb as the context line, and the
+    /// protected-row legend (#333).</summary>
     private StackPanel BuildPageHead()
     {
-        var crumb = new TextBlock
-        {
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Small,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
-        };
-        Themed(crumb, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        var crumb = TitleText.Context();
 
-        var title = new TextBlock { TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
-        TitleText.Style(title, TypeScale.Title, TitleRank.Screen, sentence: true);
+        var title = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        TitleText.Style(title, TypeScale.Title, TitleRank.Screen);
 
         var legend = new TextBlock
         {
@@ -918,7 +912,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Name = PageHeadName,
             Spacing = 4,
             Margin = new Thickness(0, 0, 0, 8),
-            Children = { crumb, title, legend },
+            Children = { TitleText.Block(title, crumb), legend },
         };
     }
 
@@ -2011,7 +2005,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             var nothing = filtering && section.Matches == 0;
 
             crumb.Text = $"{_navAreas[_activeArea].Title.ToUpperInvariant()} ›";
-            Paint(title, section.Title);
+            Paint(title, section.Title.ToUpperInvariant());
 
             legend.IsVisible = _rows.Any(row => row.Row.Protected && row.Section == _activeSection);
 

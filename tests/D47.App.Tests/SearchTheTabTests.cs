@@ -590,7 +590,7 @@ public class SearchTheTabTests
 
         // The name is marked in both places it is written — the page title and the nav item — rather than
         // only in whichever rows happen to repeat the word.
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Voice Input");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "VOICE INPUT");
         Assert.Contains(MarkedIn(host.View.FindControl<Control>("NavItems")!), run => run.Text == "Voice Input");
 
         // Whether a mark on a heading reads as an answer or as noise is a question only eyes settle, and this
@@ -611,7 +611,7 @@ public class SearchTheTabTests
         Assert.Contains(
             host.View.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(Words),
             words => words == "Thinking bed");
-        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "Sounds and levels");
+        Assert.Contains(MarkedIn(host.View.FindControl<Control>("Cards")!), run => run.Text == "SOUNDS AND LEVELS");
 
         box.Text = string.Empty;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

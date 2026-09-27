@@ -90,7 +90,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         var title = SettingsPageReading.Title(host.View);
         var crumb = SettingsPageReading.Crumb(host.View);
 
-        Assert.Equal(place.Title, title.Text);
+        Assert.Equal(place.Title.ToUpperInvariant(), title.Text);
         Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
 
         Assert.Equal($"{area.Title.ToUpperInvariant()} ›", crumb.Text);

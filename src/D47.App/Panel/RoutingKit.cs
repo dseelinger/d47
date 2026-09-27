@@ -17,20 +17,20 @@ internal static class RoutingKit
     public const double ProseWidth = 520;
 
     /// <summary>
-    /// The page's Screen title over a 1px A rule, at Heading size while the panel is mini. The text
-    /// can be changed through the returned block.
+    /// The page's Screen title as a title block, at Heading size while the panel is mini. The text
+    /// can be changed through the returned block; a <paramref name="sentence"/> keeps its own case.
     /// </summary>
-    public static (Control Row, SelectableTextBlock Text) Title(string text)
+    public static (Control Row, SelectableTextBlock Text) Title(string text, bool sentence = false)
     {
         var block = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
             TypeScale.Title,
             TitleRank.Screen,
-            sentence: true);
+            sentence);
 
-        TitleText.Show(block, text, sentence: true);
+        TitleText.Show(block, text, sentence);
 
-        var row = TitleText.GroupRow(block);
+        var row = TitleText.Block(block);
         row.Margin = new Thickness(0, 0, 0, 10);
 
         IDisposable? mode = null;
@@ -45,6 +45,7 @@ internal static class RoutingKit
                     var mini = panel == PanelMode.Mini;
 
                     block.FontSize = mini ? TypeScale.Heading : TypeScale.Title;
+                    block.LetterSpacing = TitleText.Tracking(block.FontSize, TitleRank.Screen, sentence);
                     row.Margin = new Thickness(0, 0, 0, mini ? 4 : 10);
                 }));
 

@@ -139,7 +139,9 @@ public sealed class CarrierPage : UserControl
             return;
         }
 
-        _body.Children.Add(Title(carrier));
+        var upkept = CarrierUpkeep.Now(carrier, _now());
+
+        _body.Children.Add(Title(carrier, Balance(upkept, carrier.Balance)));
 
         if (carrier.PendingDecommission)
         {
@@ -167,25 +169,10 @@ public sealed class CarrierPage : UserControl
             tiles.Add(StatTile.Build("Cargo", $"{cargo:N0} t", StatInk.Number));
         }
 
-        var upkept = CarrierUpkeep.Now(carrier, _now());
-
-        if (upkept is { } balance)
+        if (upkept is { Weekly: { } weekly } balance)
         {
-            tiles.Add(StatTile.Build(
-                "Balance",
-                (balance.Adjusted ? "about " : string.Empty)
-                + balance.Balance.ToString("N0", CultureInfo.CurrentCulture) + " cr",
-                StatInk.Number));
-
-            if (balance.Weekly is { } weekly)
-            {
-                tiles.Add(StatTile.Build("Upkeep", weekly.ToString("N0", CultureInfo.CurrentCulture) + " cr a week", StatInk.Number));
-                tiles.Add(StatTile.Build("Covers", $"{balance.WeeksCovered:N0} weeks", StatInk.Number));
-            }
-        }
-        else if (carrier.Balance is { } recorded)
-        {
-            tiles.Add(StatTile.Build("Balance", recorded.ToString("N0", CultureInfo.CurrentCulture) + " cr", StatInk.Number));
+            tiles.Add(StatTile.Build("Upkeep", weekly.ToString("N0", CultureInfo.CurrentCulture) + " cr a week", StatInk.Number));
+            tiles.Add(StatTile.Build("Covers", $"{balance.WeeksCovered:N0} weeks", StatInk.Number));
         }
 
         if (!string.IsNullOrWhiteSpace(carrier.DockingAccess))
@@ -265,18 +252,26 @@ public sealed class CarrierPage : UserControl
             ? carrier.CallSign ?? "Your carrier"
             : $"{carrier.Name} ({carrier.CallSign})";
 
-    /// <summary>The carrier's name as the screen title, over a 1px A rule, under the breadcrumb that is its context line.</summary>
-    private Control Title(CarrierState carrier)
+    /// <summary>The carrier's balance, "about" when upkeep has been taken from the recorded figure.</summary>
+    private static string? Balance(CarrierBalance? upkept, long? recorded) =>
+        upkept is { } balance
+            ? (balance.Adjusted ? "about " : string.Empty)
+              + balance.Balance.ToString("N0", CultureInfo.CurrentCulture) + " cr"
+            : recorded is { } known
+                ? known.ToString("N0", CultureInfo.CurrentCulture) + " cr"
+                : null;
+
+    /// <summary>The carrier's name as the screen title block, with its balance as the figure.</summary>
+    private Control Title(CarrierState carrier, string? balance)
     {
         var name = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
             _mini ? TypeScale.Heading : TypeScale.Title,
-            TitleRank.Screen,
-            sentence: true);
+            TitleRank.Screen);
 
-        TitleText.Show(name, Named(carrier), sentence: true);
+        TitleText.Show(name, Named(carrier));
 
-        var title = TitleText.GroupRow(name);
+        var title = TitleText.Block(name, figure: balance is null ? null : TitleText.Figure("Carrier balance", balance));
         title.Margin = new Thickness(0, 0, 0, _mini ? 4 : 10);
 
         return title;

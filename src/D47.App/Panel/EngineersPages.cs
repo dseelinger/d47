@@ -604,18 +604,17 @@ public sealed class EngineerPage : EngineerPageBase
         }
     }
 
-    /// <summary>The engineer's name as the screen title, over a 1px A rule, under the breadcrumb that is its context line.</summary>
+    /// <summary>The engineer's name as the screen title block.</summary>
     private Control Title(string name)
     {
         var block = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
             Mini ? TypeScale.Heading : TypeScale.Title,
-            TitleRank.Screen,
-            sentence: true);
+            TitleRank.Screen);
 
-        TitleText.Show(block, name, sentence: true);
+        TitleText.Show(block, name);
 
-        var title = TitleText.GroupRow(block);
+        var title = TitleText.Block(block);
         title.Margin = new Thickness(0, 0, 0, Mini ? 4 : 10);
 
         return title;

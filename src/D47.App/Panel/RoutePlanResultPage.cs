@@ -68,7 +68,7 @@ public sealed class RoutePlanResultPage : UserControl
         var here = _here?.Invoke();
 
         _stack.Children.Clear();
-        _stack.Children.Add(RoutingKit.Title(Heading(plan)).Row);
+        _stack.Children.Add(RoutingKit.Title(Heading(plan), sentence: true).Row);
 
         var provenance = RoutingKit.Prose(Provenance(plan));
         provenance.Margin = new Thickness(0, 0, 0, 10);

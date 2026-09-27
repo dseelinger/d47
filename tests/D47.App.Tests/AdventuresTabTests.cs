@@ -238,7 +238,7 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("Ask for an adventure"));
+        Assert.Contains(drawn, text => text.Contains("ASK FOR AN ADVENTURE", StringComparison.Ordinal));
         Assert.Contains(drawn, text => text.Contains("needs a language model"));
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));

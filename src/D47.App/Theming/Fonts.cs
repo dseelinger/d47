@@ -23,6 +23,9 @@ public static class Fonts
     /// prose take none.</summary>
     public const double ChromeTracking = 0.06;
 
+    /// <summary>Letter-spacing on a screen title, as a fraction of its font size.</summary>
+    public const double TitleTracking = 0.04;
+
     /// <summary>Letter-spacing on the brand name in the caption, as a fraction of its font size.</summary>
     public const double BrandTracking = 0.12;
 }

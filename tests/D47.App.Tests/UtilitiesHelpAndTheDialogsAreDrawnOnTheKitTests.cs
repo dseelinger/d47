@@ -402,7 +402,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         Dispatcher.UIThread.RunJobs();
 
         var title = panel.GetVisualDescendants().OfType<TextBlock>()
-            .Single(block => block.Text == "Utilities" && block.FontSize == TypeScale.Title);
+            .Single(block => block.Text == "UTILITIES" && block.FontSize == TypeScale.Title);
 
         Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
 

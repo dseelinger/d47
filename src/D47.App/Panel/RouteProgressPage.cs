@@ -34,7 +34,7 @@ public sealed class RouteProgressPage : UserControl
         _aside.Margin = new Thickness(0, 6, 0, 0);
         _aside.IsVisible = false;
 
-        (var title, _headline) = RoutingKit.Title(string.Empty);
+        (var title, _headline) = RoutingKit.Title(string.Empty, sentence: true);
 
         var header = new StackPanel
         {

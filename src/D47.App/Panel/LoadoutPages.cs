@@ -1590,12 +1590,11 @@ public sealed class ItemPage : LoadoutPage
     private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = IndexPage.ListGap };
 
-    /// <summary>What the page is about: the screen title, under the breadcrumb that is its context line.</summary>
+    /// <summary>What the page is about: the screen title.</summary>
     private readonly TextBlock _title = TitleText.Style(
         new TextBlock { TextWrapping = TextWrapping.Wrap },
         TypeScale.Title,
-        TitleRank.Screen,
-        sentence: true);
+        TitleRank.Screen);
 
     private readonly Control _heading;
 
@@ -1626,7 +1625,7 @@ public sealed class ItemPage : LoadoutPage
 
         LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        _heading = TitleText.GroupRow(_title);
+        _heading = TitleText.Block(_title);
         _heading.Margin = new Thickness(0, 0, 0, 10);
 
         var promote = LoadoutPages.Press(mode.PromoteLabel, () => Said(Mode.Promote(_item)));
@@ -1734,10 +1733,11 @@ public sealed class ItemPage : LoadoutPage
             return;
         }
 
-        _title.Text = title ?? string.Empty;
+        TitleText.Show(_title, title ?? string.Empty);
 
         // Smaller on mini, leaving room for the slot rows.
         _title.FontSize = Mini ? TypeScale.Heading : TypeScale.Title;
+        _title.LetterSpacing = TitleText.Tracking(_title.FontSize, TitleRank.Screen);
         _heading.IsVisible = title is { Length: > 0 };
 
         Said(summary);

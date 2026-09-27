@@ -221,7 +221,13 @@ public class TheRoutingTabIsInTheHeadsetTests
         var plot = Pressable(panel, control => control is Button { Content: "Plot" });
 
         Assert.NotNull(plot);
-        Assert.True(Press(panel, plot!));
+        // The form runs past the quad's page area, so the page is scrolled to the button first.
+        plot!.GetVisualAncestors().OfType<ScrollViewer>().First().ScrollToEnd();
+        panel.Invalidate();
+        panel.Draw(pixels.Address, pixels.RowBytes);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Press(panel, plot));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(FieldMessages(panel), text => text.Contains("Name a destination first", StringComparison.Ordinal));
