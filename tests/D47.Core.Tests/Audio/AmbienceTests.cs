@@ -203,9 +203,9 @@ public class AmbienceTests : IDisposable
     {
         var library = Library(("in-combat", "battle"));
 
-        Assert.Single(library.Skipped);
-        Assert.Contains("in-combat", library.Skipped[0], StringComparison.Ordinal);
-        Assert.Contains(Situations.Supercruise, library.Skipped[0], StringComparison.Ordinal);
+        Assert.Single(library.Ignored);
+        Assert.Contains("in-combat", library.Ignored[0], StringComparison.Ordinal);
+        Assert.Contains(Situations.Supercruise, library.Ignored[0], StringComparison.Ordinal);
     }
 
     private static MusicTrack Track(string name) =>

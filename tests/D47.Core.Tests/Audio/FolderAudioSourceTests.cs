@@ -114,11 +114,11 @@ public class FolderAudioSourceTests : IDisposable
 
         var library = Load();
 
-        Assert.Single(library.Skipped);
-        Assert.Contains("pondering", library.Skipped[0], StringComparison.Ordinal);
+        Assert.Single(library.Ignored);
+        Assert.Contains("pondering", library.Ignored[0], StringComparison.Ordinal);
 
         // And it names what would have worked.
-        Assert.Contains("thinking", library.Skipped[0], StringComparison.Ordinal);
+        Assert.Contains("thinking", library.Ignored[0], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class FolderAudioSourceTests : IDisposable
     {
         Write($"{FolderAudioSource.AlertsFolder}/ambush/boom.wav");
 
-        Assert.Contains("bounty-hunter", Assert.Single(Load().Skipped), StringComparison.Ordinal);
+        Assert.Contains("bounty-hunter", Assert.Single(Load().Ignored), StringComparison.Ordinal);
     }
 
     /// <summary>A file loose in music/ has not said when it should play.</summary>

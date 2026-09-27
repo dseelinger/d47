@@ -277,17 +277,22 @@ A sound goes in the folder for where it is used, under any file name. A cue or a
 files in it plays only those, one picked each time the cue plays; an empty one plays the shipped
 sound. `beds/` works the same way, with one file picked when a turn starts and looped for that
 turn. Each folder plays every file once, in shuffled order, before any repeats, and never the same
-file twice in a row. A file loose in `cues/` or `alerts/`, outside a named folder, is not read.
+file twice in a row. A file loose in `cues/`, `alerts/` or `music/`, outside a named folder, is not
+read.
 
 Files are picked up while D47 is running, without a restart, and a reload never cuts a clip that
 is already playing.
 
-A file that will not load is skipped rather than fatal, and the **Your own audio** row says which
-one and why — a skipped file is silent in exactly the way a missing one is, so without that the
-only symptom of a file Windows cannot read is a cue that never plays:
+The **Your own audio** row accounts for every file under `data\audio`: a count for each folder
+that has files in it, then every file that was never a candidate — in the wrong place, or not a
+format D47 reads — and finally every file that was tried and would not load:
 
 ```text
-2 files picked up from data/audio.
+cues/listening: 5 files
+alerts/under-fire: 1 file
+music/combat-dogfight: 12 files
+Ignored: klaxon.wav is directly in alerts; put it in a folder such as alerts/under-fire.
+Ignored: notes.txt is not an audio format D47 reads.
 Skipped: engine-room: Windows has no decoder for this file. On a Windows N edition, install the Media Feature Pack.
 ```
 

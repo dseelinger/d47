@@ -16,6 +16,9 @@ public interface ICueSource
     /// <summary>Whether a clip that will not load takes the library down with it.</summary>
     bool Required => true;
 
+    /// <summary>Files that were never a candidate to load, with where they should go instead.</summary>
+    IReadOnlyList<string> Ignored => [];
+
     /// <summary>The whole clip in <see cref="AudioFormat.Standard"/>.</summary>
     AudioClip Decode(string name, string clipName)
     {
@@ -81,7 +84,9 @@ public sealed class CueLibrary
         ClipPool? bedPool,
         IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> music,
         int customCount,
-        IReadOnlyList<string> skipped)
+        IReadOnlyList<string> skipped,
+        IReadOnlyList<string> ignored,
+        IReadOnlyList<KeyValuePair<string, int>> folderCounts)
     {
         _cues = cues;
         _alerts = alerts;
@@ -92,12 +97,24 @@ public sealed class CueLibrary
         _music = music;
         CustomCount = customCount;
         Skipped = skipped;
+        Ignored = ignored;
+        FolderCounts = folderCounts;
     }
 
     /// <summary>
-    /// Drop-in files that would not load, each with the reason, in words a Commander can act on.
+    /// Drop-in files that were tried and would not load, each with the reason, in words a Commander can
+    /// act on.
     /// </summary>
     public IReadOnlyList<string> Skipped { get; }
+
+    /// <summary>
+    /// Drop-in files that were never tried, because they are not where D47 looks, with where they should
+    /// go instead.
+    /// </summary>
+    public IReadOnlyList<string> Ignored { get; }
+
+    /// <summary>How many files were picked up under each folder, or folder/subfolder, in folder order.</summary>
+    public IReadOnlyList<KeyValuePair<string, int>> FolderCounts { get; }
 
     /// <summary>How many clips came from the Commander's folder rather than from the build.</summary>
     public int CustomCount { get; }
@@ -144,10 +161,25 @@ public sealed class CueLibrary
         var music = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
         var custom = 0;
         var skipped = new List<string>();
+        var ignored = new List<string>();
         var unclaimed = new List<string>();
+        var folderOrder = new List<string>();
+        var folderCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        void CountFolder(string label)
+        {
+            if (!folderCounts.ContainsKey(label))
+            {
+                folderOrder.Add(label);
+            }
+
+            folderCounts[label] = folderCounts.GetValueOrDefault(label) + 1;
+        }
 
         foreach (var source in sources)
         {
+            ignored.AddRange(source.Ignored);
+
             // Loop states and alerts are both keyed by an enum, with the same rule binding a name to a member.
             void ReadInto<TKey>(
                 Dictionary<TKey, AudioClip> shipped,
@@ -173,7 +205,7 @@ public sealed class CueLibrary
                     }
                     else
                     {
-                        skipped.Add(
+                        ignored.Add(
                             $"{folder}/{member}/{stem} is in no {subject} folder — expected one of "
                             + $"{string.Join(", ", Enum.GetValues<TKey>().Select(FolderName))}.");
                     }
@@ -195,6 +227,7 @@ public sealed class CueLibrary
 
                     pool.Add(clip);
                     custom++;
+                    CountFolder($"{folder}/{member}");
                 }
                 else
                 {
@@ -230,6 +263,7 @@ public sealed class CueLibrary
                         {
                             bedPool.Add(clip);
                             custom++;
+                            CountFolder("beds");
                         }
                     }
                 }
@@ -249,7 +283,7 @@ public sealed class CueLibrary
 
                     if (!Situations.All.Contains(situation, StringComparer.OrdinalIgnoreCase))
                     {
-                        skipped.Add(
+                        ignored.Add(
                             $"music/{situation}/{stem} is in no situation D47 knows — expected one of "
                             + $"{string.Join(", ", Situations.All)}.");
                         continue;
@@ -267,6 +301,7 @@ public sealed class CueLibrary
                         if (!source.Required)
                         {
                             custom++;
+                            CountFolder($"music/{situation}");
                         }
                     }
                 }
@@ -309,6 +344,11 @@ public sealed class CueLibrary
             logger?.LogWarning("Skipped a drop-in audio file: {Reason}", reason);
         }
 
+        foreach (var reason in ignored)
+        {
+            logger?.LogWarning("Ignored a drop-in audio file: {Reason}", reason);
+        }
+
         var shuffle = random ?? Random.Shared;
 
         return new CueLibrary(
@@ -323,7 +363,9 @@ public sealed class CueLibrary
                 entry => (IReadOnlyList<MusicTrack>)entry.Value,
                 StringComparer.OrdinalIgnoreCase),
             custom,
-            skipped);
+            skipped,
+            ignored,
+            folderOrder.Select(label => new KeyValuePair<string, int>(label, folderCounts[label])).ToList());
     }
 
     /// <summary>
@@ -332,16 +374,14 @@ public sealed class CueLibrary
     /// </summary>
     public string DescribeDrops()
     {
-        var picked = CustomCount switch
-        {
-            0 => @"Nothing in data\audio yet.",
-            1 => "1 file picked up from data/audio.",
-            _ => $"{CustomCount} files picked up from data/audio.",
-        };
+        var lines = new List<string>();
+        lines.AddRange(FolderCounts.Select(entry => $"{entry.Key}: {entry.Value} file{(entry.Value == 1 ? "" : "s")}"));
+        lines.AddRange(Ignored.Select(reason => $"Ignored: {reason}"));
+        lines.AddRange(Skipped.Select(reason => $"Skipped: {reason}"));
 
-        return Skipped.Count == 0
-            ? picked
-            : $"{picked}{Environment.NewLine}Skipped: {string.Join($"{Environment.NewLine}Skipped: ", Skipped)}";
+        return lines.Count == 0
+            ? @"Nothing in data\audio yet."
+            : string.Join(Environment.NewLine, lines);
     }
 
     /// <summary>The cue for one loop state, picked from the Commander's pool on each call.</summary>
