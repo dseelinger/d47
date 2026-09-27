@@ -226,6 +226,8 @@ public static class GameActions
             Phrases =
             [
                 ("engage", DesiredState.Toggle),
+                ("engage hyperspace", DesiredState.Toggle),
+                ("hyperspace", DesiredState.Toggle),
                 ("hyperspace jump", DesiredState.Toggle),
                 ("jump to the next system", DesiredState.Toggle),
             ],

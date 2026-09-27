@@ -78,21 +78,24 @@ public static class PhraseScore
             KeywordRouter.Words(KeywordRouter.Utterance(phrase)));
 
     /// <summary>
-    /// The word sequence with every run matching an equivalence class member replaced by that
-    /// class's canonical word, and a trailing plural "s" dropped from the last word.
+    /// The word sequence with every "the" removed, every run matching an equivalence class member
+    /// replaced by that class's canonical word, and a trailing plural "s" dropped from the last word.
+    /// "The" folds out here too, so ranking agrees with the exact match <see cref="KeywordRouter.WithoutThe"/>
+    /// gives the router's other routes (#525).
     /// </summary>
     private static string[] Fold(IReadOnlyList<string> words)
     {
-        var folded = new List<string>(words.Count);
+        var withoutThe = words.Where(word => !string.Equals(word, "the", StringComparison.OrdinalIgnoreCase)).ToList();
+        var folded = new List<string>(withoutThe.Count);
 
         var i = 0;
 
-        while (i < words.Count)
+        while (i < withoutThe.Count)
         {
             var folding = Foldings.FirstOrDefault(entry =>
-                i + entry.Words.Length <= words.Count
+                i + entry.Words.Length <= withoutThe.Count
                 && entry.Words.Select((w, j) => (w, j))
-                    .All(pair => string.Equals(pair.w, words[i + pair.j], StringComparison.OrdinalIgnoreCase)));
+                    .All(pair => string.Equals(pair.w, withoutThe[i + pair.j], StringComparison.OrdinalIgnoreCase)));
 
             if (folding.Words is not null)
             {
@@ -101,7 +104,7 @@ public static class PhraseScore
             }
             else
             {
-                folded.Add(words[i]);
+                folded.Add(withoutThe[i]);
                 i += 1;
             }
         }

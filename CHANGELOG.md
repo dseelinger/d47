@@ -261,6 +261,11 @@ the fixed strength it used to default to.
 The figures in Help and the docs site now have square corners and flat line caps, matching every
 other panel.
 
+Saying a command without its "the" now works the same as saying it with one, and the other way
+round: "open galaxy map" reaches the galaxy map, "target next system" targets the next system, and
+so on for every declared phrase. "Engage hyperspace" and "hyperspace" now also engage the frame
+shift drive.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

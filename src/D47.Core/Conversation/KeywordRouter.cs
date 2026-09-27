@@ -168,7 +168,7 @@ public sealed class KeywordRouter(
             from capability in registry.All
             from row in capability.Descriptor.Settings
             from command in row.Commands
-            where string.Equals(said, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            where string.Equals(WithoutThe(said), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
             select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
             .FirstOrDefault();
     }
@@ -186,7 +186,7 @@ public sealed class KeywordRouter(
         // The Commander's own phrases first.
         var dynamic = (
             from command in dynamicCommands?.Invoke() ?? []
-            where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            where string.Equals(WithoutThe(utterance), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
             orderby command.Phrase.Length descending
             select new ToolCommandMatch(
                 command.CapabilityId,
@@ -204,7 +204,7 @@ public sealed class KeywordRouter(
             from capability in registry.All
             from tool in capability.Descriptor.Tools
             from command in tool.Commands
-            where string.Equals(utterance, Utterance(command.Phrase), StringComparison.OrdinalIgnoreCase)
+            where string.Equals(WithoutThe(utterance), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
 
             // A phrase that is only an answer while there is a question.
             where command.When?.Invoke() ?? true
@@ -243,13 +243,18 @@ public sealed class KeywordRouter(
     /// How many words the utterance holds, counted once by the caller rather than once per declared
     /// phrase — every capability's whole vocabulary is walked for every utterance.
     /// </param>
+    /// <remarks>
+    /// The allowance is sized off the phrase as matched — with "the" folded out — not as declared,
+    /// so a phrase carrying more than one "the" is not allowed extra surrounding words for it (#525).
+    /// </remarks>
     private static bool MatchesAsCommand(string text, string phrase, int? words) =>
         ContainsPhrase(text, phrase)
-        && (words is not { } count || count <= Words(phrase).Length + MaxWordsAroundAKeyword);
+        && (words is not { } count || count <= Words(WithoutThe(phrase)).Length + MaxWordsAroundAKeyword);
 
     /// <summary>
     /// True when the phrase appears in the text bounded by word edges, so "docked" does not match
-    /// inside a longer word and "where am i" only matches those three words in that order.
+    /// inside a longer word and "where am i" only matches those three words in that order. Both sides
+    /// are folded by <see cref="WithoutThe"/> first, so "the" is optional wherever it appears (#525).
     /// </summary>
     private static bool ContainsPhrase(string text, string phrase)
     {
@@ -260,8 +265,8 @@ public sealed class KeywordRouter(
 
         // Apostrophes vary by keyboard and by autocorrect; "what's" and "what’s" must behave the same, and
         // neither should be the reason a command does not route.
-        var normalisedText = Normalise(text);
-        var normalisedPhrase = Normalise(phrase);
+        var normalisedText = WithoutThe(text);
+        var normalisedPhrase = WithoutThe(phrase);
 
         return Regex.IsMatch(
             normalisedText,
@@ -271,4 +276,13 @@ public sealed class KeywordRouter(
 
     private static string Normalise(string value) =>
         value.Replace('’', '\'').Replace('ʼ', '\'');
+
+    /// <summary>
+    /// An utterance or declared phrase with every "the" removed, so a Commander who says a declared
+    /// phrase without its "the" (or adds one where none was declared) still reaches the same target
+    /// (#525). This is the only fold applied to <see cref="Utterance"/>'s output; <see cref="Utterance"/>
+    /// itself is unchanged because most of its call sites are not phrase comparison.
+    /// </summary>
+    internal static string WithoutThe(string text) =>
+        string.Join(' ', Words(text).Where(word => !string.Equals(word, "the", StringComparison.OrdinalIgnoreCase)));
 }
