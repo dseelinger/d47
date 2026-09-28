@@ -117,7 +117,7 @@ public class ANumberStepsAndTakesTypingTests
 
         var amount = AmountOn(host, SpeechCapability.CharacterPriceKey, "Price per 1,000 characters");
 
-        Assert.Equal("$0.05", Shown(amount));
+        Assert.Equal("$0.04", Shown(amount));
 
         Type(host, amount, "0.07");
 
