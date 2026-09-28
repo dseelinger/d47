@@ -13,12 +13,12 @@ says what it is about.
 
 ## Turn the voice on first
 
-Once the instruction lands, the first step of the working turn is `/neural-voice New issue <subject>`,
-the subject in a word or two — `/neural-voice New issue engineers` for a request about the Engineers
+Once the instruction lands, the first step of the working turn is `/claude-voice New issue <subject>`,
+the subject in a word or two — `/claude-voice New issue engineers` for a request about the Engineers
 tab. Several of these sessions run at once and are told apart by ear, and the subject is what tells
-them apart. Where the request has no obvious subject yet, `/neural-voice New issue` on its own.
+them apart. Where the request has no obvious subject yet, `/claude-voice New issue` on its own.
 
-It is a default, not a fixture: `/neural-voice off` stops it and the work carries on unchanged.
+It is a default, not a fixture: `/claude-voice off` stops it and the work carries on unchanged.
 
 ## The failure this exists to prevent
 

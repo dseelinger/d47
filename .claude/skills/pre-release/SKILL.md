@@ -14,9 +14,9 @@ other reason.
 
 ## Turn the voice on first
 
-Before the first build, run `/neural-voice Pre-release`. The suite takes minutes and the
+Before the first build, run `/claude-voice Pre-release`. The suite takes minutes and the
 maintainer will be doing something else while it runs. It is a default, not a fixture:
-`/neural-voice off` stops it and the run carries on unchanged.
+`/claude-voice off` stops it and the run carries on unchanged.
 
 ## The gate is one command
 

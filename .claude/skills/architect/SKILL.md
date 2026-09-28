@@ -16,12 +16,12 @@ start when the maintainer names something.
 
 ## Turn the voice on first
 
-Once the instruction lands, the first step of the working turn is `/neural-voice Architect <number>`,
-the number spoken as words — `/neural-voice Architect eighty six` for #86. Several of these sessions
+Once the instruction lands, the first step of the working turn is `/claude-voice Architect <number>`,
+the number spoken as words — `/claude-voice Architect eighty six` for #86. Several of these sessions
 run at once and are told apart by ear, and the number is what tells them apart. Where no single issue
-is in front of you, `/neural-voice Architect` on its own.
+is in front of you, `/claude-voice Architect` on its own.
 
-It is a default, not a fixture: `/neural-voice off` stops it and the work carries on unchanged.
+It is a default, not a fixture: `/claude-voice off` stops it and the work carries on unchanged.
 
 ## Input and output
 

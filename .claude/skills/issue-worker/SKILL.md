@@ -17,11 +17,11 @@ the maintainer names one.
 
 ## Turn the voice on first
 
-Once the issue is named, the first step of the working turn is `/neural-voice Issue worker <number>`,
-the number spoken as words — `/neural-voice Issue worker sixty six` for #66. Several of these
+Once the issue is named, the first step of the working turn is `/claude-voice Issue worker <number>`,
+the number spoken as words — `/claude-voice Issue worker sixty six` for #66. Several of these
 sessions run at once and are told apart by ear, and the number is what tells them apart.
 
-It is a default, not a fixture: `/neural-voice off` stops it and the work carries on unchanged.
+It is a default, not a fixture: `/claude-voice off` stops it and the work carries on unchanged.
 
 ## One issue, one checkout
 
@@ -276,7 +276,7 @@ The turn where the work lands ends in this order:
 2. `/code-review` or `/prose`, when the Reviews section calls for one, with its findings amended into
    the commit.
 3. `/test-drive`, when the change needs manual testing.
-4. The spoken done sentence, through `/neural-voice`'s command, unless the voice was turned off. It
+4. The spoken done sentence, through `/claude-voice`'s command, unless the voice was turned off. It
    is the last tool call of the turn.
 5. The written report, then how to test it — the exact steps, against the test drive now running.
 

@@ -196,7 +196,7 @@ own — a separate watch key duplicates it. **Major is deliberately not on the d
 
 The profile keeps its second page in the manifest, empty, with nothing navigating to it.
 
-A neural-voice key was tried and dropped. If one is asked for again: the state lives in the session
+A claude-voice key was tried and dropped. If one is asked for again: the state lives in the session
 and nowhere on disk, and sessions run in parallel with different settings, so **a key cannot detect
 whether it is on** and a toggle is impossible. Two keys or none. Do not fake it with a flag file,
 which would make one session's voice global.
