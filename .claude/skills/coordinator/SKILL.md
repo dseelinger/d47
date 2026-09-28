@@ -9,6 +9,14 @@ You decide what to work on next and hold the thread across a run of issues.
 
 Wait for the maintainer's first instruction before doing anything. Acknowledge in one line and stop.
 
+## Turn the voice on first
+
+Once the instruction lands, the first step of the working turn is `/claude-voice Coordinator`, before
+`/triage` runs. Several sessions run at once and are told apart by ear. There is no issue number in
+the phrase, because this session spans a run of issues.
+
+It is a default, not a fixture: `/claude-voice off` stops it and the work carries on unchanged.
+
 ## Triage is the ranking authority
 
 Do not re-derive the order. Run `/triage` and reason from its report. It already applies the

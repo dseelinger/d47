@@ -13,6 +13,9 @@ Before the first `gh` call, run `/claude-voice Triage`. There is no issue number
 report covers all of them — so the phrase is the bare word. Several of these sessions run at once
 and are told apart by ear.
 
+When this session has already turned the voice on or off — `/coordinator` turns it on as
+"Coordinator" before it runs triage — leave the voice and its phrase as they are.
+
 It is a default, not a fixture: `/claude-voice off` stops it and the report carries on unchanged.
 
 ## The eligible set
