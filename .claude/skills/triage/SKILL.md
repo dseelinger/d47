@@ -33,6 +33,18 @@ Keep an issue only if **all** of these hold:
 Say in one line how many survived and how many each rule removed. Then stop justifying: the point
 of the report is the order, not the filter.
 
+## What each issue needs first
+
+Many bodies name their prerequisites: a `Needs first: #537, #538.` line, or a sentence
+`Needs #582 first`. Title and labels do not show them, so read them in one more call:
+
+```bash
+gh issue list --state open --limit 300 --json number,body --jq '.[] | {n: .number, needs: ([.body | scan("(?:^|[^`])Needs first:[^.\n]*"), scan("Needs #[0-9][^.\n]* first")] | map([scan("#[0-9]+") | ltrimstr("#")]) | add // [] | unique)} | select(.needs != []) | "\(.n): \(.needs | join(" "))"'
+```
+
+A needed issue is done when it is not in the open list, or when `git log main --format=%B` has the
+line `Fixes #N`. An eligible issue with a needed issue that is not done is **waiting**.
+
 ## Read only what you need
 
 The titles in this repository state the defect and usually its cause — "the row is decided from a
@@ -47,7 +59,9 @@ produce a ranking that only acts on five is waste the maintainer pays for.
 Development here is sequential — one checkout, one session at a time — so the order is a queue, not
 lanes. Rank by, in this order:
 
-1. **Blocking.** Anything a later issue needs. Rare; say why when you claim it.
+1. **Blocking.** A waiting issue ranks after every issue it needs, never before and never first.
+   Where one of those is not in the queue — ineligible, or left out — the waiting issue is left out
+   too and named in **Not now** with what it waits on.
 2. **Truth.** A `data-accuracy` issue or a crash outranks a nicety. d47 stating something untrue
    about Elite is the worst thing it does.
 3. **Adjacency.** Issues touching the same file or subsystem go consecutive, so one session's
@@ -155,7 +169,8 @@ Markdown, and short. Three parts:
 
    Shorten titles to the claim. The full title is one click away.
 3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
-   why. Omit the section when there is nothing.
+   why, including each waiting issue left out and the numbers it waits on. Omit the section when
+   there is nothing.
 
 No launch lines. The Stream Deck's Issue key starts a session from the grid below, with
 `/issue-worker` as its opening command, so the finish line that skill defines is in its first

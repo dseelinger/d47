@@ -33,6 +33,30 @@ Read the issue in full before touching anything. The titles in this repository s
 well as the defect, and the body usually names the file. Confirm that claim against the code — an
 issue written a month ago may name a line that has moved.
 
+## Check what it needs first
+
+Before touching the tree, list the issues this one names as prerequisites. Two forms count: a
+`Needs first: #537, #538.` line, and a sentence `Needs #582 first` (including
+`Needs #606 (…) and #607 (…) to land first`). Prose that names no number, such as "this lands
+first", does not.
+
+```bash
+gh issue view <number> --json body --jq '[.body | scan("(?:^|[^`])Needs first:[^.\n]*"), scan("Needs #[0-9][^.\n]* first")] | map([scan("#[0-9]+") | ltrimstr("#")]) | add // [] | unique | join(" ")'
+```
+
+A needed issue is done when it is closed on GitHub, or when a commit on local `main` carries the
+line `Fixes #N` — the Night Shift commits without pushing, so its work is not closed until morning:
+
+```bash
+for n in <needed numbers>; do
+  s=$(gh issue view "$n" --json state -q .state)
+  if [ "$s" != CLOSED ] && ! git log main --format=%B | grep -qx "Fixes #$n"; then echo "#$n is not done"; fi
+done
+```
+
+If any is not done, stop with the tree unchanged, name each one, and ask whether to take it
+instead. A direct instruction from the maintainer to go ahead anyway overrides the check.
+
 ## The build is the gate
 
 ```bash
