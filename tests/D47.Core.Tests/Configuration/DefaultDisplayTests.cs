@@ -46,7 +46,7 @@ public class DefaultDisplayTests
         var model = surface.Settings.Find(ConversationCapability.ModelKey);
         Assert.NotNull(model);
 
-        Assert.Equal("claude-sonnet-5", model.BareDefaultFor(surface.Settings.Current));
+        Assert.Equal("claude-sonnet-5-5", model.BareDefaultFor(surface.Settings.Current));
     }
 
     /// <summary>

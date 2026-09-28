@@ -35,9 +35,10 @@ public sealed class PriceTable
 
     public static PriceTable Default { get; } = new(new Dictionary<(string, string), ModelPrice>
     {
-        // Anthropic list prices, read from platform.claude.com/docs/en/about-claude/pricing on 2026-09-23.
+        // Anthropic list prices, read from platform.claude.com/docs/en/about-claude/pricing on 2026-09-28.
         [("anthropic", "claude-opus-5")] = new(5m, 25m),
         [("anthropic", "claude-opus-5-5")] = new(4m, 20m) { CacheReadFactor = 0.05m },
+        [("anthropic", "claude-sonnet-5-5")] = new(2m, 10m),
         [("anthropic", "claude-sonnet-5")] = new(2m, 10m),
         [("anthropic", "claude-haiku-4-5")] = new(1m, 5m),
         [("anthropic", "claude-fable-5")] = new(10m, 50m),

@@ -301,7 +301,7 @@ public class SettingsServiceTests
 
         Assert.Null(surface.Settings.Read(ConversationCapability.ModelKey));
         Assert.Equal(
-            "claude-sonnet-5",
+            "claude-sonnet-5-5",
             surface.Settings.Find(ConversationCapability.ModelKey)!.DefaultDisplayFor(surface.Settings.Current));
     }
 

@@ -19,11 +19,21 @@ public class ProviderCapabilityTests
         Assert.False(string.IsNullOrWhiteSpace(provider.DefaultModel));
     }
 
+    [Fact]
+    public void TheProviderAndTheCatalogNameTheSameDefault()
+    {
+        var listed = D47.Core.Conversation.LlmProviderCatalog.Find(D47.Core.Conversation.LlmProviderCatalog.AnthropicId)!;
+
+        Assert.Equal(listed.DefaultModel, Own().DefaultModel);
+        Assert.Equal(listed.DefaultModel, listed.Models[0]);
+    }
+
     /// <summary>The models that accept a <c>{"role":"system"}</c> message carrying operator authority.</summary>
     [Theory]
     [InlineData("claude-opus-5", true)]
     [InlineData("claude-opus-5-5", true)]
     [InlineData("claude-fable-5", true)]
+    [InlineData("claude-sonnet-5-5", true)]
     [InlineData("claude-sonnet-5", false)]
     [InlineData("claude-haiku-4-5", false)]
     public void OperatorSystemMessagesAreDeclaredPerModel(string model, bool expected)
@@ -35,6 +45,7 @@ public class ProviderCapabilityTests
     [InlineData("claude-opus-5", 512)]
     [InlineData("claude-fable-5", 512)]
     [InlineData("claude-opus-5-5", 512)]
+    [InlineData("claude-sonnet-5-5", 512)]
     [InlineData("claude-sonnet-5", 1024)]
     [InlineData("claude-opus-4-7", 2048)]
     [InlineData("claude-haiku-4-5", 4096)]
@@ -76,6 +87,7 @@ public class ProviderCapabilityTests
     [Theory]
     [InlineData("claude-opus-5", true)]
     [InlineData("claude-opus-5-5", true)]
+    [InlineData("claude-sonnet-5-5", true)]
     [InlineData("claude-sonnet-5", true)]
     [InlineData("claude-fable-5", true)]
     [InlineData("claude-haiku-4-5", false)]

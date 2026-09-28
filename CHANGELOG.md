@@ -14,6 +14,11 @@ row, and a model you chose there is kept. The speaking rate row is hidden while 
 selected. The ElevenLabs list price is now $0.04 per thousand characters, down from $0.05, which
 matches ElevenLabs' published price for all three models.
 
+Claude Sonnet 5.5 is now Anthropic's default model, at the same price as Sonnet 5: $2 in and $10
+out per million tokens. Live game state reaches it as a system message, as on the Opus models, and
+a prompt of 512 tokens or more is cached. Sonnet 5 is still offered in the Model row, and a model
+you chose there is kept.
+
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 

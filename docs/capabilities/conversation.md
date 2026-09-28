@@ -159,7 +159,7 @@ at all.
 
 ```text
 Provider: Anthropic
-Model: claude-sonnet-5
+Model: claude-sonnet-5-5
 Availability: Available
 Personality: on
 Session so far: 3 turn(s), $0.0412
@@ -249,7 +249,7 @@ answers:
 
 ```text
 Provider: Anthropic
-Model: claude-sonnet-5
+Model: claude-sonnet-5-5
 Availability: NotConfigured — No Anthropic API key is stored. Add one in Settings.
 Personality: on
 Session so far: 0 turn(s), $0.0000
@@ -338,7 +338,7 @@ chosen" stays distinguishable from "I chose that one".
 **This is the model your *conversation* takes.** The things Directive 47 says without being asked
 can be sent somewhere cheaper — see [Model for the quiet calls](#background-model), two rows down.
 
-Anthropic's default is the highest Sonnet — currently **Claude Sonnet 5**. A companion answering
+Anthropic's default is the highest Sonnet — currently **Claude Sonnet 5.5**. A companion answering
 questions about a game in flight is not the work the Opus tiers are priced for, and the Opus
 models are the next entries in the list if you want one. OpenAI's default is the middle tier for
 the same reason.
@@ -373,7 +373,7 @@ and reporting "unknown" forever about something that genuinely costs nothing is 
 to be rigour.
 
 **The cheaper models carry live game state under a weaker guarantee, and it is worth knowing before
-you pick one.** On Claude Opus 5, Opus 5.5 and Fable 5, what your ship is doing right now reaches
+you pick one.** On Claude Opus 5, Opus 5.5, Sonnet 5.5 and Fable 5, what your ship is doing right now reaches
 the model under a role that journal content cannot imitate. Everywhere else — Claude Haiku 4.5,
 Sonnet 5, and every OpenAI-compatible endpoint — it is folded into the message instead, marked off
 by a convention rather than by a boundary. That is the well-travelled path rather than a new risk,
