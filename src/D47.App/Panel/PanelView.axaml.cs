@@ -2955,11 +2955,14 @@ public partial class PanelView : UserControl
                 entry.Line.Contains(_query, StringComparison.OrdinalIgnoreCase)
                 || entry.Kind.Contains(_query, StringComparison.OrdinalIgnoreCase))).ToList();
 
+        // Read before the list is replaced: the ListBox carries its selection across by equality, which lands on
+        // the first of two identical events and reports it as a new selection.
+        var chosen = model.JournalSelected;
+
         JournalList.ItemsSource = shown;
 
-        // Against the filtered list rather than the whole one.
-        var selected = model.JournalSelected >= 0 && model.JournalSelected < model.Journal.Count
-            ? shown.IndexOf(model.Journal[model.JournalSelected])
+        var selected = chosen is { } entry
+            ? shown.FindIndex(line => ReferenceEquals(line, entry))
             : -1;
 
         JournalList.SelectedIndex = selected;
@@ -3014,12 +3017,12 @@ public partial class PanelView : UserControl
     /// <summary>A line was chosen, so the fields beside it change.</summary>
     private void OnJournalSelected(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
     {
-        if (Model is not { } model || JournalList.SelectedIndex < 0)
+        if (Model is not { } model || JournalList.SelectedItem is not D47.Core.Journal.JournalEntry entry)
         {
             return;
         }
 
-        model.JournalSelected = JournalList.SelectedIndex;
+        model.JournalSelected = entry;
         JournalDetail.Text = model.JournalDetailText;
     }
 

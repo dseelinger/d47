@@ -196,6 +196,73 @@ public sealed class TheJournalIsAReadingTests
         window.Close();
     }
 
+    private static TextBox Search(PanelView panel) => panel.FindControl<TextBox>("SearchInput")!;
+
+    /// <summary>
+    /// A line chosen from a search-filtered list shows its own fields, not those of the line at that
+    /// position in the unfiltered list (#653).
+    /// </summary>
+    [AvaloniaFact]
+    public void ALineChosenFromAFilteredListShowsItsOwnFields()
+    {
+        var (panel, window) = Shown(rawJournal: true);
+
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        var model = (PanelViewModel)panel.DataContext!;
+        var kusauts = model.Journal.Single(entry => entry.Kind == "FSDTarget");
+
+        Search(panel).Text = "Kusauts";
+        Dispatcher.UIThread.RunJobs();
+
+        var list = List(panel);
+
+        Assert.Single(list.ItemsSource!.Cast<JournalEntry>());
+
+        list.SelectedIndex = 0;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(kusauts, model.JournalSelected);
+        Assert.Equal(kusauts.Raw, model.JournalDetailText);
+        Assert.Equal(kusauts.Raw, panel.GetControl<SelectableTextBlock>("JournalDetail").Text);
+
+        window.Close();
+    }
+
+    /// <summary>Of two identical events, the one chosen stays chosen when the list is drawn again (#653).</summary>
+    [AvaloniaFact]
+    public void OfTwoIdenticalEventsTheChosenOneStaysChosen()
+    {
+        var log = new JournalLog();
+        const string docked = """{"event":"Docked","StationName":"Jameson Memorial"}""";
+
+        log.Add([Event("Docked", docked, 3), Event("Docked", docked, 3)]);
+
+        var (panel, window) = Shown(rawJournal: true, log);
+
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+
+        var model = (PanelViewModel)panel.DataContext!;
+        var list = List(panel);
+
+        Assert.Equal(model.Journal[0], model.Journal[1]);
+
+        list.SelectedIndex = 1;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(model.Journal[1], model.JournalSelected);
+
+        panel.ShowJournalDetail(true);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(model.Journal[1], model.JournalSelected);
+        Assert.Equal(1, list.SelectedIndex);
+
+        window.Close();
+    }
+
     /// <summary>
     /// The noise toggle rebuilds rather than hides: the filter belongs to the log, and applying it on
     /// the way in would make it unswitchable.

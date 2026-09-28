@@ -164,7 +164,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public Func<string>? LogSource { get; set; }
 
     private IReadOnlyList<D47.Core.Journal.JournalEntry> _journal = [];
-    private int _journalSelected = -1;
+    private D47.Core.Journal.JournalEntry? _journalSelected;
     private bool _journalDetail = true;
     private bool _journalNoise;
 
@@ -180,11 +180,24 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// </summary>
     public Func<bool, IReadOnlyList<D47.Core.Journal.JournalEntry>>? JournalSource { get; set; }
 
-    /// <summary>Which line's fields the detail pane is showing, or -1 for none.</summary>
-    public int JournalSelected
+    /// <summary>The event whose fields the detail pane is showing, or null for none.</summary>
+    /// <remarks>
+    /// Compared by reference: <see cref="D47.Core.Journal.JournalEntry"/> is a record, and two identical
+    /// events are still two lines.
+    /// </remarks>
+    public D47.Core.Journal.JournalEntry? JournalSelected
     {
         get => _journalSelected;
-        set => Set(ref _journalSelected, value);
+        set
+        {
+            if (ReferenceEquals(_journalSelected, value))
+            {
+                return;
+            }
+
+            _journalSelected = value;
+            Raise(nameof(JournalSelected));
+        }
     }
 
     /// <summary>Whether the fields are shown beside the list.</summary>
@@ -214,19 +227,14 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public Func<bool, string>? JournalDocumentSource { get; set; }
 
     /// <summary>The fields behind the selected line, or empty when nothing is selected.</summary>
-    public string JournalDetailText =>
-        JournalSelected >= 0 && JournalSelected < Journal.Count
-            ? Journal[JournalSelected].Raw
-            : string.Empty;
+    public string JournalDetailText => JournalSelected?.Raw ?? string.Empty;
 
     /// <summary>Re-reads the journal from the log.</summary>
     public void RefreshJournal()
     {
         Journal = JournalSource is { } read ? read(JournalNoise) : [];
         JournalRawText = JournalDocumentSource is { } document ? document(JournalNoise) : string.Empty;
-
-        // The selection is an index into a list that has just been rebuilt, so it cannot survive it.
-        JournalSelected = Journal.Count > 0 ? 0 : -1;
+        JournalSelected = Journal.Count > 0 ? Journal[0] : null;
     }
 
     /// <summary>Re-reads the log.</summary>

@@ -324,6 +324,9 @@ picked up: a count for each folder with files in it, then every file that was ne
 loose in the wrong place, in a folder D47 does not read, or not a format D47 reads — and finally
 every file that was tried and would not load.
 
+On the Journal File reading, choosing a line while a search is typed now shows that line's fields.
+It showed the fields of whichever event sat at the same position in the unfiltered list.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
