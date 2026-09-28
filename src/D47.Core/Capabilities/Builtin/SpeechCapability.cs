@@ -1134,10 +1134,10 @@ public static class SpeechCapability
                 Key = ElevenLabsModelKey,
                 Label = "ElevenLabs model",
                 Help =
-                    "v3 Conversational performs delivery direction such as a sigh or an alarmed "
-                    + "line, and takes about two seconds a line. Flash 2.5 takes about a third of "
-                    + "a second and reads direction out loud instead, so D47 does not send it any. "
-                    + "Flash is also the only one of the two with a speaking rate.",
+                    "v4 Turbo, the default, and v3 Conversational perform delivery direction such as "
+                    + "a sigh or an alarmed line; v3 takes about two seconds a line. Flash 2.5 takes "
+                    + "about a third of a second and reads direction out loud instead, so D47 does "
+                    + "not send it any. Flash is also the only one with a speaking rate.",
                 Kind = SettingKind.Choice,
                 Choices = [.. ElevenLabsModels.All.Select(model => model.Id)],
                 ChoiceLabel = id => ElevenLabsModels.All.FirstOrDefault(model => model.Id == id).Label ?? id,

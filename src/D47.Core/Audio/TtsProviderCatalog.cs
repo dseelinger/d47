@@ -141,9 +141,9 @@ public static class TtsProviderCatalog
 
         Billed = true,
 
-        // The published API list price for eleven_flash_v2_5, which is the model d47 pins — $0.05 per 1,000
-        // characters, half the Multilingual 2 rate this used to read.
-        ListDollarsPerThousandCharacters = 0.05m,
+        // The API list price per 1,000 characters for every model ElevenLabsModels offers, read from
+        // elevenlabs.io/pricing/api on 2026-09-28.
+        ListDollarsPerThousandCharacters = 0.04m,
     };
 
     public static TtsProviderInfo OpenAi { get; } = new()

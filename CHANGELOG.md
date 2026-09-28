@@ -8,6 +8,12 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+ElevenLabs v4 Turbo is now the default ElevenLabs model. It performs delivery direction, such as a
+sigh or an alarmed reading, as v3 does. v3 and Flash 2.5 are still offered in the ElevenLabs model
+row, and a model you chose there is kept. The speaking rate row is hidden while v4 Turbo is
+selected. The ElevenLabs list price is now $0.04 per thousand characters, down from $0.05, which
+matches ElevenLabs' published price for all three models.
+
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 

@@ -481,23 +481,26 @@ them under, so those are dropped rather than filed under a guess.
 
 #### ElevenLabs model {#elevenlabs-model}
 
-Two, and they are a real choice rather than a newer and an older.
+Three.
 
-**v3 Conversational** is the default. It performs *delivery direction*: where a line calls for it,
+**v4 Turbo** is the default. It performs *delivery direction*: where a line calls for it,
 Directive 47 can ask for a sigh, an alarmed reading or a dry one, and the voice acts on it instead
-of saying the word. It takes about two seconds to produce a line.
+of saying the word. It is ElevenLabs' fast expressive model.
 
-**Flash 2.5** takes about a third of a second, and is what to pick if that second and a half
-matters to you — in a fight it might. It cannot perform direction, so Directive 47 sends it none:
-handed `[sighs]`, Flash reads the word "sighs" out loud, which is why nothing is ever sent one.
+**v3 Conversational**, labelled "v3" in the row, performs direction the same way. It takes about
+two seconds to produce a line.
 
-Both cost the same, $0.05 per thousand characters, so the choice is speed against expression and
-nothing else.
+**Flash 2.5** takes about a third of a second. It cannot perform direction, so Directive 47 sends
+it none: handed `[sighs]`, Flash reads the word "sighs" out loud, which is why nothing is ever sent
+one.
 
-Two things follow from picking v3, and both are visible:
+All three cost the same, $0.04 per thousand characters.
 
-- **The speaking rate row disappears**, because v3 has no speaking rate. It is not missing at their
-  end — the field is accepted, and every value from `0.5` to `2.0` comes back with the same audio.
+Two things follow from picking v4 Turbo or v3, and both are visible:
+
+- **The speaking rate row disappears**, because only Flash is known to act on one. v3 accepts the
+  field, and every value from `0.5` to `2.0` comes back with the same audio; v4 Turbo has not been
+  measured.
   Rather than offer a control that appears to work, Directive 47 offers none, exactly as it does for
   Cartesia.
 - **Directive 47 speaks in slightly longer pieces.** Direction needs room to land — a few words on
@@ -810,8 +813,8 @@ would be a number whose basis is wrong, which is why this is counted separately 
 You see one price row, not two: the one that matches the provider you are on.
 
 **Price per 1,000 characters** is an assumption you can correct. It defaults to the provider's
-published list price for the model Directive 47 asks for — $0.05 per thousand for ElevenLabs'
-`eleven_flash_v2_5`, read from their API pricing page. That is a list price and not your
+published list price for the model Directive 47 asks for — $0.04 per thousand for every ElevenLabs
+model Directive 47 offers, read from their API pricing page. That is a list price and not your
 bill: a subscription burns bundled credits instead, at an effective rate that depends on your
 tier and on how much of the month's bundle is left, and the API reports neither. Correct the row
 and every figure below follows it. The row is absent on a provider that charges nothing.

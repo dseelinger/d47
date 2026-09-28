@@ -101,10 +101,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// <summary>The model in force right now, resolved against what d47 still offers.</summary>
     internal string Model => ElevenLabsModels.Named(_model?.Invoke());
 
-    /// <summary>v3 performs bracketed direction; Flash reads it aloud.</summary>
+    /// <summary>Whether the model in force performs bracketed direction rather than reading it aloud.</summary>
     public bool ReadsAudioTags => ElevenLabsModels.ReadsTags(Model);
 
-    /// <summary>How much text v3 would rather have at once, and nothing at all for Flash.</summary>
+    /// <summary>How much text the model in force would rather have at once, or zero for one sentence at a time.</summary>
     public int GroupsSentencesUpTo => ElevenLabsModels.GroupsSentencesUpTo(Model);
 
     public async Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default)

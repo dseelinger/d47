@@ -60,7 +60,7 @@ public class WhatTheVoicesCostTests
         var spend = new SpeechSpend();
         spend.Record(Eleven, 20_000);
 
-        Assert.Contains("$1.00", spend.Describe(On(Eleven))!, StringComparison.Ordinal);
+        Assert.Contains("$0.80", spend.Describe(On(Eleven))!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class WhatTheVoicesCostTests
         // One total that mixed a free provider's characters with a paid one's is a figure that means nothing.
         Assert.Contains("21,806 characters", said, StringComparison.Ordinal);
         Assert.Contains("Edge Neural 1,806 (Edge Neural is free)", said, StringComparison.Ordinal);
-        Assert.Contains("ElevenLabs 20,000 ($1.00", said, StringComparison.Ordinal);
+        Assert.Contains("ElevenLabs 20,000 ($0.80", said, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -244,9 +244,8 @@ public class WhatTheVoicesCostTests
     [Fact]
     public void TheListPriceIsWhatTheProviderPublishes()
     {
-        // Read from elevenlabs.io/pricing/api for eleven_flash_v2_5, which is the model ElevenLabsTtsProvider
-        // pins.
-        Assert.Equal(0.05m, TtsProviderCatalog.ElevenLabs.ListDollarsPerThousandCharacters);
+        // Read from elevenlabs.io/pricing/api on 2026-09-28: every model ElevenLabsModels offers lists at this.
+        Assert.Equal(0.04m, TtsProviderCatalog.ElevenLabs.ListDollarsPerThousandCharacters);
         Assert.True(TtsProviderCatalog.ElevenLabs.Billed);
 
         Assert.Null(TtsProviderCatalog.Edge.ListDollarsPerThousandCharacters);

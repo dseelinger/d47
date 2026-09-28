@@ -28,18 +28,35 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     }
 
     [AvaloniaFact]
-    public void TheRowIsDrawnWithBothModelsOnIt()
+    public void TheRowIsDrawnWithEveryModelOnIt()
     {
         var host = OnElevenLabs(out _);
         host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var segment = Row(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Segment>().First();
 
-        Assert.Equal(2, segment.ItemsSource.Count);
+        Assert.Equal(ElevenLabsModels.All.Count, segment.ItemsSource.Count);
+    }
+
+    /// <summary>The row with every model on it, for a human to look at.</summary>
+    [AvaloniaFact]
+    public void TheRowRendersToACapture()
+    {
+        var (created, viewState, paths) = TestSurface.Create();
+        created.Apply(SpeechCapability.ProviderKey, TtsProviderCatalog.ElevenLabsId, SettingsCaller.Panel);
+        var host = SettingsHost.Open(created, viewState, paths, width: 820, height: 1100);
+        host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        host.Window.CaptureRenderedFrame()!.Save(
+            Path.Combine(TestSurface.CaptureDirectory, "elevenlabs-model-row.png"),
+            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        host.Close();
     }
 
     /// <summary>
-    /// v3 Conversational is what a Commander who never opens the row is speaking through, so it is what
+    /// v4 Turbo is what a Commander who never opens the row is speaking through, so it is what
     /// the row shows before anybody touches it.
     /// </summary>
     [AvaloniaFact]
@@ -47,8 +64,8 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     {
         var host = OnElevenLabs(out var settings);
 
-        Assert.Equal(ElevenLabsModels.V3, ElevenLabsModels.Named(settings.Current.Speech.ElevenLabsModel));
-        Assert.Equal(ElevenLabsModels.V3, ElevenLabsModels.Default);
+        Assert.Equal(ElevenLabsModels.V4Turbo, ElevenLabsModels.Named(settings.Current.Speech.ElevenLabsModel));
+        Assert.Equal(ElevenLabsModels.V4Turbo, ElevenLabsModels.Default);
     }
 
     /// <summary>

@@ -472,8 +472,8 @@ carrier's captain and tower).
 - **Levels 1 to 6 are dry.** Understatement and timing only, with hard bans on similes and
   comparisons, puns, whimsy, zany exaggeration, exclamation marks and "…" pauses for comic effect.
   **From 7 the bans lift**: puns, comparisons and absurdity are allowed.
-- **Laughter.** When a line gets humor and its voice performs delivery notes (ElevenLabs v3
-  today), the model is offered `[laughs]` and `[chuckles]` as well. Any other voice has them
+- **Laughter.** When a line gets humor and its voice performs delivery notes (ElevenLabs v4 Turbo
+  or v3), the model is offered `[laughs]` and `[chuckles]` as well. Any other voice has them
   stripped.
 - **Warnings never get humor**, at any level.
 
