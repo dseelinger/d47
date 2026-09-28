@@ -16,7 +16,7 @@ public class NpcChatterCalloutTests
 
     // Longest pinned to the interval, so the timing tests drive a fixed cadence; the range is its own test
     // below.
-    private static NpcChatterCallout Callout() => new()
+    private static NpcChatterCallout Callout() => new(new NearbyFight())
     {
         Interval = TimeSpan.FromMinutes(20),
         Longest = TimeSpan.FromMinutes(20),
@@ -102,7 +102,7 @@ public class NpcChatterCalloutTests
     [Fact]
     public void TheGapVariesInsideTheRangeAndReplaysTheSame()
     {
-        var callout = new NpcChatterCallout
+        var callout = new NpcChatterCallout(new NearbyFight())
         {
             Interval = TimeSpan.FromMinutes(20),
             Longest = TimeSpan.FromMinutes(40),
@@ -117,7 +117,7 @@ public class NpcChatterCalloutTests
 
         // And the same drive again lands on the same cycle boundaries: the spacing comes off the pick
         // counter, never a clock or a seed.
-        var replay = new NpcChatterCallout
+        var replay = new NpcChatterCallout(new NearbyFight())
         {
             Interval = TimeSpan.FromMinutes(20),
             Longest = TimeSpan.FromMinutes(40),

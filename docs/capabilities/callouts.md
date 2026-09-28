@@ -902,6 +902,10 @@ fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the 
 The two pairs carry the same numbers on purpose, so the two kinds of chatter arrive at the same
 rate and what varies is the mix.
 
+**It waits out a fight.** An exchange that falls due while Elite shows you in danger, or within a
+minute of you being attacked or making a kill, is held until the fight has been quiet for a minute,
+then plays.
+
 **And the two are kept apart from each other.** They used to be timed independently and blind to
 one another — two clocks, neither able to see the other — so nothing stopped a remark from inside
 the ship and a four-line scene from outside it arriving nose to tail. Worse, the two were due on

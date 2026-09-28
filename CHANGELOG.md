@@ -333,6 +333,10 @@ would have written a journal event, and none did. An exchange with such a line i
 all. In controller chatter, where the controller talks to its own pilot, a line counts only when it
 names the Commander.
 
+Invented chatter now waits while you are in a fight. An exchange that falls due while Elite shows you
+in danger, or within a minute of you being attacked or making a kill, plays once the fight has been
+quiet for a minute.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

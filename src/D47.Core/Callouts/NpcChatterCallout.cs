@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>Overheard chatter, now and then, from people who do not exist (#244).</summary>
-public sealed class NpcChatterCallout : ICallout
+public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
 {
     public string Id => "npc-chatter";
 
@@ -60,6 +60,12 @@ public sealed class NpcChatterCallout : ICallout
         }
 
         if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
+        {
+            yield break;
+        }
+
+        // No small talk in the middle of a fight; the exchange waits until it is over.
+        if (fight.On(context.Now, context.Status))
         {
             yield break;
         }

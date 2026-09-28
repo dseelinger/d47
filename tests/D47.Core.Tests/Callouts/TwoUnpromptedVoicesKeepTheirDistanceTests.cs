@@ -68,7 +68,7 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
         Settle = TimeSpan.FromSeconds(settle),
     };
 
-    private static NpcChatterCallout Exchanges(int least = 300, int most = 600, int settle = 0) => new()
+    private static NpcChatterCallout Exchanges(int least = 300, int most = 600, int settle = 0) => new(new NearbyFight())
     {
         Interval = TimeSpan.FromSeconds(least),
         Longest = TimeSpan.FromSeconds(most),

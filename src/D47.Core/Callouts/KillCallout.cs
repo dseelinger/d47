@@ -114,8 +114,7 @@ public sealed class KillCallout : ICallout
 
         var credits = reward.ToString("N0", CultureInfo.InvariantCulture);
         var pilot = bond ? null : PilotOf(journalEvent);
-        var onFoot = !bond && journalEvent.String("Target") is { } target
-            && target.Contains("suitai", StringComparison.OrdinalIgnoreCase);
+        var onFoot = !bond && OnFoot(journalEvent);
 
         var victim = bond
             ? Resolved(journalEvent.Named("VictimFaction")) is { } faction ? $"{faction} ship" : "Ship"
@@ -138,17 +137,23 @@ public sealed class KillCallout : ICallout
     }
 
     /// <summary>An NPC's name, "A Commander" for a player, whose name another player chose, or null.</summary>
-    private static string? PilotOf(JournalEvent journalEvent) =>
-        journalEvent.String("PilotName") is { } raw && raw.StartsWith("$cmdr", StringComparison.OrdinalIgnoreCase)
-            ? "A Commander"
-            : Resolved(journalEvent.String("PilotName_Localised"));
+    internal static string? PilotOf(JournalEvent journalEvent) =>
+        IsCommander(journalEvent) ? "A Commander" : Resolved(journalEvent.String("PilotName_Localised"));
 
-    private static string? ShipOf(JournalEvent journalEvent) =>
+    /// <summary>Whether the pilot killed was a player.</summary>
+    internal static bool IsCommander(JournalEvent journalEvent) =>
+        journalEvent.String("PilotName") is { } raw && raw.StartsWith("$cmdr", StringComparison.OrdinalIgnoreCase);
+
+    internal static string? ShipOf(JournalEvent journalEvent) =>
         Resolved(journalEvent.String("Target_Localised"))
         ?? EliteSpecifications.Ship(journalEvent.String("Target"))?.Name;
 
+    /// <summary>Whether the kill was an on-foot target rather than a ship.</summary>
+    internal static bool OnFoot(JournalEvent journalEvent) =>
+        journalEvent.String("Target") is { } target && target.Contains("suitai", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>The text, or null when it is empty or a key Elite left unlocalised.</summary>
-    private static string? Resolved(string? text) => text is { Length: > 0 } && text[0] != '$' ? text : null;
+    internal static string? Resolved(string? text) => text is { Length: > 0 } && text[0] != '$' ? text : null;
 
     private static string Number(int count) => count.ToString(CultureInfo.InvariantCulture);
 }

@@ -1050,6 +1050,8 @@ public sealed class AppHost : IDisposable
             checklists,
             () => unlocksRef);
 
+        var fight = new NearbyFight();
+
         var callouts = BuildCallouts(
             settings,
             loggerFactory,
@@ -1063,7 +1065,8 @@ public sealed class AppHost : IDisposable
             communityGoalSearch,
             gameState,
             exobiology,
-            cartography);
+            cartography,
+            fight);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -1133,6 +1136,12 @@ public sealed class AppHost : IDisposable
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
             planBook.Apply(events);
+
+            // Outside the callouts, so the fight is followed while they or chatter are switched off.
+            foreach (var journalEvent in events)
+            {
+                fight.Fold(journalEvent, context.Now, context.IsFirst);
+            }
 
             var calloutContext = new CalloutContext(
                 context.Now,
@@ -2112,6 +2121,8 @@ public sealed class AppHost : IDisposable
         // The buffer the tick closure has been filling since before this instance existed (#51).
         host.JournalLog = journalLog;
 
+        host._fight = fight;
+
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
 
@@ -2539,7 +2550,8 @@ public sealed class AppHost : IDisposable
         D47.Core.Knowledge.CommunityGoalSearch communityGoal,
         GameStateStore gameState,
         D47.Core.Journal.ExobiologyLedger exobiology,
-        D47.Core.Journal.CartographyLedger cartography)
+        D47.Core.Journal.CartographyLedger cartography,
+        NearbyFight fight)
     {
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
         var tradingMode = new TradingModeCallout(loggers.CreateLogger<TradingModeCallout>());
@@ -2615,7 +2627,7 @@ public sealed class AppHost : IDisposable
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
             // marker composes to nothing.
-            .Add(new NpcChatterCallout())
+            .Add(new NpcChatterCallout(fight))
             .Add(new AmbientCallout())
             .Add(new IncomingMessages
             {
@@ -5237,6 +5249,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Takes whatever the callouts queued this tick and says it.</summary>
     private readonly D47.Core.Callouts.SpokenReferent _referent = new();
+
+    /// <summary>The fight around the Commander, as the chatter callout folds it.</summary>
+    private NearbyFight _fight = null!;
 
     /// <summary>Whether the next carrier exchange may make his owning it the subject (#88).</summary>
     private readonly NpcChatterOwnershipSpotlight _carrierSpotlight = new();
