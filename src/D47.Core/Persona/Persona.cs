@@ -15,6 +15,7 @@ namespace D47.Core.Persona;
 /// </param>
 /// <param name="VoiceHint">How this core should sound, in plain words.</param>
 /// <param name="Unlockable">Marked unlockable in the persona pack.</param>
+/// <param name="Domain">What this core acts in, or none. Most cores have none.</param>
 public sealed record Persona(
     string Id,
     string Name,
@@ -23,7 +24,8 @@ public sealed record Persona(
     string Intro,
     string Return,
     VoiceHint VoiceHint,
-    bool Unlockable = false)
+    bool Unlockable = false,
+    PersonaDomain Domain = PersonaDomain.None)
 {
     /// <summary>
     /// The whole prompt block: shared preamble, then this core's voice, then the standing instructions
@@ -88,6 +90,19 @@ public sealed record VoiceHint(string Description, VoiceGender Gender = VoiceGen
         "female" or "f" or "woman" or "feminine" => VoiceGender.Female,
         _ => null,
     };
+}
+
+/// <summary>What a core acts in and pays attention to, beyond the voice it speaks in.</summary>
+public enum PersonaDomain
+{
+    /// <summary>None: this core remarks on nothing of the kind.</summary>
+    None,
+
+    /// <summary>Money: what the session has earned.</summary>
+    Earnings,
+
+    /// <summary>Combat: what the session has earned fighting.</summary>
+    Combat,
 }
 
 /// <summary>Which of a provider's voices can speak for a core.</summary>
