@@ -61,24 +61,30 @@ public sealed record PlannedWork(
 public static class PlannedNeeds
 {
     /// <summary>
-    /// Every planned thing across both stores that wants an engineer, in the order the plans state
-    /// them.
+    /// Every planned thing across both stores still to be rolled, in the order the plans state them. A
+    /// blueprint or experimental the remembered loadout already has is left out; a ship with no
+    /// remembered loadout keeps all of its work.
     /// </summary>
     public static IReadOnlyList<PlannedWork> Of(
         IReadOnlyList<ShipBuild> ships,
-        IReadOnlyList<OnFootBuild> onFoot)
+        IReadOnlyList<OnFootBuild> onFoot,
+        CommanderGameState? state)
     {
         var work = new List<PlannedWork>();
 
         foreach (var build in ships)
         {
+            var remembered = state?.Loadouts.For(build.ShipId)?.Loadout;
+
             foreach (var slot in build.Slots.Where(slot => !slot.IsEmpty))
             {
+                var fitted = remembered?.Modules.FirstOrDefault(module =>
+                    string.Equals(module.Slot, slot.Slot, StringComparison.OrdinalIgnoreCase));
                 var shipSlot = EliteSpecifications.Slot(build.Hull, slot.Slot);
                 var slotName = shipSlot?.Describe() ?? slot.Slot;
                 var what = $"{build.Describe()} · {slotName}";
 
-                if (slot.Blueprint is { Length: > 0 } blueprint)
+                if (slot.Blueprint is { Length: > 0 } blueprint && !AppliedEngineering.Blueprint(slot, fitted))
                 {
                     work.Add(new PlannedWork(
                         what,
@@ -91,7 +97,8 @@ public static class PlannedNeeds
                     });
                 }
 
-                if (slot.Experimental is { Length: > 0 } experimental)
+                if (slot.Experimental is { Length: > 0 } experimental
+                    && !AppliedEngineering.Experimental(slot, fitted))
                 {
                     work.Add(new PlannedWork(
                         what,
@@ -108,11 +115,14 @@ public static class PlannedNeeds
 
         foreach (var build in onFoot)
         {
+            var applied = EngineerWorkload.AppliedModifications(build, state?.OnFoot);
+
             foreach (var slot in build.Slots.Where(slot => !slot.IsEmpty))
             {
                 // A grade on foot is bought at Pioneer Supplies, not rolled by anybody — an engineer's base
                 // does not sell one.
-                if (slot.Modification is not { Length: > 0 } modification)
+                if (slot.Modification is not { Length: > 0 } modification
+                    || applied?.Contains(modification, StringComparer.OrdinalIgnoreCase) == true)
                 {
                     continue;
                 }

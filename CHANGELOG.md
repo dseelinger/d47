@@ -25,6 +25,12 @@ the Fleet page showed the slot as unfinished, because Elite names the effect "Su
 the plan names it "Super Capacitor". An applied experimental is now matched on the journal's symbol
 rather than its display name.
 
+An engineer's Planned work, and What unlocking them buys, no longer lists engineering your ship
+already has. A slot whose blueprint is applied but whose experimental is not lists only the
+experimental, and an engineer with nothing left to do shows no Planned work at all. The unlock
+ranking no longer counts finished work either. A ship d47 has not yet seen a Loadout for still
+lists all of its planned work.
+
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 

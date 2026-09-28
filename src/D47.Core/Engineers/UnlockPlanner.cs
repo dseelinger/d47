@@ -132,7 +132,7 @@ public sealed record EngineerReport
     /// </summary>
     public IReadOnlyList<UnlockCandidate> Route { get; init; } = [];
 
-    /// <summary>Everything the plans want rolling.</summary>
+    /// <summary>Everything the plans still need rolling.</summary>
     public IReadOnlyList<PlannedWork> Planned { get; init; } = [];
 
     /// <summary>How many planned things are waiting on somebody the Commander has not unlocked.</summary>
@@ -185,7 +185,7 @@ public static class UnlockPlanner
         var evidence = UnlockEvidence.From(state);
         var from = state?.Location.StarPos;
         var range = state?.Ship.MaxJumpRange;
-        var planned = PlannedNeeds.Of(ships, onFoot);
+        var planned = PlannedNeeds.Of(ships, onFoot, state);
         var workload = EngineerWorkload.Outstanding(ships, onFoot, state);
 
         // What nobody the Commander can reach today can roll.

@@ -7,8 +7,7 @@ namespace D47.Core.Engineers;
 
 /// <summary>
 /// Modules still to engineer, and who could finish each one (#137). Distinct from <see
-/// cref="PlannedNeeds"/>, which counts rolls rather than modules and credits every candidate engineer
-/// with the same roll regardless of what is already applied.
+/// cref="PlannedNeeds"/>, which lists rolls rather than counting modules.
 /// </summary>
 public static class EngineerWorkload
 {
@@ -130,7 +129,7 @@ public static class EngineerWorkload
     /// The modification names already applied to the loadout this build costs, or null where the build
     /// is not the one currently worn — nothing can be discounted against a loadout that is not it.
     /// </summary>
-    private static IReadOnlyList<string>? AppliedModifications(OnFootBuild build, OnFootLoadout? worn)
+    internal static IReadOnlyList<string>? AppliedModifications(OnFootBuild build, OnFootLoadout? worn)
     {
         if (worn is not { IsKnown: true } || build.ItemId is not { } id)
         {
