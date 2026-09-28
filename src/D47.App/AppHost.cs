@@ -2610,6 +2610,10 @@ public sealed class AppHost : IDisposable
             // Where a sale of the Community Goal commodity leaves the session, net of cost (#296).
             .Add(new CommunityGoalSaleCallout(ledger, communityGoal))
 
+            // The session's rate in the core's domain — credits an hour, or combat earnings — read off the
+            // core aboard on the tick (#613).
+            .Add(new DomainCallout(() => PersonaCatalog.Resolve(settings.Current.Persona.Id)))
+
             // A beat of the Commander's story, when they reach it (Phase 47).
             .Add(new D47.Core.Adventures.AdventureCallout(adventures))
 
@@ -2695,6 +2699,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("continuity", callouts.Continuity, now);
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
+        engine.SetEnabled("domain", callouts.Domain, now);
 
         foreach (var callout in engine.Callouts)
         {

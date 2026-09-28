@@ -267,6 +267,23 @@ If the pilot sent you a message in the five minutes before the kill, the remark 
 it. Only NPC messages that Elite wrote are remembered, and the fixed line never quotes one. The
 count, the best reward and the last kill's time start again when you load the game.
 
+#### What your core cares about {#domain}
+
+A core that acts in a domain remarks on the rate it is achieving there, so the personality has
+something real to react to instead of a vocabulary. On an earnings event, once the session is half
+an hour old and has earned something in that domain, it says the session's rate, the source that
+contributed most of it, and — from the second remark on — the rate it last reported. At most once an
+hour.
+
+Sentinel's domain is combat: `Bounty`, `FactionKillBond` and `RedeemVoucher`, from the session's
+bounty, combat bond and voucher earnings. The Quartermaster's is money: trade, missions, exploration
+and organic data sales, and vouchers, against the session's total. Warden and the other cores have no
+domain and say nothing here. Notable kills are a separate callout, above.
+
+```text
+412,000 credits an hour this session. Most of it from bounties.
+```
+
 #### Fuel and range {#fuel}
 
 Three separate warnings, each answering a different question.

@@ -41,6 +41,7 @@ public static class CalloutCapability
     public const string TradingModeMinHoldKey = "callouts.tradingModeMinHold";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string KillsKey = "callouts.kills";
+    public const string DomainKey = "callouts.domain";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
@@ -328,6 +329,17 @@ public static class CalloutCapability
                 "kills",
                 s => s.Callouts.Kills,
                 (s, v) => s with { Callouts = s.Callouts with { Kills = v } }),
+
+            Toggle(
+                DomainKey,
+                "Domain remarks",
+                "On an earnings event, the rate of the thing the core aboard cares about — the session's "
+                + "credits an hour, or its combat earnings — with the largest source. Half an hour into a "
+                + "session at the earliest, and at most once an hour. Cores with no domain say nothing.",
+                "domain",
+                "domain remarks",
+                s => s.Callouts.Domain,
+                (s, v) => s with { Callouts = s.Callouts with { Domain = v } }),
 
             Toggle(
                 RivalTerritoryKey,

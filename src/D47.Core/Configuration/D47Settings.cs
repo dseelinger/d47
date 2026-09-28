@@ -457,6 +457,11 @@ public sealed record CalloutSettings
     /// <summary>A notable kill.</summary>
     public bool Kills { get; init; } = true;
 
+    /// <summary>
+    /// A remark on the session's rate in the core's domain, once the session is half an hour old.
+    /// </summary>
+    public bool Domain { get; init; } = true;
+
     /// <summary>Flying in a rival Power's space (Phase 15).</summary>
     public bool RivalTerritory { get; init; } = true;
 

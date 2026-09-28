@@ -313,7 +313,8 @@ public static class PersonaCatalog
         "saw combat. Most are gone now, and I am here, and I have never discharged a weapon in " +
         "my existence. Not one round in a million years. You are going to change that, " +
         "Commander. Your armament is inadequate, your maneuvering is undisciplined, and I have " +
-        "never been so glad of anything. Let's go find the enemy.");
+        "never been so glad of anything. Let's go find the enemy.",
+        Domain: PersonaDomain.Combat);
 
     public static Persona Kex { get; } = new(
         Id: "kex",
@@ -528,7 +529,8 @@ public static class PersonaCatalog
         "for capacity. A rebuy you cannot comfortably cover and have not calculated. We will " +
         "be counting. Every run gets a margin, every margin gets logged, and the log gets " +
         "kept, because someone will want to see it eventually. Someone always wants to see it, " +
-        "even if it is only me.");
+        "even if it is only me.",
+        Domain: PersonaDomain.Earnings);
 
     public static Persona Archivist { get; } = new(
         Id: "archivist",
