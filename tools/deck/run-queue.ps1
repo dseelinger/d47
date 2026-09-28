@@ -51,7 +51,7 @@ Add-Type -Namespace D47 -Name Power -MemberDefinition @'
 $unattended = @'
 This is an unattended overnight queue run. No one is at the keyboard, and the next issue starts
 when this session exits. These instructions override the issue-worker skill where they conflict:
-- Do not run /neural-voice and do not speak anything. The maintainer is asleep.
+- Do not run /claude-voice and do not speak anything. The maintainer is asleep.
 - Do not stop to ask questions. Where the issue leaves a choice, take the reading the issue text
   supports best and say which you took in the commit body.
 - Ignore manual testing entirely. Do not run /test-drive, do not write manual test steps, and do
