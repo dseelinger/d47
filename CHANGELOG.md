@@ -327,6 +327,12 @@ every file that was tried and would not load.
 On the Journal File reading, choosing a line while a search is typed now shows that line's fields.
 It showed the fields of whichever event sat at the same position in the unfiltered list.
 
+Invented chatter no longer has anyone scan, interdict, target, fine or put a bounty on you, grant or
+deny you docking, give you or take your cargo, or send you a wing or friend invite. Each of those
+would have written a journal event, and none did. An exchange with such a line is not played at
+all. In controller chatter, where the controller talks to its own pilot, a line counts only when it
+names the Commander.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

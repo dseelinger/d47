@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Journal;
@@ -175,7 +176,7 @@ public sealed class NpcChatterOwnershipSpotlight
 /// never the game's own NPC messages, which arrive through <see cref="IncomingMessages"/> and are
 /// somebody else's words.
 /// </summary>
-public static class NpcChatter
+public static partial class NpcChatter
 {
     public const string KeyPrefix = "npc.chatter.";
 
@@ -248,7 +249,9 @@ public static class NpcChatter
         "No other text, no quotation marks, no stage directions. Use the live game state only for "
         + "where this is happening; invent everything else. Never name or imitate a real person or "
         + "another player. Nobody asks the Commander to do anything, nobody asks the Commander a "
-        + "question, and nobody expects an answer.";
+        + "question, and nobody expects an answer. Nobody scans, interdicts, targets, fines or puts a "
+        + "bounty on the Commander, grants or denies them docking, gives them or takes their cargo, or "
+        + "sends them a wing or friend invite.";
 
     /// <summary>The cast slots, described by accent and gender, or nothing where there is no roster.</summary>
     private static string Roster(NpcChatterRoster roster)
@@ -693,7 +696,7 @@ public static class NpcChatter
             var name = named[spelled];
             var role = RoleOf(name, about);
 
-            if (MovesTheCarrier(text, role, about))
+            if (MovesTheCarrier(text, role, about) || EscalatesIn(text, kind))
             {
                 return [];
             }
@@ -768,7 +771,7 @@ public static class NpcChatter
                 voice = slot.VoiceId;
             }
 
-            if (MovesTheCarrier(text, role, carrier))
+            if (MovesTheCarrier(text, role, carrier) || EscalatesIn(text, kind))
             {
                 return [];
             }
@@ -826,7 +829,7 @@ public static class NpcChatter
 
         text = text.Trim('"');
 
-        return text.Length > 0 && !MovesTheCarrier(text, role, carrier ?? NpcChatterCarrier.None)
+        return text.Length > 0 && !MovesTheCarrier(text, role, carrier ?? NpcChatterCarrier.None) && !Escalates(text)
             ? text
             : null;
     }
@@ -941,6 +944,78 @@ public static class NpcChatter
             || Mentions(text, "casting off")
             || Mentions(text, "casts off");
     }
+
+    /// <summary>
+    /// Whether this line says, threatens or promises something Elite would write a journal event for about
+    /// the Commander — a scan, an interdiction, weapons, a fine or bounty, a docking decision, cargo given or
+    /// taken, a wing or friend invite. "You" is read as the Commander.
+    /// </summary>
+    public static bool Escalates(string text) =>
+        !string.IsNullOrEmpty(text) && Escalation().IsMatch(text.Replace('’', '\''));
+
+    /// <summary>
+    /// <see cref="Escalates"/> for a line of an exchange of <paramref name="kind"/>. In a controller
+    /// exchange "you" is the invented pilot, so there the line must name the Commander as well.
+    /// </summary>
+    private static bool EscalatesIn(string text, NpcChatterKind kind) =>
+        Escalates(text) && (kind != NpcChatterKind.Controller || NamesTheCommander().IsMatch(text));
+
+    private const string Them = @"(?:you|ya|your|yours|yourself|(?:the\s+)?commander(?:'s)?|cmdr)\b";
+
+    private const string TheirOwn = @"(?:your|the\s+commander's)";
+
+    private const string Subject = @"\b(?:you|(?:the\s+)?commander|cmdr)"
+        + @"(?:\s*'(?:re|ve|ll|s)\b|\s+(?:are|were|was|is|have|has|had|been|being|be|get|gets|got|getting|gonna|going|to|will|just|now|already|about|not))+\s+";
+
+    private const string DockingDecision =
+        @"(?:docking|landing)\s+(?:request\s+|permission\s+|clearance\s+|access\s+)?(?:is\s+|has\s+been\s+)?(?:denied|granted|refused|approved|rejected)";
+
+    [GeneratedRegex(
+        // Interdicted
+        @"\binterdict(?:s|ed|ing|ion)?\s+(?:on\s+)?" + Them
+        + "|" + Subject + @"interdicted\b"
+        + @"|\b(?:pull|pulls|pulling|pulled|drag|drags|dragging|dragged|yank\w*|rip|ripping)\s+" + Them + @"\s+(?:out\s+of|from)\s+(?:super\s*cruise|frame\s*shift|the\s+jump)"
+        // Scanned
+        + @"|\bscan(?:s|ned|ning)?\s+(?:on\s+)?" + Them
+        + "|" + Subject + @"scanned\b"
+        // UnderAttack
+        + @"|\b(?:open(?:s|ed|ing)?\s+fire|fir(?:e|es|ed|ing)|shoot(?:s|ing)?|shot)\s+(?:at|on|upon)\s+" + Them
+        + @"|\b(?:shoot|shooting|attack|attacks|attacking|attacked|blast|blasting|kill|killing|destroy|destroying|target|targets|targeting|targetting)\s+" + Them
+        + @"|\b(?:weapons|guns|lasers|missiles|torpedoes)\s+(?:are\s+)?(?:locked\s+|trained\s+|hot\s+)?(?:on|onto|at)\s+" + Them
+        + @"|\block(?:s|ed|ing)?\s+(?:on|onto|on\s+to)\s+" + Them
+        + "|" + Subject + @"(?:under\s+(?:attack|fire)|attacked|targeted|shot\s+at|fired\s+(?:on|upon))"
+        // CommitCrime, Bounty
+        + @"|\bfin(?:ing|ed)\s+" + Them
+        + @"|\bfine\s+" + Them + @"\s+(?:for|\d)"
+        + "|" + Subject + @"fined\b"
+        + @"|\b(?:a|the|another)\s+fine\s+(?:on|for|to)\s+" + Them
+        + @"|\bbounty\s+(?:on|for)\s+" + Them
+        + @"|\bprice\s+on\s+" + TheirOwn + @"\s+head"
+        + @"|\b" + TheirOwn + @"\s+bounty\b"
+        + "|" + Subject + @"(?:a\s+)?bounty\b"
+        + @"|\b(?:you|commander|cmdr)(?:\s*'re|\s+are|\s+is)(?:\s+now)?\s+wanted\b"
+        // DockingDenied, DockingGranted
+        + @"|\b" + TheirOwn + @"\s+(?:docking|landing)\s+(?:request|permission|clearance|access)"
+        + "|" + Subject + @"(?:cleared|authori[sz]ed|permitted|allowed|clear)\s+(?:to|for)\s+(?:dock|land|docking|landing|approach)"
+        + @"|\b(?:deny|denies|denying|denied|refuse\w*|grant\w*|clear|clearing)\s+" + Them + @"\s+(?:for\s+)?(?:docking|landing|a\s+pad|to\s+(?:dock|land))"
+        + @"|\b" + DockingDecision + @"\s+(?:for|to)\s+" + Them
+        + @"|\b(?:commander|cmdr)\b[^.!?]{0,24}?\b" + DockingDecision
+        // CollectCargo, EjectCargo
+        + @"|\b(?:drop|drops|dropping|dump|dumping|jettison\w*|eject\w*|hand\w*\s+over|surrender\w*|give\s+(?:me|us)|turn\w*\s+over)\s+" + TheirOwn + @"\s+(?:cargo|hold|goods|canisters?|cans|load|haul)"
+        + @"|\b(?:take|taking|took|steal\w*|stole|grab\w*|scoop\w*|seiz\w*|confiscat\w*|impound\w*)\s+" + TheirOwn + @"\s+(?:cargo|goods|canisters?|cans|load|haul)"
+        + @"|\b(?:drop|dropping|dropped|eject\w*|jettison\w*|leave|leaving|left|give|giving|gave|send|sending|sent)\s+(?:you|(?:the\s+)?commander|cmdr)\s+(?:some\s+|a\s+few\s+|a\s+couple\s+(?:of\s+)?|a\s+|the\s+)?(?:cargo|canisters?|cans|goods|crates?)"
+        + @"|\b(?:cargo|canisters?|cans|goods|crates?)\s+(?:for|to)\s+(?:you|(?:the\s+)?commander|cmdr)\b"
+        // WingInvite, Friends
+        + @"|\b(?:wing|friend|friends|squadron)\s+(?:invite|invites|invitation|request)\s+(?:to|for)\s+" + Them
+        + @"|\b" + TheirOwn + @"\s+(?:wing|friend)\s+(?:invite|invitation|request)"
+        + @"|\b(?:send|sends|sending|sent|ping\w*)\s+" + Them + @"\s+an?\s+(?:wing|friend|squadron)\s+(?:invite|invitation|request)"
+        + @"|\b(?:invite|invites|inviting|invited|add|adding|added)\s+" + Them + @"\s+(?:to\s+(?:my|our|the)\s+(?:wing|friends?\s+list)|as\s+(?:a\s+)?friend)"
+        + @"|\bjoin\s+(?:my|our)\s+wing\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex Escalation();
+
+    [GeneratedRegex(@"\b(?:commander|cmdr)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex NamesTheCommander();
 
     private static bool Mentions(string text, string? word) =>
         word is { Length: > 0 } && text.Contains(word, StringComparison.OrdinalIgnoreCase);
