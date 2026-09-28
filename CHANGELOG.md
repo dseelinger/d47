@@ -19,6 +19,12 @@ out per million tokens. Live game state reaches it as a system message, as on th
 a prompt of 512 tokens or more is cached. Sonnet 5 is still offered in the Model row, and a model
 you chose there is kept.
 
+A shield booster that already has Super Capacitors no longer counts as work still to do. The
+Engineers page counted it against Mel Brandon, Felicity Farseer, Lei Cheung and Didi Vatermann, and
+the Fleet page showed the slot as unfinished, because Elite names the effect "Super Capacitors" and
+the plan names it "Super Capacitor". An applied experimental is now matched on the journal's symbol
+rather than its display name.
+
 Page content on every tab now runs to the window's edge, with no border drawn around it, matching
 the design.
 

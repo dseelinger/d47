@@ -554,7 +554,7 @@ public sealed class ShipsMode(
                     // neither — because a row with a blank note reads as a row d47 has nothing to say about
                     // rather than as an empty slot.
                     plan is not null ? plan.Describe() : Describe(module) ?? Vacant(build, fitted),
-                    Outstanding(plan, module))
+                    ShipPlanService.Outstanding(plan, module))
                 {
                     Group = ShipSlot.Heading(slot.Kind),
 
@@ -622,7 +622,7 @@ public sealed class ShipsMode(
             Vacant(build, fitted))
         {
             // The plan is carried out, so the second column has nothing left to say.
-            Met = planned is not null && !Outstanding(planned, module),
+            Met = planned is not null && !ShipPlanService.Outstanding(planned, module),
 
             Draw = draw is not null && draw.TryGetValue(slot.Name, out var figure)
                 ? new LoadoutDraw(Megawatts(figure.Megawatts), figure.Kind == FigureKind.Modelled)
@@ -693,52 +693,6 @@ public sealed class ShipsMode(
     /// <summary>A module's name with the size, the rating and the mount off it, for the blueprint join.</summary>
     private static string? Bare(string? symbol) => EliteSpecifications.Module(symbol)?.Name;
 
-    /// <summary>Whether this slot still has work in it (GitHub issue 38).</summary>
-    private static bool Outstanding(SlotPlan? plan, ShipModule? module)
-    {
-        if (plan is null || plan.IsEmpty)
-        {
-            return false;
-        }
-
-        // Nothing there yet, so everything the plan asks for is still to do.
-        if (module is null)
-        {
-            return true;
-        }
-
-        if (!IsWhatWasWanted(plan, module))
-        {
-            // Something else is in the slot.
-            return true;
-        }
-
-        if (plan.Blueprint is not { Length: > 0 })
-        {
-            // The plan wanted a module and not a roll, and the module is here.
-            return false;
-        }
-
-        // **Both spellings, because a plan and the journal do not use the same one.** A plan stores the
-        // readable name the Commander picked — "System Focused" — and Elite stores a symbol —
-        // `PowerDistributor_PrioritySystems`.
-        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(plan.Blueprint, Readable(module.Blueprint), StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (plan.Grade > 0 && module.BlueprintLevel < plan.Grade)
-        {
-            return true;
-        }
-
-        // An experimental the plan asks for and the roll has not got.
-        return plan.Experimental is { Length: > 0 } wanted
-               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase)
-               && !string.Equals(wanted, Readable(module.Experimental), StringComparison.OrdinalIgnoreCase);
-    }
-
     /// <summary>The blueprint in the Commander's words rather than the journal's (GitHub issue 39).</summary>
     private static string? Readable(string? blueprint) =>
         blueprint is not { Length: > 0 }
@@ -760,25 +714,6 @@ public sealed class ShipsMode(
         return here is { Length: > 0 } && !string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase)
             ? here
             : null;
-    }
-
-    /// <summary>Whether the fitted module is the one the plan asked for (GitHub issue 38).</summary>
-    private static bool IsWhatWasWanted(SlotPlan plan, ShipModule module)
-    {
-        if (plan.Variant is { Length: > 0 } variant)
-        {
-            return string.Equals(variant, module.Item, StringComparison.OrdinalIgnoreCase);
-        }
-
-        if (plan.Module is not { Length: > 0 } wanted)
-        {
-            // A plan asking only for a roll is about whatever is in the slot.
-            return true;
-        }
-
-        var here = EliteSpecifications.Module(module.Item)?.Name;
-
-        return here is { Length: > 0 } && string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>The fitted module's name, where a plan names a different one and both are worth saying.</summary>
@@ -1144,7 +1079,7 @@ public sealed class ShipsMode(
         var fitted = Modules(build).FirstOrDefault(candidate =>
             string.Equals(candidate.Slot, slot, StringComparison.OrdinalIgnoreCase));
 
-        if (Outstanding(plan, fitted)
+        if (ShipPlanService.Outstanding(plan, fitted)
             && ShipGauges.Read(build, Picture(build)?.Loadout, LiveDraw(build)).Power?.Draw.ContainsKey(slot) is true)
         {
             lines.Add(new LoadoutLine(

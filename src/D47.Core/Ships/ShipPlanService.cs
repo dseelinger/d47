@@ -456,28 +456,7 @@ public sealed class ShipPlanService(
             return true;
         }
 
-        if (plan.Blueprint is not { Length: > 0 })
-        {
-            // The plan wanted a module and not a roll, and the module is here.
-            return false;
-        }
-
-        // Both spellings, because a plan and the journal do not use the same one.
-        if (!string.Equals(plan.Blueprint, module.Blueprint, StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(plan.Blueprint, Readable(module.Blueprint), StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (plan.Grade > 0 && module.BlueprintLevel < plan.Grade)
-        {
-            return true;
-        }
-
-        // An experimental the plan asks for and the roll has not got.
-        return plan.Experimental is { Length: > 0 } wanted
-               && !string.Equals(wanted, module.Experimental, StringComparison.OrdinalIgnoreCase)
-               && !string.Equals(wanted, Readable(module.Experimental), StringComparison.OrdinalIgnoreCase);
+        return !AppliedEngineering.Blueprint(plan, module) || !AppliedEngineering.Experimental(plan, module);
     }
 
     /// <summary>Whether the fitted module is the one the plan asked for.</summary>
@@ -498,12 +477,6 @@ public sealed class ShipPlanService(
 
         return here is { Length: > 0 } && string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase);
     }
-
-    /// <summary>The blueprint in the Commander's words rather than the journal's.</summary>
-    private static string? Readable(string? blueprint) =>
-        blueprint is not { Length: > 0 }
-            ? null
-            : BlueprintCatalogue.NameOf(blueprint) ?? blueprint;
 
     /// <summary>
     /// Offers a build to the checklist (Phase 26, "A plan reaches the checklist when you say so").

@@ -78,30 +78,6 @@ public static class EngineerWorkload
         return fitted?.Item is { Length: > 0 } item ? EliteSpecifications.Module(item)?.Name : null;
     }
 
-    /// <summary>Whether the planned blueprint is already applied at or above the planned grade.</summary>
-    private static bool BlueprintApplied(SlotPlan slot, ShipModule? fitted)
-    {
-        if (slot.Blueprint is not { Length: > 0 } wanted)
-        {
-            return true;
-        }
-
-        if (fitted?.Blueprint is not { Length: > 0 } appliedSymbol
-            || BlueprintCatalogue.NameOf(appliedSymbol) is not { Length: > 0 } appliedName
-            || !string.Equals(appliedName, wanted, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return slot.Grade <= 0 || (fitted.BlueprintLevel ?? 0) >= slot.Grade;
-    }
-
-    /// <summary>Whether the planned experimental effect is already applied.</summary>
-    private static bool ExperimentalApplied(SlotPlan slot, ShipModule? fitted) =>
-        slot.Experimental is not { Length: > 0 } wanted
-        || (fitted?.Experimental is { Length: > 0 } appliedName
-            && string.Equals(appliedName, wanted, StringComparison.OrdinalIgnoreCase));
-
     /// <summary>
     /// Everybody who finishes this slot: rolls the outstanding blueprint, or applies the outstanding
     /// experimental effect where the blueprint is either applied already or theirs to roll too.
@@ -109,7 +85,7 @@ public static class EngineerWorkload
     private static IEnumerable<int> EngineersFor(SlotPlan slot, ShipModule? fitted, string? module)
     {
         var ids = new HashSet<int>();
-        var blueprintDone = BlueprintApplied(slot, fitted);
+        var blueprintDone = AppliedEngineering.Blueprint(slot, fitted);
 
         if (slot.Blueprint is { Length: > 0 } blueprint && !blueprintDone)
         {
@@ -122,7 +98,7 @@ public static class EngineerWorkload
             }
         }
 
-        if (slot.Experimental is { Length: > 0 } experimental && !ExperimentalApplied(slot, fitted))
+        if (slot.Experimental is { Length: > 0 } experimental && !AppliedEngineering.Experimental(slot, fitted))
         {
             var appliers = PlannedNeeds.Rollers(experimental, module, null);
 
