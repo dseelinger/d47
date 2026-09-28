@@ -72,8 +72,7 @@ patches in the changelog records what has been worked on, not a rule about numbe
 A group is what ships under one version:
 
 - **2 to 5 issues.** Fewer wastes a release; more delays every fix in it behind the slowest.
-- **They share a subject**, so they fold into one CHANGELOG entry. Precedent: several headset
-  entries were folded into one 0.110.9 entry rather than shipped as separate versions.
+- **They share a subject**, so they fold into one CHANGELOG entry.
 - **They take the same increment.** A group holding both a fix and a new capability is numbered
   by the capability, which makes the patches in it read as features. Split it instead. A single
   issue that adds or removes a capability is worth its own minor even though it is one issue.

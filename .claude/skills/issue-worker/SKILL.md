@@ -98,7 +98,7 @@ Tests are named as behavioural sentences — `ACancelledTurnIsNotAFailureTests`,
 ## The changelog
 
 A change that alters what a user sees, hears or can do gets a `CHANGELOG.md` entry **in the same
-commit**. A test-only or tooling change gets none — `4bff303` is the precedent.
+commit**. A test-only or tooling change gets none.
 
 Prefer folding into the current unreleased heading over opening a new one; several commits routinely
 land under one version. The number is a guess and is reconciled when the release is cut.
@@ -124,8 +124,7 @@ Co-Authored-By: ...
 
 `(#92)` in the subject is a reference and closes nothing. `Fixes #92` is the line GitHub acts on
 when the maintainer pushes to `main`, which is the default branch. Without it the issue stays open
-after the fix has shipped and has to be closed by hand later. `Fixes #93` and `Fixes #50` are the
-precedent.
+after the fix has shipped and has to be closed by hand later.
 
 Put the trailer on the commit that finishes the issue, and on that one only. Where a fix takes
 several commits — a first attempt that did not hold, then the one that did — the earlier commits

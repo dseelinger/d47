@@ -34,7 +34,8 @@ Your output is a **settled decision** and the **build issues it should spawn** â
 enough that an issue worker can take it with a model and an effort, and specific enough that it does
 not come back to you. Say which of them can be done in parallel and which must follow another.
 
-You file those issues yourself, the moment the design is settled.
+You file those issues yourself once the design is settled and the maintainer has acknowledged each
+text (see below).
 
 ## Design within the rules
 
@@ -52,7 +53,7 @@ Read CLAUDE.md before proposing anything. The constraints are not preferences:
   hotkey is still refused to the LLM.
 - **Egress.** Every destination is disclosed from live settings in `EgressDisclosure`. A new
   destination is a new disclosure entry, and that is part of the design, not follow-up work.
-- **Switches.** A two-state control is a `ToggleSwitch` (#223); "checkbox" in a request means one.
+- **Two-state controls.** A two-state control is the 16px Elite checkbox (`LabeledCheckBox`).
 - **No elevation.** Per-user install to a fixed unversioned path, because `data\` lives beside the
   exe.
 - **The asset contract.** `d47.zip` and `d47.zip.sha256` are hardcoded in `UpdateChecker`. Anything

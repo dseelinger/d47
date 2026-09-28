@@ -5,8 +5,7 @@ description: Edit the maintainer's Stream Deck profiles by writing ProfilesV2 JS
 
 # Stream Deck profiles
 
-Verified on this machine against Stream Deck 7.4 and a MK.2. Written down because the same problem
-has been solved from scratch three times, each time through the same failures.
+Verified on this machine against Stream Deck 7.4 and a MK.2.
 
 ## Changing the d47 profile
 
@@ -26,9 +25,8 @@ next run of the script overwrites it.
 ## The one that costs the most time
 
 **Every controller needs `"Type": "Keypad"`.** Without it the profile loads, the pages load, the log
-says nothing, and every action is silently discarded — an empty grid. This single missing field
-caused four straight "imported fine, no buttons" failures, and it is invisible unless you diff
-against a working profile.
+says nothing, and every action is silently discarded, leaving an empty grid. It is invisible unless
+you diff against a working profile.
 
 ```json
 {"Controllers": [{"Type": "Keypad", "Actions": {"0,0": { ... }}}], "Icon": "", "Name": "Page 1"}
@@ -37,8 +35,8 @@ against a working profile.
 ## Diff against a working profile first
 
 Do this before theorising. `ProfilesV2` holds profiles the app itself authored; open one and compare
-field by field. Both the `Type` bug and the key-image path bug were found in a minute this way,
-after hours of guessing. If the maintainer offers to export a profile, take it.
+field by field. This finds both the `Type` bug and the key-image path bug. If the maintainer offers
+to export a profile, take it.
 
 ## Do not import. Write the files.
 

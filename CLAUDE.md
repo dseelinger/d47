@@ -131,11 +131,9 @@ Not `MethodName_Condition_Result`. From the suite: `ACancelledTurnIsNotAFailureT
 
 ### Locate the repository root with `d47.slnx`
 
-19 test files do. Two walk up for `CLAUDE.md`
-(`tests/D47.Core.Tests/Knowledge/FindMaterialAsksTheOneTableTests.cs:111`,
-`TheWordIsCraftExceptWhereItIsNotTests.cs:87`) and one for a docs page. Use `d47.slnx` — a build
-file that must exist for the test to have compiled. Keying off documentation makes the test fail
-when that file moves, which is what happened in this checkout.
+Use `d47.slnx`, a build file that must exist for the test to have compiled. Keying off documentation
+makes the test fail when that file moves. `FindMaterialAsksTheOneTableTests` and
+`TheWordIsCraftExceptWhereItIsNotTests` still walk up for `CLAUDE.md`.
 
 ### Generated data is generated
 
