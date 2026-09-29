@@ -903,6 +903,18 @@ The two voice rows offer the same play glyphs as the voice row, and both auditio
 rather than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven"
 is what you are actually listening for when you cast one.
 
+#### How often an accent flavours the words {#accent-percent}
+
+When the language model writes an NPC's line, and the voice that will speak it has an accent, the
+model can be asked to let the words suit that accent through regional word choice, idiom and
+rhythm. This row sets how often it is asked, from 0 to 100 percent in steps of 10. The default is 50.
+
+The roll is made per line for a reworded canned line, and per speaker for each invented exchange,
+including the carrier's tower and captain. A speaker who misses the roll is written without the accent
+request; the voice is the same either way and keeps its accent. At 0 the request is never made, and
+at 100 it is made for every accented voice. A line spoken exactly as it arrived over comms is never
+sent to the model and is not affected.
+
 #### Forget every voice and pair again {#reset-voices}
 
 This row throws away every voice assignment and chooses again from what your provider offers now.

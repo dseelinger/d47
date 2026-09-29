@@ -29,15 +29,46 @@ public sealed record NpcChatterLine(string Name, string Text, VoiceRole? Role = 
 /// <summary>One voice an exchange may use, cast before the exchange is written (#415).</summary>
 /// <param name="Tag">What the model tags this slot's lines with.</param>
 /// <param name="Name">The NPC's name where they were already heard in this system, or null for a new one.</param>
-public sealed record NpcChatterSlot(string Tag, string VoiceId, string? Accent, Audio.VoiceGender Gender, string? Name = null);
+/// <param name="Flavoured">Whether this exchange asks for the slot's words to suit its accent.</param>
+public sealed record NpcChatterSlot(
+    string Tag,
+    string VoiceId,
+    string? Accent,
+    Audio.VoiceGender Gender,
+    string? Name = null,
+    bool Flavoured = true);
 
 /// <summary>The voices an exchange is written for: the invented speakers' slots and the carrier's two posts.</summary>
 public sealed record NpcChatterRoster(
     IReadOnlyList<NpcChatterSlot> Slots,
     string? TowerAccent = null,
-    string? CaptainAccent = null)
+    string? CaptainAccent = null,
+    bool TowerFlavoured = true,
+    bool CaptainFlavoured = true)
 {
     public static readonly NpcChatterRoster None = new([]);
+
+    /// <summary>The same roster with each accented speaker rolled once against <paramref name="percent"/>.</summary>
+    public NpcChatterRoster Rolled(AccentRoll roll, int percent)
+    {
+        ArgumentNullException.ThrowIfNull(roll);
+
+        return this with
+        {
+            Slots = [.. Slots.Select(slot => slot with { Flavoured = slot.Accent is not { Length: > 0 } || roll.Hits(percent) })],
+            TowerFlavoured = TowerAccent is not { Length: > 0 } || roll.Hits(percent),
+            CaptainFlavoured = CaptainAccent is not { Length: > 0 } || roll.Hits(percent),
+        };
+    }
+
+    /// <summary>Whether the accent sentence goes with this line's speaker.</summary>
+    public bool IsFlavoured(NpcChatterLine line) =>
+        line.Role switch
+        {
+            VoiceRole.TowerControl => TowerFlavoured,
+            VoiceRole.CarrierCaptain => CaptainFlavoured,
+            _ => Slots.FirstOrDefault(slot => slot.VoiceId == line.VoiceId)?.Flavoured ?? true,
+        };
 
     /// <summary>The most NPCs already heard in this system that one exchange is offered back.</summary>
     public const int MostMet = 3;
@@ -283,9 +314,15 @@ public static partial class NpcChatter
                 : $"[{slot.Tag}] {who}{accent} — invent a plain name or call sign";
         });
 
-        var accented = roster.Slots.Any(slot => slot.Accent is { Length: > 0 })
-            ? " Each speaker's words suit their slot's accent. " + SpeakerAccent.Rules
-            : string.Empty;
+        var withAccent = roster.Slots.Where(slot => slot.Accent is { Length: > 0 }).ToList();
+        var flavoured = withAccent.Where(slot => slot.Flavoured).ToList();
+
+        var accented = flavoured.Count == 0
+            ? string.Empty
+            : (flavoured.Count == withAccent.Count
+                ? " Each speaker's words suit their slot's accent. "
+                : $" The words of {string.Join(" and ", flavoured.Select(slot => $"[{slot.Tag}]"))} suit their slot's accent. ")
+                + SpeakerAccent.Rules;
 
         return "The voices are already cast; every invented speaker is one of these slots: "
             + string.Join("; ", described) + "." + accented + " ";
@@ -631,9 +668,22 @@ public static partial class NpcChatter
             .Select(post => $"{post.Post}'s voice has {SpeakerAccent.Article(post.Accent!)} {post.Accent} accent")
             .ToList();
 
-        return posts.Count == 0
-            ? string.Empty
-            : string.Join(" and ", posts) + ". Their words suit it the same way. ";
+        if (posts.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var suit = (
+            roster.TowerFlavoured && roster.TowerAccent is { Length: > 0 },
+            roster.CaptainFlavoured && roster.CaptainAccent is { Length: > 0 }) switch
+        {
+            (true, true) => " Their words suit it the same way. ",
+            (true, false) => $" {TowerName}'s words suit it. ",
+            (false, true) => $" {CaptainName}'s words suit it. ",
+            _ => " ",
+        };
+
+        return string.Join(" and ", posts) + "." + suit;
     }
 
     /// <summary>The carrier's name and a trailing space, or nothing when it has no name to give.</summary>

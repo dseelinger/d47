@@ -8,6 +8,10 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+A new setting, How often an accent flavours the words, sets how often the model is asked to let an NPC's
+words suit the accent of its voice. It applies per line to reworded comms and per speaker to invented
+chatter, from 0 to 100 percent in steps of 10, and defaults to 50. The voice keeps its accent either way.
+
 A named character in an in-game message is now spoken in a voice with the accent
 their name clearly suggests, when the voice provider has one. The language model is asked once per name
 and provider, in the background, and the answer is kept in `data

@@ -5323,6 +5323,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Decides, line by line, which model-written lines get humor.</summary>
     private readonly HumorRoll _humor = new();
 
+    /// <summary>Decides, line by line, which accented NPC lines are written to suit the accent.</summary>
+    private readonly AccentRoll _accent = new();
+
     /// <summary>The humor instruction for one line from a group, or null on a miss.</summary>
     private string? HumorFor(HumorGroup group, bool canBeDirected) =>
         _humor.ForLine(Humor.DialFor(Settings.Current.Persona, group), canBeDirected);
@@ -5350,7 +5353,9 @@ public sealed class AppHost : IDisposable
                     Turns.BackgroundModel,
                     brief.NeedsPersona
                         ? Personas.RenderBlock(personalityEnabled: true)
-                        : SpeakerAccent.Join(brief.Speaker, SpeakerAccent.For(CastFor(announcement), announcement)),
+                        : SpeakerAccent.Join(
+                            brief.Speaker,
+                            SpeakerAccent.For(CastFor(announcement), announcement, _accent, Settings.Current.Speech.AccentPercent)),
                     StoryFor(brief),
                     ask,
                     brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
@@ -5405,7 +5410,7 @@ public sealed class AppHost : IDisposable
             docked ? location?.StationAllegiance : null,
             posts.AccentOf(posts.For(VoiceRole.TowerControl).VoiceId),
             posts.AccentOf(posts.For(VoiceRole.CarrierCaptain).VoiceId),
-            _fight.Snapshot.Dead);
+            _fight.Snapshot.Dead).Rolled(_accent, Settings.Current.Speech.AccentPercent);
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
@@ -5434,9 +5439,11 @@ public sealed class AppHost : IDisposable
 
         foreach (var line in NpcChatter.Parse(script, kind, carrier, roster))
         {
-            var accent = SpeakerAccent.Sentence(line.Role is { } post
-                ? posts.AccentOf(posts.For(post).VoiceId)
-                : npcs.AccentOf(line.VoiceId));
+            var accent = roster.IsFlavoured(line)
+                ? SpeakerAccent.Sentence(line.Role is { } post
+                    ? posts.AccentOf(posts.For(post).VoiceId)
+                    : npcs.AccentOf(line.VoiceId))
+                : null;
 
             // **Per line rather than per exchange** (#338).
             var said = ContradictedClaims.AboutTheCommandersShip(line.Text)

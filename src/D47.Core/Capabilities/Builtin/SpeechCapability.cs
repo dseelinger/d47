@@ -46,6 +46,7 @@ public static class SpeechCapability
     public const string MinutePriceKey = "speech.minutePrice";
     public const string SpentKey = "speech.spent";
     public const string SpeakNpcKey = "speech.speakNpcMessages";
+    public const string AccentPercentKey = "speech.accentPercent";
 
     /// <summary>
     /// The five per-channel rows (#299), each named for the row rather than for the raw <c>Channel</c>
@@ -775,6 +776,31 @@ public static class SpeechCapability
                     Write = (s, v) => s with
                     {
                         Speech = s.Speech with { SpeakIncomingMessages = v is not "false" and not null },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = AccentPercentKey,
+                Advanced = true,
+                Label = "How often an accent flavours the words",
+                Help = "The share of NPC lines written to suit the accent of the voice that speaks them. "
+                    + "The voice keeps its accent either way.",
+                Kind = SettingKind.Number,
+                Step = 10,
+                Minimum = 0,
+                Maximum = 100,
+                Unit = "%",
+                DefaultDisplay = "50",
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "accent-percent",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.AccentPercent.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { AccentPercent = Clamped(v, 100, s.Speech.AccentPercent) },
                     },
                 },
             },
@@ -1553,4 +1579,10 @@ public static class SpeechCapability
             System.Globalization.CultureInfo.InvariantCulture, out var parsed)
             ? Math.Clamp(parsed, min, max)
             : fallback;
+
+    private static int Clamped(string? value, int most, int unchanged) =>
+        int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var number)
+            ? Math.Clamp(number, 0, most)
+            : unchanged;
+
 }

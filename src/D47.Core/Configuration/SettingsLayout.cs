@@ -509,6 +509,10 @@ public static class SettingsLayout
                                 E("speech.speakSquadronChat", under: true),
                                 E("speech.speakDirectMessages", under: true),
                             ]),
+                        G(
+                            "How NPCs sound",
+                            "How often the words written for an accented voice suit its accent.",
+                            [E("speech.accentPercent")]),
                     ]),
             ]),
         new SettingsArea(

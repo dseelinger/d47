@@ -739,6 +739,9 @@ public sealed record SpeechSettings
     /// </summary>
     public bool SpeakIncomingMessages { get; init; }
 
+    /// <summary>The chance, 0-100, that an accented NPC line is written to suit its accent. Clamped where it is read.</summary>
+    public int AccentPercent { get; init; } = 50;
+
     /// <summary>Whether NPC chatter is included when messages are spoken.</summary>
     public bool SpeakNpcMessages { get; init; }
 

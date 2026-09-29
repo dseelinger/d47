@@ -26,16 +26,19 @@ public static class SpeakerAccent
     }
 
     /// <summary>
-    /// The accent brief for the voice that will speak an NPC's line, or null for a core, the crew, or a
-    /// voice whose listing names no accent.
+    /// The accent brief for the voice that will speak an NPC's line, or null for a core, the crew, a
+    /// voice whose listing names no accent, or a line whose roll against <paramref name="percent"/> misses.
     /// </summary>
-    public static string? For(VoiceCast cast, Announcement announcement)
+    public static string? For(VoiceCast cast, Announcement announcement, AccentRoll roll, int percent)
     {
         ArgumentNullException.ThrowIfNull(announcement);
+        ArgumentNullException.ThrowIfNull(roll);
 
         return announcement.Voice is VoiceRole.Comms or VoiceRole.CarrierCaptain or VoiceRole.TowerControl
-            ? Sentence(cast.AccentOf(VoiceOf(cast, announcement).VoiceId))
-            : null;
+            && Sentence(cast.AccentOf(VoiceOf(cast, announcement).VoiceId)) is { } sentence
+            && roll.Hits(percent)
+                ? sentence
+                : null;
     }
 
     /// <summary>"Your voice has a British accent." and the rules, or null for no accent.</summary>

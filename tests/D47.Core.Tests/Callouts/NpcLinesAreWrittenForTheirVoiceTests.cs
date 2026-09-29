@@ -43,7 +43,7 @@ public class NpcLinesAreWrittenForTheirVoiceTests
             CommsChannel = "npc",
         };
 
-        var brief = SpeakerAccent.For(cast, line);
+        var brief = SpeakerAccent.For(cast, line, AccentRoll.Always, 100);
         var spoken = SpeakerAccent.VoiceOf(cast, line).VoiceId;
 
         Assert.NotNull(brief);
@@ -59,7 +59,7 @@ public class NpcLinesAreWrittenForTheirVoiceTests
         var line = new Announcement("carrier.welcome", "Welcome aboard.") { Voice = VoiceRole.TowerControl };
 
         Assert.Equal("ie-woman", SpeakerAccent.VoiceOf(cast, line).VoiceId);
-        Assert.StartsWith("Your voice has an Irish accent.", SpeakerAccent.For(cast, line), StringComparison.Ordinal);
+        Assert.StartsWith("Your voice has an Irish accent.", SpeakerAccent.For(cast, line, AccentRoll.Always, 100), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class NpcLinesAreWrittenForTheirVoiceTests
         var cast = Cast();
         cast.DefaultVoice = "gb-woman";
 
-        Assert.Null(SpeakerAccent.For(cast, new Announcement("arrival", "We're here.")));
+        Assert.Null(SpeakerAccent.For(cast, new Announcement("arrival", "We're here."), AccentRoll.Always, 100));
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public class NpcLinesAreWrittenForTheirVoiceTests
         cast.Assign(VoiceRole.CarrierCaptain, "plain");
         cast.Assign(VoiceRole.TowerControl, "bare");
 
-        Assert.Null(SpeakerAccent.For(cast, new Announcement("carrier.a", "x") { Voice = VoiceRole.CarrierCaptain }));
-        Assert.Null(SpeakerAccent.For(cast, new Announcement("carrier.b", "x") { Voice = VoiceRole.TowerControl }));
+        Assert.Null(SpeakerAccent.For(cast, new Announcement("carrier.a", "x") { Voice = VoiceRole.CarrierCaptain }, AccentRoll.Always, 100));
+        Assert.Null(SpeakerAccent.For(cast, new Announcement("carrier.b", "x") { Voice = VoiceRole.TowerControl }, AccentRoll.Always, 100));
         Assert.Equal("a brief", SpeakerAccent.Join("a brief", null));
     }
 
