@@ -12,6 +12,12 @@ Only an explicit request to deliberate now gets Max effort: "carefully", "think 
 "max effort" and "maximum effort". "Work out", "figure out", "explain why", "walk me through" and "in
 detail" get High, and "think about" no longer changes the effort.
 
+When a conversation turn with an Anthropic model calls tools, each later round now sends back the
+model's reasoning from the rounds before it. Nothing else sent earlier in the turn changes: memory,
+standing directions and the tool list stay as they were, the last round is still shown the tools but
+may not call them, and game state that changed while a tool ran is added after the tool results. The
+reasoning is not kept once the turn ends.
+
 A model turn that streamed thinking or asked for a tool before it failed is no longer sent again. It
 was billed a second time and delayed the answer; ask again instead. A turn that fails before the model
 sends anything is still retried. A timeout from d47 no longer marks the model unavailable, so the next

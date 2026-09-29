@@ -299,7 +299,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             json.WriteString("content", request.Prompt.RenderCachedSystemBlock());
             json.WriteEndObject();
 
-            foreach (var turn in OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: false, out _))
+            foreach (var turn in OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: false))
             {
                 WriteTurn(json, turn);
             }
@@ -343,7 +343,9 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                 json.WriteEndObject();
             }
 
-            if (request.Prompt.Tools.Count > 0 && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools))
+            if (request.ToolCallsAllowed
+                && request.Prompt.Tools.Count > 0
+                && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools))
             {
                 json.WriteStartArray("tools");
 

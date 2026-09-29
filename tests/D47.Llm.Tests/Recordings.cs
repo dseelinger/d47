@@ -69,6 +69,22 @@ internal static class Recordings
                 ("I", index),
                 ("T", JsonSerializer.Serialize(text))));
 
+    public static string SignatureDelta(string signature, int index = 0) =>
+        RecordedEndpoint.Event(
+            "content_block_delta",
+            Fill(
+                """{"type":"content_block_delta","index":$I$,"delta":{"type":"signature_delta","signature":$S$}}""",
+                ("I", index),
+                ("S", JsonSerializer.Serialize(signature))));
+
+    public static string RedactedThinkingBlockStart(string data, int index = 0) =>
+        RecordedEndpoint.Event(
+            "content_block_start",
+            Fill(
+                """{"type":"content_block_start","index":$I$,"content_block":{"type":"redacted_thinking","data":$D$}}""",
+                ("I", index),
+                ("D", JsonSerializer.Serialize(data))));
+
     public static string ToolUseBlockStart(string id, string name, int index = 0) =>
         RecordedEndpoint.Event(
             "content_block_start",

@@ -314,21 +314,9 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
             json.WriteStartArray("input");
 
-            var turns = OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: true, out var trailingState);
-
-            foreach (var turn in turns)
+            foreach (var turn in OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: true))
             {
                 WriteTurn(json, turn);
-            }
-
-            if (trailingState is { Length: > 0 })
-            {
-                // Below everything cached, so attaching it costs no prefix — and under the role that carries
-                // operator authority, which is what stops journal content being able to forge it.
-                json.WriteStartObject();
-                json.WriteString("role", "developer");
-                json.WriteString("content", trailingState);
-                json.WriteEndObject();
             }
 
             json.WriteEndArray();
@@ -355,10 +343,12 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
             json.WriteBoolean("store", false);
             json.WriteBoolean("stream", true);
 
-            var tools = request.Prompt.Tools.Count > 0
+            var tools = request.ToolCallsAllowed
+                        && request.Prompt.Tools.Count > 0
                         && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools);
+            var webSearch = request.ToolCallsAllowed && request.WebSearch;
 
-            if (tools || request.WebSearch)
+            if (tools || webSearch)
             {
                 json.WriteStartArray("tools");
 
@@ -378,7 +368,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
                 // Appended after the registered tools rather than mixed in, so turning it on leaves every
                 // byte of the existing advertisement where it was.
-                if (request.WebSearch)
+                if (webSearch)
                 {
                     json.WriteStartObject();
                     json.WriteString("type", "web_search");
@@ -388,7 +378,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
                 json.WriteEndArray();
             }
 
-            if (request.WebSearch)
+            if (webSearch)
             {
                 json.WriteNumber("max_tool_calls", MaxWebSearchesPerTurn);
             }
@@ -413,8 +403,10 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
         if (turn.Text is { } text)
         {
+            // Operator state goes under the role that carries operator authority, which is what stops journal
+            // content being able to forge it.
             json.WriteStartObject();
-            json.WriteString("role", turn.IsAssistant ? "assistant" : "user");
+            json.WriteString("role", turn.IsOperator ? "developer" : turn.IsAssistant ? "assistant" : "user");
             json.WriteString("content", text);
             json.WriteEndObject();
         }

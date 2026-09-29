@@ -72,6 +72,10 @@ internal sealed class RecordedEndpoint : IDisposable
     public static RecordedEndpoint Streaming(params string[] events) =>
         new((200, "text/event-stream", string.Concat(events)));
 
+    /// <summary>Replays one stream per request, in order, which is what a turn of several rounds looks like.</summary>
+    public static RecordedEndpoint StreamingEach(params string[][] rounds) =>
+        new([.. rounds.Select(events => (200, "text/event-stream", string.Concat(events)))]);
+
     /// <summary>Replays an error, so the failure translation can be driven by status code.</summary>
     public static RecordedEndpoint Failing(int status, string body) =>
         new((status, "application/json", body));

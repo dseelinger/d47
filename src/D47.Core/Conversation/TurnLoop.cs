@@ -1110,9 +1110,19 @@ public sealed class TurnLoop(
         IReadOnlyList<ConversationContent>? closingContent = null;
         string? standingAdded = null;
 
+        // Read once for the whole turn: a replayed thinking block is refused, or dropped, when anything before
+        // it has changed since it was written.
+        var persona = speaker?.Brief ?? Persona;
+        var aboutMe = AboutMe;
+        var recall = speaker is null ? Recall : null;
+        var directions = speaker is null ? Directions : null;
+
+        // The live game state an earlier round sent, which stays where it was sent.
+        string? stateSent = null;
+
         for (var round = 1; ; round++)
         {
-            // The last round is offered no tools at all.
+            // The last round may not call the tools it is still shown.
             var lastRound = round > MaxToolRounds;
 
             var remaining = OutputCeilingFor(effort) - usage.OutputTokens;
@@ -1128,6 +1138,10 @@ public sealed class TurnLoop(
                 yield return new TurnEvent.TextDelta(" ");
             }
 
+            // After the first round, only a state that has changed is sent, after everything already sent.
+            var live = LiveGameState?.Invoke();
+            var liveToSend = round == 1 || !string.Equals(live, stateSent, StringComparison.Ordinal) ? live : null;
+
             var request = new LlmRequest
             {
                 Model = chosenModel,
@@ -1136,22 +1150,22 @@ public sealed class TurnLoop(
 
                 // Warm, on every round including the last one (#98).
                 Sampling = LlmSampling.Conversation,
+                WebSearch = webSearch,
 
-                // Withdrawn on the last round with the tools, and for the same reason: that round exists to
-                // force an answer out of what is already known.
-                WebSearch = webSearch && !lastRound,
+                // The last round exists to force an answer out of what is already known.
+                ToolCallsAllowed = !lastRound,
                 Prompt = new PromptAssembly
                 {
-                    Tools = lastRound ? [] : advertised,
+                    Tools = advertised,
                     ToolsSearchable = searchable,
-                    Persona = speaker?.Brief ?? Persona,
+                    Persona = persona,
                     CanBeDirected = directed,
-                    AboutMe = AboutMe,
-                    Recall = speaker is null ? Recall : null,
-                    Directions = speaker is null ? Directions : null,
+                    AboutMe = aboutMe,
+                    Recall = recall,
+                    Directions = directions,
                     History = trimmed ? [.. pending] : [.. transcript, .. pending],
-                    LiveGameState = LiveGameState?.Invoke(),
-                    Humor = humor,
+                    LiveGameState = liveToSend,
+                    Humor = round == 1 ? humor : null,
                 },
             };
 
@@ -1242,11 +1256,23 @@ public sealed class TurnLoop(
                     search.Found.Count == 0 ? "nothing" : string.Join(", ", search.Found));
             }
 
-            if (outcome.ToolUses.Count == 0)
+            // A call on the last round is not run, and not kept: a tool_use with no result is refused next turn.
+            if (outcome.ToolUses.Count == 0 || lastRound)
             {
-                closingContent = outcome.Content;
+                closingContent = [.. outcome.Content.Where(part => part is not ConversationContent.ToolUse)];
                 break;
             }
+
+            // The state this round sent, kept on the message it followed.
+            if (request.Prompt.TrailingState is { } trailing)
+            {
+                pending[^1] = pending[^1] with
+                {
+                    Content = [.. pending[^1].Content, new ConversationContent.TrailingState(trailing)],
+                };
+            }
+
+            stateSent = liveToSend ?? stateSent;
 
             // The assistant's own turn, carrying the calls it asked for, in the order they arrived.
             pending.Add(new ConversationMessage(ConversationRole.Assistant, [.. outcome.Content]));
@@ -1385,7 +1411,7 @@ public sealed class TurnLoop(
         if (turnOutcome == TurnOutcome.Answered)
         {
             // The tool rounds are committed too, not just the question and the answer.
-            transcript.AddRange(pending);
+            transcript.AddRange(pending.Select(Settled));
             transcript.Add(Closing(answer, closingContent, standingAdded));
 
             Bound(transcript);
@@ -1420,7 +1446,7 @@ public sealed class TurnLoop(
             return new ConversationMessage(ConversationRole.Assistant, answer);
         }
 
-        List<ConversationContent> content = [.. closingContent];
+        List<ConversationContent> content = [.. closingContent.Where(part => part is not ConversationContent.ThinkingBlock)];
 
         if (standingAdded is not null)
         {
@@ -1429,6 +1455,19 @@ public sealed class TurnLoop(
 
         return new ConversationMessage(ConversationRole.Assistant, content);
     }
+
+    /// <summary>The message without the parts that belong only to the turn that produced it.</summary>
+    private static ConversationMessage Settled(ConversationMessage message) =>
+        message.Content.Any(part => part is ConversationContent.ThinkingBlock or ConversationContent.TrailingState)
+            ? message with
+            {
+                Content =
+                [
+                    .. message.Content.Where(
+                        part => part is not (ConversationContent.ThinkingBlock or ConversationContent.TrailingState)),
+                ],
+            }
+            : message;
 
     /// <summary>What one round of the model turn produced.</summary>
     private sealed class RoundOutcome
@@ -1594,6 +1633,11 @@ public sealed class TurnLoop(
 
                     case LlmStreamEvent.Opaque opaque:
                         outcome.Add(new ConversationContent.Opaque(activeProvider.Id, opaque.Json));
+                        receivedContent = true;
+                        break;
+
+                    case LlmStreamEvent.ThinkingBlock thinking:
+                        outcome.Add(new ConversationContent.ThinkingBlock(activeProvider.Id, thinking.Json));
                         receivedContent = true;
                         break;
 

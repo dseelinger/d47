@@ -135,6 +135,11 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         var searchResults = new Dictionary<long, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>();
         var queries = new Dictionary<string, string>(StringComparer.Ordinal);
 
+        // A thinking block arrives as a start, a run of thinking deltas and a signature delta; a redacted one
+        // whole in its start event. Both go back as they came.
+        var thinkingBlocks = new Dictionary<long, PendingThinking>();
+        var redactedBlocks = new Dictionary<long, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>();
+
         var stream = _client.Messages.CreateStreaming(BuildParameters(request), cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
 
@@ -225,7 +230,19 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 }
                 else if (blockDelta.Delta.TryPickThinking(out var thinking))
                 {
+                    if (thinkingBlocks.TryGetValue(blockDelta.Index, out var reasoning))
+                    {
+                        reasoning.Thinking.Append(thinking!.Thinking);
+                    }
+
                     yield return new LlmStreamEvent.ThinkingDelta(thinking!.Thinking);
+                }
+                else if (blockDelta.Delta.TryPickSignature(out var signature))
+                {
+                    if (thinkingBlocks.TryGetValue(blockDelta.Index, out var reasoning))
+                    {
+                        reasoning.Signature.Append(signature!.Signature);
+                    }
                 }
                 else if (blockDelta.Delta.TryPickInputJson(out var inputJson))
                 {
@@ -253,6 +270,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 else if (blockStart.ContentBlock.TryPickToolSearchToolResult(out var searchResult))
                 {
                     searchResults[blockStart.Index] = searchResult!.RawData;
+                }
+                else if (blockStart.ContentBlock.TryPickThinking(out var thinkingStart))
+                {
+                    thinkingBlocks[blockStart.Index] = new PendingThinking(thinkingStart!.Thinking, thinkingStart.Signature);
+                }
+                else if (blockStart.ContentBlock.TryPickRedactedThinking(out var redactedStart))
+                {
+                    redactedBlocks[blockStart.Index] = redactedStart!.RawData;
                 }
             }
             else if (streamEvent.TryPickContentBlockStop(out var blockStop))
@@ -284,6 +309,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                         : string.Empty;
 
                     yield return new LlmStreamEvent.ToolSearched(query, ToolsFound(found));
+                }
+                else if (thinkingBlocks.Remove(blockStop.Index, out var reasoning))
+                {
+                    yield return new LlmStreamEvent.ThinkingBlock(reasoning.Serialize());
+                }
+                else if (redactedBlocks.Remove(blockStop.Index, out var redacted))
+                {
+                    yield return new LlmStreamEvent.ThinkingBlock(Serialize(redacted));
                 }
             }
             else if (streamEvent.TryPickStart(out var start))
@@ -325,10 +358,16 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         {
             var role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User;
 
-            // Another provider's blocks are not sent, and nor are this provider's on a request that defers no
-            // tool: a replayed tool_reference to a tool the request does not declare is a 400.
+            // Another provider's blocks are not sent, and nor are this provider's tool search blocks on a request
+            // that defers no tool: a replayed tool_reference to a tool the request does not declare is a 400.
             var parts = turn.Content
-                .Where(part => part is not ConversationContent.Opaque opaque || (opaque.ProviderId == Id && deferring))
+                .Where(part => part switch
+                {
+                    ConversationContent.Opaque opaque => opaque.ProviderId == Id && deferring,
+                    ConversationContent.ThinkingBlock thinking => thinking.ProviderId == Id,
+                    ConversationContent.TrailingState => false,
+                    _ => true,
+                })
                 .ToList();
 
             if (parts.Count == 0)
@@ -343,6 +382,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 blocksSinceBreakpoint++;
                 lastBlocks = null;
                 lastText = only.Value;
+                AttachSentState(turn);
                 continue;
             }
 
@@ -391,61 +431,83 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                         break;
 
                     case ConversationContent.Opaque opaque:
-                        using (var document = System.Text.Json.JsonDocument.Parse(opaque.Json))
-                        {
-                            blocks.Add(new ContentBlockParam(document.RootElement.Clone()));
-                        }
+                        blocks.Add(Block(opaque.Json));
+                        break;
 
+                    case ConversationContent.ThinkingBlock thinking:
+                        blocks.Add(Block(thinking.Json));
                         break;
                 }
             }
 
             messages.Add(new MessageParam { Role = role, Content = blocks });
             lastBlocks = blocks;
+            AttachSentState(turn);
         }
 
-        // Live game state goes after the cached history either way.
-        if (!string.IsNullOrWhiteSpace(prompt.TrailingState))
+        // Live game state goes after the cached history either way, and state an earlier round of this turn sent
+        // goes where that round put it, so that each round's request begins with the whole of the last one.
+        void AttachSentState(ConversationMessage turn)
         {
+            foreach (var sent in turn.Content.OfType<ConversationContent.TrailingState>())
+            {
+                AttachState(sent.Value);
+            }
+        }
+
+        void AttachState(string? state)
+        {
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                return;
+            }
+
             if (capabilities.SupportsOperatorSystemMessages)
             {
-                messages.Add(new MessageParam { Role = Role.System, Content = prompt.TrailingState });
+                messages.Add(new MessageParam { Role = Role.System, Content = state });
             }
             else if (messages.Count > 0)
             {
                 var last = messages[^1];
-                var reminder = $"<system-reminder>\n{prompt.TrailingState}\n</system-reminder>";
+                var reminder = $"<system-reminder>\n{state}\n</system-reminder>";
 
                 // Folded into the last message rather than added after it: a message of its own would be a
                 // second user turn in a row, and in the middle of a tool round it would stand between a
                 // tool_use and the result answering it.
-                messages[^1] = lastBlocks is null
-                    ? new MessageParam { Role = last.Role, Content = $"{reminder}\n\n{lastText}" }
-
+                if (lastBlocks is null)
+                {
+                    lastText = $"{reminder}\n\n{lastText}";
+                    messages[^1] = new MessageParam { Role = last.Role, Content = lastText };
+                }
+                else
+                {
                     // After the blocks rather than before them, because a user message carrying tool results
                     // has to open with them.
-                    : new MessageParam
-                    {
-                        Role = last.Role,
-                        Content = new List<ContentBlockParam>(
-                            [.. lastBlocks, new TextBlockParam { Text = reminder }]),
-                    };
+                    lastBlocks = [.. lastBlocks, new TextBlockParam { Text = reminder }];
+                    messages[^1] = new MessageParam { Role = last.Role, Content = lastBlocks };
+                }
             }
         }
+
+        AttachState(prompt.TrailingState);
+
+        // Position 1, serialised before everything else.
+        // The search tool first when any tool is deferred, because it is the one that loads them.
+        List<ToolUnion> tools =
+        [
+            .. deferring ? [new ToolUnion(ToolSearchTool())] : Array.Empty<ToolUnion>(),
+            .. prompt.Tools.Select(Translate),
+            .. WebSearchTool(request),
+        ];
 
         return new MessageCreateParams
         {
             Model = request.Model,
             MaxTokens = request.MaxOutputTokens,
+            Tools = tools,
 
-            // Position 1, serialised before everything else.
-            // The search tool first when any tool is deferred, because it is the one that loads them.
-            Tools =
-            [
-                .. deferring ? [new ToolUnion(ToolSearchTool())] : Array.Empty<ToolUnion>(),
-                .. prompt.Tools.Select(Translate),
-                .. WebSearchTool(request),
-            ],
+            // The tools stay declared when calls are not allowed, so the prefix does not change.
+            ToolChoice = !request.ToolCallsAllowed && tools.Count > 0 ? new ToolChoice(new ToolChoiceNone()) : null,
 
             // The cache breakpoint.
             System = new List<TextBlockParam>
@@ -466,6 +528,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 : null,
             Messages = messages,
         };
+    }
+
+    /// <summary>A block kept as JSON, as the SDK sends it.</summary>
+    private static ContentBlockParam Block(string json)
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+
+        return new ContentBlockParam(document.RootElement.Clone());
     }
 
     /// <summary>The web search declaration, or nothing.</summary>
@@ -489,6 +559,30 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         public string Name { get; } = name;
 
         public System.Text.StringBuilder Input { get; } = new();
+    }
+
+    /// <summary>A thinking block being assembled from the stream.</summary>
+    private sealed class PendingThinking(string thinking, string signature)
+    {
+        public System.Text.StringBuilder Thinking { get; } = new(thinking);
+
+        public System.Text.StringBuilder Signature { get; } = new(signature);
+
+        public string Serialize()
+        {
+            using var buffer = new MemoryStream();
+
+            using (var writer = new System.Text.Json.Utf8JsonWriter(buffer))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("type", "thinking");
+                writer.WriteString("thinking", Thinking.ToString());
+                writer.WriteString("signature", Signature.ToString());
+                writer.WriteEndObject();
+            }
+
+            return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+        }
     }
 
     /// <summary>The BM25 tool search declaration.</summary>

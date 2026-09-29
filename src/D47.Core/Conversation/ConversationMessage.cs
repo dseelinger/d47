@@ -26,6 +26,18 @@ public abstract record ConversationContent
     /// <paramref name="ProviderId"/> and to no other. Never drawn or spoken.
     /// </summary>
     public sealed record Opaque(string ProviderId, string Json) : ConversationContent;
+
+    /// <summary>
+    /// A reasoning block, sent back verbatim and in place to <paramref name="ProviderId"/> on the later rounds
+    /// of the turn that produced it. Never stored past that turn.
+    /// </summary>
+    public sealed record ThinkingBlock(string ProviderId, string Json) : ConversationContent;
+
+    /// <summary>
+    /// <see cref="PromptAssembly.TrailingState"/> as an earlier round of this turn sent it, rendered after the
+    /// rest of its message so later rounds send the same prefix. Never stored past that turn.
+    /// </summary>
+    public sealed record TrailingState(string Value) : ConversationContent;
 }
 
 /// <summary>One turn of conversation history.</summary>

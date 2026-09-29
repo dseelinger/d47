@@ -10,19 +10,18 @@ internal sealed record WireTurn(
     bool IsAssistant,
     IReadOnlyList<ConversationContent.ToolResult> Results,
     string? Text,
-    IReadOnlyList<ConversationContent.ToolUse> Calls);
+    IReadOnlyList<ConversationContent.ToolUse> Calls,
+    bool IsOperator = false);
 
 /// <summary>Turning an assembled prompt into wire turns.</summary>
 internal static class OpenAiPrompt
 {
     /// <summary>
-    /// The conversation, with live game state attached (position 7, below the cache breakpoint).
+    /// The conversation, with live game state attached (position 7, below the cache breakpoint), and state an
+    /// earlier round of this turn sent attached where that round put it. <paramref name="operatorRoleAvailable"/>
+    /// chooses how.
     /// </summary>
-    /// <paramref name="operatorRoleAvailable"/>chooses how.</paramref>
-    public static IReadOnlyList<WireTurn> Flatten(
-        PromptAssembly prompt,
-        bool operatorRoleAvailable,
-        out string? trailingState)
+    public static IReadOnlyList<WireTurn> Flatten(PromptAssembly prompt, bool operatorRoleAvailable)
     {
         ArgumentNullException.ThrowIfNull(prompt);
 
@@ -30,8 +29,9 @@ internal static class OpenAiPrompt
 
         foreach (var message in prompt.History)
         {
-            // Opaque blocks are never sent over the OpenAI protocols; a message holding only opaque blocks is skipped.
-            if (message.Content.Count > 0 && message.Content.All(part => part is ConversationContent.Opaque))
+            // Provider blocks are never sent over the OpenAI protocols; a message holding only those is skipped.
+            if (message.Content.Count > 0
+                && message.Content.All(part => part is ConversationContent.Opaque or ConversationContent.ThinkingBlock))
             {
                 continue;
             }
@@ -62,6 +62,8 @@ internal static class OpenAiPrompt
                         break;
 
                     case ConversationContent.Opaque:
+                    case ConversationContent.ThinkingBlock:
+                    case ConversationContent.TrailingState:
                         break;
                 }
             }
@@ -71,31 +73,41 @@ internal static class OpenAiPrompt
                 results,
                 text.Length > 0 ? text.ToString() : null,
                 calls));
+
+            foreach (var sent in message.Content.OfType<ConversationContent.TrailingState>())
+            {
+                Attach(turns, sent.Value, operatorRoleAvailable);
+            }
         }
 
-        trailingState = null;
+        Attach(turns, prompt.TrailingState, operatorRoleAvailable);
 
-        if (string.IsNullOrWhiteSpace(prompt.TrailingState))
+        return turns;
+    }
+
+    private static void Attach(List<WireTurn> turns, string? state, bool operatorRoleAvailable)
+    {
+        if (string.IsNullOrWhiteSpace(state))
         {
-            return turns;
+            return;
         }
 
         if (operatorRoleAvailable)
         {
-            trailingState = prompt.TrailingState;
-            return turns;
+            turns.Add(new WireTurn(IsAssistant: false, [], state, [], IsOperator: true));
+            return;
         }
 
         // The fallback: the reminder goes inside the last message the model reads, so a strict chat template
         // sees alternating roles and a small model answers the Commander or the tool rather than the reminder.
-        var reminder = $"<system-reminder>\n{prompt.TrailingState}\n</system-reminder>";
+        var reminder = $"<system-reminder>\n{state}\n</system-reminder>";
 
         if (turns.Count > 0 && turns[^1] is { IsAssistant: false } last)
         {
             if (last.Text is { } text)
             {
                 turns[^1] = last with { Text = $"{text}\n\n{reminder}" };
-                return turns;
+                return;
             }
 
             if (last.Results.Count > 0)
@@ -103,12 +115,10 @@ internal static class OpenAiPrompt
                 var results = last.Results.ToList();
                 results[^1] = results[^1] with { Content = $"{results[^1].Content}\n\n{reminder}" };
                 turns[^1] = last with { Results = results };
-                return turns;
+                return;
             }
         }
 
         turns.Add(new WireTurn(IsAssistant: false, [], reminder, []));
-
-        return turns;
     }
 }

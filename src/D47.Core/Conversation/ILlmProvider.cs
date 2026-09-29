@@ -119,6 +119,9 @@ public abstract record LlmStreamEvent
     /// <summary>A content block that must go back to this provider unchanged, in its place in the reply.</summary>
     public sealed record Opaque(string Json) : LlmStreamEvent;
 
+    /// <summary>A finished reasoning block, which must go back to this provider unchanged on the turn's later rounds.</summary>
+    public sealed record ThinkingBlock(string Json) : LlmStreamEvent;
+
     /// <summary>The provider searched the deferred tools, for the log. Its blocks arrive as <see cref="Opaque"/>.</summary>
     public sealed record ToolSearched(string Query, IReadOnlyList<string> Found) : LlmStreamEvent;
 
@@ -154,6 +157,9 @@ public sealed record LlmRequest
 
     /// <summary>Whether the provider may search the web for this turn.</summary>
     public bool WebSearch { get; init; }
+
+    /// <summary>Whether the model may call a tool. When false the tools are still declared, but not callable.</summary>
+    public bool ToolCallsAllowed { get; init; } = true;
 }
 
 /// <summary>The seam.</summary>

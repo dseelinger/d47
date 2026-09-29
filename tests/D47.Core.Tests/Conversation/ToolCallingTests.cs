@@ -239,7 +239,34 @@ public class ToolCallingTests
 
         // The same call with the same arguments three times over: only the first is actually run (#87).
         Assert.Single(spy.Calls);
-        Assert.Empty(provider.Requests[3].Prompt.Tools);
+
+        // Still shown the tools, so the prefix does not change, but not allowed to call them.
+        Assert.Equal(provider.Requests[0].Prompt.Tools, provider.Requests[3].Prompt.Tools);
+        Assert.True(provider.Requests[2].ToolCallsAllowed);
+        Assert.False(provider.Requests[3].ToolCallsAllowed);
+    }
+
+    [Fact]
+    public async Task ACallOnTheLastRoundIsNeitherRunNorKept()
+    {
+        var spy = new SpyTool();
+        var registry = CapabilityRegistry.Build([spy.Describe()]);
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Calling("c1", "look_up_distance", """{"system":"Sol"}"""),
+            RoundScriptedLlmProvider.Calling("c2", "look_up_distance", """{"system":"Achenar"}"""),
+            RoundScriptedLlmProvider.Saying("Never asked for."));
+
+        var loop = Build(registry, provider);
+        loop.MaxToolRounds = 1;
+
+        await RunAsync(loop, "how far is Sol");
+
+        Assert.Equal(2, provider.CallCount);
+        Assert.Single(spy.Calls);
+        Assert.DoesNotContain(
+            loop.History.SelectMany(message => message.Content),
+            part => part is ConversationContent.ToolUse { Id: "c2" });
     }
 
     [Fact]
