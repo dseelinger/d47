@@ -44,7 +44,7 @@ public sealed record NpcChatterRoster(
 
     /// <summary>
     /// Casts the slots for one exchange from the NPC cast: new voices for the speakers the kind needs,
-    /// and the NPCs already heard here with the voices they already have.
+    /// and the NPCs already heard here with the voices they already have, less any in <paramref name="dead"/>.
     /// </summary>
     public static NpcChatterRoster Cast(
         VoiceCast cast,
@@ -53,7 +53,8 @@ public sealed record NpcChatterRoster(
         string? system,
         string? allegiance = null,
         string? towerAccent = null,
-        string? captainAccent = null)
+        string? captainAccent = null,
+        IReadOnlySet<string>? dead = null)
     {
         ArgumentNullException.ThrowIfNull(cast);
 
@@ -65,7 +66,9 @@ public sealed record NpcChatterRoster(
             slots.Add(new NpcChatterSlot(TagOf(slots.Count), voice, cast.AccentOf(voice), cast.GenderOf(voice)));
         }
 
-        foreach (var (name, voice) in cast.MetHere.Take(MostMet))
+        var living = cast.MetHere.Where(met => dead is null || !dead.Contains(met.Name, StringComparer.OrdinalIgnoreCase));
+
+        foreach (var (name, voice) in living.Take(MostMet))
         {
             slots.Add(new NpcChatterSlot(TagOf(slots.Count), voice, cast.AccentOf(voice), cast.GenderOf(voice), name));
         }

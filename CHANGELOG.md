@@ -337,6 +337,9 @@ Invented chatter now waits while you are in a fight. An exchange that falls due 
 in danger, or within a minute of you being attacked or making a kill, plays once the fight has been
 quiet for a minute.
 
+A pilot killed in this system no longer speaks in invented chatter. The next pilot already heard in
+the system takes their place.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

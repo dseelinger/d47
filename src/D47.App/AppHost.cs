@@ -5385,7 +5385,8 @@ public sealed class AppHost : IDisposable
             location?.StarSystem,
             docked ? location?.StationAllegiance : null,
             posts.AccentOf(posts.For(VoiceRole.TowerControl).VoiceId),
-            posts.AccentOf(posts.For(VoiceRole.CarrierCaptain).VoiceId));
+            posts.AccentOf(posts.For(VoiceRole.CarrierCaptain).VoiceId),
+            _fight.Snapshot.Dead);
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
