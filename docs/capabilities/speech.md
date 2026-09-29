@@ -479,6 +479,18 @@ cores are not re-picked from scratch.
 A settings file written before Directive 47 recorded whose voices were whose has nothing to file
 them under, so those are dropped rather than filed under a guess.
 
+#### Voices for named characters {#name-accents}
+
+A character named in an in-game message gets a voice from the provider's list
+that carries the accent their name clearly suggests. The language model is asked once per name and
+provider, in the background, which of the accents the provider's voices carry the name points to, or
+none. The answer is kept in `data
+ame-accents.json`, so a name is never asked twice. The first line
+from a name not yet answered is voiced as before, and the answer applies the next time that name is
+cast. Only an accent the provider's voices actually carry is used, other Commanders are never asked
+about, invented chatter is cast at random, and the language of every line stays English. The
+names are sent to the language model, as the Language model entry under Privacy and egress says.
+
 #### ElevenLabs model {#elevenlabs-model}
 
 Three.

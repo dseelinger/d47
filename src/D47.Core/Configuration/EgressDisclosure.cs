@@ -530,7 +530,9 @@ public static class EgressDisclosure
             LanguageModel,
             NameOf(LanguageModel),
             destination,
-            $"{provider.Name} is selected. {provider.Egress}",
+            $"{provider.Name} is selected. {provider.Egress} The names of characters in in-game messages are "
+            + "also sent to it, one short request at a time, to choose which accent a "
+            + "voice should have for them; each name is asked about once and the answer is kept on this machine.",
             Active: true,
             Summary: $"{provider.Name} receives your question, the game state from your journal, and "
                 + "sends back its reply.");

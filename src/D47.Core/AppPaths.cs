@@ -33,6 +33,7 @@ public sealed class AppPaths
         ViewStateFile = Path.Combine(Data, "view-state.json");
         SpendFile = Path.Combine(Data, "spend.jsonl");
         PronunciationsFile = Path.Combine(Data, PronunciationOverrides.FileName);
+        NameAccentsFile = Path.Combine(Data, "name-accents.json");
         VrActions = Path.Combine(Data, "vr-actions");
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
         Donations = Path.Combine(Data, "donations");
@@ -76,6 +77,9 @@ public sealed class AppPaths
 
     /// <summary>How the Commander wants a word said, where the local voice gets one wrong (#150).</summary>
     public string PronunciationsFile { get; }
+
+    /// <summary>The accents the language model judged sender names to suggest.</summary>
+    public string NameAccentsFile { get; }
 
     /// <summary>
     /// The OpenVR action manifest and its binding files, written here rather than shipped as content

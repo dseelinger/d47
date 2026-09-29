@@ -60,6 +60,18 @@ public sealed class VoiceCast
     public IReadOnlyDictionary<string, VoiceInfo> Voices { get; set; } =
         new Dictionary<string, VoiceInfo>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The accents the pool's voices carry, without repeats.</summary>
+    public IReadOnlyList<string> Accents =>
+        [.. Pool.Select(AccentOf).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
+
+    /// <summary>
+    /// The accent recorded for a sender's name: null while unanswered, empty for none. Never waits on the model.
+    /// </summary>
+    public Func<string, string?>? AccentOfName { get; set; }
+
+    /// <summary>Called with a name that has no answer yet, so the question can be queued.</summary>
+    public Action<string>? NameUnknown { get; set; }
+
     /// <summary>The accent a voice is heard in, or null where its listing names none.</summary>
     public string? AccentOf(string? voiceId) =>
         voiceId is not null && Voices.TryGetValue(voiceId, out var voice) ? VoicePool.AccentOf(voice) : null;
@@ -149,11 +161,17 @@ public sealed class VoiceCast
             return For(role);
         }
 
-        // An Empire station sounds British where the pool has a British voice to give it (#68). Federation
-        // and Alliance are left as they are: neither has a canon accent as settled as the Empire's.
-        var accentMatched = allegiance == "Empire"
-            ? eligible.Where(British.Contains).ToList()
-            : eligible;
+        // The name's accent first, then an Empire station's British one (#68). Federation and Alliance are
+        // left as they are: neither has a canon accent as settled as the Empire's.
+        var named = NameAccentOf(sender, isPlayer, role);
+        var accentMatched = named is null
+            ? new List<string>()
+            : eligible.Where(voice => string.Equals(AccentOf(voice), named, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (accentMatched.Count == 0)
+        {
+            accentMatched = allegiance == "Empire" ? eligible.Where(British.Contains).ToList() : eligible;
+        }
 
         var accentPool = accentMatched.Count > 0 ? accentMatched : eligible;
 
@@ -178,6 +196,28 @@ public sealed class VoiceCast
         // They are all spoken for, so this sender shares one — still of the right sex.
         assignments[sender] = drawnFrom[0];
         return new VoiceSelection(drawnFrom[0], Rate);
+    }
+
+    /// <summary>
+    /// The pool accent a name is recorded as suggesting, or null. A name with no answer yet is reported to
+    /// <see cref="NameUnknown"/>; other Commanders and roles other than comms are never looked up.
+    /// </summary>
+    private string? NameAccentOf(string sender, bool isPlayer, VoiceRole role)
+    {
+        if (isPlayer || role != VoiceRole.Comms || AccentOfName is null)
+        {
+            return null;
+        }
+
+        var recorded = AccentOfName(sender);
+
+        if (recorded is null)
+        {
+            NameUnknown?.Invoke(sender);
+            return null;
+        }
+
+        return Accents.FirstOrDefault(accent => string.Equals(accent, recorded, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>Gives an NPC in this system a voice chosen before their name was known.</summary>

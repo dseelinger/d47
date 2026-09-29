@@ -8,6 +8,14 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+A named character in an in-game message is now spoken in a voice with the accent
+their name clearly suggests, when the voice provider has one. The language model is asked once per name
+and provider, in the background, and the answer is kept in `data
+ame-accents.json`. The first line
+from a name that has not been answered yet is voiced as before; later systems use the answer. Other
+Commanders and invented chatter voices are unchanged, and the language stays English. The Language
+model entry under Privacy and egress now says these names are sent to it.
+
 Only an explicit request to deliberate now gets Max effort: "carefully", "think hard", "step by step",
 "max effort" and "maximum effort". "Work out", "figure out", "explain why", "walk me through" and "in
 detail" get High, and "think about" no longer changes the effort.

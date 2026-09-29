@@ -108,6 +108,18 @@ public sealed class AppHost : IDisposable
         ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
+        NameAccents = new NameAccents(paths.NameAccentsFile, _logger)
+        {
+            Ask = (names, accents, token) => VoicePairing.AskAccentsAsync(
+                names,
+                accents,
+                Turns.Provider,
+                Turns.BackgroundModel,
+                Spend,
+                PriceTable.Default,
+                _logger,
+                token),
+        };
         SpendLedger = spendLedger;
         _audioSink = audioSink;
         Audio = audio;
@@ -3711,6 +3723,10 @@ public sealed class AppHost : IDisposable
                 .GroupBy(voice => voice.Id, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
+            // A sender's name may suggest an accent; the question is queued and answered off the speech path.
+            cast.AccentOfName = name => NameAccents.Get(provider.Id, name);
+            cast.NameUnknown = name => NameAccents.Enqueue(provider.Id, cast.Accents, [name]);
+
             // Both numbers, because one of them alone is what hid that: "1 voice available" is alarming
             // beside "473 offered" and unremarkable on its own.
             _logger.LogInformation(
@@ -4972,6 +4988,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Everyone d47 can speak as (Phase 11).</summary>
     public VoiceCasting Casting { get; } = new();
+
+    /// <summary>The accents the model judged sender names to suggest, asked off the speech path.</summary>
+    public NameAccents NameAccents { get; }
 
     /// <summary>The cast aboard the ship.</summary>
     public VoiceCast Cast => Casting.Of(VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard));
