@@ -139,7 +139,7 @@ public static partial class JournalCapability
                         },
                     ],
                     Commands = Asking(Flying),
-                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeShip(gameState, arguments))),
+                    Handler = (arguments, _) => Task.FromResult(DescribeShip(gameState, arguments)),
                 },
                 new ToolDefinition
                 {
@@ -209,7 +209,7 @@ public static partial class JournalCapability
                         },
                     ],
                     Handler = (arguments, _) => Task.FromResult(
-                        ToolResult.Ok(DescribeStoredModules(gameState, arguments))),
+                        DescribeStoredModules(gameState, arguments)),
                 },
                 new ToolDefinition
                 {
@@ -592,11 +592,11 @@ public static partial class JournalCapability
         report.Append($" {ahead.Count} jump{(ahead.Count == 1 ? "" : "s")} left on the route.");
     }
 
-    private static string DescribeShip(GameStateStore gameState, ToolArguments arguments)
+    private static ToolResult DescribeShip(GameStateStore gameState, ToolArguments arguments)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
-            return reason;
+            return ToolResult.Ok(reason);
         }
 
         var named = arguments.TryGetString("ship", out var spoken) && !string.IsNullOrWhiteSpace(spoken)
@@ -613,8 +613,9 @@ public static partial class JournalCapability
             if (!flown.IsKnown)
             {
                 // Specific about why.
-                return "No Loadout event has been seen yet, so I do not know what you are flying. "
-                       + "It is written when you enter the game or change your outfitting.";
+                return ToolResult.Ok(
+                    "No Loadout event has been seen yet, so I do not know what you are flying. "
+                    + "It is written when you enter the game or change your outfitting.");
             }
 
             var seenAt = active.Ship.IsKnown ? null : active.Loadouts.For(flown.ShipId)?.SeenAt;
@@ -623,7 +624,7 @@ public static partial class JournalCapability
 
         if (Remembered(active, named) is not { } found)
         {
-            return UnknownShip(active, named);
+            return ToolResult.Ok(UnknownShip(active, named));
         }
 
         var isCurrent = active.Ship.IsKnown && active.Ship.ShipId == found.Loadout.ShipId;
@@ -632,7 +633,7 @@ public static partial class JournalCapability
 
     /// <summary>One ship's report: metrics and the fitted modules, from the live loadout or a remembered
     /// one — dated, and with no claim about the current cargo fill, when it is not (#108).</summary>
-    private static string Report(CommanderGameState active, ShipLoadout ship, bool isFlown, DateTimeOffset? seenAt)
+    private static ToolResult Report(CommanderGameState active, ShipLoadout ship, bool isFlown, DateTimeOffset? seenAt)
     {
         var report = new StringBuilder(isFlown ? $"Flying {ship.Describe()}" : $"{ship.Describe()}");
 
@@ -690,13 +691,15 @@ public static partial class JournalCapability
         }
 
         var fitted = Fitted(ship);
+        string? shortForm = null;
 
         if (fitted.Count > 0)
         {
             var modules = fitted.Select(entry => entry.Module).ToList();
+            var head = report.ToString().TrimEnd();
+            var tally = $"{modules.Count} modules fitted, {modules.Count(module => module.IsEngineered)} engineered.";
 
-            report.AppendLine(
-                $"{modules.Count} modules fitted, {modules.Count(module => module.IsEngineered)} engineered.");
+            report.AppendLine(tally);
 
             string? group = null;
 
@@ -718,9 +721,16 @@ public static partial class JournalCapability
                 // Worth stating unprompted: an unpowered module is one the Commander believes they have.
                 report.AppendLine("Unpowered: " + string.Join(", ", unpowered.Select(Said)) + ".");
             }
+
+            shortForm = $"{head} {tally}"
+                        + (unpowered.Count > 0
+                            ? $" {unpowered.Count} unpowered: {SpokenList.Names([.. unpowered.Select(Said)])}."
+                            : "")
+                        + " The full loadout is on Fleet › Ships.";
         }
 
-        return report.ToString().TrimEnd();
+        var content = report.ToString().TrimEnd();
+        return shortForm is null ? ToolResult.Ok(content) : ToolResult.Ok(content, shortForm);
     }
 
     /// <summary>
@@ -1126,11 +1136,11 @@ public static partial class JournalCapability
     }
 
     /// <summary>What is in module storage, grouped by where it is.</summary>
-    private static string DescribeStoredModules(GameStateStore gameState, ToolArguments arguments)
+    private static ToolResult DescribeStoredModules(GameStateStore gameState, ToolArguments arguments)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
-            return reason;
+            return ToolResult.Ok(reason);
         }
 
         var store = active.Modules;
@@ -1140,7 +1150,8 @@ public static partial class JournalCapability
             // The same shape of answer the fleet gives, and true for the same reason: the event is written on
             // docking somewhere with outfitting, so silence before that is missing evidence rather than an
             // empty store.
-            return "I have no module storage list yet — it is written when you dock at a station with outfitting.";
+            return ToolResult.Ok(
+                "I have no module storage list yet — it is written when you dock at a station with outfitting.");
         }
 
         var wanted = arguments.TryGetString("module", out var fragment) && !string.IsNullOrWhiteSpace(fragment)
@@ -1151,10 +1162,10 @@ public static partial class JournalCapability
 
         if (modules.Count == 0)
         {
-            return wanted is null
+            return ToolResult.Ok(wanted is null
                 ? "No modules in storage."
                 : $"Nothing in storage matches '{wanted}'. {store.Modules.Count} module"
-                  + $"{(store.Modules.Count == 1 ? " is" : "s are")} stored in total.";
+                  + $"{(store.Modules.Count == 1 ? " is" : "s are")} stored in total.");
         }
 
         var report = new StringBuilder();
@@ -1164,6 +1175,7 @@ public static partial class JournalCapability
             : $"{modules.Count} stored module{(modules.Count == 1 ? "" : "s")} match '{wanted}'");
 
         report.AppendLine(store.TakenAt is { } taken ? AsOf(taken) + "." : ".");
+        var headline = report.ToString().TrimEnd().TrimEnd('.');
 
         foreach (var group in modules
                      .Where(module => !module.InTransit)
@@ -1202,7 +1214,24 @@ public static partial class JournalCapability
             report.AppendLine("In transit: " + string.Join(", ", moving.Select(module => module.Describe())) + ".");
         }
 
-        return report.ToString().TrimEnd();
+        var stored = modules.Where(module => !module.InTransit).ToList();
+        var systems = stored.Select(module => module.StarSystem).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+
+        var origin = store.SnapshotSystem;
+        var named = stored
+            .OrderBy(module => origin is not null
+                               && string.Equals(module.StarSystem, origin, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(module => module.StarSystem, StringComparer.OrdinalIgnoreCase)
+            .Select(module => module.Describe())
+            .ToList();
+
+        var spoken = headline
+                     + (named.Count > 0
+                         ? $", in {systems} system{(systems == 1 ? "" : "s")}: {SpokenList.Names(named)}."
+                         : ".")
+                     + (moving.Length > 0 ? $" {moving.Length} in transit." : "");
+
+        return ToolResult.Ok(report.ToString().TrimEnd(), spoken);
     }
 
     /// <summary>A transfer time in words.</summary>

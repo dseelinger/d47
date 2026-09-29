@@ -487,6 +487,10 @@ owns when named — from the loadout last seen for it, dated, rather than refusi
 {"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one currently flown."}},"required":[],"additionalProperties":false}
 ```
 
+Spoken, `get_ship` gives the ship's line and metrics, the module count, and the unpowered modules as
+a count with at most three named, then points to Fleet › Ships for the full loadout. The model
+still receives every fitted module.
+
 `get_fleet` answers about the carrier, and lists the ships only when it was asked to:
 
 ```json
@@ -505,6 +509,10 @@ in the tool so the model is comparing figures rather than deriving them:
 ```json
 {"type":"object","properties":{"module":{"type":"string","description":"Narrow the list to stored modules whose name contains this \u2014 for example \u0022shield\u0022 or \u0022Frame Shift Drive\u0022. Leave it out for the whole store."}},"required":[],"additionalProperties":false}
 ```
+
+Spoken, `get_stored_modules` gives the count, the number of systems and at most three modules by
+name, those in the Commander's system first, then the number in transit. The model still receives
+every stored module.
 
 `get_commander_statistics` takes an optional section, one of the sixteen `Statistics` writes:
 

@@ -393,6 +393,10 @@ other things, with a different recipe each — takes the module as well to say w
 Matches against both the module's name and its slot, because "frame shift drive" is one and
 "MainEngines" is the other and you use whichever you can see.
 
+Spoken, an answer with no slot asked gives the count of engineered modules and at most three
+named; the no-match fallback names at most three. The model still receives every engineered
+module.
+
 #### `find_material`
 
 ```json

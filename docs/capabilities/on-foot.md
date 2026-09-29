@@ -204,6 +204,9 @@ Modifications are permanent — they cannot be removed or replaced, and a wrong 
 only by buying and re-upgrading a fresh item.
 ```
 
+That is what the model receives. Spoken, the answer gives the modification count for the suit and
+each weapon and names at most three modifications across all of them.
+
 **The suit's name never comes from Elite's own localisation.** Frontier's localisation is broken for
 every suit above grade 1, and it is not an edge case: of 768 `SuitLoadout` events in a 912-journal
 corpus, **269 carry an unresolved `$UtilitySuit_Class1_Name;` token, and every one says Class1**

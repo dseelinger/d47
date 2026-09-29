@@ -46,6 +46,11 @@ public sealed record PromptAssembly
         + "for. Never put two in one sentence. Never use one to narrate — it directs how you "
         + "sound, and is not something the Commander reads.";
 
+    /// <summary>What the model is told about listing modules aloud.</summary>
+    public const string SpokenModules =
+        "When speaking, name at most three modules and say how many more there are; the full list "
+        + "is on the panel.";
+
     /// <summary>Position 4.</summary>
     public string? AboutMe { get; init; }
 
@@ -104,6 +109,8 @@ public sealed record PromptAssembly
         {
             block.Append("\n\n").Append(Persona.Trim());
         }
+
+        block.Append("\n\n").Append(SpokenModules);
 
         // Under the persona, because the persona says who is speaking and this says what their voice can be
         // asked to do.

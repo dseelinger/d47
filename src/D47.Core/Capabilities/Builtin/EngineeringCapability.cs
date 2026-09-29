@@ -93,7 +93,7 @@ public static class EngineeringCapability
                             + "\"MainEngines\" or \"power plant\". Omit for every engineered module.",
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Fitted(commander, arguments))),
+                Handler = (arguments, _) => Task.FromResult(Fitted(commander, arguments)),
             },
             new ToolDefinition
             {
@@ -905,13 +905,13 @@ public static class EngineeringCapability
 
     // ---- How the roll actually went --------------------------------------------------------------
 
-    private static string Fitted(Func<CommanderGameState?> commander, ToolArguments arguments)
+    private static ToolResult Fitted(Func<CommanderGameState?> commander, ToolArguments arguments)
     {
         var active = commander();
 
         if (active is null)
         {
-            return "No Elite Dangerous journal has been detected yet.";
+            return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
         }
 
         // The ship being flown rather than the live loadout alone (<a
@@ -924,7 +924,7 @@ public static class EngineeringCapability
             // Loadout is written on entering the game and on every outfitting change, so silence before that
             // is missing evidence rather than a ship with nothing fitted — and with the fallback above, this
             // is now a ship d47 has never seen at all.
-            return "I have no loadout yet — it is written when you enter the game.";
+            return ToolResult.Ok("I have no loadout yet — it is written when you enter the game.");
         }
 
         // A remembered loadout is a fact about a moment and not about now (see ShipLoadouts): the Commander
@@ -939,18 +939,25 @@ public static class EngineeringCapability
 
         if (string.IsNullOrWhiteSpace(wanted))
         {
-            return Summarise(ship, engineered, active.Engineers) + remembered;
+            var summary = Summarise(ship, engineered, active.Engineers) + remembered;
+
+            return engineered.Count > SpokenList.Limit
+                ? ToolResult.Ok(summary, SummariseAloud(ship, engineered) + remembered)
+                : ToolResult.Ok(summary);
         }
 
         var matches = Matching(ship.Modules, wanted);
 
         if (matches.Count == 0)
         {
-            return $"Nothing fitted matches '{wanted.Trim()}'. "
-                   + $"Engineered right now: {(engineered.Count == 0
-                       ? "nothing"
-                       : string.Join(", ", engineered.Select(module => Where(ship.Type, module))))}."
-                   + remembered;
+            var places = engineered.Select(module => Where(ship.Type, module)).ToList();
+            var miss = $"Nothing fitted matches '{wanted.Trim()}'. Engineered right now: ";
+
+            var listed = miss + (places.Count == 0 ? "nothing" : string.Join(", ", places)) + "." + remembered;
+
+            return places.Count > SpokenList.Limit
+                ? ToolResult.Ok(listed, miss + SpokenList.Names(places) + "." + remembered)
+                : ToolResult.Ok(listed);
         }
 
         // More than one is an answer, not a failure — "shield booster" names four slots on plenty of ships,
@@ -966,11 +973,15 @@ public static class EngineeringCapability
                 report.AppendLine("  " + Line(ship.Type, module, active.Engineers));
             }
 
-            return report.ToString().TrimEnd() + remembered;
+            return ToolResult.Ok(report.ToString().TrimEnd() + remembered);
         }
 
-        return Detail(ship.Type, matches[0], active.Engineers) + remembered;
+        return ToolResult.Ok(Detail(ship.Type, matches[0], active.Engineers) + remembered);
     }
+
+    private static string SummariseAloud(ShipLoadout ship, IReadOnlyList<ShipModule> engineered) =>
+        $"{Headline(ship, engineered)} "
+        + SpokenList.Names([.. engineered.Select(module => Where(ship.Type, module))]) + ".";
 
     private static string Summarise(
         ShipLoadout ship,
@@ -979,11 +990,7 @@ public static class EngineeringCapability
     {
         var report = new StringBuilder();
 
-        var described = ship.Describe();
-
-        report.AppendLine(
-            $"{engineered.Count} of {ship.Modules.Count} modules engineered"
-            + (described is null ? "." : $" on {described}."));
+        report.AppendLine(Headline(ship, engineered));
 
         if (engineered.Count == 0)
         {
@@ -998,6 +1005,14 @@ public static class EngineeringCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    private static string Headline(ShipLoadout ship, IReadOnlyList<ShipModule> engineered)
+    {
+        var described = ship.Describe();
+
+        return $"{engineered.Count} of {ship.Modules.Count} modules engineered"
+               + (described is null ? "." : $" on {described}.");
     }
 
     private static string Line(string? hull, ShipModule module, EngineerProgressState progress)

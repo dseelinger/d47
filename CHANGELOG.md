@@ -8,6 +8,12 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+Spoken answers about your ship, stored modules, engineering and suit now name at most three modules
+and give a count for the rest. "My ship" says how many modules are fitted and unpowered and points to
+Fleet › Ships for the full loadout; "stored modules" gives the count and the number of systems; "my
+engineering" gives the number of engineered modules; "my suit" gives the modification count for the
+suit and each weapon. The model is told the same rule when it answers aloud.
+
 Ambient music now plays only while Elite is running. It stops within a few seconds of the game
 closing, including after a crash, and starts again for the current situation when the game is back,
 unless it was paused or muted. With Elite closed, "resume the music", "next track" and the media keys

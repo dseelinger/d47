@@ -49,7 +49,7 @@ public static class OnFootCapability
                     "What the Commander is wearing and carrying on foot: the suit and its grade, the "
                     + "modifications fitted to it and how many slots are left, and each weapon with its "
                     + "grade and modifications. Read from the journal, so it is about this Commander.",
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeLoadout(commander))),
+                Handler = (_, _) => Task.FromResult(DescribeLoadout(commander)),
             },
             new ToolDefinition
             {
@@ -254,13 +254,13 @@ public static class OnFootCapability
                 : null,
             arguments.TryGetBoolean("weapon", out var weapon) && weapon);
 
-    private static string DescribeLoadout(Func<CommanderGameState?> commander)
+    private static ToolResult DescribeLoadout(Func<CommanderGameState?> commander)
     {
         var active = commander();
 
         if (active is null)
         {
-            return "No Elite Dangerous journal has been detected yet.";
+            return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
         }
 
         var loadout = active.OnFoot;
@@ -269,7 +269,7 @@ public static class OnFootCapability
         {
             // Written when the Commander goes on foot, so silence is missing evidence rather than a Commander
             // wearing nothing.
-            return "I have not seen you on foot this session, so I do not know what you are wearing.";
+            return ToolResult.Ok("I have not seen you on foot this session, so I do not know what you are wearing.");
         }
 
         var report = new StringBuilder();
@@ -282,6 +282,7 @@ public static class OnFootCapability
         }
 
         report.AppendLine(".");
+        var wearing = report.ToString().TrimEnd();
 
         report.AppendLine(Slots("Suit", loadout.Grade, loadout.SuitModifications, loadout.FreeSlots));
 
@@ -293,12 +294,41 @@ public static class OnFootCapability
 
         // Said once, at the end, because it is the reason this capability exists and not a caveat about any
         // one line: nothing on foot can be undone.
-        report.Append(
+        const string permanent =
             "Modifications are permanent — they cannot be removed or replaced, and a wrong one is "
-            + "recoverable only by buying and re-upgrading a fresh item.");
+            + "recoverable only by buying and re-upgrading a fresh item.";
 
-        return report.ToString();
+        report.Append(permanent);
+
+        var weapons = loadout.Weapons.OrderBy(weapon => weapon.Slot, StringComparer.Ordinal).ToList();
+
+        var modifications = loadout.SuitModifications
+            .Concat(weapons.SelectMany(weapon => weapon.Modifications))
+            .Select(modification => modification.Speak())
+            .ToList();
+
+        if (modifications.Count <= SpokenList.Limit)
+        {
+            return ToolResult.Ok(report.ToString());
+        }
+
+        var aloud = new StringBuilder(wearing)
+            .Append(CultureInfo.InvariantCulture, $" Suit: {Modifications(loadout.SuitModifications.Count)}.");
+
+        foreach (var weapon in weapons)
+        {
+            aloud.Append(CultureInfo.InvariantCulture,
+                $" {weapon.Slot}: {weapon.Speak()}, {Modifications(weapon.Modifications.Count)}.");
+        }
+
+        aloud.Append(CultureInfo.InvariantCulture, $" Modifications include {SpokenList.Names(modifications)}. ")
+            .Append(permanent);
+
+        return ToolResult.Ok(report.ToString(), aloud.ToString());
     }
+
+    private static string Modifications(int count) =>
+        count switch { 0 => "no modifications", 1 => "1 modification", _ => $"{count} modifications" };
 
     private static string Slots(
         string what, int? grade, IReadOnlyList<FittedModification> fitted, int? free)
