@@ -19,6 +19,9 @@ public enum NpcChatterKind
 
     /// <summary>One invented person saying a line or two to the Commander.</summary>
     Hail,
+
+    /// <summary>Two invented bystanders reacting to the Commander's last kill.</summary>
+    Combat,
 }
 
 /// <summary>One parsed line of an exchange: who says it, what they say, and whose voice it is.</summary>
@@ -415,6 +418,7 @@ public static partial class NpcChatter
     /// whether the station has a mail slot (#314) rather than leave the model to guess at one.
     /// </param>
     /// <param name="roster">The voices cast for this exchange, or null to let the model name them freely.</param>
+    /// <param name="fight">The fight the <see cref="NpcChatterKind.Combat"/> scene reacts to.</param>
     public static string Instruction(
         NpcChatterKind kind,
         NpcChatterCarrier? carrier = null,
@@ -422,13 +426,14 @@ public static partial class NpcChatter
         bool spotlight = false,
         int exchangeIndex = 0,
         string? stationType = null,
-        NpcChatterRoster? roster = null)
+        NpcChatterRoster? roster = null,
+        FightSnapshot? fight = null)
     {
         var about = carrier ?? NpcChatterCarrier.None;
         var cast = roster ?? NpcChatterRoster.None;
 
         return Situation(docked, stationType)
-            + Scene(kind, about, docked, exchangeIndex)
+            + Scene(kind, about, docked, exchangeIndex, fight)
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(kind, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
@@ -500,9 +505,12 @@ public static partial class NpcChatter
             : "This station has no mail slot. Nobody mentions a mail slot, a letterbox or a docking "
                 + "slot. ";
 
-    private static string Scene(NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex) =>
+    private static string Scene(
+        NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex, FightSnapshot? fight) =>
         kind switch
         {
+            NpcChatterKind.Combat => CombatScene(fight ?? FightSnapshot.None),
+
             // Docked is the only situation this pairing fires in, and while the Commander is at their own
             // carrier the only thing they can be docked at is that carrier — so the controller is named
             // rather than left for the model to guess at.
@@ -531,6 +539,24 @@ public static partial class NpcChatter
 
             _ => PassersbyScene(exchangeIndex, docked),
         };
+
+    private static string CombatScene(FightSnapshot fight)
+    {
+        var ship = fight.LastShip is { Length: > 0 } hull ? $"a {hull}" : "a ship";
+        var faction = fight.LastVictimFaction is { Length: > 0 } owner ? $" of {owner}" : string.Empty;
+
+        var pilot = fight.LastVictim is { Length: > 0 } name && fight.Dead.Contains(name)
+            ? $" Its pilot, {name}, was destroyed with it. "
+            : " ";
+
+        var kills = fight.Kills == 1 ? "one ship" : $"{fight.Kills} ships";
+
+        return "Two invented bystanders near the Commander react over the open channel to a fight that has "
+            + "just ended — exchange 2 to 4 short lines. The Commander has destroyed " + kills
+            + $" here; the last was {ship}{faction}." + pilot
+            + "No destroyed pilot speaks. The Commander is not addressed, and the bystanders are not "
+            + "in the fight. No pad, no dock, no queue: there is no station here. ";
+    }
 
     /// <summary>
     /// A dock hand noticing a pad and a courier saying "not my problem" was one script wearing

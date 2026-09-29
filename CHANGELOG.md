@@ -17,6 +17,14 @@ claim a scan, fine or docking decision is replaced with "Got to go. Vance out." 
 background model and are billed like any turn. Exchanges you can answer now appear on the In Ship
 page, and every invented speaker there, and each reply they give, is labelled "Name (invented)".
 
+Two invented bystanders now react to a kill. When you destroy a ship in normal space and 20 seconds
+pass with no further shooting, they exchange two to four lines about it, naming how many ships you
+have destroyed there and the last one's ship and faction. A destroyed NPC pilot is named as
+destroyed and never speaks; a player's name is never used. It fires for a kill under two minutes
+old, at most once per "least time" setting, uses no new setting, and restarts the ordinary gap.
+It is not made docked, landed, on foot or in supercruise, and is dropped if you dock, land or enter
+supercruise before it is written.
+
 ## 1.19.0 — Music and model checks in Settings
 
 Settings › Language model › Provider and model has a Test row below Model. Its text shows whether the

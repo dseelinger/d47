@@ -2153,6 +2153,7 @@ public sealed class AppHost : IDisposable
         host.JournalLog = journalLog;
 
         host._fight = fight;
+        host._liveStatus = () => status.Current;
 
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
@@ -5303,6 +5304,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The fight around the Commander, as the chatter callout folds it.</summary>
     private NearbyFight _fight = null!;
 
+    private Func<Core.Journal.GameStatus> _liveStatus = () => Core.Journal.GameStatus.Unknown;
+
     /// <summary>Whether the next carrier exchange may make his owning it the subject (#88).</summary>
     private readonly NpcChatterOwnershipSpotlight _carrierSpotlight = new();
 
@@ -5428,6 +5431,14 @@ public sealed class AppHost : IDisposable
         var location = GameState.Active?.Location;
         var docked = location?.Docked ?? false;
 
+        // A combat marker is made in normal space; a Commander who has since docked, landed or entered
+        // supercruise has left the fight behind.
+        if (kind == NpcChatterKind.Combat
+            && AmbientLines.Situate(_liveStatus()) != AmbientSituation.NormalSpace)
+        {
+            return [];
+        }
+
         // The kind was picked from the Docked flag when the marker was made; the exchange is composed
         // later. A controller needs a dock to be at — one lifted off in between is worse than silence
         // (#43).
@@ -5463,7 +5474,7 @@ public sealed class AppHost : IDisposable
             NpcChatter.Speaker,
             null,
             NpcChatter.WithHumor(
-                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster),
+                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot),
                 carrier,
                 Settings.Current.Persona,
                 _humor,

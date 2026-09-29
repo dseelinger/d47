@@ -29,7 +29,14 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
     private AmbientSituation _situation = AmbientSituation.None;
     private DateTimeOffset _situationSince;
     private DateTimeOffset _lastSpokenAt;
+    private DateTimeOffset _lastCombatAt;
     private int _picks;
+
+    /// <summary>How long a ship kill stays worth reacting to.</summary>
+    public static readonly TimeSpan KillFresh = TimeSpan.FromMinutes(2);
+
+    /// <summary>How long the fight must have been quiet before bystanders react to a kill.</summary>
+    public static readonly TimeSpan KillQuiet = TimeSpan.FromSeconds(20);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -48,6 +55,16 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             || Interval <= TimeSpan.Zero
             || situation is AmbientSituation.None or AmbientSituation.Supercruise)
         {
+            yield break;
+        }
+
+        if (situation == AmbientSituation.NormalSpace && ReactsToKill(context))
+        {
+            _picks++;
+            _lastSpokenAt = context.Now;
+            _lastCombatAt = context.Now;
+
+            yield return Marker(NpcChatterKind.Combat);
             yield break;
         }
 
@@ -90,9 +107,27 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
         _picks++;
         _lastSpokenAt = context.Now;
 
-        // Text deliberately empty: this is a marker the app composes from, and an empty line is one that can
-        // never be spoken by mistake if a road is ever missed.
-        yield return new Announcement($"{NpcChatter.KeyPrefix}{kind}".ToLowerInvariant(), string.Empty)
+        yield return Marker(kind);
+    }
+
+    /// <summary>Whether a ship kill newer than the last combat exchange is fresh and the fight has gone quiet.</summary>
+    private bool ReactsToKill(CalloutContext context)
+    {
+        var snapshot = fight.Snapshot;
+
+        return snapshot.LastKillAt is { } killed
+            && snapshot.LastShip is not null
+            && killed > _lastCombatAt
+            && context.Now - killed < KillFresh
+            && (snapshot.LastActionAt is not { } acted || context.Now - acted >= KillQuiet)
+            && (_lastCombatAt == default || context.Now - _lastCombatAt >= Interval)
+            && !CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval);
+    }
+
+    // Text deliberately empty: this is a marker the app composes from, and an empty line is one that can
+    // never be spoken by mistake if a road is ever missed.
+    private Announcement Marker(NpcChatterKind kind) =>
+        new($"{NpcChatter.KeyPrefix}{kind}".ToLowerInvariant(), string.Empty)
         {
             Urgency = CalloutUrgency.Routine,
             Cooldown = Interval,
@@ -102,7 +137,6 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             // spaces on and the clamp that bounds how long it may hold this (#257).
             Chatter = Interval,
         };
-    }
 
     /// <summary>This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
     private TimeSpan Gap()

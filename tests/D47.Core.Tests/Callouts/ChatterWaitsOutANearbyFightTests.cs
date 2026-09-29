@@ -99,8 +99,10 @@ public class ChatterWaitsOutANearbyFightTests
 
         fight.Fold(Bounty("Paul Curnow"), killed, priming: false);
 
-        Assert.Empty(callout.Examine(Context(killed + TimeSpan.FromSeconds(30))));
-        Assert.Single(callout.Examine(Context(killed + NearbyFight.Holds)));
+        Assert.Empty(callout.Examine(Context(killed + TimeSpan.FromSeconds(10))));
+
+        var marker = Assert.Single(callout.Examine(Context(killed + TimeSpan.FromSeconds(30))));
+        Assert.Equal(NpcChatterKind.Combat, NpcChatter.KindOf(marker.Key));
     }
 
     [Fact]

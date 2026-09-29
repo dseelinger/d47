@@ -901,6 +901,14 @@ surprised, careful, or embarrassed to have been overheard. Ownership colours at 
 per visit as the thing actually being talked about — the rest may show it without a line remarking
 on it — and none of this fires at all until you are actually on the carrier's deck.
 
+**Bystanders react to your kills.** When you destroy a ship in normal space and the fight has been
+quiet for 20 seconds, two invented bystanders exchange two to four lines about it, naming how many
+ships you have destroyed in the system and the last one's ship and faction. A destroyed NPC pilot is
+named only as destroyed and never speaks, and a player pilot is never named. It reacts only to a kill
+under two minutes old, no more often than the least time row allows, and it restarts the ordinary
+gap. It is not made docked, landed, on foot or in supercruise, and is dropped if you dock, land or
+enter supercruise before it is written. It has no setting of its own.
+
 **This is not the game's own NPC traffic.** Elite's real messages — station chatter, pirates,
 your wing — are re-voiced under Speech → *Speak incoming messages*, and they are somebody else's
 words. NPC chatter is Directive 47's own fiction, on its own switch, so you can have either
