@@ -1062,6 +1062,7 @@ public sealed class TurnLoop(
         yield return new TurnEvent.Routed(TurnRoute.Model, effortReported);
 
         var usage = LlmUsage.None;
+        var longestGap = TimeSpan.Zero;
         var answer = string.Empty;
         var stopReason = LlmStopReason.Completed;
 
@@ -1191,6 +1192,7 @@ public sealed class TurnLoop(
 
             // Every round is a billed request, so usage accumulates across the whole turn.
             usage = Add(usage, outcome.Usage);
+            longestGap = Max(longestGap, outcome.LongestGap);
             answer = outcome.Reply.ToString().Trim();
             stopReason = outcome.StopReason;
             previousRoundSpoke = answer.Length > 0;
@@ -1352,14 +1354,15 @@ public sealed class TurnLoop(
         }
 
         logger.LogInformation(
-            "Model turn {Outcome} at {Effort} effort, stopped on {Stop}; {Input} in ({CacheRead} cached), {Output} out, {Cost}",
+            "Model turn {Outcome} at {Effort} effort, stopped on {Stop}; {Input} in ({CacheRead} cached), {Output} out, {Cost}, longest gap {Gap:0.0} s",
             turnOutcome,
             effort,
             stopReason,
             usage.TotalInputTokens,
             usage.CacheReadInputTokens,
             usage.OutputTokens,
-            cost.Priced ? cost.Dollars.ToString("C4") : "unpriced");
+            cost.Priced ? cost.Dollars.ToString("C4") : "unpriced",
+            longestGap.TotalSeconds);
 
         yield return new TurnEvent.Completed(new TurnResult(
             turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel));
@@ -1416,6 +1419,9 @@ public sealed class TurnLoop(
 
         /// <summary>The requests made for this round, retries included.</summary>
         public int Attempts { get; set; }
+
+        /// <summary>The longest wait for a stream event across the round's attempts.</summary>
+        public TimeSpan LongestGap { get; set; }
 
         public void AddText(string text)
         {
@@ -1483,6 +1489,8 @@ public sealed class TurnLoop(
             : PrefixWarmth.Unknown;
     }
 
+    private static TimeSpan Max(TimeSpan a, TimeSpan b) => a > b ? a : b;
+
     private static LlmUsage Add(LlmUsage running, LlmUsage round) => new(
         running.InputTokens + round.InputTokens,
         running.OutputTokens + round.OutputTokens,
@@ -1525,7 +1533,7 @@ public sealed class TurnLoop(
             transient = false;
             var spokeThisAttempt = false;
 
-            await foreach (var streamEvent in AttemptAsync(request, activeProvider, cancellationToken)
+            await foreach (var streamEvent in AttemptAsync(request, activeProvider, outcome, cancellationToken)
                                .ConfigureAwait(false))
             {
                 switch (streamEvent)
@@ -1581,13 +1589,18 @@ public sealed class TurnLoop(
         }
     }
 
-    /// <summary>One attempt, with a stall turned into an ordinary failure event.</summary>
+    /// <summary>
+    /// One attempt, with a stall turned into an ordinary failure event. The timeout restarts on every stream
+    /// event, so it measures silence rather than total time.
+    /// </summary>
     private async IAsyncEnumerable<LlmStreamEvent> AttemptAsync(
         LlmRequest request,
         ILlmProvider activeProvider,
+        RoundOutcome outcome,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var timeout = _clock.CreateTimeout(Retry.AttemptTimeout, cancellationToken);
+        var lastEvent = _clock.Now;
 
         await using var events = activeProvider
             .StreamAsync(request, timeout.Token)
@@ -1604,6 +1617,11 @@ public sealed class TurnLoop(
                 if (await events.MoveNextAsync().ConfigureAwait(false))
                 {
                     current = events.Current;
+
+                    var now = _clock.Now;
+                    outcome.LongestGap = Max(outcome.LongestGap, now - lastEvent);
+                    lastEvent = now;
+                    _clock.Restart(timeout, Retry.AttemptTimeout);
                 }
                 else
                 {
@@ -1619,7 +1637,7 @@ public sealed class TurnLoop(
             {
                 // Ours tripped, not the caller's: the attempt ran out of time.
                 failed = new LlmStreamEvent.Failed(
-                    $"it did not answer within {Retry.AttemptTimeout.TotalSeconds:0} seconds",
+                    $"It sent nothing for {Retry.AttemptTimeout.TotalSeconds:0} seconds.",
                     Transient: true);
             }
             catch (Exception ex)

@@ -791,7 +791,7 @@ public sealed record SpeechSettings
     /// <summary>"sequential" or "logarithmic" (Phase 5).</summary>
     public string RetryBackoff { get; init; } = "sequential";
 
-    /// <summary>How long one attempt may run before it counts as a failure worth reporting.</summary>
+    /// <summary>How long an attempt may go with nothing from the model before it counts as failed.</summary>
     public double TurnTimeoutSeconds { get; init; } = 45;
 }
 

@@ -23,7 +23,7 @@ public sealed record RetryPolicy
 
     public BackoffShape Backoff { get; init; } = BackoffShape.Sequential;
 
-    /// <summary>How long one attempt may run before it counts as failed.</summary>
+    /// <summary>How long an attempt may go without a stream event before it counts as failed.</summary>
     public TimeSpan AttemptTimeout { get; init; } = TimeSpan.FromSeconds(45);
 
     /// <summary>The wait before attempt number <paramref name="attempt"/>, counting from 1.</summary>
@@ -63,19 +63,29 @@ public sealed record RetryPolicy
     }
 }
 
-/// <summary>The two things the turn path needs from a clock.</summary>
+/// <summary>What the turn path needs from a clock.</summary>
 public interface ITurnClock
 {
+    /// <summary>A monotonic reading, for measuring gaps.</summary>
+    TimeSpan Now { get; }
+
     Task DelayAsync(TimeSpan duration, CancellationToken cancellationToken);
 
     /// <summary>A token that trips after <paramref name="duration"/>, or when the caller's does.</summary>
     CancellationTokenSource CreateTimeout(TimeSpan duration, CancellationToken linkedTo);
+
+    /// <summary>Sets a timeout from <see cref="CreateTimeout"/> to trip <paramref name="duration"/> from now.</summary>
+    void Restart(CancellationTokenSource timeout, TimeSpan duration);
 }
 
 /// <summary>The real one.</summary>
 public sealed class SystemTurnClock : ITurnClock
 {
     public static readonly SystemTurnClock Instance = new();
+
+    private static readonly long Origin = System.Diagnostics.Stopwatch.GetTimestamp();
+
+    public TimeSpan Now => System.Diagnostics.Stopwatch.GetElapsedTime(Origin);
 
     public Task DelayAsync(TimeSpan duration, CancellationToken cancellationToken) =>
         Task.Delay(duration, cancellationToken);
@@ -86,4 +96,6 @@ public sealed class SystemTurnClock : ITurnClock
         source.CancelAfter(duration);
         return source;
     }
+
+    public void Restart(CancellationTokenSource timeout, TimeSpan duration) => timeout.CancelAfter(duration);
 }

@@ -1034,7 +1034,7 @@ indistinguishable from having been ignored.
 | Attempts | `3` | Total tries, not retries. `1` means do not retry. |
 | Wait between attempts | `2` | Seconds before the first retry. |
 | Backoff | `sequential` | `sequential` adds the base each time (2s, 4s, 6s); `logarithmic` grows but slows down. |
-| Give up after | `45` | Seconds one attempt may run before it counts as failed. |
+| Give up after | `45` | Seconds with nothing from the model before an attempt counts as failed. |
 
 Two things are never retried: a failure that already produced words, since there is no un-saying
 them, and a configuration mistake like a bad model name, which will fail the same way next time

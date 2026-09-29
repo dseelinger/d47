@@ -353,6 +353,8 @@ public sealed class InstantClock : D47.Core.Conversation.ITurnClock
     /// <summary>When set, the next attempt's timeout trips immediately — a provider that hangs.</summary>
     public bool TimeOutImmediately { get; set; }
 
+    public TimeSpan Now => TimeSpan.Zero;
+
     public Task DelayAsync(TimeSpan duration, CancellationToken cancellationToken)
     {
         Waited.Add(duration);
@@ -369,5 +371,46 @@ public sealed class InstantClock : D47.Core.Conversation.ITurnClock
         }
 
         return source;
+    }
+
+    public void Restart(CancellationTokenSource timeout, TimeSpan duration)
+    {
+    }
+}
+
+/// <summary>A clock that moves only when <see cref="Advance"/> is called, tripping any timeout it passes.</summary>
+public sealed class ManualTurnClock : D47.Core.Conversation.ITurnClock
+{
+    private readonly Dictionary<CancellationTokenSource, TimeSpan> _deadlines = [];
+
+    public TimeSpan Now { get; private set; }
+
+    public Task DelayAsync(TimeSpan duration, CancellationToken cancellationToken)
+    {
+        Advance(duration);
+        return Task.CompletedTask;
+    }
+
+    public CancellationTokenSource CreateTimeout(TimeSpan duration, CancellationToken linkedTo)
+    {
+        var source = CancellationTokenSource.CreateLinkedTokenSource(linkedTo);
+        _deadlines[source] = Now + duration;
+        return source;
+    }
+
+    public void Restart(CancellationTokenSource timeout, TimeSpan duration) => _deadlines[timeout] = Now + duration;
+
+    public void Advance(TimeSpan duration)
+    {
+        Now += duration;
+
+        foreach (var (source, deadline) in _deadlines.ToList())
+        {
+            if (deadline <= Now)
+            {
+                _deadlines.Remove(source);
+                source.Cancel();
+            }
+        }
     }
 }

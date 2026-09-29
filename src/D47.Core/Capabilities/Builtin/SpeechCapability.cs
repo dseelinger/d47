@@ -1023,7 +1023,7 @@ public static class SpeechCapability
                 Label = "Give up after",
                 Kind = SettingKind.Number,
                 Step = 0.5,
-                Help = "Seconds one attempt may run before it counts as failed.",
+                Help = "Seconds with nothing from the model before an attempt counts as failed.",
                 DefaultDisplay = "45",
                 Group = "When a turn fails",
                 DocsAnchor = "retry",

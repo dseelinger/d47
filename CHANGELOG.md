@@ -345,6 +345,12 @@ that answer." Before, it stopped mid-sentence, or said nothing when the model ha
 limit thinking. The unfinished reply is not kept in the conversation, and the log now records why
 each model turn stopped.
 
+A long model turn is no longer cut off while the model is still thinking. "Give up after" now counts
+seconds with nothing from the model, and every piece of the reply, thinking included, restarts it.
+Before, it limited the whole attempt, so a Max-effort turn could fail at 45 seconds and be billed
+three times. A timed-out turn now says "It sent nothing for 45 seconds.", and the log records the
+longest wait between pieces of each model turn.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned
