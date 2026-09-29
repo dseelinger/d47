@@ -464,13 +464,14 @@ public class GuardrailsSurvivePersonaTests
     [Fact]
     public void SwitchingThePersonaOffLeavesTheGuardrailsExactlyWhereTheyWere()
     {
-        var withPersona = new PromptAssembly { Persona = PersonaCatalog.Kex.RenderBlock() }
-            .RenderCachedSystemBlock();
+        var persona = PersonaCatalog.Kex.RenderBlock().Trim();
+        var withPersona = new PromptAssembly { Persona = persona }.RenderCachedSystemBlock();
 
         var without = new PromptAssembly { Persona = null }.RenderCachedSystemBlock();
 
         Assert.StartsWith(Guardrails.Text, withPersona, StringComparison.Ordinal);
-        Assert.Equal(Guardrails.Text, without);
+        Assert.Equal($"{Guardrails.Text}\n\n{PromptAssembly.SpokenModules}", without);
+        Assert.Equal(without, withPersona.Replace($"\n\n{persona}", "", StringComparison.Ordinal));
     }
 }
 
