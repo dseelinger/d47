@@ -8,6 +8,11 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+Each invented speaker in NPC chatter is now given a manner of speaking for the exchange, such as
+terse, over-explaining, talking in questions or stiffly formal, and two speakers in one exchange never
+share one. A manner describes how someone talks, never where they are from: every line is still
+written in standard English grammar, with no phonetic spelling or dropped articles for any accent.
+
 A new setting, How often an accent flavours the words, sets how often the model is asked to let an NPC's
 words suit the accent of its voice. It applies per line to reworded comms and per speaker to invented
 chatter, from 0 to 100 percent in steps of 10, and defaults to 50. The voice keeps its accent either way.

@@ -208,7 +208,9 @@ public sealed class NpcChatterOwnershipSpotlight
 /// <summary>
 /// Invented background radio traffic (#244): made-up conversations between people who do not exist —
 /// never the game's own NPC messages, which arrive through <see cref="IncomingMessages"/> and are
-/// somebody else's words.
+/// somebody else's words. Each speaker is drawn a manner of speaking from <see cref="Manners"/>; a
+/// manner describes how someone talks, never where they are from or how well they speak English, and
+/// no accent is ever rendered through spelling or grammar (#57).
 /// </summary>
 public static partial class NpcChatter
 {
@@ -263,7 +265,62 @@ public static partial class NpcChatter
         "You write background radio traffic overheard in the Elite Dangerous galaxy in 3311: "
         + "short exchanges between minor invented characters — freighter crews, couriers, dock "
         + "hands, controllers. Plain working speech, brief and human. Never mention being an AI "
-        + "or a model, and never break the fiction.";
+        + "or a model, and never break the fiction. A speaker's manner is how they talk, never where "
+        + "they are from: every line is in standard English grammar, and no accent or origin is ever "
+        + "shown through phonetic spelling, dropped articles, broken or non-native grammar, or "
+        + "imperfect English.";
+
+    /// <summary>
+    /// How a speaker talks: pace, register, formality, verbal habits. An entry never names a
+    /// nationality, a language, a region or a level of fluency.
+    /// </summary>
+    public static readonly IReadOnlyList<string> Manners =
+    [
+        "terse to the point of rudeness",
+        "over-explains everything",
+        "talks in questions",
+        "formal to the point of stiffness",
+        "cheerful and too familiar",
+        "distracted, half attending to something else",
+        "dry and deadpan",
+        "nervous, hedging every statement",
+        "wanders off the point",
+        "precise, correcting small details",
+        "weary, saying no more than the job needs",
+        "enthusiastic about small things",
+    ];
+
+    /// <summary>
+    /// The manners drawn for one exchange's speakers, in speaker order: distinct from each other while
+    /// there are no more speakers than manners, and the same for the same exchange every time.
+    /// </summary>
+    public static IReadOnlyList<string> MannersFor(int exchangeIndex, int speakers)
+    {
+        var fraction = unchecked((uint)(exchangeIndex + MannerOffset) * 2654435761u) / 4294967296.0;
+        var first = (int)(fraction * Manners.Count);
+
+        return [.. Enumerable.Range(0, speakers).Select(speaker => Manners[(first + speaker * MannerStep) % Manners.Count])];
+    }
+
+    /// <summary>The stride between one speaker's manner and the next; coprime with the table's length.</summary>
+    private const int MannerStep = 5;
+
+    private const int MannerOffset = 31;
+
+    private const string MannerMeaning =
+        "A manner is how that speaker talks — pace, register, verbal habits — and shapes every line of "
+        + "theirs. ";
+
+    /// <summary>The manners for the speakers of an exchange nobody was cast for ahead of time.</summary>
+    private static string UnslottedManners(NpcChatterKind kind, int exchangeIndex)
+    {
+        var manners = MannersFor(exchangeIndex, kind == NpcChatterKind.Hail ? 1 : 2);
+
+        return manners.Count == 1
+            ? $"The speaker's manner: {manners[0]}. " + MannerMeaning
+            : $"The speakers' manners, in the order they first speak: first, {manners[0]}; second, "
+                + $"{manners[1]}. " + MannerMeaning;
+    }
 
     /// <summary>The line format when no voices were cast ahead of the exchange.</summary>
     private const string Unslotted =
@@ -288,14 +345,16 @@ public static partial class NpcChatter
         + "sends them a wing or friend invite.";
 
     /// <summary>The cast slots, described by accent and gender, or nothing where there is no roster.</summary>
-    private static string Roster(NpcChatterRoster roster)
+    private static string Roster(NpcChatterRoster roster, int exchangeIndex)
     {
         if (roster.Slots.Count == 0)
         {
             return string.Empty;
         }
 
-        var described = roster.Slots.Select(slot =>
+        var manners = MannersFor(exchangeIndex, roster.Slots.Count);
+
+        var described = roster.Slots.Select((slot, index) =>
         {
             var who = slot.Gender switch
             {
@@ -308,10 +367,12 @@ public static partial class NpcChatter
                 ? $" with {SpeakerAccent.Article(heard)} {heard} accent"
                 : string.Empty;
 
+            var manner = $", manner: {manners[index]}";
+
             return slot.Name is { Length: > 0 } name
-                ? $"[{slot.Tag}] {name}, already heard in this system, {who}{accent} — if they speak, "
-                    + "use exactly that name"
-                : $"[{slot.Tag}] {who}{accent} — invent a plain name or call sign";
+                ? $"[{slot.Tag}] {name}, already heard in this system, {who}{accent}{manner} — if they "
+                    + "speak, use exactly that name"
+                : $"[{slot.Tag}] {who}{accent}{manner} — invent a plain name or call sign";
         });
 
         var withAccent = roster.Slots.Where(slot => slot.Accent is { Length: > 0 }).ToList();
@@ -325,7 +386,8 @@ public static partial class NpcChatter
                 + SpeakerAccent.Rules;
 
         return "The voices are already cast; every invented speaker is one of these slots: "
-            + string.Join("; ", described) + "." + accented + " ";
+            + string.Join("; ", described) + ". " + MannerMeaning
+            + (accented.Length > 0 ? accented.Trim() + " " : string.Empty);
     }
 
     /// <summary>
@@ -364,7 +426,7 @@ public static partial class NpcChatter
 
         return Situation(docked, stationType)
             + Scene(kind, about, docked, exchangeIndex)
-            + Roster(cast)
+            + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(kind, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
             + Carrier(about, spotlight, cast);

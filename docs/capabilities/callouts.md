@@ -896,6 +896,14 @@ as one person before either is voiced. The exchange is written by the model agai
 you actually are; with no language model configured there is no chatter and these rows are absent,
 the same rule as the In Ship chatter above — there are no canned conversations, on purpose.
 
+**Each speaker is given a manner of speaking** for the exchange: terse to the point of rudeness,
+over-explains everything, talks in questions, formal to the point of stiffness, and eight more. Two
+people in one exchange never share one, and the manner is not remembered afterwards. A manner is how
+someone talks — pace, register, verbal habits. It is never where they are from or how well they
+speak: no manner names a nationality, a language, a region or a fluency, and the model is told to
+write every line in standard English grammar, with no phonetic spelling and no dropped articles or
+other non-native grammar, whatever the speaker's accent.
+
 The gap between exchanges is a range, not a tick: each wait lands somewhere between the least and
 the most time rows — five to ten minutes out of the box — because overheard traffic on a
 fixed cadence stops sounding overheard. Setting the two equal pins it; 0 on the least silences it.
