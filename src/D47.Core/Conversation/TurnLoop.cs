@@ -27,6 +27,9 @@ public enum TurnRoute
 
     /// <summary>Addressed to the carrier's captain while the carrier is beyond comms range.</summary>
     CarrierOutOfRange,
+
+    /// <summary>Addressed to an invented speaker whose exchange is over.</summary>
+    ChatterClosed,
 }
 
 public enum TurnOutcome
@@ -757,6 +760,34 @@ public sealed class TurnLoop(
         await foreach (var turnEvent in RunModelTurnAsync(taken.Question, activeProvider, speaker, cancellationToken)
                            .ConfigureAwait(false))
         {
+            if (speaker.Screen is { } screen)
+            {
+                if (turnEvent is TurnEvent.TextDelta)
+                {
+                    continue;
+                }
+
+                if (turnEvent is TurnEvent.Completed { Result.Outcome: TurnOutcome.Answered or TurnOutcome.Truncated } unscreened)
+                {
+                    var said = screen(unscreened.Result.Text);
+
+                    if (thinner is not null)
+                    {
+                        said = (thinner.Push(said) + thinner.Flush()).Trim();
+                        heard.Append(said);
+                    }
+
+                    if (said.Length > 0)
+                    {
+                        yield return new TurnEvent.TextDelta(said);
+                    }
+
+                    result = unscreened.Result with { Text = said };
+                    yield return new TurnEvent.Completed(result);
+                    continue;
+                }
+            }
+
             if (thinner is not null)
             {
                 if (turnEvent is TurnEvent.TextDelta delta)
@@ -1023,7 +1054,7 @@ public sealed class TurnLoop(
         Persona.Speaker? speaker,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var chosenModel = Model ?? activeProvider.DefaultModel;
+        var chosenModel = speaker?.Model ?? Model ?? activeProvider.DefaultModel;
         // What the Commander asked for, held between what they will pay for (Phase 54).
         var effort = ThinkingEffortRange.Clamp(EffortRouter.ChooseFor(input), EffortFloor, EffortCeiling);
 

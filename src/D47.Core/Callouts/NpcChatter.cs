@@ -670,6 +670,15 @@ public static partial class NpcChatter
         return options[(int)(fraction * options.Length)];
     }
 
+    /// <summary>Whether the Commander may answer an exchange: every hail, and a passers-by exchange that notices them.</summary>
+    public static bool MayNotice(NpcChatterKind kind, int exchangeIndex) =>
+        kind switch
+        {
+            NpcChatterKind.Hail => true,
+            NpcChatterKind.Passersby => Notices(exchangeIndex),
+            _ => false,
+        };
+
     /// <summary>Whether this exchange is one of the few allowed to notice the Commander at all.</summary>
     private static bool Notices(int exchangeIndex) =>
         unchecked((uint)(exchangeIndex + NoticeOffset) * 2654435761u) % 5 == 0;

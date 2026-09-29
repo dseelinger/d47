@@ -7,13 +7,19 @@ namespace D47.Core.Persona;
 /// <param name="Transcript">The speaker's own conversation, which the ship AI's never shares.</param>
 /// <param name="OffersTools">Whether the model is offered the mode-free tool list on this speaker's turns.</param>
 /// <param name="Signal">How clearly the line carries, 0 to 1.</param>
+/// <param name="Model">The model this speaker answers on, or null for the turn loop's own.</param>
+/// <param name="Screen">
+/// Given the whole reply, returns what may be said instead; the reply is held back until it has run.
+/// </param>
 public sealed record Speaker(
     VoiceRole Role,
     string Name,
     string Brief,
     List<ConversationMessage> Transcript,
     bool OffersTools,
-    double Signal);
+    double Signal,
+    string? Model = null,
+    Func<string, string>? Screen = null);
 
 /// <summary>What a line makes of one utterance.</summary>
 public abstract record LineDecision
