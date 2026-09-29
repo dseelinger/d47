@@ -15,15 +15,17 @@ public sealed record MusicState(string? Track, bool Playing, bool Paused);
 
 /// <summary>
 /// The ambience layer and its transport: follows the situation, starts the next track, and holds the
-/// Commander's pause. Pause is session state; the mute setting is separate and saved.
+/// Commander's pause. Pause is session state; the mute setting is separate and saved. Nothing plays
+/// until <see cref="GameRunning"/> says Elite is running.
 /// </summary>
 public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, Random? shuffle = null)
 {
-    private readonly Ambience _ambience = new(shuffle);
     private readonly Lock _gate = new();
 
+    private Ambience _ambience = new(shuffle);
     private MusicTrack? _current;
     private bool _paused;
+    private bool _running;
 
     /// <summary>Raised after the track or the paused state changes, outside any lock.</summary>
     public event Action<MusicState>? Changed;
@@ -55,7 +57,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     {
         lock (_gate)
         {
-            if (!_ambience.Enter(Situations.For(status, musicTrack, library())))
+            if (!_running || !_ambience.Enter(Situations.For(status, musicTrack, library())))
             {
                 return;
             }
@@ -79,7 +81,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         {
             _current = null;
 
-            if (!_paused)
+            if (_running && !_paused)
             {
                 StartNext(afterGap: true);
             }
@@ -98,9 +100,35 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
                 audio.StopMusic();
                 _current = null;
             }
-            else if (!_paused && !audio.Activity.MusicPlaying)
+            else if (_running && !_paused && !audio.Activity.MusicPlaying)
             {
                 StartNext();
+            }
+        }
+
+        Raise();
+    }
+
+    /// <summary>
+    /// Whether Elite is running. Stopping stops the track; starting again leaves the next
+    /// <see cref="Follow"/> to start one for the situation it finds.
+    /// </summary>
+    public void GameRunning(bool running)
+    {
+        lock (_gate)
+        {
+            if (running == _running)
+            {
+                return;
+            }
+
+            _running = running;
+
+            if (!running)
+            {
+                audio.StopMusic();
+                _current = null;
+                _ambience = new Ambience(shuffle);
             }
         }
 
@@ -140,6 +168,11 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
     private string Resume()
     {
+        if (!_running)
+        {
+            return NotRunning;
+        }
+
         _paused = false;
 
         if (audio.Mix.Music.Muted)
@@ -163,6 +196,11 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
     private string Skip()
     {
+        if (!_running)
+        {
+            return NotRunning;
+        }
+
         _paused = false;
 
         if (audio.Mix.Music.Muted)
@@ -174,6 +212,8 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         _current = null;
         return StartNext() ? "Next track." : NothingToPlay;
     }
+
+    private const string NotRunning = "Elite is not running.";
 
     private const string NothingToPlay = "There is no music to play. Drop tracks into data\\audio\\music.";
 

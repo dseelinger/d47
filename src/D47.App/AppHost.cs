@@ -2516,8 +2516,20 @@ public sealed class AppHost : IDisposable
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
 
         // Ambience follows Elite's music track where its folder has tracks, and otherwise the situation
-        // Status.json states, sampled on the tick after the journal has been read.
-        tick.Add("ambience", _ => host.Music.Follow(status.Current, eliteMusic.Track));
+        // Status.json states, sampled on the tick after the journal has been read. It plays only while Elite
+        // runs; the process check lists processes while Elite is down, so it runs every two seconds.
+        var eliteCheckedAt = DateTimeOffset.MinValue;
+
+        tick.Add("ambience", context =>
+        {
+            if (context.Now - eliteCheckedAt >= TimeSpan.FromSeconds(2))
+            {
+                eliteCheckedAt = context.Now;
+                host.Music.GameRunning(host.Elite.IsRunning);
+            }
+
+            host.Music.Follow(status.Current, eliteMusic.Track);
+        });
 
         // The folder those tracks came from, which the Commander can add to while d47 is running.
         host._audioWatch = new AudioFolderWatch(

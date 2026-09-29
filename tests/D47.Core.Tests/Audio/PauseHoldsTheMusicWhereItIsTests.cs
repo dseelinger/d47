@@ -30,6 +30,7 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
 
         _music = new AmbientMusic(_audio, () => library, new Random(7));
         _audio.MusicFinished += _music.TrackFinished;
+        _music.GameRunning(running: true);
     }
 
     public void Dispose()

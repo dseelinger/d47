@@ -8,6 +8,11 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+Ambient music now plays only while Elite is running. It stops within a few seconds of the game
+closing, including after a crash, and starts again for the current situation when the game is back,
+unless it was paused or muted. With Elite closed, "resume the music", "next track" and the media keys
+reply "Elite is not running." and play nothing, and unmuting Music in the Audio mixer starts no track.
+
 Each invented speaker in NPC chatter is now given a manner of speaking for the exchange, such as
 terse, over-explaining, talking in questions or stiffly formal, and two speakers in one exchange never
 share one. A manner describes how someone talks, never where they are from: every line is still

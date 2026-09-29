@@ -135,7 +135,7 @@ nav_order: 123
  <text x="440" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">an empty folder changes nothing</text>
  <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">Set Elite's music volume to zero (Options, Audio) to hear yours instead of the game's.</text>
 </svg>
-<p class="body">Directive 47 ships with no music of its own — drop your own <code>.mp3</code>, <code>.m4a</code>, <code>.flac</code> or <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files.</p>
+<p class="body">Directive 47 ships with no music of its own — drop your own <code>.mp3</code>, <code>.m4a</code>, <code>.flac</code> or <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files. Ambience plays only while Elite is running, and stops within a few seconds of the game closing.</p>
 </section>
 <section>
 <h2><span class="num">4</span> No tool sets a level or a mute.</h2>
@@ -340,6 +340,11 @@ folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have
 
 To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 
+Ambience plays only while Elite is running. D47 checks for the game's window every two seconds:
+when the game closes, crashed or not, the track stops, and when it starts again the music picks up
+for the situation it is in, unless you paused or muted it. Until Elite's window appears, which is a
+few seconds after launch, nothing plays.
+
 Tracks are shuffled within a folder and the whole folder plays before any of them repeats — you
 did not number your files, and hearing the same one every time you dock is what happens if D47
 plays them in name order. Two seconds of silence separate a track that ends from the next one,
@@ -362,6 +367,8 @@ these keys.
 - **Pause** holds the track where it is. **Resume** continues it from that point.
 - **Next** ends the track and starts the next one in the shuffle. It also ends a pause.
 - While paused, a change of situation starts nothing. Resume starts the new situation's track.
+- With Elite closed, resume and next reply "Elite is not running." and play nothing. Pause still
+  works.
 - Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and
   unchanged by these keys.
 
