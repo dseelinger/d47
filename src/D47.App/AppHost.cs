@@ -1920,6 +1920,14 @@ public sealed class AppHost : IDisposable
                 openAudioFolder: () => System.Diagnostics.Process.Start(
                     new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
                 controlMusic: action => self?.Music.Control(action) ?? "Ambient music is not available.",
+                musicState: () => self?.Music.State ?? new MusicState(null, false, false),
+                watchMusic: refresh =>
+                {
+                    void Changed(MusicState _) => refresh();
+                    var music = self!.Music;
+                    music.Changed += Changed;
+                    return () => music.Changed -= Changed;
+                },
                 exobiology: exobiology,
                 cartography: cartography));
 

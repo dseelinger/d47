@@ -2819,13 +2819,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         // A label computed from state discovered after the row was built — a pending update's version —
         // has to be re-read on every refresh, not only when the button is first drawn (#193).
-        var refresh = row.PressLabelFor is { } label
-            ? () =>
+        void refresh()
+        {
+            baseRefresh();
+
+            if (row.PressLabelFor is { } label)
             {
-                baseRefresh();
                 press.Content = label();
             }
-            : baseRefresh;
+
+            if (row.PressEnabled is { } enabled && _settings is not null)
+            {
+                press.IsEnabled = enabled(_settings.Current);
+            }
+        }
+
+        refresh();
 
         // Along the bottom of the button rather than across the row, because it is the button's work it is
         // reporting.
@@ -2871,6 +2880,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var stack = row.Binding?.Read is null
             ? new StackPanel { Spacing = 8, Children = { pressed } }
             : new StackPanel { Spacing = 8, Children = { inset, pressed } };
+
+        if (row.Watch is { } watch)
+        {
+            Action? unwatch = null;
+
+            stack.AttachedToVisualTree += (_, _) =>
+                unwatch = watch(() => Dispatcher.UIThread.Post(refresh));
+            stack.DetachedFromVisualTree += (_, _) => unwatch?.Invoke();
+        }
 
         return (stack, refresh);
     }

@@ -49,7 +49,9 @@ public static class AudioCapability
     public static CapabilityDescriptor Create(
         Func<string>? drops = null,
         Action? openFolder = null,
-        Func<MusicAction, string>? music = null) => new()
+        Func<MusicAction, string>? music = null,
+        Func<MusicState>? musicState = null,
+        Func<Action, Action>? watchMusic = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -64,7 +66,9 @@ public static class AudioCapability
         },
         Settings =
         [
-            .. Enum.GetValues<AudioChannel>().SelectMany(RowsFor),
+            .. Enum.GetValues<AudioChannel>().SelectMany(channel => channel == AudioChannel.Music
+                ? [.. TransportRows(music, musicState, watchMusic), .. RowsFor(channel)]
+                : RowsFor(channel)),
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
         ],
         Tools = [ManageMusic(music)],
@@ -119,6 +123,75 @@ public static class AudioCapability
                 : ToolResult.Ok(music(action)));
         },
     };
+
+    public const string NowPlayingKey = "audio.music.now";
+
+    public const string NextTrackKey = "audio.music.next";
+
+    private const string MusicGroup = "Ambient music";
+
+    /// <summary>What the transport row says: the track, or why there is none.</summary>
+    internal static string NowPlaying(MusicState state, bool muted) => state switch
+    {
+        _ when muted => "Muted",
+        { Paused: true } => "Paused",
+        { Track: { } track } => Path.GetFileNameWithoutExtension(track),
+        _ => "Nothing playing",
+    };
+
+    private static bool CanControl(MusicState state, D47Settings settings) =>
+        !settings.Audio.For(AudioChannel.Music).Muted && (state.Playing || state.Paused);
+
+    /// <summary>Pause or resume, and next, above the music's level row. None where nothing plays the music.</summary>
+    private static IEnumerable<SettingRow> TransportRows(
+        Func<MusicAction, string>? music,
+        Func<MusicState>? musicState,
+        Func<Action, Action>? watch)
+    {
+        if (music is null || musicState is null)
+        {
+            yield break;
+        }
+
+        var (_, what) = Describe(AudioChannel.Music);
+
+        yield return new SettingRow
+        {
+            Key = NowPlayingKey,
+            Advanced = true,
+            Label = "Now playing",
+            Help = "The track that is playing. Pause holds it where it is; Resume carries on. "
+                   + "Voice and the media keys do the same.",
+            Kind = SettingKind.Info,
+            Group = MusicGroup,
+            GroupHelp = what,
+            DocsAnchor = "the-six-categories",
+            Binding = new SettingBinding
+            {
+                Read = s => NowPlaying(musicState(), s.Audio.For(AudioChannel.Music).Muted),
+            },
+            PressLabelFor = () => musicState().Paused ? "Resume" : "Pause",
+            PressEnabled = s => CanControl(musicState(), s),
+            Press = () => music(musicState().Paused ? MusicAction.Resume : MusicAction.Pause),
+            Watch = watch,
+        };
+
+        yield return new SettingRow
+        {
+            Key = NextTrackKey,
+            Advanced = true,
+            Label = "Next track",
+            Help = "Starts another track from the same folder.",
+            Kind = SettingKind.Info,
+            Group = MusicGroup,
+            GroupHelp = what,
+            DocsAnchor = "the-six-categories",
+            PressLabel = "Next",
+            PressEnabled = s => CanControl(musicState(), s),
+            Press = () => music(MusicAction.Next),
+            Watch = watch,
+        };
+    }
 
     private static ToolCommandPhrase Phrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });

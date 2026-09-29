@@ -195,6 +195,10 @@ public static class BuiltinCapabilities
         // Pauses, resumes or skips the ambient music; null where nothing plays it.
         Func<Audio.MusicAction, string>? controlMusic = null,
 
+        // What the music is playing, and a way to be told when that changes.
+        Func<Audio.MusicState>? musicState = null,
+        Func<Action, Action>? watchMusic = null,
+
         // The organic data analysed and not yet sold (#526).
         ExobiologyLedger? exobiology = null,
 
@@ -278,7 +282,7 @@ public static class BuiltinCapabilities
             contextNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),

@@ -288,6 +288,15 @@ public sealed record SettingRow
     /// </summary>
     public Func<string>? PressLabelFor { get; init; }
 
+    /// <summary>Whether the press button is enabled; null leaves it enabled.</summary>
+    public Func<D47Settings, bool>? PressEnabled { get; init; }
+
+    /// <summary>
+    /// Subscribes a refresh to something outside settings that changes what the row shows, and returns
+    /// the action that unsubscribes. Called while the row is on screen.
+    /// </summary>
+    public Func<Action, Action>? Watch { get; init; }
+
     /// <summary>
     /// A press this row acts on only asks the first time; a second press within a few seconds is the
     /// confirmation, and the ask lapses on its own if the second press does not come (#85).

@@ -24,6 +24,11 @@ closing, including after a crash, and starts again for the current situation whe
 unless it was paused or muted. With Elite closed, "resume the music", "next track" and the media keys
 reply "Elite is not running." and play nothing, and unmuting Music in the Audio mixer starts no track.
 
+The Ambient music group in Settings now starts with a Now playing row and a Next track row. The first
+shows the track name, or Paused, Muted or Nothing playing, with a Pause button that reads Resume while
+paused; the second skips to another track. Both buttons are disabled while the music is muted or nothing
+is playing, and the row follows changes made by voice or the media keys while Settings is open.
+
 Each invented speaker in NPC chatter is now given a manner of speaking for the exchange, such as
 terse, over-explaining, talking in questions or stiffly formal, and two speakers in one exchange never
 share one. A manner describes how someone talks, never where they are from: every line is still
