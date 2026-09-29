@@ -65,9 +65,9 @@ public sealed class VoiceCast
         [.. Pool.Select(AccentOf).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
 
     /// <summary>
-    /// The accent recorded for a sender's name: null while unanswered, empty for none. Never waits on the model.
+    /// The reading recorded for a sender's name: null while unanswered. Never waits on the model.
     /// </summary>
-    public Func<string, string?>? AccentOfName { get; set; }
+    public Func<string, NameReading?>? ReadingOfName { get; set; }
 
     /// <summary>Called with a name that has no answer yet, so the question can be queued.</summary>
     public Action<string>? NameUnknown { get; set; }
@@ -163,7 +163,10 @@ public sealed class VoiceCast
 
         // The name's accent first, then an Empire station's British one (#68). Federation and Alliance are
         // left as they are: neither has a canon accent as settled as the Empire's.
-        var named = NameAccentOf(sender, isPlayer, role);
+        var reading = NameReadingOf(sender, isPlayer, role);
+        var named = reading is null
+            ? null
+            : Accents.FirstOrDefault(accent => string.Equals(accent, reading.Accent, StringComparison.OrdinalIgnoreCase));
         var accentMatched = named is null
             ? new List<string>()
             : eligible.Where(voice => string.Equals(AccentOf(voice), named, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -175,10 +178,10 @@ public sealed class VoiceCast
 
         var accentPool = accentMatched.Count > 0 ? accentMatched : eligible;
 
-        // Of the right sex where there is a right sex to be had, within whichever pool the accent left.
-        var matching = accentPool
-            .Where(voice => Feminine.Contains(voice) == GivenNames.ReadsFemale(sender))
-            .ToList();
+        // Of the sex the model gave the name where there is one to be had, within whichever pool the accent left.
+        var matching = reading?.Sex is NameReading.Female or NameReading.Male
+            ? accentPool.Where(voice => Feminine.Contains(voice) == (reading.Sex == NameReading.Female)).ToList()
+            : [];
 
         var drawnFrom = matching.Count > 0 ? matching : accentPool;
 
@@ -193,31 +196,30 @@ public sealed class VoiceCast
             }
         }
 
-        // They are all spoken for, so this sender shares one — still of the right sex.
+        // They are all spoken for, so this sender shares one — still of the sex chosen.
         assignments[sender] = drawnFrom[0];
         return new VoiceSelection(drawnFrom[0], Rate);
     }
 
     /// <summary>
-    /// The pool accent a name is recorded as suggesting, or null. A name with no answer yet is reported to
+    /// The accent and sex a name is recorded as suggesting, or null. A name with no answer yet is reported to
     /// <see cref="NameUnknown"/>; other Commanders and roles other than comms are never looked up.
     /// </summary>
-    private string? NameAccentOf(string sender, bool isPlayer, VoiceRole role)
+    private NameReading? NameReadingOf(string sender, bool isPlayer, VoiceRole role)
     {
-        if (isPlayer || role != VoiceRole.Comms || AccentOfName is null)
+        if (isPlayer || role != VoiceRole.Comms || ReadingOfName is null)
         {
             return null;
         }
 
-        var recorded = AccentOfName(sender);
+        var recorded = ReadingOfName(sender);
 
         if (recorded is null)
         {
             NameUnknown?.Invoke(sender);
-            return null;
         }
 
-        return Accents.FirstOrDefault(accent => string.Equals(accent, recorded, StringComparison.OrdinalIgnoreCase));
+        return recorded;
     }
 
     /// <summary>Gives an NPC in this system a voice chosen before their name was known.</summary>

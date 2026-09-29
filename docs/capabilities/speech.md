@@ -302,8 +302,8 @@ and nothing else.
 
 **Cartesia is here for the size of the library.** 924 voices against ElevenLabs' several hundred,
 Edge's 322 and OpenAI's thirteen, tagged with a language, an accent, a country and a gender — which
-is what lets Directive 47 give a Commander who reads as a woman a woman's voice, something OpenAI
-publishes nothing for. It is also the second provider after ElevenLabs that may speak for the slots
+is what lets Directive 47 give a named character a voice of the sex and accent their name suggests,
+something OpenAI publishes nothing for. It is also the second provider after ElevenLabs that may speak for the slots
 carrying other players' words, because it can be told which language to use. What it cannot be told
 is a speaking rate: see [Speaking rate](#rate).
 
@@ -481,15 +481,16 @@ them under, so those are dropped rather than filed under a guess.
 
 #### Voices for named characters {#name-accents}
 
-A character named in an in-game message gets a voice from the provider's list
-that carries the accent their name clearly suggests. The language model is asked once per name and
-provider, in the background, which of the accents the provider's voices carry the name points to, or
-none. The answer is kept in `data
-ame-accents.json`, so a name is never asked twice. The first line
-from a name not yet answered is voiced as before, and the answer applies the next time that name is
-cast. Only an accent the provider's voices actually carry is used, other Commanders are never asked
-about, invented chatter is cast at random, and the language of every line stays English. The
-names are sent to the language model, as the Language model entry under Privacy and egress says.
+A character named in an in-game message gets a voice from the provider's list that carries the accent
+their name clearly suggests and matches the sex it suggests. The language model is asked once per name
+and provider, in the background, in the same request: which of the accents the provider's voices carry
+the name points to, or none, and whether it reads as female, male or unknown. The answer is kept in
+`data\name-accents.json`, so a name is never asked twice. The first line from a name not yet answered
+is voiced without regard to sex or accent, and the answer applies the next time that name is cast.
+Only an accent the provider's voices actually carry is used. An unknown sex, or no language model,
+draws a voice without regard to sex. Other Commanders are never asked about and are cast without regard
+to sex, invented chatter is cast at random, and the language of every line stays English. The names are
+sent to the language model, as the Language model entry under Privacy and egress says.
 
 #### ElevenLabs model {#elevenlabs-model}
 

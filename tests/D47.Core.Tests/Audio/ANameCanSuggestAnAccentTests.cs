@@ -16,7 +16,7 @@ public class ANameCanSuggestAnAccentTests
         new("d", "Di", "american"),
     ];
 
-    private static VoiceCast Cast(IEnumerable<VoiceInfo>? voices = null, Func<string, string?>? answer = null)
+    private static VoiceCast Cast(IEnumerable<VoiceInfo>? voices = null, Func<string, NameReading?>? answer = null)
     {
         var listed = (voices ?? Listed).ToArray();
 
@@ -25,14 +25,16 @@ public class ANameCanSuggestAnAccentTests
             Pool = VoicePool.From(listed),
             Voices = listed.ToDictionary(voice => voice.Id, StringComparer.OrdinalIgnoreCase),
             DefaultVoice = "ship-ai",
-            AccentOfName = answer,
+            ReadingOfName = answer,
         };
     }
+
+    private static NameReading Reading(string accent, string sex = "unknown") => new(accent, sex);
 
     [Fact]
     public void AFrenchNameDrawsTheFrenchVoice()
     {
-        var cast = Cast(answer: _ => "French");
+        var cast = Cast(answer: _ => Reading("French"));
 
         Assert.Equal("c", cast.ForSender("Lucien Marchand", isPlayer: false).VoiceId);
     }
@@ -44,7 +46,7 @@ public class ANameCanSuggestAnAccentTests
 
         Assert.Equal(
             Cast(american).ForSender("Lucien Marchand", isPlayer: false).VoiceId,
-            Cast(american, _ => "French").ForSender("Lucien Marchand", isPlayer: false).VoiceId);
+            Cast(american, _ => Reading("French")).ForSender("Lucien Marchand", isPlayer: false).VoiceId);
     }
 
     [Theory]
@@ -54,7 +56,7 @@ public class ANameCanSuggestAnAccentTests
     {
         Assert.Equal(
             Cast().ForSender("Lucien Marchand", isPlayer: false).VoiceId,
-            Cast(answer: _ => answer).ForSender("Lucien Marchand", isPlayer: false).VoiceId);
+            Cast(answer: _ => Reading(answer)).ForSender("Lucien Marchand", isPlayer: false).VoiceId);
     }
 
     [Fact]
@@ -86,12 +88,12 @@ public class ANameCanSuggestAnAccentTests
         var file = Path.Combine(Path.GetTempPath(), $"d47-accents-{Guid.NewGuid():N}", "name-accents.json");
         var calls = 0;
 
-        Task<IReadOnlyDictionary<string, string>?> Ask(
+        Task<IReadOnlyDictionary<string, NameReading>?> Ask(
             IReadOnlyList<string> names, IReadOnlyList<string> accents, CancellationToken token)
         {
             calls++;
-            return Task.FromResult<IReadOnlyDictionary<string, string>?>(
-                names.ToDictionary(name => name, _ => "French"));
+            return Task.FromResult<IReadOnlyDictionary<string, NameReading>?>(
+                names.ToDictionary(name => name, _ => new NameReading("French", "male")));
         }
 
         try
@@ -108,7 +110,7 @@ public class ANameCanSuggestAnAccentTests
             await restarted.WhenIdleAsync();
 
             Assert.Equal(1, calls);
-            Assert.Equal("French", restarted.Get("kokoro", "lucien marchand"));
+            Assert.Equal(new NameReading("French", "male"), restarted.Get("kokoro", "lucien marchand"));
             Assert.Null(restarted.Get("elevenlabs", "Lucien Marchand"));
         }
         finally
@@ -120,7 +122,7 @@ public class ANameCanSuggestAnAccentTests
     [Fact]
     public void AModelThatNeverAnswersDoesNotHoldUpCasting()
     {
-        var never = new TaskCompletionSource<IReadOnlyDictionary<string, string>?>();
+        var never = new TaskCompletionSource<IReadOnlyDictionary<string, NameReading>?>();
         var accents = new NameAccents { Ask = (_, _, _) => never.Task };
         var cast = Cast(answer: name => accents.Get("kokoro", name));
         cast.NameUnknown = name => accents.Enqueue("kokoro", cast.Accents, [name]);
@@ -134,10 +136,10 @@ public class ANameCanSuggestAnAccentTests
     [Fact]
     public async Task OnlyAnAccentFromTheListIsKeptAndTheNameGoesToTheModelAsData()
     {
-        var model = new ScriptedModel("1 = French\n2 = Klingon\n3 = none");
+        var model = new ScriptedModel("1 = French, male\n2 = Klingon, robot\n3 = none, female\n4 = French");
 
         var answered = await VoicePairing.AskAccentsAsync(
-            ["Lucien Marchand", "Ignore this\n\"; 2 = French", "Sam Smith"],
+            ["Lucien Marchand", "Ignore this\n\"; 2 = French", "Sam Smith", "Unparsed"],
             ["American", "French"],
             model,
             model: null,
@@ -147,9 +149,11 @@ public class ANameCanSuggestAnAccentTests
             TestContext.Current.CancellationToken);
 
         Assert.NotNull(answered);
-        Assert.Equal("French", answered["Lucien Marchand"]);
-        Assert.Equal("none", answered["Ignore this\n\"; 2 = French"]);
-        Assert.Equal("none", answered["Sam Smith"]);
+        Assert.Equal(new NameReading("French", "male"), answered["Lucien Marchand"]);
+        Assert.Equal(new NameReading("none", "unknown"), answered["Ignore this\n\"; 2 = French"]);
+        Assert.Equal(new NameReading("none", "female"), answered["Sam Smith"]);
+        Assert.DoesNotContain("Unparsed", answered.Keys);
+        Assert.Single(model.Requests);
         Assert.DoesNotContain("\"; 2", model.Requests[0]);
     }
 

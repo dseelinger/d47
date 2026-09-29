@@ -3735,8 +3735,8 @@ public sealed class AppHost : IDisposable
                 .GroupBy(voice => voice.Id, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
-            // A sender's name may suggest an accent; the question is queued and answered off the speech path.
-            cast.AccentOfName = name => NameAccents.Get(provider.Id, name);
+            // A sender's name may suggest an accent and a sex; the question is queued and answered off the speech path.
+            cast.ReadingOfName = name => NameAccents.Get(provider.Id, name);
             cast.NameUnknown = name => NameAccents.Enqueue(provider.Id, cast.Accents, [name]);
 
             // Both numbers, because one of them alone is what hid that: "1 voice available" is alarming

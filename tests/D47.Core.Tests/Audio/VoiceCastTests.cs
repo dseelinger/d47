@@ -444,11 +444,14 @@ public class AnEmpireStationSoundsLikeTheEmpireTests
 /// <summary> A woman on the radio sounds like one. </summary>
 public class VoicesMatchTheNameTests
 {
-    private static VoiceCast Cast() => new()
+    private static readonly string[] Women = ["Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl", "Beatrice Kohl"];
+
+    private static VoiceCast Cast(Func<string, NameReading?>? sex = null) => new()
     {
         DefaultVoice = "ship-ai",
         Pool = ["m1", "f1", "m2", "f2", "m3", "f3"],
         Feminine = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "f1", "f2", "f3" },
+        ReadingOfName = sex ?? (name => new NameReading("", Women.Contains(name) ? "female" : "male")),
     };
 
     private static bool IsFemale(string? voiceId) => voiceId is not null && voiceId.StartsWith('f');
@@ -458,14 +461,14 @@ public class VoicesMatchTheNameTests
     {
         var cast = Cast();
 
-        foreach (var name in new[] { "Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl" })
+        foreach (var name in Women.Take(3))
         {
             Assert.True(IsFemale(cast.ForSender(name, isPlayer: false).VoiceId), name);
         }
     }
 
     [Fact]
-    public void EverybodyElseGetsAMans()
+    public void AManGetsAMansVoice()
     {
         var cast = Cast();
 
@@ -475,13 +478,59 @@ public class VoicesMatchTheNameTests
         }
     }
 
+    [Theory]
+    [InlineData("unknown")]
+    [InlineData(null)]
+    public void AnUnknownOrMissingAnswerDrawsWithoutRegardToSex(string? sex)
+    {
+        var unmatched = new VoiceCast
+        {
+            DefaultVoice = "ship-ai",
+            Pool = ["m1", "f1", "m2", "f2", "m3", "f3"],
+            Feminine = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "f1", "f2", "f3" },
+            ReadingOfName = _ => sex is null ? null : new NameReading("", sex),
+        };
+        var drawn = Women.Select(name => unmatched.ForSender(name, isPlayer: false).VoiceId).ToArray();
+
+        Assert.Contains(drawn, voice => !IsFemale(voice));
+        Assert.Contains(drawn, voice => IsFemale(voice));
+    }
+
+    [Fact]
+    public void WithNoLookupTheDrawIgnoresSex()
+    {
+        var cast = new VoiceCast
+        {
+            DefaultVoice = "ship-ai",
+            Pool = ["m1", "f1", "m2", "f2"],
+            Feminine = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "f1", "f2" },
+        };
+
+        Assert.NotNull(cast.ForSender("Marianne Hobbs", isPlayer: false).VoiceId);
+    }
+
+    [Fact]
+    public void AnotherCommanderIsCastWithoutRegardToSex()
+    {
+        var asked = new List<string>();
+        var cast = Cast(_ => new NameReading("", "female"));
+        cast.NameUnknown = asked.Add;
+
+        var voices = new[] { "Astrid Vahl", "Ilse Bruhn", "Mark Bennett", "Marianne Hobbs" }
+            .Select(name => cast.ForSender(name, isPlayer: true).VoiceId)
+            .ToArray();
+
+        Assert.Empty(asked);
+        Assert.Contains(voices, voice => !IsFemale(voice));
+    }
+
     /// <summary>And they are still one voice each.</summary>
     [Fact]
     public void TheyAreStillDistinctWithinTheSex()
     {
         var cast = Cast();
 
-        var women = new[] { "Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl" }
+        var women = Women.Take(3)
             .Select(name => cast.ForSender(name, isPlayer: false).VoiceId)
             .ToArray();
 
@@ -497,7 +546,7 @@ public class VoicesMatchTheNameTests
     {
         var cast = Cast();
 
-        var women = new[] { "Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl", "Beatrice Kohl" }
+        var women = Women
             .Select(name => cast.ForSender(name, isPlayer: false).VoiceId)
             .ToArray();
 

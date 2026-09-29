@@ -28,13 +28,13 @@ A new setting, How often an accent flavours the words, sets how often the model 
 words suit the accent of its voice. It applies per line to reworded comms and per speaker to invented
 chatter, from 0 to 100 percent in steps of 10, and defaults to 50. The voice keeps its accent either way.
 
-A named character in an in-game message is now spoken in a voice with the accent
-their name clearly suggests, when the voice provider has one. The language model is asked once per name
-and provider, in the background, and the answer is kept in `data
-ame-accents.json`. The first line
-from a name that has not been answered yet is voiced as before; later systems use the answer. Other
-Commanders and invented chatter voices are unchanged, and the language stays English. The Language
-model entry under Privacy and egress now says these names are sent to it.
+A named character in an in-game message is now spoken in a voice with the accent their name clearly
+suggests, when the voice provider has one, and in a voice of the sex it suggests. NPC voices match sex
+by asking the language model, in the same request that asks about the accent; without a language model
+they ignore sex. The answers are kept in `data\name-accents.json`. The first line from a name that has
+not been answered yet is voiced without regard to sex or accent; later systems use the answer. Other
+Commanders are cast without regard to sex, invented chatter voices are unchanged, and the language stays
+English. The Language model entry under Privacy and egress now says these names are sent to it.
 
 Only an explicit request to deliberate now gets Max effort: "carefully", "think hard", "step by step",
 "max effort" and "maximum effort". "Work out", "figure out", "explain why", "walk me through" and "in
