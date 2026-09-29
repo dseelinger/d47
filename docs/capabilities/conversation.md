@@ -426,8 +426,8 @@ The most effort a question gets, however hard it sounded.
 
 Thinking is most of what a turn costs, so this is the dial that decides what an expensive-looking
 question is allowed to spend. It also catches the gauge being wrong in the other direction: it
-matches on the words you used and not on grammar, so an idle "what do you think about the Corvette"
-contains "think about" and is priced as a request to deliberate.
+matches on the words you used and not on grammar, so an idle "I landed carefully, what now"
+contains "carefully" and is priced as a request to deliberate.
 
 Each of the two rows offers only the rungs the other allows, so you cannot set a floor above a
 ceiling from the panel.

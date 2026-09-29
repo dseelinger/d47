@@ -18,9 +18,21 @@ public class EffortRouterTests
     [Theory]
     [InlineData("carefully work out my jump range")]
     [InlineData("think hard about this build")]
-    [InlineData("walk me through unlocking Palin")]
+    [InlineData("max effort, plan my route")]
+    [InlineData("use maximum effort on this")]
     public void AnExplicitAskToDeliberateOutranksEverything(string input) =>
         Assert.Equal(ThinkingEffort.Max, EffortRouter.ChooseFor(input));
+
+    [Theory]
+    [InlineData("walk me through unlocking Palin")]
+    [InlineData("work out my jump range")]
+    [InlineData("explain why the FSD is hot")]
+    public void EverydayPhrasesForWorkingSomethingOutGetHighEffort(string input) =>
+        Assert.Equal(ThinkingEffort.High, EffortRouter.ChooseFor(input));
+
+    [Fact]
+    public void ThinkAboutIsOrdinarySpeech() =>
+        Assert.Equal(ThinkingEffort.Medium, EffortRouter.ChooseFor("what do you think about the Corvette"));
 
     [Theory]
     [InlineData("plan the cheapest trade route from here")]

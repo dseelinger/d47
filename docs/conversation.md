@@ -232,15 +232,15 @@ live with it:
 | "where am I", "am I docked" — a plain lookup | Low |
 | Most questions | Medium |
 | "plan the cheapest route", "compare these loadouts" — several constraints at once | High |
-| "carefully work out…", "walk me through…" — you asked it to deliberate | Max |
+| "walk me through…", "work out…", "explain why…" — you asked for a fuller answer | High |
+| "carefully work out…", "think hard…", "step by step", "max effort" — you asked it to deliberate | Max |
 
 The heuristic is deterministic, so the same question always gets the same effort.
 
 **You can put a floor and a ceiling on it**, in Settings under the language model, and both are
 empty by default. The floor is where you say the cheapest rung is not enough for you; the ceiling
 is a cost dial, and it also catches the gauge reading a passing remark as a request to deliberate —
-it matches on words rather than grammar, so "what do you think about the Corvette" contains "think
-about". **`Xhigh` is reachable only by setting a bound**: the gauge above keeps its four answers.
+it matches on words rather than grammar, so "I landed carefully, what now" contains "carefully". **`Xhigh` is reachable only by setting a bound**: the gauge above keeps its four answers.
 See [think at least this hard](capabilities/conversation.md#effort-floor) and
 [never think harder than this](capabilities/conversation.md#effort-ceiling).
 

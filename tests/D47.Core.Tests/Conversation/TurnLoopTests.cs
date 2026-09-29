@@ -357,11 +357,11 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        Assert.Equal(ThinkingEffort.Max, EffortRouter.ChooseFor("what do you think about the Corvette"));
+        Assert.Equal(ThinkingEffort.Max, EffortRouter.ChooseFor("I landed carefully, what now"));
 
         loop.EffortCeiling = ThinkingEffort.Medium;
 
-        var (result, _) = await RunAsync(loop, "what do you think about the Corvette");
+        var (result, _) = await RunAsync(loop, "I landed carefully, what now");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Equal(ThinkingEffort.Medium, result.Effort);

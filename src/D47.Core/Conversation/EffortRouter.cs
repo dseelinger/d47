@@ -6,8 +6,13 @@ public static class EffortRouter
     /// <summary>Words that mean the Commander wants the model to work at it.</summary>
     private static readonly string[] DeliberateSignals =
     [
-        "carefully", "think hard", "think about", "work out", "figure out",
-        "explain why", "walk me through", "in detail", "step by step",
+        "carefully", "think hard", "step by step", "max effort", "maximum effort",
+    ];
+
+    /// <summary>Phrases that ask for a fuller answer without asking for the deepest reasoning.</summary>
+    private static readonly string[] ThoroughSignals =
+    [
+        "work out", "figure out", "explain why", "walk me through", "in detail",
     ];
 
     /// <summary>Work that is inherently multi-constraint: planning, comparing, optimising.</summary>
@@ -38,6 +43,11 @@ public static class EffortRouter
         if (DeliberateSignals.Any(signal => text.Contains(signal, StringComparison.Ordinal)))
         {
             return ThinkingEffort.Max;
+        }
+
+        if (ThoroughSignals.Any(signal => text.Contains(signal, StringComparison.Ordinal)))
+        {
+            return ThinkingEffort.High;
         }
 
         var reasoning = ReasoningSignals.Count(signal => text.Contains(signal, StringComparison.Ordinal));
