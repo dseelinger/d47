@@ -1,7 +1,9 @@
 ﻿using Anthropic;
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
+using Anthropic.Models.Models;
 using D47.Core.Conversation;
+using D47.Llm.OpenAi;
 using CoreConversation = D47.Core.Conversation;
 
 namespace D47.Llm;
@@ -788,6 +790,27 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                     current.WebSearchRequests,
                     (int)(incoming.ServerToolUse?.WebSearchRequests ?? 0)),
             };
+
+    /// <summary>Asks the endpoint for its model list. Free: it runs no completion.</summary>
+    public async Task<EndpointModels> ListModelsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var page = await _client.Models.List(new ModelListParams(), cancellationToken).ConfigureAwait(false);
+
+            return new EndpointModels(EndpointReach.Answered, [.. page.Items.Select(model => model.ID).Order(StringComparer.Ordinal)], null);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return IsTransient(ex) || ex is not AnthropicApiException
+                ? EndpointModels.Unreachable(Describe(ex))
+                : EndpointModels.Refused(Describe(ex));
+        }
+    }
 
     /// <summary>Transient means "the same request may work shortly".</summary>
     private static bool IsTransient(Exception ex) => ex switch

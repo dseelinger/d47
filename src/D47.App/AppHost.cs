@@ -6207,76 +6207,29 @@ public sealed class AppHost : IDisposable
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         budget.CancelAfter(KeyCheckBudget);
 
-        // An OpenAI-shaped endpoint is checked by asking it what it serves rather than by spending a turn on
-        // it (Phase 29), and that is the same reasoning the speech key check follows: it proves the exact
-        // call d47 makes anyway rather than a proxy for it.
-        if (provider is ChatCompletionsLlmProvider or ResponsesLlmProvider)
+        // Lists the provider's models: free, and the same call the endpoint handshake makes. No completion
+        // is run, so nothing is added to Spend.
+        var asked = provider switch
         {
-            var asked = provider switch
-            {
-                ChatCompletionsLlmProvider chat => await chat.ListModelsAsync(budget.Token).ConfigureAwait(false),
-                ResponsesLlmProvider responses => await responses.ListModelsAsync(budget.Token).ConfigureAwait(false),
-                _ => EndpointModels.Unreachable(null),
-            };
-
-            return asked.Reach switch
-            {
-                // Reached and refused.
-                EndpointReach.Refused => SecretCheck.Rejected(asked.Detail ?? $"{selected.Name} refused the request."),
-
-                EndpointReach.Answered when asked.Ids.Count > 0 => SecretCheck.Works(
-                    $"{selected.Name} answered — {asked.Ids.Count} models."),
-
-                // Answered with an empty catalogue, which is a gateway's prerogative and not a fault.
-                EndpointReach.Answered => SecretCheck.Works(
-                    $"{selected.Name} answered, but lists no models. Type the model name yourself."),
-
-                _ => SecretCheck.Unreachable(asked.Detail ?? $"{selected.Name} could not be reached."),
-            };
-        }
-
-        var request = new LlmRequest
-        {
-            Model = Settings.Current.Llm.Model ?? selected.DefaultModel ?? provider.DefaultModel,
-            Prompt = new PromptAssembly
-            {
-                History = [new ConversationMessage(ConversationRole.User, "Reply with the single word OK.")],
-            },
-            Effort = ThinkingEffort.Low,
-
-            // Nothing said about sampling, on purpose (#98).
-            Sampling = LlmSampling.Unstated,
-
-            // Enough room to say one word, rather than exactly one token.
-            MaxOutputTokens = 64,
+            AnthropicLlmProvider anthropic => await anthropic.ListModelsAsync(budget.Token).ConfigureAwait(false),
+            ChatCompletionsLlmProvider chat => await chat.ListModelsAsync(budget.Token).ConfigureAwait(false),
+            ResponsesLlmProvider responses => await responses.ListModelsAsync(budget.Token).ConfigureAwait(false),
+            _ => EndpointModels.Unreachable(null),
         };
 
-        try
+        return asked.Reach switch
         {
-            await foreach (var step in provider.StreamAsync(request, budget.Token).ConfigureAwait(false))
-            {
-                // A failure the provider itself classified.
-                if (step is LlmStreamEvent.Failed failure)
-                {
-                    return failure.Transient
-                        ? SecretCheck.Unreachable(failure.Message)
-                        : SecretCheck.Rejected(failure.Message);
-                }
-            }
+            EndpointReach.Refused => SecretCheck.Rejected(asked.Detail ?? $"{selected.Name} refused the request."),
 
-            // Reaching the end of the stream without a failure is the provider having accepted the key.
-            return SecretCheck.Works($"{selected.Name} accepted the key.");
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return SecretCheck.Unreachable($"{selected.Name} did not answer within {KeyCheckBudget.TotalSeconds:0} seconds.");
-        }
-        catch (Exception ex)
-        {
-            // Never the key, at any level — the message is the exception's and the exception never held it.
-            _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
-            return SecretCheck.Unreachable(ex.Message);
-        }
+            EndpointReach.Answered when asked.Ids.Count > 0 => SecretCheck.Works(
+                $"{selected.Name} answered — {asked.Ids.Count} models."),
+
+            // An empty catalogue is a gateway's choice, not a fault.
+            EndpointReach.Answered => SecretCheck.Works(
+                $"{selected.Name} answered, but lists no models. Type the model name yourself."),
+
+            _ => SecretCheck.Unreachable(asked.Detail ?? $"{selected.Name} could not be reached."),
+        };
     }
 
     /// <summary>

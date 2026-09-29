@@ -15,6 +15,8 @@ public static class ConversationCapability
 
     public const string ModelKey = "llm.model";
 
+    public const string TestKey = "llm.test";
+
     /// <summary>The model for calls the Commander is not waiting on (Phase 54).</summary>
     public const string BackgroundModelKey = "llm.backgroundModel";
 
@@ -142,7 +144,7 @@ public static class ConversationCapability
                         ToolResult.Ok(DescribeModel(settings.Current, availability, spend, speechSpend))),
                 },
             ],
-            Settings = BuildSettingRows(verifyKey, endpointModels, contextNote),
+            Settings = BuildSettingRows(settings, verifyKey, availability, endpointModels, contextNote),
         };
     }
 
@@ -206,7 +208,9 @@ public static class ConversationCapability
             PriceTable.Default);
 
     private static IReadOnlyList<SettingRow> BuildSettingRows(
+        SettingsService settings,
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey,
+        LlmAvailabilityState availability,
         Func<IReadOnlyList<string>>? endpointModels = null,
         Func<string?>? contextNote = null)
     {
@@ -315,6 +319,47 @@ public static class ConversationCapability
                 {
                     Read = s => s.Llm.Model,
                     Write = (s, v) => s with { Llm = s.Llm with { Model = v } },
+                },
+            },
+            new()
+            {
+                Key = TestKey,
+                Label = "Test",
+                Help =
+                    "Asks the selected provider for its list of models, with the stored key. Free: it runs no "
+                    + "completion and adds nothing to this session's spend. A working answer marks the model "
+                    + "available; a refusal or silence marks it unavailable.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "test",
+                PressLabel = "Test",
+                PressAsync = verifyKey is null
+                    ? null
+                    : async (_, token) =>
+                    {
+                        var provider = LlmProviderCatalog.Selected(settings.Current.Llm.Provider);
+                        var check = await verifyKey(provider.Id, token).ConfigureAwait(false);
+
+                        switch (check.Verdict)
+                        {
+                            case SecretVerdict.Works:
+                                availability.MarkAvailable();
+                                break;
+                            case SecretVerdict.Rejected:
+                                availability.MarkFailed(check.Detail, transient: false);
+                                break;
+                            default:
+                                availability.MarkFailed(check.Detail, transient: true);
+                                break;
+                        }
+
+                        return check.Detail;
+                    },
+                AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+                Binding = new SettingBinding
+                {
+                    Read = _ => availability.Reason is { } why
+                        ? $"{availability.Current} — {why}"
+                        : availability.Current.ToString(),
                 },
             },
             new()

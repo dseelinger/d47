@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.19.0 — Music and model checks in Settings
+
+Settings › Language model › Provider and model has a Test row below Model. Its text shows whether the
+language model is available and why, as "what model are you using" reports it. The Test button asks
+the selected provider for its list of models with the stored key and reports that it works, that the
+key was refused, or that the service could not be reached, and sets the availability to match. It
+runs no completion and adds nothing to the session's spend. The VERIFY button on each language-model
+key now uses the same free check; Anthropic keys were previously verified with a paid one-word turn.
+
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
 Invented radio traffic between other pilots and controllers now sounds further off than a hail: the

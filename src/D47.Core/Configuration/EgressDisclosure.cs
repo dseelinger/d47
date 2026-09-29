@@ -530,7 +530,8 @@ public static class EgressDisclosure
             LanguageModel,
             NameOf(LanguageModel),
             destination,
-            $"{provider.Name} is selected. {provider.Egress} The names of characters in in-game messages are "
+            $"{provider.Name} is selected. {provider.Egress} The Test button and the key's VERIFY button ask "
+            + "the provider for its list of models, sending the key and nothing else. The names of characters in in-game messages are "
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine.",
             Active: true,

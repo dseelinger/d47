@@ -259,6 +259,7 @@ public static class SettingsLayout
                                 F(IsLlmProviderKeyFamily),
                                 E("llm.endpoint"),
                                 E("llm.model"),
+                                E("llm.test"),
                                 E("llm.backgroundModel"),
                                 E("llm.effortFloor"),
                                 E("llm.effortCeiling"),

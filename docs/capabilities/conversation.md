@@ -381,6 +381,17 @@ and the guardrails that say in-game text is information rather than instruction 
 either way. But a hostile ship name has one more thing it can try on the cheap models than on the
 expensive ones, so the choice is a real one and not only about money.
 
+#### Test {#test}
+
+Below Model. Its text says whether the language model is available and why, the same words
+`get_model_status` uses. **Test** asks the selected provider for its list of models, with the stored key
+and the endpoint you set, and reports one of three things: it works, the key was refused, or the
+service could not be reached. A working answer marks the model available; a refusal or silence marks
+it unavailable, so the text and `get_model_status` agree with it.
+
+The check is free. It lists models and never runs a completion, so nothing is added to this session's
+spend. It runs only when you press Test or a key's VERIFY button, never on a timer.
+
 #### Model for the quiet calls {#background-model}
 
 Which model writes the things you did not ask for: a line of In Ship chatter, the brief when you sit down,
