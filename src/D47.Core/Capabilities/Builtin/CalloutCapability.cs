@@ -406,8 +406,11 @@ public static class CalloutCapability
                 "NPC chatter",
                 "Anybody outside your ship. Made-up radio traffic from people who do not exist - "
                 + "passers-by talking to each other, the dock telling somebody off, the occasional "
-                + "one-way word to you. Theatre, written by the model, and never answered. The "
-                + "game's own NPC messages are a different switch, under Speech.",
+                + "word to you. Theatre, written by the model. When one of them speaks to you, say "
+                + "their name within 90 seconds of the last line and they answer, up to four replies "
+                + "before they sign off; after that D47 says they are off the channel. Each reply is "
+                + "billed like any turn, on the background model. The game's own NPC messages are a "
+                + "different switch, under Speech.",
                 "npc-chatter",
                 "npc chatter",
                 s => s.Callouts.NpcChatter,

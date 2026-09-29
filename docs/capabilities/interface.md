@@ -572,7 +572,7 @@ bar and the fourth on a switch beside it. They are readings of one session rathe
 destinations, which is why they are a stepper and not four tabs of their own.
 
 **In Ship** is the conversation: you, the ship's AI, and the callouts spoken to you — everything
-but invented chatter and a message you only overheard rather than were sent. It is what a fresh
+but invented chatter you cannot answer and a message you only overheard rather than were sent. It is what a fresh
 installation opens on, and what you come back to unless you left the tab on another reading — see
 *the panel* above.
 

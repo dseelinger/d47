@@ -1,3 +1,5 @@
+using D47.Core.Audio;
+using D47.Core.Callouts;
 using D47.Core.Conversation;
 
 namespace D47.App.Panel;
@@ -18,7 +20,7 @@ public sealed class TurnPresenter(PanelViewModel model)
         switch (turnEvent)
         {
             case TurnEvent.Addressed addressed:
-                _speaker = addressed.Name;
+                _speaker = addressed.Role == VoiceRole.Comms ? NpcChatter.Invented(addressed.Name) : addressed.Name;
                 break;
 
             case TurnEvent.Routed routed:

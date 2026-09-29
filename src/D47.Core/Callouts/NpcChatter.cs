@@ -26,6 +26,9 @@ public enum NpcChatterKind
 /// <param name="VoiceId">The voice its roster slot was cast with, or null where there was no roster.</param>
 public sealed record NpcChatterLine(string Name, string Text, VoiceRole? Role = null, string? VoiceId = null);
 
+/// <summary>A chatter line as it will be spoken, with its exchange and whether the Commander may answer it.</summary>
+public sealed record NpcChatterHeard(NpcChatterLine Line, int ExchangeIndex, bool Answerable);
+
 /// <summary>One voice an exchange may use, cast before the exchange is written (#415).</summary>
 /// <param name="Tag">What the model tags this slot's lines with.</param>
 /// <param name="Name">The NPC's name where they were already heard in this system, or null for a new one.</param>
@@ -678,6 +681,9 @@ public static partial class NpcChatter
             NpcChatterKind.Passersby => Notices(exchangeIndex),
             _ => false,
         };
+
+    /// <summary>The name an invented speaker is shown under, so they read apart from a real Commander.</summary>
+    public static string Invented(string name) => $"{name} (invented)";
 
     /// <summary>Whether this exchange is one of the few allowed to notice the Commander at all.</summary>
     private static bool Notices(int exchangeIndex) =>

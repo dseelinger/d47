@@ -103,6 +103,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public string? Callback { get; init; }
 
+    /// <summary>The invented chatter line this speaks, or null for anything else.</summary>
+    public NpcChatterHeard? Invented { get; init; }
+
     /// <summary>The line the conversation page should carry, or null when this belongs on another page.</summary>
     public string? ConversationLine =>
         Transcript is null && Voice == Audio.VoiceRole.ShipAi ? Text : null;

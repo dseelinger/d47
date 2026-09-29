@@ -20,7 +20,7 @@ public enum TranscriptPage
 {
     /// <summary>
     /// The Commander, the ship's AI, and the callouts spoken to the Commander — everything but
-    /// invented chatter and an overheard relay.
+    /// invented chatter they may not answer and an overheard relay.
     /// </summary>
     Conversation,
 

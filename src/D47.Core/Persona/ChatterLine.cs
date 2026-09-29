@@ -93,6 +93,10 @@ public sealed class ChatterLine(
         }
     }
 
+    /// <summary>Records a line as spoken in the Commander's current system and situation.</summary>
+    public void Heard(NpcChatterLine line, bool answerable, int exchangeIndex) =>
+        Heard(line, answerable, exchangeIndex, system(), situation());
+
     public Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
     {
         lock (_lock)

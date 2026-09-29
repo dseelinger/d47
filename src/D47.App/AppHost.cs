@@ -2070,6 +2070,17 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Ship.Name,
             () => personas.ShipName));
 
+        // An invented speaker from the last overheard exchange, reached by name while it is still going.
+        turns.Lines.Add(new ChatterLine(
+            () => SystemWallClock.Instance.UtcNow,
+            () => gameState.Active?.Location.StarSystem,
+            () => AmbientLines.Situate(status.Current),
+            () => personas.ShipName,
+            () => turns.BackgroundModel,
+            voiceId => self?.NpcCast.AccentOf(voiceId),
+            () => ShipFacts.Of(gameState.Active),
+            loggerFactory.CreateLogger<ChatterLine>()));
+
         // The catalogue a generated story may draw its stops from (Phase 47).
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
@@ -5390,6 +5401,10 @@ public sealed class AppHost : IDisposable
             });
     }
 
+    /// <summary>The cast invented chatter is voiced from.</summary>
+    private VoiceCast NpcCast =>
+        CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.Comms, CommsChannel = "npc" });
+
     /// <summary>How long an exchange may spend being written.</summary>
     private static readonly TimeSpan ChatterBudget = TimeSpan.FromSeconds(10);
 
@@ -5425,7 +5440,7 @@ public sealed class AppHost : IDisposable
         var spotlight = _carrierSpotlight.Claim(carrier.Present);
 
         // The voices are cast before the exchange is written, so each line can be written for its accent (#415).
-        var npcs = CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.Comms, CommsChannel = "npc" });
+        var npcs = NpcCast;
         var posts = CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.TowerControl, CommsChannel = "npc" });
 
         var roster = NpcChatterRoster.Cast(
@@ -5462,6 +5477,8 @@ public sealed class AppHost : IDisposable
 
         var facts = ShipFacts.Of(GameState.Active);
         var heard = new List<Announcement>();
+        var exchange = marker.Variant ?? 0;
+        var answerable = NpcChatter.MayNotice(kind, exchange);
 
         foreach (var line in NpcChatter.Parse(script, kind, carrier, roster))
         {
@@ -5514,6 +5531,7 @@ public sealed class AppHost : IDisposable
                 SpeakerIsPlayer = false,
                 CommsChannel = "npc",
                 Overheard = kind is not NpcChatterKind.Hail,
+                Invented = new NpcChatterHeard(line with { Text = said }, exchange, answerable),
             });
         }
 
@@ -5680,7 +5698,10 @@ public sealed class AppHost : IDisposable
     {
         var restore = new AddressedVoice(this, Voice.Voice, Voice.CaptionSpeaker);
 
-        Voice.Voice = Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role);
+        // An invented speaker keeps the voice their exchange was heard in.
+        Voice.Voice = addressed.Role == VoiceRole.Comms
+            ? NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role)
+            : Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role);
         Voice.SpeakingAs = addressed.Role;
         Voice.CaptionSpeaker = addressed.Name;
 
@@ -5793,18 +5814,21 @@ public sealed class AppHost : IDisposable
 
     /// <summary>
     /// Whether a spoken callout is heard closely enough to join the Conversation page — everything but
-    /// invented chatter and a relay the Commander only overheard (#276).
+    /// invented chatter the Commander may not answer and a relay they only overheard (#276).
     /// </summary>
     internal static bool JoinsConversation(Announcement announcement) =>
-        !announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal)
-        && (announcement.CommsChannel == "player"
-            || (!announcement.Key.StartsWith("message.", StringComparison.Ordinal)
-                && announcement.Key != IncomingMessages.CarrierCannedKey
-                && announcement.Key != IncomingMessages.AuthorityCannedKey));
+        announcement.Invented is { Answerable: true }
+        || (!announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal)
+            && (announcement.CommsChannel == "player"
+                || (!announcement.Key.StartsWith("message.", StringComparison.Ordinal)
+                    && announcement.Key != IncomingMessages.CarrierCannedKey
+                    && announcement.Key != IncomingMessages.AuthorityCannedKey)));
 
     /// <summary>The chip the Conversation page names this speaker with.</summary>
     internal static string ConversationSpeaker(Announcement announcement) =>
-        announcement.Speaker is { Length: > 0 } speaker ? speaker : VoiceRoles.Called(announcement.Voice) ?? "D47";
+        announcement.Speaker is { Length: > 0 } speaker
+            ? announcement.Invented is null ? speaker : NpcChatter.Invented(speaker)
+            : VoiceRoles.Called(announcement.Voice) ?? "D47";
 
     private void SpeakPendingCallouts()
     {
@@ -5896,6 +5920,13 @@ public sealed class AppHost : IDisposable
                     if (JoinsConversation(announcement))
                     {
                         CalloutSaid?.Invoke(announcement.Text, ConversationSpeaker(announcement), announcement.Key);
+                    }
+
+                    // Only a line actually spoken can be answered.
+                    if (announcement.Invented is { } chatter)
+                    {
+                        Turns.Lines.OfType<ChatterLine>().FirstOrDefault()
+                            ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
                     }
 
                     // What the Commander actually heard about a story, kept (asked for 2026-08-22).

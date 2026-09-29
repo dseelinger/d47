@@ -872,10 +872,26 @@ is your own AI and crew.
 
 Made-up radio traffic from people who do not exist: two crews on the local channel about their own
 small business, the dock telling an invented pilot off when you are docked somewhere, and — about
-one exchange in four — one line said to *you* over the open channel. Statements only, never a
-question: **nothing here is ever answered**, by you or by the ship's AI, and none of it enters the
-conversation or the comms record. It is theatre, heard once. Traffic between other people sounds
-further off than a hail and has its own row, Overheard chatter, in the audio mixer.
+one exchange in four — one line said to *you* over the open channel. Traffic between other people
+sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
+
+**You can answer the ones that speak to you, by name.** A hail, and the occasional passer-by who
+notices you, can be answered: start with the speaker's name — *"Vance, thanks"*, or the whole
+*"Courier Vance"* — within 90 seconds of the last line anyone said in that exchange, and they reply
+in the voice you heard them in. Once you have named them, your next line goes to them too, until you
+name your ship's AI or say goodbye. Each exchange gives **four replies at most**; the fourth is their sign-off.
+A reply that would contradict your ship or claim something the game would log — a scan, a fine, a
+docking decision — is replaced with *"Got to go. Vance out."*, which ends the exchange. After 90
+seconds, a jump, a change of situation such as docking or undocking, or the next exchange, naming
+them gets *"Vance is off the channel."* from D47, and nothing is sent to the model.
+
+Each reply is a turn of its own on the background model, billed like any other turn. A tower
+controller's traffic and passers-by talking only to each other are never answered.
+
+An exchange you can answer appears on the **In Ship** page, so you can read the names; its
+speakers, and their replies, are shown as *"Courier Vance (invented)"* to keep them apart from a
+real Commander's direct message. The rest of the chatter stays off that page and out of
+the comms record — it is heard once.
 
 **Parked on your own carrier, it knows whose deck it is standing on.** Its tower controller and its
 captain are cast as real people rather than invented, and everyone in the scene is told how to

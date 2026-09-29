@@ -6,6 +6,17 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.20.0 — Invented chatter answers when named
+
+You can now answer an invented NPC who hails you, or a passer-by who remarks on you. Start with their
+name — "Vance, thanks" — within 90 seconds of the exchange's last line, and they reply in the voice
+the hail used; your next line goes to them too. Each exchange gives four replies at most, and the
+fourth is their sign-off. After a jump, docking, undocking or 90 seconds of quiet, naming them gets
+"Vance is off the channel." from D47, with no model call. A reply that would contradict your ship or
+claim a scan, fine or docking decision is replaced with "Got to go. Vance out." Replies run on the
+background model and are billed like any turn. Exchanges you can answer now appear on the In Ship
+page, and every invented speaker there, and each reply they give, is labelled "Name (invented)".
+
 ## 1.19.0 — Music and model checks in Settings
 
 Settings › Language model › Provider and model has a Test row below Model. Its text shows whether the
