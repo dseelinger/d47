@@ -874,7 +874,8 @@ Made-up radio traffic from people who do not exist: two crews on the local chann
 small business, the dock telling an invented pilot off when you are docked somewhere, and — about
 one exchange in four — one line said to *you* over the open channel. Statements only, never a
 question: **nothing here is ever answered**, by you or by the ship's AI, and none of it enters the
-conversation or the comms record. It is theatre, heard once.
+conversation or the comms record. It is theatre, heard once. Traffic between other people sounds
+further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 
 **Parked on your own carrier, it knows whose deck it is standing on.** Its tower controller and its
 captain are cast as real people rather than invented, and everyone in the scene is told how to

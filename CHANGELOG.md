@@ -8,6 +8,11 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+Invented radio traffic between other pilots and controllers now sounds further off than a hail: the
+voice is narrower and sits over more static. It has its own row in the Audio mixer, Overheard
+chatter, at level 0.5 with a mute box. Muting it stops those exchanges being written, so no model
+call is made for them. Hails addressed to you sound as before.
+
 Spoken answers about your ship, stored modules, engineering and suit now name at most three modules
 and give a count for the rest. "My ship" says how many modules are fitted and unpowered and points to
 Fleet › Ships for the full loadout; "stored modules" gives the count and the number of systems; "my

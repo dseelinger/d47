@@ -171,13 +171,13 @@ public class SettingsLayoutTests
 
     /// <summary>Every channel's Level and Mute, and Duck for the three that duck (#217, "Notes for the build").</summary>
     [Fact]
-    public void SoundsHoldsExactlySixteenAllAdvancedEntriesTests()
+    public void SoundsHoldsExactlyEighteenAllAdvancedEntriesTests()
     {
         var surface = Surface();
 
-        Assert.Equal(16, EntryCount("sounds"));
+        Assert.Equal(18, EntryCount("sounds"));
         Assert.Equal(0, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(16, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(18, surface.Settings.RowsForPlace("sounds").Count);
     }
 
     [Fact]

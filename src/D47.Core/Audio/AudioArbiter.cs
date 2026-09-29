@@ -14,11 +14,14 @@ public enum AudioChannel
     /// <summary>A short non-speech marker.</summary>
     Cue = 2,
 
+    /// <summary>Invented radio traffic not addressed to the Commander; yields to an answer and an alert.</summary>
+    Overheard = 3,
+
     /// <summary>An answer, spoken.</summary>
-    Speech = 3,
+    Speech = 4,
 
     /// <summary>A journal-triggered danger callout (Phase 8).</summary>
-    Alert = 4,
+    Alert = 5,
 }
 
 /// <summary>One thing to make audible.</summary>
@@ -501,7 +504,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// in mid-playback.
     /// </summary>
     private bool NeedsGap(AudioRequest request) =>
-        request.Channel == AudioChannel.Speech
+        request.Channel is AudioChannel.Speech or AudioChannel.Overheard
         && _lastSpokenGroup is not null
         && _lastSpokenGroup != request.Group;
 
@@ -530,7 +533,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// </summary>
     private float GainFor(AudioChannel channel)
     {
-        var speaking = _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert;
+        var speaking = _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard;
 
         // Nothing ducks under itself.
         return _mix.For(channel).GainWhile(speaking && AudioMix.Ducks(channel));
@@ -561,7 +564,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             {
                 // Only a line that ran to its own end sets what the next gap check compares against — one
                 // Silence, DropGroup or an alert cut off does not count as a finished thought.
-                if (_current.Request.Channel is AudioChannel.Speech or AudioChannel.Alert)
+                if (_current.Request.Channel is AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard)
                 {
                     _lastSpokenGroup = _current.Request.Group;
                 }

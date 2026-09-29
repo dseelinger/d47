@@ -34,8 +34,13 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>How long this key stays suppressed after being said.</summary>
     public TimeSpan Cooldown { get; init; } = TimeSpan.Zero;
 
+    /// <summary>A line not addressed to the Commander, heard as traffic further off.</summary>
+    public bool Overheard { get; init; }
+
     public AudioChannel Channel =>
-        Urgency == CalloutUrgency.Urgent ? AudioChannel.Alert : AudioChannel.Speech;
+        Urgency == CalloutUrgency.Urgent ? AudioChannel.Alert
+        : Overheard ? AudioChannel.Overheard
+        : AudioChannel.Speech;
 
     /// <summary>The arbiter group this is spoken in; a reply drops invented chatter by it.</summary>
     public string Group =>

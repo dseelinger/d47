@@ -14,13 +14,26 @@ public static class RadioVoice
 
     /// <summary>The treatment for a role over a link of <paramref name="strength"/>, 0 to 1, or null where there is none.</summary>
     public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength) =>
-        IsOverTheAir(role) ? clip => Apply(clip, strength) : null;
+        Colours(role, strength, overheard: false);
+
+    /// <summary>The treatment for a role, thinner and hissier when the line is <paramref name="overheard"/>.</summary>
+    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength, bool overheard) =>
+        IsOverTheAir(role) ? clip => Apply(clip, strength, overheard) : null;
 
     /// <summary>The bottom of the passband.</summary>
     private const double LowEdgeHz = 400;
 
     /// <summary>The top.</summary>
     private const double HighEdgeHz = 2_700;
+
+    /// <summary>The bottom of the passband for an overheard line.</summary>
+    private const double OverheardLowEdgeHz = 550;
+
+    /// <summary>The top.</summary>
+    private const double OverheardHighEdgeHz = 2_200;
+
+    /// <summary>How loud the static is under an overheard line.</summary>
+    private const double OverheardHissUnderVoice = 0.05;
 
     /// <summary>The bottom of the passband on a link with no signal left.</summary>
     private const double WeakLowEdgeHz = 600;
@@ -74,7 +87,10 @@ public static class RadioVoice
     /// The same speech, over a link of <paramref name="strength"/>, 0 to 1. Below 1 the static rises, the
     /// passband narrows and stretches of the voice drop out to the carrier.
     /// </summary>
-    public static AudioClip Apply(AudioClip clip, double strength)
+    public static AudioClip Apply(AudioClip clip, double strength) => Apply(clip, strength, overheard: false);
+
+    /// <summary>The same speech, heard as traffic further off: a narrower passband and more static.</summary>
+    public static AudioClip Apply(AudioClip clip, double strength, bool overheard)
     {
         var weakness = double.IsNaN(strength) ? 0 : 1 - Math.Clamp(strength, 0, 1);
         var pcm = clip.Pcm.Span;
@@ -88,9 +104,13 @@ public static class RadioVoice
         var channels = Math.Max(1, clip.Format.Channels);
         var rate = clip.Format.SampleRate > 0 ? clip.Format.SampleRate : AudioFormat.Standard.SampleRate;
 
-        var lowEdge = LowEdgeHz + (weakness * (WeakLowEdgeHz - LowEdgeHz));
-        var highEdge = HighEdgeHz + (weakness * (WeakHighEdgeHz - HighEdgeHz));
-        var hissUnderVoice = HissUnderVoice + (weakness * (HissOnTheOpenCarrier - HissUnderVoice));
+        var nearLow = overheard ? OverheardLowEdgeHz : LowEdgeHz;
+        var nearHigh = overheard ? OverheardHighEdgeHz : HighEdgeHz;
+        var nearHiss = overheard ? OverheardHissUnderVoice : HissUnderVoice;
+
+        var lowEdge = nearLow + (weakness * (Math.Max(nearLow, WeakLowEdgeHz) - nearLow));
+        var highEdge = nearHigh + (weakness * (Math.Min(nearHigh, WeakHighEdgeHz) - nearHigh));
+        var hissUnderVoice = nearHiss + (weakness * (HissOnTheOpenCarrier - nearHiss));
         var hissOnTheCarrier = HissOnTheOpenCarrier + (weakness * (HissOnAWeakCarrier - HissOnTheOpenCarrier));
 
         // One filter pair per channel, and a second pair for the static.

@@ -215,14 +215,15 @@ public sealed class VoicePipeline(
         bool captioned = true,
         VoiceGroup slot = VoiceGroup.Aboard,
         string? captionSpeaker = null,
-        VoiceRole role = VoiceRole.ShipAi)
+        VoiceRole role = VoiceRole.ShipAi,
+        bool overheard = false)
     {
         if (Speaker(slot) is not { } provider)
         {
             return;
         }
 
-        var applied = colour ?? Colour(role);
+        var applied = colour ?? Colour(role, overheard: overheard);
 
         // The voice is a parameter rather than always the ship AI's, because Phase 11 has several things to
         // say that are not the ship AI speaking — a re-voiced in-game message, a carrier's tower, a crew
@@ -294,6 +295,7 @@ public sealed class VoicePipeline(
                 // The group a reply may drop this by.
                 announcement.Group,
                 role: announcement.Voice,
+                overheard: announcement.Overheard,
 
                 // The sender where there is one and the role otherwise, which is the difference between "Ilse
                 // Bruhn" and "Comms" in the log — and the reason for writing the voice down is being able
@@ -374,8 +376,8 @@ public sealed class VoicePipeline(
     /// A radio link for an over-the-air role, the ship AI's Guardian treatment where one is switched
     /// on, and no treatment for every other role — Crew included (#225).
     /// </summary>
-    private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1) =>
-        RadioVoice.Colours(role, signal) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
+    private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1, bool overheard = false) =>
+        RadioVoice.Colours(role, signal, overheard) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
 
     /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
     private static bool IsGuardianTreated(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>

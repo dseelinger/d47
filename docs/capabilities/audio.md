@@ -74,7 +74,7 @@ nav_order: 123
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">How loud each kind of sound is, and how far it drops out of the way while Directive 47 speaks.</p>
 <section>
-<h2><span class="num">1</span> Five categories, and everything audible is one of them.</h2>
+<h2><span class="num">1</span> Six categories, and everything audible is one of them.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Speech, alerts, sound cues, the thinking bed and ambient music, each with its own level and mute">
  <rect x="21" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="100" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SPEECH</text>
@@ -171,7 +171,7 @@ nav_order: 123
 How loud each kind of sound is, whether it is muted, and how far it drops out of the way while
 Directive 47 is speaking.
 
-### The five categories
+### The six categories
 
 Everything audible goes through one queue, and everything on that queue belongs to exactly one
 of these:
@@ -180,6 +180,7 @@ of these:
 |---|---|
 | **Speech** | Everything D47 says out loud. |
 | **Alerts** | The danger callouts — interdiction, shields down, low fuel. The one thing that cuts in mid-sentence. |
+| **Overheard chatter** | Invented radio traffic between other pilots and controllers, not meant for you. |
 | **Sound cues** | The short markers for listening, thinking and answering. |
 | **Thinking bed** | The loop that plays underneath a turn while D47 works. |
 | **Ambient music** | The background layer that follows what you are doing. |
@@ -240,6 +241,7 @@ volume is one you switch off rather than turn down.
   "bed":    { "level": 1,   "muted": false, "duckUnderSpeech": 0.35 },
   "music":  { "level": 0.5, "muted": false, "duckUnderSpeech": 0.2 },
   "cue":    { "level": 1,   "muted": false, "duckUnderSpeech": 1 },
+  "overheard": { "level": 0.5, "muted": false, "duckUnderSpeech": 1 },
   "speech": { "level": 1,   "muted": false, "duckUnderSpeech": 1 },
   "alert":  { "level": 1,   "muted": false, "duckUnderSpeech": 1 }
 }

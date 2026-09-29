@@ -31,6 +31,9 @@ public static class AudioCapability
             "The background layer that follows what you are doing. To hear it instead of Elite's, set Elite's "
             + "music volume to zero (Options, Audio)."),
         AudioChannel.Cue => ("Sound cues", "The short markers for listening, thinking and answering."),
+        AudioChannel.Overheard => (
+            "Overheard chatter",
+            "Invented radio traffic between other pilots and controllers, not meant for you."),
         AudioChannel.Speech => ("Speech", "Everything D47 says out loud."),
         _ => ("Alerts", "The danger callouts, which are the one thing that cuts in mid-sentence."),
     };
@@ -157,9 +160,9 @@ public static class AudioCapability
             Maximum = 1,
             Group = group,
             GroupHelp = what,
-            // The page explains the five categories together and has no heading per channel, so this points
+            // The page explains the six categories together and has no heading per channel, so this points
             // at the section rather than at a heading that would have to be written to satisfy a link (#123).
-            DocsAnchor = "the-five-categories",
+            DocsAnchor = "the-six-categories",
             Binding = Bind(channel, mix => Number(mix.Level), (mix, v) => mix with { Level = Fraction(v, mix.Level) }),
         };
 
@@ -173,7 +176,7 @@ public static class AudioCapability
             Kind = SettingKind.Toggle,
             Group = group,
             GroupHelp = what,
-            DocsAnchor = "the-five-categories",
+            DocsAnchor = "the-six-categories",
             Binding = Bind(
                 channel,
                 mix => mix.Muted ? "true" : "false",

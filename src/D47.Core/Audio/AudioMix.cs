@@ -50,6 +50,9 @@ public sealed record AudioMix
 
     public ChannelMix Cue { get; init; } = ChannelMix.Full;
 
+    /// <summary>Chatter not meant for the Commander sits below speech and does not duck.</summary>
+    public ChannelMix Overheard { get; init; } = new(0.5, Muted: false, DuckUnderSpeech: 1.0);
+
     /// <summary>Speech does not duck: it is what everything else ducks under.</summary>
     public ChannelMix Speech { get; init; } = ChannelMix.Full;
 
@@ -61,13 +64,14 @@ public sealed record AudioMix
 
     /// <summary>The channels that can duck — everything except the two that are ducked under.</summary>
     public static bool Ducks(AudioChannel channel) =>
-        channel is not (AudioChannel.Speech or AudioChannel.Alert);
+        channel is not (AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard);
 
     public ChannelMix For(AudioChannel channel) => channel switch
     {
         AudioChannel.Bed => Bed,
         AudioChannel.Music => Music,
         AudioChannel.Cue => Cue,
+        AudioChannel.Overheard => Overheard,
         AudioChannel.Alert => Alert,
         _ => Speech,
     };
@@ -77,6 +81,7 @@ public sealed record AudioMix
         AudioChannel.Bed => this with { Bed = mix },
         AudioChannel.Music => this with { Music = mix },
         AudioChannel.Cue => this with { Cue = mix },
+        AudioChannel.Overheard => this with { Overheard = mix },
         AudioChannel.Alert => this with { Alert = mix },
         _ => this with { Speech = mix },
     };

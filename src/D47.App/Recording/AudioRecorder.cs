@@ -216,7 +216,7 @@ public sealed class AudioRecorder : IDisposable
 
         lock (_gate)
         {
-            var speaking = activity.Channel is AudioChannel.Speech or AudioChannel.Alert
+            var speaking = activity.Channel is AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard
                 && activity.Utterance is not null;
 
             if (_open is { } open && (!speaking || open.Id != activity.Utterance))

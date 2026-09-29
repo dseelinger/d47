@@ -5396,6 +5396,12 @@ public sealed class AppHost : IDisposable
         }
 
         var kind = NpcChatter.KindOf(marker.Key);
+
+        if (kind is not NpcChatterKind.Hail && Settings.Current.Audio.Overheard.Muted)
+        {
+            return [];
+        }
+
         var location = GameState.Active?.Location;
         var docked = location?.Docked ?? false;
 
@@ -5499,6 +5505,7 @@ public sealed class AppHost : IDisposable
                 Speaker = line.Name,
                 SpeakerIsPlayer = false,
                 CommsChannel = "npc",
+                Overheard = kind is not NpcChatterKind.Hail,
             });
         }
 
