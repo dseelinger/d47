@@ -82,7 +82,7 @@ public class PersonaMatrixTests
             if (persona is null)
             {
                 // Personality off truncates a later block and cannot reach this one.
-                Assert.Equal(Guardrails.Text, block);
+                Assert.Equal($"{Guardrails.Text}\n\n{PromptAssembly.SpokenModules}", block);
             }
             else
             {
