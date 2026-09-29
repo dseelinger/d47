@@ -13,6 +13,10 @@ was billed a second time and delayed the answer; ask again instead. A turn that 
 sends anything is still retried. A timeout from d47 no longer marks the model unavailable, so the next
 turn reaches it.
 
+A conversation turn now has one output limit for all its rounds: 8,192 tokens at Low, Medium and High
+effort, and 16,384 at Xhigh and Max. Each round is given what the earlier rounds left. A turn with
+fewer than 1,024 tokens left stops without another request and says it ran out of room.
+
 ElevenLabs v4 Turbo is now the default ElevenLabs model. It performs delivery direction, such as a
 sigh or an alarmed reading, as v3 does. v3 and Flash 2.5 are still offered in the ElevenLabs model
 row, and a model you chose there is kept. The speaking rate row is hidden while v4 Turbo is

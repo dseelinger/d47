@@ -242,6 +242,13 @@ public sealed class TurnLoop(
     /// <summary>How many messages of one persona's transcript are kept (remediation.md 17, item 4).</summary>
     public const int TranscriptKept = 80;
 
+    /// <summary>A turn with fewer output tokens left than this sends no further request.</summary>
+    public const int MinimumRoundOutputTokens = 1024;
+
+    /// <summary>The output tokens a whole turn may use at this effort.</summary>
+    public static int OutputCeilingFor(ThinkingEffort effort) =>
+        effort is ThinkingEffort.Xhigh or ThinkingEffort.Max ? 16384 : 8192;
+
     /// <summary>Said after whatever a turn managed before it reached the output ceiling.</summary>
     public const string TruncatedLine = "I ran out of room before I could finish that answer.";
 
@@ -1088,6 +1095,14 @@ public sealed class TurnLoop(
             // The last round is offered no tools at all.
             var lastRound = round > MaxToolRounds;
 
+            var remaining = OutputCeilingFor(effort) - usage.OutputTokens;
+
+            if (remaining < MinimumRoundOutputTokens)
+            {
+                stopReason = LlmStopReason.MaxTokens;
+                break;
+            }
+
             if (round > 1 && previousRoundSpoke)
             {
                 yield return new TurnEvent.TextDelta(" ");
@@ -1097,6 +1112,7 @@ public sealed class TurnLoop(
             {
                 Model = chosenModel,
                 Effort = effort,
+                MaxOutputTokens = remaining,
 
                 // Warm, on every round including the last one (#98).
                 Sampling = LlmSampling.Conversation,
