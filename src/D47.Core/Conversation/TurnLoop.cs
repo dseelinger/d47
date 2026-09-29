@@ -37,6 +37,9 @@ public enum TurnOutcome
     Unsure,
 
     Failed,
+
+    /// <summary>The model reached the output ceiling before it finished answering.</summary>
+    Truncated,
 }
 
 public sealed record TurnResult(
@@ -238,6 +241,9 @@ public sealed class TurnLoop(
 
     /// <summary>How many messages of one persona's transcript are kept (remediation.md 17, item 4).</summary>
     public const int TranscriptKept = 80;
+
+    /// <summary>Said after whatever a turn managed before it reached the output ceiling.</summary>
+    public const string TruncatedLine = "I ran out of room before I could finish that answer.";
 
     /// <summary>
     /// Trims the transcript to <see cref="TranscriptKept"/>, never leaving a tool call whose result was
@@ -1295,8 +1301,18 @@ public sealed class TurnLoop(
 
         availability.MarkAvailable();
 
+        // Thinking counts against the ceiling, so a turn can spend it all and say nothing, or stop mid-sentence.
+        var truncated = stopReason == LlmStopReason.MaxTokens;
+
+        if (truncated)
+        {
+            yield return new TurnEvent.TextDelta(answer.Length > 0 ? " " + TruncatedLine : TruncatedLine);
+            answer = answer.Length > 0 ? $"{answer} {TruncatedLine}" : TruncatedLine;
+        }
+
         // Still open, and the model has finished talking about it.
-        if (answer.Length > 0
+        if (!truncated
+            && answer.Length > 0
             && standingBefore is { Length: > 0 }
             && string.Equals(standingBefore, Standing?.Invoke(), StringComparison.Ordinal))
         {
@@ -1322,8 +1338,8 @@ public sealed class TurnLoop(
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer about what it
         // will do rather than a fault in the pipeline.
-        var turnOutcome = stopReason is LlmStopReason.Refusal or LlmStopReason.Paused || answer.Length == 0
-            ? TurnOutcome.Unsure
+        var turnOutcome = truncated ? TurnOutcome.Truncated
+            : stopReason is LlmStopReason.Refusal or LlmStopReason.Paused || answer.Length == 0 ? TurnOutcome.Unsure
             : TurnOutcome.Answered;
 
         if (turnOutcome == TurnOutcome.Answered)
@@ -1336,9 +1352,10 @@ public sealed class TurnLoop(
         }
 
         logger.LogInformation(
-            "Model turn {Outcome} at {Effort} effort; {Input} in ({CacheRead} cached), {Output} out, {Cost}",
+            "Model turn {Outcome} at {Effort} effort, stopped on {Stop}; {Input} in ({CacheRead} cached), {Output} out, {Cost}",
             turnOutcome,
             effort,
+            stopReason,
             usage.TotalInputTokens,
             usage.CacheReadInputTokens,
             usage.OutputTokens,

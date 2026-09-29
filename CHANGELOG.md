@@ -340,6 +340,11 @@ quiet for a minute.
 A pilot killed in this system no longer speaks in invented chatter. The next pilot already heard in
 the system takes their place.
 
+A reply that reaches the model's output limit now ends with "I ran out of room before I could finish
+that answer." Before, it stopped mid-sentence, or said nothing when the model had spent the whole
+limit thinking. The unfinished reply is not kept in the conversation, and the log now records why
+each model turn stopped.
+
 ## 1.17.0 — The ship remarks on promotions and notable kills
 
 On the Gap page, the two red summary lines now say what they count in plain terms: "N planned

@@ -184,7 +184,7 @@ public sealed class VoicePipeline(
             var settled = result?.Outcome switch
             {
                 TurnOutcome.Answered => LoopState.Answered,
-                TurnOutcome.Unsure => LoopState.Unsure,
+                TurnOutcome.Unsure or TurnOutcome.Truncated => LoopState.Unsure,
                 TurnOutcome.Failed => LoopState.Failed,
                 _ => cancellationToken.IsCancellationRequested ? LoopState.Idle : LoopState.Failed,
             };
