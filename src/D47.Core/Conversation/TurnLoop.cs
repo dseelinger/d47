@@ -252,6 +252,26 @@ public sealed class TurnLoop(
     /// <summary>Said after whatever a turn managed before it reached the output ceiling.</summary>
     public const string TruncatedLine = "I ran out of room before I could finish that answer.";
 
+    /// <summary>The sentence that follows <see cref="TruncatedLine"/>, chosen by the effort the turn ran at.</summary>
+    public static string TruncatedAdvice(bool supportsEffort, ThinkingEffort effort, ThinkingEffort? ceiling)
+    {
+        const string OnePartAtATime = "Ask for one part of it at a time.";
+
+        if (!supportsEffort)
+        {
+            return OnePartAtATime;
+        }
+
+        if (ceiling == effort && effort != ThinkingEffortRange.Highest)
+        {
+            return $"\"Never think harder than this\" is holding me at {ThinkingEffortRange.Name(effort)}.";
+        }
+
+        return effort == ThinkingEffortRange.Highest
+            ? OnePartAtATime
+            : "Ask again and say \"think carefully\", and I'll have more room.";
+    }
+
     /// <summary>
     /// Trims the transcript to <see cref="TranscriptKept"/>, never leaving a tool call whose result was
     /// dropped with it.
@@ -1324,8 +1344,10 @@ public sealed class TurnLoop(
 
         if (truncated)
         {
-            yield return new TurnEvent.TextDelta(answer.Length > 0 ? " " + TruncatedLine : TruncatedLine);
-            answer = answer.Length > 0 ? $"{answer} {TruncatedLine}" : TruncatedLine;
+            var closing = $"{TruncatedLine} {TruncatedAdvice(providerCapabilities.SupportsThinkingEffort, effort, EffortCeiling)}";
+
+            yield return new TurnEvent.TextDelta(answer.Length > 0 ? " " + closing : closing);
+            answer = answer.Length > 0 ? $"{answer} {closing}" : closing;
         }
 
         // Still open, and the model has finished talking about it.

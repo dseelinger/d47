@@ -21,6 +21,10 @@ A conversation turn now has one output limit for all its rounds: 8,192 tokens at
 effort, and 16,384 at Xhigh and Max. Each round is given what the earlier rounds left. A turn with
 fewer than 1,024 tokens left stops without another request and says it ran out of room.
 
+A turn that runs out of room now says what to do next: ask for one part at a time on a model with no
+effort setting or at Max, name "Never think harder than this" when it is holding the turn, and
+otherwise ask again with "think carefully".
+
 ElevenLabs v4 Turbo is now the default ElevenLabs model. It performs delivery direction, such as a
 sigh or an alarmed reading, as v3 does. v3 and Flash 2.5 are still offered in the ElevenLabs model
 row, and a model you chose there is kept. The speaking rate row is hidden while v4 Turbo is

@@ -440,6 +440,29 @@ stop thinking so hard      → the ceiling becomes Medium
 think as hard as you like  → the ceiling is cleared
 ```
 
+**It is also the room a turn has.** A turn may produce this many output tokens, all rounds together,
+and thinking counts against them:
+
+```csharp
+public static int OutputCeilingFor(ThinkingEffort effort) =>
+    effort is ThinkingEffort.Xhigh or ThinkingEffort.Max ? 16384 : 8192;
+```
+
+That is 8,192 tokens at Low, Medium and High, and 16,384 at Xhigh and Max. Raising the effort level
+gives a turn more room and also more thinking, so a long answer can still run out. Only the tokens
+actually produced are billed, not the ceiling.
+
+When a turn reaches the limit it says so and adds one sentence chosen by the effort it ran at:
+
+```csharp
+public const string TruncatedLine = "I ran out of room before I could finish that answer.";
+```
+
+- A model with no effort setting: "Ask for one part of it at a time."
+- The turn ran at your ceiling, below Max: "\"Never think harder than this\" is holding me at" and the level.
+- The turn ran at Max: "Ask for one part of it at a time."
+- Otherwise: "Ask again and say \"think carefully\", and I'll have more room."
+
 #### API key {#api-key}
 
 Encrypted for your Windows account and kept in `data/secrets.json` beside the executable.

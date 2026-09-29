@@ -97,6 +97,6 @@ public sealed class ATurnHasOneOutputCeilingTests : IDisposable
 
         Assert.Single(provider.Requests);
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
-        Assert.EndsWith(TurnLoop.TruncatedLine, result.Text, StringComparison.Ordinal);
+        Assert.Contains(TurnLoop.TruncatedLine, result.Text, StringComparison.Ordinal);
     }
 }

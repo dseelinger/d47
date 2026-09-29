@@ -61,7 +61,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests : IDisposable
         var (result, text) = await RunAsync(Build(provider), "work out the best route to Colonia and explain why");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
-        Assert.Equal($"The best route to Colonia runs through {TurnLoop.TruncatedLine}", text);
+        Assert.Equal($"The best route to Colonia runs through {TurnLoop.TruncatedLine} {MoreRoom}", text);
         Assert.Equal(text, result.Text);
     }
 
@@ -75,7 +75,69 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests : IDisposable
         var (result, text) = await RunAsync(Build(provider), "work out the best route to Colonia and explain why");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
-        Assert.Equal(TurnLoop.TruncatedLine, text);
+        Assert.Equal($"{TurnLoop.TruncatedLine} {MoreRoom}", text);
+    }
+
+    private const string MoreRoom = "Ask again and say \"think carefully\", and I'll have more room.";
+
+    private const string OnePart = "Ask for one part of it at a time.";
+
+    private static FakeLlmProvider Truncated(bool takesEffort = true) =>
+        new(
+            new LlmStreamEvent.TextDelta("The best route"),
+            new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.MaxTokens))
+        {
+            ThinkingEffort = takesEffort,
+        };
+
+    [Fact]
+    public async Task AModelWithNoEffortSettingIsToldToAskForOnePartAtATime()
+    {
+        var (result, text) = await RunAsync(Build(Truncated(takesEffort: false)), "work out the best route");
+
+        Assert.Equal(TurnOutcome.Truncated, result.Outcome);
+        Assert.EndsWith($"{TurnLoop.TruncatedLine} {OnePart}", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ATurnHeldAtTheCeilingNamesTheCeilingSetting()
+    {
+        var loop = Build(Truncated());
+        loop.EffortCeiling = D47.Core.Conversation.ThinkingEffort.High;
+
+        var (result, text) = await RunAsync(loop, "think carefully about the best route");
+
+        Assert.Equal(TurnOutcome.Truncated, result.Outcome);
+        Assert.EndsWith(
+            $"{TurnLoop.TruncatedLine} \"Never think harder than this\" is holding me at High.",
+            text,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ATurnThatRanAtMaxIsToldToAskForOnePartAtATime()
+    {
+        var (result, text) = await RunAsync(Build(Truncated()), "think carefully about the best route");
+
+        Assert.Equal(TurnOutcome.Truncated, result.Outcome);
+        Assert.EndsWith($"{TurnLoop.TruncatedLine} {OnePart}", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ATurnBelowMaxIsToldToSayThinkCarefully()
+    {
+        var loop = Build(Truncated());
+        loop.EffortCeiling = D47.Core.Conversation.ThinkingEffort.Max;
+
+        var (_, text) = await RunAsync(loop, "work out the best route");
+
+        Assert.EndsWith($"{TurnLoop.TruncatedLine} {MoreRoom}", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheAdviceToSayThinkCarefullyRoutesToMax()
+    {
+        Assert.Equal(D47.Core.Conversation.ThinkingEffort.Max, EffortRouter.ChooseFor("think carefully"));
     }
 
     [Fact]
