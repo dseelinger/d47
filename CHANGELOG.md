@@ -8,6 +8,11 @@
 
 ## 1.18.0 — Seven more effects join the Guardian voice chain, a rebuy warning, and bookmarks
 
+A model turn that streamed thinking or asked for a tool before it failed is no longer sent again. It
+was billed a second time and delayed the answer; ask again instead. A turn that fails before the model
+sends anything is still retried. A timeout from d47 no longer marks the model unavailable, so the next
+turn reaches it.
+
 ElevenLabs v4 Turbo is now the default ElevenLabs model. It performs delivery direction, such as a
 sigh or an alarmed reading, as v3 does. v3 and Flash 2.5 are still offered in the ElevenLabs model
 row, and a model you chose there is kept. The speaking rate row is hidden while v4 Turbo is

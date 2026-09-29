@@ -1531,7 +1531,7 @@ public sealed class TurnLoop(
             outcome.Reset();
             outcome.Attempts = attempt;
             transient = false;
-            var spokeThisAttempt = false;
+            var receivedContent = false;
 
             await foreach (var streamEvent in AttemptAsync(request, activeProvider, outcome, cancellationToken)
                                .ConfigureAwait(false))
@@ -1540,24 +1540,28 @@ public sealed class TurnLoop(
                 {
                     case LlmStreamEvent.TextDelta text:
                         outcome.AddText(text.Text);
-                        spokeThisAttempt = true;
+                        receivedContent = true;
                         yield return new TurnEvent.TextDelta(text.Text);
                         break;
 
                     case LlmStreamEvent.ThinkingDelta thinking:
+                        receivedContent = true;
                         yield return new TurnEvent.ThinkingDelta(thinking.Text);
                         break;
 
                     case LlmStreamEvent.ToolUse toolUse:
                         outcome.Add(new ConversationContent.ToolUse(toolUse.Id, toolUse.Name, toolUse.InputJson));
+                        receivedContent = true;
                         break;
 
                     case LlmStreamEvent.Opaque opaque:
                         outcome.Add(new ConversationContent.Opaque(activeProvider.Id, opaque.Json));
+                        receivedContent = true;
                         break;
 
                     case LlmStreamEvent.ToolSearched searched:
                         outcome.Searches.Add(searched);
+                        receivedContent = true;
                         break;
 
                     case LlmStreamEvent.Completed completed:
@@ -1569,7 +1573,12 @@ public sealed class TurnLoop(
                         outcome.Failure = failed.Message;
                         outcome.ContextExceeded = failed.ContextExceeded;
                         transient = failed.Transient;
-                        availability.MarkFailed(failed.Message, failed.Transient);
+
+                        if (!failed.TimedOut)
+                        {
+                            availability.MarkFailed(failed.Message, failed.Transient);
+                        }
+
                         logger.LogWarning(
                             "Model turn failed ({Kind}): {Message}",
                             failed.Transient ? "transient" : "configuration",
@@ -1581,8 +1590,8 @@ public sealed class TurnLoop(
             outcome.EndRun();
 
             // A configuration failure will fail identically next time, so retrying it only spends the
-            // Commander's silence.
-            if (outcome.Failure is null || spokeThisAttempt || !transient)
+            // Commander's silence. An attempt that produced content is not resent: that bills it again.
+            if (outcome.Failure is null || receivedContent || !transient)
             {
                 break;
             }
@@ -1638,7 +1647,10 @@ public sealed class TurnLoop(
                 // Ours tripped, not the caller's: the attempt ran out of time.
                 failed = new LlmStreamEvent.Failed(
                     $"It sent nothing for {Retry.AttemptTimeout.TotalSeconds:0} seconds.",
-                    Transient: true);
+                    Transient: true)
+                {
+                    TimedOut = true,
+                };
             }
             catch (Exception ex)
             {
