@@ -52,6 +52,13 @@ how many missions are active, what they pay in total, and where the three that e
 how long each has left. A mission accepted
 before any journal still on disk is known by its internal name only, with no destination or reward.
 
+You can now ask for your mission board: "mission board", "what missions do I have", "read my missions" or
+"what am I hauling". D47 answers itself with no model, naming up to three missions with their
+destination and time left, then how many more there are and the total reward. Missions expiring within
+the hour come first, then those handed in at the station you are docked at, then the rest by soonest
+expiry. Asking "what missions should I take" adds that D47 only sees missions after you accept them,
+because the journal does not list what a station offers.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a
