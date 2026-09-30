@@ -356,6 +356,7 @@ public sealed class ChecklistService(
         }
 
         Adopt(state);
+        FollowMissions(state);
 
         var document = list.For(state.Identity.FrontierId, state.Identity.Name);
         var news = new List<ChecklistNews>();
@@ -463,6 +464,43 @@ public sealed class ChecklistService(
         }
 
         return news;
+    }
+
+    /// <summary>
+    /// Brings the mission lines into line with the board: a line for each delivery accepted, the wording
+    /// refreshed on a redirect, and a line removed when its mission leaves the board.
+    /// </summary>
+    private void FollowMissions(CommanderGameState state)
+    {
+        if (!state.Missions.IsKnown)
+        {
+            return;
+        }
+
+        var document = list.For(state.Identity.FrontierId, state.Identity.Name);
+
+        var held = document.Items
+            .Where(item => item.Source == ChecklistSource.Mission && item.Scope.Same(ChecklistScope.Universal))
+            .ToDictionary(item => item.Key, StringComparer.OrdinalIgnoreCase);
+
+        var wanted = MissionLines.Wanted(state.Missions, held.ContainsKey);
+
+        // Checked before writing, because this runs on every tick.
+        if (wanted.Count == held.Count
+            && wanted.All(item => held.TryGetValue(item.Key, out var line) && line.Text == item.Text))
+        {
+            return;
+        }
+
+        var change = list.Apply(
+            state.Identity.FrontierId,
+            state.Identity.Name,
+            current => current.Revise(ChecklistScope.Universal, ChecklistSource.Mission, wanted) with { Changed = true });
+
+        if (Selected is { } selected && change.Document.Find(selected) is null)
+        {
+            Select(null);
+        }
     }
 
     /// <summary>Hands anything written before a Commander was known to the first one who appears.</summary>
@@ -983,6 +1021,7 @@ public sealed class ChecklistService(
         ChecklistSource.ColonisationPlan => "A construction site",
         ChecklistSource.OnFootPlan => "A suit or weapon build",
         ChecklistSource.EngineerPrerequisite => "An engineer's prerequisites",
+        ChecklistSource.Mission => "A mission",
         _ => "You",
     };
 

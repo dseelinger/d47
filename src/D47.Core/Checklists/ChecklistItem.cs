@@ -93,6 +93,9 @@ public enum ChecklistSource
 
     /// <summary>An engineer's unlock prerequisites, added from their own page or the Route (#257).</summary>
     EngineerPrerequisite,
+
+    /// <summary>A delivery or collect mission on the board (<see cref="MissionLines"/>).</summary>
+    Mission,
 }
 
 /// <summary>Where an item stands.</summary>
@@ -174,7 +177,7 @@ public enum ChecklistIntentKind
     /// <summary>A facility at a place in a system.</summary>
     Facility,
 
-    /// <summary>A commodity a construction site is asking for.</summary>
+    /// <summary>A commodity a construction site or a mission is asking for.</summary>
     Commodity,
 
     /// <summary>A grade on a suit or a hand weapon, bought at Pioneer Supplies.</summary>

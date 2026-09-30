@@ -79,6 +79,12 @@ Delivery missions, which hand you their cargo, get no such line. The market chec
 saw at that station. Both lines are part of Settings › Callouts › Plans and stories › **Mission hand-ins
 and expiry**.
 
+Accepting a delivery or collect mission now adds a line to your checklist, such as "Deliver 99 Polymers
+to Crown Barracks, Wadjuk". It shows how many have been delivered, or before the first delivery how many
+are in your hold, and ticks itself when the last one is handed over. You cannot tick it by hand. It
+leaves the list when the mission is completed, failed or abandoned. Courier and passenger missions get
+no line.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a
