@@ -2676,6 +2676,9 @@ public sealed class AppHost : IDisposable
             // marker composes to nothing.
             .Add(new NpcChatterCallout(fight))
             .Add(new AmbientCallout())
+
+            // The Commander's story, told during a lull: the marker only, written by the model or not said.
+            .Add(new NarratorCallout(fight))
             .Add(new IncomingMessages
             {
                 Enabled = () => settings.Current.Speech.SpeakIncomingMessages,
@@ -2751,6 +2754,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
         engine.SetEnabled("ambient", callouts.Ambient, now);
+        engine.SetEnabled("narrator", callouts.Narrator, now);
         engine.SetEnabled("continuity", callouts.Continuity, now);
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
@@ -2830,6 +2834,16 @@ public sealed class AppHost : IDisposable
                     // The ambient pair of gates (#244): theatre is personality by any reading, and the
                     // no-model half lives at the compose step for the reason above.
                     chatter.Enabled = () => settings.Current.Callouts.NpcChatter && settings.Current.Llm.PersonalityEnabled;
+                    break;
+
+                case NarratorCallout narrator:
+                    narrator.Interval = TimeSpan.FromSeconds(callouts.NarratorSeconds);
+                    narrator.Longest = TimeSpan.FromSeconds(callouts.NarratorMaxSeconds);
+                    narrator.Enabled = () => settings.Current.Callouts.Narrator && settings.Current.Llm.PersonalityEnabled;
+                    narrator.HasStory = () => settings.Current.Llm is var llm
+                        && (!string.IsNullOrWhiteSpace(llm.CharacterSheet)
+                            || !string.IsNullOrWhiteSpace(llm.AboutMe)
+                            || !string.IsNullOrWhiteSpace(llm.Scenario));
                     break;
             }
         }
@@ -4186,6 +4200,11 @@ public sealed class AppHost : IDisposable
 
             cast.Assign(VoiceRole.CarrierCaptain, speaksForTheCarrier ? speech.CarrierCaptainVoice : null);
             cast.Assign(VoiceRole.TowerControl, speaksForTheCarrier ? speech.TowerVoice : null);
+
+            // The Narrator speaks for the ship's provider, and never in the ship's voice.
+            cast.Assign(
+                VoiceRole.Narrator,
+                string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase) ? speech.NarratorVoice : null);
         }
 
         Voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
@@ -5333,10 +5352,14 @@ public sealed class AppHost : IDisposable
     {
         // The voice takes the pronoun; everything written below keeps the name, so a Commander scrolling back
         // can always see which system "it" was.
-        announcement = announcement with
+        // Not a narration, which is prose and keeps its names.
+        if (announcement.Voice != VoiceRole.Narrator)
         {
-            Text = _referent.Speak(announcement.Text, SystemsIn(announcement.Text), DateTimeOffset.Now),
-        };
+            announcement = announcement with
+            {
+                Text = _referent.Speak(announcement.Text, SystemsIn(announcement.Text), DateTimeOffset.Now),
+            };
+        }
 
         var voice = SpeakerAccent.VoiceOf(CastFor(announcement), announcement);
 
@@ -5900,9 +5923,10 @@ public sealed class AppHost : IDisposable
                     continue;
                 }
 
-                // An ambient remark the model did not write is not spoken (#245).
+                // An ambient remark or a narration the model did not write is not spoken (#245).
                 if (ReferenceEquals(varied, announcement)
-                    && announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
+                    && (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
+                        || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal)))
                 {
                     continue;
                 }

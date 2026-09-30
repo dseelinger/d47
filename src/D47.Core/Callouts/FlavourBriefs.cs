@@ -94,6 +94,7 @@ public static class FlavourBriefs
         ArgumentNullException.ThrowIfNull(brief);
 
         if (announcement.Urgency == CalloutUrgency.Urgent
+            || announcement.Voice == VoiceRole.Narrator
             || string.Equals(announcement.Key, AnnouncedAttackCallout.HuntedKey, StringComparison.Ordinal))
         {
             return null;
@@ -138,6 +139,11 @@ public static class FlavourBriefs
                 NeedsAboutMe = false,
                 NeedsScenario = false,
             };
+        }
+
+        if (announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return Narration;
         }
 
         if (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
@@ -486,6 +492,26 @@ public static class FlavourBriefs
 
         return null;
     }
+
+    /// <summary>The Narrator's brief: the Commander's story told in the third person, from the texts they wrote.</summary>
+    public static FlavourBrief Narration { get; } = new()
+    {
+        Speaker =
+            "You are the narrator of this Commander's story, writing as a novel's narrator does. You are not "
+            + "the ship's AI and you do not speak to the Commander. Never mention being an AI.",
+        Instruction =
+            "Narrate this moment in the Commander's story. Two or three sentences, in the third person and the "
+            + "past tense, the way a novel's narrator writes. Refer to the Commander by the name the character "
+            + "sheet gives, with the pronouns it gives; where it gives no pronouns, use the name and no pronouns. "
+            + "Draw on the backstory and the scenario, and connect them to where the Commander is now. Say only "
+            + "what the game state and these texts say: invent no events, write no dialogue, ask no question and "
+            + "give no advice.",
+        NeedsPersona = false,
+        NeedsGameState = true,
+        NeedsAboutMe = true,
+        NeedsStory = true,
+        NeedsScenario = true,
+    };
 
     /// <summary>
     /// Phrases that mean a model has answered a rewording brief by talking about itself (GitHub issue

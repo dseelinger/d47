@@ -7,7 +7,7 @@ namespace D47.Core.Audio;
 public static class RadioVoice
 {
     /// <summary>Which roles arrive over a link rather than from the next seat.</summary>
-    public static bool IsOverTheAir(VoiceRole role) => role is not (VoiceRole.ShipAi or VoiceRole.Crew);
+    public static bool IsOverTheAir(VoiceRole role) => role is not (VoiceRole.ShipAi or VoiceRole.Crew or VoiceRole.Narrator);
 
     /// <summary>The treatment for a role, or null where there is none.</summary>
     public static Func<AudioClip, AudioClip>? Colours(VoiceRole role) => Colours(role, 1);

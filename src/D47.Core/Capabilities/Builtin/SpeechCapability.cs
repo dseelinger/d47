@@ -31,6 +31,7 @@ public static class SpeechCapability
     public const string EgressKey = "speech.egress";
     public const string CarrierCaptainVoiceKey = "speech.carrierCaptainVoice";
     public const string TowerVoiceKey = "speech.towerVoice";
+    public const string NarratorVoiceKey = "speech.narratorVoice";
     public const string CarrierCaptainNameKey = "speech.carrierCaptainName";
     public const string TowerNameKey = "speech.towerName";
     public const string SpeakIncomingKey = "speech.speakIncomingMessages";
@@ -736,6 +737,33 @@ public static class SpeechCapability
             },
             new SettingRow
             {
+                Key = NarratorVoiceKey,
+                Advanced = true,
+                Label = "Narrator voice",
+                Help = "Who tells your story. From the voices that speak for your ship; left empty, or set to "
+                       + "the ship's own voice, the Narrator takes the first voice on that list that is not the ship's.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(first voice that is not the ship's)",
+                AllowsFreeText = true,
+                ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Aboard) ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
+                Facet = _ => GenderFacet(surface, VoiceGroup.Aboard),
+                Audition = AuditionOf(surface, VoiceRole.Narrator),
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "narrator-voice",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.NarratorVoice,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { NarratorVoice = string.IsNullOrWhiteSpace(v) ? null : v.Trim() },
+                    },
+                },
+            },
+            new SettingRow
+            {
                 Key = ResetVoicesKey,
                 Advanced = true,
                 Label = "Forget every voice and pair again",
@@ -1273,6 +1301,7 @@ public static class SpeechCapability
             Voice = Unless(settings.Speech.Voice, voiceId),
             CarrierCaptainVoice = Unless(settings.Speech.CarrierCaptainVoice, voiceId),
             TowerVoice = Unless(settings.Speech.TowerVoice, voiceId),
+            NarratorVoice = Unless(settings.Speech.NarratorVoice, voiceId),
         },
         Persona = settings.Persona with
         {
@@ -1286,7 +1315,7 @@ public static class SpeechCapability
     };
 
     /// <summary>
-    /// The same settings with every core voice and <see cref="SpeechSettings.Voice"/> that
+    /// The same settings with every core voice, <see cref="SpeechSettings.Voice"/> and <see cref="SpeechSettings.NarratorVoice"/> that
     /// <paramref name="list"/> does not offer removed, or the same instance when nothing is removed or
     /// the list did not arrive.
     /// </summary>
@@ -1299,16 +1328,19 @@ public static class SpeechCapability
 
         var offered = list.Voices.Select(voice => voice.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var voice = settings.Speech.Voice is { } held && !offered.Contains(held) ? null : settings.Speech.Voice;
+        var narrator = settings.Speech.NarratorVoice is { } told && !offered.Contains(told) ? null : settings.Speech.NarratorVoice;
         var kept = settings.Persona.Voices.Where(pair => offered.Contains(pair.Value)).ToArray();
 
-        if (voice == settings.Speech.Voice && kept.Length == settings.Persona.Voices.Count)
+        if (voice == settings.Speech.Voice
+            && narrator == settings.Speech.NarratorVoice
+            && kept.Length == settings.Persona.Voices.Count)
         {
             return settings;
         }
 
         return settings with
         {
-            Speech = settings.Speech with { Voice = voice },
+            Speech = settings.Speech with { Voice = voice, NarratorVoice = narrator },
             Persona = settings.Persona with
             {
                 Voices = kept.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal),

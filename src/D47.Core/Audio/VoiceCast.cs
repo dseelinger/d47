@@ -17,6 +17,9 @@ public enum VoiceRole
 
     /// <summary>A member of the invisible crew.</summary>
     Crew,
+
+    /// <summary>Tells the Commander's story in the third person. Never addressed, and calls no tools.</summary>
+    Narrator,
 }
 
 /// <summary>
@@ -32,6 +35,7 @@ public static class VoiceRoles
         VoiceRole.TowerControl => "Tower",
         VoiceRole.Crew => "Crew",
         VoiceRole.Comms => "Comms",
+        VoiceRole.Narrator => "Narrator",
         _ => null,
     };
 }
@@ -102,7 +106,25 @@ public sealed class VoiceCast
 
     /// <summary>What a role sounds like right now.</summary>
     public VoiceSelection For(VoiceRole role) =>
-        new(_roleVoices.GetValueOrDefault(role) ?? DefaultVoice, Rate);
+        new(role == VoiceRole.Narrator ? NarratorVoice() : _roleVoices.GetValueOrDefault(role) ?? DefaultVoice, Rate);
+
+    /// <summary>
+    /// The narrator's pinned voice, or the first pool voice that is not the ship's when none is pinned or the
+    /// pinned one is the ship's.
+    /// </summary>
+    private string? NarratorVoice()
+    {
+        var pinned = _roleVoices.GetValueOrDefault(VoiceRole.Narrator);
+
+        if (pinned is not null && !string.Equals(pinned, DefaultVoice, StringComparison.OrdinalIgnoreCase))
+        {
+            return pinned;
+        }
+
+        return Pool.FirstOrDefault(voice => !string.Equals(voice, DefaultVoice, StringComparison.OrdinalIgnoreCase))
+            ?? pinned
+            ?? DefaultVoice;
+    }
 
     /// <summary>
     /// What one sender sounds like, assigning them a voice the first time and keeping it after that.

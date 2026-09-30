@@ -9,8 +9,8 @@ public sealed class RewordChance(Random? choice = null)
     private readonly Random _choice = choice ?? Random.Shared;
 
     /// <summary>
-    /// True if this announcement should be reworded. An ambient remark, a promotion, a domain remark and a canned line
-    /// from the Commander's own carrier always are; every other line is decided independently against
+    /// True if this announcement should be reworded. An ambient remark, a narration, a promotion, a domain remark and a
+    /// canned line from the Commander's own carrier always are; every other line is decided independently against
     /// <paramref name="rewordPercent"/> (0-100, clamped).
     /// </summary>
     public bool ShouldReword(Announcement announcement, int rewordPercent)
@@ -18,6 +18,7 @@ public sealed class RewordChance(Random? choice = null)
         ArgumentNullException.ThrowIfNull(announcement);
 
         return announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
+            || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(PromotionCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(DomainCallout.KeyPrefix, StringComparison.Ordinal)
             || string.Equals(announcement.Key, IncomingMessages.CarrierCannedKey, StringComparison.Ordinal)

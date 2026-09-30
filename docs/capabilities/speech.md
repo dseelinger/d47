@@ -904,6 +904,13 @@ The two voice rows offer the same play glyphs as the voice row, and both auditio
 rather than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven"
 is what you are actually listening for when you cast one.
 
+#### Narrator voice {#narrator-voice}
+
+Who tells your story, for the [Narrator](callouts.md#narrator). It is picked from the voices of the
+provider that speaks for your ship, because the Narrator is heard in the cockpit rather than over
+the radio. Left empty, or set to the ship's own voice, the Narrator takes the first voice on that
+list that is not the ship's, so a narration is never mistaken for your ship's AI talking to you.
+
 #### How often an accent flavours the words {#accent-percent}
 
 When the language model writes an NPC's line, and the voice that will speak it has an accent, the
@@ -1079,7 +1086,7 @@ leaving, and to whom — and then says which slot is going where:
 
 ```text
 Another player's words are sent to speech.platform.bing.com to be spoken aloud. Line by
-line: Aboard (your ship's AI and your crew) → ElevenLabs; Carrier (your fleet carrier's
+line: Aboard (your ship's AI, your crew and the narrator) → ElevenLabs; Carrier (your fleet carrier's
 captain and its tower) → Edge Neural; NPCs (stations, police, and every other ship the
 game speaks for) → Edge Neural; People you know (your friends, your wing and your
 squadron) → Edge Neural; Direct messages (a Commander messaging you directly) → Edge

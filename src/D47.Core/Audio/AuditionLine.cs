@@ -26,6 +26,9 @@ public static class AuditionLine
         VoiceRole.TowerControl =>
             "Tower to inbound. You're cleared for landing pad seven, Commander. Mind the traffic.",
 
+        VoiceRole.Narrator =>
+            "The station lights slid past the canopy, and the Commander thought of the last time they had come this way.",
+
         _ => "Systems nominal, Commander. Standing by.",
     };
 

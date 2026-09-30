@@ -513,6 +513,7 @@ public static class EgressDisclosure
 
         var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
         var commander = CommanderTextSent(settings.Llm);
+        var narration = commander is not null && Narrates(settings) ? $"The Narrator sends {commander}" : null;
 
         // The first time in d47's life that the accurate answer to *what is leaving* is *nothing* (Phase 29).
         if (LocalEndpoint.IsLoopback(destination))
@@ -525,7 +526,8 @@ public static class EgressDisclosure
                 + (commander is null ? string.Empty : $"{commander}, ")
                 + "and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
-                + "key is involved.",
+                + "key is involved."
+                + (narration is null ? string.Empty : $" {narration} to that address each time it narrates."),
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
         }
 
@@ -537,12 +539,18 @@ public static class EgressDisclosure
             + "the provider for its list of models, sending the key and nothing else. The names of characters in in-game messages are "
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
-            + (commander is null ? string.Empty : $" Every turn also carries {commander}."),
+            + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
+            + (narration is null ? string.Empty : $" {narration} each time it narrates."),
             Active: true,
             Summary: $"{provider.Name} receives your question, the game state from your journal, "
                 + (commander is null ? string.Empty : $"{commander}, ")
                 + "and sends back its reply.");
     }
+
+    /// <summary>Whether the Narrator can speak, and so send the Commander's texts.</summary>
+    private static bool Narrates(D47Settings settings) =>
+        settings.Callouts is { Enabled: true, Narrator: true, NarratorSeconds: > 0 }
+        && settings.Llm.PersonalityEnabled;
 
     /// <summary>The Commander's own texts that are set, as a phrase, or null when none is.</summary>
     private static string? CommanderTextSent(LlmSettings llm)

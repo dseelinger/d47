@@ -545,6 +545,15 @@ public sealed record CalloutSettings
     /// </summary>
     public int AmbientMaxSeconds { get; init; } = 600;
 
+    /// <summary>The Narrator telling the Commander's story during a lull.</summary>
+    public bool Narrator { get; init; } = true;
+
+    /// <summary>The shortest gap between two narrations, in seconds. 0 silences them.</summary>
+    public int NarratorSeconds { get; init; } = 1800;
+
+    /// <summary>The longest gap between two narrations, in seconds.</summary>
+    public int NarratorMaxSeconds { get; init; } = 3600;
+
     /// <summary>The running session total after every sale of the Community Goal commodity (#296).</summary>
     public bool CommunityGoalSales { get; init; } = true;
 
@@ -738,6 +747,9 @@ public sealed record SpeechSettings
 
     /// <summary>And its tower, separately, because they are two people.</summary>
     public string? TowerVoice { get; init; }
+
+    /// <summary>The Narrator's voice, from the ship's provider, or null for the first that is not the ship's.</summary>
+    public string? NarratorVoice { get; init; }
 
     /// <summary>
     /// The Commander's own name for the carrier captain, spoken in place of "Captain" alone. Empty

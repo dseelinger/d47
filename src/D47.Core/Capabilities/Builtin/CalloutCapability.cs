@@ -68,6 +68,11 @@ public static class CalloutCapability
     public const string NpcChatterSecondsKey = "callouts.npcChatterSeconds";
     public const string NpcChatterMaxSecondsKey = "callouts.npcChatterMaxSeconds";
 
+    /// <summary>The Narrator, telling the Commander's story during a lull.</summary>
+    public const string NarratorKey = "callouts.narrator";
+    public const string NarratorSecondsKey = "callouts.narratorSeconds";
+    public const string NarratorMaxSecondsKey = "callouts.narratorMaxSeconds";
+
     public static CapabilityDescriptor Create(SettingsService settings, Func<string> describe) => new()
     {
         Id = Id,
@@ -431,6 +436,19 @@ public static class CalloutCapability
 
                 // The same rule as the ambient row above (#245): no model, no theatre, no row.
                 appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
+
+            Toggle(
+                NarratorKey,
+                "Narrator",
+                "A voice of its own that tells your story in the third person during a lull, from your "
+                + "character sheet, your backstory and your scenario. Never in supercruise or during a fight, "
+                + "and silent while all three are empty. Written by the model, which is sent the whole "
+                + "backstory each time; with no model, or personality off, there is no narration.",
+                "narrator",
+                "the narrator",
+                s => s.Callouts.Narrator,
+                (s, v) => s with { Callouts = s.Callouts with { Narrator = v } },
+                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
         ]);
 
         rows.Add(new SettingRow
@@ -550,6 +568,55 @@ public static class CalloutCapability
                         && seconds >= 0
                             ? Math.Min(seconds, 14400)
                             : new CalloutSettings().NpcChatterMaxSeconds },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = NarratorSecondsKey,
+            Advanced = true,
+            Label = "The least time between narrations",
+            Help = "In seconds. Each gap lands somewhere between this and the row below; 0 silences the "
+                   + "Narrator.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "1800",
+            DocsAnchor = "narrator",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Narrator: true }
+                               && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.NarratorSeconds.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with { NarratorSeconds = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+                        && seconds >= 0
+                            ? Math.Min(seconds, 14400)
+                            : new CalloutSettings().NarratorSeconds },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = NarratorMaxSecondsKey,
+            Advanced = true,
+            Label = "The most time between narrations",
+            Help = "In seconds. Equal to the row above pins a fixed cadence; anything below it reads as equal.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "3600",
+            DocsAnchor = "narrator",
+            AppliesWhen = s => s.Callouts is { Enabled: true, Narrator: true }
+                               && LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.NarratorMaxSeconds.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with { NarratorMaxSeconds = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds)
+                        && seconds >= 0
+                            ? Math.Min(seconds, 14400)
+                            : new CalloutSettings().NarratorMaxSeconds },
                 },
             },
         });

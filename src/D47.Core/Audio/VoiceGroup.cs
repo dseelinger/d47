@@ -61,10 +61,10 @@ public static class VoiceGroups
         Id = "aboard",
         Group = VoiceGroup.Aboard,
         Name = "Aboard",
-        Covers = "your ship's AI and your crew",
+        Covers = "your ship's AI, your crew and the narrator",
         OverTheAir = false,
         OtherPeoplesWords = false,
-        Roles = [VoiceRole.ShipAi, VoiceRole.Crew],
+        Roles = [VoiceRole.ShipAi, VoiceRole.Crew, VoiceRole.Narrator],
     };
 
     public static VoiceGroupInfo Carrier { get; } = new()

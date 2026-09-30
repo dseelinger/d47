@@ -20,6 +20,8 @@ public sealed record VoiceChoices
 
     public string? Tower { get; init; }
 
+    public string? Narrator { get; init; }
+
     /// <summary>The voice paired to each core, keyed by persona id.</summary>
     public IReadOnlyDictionary<string, string> Cores { get; init; } =
         new Dictionary<string, string>(StringComparer.Ordinal);
@@ -36,7 +38,7 @@ public sealed record VoiceChoices
 
     /// <summary>Nothing was ever chosen here.</summary>
     public bool IsEmpty =>
-        Ship is null && CarrierCaptain is null && Tower is null
+        Ship is null && CarrierCaptain is null && Tower is null && Narrator is null
         && Cores.Count == 0 && PairedCores.Count == 0 && !Paired;
 }
 
@@ -161,6 +163,7 @@ public static class VoiceMemory
         _ => held with
         {
             Ship = taking.Ship,
+            Narrator = taking.Narrator,
             Cores = taking.Cores,
             PairedCores = taking.PairedCores,
             Paired = taking.Paired,
@@ -181,7 +184,7 @@ public static class VoiceMemory
             },
             _ => settings with
             {
-                Speech = settings.Speech with { Voice = restoring.Ship },
+                Speech = settings.Speech with { Voice = restoring.Ship, NarratorVoice = restoring.Narrator },
                 Persona = settings.Persona with
                 {
                     Voices = new Dictionary<string, string>(restoring.Cores, StringComparer.Ordinal),
@@ -199,6 +202,7 @@ public static class VoiceMemory
         Ship = settings.Speech.Voice,
         CarrierCaptain = settings.Speech.CarrierCaptainVoice,
         Tower = settings.Speech.TowerVoice,
+        Narrator = settings.Speech.NarratorVoice,
         Cores = new Dictionary<string, string>(settings.Persona.Voices, StringComparer.Ordinal),
         PairedCores = new Dictionary<string, string>(settings.Persona.PairedVoices, StringComparer.Ordinal),
         Paired = settings.Persona.VoicesPaired,
@@ -206,7 +210,7 @@ public static class VoiceMemory
 
     /// <summary>
     /// Every voice assignment on every provider forgotten: each core's voice and recorded pairing, the
-    /// ship AI's, the carrier captain's and the tower's, and the flag saying the pairing has run. The
+    /// ship AI's, the narrator's, the carrier captain's and the tower's, and the flag saying the pairing has run. The
     /// selected provider is paired again by the caller; a stashed one when it is next selected.
     /// </summary>
     /// <returns>The settings, and how many providers' voices were forgotten.</returns>
@@ -221,6 +225,7 @@ public static class VoiceMemory
                 Ship = null,
                 CarrierCaptain = null,
                 Tower = null,
+                Narrator = null,
                 Cores = new Dictionary<string, string>(StringComparer.Ordinal),
                 PairedCores = new Dictionary<string, string>(StringComparer.Ordinal),
                 Paired = false,
@@ -240,6 +245,7 @@ public static class VoiceMemory
                 Voice = null,
                 CarrierCaptainVoice = null,
                 TowerVoice = null,
+                NarratorVoice = null,
                 ProviderVoices = providerVoices,
             },
         };

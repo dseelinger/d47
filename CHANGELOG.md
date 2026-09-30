@@ -6,6 +6,18 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.24.0 — A Narrator tells your story
+
+A new voice, the **Narrator**, now tells your Commander's story during a lull, in the third person
+and the past tense, from your character sheet, backstory and current scenario, connected to where you
+are now. It waits for a quiet moment: never in supercruise, never during a fight, and never straight
+after other chatter. It says nothing while all three texts are empty. Its lines are captioned
+*Narrator* and spoken in a voice that is never your ship's. The rows are Settings › Callouts ›
+Plans and stories › **Narrator**, on by default, with the least and most time between narrations
+(thirty and sixty minutes) and **Narrator voice**. Each narration is written by the language model
+and sends your whole backstory; with no model, or personality off, there is no narration, and Privacy
+and egress now says when the Narrator sends your texts.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a
