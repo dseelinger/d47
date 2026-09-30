@@ -56,6 +56,24 @@ The same applies to the tables under `src/D47.Core/Knowledge/`. Read the row, do
 `NarratedOnly` is what it can say a sentence about and nothing more. A request that needs a
 `NarratedOnly` event needs new state, and that changes the size of the job.
 
+## Search the open issues before drafting
+
+Before drafting anything, search the open issues for the same work. Search by the terms in the
+request and by the names of the surface, type and method you read, since the other issue may use
+either:
+
+```
+gh issue list --state open --search "<terms>" --limit 30
+```
+
+Read the body of every plausible match, not only the title. Then one of three things:
+
+- **It is already filed.** Say so, link the issue, and file nothing. Where the request adds to it, the
+  addition is a comment on that issue, shown for acknowledgement like any other write.
+- **It overlaps.** File the new issue, and name the other one under `### Not this issue` with the
+  line that separates them.
+- **Nothing matches.** Say that you searched, in one line of your answer.
+
 ## What to hunt for
 
 Go looking for these. They are where dictated requests come apart.

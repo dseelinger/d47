@@ -105,7 +105,18 @@ label, it means: show it, wait, then do it.
 A settled design ends with its issues in the tracker, not in a transcript the maintainer has to copy
 them out of. A design you are not settling files nothing at all.
 
-File each build issue through `/new-issue`. It holds the issue form, the label list, the checks
+Before proposing the build issues, find what already exists for this design. Read the design
+issue's comments for issues filed from it earlier, and search for open issues that reference it:
+
+```
+gh issue view <N> --comments
+gh issue list --state open --search "#<N>" --limit 30
+```
+
+A build issue that is already open is listed in your answer by number, not proposed again. Where it
+no longer matches the settled design, the change is an edit to that issue, shown for acknowledgement.
+
+File each build issue through `/new-issue`, which also searches the open issues for the same work. It holds the issue form, the label list, the checks
 against the tree and the journals, and the sizing list, and the acknowledgement rule above applies
 to it unchanged. The settled design is its input: the decisions are made, so it asks the maintainer
 only what the design left open.
