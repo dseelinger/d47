@@ -85,7 +85,7 @@ nav_order: 147
  <text x="225" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">and the running cost, which is one bill</text>
  <rect x="450" y="24" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="655" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">PER COMMANDER</text>
- <text x="655" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">your character sheet, your About Me</text>
+ <text x="655" y="98" text-anchor="middle" font-size="16" fill="var(--text-muted)">your character sheet, your backstory</text>
  <text x="655" y="130" text-anchor="middle" font-size="16" fill="var(--text-muted)">which ship each core is bound to</text>
  <text x="655" y="158" text-anchor="middle" font-size="15" fill="var(--text-muted)">Elite says who is flying, and D47 listens</text>
  <text x="440" y="216" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A second Commander on the same machine never sees the first's story.</text>
@@ -195,7 +195,7 @@ Several Commanders can play on one machine, and Elite tells Directive 47 which o
 Most settings are the installation's — keys, devices, theme, zoom, hotkeys — and stay the same
 whoever logs in. A few are about the *person in the chair*, and those are marked **per
 Commander** on the row: the [Character sheet](conversation.md#character-sheet),
-[About Me](conversation.md#about-me), the [Current scenario](conversation.md#current-scenario)
+[Backstory](conversation.md#backstory), the [Current scenario](conversation.md#current-scenario)
 and [who knows about it](conversation.md#who-knows-about-it), and which ship the
 [core-binding rows](persona.md#core-for-this-ship) are pointed at. Each Commander sees their own
 value there, and a second Commander on the same machine never sees the first one's story.
@@ -208,7 +208,7 @@ How it works, because it affects what you see in the file:
 - Once a Commander sets a row, their value lives in their own entry under `commanders` in
   `settings.json`, keyed by their Frontier id with their name written beside it. The
   installation's value is untouched.
-- **Clearing a per-Commander row is a choice, not a reset.** A Commander who empties About Me
+- **Clearing a per-Commander row is a choice, not a reset.** A Commander who empties the backstory
   reads nothing — not the installation's story, and not somebody else's. In the file that is an
   empty string; a value that was never set is `null`, and the two are deliberately different.
 - Anything set before Elite has said who is flying is the installation's. It is not handed to

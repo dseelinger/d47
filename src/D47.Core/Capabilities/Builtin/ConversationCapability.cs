@@ -566,15 +566,15 @@ public static class ConversationCapability
         {
             Key = "llm.aboutMe",
             Advanced = true,
-            Label = "About Me",
+            Label = "Backstory",
             Help =
-                "Your Commander's story, in your own words — as long as you like. D47 treats it as true "
+                "Your Commander's backstory, in your own words — as long as you like. D47 treats it as true "
                 + "of the world you share. Sent with every turn, and with about one unprompted remark in "
                 + "four, so the ship's AI knows who it is flying with. Kept between sessions.",
             Kind = SettingKind.Text,
             Multiline = true,
             DefaultDisplay = "(nothing yet)",
-            DocsAnchor = "about-me",
+            DocsAnchor = "backstory",
 
             // The most per-Commander thing in the file, and until Phase 44 in the least per-Commander place.
             Scope = SettingScope.Commander,

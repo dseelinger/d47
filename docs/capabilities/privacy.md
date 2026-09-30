@@ -86,7 +86,7 @@ now.
 2 of 4 destinations are active right now.
 
 Language model → Anthropic
-  Anthropic is selected. Your question, D47's reply so far, the guardrails, the persona and your About Me text, and the game state D47 assembled from your journal — system, body, station and docking state — are sent on every turn the model answers. Journal files themselves are never uploaded.
+  Anthropic is selected. Your question, D47's reply so far, the guardrails, the persona and your backstory text, and the game state D47 assembled from your journal — system, body, station and docking state — are sent on every turn the model answers. Journal files themselves are never uploaded.
 
 Update check → api.github.com, and github.com if you accept an update
   One request for the latest release tag at startup. Nothing about you goes with it — no key, no journal content, and no identifier beyond the request itself. Accepting an offered update downloads that release from github.com and replaces D47 with it; nothing is downloaded unless you ask for it.
@@ -105,10 +105,10 @@ can — which is why the answer is worth more than the page.
 ## The destinations
 
 **Language model** — the only one that receives anything from your gameplay. What goes: your
-question, the conversation so far, the guardrails, the persona, your About Me text, and the game
+question, the conversation so far, the guardrails, the persona, your backstory text, and the game
 state assembled from your journal. The lines D47 says in character without being asked — ambient
 remarks, the greeting, a core's first words — carry your character sheet too, and about one ambient
-remark in four carries your About Me story; the carrier's captain and tower get neither. With
+remark in four carries your backstory; the carrier's captain and tower get neither. With
 personality on, the NPC lines Elite itself wrote go too, to be said in other words — a pirate's
 threat, a station's docking notice; a message another player typed never does. What does
 not: journal files, your key, or anything about your machine. Inactive when the provider is `none`, and also when a provider that *needs* a key is

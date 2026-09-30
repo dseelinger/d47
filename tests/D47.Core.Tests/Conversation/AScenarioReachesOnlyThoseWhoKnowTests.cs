@@ -147,7 +147,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
 
         var what = EgressDisclosure.Entry(EgressDisclosure.LanguageModel, set, llmKeyPresent: true).What;
 
-        Assert.Contains("your character sheet and your About Me", what, StringComparison.Ordinal);
+        Assert.Contains("your character sheet and your backstory", what, StringComparison.Ordinal);
     }
 
     [Fact]

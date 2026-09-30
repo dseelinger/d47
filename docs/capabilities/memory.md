@@ -234,7 +234,7 @@ At most eight entries and at most 1,200 characters, whichever binds first, chose
 are in, the ship you are flying and what you are doing. Ask *what do you remember about me* and you
 get the whole file, not the sample.
 
-The block sits **above the cache breakpoint**, beside your About Me text, because facts about you
+The block sits **above the cache breakpoint**, beside your backstory text, because facts about you
 change rarely and paying for them once is cheaper than paying every turn. It is only re-sent when it
 actually changes, which is why flying through a dozen systems D47 knows nothing about costs nothing.
 

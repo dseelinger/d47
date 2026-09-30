@@ -657,7 +657,7 @@ your history — the same reason they do not get the core's persona.
 **Per Commander.** Another Commander logging in on this machine sees their own sheet, not yours —
 see [Some rows are the Commander's](settings.md#some-rows-are-the-commanders-not-the-installations).
 
-#### About Me {#about-me}
+#### Backstory {#backstory}
 
 Your Commander's story, in your own words, as long as you like — how you fly, what you are working
 towards, where you have been. Kept between sessions.
@@ -686,16 +686,16 @@ Both go to the provider along with everything else. See [Privacy](privacy.md).
 #### Current scenario {#current-scenario}
 
 The situation your Commander is in now, in your own words — a secret cargo run, a refugee convoy, a
-debt being worked off. It is separate from the character sheet and About Me, which say who you are;
+debt being worked off. It is separate from the character sheet and backstory, which say who you are;
 this says what you are in the middle of. Kept between sessions until you clear it, and cleared from
 the next turn the moment you do.
 
-It is treated as true, the same as About Me, with one limit: the ship's own instruments are the
+It is treated as true, the same as backstory, with one limit: the ship's own instruments are the
 authority on what is in the hold and where the ship is, and where the scenario disagrees with them the
 instruments win.
 
 You can set it by voice — "set my scenario to running medical supplies to a blockaded system" — as you
-can About Me. **Per Commander**, like the rows above it.
+can set your backstory. **Per Commander**, like the rows above it.
 
 #### Who knows about it {#who-knows-about-it}
 
@@ -742,7 +742,7 @@ The endpoint is reported only when the Commander has chosen one; a line stating 
 lives tells them something they knew. **The model for the quiet calls follows the same rule** and
 appears only where it differs — otherwise it would repeat the model named on the line above.
 
-About Me and the character sheet sit inside the cached prompt prefix, so editing either costs one
+Backstory and the character sheet sit inside the cached prompt prefix, so editing either costs one
 cold prefix on the next turn and nothing after that. Off the turn path there is no such shelter:
 `FlavourBrief.NeedsAboutMe` says whether a line carries position 4 at all and `NeedsStory` whether
 the story goes with the sheet, decided in Core from the announcement's `Variant` —

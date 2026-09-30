@@ -869,7 +869,7 @@ SRV, and on foot.
 The core aboard writes every remark itself and it is genuinely theirs — Chart will tell you about
 the sky, the Quartermaster about what the run cost. It also knows who it is flying with: your
 [character sheet](conversation.md#character-sheet) goes with every remark, and your
-[About Me](conversation.md#about-me) story with about one in four, so the remarks differ by who is
+[Backstory](conversation.md#backstory) with about one in four, so the remarks differ by who is
 flying and not just by wording.
 
 **Chatter is model-written or it is nothing.** With no language model configured there are no

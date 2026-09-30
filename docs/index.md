@@ -120,7 +120,7 @@ Two things reset never touches:
 - **Your API keys.** Forgetting a key means going and finding it again, so it is a separate act
   and never something a card reset sweeps up. Asking for a working Speech tab is not asking to be
   logged out of ElevenLabs.
-- **Anyone else's settings.** On a row that is yours rather than the installation's — About Me,
+- **Anyone else's settings.** On a row that is yours rather than the installation's — backstory,
   your character sheet, the core paired to your ship — reset means *stop having my own answer*, so
   the installation's value shows through again. Clearing the box by hand still means deliberately
   blank, which is a different thing and stays different.

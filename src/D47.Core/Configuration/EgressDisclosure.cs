@@ -556,7 +556,7 @@ public static class EgressDisclosure
 
         if (!string.IsNullOrWhiteSpace(llm.AboutMe))
         {
-            set.Add("your About Me");
+            set.Add("your backstory");
         }
 
         if (!string.IsNullOrWhiteSpace(llm.Scenario))

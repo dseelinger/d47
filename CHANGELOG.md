@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.23.0 — About Me is now Backstory
+
+The settings row that held your Commander's story is now called **Backstory**, in Settings, in the help
+pages and in what D47 says it sends to the language model. What you wrote is unchanged, and asking by
+voice to set your backstory works as before.
+
 ## 1.22.0 — Each core notices its own domain
 
 With Quartermaster aboard, D47 now says what the session is earning: the credits an hour and where
