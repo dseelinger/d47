@@ -19,6 +19,7 @@ public static class FlavourTurn
 
     /// <summary><param name="instruction"> What to say and why, as a user turn.</summary>
     /// <param name="instruction">What to say and why, as a user turn.</param>
+    /// <param name="scenario">The Commander's scenario, already gated by the brief and the audience, or null.</param>
     /// <param name="gameState">Live state for the line to be about.</param>
     /// <param name="maxOutputTokens">
     /// The ceiling on the whole completion, which is <see cref="AnswerBudget"/> plus <see
@@ -49,7 +50,8 @@ public static class FlavourTurn
         ThinkingEffort effort = ThinkingEffort.Low,
         LlmSampling? sampling = null,
         bool canBeDirected = false,
-        string? humor = null) =>
+        string? humor = null,
+        string? scenario = null) =>
         (await AskForAsync(
             provider,
             model,
@@ -66,7 +68,8 @@ public static class FlavourTurn
             effort,
             sampling,
             canBeDirected,
-            humor).ConfigureAwait(false)).Line;
+            humor,
+            scenario).ConfigureAwait(false)).Line;
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     public static async Task<FlavourReply> AskForAsync(
@@ -85,7 +88,8 @@ public static class FlavourTurn
         ThinkingEffort effort = ThinkingEffort.Low,
         LlmSampling? sampling = null,
         bool canBeDirected = false,
-        string? humor = null)
+        string? humor = null,
+        string? scenario = null)
     {
         if (provider is null)
         {
@@ -119,6 +123,7 @@ public static class FlavourTurn
                 // uses, so the caller answers this rather than the setting for the ship's own voice (#291).
                 CanBeDirected = canBeDirected,
                 AboutMe = aboutMe,
+                Scenario = scenario,
                 History = [new ConversationMessage(ConversationRole.User, instruction)],
                 LiveGameState = gameState,
                 Humor = humor,

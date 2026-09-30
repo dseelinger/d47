@@ -90,6 +90,7 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
             NeedsPersona = true,
             NeedsGameState = false,
             NeedsAboutMe = false,
+            NeedsScenario = false,
         };
 
         Assert.Null(FlavourBriefs.HumorGroupOf(new Announcement("any", "Hull at ten percent", CalloutUrgency.Urgent), brief));
@@ -106,6 +107,7 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
             NeedsPersona = false,
             NeedsGameState = false,
             NeedsAboutMe = false,
+            NeedsScenario = false,
         };
 
         Assert.Equal(

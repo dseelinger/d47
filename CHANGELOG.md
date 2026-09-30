@@ -16,6 +16,8 @@ aboard and your carrier's captain and tower, or everyone, comms included. Both r
 Commander and kept between sessions until you clear them. Privacy and egress now says when your
 character sheet, About Me and scenario are sent to the language model.
 
+The scenario now also shapes the ship's AI's idle remarks, callout rewordings, and your carrier captain's and tower's lines, to whoever **Who knows about it** reaches. Lines that reword another player's or Frontier's words, such as NPC comms and System Authority patrols, never carry it.
+
 ## 1.20.0 — Invented chatter answers when named
 
 You can now answer an invented NPC who hails you, or a passer-by who remarks on you. Start with their

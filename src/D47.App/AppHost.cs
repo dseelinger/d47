@@ -4029,7 +4029,8 @@ public sealed class AppHost : IDisposable
                         Spend,
                         PriceTable.Default,
                         _logger,
-                        humor: HumorFor(HumorGroup.Cores, canBeDirected: false));
+                        humor: HumorFor(HumorGroup.Cores, canBeDirected: false),
+                        scenario: ScenarioFor(brief, VoiceRole.ShipAi));
 
                     var generated = await AskAsync(brief.Instruction).ConfigureAwait(false);
 
@@ -5402,7 +5403,8 @@ public sealed class AppHost : IDisposable
                     canBeDirected: directed,
                     humor: FlavourBriefs.HumorGroupOf(announcement, brief) is { } group
                         ? HumorFor(group, directed)
-                        : null);
+                        : null,
+                    scenario: ScenarioFor(brief, announcement.Voice));
             });
     }
 
@@ -5557,6 +5559,10 @@ public sealed class AppHost : IDisposable
             ? CommanderStory.Compose(
                 Settings.Current.Llm.CharacterSheet, Settings.Current.Llm.AboutMe, withStory: brief.NeedsStory)
             : null;
+
+    /// <summary>The Commander's scenario for a flavour line, or null when the brief or the audience leaves it out.</summary>
+    private string? ScenarioFor(FlavourBrief brief, VoiceRole speaker) =>
+        FlavourBriefs.ScenarioFor(brief, Settings.Current.Llm.ScenarioAudience, speaker, Settings.Current.Llm.Scenario);
 
     /// <summary>Whether a web lookup could actually be run right now.</summary>
     private bool CanSearch =>

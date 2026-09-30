@@ -22,6 +22,9 @@ public sealed record FlavourBrief
     /// <summary>Whether the Commander's own account of themselves goes with it (Phase 43).</summary>
     public required bool NeedsAboutMe { get; init; }
 
+    /// <summary>Whether the Commander's scenario goes with it, to a speaker the scenario audience reaches.</summary>
+    public required bool NeedsScenario { get; init; }
+
     /// <summary>Whether the story goes as well as the character sheet.</summary>
     public bool NeedsStory { get; init; }
 
@@ -68,7 +71,20 @@ public static class FlavourBriefs
 
             // The sheet, so the first words are addressed to somebody — a name, not "Commander" every time.
             NeedsAboutMe = true,
+            NeedsScenario = true,
         };
+    }
+
+    /// <summary>The scenario a flavour line carries: only when the brief asks and the audience reaches the speaker.</summary>
+    public static string? ScenarioFor(FlavourBrief brief, ScenarioAudience audience, VoiceRole speaker, string? scenario)
+    {
+        ArgumentNullException.ThrowIfNull(brief);
+
+        return brief.NeedsScenario
+            && ScenarioAudiences.Reaches(audience, speaker)
+            && !string.IsNullOrWhiteSpace(scenario)
+                ? scenario
+                : null;
     }
 
     /// <summary>Whose humor settings a briefed line follows, or null for a warning, which never gets any.</summary>
@@ -120,6 +136,7 @@ public static class FlavourBriefs
                 NeedsPersona = false,
                 NeedsGameState = false,
                 NeedsAboutMe = false,
+                NeedsScenario = false,
             };
         }
 
@@ -145,6 +162,7 @@ public static class FlavourBriefs
                 // bay that means something to this Commander is the difference between company and ten ways
                 // to say nothing.
                 NeedsAboutMe = true,
+                NeedsScenario = true,
                 NeedsStory = CommanderStory.TellsStory(announcement.Variant),
             };
         }
@@ -171,6 +189,7 @@ public static class FlavourBriefs
                 NeedsPersona = true,
                 NeedsGameState = true,
                 NeedsAboutMe = true,
+                NeedsScenario = true,
             };
         }
 
@@ -194,6 +213,7 @@ public static class FlavourBriefs
 
                 // The sheet, so it is addressed to somebody.
                 NeedsAboutMe = true,
+                NeedsScenario = true,
             };
         }
 
@@ -212,6 +232,7 @@ public static class FlavourBriefs
 
                 // The sheet, so it is addressed to somebody.
                 NeedsAboutMe = true,
+                NeedsScenario = true,
             };
         }
 
@@ -233,6 +254,7 @@ public static class FlavourBriefs
 
                 // The sheet, so it is addressed to somebody.
                 NeedsAboutMe = true,
+                NeedsScenario = true,
             };
         }
 
@@ -256,6 +278,7 @@ public static class FlavourBriefs
 
                 // The sheet: a greeting is the one line where knowing whose ship this is matters most.
                 NeedsAboutMe = true,
+                NeedsScenario = true,
             };
         }
 
@@ -281,6 +304,7 @@ public static class FlavourBriefs
                 NeedsPersona = false,
                 NeedsGameState = false,
                 NeedsAboutMe = false,
+                NeedsScenario = false,
             };
         }
 
@@ -322,6 +346,7 @@ public static class FlavourBriefs
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
+                    NeedsScenario = true,
                 };
             }
 
@@ -342,6 +367,7 @@ public static class FlavourBriefs
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
+                    NeedsScenario = true,
                 };
             }
 
@@ -361,6 +387,7 @@ public static class FlavourBriefs
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
+                    NeedsScenario = true,
                 };
             }
 
@@ -379,6 +406,7 @@ public static class FlavourBriefs
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
+                    NeedsScenario = true,
                 };
             }
 
@@ -398,6 +426,7 @@ public static class FlavourBriefs
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
+                    NeedsScenario = true,
                 };
             }
 
@@ -419,6 +448,7 @@ public static class FlavourBriefs
                     NeedsPersona = false,
                     NeedsGameState = false,
                     NeedsAboutMe = false,
+                    NeedsScenario = false,
                 };
             }
 
@@ -431,6 +461,7 @@ public static class FlavourBriefs
 
                 // A stranger on a comms channel.
                 NeedsAboutMe = false,
+                NeedsScenario = false,
             };
         }
 
