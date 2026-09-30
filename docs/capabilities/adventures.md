@@ -238,6 +238,15 @@ it. A hostile message arriving in your comms panel cannot propose a story, end o
 
 It also costs nothing: none of this is on the advertised tool surface.
 
+### Messages
+
+Every beat the ship's AI says is also kept as a written message, so a line said during a fight is not
+lost. Open **Messages** on the Adventures tab: newest first, unread in bold, and the button carries the
+unread count. Opening a message marks it read.
+
+The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
+message goes first.
+
 ### Where it lives
 
 `data/adventures.json`, beside the executable, per Commander, and hand-editable like everything

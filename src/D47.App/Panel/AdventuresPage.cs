@@ -39,6 +39,8 @@ public sealed class AdventuresPage : UserControl
     private readonly Notice _problems = new() { IsVisible = false };
 
     private readonly Button _ask = new() { Content = "Ask for one" };
+    private readonly Button _messages = new() { Name = "OpenMessages", Content = "Messages" };
+    private MessagesView? _inbox;
 
     /// <summary>The revision conversation per draft, for this session.</summary>
     private readonly Dictionary<string, List<AdventureRemark>> _exchanges = new(StringComparer.OrdinalIgnoreCase);
@@ -58,7 +60,9 @@ public sealed class AdventuresPage : UserControl
         var write = new Button { Content = "Write an adventure" };
         write.Click += (_, _) => _nav.Drill(new NavCrumb(EditPrefix + NewKey, "Write") { Help = EditHelp });
 
+        _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, "Messages"));
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
+        _messages.IsVisible = surface.Messages is not null;
 
         var bar = new StackPanel
         {
@@ -67,7 +71,7 @@ public sealed class AdventuresPage : UserControl
             Children =
             {
                 Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."),
-                Buttons(_ask, write),
+                Buttons(_ask, write, _messages),
             },
         };
 
@@ -111,6 +115,12 @@ public sealed class AdventuresPage : UserControl
         // A beat firing does not write the file — nothing on disk moves until the line has been said — so the
         // waiting indicator needs the book's own event as well as the store's.
         _surface.Book.StirringChanged += OnChanged;
+
+        if (_surface.Messages is { } messages)
+        {
+            messages.Changed += OnChanged;
+        }
+
         Rebuild();
     }
 
@@ -119,6 +129,11 @@ public sealed class AdventuresPage : UserControl
         base.OnDetachedFromVisualTree(e);
         _surface.Book.Store.Changed -= OnChanged;
         _surface.Book.StirringChanged -= OnChanged;
+
+        if (_surface.Messages is { } messages)
+        {
+            messages.Changed -= OnChanged;
+        }
     }
 
     /// <summary>The levels below the root, by crumb.</summary>
@@ -127,6 +142,13 @@ public sealed class AdventuresPage : UserControl
         if (crumb.Key == AskKey)
         {
             return BuildAsk();
+        }
+
+        if (_surface.Messages is { } inbox
+            && (crumb.Key == MessagesView.RootKey || crumb.Key.StartsWith(MessagesView.ReadPrefix, StringComparison.Ordinal)))
+        {
+            _inbox ??= new MessagesView(inbox, _nav);
+            return crumb.Key == MessagesView.RootKey ? _inbox : _inbox.Build(crumb);
         }
 
         if (crumb.Key.StartsWith(ReadPrefix, StringComparison.Ordinal))
@@ -156,6 +178,11 @@ public sealed class AdventuresPage : UserControl
         var problems = _surface.Book.Store.Problems;
         _problems.IsVisible = problems.Count > 0;
         _problems.Text = string.Join("\n", problems.Select(problem => $"{problem.Where}: {problem.Reason}"));
+
+        if (_surface.Messages is { } store)
+        {
+            _messages.Content = MessagesView.ButtonLabel(store);
+        }
 
         _ask.IsEnabled = _surface.ModelAvailable() && _surface.GalaxySearchOn();
 

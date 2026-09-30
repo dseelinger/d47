@@ -386,6 +386,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The stories the Commander flies, and the thing that writes one (Phase 47).</summary>
     public (D47.Core.Adventures.AdventureBook Book, D47.Core.Adventures.AdventureGenerator Generator)? Adventures { get; private set; }
 
+    public D47.Core.Messages.MessageStore? Messages { get; private set; }
+
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
@@ -1014,6 +1016,10 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureStore>());
 
         adventureStore.Poll();
+
+        var messageStore = new D47.Core.Messages.MessageStore(
+            Path.Combine(paths.Data, "messages.json"),
+            loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>());
 
         var adventureBook = new D47.Core.Adventures.AdventureBook(
             adventureStore, loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>());
@@ -2270,6 +2276,7 @@ public sealed class AppHost : IDisposable
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
         host.Adventures = (adventureBook, adventureGenerator);
+        host.Messages = messageStore;
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
         host.History = history;
@@ -6086,6 +6093,12 @@ public sealed class AppHost : IDisposable
         var commander = GameState.Active?.Identity.FrontierId;
         var story = adventures.Book.Store.Find(commander, key);
         var reached = beat >= 0 ? story?.Beats.ElementAtOrDefault(beat) : null;
+
+        if (Messages is { } messages)
+        {
+            D47.Core.Adventures.AdventureMessages.Post(
+                messages, Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now);
+        }
 
         adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
         {

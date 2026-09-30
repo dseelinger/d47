@@ -6,6 +6,12 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.25.0 — Messages and the sleeping cores
+
+The Adventures tab has a **Messages** button. Every adventure beat D47 speaks is also kept there as a
+written message, newest first, with unread ones in bold and the unread count on the button. Opening a
+message marks it read. The messages are kept in `data/messages.json`, up to 200.
+
 ## 1.24.0 — A Narrator tells your story
 
 A new voice, the **Narrator**, now tells your Commander's story during a lull, in the third person

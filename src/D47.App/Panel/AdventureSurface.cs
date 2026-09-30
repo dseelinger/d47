@@ -1,5 +1,6 @@
 using D47.Core.Adventures;
 using D47.Core.Journal;
+using D47.Core.Messages;
 
 namespace D47.App.Panel;
 
@@ -14,4 +15,5 @@ public sealed record AdventureSurface(
     Func<bool> ModelAvailable,
     Func<bool> GalaxySearchOn,
     Func<AdventureResolver?> Resolver,
-    Action OpenSettings);
+    Action OpenSettings,
+    MessageStore? Messages = null);

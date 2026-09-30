@@ -188,7 +188,8 @@ public partial class MainWindow : Window
                     () => host.Galaxy is { } galaxy && host.Settings.Current.Knowledge.GalaxySearch
                         ? new D47.Core.Adventures.AdventureResolver(galaxy)
                         : null,
-                    OpenSettings);
+                    OpenSettings,
+                    host.Messages);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));
