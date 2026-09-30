@@ -26,6 +26,13 @@ Chatter and messages › **Scene chatter**, on by default. Each exchange is writ
 model; with no model, or personality off, there are no scenes, and Privacy and egress says when scenes
 send your scenario.
 
+Scene chatter now reaches ship fights too. With a current scenario set, the pilots around you are heard
+on their own channel when you drop into a conflict zone, an extraction site or pirate activity, when a
+pilot interdicts you, when the shooting starts, when you destroy a ship, when you are destroyed and when
+you escape into supercruise. At a conflict zone they may fly for either side. While a ship scene is
+heard, the bystanders' combat exchange after a kill is not made, so a kill is answered once; with no
+scenario it is made as before.
+
 Typing into a text setting, such as Backstory, and then opening another settings page no longer
 closes D47, and what you typed is saved.
 

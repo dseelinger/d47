@@ -24,14 +24,14 @@ public class SceneChatterIsNamedAmongWhatIsSentTests
     [Fact]
     public void AHostedModelIsSaidToReceiveTheScenarioFromScenes() =>
         Assert.Contains(
-            "Scene chatter at a settlement sends your current scenario, whatever Who knows about it is set to.",
+            "Scene chatter at a settlement or in a ship fight sends your current scenario, whatever Who knows about it is set to.",
             What(WithScenario()),
             StringComparison.Ordinal);
 
     [Fact]
     public void ALoopbackModelIsSaidToReceiveTheScenarioFromScenes() =>
         Assert.Contains(
-            "Scene chatter at a settlement sends your current scenario to that address, whatever Who knows about it is set to.",
+            "Scene chatter at a settlement or in a ship fight sends your current scenario to that address, whatever Who knows about it is set to.",
             What(WithScenario(endpoint: "http://localhost:11434")),
             StringComparison.Ordinal);
 

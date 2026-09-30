@@ -459,8 +459,8 @@ public static partial class NpcChatter
                 + "and nobody asks the Commander about it.";
 
     /// <summary>
-    /// What the model is asked for one exchange of a scene at a settlement. The scenario is given whatever
-    /// the audience setting, as who the speakers are.
+    /// What the model is asked for one exchange of a scene, at a settlement or in a ship fight. The scenario
+    /// is given whatever the audience setting, as who the speakers are.
     /// </summary>
     public static string SceneInstruction(
         SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0)
@@ -469,11 +469,13 @@ public static partial class NpcChatter
 
         var cast = roster ?? NpcChatterRoster.None;
 
-        return SceneSituation(beat)
-            + "The Commander's current scenario, which this settlement is part of: " + scenario.Trim()
+        var aboard = beat.Place == ScenePlace.Ship;
+
+        return (aboard ? FightSituation(beat) : SceneSituation(beat))
+            + $"The Commander's current scenario, which this {(aboard ? "fight" : "settlement")} is part of: " + scenario.Trim()
             + " Take from it who these people are and what is going on around them. They do not know who the "
             + "Commander is or why the Commander is there. "
-            + SceneMoment(beat)
+            + (aboard ? FightMoment(beat) : SceneMoment(beat))
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(NpcChatterKind.Scene, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + SceneContract;
@@ -529,6 +531,73 @@ public static partial class NpcChatter
             : " Nobody has seen who did it, and nobody has seen the Commander. ";
 
         return killed + total + who + "The dead do not speak. ";
+    }
+
+    private static string FightSituation(SceneBeat beat)
+    {
+        var site = beat.Site is { Length: > 0 } kind ? $" at a {kind}" : string.Empty;
+        var system = beat.System is { Length: > 0 } star ? $" in {star}" : string.Empty;
+
+        var speakers = beat.Sides is [var one, var other, ..]
+            ? $"Pilots fighting there for {one} or for {other}, some from each side, "
+            : beat.Faction is { Length: > 0 } faction
+                ? $"Pilots flying for {faction}, the side the Commander's ship is fighting, "
+                : "Pilots flying out there ";
+
+        return $"The Commander is flying a ship{site}{system}. "
+            + speakers
+            + "exchange 2 to 4 short lines with each other on their own channel about what has just happened. ";
+    }
+
+    private static string FightMoment(SceneBeat beat) => beat.Kind switch
+    {
+        SceneBeatKind.Site =>
+            "A ship has just dropped in. Nobody has noticed it yet, and nobody mentions a newcomer. ",
+
+        SceneBeatKind.Interdicted =>
+            (beat.Interdictor is { Length: > 0 } interdictor ? $"{interdictor}" : "One of them")
+            + " has just pulled a ship they do not know out of supercruise"
+            + (beat.Submitted ? ", and its pilot gave in without a struggle. " : ", against its pilot's struggle. ")
+            + (beat.Interdictor is { Length: > 0 } ? "The interdictor may be one of the speakers. " : string.Empty),
+
+        SceneBeatKind.Engaged =>
+            "They have just started shooting at a ship they do not know. ",
+
+        SceneBeatKind.ShipDown => FightKill(beat),
+
+        SceneBeatKind.CommanderDown =>
+            "They have just destroyed the ship they were fighting."
+            + (beat.Killer is { Length: > 0 } killer
+                ? $" {killer}{(beat.Ship is { Length: > 0 } ship ? $", flying a {ship}," : string.Empty)} fired the last shot and may be one of the speakers. "
+                : " "),
+
+        _ => "The ship they were fighting has just escaped into supercruise"
+            + (beat.Kills > 0 ? $", after destroying {beat.Kills} of their ships. " : ". "),
+    };
+
+    private static string FightKill(SceneBeat beat)
+    {
+        var named = (beat.Victim, beat.Ship) switch
+        {
+            ({ Length: > 0 } pilot, { Length: > 0 } ship) => $"{pilot}'s {ship}",
+            ({ Length: > 0 } pilot, _) => pilot,
+            (_, { Length: > 0 } ship) => $"a {ship}",
+            _ => null,
+        };
+
+        var whose = beat.Faction is { Length: > 0 } faction ? $" flying for {faction}" : string.Empty;
+
+        var killed = (beat.Merged > 1, named) switch
+        {
+            (true, null) => $"{beat.Merged} ships{whose} have just been destroyed.",
+            (true, _) => $"{beat.Merged} ships{whose} have just been destroyed, the last of them {named}.",
+            (false, null) => $"A ship{whose} has just been destroyed.",
+            _ => $"{named}{whose} has just been destroyed.",
+        };
+
+        var total = beat.Kills > beat.Merged ? $" That makes {beat.Kills} ships down since the fight began." : string.Empty;
+
+        return killed + total + " A ship they do not know did it. The dead do not speak. ";
     }
 
     /// <summary>The format contract for a scene: the speakers talk among themselves about the Commander.</summary>

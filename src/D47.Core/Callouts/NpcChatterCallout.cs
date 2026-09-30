@@ -26,10 +26,17 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
     /// </summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(90);
 
+    /// <summary>
+    /// Whether a ship scene is answering the fight; while it is, kills are left to the scene and no combat
+    /// exchange is made for them, then or later.
+    /// </summary>
+    public Func<bool> SceneHoldsTheFight { get; set; } = () => false;
+
     private AmbientSituation _situation = AmbientSituation.None;
     private DateTimeOffset _situationSince;
     private DateTimeOffset _lastSpokenAt;
     private DateTimeOffset _lastCombatAt;
+    private DateTimeOffset _sceneTookKillAt;
     private int _picks;
 
     /// <summary>How long a ship kill stays worth reacting to.</summary>
@@ -41,6 +48,12 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var situation = AmbientLines.Situate(context.Status);
+        var sceneHolds = SceneHoldsTheFight();
+
+        if (sceneHolds && fight.Snapshot.LastKillAt is { } taken)
+        {
+            _sceneTookKillAt = taken;
+        }
 
         if (situation != _situation)
         {
@@ -58,7 +71,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             yield break;
         }
 
-        if (situation == AmbientSituation.NormalSpace && ReactsToKill(context))
+        if (situation == AmbientSituation.NormalSpace && !sceneHolds && ReactsToKill(context))
         {
             _picks++;
             _lastSpokenAt = context.Now;
@@ -118,6 +131,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
         return snapshot.LastKillAt is { } killed
             && snapshot.LastShip is not null
             && killed > _lastCombatAt
+            && killed > _sceneTookKillAt
             && context.Now - killed < KillFresh
             && (snapshot.LastActionAt is not { } acted || context.Now - acted >= KillQuiet)
             && (_lastCombatAt == default || context.Now - _lastCombatAt >= Interval)

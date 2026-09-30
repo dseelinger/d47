@@ -68,7 +68,7 @@ public static class CalloutCapability
     public const string NpcChatterSecondsKey = "callouts.npcChatterSeconds";
     public const string NpcChatterMaxSecondsKey = "callouts.npcChatterMaxSeconds";
 
-    /// <summary>Scene chatter at a settlement on foot.</summary>
+    /// <summary>Scene chatter at a settlement on foot and in a ship fight.</summary>
     public const string ScenesKey = "callouts.scenes";
 
     /// <summary>The Narrator, telling the Commander's story during a lull.</summary>
@@ -443,8 +443,9 @@ public static class CalloutCapability
             Toggle(
                 ScenesKey,
                 "Scene chatter",
-                "The people of a settlement you are on foot at, heard on their radio reacting to what just "
-                + "happened: your arrival, being found, a killing, your death and your escape. Needs a current "
+                "The people of a settlement you are on foot at, or the pilots of a fight you are in, heard on "
+                + "their radio reacting to what just happened: your arrival, being found or interdicted, a killing, "
+                + "your death and your escape. Needs a current "
                 + "scenario, which they are given whatever Who knows about it is set to. At most one exchange "
                 + "every 45 seconds. Written by the model; with no model, or personality off, there are no scenes.",
                 "scenes",

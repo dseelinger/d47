@@ -2602,6 +2602,7 @@ public sealed class AppHost : IDisposable
         NearbyFight fight,
         SceneTracker scenes)
     {
+        var sceneCallout = new SceneCallout(scenes);
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
         var tradingMode = new TradingModeCallout(loggers.CreateLogger<TradingModeCallout>());
         var biology = new BiologyCallout { AlreadySaid = surveyedBiology.Reported };
@@ -2679,10 +2680,11 @@ public sealed class AppHost : IDisposable
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
             // marker composes to nothing.
-            .Add(new NpcChatterCallout(fight))
+            .Add(new NpcChatterCallout(fight) { SceneHoldsTheFight = () => sceneCallout.HoldsTheFight })
 
-            // A settlement's people reacting to the Commander on foot: the marker only, composed like chatter.
-            .Add(new SceneCallout(scenes))
+            // The people of a settlement, or the pilots of a fight, reacting to the Commander: the marker only,
+            // composed like chatter.
+            .Add(sceneCallout)
             .Add(new AmbientCallout())
 
             // The Commander's story, told during a lull: the marker only, written by the model or not said.

@@ -1,0 +1,8 @@
+{ "timestamp":"2026-09-29T14:45:11Z", "event":"SupercruiseDestinationDrop", "Type":"$Warzone_PointRace_Low:#index=1;", "Type_Localised":"Conflict Zone [Low Intensity]", "Threat":0 }
+{ "timestamp":"2026-09-29T14:45:13Z", "event":"SupercruiseExit", "Taxi":false, "Multicrew":false, "StarSystem":"LTT 7786", "SystemAddress":633608311522, "Body":"LTT 7786 1", "BodyID":5, "BodyType":"Planet" }
+{ "timestamp":"2026-09-29T14:55:50Z", "event":"UnderAttack", "Target":"You" }
+{ "timestamp":"2026-09-29T14:56:15Z", "event":"FactionKillBond", "Reward":25746, "AwardingFaction":"LTT 7786 Labour", "VictimFaction":"LTT 7786 Major Group" }
+{ "timestamp":"2026-09-29T14:56:20Z", "event":"UnderAttack", "Target":"You" }
+{ "timestamp":"2026-09-29T14:56:24Z", "event":"FactionKillBond", "Reward":36369, "AwardingFaction":"LTT 7786 Labour", "VictimFaction":"LTT 7786 Major Group" }
+{ "timestamp":"2026-09-29T14:56:31Z", "event":"FactionKillBond", "Reward":32238, "AwardingFaction":"LTT 7786 Labour", "VictimFaction":"LTT 7786 Major Group" }
+{ "timestamp":"2026-09-29T14:58:28Z", "event":"SupercruiseEntry", "Taxi":false, "Multicrew":false, "StarSystem":"LTT 7786", "SystemAddress":633608311522 }

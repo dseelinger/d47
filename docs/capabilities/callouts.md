@@ -1007,9 +1007,11 @@ Set the interval to `0` if you want the switch without finding the switch.
 
 #### Scene chatter {#scenes}
 
-**Who it is: the people of a settlement you are on foot at**, heard on their own radio reacting to
-what the journal says just happened. It needs a [current scenario](conversation.md#current-scenario):
-with none set there are no scenes.
+**Who it is: the people of a settlement you are on foot at, or the pilots of a fight you are in**,
+heard on their own radio reacting to what the journal says just happened. It needs a
+[current scenario](conversation.md#current-scenario): with none set there are no scenes.
+
+##### On foot
 
 A scene opens when you disembark on the body of the settlement you last approached, other than from a
 taxi, and closes when you enter supercruise, jump, reload, die or approach another settlement. Inside
@@ -1023,13 +1025,37 @@ it, these moments are heard:
 | Your death | you are killed on foot | they got the intruder, and who fired |
 | Escape | you board a ship, an SRV or a taxi after being found or killing | the intruder got away |
 
+##### In a ship
+
+A ship scene opens when you drop into a conflict zone, a power conflict zone, a resource extraction
+site or pirate activity, when a pilot who is not a player interdicts you, or at the first attack on you
+in normal space when no scene is open. It closes when you enter supercruise, jump, reload, die, dock
+or disembark. Inside it, these moments are heard:
+
+| Moment | When | What they know |
+| --- | --- | --- |
+| Arrival | you drop into one of those sites | nothing: a ship has dropped in and nobody has noticed |
+| Interdiction | a pilot pulls you out of supercruise | who did it, for which faction, and whether you submitted |
+| Engaged | the first attack on you in the scene | they are shooting at a ship they do not know |
+| A kill | a ship bounty or a combat bond | the pilot's name and ship for a bounty, only the faction for a bond, and how many so far |
+| Your death | a ship destroys yours | they got the ship, and who fired, in what |
+| Escape | you enter supercruise after being attacked or killing | the ship got away |
+
+The speakers fly for the victim's or the interdictor's faction. At a conflict zone, the exchange names
+both sides from your combat bonds and the speakers may fly for either. While a ship scene is being
+heard, the [combat exchange](#npc-chatter) after a kill is not made, so the same kill is never answered
+twice; with no scenario, it is made as before. Frontier's own lines, such as a pirate's threat, are
+spoken as they are and are not part of a scene.
+
+##### Both kinds
+
 At most one exchange every 45 seconds. A moment that falls inside the wait replaces the one waiting,
 and kills in that time are counted together into one. Your death is never held back. An exchange for a
 scene you have already left is dropped, except your escape and your death, which are heard even after
 you reach supercruise.
 
 **The scenario reaches them whatever [Who knows about it](conversation.md#who-knows-about-it) is set
-to**, because in a secret scenario the people at the settlement are part of it. They are given it as
+to**, because in a secret scenario the people in the scene are part of it. They are given it as
 who they are and what is going on around them, and are told they do not know who you are or why you
 are there. It is sent with each exchange, and [Privacy and egress](privacy.md) says so.
 

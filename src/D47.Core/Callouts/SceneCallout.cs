@@ -1,8 +1,8 @@
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A marker for each beat of a scene at a settlement, for the people there to react to on their radio. The
-/// app has the model write the exchange; the marker's own text is empty.
+/// A marker for each beat of a scene, at a settlement or in a ship fight, for the people there to react to on
+/// their radio. The app has the model write the exchange; the marker's own text is empty.
 /// </summary>
 public sealed class SceneCallout(SceneTracker tracker) : ICallout
 {
@@ -25,6 +25,9 @@ public sealed class SceneCallout(SceneTracker tracker) : ICallout
     private int _scene;
     private int _killsReported;
     private int _picks;
+
+    /// <summary>Whether a ship scene is open and would be heard, so no timed combat exchange is made.</summary>
+    public bool HoldsTheFight => tracker.Snapshot.InShip && Enabled() && !string.IsNullOrWhiteSpace(Scenario());
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -102,7 +105,7 @@ public sealed class SceneCallout(SceneTracker tracker) : ICallout
         var merged = beat.Kills - _killsReported;
         _killsReported = beat.Kills;
 
-        return beat with { Merged = beat.Kind == SceneBeatKind.Down ? merged : 0 };
+        return beat with { Merged = beat.Kind is SceneBeatKind.Down or SceneBeatKind.ShipDown ? merged : 0 };
     }
 
     // Text empty: the app composes from the marker, and an empty line cannot be spoken by mistake.

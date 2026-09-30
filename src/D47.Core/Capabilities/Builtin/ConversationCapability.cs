@@ -614,7 +614,7 @@ public static class ConversationCapability
             Help =
                 "Who hears your scenario: only those aboard — the ship's AI and the crew; those aboard and "
                 + "your carrier's captain and tower; or everyone, comms included. Scene chatter at a settlement "
-                + "is given it whatever this is set to.",
+                + "or in a ship fight is given it whatever this is set to.",
             Kind = SettingKind.Choice,
             Choices = [ScenarioAboard, ScenarioCarrier, ScenarioPublic],
             ChoiceLabel = id => id switch
