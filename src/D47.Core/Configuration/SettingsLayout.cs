@@ -311,6 +311,8 @@ public static class SettingsLayout
                                 E("persona.own"),
                                 E("llm.characterSheet"),
                                 E("llm.aboutMe"),
+                                E("llm.scenario"),
+                                E("llm.scenarioAudience", under: true),
                             ]),
                         G(
                             "Humor",

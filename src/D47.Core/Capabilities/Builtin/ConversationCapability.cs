@@ -27,6 +27,12 @@ public static class ConversationCapability
     /// <summary>Whether the model may search the web.</summary>
     public const string WebSearchKey = "llm.webSearch";
 
+    private const string ScenarioAboard = "aboard";
+
+    private const string ScenarioCarrier = "carrier";
+
+    private const string ScenarioPublic = "public";
+
     /// <summary>The secret row key for a provider's API key.</summary>
     public static string KeyRowFor(LlmProviderInfo provider) => $"llm.{provider.Id}.apiKey";
 
@@ -576,6 +582,69 @@ public static class ConversationCapability
             {
                 Read = s => s.Llm.AboutMe,
                 Write = (s, v) => s with { Llm = s.Llm with { AboutMe = v } },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = "llm.scenario",
+            Advanced = true,
+            Label = "Current scenario",
+            Help =
+                "The situation your Commander is in now — a secret cargo run, a refugee convoy, a debt "
+                + "being worked off. D47 treats it as true, and tells it only to those the row below "
+                + "says know about it. Kept between sessions until you clear it.",
+            Kind = SettingKind.Text,
+            Multiline = true,
+            DefaultDisplay = "(nothing yet)",
+            DocsAnchor = "current-scenario",
+            Scope = SettingScope.Commander,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Llm.Scenario,
+                Write = (s, v) => s with { Llm = s.Llm with { Scenario = v } },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = "llm.scenarioAudience",
+            Advanced = true,
+            Label = "Who knows about it",
+            Help =
+                "Who hears your scenario: only those aboard — the ship's AI and the crew; those aboard and "
+                + "your carrier's captain and tower; or everyone, comms included.",
+            Kind = SettingKind.Choice,
+            Choices = [ScenarioAboard, ScenarioCarrier, ScenarioPublic],
+            ChoiceLabel = id => id switch
+            {
+                ScenarioCarrier => "Aboard and my carrier",
+                ScenarioPublic => "Everyone",
+                _ => "Only those aboard",
+            },
+            DefaultDisplay = ScenarioAboard,
+            DocsAnchor = "who-knows-about-it",
+            Scope = SettingScope.Commander,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Llm.ScenarioAudience switch
+                {
+                    ScenarioAudience.Carrier => ScenarioCarrier,
+                    ScenarioAudience.Public => ScenarioPublic,
+                    _ => ScenarioAboard,
+                },
+                Write = (s, v) => s with
+                {
+                    Llm = s.Llm with
+                    {
+                        ScenarioAudience = v switch
+                        {
+                            ScenarioCarrier => ScenarioAudience.Carrier,
+                            ScenarioPublic => ScenarioAudience.Public,
+                            _ => ScenarioAudience.Aboard,
+                        },
+                    },
+                },
             },
         });
 

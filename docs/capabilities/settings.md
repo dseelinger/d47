@@ -195,7 +195,8 @@ Several Commanders can play on one machine, and Elite tells Directive 47 which o
 Most settings are the installation's — keys, devices, theme, zoom, hotkeys — and stay the same
 whoever logs in. A few are about the *person in the chair*, and those are marked **per
 Commander** on the row: the [Character sheet](conversation.md#character-sheet),
-[About Me](conversation.md#about-me), and which ship the
+[About Me](conversation.md#about-me), the [Current scenario](conversation.md#current-scenario)
+and [who knows about it](conversation.md#who-knows-about-it), and which ship the
 [core-binding rows](persona.md#core-for-this-ship) are pointed at. Each Commander sees their own
 value there, and a second Commander on the same machine never sees the first one's story.
 

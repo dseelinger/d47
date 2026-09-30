@@ -23,6 +23,8 @@ public static class CommanderScope
             {
                 AboutMe = Read(overlay.AboutMe, stored.Llm.AboutMe),
                 CharacterSheet = Read(overlay.CharacterSheet, stored.Llm.CharacterSheet),
+                Scenario = Read(overlay.Scenario, stored.Llm.Scenario),
+                ScenarioAudience = overlay.ScenarioAudience ?? stored.Llm.ScenarioAudience,
             },
             Persona = stored.Persona with
             {
@@ -52,6 +54,8 @@ public static class CommanderScope
             {
                 AboutMe = stored.Llm.AboutMe,
                 CharacterSheet = stored.Llm.CharacterSheet,
+                Scenario = stored.Llm.Scenario,
+                ScenarioAudience = stored.Llm.ScenarioAudience,
             },
             Persona = next.Persona with
             {
@@ -70,6 +74,16 @@ public static class CommanderScope
         if (!string.Equals(next.Llm.CharacterSheet, effective.Llm.CharacterSheet, StringComparison.Ordinal))
         {
             updated = updated with { CharacterSheet = Written(next.Llm.CharacterSheet) };
+        }
+
+        if (!string.Equals(next.Llm.Scenario, effective.Llm.Scenario, StringComparison.Ordinal))
+        {
+            updated = updated with { Scenario = Written(next.Llm.Scenario) };
+        }
+
+        if (next.Llm.ScenarioAudience != effective.Llm.ScenarioAudience)
+        {
+            updated = updated with { ScenarioAudience = next.Llm.ScenarioAudience };
         }
 
         if (next.Persona.ShipCoreShip != effective.Persona.ShipCoreShip)
@@ -113,6 +127,8 @@ public static class CommanderScope
         [
             Without(stored, fid, overlay with { AboutMe = null }),
             Without(stored, fid, overlay with { CharacterSheet = null }),
+            Without(stored, fid, overlay with { Scenario = null }),
+            Without(stored, fid, overlay with { ScenarioAudience = null }),
             Without(stored, fid, overlay with { ShipCoreShip = null }),
         ];
     }
@@ -128,6 +144,8 @@ public static class CommanderScope
 
         var empty = updated.AboutMe is null
                     && updated.CharacterSheet is null
+                    && updated.Scenario is null
+                    && updated.ScenarioAudience is null
                     && updated.ShipCoreShip is null;
 
         return stored with { Commanders = empty ? [.. others] : [.. others, updated] };

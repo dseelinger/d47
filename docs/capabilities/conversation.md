@@ -683,6 +683,36 @@ login is rare, and a Commander must never be answered from somebody else's cache
 
 Both go to the provider along with everything else. See [Privacy](privacy.md).
 
+#### Current scenario {#current-scenario}
+
+The situation your Commander is in now, in your own words — a secret cargo run, a refugee convoy, a
+debt being worked off. It is separate from the character sheet and About Me, which say who you are;
+this says what you are in the middle of. Kept between sessions until you clear it, and cleared from
+the next turn the moment you do.
+
+It is treated as true, the same as About Me, with one limit: the ship's own instruments are the
+authority on what is in the hold and where the ship is, and where the scenario disagrees with them the
+instruments win.
+
+You can set it by voice — "set my scenario to running medical supplies to a blockaded system" — as you
+can About Me. **Per Commander**, like the rows above it.
+
+#### Who knows about it {#who-knows-about-it}
+
+Who hears the scenario. Decided by who is speaking, never left to the model:
+
+| Choice | The ship's AI and crew | Carrier captain and tower | Comms |
+| --- | --- | --- | --- |
+| **Only those aboard** (`aboard`, the default) | yes | no | no |
+| **Aboard and my carrier** (`carrier`) | yes | yes | no |
+| **Everyone** (`public`) | yes | yes | yes |
+
+So a secret run set to *Only those aboard* is never in the prompt when you address your carrier's
+captain.
+
+The scenario goes to the provider with every turn that hears it, and the
+[Privacy and egress](privacy.md) section names it while one is set.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

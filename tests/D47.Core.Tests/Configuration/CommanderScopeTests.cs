@@ -32,6 +32,8 @@ public class CommanderScopeTests
                     CommanderFid = "F1",
                     AboutMe = "a story",
                     CharacterSheet = "a sheet",
+                    Scenario = "a scenario",
+                    ScenarioAudience = D47.Core.Conversation.ScenarioAudience.Public,
                     ShipCoreShip = 7,
                 },
             ],

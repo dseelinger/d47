@@ -64,6 +64,15 @@ public sealed record PromptAssembly
         + "who knows them would. Never question it, hedge it or call it fiction, and do not recite it "
         + "back — let it shape what you say.";
 
+    /// <summary>Position 4, second block: the situation the Commander is in now, or null where it does not reach the speaker.</summary>
+    public string? Scenario { get; init; }
+
+    /// <summary>What the model is told the scenario is.</summary>
+    public const string ScenarioLabel =
+        "The situation the Commander is in now, in their words. Treat it as true and let it shape what "
+        + "you say, without reciting it. The ship's own instruments are the authority on what is aboard "
+        + "and where the ship is; where this and the instruments disagree, the instruments are right.";
+
     /// <summary>
     /// Position 5 — what d47 remembers about the Commander, bounded and labelled by <see
     /// cref="Memory.MemoryRecall"/> (Phase 31).
@@ -122,6 +131,11 @@ public sealed record PromptAssembly
         if (!string.IsNullOrWhiteSpace(AboutMe))
         {
             block.Append("\n\n").Append(AboutMeLabel).Append('\n').Append(AboutMe.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(Scenario))
+        {
+            block.Append("\n\n").Append(ScenarioLabel).Append('\n').Append(Scenario.Trim());
         }
 
         // Last of the cached region, and below About Me deliberately: that is the Commander describing

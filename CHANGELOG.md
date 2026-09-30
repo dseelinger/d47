@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.21.0 — The Commander's current scenario
+
+Settings › Persona › Core and character has two new rows under About Me. **Current scenario** is the
+situation your Commander is in now — a secret cargo run, a refugee convoy, a debt being worked off —
+and D47 treats it as true, except that the ship's instruments win where the two disagree. **Who
+knows about it** decides who hears it: only those aboard (the ship's AI and crew, the default), those
+aboard and your carrier's captain and tower, or everyone, comms included. Both rows are per
+Commander and kept between sessions until you clear them. Privacy and egress now says when your
+character sheet, About Me and scenario are sent to the language model.
+
 ## 1.20.0 — Invented chatter answers when named
 
 You can now answer an invented NPC who hails you, or a passer-by who remarks on you. Start with their

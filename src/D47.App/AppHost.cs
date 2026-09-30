@@ -2893,6 +2893,8 @@ public sealed class AppHost : IDisposable
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's thirteen
         // hundred tokens are paid once per edit rather than per turn (Phase 43).
         Turns.AboutMe = CommanderStory.Compose(current.Llm.CharacterSheet, current.Llm.AboutMe, withStory: true);
+        Turns.Scenario = current.Llm.Scenario;
+        Turns.ScenarioAudience = current.Llm.ScenarioAudience;
 
         // Position 3 of the assembled prompt, and null when personality is off.
         ApplyPersonaBlock();

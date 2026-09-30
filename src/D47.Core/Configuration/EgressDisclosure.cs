@@ -512,6 +512,7 @@ public static class EgressDisclosure
         }
 
         var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
+        var commander = CommanderTextSent(settings.Llm);
 
         // The first time in d47's life that the accurate answer to *what is leaving* is *nothing* (Phase 29).
         if (LocalEndpoint.IsLoopback(destination))
@@ -520,7 +521,9 @@ public static class EgressDisclosure
                 LanguageModel,
                 NameOf(LanguageModel),
                 $"{provider.Name} is selected and pointed at {destination}, which is this machine. Your question, "
-                + "the reply, the persona, what D47 remembers about you and the game state D47 assembled from your "
+                + "the reply, the persona, what D47 remembers about you, "
+                + (commander is null ? string.Empty : $"{commander}, ")
+                + "and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
                 + "key is involved.",
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
@@ -533,9 +536,39 @@ public static class EgressDisclosure
             $"{provider.Name} is selected. {provider.Egress} The Test button and the key's VERIFY button ask "
             + "the provider for its list of models, sending the key and nothing else. The names of characters in in-game messages are "
             + "also sent to it, one short request at a time, to choose which accent and "
-            + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine.",
+            + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
+            + (commander is null ? string.Empty : $" Every turn also carries {commander}."),
             Active: true,
-            Summary: $"{provider.Name} receives your question, the game state from your journal, and "
-                + "sends back its reply.");
+            Summary: $"{provider.Name} receives your question, the game state from your journal, "
+                + (commander is null ? string.Empty : $"{commander}, ")
+                + "and sends back its reply.");
+    }
+
+    /// <summary>The Commander's own texts that are set, as a phrase, or null when none is.</summary>
+    private static string? CommanderTextSent(LlmSettings llm)
+    {
+        List<string> set = [];
+
+        if (!string.IsNullOrWhiteSpace(llm.CharacterSheet))
+        {
+            set.Add("your character sheet");
+        }
+
+        if (!string.IsNullOrWhiteSpace(llm.AboutMe))
+        {
+            set.Add("your About Me");
+        }
+
+        if (!string.IsNullOrWhiteSpace(llm.Scenario))
+        {
+            set.Add("your current scenario");
+        }
+
+        return set.Count switch
+        {
+            0 => null,
+            1 => set[0],
+            _ => $"{string.Join(", ", set[..^1])} and {set[^1]}",
+        };
     }
 }

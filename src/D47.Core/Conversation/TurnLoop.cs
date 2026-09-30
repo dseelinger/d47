@@ -372,6 +372,11 @@ public sealed class TurnLoop(
 
     public string? AboutMe { get; set; }
 
+    /// <summary>The Commander's current scenario, sent only to a speaker <see cref="ScenarioAudience"/> reaches.</summary>
+    public string? Scenario { get; set; }
+
+    public ScenarioAudience ScenarioAudience { get; set; }
+
     /// <summary>
     /// What d47 remembers about the Commander, already bounded and labelled by <see
     /// cref="Memory.MemoryRecall"/> (Phase 31).
@@ -1145,6 +1150,7 @@ public sealed class TurnLoop(
         // it has changed since it was written.
         var persona = speaker?.Brief ?? Persona;
         var aboutMe = AboutMe;
+        var scenario = ScenarioAudiences.Reaches(ScenarioAudience, speaker?.Role ?? Audio.VoiceRole.ShipAi) ? Scenario : null;
         var recall = speaker is null ? Recall : null;
         var directions = speaker is null ? Directions : null;
 
@@ -1192,6 +1198,7 @@ public sealed class TurnLoop(
                     Persona = persona,
                     CanBeDirected = directed,
                     AboutMe = aboutMe,
+                    Scenario = scenario,
                     Recall = recall,
                     Directions = directions,
                     History = trimmed ? [.. pending] : [.. transcript, .. pending],

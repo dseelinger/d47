@@ -89,6 +89,12 @@ public sealed record CommanderSettings
     /// <summary>This Commander's <see cref="LlmSettings.CharacterSheet"/>.</summary>
     public string? CharacterSheet { get; init; }
 
+    /// <summary>This Commander's <see cref="LlmSettings.Scenario"/>.</summary>
+    public string? Scenario { get; init; }
+
+    /// <summary>This Commander's <see cref="LlmSettings.ScenarioAudience"/>.</summary>
+    public Conversation.ScenarioAudience? ScenarioAudience { get; init; }
+
     /// <summary>
     /// This Commander's <see cref="PersonaSettings.ShipCoreShip"/> — a ship id, which only means
     /// something for the Commander whose fleet it counts.
@@ -618,6 +624,12 @@ public sealed record LlmSettings
     /// in any sentence (Phase 43).
     /// </summary>
     public string? CharacterSheet { get; init; }
+
+    /// <summary>The situation the Commander is in now, in their own words, kept until they clear it.</summary>
+    public string? Scenario { get; init; }
+
+    /// <summary>Who knows about <see cref="Scenario"/>.</summary>
+    public Conversation.ScenarioAudience ScenarioAudience { get; init; }
 
     /// <summary>
     /// Whether the model may search the web when it decides a question needs current information.
