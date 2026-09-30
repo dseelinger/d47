@@ -555,7 +555,7 @@ public static class EgressDisclosure
         settings.Callouts is { Enabled: true, Narrator: true, NarratorSeconds: > 0 }
         && settings.Llm.PersonalityEnabled;
 
-    private const string SceneChatter = "Scene chatter at a settlement or in a ship fight sends your current scenario";
+    private const string SceneChatter = "Scene chatter at a settlement, in a ship fight or over a mission sends your current scenario";
 
     /// <summary>Whether scene chatter can speak, and so send the scenario at every audience.</summary>
     private static bool Scenes(D47Settings settings) =>

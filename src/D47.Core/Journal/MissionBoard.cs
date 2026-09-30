@@ -14,6 +14,9 @@ public sealed record Mission(long Id, string Name)
 
     public string? Faction { get; init; }
 
+    /// <summary>The faction the mission is against, where it names one.</summary>
+    public string? TargetFaction { get; init; }
+
     public string? DestinationSystem { get; init; }
 
     /// <summary>The station, or the settlement for an on-foot mission.</summary>
@@ -55,6 +58,43 @@ public sealed record Mission(long Id, string Name)
         ({ } station, null) => station,
         _ => null,
     };
+
+    /// <summary>
+    /// The mission a <c>MissionAccepted</c> or <c>MissionCompleted</c> describes, or null without a
+    /// <c>MissionID</c>. <see cref="AcceptedAt"/> is the event's time.
+    /// </summary>
+    internal static Mission? Of(JournalEvent journalEvent)
+    {
+        if (journalEvent.Long("MissionID") is not { } id)
+        {
+            return null;
+        }
+
+        return new Mission(id, journalEvent.String("Name") ?? $"Mission {id}")
+        {
+            LocalisedName = Text(journalEvent.String("LocalisedName")),
+            Faction = Text(journalEvent.String("Faction")),
+            TargetFaction = Text(journalEvent.String("TargetFaction")),
+            DestinationSystem = Text(journalEvent.String("DestinationSystem")),
+            DestinationStation = Text(journalEvent.String("DestinationStation"))
+                ?? Text(journalEvent.String("DestinationSettlement")),
+            Commodity = JournalJson.Symbol(journalEvent.String("Commodity")),
+            CommodityLocalised = Text(journalEvent.String("Commodity_Localised")),
+            Count = journalEvent.Int("Count"),
+            PassengerCount = journalEvent.Int("PassengerCount"),
+            PassengerMission = journalEvent.Int("PassengerCount") is > 0,
+            Reward = journalEvent.Long("Reward"),
+            Expiry = ParseExpiry(journalEvent.String("Expiry")),
+            AcceptedAt = journalEvent.Timestamp,
+        };
+    }
+
+    private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+
+    private static DateTimeOffset? ParseExpiry(string? value) =>
+        DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed)
+            ? parsed
+            : null;
 
     /// <summary>
     /// This detail under what a live entry with no accept has seen since: the live expiry, redirect and
@@ -100,6 +140,12 @@ public sealed record MissionBoard
     /// <summary>The missions with an expiry, soonest first, then those without.</summary>
     public IReadOnlyList<Mission> BySoonest() =>
         [.. Missions.OrderBy(mission => mission.Expiry ?? DateTimeOffset.MaxValue).ThenBy(mission => mission.Id)];
+
+    /// <summary>The live missions whose destination is the settlement, or whose target is its faction.</summary>
+    public IReadOnlyList<Mission> Concerning(string? settlement, string? faction) =>
+        [.. Missions.Where(mission =>
+            settlement is { Length: > 0 } && string.Equals(mission.DestinationStation, settlement, StringComparison.OrdinalIgnoreCase)
+            || faction is { Length: > 0 } && string.Equals(mission.TargetFaction, faction, StringComparison.OrdinalIgnoreCase))];
 
     public MissionBoard Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
@@ -152,27 +198,12 @@ public sealed record MissionBoard
 
     private MissionBoard Accept(JournalEvent journalEvent)
     {
-        if (journalEvent.Long("MissionID") is not { } id)
+        if (Mission.Of(journalEvent) is not { } accepted)
         {
             return this;
         }
 
-        var accepted = new Mission(id, journalEvent.String("Name") ?? $"Mission {id}")
-        {
-            LocalisedName = Text(journalEvent.String("LocalisedName")),
-            Faction = Text(journalEvent.String("Faction")),
-            DestinationSystem = Text(journalEvent.String("DestinationSystem")),
-            DestinationStation = Text(journalEvent.String("DestinationStation"))
-                ?? Text(journalEvent.String("DestinationSettlement")),
-            Commodity = JournalJson.Symbol(journalEvent.String("Commodity")),
-            CommodityLocalised = Text(journalEvent.String("Commodity_Localised")),
-            Count = journalEvent.Int("Count"),
-            PassengerCount = journalEvent.Int("PassengerCount"),
-            PassengerMission = journalEvent.Int("PassengerCount") is > 0,
-            Reward = journalEvent.Long("Reward"),
-            Expiry = ParseExpiry(journalEvent.String("Expiry")),
-            AcceptedAt = journalEvent.Timestamp,
-        };
+        var id = accepted.Id;
 
         return this with
         {
@@ -246,9 +277,4 @@ public sealed record MissionBoard
         SeenAt is { } seen && seen > arrived ? seen : arrived;
 
     private static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
-
-    private static DateTimeOffset? ParseExpiry(string? value) =>
-        DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed)
-            ? parsed
-            : null;
 }

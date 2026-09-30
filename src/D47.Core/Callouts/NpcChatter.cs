@@ -459,8 +459,8 @@ public static partial class NpcChatter
                 + "and nobody asks the Commander about it.";
 
     /// <summary>
-    /// What the model is asked for one exchange of a scene, at a settlement or in a ship fight. The scenario
-    /// is given whatever the audience setting, as who the speakers are.
+    /// What the model is asked for one exchange of a scene, at a settlement, in a ship fight or over a mission.
+    /// The scenario is given whatever the audience setting, as who the speakers are.
     /// </summary>
     public static string SceneInstruction(
         SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0)
@@ -468,6 +468,18 @@ public static partial class NpcChatter
         ArgumentNullException.ThrowIfNull(beat);
 
         var cast = roster ?? NpcChatterRoster.None;
+
+        if (beat.Place == ScenePlace.Mission)
+        {
+            return MissionSituation(beat)
+                + "The Commander's current scenario: " + scenario.Trim()
+                + " Take from it who these people are and what is going on around them. They do not know who the "
+                + "Commander is or the Commander's real purpose. If these missions do not bear on the scenario, reply "
+                + "with nothing at all: no lines and no other text. "
+                + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(NpcChatterKind.Scene, exchangeIndex))
+                + (cast.Slots.Count > 0 ? Slotted : Unslotted)
+                + SceneContract;
+        }
 
         var aboard = beat.Place == ScenePlace.Ship;
 
@@ -487,9 +499,52 @@ public static partial class NpcChatter
         var faction = beat.Faction is { Length: > 0 } owner ? $", run by {owner}" : string.Empty;
         var government = beat.Government is { Length: > 0 } rule ? $" Its government is {rule}." : string.Empty;
 
+        var missions = beat.Missions is { Count: > 0 } held
+            ? $"The Commander holds these missions concerning this settlement, which the people here do not know of: "
+                + $"{MissionList(held, 0)}. "
+            : string.Empty;
+
         return $"The Commander is on foot at {beat.Settlement}, a settlement{body}{faction}.{government} "
+            + missions
             + "People who live and work there, such as guards, workers and staff, exchange 2 to 4 short lines "
             + "with each other on the settlement's own radio about what has just happened. ";
+    }
+
+    private static string MissionSituation(SceneBeat beat)
+    {
+        var missions = beat.Missions ?? [];
+
+        var factions = missions
+            .Select(mission => mission.Faction)
+            .OfType<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var speakers = factions.Count > 0
+            ? $"People of {string.Join(" or of ", factions)}"
+            : "People of the faction that gave the work";
+
+        var moment = beat.Kind switch
+        {
+            SceneBeatKind.MissionTaken => "has just taken on",
+            SceneBeatKind.MissionDone => "has just completed",
+            _ => "has just failed or abandoned",
+        };
+
+        return $"{speakers} exchange 2 to 4 short lines with each other on their own channel about a pilot they do "
+            + $"not know, who {moment} work they gave out: {MissionList(missions, beat.MoreMissions)}. ";
+    }
+
+    /// <summary>Each mission by name, giver, target and destination where known, then the count of the rest.</summary>
+    private static string MissionList(IReadOnlyList<Mission> missions, int more)
+    {
+        var named = missions.Select(mission =>
+            mission.Title
+            + (mission.Faction is { Length: > 0 } faction ? $" for {faction}" : string.Empty)
+            + (mission.TargetFaction is { Length: > 0 } target ? $", against {target}" : string.Empty)
+            + (mission.Destination is { Length: > 0 } destination ? $", to {destination}" : string.Empty));
+
+        return string.Join("; ", named) + (more > 0 ? $"; and {more} more" : string.Empty);
     }
 
     private static string SceneMoment(SceneBeat beat) => beat.Kind switch

@@ -33,6 +33,14 @@ you escape into supercruise. At a conflict zone they may fly for either side. Wh
 heard, the bystanders' combat exchange after a kill is not made, so a kill is answered once; with no
 scenario it is made as before.
 
+Scene chatter now answers missions as well. With a current scenario set, taking, completing, failing or
+abandoning a mission can be answered on comms by people of the faction that gave it. Missions of the
+same kind within a minute of each other are answered once, naming up to three and counting the rest.
+The model is told to say nothing unless the missions bear on your scenario, so most unrelated missions
+are not answered. A failed or abandoned mission is answered only when D47 knows which faction gave it.
+At a settlement, the exchange is now written knowing your missions to that settlement or against its
+owner, so a raid can carry the reason for it. The people there still do not know about those missions.
+
 Typing into a text setting, such as Backstory, and then opening another settings page no longer
 closes D47, and what you typed is saved.
 

@@ -710,7 +710,7 @@ Who hears the scenario. Decided by who is speaking, never left to the model:
 So a secret run set to *Only those aboard* is never in the prompt when you address your carrier's
 captain.
 
-[Scene chatter](callouts.md#scenes) at a settlement or in a ship fight is the exception: the people
+[Scene chatter](callouts.md#scenes) at a settlement, in a ship fight or over a mission is the exception: the people
 there are given the scenario whatever this is set to, as who they are, and are told they do not know who
 you are or why you are there.
 

@@ -3,11 +3,12 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
-/// <summary>Where a scene happens: on foot at a settlement, or in a ship fight.</summary>
+/// <summary>Where a scene happens: on foot at a settlement, in a ship fight, or among a mission's faction.</summary>
 public enum ScenePlace
 {
     Settlement,
     Ship,
+    Mission,
 }
 
 /// <summary>What just happened in a scene, as a beat the people there react to.</summary>
@@ -42,6 +43,15 @@ public enum SceneBeatKind
 
     /// <summary>The Commander destroyed a ship.</summary>
     ShipDown,
+
+    /// <summary>The Commander took one or more missions.</summary>
+    MissionTaken,
+
+    /// <summary>The Commander completed one or more missions.</summary>
+    MissionDone,
+
+    /// <summary>The Commander failed or abandoned one or more missions.</summary>
+    MissionLost,
 }
 
 /// <summary>One beat of a scene, with what the brief for it needs.</summary>
@@ -56,6 +66,10 @@ public enum SceneBeatKind
 /// <param name="Site">The kind of place dropped into, such as "Conflict Zone [Low Intensity]".</param>
 /// <param name="Ship">The victim's ship for <see cref="SceneBeatKind.ShipDown"/>, the killer's for <see cref="SceneBeatKind.CommanderDown"/>.</param>
 /// <param name="Sides">Both factions of a conflict zone, from its kill bonds.</param>
+/// <param name="Missions">
+/// For a mission beat, the missions it names, at most three; for a settlement, the live missions concerning it.
+/// </param>
+/// <param name="MoreMissions">How many more missions a mission beat stands for than it names.</param>
 public sealed record SceneBeat(
     SceneBeatKind Kind,
     int Scene,
@@ -74,7 +88,9 @@ public sealed record SceneBeat(
     string? Interdictor = null,
     bool Submitted = false,
     string? Ship = null,
-    IReadOnlyList<string>? Sides = null);
+    IReadOnlyList<string>? Sides = null,
+    IReadOnlyList<Mission>? Missions = null,
+    int MoreMissions = 0);
 
 /// <summary>The scene the Commander is in, or the last one, as folded from the journal.</summary>
 /// <param name="Beats">How many beats have been folded this session; a change means <see cref="Last"/> is new.</param>

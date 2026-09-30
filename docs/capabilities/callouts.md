@@ -1007,8 +1007,9 @@ Set the interval to `0` if you want the switch without finding the switch.
 
 #### Scene chatter {#scenes}
 
-**Who it is: the people of a settlement you are on foot at, or the pilots of a fight you are in**,
-heard on their own radio reacting to what the journal says just happened. It needs a
+**Who it is: the people of a settlement you are on foot at, the pilots of a fight you are in, or the
+people of a faction whose mission you took**, heard on their own radio reacting to what the journal says
+just happened. It needs a
 [current scenario](conversation.md#current-scenario): with none set there are no scenes.
 
 ##### On foot
@@ -1047,10 +1048,27 @@ heard, the [combat exchange](#npc-chatter) after a kill is not made, so the same
 twice; with no scenario, it is made as before. Frontier's own lines, such as a pirate's threat, are
 spoken as they are and are not part of a scene.
 
-##### Both kinds
+##### Missions
 
-At most one exchange every 45 seconds. A moment that falls inside the wait replaces the one waiting,
-and kills in that time are counted together into one. Your death is never held back. An exchange for a
+| Moment | When | What they know |
+| --- | --- | --- |
+| Taken | you accept a mission | the mission, who gave it, who it is against and where it goes |
+| Done | you complete a mission | the same, from the completion |
+| Lost | you fail or abandon a mission | the same, from the missions D47 keeps track of, because Elite does not say which faction it was |
+
+The speakers are people of the faction that gave the mission. Missions taken, done or lost within a
+minute of the first of their kind are answered as one exchange, naming at most three and counting the
+rest, so the exchange comes a minute after the first mission. A lost mission D47 has no record of is not answered.
+The model is told to write nothing unless the missions bear on your scenario, and an exchange with no
+lines is not spoken, so most missions for unrelated factions cost one request and say nothing.
+
+At a settlement, the exchange is also told about your live missions whose destination is that
+settlement or whose target is the faction that runs it, and that the people there do not know of them.
+
+##### All scenes
+
+At a settlement or in a ship, at most one exchange every 45 seconds. A moment that falls inside the
+wait replaces the one waiting, and kills in that time are counted together into one. Your death is never held back. An exchange for a
 scene you have already left is dropped, except your escape and your death, which are heard even after
 you reach supercruise.
 
