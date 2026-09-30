@@ -6,6 +6,13 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.23.1 — Delivery direction can be a sound
+
+With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a
+sentence with a sound as well as a manner, such as a klaxon blaring, static crackle or a door slamming.
+A note with a comma in it, or up to sixty characters long, is now recognised as direction, so it is
+kept out of captions and the panel and is never read aloud by a voice that cannot perform it.
+
 ## 1.23.0 — About Me is now Backstory
 
 The settings row that held your Commander's story is now called **Backstory**, in Settings, in the help

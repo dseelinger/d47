@@ -497,8 +497,8 @@ sent to the language model, as the Language model entry under Privacy and egress
 Three.
 
 **v4 Turbo** is the default. It performs *delivery direction*: where a line calls for it,
-Directive 47 can ask for a sigh, an alarmed reading or a dry one, and the voice acts on it instead
-of saying the word. It is ElevenLabs' fast expressive model.
+Directive 47 can ask for a sigh, an alarmed reading or a dry one, or for a sound such as a klaxon
+or a door slamming, and the voice acts on it instead of saying the word. It is ElevenLabs' fast expressive model.
 
 **v3 Conversational**, labelled "v3" in the row, performs direction the same way. It takes about
 two seconds to produce a line.

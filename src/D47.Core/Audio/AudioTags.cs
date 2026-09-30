@@ -44,7 +44,7 @@ public static partial class AudioTags
         Gap().Replace(sentence, " ").Replace(" ,", ",", StringComparison.Ordinal).Trim();
 
     /// <summary>One bracketed direction.</summary>
-    [GeneratedRegex(@"\[(?<tag>[A-Za-z][A-Za-z0-9 '’-]{0,39})\](?!\()")]
+    [GeneratedRegex(@"\[(?<tag>[A-Za-z][A-Za-z0-9 ,'’-]{0,59})\](?!\()")]
     private static partial Regex Tag();
 
     [GeneratedRegex(@"[ \t]{2,}")]

@@ -37,9 +37,10 @@ public sealed record PromptAssembly
     /// <summary>What the model is told about delivery direction.</summary>
     public const string DeliveryDirection =
         "Your voice can be directed. Where a line genuinely calls for it, you may open a sentence "
-        + "with a delivery note in square brackets — [sighs], [alarmed], [dryly], [reassuring] — "
-        + "and it will be performed rather than read out. Any short description of a manner or a "
-        + "reaction works; you are not choosing from a list.\n"
+        + "with a note in square brackets and it will be performed rather than read out. A note can "
+        + "be a manner or a reaction — [sighs], [alarmed], [dryly], [reassuring] — or a sound — "
+        + "[klaxon blaring], [static crackle], [door slams]. Any short description works; you are "
+        + "not choosing from a list.\n"
         + "Use it sparingly, where the delivery carries something the words do not. Most lines "
         + "need none.\n"
         + "A note applies only to the sentence it opens, so put one on each sentence you mean it "

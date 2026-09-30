@@ -11,6 +11,8 @@ public class DirectionReachesOnlyAVoiceThatPerformsItTests
     [InlineData("Hull at 14 percent. [alarmed] Get us down.", "Hull at 14 percent. Get us down.")]
     [InlineData("[strong Scottish accent] Contact on the scanner.", "Contact on the scanner.")]
     [InlineData("[laughs harder] The entire bounty is 812 credits.", "The entire bounty is 812 credits.")]
+    [InlineData("[quietly, urgently] Contact.", "Contact.")]
+    [InlineData("[klaxon blaring, then a long silence, deck lights flickering] Contact.", "Contact.")]
     public void DirectionComesOutOfTheWrittenLine(string written, string expected) =>
         Assert.Equal(expected, AudioTags.Strip(written));
 
@@ -22,6 +24,7 @@ public class DirectionReachesOnlyAVoiceThatPerformsItTests
     [InlineData("The contact is at [2] on the scanner.")]
     [InlineData("Reading the value at index [0] now.")]
     [InlineData("A bracket that never closes [ is just a bracket.")]
+    [InlineData("The pair is [1, 2] on the scanner.")]
     public void ProseThatMerelyContainsABracketIsUntouched(string written) =>
         Assert.Equal(written, AudioTags.Strip(written));
 
@@ -47,6 +50,29 @@ public class DirectionReachesOnlyAVoiceThatPerformsItTests
         Assert.Equal(Written, AudioTags.For(Written, performed: true));
         Assert.Equal("Plotting now, Commander.", AudioTags.For(Written, performed: false));
     }
+
+    [Fact]
+    public void ADescriptiveNoteWithACommaIsKeptWholeByAVoiceThatPerformsIt()
+    {
+        const string Written = "[quietly, urgently] Contact.";
+
+        Assert.Equal(Written, AudioTags.For(Written, performed: true));
+        Assert.Equal("Contact.", AudioTags.For(Written, performed: false));
+    }
+
+    [Fact]
+    public void ANoteOfSixtyCharactersIsDirectionAndOneOfSixtyOneIsNot()
+    {
+        var sixty = new string('a', 60);
+        var sixtyOne = new string('a', 61);
+
+        Assert.Equal("Contact.", AudioTags.Strip($"[{sixty}] Contact."));
+        Assert.Equal($"[{sixtyOne}] Contact.", AudioTags.Strip($"[{sixtyOne}] Contact."));
+    }
+
+    [Fact]
+    public void TheModelIsToldANoteCanBeASound() =>
+        Assert.Contains("[klaxon blaring]", D47.Core.Conversation.PromptAssembly.DeliveryDirection);
 
     /// <summary>What the log line is built from.</summary>
     [Fact]
