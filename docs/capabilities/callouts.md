@@ -1005,6 +1005,41 @@ chatter of either kind.
 
 Set the interval to `0` if you want the switch without finding the switch.
 
+#### Scene chatter {#scenes}
+
+**Who it is: the people of a settlement you are on foot at**, heard on their own radio reacting to
+what the journal says just happened. It needs a [current scenario](conversation.md#current-scenario):
+with none set there are no scenes.
+
+A scene opens when you disembark on the body of the settlement you last approached, other than from a
+taxi, and closes when you enter supercruise, jump, reload, die or approach another settlement. Inside
+it, these moments are heard:
+
+| Moment | When | What they know |
+| --- | --- | --- |
+| Arrival | the scene opens | nothing: they are going about their shift |
+| Found | the first attack on you in the scene | an intruder is in the settlement |
+| A killing | a kill on foot, or a murder | who died and how many so far; if nobody has attacked you yet, nobody has seen you |
+| Your death | you are killed on foot | they got the intruder, and who fired |
+| Escape | you board a ship, an SRV or a taxi after being found or killing | the intruder got away |
+
+At most one exchange every 45 seconds. A moment that falls inside the wait replaces the one waiting,
+and kills in that time are counted together into one. Your death is never held back. An exchange for a
+scene you have already left is dropped, except your escape and your death, which are heard even after
+you reach supercruise.
+
+**The scenario reaches them whatever [Who knows about it](conversation.md#who-knows-about-it) is set
+to**, because in a secret scenario the people at the settlement are part of it. They are given it as
+who they are and what is going on around them, and are told they do not know who you are or why you
+are there. It is sent with each exchange, and [Privacy and egress](privacy.md) says so.
+
+The speakers are invented, cast from the NPC voices and captioned *Comms*. They talk to each other,
+never to you, and you cannot answer them. The dead never speak. Every exchange is written by the
+model; with no language model configured this row is absent, and with personality off, or Overheard
+chatter muted in the mixer, there are no scenes.
+
+> "stop calling out scene chatter" / "start calling out scene chatter"
+
 #### Narrator {#narrator}
 
 **Who it is: a voice of its own**, neither your ship's AI nor anybody outside the ship. It tells your

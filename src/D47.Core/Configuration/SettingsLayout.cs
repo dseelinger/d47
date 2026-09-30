@@ -87,9 +87,10 @@ public static class SettingsLayout
     /// Advanced); <c>voice-input</c> holds the hearing provider
     /// beside the microphone, wake word and corrections rows (16 entries, the hosted providers' keys one
     /// family entry of which at most one row applies at a time, and every speech-recognition row
-    /// Advanced).
+    /// Advanced); <c>chatter</c> holds the scene chatter row beside NPC chatter as well as the seven
+    /// messages rows and the accent row (15 entries, the chatter rows Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input", "chatter"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -496,7 +497,7 @@ public static class SettingsLayout
                     [
                         G(
                             "Chatter",
-                            "Invented radio traffic between other pilots, and how often it plays.",
+                            "Invented radio traffic between other pilots and at settlements, and how often it plays.",
                             [
                                 E("callouts.ambient"),
                                 E("callouts.ambientSeconds", under: true),
@@ -504,6 +505,7 @@ public static class SettingsLayout
                                 E("callouts.npcChatter"),
                                 E("callouts.npcChatterSeconds", under: true),
                                 E("callouts.npcChatterMaxSeconds", under: true),
+                                E("callouts.scenes"),
                             ]),
                         G(
                             "Messages read aloud",

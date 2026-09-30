@@ -23,6 +23,9 @@ public enum NpcChatterKind
 
     /// <summary>Two invented bystanders reacting to the Commander's last kill.</summary>
     Combat,
+
+    /// <summary>The people of a settlement the Commander is on foot at, on their own radio.</summary>
+    Scene,
 }
 
 /// <summary>One parsed line of an exchange: who says it, what they say, and whose voice it is.</summary>
@@ -454,6 +457,86 @@ public static partial class NpcChatter
                 + scenario.Trim()
                 + " An exchange may be coloured by this where it fits; most exchanges do not mention it, "
                 + "and nobody asks the Commander about it.";
+
+    /// <summary>
+    /// What the model is asked for one exchange of a scene at a settlement. The scenario is given whatever
+    /// the audience setting, as who the speakers are.
+    /// </summary>
+    public static string SceneInstruction(
+        SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0)
+    {
+        ArgumentNullException.ThrowIfNull(beat);
+
+        var cast = roster ?? NpcChatterRoster.None;
+
+        return SceneSituation(beat)
+            + "The Commander's current scenario, which this settlement is part of: " + scenario.Trim()
+            + " Take from it who these people are and what is going on around them. They do not know who the "
+            + "Commander is or why the Commander is there. "
+            + SceneMoment(beat)
+            + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(NpcChatterKind.Scene, exchangeIndex))
+            + (cast.Slots.Count > 0 ? Slotted : Unslotted)
+            + SceneContract;
+    }
+
+    private static string SceneSituation(SceneBeat beat)
+    {
+        var body = beat.Body is { Length: > 0 } planet ? $" on {planet}" : string.Empty;
+        var faction = beat.Faction is { Length: > 0 } owner ? $", run by {owner}" : string.Empty;
+        var government = beat.Government is { Length: > 0 } rule ? $" Its government is {rule}." : string.Empty;
+
+        return $"The Commander is on foot at {beat.Settlement}, a settlement{body}{faction}.{government} "
+            + "People who live and work there, such as guards, workers and staff, exchange 2 to 4 short lines "
+            + "with each other on the settlement's own radio about what has just happened. ";
+    }
+
+    private static string SceneMoment(SceneBeat beat) => beat.Kind switch
+    {
+        SceneBeatKind.Arrived =>
+            "Nothing has happened yet: they are going about their shift and do not know anyone has arrived. "
+            + "Nobody mentions an intruder or a visitor. ",
+
+        SceneBeatKind.Spotted =>
+            "They have just found an intruder in the settlement and are shooting at them. They do not know who "
+            + "it is. ",
+
+        SceneBeatKind.Down => SceneKill(beat),
+
+        SceneBeatKind.CommanderDown =>
+            "They have just killed the intruder they were fighting."
+            + (beat.Killer is { Length: > 0 } killer ? $" {killer} fired the shot and may be one of the speakers. " : " "),
+
+        _ => "The intruder has just got away in a ship or a vehicle"
+            + (beat.Kills > 0 ? $", after killing {beat.Kills} of their people. " : ". "),
+    };
+
+    private static string SceneKill(SceneBeat beat)
+    {
+        var named = beat.Victim is { Length: > 0 } name ? name : null;
+
+        var killed = (beat.Merged > 1, named) switch
+        {
+            (true, null) => $"{beat.Merged} of their people have just been killed.",
+            (true, _) => $"{beat.Merged} of their people have just been killed, the last of them {named}.",
+            (false, null) => "One of their people has just been killed.",
+            _ => $"{named}, one of their people, has just been killed.",
+        };
+
+        var total = beat.Kills > beat.Merged ? $" That makes {beat.Kills} dead since the scene began." : string.Empty;
+
+        var who = beat.Seen
+            ? " The intruder they are fighting did it. "
+            : " Nobody has seen who did it, and nobody has seen the Commander. ";
+
+        return killed + total + who + "The dead do not speak. ";
+    }
+
+    /// <summary>The format contract for a scene: the speakers talk among themselves about the Commander.</summary>
+    private const string SceneContract =
+        "No other text, no quotation marks, no stage directions. Use the live game state only for where this is "
+        + "happening; invent everything else. Never name or imitate a real person or another player. They talk "
+        + "to each other, never to the Commander, and nobody expects an answer. Nobody fines the Commander or "
+        + "puts a bounty on them, and no dead person speaks.";
 
     /// <summary>
     /// The instruction with humor rolled once for the invented speakers and once for the carrier's crew
@@ -1126,10 +1209,11 @@ public static partial class NpcChatter
 
     /// <summary>
     /// <see cref="Escalates"/> for a line of an exchange of <paramref name="kind"/>. In a controller
-    /// exchange "you" is the invented pilot, so there the line must name the Commander as well.
+    /// exchange and a scene "you" is another invented speaker, so there the line must name the Commander as well.
     /// </summary>
     private static bool EscalatesIn(string text, NpcChatterKind kind) =>
-        Escalates(text) && (kind != NpcChatterKind.Controller || NamesTheCommander().IsMatch(text));
+        Escalates(text)
+        && (kind is not (NpcChatterKind.Controller or NpcChatterKind.Scene) || NamesTheCommander().IsMatch(text));
 
     private const string Them = @"(?:you|ya|your|yours|yourself|(?:the\s+)?commander(?:'s)?|cmdr)\b";
 

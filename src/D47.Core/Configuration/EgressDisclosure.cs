@@ -514,6 +514,7 @@ public static class EgressDisclosure
         var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
         var commander = CommanderTextSent(settings.Llm);
         var narration = commander is not null && Narrates(settings) ? $"The Narrator sends {commander}" : null;
+        var scenes = Scenes(settings);
 
         // The first time in d47's life that the accurate answer to *what is leaving* is *nothing* (Phase 29).
         if (LocalEndpoint.IsLoopback(destination))
@@ -527,7 +528,8 @@ public static class EgressDisclosure
                 + "and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
                 + "key is involved."
-                + (narration is null ? string.Empty : $" {narration} to that address each time it narrates."),
+                + (narration is null ? string.Empty : $" {narration} to that address each time it narrates.")
+                + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty),
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
         }
 
@@ -540,7 +542,8 @@ public static class EgressDisclosure
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
-            + (narration is null ? string.Empty : $" {narration} each time it narrates."),
+            + (narration is null ? string.Empty : $" {narration} each time it narrates.")
+            + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),
             Active: true,
             Summary: $"{provider.Name} receives your question, the game state from your journal, "
                 + (commander is null ? string.Empty : $"{commander}, ")
@@ -551,6 +554,14 @@ public static class EgressDisclosure
     private static bool Narrates(D47Settings settings) =>
         settings.Callouts is { Enabled: true, Narrator: true, NarratorSeconds: > 0 }
         && settings.Llm.PersonalityEnabled;
+
+    private const string SceneChatter = "Scene chatter at a settlement sends your current scenario";
+
+    /// <summary>Whether scene chatter can speak, and so send the scenario at every audience.</summary>
+    private static bool Scenes(D47Settings settings) =>
+        settings.Callouts is { Enabled: true, Scenes: true }
+        && settings.Llm.PersonalityEnabled
+        && !string.IsNullOrWhiteSpace(settings.Llm.Scenario);
 
     /// <summary>The Commander's own texts that are set, as a phrase, or null when none is.</summary>
     private static string? CommanderTextSent(LlmSettings llm)

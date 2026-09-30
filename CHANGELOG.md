@@ -18,6 +18,14 @@ Plans and stories › **Narrator**, on by default, with the least and most time 
 and sends your whole backstory; with no model, or personality off, there is no narration, and Privacy
 and egress now says when the Narrator sends your texts.
 
+With a current scenario set, the people of a settlement you are on foot at are now heard on their own
+radio reacting to what just happened: your arrival, being found, each killing, your death and your
+escape, at most one exchange every 45 seconds. They are given your scenario whatever *Who knows about
+it* is set to, and do not know who you are or why you are there. The row is Settings › Callouts ›
+Chatter and messages › **Scene chatter**, on by default. Each exchange is written by the language
+model; with no model, or personality off, there are no scenes, and Privacy and egress says when scenes
+send your scenario.
+
 Typing into a text setting, such as Backstory, and then opening another settings page no longer
 closes D47, and what you typed is saved.
 

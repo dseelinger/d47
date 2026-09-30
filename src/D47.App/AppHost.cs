@@ -1063,6 +1063,7 @@ public sealed class AppHost : IDisposable
             () => unlocksRef);
 
         var fight = new NearbyFight();
+        var scenes = new SceneTracker();
 
         var callouts = BuildCallouts(
             settings,
@@ -1078,7 +1079,8 @@ public sealed class AppHost : IDisposable
             gameState,
             exobiology,
             cartography,
-            fight);
+            fight,
+            scenes);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -1153,6 +1155,7 @@ public sealed class AppHost : IDisposable
             foreach (var journalEvent in events)
             {
                 fight.Fold(journalEvent, context.Now, context.IsFirst);
+                scenes.Fold(journalEvent);
             }
 
             var calloutContext = new CalloutContext(
@@ -2153,6 +2156,7 @@ public sealed class AppHost : IDisposable
         host.JournalLog = journalLog;
 
         host._fight = fight;
+        host._scenes = scenes;
         host._liveStatus = () => status.Current;
 
         // The face follows the loop.
@@ -2595,7 +2599,8 @@ public sealed class AppHost : IDisposable
         GameStateStore gameState,
         D47.Core.Journal.ExobiologyLedger exobiology,
         D47.Core.Journal.CartographyLedger cartography,
-        NearbyFight fight)
+        NearbyFight fight,
+        SceneTracker scenes)
     {
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
         var tradingMode = new TradingModeCallout(loggers.CreateLogger<TradingModeCallout>());
@@ -2675,6 +2680,9 @@ public sealed class AppHost : IDisposable
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
             // marker composes to nothing.
             .Add(new NpcChatterCallout(fight))
+
+            // A settlement's people reacting to the Commander on foot: the marker only, composed like chatter.
+            .Add(new SceneCallout(scenes))
             .Add(new AmbientCallout())
 
             // The Commander's story, told during a lull: the marker only, written by the model or not said.
@@ -2834,6 +2842,11 @@ public sealed class AppHost : IDisposable
                     // The ambient pair of gates (#244): theatre is personality by any reading, and the
                     // no-model half lives at the compose step for the reason above.
                     chatter.Enabled = () => settings.Current.Callouts.NpcChatter && settings.Current.Llm.PersonalityEnabled;
+                    break;
+
+                case SceneCallout scene:
+                    scene.Enabled = () => settings.Current.Callouts.Scenes && settings.Current.Llm.PersonalityEnabled;
+                    scene.Scenario = () => settings.Current.Llm.Scenario;
                     break;
 
                 case NarratorCallout narrator:
@@ -5335,6 +5348,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The fight around the Commander, as the chatter callout folds it.</summary>
     private NearbyFight _fight = null!;
+    private SceneTracker _scenes = null!;
 
     private Func<Core.Journal.GameStatus> _liveStatus = () => Core.Journal.GameStatus.Unknown;
 
@@ -5465,6 +5479,16 @@ public sealed class AppHost : IDisposable
             return [];
         }
 
+        // A scene is written from its beat and the scenario, and without a scenario there is no scene.
+        var scene = kind == NpcChatterKind.Scene ? marker.Scene : null;
+        var scenario = Settings.Current.Llm.Scenario;
+
+        if (kind == NpcChatterKind.Scene
+            && (scene is null || string.IsNullOrWhiteSpace(scenario) || !SceneCallout.IsStillHappening(scene, _scenes.Snapshot)))
+        {
+            return [];
+        }
+
         var location = GameState.Active?.Location;
         var docked = location?.Docked ?? false;
 
@@ -5484,8 +5508,8 @@ public sealed class AppHost : IDisposable
             return [];
         }
 
-        var carrier = NpcChatterCarrier.Of(GameState.Active?.Carrier, location);
-        var spotlight = _carrierSpotlight.Claim(carrier.Present);
+        var carrier = scene is null ? NpcChatterCarrier.Of(GameState.Active?.Carrier, location) : NpcChatterCarrier.None;
+        var spotlight = scene is null && _carrierSpotlight.Claim(carrier.Present);
 
         // The voices are cast before the exchange is written, so each line can be written for its accent (#415).
         var npcs = NpcCast;
@@ -5511,8 +5535,10 @@ public sealed class AppHost : IDisposable
             NpcChatter.Speaker,
             null,
             NpcChatter.WithHumor(
-                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot,
-                    NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, Settings.Current.Llm.Scenario)),
+                scene is null
+                    ? NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot,
+                        NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario))
+                    : NpcChatter.SceneInstruction(scene, scenario!, roster, marker.Variant ?? 0),
                 carrier,
                 Settings.Current.Persona,
                 _humor,
@@ -5523,6 +5549,12 @@ public sealed class AppHost : IDisposable
             _logger,
             budget.Token,
             canBeDirected: directed).ConfigureAwait(false);
+
+        // Checked again once written: the Commander may have left the scene while the model was writing.
+        if (scene is not null && !SceneCallout.IsStillHappening(scene, _scenes.Snapshot))
+        {
+            return [];
+        }
 
         var facts = ShipFacts.Of(GameState.Active);
         var heard = new List<Announcement>();

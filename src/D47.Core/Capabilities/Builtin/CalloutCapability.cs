@@ -68,6 +68,9 @@ public static class CalloutCapability
     public const string NpcChatterSecondsKey = "callouts.npcChatterSeconds";
     public const string NpcChatterMaxSecondsKey = "callouts.npcChatterMaxSeconds";
 
+    /// <summary>Scene chatter at a settlement on foot.</summary>
+    public const string ScenesKey = "callouts.scenes";
+
     /// <summary>The Narrator, telling the Commander's story during a lull.</summary>
     public const string NarratorKey = "callouts.narrator";
     public const string NarratorSecondsKey = "callouts.narratorSeconds";
@@ -435,6 +438,19 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { NpcChatter = v } },
 
                 // The same rule as the ambient row above (#245): no model, no theatre, no row.
+                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
+
+            Toggle(
+                ScenesKey,
+                "Scene chatter",
+                "The people of a settlement you are on foot at, heard on their radio reacting to what just "
+                + "happened: your arrival, being found, a killing, your death and your escape. Needs a current "
+                + "scenario, which they are given whatever Who knows about it is set to. At most one exchange "
+                + "every 45 seconds. Written by the model; with no model, or personality off, there are no scenes.",
+                "scenes",
+                "scene chatter",
+                s => s.Callouts.Scenes,
+                (s, v) => s with { Callouts = s.Callouts with { Scenes = v } },
                 appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
 
             Toggle(

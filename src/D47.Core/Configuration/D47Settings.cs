@@ -582,6 +582,9 @@ public sealed record CalloutSettings
     /// </summary>
     public int NpcChatterMaxSeconds { get; init; } = 600;
 
+    /// <summary>The people of a settlement the Commander is on foot at, heard reacting to what just happened.</summary>
+    public bool Scenes { get; init; } = true;
+
     /// <summary>What this row held when it was in minutes.</summary>
     public int? AmbientMinutes { get; init; }
 
