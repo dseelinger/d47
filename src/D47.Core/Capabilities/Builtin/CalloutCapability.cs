@@ -391,7 +391,8 @@ public static class CalloutCapability
                 MissionsKey,
                 "Mission hand-ins and expiry",
                 "On docking where missions hand in, on leaving with one unclaimed, and an hour and ten "
-                + "minutes before a mission expires.",
+                + "minutes before a mission expires. On accepting a mission, when its cargo is more than "
+                + "your hold or a collect mission's cargo is sold at the station you are docked at.",
                 "missions",
                 "mission callouts",
                 s => s.Callouts.Missions,

@@ -1085,7 +1085,8 @@ public sealed class AppHost : IDisposable
             cartography,
             fight,
             scenes,
-            handInOffer);
+            handInOffer,
+            marketBook);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -2607,7 +2608,8 @@ public sealed class AppHost : IDisposable
         D47.Core.Journal.CartographyLedger cartography,
         NearbyFight fight,
         SceneTracker scenes,
-        D47.Core.Conversation.HandInOffer handInOffer)
+        D47.Core.Conversation.HandInOffer handInOffer,
+        D47.Core.Knowledge.MarketBook marketBook)
     {
         var sceneCallout = new SceneCallout(scenes);
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
@@ -2646,7 +2648,7 @@ public sealed class AppHost : IDisposable
             // Phase 11.
             .Add(new CarrierCallout())
 
-            .Add(new MissionCallout { Offer = handInOffer })
+            .Add(new MissionCallout { Offer = handInOffer, Markets = marketBook })
 
             // Phase 17.
             .Add(new SamplingCallout { Ledger = exobiology })

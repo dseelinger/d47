@@ -3,6 +3,7 @@ using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -49,6 +50,82 @@ public class MissionCalloutTests
 
     private static List<Announcement> Run(MissionCallout callout, CommanderGameState state, DateTimeOffset now, bool priming = false, params JournalEvent[] events) =>
         [.. callout.Examine(new CalloutContext(now, priming, state, GameStatus.Unknown, NavRoute.None, events))];
+
+    private static JournalEvent Cargo(long id, string kind, string symbol, string localised, int count) =>
+        Event("MissionAccepted",
+            ("MissionID", id),
+            ("Name", kind),
+            ("LocalisedName", $"Cargo {id}"),
+            ("Commodity", $"${symbol}_Name;"),
+            ("Commodity_Localised", localised),
+            ("Count", count),
+            ("Expiry", Start.AddDays(2).UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")));
+
+    private static CommanderGameState DockedWithHold(int hold) =>
+        Commander(
+            Event("Loadout", ("Ship", "python"), ("ShipID", 1), ("CargoCapacity", hold)),
+            Event("Docked", ("StarSystem", "Sol"), ("StationName", "Jameson Memorial")));
+
+    private static MarketBook Market(string commodity, int stock)
+    {
+        var book = new MarketBook(Path.Combine(Path.GetTempPath(), $"d47-market-{Guid.NewGuid():N}.json"), NullLogger.Instance);
+
+        book.Remember(new MarketSnapshot
+        {
+            Station = "Jameson Memorial",
+            System = "Sol",
+            Quotes = new Dictionary<string, MarketQuote>(StringComparer.OrdinalIgnoreCase)
+            {
+                [commodity] = new MarketQuote(commodity) { Supply = stock },
+            },
+        });
+
+        return book;
+    }
+
+    [Fact]
+    public void ADeliveryLargerThanTheHoldSaysHowManyTripsItTakes()
+    {
+        var accept = Cargo(1, "Mission_Delivery_Boom", "powergenerators", "Power Generators", 99);
+
+        var said = Run(new MissionCallout(), DockedWithHold(64), Start, false, accept);
+
+        Assert.Equal("That's 99 tons against a 64-ton hold. Two trips, or a bigger ship.", Assert.Single(said).Text);
+        Assert.Empty(Run(new MissionCallout(), DockedWithHold(128), Start, false, accept));
+    }
+
+    [Fact]
+    public void ACollectMissionForWhatTheMarketStocksSaysTheyAreSoldHere()
+    {
+        var callout = new MissionCallout { Markets = Market("Power Generators", 500) };
+        var accept = Cargo(1, "Mission_Collect_Boom", "powergenerators", "Power Generators", 20);
+
+        Assert.Equal("They sell Power Generators here.", Assert.Single(Run(callout, DockedWithHold(64), Start, false, accept)).Text);
+
+        var unstocked = new MissionCallout { Markets = Market("Power Generators", 0) };
+        Assert.Empty(Run(unstocked, DockedWithHold(64), Start, false, accept));
+
+        var elsewhere = new MissionCallout { Markets = Market("Gold", 500) };
+        Assert.Empty(Run(elsewhere, DockedWithHold(64), Start, false, accept));
+    }
+
+    [Fact]
+    public void ADeliveryMissionForWhatTheMarketStocksSaysNothing()
+    {
+        var callout = new MissionCallout { Markets = Market("Power Generators", 500) };
+        var accept = Cargo(1, "Mission_Delivery_Boom", "powergenerators", "Power Generators", 20);
+
+        Assert.Empty(Run(callout, DockedWithHold(64), Start, false, accept));
+    }
+
+    [Fact]
+    public void TheMarketIsJoinedByDisplayNameNotBySymbol()
+    {
+        var callout = new MissionCallout { Markets = Market("Low Temperature Diamonds", 12) };
+        var accept = Cargo(1, "Mission_Collect_Boom", "lowtemperaturediamond", "Low Temperature Diamonds", 4);
+
+        Assert.Equal("They sell Low Temperature Diamonds here.", Assert.Single(Run(callout, DockedWithHold(64), Start, false, accept)).Text);
+    }
 
     [Fact]
     public void DockingWhereTwoMissionsHandInSaysTheCountAndTheReward()

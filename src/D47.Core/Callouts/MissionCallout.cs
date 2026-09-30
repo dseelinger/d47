@@ -1,5 +1,6 @@
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
@@ -15,6 +16,11 @@ public sealed class MissionCallout : ICallout
     public const string ExpiryKey = "missions.expiry";
 
     public const string RedirectedKey = "missions.redirected";
+
+    public const string AcceptedKey = "missions.accepted";
+
+    /// <summary>The markets the Commander has seen; without it a collect mission says nothing about supply.</summary>
+    public MarketBook? Markets { get; init; }
 
     /// <summary>Opened on a redirect, withdrawn once the mission is off the board.</summary>
     public HandInOffer? Offer { get; init; }
@@ -56,6 +62,10 @@ public sealed class MissionCallout : ICallout
                     yield return redirect;
                     break;
 
+                case "MissionAccepted" when Accepted(journalEvent, context.State) is { } accepted:
+                    yield return accepted;
+                    break;
+
                 case "Docked" when HandIns(board, station) is { Count: > 0 } here:
                     yield return new Announcement(HandInKey, HandInSentence(here));
                     break;
@@ -75,6 +85,35 @@ public sealed class MissionCallout : ICallout
                 yield return new Announcement($"{ExpiryKey}.{mission.Id}.{warning.Name}", $"{mission.Title} expires in {warning.Said}.");
             }
         }
+    }
+
+    /// <summary>A mission's cargo against the hold, and a collect mission's commodity against the docked market.</summary>
+    private Announcement? Accepted(JournalEvent journalEvent, CommanderGameState? state)
+    {
+        if (Mission.Of(journalEvent) is not { CommodityLocalised: { } commodity, Count: > 0 and var count } mission
+            || mission.PassengerMission)
+        {
+            return null;
+        }
+
+        var said = new List<string>();
+
+        if (state?.Ship.CargoCapacity is > 0 and var capacity && count > capacity)
+        {
+            var trips = (count + capacity - 1) / capacity;
+            said.Add($"That's {count} tons against a {capacity}-ton hold. {Words(trips)} trips, or a bigger ship.");
+        }
+
+        if (mission.Name.StartsWith("Mission_Collect", StringComparison.OrdinalIgnoreCase)
+            && state?.Location is { Docked: true } here
+            && Markets?.At(here.StarSystem, here.StationName)?.Quote(commodity) is { Supply: > 0 })
+        {
+            said.Add($"They sell {commodity} here.");
+        }
+
+        return said.Count > 0
+            ? new Announcement($"{AcceptedKey}.{mission.Id}", string.Join(' ', said))
+            : null;
     }
 
     private Announcement? Redirect(JournalEvent journalEvent, MissionBoard board)

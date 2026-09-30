@@ -72,6 +72,13 @@ moved to Jameson Memorial in Sol. Say plot it to set the course." Saying "plot i
 The offer stands until another redirect replaces it or the mission leaves the board. Nothing is plotted
 until you say so.
 
+When you accept a mission, D47 now checks it against your ship and the station. A mission for more cargo
+than your hold carries says so: "That's 99 tons against a 64-ton hold. Two trips, or a bigger ship." A collect
+mission whose commodity the station you are docked at has in stock says "They sell Power Generators here."
+Delivery missions, which hand you their cargo, get no such line. The market check uses the market D47 last
+saw at that station. Both lines are part of Settings › Callouts › Plans and stories › **Mission hand-ins
+and expiry**.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a
