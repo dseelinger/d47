@@ -134,6 +134,9 @@ public sealed record SettingRow
     /// <summary>A status line for one choice, computed from live settings, or null where it has none.</summary>
     public Func<D47Settings, string, ChoiceStatus?>? ChoiceStatus { get; init; }
 
+    /// <summary>Why one choice cannot be taken right now, or null where it can.</summary>
+    public Func<D47Settings, string, string?>? Refuses { get; init; }
+
     /// <summary>
     /// Choices that depend on other settings — the model list belongs to the selected provider's
     /// endpoint, not to the app.

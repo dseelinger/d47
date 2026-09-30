@@ -1,0 +1,8 @@
+{ "timestamp":"2026-09-30T12:00:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.2.0.0", "build":"r316000/r0 " }
+{ "timestamp":"2026-09-30T12:00:01Z", "event":"Commander", "FID":"F1000696", "Name":"Fixture Beacon" }
+{ "timestamp":"2026-09-30T12:00:02Z", "event":"LoadGame", "FID":"F1000696", "Commander":"Fixture Beacon", "Horizons":true, "Odyssey":true, "Ship":"SideWinder", "ShipID":1, "GameMode":"Open", "Credits":1000, "Loan":0 }
+{ "timestamp":"2026-09-30T12:00:10Z", "event":"Location", "Docked":false, "StarSystem":"Synuefe XR-H d11-102", "SystemAddress":3549631072611, "Body":"Synuefe XR-H d11-102", "BodyID":0, "BodyType":"Star" }
+{ "timestamp":"2026-09-30T12:05:00Z", "event":"DataScanned", "Type":"$Datascan_DataPoint;" }
+{ "timestamp":"2026-09-30T12:20:00Z", "event":"FSDJump", "StarSystem":"IC 2391 Sector MX-T b3-6", "SystemAddress":13872878396833, "Body":"IC 2391 Sector MX-T b3-6", "BodyID":0, "BodyType":"Star", "JumpDist":14.2, "FuelUsed":1.1, "FuelLevel":5.9 }
+{ "timestamp":"2026-09-30T12:22:00Z", "event":"SupercruiseExit", "StarSystem":"IC 2391 Sector MX-T b3-6", "SystemAddress":13872878396833, "Body":"IC 2391 Sector MX-T b3-6", "BodyID":0, "BodyType":"Star" }
+{ "timestamp":"2026-09-30T12:24:00Z", "event":"DataScanned", "Type":"$Datascan_DataPoint;" }

@@ -46,9 +46,10 @@ public class ACoreYouWroteYourselfTests : IDisposable
 
         Assert.Contains(PersonaCatalog.All, persona => persona.Name == "Rusty");
 
-        // The shipped eleven come first, so writing a twelfth does not move them.
-        Assert.Equal("warden", PersonaCatalog.All[0].Id);
-        Assert.Equal(PersonaCatalog.Shipped.Count + 1, PersonaCatalog.All.Count);
+        // The stock core and the shipped eleven come first, so writing one more does not move them.
+        Assert.Equal("covas", PersonaCatalog.All[0].Id);
+        Assert.Equal("warden", PersonaCatalog.All[1].Id);
+        Assert.Equal(PersonaCatalog.Shipped.Count + 2, PersonaCatalog.All.Count);
     }
 
     [Fact]

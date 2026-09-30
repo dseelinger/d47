@@ -33,7 +33,7 @@ public class WhoAreYouTests
         using var install = new TempInstall();
         var surface = TestSurface.For(install);
 
-        Assert.Equal("I am Warden.", await AskAsync(surface, input));
+        Assert.Equal("I am COVAS.", await AskAsync(surface, input));
     }
 
     [Fact]

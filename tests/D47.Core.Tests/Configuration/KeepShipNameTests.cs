@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Persona;
 using Xunit;
 
 namespace D47.Core.Tests.Configuration;
@@ -61,7 +62,7 @@ public class KeepShipNameTests
         var surface = Named(install, "Fred", keep: false);
         var write = surface.Settings.Find(PersonaCapability.PersonaKey)!.Binding!.Write!;
 
-        var unchanged = write(surface.Settings.Current, "warden");
+        var unchanged = write(surface.Settings.Current, PersonaCatalog.DefaultId);
 
         Assert.Equal("Fred", unchanged.Persona.ShipName);
 

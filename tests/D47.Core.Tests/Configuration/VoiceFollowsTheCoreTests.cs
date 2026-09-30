@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Persona;
 using Xunit;
 
 namespace D47.Core.Tests.Configuration;
@@ -96,6 +97,6 @@ public class VoiceFollowsTheCoreTests
         Choose(surface, SpeechCapability.VoiceKey, "en-GB-SoniaNeural");
 
         Assert.Null(surface.Settings.Current.Speech.Voice);
-        Assert.Equal("en-GB-SoniaNeural", surface.Settings.Current.Persona.Voices["warden"]);
+        Assert.Equal("en-GB-SoniaNeural", surface.Settings.Current.Persona.Voices[PersonaCatalog.DefaultId]);
     }
 }

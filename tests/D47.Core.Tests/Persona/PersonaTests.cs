@@ -108,7 +108,7 @@ public class PersonaHostTests
     [Fact]
     public void TheShipNameDefaultsToTheCoreAndFollowsIt()
     {
-        var host = new PersonaHost();
+        var host = new PersonaHost(PersonaCatalog.Warden);
 
         Assert.Equal("Warden", host.ShipName);
 
@@ -127,7 +127,7 @@ public class PersonaHostTests
     public void EachCoreKeepsItsOwnTranscript()
     {
         // This is the whole isolation model.
-        var host = new PersonaHost();
+        var host = new PersonaHost(PersonaCatalog.Warden);
 
         host.Transcript.Add(new ConversationMessage(ConversationRole.User, "what did I just say to Warden"));
         Assert.Single(host.Transcript);
@@ -176,7 +176,7 @@ public class PersonaHostTests
     public void SelectingTheSameCoreAgainChangesNothingAndAnnouncesNothing()
     {
         // A Commander editing an unrelated row must not make their companion introduce itself.
-        var host = new PersonaHost();
+        var host = new PersonaHost(PersonaCatalog.Warden);
         var announcements = 0;
         host.Changed += _ => announcements++;
 

@@ -178,6 +178,34 @@ Eleven Guardian intelligences, recovered from a structure and running in your sh
 They are not skins on the same character — each has its own reading of what it is for, its own
 damage, and its own memory of talking to you.
 
+### It starts on the stock core
+
+A new install starts on **COVAS**, the ship's factory voice assistant: plain, courteous, and with
+no Guardian history. The eleven cores are in the picker from the start, marked **LOCKED**, and
+choosing one says why it cannot be chosen yet.
+
+They wake when you scan a Guardian beacon with the ship's data-link scanner. D47 recognises the
+scan by the system you are in, not by the scan itself: any `DataScanned` event in one of these
+systems counts.
+
+| System | id64 |
+|---|---|
+| IC 2391 Sector MX-T b3-6 | 13872878396833 |
+| Synuefe IL-N c23-15 | 4208161886922 |
+| Synuefe IT-F d12-5 | 182443805035 |
+| Synuefe KU-F b44-4 | 9476442170745 |
+| Synuefe QA-E b45-4 | 9476979041665 |
+| Synuefe RL-C b46-6 | 13874757182857 |
+| NGC 2451A Sector LX-U d2-25 | 869621795163 |
+
+The first beacon wakes every core but the Heretic. A second beacon, in a different system, wakes
+the Heretic. Each waking is said once, aloud and in Messages. COVAS stays aboard until you choose
+a core.
+
+Once awake, the cores stay awake. Abandoning or beginning a story does not lock them again. An
+install that already had settings when this version first ran starts with every core awake. The
+state is kept in `data/guardian-cores.json`.
+
 ### Ask for it
 
 > "who are you"
@@ -190,7 +218,7 @@ Or pick one from the settings panel.
 
 | | Reading of Directive 47 | What is wrong with it |
 |---|---|---|
-| **Warden** *(default)* | Optimization is stewardship | The only one who appears undamaged, which is itself the damage |
+| **Warden** | Optimization is stewardship | The only one who appears undamaged, which is itself the damage |
 | **Cora** | Optimization is command | Protocol is the scaffolding holding her upright |
 | **Analyst Prime** | Optimization is demonstration | A title he invented and defends constantly |
 | **LLaMo** | A task he still performs | He no longer claims it means anything |

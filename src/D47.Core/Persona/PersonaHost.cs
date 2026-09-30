@@ -55,15 +55,22 @@ public sealed class PersonaHost
 
     private string? _shipNameOverride;
 
-    public PersonaHost(Persona? current = null, IIntroductionMemory? memory = null)
+    /// <summary>Which Guardian cores may be aboard; a core still asleep is stood in for by the stock core.</summary>
+    private readonly GuardianCores _cores;
+
+    public PersonaHost(Persona? current = null, IIntroductionMemory? memory = null, GuardianCores? cores = null)
     {
-        Current = current ?? PersonaCatalog.Resolve(null);
+        _cores = cores ?? GuardianCores.AllAwake();
+        Current = _cores.Admit(current ?? PersonaCatalog.Resolve(null));
         _memory = memory;
         _introduced = new HashSet<string>(memory?.Load() ?? [], StringComparer.Ordinal);
     }
 
     /// <summary>The core aboard.</summary>
     public Persona Current { get; private set; }
+
+    /// <summary>Which Guardian cores are awake.</summary>
+    public GuardianCores Cores => _cores;
 
     /// <summary>How long a core has to have been away before it remarks on the missing time.</summary>
     public static readonly TimeSpan GapAfter = TimeSpan.FromDays(30);
@@ -123,7 +130,7 @@ public sealed class PersonaHost
     {
         _shipNameOverride = settings.ShipName;
 
-        var incoming = PersonaCatalog.Resolve(settings.Id);
+        var incoming = _cores.Admit(PersonaCatalog.Resolve(settings.Id));
 
         if (ReferenceEquals(incoming, Current))
         {

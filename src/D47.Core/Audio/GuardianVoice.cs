@@ -570,6 +570,10 @@ public static class GuardianVoice
         _ => 165,
     };
 
+    /// <summary>The treatment for this core: none for a stock core, whatever is ticked.</summary>
+    public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.Persona core) =>
+        core.Stock ? null : ColourFor(speech, core.VoiceHint.Gender);
+
     /// <summary>The ship AI's treatment for the settings in force, or null when no effect is ticked (#225).</summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
     {

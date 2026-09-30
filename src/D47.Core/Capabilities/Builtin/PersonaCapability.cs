@@ -57,7 +57,7 @@ public static class PersonaCapability
         Id = Id,
         Group = "Conversation",
         Name = "Persona",
-        Summary = "Report which Guardian core is aboard, what it is called, and how to change it.",
+        Summary = "Report which core is aboard, what it is called, and how to change it.",
         Examples = ["who are you", "which persona is this", "switch to Cora"],
         // Each names its tool (#161). state_identity is what all five already reached, and saying so is what
         // stops the next tool declared above it silently taking them — bind_ship_core and forget_ship_core
@@ -103,7 +103,9 @@ public static class PersonaCapability
         {
             Key = PersonaKey,
             Label = "Persona",
-            Help = "Which Guardian core answers you. Each keeps its own memory of your conversations.",
+            Help =
+                "Which core answers you. Each keeps its own memory of your conversations. The "
+                + "Guardian cores are locked until you scan a Guardian beacon.",
             Kind = SettingKind.Choice,
             DefaultDisplay = PersonaCatalog.Resolve(null).Name,
             DocsAnchor = "persona",
@@ -112,6 +114,8 @@ public static class PersonaCapability
             Choices = [.. PersonaCatalog.Shipped.Select(persona => persona.Id)],
             ChoiceSource = _ => [.. PersonaCatalog.All.Select(persona => persona.Id)],
             ChoiceLabel = id => PersonaCatalog.Resolve(id).Name,
+            ChoiceStatus = (_, id) => Locked(host, id),
+            Refuses = (_, id) => WhyAsleep(host, id),
 
             // Protected, and this is the one row in the phase where that is a judgement call rather than a
             // rule being followed.
@@ -200,7 +204,7 @@ public static class PersonaCapability
             Label = "Cores of your own",
             Help =
                 "Cores you wrote, which join the picker at the top of this section beside the "
-                + "eleven that ship. One needs a name and a paragraph saying what it is like; "
+                + "cores that ship. One needs a name and a paragraph saying what it is like; "
                 + "everything else about the frame is supplied, and the shared preamble and "
                 + "standing instructions wrap what you write exactly as they wrap a shipped core. "
                 + "The file behind it is personas.json beside d47.exe, and the editor is a "
@@ -398,6 +402,8 @@ public static class PersonaCapability
             ChoiceLabel = id => id == Nobody
                 ? "Nobody — whoever is aboard stays aboard"
                 : PersonaCatalog.Resolve(id).Name,
+            ChoiceStatus = (_, id) => id == Nobody ? null : Locked(host, id),
+            Refuses = (_, id) => id == Nobody ? null : WhyAsleep(host, id),
             Binding = new SettingBinding
             {
                 Read = settings => settings.Persona.ShipCoreShip is var id and not 0
@@ -434,6 +440,25 @@ public static class PersonaCapability
             Binding = new SettingBinding { Read = _ => ships.DescribeAll() },
         },
     ];
+
+    /// <summary>The status drawn under a core that is still asleep.</summary>
+    private static ChoiceStatus? Locked(PersonaHost host, string id) =>
+        host.Cores.IsAwake(PersonaCatalog.Resolve(id)) ? null : new ChoiceStatus("LOCKED", ChoiceTone.Grey);
+
+    /// <summary>Why a core cannot be chosen yet, or null where it can.</summary>
+    private static string? WhyAsleep(PersonaHost host, string id)
+    {
+        var persona = PersonaCatalog.Resolve(id);
+
+        if (host.Cores.IsAwake(persona))
+        {
+            return null;
+        }
+
+        return persona.Unlockable && host.Cores.CoresAwake
+            ? $"{persona.Name} is locked. The beacon you scanned did not hold that core."
+            : $"{persona.Name} is locked. The Guardian cores wake when you scan a Guardian beacon.";
+    }
 
     /// <summary>What the introductions row states.</summary>
     private static string Introductions(PersonaHost host)
@@ -526,7 +551,7 @@ public static class PersonaCapability
         report.AppendLine();
         report.AppendLine("Available personas (the Commander changes these from the panel or by saying so):");
 
-        foreach (var persona in PersonaCatalog.All)
+        foreach (var persona in PersonaCatalog.All.Where(host.Cores.IsAwake))
         {
             report.AppendLine($"  {persona.Id} — {persona.Name}: {persona.Tagline}");
         }

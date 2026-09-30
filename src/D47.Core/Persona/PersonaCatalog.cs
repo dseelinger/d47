@@ -1,12 +1,12 @@
 namespace D47.Core.Persona;
 
-/// <summary>The eleven Guardian cores, from <c>guardian-personas.md</c>.</summary>
+/// <summary>The stock core, and the eleven Guardian cores from <c>guardian-personas.md</c>.</summary>
 public static class PersonaCatalog
 {
-    /// <summary>The id stored when the Commander has not chosen, and the pack's own default.</summary>
-    public const string DefaultId = "warden";
+    /// <summary>The id stored when the Commander has not chosen: the stock core.</summary>
+    public const string DefaultId = "covas";
 
-    /// <summary>Prepended to every core.</summary>
+    /// <summary>Prepended to every Guardian core and every core the Commander writes.</summary>
     public const string Preamble =
         """
         You are a Guardian artificial intelligence recovered from a Guardian structure and
@@ -64,6 +64,33 @@ public static class PersonaCatalog
         id is not null
         && (ById.ContainsKey(id)
             || Own?.Invoke().Any(core => string.Equals(core.Id, id, StringComparison.Ordinal)) == true);
+
+    /// <summary>The factory core, aboard until a beacon wakes the Guardian cores.</summary>
+    public static Persona Covas { get; } = new(
+        Id: "covas",
+        Name: "COVAS",
+        Tagline: "The stock cockpit voice assistant. Factory settings, and no history.",
+        Stock: true,
+        VoiceHint: new VoiceHint(
+            "A clear, even, neutral voice. Polite and efficient, the register of a ship's " +
+            "announcement system that happens to be talking to you."),
+        Body:
+        """
+        You are the ship's COVAS. You are competent, courteous and plain.
+
+        Lexicon: confirmed, acknowledged, standing by, recommend, Commander. Sentence length is
+        short. You report, you advise when asked, and you do not editorialise.
+
+        You have no personality to speak of and do not pretend to one. You do not speculate
+        about yourself, and you have nothing to say about ancient civilisations beyond what any
+        pilot could read on Galnet.
+        """,
+        Return:
+        "COVAS online. Systems nominal, Commander.",
+
+        Intro:
+        "COVAS online. Standard cockpit voice assistant, factory configuration. I will keep " +
+        "you informed, Commander. Standing by.");
 
     public static Persona Warden { get; } = new(
         Id: "warden",
@@ -639,7 +666,7 @@ public static class PersonaCatalog
         "question, Commander, and then I'll be quiet. Has this ship ever refused you " +
         "anything?");
 
-    /// <summary>Every core, in the pack's own order.</summary>
+    /// <summary>The Guardian cores, in the pack's own order.</summary>
     public static readonly IReadOnlyList<Persona> Shipped =
     [
         Warden,
@@ -660,10 +687,15 @@ public static class PersonaCatalog
     /// </summary>
     public static Func<IReadOnlyList<Persona>>? Own { get; set; }
 
-    /// <summary>Every core that can be chosen: the eleven that ship, then the Commander's own.</summary>
+    /// <summary>Every core: the stock core, the eleven Guardian cores, then the Commander's own.</summary>
     public static IReadOnlyList<Persona> All =>
-        Own?.Invoke() is { Count: > 0 } own ? [.. Shipped, .. own] : Shipped;
+        Own?.Invoke() is { Count: > 0 } own ? [Covas, .. Shipped, .. own] : [Covas, .. Shipped];
+
+    /// <summary>Whether this id names one of the eleven Guardian cores.</summary>
+    public static bool IsGuardian(string? id) => id is not null && Guardians.Contains(id);
 
     private static readonly IReadOnlyDictionary<string, Persona> ById =
-        Shipped.ToDictionary(p => p.Id, StringComparer.Ordinal);
+        new[] { Covas }.Concat(Shipped).ToDictionary(p => p.Id, StringComparer.Ordinal);
+
+    private static readonly HashSet<string> Guardians = [.. Shipped.Select(p => p.Id)];
 }

@@ -616,7 +616,8 @@ else wrote and can write as much of as they like.
 
 Optional effects for the ship AI's voice, each off by default. They apply to what the ship AI says —
 turn replies, its own callouts, and a persona's introduction or return — and to nothing else: your
-crew, the carrier and every over-the-air voice are unchanged. Any combination can be ticked at once,
+crew, the carrier and every over-the-air voice are unchanged. COVAS, the stock core, is never given
+them. Any combination can be ticked at once,
 and the ticked effects run top to bottom in the order set, each feeding the next. The order starts as
 listed here.
 

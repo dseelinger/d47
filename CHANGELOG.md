@@ -12,6 +12,13 @@ The Adventures tab has a **Messages** button. Every adventure beat D47 speaks is
 written message, newest first, with unread ones in bold and the unread count on the button. Opening a
 message marks it read. The messages are kept in `data/messages.json`, up to 200.
 
+A new install now starts on **COVAS**, a plain factory ship AI with no Guardian history. The Guardian
+cores are shown as **LOCKED** in the Persona picker until you scan a Guardian beacon with the data-link
+scanner. The first beacon wakes every core but the Heretic, and a second beacon in a different system
+wakes the Heretic. Each waking is announced once, aloud and in Messages. Once awake, the cores stay
+awake. An existing install keeps every core it had. COVAS speaks without the Guardian Voice Effects,
+whatever is ticked there.
+
 ## 1.24.0 — A Narrator tells your story
 
 A new voice, the **Narrator**, now tells your Commander's story during a lull, in the third person

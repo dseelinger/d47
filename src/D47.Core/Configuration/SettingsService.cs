@@ -524,6 +524,11 @@ public sealed class SettingsService
                     : $"'{value}' is not a valid {row.Label}.");
         }
 
+        if (normalised is not null && row.Refuses?.Invoke(Current, normalised) is { } refused)
+        {
+            return new SettingApplyResult(SettingApplyStatus.Rejected, refused);
+        }
+
         // Said here rather than discovered later.
         if (row.Kind == SettingKind.Hotkey && row.SystemWide
             && normalised is { Length: > 0 } gesture && !gesture.Contains('+'))

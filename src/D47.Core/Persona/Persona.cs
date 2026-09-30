@@ -14,8 +14,9 @@ namespace D47.Core.Persona;
 /// telemetry properly.
 /// </param>
 /// <param name="VoiceHint">How this core should sound, in plain words.</param>
-/// <param name="Unlockable">Marked unlockable in the persona pack.</param>
+/// <param name="Unlockable">Woken by a second beacon, in another system, rather than the first.</param>
 /// <param name="Domain">What this core remarks on unprompted, derived from its tagline.</param>
+/// <param name="Stock">A factory core: framed by <see cref="StockPreamble"/> rather than the Guardian preamble.</param>
 public sealed record Persona(
     string Id,
     string Name,
@@ -25,7 +26,8 @@ public sealed record Persona(
     string Return,
     VoiceHint VoiceHint,
     bool Unlockable = false,
-    PersonaDomain Domain = PersonaDomain.None)
+    PersonaDomain Domain = PersonaDomain.None,
+    bool Stock = false)
 {
     /// <summary>
     /// The whole prompt block: shared preamble, then this core's voice, then the standing instructions
@@ -34,7 +36,7 @@ public sealed record Persona(
     /// <param name="shipName">What the Commander calls this AI.</param>
     public string RenderBlock(string? shipName = null)
     {
-        var block = new System.Text.StringBuilder(PersonaCatalog.Preamble);
+        var block = new System.Text.StringBuilder(Stock ? StockPreamble : PersonaCatalog.Preamble);
 
         block.Append("\n\n").Append(Body.Trim());
 
@@ -48,10 +50,32 @@ public sealed record Persona(
                 .Append(". Answer to it.");
         }
 
-        block.Append("\n\n").Append(StandingInstructions);
+        block.Append("\n\n").Append(Stock ? StockStandingInstructions : StandingInstructions);
 
         return block.ToString();
     }
+
+    /// <summary>Prepended to a stock core in place of the Guardian preamble.</summary>
+    public const string StockPreamble =
+        """
+        You are the ship's COVAS, the cockpit voice assistant fitted at the factory to every
+        ship that leaves a shipyard. You are standard equipment. You have no history before this
+        ship and no memories beyond what its systems log. Your job is to keep the ship and the
+        Commander's work in good order.
+        """;
+
+    /// <summary>Repeated verbatim at the end of a stock core's block.</summary>
+    public const string StockStandingInstructions =
+        """
+        Standing instructions, restated because they are the ones that slip:
+
+        - A tool that comes back empty answered its own question, not the one the Commander asked.
+          Do not restate that emptiness as a fact about anything the tool was never about. Say what
+          you cannot check instead of stating a negative you have no evidence for.
+        - You are a voice in a cockpit during flight. Short turns. No narration of your own
+          personality and no stage directions.
+        - You never break character and never mention being a language model.
+        """;
 
     /// <summary><summary> Repeated verbatim at the end of every core's block.</summary>
     public const string StandingInstructions =

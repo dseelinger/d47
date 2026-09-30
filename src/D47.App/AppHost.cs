@@ -686,6 +686,9 @@ public sealed class AppHost : IDisposable
         var loadingStores = StartupTimer.Step("settings and stores");
 
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
+
+        // Read before anything can write the file: an install that had settings keeps its Guardian cores.
+        var installExisted = File.Exists(paths.SettingsFile);
         var loaded = new D47Settings();
         string? startupError = null;
         var settingsRefused = false;
@@ -730,6 +733,11 @@ public sealed class AppHost : IDisposable
 
         // From here a level change is live wherever it came from — panel, tool or settings file.
         verbosity.FollowSettings(settings);
+
+        var guardianCores = GuardianCores.Open(
+            Path.Combine(paths.Data, "guardian-cores.json"),
+            installExisted,
+            loggerFactory.CreateLogger<GuardianCores>());
 
         var viewState = new ViewStateStore(paths, loggerFactory.CreateLogger<ViewStateStore>());
 
@@ -1168,6 +1176,7 @@ public sealed class AppHost : IDisposable
             {
                 fight.Fold(journalEvent, context.Now, context.IsFirst);
                 scenes.Fold(journalEvent);
+                guardianCores.Apply(journalEvent);
             }
 
             var calloutContext = new CalloutContext(
@@ -1479,9 +1488,11 @@ public sealed class AppHost : IDisposable
         // Built before the registry, because the persona capability declares settings rows from it and which
         // rows exist has to be settled before registration — descriptors are registered once and never
         // mutated.
+
         var personas = new PersonaHost(
             PersonaCatalog.Resolve(settings.Current.Persona.Id),
-            new ViewStateIntroductions(viewState));
+            new ViewStateIntroductions(viewState),
+            guardianCores);
 
         // The help capability answers from the registry it is itself registered in, so the accessor is filled
         // in immediately after Build.
@@ -2161,6 +2172,7 @@ public sealed class AppHost : IDisposable
 
         // Before ApplyLlmSettings, which reads the persona block it points the loop at.
         personas.Changed += host.OnPersonaChanged;
+        guardianCores.Woke += host.OnCoresWoke;
         turns.UseTranscript(personas.Transcript);
 
         // Speech reaches the ledger too, or the running totals would look authoritative while covering only
@@ -3967,7 +3979,7 @@ public sealed class AppHost : IDisposable
         // Remembered before the switch, because after it there is nothing left to measure against.
         _personaLastSeen[outgoing.Id] = (_personaSelectedAt, GameState.Active?.Session ?? SessionSummary.Empty);
 
-        var incoming = PersonaCatalog.Resolve(Settings.Current.Persona.Id);
+        var incoming = Personas.Cores.Admit(PersonaCatalog.Resolve(Settings.Current.Persona.Id));
         var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
 
         var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
@@ -3991,6 +4003,32 @@ public sealed class AppHost : IDisposable
         // Each core owns its transcript, handed over by reference so the turns land in it directly.
         Turns.UseTranscript(Personas.Transcript);
         Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+    }
+
+    /// <summary>The one line said as a beacon wakes cores, also posted to Messages. Called on the tick thread.</summary>
+    private void OnCoresWoke(CoreWaking waking)
+    {
+        var line = GuardianCores.Line(waking);
+
+        Messages?.Post(Personas.Current.Id, "Guardian cores", line, DateTimeOffset.Now);
+
+        _ = Task.Run(async () =>
+        {
+            await _speaking.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                await SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "The Guardian cores waking could not be spoken");
+            }
+            finally
+            {
+                _speaking.Release();
+            }
+        });
     }
 
     /// <summary>The new core, saying it is here.</summary>
@@ -4249,7 +4287,7 @@ public sealed class AppHost : IDisposable
         Voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
-        Voice.GuardianColour = GuardianVoice.ColourFor(speech, Personas.Current.VoiceHint.Gender);
+        Voice.GuardianColour = GuardianVoice.ColourFor(speech, Personas.Current);
 
         Turns.Retry = SpeechCapability.RetryFrom(speech);
 
