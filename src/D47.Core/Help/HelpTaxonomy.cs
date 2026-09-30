@@ -113,7 +113,11 @@ public static class HelpTaxonomy
                 HelpNode.Leaf(
                     "Community goals",
                     "What community goals are running, what tier they have reached, and how you are doing in them.",
-                    "community-goals")),
+                    "community-goals"),
+                HelpNode.Leaf(
+                    "Missions",
+                    "Read your mission board aloud, and keep a checklist line for each delivery.",
+                    "missions")),
             HelpNode.Category(
                 "The galaxy itself",
                 "What a place is, beyond what it can sell you.",
