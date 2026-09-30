@@ -18,6 +18,8 @@ character sheet, About Me and scenario are sent to the language model.
 
 The scenario now also shapes the ship's AI's idle remarks, callout rewordings, and your carrier captain's and tower's lines, to whoever **Who knows about it** reaches. Lines that reword another player's or Frontier's words, such as NPC comms and System Authority patrols, never carry it.
 
+When **Who knows about it** is set to everyone, invented radio traffic and passers-by can be coloured by the scenario too, by what pilots nearby could see you doing. Most exchanges still do not mention it, and nobody asks you about it. With either narrower setting, chatter never sees it.
+
 ## 1.20.0 — Invented chatter answers when named
 
 You can now answer an invented NPC who hails you, or a passer-by who remarks on you. Start with their

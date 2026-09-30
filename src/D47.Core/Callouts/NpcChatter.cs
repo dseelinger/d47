@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Persona;
 
@@ -427,7 +428,8 @@ public static partial class NpcChatter
         int exchangeIndex = 0,
         string? stationType = null,
         NpcChatterRoster? roster = null,
-        FightSnapshot? fight = null)
+        FightSnapshot? fight = null,
+        string? scenario = null)
     {
         var about = carrier ?? NpcChatterCarrier.None;
         var cast = roster ?? NpcChatterRoster.None;
@@ -437,8 +439,21 @@ public static partial class NpcChatter
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(kind, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
-            + Carrier(about, spotlight, cast);
+            + Carrier(about, spotlight, cast)
+            + Scenario(scenario);
     }
+
+    /// <summary>The scenario chatter may carry: only when everyone is told, and only when there is one.</summary>
+    public static string? ScenarioFor(ScenarioAudience audience, string? scenario) =>
+        audience == ScenarioAudience.Public && !string.IsNullOrWhiteSpace(scenario) ? scenario : null;
+
+    private static string Scenario(string? scenario) =>
+        string.IsNullOrWhiteSpace(scenario)
+            ? string.Empty
+            : " The pilots around the Commander can see what the Commander is doing, as follows: "
+                + scenario.Trim()
+                + " An exchange may be coloured by this where it fits; most exchanges do not mention it, "
+                + "and nobody asks the Commander about it.";
 
     /// <summary>
     /// The instruction with humor rolled once for the invented speakers and once for the carrier's crew

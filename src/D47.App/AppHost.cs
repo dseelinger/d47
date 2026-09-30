@@ -5478,7 +5478,8 @@ public sealed class AppHost : IDisposable
             NpcChatter.Speaker,
             null,
             NpcChatter.WithHumor(
-                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot),
+                NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot,
+                    NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, Settings.Current.Llm.Scenario)),
                 carrier,
                 Settings.Current.Persona,
                 _humor,
