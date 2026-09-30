@@ -236,6 +236,25 @@ public static class FlavourBriefs
             };
         }
 
+        // A figure in the subject the core aboard pays attention to (#611).
+        if (announcement.Key.StartsWith(DomainCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "This is where the Commander's session stands in the subject you pay attention to. Remark "
+                    + $"on it in your own voice, from this: \"{announcement.Text}\" Keep every figure exactly as "
+                    + "given and add no facts. Praise or complain only in relation to the figures given. Give no "
+                    + "advice. One or two sentences. Do not ask a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+
+                // The sheet, so it is addressed to somebody.
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
+        }
+
         // A notable kill.
         if (announcement.Key.StartsWith(KillCallout.KeyPrefix, StringComparison.Ordinal))
         {

@@ -44,6 +44,7 @@ public static class CalloutCapability
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
+    public const string DomainKey = "callouts.domain";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
@@ -376,6 +377,18 @@ public static class CalloutCapability
                 "community goal sales",
                 s => s.Callouts.CommunityGoalSales,
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalSales = v } }),
+
+            Toggle(
+                DomainKey,
+                "Your core's own subject",
+                "An occasional remark from the core aboard about the subject it pays attention to, with a "
+                + "figure from this session. Quartermaster says the credits an hour after a sale, a mission "
+                + "or a cashed voucher, at most once an hour. Warden and the cores you write have no subject "
+                + "and say nothing. Silent with personality off.",
+                "domain",
+                "core remarks",
+                s => s.Callouts.Domain,
+                (s, v) => s with { Callouts = s.Callouts with { Domain = v } }),
 
             Toggle(
                 AmbientKey,

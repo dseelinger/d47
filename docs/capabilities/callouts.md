@@ -779,6 +779,23 @@ the Routing tab's Community Goal page — and the figures come from the ledger d
 it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
 keeps counting for the page and for *"how have I done today"*.
 
+#### Your core's own subject {#domain}
+
+Some cores pay attention to a subject of their own, and remark on it with a figure from this session
+([#611](https://github.com/dseelinger/d47/issues/611)). The subject comes from the core's tagline.
+Quartermaster, *"Efficiency in ledgers"*, says what the session is earning: after a sale, a paid
+mission, a cashed voucher or sold exploration or organic data, once the session is at least thirty
+minutes old and has earned something, and at most once an hour.
+
+```text
+4.2 million credits an hour this session, the largest share from trade. At the last count it was 3.8 million an hour.
+```
+
+The figure is worked out from the journal; with a language model configured the core says it in its
+own voice, keeping every figure and adding nothing. Warden and every core you write have no subject
+and say nothing here. Choosing a core never switches this row on or off, and it is silent with
+personality off.
+
 ### Settings
 
 #### Speak without being asked {#enabled}

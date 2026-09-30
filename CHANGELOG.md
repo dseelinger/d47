@@ -6,6 +6,16 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.22.0 — Each core notices its own domain
+
+With Quartermaster aboard, D47 now says what the session is earning: the credits an hour and where
+most of it came from, after a sale, a paid mission, a cashed voucher or sold exploration or organic
+data. It waits until the session is thirty minutes old, speaks at most once an hour, and from the
+second time on also says the rate it gave last time. The core says the figures in its own voice and
+changes none of them. Warden and cores you write say nothing new. The new row is Settings ›
+Callouts › Plans and stories › **Your core's own subject**. It is on by default, choosing a core
+never turns it on or off, and it is silent with personality off.
+
 ## 1.21.0 — The Commander's current scenario
 
 Settings › Persona › Core and character has two new rows under About Me. **Current scenario** is the

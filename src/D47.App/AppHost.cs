@@ -2666,6 +2666,9 @@ public sealed class AppHost : IDisposable
             // Where a sale of the Community Goal commodity leaves the session, net of cost (#296).
             .Add(new CommunityGoalSaleCallout(ledger, communityGoal))
 
+            // A remark on the subject the core aboard pays attention to (#611).
+            .Add(new DomainCallout())
+
             // A beat of the Commander's story, when they reach it (Phase 47).
             .Add(new D47.Core.Adventures.AdventureCallout(adventures))
 
@@ -2751,6 +2754,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("continuity", callouts.Continuity, now);
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
+        engine.SetEnabled("domain", callouts.Domain, now);
 
         foreach (var callout in engine.Callouts)
         {
@@ -2811,6 +2815,12 @@ public sealed class AppHost : IDisposable
 
                     // Silent while personality is off.
                     ambient.Enabled = () => settings.Current.Callouts.Ambient && settings.Current.Llm.PersonalityEnabled;
+                    break;
+
+                case DomainCallout domain:
+                    // Silent while personality is off: with no core aboard there is no subject.
+                    domain.Enabled = () => settings.Current.Callouts.Domain && settings.Current.Llm.PersonalityEnabled;
+                    domain.Domain = () => PersonaCatalog.Resolve(settings.Current.Persona.Id).Domain;
                     break;
 
                 case NpcChatterCallout chatter:

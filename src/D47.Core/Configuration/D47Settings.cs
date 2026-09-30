@@ -548,6 +548,9 @@ public sealed record CalloutSettings
     /// <summary>The running session total after every sale of the Community Goal commodity (#296).</summary>
     public bool CommunityGoalSales { get; init; } = true;
 
+    /// <summary>A remark on the subject the core aboard pays attention to (#611). Choosing a core never changes it.</summary>
+    public bool Domain { get; init; } = true;
+
     /// <summary>The day the Elite week turns, UTC (#332).</summary>
     public DayOfWeek WeekBoundaryDay { get; init; } = DayOfWeek.Thursday;
 

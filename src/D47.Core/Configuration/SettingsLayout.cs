@@ -464,19 +464,20 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "plans-and-stories",
                     "Plans and stories",
-                    "Checklist changes, continuity, adventures, community goal sales and what to buy.",
+                    "Checklist changes, continuity, adventures, community goal sales, your core's subject and what to buy.",
                     "callouts",
                     [],
                     false,
                     [
                         G(
                             "Plan and story callouts",
-                            "What D47 says about your checklist, adventures, community goals and trades.",
+                            "What D47 says about your checklist, adventures, community goals, trades and what your core pays attention to.",
                             [
                                 E("callouts.checklist"),
                                 E("callouts.continuity"),
                                 E("callouts.adventure"),
                                 E("callouts.communityGoalSales"),
+                                E("callouts.domain"),
                                 E("callouts.tradingMode"),
                                 E("callouts.tradingModeMinHold", under: true),
                             ]),

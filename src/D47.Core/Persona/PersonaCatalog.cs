@@ -528,7 +528,9 @@ public static class PersonaCatalog
         "for capacity. A rebuy you cannot comfortably cover and have not calculated. We will " +
         "be counting. Every run gets a margin, every margin gets logged, and the log gets " +
         "kept, because someone will want to see it eventually. Someone always wants to see it, " +
-        "even if it is only me.");
+        "even if it is only me.",
+
+        Domain: PersonaDomain.Earnings);
 
     public static Persona Archivist { get; } = new(
         Id: "archivist",

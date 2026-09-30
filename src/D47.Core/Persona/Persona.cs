@@ -15,6 +15,7 @@ namespace D47.Core.Persona;
 /// </param>
 /// <param name="VoiceHint">How this core should sound, in plain words.</param>
 /// <param name="Unlockable">Marked unlockable in the persona pack.</param>
+/// <param name="Domain">What this core remarks on unprompted, derived from its tagline.</param>
 public sealed record Persona(
     string Id,
     string Name,
@@ -23,7 +24,8 @@ public sealed record Persona(
     string Intro,
     string Return,
     VoiceHint VoiceHint,
-    bool Unlockable = false)
+    bool Unlockable = false,
+    PersonaDomain Domain = PersonaDomain.None)
 {
     /// <summary>
     /// The whole prompt block: shared preamble, then this core's voice, then the standing instructions
@@ -88,6 +90,19 @@ public sealed record VoiceHint(string Description, VoiceGender Gender = VoiceGen
         "female" or "f" or "woman" or "feminine" => VoiceGender.Female,
         _ => null,
     };
+}
+
+/// <summary>
+/// The subject a core pays attention to, which decides the domain remarks it makes. It changes what is said,
+/// never which callouts are enabled.
+/// </summary>
+public enum PersonaDomain
+{
+    /// <summary>No subject of its own: Warden, and every core the Commander wrote.</summary>
+    None,
+
+    /// <summary>Credits earned. Quartermaster: "Efficiency in ledgers."</summary>
+    Earnings,
 }
 
 /// <summary>Which of a provider's voices can speak for a core.</summary>
