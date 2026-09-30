@@ -796,6 +796,17 @@ hour warning, and gets the ten-minute one only if that mark passed less than a m
 warnings are fixed at an hour and ten minutes. Switching this off stops all four and leaves the
 mission board as it was.
 
+On accepting a mission with an expiry, D47 asks the galaxy search how far the destination is
+([#666](https://github.com/dseelinger/d47/issues/666)), divides by your ship's jump range and allows
+five minutes a jump. Only when that is longer than the time left does it speak:
+
+```text
+Wadjuk is about 40 jumps. That's tight for a 12-hour deadline.
+```
+
+A trip that fits, a destination whose position cannot be found, and Galaxy search being off all say
+nothing. The lookup runs off the game's tick, so it never delays other callouts.
+
 When a mission is redirected, D47 also says where the hand-in moved
 ([#663](https://github.com/dseelinger/d47/issues/663)):
 

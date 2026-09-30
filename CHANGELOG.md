@@ -85,6 +85,12 @@ are in your hold, and ticks itself when the last one is handed over. You cannot 
 leaves the list when the mission is completed, failed or abandoned. Courier and passenger missions get
 no line.
 
+When you accept a mission with an expiry, D47 also works out whether you can reach its destination in time. It
+asks the galaxy search for the distance from where you are, divides by your ship's jump range, and allows five
+minutes per jump. If that is longer than the time left, it says "Wadjuk is about 40 jumps. That's tight for a
+12-hour deadline." It says nothing when the trip fits, when the distance cannot be found, or when Galaxy search
+is off. The line is part of **Mission hand-ins and expiry**.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a

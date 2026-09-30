@@ -1497,6 +1497,11 @@ public sealed class AppHost : IDisposable
         var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Knowledge.SpanshGalaxyService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()));
 
+        foreach (var missions in callouts.Callouts.OfType<MissionCallout>())
+        {
+            missions.Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null;
+        }
+
         foreach (var surveyed in callouts.Callouts.OfType<SurveyedBiologyCallout>())
         {
             surveyed.Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null;
@@ -2648,7 +2653,7 @@ public sealed class AppHost : IDisposable
             // Phase 11.
             .Add(new CarrierCallout())
 
-            .Add(new MissionCallout { Offer = handInOffer, Markets = marketBook })
+            .Add(new MissionCallout { Offer = handInOffer, Markets = marketBook, Log = loggers.CreateLogger<MissionCallout>() })
 
             // Phase 17.
             .Add(new SamplingCallout { Ledger = exobiology })

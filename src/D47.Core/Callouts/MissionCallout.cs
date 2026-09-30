@@ -1,6 +1,10 @@
+using System.Collections.Concurrent;
+using System.Globalization;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Core.Callouts;
 
@@ -19,6 +23,11 @@ public sealed class MissionCallout : ICallout
 
     public const string AcceptedKey = "missions.accepted";
 
+    public const string TripKey = "missions.trip";
+
+    /// <summary>Time allowed per jump, including scooping and the run to the station, when judging a trip against its expiry.</summary>
+    public static readonly TimeSpan TimePerJump = TimeSpan.FromMinutes(5);
+
     /// <summary>The markets the Commander has seen; without it a collect mission says nothing about supply.</summary>
     public MarketBook? Markets { get; init; }
 
@@ -35,11 +44,29 @@ public sealed class MissionCallout : ICallout
     /// <summary>How far past its mark a warning can be and still be said.</summary>
     private static readonly TimeSpan Grace = TimeSpan.FromMinutes(1);
 
+    /// <summary>The service to ask, or null when galaxy search is off.</summary>
+    public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
+
+    /// <summary>Starts the lookup off the tick thread; must return without waiting for it.</summary>
+    public Action<Func<Task>> Dispatch { get; init; } = work => _ = Task.Run(work);
+
+    public ILogger Log { get; init; } = NullLogger.Instance;
+
     private readonly HashSet<(long Id, string Warning)> _warned = [];
+
+    private readonly ConcurrentQueue<Trip> _trips = new();
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var board = context.State?.Missions ?? MissionBoard.Empty;
+
+        while (_trips.TryDequeue(out var trip))
+        {
+            if (board.For(trip.MissionId) is not null)
+            {
+                yield return new Announcement($"{TripKey}.{trip.MissionId}", trip.Said);
+            }
+        }
 
         if (context.IsPriming)
         {
@@ -55,6 +82,11 @@ public sealed class MissionCallout : ICallout
         foreach (var journalEvent in context.Events)
         {
             var station = journalEvent.String("StationName");
+
+            if (journalEvent.Kind == "MissionAccepted")
+            {
+                StartTripCheck(journalEvent, context);
+            }
 
             switch (journalEvent.Kind)
             {
@@ -115,6 +147,57 @@ public sealed class MissionCallout : ICallout
             ? new Announcement($"{AcceptedKey}.{mission.Id}", string.Join(' ', said))
             : null;
     }
+
+    /// <summary>Queues a distance lookup to the mission's destination; the answer is said on a later tick.</summary>
+    private void StartTripCheck(JournalEvent journalEvent, CalloutContext context)
+    {
+        if (Mission.Of(journalEvent) is not { DestinationSystem: { Length: > 0 } destination, Expiry: { } expiry } mission
+            || context.State?.Location.StarSystem is not { Length: > 0 } from
+            || context.State.Ship.MaxJumpRange is not > 0
+            || Galaxy() is not { } galaxy)
+        {
+            return;
+        }
+
+        var range = context.State.Ship.MaxJumpRange.GetValueOrDefault();
+        var left = expiry - context.Now;
+
+        if (left <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        Dispatch(() => CheckTrip(galaxy, mission.Id, from, destination, range, left));
+    }
+
+    private async Task CheckTrip(IGalaxyService galaxy, long id, string from, string destination, double range, TimeSpan left)
+    {
+        try
+        {
+            if (await galaxy.DistanceAsync(from, destination, CancellationToken.None).ConfigureAwait(false) is not { } distance)
+            {
+                return;
+            }
+
+            var jumps = (int)Math.Ceiling(distance / range);
+
+            if (jumps > 0 && jumps * TimePerJump.Ticks > left.Ticks)
+            {
+                _trips.Enqueue(new Trip(id, $"{destination} is about {jumps} jumps. That's tight for {Deadline(left)} deadline."));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Could not measure the trip to {Destination} for mission {MissionId}", destination, id);
+        }
+    }
+
+    private static string Deadline(TimeSpan left) =>
+        left.TotalHours >= 1
+            ? $"a {Math.Round(left.TotalHours).ToString(CultureInfo.InvariantCulture)}-hour"
+            : $"a {Math.Max(1, Math.Round(left.TotalMinutes)).ToString(CultureInfo.InvariantCulture)}-minute";
+
+    private readonly record struct Trip(long MissionId, string Said);
 
     private Announcement? Redirect(JournalEvent journalEvent, MissionBoard board)
     {
