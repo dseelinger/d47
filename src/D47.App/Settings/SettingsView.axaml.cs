@@ -1980,14 +1980,27 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             order.Add(otherTabs);
         }
 
-        if (Cards.Children.SequenceEqual(order))
+        if (_layingOut || Cards.Children.SequenceEqual(order))
         {
             return;
         }
 
-        Cards.Children.Clear();
-        Cards.Children.AddRange(order);
+        // Clearing detaches a focused text box, whose LostFocus saves and refreshes back into here.
+        _layingOut = true;
+
+        try
+        {
+            Cards.Children.Clear();
+            Cards.Children.AddRange(order);
+        }
+        finally
+        {
+            _layingOut = false;
+        }
     }
+
+    /// <summary>Whether <see cref="LayoutPage"/> is replacing the page's children.</summary>
+    private bool _layingOut;
 
     /// <summary>The width a compact row's control is built to.</summary>
     private const double StandardControlWidth = 190;
@@ -3650,11 +3663,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         return (box, () =>
         {
-            box.Text = _settings!.Read(row.Key) ?? string.Empty;
+            // Not while the Commander is typing in it: leaving the box saves what they typed.
+            if (!box.IsFocused)
+            {
+                box.Text = _settings!.Read(row.Key) ?? string.Empty;
+            }
 
             // The default is a placeholder, never a value, so "I have not chosen" stays distinguishable from
             // "I chose the default" (Phase 4).
-            box.PlaceholderText = row.DefaultDisplayFor(_settings.Current) ?? string.Empty;
+            box.PlaceholderText = row.DefaultDisplayFor(_settings!.Current) ?? string.Empty;
         });
     }
 

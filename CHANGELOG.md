@@ -18,6 +18,9 @@ Plans and stories › **Narrator**, on by default, with the least and most time 
 and sends your whole backstory; with no model, or personality off, there is no narration, and Privacy
 and egress now says when the Narrator sends your texts.
 
+Typing into a text setting, such as Backstory, and then opening another settings page no longer
+closes D47, and what you typed is saved.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a
