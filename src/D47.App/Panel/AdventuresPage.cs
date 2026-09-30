@@ -873,6 +873,10 @@ public sealed class AdventuresPage : UserControl
                     stack.Children.Add(Trigger(Sentence(trigger), here));
                 }
             }
+            else if (told.Kind == AdventureToldKind.Nudge)
+            {
+                stack.Children.Add(Stamped("Narrator — ", told.At));
+            }
             else
             {
                 // The Commander's own words above the answer, so an aside reads as an exchange rather than as

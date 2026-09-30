@@ -14,6 +14,9 @@ public sealed record AdventureStanding
     /// <summary>When each beat reached so far fired, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Fired { get; init; } = [];
 
+    /// <summary>When each <c>LoadGame</c> since acceptance was written, oldest first.</summary>
+    public IReadOnlyList<DateTimeOffset> Loads { get; init; } = [];
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
@@ -194,6 +197,11 @@ public static class AdventureFold
         if (adventure.AbandonedAt is { } abandoned && journalEvent.Timestamp >= abandoned)
         {
             return standing;
+        }
+
+        if (journalEvent.Kind is "LoadGame")
+        {
+            return standing with { Loads = [.. standing.Loads, journalEvent.Timestamp] };
         }
 
         var current = standing.CurrentBeat;

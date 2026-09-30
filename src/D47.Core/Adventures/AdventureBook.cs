@@ -433,6 +433,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
             _standings[key] = after;
 
+            if (after.Fired.Count == before.Fired.Count)
+            {
+                continue;
+            }
+
             if (announce)
             {
                 _moments.Enqueue(new AdventureMoment(commander, adventure, after.Fired.Count - 1, journalEvent.Timestamp));

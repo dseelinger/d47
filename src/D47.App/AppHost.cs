@@ -2723,7 +2723,7 @@ public sealed class AppHost : IDisposable
             .Add(new AmbientCallout())
 
             // The Commander's story, told during a lull: the marker only, written by the model or not said.
-            .Add(new NarratorCallout(fight))
+            .Add(new NarratorCallout(fight) { Adventures = () => adventures.Active(gameState.Active?.Identity.FrontierId) })
             .Add(new IncomingMessages
             {
                 Enabled = () => settings.Current.Speech.SpeakIncomingMessages,
@@ -6010,7 +6010,7 @@ public sealed class AppHost : IDisposable
                     continue;
                 }
 
-                var varied = await VaryAsync(announcement).ConfigureAwait(false);
+                var varied = await VaryAsync(await RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);
 
                 // Nothing true left to say (#338): the model's line and the authored one both contradicted
                 // what the ship knows about itself, and both were logged on the way out.
@@ -6081,6 +6081,7 @@ public sealed class AppHost : IDisposable
 
                     // What the Commander actually heard about a story, kept (asked for 2026-08-22).
                     RecordAdventure(announcement);
+                    RecordNudge(announcement);
 
                     // After the fact has been spoken, and not awaited: the search is a round trip through
                     // somebody else's index, and the rest of this batch is where a danger callout would be
@@ -6149,6 +6150,63 @@ public sealed class AppHost : IDisposable
             // Stored rather than derived later: a story edited after a beat has fired would otherwise
             // re-describe what the Commander did with the trigger it has now.
             Trigger = reached?.Trigger.Describe(),
+        });
+    }
+
+    /// <summary>A nudge with the route distance to the adventure's next beat added, when it can be found.</summary>
+    private async Task<Announcement> RoutedAsync(Announcement announcement)
+    {
+        if (D47.Core.Callouts.NarratorCallout.Nudged(announcement.Key) is not { } key
+            || Adventures is not { } adventures
+            || adventures.Book.Standing(GameState.Active?.Identity.FrontierId, key) is not { } standing)
+        {
+            return announcement;
+        }
+
+        double? distance = null;
+
+        if (Galaxy is { } galaxy
+            && GameState.Active?.Location.StarSystem is { Length: > 0 } here
+            && D47.Core.Adventures.AdventureNudge.Destination(standing) is { } there)
+        {
+            try
+            {
+                using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                distance = string.Equals(here, there, StringComparison.OrdinalIgnoreCase)
+                    ? 0
+                    : await galaxy.DistanceAsync(here, there, budget.Token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("No route distance for the nudge toward {Name}: {Reason}", standing.Adventure.Name, ex.Message);
+            }
+        }
+
+        return announcement with { Text = D47.Core.Adventures.AdventureNudge.Facts(standing, distance) };
+    }
+
+    /// <summary>A spoken nudge, posted to Messages from the narrator and kept on the story's feed.</summary>
+    private void RecordNudge(Announcement announcement)
+    {
+        if (Adventures is not { } adventures
+            || D47.Core.Callouts.NarratorCallout.Nudged(announcement.Key) is not { } key)
+        {
+            return;
+        }
+
+        var commander = GameState.Active?.Identity.FrontierId;
+        var story = adventures.Book.Standing(commander, key);
+        var now = DateTimeOffset.Now;
+
+        Messages?.Post("narrator", story?.Adventure.Name ?? key, announcement.Text, now, key);
+
+        adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
+        {
+            Kind = D47.Core.Adventures.AdventureToldKind.Nudge,
+            Text = announcement.Text,
+            At = now,
+            Title = story?.CurrentBeat?.Title,
+            Trigger = story?.CurrentBeat?.Trigger.Describe(),
         });
     }
 

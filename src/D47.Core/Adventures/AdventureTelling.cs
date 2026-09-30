@@ -13,6 +13,9 @@ public enum AdventureToldKind
     /// context exists to produce.
     /// </summary>
     Aside,
+
+    /// <summary>The narrator leaning toward a beat the story has waited on too long.</summary>
+    Nudge,
 }
 
 /// <summary>One thing that was said about an adventure, kept (asked for 2026-08-22).</summary>

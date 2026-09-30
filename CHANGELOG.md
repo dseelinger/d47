@@ -19,6 +19,11 @@ wakes the Heretic. Each waking is announced once, aloud and in Messages. Once aw
 awake. An existing install keeps every core it had. COVAS speaks without the Guardian Voice Effects,
 whatever is ticked there.
 
+When an adventure has waited at its next beat through three play sessions and seven days, the
+**Narrator**'s next narration leans toward where it waits, with at most one such nudge per adventure
+each time D47 runs. The nudge is also posted to Messages, from the narrator, and appears in the
+adventure's story feed.
+
 ## 1.24.0 — A Narrator tells your story
 
 A new voice, the **Narrator**, now tells your Commander's story during a lull, in the third person

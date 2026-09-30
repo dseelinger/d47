@@ -247,6 +247,13 @@ unread count. Opening a message marks it read.
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
 message goes first.
 
+### A nudge when a story stalls
+
+When the next beat has waited through three play sessions and seven days since the last beat or nudge,
+the Narrator's next narration leans toward it. It may hint at where the beat waits; it never quotes the
+beat's line. It is posted to Messages from the narrator, and each adventure is nudged at most once each
+time D47 runs.
+
 ### Where it lives
 
 `data/adventures.json`, beside the executable, per Commander, and hand-editable like everything

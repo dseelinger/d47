@@ -141,6 +141,11 @@ public static class FlavourBriefs
             };
         }
 
+        if (NarratorCallout.Nudged(announcement.Key) is not null)
+        {
+            return Nudge(announcement.Text);
+        }
+
         if (announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal))
         {
             return Narration;
@@ -511,6 +516,17 @@ public static class FlavourBriefs
         NeedsAboutMe = true,
         NeedsStory = true,
         NeedsScenario = true,
+    };
+
+    /// <summary>The narration for an adventure that has waited too long at its next beat.</summary>
+    public static FlavourBrief Nudge(string facts) => Narration with
+    {
+        Instruction =
+            Narration.Instruction
+            + " The Commander's adventure has waited a long time at its next beat. Let this narration lean "
+            + "toward it: you may hint at where it waits, but do not order the Commander there and do not say "
+            + "what happens there. Mention fuel, jump range, cargo, credits, danger or rank only as the game "
+            + $"state gives them. What you know of the adventure: {facts}",
     };
 
     /// <summary>

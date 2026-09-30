@@ -1,3 +1,4 @@
+using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Journal;
 
@@ -15,11 +16,17 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
 
     public const string Key = KeyPrefix + "story";
 
+    /// <summary>A narration that leans toward a stalled adventure's next beat; the adventure's key follows.</summary>
+    public const string NudgePrefix = KeyPrefix + "nudge.";
+
     /// <summary>Off means no narration, whatever else is enabled.</summary>
     public Func<bool> Enabled { get; set; } = () => true;
 
     /// <summary>Whether the character sheet, the backstory or the scenario is set.</summary>
     public Func<bool> HasStory { get; set; } = () => false;
+
+    /// <summary>The adventures under way, checked for one stalled at its next beat.</summary>
+    public Func<IReadOnlyList<AdventureStanding>> Adventures { get; set; } = () => [];
 
     /// <summary>The shortest gap between two narrations.</summary>
     public TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(30);
@@ -34,6 +41,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     private DateTimeOffset _situationSince;
     private DateTimeOffset _lastSpokenAt;
     private int _picks;
+    private readonly HashSet<string> _nudged = new(StringComparer.OrdinalIgnoreCase);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -68,8 +76,15 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         }
 
         if (fight.On(context.Now, context.Status)
-            || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval)
-            || !HasStory())
+            || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval))
+        {
+            yield break;
+        }
+
+        var stalled = Adventures().FirstOrDefault(standing =>
+            !_nudged.Contains(standing.Adventure.Key) && AdventureNudge.IsDue(standing, context.Now));
+
+        if (stalled is null && !HasStory())
         {
             yield break;
         }
@@ -77,7 +92,14 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         _picks++;
         _lastSpokenAt = context.Now;
 
-        yield return new Announcement(Key, string.Empty)
+        if (stalled is not null)
+        {
+            _nudged.Add(stalled.Adventure.Key);
+        }
+
+        yield return new Announcement(
+            stalled is null ? Key : NudgePrefix + stalled.Adventure.Key,
+            stalled is null ? string.Empty : AdventureNudge.Facts(stalled, lightYears: null))
         {
             Urgency = CalloutUrgency.Routine,
             Cooldown = Interval,
@@ -86,6 +108,12 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             Variant = _picks - 1,
         };
     }
+
+    /// <summary>The adventure a nudge is about, or null when the key is not a nudge.</summary>
+    public static string? Nudged(string? key) =>
+        key is not null && key.StartsWith(NudgePrefix, StringComparison.Ordinal) && key.Length > NudgePrefix.Length
+            ? key[NudgePrefix.Length..]
+            : null;
 
     /// <summary>This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
     private TimeSpan Gap()
