@@ -1,0 +1,4 @@
+{ "timestamp":"2026-09-24T10:00:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.1.0.100", "build":"r300000/r0 " }
+{ "timestamp":"2026-09-24T10:00:05Z", "event":"Commander", "FID":"F100", "Name":"Fixture" }
+{ "timestamp":"2026-09-24T10:00:06Z", "event":"LoadGame", "FID":"F100", "Commander":"Fixture", "Horizons":true, "Odyssey":true, "Ship":"Python", "ShipID":1, "GameMode":"Solo", "Credits":1000000, "Loan":0 }
+{ "timestamp":"2026-09-24T10:00:30Z", "event":"Missions", "Active":[ { "MissionID":1066795391, "Name":"Mission_Courier", "PassengerMission":false, "Expires":3600 }, { "MissionID":1066820845, "Name":"Mission_Massacre_RankEmp", "PassengerMission":false, "Expires":50000 }, { "MissionID":1041612601, "Name":"Mission_Delivery_Boom", "PassengerMission":false, "Expires":90000 }, { "MissionID":1030000000, "Name":"Mission_Collect", "PassengerMission":false, "Expires":7200 } ], "Failed":[  ], "Complete":[  ] }

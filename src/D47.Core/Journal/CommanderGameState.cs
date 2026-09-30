@@ -58,6 +58,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
 
+    /// <summary>Their live missions.</summary>
+    public MissionBoard Missions { get; internal set; } = MissionBoard.Empty;
+
     /// <summary>Which Power they fly for, if any (Phase 15).</summary>
     public PowerplayPledge Pledge { get; private set; } = PowerplayPledge.None;
 
@@ -103,6 +106,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Contributions = EngineerContributions.Empty;
             Loadouts = ShipLoadouts.NoShips;
             Kit = OwnedKit.Empty;
+            Missions = MissionBoard.Empty;
             return;
         }
 
@@ -137,6 +141,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Reputation = Reputation.Apply(journalEvent);
         Contributions = Contributions.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
+        Missions = Missions.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);

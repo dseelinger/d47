@@ -854,6 +854,9 @@ public sealed class AppHost : IDisposable
             // And where the carrier was parked, so "where is my carrier" survives a restart.
             RestoreCarrier = fid => history.Carriers?.GetValueOrDefault(fid),
 
+            // And the live missions' detail, which is on each accept however many sessions ago it was.
+            RestoreMissions = fid => history.Missions?.GetValueOrDefault(fid),
+
             // And the names, so a failing lookup has something to match against on the very first question of
             // the session rather than after a few jumps.
             RestoreNames = fid => history.Names?.GetValueOrDefault(fid),

@@ -63,6 +63,12 @@ public sealed class GameStateStore
     public Func<string, CarrierState?>? RestoreCarrier { get; init; }
 
     /// <summary>
+    /// This Commander's live missions with the detail their older journals hold, on the same terms as
+    /// <see cref="RestoreFleet"/>.
+    /// </summary>
+    public Func<string, MissionBoard?>? RestoreMissions { get; init; }
+
+    /// <summary>
     /// Every place this Commander has met, on the same terms as <see cref="RestoreLoadouts"/> (#134).
     /// </summary>
     public Func<string, Listening.SpokenNames?>? RestoreNames { get; init; }
@@ -115,6 +121,11 @@ public sealed class GameStateStore
             if (!state.Carrier.Owned && RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
             {
                 state.Carrier = carrier.With(state.Carrier);
+            }
+
+            if (RestoreMissions?.Invoke(fid) is { IsKnown: true } missions)
+            {
+                state.Missions = missions.With(state.Missions);
             }
 
             // Merged rather than taken or refused: a ship boarded this session is in the live set and every
@@ -236,6 +247,11 @@ public sealed class GameStateStore
         if (RestoreCarrier?.Invoke(identity.FrontierId) is { IsKnown: true } carrier)
         {
             state.Carrier = carrier;
+        }
+
+        if (RestoreMissions?.Invoke(identity.FrontierId) is { IsKnown: true } missions)
+        {
+            state.Missions = missions;
         }
 
         if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)

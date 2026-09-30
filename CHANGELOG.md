@@ -36,6 +36,14 @@ scenario it is made as before.
 Typing into a text setting, such as Backstory, and then opening another settings page no longer
 closes D47, and what you typed is saved.
 
+D47 now keeps track of your active missions, and knows them after a restart: for each mission in
+the list Elite writes when you log in, it finds the mission's acceptance in your older journals and
+reads its destination, faction, cargo and reward from there. A redirected destination and cargo
+delivered so far are kept too. The game state sent to the language model with each question now says
+how many missions are active, what they pay in total, and where the three that expire soonest go and
+how long each has left. A mission accepted
+before any journal still on disk is known by its internal name only, with no destination or reward.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a

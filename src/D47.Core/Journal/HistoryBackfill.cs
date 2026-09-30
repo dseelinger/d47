@@ -13,13 +13,13 @@ public enum HistoryState
     /// <summary>Walking.</summary>
     Running,
 
-    /// <summary>Finished; the six dictionaries are there.</summary>
+    /// <summary>Finished; the seven dictionaries are there.</summary>
     Done,
 
-    /// <summary>Threw; the six dictionaries are not there and never will be.</summary>
+    /// <summary>Threw; the seven dictionaries are not there and never will be.</summary>
     Failed,
 
-    /// <summary>Told to stop part-way; the six dictionaries are not there and never will be.</summary>
+    /// <summary>Told to stop part-way; the seven dictionaries are not there and never will be.</summary>
     Stopped,
 }
 
@@ -87,6 +87,8 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, CarrierState>? Carriers { get; private set; }
 
+    public IReadOnlyDictionary<string, MissionBoard>? Missions { get; private set; }
+
     public IReadOnlyDictionary<string, SpokenNames>? Names { get; private set; }
 
     public IReadOnlyDictionary<string, UnlockEvidence>? Evidence { get; private set; }
@@ -141,6 +143,13 @@ public sealed class HistoryBackfill
                 () => CarrierBackfill.FromHistory(
                     Directory,
                     Loggers.CreateLogger(nameof(CarrierBackfill)),
+                    cancellation));
+
+            Missions = Timed(
+                "mission backfill",
+                () => MissionBackfill.FromHistory(
+                    Directory,
+                    Loggers.CreateLogger(nameof(MissionBackfill)),
                     cancellation));
 
             Names = Timed("spoken names", () => MineNames(cancellation));

@@ -37,6 +37,7 @@ public static class Situation
         AppendDrive(status, now, lines);
         AppendCredits(status, now, lines);
         AppendCarrier(state, lines);
+        AppendMissions(state, now, lines);
         AppendPowerplay(state, lines);
         AppendSession(state, lines);
 
@@ -307,6 +308,81 @@ public static class Situation
         }
 
         lines.Add(description.ToString());
+    }
+
+    private const int MaxMissionsNamed = 3;
+
+    /// <summary>The live missions: how many, the soonest to expire, and what they pay.</summary>
+    private static void AppendMissions(CommanderGameState state, DateTimeOffset? now, List<string> lines)
+    {
+        var missions = state.Missions.BySoonest();
+
+        if (missions.Count == 0)
+        {
+            return;
+        }
+
+        // Past its expiry but not yet failed by the game: counted, never named ahead of a live one.
+        var expired = now is { } clock
+            ? missions.Where(mission => mission.Expiry <= clock).ToList()
+            : [];
+
+        var named = missions.Except(expired).Take(MaxMissionsNamed);
+
+        var summary = new StringBuilder($"Missions: {missions.Count} active");
+
+        if (expired.Count > 0)
+        {
+            summary.Append($" ({expired.Count} past expiry)");
+        }
+
+        var rewards = missions.Where(mission => mission.Reward is not null).ToList();
+
+        if (rewards.Count > 0)
+        {
+            summary.Append($", {rewards.Sum(mission => mission.Reward.GetValueOrDefault()):N0} cr in rewards");
+        }
+
+        if (rewards.Count < missions.Count)
+        {
+            var unknown = missions.Count - rewards.Count;
+            summary.Append($" ({unknown} with no reward on record)");
+        }
+
+        lines.Add(summary.ToString());
+
+        foreach (var mission in named)
+        {
+            var line = new StringBuilder($"Mission: {mission.Title}");
+
+            if (!mission.HasDetail)
+            {
+                line.Append(", no destination or reward on record");
+            }
+            else if (mission.Destination is { } destination)
+            {
+                line.Append($", to {destination}");
+            }
+
+            if (mission.Expiry is { } expiry)
+            {
+                line.Append(now is { } asOf ? $", {TimeLeft(expiry - asOf)}" : $", expires {expiry:yyyy-MM-dd HH:mm} UTC");
+            }
+
+            lines.Add(line.ToString());
+        }
+    }
+
+    private static string TimeLeft(TimeSpan left)
+    {
+        if (left <= TimeSpan.Zero)
+        {
+            return "expired";
+        }
+
+        return left.TotalHours >= 1
+            ? $"{(int)left.TotalHours}h {left.Minutes}m left"
+            : $"{Math.Max(1, left.Minutes)}m left";
     }
 
     /// <summary>Which Power the Commander is pledged to, once a Powerplay event has said.</summary>
