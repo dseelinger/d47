@@ -199,6 +199,9 @@ a voice on a wreck's log. It may not invent a system, a station, a body, a facti
 game mechanic — every place in a generated story is resolved against the galaxy before you are
 offered it, and a miss refuses the whole draft by name.
 
+**No stop needs a permit.** Your journal does not say which permits you hold, so a generated story
+never sends you to a permit-locked system such as Shinrarta Dezhra or Sol, unless you are already in it.
+
 **Invented people are told about, never met.** The game has no act for meeting anyone, and the only
 thing you can actually do in a story is fly to the next beat. Ask the core whether one of them was
 real and it says they are someone in the story.
@@ -259,6 +262,24 @@ When the next beat has waited through three play sessions and seven days since t
 the Narrator's next narration leans toward it. It may hint at where the beat waits; it never quotes the
 beat's line. It is posted to Messages from the narrator, and each adventure is nudged at most once each
 time D47 runs.
+
+### Stock stories
+
+Open **Stories** on the Adventures tab for twenty stories written to run for months, a chapter at a
+time. Each card shows the story in your words, what your Commander believes, wants and needs, the lore
+it draws on, why it sends you to a Guardian beacon, and the kind of play it suits. Each story also has
+a hidden layer of twists. D47 keeps that layer sealed, never shows it, and sends it to the language
+model so the chapters can hint at it.
+
+**Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then
+begins. Chapter one always ends with an arrival at the Guardian beacon system nearest to you, where you
+scan the beacon. Each chapter is an adventure on this tab. When one finishes, the next is written from it
+and begins. **Switch** abandons the running story, keeps its chapters on file, and picks another.
+**Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
+pauses the story, and **Resume** on the Stories page begins that chapter again.
+
+One story runs at a time, kept in `data/story.json`. A story needs a language model and galaxy search,
+the same as asking for an adventure.
 
 ### Where it lives
 

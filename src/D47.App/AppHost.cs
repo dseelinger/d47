@@ -388,6 +388,9 @@ public sealed class AppHost : IDisposable
 
     public D47.Core.Messages.MessageStore? Messages { get; private set; }
 
+    /// <summary>The stock story the Commander picked, run as a chain of adventures.</summary>
+    public D47.Core.Stories.StoryDirector? Stories { get; private set; }
+
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
@@ -2131,6 +2134,18 @@ public sealed class AppHost : IDisposable
             PriceTable.Default,
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>());
 
+        // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
+        var storyDirector = new D47.Core.Stories.StoryDirector(
+            D47.Core.Stories.StoryStore.Open(
+                Path.Combine(paths.Data, "story.json"),
+                loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>()),
+            adventureBook,
+            D47.Core.Stories.StoryCatalog.Default,
+            adventureGenerator.GenerateAsync,
+            () => gameState.Active?.Location.StarPos,
+            backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
+            loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>());
+
         var host = self = new AppHost(
             paths,
             router,
@@ -2288,6 +2303,7 @@ public sealed class AppHost : IDisposable
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
         host.Adventures = (adventureBook, adventureGenerator);
+        host.Stories = storyDirector;
         host.Messages = messageStore;
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
@@ -2558,7 +2574,7 @@ public sealed class AppHost : IDisposable
         // The adventures file is hand-editable and polled like the others; and when a stamp has moved -
         // Begin, Begin again, a hand edit - the walk the book asked for happens here, on the tick, so the
         // live fold cannot interleave with it.
-        tick.Add("adventures", _ =>
+        tick.Add("adventures", context =>
         {
             adventureStore.Poll();
 
@@ -2566,6 +2582,16 @@ public sealed class AppHost : IDisposable
             {
                 adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(journalDirectory, adventureBook.EarliestAcceptance()));
             }
+
+            var commander = gameState.Active?.Identity.FrontierId;
+
+            foreach (var journalEvent in arrived)
+            {
+                storyDirector.Observe(journalEvent, commander);
+            }
+
+            // A finished chapter's successor is written on the pool; the tick only starts it.
+            _ = storyDirector.Tick(commander, context.Now);
         });
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());

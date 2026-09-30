@@ -24,6 +24,8 @@
     <EmbeddedResource Include="Knowledge\Exobiology.tsv" LogicalName="D47.Core.Exobiology" />
     <EmbeddedResource Include="Knowledge\Regions.tsv" LogicalName="D47.Core.Regions" />
     <EmbeddedResource Include="Knowledge\PermitSystems.tsv" LogicalName="D47.Core.PermitSystems" />
+    <EmbeddedResource Include="Stories\StoryCatalog.json" LogicalName="D47.Core.StoryCatalog" />
+    <EmbeddedResource Include="Stories\StoryCatalog.sealed" LogicalName="D47.Core.StoryCatalog.Sealed" />
   </ItemGroup>
 
   <ItemGroup>

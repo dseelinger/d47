@@ -35,6 +35,27 @@ public sealed class GuardianCores
         [869621795163] = "NGC 2451A Sector LX-U d2-25",
     }.ToFrozenDictionary();
 
+    /// <summary>Where each of <see cref="Beacons"/> is, from EDSM.</summary>
+    public static readonly FrozenDictionary<long, StarPosition> BeaconPositions = new Dictionary<long, StarPosition>
+    {
+        [13872878396833] = new(582.9375, -72.28125, -19.40625),
+        [4208161886922] = new(658.28125, -117.96875, -46.3125),
+        [182443805035] = new(739.46875, -140.53125, -13.375),
+        [9476442170745] = new(714.34375, -173.84375, -113.59375),
+        [9476979041665] = new(738.0625, -174.375, -103.25),
+        [13874757182857] = new(727.90625, -157.1875, -67.1875),
+        [869621795163] = new(726.0625, -163.5625, -171.78125),
+    }.ToFrozenDictionary();
+
+    /// <summary>The beacon system nearest <paramref name="here"/>, measured from Sol when it is unknown.</summary>
+    public static (long Address, string Name) NearestBeacon(StarPosition? here)
+    {
+        var from = here ?? StarPosition.Origin;
+        var address = BeaconPositions.MinBy(pair => pair.Value.DistanceTo(from)).Key;
+
+        return (address, Beacons[address]);
+    }
+
     private static readonly JsonSerializerOptions Json = new()
     {
         WriteIndented = true,

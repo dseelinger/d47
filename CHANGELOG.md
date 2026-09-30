@@ -6,6 +6,19 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.27.0 — Stock stories begin
+
+The Adventures tab has a **Stories** button, opening twenty stock stories written to run for months.
+Each card shows the story in your words, your Commander's heart, the lore it draws on, why it sends you
+to a Guardian beacon and the play it suits. **Pick** makes the story's words your Backstory and has the
+ship's AI write chapter one, which begins at once and ends at the Guardian beacon system nearest to
+you. When a chapter finishes, the next is written and begins. **Switch** abandons the running story and
+picks another, **Abandon** ends it, and neither changes your Guardian cores. Each story has a hidden
+layer D47 never shows; **Privacy and egress** says it is sent to the language model with each chapter.
+
+A generated adventure or story chapter no longer sends you to a system that needs a permit, such as
+Shinrarta Dezhra, unless you are already in it.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

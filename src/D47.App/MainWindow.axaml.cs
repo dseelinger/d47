@@ -189,7 +189,8 @@ public partial class MainWindow : Window
                         ? new D47.Core.Adventures.AdventureResolver(galaxy)
                         : null,
                     OpenSettings,
-                    host.Messages);
+                    host.Messages,
+                    host.Stories);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));

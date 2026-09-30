@@ -543,7 +543,8 @@ public static class EgressDisclosure
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
             + " Asking for an adventure sends where you are, the ships you own and your ranks; asking for the next "
             + "chapter of one also sends the adventure it follows — its spine, its beats and what was said as you flew it — "
-            + "and the name and premise of each chapter before that."
+            + "and the name and premise of each chapter before that. A chapter of a stock story also sends the story's "
+            + "card and its hidden layer, the twists d47 keeps from you and never shows."
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),

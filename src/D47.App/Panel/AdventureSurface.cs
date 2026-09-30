@@ -16,4 +16,5 @@ public sealed record AdventureSurface(
     Func<bool> GalaxySearchOn,
     Func<AdventureResolver?> Resolver,
     Action OpenSettings,
-    MessageStore? Messages = null);
+    MessageStore? Messages = null,
+    D47.Core.Stories.StoryDirector? Stories = null);

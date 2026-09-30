@@ -43,7 +43,9 @@ public sealed class AdventuresPage : UserControl
 
     private readonly Button _ask = new() { Content = "Ask for one" };
     private readonly Button _messages = new() { Name = "OpenMessages", Content = "Messages" };
+    private readonly Button _stories = new() { Name = "OpenStories", Content = "Stories" };
     private MessagesView? _inbox;
+    private StoriesView? _storiesView;
 
     /// <summary>The revision conversation per draft, for this session.</summary>
     private readonly Dictionary<string, List<AdventureRemark>> _exchanges = new(StringComparer.OrdinalIgnoreCase);
@@ -66,6 +68,8 @@ public sealed class AdventuresPage : UserControl
         _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, "Messages"));
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
         _messages.IsVisible = surface.Messages is not null;
+        _stories.Click += (_, _) => _nav.Drill(new NavCrumb(StoriesView.RootKey, "Stories"));
+        _stories.IsVisible = surface.Stories is not null;
 
         var bar = new StackPanel
         {
@@ -74,7 +78,7 @@ public sealed class AdventuresPage : UserControl
             Children =
             {
                 Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."),
-                Buttons(_ask, write, _messages),
+                Buttons(_ask, write, _stories, _messages),
             },
         };
 
@@ -157,6 +161,13 @@ public sealed class AdventuresPage : UserControl
         {
             _inbox ??= new MessagesView(inbox, _nav);
             return crumb.Key == MessagesView.RootKey ? _inbox : _inbox.Build(crumb);
+        }
+
+        if (_surface.Stories is { } director
+            && (crumb.Key == StoriesView.RootKey || crumb.Key.StartsWith(StoriesView.ReadPrefix, StringComparison.Ordinal)))
+        {
+            _storiesView ??= new StoriesView(_surface, director, _nav, _prompts);
+            return crumb.Key == StoriesView.RootKey ? _storiesView : _storiesView.Build(crumb);
         }
 
         if (crumb.Key.StartsWith(ReadPrefix, StringComparison.Ordinal))

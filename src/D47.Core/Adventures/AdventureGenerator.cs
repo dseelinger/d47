@@ -35,7 +35,24 @@ public sealed record AdventureAsk(
     AdventureLength Length = AdventureLength.Evening,
     bool ThisShipOnly = false,
     string? Brief = null,
-    AdventureChapter? Chapter = null);
+    AdventureChapter? Chapter = null,
+    AdventureStory? Story = null);
+
+/// <summary>The Guardian beacon system a story's first chapter ends at.</summary>
+public sealed record AdventureBeacon(long SystemAddress, string System);
+
+/// <summary>
+/// The stock story a chapter belongs to: both layers, how long it has run, and the beacon chapter one ends at.
+/// </summary>
+public sealed record AdventureStory(
+    string Id,
+    string Title,
+    string Public,
+    string Hidden,
+    int Chapter,
+    int DaysRunning,
+    int? DaysSinceBeacon,
+    AdventureBeacon? Beacon = null);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -258,6 +275,7 @@ public sealed class AdventureGenerator(
             Beats = resolved.Beats,
             Previous = previous is null ? null : previous with { Previous = null },
             Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
+            StoryId = ask.Story?.Id ?? previous?.StoryId,
         };
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
@@ -325,7 +343,9 @@ public sealed class AdventureGenerator(
             var stations = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
             var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
 
-            return new Candidates(stations.Stations, bodies.Bodies);
+            return new Candidates(
+                [.. stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName))],
+                [.. bodies.Bodies.Where(body => !facts.NeedsPermit(body.SystemName))]);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -483,6 +503,11 @@ public sealed class AdventureGenerator(
             AppendChapter(text, chapter);
         }
 
+        if (ask.Story is { } story)
+        {
+            AppendStory(text, story);
+        }
+
         text.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(ask.Brief))
@@ -581,6 +606,44 @@ public sealed class AdventureGenerator(
             + "what it settled stays settled.");
     }
 
+    /// <summary>
+    /// Both layers of a stock story, the clue pace, and for chapter one the beacon its last beat arrives at.
+    /// </summary>
+    private static void AppendStory(StringBuilder text, AdventureStory story)
+    {
+        text.AppendLine();
+        text.AppendLine(
+            $"This adventure is chapter {story.Chapter.ToString(CultureInfo.InvariantCulture)} of \"{story.Title}\", a stock story the "
+            + "Commander chose. It runs for months or years, one chapter at a time, as they play.");
+        text.AppendLine();
+        text.AppendLine("What the Commander knows — the public layer, which they chose the story by:");
+        text.AppendLine(story.Public);
+        text.AppendLine();
+        text.AppendLine(
+            "What only you know — the hidden layer. Never state it, and never write a line that states it. It "
+            + "surfaces as clues a Commander could miss:");
+        text.AppendLine(story.Hidden);
+        text.AppendLine();
+        text.Append($"The story has been running for {story.DaysRunning.ToString(CultureInfo.InvariantCulture)} days");
+        text.AppendLine(story.DaysSinceBeacon is { } scanned
+            ? $", and the Commander scanned the Guardian beacon {scanned.ToString(CultureInfo.InvariantCulture)} days ago."
+            : ", and the Commander has not yet scanned a Guardian beacon.");
+        text.AppendLine(
+            "Use at most one clue in this chapter, from the stage that fits how long it has run — weeks, months, or a year "
+            + "or more — and never one from a later stage. The hidden layer is fiction only: never misstate fuel, cargo, "
+            + "credits, routes, rank or danger.");
+
+        if (story.Beacon is { } beacon)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"This is the first chapter, and it ends at a Guardian beacon: its last beat is \"arrive\" at {beacon.System}, "
+                + "where the Commander scans the beacon with the ship's data-link scanner. That scan is when the Guardian cores "
+                + "come aboard. The reason to go is the public layer's beacon line. That beat may be farther than the reach; "
+                + "every other hop keeps to it.");
+        }
+    }
+
     private static string BeatsInstruction(
         AdventureAsk ask,
         Facts facts,
@@ -642,6 +705,11 @@ public sealed class AdventureGenerator(
 
         AppendCandidates(text, candidates);
 
+        if (ask.Story is { } story)
+        {
+            AppendStory(text, story);
+        }
+
         text.AppendLine();
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
         text.AppendLine("Each beat waits for exactly one of six things, and nothing else exists:");
@@ -652,7 +720,7 @@ public sealed class AdventureGenerator(
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine("- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship.");
         text.AppendLine();
-        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
+        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
         text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next beat, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next beat's place, and the line may point them at it.");
         text.AppendLine("Give each beat a short title — a chapter name, never a number.");
@@ -962,7 +1030,11 @@ public sealed class AdventureGenerator(
                         }
                     }
 
-                    if (hop is { } far && far > facts.RadiusLightYears)
+                    if (facts.NeedsPermit(place.System))
+                    {
+                        refusals.Add($"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
+                    }
+                    else if (hop is { } far && far > facts.RadiusLightYears && place.SystemAddress != ask.Story?.Beacon?.SystemAddress)
                     {
                         refusals.Add($"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
                     }
@@ -993,6 +1065,13 @@ public sealed class AdventureGenerator(
                     Line = beat.Line,
                 });
             }
+        }
+
+        if (ask.Story?.Beacon is { } beacon
+            && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Arrive
+                || resolved.LastOrDefault()?.Trigger.SystemAddress != beacon.SystemAddress))
+        {
+            refusals.Add($"The last beat must be \"arrive\" at {beacon.System}, where the Commander scans the Guardian beacon.");
         }
 
         return new Resolved(resolved, refusals);
@@ -1055,6 +1134,13 @@ public sealed class AdventureGenerator(
         }
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
+
+        /// <summary>
+        /// Whether a system needs a permit. The journal does not say which permits are held, so every locked
+        /// system counts except the one the Commander is already in.
+        /// </summary>
+        public bool NeedsPermit(string? system) =>
+            PermitSystemTable.Locked(system) && !string.Equals(system, System, StringComparison.OrdinalIgnoreCase);
 
         /// <summary>Whether a beat's station has to have a large pad for anyone to dock there.</summary>
         public bool NeedsLargePad(bool thisShipOnly)

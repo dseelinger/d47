@@ -354,6 +354,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             AbandonedAt = record.AbandonedAt,
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
+            StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
         };
 
         var refusals = AdventureValidation.Problems(adventure);
@@ -411,6 +412,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         AbandonedAt = adventure.AbandonedAt,
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
+        StoryId = adventure.StoryId,
     };
 
     private sealed class Document
@@ -450,6 +452,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public AdventureRecord? Previous { get; set; }
 
         public string? Follows { get; set; }
+
+        public string? StoryId { get; set; }
     }
 
     private sealed class SpineRecord
