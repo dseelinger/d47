@@ -44,6 +44,9 @@ public sealed record SessionSummary
     /// <summary>The credit balance Elite last reported, from LoadGame.</summary>
     public long? Balance { get; init; }
 
+    /// <summary>Influence marks reported on completed missions.</summary>
+    public InfluenceLedger Influence { get; init; } = InfluenceLedger.Empty;
+
     public long TotalEarnings =>
         BountyEarnings + CombatBondEarnings + TradeEarnings +
         ExplorationEarnings + MissionEarnings + VoucherEarnings;
@@ -105,6 +108,7 @@ public sealed record SessionSummary
             "MissionCompleted" => updated with
             {
                 MissionEarnings = MissionEarnings + (journalEvent.Long("Reward") ?? 0),
+                Influence = Influence.Apply(journalEvent),
             },
 
             "RedeemVoucher" => updated with

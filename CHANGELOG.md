@@ -91,6 +91,11 @@ minutes per jump. If that is longer than the time left, it says "Wadjuk is about
 12-hour deadline." It says nothing when the trip fits, when the distance cannot be found, or when Galaxy search
 is off. The line is part of **Mission hand-ins and expiry**.
 
+The session report now includes the influence Elite reported on your completed missions, per faction, in
+Frontier's `+` notation with the direction from the trend: "Influence from missions: Party of Yoru up ++ x4,
++ x1; Tirada Jet Comms Limited down + x2." At most five factions are named, most marks first. The logbook
+records the same line as one mission fact.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a

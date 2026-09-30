@@ -258,6 +258,8 @@ public sealed class LogDigestBuilder(ILogger logger)
         private readonly Trail _scooped = new();
         private readonly Trail _missionsAccepted = new();
         private readonly Trail _missionsLost = new();
+        private readonly Trail _influence = new();
+        private InfluenceLedger _influenceLedger = InfluenceLedger.Empty;
 
         private readonly SortedSet<string> _systems = new(StringComparer.Ordinal);
         private readonly SortedSet<string> _stations = new(StringComparer.Ordinal);
@@ -440,6 +442,14 @@ public sealed class LogDigestBuilder(ILogger logger)
                     break;
 
                 case "MissionCompleted":
+                    var ledger = _influenceLedger.Apply(journalEvent);
+
+                    if (!ReferenceEquals(ledger, _influenceLedger))
+                    {
+                        _influenceLedger = ledger;
+                        _influence.Add(journalEvent);
+                    }
+
                     Moment(
                         journalEvent,
                         LogFactKind.Mission,
@@ -628,6 +638,8 @@ public sealed class LogDigestBuilder(ILogger logger)
                     _missionsLost.Fact(
                         LogFactKind.Mission,
                         $"Failed or abandoned {Count(_missionsLost.Count)} mission(s)."),
+
+                    _influence.Fact(LogFactKind.Mission, _influenceLedger.Describe() ?? ""),
 
                     _materials.Fact(
                         LogFactKind.Exploration,

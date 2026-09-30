@@ -1353,6 +1353,11 @@ public static partial class JournalCapability
             report.AppendLine($"{session.MaterialsGained} material units collected.");
         }
 
+        if (session.Influence.Describe() is { } influence)
+        {
+            report.AppendLine(influence);
+        }
+
         if (session.Interdictions > 0)
         {
             report.AppendLine($"{session.Interdictions} interdiction{(session.Interdictions == 1 ? "" : "s")}.");
