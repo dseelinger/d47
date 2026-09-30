@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -302,7 +303,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             {
                 problems.Add(new AdventureProblem(
                     where,
-                    $"beat {index + 1} names a trigger \"{beat.Trigger?.Kind ?? string.Empty}\"; the five are "
+                    $"beat {index + 1} names a trigger \"{beat.Trigger?.Kind ?? string.Empty}\"; the six are "
                     + string.Join(", ", AdventureValidation.Kinds)));
                 return null;
             }
@@ -320,6 +321,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     BodyId = beat.Trigger.BodyId,
                     Career = Careers.Match(beat.Trigger.Career) ?? beat.Trigger.Career?.Trim(),
                     Rank = beat.Trigger.Rank,
+                    ShipType = EliteSpecifications.HullSymbol(beat.Trigger.ShipType) ?? beat.Trigger.ShipType?.Trim(),
                     System = beat.Trigger.System?.Trim(),
                     Station = beat.Trigger.Station?.Trim(),
                     Body = beat.Trigger.Body?.Trim(),
@@ -397,6 +399,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     BodyId = beat.Trigger.BodyId,
                     Career = beat.Trigger.Career,
                     Rank = beat.Trigger.Rank,
+                    ShipType = beat.Trigger.ShipType,
                     System = beat.Trigger.System,
                     Station = beat.Trigger.Station,
                     Body = beat.Trigger.Body,
@@ -486,6 +489,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public string? Career { get; set; }
 
         public int? Rank { get; set; }
+
+        public string? ShipType { get; set; }
 
         public string? System { get; set; }
 

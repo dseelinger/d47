@@ -35,25 +35,28 @@ nav_order: 205
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> A beat waits for one of five things. There is no sixth.</h2>
-<svg viewBox="0 0 880 232" role="img" aria-label="The five triggers a beat can wait for: arrive, dock, land, scan, reach a rank">
- <rect x="20" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="102" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ARRIVE</text>
- <text x="102" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a system</text>
- <rect x="196" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="278" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">DOCK</text>
- <text x="278" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a station</text>
- <rect x="372" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="454" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LAND</text>
- <text x="454" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">on a body</text>
- <rect x="548" y="30" width="164" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="630" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SCAN</text>
- <text x="630" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">a body</text>
- <rect x="724" y="30" width="136" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="792" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">RANK</text>
- <text x="792" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">reach one</text>
- <rect x="20" y="142" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="172" text-anchor="middle" font-size="16" fill="var(--text)">All five are things your journal already records, which is why they are the whole list.</text>
+<h2><span class="num">2</span> A beat waits for one of six things. There is no seventh.</h2>
+<svg viewBox="0 0 880 232" role="img" aria-label="The six triggers a beat can wait for: arrive, dock, land, scan, reach a rank, board a ship">
+ <rect x="20" y="30" width="130" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="85" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ARRIVE</text>
+ <text x="85" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a system</text>
+ <rect x="162" y="30" width="130" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="227" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">DOCK</text>
+ <text x="227" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">at a station</text>
+ <rect x="304" y="30" width="130" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="369" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LAND</text>
+ <text x="369" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">on a body</text>
+ <rect x="446" y="30" width="130" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="511" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SCAN</text>
+ <text x="511" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">a body</text>
+ <rect x="588" y="30" width="130" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="653" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">RANK</text>
+ <text x="653" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">reach one</text>
+ <rect x="730" y="30" width="130" height="92" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="795" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">BOARD</text>
+ <text x="795" y="98" text-anchor="middle" font-size="14" fill="var(--text-muted)">a ship</text>
+<rect x="20" y="142" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="172" text-anchor="middle" font-size="16" fill="var(--text)">All six are things your journal already records, which is why they are the whole list.</text>
  <text x="440" y="198" text-anchor="middle" font-size="15" fill="var(--text-muted)">A story cannot wait for something Elite never writes down — so it is not offered.</text>
 </svg>
 </section>
@@ -106,20 +109,21 @@ the draft.
 **Save** keeps it. **Save and begin** keeps it and starts it immediately, which is the usual choice
 for something you wrote because you are about to go and fly it.
 
-### Beats, and the five triggers
+### Beats, and the six triggers
 
 A beat is *something that happens*, *where*, and *the line said when it does*. Adding one asks
 those three in turn.
 
-The trigger is one of five, and the list is closed:
+The trigger is one of six, and the list is closed:
 
 - **Arrive at a system**
 - **Dock at a station**
 - **Land on a body**
 - **Scan a body**
 - **Reach a rank**
+- **Board a ship** — fires when you buy the ship or swap into it
 
-That is not a starting set. Those are the five things your own journal records unambiguously, and a
+That is not a starting set. Those are the six things your own journal records unambiguously, and a
 story that waits for something Elite never writes down would be a story that never advances — so
 it is not offered rather than offered and broken.
 

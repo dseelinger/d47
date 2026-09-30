@@ -15,6 +15,10 @@ you flew it, and each chapter before that by name and premise only. The draft ca
 adventure the new one follows. **Privacy and egress** now says that asking for an adventure sends
 your location, ships and ranks, and that a next chapter also sends the story it follows.
 
+An adventure beat can now wait for you to **board a ship**: it fires when you buy that ship or swap into
+it. You can add one in the adventure editor, or write `"kind": "board"` with a `shipType` in the file.
+The ship's AI writes a board beat only for a ship your brief names.
+
 ## 1.25.0 — Messages and the sleeping cores
 
 The Adventures tab has a **Messages** button. Every adventure beat D47 speaks is also kept there as a

@@ -172,6 +172,10 @@ public static class AdventureFold
                 && raw.Int(career) is { } reached
                 && reached >= trigger.Rank,
 
+            TriggerKind.Board =>
+                journalEvent.Kind is "ShipyardNew" or "ShipyardSwap"
+                && string.Equals(raw.String("ShipType"), trigger.ShipType, StringComparison.OrdinalIgnoreCase),
+
             _ => false,
         };
     }

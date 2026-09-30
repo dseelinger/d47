@@ -11,7 +11,7 @@ public enum AdventureSource
 }
 
 /// <summary>
-/// The five things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is
+/// The six things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is
 /// free").
 /// </summary>
 public enum TriggerKind
@@ -30,6 +30,9 @@ public enum TriggerKind
 
     /// <summary><c>Promotion</c> in a career to at least a rank.</summary>
     Rank,
+
+    /// <summary><c>ShipyardNew</c> or <c>ShipyardSwap</c> into a <c>ShipType</c>.</summary>
+    Board,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -49,6 +52,9 @@ public sealed record AdventureTrigger
     /// <summary>The rank to reach, 1 to 8.</summary>
     public int? Rank { get; init; }
 
+    /// <summary>The hull to board, as the journal spells it: lower case, such as <c>cobramkiii</c>.</summary>
+    public string? ShipType { get; init; }
+
     public string? System { get; init; }
 
     public string? Station { get; init; }
@@ -62,6 +68,7 @@ public sealed record AdventureTrigger
         TriggerKind.Dock => MarketId is not null,
         TriggerKind.Land or TriggerKind.Scan => SystemAddress is not null && BodyId is not null,
         TriggerKind.Rank => Career is not null && Rank is not null,
+        TriggerKind.Board => ShipType is not null,
         _ => false,
     };
 
@@ -73,6 +80,7 @@ public sealed record AdventureTrigger
         TriggerKind.Land => $"land on {Body ?? Address(SystemAddress, BodyId)}{In()}",
         TriggerKind.Scan => $"scan {Body ?? Address(SystemAddress, BodyId)}{In()}",
         TriggerKind.Rank => $"reach {Careers.Word(Career)} rank {Rank}",
+        TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
         _ => Kind.ToString(),
     };
 
@@ -83,6 +91,9 @@ public sealed record AdventureTrigger
     public string HandOff() => Kind == TriggerKind.Scan
         ? $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before."
         : $"Next: {Describe()}.";
+
+    private static string Article(string name) =>
+        name == "an unknown ship" ? name : (char.ToLowerInvariant(name[0]) is 'a' or 'e' or 'i' or 'o' ? "an " : "a ") + name;
 
     private string In() => System is { Length: > 0 } system && !string.Equals(system, Body, StringComparison.Ordinal)
         ? $" in {system}"

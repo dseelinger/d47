@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Adventures;
 
@@ -61,8 +62,8 @@ public static class Careers
 /// </summary>
 public static class AdventureValidation
 {
-    /// <summary>The five, in the words the file and the chooser use.</summary>
-    public static IReadOnlyList<string> Kinds { get; } = ["arrive", "dock", "land", "scan", "rank"];
+    /// <summary>The six, in the words the file and the chooser use.</summary>
+    public static IReadOnlyList<string> Kinds { get; } = ["arrive", "dock", "land", "scan", "rank", "board"];
 
     public static bool TryKind(string? text, out TriggerKind kind)
     {
@@ -171,6 +172,18 @@ public static class AdventureValidation
                     if (beat.Trigger.Rank is not (>= 1 and <= RankStanding.Elite))
                     {
                         problems.Add($"{where} names rank {beat.Trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; ranks run 1 to {RankStanding.Elite}.");
+                    }
+
+                    break;
+
+                case TriggerKind.Board:
+                    if (string.IsNullOrWhiteSpace(beat.Trigger.ShipType))
+                    {
+                        problems.Add($"{where} boards no ship: it names no ship type.");
+                    }
+                    else if (EliteSpecifications.HullName(beat.Trigger.ShipType) is null)
+                    {
+                        problems.Add($"{where} names a ship \"{beat.Trigger.ShipType.Trim()}\" that d47 has no name for.");
                     }
 
                     break;

@@ -242,13 +242,14 @@ public sealed class AdventureEditor : UserControl
                 "adventure.kind",
                 "What happens",
                 "What does this beat wait for?",
-                "The five things a beat can wait for. Nothing else exists.",
+                "The six things a beat can wait for. Nothing else exists.",
                 [
                     new ChoiceOption("arrive", "Arrive at a system"),
                     new ChoiceOption("dock", "Dock at a station"),
                     new ChoiceOption("land", "Land on a body"),
                     new ChoiceOption("scan", "Scan a body"),
                     new ChoiceOption("rank", "Reach a rank"),
+                    new ChoiceOption("board", "Board a ship"),
                 ],
                 "arrive",
                 ChoiceSurface.Layer),
@@ -281,6 +282,12 @@ public sealed class AdventureEditor : UserControl
         if (beat.Trigger.Kind == TriggerKind.Rank)
         {
             ChooseRank(index, beat);
+            return;
+        }
+
+        if (beat.Trigger.Kind == TriggerKind.Board)
+        {
+            ChooseShip(index, beat);
             return;
         }
 
@@ -397,6 +404,21 @@ public sealed class AdventureEditor : UserControl
                 }
             });
         });
+    }
+
+    private void ChooseShip(int index, AdventureBeat beat)
+    {
+        Enter("adventure.ship", "Ship", "Which ship?", "Fires when you buy it or swap into it — \"Sidewinder\", \"Cobra Mk III\".",
+            EliteSpecifications.HullName(beat.Trigger.ShipType) ?? string.Empty,
+            EntrySurface.Voice,
+            value =>
+            {
+                ReplaceBeat(index, beat with { Trigger = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = EliteSpecifications.HullSymbol(value) } });
+                AskForLine(index);
+            },
+            value => EliteSpecifications.HullSymbol(value) is null
+                ? EntryVerdict.No($"d47 has no ship called \"{value.Trim()}\".")
+                : EntryVerdict.Ok);
     }
 
     private void ChooseRank(int index, AdventureBeat beat)

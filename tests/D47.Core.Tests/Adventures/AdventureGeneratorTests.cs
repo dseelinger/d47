@@ -205,6 +205,43 @@ public sealed class AdventureGeneratorTests
         Assert.Equal(8, outcome.Draft.Beats[1].Trigger.Rank);
     }
 
+    private const string BoardBeats = """
+        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Hull", "function": "turn", "kind": "board", "ship": "Cobra MkIII", "line": "Sign for it."}
+        ]}
+        """;
+
+    [Fact]
+    public async Task AShipBeatStandsWhenTheBriefNamesTheShip()
+    {
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BoardBeats));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(
+            new AdventureAsk(Length: AdventureLength.Short, Brief: "a story that ends with me in a cobra mkiii"), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var board = outcome.Draft!.Beats[1].Trigger;
+        Assert.Equal(TriggerKind.Board, board.Kind);
+        Assert.Equal("cobramkiii", board.ShipType);
+    }
+
+    [Fact]
+    public async Task AShipBeatTheBriefDidNotNameGoesBackThroughTheTurn()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(BoardBeats),
+            RoundScriptedLlmProvider.Saying(GoodBeats));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(
+            new AdventureAsk(Length: AdventureLength.Short, Brief: "a quiet trading story"), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(3, provider.CallCount);
+        Assert.Contains("which the Commander's brief does not name", provider.Requests[2].Prompt.History[0].Text);
+    }
+
     [Fact]
     public async Task ARankBeatWithNoCareerIsRefusedInWordsTheModelCanActOn()
     {

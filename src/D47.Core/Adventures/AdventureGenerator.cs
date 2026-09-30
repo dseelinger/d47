@@ -448,7 +448,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("Rules:");
         text.AppendLine("- The protagonist is the Commander. You are a character in it too, as yourself.");
         text.AppendLine("- You may invent people, a message, a wreck's log, a reason somebody left. You may NOT invent a star system, a station, a body, a faction, a Power or a game mechanic. Places must be real and are listed below.");
-        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous. The only things they can do in this story are fly to a system, dock, land, scan and earn a rank, so the story must turn on what they see at each place and what was left there, not on anyone they could question.");
+        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous. The only things they can do in this story are fly to a system, dock, land, scan, earn a rank and, when the brief below names a ship, board that ship, so the story must turn on what they see at each place and what was left there, not on anyone they could question.");
         text.AppendLine("- Never tell the Commander what they feel. Show the world and let the feeling arrive.");
         text.AppendLine();
         text.Append(facts.Describe());
@@ -644,12 +644,13 @@ public sealed class AdventureGenerator(
 
         text.AppendLine();
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
-        text.AppendLine("Each beat waits for exactly one of five things, and nothing else exists:");
+        text.AppendLine("Each beat waits for exactly one of six things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
+        text.AppendLine("- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship.");
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
@@ -708,9 +709,9 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
             + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
-            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\", "
+            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\", "
             + "\"system\": string, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
-            + "\"rank\": number|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
+            + "\"rank\": number|null, \"ship\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
 
         return text.ToString();
@@ -768,7 +769,7 @@ public sealed class AdventureGenerator(
         }
     }
 
-    private sealed record ReadBeat(string Title, string? Function, TriggerKind Kind, string? System, string? Station, string? Body, string? Career, int? Rank, string Line)
+    private sealed record ReadBeat(string Title, string? Function, TriggerKind Kind, string? System, string? Station, string? Body, string? Career, int? Rank, string? Ship, string Line)
     {
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
         public string Describe() => Kind switch
@@ -777,6 +778,7 @@ public sealed class AdventureGenerator(
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
             TriggerKind.Land => $"land: {Body ?? "?"} in {System ?? "?"}",
             TriggerKind.Scan => $"scan: {Body ?? "?"} in {System ?? "?"}",
+            TriggerKind.Board => $"board: {Ship ?? "?"}",
             _ => $"arrive: {System ?? "?"}",
         };
     }
@@ -813,6 +815,7 @@ public sealed class AdventureGenerator(
                         Text(element, "body"),
                         Text(element, "career") ?? Text(element, "ladder") ?? (nested is { } trigger ? Text(trigger, "career") ?? Text(trigger, "ladder") : null),
                         Integer(element, "rank") ?? Integer(element, "to") ?? (nested is { } nestedRank ? Integer(nestedRank, "rank") ?? Integer(nestedRank, "to") ?? Integer(nestedRank, "level") : null),
+                        Text(element, "ship"),
                         Text(element, "line") ?? string.Empty));
                 }
             }
@@ -880,7 +883,22 @@ public sealed class AdventureGenerator(
             var where = $"Beat {index + 1} ({beat.Title})";
             AdventureTrigger? trigger = null;
 
-            if (beat.Kind == TriggerKind.Rank)
+            if (beat.Kind == TriggerKind.Board)
+            {
+                if (EliteSpecifications.HullSymbol(beat.Ship) is not { } symbol)
+                {
+                    refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; name a ship or use another kind of beat.");
+                }
+                else if (!BriefNames(ask.Brief, symbol))
+                {
+                    refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of beat.");
+                }
+                else
+                {
+                    trigger = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = symbol };
+                }
+            }
+            else if (beat.Kind == TriggerKind.Rank)
             {
                 var career = Careers.Match(beat.Career);
                 var careers = string.Join(", ", Careers.Keys.Select(Careers.Word));
@@ -978,6 +996,16 @@ public sealed class AdventureGenerator(
         }
 
         return new Resolved(resolved, refusals);
+    }
+
+    /// <summary>Whether the brief says the hull's name, in any spacing or case.</summary>
+    private static bool BriefNames(string? brief, string symbol)
+    {
+        static string Plain(string text) => string.Concat(text.Where(char.IsLetterOrDigit)).ToLowerInvariant();
+
+        return !string.IsNullOrWhiteSpace(brief)
+               && EliteSpecifications.HullName(symbol) is { } name
+               && Plain(brief).Contains(Plain(name), StringComparison.Ordinal);
     }
 
     // ---- what d47 reads rather than asks ---------------------------------------------------
