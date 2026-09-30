@@ -128,6 +128,11 @@ public sealed class PhraseBook
                 .Where(phrase => !claimed.Contains(phrase))
                 .Select(phrase => Dynamic(registry, phrase, NavigationCapability.Id, "copy_to_clipboard", null)));
 
+        entries.AddRange(
+            HandInOffer.EveryPhrase
+                .Where(phrase => !claimed.Contains(phrase))
+                .Select(phrase => Dynamic(registry, phrase, NavigationCapability.Id, "plot_course", null)));
+
         if (!claimed.Contains(CommunityGoalCourse.SetCourse))
         {
             entries.Add(Dynamic(registry, CommunityGoalCourse.SetCourse, NavigationCapability.Id, "plot_course", null));

@@ -1067,6 +1067,7 @@ public sealed class AppHost : IDisposable
 
         var fight = new NearbyFight();
         var scenes = new SceneTracker();
+        var handInOffer = new D47.Core.Conversation.HandInOffer();
 
         var callouts = BuildCallouts(
             settings,
@@ -1083,7 +1084,8 @@ public sealed class AppHost : IDisposable
             exobiology,
             cartography,
             fight,
-            scenes);
+            scenes,
+            handInOffer);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -1964,6 +1966,7 @@ public sealed class AppHost : IDisposable
         // phrases that take up a clipboard offer.
         IEnumerable<DynamicCommand> OtherDynamicCommands() =>
             clipboardOffer.Phrases()
+                .Concat(handInOffer.Phrases())
 
                 // And "set course for my carrier", which is an instruction rather than a topic and has to
                 // out-match the "my carrier" keyword that was answering it with a position report
@@ -2603,7 +2606,8 @@ public sealed class AppHost : IDisposable
         D47.Core.Journal.ExobiologyLedger exobiology,
         D47.Core.Journal.CartographyLedger cartography,
         NearbyFight fight,
-        SceneTracker scenes)
+        SceneTracker scenes,
+        D47.Core.Conversation.HandInOffer handInOffer)
     {
         var sceneCallout = new SceneCallout(scenes);
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
@@ -2642,7 +2646,7 @@ public sealed class AppHost : IDisposable
             // Phase 11.
             .Add(new CarrierCallout())
 
-            .Add(new MissionCallout())
+            .Add(new MissionCallout { Offer = handInOffer })
 
             // Phase 17.
             .Add(new SamplingCallout { Ledger = exobiology })

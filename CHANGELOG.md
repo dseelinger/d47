@@ -66,6 +66,12 @@ mission is announced an hour before it expires and again ten minutes before, onc
 already inside the hour when D47 starts gets only the warning still ahead. The row is Settings ›
 Callouts › Plans and stories › **Mission hand-ins and expiry**, on by default.
 
+When a mission's work is done and its hand-in moves, D47 now says so: "That's Courier to Sol done. Hand-in
+moved to Jameson Memorial in Sol. Say plot it to set the course." Saying "plot it", "plot the hand-in" or
+"set course for the hand-in" then plots that system, or copies it to the clipboard when auto-plot is off.
+The offer stands until another redirect replaces it or the mission leaves the board. Nothing is plotted
+until you say so.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a

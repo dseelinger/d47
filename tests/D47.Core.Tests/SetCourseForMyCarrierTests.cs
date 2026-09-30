@@ -139,7 +139,10 @@ public class SetCourseForMyCarrierTests
         var lastFound = new LastFoundSystem();
         lastFound.Remember("HR 6012");
 
-        return [.. Commands(Parked), .. CommunityGoalCourse.Phrases(lastFound)];
+        var handIn = new HandInOffer();
+        handIn.Open(1, "Sol");
+
+        return [.. Commands(Parked), .. CommunityGoalCourse.Phrases(lastFound), .. handIn.Phrases()];
     }
 
     /// <summary>

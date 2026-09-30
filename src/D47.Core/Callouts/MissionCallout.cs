@@ -1,3 +1,4 @@
+using D47.Core.Conversation;
 using D47.Core.Journal;
 
 namespace D47.Core.Callouts;
@@ -12,6 +13,11 @@ public sealed class MissionCallout : ICallout
     public const string UnclaimedKey = "missions.unclaimed";
 
     public const string ExpiryKey = "missions.expiry";
+
+    public const string RedirectedKey = "missions.redirected";
+
+    /// <summary>Opened on a redirect, withdrawn once the mission is off the board.</summary>
+    public HandInOffer? Offer { get; init; }
 
     /// <summary>The warnings, furthest first.</summary>
     private static readonly (string Name, TimeSpan Before, string Said)[] Warnings =
@@ -35,12 +41,21 @@ public sealed class MissionCallout : ICallout
             yield break;
         }
 
+        if (Offer is { MissionId: { } offered } && board.For(offered) is null)
+        {
+            Offer.Withdraw();
+        }
+
         foreach (var journalEvent in context.Events)
         {
             var station = journalEvent.String("StationName");
 
             switch (journalEvent.Kind)
             {
+                case "MissionRedirected" when Redirect(journalEvent, board) is { } redirect:
+                    yield return redirect;
+                    break;
+
                 case "Docked" when HandIns(board, station) is { Count: > 0 } here:
                     yield return new Announcement(HandInKey, HandInSentence(here));
                     break;
@@ -60,6 +75,24 @@ public sealed class MissionCallout : ICallout
                 yield return new Announcement($"{ExpiryKey}.{mission.Id}.{warning.Name}", $"{mission.Title} expires in {warning.Said}.");
             }
         }
+    }
+
+    private Announcement? Redirect(JournalEvent journalEvent, MissionBoard board)
+    {
+        if (journalEvent.Long("MissionID") is not { } id
+            || board.For(id) is null
+            || journalEvent.String("NewDestinationSystem") is not { Length: > 0 } system)
+        {
+            return null;
+        }
+
+        var title = journalEvent.String("LocalisedName") is { Length: > 0 } named ? named : board.For(id)!.Title;
+        var station = journalEvent.String("NewDestinationStation");
+        Offer?.Open(id, system);
+
+        var moved = station is { Length: > 0 } ? $"{station} in {system}" : system;
+        return new Announcement(
+            $"{RedirectedKey}.{id}", $"That's {title} done. Hand-in moved to {moved}. Say plot it to set the course.");
     }
 
     /// <summary>Marks every warning already behind a mission as said, so a restart does not repeat it.</summary>

@@ -796,6 +796,17 @@ hour warning, and gets the ten-minute one only if that mark passed less than a m
 warnings are fixed at an hour and ten minutes. Switching this off stops all four and leaves the
 mission board as it was.
 
+When a mission is redirected, D47 also says where the hand-in moved
+([#663](https://github.com/dseelinger/d47/issues/663)):
+
+```text
+That's Courier 4 done. Hand-in moved to Jameson Memorial in Sol. Say plot it to set the course.
+```
+
+Saying "plot it", "plot the hand-in" or "set course for the hand-in" then plots that system, or copies
+it to the clipboard when auto-plot is off. The offer stands until another redirect replaces it or the
+mission leaves the board, and nothing is plotted until you say so.
+
 #### Your core's own subject {#domain}
 
 Some cores pay attention to a subject of their own, and remark on it with a figure from this session
