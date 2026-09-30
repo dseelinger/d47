@@ -605,6 +605,9 @@ public sealed record CalloutSettings
 
     /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public bool Adventure { get; init; } = true;
+
+    /// <summary>A reminder after a turning beat that the Backstory may no longer fit the story.</summary>
+    public bool BackstoryNudge { get; init; } = true;
 }
 
 public sealed record LlmSettings

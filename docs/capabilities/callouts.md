@@ -759,6 +759,13 @@ Ossen's Lantern. The nebula is what is left of the star this white dwarf used to
 Off leaves the story in the conversation and stops it being read out — the acknowledgement with
 it, since both belong to this callout.
 
+#### Backstory reminder {#backstory-nudge}
+
+After a beat whose function is a midpoint, a turn or
+"all is lost", one more plain line says the story has turned and your Backstory still describes
+where it began. It is said only when a Backstory is set and only if the beat itself was said, so a
+beat dropped in danger drops it too. No model is called and nothing writes to your Backstory.
+
 While a beat is between firing and being said, the Adventures tab shows that the core is
 composing, on the desktop window and in the headset alike.
 

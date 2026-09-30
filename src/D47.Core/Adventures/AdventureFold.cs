@@ -105,6 +105,11 @@ public sealed record AdventureStanding
     private string? CurrentBeatTitle() =>
         Current < Adventure.Beats.Count ? Adventure.Beats[Current].Title : null;
 
+    /// <summary>Whether a beat's function marks the story turning: the same words as <see cref="TurnReached"/>, plus "all is lost".</summary>
+    public static bool IsTurning(string? function) =>
+        function is not null
+        && new[] { "midpoint", "turn", "all is lost" }.Any(word => function.Contains(word, StringComparison.OrdinalIgnoreCase));
+
     private bool Reached(params string[] functions)
     {
         for (var index = 0; index < Fired.Count && index < Adventure.Beats.Count; index++)

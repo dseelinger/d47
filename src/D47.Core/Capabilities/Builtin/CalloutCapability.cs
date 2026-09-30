@@ -60,6 +60,8 @@ public static class CalloutCapability
     /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public const string AdventureKey = "callouts.adventure";
 
+    public const string BackstoryNudgeKey = "callouts.backstoryNudge";
+
     public const string AmbientKey = "callouts.ambient";
     public const string AmbientSecondsKey = "callouts.ambientSeconds";
     public const string AmbientMaxSecondsKey = "callouts.ambientMaxSeconds";
@@ -376,6 +378,17 @@ public static class CalloutCapability
                 "the adventure",
                 s => s.Callouts.Adventure,
                 (s, v) => s with { Callouts = s.Callouts with { Adventure = v } }),
+
+            Toggle(
+                BackstoryNudgeKey,
+                "Backstory reminder",
+                "After an adventure beat that turns the story, one plain line saying your Backstory still "
+                + "describes where it began and is yours to change. Said only when you have a Backstory, and "
+                + "only if the beat itself was said. No model writes or changes it.",
+                "backstory-nudge",
+                "the backstory reminder",
+                s => s.Callouts.BackstoryNudge,
+                (s, v) => s with { Callouts = s.Callouts with { BackstoryNudge = v } }),
 
             Toggle(
                 CommunityGoalSalesKey,

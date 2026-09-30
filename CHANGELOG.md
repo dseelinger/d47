@@ -15,6 +15,11 @@ you flew it, and each chapter before that by name and premise only. The draft ca
 adventure the new one follows. **Privacy and egress** now says that asking for an adventure sends
 your location, ships and ranks, and that a next chapter also sends the story it follows.
 
+When an adventure beat that turns the story is said (its function is a midpoint, a turn or "all is
+lost"), D47 adds one plain line: your Backstory still describes where the story began, and it is yours to
+change. It is said only when you have a Backstory and only if the beat itself was said. Nothing writes to
+your Backstory. **Callouts** has a **Backstory reminder** checkbox, on by default.
+
 An adventure beat can now wait for you to **board a ship**: it fires when you buy that ship or swap into
 it. You can add one in the adventure editor, or write `"kind": "board"` with a `shipType` in the file.
 The ship's AI writes a board beat only for a ship your brief names.

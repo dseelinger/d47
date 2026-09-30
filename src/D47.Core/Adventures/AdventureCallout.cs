@@ -19,6 +19,17 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// </summary>
     public const string AckPrefix = "adventure-ack.";
 
+    public const string BackstoryPrefix = "adventure-backstory.";
+
+    public const string BackstoryLine =
+        "The story has turned. Your Backstory still describes where it began, and it is yours to change.";
+
+    /// <summary>Whether the Commander has a Backstory set.</summary>
+    public Func<bool> HasBackstory { get; init; } = () => false;
+
+    /// <summary>Whether the Backstory nudge is switched on.</summary>
+    public Func<bool> NudgeBackstory { get; init; } = () => true;
+
     /// <summary>How long a reached beat waits before it is said.</summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(20);
 
@@ -132,6 +143,18 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 // opening is -1.
                 Variant = moment.Beat,
             };
+
+            if (!moment.IsOpening
+                && moment.Beat < moment.Adventure.Beats.Count
+                && AdventureStanding.IsTurning(moment.Adventure.Beats[moment.Beat].Function)
+                && NudgeBackstory()
+                && HasBackstory())
+            {
+                yield return new Announcement($"{BackstoryPrefix}{moment.Adventure.Key}.{moment.Beat}", BackstoryLine)
+                {
+                    Urgency = CalloutUrgency.Routine,
+                };
+            }
         }
     }
 }

@@ -2711,7 +2711,11 @@ public sealed class AppHost : IDisposable
             .Add(new DomainCallout())
 
             // A beat of the Commander's story, when they reach it (Phase 47).
-            .Add(new D47.Core.Adventures.AdventureCallout(adventures))
+            .Add(new D47.Core.Adventures.AdventureCallout(adventures)
+            {
+                HasBackstory = () => !string.IsNullOrWhiteSpace(settings.Current.Llm.AboutMe),
+                NudgeBackstory = () => settings.Current.Callouts.BackstoryNudge,
+            })
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
             // marker composes to nothing.
