@@ -241,7 +241,8 @@ Both are yours alone, reachable from the panel and nowhere else.
 
 ### Nothing here is callable by the model
 
-Generation, beginning, abandoning and removing are all your acts, on the panel. The ship's AI can
+Generation, beginning, abandoning and removing are all your acts, on the panel. Pausing and resuming
+a stock story are yours too, by voice or by the **Story on** checkbox. The ship's AI can
 *read* the story — that is what it is for, so it can play off it — and can change nothing about
 it. A hostile message arriving in your comms panel cannot propose a story, end one, or delete one.
 
@@ -284,10 +285,40 @@ the same as asking for an adventure.
 A story chapter's page never shows its premise, turn or ending, and has no **Edit** button, because
 the chapter was written from the hidden layer.
 
+### Pausing the story
+
+Clear **Story on**, on the Stories page or on the mini panel, or say "pause the story", and the
+running stock story goes quiet until you switch it on again. While it is off no beat is said, no
+nudge or clue is owed, nothing from the story is posted to Messages, and the hidden layer is left out of
+every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
+Narration and chatter work as they always do, and your Backstory, cores and persona are unchanged.
+
+A place you visit while the story is off does not count. Its beat waits for the next visit. The
+switch is kept in `data/story.json`, so it lasts across restarts. Say "resume the story" or tick
+**Story on** to bring it back.
+
+Both phrases are the model-free router's, and the model is refused them.
+
+#### `pause_story`
+
+Pause the Commander's running story: no beats, nudges, clues or story chatter until it is resumed.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `resume_story`
+
+Resume the Commander's running story after a pause.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 ### Clues
 
 The hidden layer holds three clues. The first may come 7 days after you scan the beacon, the second
-after 60 and the third after 365. Days while the story is paused do not count, and at most one clue
+after 60 and the third after 365. Days while the story is paused or switched off do not count, and at most one clue
 comes in any four play sessions. A clue is spoken by the Narrator when narration is on, and otherwise
 by the core aboard, in its own words. It is also posted to Messages. A clue needs a language model
 and personality; without them it waits.

@@ -104,6 +104,15 @@ public sealed class StoriesView : UserControl
         }
     }
 
+    /// <summary>The Story on checkbox for the Commander's current story.</summary>
+    internal static Control StoryOnBox(AdventureSurface surface, StoryDirector director, Story story)
+    {
+        var (box, _) = LabeledCheckBox.Build("Story on");
+        box.IsChecked = !story.IsOff;
+        box.IsCheckedChanged += (_, _) => director.SetOn(surface.Commander(), box.IsChecked == true, surface.Now());
+        return box;
+    }
+
     private Control CurrentCard(Story story)
     {
         var commander = _surface.Commander();
@@ -125,6 +134,8 @@ public sealed class StoriesView : UserControl
             buttons.Children.Add(Act("Write it again", () => Run(
                 "Writing…", () => _director.WriteNextAsync(commander, _surface.Now(), CancellationToken.None))));
         }
+
+        buttons.Children.Add(StoryOnBox(_surface, _director, story));
 
         buttons.Children.Add(Act("Abandon", () => Confirm(
             "story.abandon",
@@ -163,6 +174,11 @@ public sealed class StoriesView : UserControl
         if (_director.WriteFailed(commander))
         {
             return $"Your story — chapter {next} could not be written.";
+        }
+
+        if (story.IsOff)
+        {
+            return "Your story — switched off. No beats, nudges or clues until you switch it on.";
         }
 
         return story.State == StoryState.Paused

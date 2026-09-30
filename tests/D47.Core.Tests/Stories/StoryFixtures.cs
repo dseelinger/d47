@@ -85,6 +85,8 @@ internal sealed class StoryFixtures : IDisposable
             NullLogger<AdventureBook>.Instance);
         Stories = StoryStore.Open(Path.Combine(_folder, "story.json"), NullLogger<StoryStore>.Instance);
 
+        Book.Silenced = (commander, id, at) => Stories.Find(commander, id)?.WasOffAt(at) == true;
+
         var generator = AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy());
 
         Director = new StoryDirector(

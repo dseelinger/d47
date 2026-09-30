@@ -204,15 +204,31 @@ public sealed class StoryDirector(
         }
     }
 
-    /// <summary>The current story's hidden layer as every speaker reads it, or null when no story is current.</summary>
+    /// <summary>Whether the Commander has the current story switched off.</summary>
+    public bool IsOff(string? frontierId) => stories.Current(frontierId) is { IsOff: true };
+
+    /// <summary>Switches the current story on or off. Returns a refusal or null.</summary>
+    public string? SetOn(string? frontierId, bool on, DateTimeOffset now)
+    {
+        if (stories.Current(frontierId) is not { } current)
+        {
+            return "No story is running.";
+        }
+
+        stories.Update(frontierId, current.Id, story => on ? story.SwitchedOn(now) : story.SwitchedOff(now));
+        logger.LogInformation("{Title} is switched {State}", current.Title, on ? "on" : "off");
+        return null;
+    }
+
+    /// <summary>The current story's hidden layer as every speaker reads it, or null when no story is current or it is switched off.</summary>
     public string? HiddenBrief(string? frontierId) =>
-        stories.Current(frontierId) is { } story && catalog.Secret(story.Id) is { } secret
+        stories.Current(frontierId) is { IsOff: false } story && catalog.Secret(story.Id) is { } secret
             ? StoryClues.Brief(story, secret)
             : null;
 
     /// <summary>The clue the running story owes now, or null.</summary>
     public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>
-        stories.Current(frontierId) is { } story && catalog.Secret(story.Id) is not null
+        stories.Current(frontierId) is { IsOff: false } story && catalog.Secret(story.Id) is not null
             ? StoryClues.Due(story, now)
             : null;
 
@@ -221,7 +237,7 @@ public sealed class StoryDirector(
     {
         ArgumentNullException.ThrowIfNull(due);
 
-        return stories.Current(frontierId) is { State: StoryState.Running } story
+        return stories.Current(frontierId) is { State: StoryState.Running, IsOff: false } story
                && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
                && story.CluesGiven == due.Index
                && catalog.Secret(story.Id) is { } secret

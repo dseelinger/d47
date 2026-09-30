@@ -18,6 +18,9 @@ public enum StoryState
     Ended,
 }
 
+/// <summary>A stretch during which the Commander had the story switched off; <see cref="To"/> is null while it is still off.</summary>
+public sealed record StoryOffSpan(DateTimeOffset From, DateTimeOffset? To);
+
 /// <summary>A stock story the Commander picked: a chain of chapters, each an adventure written as they play.</summary>
 public sealed record Story
 {
@@ -59,6 +62,13 @@ public sealed record Story
     /// <summary>The value of <see cref="Sessions"/> when the last clue was spoken.</summary>
     public int? ClueSession { get; init; }
 
+    /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
+    public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
+
+    /// <summary>Whether the Commander has the story switched off.</summary>
+    [JsonIgnore]
+    public bool IsOff => OffSpans.Count > 0 && OffSpans[^1].To is null;
+
     /// <summary>Running or paused: the Commander's current story.</summary>
     [JsonIgnore]
     public bool IsCurrent => State is StoryState.Running or StoryState.Paused;
@@ -74,7 +84,7 @@ public sealed record Story
             return null;
         }
 
-        var paused = PausedFor + (State == StoryState.Paused ? PausedSince(scan, now) : TimeSpan.Zero);
+        var paused = PausedFor + (State == StoryState.Paused ? PausedSince(scan, now) : TimeSpan.Zero) + OffSince(scan, now);
         var since = now - scan - paused;
 
         return since > TimeSpan.Zero ? since : TimeSpan.Zero;
@@ -88,6 +98,33 @@ public sealed record Story
         PausedAt = null,
         PausedFor = PausedFor + (BeaconScanAt is { } scan ? PausedSince(scan, now) : TimeSpan.Zero),
     };
+
+    /// <summary>Whether the story was switched off at this moment.</summary>
+    public bool WasOffAt(DateTimeOffset at) => OffSpans.Any(span => at >= span.From && (span.To is not { } end || at < end));
+
+    public Story SwitchedOff(DateTimeOffset now) => IsOff ? this : this with { OffSpans = [.. OffSpans, new StoryOffSpan(now, null)] };
+
+    public Story SwitchedOn(DateTimeOffset now) =>
+        IsOff ? this with { OffSpans = [.. OffSpans.SkipLast(1), OffSpans[^1] with { To = now }] } : this;
+
+    /// <summary>The time the story was switched off between the beacon scan and <paramref name="now"/>.</summary>
+    private TimeSpan OffSince(DateTimeOffset scan, DateTimeOffset now)
+    {
+        var total = TimeSpan.Zero;
+
+        foreach (var span in OffSpans)
+        {
+            var from = span.From > scan ? span.From : scan;
+            var to = span.To is { } end && end < now ? end : now;
+
+            if (to > from)
+            {
+                total += to - from;
+            }
+        }
+
+        return total;
+    }
 
     /// <summary>The part of the current pause that falls after the beacon scan.</summary>
     private TimeSpan PausedSince(DateTimeOffset scan, DateTimeOffset now)

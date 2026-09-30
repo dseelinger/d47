@@ -1035,6 +1035,13 @@ public sealed class AppHost : IDisposable
         var adventureBook = new D47.Core.Adventures.AdventureBook(
             adventureStore, loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>());
 
+        // Read before the catch-up below: a place visited while the Commander had the story off is not remembered.
+        var storyStore = D47.Core.Stories.StoryStore.Open(
+            Path.Combine(paths.Data, "story.json"),
+            loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>());
+
+        adventureBook.Silenced = (commander, id, at) => storyStore.Find(commander, id)?.WasOffAt(at) == true;
+
         // A hand edit, a Begin or an Abandon all arrive here; the book keeps what it can and asks for a walk
         // over the files when a stamp moved, which the tick below grants.
         adventureStore.Changed += adventureBook.Reconcile;
@@ -1563,6 +1570,8 @@ public sealed class AppHost : IDisposable
         // itself reads, rather than one nobody looks at.
         var offers = new OfferWindow();
 
+        var storySwitch = new AdventureCapability.StorySwitch();
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -1965,7 +1974,8 @@ public sealed class AppHost : IDisposable
                     return () => music.Changed -= Changed;
                 },
                 exobiology: exobiology,
-                cartography: cartography));
+                cartography: cartography,
+                storySwitch: storySwitch));
 
         buildingRegistry.Dispose();
 
@@ -2075,7 +2085,7 @@ public sealed class AppHost : IDisposable
                             Join(
                                 // The story under way, told from inside (Phase 47).
                                 D47.Core.Adventures.AdventureContext.Describe(
-                                    adventureBook.Standings(gameState.Active?.Identity.FrontierId),
+                                    adventureBook.Audible(gameState.Active?.Identity.FrontierId, SystemWallClock.Instance.UtcNow),
                                     id => PersonaCatalog.Knows(id) ? PersonaCatalog.Resolve(id).Name : null,
                                     SystemWallClock.Instance.UtcNow),
 
@@ -2138,15 +2148,15 @@ public sealed class AppHost : IDisposable
 
         // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
         var storyDirector = new D47.Core.Stories.StoryDirector(
-            D47.Core.Stories.StoryStore.Open(
-                Path.Combine(paths.Data, "story.json"),
-                loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>()),
+            storyStore,
             adventureBook,
             D47.Core.Stories.StoryCatalog.Default,
             adventureGenerator.GenerateAsync,
             () => gameState.Active?.Location.StarPos,
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>());
+
+        storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
 
@@ -2758,7 +2768,9 @@ public sealed class AppHost : IDisposable
             .Add(new AmbientCallout())
 
             // The Commander's story, told during a lull: the marker only, written by the model or not said.
-            .Add(new NarratorCallout(fight) { Adventures = () => adventures.Active(gameState.Active?.Identity.FrontierId) })
+            .Add(new NarratorCallout(fight) { Adventures = () => adventures.Audible(gameState.Active?.Identity.FrontierId, SystemWallClock.Instance.UtcNow)
+                .Where(standing => standing.Adventure.IsActive && !standing.IsDone)
+                .ToList() })
 
             // A clue the running stock story owes: the marker only, written by the model from the hidden layer or not said.
             .Add(storyClue)

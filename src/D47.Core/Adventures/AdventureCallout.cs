@@ -94,6 +94,12 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
         foreach (var moment in reached)
         {
+            if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now))
+            {
+                book.Quiet(moment.FrontierId, moment.Adventure.Key);
+                continue;
+            }
+
             // Stamped with the tick rather than the journal's time, so the settle is measured from when d47
             // learned of it rather than from a timestamp that may be a file flush behind.
             _waiting.Add(moment with { At = context.Now });
@@ -124,6 +130,12 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
         foreach (var moment in due)
         {
             _waiting.Remove(moment);
+
+            if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now))
+            {
+                book.Quiet(moment.FrontierId, moment.Adventure.Key);
+                continue;
+            }
 
             if (inDanger && !moment.IsOpening)
             {

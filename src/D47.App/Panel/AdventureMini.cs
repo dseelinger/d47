@@ -34,6 +34,12 @@ public sealed class AdventureMini : UserControl
         base.OnAttachedToVisualTree(e);
         _surface.Book.Store.Changed += OnChanged;
         _surface.Book.StirringChanged += OnChanged;
+
+        if (_surface.Stories is { } stories)
+        {
+            stories.Stories.Changed += OnChanged;
+        }
+
         Fill();
     }
 
@@ -42,6 +48,11 @@ public sealed class AdventureMini : UserControl
         base.OnDetachedFromVisualTree(e);
         _surface.Book.Store.Changed -= OnChanged;
         _surface.Book.StirringChanged -= OnChanged;
+
+        if (_surface.Stories is { } stories)
+        {
+            stories.Stories.Changed -= OnChanged;
+        }
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Fill);
@@ -52,6 +63,11 @@ public sealed class AdventureMini : UserControl
 
         var commander = _surface.Commander();
         var active = _surface.Book.Active(commander);
+
+        if (_surface.Stories is { } director && director.Stories.Current(commander) is { } story)
+        {
+            _body.Children.Add(StoriesView.StoryOnBox(_surface, director, story));
+        }
 
         if (active.Count == 0)
         {

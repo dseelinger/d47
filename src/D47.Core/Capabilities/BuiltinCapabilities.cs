@@ -203,7 +203,10 @@ public static class BuiltinCapabilities
         ExobiologyLedger? exobiology = null,
 
         // The bodies mapped and not yet sold (#527).
-        CartographyLedger? cartography = null) =>
+        CartographyLedger? cartography = null,
+
+        // Pauses and resumes the Commander's running story by voice.
+        AdventureCapability.StorySwitch? storySwitch = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -254,7 +257,7 @@ public static class BuiltinCapabilities
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(),
+        AdventureCapability.Create(storySwitch),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

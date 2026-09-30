@@ -26,6 +26,13 @@ aboard does; each is also posted to Messages. The Narrator, the core, invented c
 and the chapter writer now all read the same hidden layer and hint at it without stating it. A story
 chapter's page no longer shows its premise, turn or ending, and has no **Edit** button.
 
+You can pause a running story. Clear **Story on** on the Stories page or the mini panel, or say "pause the
+story", and no beat is said, no clue or nudge is owed, nothing from the story is posted to Messages and
+the story's hidden layer is left out of what the Narrator and the core say. The clue clock stops.
+Narration and chatter carry on as before, and your Backstory and Guardian cores are unchanged. A place
+you visit while the story is off does not count; its beat waits for the next visit. The switch lasts
+across restarts. Say "resume the story" or tick **Story on** to bring it back.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

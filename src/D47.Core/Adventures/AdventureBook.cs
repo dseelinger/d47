@@ -51,6 +51,21 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
     public AdventureStore Store => store;
 
+    /// <summary>Whether the story a chapter belongs to was switched off at a moment: commander, story id, time.</summary>
+    public Func<string, string, DateTimeOffset, bool> Silenced { get; set; } = (_, _, _) => false;
+
+    /// <summary>Whether this adventure is a chapter of a story that is switched off at <paramref name="at"/>.</summary>
+    public bool IsSilenced(string? frontierId, Adventure adventure, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(adventure);
+
+        return adventure.StoryId is { } story && Silenced(frontierId ?? AdventureStore.NoCommander, story, at);
+    }
+
+    /// <summary>The standings that are not silenced at <paramref name="now"/>.</summary>
+    public IReadOnlyList<AdventureStanding> Audible(string? frontierId, DateTimeOffset now) =>
+        [.. Standings(frontierId).Where(standing => !IsSilenced(frontierId, standing.Adventure, now))];
+
     /// <summary>Raised when a story starts or stops being owed a line.</summary>
     public event Action? StirringChanged;
 
@@ -418,6 +433,12 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         foreach (var adventure in store.For(commander))
         {
             if (!adventure.IsActive)
+            {
+                continue;
+            }
+
+            // A place visited while the story was off is not remembered: its beat waits for the next visit.
+            if (IsSilenced(commander, adventure, journalEvent.Timestamp))
             {
                 continue;
             }
