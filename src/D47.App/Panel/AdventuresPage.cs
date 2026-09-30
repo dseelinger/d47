@@ -28,6 +28,9 @@ public sealed class AdventuresPage : UserControl
 
     public const string AskKey = "adventure.ask";
 
+    /// <summary>The ask form for the next chapter of the finished adventure keyed after it.</summary>
+    public const string NextPrefix = "adventure.next.";
+
     /// <summary>The editor's key for a story that does not exist yet.</summary>
     public const string NewKey = "new";
 
@@ -141,7 +144,12 @@ public sealed class AdventuresPage : UserControl
     {
         if (crumb.Key == AskKey)
         {
-            return BuildAsk();
+            return BuildAsk(follows: null);
+        }
+
+        if (crumb.Key.StartsWith(NextPrefix, StringComparison.Ordinal))
+        {
+            return BuildAsk(follows: crumb.Key[NextPrefix.Length..]);
         }
 
         if (_surface.Messages is { } inbox
@@ -289,6 +297,11 @@ public sealed class AdventuresPage : UserControl
         body.Children.Add(RowName(adventure.Name));
         body.Children.Add(RowSecondary($"{By(adventure)} — waiting for your yes"));
 
+        if (FollowsLine(adventure) is { } follows)
+        {
+            body.Children.Add(Muted(follows));
+        }
+
         if (!string.IsNullOrWhiteSpace(adventure.Spine?.Premise))
         {
             body.Children.Add(Text(adventure.Spine.Premise, TypeScale.Body));
@@ -360,6 +373,11 @@ public sealed class AdventuresPage : UserControl
                 : $"{By(adventure)} — {standing.Place()}";
 
             page.Children.Add(Muted(where));
+
+            if (FollowsLine(adventure) is { } follows)
+            {
+                page.Children.Add(Muted(follows));
+            }
 
             if (adventure.Spine is { } spine && !string.IsNullOrWhiteSpace(spine.Premise))
             {
@@ -448,6 +466,10 @@ public sealed class AdventuresPage : UserControl
             bar.Children.Add(Action("Edit", () => _surface.Say(
                 $"{adventure.Name} is under way. Abandon it first, change it, and begin again.")));
         }
+        else
+        {
+            bar.Children.Add(Action("Write the next chapter", () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))));
+        }
 
         bar.Children.Add(Action("Remove", () => Remove(adventure, confirm: adventure.IsBegun), destructive: true));
         return bar;
@@ -455,7 +477,8 @@ public sealed class AdventuresPage : UserControl
 
     // ---- the ask form ------------------------------------------------------------------------
 
-    private Control BuildAsk()
+    /// <summary>The ask form; with <paramref name="follows"/>, for the next chapter of that adventure.</summary>
+    private Control BuildAsk(string? follows)
     {
         var page = new StackPanel { Spacing = 10, Margin = new Thickness(14) };
         var reach = AdventureReach.NearHere;
@@ -466,10 +489,22 @@ public sealed class AdventuresPage : UserControl
         var state = _surface.State();
         var hasChoice = state is not null && (state.Fleet.Ships.Count > 0 || state.Carrier.Owned);
 
-        page.Children.Add(RoutingKit.Title("Ask for an adventure").Row);
-        page.Children.Add(Muted(
-            "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
-            + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
+        var after = follows is null ? null : _surface.Book.Store.Find(_surface.Commander(), follows);
+
+        if (follows is null)
+        {
+            page.Children.Add(RoutingKit.Title("Ask for an adventure").Row);
+            page.Children.Add(Muted(
+                "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
+                + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
+        }
+        else
+        {
+            page.Children.Add(RoutingKit.Title("Write the next chapter").Row);
+            page.Children.Add(Muted(
+                $"The ship's AI writes the story that follows {after?.Name ?? "that adventure"}, from how it ended, "
+                + "and waits for your yes. The same three choices, and a brief if you want one."));
+        }
 
         var reachCombo = new Segment
         {
@@ -534,10 +569,19 @@ public sealed class AdventuresPage : UserControl
                 return;
             }
 
+            AdventureChapter? chapter = null;
+
+            if (follows is not null
+                && (chapter = AdventureChapter.Of(_surface.Book.Store.For(_surface.Commander()), follows)) is null)
+            {
+                status.Fail("That adventure is no longer on file.");
+                return;
+            }
+
             go.IsEnabled = false;
             status.Say("Writing…");
 
-            var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief);
+            var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter);
 
             _ = Task.Run(async () =>
             {
@@ -742,6 +786,12 @@ public sealed class AdventuresPage : UserControl
         });
 
     // ---- drawing -----------------------------------------------------------------------------
+
+    /// <summary>"Follows The Lantern Route." for a chapter whose previous adventure is still on file, or null.</summary>
+    private string? FollowsLine(Adventure adventure) =>
+        adventure.Follows is { } key && _surface.Book.Store.Find(_surface.Commander(), key) is { } previous
+            ? $"Follows {previous.Name}."
+            : null;
 
     private static string By(Adventure adventure) => adventure.Source == AdventureSource.Commander
         ? "yours"

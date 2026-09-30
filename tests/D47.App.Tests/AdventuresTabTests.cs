@@ -210,6 +210,49 @@ public class AdventuresTabTests
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Abandon"));
     }
 
+    /// <summary>A finished adventure offers its next chapter; a running, draft or abandoned one does not.</summary>
+    [AvaloniaFact]
+    public void OnlyAFinishedAdventureOffersTheNextChapter()
+    {
+        static bool Offers(PanelView panel, string key)
+        {
+            panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + key, key));
+            Dispatcher.UIThread.RunJobs();
+            return panel.GetVisualDescendants().OfType<Button>().Any(button => Equals(button.Content, "Write the next chapter"));
+        }
+
+        var (panel, book, _) = Open(
+            Story(Now.AddHours(-1)),
+            Story(null, AdventureSource.Generated) with { Key = "draft", Name = "The Draft", Follows = "the-lantern-route" },
+            Story(Now.AddHours(-1)) with { Key = "abandoned", Name = "Abandoned", AbandonedAt = Now });
+
+        Assert.False(Offers(panel, "the-lantern-route"));
+        Assert.False(Offers(panel, "draft"));
+        Assert.False(Offers(panel, "abandoned"));
+
+        Arrive(book);
+        Assert.True(JournalEvent.TryParse(
+            """{ "timestamp":"2026-08-22T19:40:00Z", "event":"Docked", "StationName":"Maren Anchorage", "StarSystem":"Dyson's Hollow", "MarketID":2 }""",
+            NullLogger.Instance,
+            out var docked));
+        book.Observe(docked!, "F1");
+
+        Assert.True(Offers(panel, "the-lantern-route"));
+
+        var next = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Write the next chapter"));
+        next.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(AdventuresPage.NextPrefix + "the-lantern-route", panel.Nav.Trail[^1].Key);
+        Assert.Contains(Drawn(panel), text => text.Contains("WRITE THE NEXT CHAPTER", StringComparison.Ordinal));
+        Assert.Contains(Drawn(panel), text => text.Contains("follows The Lantern Route", StringComparison.Ordinal));
+
+        // The draft card names the chapter it follows.
+        panel.Nav.ToRoot();
+        Dispatcher.UIThread.RunJobs();
+        Assert.Contains(Drawn(panel), text => text == "Follows The Lantern Route.");
+    }
+
     [AvaloniaFact]
     public void TheEditorBuildsForANewStoryAndPrintsWhyBeginIsShut()
     {

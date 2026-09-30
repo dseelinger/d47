@@ -171,6 +171,12 @@ And one optional thing said: a brief — a theme, a mood, a place it must includ
 ships: your fleet and what each hull can do, whether you have a carrier and where it is, where you
 are, who is aboard, and your ranks.
 
+**Write the next chapter** — on a finished adventure's page, the same form for the story that
+follows it. The AI reads the finished one in full — its spine, its beats and what was said as you
+flew it — and each chapter before that by name and premise only. The new story's want follows from
+how the last one turned and ended, and its stake is the belief the last one left open. The draft
+card says which adventure it follows, and it is accepted, flown and checked like any other.
+
 ### What a beat can be
 
 Five triggers, and every one is a comparison on a structured field rather than on a name:

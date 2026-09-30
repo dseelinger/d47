@@ -261,7 +261,7 @@ public sealed class AdventureGeneratorTests
         Assert.Null(Careers.Match(""));
     }
 
-    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1)
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1)
     {
         var state = State(combat);
 
@@ -299,7 +299,7 @@ public sealed class AdventureGeneratorTests
     }
 
     /// <summary>Five systems: here, two within reach, Colonia, and nothing else.</summary>
-    private sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : IGalaxyService
     {
         private static readonly Dictionary<string, long> Systems = new(StringComparer.OrdinalIgnoreCase)
         {

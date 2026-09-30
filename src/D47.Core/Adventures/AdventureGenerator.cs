@@ -34,7 +34,39 @@ public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
     AdventureLength Length = AdventureLength.Evening,
     bool ThisShipOnly = false,
-    string? Brief = null);
+    string? Brief = null,
+    AdventureChapter? Chapter = null);
+
+/// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
+public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
+{
+    /// <summary>The chain ending at <paramref name="key"/>, walked back through <see cref="Adventure.Follows"/>; null when the key is not on file.</summary>
+    public static AdventureChapter? Of(IReadOnlyList<Adventure> adventures, string key)
+    {
+        ArgumentNullException.ThrowIfNull(adventures);
+
+        if (Find(key) is not { } previous)
+        {
+            return null;
+        }
+
+        var earlier = new List<Adventure>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { previous.Key };
+        var at = previous.Follows;
+
+        while (at is not null && Find(at) is { } one && seen.Add(one.Key))
+        {
+            earlier.Add(one);
+            at = one.Follows;
+        }
+
+        earlier.Reverse();
+        return new AdventureChapter(previous, earlier);
+
+        Adventure? Find(string wanted) =>
+            adventures.FirstOrDefault(adventure => string.Equals(adventure.Key, wanted, StringComparison.OrdinalIgnoreCase));
+    }
+}
 
 /// <summary>One round of the revision loop: what the Commander said and what the core answered.</summary>
 public sealed record AdventureRemark(string Remark, string? Reply);
@@ -225,6 +257,7 @@ public sealed class AdventureGenerator(
             Opening = read.Opening,
             Beats = resolved.Beats,
             Previous = previous is null ? null : previous with { Previous = null },
+            Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
         };
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
@@ -445,6 +478,11 @@ public sealed class AdventureGenerator(
 
         AppendCandidates(text, candidates);
 
+        if (ask.Chapter is { } chapter)
+        {
+            AppendChapter(text, chapter);
+        }
+
         text.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(ask.Brief))
@@ -464,6 +502,83 @@ public sealed class AdventureGenerator(
             + "it stops being what it looked like), \"ending\" (what the last beat means). Each under 600 characters.");
 
         return text.ToString();
+    }
+
+    /// <summary>
+    /// The chapter before in full — spine, beat titles and what was said — and each one before that as
+    /// its name and premise only.
+    /// </summary>
+    private static void AppendChapter(StringBuilder text, AdventureChapter chapter)
+    {
+        var previous = chapter.Previous;
+
+        text.AppendLine();
+        text.AppendLine("This story is the next chapter of one the Commander has already flown to its end.");
+
+        if (chapter.Earlier.Count > 0)
+        {
+            text.AppendLine();
+            text.AppendLine("The chapters before that one, oldest first:");
+
+            foreach (var earlier in chapter.Earlier)
+            {
+                text.Append("- ").Append(earlier.Name);
+
+                if (!string.IsNullOrWhiteSpace(earlier.Spine?.Premise))
+                {
+                    text.Append(": ").Append(earlier.Spine.Premise);
+                }
+
+                text.AppendLine();
+            }
+        }
+
+        text.AppendLine();
+        text.AppendLine("The chapter just finished:");
+        text.AppendLine($"Title: {previous.Name}");
+        text.AppendLine($"Premise: {previous.Spine?.Premise}");
+        text.AppendLine($"Want: {previous.Spine?.Want}");
+        text.AppendLine($"Stake: {previous.Spine?.Stake}");
+        text.AppendLine($"Turn: {previous.Spine?.Turn}");
+        text.AppendLine($"Ending: {previous.Spine?.Ending}");
+        text.AppendLine("Beats: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
+
+        if (previous.Told.Count > 0)
+        {
+            text.AppendLine("What was said to the Commander as they flew it, oldest first:");
+
+            foreach (var told in previous.Told)
+            {
+                text.Append("- ");
+
+                if (told.Kind == AdventureToldKind.Aside && told.Asked is { Length: > 0 } asked)
+                {
+                    text.Append("(the Commander asked \"").Append(asked).Append("\") ");
+                }
+
+                text.AppendLine(told.Text);
+            }
+        }
+        else
+        {
+            text.AppendLine("What was written to be said as they flew it:");
+
+            if (!string.IsNullOrWhiteSpace(previous.Opening))
+            {
+                text.Append("- ").AppendLine(previous.Opening);
+            }
+
+            foreach (var beat in previous.Beats)
+            {
+                text.Append("- ").AppendLine(beat.Line);
+            }
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
+            + "stake is the belief that chapter left open. People, places and things it established may return; "
+            + "what it settled stays settled.");
     }
 
     private static string BeatsInstruction(

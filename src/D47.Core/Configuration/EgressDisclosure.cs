@@ -541,6 +541,9 @@ public static class EgressDisclosure
             + "the provider for its list of models, sending the key and nothing else. The names of characters in in-game messages are "
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
+            + " Asking for an adventure sends where you are, the ships you own and your ranks; asking for the next "
+            + "chapter of one also sends the adventure it follows — its spine, its beats and what was said as you flew it — "
+            + "and the name and premise of each chapter before that."
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),

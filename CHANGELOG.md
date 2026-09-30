@@ -6,6 +6,15 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.26.0 — Adventures run in chapters
+
+A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It
+opens the same form as **Ask for one**, and the ship's AI writes a story that continues from how the
+finished one turned and ended. It reads the finished adventure in full, including what was said as
+you flew it, and each chapter before that by name and premise only. The draft card says which
+adventure the new one follows. **Privacy and egress** now says that asking for an adventure sends
+your location, ships and ranks, and that a next chapter also sends the story it follows.
+
 ## 1.25.0 — Messages and the sleeping cores
 
 The Adventures tab has a **Messages** button. Every adventure beat D47 speaks is also kept there as a

@@ -169,6 +169,9 @@ public sealed record Adventure
     /// </summary>
     public Adventure? Previous { get; init; }
 
+    /// <summary>The key of the finished adventure this one is the next chapter of, or null.</summary>
+    public string? Follows { get; init; }
+
     /// <summary>
     /// What was actually said about this story, oldest first (asked for 2026-08-22) — the beats as the
     /// Commander heard them and the asides between them.
