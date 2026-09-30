@@ -3,21 +3,21 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The guard between composition and speech runs on the four flavour paths and on nothing else. Three
+/// The guard between composition and speech runs on the five flavour paths and on nothing else. Four
 /// are in <c>AppHost.cs</c>; the announcement rewrite is in Core's <c>Rewording.cs</c>. An invented
 /// speaker's reply is screened by Core's <c>ChatterLine.cs</c>, with a ship reader from the app.
 /// </summary>
 public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 {
     /// <summary>
-    /// The four flavour paths, exactly: the persona's return-after-a-gap line, its introduction, the
-    /// announcement rewrite that carries every ambient remark and carrier line, and one line of an
-    /// invented exchange.
+    /// The five flavour paths, exactly: the persona's return-after-a-gap line, its introduction, the
+    /// announcement rewrite that carries every ambient remark and carrier line, one line of an invented
+    /// exchange, and a stock story's clue.
     /// </summary>
-    private const int FlavourCallSites = 4;
+    private const int FlavourCallSites = 5;
 
     [Fact]
-    public void TheGuardWithItsOneRetryIsReachedFromTheFourFlavourPaths()
+    public void TheGuardWithItsOneRetryIsReachedFromTheFiveFlavourPaths()
     {
         var guarded = CodeLinesContaining("ContradictedClaims.SayableAsync(");
 
@@ -25,7 +25,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
     }
 
     /// <summary>
-    /// Three of the four have an authored line behind the model's, and all three of those are checked
+    /// Three of the five have an authored line behind the model's, and all three of those are checked
     /// as well: an authored line asserting cargo that was not aboard is the incident this guard was
     /// reported for. The announcement path checks its fallback and its as-written line (#214) at one
     /// call site.
@@ -35,7 +35,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
     {
         var checkedFallbacks = CodeLinesContaining("ContradictedClaims.Sayable(");
 
-        Assert.Equal(FlavourCallSites - 1, checkedFallbacks.Count);
+        Assert.Equal(FlavourCallSites - 2, checkedFallbacks.Count);
     }
 
     /// <summary>And nowhere else in the app.</summary>
@@ -65,7 +65,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
     {
         var read = CodeLinesContaining("ShipFacts.Of(");
 
-        // Three for the four paths — the two persona paths are branches of one switch and share a
+        // Four for the five paths — the two persona paths are branches of one switch and share a
         // snapshot — and the reader ChatterLine screens each reply against.
         Assert.Equal(FlavourCallSites, read.Count);
         Assert.All(read, line => Assert.Contains(

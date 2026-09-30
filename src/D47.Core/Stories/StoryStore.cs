@@ -78,6 +78,40 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
+    /// <summary>Replaces the story with <paramref name="id"/> by what <paramref name="change"/> makes of it, under the store's lock.</summary>
+    public void Update(string? frontierId, string id, Func<Story, Story> change)
+    {
+        ArgumentNullException.ThrowIfNull(change);
+
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_gate)
+        {
+            var existing = _byCommander.GetValueOrDefault(commander, []);
+
+            if (existing.FirstOrDefault(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase)) is not { } before)
+            {
+                return;
+            }
+
+            var after = change(before);
+
+            if (after == before)
+            {
+                return;
+            }
+
+            _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+            {
+                [commander] = [.. existing.Select(story => ReferenceEquals(story, before) ? after : story)],
+            };
+
+            Write();
+        }
+
+        Changed?.Invoke();
+    }
+
     private void Write()
     {
         if (_path is null)

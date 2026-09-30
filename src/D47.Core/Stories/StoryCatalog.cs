@@ -67,18 +67,6 @@ public sealed record StorySecret
     public required string Year { get; init; }
 
     public required string End { get; init; }
-
-    /// <summary>The layer as the model reads it.</summary>
-    public string Describe()
-    {
-        var text = new StringBuilder();
-        StoryCard.Line(text, "The secret", Secret);
-        StoryCard.Line(text, "A clue for the first weeks", Weeks);
-        StoryCard.Line(text, "A clue after months", Months);
-        StoryCard.Line(text, "A clue after a year or more", Year);
-        StoryCard.Line(text, "The end", End);
-        return text.ToString().TrimEnd();
-    }
 }
 
 /// <summary>

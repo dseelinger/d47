@@ -377,6 +377,9 @@ public sealed class TurnLoop(
 
     public ScenarioAudience ScenarioAudience { get; set; }
 
+    /// <summary>The running stock story's hidden layer, read once per turn, or null.</summary>
+    public Func<string?>? HiddenStory { get; set; }
+
     /// <summary>
     /// What d47 remembers about the Commander, already bounded and labelled by <see
     /// cref="Memory.MemoryRecall"/> (Phase 31).
@@ -1151,6 +1154,7 @@ public sealed class TurnLoop(
         var persona = speaker?.Brief ?? Persona;
         var aboutMe = AboutMe;
         var scenario = ScenarioAudiences.Reaches(ScenarioAudience, speaker?.Role ?? Audio.VoiceRole.ShipAi) ? Scenario : null;
+        var hiddenStory = HiddenStory?.Invoke();
         var recall = speaker is null ? Recall : null;
         var directions = speaker is null ? Directions : null;
 
@@ -1199,6 +1203,7 @@ public sealed class TurnLoop(
                     CanBeDirected = directed,
                     AboutMe = aboutMe,
                     Scenario = scenario,
+                    HiddenStory = hiddenStory,
                     Recall = recall,
                     Directions = directions,
                     History = trimmed ? [.. pending] : [.. transcript, .. pending],

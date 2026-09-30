@@ -19,6 +19,13 @@ layer D47 never shows; **Privacy and egress** says it is sent to the language mo
 A generated adventure or story chapter no longer sends you to a system that needs a permit, such as
 Shinrarta Dezhra, unless you are already in it.
 
+A stock story's hidden layer now gives up three clues over time: the first 7 days after you scan the
+beacon, the second after 60 and the third after 365, with paused days not counted and at most one clue
+in any four play sessions. The Narrator speaks a clue when narration is on, and otherwise the core
+aboard does; each is also posted to Messages. The Narrator, the core, invented chatter, scene chatter
+and the chapter writer now all read the same hidden layer and hint at it without stating it. A story
+chapter's page no longer shows its premise, turn or ending, and has no **Edit** button.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

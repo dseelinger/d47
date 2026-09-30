@@ -127,11 +127,11 @@ public sealed class StoryDirector(
                 return refusal;
             }
 
-            stories.Save(frontierId, paused with { State = StoryState.Running });
+            stories.Save(frontierId, paused.Resumed(now));
             return null;
         }
 
-        stories.Save(frontierId, paused with { State = StoryState.Running, Chapters = [.. paused.Chapters.SkipLast(1)] });
+        stories.Save(frontierId, paused.Resumed(now) with { Chapters = [.. paused.Chapters.SkipLast(1)] });
         return await WriteChapterAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
     }
 
@@ -156,13 +156,13 @@ public sealed class StoryDirector(
 
         if (story.State == StoryState.Running && standing is null or { Adventure.IsAbandoned: true })
         {
-            stories.Save(frontierId, story with { State = StoryState.Paused });
+            stories.Save(frontierId, story.Paused(now));
             return null;
         }
 
         if (story.State == StoryState.Paused && standing is { Adventure.IsActive: true })
         {
-            stories.Save(frontierId, story with { State = StoryState.Running });
+            stories.Save(frontierId, story.Resumed(now));
             return null;
         }
 
@@ -174,12 +174,24 @@ public sealed class StoryDirector(
         return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
     }
 
-    /// <summary>Stamps the current story the first time the Commander data-links a beacon while it runs.</summary>
+    /// <summary>
+    /// Counts the current story's play sessions, and stamps it the first time the Commander data-links a beacon
+    /// while it runs.
+    /// </summary>
     public void Observe(JournalEvent journalEvent, string? frontierId)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         _where = _where.Apply(journalEvent);
+
+        if (journalEvent.Kind == "LoadGame"
+            && stories.Current(frontierId) is { } playing
+            && journalEvent.Timestamp >= playing.PickedAt)
+        {
+            stories.Update(frontierId, playing.Id, story => story.LastSessionAt is { } last && journalEvent.Timestamp <= last
+                ? story
+                : story with { Sessions = story.Sessions + 1, LastSessionAt = journalEvent.Timestamp });
+        }
 
         if (journalEvent.Kind == "DataScanned"
             && _where.SystemAddress is { } address
@@ -187,9 +199,45 @@ public sealed class StoryDirector(
             && stories.Current(frontierId) is { BeaconScanAt: null } story
             && journalEvent.Timestamp >= story.PickedAt)
         {
-            stories.Save(frontierId, story with { BeaconScanAt = journalEvent.Timestamp });
+            stories.Update(frontierId, story.Id, current => current with { BeaconScanAt = journalEvent.Timestamp });
             logger.LogInformation("{Title}: the beacon in {System} was scanned", story.Title, GuardianCores.Beacons[address]);
         }
+    }
+
+    /// <summary>The current story's hidden layer as every speaker reads it, or null when no story is current.</summary>
+    public string? HiddenBrief(string? frontierId) =>
+        stories.Current(frontierId) is { } story && catalog.Secret(story.Id) is { } secret
+            ? StoryClues.Brief(story, secret)
+            : null;
+
+    /// <summary>The clue the running story owes now, or null.</summary>
+    public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>
+        stories.Current(frontierId) is { } story && catalog.Secret(story.Id) is not null
+            ? StoryClues.Due(story, now)
+            : null;
+
+    /// <summary>The text of a clue that is still the next one owed, or null.</summary>
+    public (string Title, string Clue)? Clue(string? frontierId, StoryClueDue due)
+    {
+        ArgumentNullException.ThrowIfNull(due);
+
+        return stories.Current(frontierId) is { State: StoryState.Running } story
+               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
+               && story.CluesGiven == due.Index
+               && catalog.Secret(story.Id) is { } secret
+               && StoryClues.Text(secret, due.Index) is { Length: > 0 } clue
+            ? (story.Title, clue)
+            : null;
+    }
+
+    /// <summary>Records that a clue was spoken, so the next waits for its day and four more sessions.</summary>
+    public void ClueGiven(string? frontierId, StoryClueDue due)
+    {
+        ArgumentNullException.ThrowIfNull(due);
+
+        stories.Update(frontierId, due.StoryId, story => story.IsCurrent && story.CluesGiven == due.Index
+            ? story with { CluesGiven = due.Index + 1, ClueSession = story.Sessions }
+            : story);
     }
 
     private void Stop(string? frontierId, Story story, StoryState state, DateTimeOffset now)
@@ -288,10 +336,10 @@ public sealed class StoryDirector(
                 story.Id,
                 story.Title,
                 story.PublicLayer,
-                secret.Describe(),
+                StoryClues.Brief(story, secret),
                 number,
                 Math.Max(0, (now - story.PickedAt).Days),
-                story.BeaconScanAt is { } scanned ? Math.Max(0, (now - scanned).Days) : null,
+                story.SinceBeacon(now)?.Days,
                 beacon is var (address, system) ? new AdventureBeacon(address, system) : null));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);

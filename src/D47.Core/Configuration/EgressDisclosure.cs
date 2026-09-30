@@ -525,6 +525,7 @@ public static class EgressDisclosure
                 $"{provider.Name} is selected and pointed at {destination}, which is this machine. Your question, "
                 + "the reply, the persona, what D47 remembers about you, "
                 + (commander is null ? string.Empty : $"{commander}, ")
+                + "a hidden story while a stock story runs, "
                 + "and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
                 + "key is involved."
@@ -544,7 +545,8 @@ public static class EgressDisclosure
             + " Asking for an adventure sends where you are, the ships you own and your ranks; asking for the next "
             + "chapter of one also sends the adventure it follows — its spine, its beats and what was said as you flew it — "
             + "and the name and premise of each chapter before that. A chapter of a stock story also sends the story's "
-            + "card and its hidden layer, the twists d47 keeps from you and never shows."
+            + "card. While a stock story runs, every line the model writes in character, and each chapter, also carries "
+            + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows."
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),

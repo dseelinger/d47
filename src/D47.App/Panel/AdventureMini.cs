@@ -71,7 +71,7 @@ public sealed class AdventureMini : UserControl
         }
 
         // The short description: the premise, which is the one sentence the whole story was built out of.
-        if (adventure.Spine?.Premise is { Length: > 0 } premise)
+        if (AdventuresPage.ShowsSpine(adventure) && adventure.Spine?.Premise is { Length: > 0 } premise)
         {
             _body.Children.Add(AdventuresPage.Text(premise, TypeScale.Secondary));
         }

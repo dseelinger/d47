@@ -619,19 +619,13 @@ public sealed class AdventureGenerator(
         text.AppendLine("What the Commander knows — the public layer, which they chose the story by:");
         text.AppendLine(story.Public);
         text.AppendLine();
-        text.AppendLine(
-            "What only you know — the hidden layer. Never state it, and never write a line that states it. It "
-            + "surfaces as clues a Commander could miss:");
         text.AppendLine(story.Hidden);
         text.AppendLine();
         text.Append($"The story has been running for {story.DaysRunning.ToString(CultureInfo.InvariantCulture)} days");
         text.AppendLine(story.DaysSinceBeacon is { } scanned
-            ? $", and the Commander scanned the Guardian beacon {scanned.ToString(CultureInfo.InvariantCulture)} days ago."
+            ? $", and {scanned.ToString(CultureInfo.InvariantCulture)} days have run since the Commander scanned the Guardian beacon, not counting days it was paused."
             : ", and the Commander has not yet scanned a Guardian beacon.");
-        text.AppendLine(
-            "Use at most one clue in this chapter, from the stage that fits how long it has run — weeks, months, or a year "
-            + "or more — and never one from a later stage. The hidden layer is fiction only: never misstate fuel, cargo, "
-            + "credits, routes, rank or danger.");
+        text.AppendLine("Never write a line that states the hidden story. A chapter may echo a clue the Commander has had.");
 
         if (story.Beacon is { } beacon)
         {

@@ -33,17 +33,17 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
     }
 
     /// <summary>
-    /// Eleven callers, all of them carrying no conversation history and already declaring a cold prefix —
+    /// Twelve callers, all of them carrying no conversation history and already declaring a cold prefix —
     /// which is what makes pointing them at a cheap model cost no cache at all.
     /// </summary>
     [Fact]
-    public void TheBackgroundModelIsReadByTheElevenCallsTheCommanderIsNotWaitingOn()
+    public void TheBackgroundModelIsReadByTheTwelveCallsTheCommanderIsNotWaitingOn()
     {
         var readers = CodeLinesContaining("Turns.BackgroundModel")
             .Where(line => !line.StartsWith("Turns.BackgroundModel =", StringComparison.Ordinal))
             .ToList();
 
-        Assert.Equal(11, readers.Count);
+        Assert.Equal(12, readers.Count);
         Assert.All(readers, line => Assert.Equal("Turns.BackgroundModel,", line));
     }
 

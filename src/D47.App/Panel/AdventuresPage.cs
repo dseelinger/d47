@@ -180,7 +180,9 @@ public sealed class AdventuresPage : UserControl
             var key = crumb.Key[EditPrefix.Length..];
             var existing = key == NewKey ? null : _surface.Book.Store.Find(_surface.Commander(), key);
 
-            return new AdventureEditor(_surface, _nav, _prompts, existing);
+            return existing is not null && !ShowsSpine(existing)
+                ? BuildReading(key)
+                : new AdventureEditor(_surface, _nav, _prompts, existing);
         }
 
         return null;
@@ -313,7 +315,7 @@ public sealed class AdventuresPage : UserControl
             body.Children.Add(Muted(follows));
         }
 
-        if (!string.IsNullOrWhiteSpace(adventure.Spine?.Premise))
+        if (ShowsSpine(adventure) && !string.IsNullOrWhiteSpace(adventure.Spine?.Premise))
         {
             body.Children.Add(Text(adventure.Spine.Premise, TypeScale.Body));
         }
@@ -390,7 +392,7 @@ public sealed class AdventuresPage : UserControl
                 page.Children.Add(Muted(follows));
             }
 
-            if (adventure.Spine is { } spine && !string.IsNullOrWhiteSpace(spine.Premise))
+            if (ShowsSpine(adventure) && adventure.Spine is { } spine && !string.IsNullOrWhiteSpace(spine.Premise))
             {
                 page.Children.Add(Text(spine.Premise, TypeScale.Body));
             }
@@ -447,6 +449,17 @@ public sealed class AdventuresPage : UserControl
         return scroller;
     }
 
+    /// <summary>Whether the page may show an adventure's Premise, Turn and Ending: never for a stock story's chapter.</summary>
+    internal static bool ShowsSpine(Adventure adventure) => adventure.StoryId is null;
+
+    private void EditAction(WrapPanel bar, Adventure adventure)
+    {
+        if (ShowsSpine(adventure))
+        {
+            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })));
+        }
+    }
+
     private Control ReadingBar(AdventureStanding standing)
     {
         var adventure = standing.Adventure;
@@ -464,12 +477,12 @@ public sealed class AdventuresPage : UserControl
         if (!adventure.IsBegun)
         {
             bar.Children.Add(Action("Begin", () => Begin(adventure.Key)));
-            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })));
+            EditAction(bar, adventure);
         }
         else if (adventure.IsAbandoned)
         {
             bar.Children.Add(Action("Begin again", () => Begin(adventure.Key)));
-            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })));
+            EditAction(bar, adventure);
         }
         else if (!standing.IsDone)
         {

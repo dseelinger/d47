@@ -75,6 +75,12 @@ public sealed record PromptAssembly
         + "and where the ship is; where this and the instruments disagree, the instruments are right.";
 
     /// <summary>
+    /// Position 4, third block: the running stock story's hidden layer, already labelled by <see
+    /// cref="Stories.StoryClues.Brief"/>, or null when no story runs.
+    /// </summary>
+    public string? HiddenStory { get; init; }
+
+    /// <summary>
     /// Position 5 — what d47 remembers about the Commander, bounded and labelled by <see
     /// cref="Memory.MemoryRecall"/> (Phase 31).
     /// </summary>
@@ -137,6 +143,11 @@ public sealed record PromptAssembly
         if (!string.IsNullOrWhiteSpace(Scenario))
         {
             block.Append("\n\n").Append(ScenarioLabel).Append('\n').Append(Scenario.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(HiddenStory))
+        {
+            block.Append("\n\n").Append(HiddenStory.Trim());
         }
 
         // Last of the cached region, and below About Me deliberately: that is the Commander describing
