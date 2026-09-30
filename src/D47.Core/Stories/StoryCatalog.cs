@@ -19,14 +19,8 @@ public sealed record StoryCard
     /// <summary>The Commander's backstory in the first person; picking the story makes it their Backstory.</summary>
     public required string InYourWords { get; init; }
 
-    public string? Heart { get; init; }
-
-    public string? DrawsOn { get; init; }
-
     /// <summary>Why this Commander goes to a Guardian beacon.</summary>
     public string? Beacon { get; init; }
-
-    public string? PlaysThrough { get; init; }
 
     /// <summary>What d47 must track before the story is offered, or null. See <see cref="StoryCatalog.Tracked"/>.</summary>
     public string? Requires { get; init; }
@@ -37,10 +31,7 @@ public sealed record StoryCard
         var text = new StringBuilder();
         text.AppendLine(Tone is { Length: > 0 } tone ? $"{Title} — {tone}." : $"{Title}.");
         text.AppendLine($"In the Commander's words: \"{InYourWords}\"");
-        Line(text, "Heart", Heart);
-        Line(text, "Draws on", DrawsOn);
         Line(text, "The beacon", Beacon);
-        Line(text, "Plays through", PlaysThrough);
         return text.ToString().TrimEnd();
     }
 

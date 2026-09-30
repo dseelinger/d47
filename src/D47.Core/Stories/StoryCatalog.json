@@ -5,10 +5,7 @@
     "title": "Factory Settings",
     "tone": "Slow-burn thriller",
     "inYourWords": "I bought a decommissioned Sidewinder at a Pilots Federation surplus sale for eleven credits over scrap. It came with a stock ship voice on factory settings. Nothing special.",
-    "heart": "Believes machines are tools. Wants a Cobra and a little respect in the station bar. Needs to learn what they owe the things that serve them.",
-    "drawsOn": "Pilots Federation surplus sales; the stock core itself.",
-    "beacon": "The stock core asks. Once, unprompted, the factory voice says it would like to see a Guardian beacon. It never asks for anything else.",
-    "playsThrough": "Trade, couriering, anything. This story lives in the ship’s voice."
+    "beacon": "The stock core asks. Once, unprompted, the factory voice says it would like to see a Guardian beacon. It never asks for anything else."
   },
   {
     "id": "the-lifeboat",
@@ -16,10 +13,7 @@
     "title": "The Lifeboat",
     "tone": "Quiet mystery",
     "inYourWords": "I was found at four, alone in a lifeboat with no ship attached, drifting near the Synuefe systems. I haven’t been ill a day since. The Pilots Federation’s orphan fund gave me a Sidewinder at eighteen.",
-    "heart": "Believes they were a lucky accident. Wants to find where the lifeboat came from. Needs to decide who they are once they know.",
-    "drawsOn": "Pilots Federation charity; foundling records; the Guardian region.",
-    "beacon": "The lifeboat’s transponder code matches nothing in any human registry. It matches the handshake a Guardian beacon sends to a ship that scans it.",
-    "playsThrough": "Exploration and Guardian sites suit it, but anything works. The clues arrive when you log in."
+    "beacon": "The lifeboat’s transponder code matches nothing in any human registry. It matches the handshake a Guardian beacon sends to a ship that scans it."
   },
   {
     "id": "episode-47",
@@ -27,10 +21,7 @@
     "title": "Episode 47",
     "tone": "Comedy",
     "inYourWords": "I played the hero pilot in Longshot, a holo-series cancelled one episode before its finale. The prop Sidewinder from the wrap auction is all I own. It turns out it flies.",
-    "heart": "Believes they’re only good at pretending to be brave. Wants to be taken seriously as a pilot, and to pay off the studio’s lien on the prop. Needs to learn that everyone starts by pretending.",
-    "drawsOn": "Holo-celebrity and fan culture; a coincidence the fans won’t stop pointing out.",
-    "beacon": "Fans decoded coordinates from the leaked script of the unaired Episode 47. You fly there as a stunt, streamed to a live audience.",
-    "playsThrough": "Passenger missions full of fans, NPC chatter that recognises you, combat with an audience. Anything that gets you noticed."
+    "beacon": "Fans decoded coordinates from the leaked script of the unaired Episode 47. You fly there as a stunt, streamed to a live audience."
   },
   {
     "id": "the-quiet-watchers",
@@ -38,10 +29,7 @@
     "title": "The Quiet Watchers",
     "tone": "Pilgrimage",
     "inYourWords": "I’m a novice of the Order of the Quiet Watchers. We believe the Guardians sleep in lanterns among the stars and wake for a faithful pilgrim. The Order gave me a Sidewinder and a prayer.",
-    "heart": "Believes a sacred text can’t be wrong. Wants to complete the pilgrimage and bring the Watchers’ voice home. Needs a faith that survives meeting the Watchers.",
-    "drawsOn": "A mirror image of the Far God cult; Guardian ruins as holy sites; pilgrims as passengers.",
-    "beacon": "The scripture names the Lantern, and opening it is the rite.",
-    "playsThrough": "Exploration, passenger missions carrying pilgrims, Guardian ruins on foot."
+    "beacon": "The scripture names the Lantern, and opening it is the rite."
   },
   {
     "id": "the-trial",
@@ -49,10 +37,7 @@
     "title": "The Trial",
     "tone": "Medical thriller",
     "inYourWords": "I signed up for an Azimuth Biotech clinical trial to clear my debts, and the fee bought a Sidewinder. I don’t remember the last three weeks of the trial. I hum when anything Thargoid is near.",
-    "heart": "Believes they’re contaminated. Wants a cure. Needs to understand what they carry before destroying it.",
-    "drawsOn": "The Thargoid war and the fall of the Titans; Azimuth Biotech; Aegis.",
     "beacon": "Leaked Azimuth notes say Guardian beacons suppress Thargoid material. You go to be cured.",
-    "playsThrough": "Anti-xeno combat, rescue, exobiology. d47 doesn’t track Thargoid journal events yet, so this one leans on chatter and memory.",
     "requires": "thargoids"
   },
   {
@@ -61,10 +46,7 @@
     "title": "The Wreck With My Name",
     "tone": "Time thriller",
     "inYourWords": "On my first salvage run I scanned a wrecked Sidewinder carrying my own registration. Its black box was addressed to me and time-stamped 3351.",
-    "heart": "Believes following instructions is safer than choosing. Wants to follow the black box and get rich. Needs to stop living by a script, even one in their own handwriting.",
-    "drawsOn": "Wrecked-ship data scans; witch space; misjumps.",
-    "beacon": "The black box’s first instruction reads, “Scan the beacon. You’ll need them.”",
-    "playsThrough": "Salvage, search and rescue, missions. Wherever the instructions point."
+    "beacon": "The black box’s first instruction reads, “Scan the beacon. You’ll need them.”"
   },
   {
     "id": "the-salome-tape",
@@ -72,10 +54,7 @@
     "title": "The Salome Tape",
     "tone": "Conspiracy",
     "inYourWords": "My father was the broadcast engineer on duty the night Salome died. He died the same week. He left me a Sidewinder and a recording nobody else has.",
-    "heart": "Believes the truth sets people free once it’s out. Wants to sell the tape to the highest bidder. Needs to decide who deserves the truth, and what it will cost them.",
-    "drawsOn": "Salome and the Club; Powerplay and the Powers.",
-    "beacon": "The tape’s last minute is a data-link handshake. Played aloud it is static. Fed to a data-link scanner, it points to a beacon.",
-    "playsThrough": "Powerplay under any Power, missions, smuggling, combat."
+    "beacon": "The tape’s last minute is a data-link handshake. Played aloud it is static. Fed to a data-link scanner, it points to a beacon."
   },
   {
     "id": "the-claim",
@@ -83,10 +62,7 @@
     "title": "The Claim",
     "tone": "Frontier building",
     "inYourWords": "Everyone in my family rented. I’m going to own a star. Right now I own a Sidewinder and a plan.",
-    "heart": "Believes a home is something you build and control. Wants to claim and colonise a system of their own. Needs to share it.",
-    "drawsOn": "System colonisation; the worlds the Guardians never used.",
-    "beacon": "The beacon’s data lists systems the Guardians reserved and never settled. You scan it to choose the system you’ll claim.",
-    "playsThrough": "Hauling, colonisation claims and construction, mining for materials, fleet carrier logistics."
+    "beacon": "The beacon’s data lists systems the Guardians reserved and never settled. You scan it to choose the system you’ll claim."
   },
   {
     "id": "the-toast",
@@ -94,10 +70,7 @@
     "title": "The Toast",
     "tone": "Legend hunt",
     "inYourWords": "My grandfather spent his life chasing Raxxla and died broke. I got his Sidewinder and his copy of the Toast, with notes in every margin.",
-    "heart": "Believes the legend is a treasure map. Wants the fortune Raxxla promises. Needs to put the people aboard ahead of the prize.",
-    "drawsOn": "Raxxla, the Dark Wheel and the Toast; Shinrarta Dezhra.",
-    "beacon": "Your grandfather’s last margin note solves one line of the Toast, and the answer is a beacon.",
-    "playsThrough": "Exploration, rank (Elite opens Shinrarta Dezhra), combat. Everything. This is the longest of the twenty."
+    "beacon": "Your grandfather’s last margin note solves one line of the Toast, and the answer is a beacon."
   },
   {
     "id": "the-glyph",
@@ -105,10 +78,7 @@
     "title": "The Glyph",
     "tone": "Archaeology",
     "inYourWords": "Since I was three I’ve drawn the same shape without knowing why. Last year I saw it on a Guardian obelisk in a Codex image.",
-    "heart": "Believes knowing where you come from tells you what you are. Wants to know why they know the shape. Needs to learn that the answer changes nothing about whom they love.",
-    "drawsOn": "Guardian obelisks and ruins; Ram Tah’s translations; the Codex.",
-    "beacon": "Ram Tah hires you because you read glyphs his team can’t, and he needs a beacon’s key data.",
-    "playsThrough": "Guardian ruins on foot, the Codex, engineering through Ram Tah."
+    "beacon": "Ram Tah hires you because you read glyphs his team can’t, and he needs a beacon’s key data."
   },
   {
     "id": "the-dreamer",
@@ -116,10 +86,7 @@
     "title": "The Dreamer",
     "tone": "Dream mystery",
     "inYourWords": "A data-link surge while I scanned a derelict left me dreaming in a language I don’t speak. The clinic says it’s a signal echo and will fade. It hasn’t.",
-    "heart": "Believes the dreams are damage. Wants them to stop. Needs to learn what they’re for.",
-    "drawsOn": "Data-link scanning; the Guardian language.",
-    "beacon": "A neural technician matches the echo to a Guardian beacon’s handshake. She advises returning the signal to its source.",
-    "playsThrough": "Anything. This one lives in the cores."
+    "beacon": "A neural technician matches the echo to a Guardian beacon’s handshake. She advises returning the signal to its source."
   },
   {
     "id": "the-misjump",
@@ -127,10 +94,7 @@
     "title": "The Misjump",
     "tone": "Wonder",
     "inYourWords": "I was a child on Jaques Station when it misjumped to Colonia. Since then I’ve heard music in witch space. Nobody else hears it.",
-    "heart": "Believes they’re the only one. Wants to find the music’s source. Needs to stop being alone.",
-    "drawsOn": "Jaques Station’s misjump; Colonia; witch space.",
-    "beacon": "The music is loudest toward the Synuefe systems. You follow it to a beacon.",
-    "playsThrough": "Long-range travel, Colonia and back, squadrons, exploration."
+    "beacon": "The music is loudest toward the Synuefe systems. You follow it to a beacon."
   },
   {
     "id": "the-blackout",
@@ -138,10 +102,7 @@
     "title": "The Blackout",
     "tone": "Guilt and inquiry",
     "inYourWords": "I was the traffic controller on shift the night Halden’s Rest lost life support. Two hundred and twelve people died. The inquiry blamed a software fault and cleared me. I quit and bought a Sidewinder with my last pay.",
-    "heart": "Believes they could have stopped it. Wants to prove it wasn’t their fault. Needs to forgive.",
-    "drawsOn": "Station life; an inquiry with an appendix nobody explained.",
-    "beacon": "The inquiry’s appendix lists an unidentified code signature in the station’s systems. You trace it to a beacon.",
-    "playsThrough": "Rescue missions, evacuations, station work, anything."
+    "beacon": "The inquiry’s appendix lists an unidentified code signature in the station’s systems. You trace it to a beacon."
   },
   {
     "id": "the-job",
@@ -149,10 +110,7 @@
     "title": "The Job",
     "tone": "Heist",
     "inYourWords": "A crew needed a runner nobody would look at twice, and a beaten Sidewinder is invisible. My cut from one job is more than I’d make in a year.",
-    "heart": "Believes everything has a price. Wants the payout. Needs to find what they won’t sell.",
-    "drawsOn": "Black markets; the trade in Guardian data; smuggling.",
-    "beacon": "The beacon is the job. Scan its data and carry it to a buyer who has already paid the crew.",
-    "playsThrough": "Smuggling, black markets, combat, running silent."
+    "beacon": "The beacon is the job. Scan its data and carry it to a buyer who has already paid the crew."
   },
   {
     "id": "the-claimant",
@@ -160,10 +118,7 @@
     "title": "The Claimant",
     "tone": "Court intrigue",
     "inYourWords": "A genetic registry says I’m Hengist Duval’s great-grandchild, about nine hundredth in line to the Imperial throne. It hasn’t paid for fuel yet.",
-    "heart": "Believes their worth is what their blood says. Wants to sell the claim to a noble house. Needs to choose their own loyalty.",
-    "drawsOn": "Hengist Duval’s death; Empress Arissa; the Imperial court; Imperial rank.",
-    "beacon": "An old court custom says the first Duval ruled with the Counsel of the Lantern, and a claimant proves their worth by bringing it back. Nobody ever has.",
-    "playsThrough": "Imperial missions and rank, couriering, combat."
+    "beacon": "An old court custom says the first Duval ruled with the Counsel of the Lantern, and a claimant proves their worth by bringing it back. Nobody ever has."
   },
   {
     "id": "the-catalogue",
@@ -171,10 +126,7 @@
     "title": "The Catalogue",
     "tone": "Science mystery",
     "inYourWords": "My mother catalogued alien life and found that the genera form a pattern. The Codex board laughed at her. She died broke and left me her notes and a Sidewinder.",
-    "heart": "Believes knowledge is always good. Wants to finish her catalogue and prove her right. Needs to decide what her work was for.",
-    "drawsOn": "Exobiology and the Codex; the Brain Trees near Guardian sites.",
-    "beacon": "Her pattern points to a beacon as its index.",
-    "playsThrough": "Exobiology on foot, exploration, Guardian sites."
+    "beacon": "Her pattern points to a beacon as its index."
   },
   {
     "id": "the-grey-ghost",
@@ -182,10 +134,7 @@
     "title": "The Grey Ghost",
     "tone": "Western",
     "inYourWords": "Three generations of my family have hunted the Grey Ghost, an outlaw who has flown the same Sidewinder for two hundred years. The bounty is the family debt, and now it’s mine.",
-    "heart": "Believes finishing the family’s work will make them worthy. Wants the bounty. Needs to choose what kind of hunter to be.",
-    "drawsOn": "Bounty hunting; pilots’ legends.",
-    "beacon": "A tip says the Ghost refuels near Guardian beacons. You wait at one, and scan it while you wait.",
-    "playsThrough": "Bounty hunting, combat, interdictions."
+    "beacon": "A tip says the Ghost refuels near Guardian beacons. You wait at one, and scan it while you wait."
   },
   {
     "id": "terminal",
@@ -193,10 +142,7 @@
     "title": "Terminal",
     "tone": "Bucket list",
     "inYourWords": "My doctor gave me until the end of 3313. I sold everything for a Sidewinder and a list: Sagittarius A*, a Guardian beacon, a Thargoid up close, Colonia.",
-    "heart": "Believes a life counts once the list is done. Wants to finish the list in time. Needs to learn the list was never the point.",
-    "drawsOn": "Long-range exploration.",
-    "beacon": "It’s item two on the list.",
-    "playsThrough": "Exploration, and whatever else is on the list."
+    "beacon": "It’s item two on the list."
   },
   {
     "id": "the-long-sleep",
@@ -204,10 +150,7 @@
     "title": "The Long Sleep",
     "tone": "Out of time",
     "inYourWords": "I boarded a generation ship in 2231. It arrived last year. Everyone I knew has been dead for a thousand years. A Federation resettlement grant bought me a Sidewinder.",
-    "heart": "Believes their life ended when they went to sleep. Wants to find anyone from their own time. Needs to make a life in this one.",
-    "drawsOn": "The generation ships; Federation resettlement.",
-    "beacon": "The ship’s log records a stop at a structure the crew called the Lantern, and after it the sleepers’ pods stopped degrading. It is the one place in the galaxy your ship touched.",
-    "playsThrough": "Everything is new to them, which suits a new player."
+    "beacon": "The ship’s log records a stop at a structure the crew called the Lantern, and after it the sleepers’ pods stopped degrading. It is the one place in the galaxy your ship touched."
   },
   {
     "id": "the-passenger",
@@ -215,9 +158,6 @@
     "title": "The Passenger",
     "tone": "Ghost story",
     "inYourWords": "My first passenger was an old woman with no luggage who asked to go wherever I was going. She keeps turning up at stations. She never pays, and I never mind.",
-    "heart": "Believes kindness is for people who can afford it. Wants to get her where she’s going. Needs to see her home, wherever that is.",
-    "drawsOn": "Passenger work; the history of the beacons.",
-    "beacon": "She tells stories about a lantern in the dark and asks to be taken there.",
-    "playsThrough": "Passenger missions, exploration."
+    "beacon": "She tells stories about a lantern in the dark and asks to be taken there."
   }
 ]

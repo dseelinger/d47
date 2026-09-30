@@ -25,7 +25,6 @@ internal sealed class StoryFixtures : IDisposable
         Title = "The Test Story",
         Tone = "Quiet test",
         InYourWords = "I bought a Sidewinder with the last of my credits.",
-        Heart = "Believes tests pass. Wants green. Needs red first.",
         Beacon = "The beacon calls.",
     };
 

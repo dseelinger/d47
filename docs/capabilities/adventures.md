@@ -267,8 +267,7 @@ time D47 runs.
 ### Stock stories
 
 Open **Stories** on the Adventures tab for twenty stories written to run for months, a chapter at a
-time. Each card shows the story in your words, what your Commander believes, wants and needs, the lore
-it draws on, why it sends you to a Guardian beacon, and the kind of play it suits. Each story also has
+time. Each card shows the story in your words and why it sends you to a Guardian beacon. Each story also has
 a hidden layer of twists. D47 keeps that layer sealed, never shows it, and sends it to the language
 model so the chapters can hint at it.
 

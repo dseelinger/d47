@@ -206,10 +206,7 @@ public sealed class StoriesView : UserControl
         }
 
         page.Children.Add(Labelled("In your words", card.InYourWords));
-        page.Children.Add(Labelled("Heart", card.Heart));
-        page.Children.Add(Labelled("Draws on", card.DrawsOn));
         page.Children.Add(Labelled("The beacon", card.Beacon));
-        page.Children.Add(Labelled("Plays through", card.PlaysThrough));
 
         var commander = _surface.Commander();
         var current = _director.Stories.Current(commander);
