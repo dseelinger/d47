@@ -779,6 +779,23 @@ the Routing tab's Community Goal page — and the figures come from the ledger d
 it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
 keeps counting for the page and for *"how have I done today"*.
 
+#### Mission hand-ins and expiry {#missions}
+
+D47 speaks about the missions on your [mission board](missions.html) at four moments
+([#662](https://github.com/dseelinger/d47/issues/662)). Docking where one or more missions hand in
+says how many and what they pay together. Undocking from that station with one still unclaimed says
+so. An hour before a mission expires, and again ten minutes before, it names the mission.
+
+```text
+Two missions conclude here. 2.9 million waiting.
+```
+
+Docking anywhere else says nothing, and neither does a mission you have already handed in. Each
+expiry warning is said once per mission. A mission already inside the hour when D47 starts gets no
+hour warning, and gets the ten-minute one only if that mark passed less than a minute ago. The
+warnings are fixed at an hour and ten minutes. Switching this off stops all four and leaves the
+mission board as it was.
+
 #### Your core's own subject {#domain}
 
 Some cores pay attention to a subject of their own, and remark on it with a figure from this session

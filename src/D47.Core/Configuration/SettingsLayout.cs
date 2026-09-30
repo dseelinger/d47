@@ -478,6 +478,7 @@ public static class SettingsLayout
                                 E("callouts.continuity"),
                                 E("callouts.adventure"),
                                 E("callouts.communityGoalSales"),
+                                E("callouts.missions"),
                                 E("callouts.domain"),
                                 E("callouts.tradingMode"),
                                 E("callouts.tradingModeMinHold", under: true),

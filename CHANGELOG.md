@@ -59,6 +59,13 @@ the hour come first, then those handed in at the station you are docked at, then
 expiry. Asking "what missions should I take" adds that D47 only sees missions after you accept them,
 because the journal does not list what a station offers.
 
+D47 now speaks about missions without being asked. Docking at a station where missions hand in says
+how many and what they pay together, for example "Two missions conclude here. 2.9 million waiting."
+Undocking from it with one still unclaimed says "You're leaving with a hand-in unclaimed". Each
+mission is announced an hour before it expires and again ten minutes before, once each; a mission
+already inside the hour when D47 starts gets only the warning still ahead. The row is Settings ›
+Callouts › Plans and stories › **Mission hand-ins and expiry**, on by default.
+
 ## 1.23.1 — Delivery direction can be a sound
 
 With a voice that performs direction (ElevenLabs v4 Turbo or v3), D47 is now told it may open a

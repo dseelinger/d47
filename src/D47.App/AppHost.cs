@@ -2642,6 +2642,8 @@ public sealed class AppHost : IDisposable
             // Phase 11.
             .Add(new CarrierCallout())
 
+            .Add(new MissionCallout())
+
             // Phase 17.
             .Add(new SamplingCallout { Ledger = exobiology })
             .Add(new DiscoveryCallout())
@@ -2772,6 +2774,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
         engine.SetEnabled("domain", callouts.Domain, now);
+        engine.SetEnabled("missions", callouts.Missions, now);
 
         foreach (var callout in engine.Callouts)
         {

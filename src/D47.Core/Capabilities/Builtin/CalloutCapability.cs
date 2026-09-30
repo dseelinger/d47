@@ -44,6 +44,7 @@ public static class CalloutCapability
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
+    public const string MissionsKey = "callouts.missions";
     public const string DomainKey = "callouts.domain";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
@@ -385,6 +386,16 @@ public static class CalloutCapability
                 "community goal sales",
                 s => s.Callouts.CommunityGoalSales,
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalSales = v } }),
+
+            Toggle(
+                MissionsKey,
+                "Mission hand-ins and expiry",
+                "On docking where missions hand in, on leaving with one unclaimed, and an hour and ten "
+                + "minutes before a mission expires.",
+                "missions",
+                "mission callouts",
+                s => s.Callouts.Missions,
+                (s, v) => s with { Callouts = s.Callouts with { Missions = v } }),
 
             Toggle(
                 DomainKey,
