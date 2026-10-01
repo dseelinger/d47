@@ -25,8 +25,8 @@ public enum HeldCores
     All,
 }
 
-/// <summary>The cores a story holds back, and the story's title.</summary>
-public readonly record struct CoreHold(HeldCores Cores, string Story)
+/// <summary>The cores a story holds back, the story's title, and whether its first beacon scan was narrated.</summary>
+public readonly record struct CoreHold(HeldCores Cores, string Story, bool Narrated = false)
 {
     public static readonly CoreHold None = new(HeldCores.None, string.Empty);
 }

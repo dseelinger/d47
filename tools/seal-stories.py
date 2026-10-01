@@ -11,8 +11,10 @@ Decode writes the hidden layer as indented JSON and refuses a path inside the re
 decoded text is never committed. Edit it there, then encode it back. Adding a story is one entry
 here and one in `StoryCatalog.json`, sharing an `id`.
 
-Each entry: {"id", "secret", "end", "beats", "clues", "finale", "options", "cast"}, paced by the
+Each entry: {"id", "secret", "end", "beats", "scan", "clues", "finale", "options", "cast"}, paced by the
 "length" on its card, one of the keys of LENGTHS.
+  scan     a story of NARRATED lengths only: one line, the Commander's beacon scan before the story opens,
+           narrated word for word at the pick. A longer story has none and flies to a real beacon.
   beats    one non-empty line for each beat of the length's sheet, keyed as in BEATS, and no other.
   clues    exactly one line for each of the length's clue days.
   finale   exactly one line for each of the length's finale chapters.
@@ -23,7 +25,7 @@ Each entry: {"id", "secret", "end", "beats", "clues", "finale", "options", "cast
            {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
            such a speaker as {name:<cast-id>}, and the card names neither the token nor either name.
-Every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
+The scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
 import base64
@@ -53,6 +55,8 @@ LENGTHS = {
     "6-months": (8, 4, BEATS),
     "1-year": (14, 4, BEATS),
 }
+# The lengths whose beacon scan is narrated at the pick, as StoryPacing.NarratedScan.
+NARRATED = ("3-days", "1-week", "2-weeks")
 PROVIDERS = ("kokoro", "chatterbox")
 SPEAKERS = ("ship", "narrator")
 VERSIONS = ("forMan", "forWoman")
@@ -74,6 +78,8 @@ def hidden_texts(entry: dict):
         yield field, entry.get(field)
     for beat, line in (entry.get("beats") or {}).items():
         yield f"beat {beat}", line
+    if isinstance(entry.get("scan"), dict):
+        yield "scan line", entry["scan"].get("text")
     for name, key in (("clue", "clues"), ("finale line", "finale")):
         for at, line in enumerate(entry.get(key) or []):
             yield f"{name} {at + 1}", line.get("text")
@@ -103,6 +109,12 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     beats = entry.get("beats") or {}
     found += [f"no beat {beat}" for beat in sheet if not text(beats.get(beat))]
     found += [f"beat {beat} is not a beat of a {length} story" for beat in BEATS if beat not in sheet and text(beats.get(beat))]
+
+    scan = entry.get("scan")
+    if length in NARRATED and not isinstance(scan, dict):
+        found.append(f"no scan line; a {length} story opens after a narrated beacon scan")
+    elif length not in NARRATED and scan is not None:
+        found.append(f"a scan line; a {length} story flies to a real beacon")
 
     clues = entry.get("clues") or []
     if len(clues) != clue_count:
@@ -167,7 +179,8 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
             if any(re.search(rf"\b{re.escape(name)}\b", value) for name in names):
                 found.append(f"the card's {field} names cast member {sid}; call the member by role")
 
-    for name, lines in (("clue", clues), ("finale line", finale)):
+    scanned = [scan] if isinstance(scan, dict) else []
+    for name, lines in (("scan line", scanned), ("clue", clues), ("finale line", finale)):
         for at, line in enumerate(lines):
             if not text(line.get("text")):
                 found.append(f"{name} {at + 1} has no text")

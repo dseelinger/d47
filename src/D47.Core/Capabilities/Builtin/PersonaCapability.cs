@@ -456,7 +456,7 @@ public static class PersonaCapability
             return null;
         }
 
-        var until = hold.Cores == HeldCores.Heretic
+        var until = hold.Cores == HeldCores.Heretic && !hold.Narrated
             ? "until you scan a Guardian beacon in a second system"
             : "until you scan a Guardian beacon";
 

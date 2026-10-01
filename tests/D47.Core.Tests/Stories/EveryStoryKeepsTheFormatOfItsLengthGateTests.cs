@@ -15,9 +15,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
 
     private static readonly StoryCard WeekCard = Card with { Length = StoryPacing.OneWeek.Key };
 
-    /// <summary>A hidden entry that fits a week: two clues, two finale lines and the short sheet's seven beats.</summary>
+    /// <summary>A hidden entry that fits a week: a scan line, two clues, two finale lines and the short sheet's seven beats.</summary>
     private static readonly StorySecret Week = Secret with
     {
+        Scan = new("The beacon's light runs over the hull.", StorySpeaker.Narrator),
         Clues = [.. Secret.Clues.Take(2)],
         Finale = [.. Secret.Finale.Take(2)],
         Beats = new StoryBeats
@@ -43,6 +44,9 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "two-day-length" => ("the length", Card with { Length = "2-days" }, Secret),
         "week-with-fourteen-clues" => ("clues has 14 lines, not 2", WeekCard, Week with { Clues = Secret.Clues }),
         "week-with-a-b-story" => ("beats.bStory is not a beat", WeekCard, Week with { Beats = Week.Beats with { BStory = "A dock worker." } }),
+        "week-without-a-scan" => ("scan is missing", WeekCard, Week with { Scan = null }),
+        "month-with-a-scan" => ("scan is set", Card with { Length = StoryPacing.OneMonth.Key }, Week),
+        "scan-by-a-stranger" => ("scan is spoken by stranger", WeekCard, Week with { Scan = Week.Scan! with { Speaker = "stranger" } }),
         "week-without-its-midpoint" => ("beats.midpoint is missing", WeekCard, Week with { Beats = Week.Beats with { Midpoint = null } }),
         "no-core" => ("the core is missing", Card with { Core = "" }, Secret),
         "unknown-core" => ("the core is missing", Card with { Core = "nobody" }, Secret),
@@ -97,6 +101,9 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("two-day-length")]
     [InlineData("week-with-fourteen-clues")]
     [InlineData("week-with-a-b-story")]
+    [InlineData("week-without-a-scan")]
+    [InlineData("month-with-a-scan")]
+    [InlineData("scan-by-a-stranger")]
     [InlineData("week-without-its-midpoint")]
     [InlineData("no-core")]
     [InlineData("unknown-core")]

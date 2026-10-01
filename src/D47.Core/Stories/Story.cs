@@ -49,8 +49,11 @@ public sealed record Story
 
     public DateTimeOffset PickedAt { get; init; }
 
-    /// <summary>When the Commander first scanned a Guardian beacon while this story ran.</summary>
+    /// <summary>When the Commander first scanned a Guardian beacon while this story ran, or the pick for a narrated scan.</summary>
     public DateTimeOffset? BeaconScanAt { get; init; }
+
+    /// <summary>Whether the first beacon scan was narrated at the pick; it counts as one beacon, in no system.</summary>
+    public bool BeaconNarrated { get; init; }
 
     /// <summary>The beacon systems the Commander scanned while this story was current, by <c>SystemAddress</c>, in order.</summary>
     public IReadOnlyList<long> BeaconSystems { get; init; } = [];
@@ -110,13 +113,18 @@ public sealed record Story
     [JsonIgnore]
     public bool IsCurrent => State is StoryState.Running or StoryState.Paused;
 
-    /// <summary>The beacon systems scanned, counting a scan stamped in <see cref="BeaconScanAt"/> before the systems were recorded.</summary>
+    /// <summary>
+    /// The beacons scanned: a narrated scan and then each system, or the systems, counting a scan stamped in
+    /// <see cref="BeaconScanAt"/> before the systems were recorded.
+    /// </summary>
     [JsonIgnore]
-    public int BeaconsScanned => Math.Max(BeaconSystems.Count, BeaconScanAt is null ? 0 : 1);
+    public int BeaconsScanned => BeaconNarrated
+        ? BeaconSystems.Count + 1
+        : Math.Max(BeaconSystems.Count, BeaconScanAt is null ? 0 : 1);
 
     /// <summary>
     /// The Guardian cores this story holds back: all of them until its first beacon scan, the Heretic until a
-    /// second system's, and none while it is paused, switched off, without Odyssey or stopped.
+    /// second beacon's, and none while it is paused, switched off, without Odyssey or stopped.
     /// </summary>
     [JsonIgnore]
     public HeldCores HeldCores => State != StoryState.Running || IsOff || IsWithoutOdyssey
@@ -130,7 +138,7 @@ public sealed record Story
 
     /// <summary><see cref="HeldCores"/> with this story's title.</summary>
     [JsonIgnore]
-    public CoreHold CoreHold => HeldCores == HeldCores.None ? CoreHold.None : new CoreHold(HeldCores, Title);
+    public CoreHold CoreHold => HeldCores == HeldCores.None ? CoreHold.None : new CoreHold(HeldCores, Title, BeaconNarrated);
 
     [JsonIgnore]
     public string? CurrentChapter => Chapters.Count > 0 ? Chapters[^1] : null;

@@ -298,6 +298,9 @@ public sealed partial record StorySecret
 
     public StoryBeats Beats { get; init; } = new();
 
+    /// <summary>The Commander's beacon scan before the story opens, narrated at the pick; only a story whose length narrates the scan has one.</summary>
+    public StoryLine? Scan { get; init; }
+
     /// <summary>One line for each clue day of the card's length.</summary>
     public IReadOnlyList<StoryLine> Clues { get; init; } = [];
 
@@ -381,6 +384,7 @@ public sealed partial record StorySecret
                 Finale = Maybe(Beats.Finale),
                 FinalImage = Maybe(Beats.FinalImage),
             },
+            Scan = Scan is null ? null : Scan with { Text = Resolve(Scan.Text) },
             Clues = [.. Clues.Select(line => line with { Text = Resolve(line.Text) })],
             Finale = [.. Finale.Select(line => line with { Text = Resolve(line.Text) })],
             Options = [.. Options.Select(option => option with { Label = Resolve(option.Label), After = Resolve(option.After) })],
@@ -392,10 +396,11 @@ public sealed partial record StorySecret
     [GeneratedRegex(@"\{name:([^{}\s]+)\}")]
     public static partial Regex NameToken();
 
-    /// <summary>Every clue and finale line, named by its place.</summary>
+    /// <summary>The scan line, then every clue and finale line, named by its place.</summary>
     public IEnumerable<(string Field, StoryLine Line)> Lines() =>
-        Clues.Select((line, at) => ($"clues[{at.ToString(CultureInfo.InvariantCulture)}]", line))
-            .Concat(Finale.Select((line, at) => ($"finale[{at.ToString(CultureInfo.InvariantCulture)}]", line)));
+        (Scan is null ? [] : new[] { ("scan", Scan) })
+            .Concat(Clues.Select((line, at) => ($"clues[{at.ToString(CultureInfo.InvariantCulture)}]", line))
+            .Concat(Finale.Select((line, at) => ($"finale[{at.ToString(CultureInfo.InvariantCulture)}]", line))));
 }
 
 /// <summary>
@@ -618,7 +623,7 @@ public sealed class StoryCatalog
         }
     }
 
-    /// <summary>Where a hidden entry does not fit its card's length: the clue and finale counts, and exactly the length's beats.</summary>
+    /// <summary>Where a hidden entry does not fit its card's length: the scan line, the clue and finale counts, and exactly the length's beats.</summary>
     private static IEnumerable<string> PacingFaults(StorySecret secret, StoryPacing pacing)
     {
         var keys = pacing.BeatKeys;
@@ -635,6 +640,15 @@ public sealed class StoryCatalog
             {
                 yield return $"beats.{key} is not a beat of a {pacing.Name} story.";
             }
+        }
+
+        if (pacing.NarratedScan && string.IsNullOrWhiteSpace(secret.Scan?.Text))
+        {
+            yield return $"scan is missing; a {pacing.Name} story opens after a narrated beacon scan.";
+        }
+        else if (!pacing.NarratedScan && secret.Scan is not null)
+        {
+            yield return $"scan is set; a {pacing.Name} story flies to a real beacon.";
         }
 
         if (secret.Clues.Count != pacing.ClueDays.Count)

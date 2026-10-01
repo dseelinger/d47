@@ -2636,7 +2636,16 @@ public sealed class AppHost : IDisposable
                 }
             }
 
-            foreach (var (waking, core) in wakings.Due(chapter => adventureBook.IsStirring(commander, chapter), context.Now))
+            // A narrated scan is said before the cores it wakes; the story's core comes aboard once the line has been said.
+            if (storyDirector.TakeNarratedScan(commander) is { } narrated)
+            {
+                host.NarrateScan(narrated, commander);
+                wakings.Add(CoreWaking.Cores, storyDirector.CoreOf(commander), NarratedScanKey, context.Now);
+            }
+
+            foreach (var (waking, core) in wakings.Due(
+                         owed => owed == NarratedScanKey ? host.IsNarratingScan : adventureBook.IsStirring(commander, owed),
+                         context.Now))
             {
                 host.OnCoresWoke(waking, core);
             }
@@ -5897,6 +5906,65 @@ public sealed class AppHost : IDisposable
     }
 
     private int _endingBusy;
+
+    /// <summary>What a waking held behind a narrated scan line waits on, in place of a chapter key.</summary>
+    private const string NarratedScanKey = "story.scan";
+
+    /// <summary>Narrated scan lines posted and not yet said.</summary>
+    private int _narratingScans;
+
+    /// <summary>Whether a narrated scan line has been posted and not yet said.</summary>
+    private bool IsNarratingScan => Volatile.Read(ref _narratingScans) > 0;
+
+    /// <summary>
+    /// Posts a story's narrated beacon scan to Messages from its speaker and says it word for word: the ship in the
+    /// voice aboard, anyone else in the Narrator's. Called on the tick thread; the speaking runs on the pool.
+    /// </summary>
+    private void NarrateScan(D47.Core.Stories.StoryScanDue scan, string? commander)
+    {
+        if (scan.Line is not { } line)
+        {
+            return;
+        }
+
+        var ship = line.Speaker == D47.Core.Stories.StorySpeaker.Ship;
+        var from = line.Speaker switch
+        {
+            D47.Core.Stories.StorySpeaker.Ship => Personas.Current.Id,
+            D47.Core.Stories.StorySpeaker.Narrator => D47.Core.Messages.MessageStore.Narrator,
+            _ => Stories?.Speaker(commander, line.Speaker)?.Name ?? D47.Core.Messages.MessageStore.Narrator,
+        };
+
+        Messages?.Post(from, scan.Title, line.Text, DateTimeOffset.Now);
+        Interlocked.Increment(ref _narratingScans);
+
+        _ = Task.Run(async () =>
+        {
+            await _speaking.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                if (ship)
+                {
+                    await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+                }
+
+                await SayAsync(new Announcement($"{NarratedScanKey}.{scan.StoryId}", line.Text)
+                {
+                    Voice = ship ? VoiceRole.ShipAi : VoiceRole.Narrator,
+                }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "The narrated beacon scan could not be spoken");
+            }
+            finally
+            {
+                _speaking.Release();
+                Interlocked.Decrement(ref _narratingScans);
+            }
+        });
+    }
 
     /// <summary>
     /// When a story has finished, has the model write its ending, posts it to Messages with the options as

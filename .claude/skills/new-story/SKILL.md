@@ -20,7 +20,7 @@ work carries on unchanged.
 
 ## The rules
 
-Every story keeps all nine. Check the draft against each before showing it.
+Every story keeps all ten. Check the draft against each before showing it.
 
 1. The card names its level, `new`, `midrange` or `endgame` (#739), and the backstory starts there:
    broke in a stock Sidewinder for `new`, a working ship and some savings for `midrange`, a fleet
@@ -52,6 +52,11 @@ Every story keeps all nine. Check the draft against each before showing it.
    only as Guardians of the past.
 8. Plain prose, and never "wants" where "needs" is meant.
 9. The story fills its length, and the beat sheet follows that length's stages in `StoryPacing`.
+10. A place the Commander has to go to is a real one, named as the game names it: every system,
+    station, settlement, body, beacon site or wreck a beat or a clue sends them to. Check each name
+    on spansh.co.uk, the source d47's `AdventureResolver` looks it up in; a name it does not know
+    cannot fire. Where any place of a kind will do, name the kind instead of a place. A place
+    mentioned only as flavour, which no beat or clue sends them to, may be invented.
 
 Within those rules: the setting is soft science fiction in Elite's galaxy of the 34th century, and
 Elite's lore and d47's own may be bent or overturned. Jobs, institutions, objects and slang belong

@@ -309,11 +309,17 @@ flying, and works toward a ship that can make the trip; the chapter writer is to
 distance, and whether the jump range, the missing fuel scoop or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is an adventure on this tab. When one finishes, the next is written from it
 and begins. **Switch** abandons the running story, keeps its chapters on file, and picks another.
+
+A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
+**Pick**, the scan is narrated in the words the story was written with, posted to Messages from its
+speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
+chapter one begins in act one with no beacon beat. The story's days count from the pick. A story of 1
+month or longer keeps the real scan.
 **Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
 pauses the story, and **Resume** on the Stories page begins that chapter again.
 
 Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When
-you scan the story's first Guardian beacon, that core comes aboard in place of the core you had, says
+you scan the story's first Guardian beacon, or at the pick of a story shorter than a month, that core comes aboard in place of the core you had, says
 the waking line, and Messages says it came aboard and that you can choose another core in Settings. A
 core you choose afterwards stays; the story does not bring its own back. Pausing, abandoning or finishing
 the story leaves the core aboard as it is.
@@ -383,7 +389,7 @@ Answer the ending of a finished story with one of its options, numbered from one
 ### Clues
 
 Each story card has one of seven lengths, and the story is paced to it. Every story in the catalog is a
-year long. The days count from the beacon scan; days while the story is paused, switched off or without
+year long. The days count from the beacon scan, or from the pick where the scan is narrated; days while the story is paused, switched off or without
 Odyssey do not count.
 
 | Length | Clues come due on day | Finale from day | Finale chapters | Clues in all | Beat sheet |
@@ -400,8 +406,8 @@ Each clue before the finale also waits for a play session since the last clue an
 since the last clue, so no two come in one session, and a Commander back after months away gets the next
 clue in order and no more.
 
-The story's stage follows the clues you have had, not the calendar. It is act one before the beacon scan
-and Break into Two with no clue yet; after that, by the number of clues you have had:
+The story's stage follows the clues you have had, not the calendar. It is act one before the beacon scan,
+and for chapter one after a narrated scan, and Break into Two with no clue yet; after that, by the number of clues you have had:
 
 | Length | Fun and Games | Midpoint | Bad Guys Close In | All Is Lost | Dark Night of the Soul |
 | --- | --- | --- | --- | --- | --- |

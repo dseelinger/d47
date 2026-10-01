@@ -1,8 +1,8 @@
 namespace D47.Core.Persona;
 
 /// <summary>
-/// Cores woken by a beacon scan, each held until the story beat the same scan reached has been said, so the beat is
-/// told in the voice that was aboard before the scan. Not thread-safe: one caller, the tick.
+/// Cores woken by a beacon scan, each held until the line owed ahead of it has been said: the story beat the same scan
+/// reached, told in the voice that was aboard before the scan, or a narrated scan. Not thread-safe: one caller, the tick.
 /// </summary>
 public sealed class WakingAfterTheBeat
 {

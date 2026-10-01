@@ -157,7 +157,7 @@ internal sealed class StoryFixtures : IDisposable
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-stories", Guid.NewGuid().ToString("N"));
 
-    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null)
+    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null)
     {
         secret ??= Secret;
 
@@ -176,7 +176,7 @@ internal sealed class StoryFixtures : IDisposable
         Director = new StoryDirector(
             Stories,
             Book,
-            new StoryCatalog([Card, Other], () => [secret, Secret with { Id = Other.Id }]),
+            new StoryCatalog([card ?? Card, Other], () => [secret, Secret with { Id = Other.Id }]),
             (ask, now, cancellationToken) =>
             {
                 Asks.Add(ask);

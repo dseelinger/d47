@@ -202,7 +202,8 @@ counts.
 
 The story's first beacon brings back every core but the Heretic. A beacon in a second, different
 system brings back the Heretic. Each is said once per story, aloud and in Messages. A scan made
-before the story was picked does not count toward it.
+before the story was picked does not count toward it. In a story shorter than a month, the scan narrated
+at the pick is the first beacon, and a real beacon scan in any system brings back the Heretic.
 
 Pausing the story, switching it off or abandoning it gives the cores back at once, and so does a
 session without Odyssey. Resuming a story that has not had its beacon scan holds them again; resuming

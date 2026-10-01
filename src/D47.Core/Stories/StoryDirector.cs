@@ -6,6 +6,9 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Stories;
 
+/// <summary>A story picked with a narrated beacon scan, waiting for the tick to say its scan line and wake the cores. <see cref="Line"/> is null when the entry has none.</summary>
+public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line);
+
 /// <summary>
 /// Runs a stock story as a chain of adventures: Pick writes and begins chapter one, and a finished chapter has
 /// the next written and begun.
@@ -26,6 +29,9 @@ public sealed class StoryDirector(
 
     /// <summary>Commanders whose last chapter could not be written; the tick does not retry until WriteNextAsync is called.</summary>
     private readonly HashSet<string> _failed = new(StringComparer.Ordinal);
+
+    /// <summary>Narrated scans picked and not yet taken by the tick, by Commander.</summary>
+    private readonly Dictionary<string, StoryScanDue> _scans = new(StringComparer.Ordinal);
 
     private JournalLocation _where = JournalLocation.Unknown;
 
@@ -128,6 +134,7 @@ public sealed class StoryDirector(
 
         setBackstory(card.InYourWords);
 
+        var narrated = card.Pacing.NarratedScan;
         var story = new Story
         {
             Id = card.Id,
@@ -135,10 +142,20 @@ public sealed class StoryDirector(
             PublicLayer = card.Describe(),
             Length = card.Pacing.Key,
             PickedAt = now,
+            BeaconScanAt = narrated ? now : null,
+            BeaconNarrated = narrated,
         };
 
         stories.Save(frontierId, story);
         logger.LogInformation("Picked the story {Title}", card.Title);
+
+        if (narrated)
+        {
+            lock (_gate)
+            {
+                _scans[frontierId ?? AdventureStore.NoCommander] = new StoryScanDue(card.Id, card.Title, Hidden(card.Id)?.Scan);
+            }
+        }
 
         return WriteChapterAsync(frontierId, now, cancellationToken);
     }
@@ -337,6 +354,28 @@ public sealed class StoryDirector(
 
         logger.LogInformation("{Title}: the beacon in {System} was scanned", current.Title, GuardianCores.Beacons[address]);
         return woke;
+    }
+
+    /// <summary>
+    /// The narrated scan of the story just picked, once, while it is still the running story; the caller says the line
+    /// and then wakes the cores. Null when none waits.
+    /// </summary>
+    public StoryScanDue? TakeNarratedScan(string? frontierId)
+    {
+        StoryScanDue? due;
+
+        lock (_gate)
+        {
+            if (!_scans.Remove(frontierId ?? AdventureStore.NoCommander, out due))
+            {
+                return null;
+            }
+        }
+
+        return stories.Current(frontierId) is { State: StoryState.Running, BeaconNarrated: true } story
+               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
+            ? due
+            : null;
     }
 
     /// <summary>The Guardian core the current story is written for, or null when no story is current.</summary>

@@ -96,7 +96,10 @@ public static class StoryClues
         return story.FinaleChapter >= story.Pacing.FinaleChapters && story.CluesGiven >= story.Pacing.Lines;
     }
 
-    /// <summary>Where the story stands in its beat sheet: act one before the beacon scan, then by the clues given.</summary>
+    /// <summary>
+    /// Where the story stands in its beat sheet: act one before the beacon scan, and for chapter one after a narrated
+    /// scan, then by the clues given.
+    /// </summary>
     public static StoryStage Stage(Story story)
     {
         ArgumentNullException.ThrowIfNull(story);
@@ -106,7 +109,7 @@ public static class StoryClues
             return StoryStage.Finale;
         }
 
-        if (story.BeaconScanAt is null)
+        if (story.BeaconScanAt is null || (story.BeaconNarrated && story.Chapters.Count == 0))
         {
             return StoryStage.ActOne;
         }
