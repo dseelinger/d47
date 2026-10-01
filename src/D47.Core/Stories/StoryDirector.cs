@@ -403,6 +403,74 @@ public sealed class StoryDirector(
             : story);
     }
 
+    /// <summary>The most recently finished story the Commander has not answered, or null.</summary>
+    private Story? Unanswered(string? frontierId) => stories.For(frontierId)
+        .Where(story => story is { State: StoryState.Finished, EndingChoice: null })
+        .OrderByDescending(story => story.StoppedAt)
+        .FirstOrDefault();
+
+    /// <summary>The ending to post, when a story has finished and its message has not been posted.</summary>
+    public StoryEndingDue? EndingDue(string? frontierId) =>
+        Unanswered(frontierId) is { EndingPostedAt: null } story && Hidden(story.Id) is { } secret
+            ? new StoryEndingDue(story.Id, story.Title, secret.End, secret.Options)
+            : null;
+
+    /// <summary>The title of the story whose posted ending waits for an answer, or null.</summary>
+    public string? EndingTitle(string? frontierId) => Unanswered(frontierId) is { EndingPostedAt: not null } story ? story.Title : null;
+
+    /// <summary>Records that the ending message was posted, so it is not posted again.</summary>
+    public void EndingPosted(string? frontierId, string storyId, DateTimeOffset now) =>
+        stories.Update(frontierId, storyId, story => story is { State: StoryState.Finished, EndingPostedAt: null }
+            ? story with { EndingPostedAt = now }
+            : story);
+
+    /// <summary>The options of the ending waiting for an answer, or none.</summary>
+    public IReadOnlyList<StoryOption> EndingOptions(string? frontierId) =>
+        Unanswered(frontierId) is { EndingPostedAt: not null } story && Hidden(story.Id) is { } secret ? secret.Options : [];
+
+    /// <summary>
+    /// Records the Commander's answer to the ending, <paramref name="choice"/> counting from one, and returns the
+    /// story's last line and the waking line of each core the option adds. Only the Commander reaches this.
+    /// </summary>
+    public StoryAnswer Answer(string? frontierId, int? choice)
+    {
+        if (Unanswered(frontierId) is not { EndingPostedAt: not null } story || Hidden(story.Id) is not { } secret)
+        {
+            return StoryAnswer.Refused("No ending is waiting for an answer.");
+        }
+
+        var options = secret.Options;
+
+        if (choice is null && options.Count != 1)
+        {
+            return StoryAnswer.Refused($"Which ending? Choose a number from one to {options.Count}.");
+        }
+
+        var index = (choice ?? 1) - 1;
+
+        if (index < 0 || index >= options.Count)
+        {
+            return StoryAnswer.Refused($"There is no option {choice}. Choose a number from one to {options.Count}.");
+        }
+
+        var picked = options[index];
+        var recorded = false;
+
+        stories.Update(frontierId, story.Id, current =>
+        {
+            recorded = current.EndingChoice is null;
+            return recorded ? current with { EndingChoice = picked.Id } : current;
+        });
+
+        if (!recorded)
+        {
+            return StoryAnswer.Refused("That ending has been answered.");
+        }
+
+        logger.LogInformation("{Title}: the ending {Option} was chosen", story.Title, picked.Id);
+        return new StoryAnswer(null, picked.After, [.. picked.Add.Select(StoryEnding.Waking)]);
+    }
+
     private void Stop(string? frontierId, Story story, StoryState state, DateTimeOffset now)
     {
         if (story.CurrentChapter is { } key && book.Standing(frontierId, key) is { Adventure.IsActive: true, IsDone: false })

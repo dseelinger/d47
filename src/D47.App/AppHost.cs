@@ -1580,6 +1580,7 @@ public sealed class AppHost : IDisposable
         var offers = new OfferWindow();
 
         var storySwitch = new AdventureCapability.StorySwitch();
+        var endingAnswer = new AdventureCapability.EndingAnswer();
 
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
@@ -1985,7 +1986,8 @@ public sealed class AppHost : IDisposable
                 },
                 exobiology: exobiology,
                 cartography: cartography,
-                storySwitch: storySwitch));
+                storySwitch: storySwitch,
+                endingAnswer: endingAnswer));
 
         buildingRegistry.Dispose();
 
@@ -2339,6 +2341,7 @@ public sealed class AppHost : IDisposable
         host.Goals = (goalBook, BackfillGoals);
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
+        endingAnswer.Answer = host.AnswerEnding;
         host.Messages = messageStore;
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
@@ -2643,6 +2646,7 @@ public sealed class AppHost : IDisposable
 
             // A finished chapter's successor is written on the pool; the tick only starts it.
             _ = storyDirector.Tick(commander, context.Now);
+            host.PostEndingIfDue(commander);
         });
 
         tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
@@ -5842,16 +5846,28 @@ public sealed class AppHost : IDisposable
     /// <summary>A due clue, written by the model in the voice the marker names, or null when no line came back.</summary>
     private async Task<Announcement?> ComposeClueAsync(Announcement marker, D47.Core.Stories.StoryClueDue due)
     {
-        if (Turns.Provider is null
-            || !Settings.Current.Llm.PersonalityEnabled
-            || Stories?.Clue(GameState.Active?.Identity.FrontierId, due) is not var (_, clue))
+        if (Stories?.Clue(GameState.Active?.Identity.FrontierId, due) is not var (_, clue))
         {
             return null;
         }
 
-        var narrated = marker.Voice == VoiceRole.Narrator;
-        var brief = D47.Core.Stories.StoryClues.Speaking(clue, narrated);
-        var directed = DirectableIn(VoiceGroups.Of(marker.Voice, marker.CommsChannel));
+        var brief = D47.Core.Stories.StoryClues.Speaking(clue, marker.Voice == VoiceRole.Narrator);
+
+        return await ComposeStoryLineAsync(brief, marker.Voice, marker.CommsChannel, marker.Key).ConfigureAwait(false) is { } said
+            ? marker with { Text = said }
+            : null;
+    }
+
+    /// <summary>A story line the model writes from the brief in the given voice, or null when no line came back.</summary>
+    private async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key)
+    {
+        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
+        {
+            return null;
+        }
+
+        var narrated = voice == VoiceRole.Narrator;
+        var directed = DirectableIn(VoiceGroups.Of(voice, channel));
 
         using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
@@ -5867,19 +5883,126 @@ public sealed class AppHost : IDisposable
             _logger,
             budget.Token,
             canBeDirected: directed,
-            scenario: ScenarioFor(brief, marker.Voice),
-            hiddenStory: HiddenStory(marker.Voice));
+            scenario: ScenarioFor(brief, voice),
+            hiddenStory: HiddenStory(voice));
 
         var facts = ShipFacts.Of(GameState.Active);
 
-        var said = await ContradictedClaims.SayableAsync(
+        return await ContradictedClaims.SayableAsync(
             await AskAsync(brief.Instruction).ConfigureAwait(false),
             facts,
             contradiction => AskAsync($"{brief.Instruction} {contradiction.Correction}"),
             _logger,
-            marker.Key).ConfigureAwait(false);
+            key).ConfigureAwait(false);
+    }
 
-        return said is null ? null : marker with { Text = said };
+    private int _endingBusy;
+
+    /// <summary>
+    /// When a story has finished, has the model write its ending, posts it to Messages with the options as
+    /// answers, says it, and records that it was posted. Starts on the pool; a failed write is tried again later.
+    /// </summary>
+    public void PostEndingIfDue(string? commander)
+    {
+        if (Stories is not { } stories
+            || stories.EndingDue(commander) is not { } due
+            || Interlocked.CompareExchange(ref _endingBusy, 1, 0) != 0)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var voice = D47.Core.Stories.StoryClues.Narrated(Personas.Current, Settings.Current.Callouts is { Narrator: true, NarratorSeconds: > 0 })
+                    ? VoiceRole.Narrator
+                    : VoiceRole.ShipAi;
+                var key = D47.Core.Stories.StoryEnding.Key(due.StoryId);
+
+                if (await ComposeStoryLineAsync(D47.Core.Stories.StoryEnding.Speaking(due.End, voice == VoiceRole.Narrator), voice, null, key).ConfigureAwait(false) is not { } said
+                    || stories.EndingDue(commander)?.StoryId != due.StoryId)
+                {
+                    return;
+                }
+
+                var options = due.Options.Select(option => new D47.Core.Messages.MessageAnswer(option.Id, option.Label)).ToList();
+
+                Messages?.Post(
+                    voice == VoiceRole.Narrator ? D47.Core.Messages.MessageStore.Narrator : Personas.Current.Id,
+                    due.Title,
+                    said,
+                    DateTimeOffset.Now,
+                    key,
+                    options);
+
+                stories.EndingPosted(commander, due.StoryId, DateTimeOffset.Now);
+                await SpeakStoryLinesAsync(key, [said]).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "The story ending could not be posted");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _endingBusy, 0);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Answers the waiting ending with the option at this position, from one: posts the story's last line and each
+    /// added core's waking line to Messages and says them. Only the Commander reaches this.
+    /// </summary>
+    public D47.Core.Stories.StoryAnswer AnswerEnding(int? option)
+    {
+        var commander = GameState.Active?.Identity.FrontierId;
+
+        if (Stories is not { } stories || stories.EndingTitle(commander) is not { } title)
+        {
+            return D47.Core.Stories.StoryAnswer.Refused("No ending is waiting for an answer.");
+        }
+
+        var answer = stories.Answer(commander, option);
+
+        if (answer.Refusal is not null)
+        {
+            return answer;
+        }
+
+        var lines = new List<string> { answer.After };
+        lines.AddRange(answer.Wakings);
+
+        foreach (var line in lines)
+        {
+            Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now);
+        }
+
+        _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", lines));
+        return answer;
+    }
+
+    private async Task SpeakStoryLinesAsync(string key, IReadOnlyList<string> lines)
+    {
+        await _speaking.WaitAsync().ConfigureAwait(false);
+
+        try
+        {
+            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+
+            foreach (var line in lines)
+            {
+                await SayAsync(new Announcement(key, line)).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "A story line could not be spoken");
+        }
+        finally
+        {
+            _speaking.Release();
+        }
     }
 
     /// <summary>A spoken clue, marked given and posted to Messages from whoever said it.</summary>

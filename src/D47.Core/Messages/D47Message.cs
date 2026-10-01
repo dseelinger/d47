@@ -18,4 +18,10 @@ public sealed record D47Message
     public string? AdventureKey { get; init; }
 
     public bool Read { get; init; }
+
+    /// <summary>The answers the Commander may give, when the message asks for one.</summary>
+    public IReadOnlyList<MessageAnswer> Answers { get; init; } = [];
 }
+
+/// <summary>One answer a message offers.</summary>
+public sealed record MessageAnswer(string Id, string Label);

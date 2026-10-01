@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Messages;
+using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
@@ -18,12 +19,14 @@ public sealed class MessagesView : UserControl
 
     private readonly MessageStore _store;
     private readonly PanelNavigator _nav;
+    private readonly AdventureSurface? _surface;
     private readonly StackPanel _list = new() { Spacing = 2 };
 
-    public MessagesView(MessageStore store, PanelNavigator nav)
+    public MessagesView(MessageStore store, PanelNavigator nav, AdventureSurface? surface = null)
     {
         _store = store;
         _nav = nav;
+        _surface = surface;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var (title, _) = RoutingKit.Title("Messages");
@@ -82,7 +85,60 @@ public sealed class MessagesView : UserControl
         page.Children.Add(AdventuresPage.Text(Caption(message), TypeScale.Small, ThemeManager.GreyKey));
         page.Children.Add(AdventuresPage.Text(message.Body, TypeScale.Body));
 
+        if (message.Answers.Count > 0)
+        {
+            page.Children.Add(Answering(message));
+        }
+
         return new ScrollViewer { Content = page, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+    }
+
+    /// <summary>The options an ending message offers while it is unanswered, and the choice once it is made.</summary>
+    private Control Answering(D47Message message)
+    {
+        var holder = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
+        var storyId = message.AdventureKey is { } key && key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal)
+            ? key[StoryEnding.KeyPrefix.Length..]
+            : null;
+        var chosen = storyId is null ? null : _surface?.Stories?.Stories.Find(_surface.Commander(), storyId)?.EndingChoice;
+
+        if (chosen is not null)
+        {
+            var label = message.Answers.FirstOrDefault(answer => answer.Id == chosen)?.Label ?? chosen;
+            holder.Children.Add(AdventuresPage.Text($"You chose: {label}", TypeScale.Body, ThemeManager.GreyKey));
+            return holder;
+        }
+
+        if (_surface?.AnswerEnding is not { } answer)
+        {
+            return holder;
+        }
+
+        var refusal = AdventuresPage.Text(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
+
+        for (var at = 0; at < message.Answers.Count; at++)
+        {
+            var position = at + 1;
+            var label = message.Answers[at].Label;
+            var button = new Button { Content = label, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+
+            button.Click += (_, _) =>
+            {
+                if (answer(position) is { } refused)
+                {
+                    refusal.Text = refused;
+                    return;
+                }
+
+                holder.Children.Clear();
+                holder.Children.Add(AdventuresPage.Text($"You chose: {label}", TypeScale.Body, ThemeManager.GreyKey));
+            };
+
+            holder.Children.Add(button);
+        }
+
+        holder.Children.Add(refusal);
+        return holder;
     }
 
     private static string Caption(D47Message message) =>

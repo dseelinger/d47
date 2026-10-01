@@ -159,7 +159,7 @@ public sealed class AdventuresPage : UserControl
         if (_surface.Messages is { } inbox
             && (crumb.Key == MessagesView.RootKey || crumb.Key.StartsWith(MessagesView.ReadPrefix, StringComparison.Ordinal)))
         {
-            _inbox ??= new MessagesView(inbox, _nav);
+            _inbox ??= new MessagesView(inbox, _nav, _surface);
             return crumb.Key == MessagesView.RootKey ? _inbox : _inbox.Build(crumb);
         }
 

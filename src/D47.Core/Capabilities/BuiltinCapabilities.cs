@@ -206,7 +206,10 @@ public static class BuiltinCapabilities
         CartographyLedger? cartography = null,
 
         // Pauses and resumes the Commander's running story by voice.
-        AdventureCapability.StorySwitch? storySwitch = null) =>
+        AdventureCapability.StorySwitch? storySwitch = null,
+
+        // Answers a finished story's ending.
+        AdventureCapability.EndingAnswer? endingAnswer = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -257,7 +260,7 @@ public static class BuiltinCapabilities
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch),
+        AdventureCapability.Create(storySwitch, endingAnswer),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

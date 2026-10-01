@@ -35,7 +35,15 @@ or off; with any other core aboard the Narrator speaks a clue when narration is 
 core does. Each is also posted to Messages, from whoever spoke it. The Narrator, invented chatter, scene
 chatter, the chapter writer and any core but COVAS now all read the same hidden layer and hint at it
 without stating it. A running story is enough for the Narrator to narrate a lull, with no character
-sheet, Backstory or scenario set. A story
+sheet, Backstory or scenario set.
+
+When a story is finished, its ending is written in the same voice as the clues, posted to Messages and said, with the story's
+options listed under it. Press an option on the message, or say "accept the ending" when there is one, or "choose ending one" to
+"choose ending four". Your choice is kept on the story, its closing line is said and posted, and an option that brings a Guardian
+core aboard has that core say its waking line. No option takes a core away. The ending waits for your answer across restarts, and the
+language model cannot answer it.
+
+A story
 chapter's page no longer shows its premise, turn or ending, and has no **Edit**, **Remove** or **Write the next chapter** button; **Abandon** is the way to stop one, and **Begin again** resumes it. **Remove** on any adventure now asks before it deletes.
 
 Removing an adventure, or a story leaving the catalog, now clears its messages. An abandoned adventure or story keeps them.

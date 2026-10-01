@@ -190,7 +190,8 @@ public partial class MainWindow : Window
                         : null,
                     OpenSettings,
                     host.Messages,
-                    host.Stories);
+                    host.Stories,
+                    option => host.AnswerEnding(option).Refusal);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));

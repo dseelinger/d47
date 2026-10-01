@@ -361,6 +361,25 @@ Resume the Commander's running story after a pause.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
+### Ending a story
+
+When a stock story's fourth finale chapter is done, the story is finished and d47 posts its ending to
+Messages, said in the voice that speaks the clues, with the story's options listed under it. Open the
+message and press an option, or say "choose ending two". A story with one option takes "accept the ending".
+The answer is kept on the story, and the option's closing line is said and posted. An option can also bring
+cores aboard: each one says its waking line once. Nothing is taken away by any option, and the ending stays
+waiting across restarts until you answer it.
+
+The model is refused this tool.
+
+#### `answer_story_ending`
+
+Answer the ending of a finished story with one of its options, numbered from one. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{"option":{"type":"integer","description":"The option\u0027s position in the ending message, from one. Leave out when the ending has one option."}},"required":[],"additionalProperties":false}
+```
+
 ### Clues
 
 The hidden layer holds eighteen clues: fourteen spread over the year and one for each of the four finale

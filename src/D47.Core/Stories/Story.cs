@@ -72,6 +72,12 @@ public sealed record Story
     /// <summary>The count of <see cref="Chapters"/> when the last clue was spoken.</summary>
     public int? ClueChapter { get; init; }
 
+    /// <summary>When the ending message was posted, once it has been.</summary>
+    public DateTimeOffset? EndingPostedAt { get; init; }
+
+    /// <summary>The id of the ending option the Commander chose, once they have.</summary>
+    public string? EndingChoice { get; init; }
+
     /// <summary>The number of the first finale chapter, once the finale has begun.</summary>
     public int? FinaleFrom { get; init; }
 
