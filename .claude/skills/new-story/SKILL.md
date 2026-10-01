@@ -98,6 +98,11 @@ add.
   `own`, or a speaker with no face such as a broadcast or a recorder, gets no prompt. The
   Commander can change any member's voice and picture later (#737), so the pinned voice is a
   default, not a constraint on the text.
+- **A romantic lead** has two versions, keyed `man` and `woman` by the Commander's gender (#746):
+  one gender-neutral name for both ("Alex") or a name for each ("Ellis" and "Ellie"), and a
+  default voice and a picture prompt for each. Text names the lead with `{name:<cast-id>}` and
+  gives the lead no pronoun. Until #746 lands, show both versions on the page and keep the story
+  out of the catalog.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 
