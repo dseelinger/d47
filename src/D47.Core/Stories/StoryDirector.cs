@@ -57,6 +57,9 @@ public sealed class StoryDirector(
 
     public StoryCatalog Catalog => catalog;
 
+    /// <summary>The Commander's game state, for whether the ship they are in can reach the beacon.</summary>
+    public Func<CommanderGameState?> Game { get; set; } = () => null;
+
     /// <summary>Raised as a chapter starts and stops being written, on the thread doing it.</summary>
     public event Action? WritingChanged;
 
@@ -236,6 +239,17 @@ public sealed class StoryDirector(
             return null;
         }
 
+        if (story.FinaleChapter >= StorySecret.FinaleCount)
+        {
+            if (StoryClues.AtTheEnd(story))
+            {
+                stories.Save(frontierId, story with { State = StoryState.Finished, StoppedAt = now });
+                logger.LogInformation("{Title} is finished", story.Title);
+            }
+
+            return null;
+        }
+
         return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
     }
 
@@ -379,13 +393,13 @@ public sealed class StoryDirector(
             : null;
     }
 
-    /// <summary>Records that a clue was spoken, so the next waits for its day and four more sessions.</summary>
+    /// <summary>Records that a clue was spoken, so the next waits for its day, a new session and a finished chapter.</summary>
     public void ClueGiven(string? frontierId, StoryClueDue due)
     {
         ArgumentNullException.ThrowIfNull(due);
 
         stories.Update(frontierId, due.StoryId, story => story.IsCurrent && story.CluesGiven == due.Index
-            ? story with { CluesGiven = due.Index + 1, ClueSession = story.Sessions }
+            ? story with { CluesGiven = due.Index + 1, ClueSession = story.Sessions, ClueChapter = story.Chapters.Count }
             : story);
     }
 
@@ -471,6 +485,11 @@ public sealed class StoryDirector(
             return $"The hidden layer of {story.Title} is missing from this build.";
         }
 
+        if (story.FinaleChapter >= StorySecret.FinaleCount)
+        {
+            return $"{story.Title} has had its last chapter.";
+        }
+
         var number = story.Chapters.Count + 1;
         AdventureChapter? previous = null;
 
@@ -480,7 +499,12 @@ public sealed class StoryDirector(
             return "The chapter before is no longer on file.";
         }
 
-        var beacon = number == 1 ? GuardianCores.NearestBeacon(here()) : ((long, string)?)null;
+        var finaleFrom = story.FinaleFrom ?? (StoryClues.FinaleDue(story, now) ? number : null);
+        var finaleChapter = number - finaleFrom + 1;
+        var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
+        var reach = story.BeaconScanAt is null
+            ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
+            : null;
 
         var ask = new AdventureAsk(
             AdventureReach.Session,
@@ -494,8 +518,12 @@ public sealed class StoryDirector(
                 number,
                 Math.Max(0, (now - story.PickedAt).Days),
                 story.SinceBeacon(now)?.Days,
-                beacon is var (address, system) ? new AdventureBeacon(address, system) : null,
-                catalog.Find(story.Id)?.Level));
+                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System) : null,
+                catalog.Find(story.Id)?.Level,
+                Stage(stage),
+                StoryClues.Beats(secret.Beats, stage, reach?.InReach != false, finaleChapter),
+                finaleChapter,
+                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -517,10 +545,23 @@ public sealed class StoryDirector(
             return refusal;
         }
 
-        stories.Save(frontierId, still with { Chapters = [.. still.Chapters, key] });
+        stories.Save(frontierId, still with { Chapters = [.. still.Chapters, key], FinaleFrom = finaleFrom });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         return null;
     }
+
+    /// <summary>A stage as the chapter writer is told it.</summary>
+    private static string Stage(StoryStage stage) => stage switch
+    {
+        StoryStage.ActOne => "Act one",
+        StoryStage.BreakIntoTwo => "Break into Two",
+        StoryStage.FunAndGames => "Fun and Games",
+        StoryStage.Midpoint => "Midpoint",
+        StoryStage.BadGuysCloseIn => "Bad Guys Close In",
+        StoryStage.AllIsLost => "All Is Lost",
+        StoryStage.DarkNightOfTheSoul => "Dark Night of the Soul",
+        _ => "Finale",
+    };
 
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
     private StorySecret? Hidden(string id) => catalog.Secret(id)?.For(Gender());

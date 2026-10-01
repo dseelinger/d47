@@ -300,8 +300,13 @@ For such a story, the story's page asks **Your Commander is**: **A man** or **A 
 the page of your running story; changing it there takes effect from the story's next line.
 
 **Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then
-begins. Chapter one always ends when you scan the Guardian beacon nearest to you with the ship's
-data-link scanner; arriving in the beacon's system is not enough. The chapter's last line is said before
+begins. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
+scanner; arriving in the beacon's system is not enough. Before each act-one chapter D47 checks whether
+the ship you are in can reach that beacon: it can when you own a fleet carrier, or when the beacon is at
+most 20 jumps away at the ship's maximum jump range and a fuel scoop is fitted. When it can, the
+chapter ends at the beacon. When it cannot, the chapter has no beacon beat, keeps to a session's
+flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
+distance, and whether the jump range, the missing fuel scoop or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is an adventure on this tab. When one finishes, the next is written from it
 and begins. **Switch** abandons the running story, keeps its chapters on file, and picks another.
 **Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
@@ -358,9 +363,25 @@ Resume the Commander's running story after a pause.
 
 ### Clues
 
-The hidden layer holds three clues. The first may come 7 days after you scan the beacon, the second
-after 60 and the third after 365. Days while the story is paused, switched off or without Odyssey do not count, and at most one clue
-comes in any four play sessions. While the core aboard is stock COVAS, every clue is spoken by the
+The hidden layer holds eighteen clues: fourteen spread over the year and one for each of the four finale
+chapters. The fourteen come due 7, 14, 21, 28, 60, 90, 120, 150, 180, 210, 240, 270, 300 and 330 days
+after you scan the beacon. Days while the story is paused, switched off or without Odyssey do not count.
+Each of the fourteen also waits for a play session since the last clue and for a chapter finished since
+the last clue, so no two come in one session, and a Commander back after months away gets the next clue
+in order and no more.
+
+The story's stage follows the clues you have had, not the calendar: act one before the beacon scan,
+Break into Two with none, Fun and Games with one to eight, Midpoint with nine, Bad Guys Close In with ten
+to twelve, All Is Lost with thirteen, and Dark Night of the Soul with fourteen. Each chapter's writer is
+told the stage and given that stage's lines from the beat sheet, and nothing from later stages.
+
+The finale begins with the first chapter written once all fourteen clues are given and at least 360 days
+have passed since the beacon scan. It is four chapters, and each one's finale clue comes due as the
+chapter begins, with no wait for a day or a session. When the fourth finale chapter is done and its clue
+given, no further chapter is written: the story is finished, the Stories page shows it as **Finished**,
+and it no longer holds back any Guardian core.
+
+While the core aboard is stock COVAS, every clue is spoken by the
 Narrator, with narration on or off. With a Guardian core or a core you wrote aboard, a clue is spoken by
 the Narrator when narration is on, and otherwise by the core, in its own words. A clue is also posted to
 Messages, from whoever spoke it. A clue needs a language model

@@ -10,8 +10,8 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>
-/// A clue is due a set number of real days after the beacon scan, at most one per four sessions, and the hidden
-/// layer every speaker reads names only the clues already given.
+/// A clue is due a set number of real days after the beacon scan, at most one per session, and the hidden layer
+/// every speaker reads names only the clues already given.
 /// </summary>
 public sealed class AClueWaitsForItsDayTests
 {
@@ -39,12 +39,17 @@ public sealed class AClueWaitsForItsDayTests
         Assert.Null(StoryClues.Due(Scanned with { BeaconScanAt = null }, Now.AddDays(400)));
 
     [Fact]
-    public void TheNextClueWaitsForFourMoreSessions()
-    {
-        var oneGiven = Scanned with { CluesGiven = 1, ClueSession = 2, Sessions = 5 };
+    public void TheFourteenCluesComeOverTheYear() =>
+        Assert.Equal([7, 14, 21, 28, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], StoryClues.Days);
 
-        Assert.Null(StoryClues.Due(oneGiven, Now.AddDays(61)));
-        Assert.Equal(new StoryClueDue(Id, 1), StoryClues.Due(oneGiven with { Sessions = 6 }, Now.AddDays(61)));
+    [Fact]
+    public void TheNextClueWaitsForItsDayAndANewSession()
+    {
+        var oneGiven = Scanned with { CluesGiven = 1, ClueSession = 2, Sessions = 2, ClueChapter = 1, Chapters = ["one", "two"] };
+
+        Assert.Null(StoryClues.Due(oneGiven with { Sessions = 3 }, Now.AddDays(14).AddMinutes(-1)));
+        Assert.Null(StoryClues.Due(oneGiven, Now.AddDays(14)));
+        Assert.Equal(new StoryClueDue(Id, 1), StoryClues.Due(oneGiven with { Sessions = 3 }, Now.AddDays(14)));
     }
 
     [Fact]
@@ -86,7 +91,7 @@ public sealed class AClueWaitsForItsDayTests
 
         Assert.Contains(Secret.Clues[0].Text, fixtures.Director.HiddenBrief("F1")!);
         Assert.Null(fixtures.Director.Clue("F1", due!));
-        Assert.Null(fixtures.Director.ClueDue("F1", scan.AddDays(61)));
+        Assert.Null(fixtures.Director.ClueDue("F1", scan.AddDays(14)));
 
         for (var session = 1; session <= StoryClues.SessionsApart; session++)
         {
@@ -97,7 +102,13 @@ public sealed class AClueWaitsForItsDayTests
         fixtures.Director.Observe(LoadGame(scan.AddDays(StoryClues.SessionsApart)), "F1");
 
         Assert.Equal(StoryClues.SessionsApart, fixtures.Stories.Current("F1")!.Sessions);
-        Assert.Equal(new StoryClueDue(Id, 1), fixtures.Director.ClueDue("F1", scan.AddDays(61)));
+
+        // A new session is not enough: the clue also waits for the next chapter.
+        Assert.Null(fixtures.Director.ClueDue("F1", scan.AddDays(14)));
+
+        fixtures.Stories.Update("F1", Id, story => story with { Chapters = [.. story.Chapters, "chapter-two"] });
+
+        Assert.Equal(new StoryClueDue(Id, 1), fixtures.Director.ClueDue("F1", scan.AddDays(14)));
     }
 
     [Fact]

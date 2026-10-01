@@ -17,6 +17,9 @@ public enum StoryState
 
     /// <summary>Stopped by Abandon.</summary>
     Ended,
+
+    /// <summary>Its fourth finale chapter is done.</summary>
+    Finished,
 }
 
 /// <summary>A stretch during which the Commander had the story switched off; <see cref="To"/> is null while it is still off.</summary>
@@ -45,7 +48,7 @@ public sealed record Story
     /// <summary>The beacon systems the Commander scanned while this story was current, by <c>SystemAddress</c>, in order.</summary>
     public IReadOnlyList<long> BeaconSystems { get; init; } = [];
 
-    /// <summary>When it was abandoned or ended.</summary>
+    /// <summary>When it was abandoned, ended or finished.</summary>
     public DateTimeOffset? StoppedAt { get; init; }
 
     /// <summary>When the current pause began, while <see cref="State"/> is paused.</summary>
@@ -65,6 +68,16 @@ public sealed record Story
 
     /// <summary>The value of <see cref="Sessions"/> when the last clue was spoken.</summary>
     public int? ClueSession { get; init; }
+
+    /// <summary>The count of <see cref="Chapters"/> when the last clue was spoken.</summary>
+    public int? ClueChapter { get; init; }
+
+    /// <summary>The number of the first finale chapter, once the finale has begun.</summary>
+    public int? FinaleFrom { get; init; }
+
+    /// <summary>Which finale chapter, 1 to 4, is the current one, or null outside the finale.</summary>
+    [JsonIgnore]
+    public int? FinaleChapter => FinaleFrom is { } from && Chapters.Count >= from ? Chapters.Count - from + 1 : null;
 
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];

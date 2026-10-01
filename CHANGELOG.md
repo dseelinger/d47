@@ -21,9 +21,16 @@ layer D47 never shows; **Privacy and egress** says it is sent to the language mo
 A generated adventure or story chapter no longer sends you to a system that needs a permit, such as
 Shinrarta Dezhra, unless you are already in it.
 
-A stock story's hidden layer now gives up three clues over time: the first 7 days after you scan the
-beacon, the second after 60 and the third after 365, with paused days not counted and at most one clue
-in any four play sessions. While stock COVAS is aboard the Narrator speaks every clue, with narration on
+A stock story now runs for a year and ends. Its hidden layer gives up fourteen clues, 7, 14, 21 and 28
+days after you scan the beacon and then every 30 days to day 330, with paused days not counted. Each
+clue also waits for a new play session and for a chapter finished since the last one, so a Commander
+back from months away gets the next clue, not several. The chapters follow the story's beat sheet by
+the clues you have had. After day 360 and the fourteenth clue comes a four-chapter finale, with a clue
+as each chapter begins, and after the fourth the story is finished: no chapter is written, the Stories
+page marks it **Finished**, and it no longer holds back any Guardian core. Act one now ends at the beacon
+only once the ship you are in can reach it, with a fleet carrier, or within 20 jumps with a fuel scoop
+fitted; until then each chapter stays within a session's flying and works toward a ship that can make
+the trip. While stock COVAS is aboard the Narrator speaks every clue, with narration on
 or off; with any other core aboard the Narrator speaks a clue when narration is on, and otherwise the
 core does. Each is also posted to Messages, from whoever spoke it. The Narrator, invented chatter, scene
 chatter, the chapter writer and any core but COVAS now all read the same hidden layer and hint at it

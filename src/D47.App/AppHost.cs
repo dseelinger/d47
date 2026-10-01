@@ -2167,6 +2167,7 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>());
 
         storyDirector.Gender = () => settings.Current.CommanderGender;
+        storyDirector.Game = () => gameState.Active;
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });
 

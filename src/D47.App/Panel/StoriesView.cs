@@ -35,8 +35,8 @@ public sealed class StoriesView : UserControl
         var root = new DockPanel { Margin = new Thickness(14) };
         var (title, _) = RoutingKit.Title("Stories");
         var intro = AdventuresPage.Muted(
-            "Stock stories that run for months, a chapter at a time. Picking one makes its words your Backstory and "
-            + "has the ship's AI write chapter one, which ends at a Guardian beacon. When a chapter finishes, the next "
+            "Stock stories that run for a year, a chapter at a time. Picking one makes its words your Backstory and "
+            + "has the ship's AI write chapter one. Act one ends at a Guardian beacon once your ship can reach it. When a chapter finishes, the next "
             + "is written and begins. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon "
             + "the story to have them back at once.");
         intro.Margin = new Thickness(0, 0, 0, 10);
@@ -108,9 +108,10 @@ public sealed class StoriesView : UserControl
 
         foreach (var card in _director.Catalog.Cards.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)))
         {
+            var finished = _director.Stories.Find(_surface.Commander(), card.Id) is { State: StoryState.Finished };
             var row = Row(
                 AdventuresPage.RowName(card.Title),
-                AdventuresPage.RowSecondary($"{card.LevelName} · {card.CoreName}"),
+                AdventuresPage.RowSecondary($"{card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"),
                 AdventuresPage.Text(card.Blurb, TypeScale.Body));
 
             var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title);

@@ -97,7 +97,7 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains("Beat 1 (Too Soon) is a \"beacon\" beat; only the last beat of a story's first chapter may be one.", refusal);
+        Assert.Contains("Beat 1 (Too Soon) is a \"beacon\" beat; only the last beat of the chapter that ends act one may be one.", refusal);
         Assert.DoesNotContain("Beat 3", refusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }

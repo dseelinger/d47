@@ -176,10 +176,15 @@ internal sealed class StoryFixtures : IDisposable
             Stories,
             Book,
             new StoryCatalog([Card, Other], () => [secret, Secret with { Id = Other.Id }]),
-            (ask, now, cancellationToken) => Throws
-                ? throw new HttpRequestException("The provider went away.")
-                : generator.GenerateAsync(ask, now, cancellationToken),
-            () => StarPosition.Origin,
+            (ask, now, cancellationToken) =>
+            {
+                Asks.Add(ask);
+
+                return Throws
+                    ? throw new HttpRequestException("The provider went away.")
+                    : generator.GenerateAsync(ask, now, cancellationToken);
+            },
+            () => Here,
             backstory => Backstory = backstory,
             NullLogger.Instance);
     }
@@ -194,6 +199,12 @@ internal sealed class StoryFixtures : IDisposable
 
     public string? Backstory { get; private set; }
 
+    /// <summary>Where the Commander is, for the nearest beacon.</summary>
+    public StarPosition Here { get; set; } = StarPosition.Origin;
+
+    /// <summary>Every chapter the director asked to have written, oldest first.</summary>
+    public List<AdventureAsk> Asks { get; } = [];
+
     /// <summary>Whether the next write throws rather than reaching the model.</summary>
     public bool Throws { get; set; }
 
@@ -201,6 +212,34 @@ internal sealed class StoryFixtures : IDisposable
 
     /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>
     public GuardianCores Cores(string frontierId) => new(() => Stories.Current(frontierId)?.CoreHold ?? CoreHold.None);
+
+    /// <summary>A Commander in a Sidewinder with this jump range, with or without a fuel scoop, and with or without a fleet carrier.</summary>
+    public static CommanderGameState Flying(double jumpRange, bool scoop, bool carrier = false)
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Test"));
+        var modules = scoop
+            ? """[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_size2_class5","On":true},{"Slot":"Slot01_Size2","Item":"int_fuelscoop_size2_class5","On":true}]"""
+            : """[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_size2_class5","On":true}]""";
+
+        state.Apply(AdventureFixtures.Event(
+            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"sidewinder", "ShipID":1, "MaxJumpRange":{{jumpRange.ToString(System.Globalization.CultureInfo.InvariantCulture)}}, "Modules":{{modules}} }"""));
+
+        if (carrier)
+        {
+            state.Apply(AdventureFixtures.Event(
+                $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"CarrierStats", "CarrierID":1, "Callsign":"X9X-9XX", "Name":"TEST" }"""));
+        }
+
+        return state;
+    }
+
+    /// <summary>A point this many light years above the test beacon, out of the galactic plane.</summary>
+    public static StarPosition BeyondTheBeacon(double lightYears)
+    {
+        var beacon = GuardianCores.BeaconPositions[BeaconAddress];
+
+        return beacon with { Y = beacon.Y + lightYears };
+    }
 
     public static JournalEvent DataScanned(DateTimeOffset at) =>
         AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(at)}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }""");
@@ -213,7 +252,7 @@ internal sealed class StoryFixtures : IDisposable
         return Director.Observe(DataScanned(at), frontierId);
     }
 
-    /// <summary>Flies every beat of a begun chapter so it is done.</summary>
+    /// <summary>Flies every beat of a begun chapter so it is done; the director sees a beacon scan, as in the app.</summary>
     public void Finish(string frontierId, string key, DateTimeOffset from)
     {
         var chapter = Book.Store.Find(frontierId, key)!;
@@ -232,6 +271,7 @@ internal sealed class StoryFixtures : IDisposable
             if (beat.Trigger.Kind == TriggerKind.Beacon)
             {
                 Book.Observe(DataScanned(at.AddSeconds(30)), frontierId);
+                ScanBeacon(frontierId, beat.Trigger.SystemAddress!.Value, at.AddSeconds(30));
             }
         }
     }

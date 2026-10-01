@@ -38,11 +38,15 @@ public sealed record AdventureAsk(
     AdventureChapter? Chapter = null,
     AdventureStory? Story = null);
 
-/// <summary>The Guardian beacon system a story's first chapter ends at.</summary>
+/// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System);
 
+/// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
+public sealed record AdventureBeaconAway(string System, double LightYears, string Why);
+
 /// <summary>
-/// The stock story a chapter belongs to: both layers, how long it has run, and the beacon chapter one ends at.
+/// The stock story a chapter belongs to: both layers, how long it has run, where it stands in its beat sheet,
+/// and the beacon act one works toward.
 /// </summary>
 public sealed record AdventureStory(
     string Id,
@@ -53,7 +57,11 @@ public sealed record AdventureStory(
     int DaysRunning,
     int? DaysSinceBeacon,
     AdventureBeacon? Beacon = null,
-    string? Level = null);
+    string? Level = null,
+    string? Stage = null,
+    IReadOnlyList<(string Key, string Line)>? StageBeats = null,
+    int? FinaleChapter = null,
+    AdventureBeaconAway? BeaconAway = null);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -608,14 +616,32 @@ public sealed class AdventureGenerator(
     }
 
     /// <summary>
-    /// Both layers of a stock story, the clue pace, and for chapter one the beacon its last beat arrives at.
+    /// Both layers of a stock story, its stage and that stage's beats, and in act one the beacon its last beat
+    /// arrives at or the reason it cannot yet.
     /// </summary>
     private static void AppendStory(StringBuilder text, AdventureStory story)
     {
         text.AppendLine();
         text.AppendLine(
             $"This adventure is chapter {story.Chapter.ToString(CultureInfo.InvariantCulture)} of \"{story.Title}\", a stock story the "
-            + "Commander chose. It runs for months or years, one chapter at a time, as they play.");
+            + "Commander chose. It runs for a year or more, one chapter at a time, as they play, and follows the Save the Cat beats.");
+
+        if (story.Stage is { Length: > 0 } stage)
+        {
+            text.AppendLine(story.FinaleChapter is { } finale
+                ? $"The story stands in its finale: this is finale chapter {finale.ToString(CultureInfo.InvariantCulture)} of 4{(finale >= 4 ? ", the story's last chapter" : string.Empty)}."
+                : $"The story stands at {stage}. Write this chapter within that stage; do not reach a later beat.");
+        }
+
+        if (story.StageBeats is { Count: > 0 } beats)
+        {
+            text.AppendLine("The beat-sheet lines for this stage, which this chapter carries forward:");
+
+            foreach (var (key, line) in beats)
+            {
+                text.AppendLine($"- {key}: {line}");
+            }
+        }
         text.AppendLine();
         text.AppendLine("What the Commander knows — the public layer, which they chose the story by:");
         text.AppendLine(story.Public);
@@ -638,11 +664,21 @@ public sealed class AdventureGenerator(
             : ", and the Commander has not yet scanned a Guardian beacon.");
         text.AppendLine("Never write a line that states the hidden story. A chapter may echo a clue the Commander has had.");
 
+        if (story.BeaconAway is { } away)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
+                + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
+                + "This chapter has no beacon beat and keeps every hop within the reach. It works toward a ship that can make "
+                + "the trip: credits, a better ship, a fuel scoop or a longer jump range.");
+        }
+
         if (story.Beacon is { } beacon)
         {
             text.AppendLine();
             text.AppendLine(
-                $"This is the first chapter, and it ends at a Guardian beacon: its last beat is \"beacon\", the Commander "
+                $"This chapter ends act one at a Guardian beacon: its last beat is \"beacon\", the Commander "
                 + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner. That scan is when the "
                 + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That beat may be farther "
                 + "than the reach; every other hop keeps to it.");
@@ -975,7 +1011,7 @@ public sealed class AdventureGenerator(
                 }
                 else
                 {
-                    refusals.Add($"{where} is a \"beacon\" beat; only the last beat of a story's first chapter may be one.");
+                    refusals.Add($"{where} is a \"beacon\" beat; only the last beat of the chapter that ends act one may be one.");
                 }
             }
             else if (beat.Kind == TriggerKind.Board)
