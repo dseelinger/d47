@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using D47.Core.Persona;
 using D47.Core.Speech;
 
@@ -130,7 +131,8 @@ public sealed record StorySpeaker
 
     public required string Id { get; init; }
 
-    public required string Name { get; init; }
+    /// <summary>Null when the member has <see cref="Versions"/>.</summary>
+    public string? Name { get; init; }
 
     /// <summary>One line for the writer: who they are and how they speak.</summary>
     public required string Who { get; init; }
@@ -138,8 +140,87 @@ public sealed record StorySpeaker
     /// <summary><see cref="Kokoro"/> or <see cref="Chatterbox"/>.</summary>
     public required string Provider { get; init; }
 
+    /// <summary>Null when the member has <see cref="Versions"/>.</summary>
+    public string? Voice { get; init; }
+
+    /// <summary>The member as a Commander who is a man, and one who is a woman, meets them; null for one version.</summary>
+    public StorySpeakerVersions? Versions { get; init; }
+
+    /// <summary>
+    /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
+    /// <see cref="StorySpeakerVersions.ForMan"/> version.
+    /// </summary>
+    public StorySpeakerShown Shown(string storyId, string? gender)
+    {
+        var woman = gender == CommanderGender.Woman;
+
+        if (Versions is not { } versions || (woman ? versions.ForWoman ?? versions.ForMan : versions.ForMan ?? versions.ForWoman) is not { } version)
+        {
+            return new StorySpeakerShown(Id, Name ?? string.Empty, Provider, Voice ?? string.Empty, $"{storyId}.{Id}");
+        }
+
+        var key = woman && versions.ForWoman is not null ? StorySpeakerVersions.ForWomanKey : StorySpeakerVersions.ForManKey;
+        return new StorySpeakerShown(Id, version.Name, version.Provider ?? Provider, version.Voice, $"{storyId}.{Id}.{key}");
+    }
+}
+
+/// <summary>What the Commander has said of their Commander, for a story with a member in two versions.</summary>
+public static class CommanderGender
+{
+    public const string Man = "man";
+
+    public const string Woman = "woman";
+
+    /// <summary>Whether <paramref name="gender"/> is <see cref="Man"/> or <see cref="Woman"/>.</summary>
+    public static bool IsSet(string? gender) => gender is Man or Woman;
+}
+
+/// <summary>One version of a cast member.</summary>
+public sealed record StorySpeakerVersion
+{
+    public required string Name { get; init; }
+
+    /// <summary>Null for the member's own provider.</summary>
+    public string? Provider { get; init; }
+
     public required string Voice { get; init; }
 }
+
+/// <summary>A cast member's two versions, keyed by the Commander who meets them, never by the character.</summary>
+public sealed record StorySpeakerVersions
+{
+    /// <summary>The picture suffix of <see cref="ForMan"/>.</summary>
+    public const string ForManKey = "for-man";
+
+    /// <summary>The picture suffix of <see cref="ForWoman"/>.</summary>
+    public const string ForWomanKey = "for-woman";
+
+    /// <summary>The version a Commander who is a man meets.</summary>
+    public StorySpeakerVersion? ForMan { get; init; }
+
+    /// <summary>The version a Commander who is a woman meets.</summary>
+    public StorySpeakerVersion? ForWoman { get; init; }
+
+    /// <summary>Both versions with their picture suffixes, leaving out one that is missing.</summary>
+    public IEnumerable<(string Key, StorySpeakerVersion Version)> All()
+    {
+        if (ForMan is { } man)
+        {
+            yield return (ForManKey, man);
+        }
+
+        if (ForWoman is { } woman)
+        {
+            yield return (ForWomanKey, woman);
+        }
+    }
+}
+
+/// <summary>
+/// A cast member as the current Commander meets them. <see cref="Picture"/> names
+/// <c>assets/stories/&lt;Picture&gt;.png</c>.
+/// </summary>
+public sealed record StorySpeakerShown(string Id, string Name, string Provider, string Voice, string Picture);
 
 /// <summary>The fifteen Save the Cat beats of one story. A line may be general; the chapter writer fills it in.</summary>
 public sealed record StoryBeats
@@ -196,7 +277,7 @@ public sealed record StoryBeats
 }
 
 /// <summary>A stock story's hidden layer. Sent to the model; never shown or logged.</summary>
-public sealed record StorySecret
+public sealed partial record StorySecret
 {
     public const int WeeklyClues = 4;
 
@@ -251,10 +332,64 @@ public sealed record StorySecret
 
         foreach (var speaker in Cast)
         {
-            yield return ($"cast.{speaker.Id}.name", speaker.Name);
+            yield return ($"cast.{speaker.Id}.name", speaker.Name ?? string.Empty);
+
+            foreach (var (key, version) in speaker.Versions?.All() ?? [])
+            {
+                yield return ($"cast.{speaker.Id}.{key}.name", version.Name);
+            }
+
             yield return ($"cast.{speaker.Id}.who", speaker.Who);
         }
     }
+
+    /// <summary>The cast member <paramref name="castId"/> as a Commander of <paramref name="gender"/> meets them, or null.</summary>
+    public StorySpeakerShown? Speaker(string castId, string? gender) =>
+        Cast.FirstOrDefault(speaker => string.Equals(speaker.Id, castId, StringComparison.Ordinal))?.Shown(Id, gender);
+
+    /// <summary>
+    /// This hidden layer with every <c>{name:&lt;cast-id&gt;}</c> replaced by the name a Commander of
+    /// <paramref name="gender"/> meets. Resolve before any hidden text is shown, spoken, logged or written from.
+    /// </summary>
+    public StorySecret For(string? gender)
+    {
+        string Resolve(string text) => NameToken().Replace(
+            text, match => Speaker(match.Groups[1].Value, gender) is { Name.Length: > 0 } shown ? shown.Name : match.Value);
+
+        string? Maybe(string? text) => text is null ? null : Resolve(text);
+
+        return this with
+        {
+            Secret = Resolve(Secret),
+            End = Resolve(End),
+            Beats = new StoryBeats
+            {
+                OpeningImage = Maybe(Beats.OpeningImage),
+                ThemeStated = Maybe(Beats.ThemeStated),
+                SetUp = Maybe(Beats.SetUp),
+                Catalyst = Maybe(Beats.Catalyst),
+                Debate = Maybe(Beats.Debate),
+                BreakIntoTwo = Maybe(Beats.BreakIntoTwo),
+                BStory = Maybe(Beats.BStory),
+                FunAndGames = Maybe(Beats.FunAndGames),
+                Midpoint = Maybe(Beats.Midpoint),
+                BadGuysCloseIn = Maybe(Beats.BadGuysCloseIn),
+                AllIsLost = Maybe(Beats.AllIsLost),
+                DarkNightOfTheSoul = Maybe(Beats.DarkNightOfTheSoul),
+                BreakIntoThree = Maybe(Beats.BreakIntoThree),
+                Finale = Maybe(Beats.Finale),
+                FinalImage = Maybe(Beats.FinalImage),
+            },
+            Clues = [.. Clues.Select(line => line with { Text = Resolve(line.Text) })],
+            Finale = [.. Finale.Select(line => line with { Text = Resolve(line.Text) })],
+            Options = [.. Options.Select(option => option with { Label = Resolve(option.Label), After = Resolve(option.After) })],
+            Cast = [.. Cast.Select(speaker => speaker with { Who = Resolve(speaker.Who) })],
+        };
+    }
+
+    /// <summary>A <c>{name:&lt;cast-id&gt;}</c> token; group 1 is the cast id.</summary>
+    [GeneratedRegex(@"\{name:([^{}\s]+)\}")]
+    public static partial Regex NameToken();
 
     /// <summary>Every clue and finale line, named by its place.</summary>
     public IEnumerable<(string Field, StoryLine Line)> Lines() =>
@@ -334,9 +469,13 @@ public sealed class StoryCatalog
                 faults.Add($"{card.Id}: the blurb is empty.");
             }
 
-            if (Secret(card.Id) is null)
+            if (Secret(card.Id) is not { } hidden)
             {
                 faults.Add($"{card.Id}: there is no hidden entry.");
+            }
+            else
+            {
+                faults.AddRange(CardFaults(card, hidden).Select(fault => $"{card.Id}: {fault}"));
             }
         }
 
@@ -411,7 +550,7 @@ public sealed class StoryCatalog
         {
             var name = $"cast[{at.ToString(CultureInfo.InvariantCulture)}]";
 
-            if (string.IsNullOrWhiteSpace(speaker.Id) || string.IsNullOrWhiteSpace(speaker.Name) || string.IsNullOrWhiteSpace(speaker.Who))
+            if (string.IsNullOrWhiteSpace(speaker.Id) || (speaker.Versions is null && string.IsNullOrWhiteSpace(speaker.Name)) || string.IsNullOrWhiteSpace(speaker.Who))
             {
                 yield return $"{name} needs an id, a name and a who.";
             }
@@ -422,20 +561,49 @@ public sealed class StoryCatalog
 
             speakers.Add(speaker.Id ?? string.Empty);
 
-            bool? voiceFits = speaker.Provider switch
+            if (speaker.Versions is not { } versions)
             {
-                StorySpeaker.Kokoro => KokoroAssets.VoiceIds.Contains(speaker.Voice, StringComparer.Ordinal),
-                StorySpeaker.Chatterbox => !string.IsNullOrWhiteSpace(speaker.Voice),
-                _ => null,
-            };
+                if (VoiceFault(name, speaker.Provider, speaker.Voice) is { } fault)
+                {
+                    yield return fault;
+                }
 
-            if (voiceFits is null)
-            {
-                yield return $"{name} has the provider {speaker.Provider}, not {StorySpeaker.Kokoro} or {StorySpeaker.Chatterbox}.";
+                continue;
             }
-            else if (voiceFits == false)
+
+            if (versions.ForMan is null || versions.ForWoman is null)
             {
-                yield return $"{name} has a voice that {speaker.Provider} does not have.";
+                yield return $"{name} has one version, not forMan and forWoman.";
+            }
+
+            if (speaker.Name is not null || speaker.Voice is not null)
+            {
+                yield return $"{name} has versions and also a name or a voice of its own.";
+            }
+
+            foreach (var (key, version) in versions.All())
+            {
+                if (string.IsNullOrWhiteSpace(version.Name) || string.IsNullOrWhiteSpace(version.Voice))
+                {
+                    yield return $"{name}.{key} needs a name and a voice.";
+                }
+                else if (VoiceFault($"{name}.{key}", version.Provider ?? speaker.Provider, version.Voice) is { } fault)
+                {
+                    yield return fault;
+                }
+            }
+        }
+
+        var versioned = secret.Cast.Where(speaker => speaker.Versions is not null).Select(speaker => speaker.Id).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var (field, text) in secret.Texts())
+        {
+            foreach (var cast in StorySecret.NameToken().Matches(text).Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal))
+            {
+                if (!versioned.Contains(cast))
+                {
+                    yield return $"{field} names {cast} with a token, and {cast} has no versions.";
+                }
             }
         }
 
@@ -448,6 +616,46 @@ public sealed class StoryCatalog
             else if (!speakers.Contains(line.Speaker))
             {
                 yield return $"{field} is spoken by {line.Speaker}, who is not the ship, the narrator or in the cast.";
+            }
+        }
+    }
+
+    private static string? VoiceFault(string name, string? provider, string? voice)
+    {
+        bool? voiceFits = provider switch
+        {
+            StorySpeaker.Kokoro => voice is not null && KokoroAssets.VoiceIds.Contains(voice, StringComparer.Ordinal),
+            StorySpeaker.Chatterbox => !string.IsNullOrWhiteSpace(voice),
+            _ => null,
+        };
+
+        return voiceFits switch
+        {
+            null => $"{name} has the provider {provider}, not {StorySpeaker.Kokoro} or {StorySpeaker.Chatterbox}.",
+            false => $"{name} has a voice that {provider} does not have.",
+            _ => null,
+        };
+    }
+
+    /// <summary>Where a card names a member that has versions: by token, or by either version's name.</summary>
+    private static IEnumerable<string> CardFaults(StoryCard card, StorySecret secret)
+    {
+        foreach (var speaker in secret.Cast.Where(speaker => speaker.Versions is not null))
+        {
+            var names = speaker.Versions!.All().Select(version => version.Version.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
+
+            foreach (var (field, text) in new[] { ("blurb", card.Blurb), ("inYourWords", card.InYourWords), ("beacon", card.Beacon) })
+            {
+                if (text is null)
+                {
+                    continue;
+                }
+
+                if (StorySecret.NameToken().IsMatch(text)
+                    || names.Any(name => Regex.IsMatch(text, $@"\b{Regex.Escape(name)}\b", RegexOptions.CultureInvariant)))
+                {
+                    yield return $"{field} names {speaker.Id}, who has versions; call them by role.";
+                }
             }
         }
     }

@@ -36,7 +36,23 @@ public sealed class StoryDirector(
         + "Your last session ran without it, so stories are off. Odyssey is a low-cost expansion from the Frontier Store, "
         + "Steam or Epic, and stories start working at the next session after it is installed.";
 
+    /// <summary>Why a story with a member in two versions cannot be picked yet.</summary>
+    public const string NeedsGender = "Choose whether your Commander is a man or a woman first. This story has a character written for each.";
+
     public StoryStore Stories => stories;
+
+    /// <summary>The Commander's gender as settings hold it: <see cref="CommanderGender.Man"/>, <see cref="CommanderGender.Woman"/> or null.</summary>
+    public Func<string?> Gender { get; set; } = () => null;
+
+    /// <summary>Stores the Commander's gender; a running story uses it from its next line.</summary>
+    public Action<string> SetGender { get; set; } = _ => { };
+
+    /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
+    public bool NeedsGenderFor(string id) => catalog.Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
+
+    /// <summary>A cast member of the current story as this Commander meets them, or null.</summary>
+    public StorySpeakerShown? Speaker(string? frontierId, string castId) =>
+        stories.Current(frontierId) is { } story ? catalog.Secret(story.Id)?.Speaker(castId, Gender()) : null;
 
     public StoryCatalog Catalog => catalog;
 
@@ -94,6 +110,11 @@ public sealed class StoryDirector(
             return Task.FromResult<string?>(NeedsOdyssey);
         }
 
+        if (NeedsGenderFor(card.Id) && !CommanderGender.IsSet(Gender()))
+        {
+            return Task.FromResult<string?>(NeedsGender);
+        }
+
         if (stories.Current(frontierId) is { } current)
         {
             return Task.FromResult<string?>(string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase)
@@ -123,6 +144,11 @@ public sealed class StoryDirector(
         if (WithoutOdyssey(frontierId))
         {
             return Task.FromResult<string?>(NeedsOdyssey);
+        }
+
+        if (NeedsGenderFor(id) && !CommanderGender.IsSet(Gender()))
+        {
+            return Task.FromResult<string?>(NeedsGender);
         }
 
         if (stories.Current(frontierId) is { } current)
@@ -321,7 +347,7 @@ public sealed class StoryDirector(
 
     /// <summary>The current story's hidden layer as every speaker reads it, or null when no story is current or it is switched off.</summary>
     public string? HiddenBrief(string? frontierId) =>
-        stories.Current(frontierId) is { IsOff: false } story && catalog.Secret(story.Id) is { } secret
+        stories.Current(frontierId) is { IsOff: false } story && Hidden(story.Id) is { } secret
             ? StoryClues.Brief(story, secret)
             : null;
 
@@ -339,7 +365,7 @@ public sealed class StoryDirector(
         return stories.Current(frontierId) is { State: StoryState.Running, IsOff: false, IsWithoutOdyssey: false } story
                && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
                && story.CluesGiven == due.Index
-               && catalog.Secret(story.Id) is { } secret
+               && Hidden(story.Id) is { } secret
                && StoryClues.Text(secret, due.Index) is { Length: > 0 } clue
             ? (story.Title, clue)
             : null;
@@ -432,7 +458,7 @@ public sealed class StoryDirector(
             return "No story is running.";
         }
 
-        if (catalog.Secret(story.Id) is not { } secret)
+        if (Hidden(story.Id) is not { } secret)
         {
             return $"The hidden layer of {story.Title} is missing from this build.";
         }
@@ -487,6 +513,9 @@ public sealed class StoryDirector(
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         return null;
     }
+
+    /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
+    private StorySecret? Hidden(string id) => catalog.Secret(id)?.For(Gender());
 
     private string UniqueKey(string? frontierId, string wanted)
     {

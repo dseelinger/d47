@@ -2159,6 +2159,10 @@ public sealed class AppHost : IDisposable
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>());
 
+        storyDirector.Gender = () => settings.Current.CommanderGender;
+        storyDirector.SetGender = gender => settings.Replace(
+            "the Commander's gender changed", current => current with { CommanderGender = gender });
+
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);

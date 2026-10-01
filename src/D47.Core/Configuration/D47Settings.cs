@@ -19,6 +19,9 @@ public sealed record D47Settings
     /// <summary>The published version that last loaded this file, or null if none has.</summary>
     public string? LastVersion { get; init; }
 
+    /// <summary>"man", "woman" or null: which version of a story's two-version character this Commander meets.</summary>
+    public string? CommanderGender { get; init; }
+
     public LoggingSettings Logging { get; init; } = new();
 
     public LlmSettings Llm { get; init; } = new();

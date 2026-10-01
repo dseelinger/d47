@@ -100,8 +100,10 @@ add.
 - **A romantic lead** has two versions, keyed `forMan` and `forWoman` by the Commander who sees them (#746):
   one gender-neutral name for both ("Alex") or a name for each ("Ellis" and "Ellie"), and a
   default voice and a picture prompt for each. The card never names the lead and calls it by
-  role ("the engineer"); hidden text names it with `{name:<cast-id>}` and gives it no pronoun. Until #746 lands, show both versions on the page and keep the story
-  out of the catalog.
+  role ("the engineer"); hidden text names it with `{name:<cast-id>}` and gives it no pronoun. In the
+  sealed entry the member carries `versions` (`forMan`, `forWoman`, each `name`, `voice` and an
+  optional `provider`) and no `name` or `voice` of its own; its pictures are
+  `assets/stories/<story-id>.<cast-id>.for-man.png` and `.for-woman.png`.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

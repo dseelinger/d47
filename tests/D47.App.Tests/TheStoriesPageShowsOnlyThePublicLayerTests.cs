@@ -23,9 +23,9 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
 
-    private sealed record Surface(Window Window, PanelView Panel);
+    private sealed record Surface(Window Window, PanelView Panel, StoryDirector Director);
 
-    private static Surface Open(bool running, StoryCatalog? catalog = null)
+    private static Surface Open(bool running, StoryCatalog? catalog = null, Func<string?>? gender = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-stories-capture"));
         paths.EnsureCreated();
@@ -73,7 +73,10 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, catalog ?? StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
+            stories, book, catalog ?? StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
+        {
+            Gender = gender ?? (() => null),
+        };
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
@@ -89,7 +92,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         panel.Nav.GoTo(new NavCrumb(StoriesView.RootKey, "Stories"));
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, panel);
+        return new Surface(window, panel, director);
     }
 
     private static string Save(Window window, string name)
@@ -157,6 +160,38 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Assert.True(Shows(panel, "The beacon"));
         NoHiddenSentence(panel);
         Save(surface.Window, "stories-card.png");
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PickWaitsForTheCommandersGender()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        string? gender = null;
+        var surface = Open(running: false, StoryFixture.Versioned, () => gender);
+        var panel = surface.Panel;
+        surface.Director.SetGender = chosen => gender = chosen;
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        Button Pick() => panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Pick");
+
+        Assert.True(Shows(panel, "Your Commander is"));
+        Assert.True(Shows(panel, StoryDirector.NeedsGender));
+        Assert.False(Pick().IsEnabled);
+        Save(surface.Window, "stories-card-gender-unset.png");
+
+        var segment = panel.GetVisualDescendants().OfType<D47.App.Controls.Segment>().Single();
+        segment.GetVisualDescendants().OfType<RadioButton>().Last().IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(CommanderGender.Woman, gender);
+        Assert.True(Pick().IsEnabled);
+        Assert.False(panel.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == StoryDirector.NeedsGender).IsEffectivelyVisible);
+        Save(surface.Window, "stories-card-gender-set.png");
 
         surface.Window.Close();
     }

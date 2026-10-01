@@ -44,6 +44,28 @@ internal static class StoryFixture
         Options = [new StoryOption { Id = "keep", Label = "Keep her", After = "She stays aboard for good." }],
     };
 
+    /// <summary>The test story with a cast member, cray, in two versions.</summary>
+    public static readonly StoryCatalog Versioned = new([Story], () =>
+    [
+        Secret with
+        {
+            Cast =
+            [
+                new StorySpeaker
+                {
+                    Id = "cray",
+                    Who = "A test engineer.",
+                    Provider = StorySpeaker.Kokoro,
+                    Versions = new StorySpeakerVersions
+                    {
+                        ForMan = new StorySpeakerVersion { Name = "Ellie", Voice = "af_heart" },
+                        ForWoman = new StorySpeakerVersion { Name = "Ellis", Voice = "am_michael" },
+                    },
+                },
+            ],
+        },
+    ]);
+
     public static readonly StoryCatalog Catalog = new([Story, Other], () => [Secret, Secret with { Id = Other.Id }]);
 
     public static readonly StoryCatalog Empty = new([], () => []);

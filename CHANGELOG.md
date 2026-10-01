@@ -53,6 +53,11 @@ When you scan the story's first beacon, that core comes aboard in place of the o
 waking line, and Messages says it came aboard and that you can choose another in Settings. A core you
 choose afterwards stays, and pausing, abandoning or finishing the story leaves the core aboard.
 
+A story can write one of its characters in two versions, one for a Commander who is a man and one for
+a Commander who is a woman, each with its own name. For such a story, the story's page asks **Your
+Commander is**: **A man** or **A woman**, and **Pick** and **Switch** wait until you choose. The same
+control is on your running story's page, and a change there applies from the story's next line.
+
 The local voice says "story", "stories", "storyline" and "backstory" with the vowel of "or", not "stawry".
 
 ## 1.26.0 — Adventures run in chapters

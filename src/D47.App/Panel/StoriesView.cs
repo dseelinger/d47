@@ -239,11 +239,18 @@ public sealed class StoriesView : UserControl
             page.Children.Add(AdventuresPage.Text(StoryDirector.NeedsOdyssey, TypeScale.Body));
         }
 
+        Button? gated = null;
+
+        if (_director.NeedsGenderFor(card.Id))
+        {
+            page.Children.Add(GenderChoice(() => gated?.IsEnabled = !withoutOdyssey));
+        }
+
         if (current is null)
         {
             var pick = Act("Pick", () => Start(card, switching: false, status));
-            pick.IsEnabled = !withoutOdyssey;
-            bar.Children.Add(pick);
+            pick.IsEnabled = !withoutOdyssey && GenderReady(card);
+            bar.Children.Add(gated = pick);
         }
         else if (!string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
         {
@@ -255,8 +262,8 @@ public sealed class StoriesView : UserControl
                 + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
                 () => Start(card, switching: true, status)));
-            switchTo.IsEnabled = !withoutOdyssey;
-            bar.Children.Add(switchTo);
+            switchTo.IsEnabled = !withoutOdyssey && GenderReady(card);
+            bar.Children.Add(gated = switchTo);
         }
         else
         {
@@ -267,6 +274,40 @@ public sealed class StoriesView : UserControl
         page.Children.Add(status);
 
         return new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+    }
+
+    private bool GenderReady(StoryCard card) =>
+        !_director.NeedsGenderFor(card.Id) || CommanderGender.IsSet(_director.Gender());
+
+    /// <summary>"Your Commander is: a man / a woman", with the reason Pick waits while it is unset.</summary>
+    private StackPanel GenderChoice(Action chosen)
+    {
+        var genders = new[] { CommanderGender.Man, CommanderGender.Woman };
+        var segment = new Segment
+        {
+            ItemsSource = ["A man", "A woman"],
+            SelectedIndex = Array.IndexOf(genders, _director.Gender()),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        var why = AdventuresPage.Muted(StoryDirector.NeedsGender);
+        why.IsVisible = segment.SelectedIndex < 0;
+
+        Avalonia.Automation.AutomationProperties.SetName(segment, "Your Commander is");
+        segment.SelectionChanged += (_, _) =>
+        {
+            if (segment.SelectedIndex >= 0)
+            {
+                _director.SetGender(genders[segment.SelectedIndex]);
+                why.IsVisible = false;
+                chosen();
+            }
+        };
+
+        var stack = new StackPanel { Spacing = 4, Margin = new Thickness(0, 6, 0, 0) };
+        stack.Children.Add(AdventuresPage.Text("Your Commander is", TypeScale.Small, ThemeManager.GreyKey));
+        stack.Children.Add(segment);
+        stack.Children.Add(why);
+        return stack;
     }
 
     private void Start(StoryCard card, bool switching, StatusLine status)

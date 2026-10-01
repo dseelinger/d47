@@ -288,6 +288,17 @@ so a story never needs a paid key or sends its lines off your PC to be spoken. E
 line names who says it: one of those speakers, the ship's AI or the narrator. D47 keeps that layer
 sealed, never shows it, and sends it to the language model so the chapters can hint at it.
 
+A speaker may be written in two versions: `forMan`, the version a Commander who is a man meets, and
+`forWoman`, the version a Commander who is a woman meets. Each version has its own name, voice and
+picture. The story's card never names that speaker and calls them by role ("the engineer"); the hidden
+layer names them as `{name:<cast-id>}`, and D47 puts in the version's name before any line is shown,
+spoken or sent to the chapter writer.
+
+For such a story, the story's page asks **Your Commander is**: **A man** or **A woman**, above **Pick**.
+**Pick** and **Switch** stay disabled until you choose, and the page says why. The choice is kept in
+`settings.json` as `commanderGender` and is asked only by a story that needs it. The same control is on
+the page of your running story; changing it there takes effect from the story's next line.
+
 **Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then
 begins. Chapter one always ends when you scan the Guardian beacon nearest to you with the ship's
 data-link scanner; arriving in the beacon's system is not enough. The chapter's last line is said before

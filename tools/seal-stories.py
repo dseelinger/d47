@@ -18,6 +18,10 @@ Each entry: {"id", "secret", "end", "beats", "clues", "finale", "options", "cast
   options  1 to 4 endings, each {"id", "label", "after", "add"}; "add" is a list of persona ids.
   cast     0 to 4 speakers, each {"id", "name", "who", "provider", "voice"}; provider is kokoro or
            chatterbox, and voice "own" is chatterbox only.
+           A speaker may instead carry "versions": {"forMan": {...}, "forWoman": {...}}, each
+           {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
+           version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
+           such a speaker as {name:<cast-id>}, and the card names neither the token nor either name.
 Every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheYearFormatGateTests) checks the same rules, and the persona and voice ids.
 """
@@ -41,6 +45,9 @@ CLUES = 14
 FINALE = 4
 PROVIDERS = ("kokoro", "chatterbox")
 SPEAKERS = ("ship", "narrator")
+VERSIONS = ("forMan", "forWoman")
+CARD_FIELDS = ("blurb", "inYourWords", "beacon")
+NAME_TOKEN = re.compile(r"\{name:([^{}\s]+)\}")
 
 
 def text(value) -> bool:
@@ -51,7 +58,31 @@ def persona_ids() -> set:
     return set(re.findall(r'Id: "([^"]+)"', PERSONAS.read_text(encoding="utf-8")))
 
 
-def faults(entry: dict, personas: set) -> list:
+def hidden_texts(entry: dict):
+    """Every hidden text a name token may appear in."""
+    for field in ("secret", "end"):
+        yield field, entry.get(field)
+    for beat, line in (entry.get("beats") or {}).items():
+        yield f"beat {beat}", line
+    for name, key in (("clue", "clues"), ("finale line", "finale")):
+        for at, line in enumerate(entry.get(key) or []):
+            yield f"{name} {at + 1}", line.get("text")
+    for option in entry.get("options") or []:
+        yield f"option {option.get('id')} label", option.get("label")
+        yield f"option {option.get('id')} after", option.get("after")
+    for speaker in entry.get("cast") or []:
+        yield f"cast {speaker.get('id')} who", speaker.get("who")
+
+
+def voice_fault(name: str, provider, voice) -> list:
+    if provider not in PROVIDERS:
+        return [f"{name} has the provider {provider}, not kokoro or chatterbox"]
+    if voice == "own" and provider != "chatterbox":
+        return [f"{name} has the voice own with a provider other than chatterbox"]
+    return []
+
+
+def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     found = [f"no {field}" for field in FIELDS if not text(entry.get(field))]
 
     beats = entry.get("beats") or {}
@@ -77,18 +108,48 @@ def faults(entry: dict, personas: set) -> list:
     if len(cast) > 4:
         found.append(f"{len(cast)} cast, more than 4")
     speakers = set(SPEAKERS)
+    versioned = {}
     for at, speaker in enumerate(cast):
         sid = speaker.get("id")
-        missing = [field for field in ("id", "name", "who", "voice") if not text(speaker.get(field))]
+        versions = speaker.get("versions")
+        own = ("id", "who") if versions is not None else ("id", "name", "who", "voice")
+        missing = [field for field in own if not text(speaker.get(field))]
         if missing:
-            found.append(f"cast {at + 1} has no {', '.join(missing)}")
+            found.append(f"cast {at + 1} ({sid}) has no {', '.join(missing)}")
         if sid in speakers or sid in personas:
             found.append(f"cast {at + 1} has the id {sid}, taken by the ship, the narrator, a persona or another speaker")
         speakers.add(sid)
-        if speaker.get("provider") not in PROVIDERS:
-            found.append(f"cast {at + 1} has the provider {speaker.get('provider')}, not kokoro or chatterbox")
-        elif speaker.get("voice") == "own" and speaker.get("provider") != "chatterbox":
-            found.append(f"cast {at + 1} has the voice own with a provider other than chatterbox")
+        if versions is None:
+            found += voice_fault(f"cast {at + 1} ({sid})", speaker.get("provider"), speaker.get("voice"))
+            continue
+        versioned[sid] = []
+        if not isinstance(versions, dict) or any(key not in versions for key in VERSIONS):
+            found.append(f"cast member {sid} has one version, not forMan and forWoman")
+            versions = versions if isinstance(versions, dict) else {}
+        if "name" in speaker or "voice" in speaker:
+            found.append(f"cast member {sid} has versions and also a name or a voice of its own")
+        for key in VERSIONS:
+            version = versions.get(key)
+            if version is None:
+                continue
+            if not text(version.get("name")) or not text(version.get("voice")):
+                found.append(f"cast member {sid} version {key} has no name or no voice")
+                continue
+            versioned[sid].append(version["name"])
+            found += voice_fault(f"cast member {sid} version {key}", version.get("provider", speaker.get("provider")), version["voice"])
+
+    for field, value in hidden_texts(entry):
+        for cid in sorted(set(NAME_TOKEN.findall(value or ""))):
+            if cid not in versioned:
+                found.append(f"{field} has the token {{name:{cid}}}, and cast member {cid} has no versions")
+
+    for field in CARD_FIELDS:
+        value = (card or {}).get(field) or ""
+        for cid in sorted(set(NAME_TOKEN.findall(value))):
+            found.append(f"the card's {field} has the token {{name:{cid}}}; call cast member {cid} by role")
+        for sid, names in versioned.items():
+            if any(re.search(rf"\b{re.escape(name)}\b", value) for name in names):
+                found.append(f"the card's {field} names cast member {sid}; call the member by role")
 
     for name, lines in (("clue", clues), ("finale line", finale)):
         for at, line in enumerate(lines):
@@ -115,11 +176,11 @@ def decode(target: pathlib.Path) -> None:
 
 def encode(source: pathlib.Path) -> None:
     entries = json.loads(source.read_text(encoding="utf-8"))
-    public = {entry["id"] for entry in json.loads(PUBLIC.read_text(encoding="utf-8"))}
+    public = {entry["id"]: entry for entry in json.loads(PUBLIC.read_text(encoding="utf-8"))}
     personas = persona_ids()
 
     for index, entry in enumerate(entries):
-        found = faults(entry, personas)
+        found = faults(entry, personas, public.get(entry.get("id")))
         if found:
             sys.exit(f"Entry {index + 1} ({entry.get('id')}): " + "; ".join(found))
         if entry["id"] not in public:

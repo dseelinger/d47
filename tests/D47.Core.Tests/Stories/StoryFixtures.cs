@@ -73,6 +73,31 @@ internal sealed class StoryFixtures : IDisposable
         Cast = [new StorySpeaker { Id = "dock-hand", Name = "Ren", Who = "A tired dock hand, short words.", Provider = StorySpeaker.Kokoro, Voice = "bm_george" }],
     };
 
+    /// <summary>
+    /// <see cref="Secret"/> with a cast member, cray, in two versions: Ellie for a Commander who is a man, Ellis for one
+    /// who is a woman. The secret and the first clue name cray by token.
+    /// </summary>
+    public static readonly StorySecret Versioned = Secret with
+    {
+        Secret = "{name:cray} is the Commander's sister.",
+        Clues = [new("{name:cray} hums a song from home.", "cray"), .. Secret.Clues.Skip(1)],
+        Cast =
+        [
+            .. Secret.Cast,
+            new StorySpeaker
+            {
+                Id = "cray",
+                Who = "A test engineer, brief and warm.",
+                Provider = StorySpeaker.Kokoro,
+                Versions = new StorySpeakerVersions
+                {
+                    ForMan = new StorySpeakerVersion { Name = "Ellie", Voice = "af_heart" },
+                    ForWoman = new StorySpeakerVersion { Name = "Ellis", Provider = StorySpeaker.Chatterbox, Voice = "ellis-sample" },
+                },
+            },
+        ],
+    };
+
     public const string Spine = """
         {"name": "The First Light", "premise": "A stock voice asks for something.", "want": "To see a beacon.",
          "stake": "Whether a tool can want.", "turn": "It asked before.", "ending": "It is answered."}
@@ -131,8 +156,10 @@ internal sealed class StoryFixtures : IDisposable
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-stories", Guid.NewGuid().ToString("N"));
 
-    public StoryFixtures(RoundScriptedLlmProvider provider)
+    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null)
     {
+        secret ??= Secret;
+
         Directory.CreateDirectory(_folder);
 
         Provider = provider;
@@ -148,7 +175,7 @@ internal sealed class StoryFixtures : IDisposable
         Director = new StoryDirector(
             Stories,
             Book,
-            new StoryCatalog([Card, Other], () => [Secret, Secret with { Id = Other.Id }]),
+            new StoryCatalog([Card, Other], () => [secret, Secret with { Id = Other.Id }]),
             (ask, now, cancellationToken) => Throws
                 ? throw new HttpRequestException("The provider went away.")
                 : generator.GenerateAsync(ask, now, cancellationToken),
