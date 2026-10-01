@@ -22,16 +22,27 @@ work carries on unchanged.
 
 Every story keeps all ten. Check the draft against each before showing it.
 
-1. The Commander starts broke, in a stock Sidewinder, with the `covas` core and no Guardian cores.
+1. The card names its level, `new`, `midrange` or `endgame` (#739), and the backstory starts there:
+   broke in a stock Sidewinder for `new`, a working ship and some savings for `midrange`, a fleet
+   and a fleet carrier for `endgame`. Every level starts with the `covas` core and no Guardian
+   cores.
 2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
    core aboard (#716), and the `breakIntoTwo` beat says so without naming the core.
 3. No core is removed or made worse, Guardian or `covas`, in the app or the fiction. NPCs that exist
    only in the fiction may be lost.
 4. The Commander never loses anything the game holds, and the story never says they did.
 5. Every beat is one of the adventure beat kinds: the six in `TriggerKind` today and the ones
-   specified in #709 and #710. Thargoids are investigated, never fought: `signal` with `Thargoid`,
-   `wreck`, and `salvage` with `metaalloys`. A live Thargoid ship is flavour only and never a beat,
-   because none can be found on demand. There are no Thargoid missions.
+   specified in #709 (combat and trade), #710 (exploration and on foot), #732 (conflict and
+   faction work), #734 (carrier, squadron and team) and #736 (suit mods and livery). Odyssey is
+   assumed (#730), so on-foot beats are fine. Thargoids are investigated, never fought: `signal`
+   with `Thargoid`, `wreck`, and `salvage` with `metaalloys`. A live Thargoid ship is flavour only
+   and never a beat, because none can be found on demand. There are no Thargoid missions, and no
+   PvP beats.
+
+   Set aside until their spikes are flown: skimmer massacres (`Mission_Massacre_Skimmer`, #721),
+   Disable (`Mission_Disable*`, #722), Hack (`Mission_Hack*`, `Mission_OnFoot_Hack*`, #723), Scan
+   (`Mission_Scan`, #724) and damaged-station missions (`Mission_RS_*`, `Mission_DS_*`, #725). No
+   beat, clue or sample chapter uses them.
 6. No clue or ending depends on an earlier choice.
 7. Each story's secret and twist are its own. The catalog will hold a hundred stories or more over
    nine genres, so genre, tone and core may repeat. Compare the draft with every story of the same
@@ -61,18 +72,29 @@ New titles must not repeat these, or any title in `src/D47.Core/Stories/StoryCat
 
 ## The format
 
-The format is set by #707. Read it there, and once #707 has landed read it from `StorySecret` in
-`src/D47.Core/Stories/StoryCatalog.cs` and `FIELDS` in `tools/seal-stories.py`, which win over the
-issue.
+Read the format from `StoryCard` and `StorySecret` in `src/D47.Core/Stories/StoryCatalog.cs` and
+from `tools/seal-stories.py`. They win over this list, which also names fields that open issues
+add.
 
 - **The card**, in `StoryCatalog.json`: `id`, `number`, `title`, `genre` (one of the nine Save the
-  Cat genres), `tone`, `blurb` (why a player would pick it, like the back cover of a novel),
-  `inYourWords` (the Commander's backstory in the first person), `beacon` (why they go to scan
-  it) and, once #716 lands, `core` (the Guardian core the story is written for, never `covas` or
-  `heretic`).
+  Cat genres), `tone`, `level` (#739), `blurb` (why a player would pick it, like the back cover of
+  a novel), `inYourWords` (the Commander's backstory in the first person, starting at the level),
+  `beacon` (why they go to scan it) and `core` (#716: the Guardian core the story is written for,
+  never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
+  leave them out of the catalog.
 - **The hidden entry**, sealed: `id`, `secret`, `beats` (one line for each of the 15 Save the Cat
-  beats), 14 `clues` (4 weekly, then 10 monthly), 4 `finale` lines, `end`, and 1 to 4 `options`,
-  each with `id`, `label`, `after` and `add` (persona ids, possibly none).
+  beats), 14 `clues` (4 weekly, then 10 monthly), 4 `finale` lines, `end`, 1 to 4 `options`, each
+  with `id`, `label`, `after` and `add` (persona ids, possibly none), and `cast`.
+- **Lines** (clues and finale) each have `text` and `speaker`: `ship`, `narrator` or a cast `id`.
+- **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, or `chatterbox` only
+  when the story needs it, #41) and `voice`. Voice `own` is the Commander's recording (#713).
+  `primary: true` (#717) marks a recurring character named in the card's `blurb` or
+  `inYourWords`, never one with voice `own` (#737). Every primary member needs a picture,
+  `assets/stories/<story-id>.<cast-id>.png`; a member that is not primary may have one. The
+  Commander can change any member's voice and picture later (#737), so the pinned voice is a
+  default, not a constraint on the text.
+- **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
+  decided. Describe it in `who` and record it on the page as a gap against #726.
 
 ## The review page
 
@@ -110,24 +132,22 @@ before this skill existed are not drafts; drop them from the page.
    in `%USERPROFILE%\Saved Games\Frontier Developments\Elite Dangerous\Journal.*.log`, and prints
    whether the #711 long-haul threshold is reached and the comfort-zone pick.
 
-   Name each beat by its kind and filter from the tables in #709 and #710, with counts sized to
-   that state and to the long-haul threshold in #711. Where a beat the story needs cannot be
-   expressed that way, say so on the page and name the issue it would change (#707 to #711, #716).
-   Do not invent a kind.
+   Name each beat by its kind and filter from the tables in rule 5's issues, with counts sized to
+   that state, and keep the chapter rules the app enforces:
+   - from chapter two on, at most two of five beats are `arrive`, `dock`, `land` or `scan` (#711);
+   - a chapter fits one to three play sessions; a longer undertaking (engineering, saving for a
+     ship then buying it, a run of ranks) continues across ordinary chapters (#711);
+   - a beat that spends credits needs the price plus a reserve of the price again or 500,000,000,
+     whichever is less, at the last load, so saving and buying fall in separate chapters (#735);
+   - the finale stays within a session's flying unless the long-haul threshold in #711 is reached.
+     A story that needs a long-haul finale is a gap against #728 until that is decided.
+
+   Where a beat the story needs cannot be expressed that way, say so on the page and name the
+   issue it would change. Do not invent a kind.
 4. **Publish** both layers and the samples on the review page.
 5. **Revise** on his notes, republishing after each round, until he approves the story. Mark it
    approved on the page.
-6. **Add it to the catalog, once #707 has landed.** It has landed when it is closed, or when a
-   commit on local `main` carries `Fixes #707`:
-
-   ```bash
-   gh issue view 707 --json state -q .state; git log main --format=%B | grep -x "Fixes #707"
-   ```
-
-   Until then, stop at the approved story on the page and tell the maintainer the catalog steps are
-   waiting on #707.
-
-   Once it has: add the card to `src/D47.Core/Stories/StoryCatalog.json` with the next `number`,
+6. **Add it to the catalog.** Add the card to `src/D47.Core/Stories/StoryCatalog.json` with the next `number`,
    decode the sealed layer into the scratchpad, add the hidden entry with the same `id`, and
    encode it:
 
@@ -148,8 +168,8 @@ before this skill existed are not drafts; drop them from the page.
 
    The build must have 0 warnings. Add a `CHANGELOG.md` entry under the current unreleased heading
    naming the story by its title, and mark the story "in the catalog" on the page.
-9. **Commit only when the maintainer says so.** The commit holds the two catalog files and the
-   changelog, with a subject such as `Add the stock story <title>`. Do not push.
+9. **Commit only when the maintainer says so.** The commit holds the two catalog files, the
+   cast pictures in `assets/stories/` and the changelog, with a subject such as `Add the stock story <title>`. Do not push.
 
 Nothing else in `src/` changes. A story that seems to need a code change is a gap: record it on the
 page and name the issue (step 3).
