@@ -8,8 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
-The Adventures tab has a **Stories** button, opening twenty stock stories written to run for months.
-Each card shows the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
+The Adventures tab has a **Stories** button, opening the stock stories, each written to run for months.
+The catalog is empty in this release; stories are added to it one at a time. Each card shows the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
 ship's AI write chapter one, which begins at once and ends at the Guardian beacon system nearest to
 you. When a chapter finishes, the next is written and begins. **Switch** abandons the running story and
 picks another, **Abandon** ends it, and neither changes your Guardian cores. Each story has a hidden

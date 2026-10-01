@@ -57,7 +57,7 @@ public class AStoryChapterShowsNoPremiseTests
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
-        var card = StoryCatalog.Default.Find("factory-settings")!;
+        var card = StoryFixture.Story;
 
         Assert.Null(book.Write("F1", Chapter("the-first-light", "The First Light", ChapterPremise, card.Id)));
         Assert.Null(book.Write("F1", Chapter("the-last-dock", "The Last Dock", OwnPremise, storyId: null)));
@@ -77,7 +77,7 @@ public class AStoryChapterShowsNoPremiseTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, StoryCatalog.Default, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
+            stories, book, StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },

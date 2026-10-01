@@ -35,7 +35,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             NullLogger<AdventureBook>.Instance);
 
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
-        var card = StoryCatalog.Default.Find("factory-settings")!;
+        var card = StoryFixture.Story;
 
         if (running)
         {
@@ -73,7 +73,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, StoryCatalog.Default, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
+            stories, book, StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
@@ -120,7 +120,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
     {
         var drawn = string.Join("\n", Drawn(panel));
 
-        foreach (var secret in StoryCatalog.Default.Secrets)
+        foreach (var secret in StoryFixture.Catalog.Secrets)
         {
             foreach (var field in new[] { secret.Secret, secret.Weeks, secret.Months, secret.Year, secret.End })
             {
@@ -136,13 +136,13 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         var surface = Open(running: false);
         var panel = surface.Panel;
-        Assert.True(Shows(panel, "Factory Settings"));
-        Assert.True(Shows(panel, "The Passenger"));
-        Assert.False(Shows(panel, "The Trial"));
+        Assert.True(Shows(panel, "The Test Story"));
+        Assert.True(Shows(panel, "The Other Story"));
+        Assert.False(Shows(panel, "The Waiting Story"));
         NoHiddenSentence(panel);
         Save(surface.Window, "stories-root.png");
 
-        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + "the-lifeboat", "The Lifeboat"));
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Other.Id, StoryFixture.Other.Title));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Pick", Buttons(panel));
@@ -166,13 +166,13 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Assert.Contains("Read the chapter", Buttons(panel));
         Save(surface.Window, "stories-running.png");
 
-        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + "the-lifeboat", "The Lifeboat"));
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Other.Id, StoryFixture.Other.Title));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Switch", Buttons(panel));
         Assert.DoesNotContain("Pick", Buttons(panel));
 
-        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + "factory-settings", "Factory Settings"));
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Shows(panel, "This is your story."));

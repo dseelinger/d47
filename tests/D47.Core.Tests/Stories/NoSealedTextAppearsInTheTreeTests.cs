@@ -19,7 +19,6 @@ public sealed class NoSealedTextAppearsInTheTreeTests
     {
         var catalog = StoryCatalog.Default;
 
-        Assert.Equal(20, catalog.Cards.Count);
         Assert.Equal(catalog.Cards.Count, catalog.Secrets.Count);
 
         foreach (var secret in catalog.Secrets)
@@ -36,12 +35,13 @@ public sealed class NoSealedTextAppearsInTheTreeTests
     }
 
     [Fact]
-    public void OnlyTheTrialWaitsForThargoidEvents()
+    public void ACardThatNeedsAnUntrackedEventIsNotOffered()
     {
-        var waiting = StoryCatalog.Default.Cards.Where(card => card.Requires is not null).ToList();
+        var waiting = StoryFixtures.Other with { Requires = "thargoids" };
+        var catalog = new StoryCatalog([StoryFixtures.Card, waiting], () => []);
 
-        Assert.Equal("the-trial", Assert.Single(waiting).Id);
-        Assert.DoesNotContain(StoryCatalog.Default.Offered, card => card.Id == "the-trial");
+        Assert.Equal(StoryFixtures.Id, Assert.Single(catalog.Offered).Id);
+        Assert.NotNull(catalog.Find(waiting.Id));
     }
 
     [Fact]
