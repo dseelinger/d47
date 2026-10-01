@@ -41,6 +41,9 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     private readonly Dictionary<string, DateTimeOffset> _highWater = new(StringComparer.Ordinal);
     private readonly Queue<AdventureMoment> _moments = new();
 
+    /// <summary>The system each Commander is in, which a standing begun from nothing starts in.</summary>
+    private readonly Dictionary<string, long> _here = new(StringComparer.Ordinal);
+
     /// <summary>
     /// Which stories are owed a spoken line right now — a beat has fired and the Commander has not
     /// heard about it yet (asked for 2026-08-22).
@@ -205,6 +208,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         {
             _standings.Clear();
             _highWater.Clear();
+            _here.Clear();
         }
 
         foreach (var file in files)
@@ -318,7 +322,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            _standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun);
+            _standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(commander));
             _moments.Enqueue(new AdventureMoment(commander, begun, -1, now));
             Stir(commander, begun.Key);
         }
@@ -430,6 +434,12 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
     private void Fold(string commander, JournalEvent journalEvent, bool announce)
     {
+        if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+            && journalEvent.Raw.Long("SystemAddress") is { } arrived)
+        {
+            _here[commander] = arrived;
+        }
+
         foreach (var adventure in store.For(commander))
         {
             if (!adventure.IsActive)
@@ -485,10 +495,12 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             return ReferenceEquals(standing.Adventure, adventure) ? standing : standing with { Adventure = adventure };
         }
 
-        var fresh = AdventureFold.Start(adventure);
+        var fresh = AdventureFold.Start(adventure, Here(commander));
         _standings[key] = fresh;
         return fresh;
     }
+
+    private long? Here(string commander) => _here.TryGetValue(commander, out var address) ? address : null;
 
     private static string StandingKey(string commander, string key) => commander + "\n" + key.ToLowerInvariant();
 

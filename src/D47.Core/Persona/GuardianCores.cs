@@ -70,6 +70,17 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
         return (address, Beacons[address]);
     }
 
+    /// <summary>
+    /// Whether this event is a Guardian beacon scan, given the system the Commander is in. <c>DataScanned</c> names
+    /// no system, so the system is the caller's.
+    /// </summary>
+    public static bool IsBeaconScan(JournalEvent journalEvent, long? systemAddress)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        return journalEvent.Kind == "DataScanned" && systemAddress is { } address && Beacons.ContainsKey(address);
+    }
+
     /// <summary>Every core available: the host for tests, the designer and the replay harness.</summary>
     public static GuardianCores AllAwake() => new();
 

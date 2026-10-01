@@ -303,7 +303,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             {
                 problems.Add(new AdventureProblem(
                     where,
-                    $"beat {index + 1} names a trigger \"{beat.Trigger?.Kind ?? string.Empty}\"; the six are "
+                    $"beat {index + 1} names a trigger \"{beat.Trigger?.Kind ?? string.Empty}\"; the seven are "
                     + string.Join(", ", AdventureValidation.Kinds)));
                 return null;
             }

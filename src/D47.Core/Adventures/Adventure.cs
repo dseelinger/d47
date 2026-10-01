@@ -1,3 +1,5 @@
+using D47.Core.Persona;
+
 namespace D47.Core.Adventures;
 
 /// <summary>How an adventure arrived, which decides how much a Commander should trust its prose.</summary>
@@ -11,7 +13,7 @@ public enum AdventureSource
 }
 
 /// <summary>
-/// The six things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is
+/// The seven things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is
 /// free").
 /// </summary>
 public enum TriggerKind
@@ -33,6 +35,9 @@ public enum TriggerKind
 
     /// <summary><c>ShipyardNew</c> or <c>ShipyardSwap</c> into a <c>ShipType</c>.</summary>
     Board,
+
+    /// <summary><c>DataScanned</c> while in a Guardian beacon system. Only a stock story's chapter one ends on one.</summary>
+    Beacon,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -69,6 +74,7 @@ public sealed record AdventureTrigger
         TriggerKind.Land or TriggerKind.Scan => SystemAddress is not null && BodyId is not null,
         TriggerKind.Rank => Career is not null && Rank is not null,
         TriggerKind.Board => ShipType is not null,
+        TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
         _ => false,
     };
 
@@ -81,6 +87,7 @@ public sealed record AdventureTrigger
         TriggerKind.Scan => $"scan {Body ?? Address(SystemAddress, BodyId)}{In()}",
         TriggerKind.Rank => $"reach {Careers.Word(Career)} rank {Rank}",
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
+        TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
         _ => Kind.ToString(),
     };
 
@@ -88,9 +95,16 @@ public sealed record AdventureTrigger
     /// The trigger as a hand-off — "Next: dock at Maren Anchorage in Dyson's Hollow." — said with the
     /// beat before it.
     /// </summary>
-    public string HandOff() => Kind == TriggerKind.Scan
-        ? $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before."
-        : $"Next: {Describe()}.";
+    public string HandOff() => Kind switch
+    {
+        TriggerKind.Scan =>
+            $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
+        TriggerKind.Beacon => $"Next: {Describe()} with the ship's data-link scanner.",
+        _ => $"Next: {Describe()}.",
+    };
+
+    private static string? BeaconName(long? address) =>
+        address is { } known && GuardianCores.Beacons.TryGetValue(known, out var name) ? name : null;
 
     private static string Article(string name) =>
         name == "an unknown ship" ? name : (char.ToLowerInvariant(name[0]) is 'a' or 'e' or 'i' or 'o' ? "an " : "a ") + name;

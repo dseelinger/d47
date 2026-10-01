@@ -29,8 +29,7 @@ Every story keeps all nine. Check the draft against each before showing it.
 2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
    core aboard (#716), and the `breakIntoTwo` beat says so without naming the core. Every story
    names its own core on the card, chosen to match the story, and its first chapter ends with a
-   `beacon` beat for the scan. No beat kind fires on `DataScanned` yet; record that as a gap
-   against #716.
+   `beacon` beat for the scan.
 3. No core is removed or made worse, Guardian or `covas`, in the app or the fiction. NPCs that exist
    only in the fiction may be lost.
 4. The Commander never loses anything the game holds, and the story never says they did.

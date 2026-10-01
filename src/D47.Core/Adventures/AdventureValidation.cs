@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Persona;
 
 namespace D47.Core.Adventures;
 
@@ -62,8 +63,8 @@ public static class Careers
 /// </summary>
 public static class AdventureValidation
 {
-    /// <summary>The six, in the words the file and the chooser use.</summary>
-    public static IReadOnlyList<string> Kinds { get; } = ["arrive", "dock", "land", "scan", "rank", "board"];
+    /// <summary>The seven, in the words the file uses.</summary>
+    public static IReadOnlyList<string> Kinds { get; } = ["arrive", "dock", "land", "scan", "rank", "board", "beacon"];
 
     public static bool TryKind(string? text, out TriggerKind kind)
     {
@@ -210,6 +211,14 @@ public static class AdventureValidation
                         && string.IsNullOrWhiteSpace(beat.Trigger.Body))
                     {
                         problems.Add($"{where} names no body.");
+                    }
+
+                    break;
+
+                case TriggerKind.Beacon:
+                    if (beat.Trigger.SystemAddress is not { } beacon || !GuardianCores.Beacons.ContainsKey(beacon))
+                    {
+                        problems.Add($"{where} waits for a Guardian beacon scan in a system with no Guardian beacon.");
                     }
 
                     break;

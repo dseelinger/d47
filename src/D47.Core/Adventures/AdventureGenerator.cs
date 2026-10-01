@@ -631,10 +631,10 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine();
             text.AppendLine(
-                $"This is the first chapter, and it ends at a Guardian beacon: its last beat is \"arrive\" at {beacon.System}, "
-                + "where the Commander scans the beacon with the ship's data-link scanner. That scan is when the Guardian cores "
-                + "come aboard. The reason to go is the public layer's beacon line. That beat may be farther than the reach; "
-                + "every other hop keeps to it.");
+                $"This is the first chapter, and it ends at a Guardian beacon: its last beat is \"beacon\", the Commander "
+                + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner. That scan is when the "
+                + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That beat may be farther "
+                + "than the reach; every other hop keeps to it.");
         }
     }
 
@@ -706,13 +706,21 @@ public sealed class AdventureGenerator(
 
         text.AppendLine();
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
-        text.AppendLine("Each beat waits for exactly one of six things, and nothing else exists:");
+        var beacon = ask.Story?.Beacon;
+
+        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "six" : "seven")} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine("- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship.");
+
+        if (beacon is not null)
+        {
+            text.AppendLine($"- \"beacon\": the Commander scans the Guardian beacon in {beacon.System}. The last beat and no other; write its kind, title and line, and leave the place to d47.");
+        }
+
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
@@ -771,7 +779,8 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
             + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
-            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\", "
+            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\""
+            + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
             + "\"system\": string, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
@@ -841,6 +850,7 @@ public sealed class AdventureGenerator(
             TriggerKind.Land => $"land: {Body ?? "?"} in {System ?? "?"}",
             TriggerKind.Scan => $"scan: {Body ?? "?"} in {System ?? "?"}",
             TriggerKind.Board => $"board: {Ship ?? "?"}",
+            TriggerKind.Beacon => "beacon",
             _ => $"arrive: {System ?? "?"}",
         };
     }
@@ -945,7 +955,19 @@ public sealed class AdventureGenerator(
             var where = $"Beat {index + 1} ({beat.Title})";
             AdventureTrigger? trigger = null;
 
-            if (beat.Kind == TriggerKind.Board)
+            if (beat.Kind == TriggerKind.Beacon)
+            {
+                // Placed at the beacon d47 chose, whatever system the model wrote.
+                if (ask.Story?.Beacon is { } beacon && index == beats.Count - 1)
+                {
+                    trigger = new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = beacon.SystemAddress, System = beacon.System };
+                }
+                else
+                {
+                    refusals.Add($"{where} is a \"beacon\" beat; only the last beat of a story's first chapter may be one.");
+                }
+            }
+            else if (beat.Kind == TriggerKind.Board)
             {
                 if (EliteSpecifications.HullSymbol(beat.Ship) is not { } symbol)
                 {
@@ -1028,7 +1050,7 @@ public sealed class AdventureGenerator(
                     {
                         refusals.Add($"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
                     }
-                    else if (hop is { } far && far > facts.RadiusLightYears && place.SystemAddress != ask.Story?.Beacon?.SystemAddress)
+                    else if (hop is { } far && far > facts.RadiusLightYears)
                     {
                         refusals.Add($"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
                     }
@@ -1061,11 +1083,9 @@ public sealed class AdventureGenerator(
             }
         }
 
-        if (ask.Story?.Beacon is { } beacon
-            && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Arrive
-                || resolved.LastOrDefault()?.Trigger.SystemAddress != beacon.SystemAddress))
+        if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
-            refusals.Add($"The last beat must be \"arrive\" at {beacon.System}, where the Commander scans the Guardian beacon.");
+            refusals.Add($"The last beat must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
         }
 
         return new Resolved(resolved, refusals);

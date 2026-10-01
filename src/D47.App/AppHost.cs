@@ -2591,6 +2591,8 @@ public sealed class AppHost : IDisposable
         // The adventures file is hand-editable and polled like the others; and when a stamp has moved -
         // Begin, Begin again, a hand edit - the walk the book asked for happens here, on the tick, so the
         // live fold cannot interleave with it.
+        var wakings = new WakingAfterTheBeat();
+
         tick.Add("adventures", context =>
         {
             adventureStore.Poll();
@@ -2606,8 +2608,16 @@ public sealed class AppHost : IDisposable
             {
                 if (storyDirector.Observe(journalEvent, commander) is { } waking && !context.IsFirst)
                 {
-                    host.OnCoresWoke(waking);
+                    // The callouts ran earlier on this tick, so a beat the same scan reached is already owed its line.
+                    var chapter = storyStore.Current(commander)?.CurrentChapter;
+                    var core = waking == CoreWaking.Cores ? storyDirector.CoreOf(commander) : null;
+                    wakings.Add(waking, core, chapter is not null && adventureBook.IsStirring(commander, chapter) ? chapter : null, context.Now);
                 }
+            }
+
+            foreach (var (waking, core) in wakings.Due(chapter => adventureBook.IsStirring(commander, chapter), context.Now))
+            {
+                host.OnCoresWoke(waking, core);
             }
 
             // A change of Commander changes whose story holds the cores.
@@ -4090,10 +4100,8 @@ public sealed class AppHost : IDisposable
     /// Brings the story's core aboard when its beacon scan lifts the hold on the cores, then says the one line, also
     /// posted to Messages. Called on the tick thread.
     /// </summary>
-    private void OnCoresWoke(CoreWaking waking)
+    private void OnCoresWoke(CoreWaking waking, D47.Core.Persona.Persona? storyCore)
     {
-        var storyCore = waking == CoreWaking.Cores ? Stories?.CoreOf(GameState.Active?.Identity.FrontierId) : null;
-
         if (storyCore is not null)
         {
             _personaCause = PersonaSwitch.Adopted;

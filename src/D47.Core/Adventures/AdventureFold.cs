@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Persona;
 
 namespace D47.Core.Adventures;
 
@@ -16,6 +17,9 @@ public sealed record AdventureStanding
 
     /// <summary>When each <c>LoadGame</c> since acceptance was written, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Loads { get; init; } = [];
+
+    /// <summary>The system the Commander is in, from the last <c>FSDJump</c>, <c>Location</c> or <c>CarrierJump</c> folded, acceptance or not.</summary>
+    public long? SystemAddress { get; init; }
 
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
@@ -137,8 +141,8 @@ public sealed record AdventureStanding
 /// <summary>The one fold, for the live tick and the startup catch-up alike (Phase 47).</summary>
 public static class AdventureFold
 {
-    /// <summary>Whether one journal event is what this trigger waits for.</summary>
-    public static bool Matches(AdventureTrigger trigger, JournalEvent journalEvent)
+    /// <summary>Whether one journal event is what this trigger waits for, with the Commander in <paramref name="systemAddress"/>.</summary>
+    public static bool Matches(AdventureTrigger trigger, JournalEvent journalEvent, long? systemAddress = null)
     {
         ArgumentNullException.ThrowIfNull(trigger);
         ArgumentNullException.ThrowIfNull(journalEvent);
@@ -181,6 +185,10 @@ public static class AdventureFold
                 journalEvent.Kind is "ShipyardNew" or "ShipyardSwap"
                 && string.Equals(raw.String("ShipType"), trigger.ShipType, StringComparison.OrdinalIgnoreCase),
 
+            TriggerKind.Beacon =>
+                systemAddress == trigger.SystemAddress
+                && GuardianCores.IsBeaconScan(journalEvent, systemAddress),
+
             _ => false,
         };
     }
@@ -192,6 +200,14 @@ public static class AdventureFold
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         var adventure = standing.Adventure;
+
+        // Before the acceptance check, so a Commander already in a beat's system when it was accepted is counted.
+        if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+            && journalEvent.Raw.Long("SystemAddress") is { } arrived
+            && arrived != standing.SystemAddress)
+        {
+            standing = standing with { SystemAddress = arrived };
+        }
 
         if (!adventure.IsBegun || standing.IsDone)
         {
@@ -215,7 +231,7 @@ public static class AdventureFold
 
         var current = standing.CurrentBeat;
 
-        if (current is null || !Matches(current.Trigger, journalEvent))
+        if (current is null || !Matches(current.Trigger, journalEvent, standing.SystemAddress))
         {
             return standing;
         }
@@ -223,6 +239,7 @@ public static class AdventureFold
         return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp] };
     }
 
-    /// <summary>A fresh standing: begun or not, nothing fired yet.</summary>
-    public static AdventureStanding Start(Adventure adventure) => new() { Adventure = adventure };
+    /// <summary>A fresh standing: begun or not, nothing fired yet, in <paramref name="systemAddress"/> when it is known.</summary>
+    public static AdventureStanding Start(Adventure adventure, long? systemAddress = null) =>
+        new() { Adventure = adventure, SystemAddress = systemAddress };
 }

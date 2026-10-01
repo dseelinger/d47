@@ -166,7 +166,7 @@ public class AdventureFoldTests
     [Fact]
     public void NothingMovingReturnsTheSameInstance()
     {
-        var start = AdventureFold.Start(LanternRoute(Accepted));
+        var start = AdventureFold.Start(LanternRoute(Accepted), Home);
 
         Assert.Same(start, AdventureFold.Apply(start, Jump(Home, Accepted.AddMinutes(1))));
     }

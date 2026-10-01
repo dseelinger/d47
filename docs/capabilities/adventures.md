@@ -179,7 +179,7 @@ card says which adventure it follows, and it is accepted, flown and checked like
 
 ### What a beat can be
 
-Five triggers, and every one is a comparison on a structured field rather than on a name:
+Seven triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -188,6 +188,11 @@ Five triggers, and every one is a comparison on a structured field rather than o
 | Land on a body | system and body ids | the body's name |
 | Scan a body | system and body ids | the body's name |
 | Reach a rank | career and a number | any rank word |
+| Board a ship | the hull's type | the ship's name |
+| Scan a Guardian beacon | a data-link scan while in a Guardian beacon system's id | the scan's type, or any name |
+
+Only a stock story's chapter one uses the beacon trigger, as its last beat, and you cannot add one on the
+form.
 
 Nothing a stranger can choose — a ship name, an in-game message, a mission title — can be a
 trigger. That is the safety property stated as a type rather than as a promise.
@@ -281,8 +286,9 @@ line names who says it: one of those speakers, the ship's AI or the narrator. D4
 sealed, never shows it, and sends it to the language model so the chapters can hint at it.
 
 **Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then
-begins. Chapter one always ends with an arrival at the Guardian beacon system nearest to you, where you
-scan the beacon. Each chapter is an adventure on this tab. When one finishes, the next is written from it
+begins. Chapter one always ends when you scan the Guardian beacon nearest to you with the ship's
+data-link scanner; arriving in the beacon's system is not enough. The chapter's last line is said before
+the core wakes, in the voice that was aboard. Each chapter is an adventure on this tab. When one finishes, the next is written from it
 and begins. **Switch** abandons the running story, keeps its chapters on file, and picks another.
 **Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
 pauses the story, and **Resume** on the Stories page begins that chapter again.

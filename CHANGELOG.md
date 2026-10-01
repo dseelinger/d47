@@ -12,8 +12,9 @@ The Adventures tab has a **Stories** button, opening the stock stories, each wri
 The catalog holds five stories in this release, **My Own Mayday**, **Ride Along**, **Black Box**, **The Borrowed Callsign** and **The Far Side**, and more are added to it one at a time.
 The list shows each story's Save the Cat genre, its tone and a blurb saying why you might pick it,
 and a story's page adds the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
-ship's AI write chapter one, which begins at once and ends at the Guardian beacon system nearest to
-you. When a chapter finishes, the next is written and begins. **Switch** abandons the running story and
+ship's AI write chapter one, which begins at once and ends when you scan the Guardian beacon nearest to
+you with the data-link scanner; arriving in the beacon's system is not enough. The chapter's last line
+is said before the Guardian core wakes, in the voice that was aboard. When a chapter finishes, the next is written and begins. **Switch** abandons the running story and
 picks another, and **Abandon** ends it. Each story has a hidden
 layer D47 never shows; **Privacy and egress** says it is sent to the language model with each chapter.
 

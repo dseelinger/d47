@@ -81,6 +81,23 @@ internal sealed class StoryFixtures : IDisposable
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
+        ]}
+        """;
+
+    /// <summary>Chapter one with a beacon beat before its last, which also ends at the beacon.</summary>
+    public const string BeatsWithAnEarlyBeacon = """
+        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
+          {"title": "Too Soon", "function": "setup", "kind": "beacon", "line": "Not yet."},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "line": "Scan it."}
+        ]}
+        """;
+
+    /// <summary>A beacon written by the model in the old form, as an arrival.</summary>
+    public const string BeatsArrivingAtTheBeacon = """
+        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Beacon", "function": "resolution", "kind": "arrive", "system": "IC 2391 Sector MX-T b3-6", "line": "Scan it."}
         ]}
         """;
@@ -95,6 +112,13 @@ internal sealed class StoryFixtures : IDisposable
     public const string NextSpine = """
         {"name": "The Second Light", "premise": "The voice asks again.", "want": "To answer.",
          "stake": "Whether it was a question.", "turn": "It was a name.", "ending": "It is kept."}
+        """;
+
+    public const string NextBeatsWithABeacon = """
+        {"opening": "Again.", "reply": "Here.", "beats": [
+          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Beacon Again", "function": "resolution", "kind": "beacon", "line": "Again."}
+        ]}
         """;
 
     public const string NextBeats = """
@@ -150,14 +174,15 @@ internal sealed class StoryFixtures : IDisposable
     /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>
     public GuardianCores Cores(string frontierId) => new(() => Stories.Current(frontierId)?.CoreHold ?? CoreHold.None);
 
+    public static JournalEvent DataScanned(DateTimeOffset at) =>
+        AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(at)}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }""");
+
     /// <summary>Jumps to a beacon system and data-links there; returns what the scan woke.</summary>
     public CoreWaking? ScanBeacon(string frontierId, long address, DateTimeOffset at)
     {
         Director.Observe(AdventureFixtures.Jump(address, at), frontierId);
 
-        return Director.Observe(
-            AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(at)}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }"""),
-            frontierId);
+        return Director.Observe(DataScanned(at), frontierId);
     }
 
     /// <summary>Flies every beat of a begun chapter so it is done.</summary>
@@ -175,6 +200,11 @@ internal sealed class StoryFixtures : IDisposable
                     ? AdventureFixtures.Docked(beat.Trigger.MarketId!.Value, at)
                     : AdventureFixtures.Jump(beat.Trigger.SystemAddress!.Value, at),
                 frontierId);
+
+            if (beat.Trigger.Kind == TriggerKind.Beacon)
+            {
+                Book.Observe(DataScanned(at.AddSeconds(30)), frontierId);
+            }
         }
     }
 

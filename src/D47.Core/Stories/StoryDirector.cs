@@ -258,9 +258,8 @@ public sealed class StoryDirector(
             });
         }
 
-        if (journalEvent.Kind != "DataScanned"
+        if (!GuardianCores.IsBeaconScan(journalEvent, _where.SystemAddress)
             || _where.SystemAddress is not { } address
-            || !GuardianCores.Beacons.ContainsKey(address)
             || stories.Current(frontierId) is not { } current
             || journalEvent.Timestamp < current.PickedAt
             || current.BeaconSystems.Contains(address))
