@@ -58,5 +58,17 @@
     "blurb": "Nico answered your post on the jobs board with a terrible joke and a good offer: split the contracts, you fly the cargo in, Nico flies it out. Nico is funny, generous with advice, and always somewhere you have just missed. A year of shared jobs and late-night messages makes Nico the best friend you have out here. You have never seen Nico's face. Every message arrives nine hours after it was sent. And Nico describes stars you cannot find on any chart.",
     "inYourWords": "Nobody lends a Sidewinder pilot anything, not even company, so I posted on the jobs board for a partner. One reply came. Nico. Bad jokes, good maths, and a ship Nico will not describe. We split the work: I fly the cargo in and Nico flies it out. We have not met yet. We keep just missing each other.",
     "beacon": "Nico's messages reach me stamped with the routing code of a Guardian beacon, and they arrive full of crackle. Nico says a data-link scan of the beacon will clear the line. I would like to hear Nico properly."
+  },
+  {
+    "id": "journeyman",
+    "core": "llamo",
+    "number": 6,
+    "title": "Journeyman",
+    "genre": "Golden Fleece",
+    "level": "new",
+    "tone": "Warm, wry, a long road",
+    "blurb": "The Companions of the Lane are older than the Pilots Federation, and their mark still opens doors a licence does not. To earn it, a journeyman walks the Circuit: nine masters scattered across the bubble, one for every craft a pilot can learn, and each one works you until the work is good before they mark your book. Hauling, mining, the hunt, charts, living things, passage, the ground, salvage and the forge. The masters are old, the guild house that sent you has not sent anyone in twenty years, and Mother Agathe, who keeps it, swears a strongbox opens for whoever comes home with a full book. Linus, the only other journeyman on the road, is always one master ahead of you, and has far too much money for someone sleeping in guild bunks. The book takes a year. You start with a Sidewinder.",
+    "inYourWords": "I had a stock Sidewinder, a few hundred credits, and nowhere to sleep but the cockpit when I found the guild house: a common room, a row of empty bunks, and a board of names with most of them crossed out. Mother Agathe keeps it. She feeds anyone who works. She watched me work for a week, then put a book in my hands: a page for a Guardian beacon, a page for each of nine masters, and one for a masterwork. She says a strongbox opens for whoever fills it. I wrote my name inside the cover.",
+    "beacon": "The first page of the book belongs to no master. It asks for the data from a Guardian beacon, the oldest machine anyone has found that still does its job. Mother Agathe says every journeyman starts there, to see how long good work outlasts the people who did it."
   }
 ]

@@ -9,7 +9,7 @@
 ## 1.27.0 — Stock stories begin
 
 The Adventures tab has a **Stories** button, opening the stock stories, each written to run for a year.
-The catalog holds five stories in this release, **My Own Mayday**, **Ride Along**, **Black Box**, **The Borrowed Callsign** and **The Far Side**, and more are added to it one at a time.
+The catalog holds six stories in this release, **My Own Mayday**, **Ride Along**, **Black Box**, **The Borrowed Callsign**, **The Far Side** and **Journeyman**, and more are added to it one at a time. **Journeyman** is written for a new commander and works through each of the game's main activities in turn.
 The list shows each story's commander level (new, mid-range or endgame, a guide and not a limit) and a
 blurb saying why you might pick it, and a story's page adds the level's guideline, the tone, the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
 ship's AI write chapter one, which begins at once and ends when you scan the Guardian beacon nearest to
