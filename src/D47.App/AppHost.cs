@@ -4086,10 +4086,29 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>The one line said as a story's beacon scan lifts its hold on the cores, also posted to Messages. Called on the tick thread.</summary>
+    /// <summary>
+    /// Brings the story's core aboard when its beacon scan lifts the hold on the cores, then says the one line, also
+    /// posted to Messages. Called on the tick thread.
+    /// </summary>
     private void OnCoresWoke(CoreWaking waking)
     {
-        var line = GuardianCores.Line(waking);
+        var storyCore = waking == CoreWaking.Cores ? Stories?.CoreOf(GameState.Active?.Identity.FrontierId) : null;
+
+        if (storyCore is not null)
+        {
+            _personaCause = PersonaSwitch.Adopted;
+
+            try
+            {
+                Settings.Apply(PersonaCapability.PersonaKey, storyCore.Id, SettingsCaller.ShipBinding);
+            }
+            finally
+            {
+                _personaCause = PersonaSwitch.Selected;
+            }
+        }
+
+        var line = GuardianCores.Line(waking, storyCore);
 
         Messages?.Post(Personas.Current.Id, "Guardian cores", line, DateTimeOffset.Now);
 
@@ -4099,6 +4118,7 @@ public sealed class AppHost : IDisposable
 
             try
             {
+                await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
                 await SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false);
             }
             catch (Exception ex)

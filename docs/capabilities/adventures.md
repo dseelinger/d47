@@ -270,7 +270,7 @@ Open **Stories** on the Adventures tab for the stock stories, each written to ru
 at a time. Until stories are added to the catalog the page says "No stories yet." The list shows each
 story's title, its Save the Cat genre (Golden Fleece, Dude with a Problem, Whydunit, Buddy Love, Rites
 of Passage, Fool Triumphant, Institutionalized, Out of the Bottle or Superhero), its tone, and a blurb
-saying why you might pick it. A story's page adds the story in your words and why it sends you to a
+saying why you might pick it, and the Guardian core the story is written for. A story's page adds the story in your words and why it sends you to a
 Guardian beacon.
 
 Each story also has a hidden layer: its secret, a beat sheet of the fifteen Save the Cat beats, fourteen
@@ -286,6 +286,12 @@ scan the beacon. Each chapter is an adventure on this tab. When one finishes, th
 and begins. **Switch** abandons the running story, keeps its chapters on file, and picks another.
 **Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
 pauses the story, and **Resume** on the Stories page begins that chapter again.
+
+Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When
+you scan the story's first Guardian beacon, that core comes aboard in place of the core you had, says
+the waking line, and Messages says it came aboard and that you can choose another core in Settings. A
+core you choose afterwards stays; the story does not bring its own back. Pausing, abandoning or finishing
+the story leaves the core aboard as it is.
 
 One story runs at a time, kept in `data/story.json`. A story needs a language model and galaxy search,
 the same as asking for an adventure.

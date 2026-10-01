@@ -36,6 +36,12 @@ public sealed record StoryCard
 
     public string? Tone { get; init; }
 
+    /// <summary>The id of the Guardian core the story is written for; it comes aboard at the beacon scan.</summary>
+    public required string Core { get; init; }
+
+    /// <summary>The name of <see cref="Core"/>.</summary>
+    public string CoreName => PersonaCatalog.Resolve(Core).Name;
+
     /// <summary>Why a player would pick this story, like the back cover of a novel.</summary>
     public required string Blurb { get; init; }
 
@@ -51,6 +57,7 @@ public sealed record StoryCard
         var text = new StringBuilder();
         text.AppendLine(Tone is { Length: > 0 } tone ? $"{Title} — {tone}." : $"{Title}.");
         Line(text, "Genre", Genre);
+        Line(text, "The core aboard once the beacon is scanned", CoreName);
         text.AppendLine($"In the Commander's words: \"{InYourWords}\"");
         Line(text, "The beacon", Beacon);
         return text.ToString().TrimEnd();
@@ -285,6 +292,11 @@ public sealed class StoryCatalog
             if (!StoryCard.Genres.Contains(card.Genre, StringComparer.Ordinal))
             {
                 faults.Add($"{card.Id}: the genre is not one of the nine Save the Cat genres.");
+            }
+
+            if (!PersonaCatalog.IsGuardian(card.Core) || card.Core == PersonaCatalog.Heretic.Id)
+            {
+                faults.Add($"{card.Id}: the core is missing, is not a Guardian core, or is the Heretic.");
             }
 
             if (string.IsNullOrWhiteSpace(card.Blurb))

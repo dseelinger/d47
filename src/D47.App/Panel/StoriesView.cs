@@ -110,7 +110,7 @@ public sealed class StoriesView : UserControl
         {
             var row = Row(
                 AdventuresPage.RowName(card.Title),
-                AdventuresPage.RowSecondary(card.Tone is { Length: > 0 } tone ? $"{card.Genre} · {tone}" : card.Genre),
+                AdventuresPage.RowSecondary(card.Tone is { Length: > 0 } tone ? $"{card.Genre} · {tone} · {card.CoreName}" : $"{card.Genre} · {card.CoreName}"),
                 AdventuresPage.Text(card.Blurb, TypeScale.Body));
 
             var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title);
@@ -222,6 +222,7 @@ public sealed class StoriesView : UserControl
             page.Children.Add(AdventuresPage.Muted(tone));
         }
 
+        page.Children.Add(AdventuresPage.Muted($"Core: {card.CoreName}"));
         page.Children.Add(AdventuresPage.Text(card.Blurb, TypeScale.Body));
         page.Children.Add(Labelled("In your words", card.InYourWords));
         page.Children.Add(Labelled("The beacon", card.Beacon));

@@ -1,6 +1,7 @@
 [
   {
     "id": "my-own-mayday",
+    "core": "archivist",
     "number": 1,
     "title": "My Own Mayday",
     "genre": "Dude with a Problem",
@@ -11,6 +12,7 @@
   },
   {
     "id": "ride-along",
+    "core": "mender",
     "number": 2,
     "title": "Ride Along",
     "genre": "Buddy Love",
@@ -21,6 +23,7 @@
   },
   {
     "id": "black-box",
+    "core": "kex",
     "number": 3,
     "title": "Black Box",
     "genre": "Whydunit",
@@ -31,6 +34,7 @@
   },
   {
     "id": "the-borrowed-callsign",
+    "core": "cora",
     "number": 4,
     "title": "The Borrowed Callsign",
     "genre": "Fool Triumphant",
@@ -41,6 +45,7 @@
   },
   {
     "id": "the-far-side",
+    "core": "warden",
     "number": 5,
     "title": "The Far Side",
     "genre": "Buddy Love",

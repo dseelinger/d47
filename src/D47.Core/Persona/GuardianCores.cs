@@ -95,12 +95,15 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
         };
     }
 
-    /// <summary>What is said, once, as the cores wake.</summary>
-    public static string Line(CoreWaking waking) => waking switch
+    /// <summary>What is said, once, as the cores wake. <paramref name="aboard"/> is the core the story brought aboard.</summary>
+    public static string Line(CoreWaking waking, Persona? aboard = null) => waking switch
     {
         CoreWaking.Heretic =>
             "Data link complete. This beacon held one more core, kept apart from the others. "
             + "The Heretic is awake, and can be chosen in the Persona section.",
+        _ when aboard is not null =>
+            "Data link complete. Something came across with the data: Guardian cores, awake in "
+            + $"the ship's systems. {aboard.Name} has come aboard. You can choose another core in Settings.",
         _ =>
             "Data link complete. Something came across with the data: Guardian cores, awake in "
             + "the ship's systems. You can choose one in the Persona section.",

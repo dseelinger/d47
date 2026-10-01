@@ -18,6 +18,10 @@ public sealed class EveryStoryKeepsTheYearFormatGateTests
     private static (string Named, StoryCard Card, StorySecret? Secret) Broken(string rule) => rule switch
     {
         "genre" => ("genre", Card with { Genre = "Western" }, Secret),
+        "no-core" => ("the core is missing", Card with { Core = "" }, Secret),
+        "unknown-core" => ("the core is missing", Card with { Core = "nobody" }, Secret),
+        "stock-core" => ("the core is missing", Card with { Core = "covas" }, Secret),
+        "heretic-core" => ("the core is missing", Card with { Core = "heretic" }, Secret),
         "blurb" => ("blurb", Card with { Blurb = " " }, Secret),
         "no-hidden-entry" => ("hidden entry", Card, null),
         "missing-beat" => ("beats.midpoint", Card, Secret with { Beats = Secret.Beats with { Midpoint = null } }),
@@ -53,6 +57,10 @@ public sealed class EveryStoryKeepsTheYearFormatGateTests
 
     [Theory]
     [InlineData("genre")]
+    [InlineData("no-core")]
+    [InlineData("unknown-core")]
+    [InlineData("stock-core")]
+    [InlineData("heretic-core")]
     [InlineData("blurb")]
     [InlineData("no-hidden-entry")]
     [InlineData("missing-beat")]

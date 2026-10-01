@@ -47,6 +47,11 @@ is aboard again when the hold lifts. With no story running, every Guardian core 
 install, and `data/guardian-cores.json` is no longer read. While the hold lasts the Persona picker
 shows COVAS, and choosing a held core is refused with a reason that names the story.
 
+Each stock story is written for one Guardian core, shown on the Stories list and on the story's page.
+When you scan the story's first beacon, that core comes aboard in place of the one you had, says the
+waking line, and Messages says it came aboard and that you can choose another in Settings. A core you
+choose afterwards stays, and pausing, abandoning or finishing the story leaves the core aboard.
+
 The local voice says "story", "stories", "storyline" and "backstory" with the vowel of "or", not "stawry".
 
 ## 1.26.0 — Adventures run in chapters

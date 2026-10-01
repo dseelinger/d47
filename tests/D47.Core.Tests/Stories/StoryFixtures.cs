@@ -28,12 +28,13 @@ internal sealed class StoryFixtures : IDisposable
         Title = "The Test Story",
         Genre = "Whydunit",
         Tone = "Quiet test",
+        Core = "archivist",
         Blurb = "A voice in the cockpit knows a song it should not.",
         InYourWords = "I bought a Sidewinder with the last of my credits.",
         Beacon = "The beacon calls.",
     };
 
-    public static readonly StoryCard Other = Card with { Id = "the-other-story", Number = 2, Title = "The Other Story", InYourWords = "I was somebody else." };
+    public static readonly StoryCard Other = Card with { Id = "the-other-story", Number = 2, Title = "The Other Story", Core = "kex", InYourWords = "I was somebody else." };
 
     /// <summary>A hidden layer that keeps every rule of the format.</summary>
     public static readonly StorySecret Secret = new()

@@ -298,6 +298,12 @@ public sealed class StoryDirector(
         return woke;
     }
 
+    /// <summary>The Guardian core the current story is written for, or null when no story is current.</summary>
+    public Persona.Persona? CoreOf(string? frontierId) =>
+        stories.Current(frontierId) is { } current && catalog.Find(current.Id) is { } card
+            ? PersonaCatalog.Resolve(card.Core)
+            : null;
+
     /// <summary>Whether the Commander has the current story switched off.</summary>
     public bool IsOff(string? frontierId) => stories.Current(frontierId) is { IsOff: true };
 

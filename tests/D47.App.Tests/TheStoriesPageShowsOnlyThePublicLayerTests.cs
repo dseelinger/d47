@@ -138,7 +138,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var panel = surface.Panel;
         Assert.True(Shows(panel, "The Test Story"));
         Assert.True(Shows(panel, "The Other Story"));
-        Assert.True(Shows(panel, "Whydunit · Quiet test"));
+        Assert.True(Shows(panel, "Whydunit · Quiet test · Archivist"));
         Assert.True(Shows(panel, StoryFixture.Story.Blurb));
         Assert.False(Shows(panel, StoryFixture.Story.InYourWords));
         NoHiddenSentence(panel);
@@ -149,6 +149,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         Assert.Contains("Pick", Buttons(panel));
         Assert.True(Shows(panel, "Buddy Love"));
+        Assert.True(Shows(panel, "Core: Archivist"));
         Assert.True(Shows(panel, StoryFixture.Other.Blurb));
         Assert.True(Shows(panel, "In your words"));
         Assert.True(Shows(panel, "The beacon"));
