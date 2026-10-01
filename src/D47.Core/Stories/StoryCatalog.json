@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "my-own-mayday",
+    "number": 1,
+    "title": "My Own Mayday",
+    "genre": "Dude with a Problem",
+    "tone": "Eerie, melancholy puzzle box",
+    "blurb": "The first distress call comes in your own voice. It is dated three weeks from now, it names a nav beacon you have never visited, and it says pirates are waiting there. They are. Every call after it names another place and another date, always a little ahead of you, and something out in the dark is listening to the calls as well. The only way to make them stop is to follow them to the end.",
+    "inYourWords": "I have a Sidewinder still in yard paint, a few hundred credits, and nobody to talk to but the ship. Then a mayday came in on a band nothing uses. The voice was mine. I have played it back a dozen times, and it is my voice, down to the way I say please. I never sent it, and the date on it hasn't happened yet.",
+    "beacon": "Every call rides the carrier of a Guardian beacon. If a beacon is sending my voice, the beacon is where I find out how."
+  }
+]

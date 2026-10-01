@@ -9,8 +9,8 @@
 ## 1.27.0 — Stock stories begin
 
 The Adventures tab has a **Stories** button, opening the stock stories, each written to run for a year.
-The catalog is empty in this release, so the page says "No stories yet." Stories are added to it one at
-a time. The list shows each story's Save the Cat genre, its tone and a blurb saying why you might pick it,
+The catalog holds one story in this release, **My Own Mayday**, and more are added to it one at a time.
+The list shows each story's Save the Cat genre, its tone and a blurb saying why you might pick it,
 and a story's page adds the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
 ship's AI write chapter one, which begins at once and ends at the Guardian beacon system nearest to
 you. When a chapter finishes, the next is written and begins. **Switch** abandons the running story and
