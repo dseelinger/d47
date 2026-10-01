@@ -82,5 +82,17 @@
     "blurb": "You have flown alone for years: a working ship, some engineering done, and savings that one bad week could take. Then Maren Holt watched you hold a line in a conflict zone after your wing ran, and offered to sponsor you into the Brightwater Mutual. Four hundred independent pilots, one share each, a fund for the bad weeks, and a wing that comes when you call. Augustin Pell, the last of the twelve who founded it, says the charter is one line long: the Mutual looks after its own. The pay is the best you have had, and it is the first place in years that feels like home. Every war the Mutual fights comes through one broker, and nobody on the council will say who the broker works for.",
     "inYourWords": "I have flown independent for six years. I have a ship I trust, some engineering done on it, and enough savings that one bad week would not finish me, though two might. Last month I held a line in a conflict zone after my wing ran, and the pilot who came back for me was Maren Holt of the Brightwater Mutual. She has offered to sponsor me. Four hundred pilots, one share each, a fund for the bad weeks, and a wing on call. Augustin Pell, who founded it, bought me a drink and told me the charter is one line. I have never belonged to anything. I have not said yes yet.",
     "beacon": "Every member of the Mutual flies the Founding Run before their first vote: a data-link scan of a Guardian beacon, as the founding twelve did the night they signed the charter. Maren says it is the only test the Mutual sets."
+  },
+  {
+    "id": "the-omphalos",
+    "core": "cartographer",
+    "number": 8,
+    "title": "The Omphalos",
+    "genre": "Golden Fleece",
+    "level": "endgame",
+    "tone": "Vast, wistful, wonder-struck",
+    "blurb": "You have a fleet carrier, a hangar of ships, and more credits than you will ever spend. There is very little left that money buys you. Then Hester Vane comes aboard: ninety years old, sixty of them spent hunting Raxxla, and the last living member of the Dark Wheel. She does not need your money or your guns. She needs your carrier and a year of your time, because the only real lead the Dark Wheel ever had is a Guardian star chart a million years old, and reading it will take the whole width of the galaxy. A salvage magnate with a carrier of his own has heard about the chart too, and he has never lost an auction.",
+    "inYourWords": "I own a fleet carrier, a hangar of ships I rarely fly, and more credits than I can spend. Not much surprises me any more. Then an old explorer named Hester Vane docked at my carrier, asked for tea, and told me she was the last of the Dark Wheel. She has been looking for Raxxla for sixty years. She did not ask for money. She asked for my carrier, and for a year.",
+    "beacon": "Hester says every Guardian beacon's data-link carries the same star chart, and that every member of the Dark Wheel scanned one and came away with something they could not read. She thinks it lists a world no human catalogue does. To read it, I need something aboard that reads Guardian charts, and she says the beacon is where I will find that too."
   }
 ]
