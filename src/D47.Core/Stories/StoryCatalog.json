@@ -94,5 +94,17 @@
     "blurb": "You have a fleet carrier, a hangar of ships, and more credits than you will ever spend. There is very little left that money buys you. Then Hester Vane comes aboard: ninety years old, sixty of them spent hunting Raxxla, and the last living member of the Dark Wheel. She does not need your money or your guns. She needs your carrier and a year of your time, because the only real lead the Dark Wheel ever had is a Guardian star chart a million years old, and reading it will take the whole width of the galaxy. A salvage magnate with a carrier of his own has heard about the chart too, and he has never lost an auction.",
     "inYourWords": "I own a fleet carrier, a hangar of ships I rarely fly, and more credits than I can spend. Not much surprises me any more. Then an old explorer named Hester Vane docked at my carrier, asked for tea, and told me she was the last of the Dark Wheel. She has been looking for Raxxla for sixty years. She did not ask for money. She asked for my carrier, and for a year.",
     "beacon": "Hester says every Guardian beacon's data-link carries the same star chart, and that every member of the Dark Wheel scanned one and came away with something they could not read. She thinks it lists a world no human catalogue does. To read it, I need something aboard that reads Guardian charts, and she says the beacon is where I will find that too."
+  },
+  {
+    "id": "the-scholarship",
+    "core": "mender",
+    "number": 9,
+    "title": "The Scholarship",
+    "genre": "Superhero",
+    "level": "new",
+    "tone": "Hard, defiant, slow-burning hope",
+    "blurb": "You grew up in your parents' scrapyard, and the only person there who was ever kind to you was the engineer they hired. The engineer helped you build a Sidewinder out of scrap and fitted it with a transponder nobody can follow, and you ran. Months later, half-starved at the edge of the charts, a well-dressed man named Augustin Rell offers you a scholarship: training, a Pilots Federation combat certification, steady contracts, and a vitamin shot to put the weight back on. Since that shot you have not lost a fight. You have not backed away from one either.",
+    "inYourWords": "I grew up in my parents' scrapyard, mostly in the way. The engineer they hired was the only one who ever asked whether I had eaten. The engineer helped me put a Sidewinder together out of three wrecks and fitted a transponder my parents can't follow. I left one night and didn't look back. That was months ago. I have the Sidewinder, a few hundred credits, and nobody who knows where I am.",
+    "beacon": "The scholarship's first contract after certification: fly to a Guardian beacon, make a data-link scan, and bring the Lantern Fund everything it holds. Rell says the Fund collects them. The fee would feed me for a year."
   }
 ]
