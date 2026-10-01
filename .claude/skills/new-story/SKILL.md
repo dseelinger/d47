@@ -104,14 +104,15 @@ add.
 ## The review page
 
 The maintainer's page "d47 Stock Stories", https://claude.ai/artifact/HNGyX7PhikSQiMuhxxJP3g,
-holds every draft between sessions. Start every session by reading it with the Artifact tool's
-`read` action, and build on the version that comes back. Republish to that same `url` after every
-change, so the page is never behind the draft. Load the `artifact-design` skill before the first
-publish of a session.
+shows only the stories this session works on. Start every session by reading it with the Artifact
+tool's `read` action. A draft found there that the maintainer chooses to continue is this session's
+story; the first publish of the session drops every other story, and the status notes about them,
+from the page. Earlier versions stay in the page's history. Republish to that same `url` after
+every change, so the page is never behind the draft. Load the `artifact-design` skill before the
+first publish of a session.
 
 Each story on the page shows the card, the whole hidden layer, the three sample chapters marked as
-samples, any gap found (below), and its state: draft, approved, or in the catalog. Stories retired
-before this skill existed are not drafts; drop them from the page.
+samples, any gap found (below), and its state: draft, approved, or in the catalog.
 
 ## The steps
 
