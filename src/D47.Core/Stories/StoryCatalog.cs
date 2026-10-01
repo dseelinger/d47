@@ -25,6 +25,9 @@ public sealed record StoryCard
         "Superhero",
     ];
 
+    /// <summary>The Commander levels a card's <see cref="Level"/> is one of; a guide to choosing, not a limit.</summary>
+    public static readonly IReadOnlyList<string> Levels = ["new", "midrange", "endgame"];
+
     public required string Id { get; init; }
 
     public int Number { get; init; }
@@ -34,10 +37,31 @@ public sealed record StoryCard
     /// <summary>One of <see cref="Genres"/>.</summary>
     public required string Genre { get; init; }
 
+    /// <summary>One of <see cref="Levels"/>: the Commander the story was written for.</summary>
+    public required string Level { get; init; }
+
     public string? Tone { get; init; }
 
     /// <summary>The id of the Guardian core the story is written for; it comes aboard at the beacon scan.</summary>
     public required string Core { get; init; }
+
+    /// <summary>The level as the list row names it.</summary>
+    public string LevelName => Level switch
+    {
+        "new" => "New commander",
+        "midrange" => "Mid-range commander",
+        "endgame" => "Endgame commander",
+        _ => Level,
+    };
+
+    /// <summary>What the level means, as the story's page shows it.</summary>
+    public string LevelGuideline => Level switch
+    {
+        "new" => "For a new commander: no engineering done yet.",
+        "midrange" => "For a mid-range commander: some ship engineering done.",
+        "endgame" => "For an endgame commander: most ship and on-foot engineers unlocked, and at least one ship, suit and weapon fully engineered.",
+        _ => Level,
+    };
 
     /// <summary>The name of <see cref="Core"/>.</summary>
     public string CoreName => PersonaCatalog.Resolve(Core).Name;
@@ -57,6 +81,7 @@ public sealed record StoryCard
         var text = new StringBuilder();
         text.AppendLine(Tone is { Length: > 0 } tone ? $"{Title} — {tone}." : $"{Title}.");
         Line(text, "Genre", Genre);
+        Line(text, "Written for", LevelGuideline);
         Line(text, "The core aboard once the beacon is scanned", CoreName);
         text.AppendLine($"In the Commander's words: \"{InYourWords}\"");
         Line(text, "The beacon", Beacon);
@@ -292,6 +317,11 @@ public sealed class StoryCatalog
             if (!StoryCard.Genres.Contains(card.Genre, StringComparer.Ordinal))
             {
                 faults.Add($"{card.Id}: the genre is not one of the nine Save the Cat genres.");
+            }
+
+            if (!StoryCard.Levels.Contains(card.Level, StringComparer.Ordinal))
+            {
+                faults.Add($"{card.Id}: the level is missing or is not new, midrange or endgame.");
             }
 
             if (!PersonaCatalog.IsGuardian(card.Core) || card.Core == PersonaCatalog.Heretic.Id)

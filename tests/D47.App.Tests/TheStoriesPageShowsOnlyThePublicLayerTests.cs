@@ -16,7 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Stories page lists every card by title, genre and blurb, and the running story, a card reads in full with Pick or Switch,
+/// The Stories page lists every card by title, level and blurb, and the running story, a card reads in full with Pick or Switch,
 /// and no hidden sentence is drawn anywhere. Captures are saved to <see cref="TestSurface.CaptureDirectory"/>.
 /// </summary>
 public class TheStoriesPageShowsOnlyThePublicLayerTests
@@ -138,7 +138,8 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var panel = surface.Panel;
         Assert.True(Shows(panel, "The Test Story"));
         Assert.True(Shows(panel, "The Other Story"));
-        Assert.True(Shows(panel, "Whydunit · Quiet test · Archivist"));
+        Assert.True(Shows(panel, "New commander · Archivist"));
+        Assert.False(Shows(panel, "Whydunit"));
         Assert.True(Shows(panel, StoryFixture.Story.Blurb));
         Assert.False(Shows(panel, StoryFixture.Story.InYourWords));
         NoHiddenSentence(panel);
@@ -148,7 +149,8 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Pick", Buttons(panel));
-        Assert.True(Shows(panel, "Buddy Love"));
+        Assert.True(Shows(panel, "For a new commander: no engineering done yet."));
+        Assert.False(Shows(panel, "Buddy Love"));
         Assert.True(Shows(panel, "Core: Archivist"));
         Assert.True(Shows(panel, StoryFixture.Other.Blurb));
         Assert.True(Shows(panel, "In your words"));

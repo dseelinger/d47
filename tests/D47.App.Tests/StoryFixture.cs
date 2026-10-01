@@ -11,6 +11,7 @@ internal static class StoryFixture
         Number = 1,
         Title = "The Test Story",
         Genre = "Whydunit",
+        Level = "new",
         Tone = "Quiet test",
         Core = "archivist",
         Blurb = "A voice in the cockpit knows a song it should not.",

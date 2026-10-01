@@ -460,7 +460,8 @@ public sealed class StoryDirector(
                 number,
                 Math.Max(0, (now - story.PickedAt).Days),
                 story.SinceBeacon(now)?.Days,
-                beacon is var (address, system) ? new AdventureBeacon(address, system) : null));
+                beacon is var (address, system) ? new AdventureBeacon(address, system) : null,
+                catalog.Find(story.Id)?.Level));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 

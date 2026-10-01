@@ -273,10 +273,13 @@ time D47 runs.
 
 Open **Stories** on the Adventures tab for the stock stories, each written to run for a year, a chapter
 at a time. Until stories are added to the catalog the page says "No stories yet." The list shows each
-story's title, its Save the Cat genre (Golden Fleece, Dude with a Problem, Whydunit, Buddy Love, Rites
-of Passage, Fool Triumphant, Institutionalized, Out of the Bottle or Superhero), its tone, and a blurb
-saying why you might pick it, and the Guardian core the story is written for. A story's page adds the story in your words and why it sends you to a
-Guardian beacon.
+story's title, the level of Commander it was written for, a blurb saying why you might pick it, and the
+Guardian core the story is written for. The level is `new` (no engineering done yet), `midrange` (some
+ship engineering done) or `endgame` (most ship and on-foot engineers unlocked, and at least one ship, suit
+and weapon fully engineered). It is a guide to choosing, not a limit: every story can be picked at any
+level, D47 does not work out your level, and where the story's backstory disagrees with your real ships,
+credits or ranks, the chapter writer goes by what is true now. A story's page adds the level's
+guideline, the tone, the story in your words and why it sends you to a Guardian beacon.
 
 Each story also has a hidden layer: its secret, a beat sheet of the fifteen Save the Cat beats, fourteen
 clues (four weekly, then ten monthly), four finale lines, one to four ways it can end, and up to four

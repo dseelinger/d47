@@ -52,7 +52,8 @@ public sealed record AdventureStory(
     int Chapter,
     int DaysRunning,
     int? DaysSinceBeacon,
-    AdventureBeacon? Beacon = null);
+    AdventureBeacon? Beacon = null,
+    string? Level = null);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -620,6 +621,16 @@ public sealed class AdventureGenerator(
         text.AppendLine(story.Public);
         text.AppendLine();
         text.AppendLine(story.Hidden);
+
+        if (story.Level is { Length: > 0 } level)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"The story was written for a {level} Commander. A Commander may pick it at any level and advance during the "
+                + "year. Where the public layer disagrees with what is true right now about ships, credits or ranks, what is "
+                + "true right now wins, and the story's people and events stay.");
+        }
+
         text.AppendLine();
         text.Append($"The story has been running for {story.DaysRunning.ToString(CultureInfo.InvariantCulture)} days");
         text.AppendLine(story.DaysSinceBeacon is { } scanned

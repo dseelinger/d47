@@ -110,7 +110,7 @@ public sealed class StoriesView : UserControl
         {
             var row = Row(
                 AdventuresPage.RowName(card.Title),
-                AdventuresPage.RowSecondary(card.Tone is { Length: > 0 } tone ? $"{card.Genre} · {tone} · {card.CoreName}" : $"{card.Genre} · {card.CoreName}"),
+                AdventuresPage.RowSecondary($"{card.LevelName} · {card.CoreName}"),
                 AdventuresPage.Text(card.Blurb, TypeScale.Body));
 
             var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title);
@@ -215,7 +215,7 @@ public sealed class StoriesView : UserControl
 
         page.Children.Add(RoutingKit.Title(card.Title).Row);
 
-        page.Children.Add(AdventuresPage.Muted(card.Genre));
+        page.Children.Add(AdventuresPage.Muted(card.LevelGuideline));
 
         if (card.Tone is { Length: > 0 } tone)
         {
