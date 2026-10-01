@@ -4,7 +4,7 @@
     python .claude/skills/new-story/game-state.py [journal folder]
 
 Reads the journals newest first and takes the last LoadGame, Loadout, Rank, Statistics and
-StoredShips. The thresholds and the comfort-zone pick are the ones in #711. Writes nothing.
+StoredShips. The long-haul threshold and the comfort-zone pick are the ones in #711. Writes nothing.
 """
 import glob
 import json
@@ -15,8 +15,7 @@ import sys
 FOLDER = pathlib.Path(os.environ.get("USERPROFILE", "~")).expanduser() / "Saved Games" / "Frontier Developments" / "Elite Dangerous"
 WANTED = ("LoadGame", "Loadout", "Rank", "Statistics", "StoredShips")
 
-AX_PREFIXES = ("hpt_atmulticannon", "hpt_atdumbfiremissile", "hpt_atventdisruptorpylon", "hpt_guardian_", "hpt_flakmortar")
-AX_SCOUTS, AX_INTERCEPTORS, LONG_HAUL = 25_000_000, 150_000_000, 250_000_000
+LONG_HAUL = 250_000_000
 
 LADDERS = {
     "Combat": ["Harmless", "Mostly Harmless", "Novice", "Competent", "Expert", "Master", "Dangerous", "Deadly"],
@@ -68,8 +67,6 @@ def main() -> None:
 
     credits = state.get("LoadGame", {}).get("Credits")
     loadout = state.get("Loadout", {})
-    items = [module.get("Item", "").lower() for module in loadout.get("Modules", [])]
-    ax_fitted = any(item.startswith(AX_PREFIXES) for item in items)
     stored = state.get("StoredShips", {})
     hulls = {ship.get("ShipType", "").lower() for ship in stored.get("ShipsHere", []) + stored.get("ShipsRemote", [])}
     caspian = loadout.get("Ship", "").lower() == "explorer_nx" or "explorer_nx" in hulls
@@ -78,7 +75,6 @@ def main() -> None:
     if loadout:
         print(f"Ship: {loadout.get('Ship')} \"{loadout.get('ShipName', '')}\", jump range {loadout.get('MaxJumpRange', 0):.1f} ly, "
               f"cargo {loadout.get('CargoCapacity', 0)} t")
-    print(f"AX or Guardian weapon fitted: {'yes' if ax_fitted else 'no'}")
     print(f"Caspian Explorer owned: {'yes' if caspian else 'no'}")
 
     rank = state.get("Rank", {})
@@ -86,20 +82,13 @@ def main() -> None:
         print("Ranks: " + ", ".join(f"{career} {rank_name(career, rank[career])}" for career in LADDERS if career in rank))
 
     credits = credits or 0
-    scouts = credits >= AX_SCOUTS or ax_fitted
-    print("Thresholds reached:")
-    print(f"  AX scouts (25,000,000 or AX weapon fitted): {'yes' if scouts else 'no'}")
-    print(f"  AX interceptors (150,000,000): {'yes' if credits >= AX_INTERCEPTORS else 'no'}")
-    print(f"  Long haul (250,000,000 or Caspian owned): {'yes' if credits >= LONG_HAUL or caspian else 'no'}")
+    print(f"Long haul (250,000,000 or Caspian owned): {'yes' if credits >= LONG_HAUL or caspian else 'no'}")
 
     statistics = state.get("Statistics")
     if not statistics:
         print("Comfort zone: no Statistics event, so no activity is picked")
         return
     rows = [(kind, statistics.get(section, {}).get(key, 0)) for kind, section, key in COMFORT]
-    if scouts:
-        figures = [v for v in statistics.get("TG_ENCOUNTERS", {}).values() if isinstance(v, (int, float))]
-        rows.append(("bond thargoid: true", max(figures, default=0)))
     print("Comfort-zone figures:")
     for kind, figure in rows:
         print(f"  {kind}: {figure:,}")

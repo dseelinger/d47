@@ -23,13 +23,15 @@ work carries on unchanged.
 Every story keeps all ten. Check the draft against each before showing it.
 
 1. The Commander starts broke, in a stock Sidewinder, with the `covas` core and no Guardian cores.
-2. Act one ends with a data-link scan of a Guardian beacon.
+2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
+   core aboard (#716), and the `breakIntoTwo` beat says so without naming the core.
 3. No core is removed or made worse, Guardian or `covas`, in the app or the fiction. NPCs that exist
    only in the fiction may be lost.
 4. The Commander never loses anything the game holds, and the story never says they did.
 5. Every beat is one of the adventure beat kinds: the six in `TriggerKind` today and the ones
-   specified in #709 and #710. Thargoids are allowed through `bond` with `thargoid: true`, `signal`
-   and `wreck`. There are no Thargoid missions.
+   specified in #709 and #710. Thargoids are investigated, never fought: `signal` with `Thargoid`,
+   `wreck`, and `salvage` with `metaalloys`. A live Thargoid ship is flavour only and never a beat,
+   because none can be found on demand. There are no Thargoid missions.
 6. No clue or ending depends on an earlier choice.
 7. Each story has a tone, genre and twist mechanism unlike the stories already in the catalog.
 8. Hidden text never tells a core that another Guardian mind is alive. Other cores are spoken of
@@ -62,8 +64,9 @@ issue.
 
 - **The card**, in `StoryCatalog.json`: `id`, `number`, `title`, `genre` (one of the nine Save the
   Cat genres), `tone`, `blurb` (why a player would pick it, like the back cover of a novel),
-  `inYourWords` (the Commander's backstory in the first person) and `beacon` (why they go to scan
-  it).
+  `inYourWords` (the Commander's backstory in the first person), `beacon` (why they go to scan
+  it) and, once #716 lands, `core` (the Guardian core the story is written for, never `covas` or
+  `heretic`).
 - **The hidden entry**, sealed: `id`, `secret`, `beats` (one line for each of the 15 Save the Cat
   beats), 14 `clues` (4 weekly, then 10 monthly), 4 `finale` lines, `end`, and 1 to 4 `options`,
   each with `id`, `label`, `after` and `add` (persona ids, possibly none).
@@ -102,11 +105,12 @@ before this skill existed are not drafts; drop them from the page.
    which takes the credits from the last `LoadGame`, the ship and jump range from the last
    `Loadout`, the ranks from the last `Rank` and the activity figures from the last `Statistics`,
    in `%USERPROFILE%\Saved Games\Frontier Developments\Elite Dangerous\Journal.*.log`, and prints
-   the #711 thresholds reached and the comfort-zone pick.
+   whether the #711 long-haul threshold is reached and the comfort-zone pick.
 
    Name each beat by its kind and filter from the tables in #709 and #710, with counts sized to
-   that state and to the thresholds in #711. Where a beat the story needs cannot be expressed that
-   way, say so on the page and name the issue it would change (#707 to #711). Do not invent a kind.
+   that state and to the long-haul threshold in #711. Where a beat the story needs cannot be
+   expressed that way, say so on the page and name the issue it would change (#707 to #711, #716).
+   Do not invent a kind.
 4. **Publish** both layers and the samples on the review page.
 5. **Revise** on his notes, republishing after each round, until he approves the story. Mark it
    approved on the page.
