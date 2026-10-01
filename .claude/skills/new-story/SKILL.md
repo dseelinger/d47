@@ -94,7 +94,7 @@ add.
   PNG. The page gives an image prompt for each named NPC, matching the style of the pictures
   already shipped. Prompts set the person in the 34th century: flight suits, station corridors,
   cockpits and ship interiors, never present-day offices, clothes or devices. A member with voice
-  `own`, or a speaker with no face such as a broadcast or a recorder, gets no prompt. The
+  `own`, or a speaker with no face such as a broadcast or a recorder, gets no prompt. Generate the pictures from these prompts (Cast pictures, below). The
   Commander can change any member's voice and picture later (#737), so the pinned voice is a
   default, not a constraint on the text.
 - **A romantic lead** has two versions, keyed `forMan` and `forWoman` by the Commander who sees them (#746):
@@ -119,6 +119,28 @@ publish of a session, and match the look of the shared review page.
 
 The draft page shows the card, the whole hidden layer, the three sample chapters marked as
 samples, any gap found (below), and its state: draft or approved.
+
+## Cast pictures
+
+`tools/story-image.py` sends a prompt to the OpenAI Images API with the OpenAI key d47 already
+holds (`openai.apiKey`, decrypted in memory from the installed app's `secrets.json`, then
+`dev-install`'s). Never print, copy or write out the key. Each call is billed to that key.
+
+```bash
+python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name <story-id>.<cast-id> -n 3 --out <scratchpad>/images
+```
+
+- Three candidates per picture, square, at the default `high` quality and the default model
+  `gpt-image-2.5-flare`. `--quality low` is for trying a prompt; `--model` and `--list-models`
+  pick another model. A romantic lead gets three for each version, named `.for-man` and
+  `.for-woman`.
+- Generate once the cast is settled, not every round. Regenerate only the members whose prompt
+  changed or whose candidates the maintainer turned down.
+- Show the candidates on the draft page under each member's prompt, embedded as data URIs, and
+  look at each before showing it: a picture with text, a logo, a present-day setting or the wrong
+  person is replaced, not shown.
+- The maintainer picks one per member. At step 7 the picked file is copied to
+  `assets/stories/<story-id>.<cast-id>.png`.
 
 ## The shared review page
 
@@ -164,13 +186,14 @@ marked approved, with a link to the shared page.
 
    Where a beat the story needs cannot be expressed that way, say so on the page and name the
    issue it would change. Do not invent a kind.
-4. **Publish** both layers and the samples on the story's draft page.
+4. **Publish** both layers and the samples on the story's draft page. Once the cast is settled,
+   generate the cast pictures and add them to it.
 5. **Revise** on his notes, republishing the draft page after each round, until he approves the
    story. Nothing goes on the shared review page or into the catalog before then.
 6. **Move it to the shared review page**, as that section describes.
 7. **Add it to the catalog.** Add the card to `src/D47.Core/Stories/StoryCatalog.json` with the next `number`,
    decode the sealed layer into the scratchpad, add the hidden entry with the same `id`, and
-   encode it:
+   encode it. Copy each picked cast picture into `assets/stories/`. Then encode:
 
    ```bash
    python tools/seal-stories.py decode <scratchpad>/sealed.json
@@ -178,7 +201,8 @@ marked approved, with a link to the shared page.
    ```
 
    Sample chapters never go in the catalog. The app writes chapters when they are due.
-8. **Delete the scratch files**: the drafts, the draft page's HTML file and the decoded layer.
+8. **Delete the scratch files**: the drafts, the draft page's HTML file, the image candidates and
+   the decoded layer.
 9. **Build and test**, once the catalog files have changed:
 
    ```bash
