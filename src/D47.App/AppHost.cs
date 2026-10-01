@@ -1636,6 +1636,7 @@ public sealed class AppHost : IDisposable
                     GuardianTest = token => self is { } host
                         ? host.GuardianTestAsync(token)
                         : Task.FromResult<string?>(null),
+                    CovasTest = _ => Task.FromResult(self?.CovasTest()),
 
                     // Late-bound like the two above, because the check is a network call made by a host that
                     // does not exist yet at this point in composition.
@@ -5471,6 +5472,25 @@ public sealed class AppHost : IDisposable
 
         return said;
     }
+
+    /// <summary>Plays the bundled stand-in through the COVAS reverb, which bills nothing.</summary>
+    private string CovasTest()
+    {
+        Audio.DropGroup(AuditionGroup);
+
+        Audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = CovasVoice.Apply(StandInVoice.Clip),
+            Group = AuditionGroup,
+            Caption = StandInVoice.Clip.Name,
+        });
+
+        return CovasStandInSaid;
+    }
+
+    /// <summary>What the COVAS Test row says once it has played.</summary>
+    private const string CovasStandInSaid = "That was a stand-in voice through the COVAS reverb.";
 
     /// <summary>Whether one voice in a slot's list has a free sample.</summary>
     internal bool HasPreviewFor(VoiceGroup group, string id) =>

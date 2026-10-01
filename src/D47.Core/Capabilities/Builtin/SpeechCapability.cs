@@ -77,6 +77,12 @@ public static class SpeechCapability
     /// <summary>The built-in or saved preset the current effects match, or "custom" (#237).</summary>
     public const string GuardianPresetKey = "speech.guardianVoice.preset";
 
+    /// <summary>Whether the stock COVAS core speaks through its short room reverb.</summary>
+    public const string CovasReverbKey = "speech.covasVoice.reverb";
+
+    /// <summary>Plays the stand-in voice through the COVAS reverb without billing anything.</summary>
+    public const string CovasTestKey = "speech.covasVoice.test";
+
     /// <summary>The secret row key for a voice provider's API key.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
@@ -253,6 +259,9 @@ public static class SpeechCapability
         /// stand-in rather than the ship's own voice.
         /// </summary>
         public Func<CancellationToken, Task<string?>>? GuardianTest { get; init; }
+
+        /// <summary>Plays the stand-in voice through the COVAS reverb, never billing a provider.</summary>
+        public Func<CancellationToken, Task<string?>>? CovasTest { get; init; }
 
         /// <summary>Whether one voice in a slot's list has a free sample for <see cref="Preview"/>.</summary>
         public Func<VoiceGroup, string, bool>? HasPreview { get; init; }
@@ -975,6 +984,40 @@ public static class SpeechCapability
                 Binding = new SettingBinding
                 {
                     Read = _ => "Hear the treatments above without paying for them.",
+                },
+            },
+            new SettingRow
+            {
+                Key = CovasReverbKey,
+                Advanced = true,
+                Label = "COVAS reverb",
+                Help = "A short room reverb on the stock COVAS voice, like the cockpit voice in Elite.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                Group = "COVAS Voice",
+                DocsAnchor = "covas-voice-reverb",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.CovasReverb ? "true" : "false",
+                    Write = (s, v) => s with { Speech = s.Speech with { CovasReverb = v is not "false" and not null } },
+                },
+            },
+            new SettingRow
+            {
+                Key = CovasTestKey,
+                Advanced = true,
+                Label = "Test",
+                Help = "Plays the bundled stand-in voice through the COVAS reverb. Never costs money.",
+                Kind = SettingKind.Info,
+                Group = "COVAS Voice",
+                DocsAnchor = "covas-voice-test",
+                PressLabel = "Test",
+                PressAsync = surface.CovasTest is null
+                    ? null
+                    : (_, token) => surface.CovasTest.Invoke(token),
+                Binding = new SettingBinding
+                {
+                    Read = _ => "Hear the COVAS reverb without paying for it.",
                 },
             },
             new SettingRow

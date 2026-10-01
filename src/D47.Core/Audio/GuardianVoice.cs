@@ -570,9 +570,14 @@ public static class GuardianVoice
         _ => 165,
     };
 
-    /// <summary>The treatment for this core: none for a stock core, whatever is ticked.</summary>
+    /// <summary>
+    /// The treatment for this core: the COVAS reverb for a stock core when it is on, otherwise the ticked
+    /// Guardian effects. Neither reaches the other kind of core.
+    /// </summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.Persona core) =>
-        core.Stock ? null : ColourFor(speech, core.VoiceHint.Gender);
+        core.Stock
+            ? speech.CovasReverb ? CovasVoice.Apply : null
+            : ColourFor(speech, core.VoiceHint.Gender);
 
     /// <summary>The ship AI's treatment for the settings in force, or null when no effect is ticked (#225).</summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
@@ -1817,7 +1822,7 @@ public static class GuardianVoice
     }
 
     /// <summary><c>y[n] = x[n] + g·y[n−D]</c>, run for <paramref name="length"/> samples.</summary>
-    private static double[] FeedbackComb(double[] signal, int delay, double feedback, int length)
+    internal static double[] FeedbackComb(double[] signal, int delay, double feedback, int length)
     {
         var output = new double[length];
 
@@ -1831,7 +1836,7 @@ public static class GuardianVoice
     }
 
     /// <summary><c>y[n] = −g·x[n] + x[n−D] + g·y[n−D]</c>.</summary>
-    private static double[] Allpass(double[] signal, int delay, double gain)
+    internal static double[] Allpass(double[] signal, int delay, double gain)
     {
         var output = new double[signal.Length];
 
@@ -1860,7 +1865,7 @@ public static class GuardianVoice
     /// The gain that brings the treated clip to the dry clip's RMS, measured over the dry clip's length, lowered
     /// where the treated peak would exceed <see cref="Ceiling"/>.
     /// </summary>
-    private static double Level(double[][] dry, double[][] treated, int frames)
+    internal static double Level(double[][] dry, double[][] treated, int frames)
     {
         var drySquared = 0.0;
         var treatedSquared = 0.0;
@@ -1885,7 +1890,7 @@ public static class GuardianVoice
         return peak * gain > Ceiling ? Ceiling / peak : gain;
     }
 
-    private static double[][] Decode(ReadOnlySpan<byte> pcm, int channels, int frames)
+    internal static double[][] Decode(ReadOnlySpan<byte> pcm, int channels, int frames)
     {
         var decoded = new double[channels][];
 
@@ -1903,7 +1908,7 @@ public static class GuardianVoice
         return decoded;
     }
 
-    private static byte[] Encode(double[][] channels, double gain)
+    internal static byte[] Encode(double[][] channels, double gain)
     {
         var frames = channels[0].Length;
         var pcm = new byte[frames * channels.Length * 2];
@@ -1927,7 +1932,7 @@ public static class GuardianVoice
     private static int FrameLength(int rate) =>
         1 << Math.Max(4, (int)Math.Round(Math.Log2(FrameSeconds * rate)));
 
-    private static int Samples(double milliseconds, int rate) =>
+    internal static int Samples(double milliseconds, int rate) =>
         Math.Max(1, (int)Math.Round(milliseconds / 1000 * rate));
 
     /// <summary>Periodic Hann.</summary>

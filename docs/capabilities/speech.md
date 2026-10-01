@@ -612,6 +612,23 @@ ElevenLabs that gives you two paid options for a re-voiced slot — and the warn
 any of them is unchanged, because a paid provider there bills you per character for text somebody
 else wrote and can write as much of as they like.
 
+#### COVAS Voice {#covas-voice}
+
+How COVAS, the stock core, sounds. Guardian Voice Effects never reach COVAS, and the COVAS reverb
+never reaches a Guardian core or a core you wrote. The Narrator, your crew and every over-the-air
+voice are unchanged.
+
+##### COVAS reverb {#covas-voice-reverb}
+
+A short room reverb on the stock COVAS voice, like the cockpit voice in Elite. On by default. The
+voice itself is not filtered or pitched; the reverb decays by 60 dB in about 0.6 seconds, chosen
+by ear against the in-game COVAS, and the line is played at the same loudness as without it.
+
+##### Test {#covas-voice-test}
+
+Plays the bundled stand-in voice through the COVAS reverb, whether or not the box is ticked. It
+never bills a provider.
+
 #### Guardian Voice Effects {#guardian-voice}
 
 Optional effects for the ship AI's voice, each off by default. They apply to what the ship AI says —

@@ -28,7 +28,7 @@ public class GuardianVoiceReachesOnlyTheShipAiTests
         return (voice, sink.Played);
     }
 
-    private static async Task<string> NameOfWhatWasPlayed(VoiceRole role)
+    internal static async Task<string> NameOfWhatWasPlayed(VoiceRole role)
     {
         var (voice, played) = Build();
 

@@ -65,6 +65,11 @@ control is on your running story's page, and a change there applies from the sto
 
 The local voice says "story", "stories", "storyline" and "backstory" with the vowel of "or", not "stawry".
 
+COVAS now speaks with a short room reverb, like the cockpit voice in Elite. The voice itself is
+unchanged. To turn it off, untick **COVAS reverb** under **COVAS Voice** on the Its voice page (an
+Advanced setting); **Test** beside it plays a stand-in voice through the reverb at no cost. Guardian
+cores, your own cores and the Narrator are not affected.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

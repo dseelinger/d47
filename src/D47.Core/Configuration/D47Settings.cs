@@ -815,6 +815,9 @@ public sealed record SpeechSettings
     /// <summary>The Guardian voice effects, global to every core rather than per persona (#225).</summary>
     public GuardianVoiceSettings GuardianVoice { get; init; } = new();
 
+    /// <summary>Whether the stock COVAS core speaks through its short room reverb.</summary>
+    public bool CovasReverb { get; init; } = true;
+
     /// <summary>Cancel (Phase 5 as "Shut up"; widened by #221).</summary>
     public string? ShutUpHotkey { get; init; } = "Ctrl+Alt+X";
 
