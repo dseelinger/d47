@@ -1,8 +1,5 @@
 using System.Collections.Frozen;
-using System.Text.Json;
 using D47.Core.Journal;
-using D47.Core.Storage;
-using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Persona;
 
@@ -16,12 +13,29 @@ public enum CoreWaking
     Heretic,
 }
 
+/// <summary>Which Guardian cores a running story holds back.</summary>
+public enum HeldCores
+{
+    None,
+
+    /// <summary>The Heretic alone: the story has had one beacon scan.</summary>
+    Heretic,
+
+    /// <summary>Every Guardian core: the story has had no beacon scan.</summary>
+    All,
+}
+
+/// <summary>The cores a story holds back, and the story's title.</summary>
+public readonly record struct CoreHold(HeldCores Cores, string Story)
+{
+    public static readonly CoreHold None = new(HeldCores.None, string.Empty);
+}
+
 /// <summary>
-/// Which Guardian cores are awake — <c>data/guardian-cores.json</c>. A <c>DataScanned</c> in a known beacon
-/// system wakes them, matched on the system rather than the scan's <c>Type</c>, and nothing puts them back
-/// to sleep.
+/// Which Guardian cores can be aboard. Every one can, except those the Commander's running story holds back
+/// until its beacon scans.
 /// </summary>
-public sealed class GuardianCores
+public sealed class GuardianCores(Func<CoreHold>? hold = null)
 {
     /// <summary>The Guardian beacon systems, by id64 from EDSM.</summary>
     public static readonly FrozenDictionary<long, string> Beacons = new Dictionary<long, string>
@@ -56,89 +70,30 @@ public sealed class GuardianCores
         return (address, Beacons[address]);
     }
 
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    /// <summary>Every core available: the host for tests, the designer and the replay harness.</summary>
+    public static GuardianCores AllAwake() => new();
 
-    private readonly string? _path;
-    private readonly ILogger? _logger;
-    private readonly Lock _gate = new();
-
-    private Document _document;
-    private JournalLocation _where = JournalLocation.Unknown;
-
-    private GuardianCores(string? path, ILogger? logger, Document document)
-    {
-        _path = path;
-        _logger = logger;
-        _document = document;
-    }
-
-    /// <summary>Every core awake and nothing written: the host for tests, the designer and the replay harness.</summary>
-    public static GuardianCores AllAwake() => new(null, null, new Document { Inherited = true });
-
-    /// <summary>Asleep and held in memory only.</summary>
-    public static GuardianCores Asleep() => new(null, null, new Document());
-
-    /// <summary>
-    /// Reads the file, or writes it on this version's first run: awake for an install that already had
-    /// settings, asleep for a new one.
-    /// </summary>
-    public static GuardianCores Open(string path, bool installExisted, ILogger<GuardianCores> logger)
-    {
-        if (Read(path, logger) is { } document)
-        {
-            return new GuardianCores(path, logger, document);
-        }
-
-        var cores = new GuardianCores(path, logger, new Document { Inherited = installExisted });
-        cores.Save();
-
-        logger.LogInformation(
-            "No {File}; the Guardian cores start {State}",
-            System.IO.Path.GetFileName(path),
-            installExisted ? "awake, for an existing install" : "asleep");
-
-        return cores;
-    }
-
-    /// <summary>Raised on the thread that applied the event, once per waking.</summary>
-    public event Action<CoreWaking>? Woke;
-
-    /// <summary>Whether the first beacon has been scanned.</summary>
-    public bool CoresAwake
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _document.Inherited || _document.Scanned.Count >= 1;
-            }
-        }
-    }
-
-    /// <summary>Whether beacons in two different systems have been scanned.</summary>
-    public bool HereticAwake
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _document.Inherited || _document.Scanned.Count >= 2;
-            }
-        }
-    }
+    /// <summary>What the current story holds back now.</summary>
+    public CoreHold Hold => hold?.Invoke() ?? CoreHold.None;
 
     /// <summary>Whether this core can be aboard. Anything that is not a Guardian core always can.</summary>
-    public bool IsAwake(Persona persona) =>
-        !PersonaCatalog.IsGuardian(persona.Id) || (persona.Unlockable ? HereticAwake : CoresAwake);
+    public bool IsAwake(Persona persona) => !IsHeld(persona, Hold);
 
-    /// <summary>The core itself where it is awake, and the stock core where it is not.</summary>
+    /// <summary>The core itself where it is available, and the stock core where it is held back.</summary>
     public Persona Admit(Persona persona) => IsAwake(persona) ? persona : PersonaCatalog.Covas;
+
+    /// <summary>Whether <paramref name="hold"/> keeps this core from being aboard.</summary>
+    public static bool IsHeld(Persona persona, CoreHold hold)
+    {
+        ArgumentNullException.ThrowIfNull(persona);
+
+        return PersonaCatalog.IsGuardian(persona.Id) && hold.Cores switch
+        {
+            HeldCores.All => true,
+            HeldCores.Heretic => persona.Unlockable,
+            _ => false,
+        };
+    }
 
     /// <summary>What is said, once, as the cores wake.</summary>
     public static string Line(CoreWaking waking) => waking switch
@@ -150,92 +105,4 @@ public sealed class GuardianCores
             "Data link complete. Something came across with the data: Guardian cores, awake in "
             + "the ship's systems. You can choose one in the Persona section.",
     };
-
-    /// <summary>Folds one event, waking cores on a data-link scan in a beacon system.</summary>
-    public void Apply(JournalEvent journalEvent)
-    {
-        CoreWaking? woke = null;
-        string? system = null;
-
-        lock (_gate)
-        {
-            _where = _where.Apply(journalEvent);
-
-            if (journalEvent.Kind != "DataScanned"
-                || _where.SystemAddress is not { } address
-                || !Beacons.ContainsKey(address)
-                || _document.Scanned.Contains(address))
-            {
-                return;
-            }
-
-            var before = _document.Scanned.Count;
-            system = Beacons[address];
-            _document = _document with { Scanned = [.. _document.Scanned, address] };
-
-            if (!_document.Inherited)
-            {
-                woke = before switch
-                {
-                    0 => CoreWaking.Cores,
-                    1 => CoreWaking.Heretic,
-                    _ => null,
-                };
-            }
-
-            Save();
-        }
-
-        if (woke is { } waking)
-        {
-            _logger?.LogInformation("A beacon scan in {System} woke {Waking}", system, waking);
-            Woke?.Invoke(waking);
-        }
-    }
-
-    private void Save()
-    {
-        if (_path is null)
-        {
-            return;
-        }
-
-        try
-        {
-            AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(_document, Json));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logger?.LogError(ex, "Could not write {Path}", _path);
-        }
-    }
-
-    private static Document? Read(string path, ILogger logger)
-    {
-        if (!File.Exists(path))
-        {
-            return null;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json) ?? new Document();
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        {
-            // Unreadable reads as awake, so a damaged file never takes cores away from the Commander.
-            logger.LogError(ex, "Could not read {Path}; treating the Guardian cores as awake", path);
-            return new Document { Inherited = true };
-        }
-    }
-
-    /// <summary>The file's shape.</summary>
-    private sealed record Document
-    {
-        /// <summary>Awake before beacons were needed: this install had settings when this version first ran.</summary>
-        public bool Inherited { get; init; }
-
-        /// <summary>The beacon systems scanned, in order.</summary>
-        public IReadOnlyList<long> Scanned { get; init; } = [];
-    }
 }

@@ -7,7 +7,7 @@ namespace D47.Core.Stories;
 
 /// <summary>
 /// Runs a stock story as a chain of adventures: Pick writes and begins chapter one, and a finished chapter has
-/// the next written and begun. Nothing here touches the Guardian cores.
+/// the next written and begun.
 /// </summary>
 public sealed class StoryDirector(
     StoryStore stories,
@@ -213,10 +213,11 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
-    /// Counts the current story's play sessions, records the stretches the game runs without Odyssey, and stamps
-    /// it the first time the Commander data-links a beacon while it runs.
+    /// Counts the current story's play sessions, records the stretches the game runs without Odyssey, and records
+    /// each Guardian beacon system the Commander data-links while it is current. Returns what a scan woke when it
+    /// lifted the story's hold on the cores.
     /// </summary>
-    public void Observe(JournalEvent journalEvent, string? frontierId)
+    public CoreWaking? Observe(JournalEvent journalEvent, string? frontierId)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
 
@@ -257,15 +258,44 @@ public sealed class StoryDirector(
             });
         }
 
-        if (journalEvent.Kind == "DataScanned"
-            && _where.SystemAddress is { } address
-            && GuardianCores.Beacons.ContainsKey(address)
-            && stories.Current(frontierId) is { BeaconScanAt: null } story
-            && journalEvent.Timestamp >= story.PickedAt)
+        if (journalEvent.Kind != "DataScanned"
+            || _where.SystemAddress is not { } address
+            || !GuardianCores.Beacons.ContainsKey(address)
+            || stories.Current(frontierId) is not { } current
+            || journalEvent.Timestamp < current.PickedAt
+            || current.BeaconSystems.Contains(address))
         {
-            stories.Update(frontierId, story.Id, current => current with { BeaconScanAt = journalEvent.Timestamp });
-            logger.LogInformation("{Title}: the beacon in {System} was scanned", story.Title, GuardianCores.Beacons[address]);
+            return null;
         }
+
+        CoreWaking? woke = null;
+
+        stories.Update(frontierId, current.Id, story =>
+        {
+            if (story.BeaconSystems.Contains(address))
+            {
+                return story;
+            }
+
+            var held = story.HeldCores;
+            var scanned = story with
+            {
+                BeaconScanAt = story.BeaconScanAt ?? journalEvent.Timestamp,
+                BeaconSystems = [.. story.BeaconSystems, address],
+            };
+
+            woke = (held, scanned.HeldCores) switch
+            {
+                (HeldCores.All, not HeldCores.All) => CoreWaking.Cores,
+                (HeldCores.Heretic, HeldCores.None) => CoreWaking.Heretic,
+                _ => null,
+            };
+
+            return scanned;
+        });
+
+        logger.LogInformation("{Title}: the beacon in {System} was scanned", current.Title, GuardianCores.Beacons[address]);
+        return woke;
     }
 
     /// <summary>Whether the Commander has the current story switched off.</summary>

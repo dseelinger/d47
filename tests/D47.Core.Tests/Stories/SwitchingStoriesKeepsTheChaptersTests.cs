@@ -7,8 +7,8 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>Switch and Abandon stop a story, keep what it told, and leave awake cores awake.</summary>
-public sealed class SwitchingStoriesKeepsTheCoresTests
+/// <summary>Switch and Abandon stop a story, keep what it told, and leave the cores to the story that is current.</summary>
+public sealed class SwitchingStoriesKeepsTheChaptersTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
         RoundScriptedLlmProvider.Saying(Spine),
@@ -16,19 +16,9 @@ public sealed class SwitchingStoriesKeepsTheCoresTests
         RoundScriptedLlmProvider.Saying(Spine),
         RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
 
-    private static GuardianCores Awake()
-    {
-        var cores = GuardianCores.Asleep();
-        cores.Apply(AdventureFixtures.Jump(BeaconAddress, Now));
-        cores.Apply(AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }"""));
-        Assert.True(cores.CoresAwake);
-        return cores;
-    }
-
     [Fact]
     public async Task SwitchingAbandonsTheOldStoryAndKeepsItsChapter()
     {
-        var cores = Awake();
         using var fixtures = Fixtures();
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -45,13 +35,12 @@ public sealed class SwitchingStoriesKeepsTheCoresTests
         Assert.Equal(Other.Id, current.Id);
         Assert.Equal(Other.InYourWords, fixtures.Backstory);
 
-        Assert.True(cores.CoresAwake);
+        Assert.Equal(new CoreHold(HeldCores.All, Other.Title), current.CoreHold);
     }
 
     [Fact]
-    public async Task AbandoningEndsTheStoryAndLeavesTheCores()
+    public async Task AbandoningEndsTheStoryAndGivesTheCoresBack()
     {
-        var cores = Awake();
         using var fixtures = Fixtures();
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -60,7 +49,7 @@ public sealed class SwitchingStoriesKeepsTheCoresTests
         Assert.Null(fixtures.Stories.Current("F1"));
         Assert.Equal(StoryState.Ended, fixtures.Stories.Find("F1", Id)!.State);
         Assert.Single(fixtures.Book.Store.For("F1"));
-        Assert.True(cores.CoresAwake);
+        Assert.Equal(CoreHold.None, fixtures.Cores("F1").Hold);
     }
 
     [Fact]
@@ -83,10 +72,7 @@ public sealed class SwitchingStoriesKeepsTheCoresTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        fixtures.Director.Observe(AdventureFixtures.Jump(BeaconAddress, Now.AddDays(2)), "F1");
-        fixtures.Director.Observe(
-            AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now.AddDays(2))}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }"""),
-            "F1");
+        fixtures.ScanBeacon("F1", BeaconAddress, Now.AddDays(2));
 
         Assert.Equal(Now.AddDays(2), fixtures.Stories.Current("F1")!.BeaconScanAt);
     }

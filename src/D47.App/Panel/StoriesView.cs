@@ -37,7 +37,8 @@ public sealed class StoriesView : UserControl
         var intro = AdventuresPage.Muted(
             "Stock stories that run for months, a chapter at a time. Picking one makes its words your Backstory and "
             + "has the ship's AI write chapter one, which ends at a Guardian beacon. When a chapter finishes, the next "
-            + "is written and begins.");
+            + "is written and begins. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon "
+            + "the story to have them back at once.");
         intro.Margin = new Thickness(0, 0, 0, 10);
 
         DockPanel.SetDock(title, Dock.Top);
@@ -155,7 +156,7 @@ public sealed class StoriesView : UserControl
             "story.abandon",
             "Abandon",
             $"Abandon {story.Title}?",
-            "The story ends here. Its chapters stay on the Adventures page, and your Guardian cores stay as they are.",
+            "The story ends here. Its chapters stay on the Adventures page, and any Guardian core it held back is available at once.",
             "Abandon it",
             () =>
             {
@@ -250,7 +251,7 @@ public sealed class StoriesView : UserControl
                 "Switch",
                 $"Switch from {current.Title} to {card.Title}?",
                 $"{current.Title} is abandoned and its chapters stay on the Adventures page. Your Backstory becomes this "
-                + "story's words, and your Guardian cores stay as they are.",
+                + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
                 () => Start(card, switching: true, status)));
             switchTo.IsEnabled = !withoutOdyssey;

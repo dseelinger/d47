@@ -1,5 +1,6 @@
 using D47.Core.Adventures;
 using D47.Core.Journal;
+using D47.Core.Persona;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
@@ -15,6 +16,8 @@ internal sealed class StoryFixtures : IDisposable
     public const string Beacon = "IC 2391 Sector MX-T b3-6";
 
     public const long BeaconAddress = 13872878396833;
+
+    public const long SecondBeaconAddress = 4208161886922;
 
     public static readonly DateTimeOffset Now = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
@@ -142,6 +145,19 @@ internal sealed class StoryFixtures : IDisposable
     public bool Throws { get; set; }
 
     public string StoryPath => Path.Combine(_folder, "story.json");
+
+    /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>
+    public GuardianCores Cores(string frontierId) => new(() => Stories.Current(frontierId)?.CoreHold ?? CoreHold.None);
+
+    /// <summary>Jumps to a beacon system and data-links there; returns what the scan woke.</summary>
+    public CoreWaking? ScanBeacon(string frontierId, long address, DateTimeOffset at)
+    {
+        Director.Observe(AdventureFixtures.Jump(address, at), frontierId);
+
+        return Director.Observe(
+            AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(at)}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }"""),
+            frontierId);
+    }
 
     /// <summary>Flies every beat of a begun chapter so it is done.</summary>
     public void Finish(string frontierId, string key, DateTimeOffset from)

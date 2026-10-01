@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using D47.Core.Persona;
 
 namespace D47.Core.Stories;
 
@@ -41,6 +42,9 @@ public sealed record Story
     /// <summary>When the Commander first scanned a Guardian beacon while this story ran.</summary>
     public DateTimeOffset? BeaconScanAt { get; init; }
 
+    /// <summary>The beacon systems the Commander scanned while this story was current, by <c>SystemAddress</c>, in order.</summary>
+    public IReadOnlyList<long> BeaconSystems { get; init; } = [];
+
     /// <summary>When it was abandoned or ended.</summary>
     public DateTimeOffset? StoppedAt { get; init; }
 
@@ -79,6 +83,28 @@ public sealed record Story
     /// <summary>Running or paused: the Commander's current story.</summary>
     [JsonIgnore]
     public bool IsCurrent => State is StoryState.Running or StoryState.Paused;
+
+    /// <summary>The beacon systems scanned, counting a scan stamped in <see cref="BeaconScanAt"/> before the systems were recorded.</summary>
+    [JsonIgnore]
+    public int BeaconsScanned => Math.Max(BeaconSystems.Count, BeaconScanAt is null ? 0 : 1);
+
+    /// <summary>
+    /// The Guardian cores this story holds back: all of them until its first beacon scan, the Heretic until a
+    /// second system's, and none while it is paused, switched off, without Odyssey or stopped.
+    /// </summary>
+    [JsonIgnore]
+    public HeldCores HeldCores => State != StoryState.Running || IsOff || IsWithoutOdyssey
+        ? HeldCores.None
+        : BeaconsScanned switch
+        {
+            0 => HeldCores.All,
+            1 => HeldCores.Heretic,
+            _ => HeldCores.None,
+        };
+
+    /// <summary><see cref="HeldCores"/> with this story's title.</summary>
+    [JsonIgnore]
+    public CoreHold CoreHold => HeldCores == HeldCores.None ? CoreHold.None : new CoreHold(HeldCores, Title);
 
     [JsonIgnore]
     public string? CurrentChapter => Chapters.Count > 0 ? Chapters[^1] : null;

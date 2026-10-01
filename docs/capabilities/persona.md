@@ -178,15 +178,17 @@ Eleven Guardian intelligences, recovered from a structure and running in your sh
 They are not skins on the same character — each has its own reading of what it is for, its own
 damage, and its own memory of talking to you.
 
-### It starts on the stock core
+### A running story holds the cores back
 
 A new install starts on **COVAS**, the ship's factory voice assistant: plain, courteous, and with
-no Guardian history. The eleven cores are in the picker from the start, marked **LOCKED**, and
-choosing one says why it cannot be chosen yet.
+no Guardian history. Every Guardian core can be chosen from the start.
 
-They wake when you scan a Guardian beacon with the ship's data-link scanner. D47 recognises the
-scan by the system you are in, not by the scan itself: any `DataScanned` event in one of these
-systems counts.
+A stock story that is running and switched on holds the Guardian cores back until you scan a
+Guardian beacon with the ship's data-link scanner while it runs. Meanwhile COVAS speaks, the held
+cores show **LOCKED** in the picker, and choosing one names the story and says why. Your chosen core
+stays chosen in settings and is aboard again as soon as the hold lifts. D47 recognises the scan by
+the system you are in, not by the scan itself: any `DataScanned` event in one of these systems
+counts.
 
 | System | id64 |
 |---|---|
@@ -198,13 +200,13 @@ systems counts.
 | Synuefe RL-C b46-6 | 13874757182857 |
 | NGC 2451A Sector LX-U d2-25 | 869621795163 |
 
-The first beacon wakes every core but the Heretic. A second beacon, in a different system, wakes
-the Heretic. Each waking is said once, aloud and in Messages. COVAS stays aboard until you choose
-a core.
+The story's first beacon brings back every core but the Heretic. A beacon in a second, different
+system brings back the Heretic. Each is said once per story, aloud and in Messages. A scan made
+before the story was picked does not count toward it.
 
-Once awake, the cores stay awake. Abandoning or beginning a story does not lock them again. An
-install that already had settings when this version first ran starts with every core awake. The
-state is kept in `data/guardian-cores.json`.
+Pausing the story, switching it off or abandoning it gives the cores back at once, and so does a
+session without Odyssey. Resuming a story that has not had its beacon scan holds them again; resuming
+one that has does not. COVAS is never held back.
 
 ### Ask for it
 

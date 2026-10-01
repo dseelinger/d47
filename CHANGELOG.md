@@ -14,7 +14,7 @@ The list shows each story's Save the Cat genre, its tone and a blurb saying why 
 and a story's page adds the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
 ship's AI write chapter one, which begins at once and ends at the Guardian beacon system nearest to
 you. When a chapter finishes, the next is written and begins. **Switch** abandons the running story and
-picks another, **Abandon** ends it, and neither changes your Guardian cores. Each story has a hidden
+picks another, and **Abandon** ends it. Each story has a hidden
 layer D47 never shows; **Privacy and egress** says it is sent to the language model with each chapter.
 
 A generated adventure or story chapter no longer sends you to a system that needs a permit, such as
@@ -30,7 +30,7 @@ chapter's page no longer shows its premise, turn or ending, and has no **Edit** 
 You can pause a running story. Clear **Story on** on the Stories page or the mini panel, or say "pause the
 story", and no beat is said, no clue or nudge is owed, nothing from the story is posted to Messages and
 the story's hidden layer is left out of what the Narrator and the core say. The clue clock stops.
-Narration and chatter carry on as before, and your Backstory and Guardian cores are unchanged. A place
+Narration and chatter carry on as before, and your Backstory is unchanged. A place
 you visit while the story is off does not count; its beat waits for the next visit. The switch lasts
 across restarts. Say "resume the story" or tick **Story on** to bring it back.
 
@@ -38,6 +38,14 @@ Stories need Elite Dangerous: Odyssey. When your last session ran without it, th
 so, **Pick** and **Switch** are disabled, a running story writes no chapter and gives no clue, and the
 days do not count toward a clue. The story carries on from where it was at the next session with
 Odyssey. A story you switched off stays off.
+
+A running story now holds the Guardian cores back until you scan a Guardian beacon while it runs,
+and COVAS speaks meanwhile. The first beacon brings back every core but the Heretic, and a beacon in a
+second system brings back the Heretic; each is said once per story, aloud and in Messages. Pausing the
+story, switching it off or abandoning it gives the cores back at once. Your chosen core stays chosen and
+is aboard again when the hold lifts. With no story running, every Guardian core can be chosen on every
+install, and `data/guardian-cores.json` is no longer read. While the hold lasts the Persona picker
+shows COVAS, and choosing a held core is refused with a reason that names the story.
 
 The local voice says "story", "stories", "storyline" and "backstory" with the vowel of "or", not "stawry".
 
@@ -65,12 +73,8 @@ The Adventures tab has a **Messages** button. Every adventure beat D47 speaks is
 written message, newest first, with unread ones in bold and the unread count on the button. Opening a
 message marks it read. The messages are kept in `data/messages.json`, up to 200.
 
-A new install now starts on **COVAS**, a plain factory ship AI with no Guardian history. The Guardian
-cores are shown as **LOCKED** in the Persona picker until you scan a Guardian beacon with the data-link
-scanner. The first beacon wakes every core but the Heretic, and a second beacon in a different system
-wakes the Heretic. Each waking is announced once, aloud and in Messages. Once awake, the cores stay
-awake. An existing install keeps every core it had. COVAS speaks without the Guardian Voice Effects,
-whatever is ticked there.
+A new install now starts on **COVAS**, a plain factory ship AI with no Guardian history. COVAS speaks
+without the Guardian Voice Effects, whatever is ticked there.
 
 When an adventure has waited at its next beat through three play sessions and seven days, the
 **Narrator**'s next narration leans toward where it waits, with at most one such nudge per adventure

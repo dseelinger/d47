@@ -374,6 +374,11 @@ public sealed class AppHost : IDisposable
 
     private readonly Lock _signalGate = new();
 
+    private readonly Lock _personaGate = new();
+
+    /// <summary>The <see cref="HeldCores"/> the persona was last admitted under.</summary>
+    private int _heldCores;
+
     /// <summary>What the prompt carries for the length of this session (#162).</summary>
     private readonly StandingDirectionsSession _directions = new();
 
@@ -575,6 +580,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Raised when the Commander's audio folder was re-read and the library replaced.</summary>
     public event Action? AudioReloaded;
 
+    /// <summary>Raised on the thread that changed it when the story's hold on the Guardian cores changes.</summary>
+    public event Action? CoreHoldChanged;
+
     /// <summary>Downloads a model and loads it.</summary>
     public async Task<ModelInstallResult> InstallModelAsync(
         WhisperModel model,
@@ -690,8 +698,6 @@ public sealed class AppHost : IDisposable
 
         var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
 
-        // Read before anything can write the file: an install that had settings keeps its Guardian cores.
-        var installExisted = File.Exists(paths.SettingsFile);
         var loaded = new D47Settings();
         string? startupError = null;
         var settingsRefused = false;
@@ -736,11 +742,6 @@ public sealed class AppHost : IDisposable
 
         // From here a level change is live wherever it came from — panel, tool or settings file.
         verbosity.FollowSettings(settings);
-
-        var guardianCores = GuardianCores.Open(
-            Path.Combine(paths.Data, "guardian-cores.json"),
-            installExisted,
-            loggerFactory.CreateLogger<GuardianCores>());
 
         var viewState = new ViewStateStore(paths, loggerFactory.CreateLogger<ViewStateStore>());
 
@@ -1188,7 +1189,6 @@ public sealed class AppHost : IDisposable
             {
                 fight.Fold(journalEvent, context.Now, context.IsFirst);
                 scenes.Fold(journalEvent);
-                guardianCores.Apply(journalEvent);
             }
 
             var calloutContext = new CalloutContext(
@@ -1500,6 +1500,9 @@ public sealed class AppHost : IDisposable
         // Built before the registry, because the persona capability declares settings rows from it and which
         // rows exist has to be settled before registration — descriptors are registered once and never
         // mutated.
+
+        var guardianCores = new GuardianCores(() =>
+            storyStore.Current(gameState.Active?.Identity.FrontierId)?.CoreHold ?? CoreHold.None);
 
         var personas = new PersonaHost(
             PersonaCatalog.Resolve(settings.Current.Persona.Id),
@@ -2201,7 +2204,7 @@ public sealed class AppHost : IDisposable
 
         // Before ApplyLlmSettings, which reads the persona block it points the loop at.
         personas.Changed += host.OnPersonaChanged;
-        guardianCores.Woke += host.OnCoresWoke;
+        storyStore.Changed += host.ReadmitIfTheHoldChanged;
         turns.UseTranscript(personas.Transcript);
 
         // Speech reaches the ledger too, or the running totals would look authoritative while covering only
@@ -2601,8 +2604,14 @@ public sealed class AppHost : IDisposable
 
             foreach (var journalEvent in arrived)
             {
-                storyDirector.Observe(journalEvent, commander);
+                if (storyDirector.Observe(journalEvent, commander) is { } waking && !context.IsFirst)
+                {
+                    host.OnCoresWoke(waking);
+                }
             }
+
+            // A change of Commander changes whose story holds the cores.
+            host.ReadmitIfTheHoldChanged();
 
             // A finished chapter's successor is written on the pool; the tick only starts it.
             _ = storyDirector.Tick(commander, context.Now);
@@ -4028,40 +4037,56 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>Puts the persona settings into effect. Called from the settings thread and the tick thread.</summary>
     private void ApplyPersonaSettings()
     {
-        var outgoing = Personas.Current;
-
-        // Remembered before the switch, because after it there is nothing left to measure against.
-        _personaLastSeen[outgoing.Id] = (_personaSelectedAt, GameState.Active?.Session ?? SessionSummary.Empty);
-
-        var incoming = Personas.Cores.Admit(PersonaCatalog.Resolve(Settings.Current.Persona.Id));
-        var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
-
-        var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
-        var delta = seen.At != default && seen.Session is { } session
-            ? TelemetryDelta.Between(session, GameState.Active?.Session, GameState.Active)
-            : null;
-
-        if (!Personas.Apply(Settings.Current.Persona, away, delta, _personaCause))
+        lock (_personaGate)
         {
-            // The name may still have changed underneath an unchanged core, and that is part of the persona
-            // block, so the prompt is rebuilt either way.
+            var outgoing = Personas.Current;
+
+            // Remembered before the switch, because after it there is nothing left to measure against.
+            _personaLastSeen[outgoing.Id] = (_personaSelectedAt, GameState.Active?.Session ?? SessionSummary.Empty);
+
+            var incoming = Personas.Cores.Admit(PersonaCatalog.Resolve(Settings.Current.Persona.Id));
+            var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
+
+            var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
+            var delta = seen.At != default && seen.Session is { } session
+                ? TelemetryDelta.Between(session, GameState.Active?.Session, GameState.Active)
+                : null;
+
+            if (!Personas.Apply(Settings.Current.Persona, away, delta, _personaCause))
+            {
+                // The name may still have changed underneath an unchanged core, and that is part of the persona
+                // block, so the prompt is rebuilt either way.
+                Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+                return;
+            }
+
+            _personaSelectedAt = DateTimeOffset.Now;
+
+            // The core that just left, written where the next session can read it.
+            RememberCoreAboard(outgoing.Id, _personaLastSeen[outgoing.Id].At);
+
+            // Each core owns its transcript, handed over by reference so the turns land in it directly.
+            Turns.UseTranscript(Personas.Transcript);
             Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
-            return;
         }
-
-        _personaSelectedAt = DateTimeOffset.Now;
-
-        // The core that just left, written where the next session can read it.
-        RememberCoreAboard(outgoing.Id, _personaLastSeen[outgoing.Id].At);
-
-        // Each core owns its transcript, handed over by reference so the turns land in it directly.
-        Turns.UseTranscript(Personas.Transcript);
-        Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
     }
 
-    /// <summary>The one line said as a beacon wakes cores, also posted to Messages. Called on the tick thread.</summary>
+    /// <summary>Puts the chosen core aboard again, or the stock core in its place, when the story's hold on the cores changes.</summary>
+    private void ReadmitIfTheHoldChanged()
+    {
+        var held = (int)Personas.Cores.Hold.Cores;
+
+        if (Interlocked.Exchange(ref _heldCores, held) != held)
+        {
+            ApplyPersonaSettings();
+            CoreHoldChanged?.Invoke();
+        }
+    }
+
+    /// <summary>The one line said as a story's beacon scan lifts its hold on the cores, also posted to Messages. Called on the tick thread.</summary>
     private void OnCoresWoke(CoreWaking waking)
     {
         var line = GuardianCores.Line(waking);

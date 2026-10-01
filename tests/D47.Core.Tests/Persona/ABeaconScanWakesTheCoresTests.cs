@@ -1,142 +1,72 @@
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Persona;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
-using static D47.Core.Tests.Persona.BeaconFixture;
+using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Persona;
 
-public class ABeaconScanWakesTheCoresTests : IDisposable
+public sealed class ABeaconScanWakesTheCoresTests
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-guardian-cores", Guid.NewGuid().ToString("N"));
-
-    public ABeaconScanWakesTheCoresTests()
-    {
-        Directory.CreateDirectory(_folder);
-    }
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
-
-    private GuardianCores NewInstall() => GuardianCores.Open(
-        Path.Combine(_folder, "guardian-cores.json"), installExisted: false, NullLogger<GuardianCores>.Instance);
-
-    private static void Replay(GuardianCores cores)
-    {
-        foreach (var journalEvent in Events())
-        {
-            cores.Apply(journalEvent);
-        }
-    }
-
     [Fact]
-    public void TheFixtureScanWakesEveryCoreButTheHeretic()
+    public async Task ThePickerShowsAHeldCoreLockedNamesTheStoryAndRefusesIt()
     {
-        var cores = NewInstall();
-        var woke = new List<CoreWaking>();
-        cores.Woke += woke.Add;
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Replay(cores);
-
-        Assert.True(cores.CoresAwake);
-        Assert.False(cores.HereticAwake);
-        Assert.Equal([CoreWaking.Cores], woke);
-        Assert.True(cores.IsAwake(PersonaCatalog.Warden));
-        Assert.False(cores.IsAwake(PersonaCatalog.Heretic));
-    }
-
-    [Fact]
-    public void TheCoresStayAwakeAfterARestart()
-    {
-        Replay(NewInstall());
-
-        Assert.True(NewInstall().CoresAwake);
-    }
-
-    [Fact]
-    public void TheLineIsSaidOnceNotOnEveryScan()
-    {
-        var cores = NewInstall();
-        var woke = new List<CoreWaking>();
-        cores.Woke += woke.Add;
-
-        Replay(cores);
-        cores.Apply(DataPoint());
-        cores.Apply(DataPoint());
-
-        Assert.Single(woke);
-    }
-
-    [Fact]
-    public void ASecondBeaconInAnotherSystemWakesTheHeretic()
-    {
-        var cores = NewInstall();
-        var woke = new List<CoreWaking>();
-        cores.Woke += woke.Add;
-
-        Replay(cores);
-        cores.Apply(JumpTo("Synuefe IL-N c23-15", 4208161886922));
-        cores.Apply(DataPoint());
-
-        Assert.True(cores.HereticAwake);
-        Assert.Equal([CoreWaking.Cores, CoreWaking.Heretic], woke);
-    }
-
-    [Fact]
-    public void UntilThenTheStockCoreSpeaks()
-    {
-        var host = new PersonaHost(PersonaCatalog.Warden, cores: NewInstall());
-
-        Assert.Same(PersonaCatalog.Covas, host.Current);
-
-        host.Apply(new PersonaSettings { Id = "kex" });
-
-        Assert.Same(PersonaCatalog.Covas, host.Current);
-        Assert.DoesNotContain("Guardian", host.RenderBlock(personalityEnabled: true), StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ANewInstallStartsOnTheStockCore()
-    {
-        Assert.Equal("covas", new PersonaSettings().Id);
-        Assert.Same(PersonaCatalog.Covas, PersonaCatalog.Resolve(null));
-    }
-
-    [Fact]
-    public void ThePickerShowsASleepingCoreLockedAndRefusesIt()
-    {
         using var install = new TempInstall();
-        var cores = NewInstall();
-        var surface = TestSurface.For(install, personas: new PersonaHost(cores: cores));
+        var surface = TestSurface.For(install, personas: new PersonaHost(cores: fixtures.Cores("F1")));
         var row = surface.Settings.Find(PersonaCapability.PersonaKey)!;
 
-        Assert.Contains("warden", row.ChoicesFor(surface.Settings.Current));
         Assert.Equal("LOCKED", row.StatusFor("warden", surface.Settings.Current)?.Text);
         Assert.Null(row.StatusFor("covas", surface.Settings.Current));
 
         var refused = surface.Settings.Apply(PersonaCapability.PersonaKey, "warden", SettingsCaller.Panel);
 
         Assert.Equal(SettingApplyStatus.Rejected, refused.Status);
-        Assert.Contains("locked", refused.Message, StringComparison.Ordinal);
-        Assert.Equal("covas", surface.Settings.Current.Persona.Id);
+        Assert.Equal(
+            "Warden is held back while The Test Story runs, until you scan a Guardian beacon. Pause or abandon the story to have it back now.",
+            refused.Message);
 
-        Replay(cores);
+        fixtures.ScanBeacon("F1", BeaconAddress, Now.AddHours(1));
 
         Assert.Null(row.StatusFor("warden", surface.Settings.Current));
         Assert.Equal(
             SettingApplyStatus.Applied,
             surface.Settings.Apply(PersonaCapability.PersonaKey, "warden", SettingsCaller.Panel).Status);
+
+        Assert.Equal("warden", surface.Settings.Read(PersonaCapability.PersonaKey));
+
+        var heretic = surface.Settings.Apply(PersonaCapability.PersonaKey, "heretic", SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Rejected, heretic.Status);
+        Assert.Contains("until you scan a Guardian beacon in a second system.", heretic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ThePickerShowsTheStockCoreWhileTheChosenOneIsHeld()
+    {
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install, personas: new PersonaHost(cores: fixtures.Cores("F1")));
         Assert.Equal(
-            SettingApplyStatus.Rejected,
-            surface.Settings.Apply(PersonaCapability.PersonaKey, "heretic", SettingsCaller.Panel).Status);
+            SettingApplyStatus.Applied,
+            surface.Settings.Apply(PersonaCapability.PersonaKey, "kex", SettingsCaller.Panel).Status);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        Assert.Equal("covas", surface.Settings.Read(PersonaCapability.PersonaKey));
+        Assert.Equal("kex", surface.Settings.Current.Persona.Id);
+
+        fixtures.ScanBeacon("F1", BeaconAddress, Now.AddHours(1));
+
+        Assert.Equal("kex", surface.Settings.Read(PersonaCapability.PersonaKey));
     }
 }

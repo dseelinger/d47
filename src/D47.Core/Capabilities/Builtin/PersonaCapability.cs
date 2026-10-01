@@ -104,8 +104,8 @@ public static class PersonaCapability
             Key = PersonaKey,
             Label = "Persona",
             Help =
-                "Which core answers you. Each keeps its own memory of your conversations. The "
-                + "Guardian cores are locked until you scan a Guardian beacon.",
+                "Which core answers you. Each keeps its own memory of your conversations. While a story "
+                + "runs, COVAS answers and the Guardian cores are locked until you scan a Guardian beacon.",
             Kind = SettingKind.Choice,
             DefaultDisplay = PersonaCatalog.Resolve(null).Name,
             DocsAnchor = "persona",
@@ -124,7 +124,7 @@ public static class PersonaCapability
             Commands = [.. PersonaCatalog.Shipped.SelectMany(SelectionPhrases)],
             Binding = new SettingBinding
             {
-                Read = s => s.Persona.Id,
+                Read = s => host.Cores.Admit(PersonaCatalog.Resolve(s.Persona.Id)).Id,
                 Write = WriteCoreAboard,
             },
         },
@@ -441,23 +441,26 @@ public static class PersonaCapability
         },
     ];
 
-    /// <summary>The status drawn under a core that is still asleep.</summary>
+    /// <summary>The status drawn under a core the running story holds back.</summary>
     private static ChoiceStatus? Locked(PersonaHost host, string id) =>
         host.Cores.IsAwake(PersonaCatalog.Resolve(id)) ? null : new ChoiceStatus("LOCKED", ChoiceTone.Grey);
 
-    /// <summary>Why a core cannot be chosen yet, or null where it can.</summary>
+    /// <summary>Why a core cannot be chosen now, or null where it can.</summary>
     private static string? WhyAsleep(PersonaHost host, string id)
     {
         var persona = PersonaCatalog.Resolve(id);
+        var hold = host.Cores.Hold;
 
-        if (host.Cores.IsAwake(persona))
+        if (!GuardianCores.IsHeld(persona, hold))
         {
             return null;
         }
 
-        return persona.Unlockable && host.Cores.CoresAwake
-            ? $"{persona.Name} is locked. The beacon you scanned did not hold that core."
-            : $"{persona.Name} is locked. The Guardian cores wake when you scan a Guardian beacon.";
+        var until = hold.Cores == HeldCores.Heretic
+            ? "until you scan a Guardian beacon in a second system"
+            : "until you scan a Guardian beacon";
+
+        return $"{persona.Name} is held back while {hold.Story} runs, {until}. Pause or abandon the story to have it back now.";
     }
 
     /// <summary>What the introductions row states.</summary>

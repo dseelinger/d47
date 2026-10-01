@@ -764,6 +764,9 @@ public partial class MainWindow : Window
             // the row that says what was found has no other way to know.
             _host.AudioReloaded += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
 
+            // A story's hold on the Guardian cores changes which core is aboard and which are locked, with no setting changed.
+            _host.CoreHoldChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(view.Refresh);
+
             // The About row that opens the changelog as a page of this panel (#50).
             _host.ShowChangelog = () =>
                 _ = Panel.Open(new Controls.ChangelogPage(D47.Core.Help.Changelog.Text));
