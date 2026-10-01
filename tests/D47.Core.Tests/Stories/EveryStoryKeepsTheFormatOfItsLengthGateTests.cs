@@ -84,8 +84,8 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         Assert.Empty(new StoryCatalog([WeekCard], () => [Week]).Faults());
 
     [Fact]
-    public void EveryShippedCardIsAYear() =>
-        Assert.All(StoryCatalog.Default.Cards, card => Assert.Equal(StoryPacing.OneYear.Key, card.Length));
+    public void EveryShippedCardNamesALength() =>
+        Assert.All(StoryCatalog.Default.Cards, card => Assert.NotNull(StoryPacing.Find(card.Length)));
 
     [Fact]
     public void AChatterboxSpeakerMayUseTheCommandersOwnVoice() =>

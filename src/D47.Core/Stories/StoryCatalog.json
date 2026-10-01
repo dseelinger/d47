@@ -115,5 +115,18 @@
     "blurb": "You grew up in your parents' scrapyard, and the only person there who was ever kind to you was the engineer they hired. The engineer helped you build a Sidewinder out of scrap and fitted it with a transponder nobody can follow, and you ran. Months later, half-starved at the edge of the charts, a well-dressed man named Augustin Rell offers you a scholarship: training, a Pilots Federation combat certification, steady contracts, and a vitamin shot to put the weight back on. Since that shot you have not lost a fight. You have not backed away from one either.",
     "inYourWords": "I grew up in my parents' scrapyard, mostly in the way. The engineer they hired was the only one who ever asked whether I had eaten. The engineer helped me put a Sidewinder together out of three wrecks and fitted a transponder my parents can't follow. I left one night and didn't look back. That was months ago. I have the Sidewinder, a few hundred credits, and nobody who knows where I am.",
     "beacon": "The scholarship's first contract after certification: fly to a Guardian beacon, make a data-link scan, and bring the Lantern Fund everything it holds. Rell says the Fund collects them. The fee would feed me for a year."
+  },
+  {
+    "id": "the-hillside",
+    "core": "sentinel",
+    "number": 10,
+    "title": "The Hillside",
+    "genre": "Dude with a Problem",
+    "level": "endgame",
+    "length": "3-days",
+    "tone": "Relentless, tense, a siege against the clock",
+    "blurb": "Three hundred and forty miners live at Ukah Mining Territory, on a grey moon in LHS 145, and they have seventy-two hours. The Kade Combine has ringed their system with interdictors and set the terms: leave the mine, or be there when the settlement's shield fails. They are not leaving. Their foreman is Tamsin Rook, who flew on your wing for six years and never asked you for anything. Last night she called, and she still did not ask. You have a fleet carrier, a hangar of ships and three days. Varro Kade has never lost a siege. And from the moment your carrier arrives, he stops caring about the mine.",
+    "inYourWords": "I have a fleet carrier, more ships than I can fly in a month, and enough credits that nobody has been able to threaten me in years. Tamsin Rook flew on my wing for six years, then went off to dig rock on a moon in LHS 145 that nobody has heard of. Last night she called. The Kade Combine has blockaded her system, and her settlement's shield has three days of power left. She did not ask me to come. She said she only needed someone to know. I have already plotted the jump.",
+    "beacon": "Rook says the Combine's trouble started far past the edge of the bubble, at a Guardian beacon where Kade has kept a ship parked for a year, listening. Before I go to her, I am going to scan that beacon and find out what he is listening for."
   }
 ]
