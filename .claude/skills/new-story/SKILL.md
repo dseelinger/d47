@@ -33,7 +33,10 @@ Every story keeps all ten. Check the draft against each before showing it.
    `wreck`, and `salvage` with `metaalloys`. A live Thargoid ship is flavour only and never a beat,
    because none can be found on demand. There are no Thargoid missions.
 6. No clue or ending depends on an earlier choice.
-7. Each story has a tone, genre and twist mechanism unlike the stories already in the catalog.
+7. Each story's secret and twist are its own. The catalog will hold a hundred stories or more over
+   nine genres, so genre, tone and core may repeat. Compare the draft with every story of the same
+   genre, in the catalog and on the page: it must not share both its secret and the way the secret
+   comes out with any of them.
 8. Hidden text never tells a core that another Guardian mind is alive. Other cores are spoken of
    only as Guardians of the past.
 9. Plain prose, and never "wants" where "needs" is meant.
