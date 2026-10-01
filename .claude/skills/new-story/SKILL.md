@@ -28,8 +28,10 @@ Every story keeps all nine. Check the draft against each before showing it.
    cores.
 2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
    core aboard (#716), and the `breakIntoTwo` beat says so without naming the core. Every story
-   names its own core on the card, chosen to match the story, and its first chapter ends with a
-   `beacon` beat for the scan.
+   names its own core on the card, chosen to match the story. From 1 month up, its first chapter
+   ends with a `beacon` beat for the scan. In a story of 3 days, 1 week or 2 weeks the scan happens
+   before the story opens and is narrated (#758): the hidden entry has a `scan` line, and the first
+   chapter has no `beacon` beat.
 3. No core is removed or made worse, Guardian or `covas`, in the app or the fiction. NPCs that exist
    only in the fiction may be lost.
 4. The Commander never loses anything the game holds, and the story never says they did.
@@ -49,7 +51,7 @@ Every story keeps all nine. Check the draft against each before showing it.
 7. Hidden text never tells a core that another Guardian mind is alive. Other cores are spoken of
    only as Guardians of the past.
 8. Plain prose, and never "wants" where "needs" is meant.
-9. A year at least: the beat sheet follows the Save the Cat beats over the clue schedule in #708.
+9. The story fills its length, and the beat sheet follows that length's stages in `StoryPacing`.
 
 Within those rules: the setting is soft science fiction in Elite's galaxy of the 34th century, and
 Elite's lore and d47's own may be bent or overturned. Jobs, institutions, objects and slang belong
@@ -70,6 +72,18 @@ New titles must not repeat these, or any title in `src/D47.Core/Stories/StoryCat
   The Job, The Claimant, The Catalogue, The Grey Ghost, Terminal, The Long Sleep, The Passenger.
 - Understudy, The Stranger's Kindness, Silent Wing.
 
+## The length
+
+Agree the length with the maintainer before the premise: one of the seven in `StoryPacing.All`
+(`src/D47.Core/Stories/StoryPacing.cs`), 3 days, 1 week, 2 weeks, 1 month, 3 months, 6 months or
+1 year. Nothing shorter than 3 days is developed; that is an adventure.
+
+`StoryPacing` gives each length's key, clue days, finale chapters, stages and `BeatKeys`. Read the
+counts and beat keys from there; this skill keeps no copy.
+
+The premise has to fill its length. Say what keeps the story going that long: one reveal can fill
+3 days, and a year needs a long-running situation with several reversals.
+
 ## The format
 
 Read the format from `StoryCard` and `StorySecret` in `src/D47.Core/Stories/StoryCatalog.cs` and
@@ -79,13 +93,16 @@ add.
 - **The card**, in `StoryCatalog.json`: `id`, `number`, `title`, `genre` (one of the nine Save the
   Cat genres), `tone`, `level` (#739), `blurb` (why a player would pick it, like the back cover of
   a novel), `inYourWords` (the Commander's backstory in the first person, starting at the level),
-  `beacon` (why they go to scan it) and `core` (#716: the Guardian core the story is written for,
+  `length` (the key of a `StoryPacing`), `beacon` (why they go to scan it; for a story shorter
+  than 1 month, the scan the story opens after) and `core` (#716: the Guardian core the story is written for,
   never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
   leave them out of the catalog.
-- **The hidden entry**, sealed: `id`, `secret`, `beats` (one line for each of the 15 Save the Cat
-  beats), 14 `clues` (4 weekly, then 10 monthly), 4 `finale` lines, `end`, 1 to 4 `options`, each
+- **The hidden entry**, sealed: `id`, `secret`, `beats` (one line for each key in the length's
+  `StoryPacing.BeatKeys`), `clues` and `finale` lines in the counts the length's `StoryPacing`
+  gives (`ClueDays.Count` clues, `FinaleChapters` finale lines), a `scan` line for a story of 3 days,
+  1 week or 2 weeks (#758) and none for a longer one, `end`, 1 to 4 `options`, each
   with `id`, `label`, `after` and `add` (persona ids, possibly none), and `cast`.
-- **Lines** (clues and finale) each have `text` and `speaker`: `ship`, `narrator` or a cast `id`.
+- **Lines** (clues, finale and `scan`) each have `text` and `speaker`: `ship`, `narrator` or a cast `id`.
 - **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, or `chatterbox` only
   when the story needs it, #41) and `voice`. Voice `own` is the Commander's recording (#713).
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
@@ -117,7 +134,7 @@ writing what comes back to the scratchpad file before editing. Republish the fil
 change, so the page is never behind the draft. Load the `artifact-design` skill before the first
 publish of a session, and match the look of the shared review page.
 
-The draft page shows the card, the whole hidden layer, the three sample chapters marked as
+The draft page shows the card with its length, the whole hidden layer, the three sample chapters marked as
 samples, any gap found (below), and its state: draft or approved.
 
 ## Cast pictures
@@ -145,7 +162,7 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
 ## The shared review page
 
 The maintainer's page "d47 Stock Stories", https://claude.ai/artifact/HNGyX7PhikSQiMuhxxJP3g,
-holds approved stories only. A draft never goes on it. When the maintainer approves a story, read
+holds approved stories only. A draft never goes on it. Each card on it shows its length. When the maintainer approves a story, read
 the page with `read`, add the story's section from the draft page with its state set to approved,
 keep every story already there, and republish to the same `url`. On a publish conflict, merge the
 story into the newer version the tool hands back. Then republish the draft page once more,
@@ -153,15 +170,17 @@ marked approved, with a link to the shared page.
 
 ## The steps
 
-1. **Agree the premise, genre and tone** with the maintainer. Offer two or three concrete premises
+1. **Agree the length, then the premise, genre and tone** with the maintainer. Offer two or three concrete premises
    when he has not given one, each with its genre, tone and twist mechanism.
 2. **Write both layers** to files in the session scratchpad, outside the repository. Never write
    hidden text into the tree: `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of
    24 characters or more in a repository file.
 3. **Sketch three sample chapters** against the maintainer's own game state:
-   - the chapter that ends at the beacon scan,
-   - a chapter from the middle of the year,
-   - a comfort-zone chapter as #711 defines it.
+   - the chapter that ends at the beacon scan; for a story shorter than 1 month, the `scan` line
+     and chapter one,
+   - a chapter from the middle of the story,
+   - a comfort-zone chapter as #711 defines it; for a story shorter than 1 month, which has none,
+     its last finale chapter.
 
    Read the state with
 
