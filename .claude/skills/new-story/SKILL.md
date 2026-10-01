@@ -1,6 +1,6 @@
 ---
 name: new-story
-description: Develop one d47 stock story with the maintainer — premise, both layers, and three sample chapters sized to his own journals — on his review page, revise it until he approves, then add it to the embedded story catalog. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+description: Develop one d47 stock story with the maintainer — premise, both layers, and three sample chapters sized to his own journals — on a draft page of its own, revise it until he approves, then add it to the shared review page and the embedded story catalog. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
@@ -10,8 +10,8 @@ He reads both layers, the card and the hidden layer, before anything ships. Noth
 him; the sealing keeps the hidden layer out of the tree's plain text, not out of his sight.
 
 `/new-story <premise>` has named the work, so start on it in that same turn. A bare `/new-story`
-reads the review page first: if a draft is there, ask whether to continue it or start another; if
-none is, ask for a premise.
+looks for draft pages first (below): if there are any, ask whether to continue one or start
+another; if there are none, ask for a premise.
 
 ## Turn the voice on first
 
@@ -107,18 +107,27 @@ add.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 
-## The review page
+## The draft page
+
+A story under development lives in its own HTML file, `<scratchpad>/<story-id>.html`, published as
+its own artifact. The file is never in the repository. Its `<title>` is the story's title, and its
+publish `description` starts `d47 stock story draft`, which is how a later session finds it: list
+the artifacts with the Artifact tool's `list` action and read the one to continue with `read`,
+writing what comes back to the scratchpad file before editing. Republish the file after every
+change, so the page is never behind the draft. Load the `artifact-design` skill before the first
+publish of a session, and match the look of the shared review page.
+
+The draft page shows the card, the whole hidden layer, the three sample chapters marked as
+samples, any gap found (below), and its state: draft or approved.
+
+## The shared review page
 
 The maintainer's page "d47 Stock Stories", https://claude.ai/artifact/HNGyX7PhikSQiMuhxxJP3g,
-shows only the stories this session works on. Start every session by reading it with the Artifact
-tool's `read` action. A draft found there that the maintainer chooses to continue is this session's
-story; the first publish of the session drops every other story, and the status notes about them,
-from the page. Earlier versions stay in the page's history. Republish to that same `url` after
-every change, so the page is never behind the draft. Load the `artifact-design` skill before the
-first publish of a session.
-
-Each story on the page shows the card, the whole hidden layer, the three sample chapters marked as
-samples, any gap found (below), and its state: draft, approved, or in the catalog.
+holds approved stories only. A draft never goes on it. When the maintainer approves a story, read
+the page with `read`, add the story's section from the draft page with its state set to approved,
+keep every story already there, and republish to the same `url`. On a publish conflict, merge the
+story into the newer version the tool hands back. Then republish the draft page once more,
+marked approved, with a link to the shared page.
 
 ## The steps
 
@@ -155,10 +164,11 @@ samples, any gap found (below), and its state: draft, approved, or in the catalo
 
    Where a beat the story needs cannot be expressed that way, say so on the page and name the
    issue it would change. Do not invent a kind.
-4. **Publish** both layers and the samples on the review page.
-5. **Revise** on his notes, republishing after each round, until he approves the story. Mark it
-   approved on the page.
-6. **Add it to the catalog.** Add the card to `src/D47.Core/Stories/StoryCatalog.json` with the next `number`,
+4. **Publish** both layers and the samples on the story's draft page.
+5. **Revise** on his notes, republishing the draft page after each round, until he approves the
+   story. Nothing goes on the shared review page or into the catalog before then.
+6. **Move it to the shared review page**, as that section describes.
+7. **Add it to the catalog.** Add the card to `src/D47.Core/Stories/StoryCatalog.json` with the next `number`,
    decode the sealed layer into the scratchpad, add the hidden entry with the same `id`, and
    encode it:
 
@@ -168,8 +178,8 @@ samples, any gap found (below), and its state: draft, approved, or in the catalo
    ```
 
    Sample chapters never go in the catalog. The app writes chapters when they are due.
-7. **Delete the scratch files**: the drafts and the decoded layer.
-8. **Build and test**, once the catalog files have changed:
+8. **Delete the scratch files**: the drafts, the draft page's HTML file and the decoded layer.
+9. **Build and test**, once the catalog files have changed:
 
    ```bash
    dotnet build d47.slnx -c Debug
@@ -178,15 +188,15 @@ samples, any gap found (below), and its state: draft, approved, or in the catalo
    ```
 
    The build must have 0 warnings. Add a `CHANGELOG.md` entry under the current unreleased heading
-   naming the story by its title, and mark the story "in the catalog" on the page.
-9. **Commit only when the maintainer says so.** The commit holds the two catalog files, the
+   naming the story by its title, and mark the story "in the catalog" on the shared review page.
+10. **Commit only when the maintainer says so.** The commit holds the two catalog files, the
    cast pictures in `assets/stories/` and the changelog, with a subject such as `Add the stock story <title>`. Do not push.
 
 Nothing else in `src/` changes. A story that seems to need a code change is a gap: record it on the
-page and name the issue (step 3).
+draft page and name the issue (step 3).
 
 ## Finishing
 
 A turn that hands the story back for review, or lands it, ends with the `/claude-voice` sentence
-as its last tool call, then the written report: the page link, what changed this round, and any
-gap found.
+as its last tool call, then the written report: the draft page link (and the shared page link once the story
+is approved), what changed this round, and any gap found.
