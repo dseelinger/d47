@@ -19,6 +19,6 @@ public sealed class ACardNamesTheLevelItWasWrittenForTests
     }
 
     [Fact]
-    public void EveryShippedStoryIsForANewCommander() =>
-        Assert.All(StoryCatalog.Default.Cards, card => Assert.Equal("new", card.Level));
+    public void EveryShippedStoryNamesALevel() =>
+        Assert.All(StoryCatalog.Default.Cards, card => Assert.Contains(card.Level, StoryCard.Levels));
 }

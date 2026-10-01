@@ -70,5 +70,17 @@
     "blurb": "The Companions of the Lane are older than the Pilots Federation, and their mark still opens doors a licence does not. To earn it, a journeyman walks the Circuit: nine masters scattered across the bubble, one for every craft a pilot can learn, and each one works you until the work is good before they mark your book. Hauling, mining, the hunt, charts, living things, passage, the ground, salvage and the forge. The masters are old, the guild house that sent you has not sent anyone in twenty years, and Mother Agathe, who keeps it, swears a strongbox opens for whoever comes home with a full book. Linus, the only other journeyman on the road, is always one master ahead of you, and has far too much money for someone sleeping in guild bunks. The book takes a year. You start with a Sidewinder.",
     "inYourWords": "I had a stock Sidewinder, a few hundred credits, and nowhere to sleep but the cockpit when I found the guild house: a common room, a row of empty bunks, and a board of names with most of them crossed out. Mother Agathe keeps it. She feeds anyone who works. She watched me work for a week, then put a book in my hands: a page for a Guardian beacon, a page for each of nine masters, and one for a masterwork. She says a strongbox opens for whoever fills it. I wrote my name inside the cover.",
     "beacon": "The first page of the book belongs to no master. It asks for the data from a Guardian beacon, the oldest machine anyone has found that still does its job. Mother Agathe says every journeyman starts there, to see how long good work outlasts the people who did it."
+  },
+  {
+    "id": "good-standing",
+    "core": "quartermaster",
+    "number": 7,
+    "title": "Good Standing",
+    "genre": "Institutionalized",
+    "level": "midrange",
+    "tone": "Warm, then uneasy, then defiant",
+    "blurb": "You have flown alone for years: a working ship, some engineering done, and savings that one bad week could take. Then Maren Holt watched you hold a line in a conflict zone after your wing ran, and offered to sponsor you into the Brightwater Mutual. Four hundred independent pilots, one share each, a fund for the bad weeks, and a wing that comes when you call. Augustin Pell, the last of the twelve who founded it, says the charter is one line long: the Mutual looks after its own. The pay is the best you have had, and it is the first place in years that feels like home. Every war the Mutual fights comes through one broker, and nobody on the council will say who the broker works for.",
+    "inYourWords": "I have flown independent for six years. I have a ship I trust, some engineering done on it, and enough savings that one bad week would not finish me, though two might. Last month I held a line in a conflict zone after my wing ran, and the pilot who came back for me was Maren Holt of the Brightwater Mutual. She has offered to sponsor me. Four hundred pilots, one share each, a fund for the bad weeks, and a wing on call. Augustin Pell, who founded it, bought me a drink and told me the charter is one line. I have never belonged to anything. I have not said yes yet.",
+    "beacon": "Every member of the Mutual flies the Founding Run before their first vote: a data-link scan of a Guardian beacon, as the founding twelve did the night they signed the charter. Maren says it is the only test the Mutual sets."
   }
 ]
