@@ -18,5 +18,15 @@
     "blurb": "There is someone in your cargo hold. Juno Ashby says she flies search and rescue, that she lost her licence over a misunderstanding, and that she will earn her passage. She hears a distress call before your scanner does, and she is the best company you have had in years. She is also lying to you about something, and every pilot she sends you to save has heard her name before.",
     "inYourWords": "I bought the Sidewinder with everything I had, which was not much, and I liked flying it alone. Nobody to owe, nobody owing me. Then on my third jump the hold reported a mass it should not have, and the mass turned out to be a rescue pilot with a bag, a grin and no licence. She says she will pay her way. I have not decided yet whether to let her.",
     "beacon": "Juno's first payment is a tip: a Guardian beacon nobody has scanned, out past the last station she worked. The data should be worth something, and she says she knows the way."
+  },
+  {
+    "id": "black-box",
+    "number": 3,
+    "title": "Black Box",
+    "genre": "Whydunit",
+    "tone": "Hard-boiled noir",
+    "blurb": "The yard sold you the cheapest Sidewinder on the lot, a rebuild with a clean title. They missed the flight recorder. Its last pilot went missing eleven months ago, and a well-dressed man named Selden Pryce will pay you on delivery to find out why. Every lead takes you somewhere new: a salvage field, a scrap yard, a distress call nobody answered. Every report you send him, he reads very carefully.",
+    "inYourWords": "I bought the cheapest Sidewinder on the lot, with a clean title and a few hundred credits left over. The yard said it was wiped by the book. They missed the flight recorder. Every time I start the drive it plays the same four seconds: a woman's voice, calm, reading out a set of coordinates and her name. Ines Harrow. Nobody has seen her in eleven months.",
+    "beacon": "The coordinates on the recorder are a Guardian beacon. It was the last place Ines Harrow logged before she went quiet, and the first place anyone looking for her would go."
   }
 ]
