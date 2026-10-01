@@ -141,7 +141,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var panel = surface.Panel;
         Assert.True(Shows(panel, "The Test Story"));
         Assert.True(Shows(panel, "The Other Story"));
-        Assert.True(Shows(panel, "New commander · Archivist"));
+        Assert.True(Shows(panel, "1 year · New commander · Archivist"));
         Assert.False(Shows(panel, "Whydunit"));
         Assert.True(Shows(panel, StoryFixture.Story.Blurb));
         Assert.False(Shows(panel, StoryFixture.Story.InYourWords));
@@ -152,7 +152,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Pick", Buttons(panel));
-        Assert.True(Shows(panel, "For a new commander: no engineering done yet."));
+        Assert.True(Shows(panel, "1 year · For a new commander: no engineering done yet."));
         Assert.False(Shows(panel, "Buddy Love"));
         Assert.True(Shows(panel, "Core: Archivist"));
         Assert.True(Shows(panel, StoryFixture.Other.Blurb));

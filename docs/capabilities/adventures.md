@@ -271,18 +271,18 @@ time D47 runs.
 
 ### Stock stories
 
-Open **Stories** on the Adventures tab for the stock stories, each written to run for a year, a chapter
-at a time. Until stories are added to the catalog the page says "No stories yet." The list shows each
-story's title, the level of Commander it was written for, a blurb saying why you might pick it, and the
+Open **Stories** on the Adventures tab for the stock stories, each written to run for the length on its
+card, a chapter at a time. Until stories are added to the catalog the page says "No stories yet." The
+list shows each story's title, its length, the level of Commander it was written for, a blurb saying why you might pick it, and the
 Guardian core the story is written for. The level is `new` (no engineering done yet), `midrange` (some
 ship engineering done) or `endgame` (most ship and on-foot engineers unlocked, and at least one ship, suit
 and weapon fully engineered). It is a guide to choosing, not a limit: every story can be picked at any
 level, D47 does not work out your level, and where the story's backstory disagrees with your real ships,
-credits or ranks, the chapter writer goes by what is true now. A story's page adds the level's
-guideline, the tone, the story in your words and why it sends you to a Guardian beacon.
+credits or ranks, the chapter writer goes by what is true now. A story's page adds the length
+beside the level's guideline, the tone, the story in your words and why it sends you to a Guardian beacon.
 
-Each story also has a hidden layer: its secret, a beat sheet of the fifteen Save the Cat beats, fourteen
-clues (four weekly, then ten monthly), four finale lines, one to four ways it can end, and up to four
+Each story also has a hidden layer: its secret, a beat sheet of Save the Cat beats, a clue for each of its
+length's clue days, a line for each finale chapter, one to four ways it can end, and up to four
 speakers who exist only in the story. Each of those speakers has a local voice, Kokoro or Chatterbox,
 so a story never needs a paid key or sends its lines off your PC to be spoken. Every clue and finale
 line names who says it: one of those speakers, the ship's AI or the narrator. D47 keeps that layer
@@ -363,7 +363,7 @@ Resume the Commander's running story after a pause.
 
 ### Ending a story
 
-When a stock story's fourth finale chapter is done, the story is finished and d47 posts its ending to
+When a stock story's last finale chapter is done, the story is finished and d47 posts its ending to
 Messages, said in the voice that speaks the clues, with the story's options listed under it. Open the
 message and press an option, or say "choose ending two". A story with one option takes "accept the ending".
 The answer is kept on the story, and the option's closing line is said and posted. An option can also bring
@@ -382,23 +382,49 @@ Answer the ending of a finished story with one of its options, numbered from one
 
 ### Clues
 
-The hidden layer holds eighteen clues: fourteen spread over the year and one for each of the four finale
-chapters. The fourteen come due 7, 14, 21, 28, 60, 90, 120, 150, 180, 210, 240, 270, 300 and 330 days
-after you scan the beacon. Days while the story is paused, switched off or without Odyssey do not count.
-Each of the fourteen also waits for a play session since the last clue and for a chapter finished since
-the last clue, so no two come in one session, and a Commander back after months away gets the next clue
-in order and no more.
+Each story card has one of seven lengths, and the story is paced to it. Every story in the catalog is a
+year long. The days count from the beacon scan; days while the story is paused, switched off or without
+Odyssey do not count.
 
-The story's stage follows the clues you have had, not the calendar: act one before the beacon scan,
-Break into Two with none, Fun and Games with one to eight, Midpoint with nine, Bad Guys Close In with ten
-to twelve, All Is Lost with thirteen, and Dark Night of the Soul with fourteen. Each chapter's writer is
-told the stage and given that stage's lines from the beat sheet, and nothing from later stages.
+| Length | Clues come due on day | Finale from day | Finale chapters | Clues in all | Beat sheet |
+| --- | --- | --- | --- | --- | --- |
+| 3 days | 1 | 2 | 1 | 2 | short |
+| 1 week | 1, 3 | 5 | 2 | 4 | short |
+| 2 weeks | 2, 4, 7, 9 | 11 | 2 | 6 | short |
+| 1 month | 3, 7, 11, 15, 19 | 23 | 3 | 8 | short |
+| 3 months | 7, 14, 21, 28, 42, 56, 70 | 84 | 3 | 10 | full |
+| 6 months | 7, 14, 21, 28, 60, 90, 120, 150 | 180 | 4 | 12 | full |
+| 1 year | 7, 14, 21, 28, then every 30 days to 330 | 360 | 4 | 18 | full |
 
-The finale begins with the first chapter written once all fourteen clues are given and at least 360 days
-have passed since the beacon scan. It is four chapters, and each one's finale clue comes due as the
-chapter begins, with no wait for a day or a session. When the fourth finale chapter is done and its clue
-given, no further chapter is written: the story is finished, the Stories page shows it as **Finished**,
-and it no longer holds back any Guardian core.
+Each clue before the finale also waits for a play session since the last clue and for a chapter finished
+since the last clue, so no two come in one session, and a Commander back after months away gets the next
+clue in order and no more.
+
+The story's stage follows the clues you have had, not the calendar. It is act one before the beacon scan
+and Break into Two with no clue yet; after that, by the number of clues you have had:
+
+| Length | Fun and Games | Midpoint | Bad Guys Close In | All Is Lost | Dark Night of the Soul |
+| --- | --- | --- | --- | --- | --- |
+| 3 days | – | 1 | – | – | – |
+| 1 week | – | 1 | – | 2 | – |
+| 2 weeks | 1 | 2 | – | 3–4 | – |
+| 1 month | 1–2 | 3 | – | 4–5 | – |
+| 3 months | 1–3 | 4 | 5 | 6 | 7 |
+| 6 months | 1–4 | 5 | 6 | 7 | 8 |
+| 1 year | 1–8 | 9 | 10–12 | 13 | 14 |
+
+Each chapter's writer is told the stage and given that stage's lines from the beat sheet, and nothing from
+later stages. The full sheet has all fifteen beats. The short sheet has only the beats of the stages its
+length reaches: Opening Image and Catalyst in act one, Break into Two once the beacon is in reach, then
+Fun and Games, Midpoint and All Is Lost where the length has them, the Finale, and the Final Image in the
+last finale chapter. A 3-day story's beats are Opening Image, Catalyst, Break into Two, Midpoint, Finale
+and Final Image.
+
+The finale begins with the first chapter written once every clue before it is given and the finale's day
+has passed. Each finale chapter's clue comes due as the chapter begins, with no wait for a day or a
+session. When the last finale chapter is done and its clue given, no further chapter is written: the
+story is finished, the Stories page shows it as **Finished**, and it no longer holds back any Guardian
+core. A story keeps the length it was picked with.
 
 While the core aboard is stock COVAS, every clue is spoken by the
 Narrator, with narration on or off. With a Guardian core or a core you wrote aboard, a clue is spoken by

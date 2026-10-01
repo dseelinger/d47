@@ -8,7 +8,7 @@
 
 ## 1.27.0 — Stock stories begin
 
-The Adventures tab has a **Stories** button, opening the stock stories, each written to run for a year.
+The Adventures tab has a **Stories** button, opening the stock stories, each written to run for the length on its card.
 The catalog holds nine stories in this release, **My Own Mayday**, **Ride Along**, **Black Box**, **The Borrowed Callsign**, **The Far Side**, **Journeyman**, **Good Standing**, **The Omphalos** and **The Scholarship**, and more are added to it one at a time. **Journeyman** is written for a new commander and works through each of the game's main activities in turn. **Good Standing** is written for a mid-range commander who joins a cooperative of independent pilots. **The Omphalos** is written for an endgame commander with a fleet carrier, and spends a year crossing the galaxy in search of Raxxla. **The Scholarship** is written for a new commander who runs from home in a Sidewinder built from scrap and takes a pilots' charity's scholarship.
 The list shows each story's commander level (new, mid-range or endgame, a guide and not a limit) and a
 blurb saying why you might pick it, and a story's page adds the level's guideline, the tone, the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
@@ -21,7 +21,10 @@ layer D47 never shows; **Privacy and egress** says it is sent to the language mo
 A generated adventure or story chapter no longer sends you to a system that needs a permit, such as
 Shinrarta Dezhra, unless you are already in it.
 
-A stock story now runs for a year and ends. Its hidden layer gives up fourteen clues, 7, 14, 21 and 28
+A stock story now runs to its length and ends. A length is 3 days, 1 week, 2 weeks, 1 month, 3 months,
+6 months or 1 year; every story in the catalog is a year long. The Stories list shows each story's
+length before its commander level, and a story's page shows it beside the level's guideline. A year's
+hidden layer gives up fourteen clues, 7, 14, 21 and 28
 days after you scan the beacon and then every 30 days to day 330, with paused days not counted. Each
 clue also waits for a new play session and for a chapter finished since the last one, so a Commander
 back from months away gets the next clue, not several. The chapters follow the story's beat sheet by

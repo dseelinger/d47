@@ -61,7 +61,9 @@ public sealed record AdventureStory(
     string? Stage = null,
     IReadOnlyList<(string Key, string Line)>? StageBeats = null,
     int? FinaleChapter = null,
-    AdventureBeaconAway? BeaconAway = null);
+    AdventureBeaconAway? BeaconAway = null,
+    string Length = "1 year",
+    int FinaleChapters = 4);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -624,12 +626,12 @@ public sealed class AdventureGenerator(
         text.AppendLine();
         text.AppendLine(
             $"This adventure is chapter {story.Chapter.ToString(CultureInfo.InvariantCulture)} of \"{story.Title}\", a stock story the "
-            + "Commander chose. It runs for a year or more, one chapter at a time, as they play, and follows the Save the Cat beats.");
+            + $"Commander chose. It runs for {story.Length} or more, one chapter at a time, as they play, and follows the Save the Cat beats.");
 
         if (story.Stage is { Length: > 0 } stage)
         {
             text.AppendLine(story.FinaleChapter is { } finale
-                ? $"The story stands in its finale: this is finale chapter {finale.ToString(CultureInfo.InvariantCulture)} of 4{(finale >= 4 ? ", the story's last chapter" : string.Empty)}."
+                ? $"The story stands in its finale: this is finale chapter {finale.ToString(CultureInfo.InvariantCulture)} of {story.FinaleChapters.ToString(CultureInfo.InvariantCulture)}{(finale >= story.FinaleChapters ? ", the story's last chapter" : string.Empty)}."
                 : $"The story stands at {stage}. Write this chapter within that stage; do not reach a later beat.");
         }
 

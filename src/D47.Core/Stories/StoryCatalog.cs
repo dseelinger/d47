@@ -43,6 +43,12 @@ public sealed record StoryCard
 
     public string? Tone { get; init; }
 
+    /// <summary>The key of one of <see cref="StoryPacing.All"/>: how long the story runs.</summary>
+    public string? Length { get; init; }
+
+    /// <summary>How the story is paced: by its <see cref="Length"/>, or as a year for a missing or unknown key.</summary>
+    public StoryPacing Pacing => StoryPacing.Find(Length) ?? StoryPacing.OneYear;
+
     /// <summary>The id of the Guardian core the story is written for; it comes aboard at the beacon scan.</summary>
     public required string Core { get; init; }
 
@@ -82,6 +88,7 @@ public sealed record StoryCard
         var text = new StringBuilder();
         text.AppendLine(Tone is { Length: > 0 } tone ? $"{Title} — {tone}." : $"{Title}.");
         Line(text, "Genre", Genre);
+        Line(text, "Length", Pacing.Name);
         Line(text, "Written for", LevelGuideline);
         Line(text, "The core aboard once the beacon is scanned", CoreName);
         text.AppendLine($"In the Commander's words: \"{InYourWords}\"");
@@ -279,12 +286,6 @@ public sealed record StoryBeats
 /// <summary>A stock story's hidden layer. Sent to the model; never shown or logged.</summary>
 public sealed partial record StorySecret
 {
-    public const int WeeklyClues = 4;
-
-    public const int ClueCount = 14;
-
-    public const int FinaleCount = 4;
-
     public const int MostOptions = 4;
 
     public const int MostCast = 4;
@@ -297,7 +298,7 @@ public sealed partial record StorySecret
 
     public StoryBeats Beats { get; init; } = new();
 
-    /// <summary>Four weekly clues, then ten monthly.</summary>
+    /// <summary>One line for each clue day of the card's length.</summary>
     public IReadOnlyList<StoryLine> Clues { get; init; } = [];
 
     /// <summary>One line for each finale chapter.</summary>
@@ -469,6 +470,13 @@ public sealed class StoryCatalog
                 faults.Add($"{card.Id}: the blurb is empty.");
             }
 
+            var pacing = StoryPacing.Find(card.Length);
+
+            if (pacing is null)
+            {
+                faults.Add($"{card.Id}: the length is missing or is not one of {string.Join(", ", StoryPacing.All.Select(length => length.Key))}.");
+            }
+
             if (Secret(card.Id) is not { } hidden)
             {
                 faults.Add($"{card.Id}: there is no hidden entry.");
@@ -476,6 +484,11 @@ public sealed class StoryCatalog
             else
             {
                 faults.AddRange(CardFaults(card, hidden).Select(fault => $"{card.Id}: {fault}"));
+
+                if (pacing is not null)
+                {
+                    faults.AddRange(PacingFaults(hidden, pacing).Select(fault => $"{card.Id}: {fault}"));
+                }
             }
         }
 
@@ -502,21 +515,6 @@ public sealed class StoryCatalog
         if (string.IsNullOrWhiteSpace(secret.End))
         {
             yield return "end is empty.";
-        }
-
-        foreach (var (key, line) in secret.Beats.All.Where(beat => string.IsNullOrWhiteSpace(beat.Line)))
-        {
-            yield return $"beats.{key} is missing.";
-        }
-
-        if (secret.Clues.Count != StorySecret.ClueCount)
-        {
-            yield return $"clues has {secret.Clues.Count.ToString(CultureInfo.InvariantCulture)} lines, not {StorySecret.ClueCount.ToString(CultureInfo.InvariantCulture)}.";
-        }
-
-        if (secret.Finale.Count != StorySecret.FinaleCount)
-        {
-            yield return $"finale has {secret.Finale.Count.ToString(CultureInfo.InvariantCulture)} lines, not {StorySecret.FinaleCount.ToString(CultureInfo.InvariantCulture)}.";
         }
 
         if (secret.Options.Count is 0 or > StorySecret.MostOptions)
@@ -617,6 +615,36 @@ public sealed class StoryCatalog
             {
                 yield return $"{field} is spoken by {line.Speaker}, who is not the ship, the narrator or in the cast.";
             }
+        }
+    }
+
+    /// <summary>Where a hidden entry does not fit its card's length: the clue and finale counts, and exactly the length's beats.</summary>
+    private static IEnumerable<string> PacingFaults(StorySecret secret, StoryPacing pacing)
+    {
+        var keys = pacing.BeatKeys;
+
+        foreach (var (key, line) in secret.Beats.All)
+        {
+            var used = keys.Contains(key, StringComparer.Ordinal);
+
+            if (used && string.IsNullOrWhiteSpace(line))
+            {
+                yield return $"beats.{key} is missing.";
+            }
+            else if (!used && !string.IsNullOrWhiteSpace(line))
+            {
+                yield return $"beats.{key} is not a beat of a {pacing.Name} story.";
+            }
+        }
+
+        if (secret.Clues.Count != pacing.ClueDays.Count)
+        {
+            yield return $"clues has {secret.Clues.Count.ToString(CultureInfo.InvariantCulture)} lines, not {pacing.ClueDays.Count.ToString(CultureInfo.InvariantCulture)} for {pacing.Name}.";
+        }
+
+        if (secret.Finale.Count != pacing.FinaleChapters)
+        {
+            yield return $"finale has {secret.Finale.Count.ToString(CultureInfo.InvariantCulture)} lines, not {pacing.FinaleChapters.ToString(CultureInfo.InvariantCulture)} for {pacing.Name}.";
         }
     }
 

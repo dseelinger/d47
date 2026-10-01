@@ -4,14 +4,33 @@ using Xunit;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>
-/// Every stock story keeps the year format: a Save the Cat genre and a blurb on the card, and a hidden entry with
-/// fifteen beats, fourteen clues, four finale lines, one to four options and a cast of local voices.
+/// Every stock story keeps the format of its length: a Save the Cat genre, a length and a blurb on the card, and a
+/// hidden entry with the length's beats, clues and finale lines, one to four options and a cast of local voices.
 /// </summary>
-public sealed class EveryStoryKeepsTheYearFormatGateTests
+public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
 {
     private static readonly StoryCard Card = StoryFixtures.Card;
 
     private static readonly StorySecret Secret = StoryFixtures.Secret;
+
+    private static readonly StoryCard WeekCard = Card with { Length = StoryPacing.OneWeek.Key };
+
+    /// <summary>A hidden entry that fits a week: two clues, two finale lines and the short sheet's seven beats.</summary>
+    private static readonly StorySecret Week = Secret with
+    {
+        Clues = [.. Secret.Clues.Take(2)],
+        Finale = [.. Secret.Finale.Take(2)],
+        Beats = new StoryBeats
+        {
+            OpeningImage = Secret.Beats.OpeningImage,
+            Catalyst = Secret.Beats.Catalyst,
+            BreakIntoTwo = Secret.Beats.BreakIntoTwo,
+            Midpoint = Secret.Beats.Midpoint,
+            AllIsLost = Secret.Beats.AllIsLost,
+            Finale = Secret.Beats.Finale,
+            FinalImage = Secret.Beats.FinalImage,
+        },
+    };
 
     private static readonly StorySpeaker Speaker = Secret.Cast[0];
 
@@ -20,6 +39,11 @@ public sealed class EveryStoryKeepsTheYearFormatGateTests
         "genre" => ("genre", Card with { Genre = "Western" }, Secret),
         "no-level" => ("the level", Card with { Level = "" }, Secret),
         "veteran-level" => ("the level", Card with { Level = "veteran" }, Secret),
+        "no-length" => ("the length", Card with { Length = null }, Secret),
+        "two-day-length" => ("the length", Card with { Length = "2-days" }, Secret),
+        "week-with-fourteen-clues" => ("clues has 14 lines, not 2", WeekCard, Week with { Clues = Secret.Clues }),
+        "week-with-a-b-story" => ("beats.bStory is not a beat", WeekCard, Week with { Beats = Week.Beats with { BStory = "A dock worker." } }),
+        "week-without-its-midpoint" => ("beats.midpoint is missing", WeekCard, Week with { Beats = Week.Beats with { Midpoint = null } }),
         "no-core" => ("the core is missing", Card with { Core = "" }, Secret),
         "unknown-core" => ("the core is missing", Card with { Core = "nobody" }, Secret),
         "stock-core" => ("the core is missing", Card with { Core = "covas" }, Secret),
@@ -52,6 +76,14 @@ public sealed class EveryStoryKeepsTheYearFormatGateTests
         Assert.Empty(new StoryCatalog([Card], () => [Secret]).Faults());
 
     [Fact]
+    public void AWeekLongStoryWithAWeeksLinesAndBeatsKeepsTheFormat() =>
+        Assert.Empty(new StoryCatalog([WeekCard], () => [Week]).Faults());
+
+    [Fact]
+    public void EveryShippedCardIsAYear() =>
+        Assert.All(StoryCatalog.Default.Cards, card => Assert.Equal(StoryPacing.OneYear.Key, card.Length));
+
+    [Fact]
     public void AChatterboxSpeakerMayUseTheCommandersOwnVoice() =>
         Assert.Empty(new StoryCatalog(
             [Card],
@@ -61,6 +93,11 @@ public sealed class EveryStoryKeepsTheYearFormatGateTests
     [InlineData("genre")]
     [InlineData("no-level")]
     [InlineData("veteran-level")]
+    [InlineData("no-length")]
+    [InlineData("two-day-length")]
+    [InlineData("week-with-fourteen-clues")]
+    [InlineData("week-with-a-b-story")]
+    [InlineData("week-without-its-midpoint")]
     [InlineData("no-core")]
     [InlineData("unknown-core")]
     [InlineData("stock-core")]

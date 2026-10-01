@@ -40,7 +40,7 @@ public sealed class AClueWaitsForItsDayTests
 
     [Fact]
     public void TheFourteenCluesComeOverTheYear() =>
-        Assert.Equal([7, 14, 21, 28, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], StoryClues.Days);
+        Assert.Equal([7, 14, 21, 28, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], StoryPacing.OneYear.ClueDays);
 
     [Fact]
     public void TheNextClueWaitsForItsDayAndANewSession()

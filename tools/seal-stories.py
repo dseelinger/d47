@@ -11,10 +11,11 @@ Decode writes the hidden layer as indented JSON and refuses a path inside the re
 decoded text is never committed. Edit it there, then encode it back. Adding a story is one entry
 here and one in `StoryCatalog.json`, sharing an `id`.
 
-Each entry: {"id", "secret", "end", "beats", "clues", "finale", "options", "cast"}.
-  beats    one non-empty line for each of the 15 Save the Cat beats, keyed as in BEATS.
-  clues    exactly 14 lines: 4 weekly, then 10 monthly.
-  finale   exactly 4 lines, one for each finale chapter.
+Each entry: {"id", "secret", "end", "beats", "clues", "finale", "options", "cast"}, paced by the
+"length" on its card, one of the keys of LENGTHS.
+  beats    one non-empty line for each beat of the length's sheet, keyed as in BEATS, and no other.
+  clues    exactly one line for each of the length's clue days.
+  finale   exactly one line for each of the length's finale chapters.
   options  1 to 4 endings, each {"id", "label", "after", "add"}; "add" is a list of persona ids.
   cast     0 to 4 speakers, each {"id", "name", "who", "provider", "voice"}; provider is kokoro or
            chatterbox, and voice "own" is chatterbox only.
@@ -23,7 +24,7 @@ Each entry: {"id", "secret", "end", "beats", "clues", "finale", "options", "cast
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
            such a speaker as {name:<cast-id>}, and the card names neither the token nor either name.
 Every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
-The gate (EveryStoryKeepsTheYearFormatGateTests) checks the same rules, and the persona and voice ids.
+The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
 import base64
 import json
@@ -41,8 +42,17 @@ BEATS = (
     "openingImage", "themeStated", "setUp", "catalyst", "debate", "breakIntoTwo", "bStory", "funAndGames",
     "midpoint", "badGuysCloseIn", "allIsLost", "darkNightOfTheSoul", "breakIntoThree", "finale", "finalImage",
 )
-CLUES = 14
-FINALE = 4
+SHORT = ("openingImage", "catalyst", "breakIntoTwo", "midpoint", "finale", "finalImage")
+# length: (clues, finale chapters, beats), as StoryPacing in src/D47.Core/Stories/StoryPacing.cs.
+LENGTHS = {
+    "3-days": (1, 1, SHORT),
+    "1-week": (2, 2, SHORT + ("allIsLost",)),
+    "2-weeks": (4, 2, SHORT + ("funAndGames", "allIsLost")),
+    "1-month": (5, 3, SHORT + ("funAndGames", "allIsLost")),
+    "3-months": (7, 3, BEATS),
+    "6-months": (8, 4, BEATS),
+    "1-year": (14, 4, BEATS),
+}
 PROVIDERS = ("kokoro", "chatterbox")
 SPEAKERS = ("ship", "narrator")
 VERSIONS = ("forMan", "forWoman")
@@ -85,16 +95,22 @@ def voice_fault(name: str, provider, voice) -> list:
 def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     found = [f"no {field}" for field in FIELDS if not text(entry.get(field))]
 
+    length = (card or {}).get("length")
+    if length not in LENGTHS:
+        found.append(f"the card's length is {length}, not one of {', '.join(LENGTHS)}")
+    clue_count, finale_count, sheet = LENGTHS.get(length, LENGTHS["1-year"])
+
     beats = entry.get("beats") or {}
-    found += [f"no beat {beat}" for beat in BEATS if not text(beats.get(beat))]
+    found += [f"no beat {beat}" for beat in sheet if not text(beats.get(beat))]
+    found += [f"beat {beat} is not a beat of a {length} story" for beat in BEATS if beat not in sheet and text(beats.get(beat))]
 
     clues = entry.get("clues") or []
-    if len(clues) != CLUES:
-        found.append(f"{len(clues)} clues, not {CLUES}")
+    if len(clues) != clue_count:
+        found.append(f"{len(clues)} clues, not {clue_count}")
 
     finale = entry.get("finale") or []
-    if len(finale) != FINALE:
-        found.append(f"{len(finale)} finale lines, not {FINALE}")
+    if len(finale) != finale_count:
+        found.append(f"{len(finale)} finale lines, not {finale_count}")
 
     options = entry.get("options") or []
     if not 1 <= len(options) <= 4:

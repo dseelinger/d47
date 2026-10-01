@@ -133,6 +133,7 @@ public sealed class StoryDirector(
             Id = card.Id,
             Title = card.Title,
             PublicLayer = card.Describe(),
+            Length = card.Pacing.Key,
             PickedAt = now,
         };
 
@@ -239,7 +240,7 @@ public sealed class StoryDirector(
             return null;
         }
 
-        if (story.FinaleChapter >= StorySecret.FinaleCount)
+        if (story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
             if (StoryClues.AtTheEnd(story))
             {
@@ -388,7 +389,7 @@ public sealed class StoryDirector(
                && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
                && story.CluesGiven == due.Index
                && Hidden(story.Id) is { } secret
-               && StoryClues.Text(secret, due.Index) is { Length: > 0 } clue
+               && StoryClues.Text(secret, story.Pacing, due.Index) is { Length: > 0 } clue
             ? (story.Title, clue)
             : null;
     }
@@ -553,7 +554,7 @@ public sealed class StoryDirector(
             return $"The hidden layer of {story.Title} is missing from this build.";
         }
 
-        if (story.FinaleChapter >= StorySecret.FinaleCount)
+        if (story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
             return $"{story.Title} has had its last chapter.";
         }
@@ -589,9 +590,11 @@ public sealed class StoryDirector(
                 reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System) : null,
                 catalog.Find(story.Id)?.Level,
                 Stage(stage),
-                StoryClues.Beats(secret.Beats, stage, reach?.InReach != false, finaleChapter),
+                StoryClues.Beats(secret.Beats, story.Pacing, stage, reach?.InReach != false, finaleChapter),
                 finaleChapter,
-                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null));
+                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
+                story.Pacing.Name,
+                story.Pacing.FinaleChapters));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 

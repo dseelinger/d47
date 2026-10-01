@@ -77,5 +77,5 @@ public sealed class TheStageFollowsTheCluesTests
     }
 
     private static string[] Keys(StoryStage stage, bool inReach = true, int? finale = null) =>
-        [.. StoryClues.Beats(Secret.Beats, stage, inReach, finale).Select(beat => beat.Key)];
+        [.. StoryClues.Beats(Secret.Beats, StoryPacing.OneYear, stage, inReach, finale).Select(beat => beat.Key)];
 }

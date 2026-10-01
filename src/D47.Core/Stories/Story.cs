@@ -18,7 +18,7 @@ public enum StoryState
     /// <summary>Stopped by Abandon.</summary>
     Ended,
 
-    /// <summary>Its fourth finale chapter is done.</summary>
+    /// <summary>Its last finale chapter is done.</summary>
     Finished,
 }
 
@@ -34,6 +34,13 @@ public sealed record Story
 
     /// <summary>The card's public layer as it read when the story was picked.</summary>
     public required string PublicLayer { get; init; }
+
+    /// <summary>The card's length key when the story was picked; a story saved without one is a year.</summary>
+    public string Length { get; init; } = StoryPacing.OneYear.Key;
+
+    /// <summary>How the story is paced: by its <see cref="Length"/>, or as a year for a key this build does not know.</summary>
+    [JsonIgnore]
+    public StoryPacing Pacing => StoryPacing.Find(Length) ?? StoryPacing.OneYear;
 
     /// <summary>The chapters' adventure keys, oldest first.</summary>
     public IReadOnlyList<string> Chapters { get; init; } = [];
@@ -81,7 +88,7 @@ public sealed record Story
     /// <summary>The number of the first finale chapter, once the finale has begun.</summary>
     public int? FinaleFrom { get; init; }
 
-    /// <summary>Which finale chapter, 1 to 4, is the current one, or null outside the finale.</summary>
+    /// <summary>Which finale chapter, counted from 1, is the current one, or null outside the finale.</summary>
     [JsonIgnore]
     public int? FinaleChapter => FinaleFrom is { } from && Chapters.Count >= from ? Chapters.Count - from + 1 : null;
 
