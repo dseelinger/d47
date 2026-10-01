@@ -24,31 +24,16 @@ public sealed class NoSealedTextAppearsInTheTreeTests
         foreach (var secret in catalog.Secrets)
         {
             Assert.True(catalog.Find(secret.Id) is not null, $"The hidden entry {secret.Id} has no public card.");
-
-            foreach (var (field, text) in Fields(secret))
-            {
-                Assert.False(string.IsNullOrWhiteSpace(text), $"The hidden entry {secret.Id} has no {field}.");
-            }
         }
 
         Assert.All(catalog.Cards, card => Assert.True(catalog.Secret(card.Id) is not null, $"The card {card.Id} has no hidden entry."));
     }
 
     [Fact]
-    public void ACardThatNeedsAnUntrackedEventIsNotOffered()
-    {
-        var waiting = StoryFixtures.Other with { Requires = "thargoids" };
-        var catalog = new StoryCatalog([StoryFixtures.Card, waiting], () => []);
-
-        Assert.Equal(StoryFixtures.Id, Assert.Single(catalog.Offered).Id);
-        Assert.NotNull(catalog.Find(waiting.Id));
-    }
-
-    [Fact]
     public void NoHiddenSentenceIsWrittenAnywhereInTheTree()
     {
         var sentences = StoryCatalog.Default.Secrets
-            .SelectMany(secret => Fields(secret).SelectMany(field => Sentences(field.Text).Select(sentence => (secret.Id, field.Name, sentence))))
+            .SelectMany(secret => secret.Texts().SelectMany(field => Sentences(field.Text).Select(sentence => (secret.Id, field.Field, sentence))))
             .ToList();
 
         var root = RepositoryRoot();
@@ -69,15 +54,6 @@ public sealed class NoSealedTextAppearsInTheTreeTests
 
         Assert.True(leaks.Count == 0, string.Join(Environment.NewLine, leaks.Distinct()));
     }
-
-    private static IEnumerable<(string Name, string Text)> Fields(StorySecret secret) =>
-    [
-        ("secret", secret.Secret),
-        ("weeks", secret.Weeks),
-        ("months", secret.Months),
-        ("year", secret.Year),
-        ("end", secret.End),
-    ];
 
     /// <summary>Each sentence long enough to be distinctive, so a quote split across lines is still found.</summary>
     private static IEnumerable<string> Sentences(string text) =>

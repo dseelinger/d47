@@ -22,7 +22,7 @@ public sealed class EverySpeakerReadsTheSameHiddenStoryTests
 
         Assert.NotNull(brief);
         Assert.Contains(brief, fixtures.Provider.Requests[0].Prompt.History[0].Text);
-        Assert.DoesNotContain(Secret.Weeks, brief);
+        Assert.DoesNotContain(Secret.Clues[0].Text, brief);
     }
 
     [Fact]

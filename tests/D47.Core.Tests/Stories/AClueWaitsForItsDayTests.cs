@@ -54,13 +54,13 @@ public sealed class AClueWaitsForItsDayTests
 
         Assert.Contains(Secret.Secret, before);
         Assert.Contains(StoryClues.Rule, before);
-        Assert.DoesNotContain(Secret.Weeks, before);
+        Assert.DoesNotContain(Secret.Clues[0].Text, before);
 
         var after = StoryClues.Brief(Scanned with { CluesGiven = 1 }, Secret);
 
-        Assert.Contains(Secret.Weeks, after);
-        Assert.DoesNotContain(Secret.Months, after);
-        Assert.DoesNotContain(Secret.Year, after);
+        Assert.Contains(Secret.Clues[0].Text, after);
+        Assert.DoesNotContain(Secret.Clues[1].Text, after);
+        Assert.DoesNotContain(Secret.Clues[2].Text, after);
     }
 
     [Fact]
@@ -79,12 +79,12 @@ public sealed class AClueWaitsForItsDayTests
         var due = fixtures.Director.ClueDue("F1", scan.AddDays(7));
 
         Assert.Equal(new StoryClueDue(Id, 0), due);
-        Assert.Equal((Card.Title, Secret.Weeks), fixtures.Director.Clue("F1", due!));
-        Assert.DoesNotContain(Secret.Weeks, fixtures.Director.HiddenBrief("F1")!);
+        Assert.Equal((Card.Title, Secret.Clues[0].Text), fixtures.Director.Clue("F1", due!));
+        Assert.DoesNotContain(Secret.Clues[0].Text, fixtures.Director.HiddenBrief("F1")!);
 
         fixtures.Director.ClueGiven("F1", due!);
 
-        Assert.Contains(Secret.Weeks, fixtures.Director.HiddenBrief("F1")!);
+        Assert.Contains(Secret.Clues[0].Text, fixtures.Director.HiddenBrief("F1")!);
         Assert.Null(fixtures.Director.Clue("F1", due!));
         Assert.Null(fixtures.Director.ClueDue("F1", scan.AddDays(61)));
 

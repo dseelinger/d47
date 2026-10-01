@@ -56,7 +56,7 @@ public sealed class StoryDirector(
     /// <summary>Starts a story when none is current: sets the Backstory and writes chapter one. Returns a refusal or null.</summary>
     public Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        if (catalog.Offered.FirstOrDefault(card => string.Equals(card.Id, id, StringComparison.OrdinalIgnoreCase)) is not { } card)
+        if (catalog.Find(id) is not { } card)
         {
             return Task.FromResult<string?>("There is no story by that name.");
         }

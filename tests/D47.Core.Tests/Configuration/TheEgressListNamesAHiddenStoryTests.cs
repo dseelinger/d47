@@ -32,7 +32,7 @@ public class TheEgressListNamesAHiddenStoryTests
         {
             foreach (var secret in StoryCatalog.Default.Secrets)
             {
-                foreach (var field in new[] { secret.Secret, secret.Weeks, secret.Months, secret.Year, secret.End })
+                foreach (var (_, field) in secret.Texts().Where(text => text.Text.Length > 0))
                 {
                     Assert.True(!what.Contains(field, StringComparison.OrdinalIgnoreCase), $"The entry quotes hidden text from {secret.Id}.");
                 }

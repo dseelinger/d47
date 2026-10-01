@@ -38,18 +38,12 @@ public static class StoryClues
         return new StoryClueDue(story.Id, story.CluesGiven);
     }
 
-    /// <summary>The clue at <paramref name="index"/>, oldest first.</summary>
+    /// <summary>The text of the clue at <paramref name="index"/>, oldest first.</summary>
     public static string? Text(StorySecret secret, int index)
     {
         ArgumentNullException.ThrowIfNull(secret);
 
-        return index switch
-        {
-            0 => secret.Weeks,
-            1 => secret.Months,
-            2 => secret.Year,
-            _ => null,
-        };
+        return secret.Clues.ElementAtOrDefault(index)?.Text;
     }
 
     /// <summary>The hidden layer as the narrator, the cores, chatter and the chapter writer all read it.</summary>

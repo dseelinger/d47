@@ -266,10 +266,19 @@ time D47 runs.
 
 ### Stock stories
 
-Open **Stories** on the Adventures tab for the stock stories, each written to run for months, a chapter
-at a time. The list is empty until stories are added to the catalog. Each card shows the story in your words and why it sends you to a Guardian beacon. Each story also has
-a hidden layer of twists. D47 keeps that layer sealed, never shows it, and sends it to the language
-model so the chapters can hint at it.
+Open **Stories** on the Adventures tab for the stock stories, each written to run for a year, a chapter
+at a time. Until stories are added to the catalog the page says "No stories yet." The list shows each
+story's title, its Save the Cat genre (Golden Fleece, Dude with a Problem, Whydunit, Buddy Love, Rites
+of Passage, Fool Triumphant, Institutionalized, Out of the Bottle or Superhero), its tone, and a blurb
+saying why you might pick it. A story's page adds the story in your words and why it sends you to a
+Guardian beacon.
+
+Each story also has a hidden layer: its secret, a beat sheet of the fifteen Save the Cat beats, fourteen
+clues (four weekly, then ten monthly), four finale lines, one to four ways it can end, and up to four
+speakers who exist only in the story. Each of those speakers has a local voice, Kokoro or Chatterbox,
+so a story never needs a paid key or sends its lines off your PC to be spoken. Every clue and finale
+line names who says it: one of those speakers, the ship's AI or the narrator. D47 keeps that layer
+sealed, never shows it, and sends it to the language model so the chapters can hint at it.
 
 **Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then
 begins. Chapter one always ends with an arrival at the Guardian beacon system nearest to you, where you

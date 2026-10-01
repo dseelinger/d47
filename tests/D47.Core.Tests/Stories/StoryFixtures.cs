@@ -23,21 +23,49 @@ internal sealed class StoryFixtures : IDisposable
         Id = Id,
         Number = 1,
         Title = "The Test Story",
+        Genre = "Whydunit",
         Tone = "Quiet test",
+        Blurb = "A voice in the cockpit knows a song it should not.",
         InYourWords = "I bought a Sidewinder with the last of my credits.",
         Beacon = "The beacon calls.",
     };
 
     public static readonly StoryCard Other = Card with { Id = "the-other-story", Number = 2, Title = "The Other Story", InYourWords = "I was somebody else." };
 
+    /// <summary>A hidden layer that keeps every rule of the format.</summary>
     public static readonly StorySecret Secret = new()
     {
         Id = Id,
         Secret = "The ship's voice is the Commander's sister.",
-        Weeks = "She hums a song from home.",
-        Months = "She knows the old address.",
-        Year = "She says the name.",
         End = "Keep her or let her go.",
+        Beats = new StoryBeats
+        {
+            OpeningImage = "A ship that hums.",
+            ThemeStated = "Who is the voice?",
+            SetUp = "A new pilot.",
+            Catalyst = "The song.",
+            Debate = "Ignore it?",
+            BreakIntoTwo = "Ask the voice.",
+            BStory = "A dock worker.",
+            FunAndGames = "Old ports.",
+            Midpoint = "The address.",
+            BadGuysCloseIn = "A buyer for the ship.",
+            AllIsLost = "The voice goes quiet.",
+            DarkNightOfTheSoul = "Alone in the black.",
+            BreakIntoThree = "The beacon.",
+            Finale = "The name.",
+            FinalImage = "Two voices hum.",
+        },
+        Clues =
+        [
+            new("She hums a song from home.", StorySpeaker.Ship),
+            new("She knows the old address.", StorySpeaker.Narrator),
+            new("She says the name.", "dock-hand"),
+            .. Enumerable.Range(4, 11).Select(at => new StoryLine($"Clue {at}.", StorySpeaker.Ship)),
+        ],
+        Finale = [.. Enumerable.Range(1, 4).Select(at => new StoryLine($"Finale {at}.", StorySpeaker.Narrator))],
+        Options = [new StoryOption { Id = "keep", Label = "Keep her", After = "She stays.", Add = ["warden"] }],
+        Cast = [new StorySpeaker { Id = "dock-hand", Name = "Ren", Who = "A tired dock hand, short words.", Provider = StorySpeaker.Kokoro, Voice = "bm_george" }],
     };
 
     public const string Spine = """

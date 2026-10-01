@@ -16,7 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Stories page lists the offered cards and the running story, a card reads in full with Pick or Switch,
+/// The Stories page lists every card by title, genre and blurb, and the running story, a card reads in full with Pick or Switch,
 /// and no hidden sentence is drawn anywhere. Captures are saved to <see cref="TestSurface.CaptureDirectory"/>.
 /// </summary>
 public class TheStoriesPageShowsOnlyThePublicLayerTests
@@ -25,7 +25,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
     private sealed record Surface(Window Window, PanelView Panel);
 
-    private static Surface Open(bool running)
+    private static Surface Open(bool running, StoryCatalog? catalog = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-stories-capture"));
         paths.EnsureCreated();
@@ -73,7 +73,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
+            stories, book, catalog ?? StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
@@ -122,7 +122,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         foreach (var secret in StoryFixture.Catalog.Secrets)
         {
-            foreach (var field in new[] { secret.Secret, secret.Weeks, secret.Months, secret.Year, secret.End })
+            foreach (var (_, field) in secret.Texts().Where(text => text.Text.Length > 0))
             {
                 Assert.True(!drawn.Contains(field, StringComparison.OrdinalIgnoreCase), $"The page draws hidden text from {secret.Id}.");
             }
@@ -138,7 +138,9 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var panel = surface.Panel;
         Assert.True(Shows(panel, "The Test Story"));
         Assert.True(Shows(panel, "The Other Story"));
-        Assert.False(Shows(panel, "The Waiting Story"));
+        Assert.True(Shows(panel, "Whydunit · Quiet test"));
+        Assert.True(Shows(panel, StoryFixture.Story.Blurb));
+        Assert.False(Shows(panel, StoryFixture.Story.InYourWords));
         NoHiddenSentence(panel);
         Save(surface.Window, "stories-root.png");
 
@@ -146,9 +148,25 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Pick", Buttons(panel));
+        Assert.True(Shows(panel, "Buddy Love"));
+        Assert.True(Shows(panel, StoryFixture.Other.Blurb));
+        Assert.True(Shows(panel, "In your words"));
         Assert.True(Shows(panel, "The beacon"));
         NoHiddenSentence(panel);
         Save(surface.Window, "stories-card.png");
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void WithNoStoriesThePageSaysSo()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var surface = Open(running: false, StoryFixture.Empty);
+
+        Assert.True(Shows(surface.Panel, "No stories yet."));
+        Save(surface.Window, "stories-empty.png");
 
         surface.Window.Close();
     }

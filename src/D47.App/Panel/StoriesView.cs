@@ -91,12 +91,17 @@ public sealed class StoriesView : UserControl
             _list.Children.Add(CurrentCard(current));
         }
 
-        foreach (var card in _director.Catalog.Offered.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)))
+        if (current is null && _director.Catalog.Cards.Count == 0)
+        {
+            _list.Children.Add(AdventuresPage.Muted("No stories yet."));
+        }
+
+        foreach (var card in _director.Catalog.Cards.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)))
         {
             var row = Row(
                 AdventuresPage.RowName(card.Title),
-                AdventuresPage.RowSecondary(card.Tone ?? string.Empty),
-                AdventuresPage.Text(card.InYourWords, TypeScale.Body));
+                AdventuresPage.RowSecondary(card.Tone is { Length: > 0 } tone ? $"{card.Genre} · {tone}" : card.Genre),
+                AdventuresPage.Text(card.Blurb, TypeScale.Body));
 
             var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title);
             row.PointerPressed += (_, _) => _nav.Drill(crumb);
@@ -190,7 +195,7 @@ public sealed class StoriesView : UserControl
     {
         var page = new StackPanel { Spacing = 8, Margin = new Thickness(14) };
 
-        if (_director.Catalog.Offered.FirstOrDefault(card => string.Equals(card.Id, id, StringComparison.OrdinalIgnoreCase)) is not { } card)
+        if (_director.Catalog.Find(id) is not { } card)
         {
             page.Children.Add(AdventuresPage.Muted("That story is not on offer."));
             return page;
@@ -200,11 +205,14 @@ public sealed class StoriesView : UserControl
 
         page.Children.Add(RoutingKit.Title(card.Title).Row);
 
+        page.Children.Add(AdventuresPage.Muted(card.Genre));
+
         if (card.Tone is { Length: > 0 } tone)
         {
             page.Children.Add(AdventuresPage.Muted(tone));
         }
 
+        page.Children.Add(AdventuresPage.Text(card.Blurb, TypeScale.Body));
         page.Children.Add(Labelled("In your words", card.InYourWords));
         page.Children.Add(Labelled("The beacon", card.Beacon));
 
