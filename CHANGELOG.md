@@ -26,7 +26,7 @@ beacon, the second after 60 and the third after 365, with paused days not counte
 in any four play sessions. The Narrator speaks a clue when narration is on, and otherwise the core
 aboard does; each is also posted to Messages. The Narrator, the core, invented chatter, scene chatter
 and the chapter writer now all read the same hidden layer and hint at it without stating it. A story
-chapter's page no longer shows its premise, turn or ending, and has no **Edit** button.
+chapter's page no longer shows its premise, turn or ending, and has no **Edit**, **Remove** or **Write the next chapter** button; **Abandon** is the way to stop one, and **Begin again** resumes it. **Remove** on any adventure now asks before it deletes.
 
 You can pause a running story. Clear **Story on** on the Stories page or the mini panel, or say "pause the
 story", and no beat is said, no clue or nudge is owed, nothing from the story is posted to Messages and

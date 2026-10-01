@@ -452,50 +452,28 @@ public sealed class AdventuresPage : UserControl
     /// <summary>Whether the page may show an adventure's Premise, Turn and Ending: never for a stock story's chapter.</summary>
     internal static bool ShowsSpine(Adventure adventure) => adventure.StoryId is null;
 
-    private void EditAction(WrapPanel bar, Adventure adventure)
-    {
-        if (ShowsSpine(adventure))
-        {
-            bar.Children.Add(Action("Edit", () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })));
-        }
-    }
-
     private Control ReadingBar(AdventureStanding standing)
     {
         var adventure = standing.Adventure;
         var bar = Buttons();
         bar.Margin = new Thickness(0, 10, 0, 0);
 
-        if (adventure.IsDraft)
+        foreach (var label in standing.ReadingButtons())
         {
-            bar.Children.Add(Action("Accept", () => Begin(adventure.Key)));
-            bar.Children.Add(Action("Change something", () => Revise(adventure)));
-            bar.Children.Add(Action("Decline", () => Remove(adventure, confirm: false), destructive: true));
-            return bar;
+            bar.Children.Add(label switch
+            {
+                "Accept" or "Begin" or "Begin again" => Action(label, () => Begin(adventure.Key)),
+                "Change something" => Action(label, () => Revise(adventure)),
+                "Decline" => Action(label, () => Remove(adventure, confirm: false), destructive: true),
+                "Abandon" => Action(label, () => Abandon(adventure)),
+                "Edit" when adventure.IsActive => Action(label, () => _surface.Say(
+                    $"{adventure.Name} is under way. Abandon it first, change it, and begin again.")),
+                "Edit" => Action(label, () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })),
+                "Write the next chapter" => Action(label, () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))),
+                _ => Action(label, () => Remove(adventure, confirm: true), destructive: true),
+            });
         }
 
-        if (!adventure.IsBegun)
-        {
-            bar.Children.Add(Action("Begin", () => Begin(adventure.Key)));
-            EditAction(bar, adventure);
-        }
-        else if (adventure.IsAbandoned)
-        {
-            bar.Children.Add(Action("Begin again", () => Begin(adventure.Key)));
-            EditAction(bar, adventure);
-        }
-        else if (!standing.IsDone)
-        {
-            bar.Children.Add(Action("Abandon", () => Abandon(adventure)));
-            bar.Children.Add(Action("Edit", () => _surface.Say(
-                $"{adventure.Name} is under way. Abandon it first, change it, and begin again.")));
-        }
-        else
-        {
-            bar.Children.Add(Action("Write the next chapter", () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))));
-        }
-
-        bar.Children.Add(Action("Remove", () => Remove(adventure, confirm: adventure.IsBegun), destructive: true));
         return bar;
     }
 

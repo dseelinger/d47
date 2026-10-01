@@ -41,6 +41,49 @@ public sealed record AdventureStanding
 
     public bool EndingReached => IsDone;
 
+    /// <summary>The labels of the buttons on the reading page, in order. A stock story's chapter has no Edit, Remove or Write the next chapter.</summary>
+    public IReadOnlyList<string> ReadingButtons()
+    {
+        var adventure = Adventure;
+
+        if (adventure.IsDraft)
+        {
+            return ["Accept", "Change something", "Decline"];
+        }
+
+        var story = adventure.StoryId is not null;
+        List<string> buttons = [];
+
+        if (!adventure.IsBegun)
+        {
+            buttons.Add("Begin");
+        }
+        else if (adventure.IsAbandoned)
+        {
+            buttons.Add("Begin again");
+        }
+        else if (!IsDone)
+        {
+            buttons.Add("Abandon");
+        }
+        else if (!story)
+        {
+            buttons.Add("Write the next chapter");
+        }
+
+        if (!story)
+        {
+            if (!adventure.IsBegun || adventure.IsAbandoned || !IsDone)
+            {
+                buttons.Add("Edit");
+            }
+
+            buttons.Add("Remove");
+        }
+
+        return buttons;
+    }
+
     /// <summary>How far through, as a count (asked for 2026-08-22).</summary>
     public string? Step()
     {
