@@ -34,6 +34,8 @@ Narration and chatter carry on as before, and your Backstory and Guardian cores 
 you visit while the story is off does not count; its beat waits for the next visit. The switch lasts
 across restarts. Say "resume the story" or tick **Story on** to bring it back.
 
+The local voice says "story", "stories", "storyline" and "backstory" with the vowel of "or", not "stawry".
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

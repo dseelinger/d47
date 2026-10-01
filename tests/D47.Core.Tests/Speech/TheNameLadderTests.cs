@@ -164,6 +164,18 @@ public class TheNameLadderTests
         Assert.NotEqual("θɹuː", Rules.ToPhonemes("through"));
     }
 
+    /// <summary>The shipped dictionary's reading of story is said "stawry", so the correction wins over it.</summary>
+    [Theory]
+    [InlineData("story", "stˈɔɹi")]
+    [InlineData("Stories.", "stˈɔɹiz.")]
+    [InlineData("backstory", "bˈækstˌɔɹi")]
+    public void StoryIsNotSaidStawry(string text, string said)
+    {
+        var withDictionary = new Phonemiser(new OneWord(text.TrimEnd('.'), "stˈoːɹi"));
+
+        Assert.Equal(said, withDictionary.ToPhonemes(text));
+    }
+
     private sealed class OneWord(string word, string ipa) : IPronunciationDictionary
     {
         public string? Lookup(string looked) =>

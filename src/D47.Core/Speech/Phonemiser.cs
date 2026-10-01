@@ -202,8 +202,7 @@ public sealed class Phonemiser(
     private (string Ipa, Reading Reading) Segment(string segment, SpeechAccent accent)
     {
         // 1.
-        if (segment.All(char.IsLetter) &&
-            dictionary?.Lookup(segment.ToLowerInvariant()) is { Length: > 0 } known)
+        if (segment.All(char.IsLetter) && Known(segment) is { Length: > 0 } known)
         {
             return Fell(segment, PhonemeRung.Dictionary, Weakened(segment, known), Reading.Spoken);
         }
@@ -284,13 +283,32 @@ public sealed class Phonemiser(
             return null;
         }
 
-        if (dictionary?.Lookup(stem.ToLowerInvariant()) is { Length: > 0 } known)
-        {
-            return known;
-        }
-
-        return LetterToSound.Pronounce(stem);
+        return Known(stem) ?? LetterToSound.Pronounce(stem);
     }
+
+    /// <summary>
+    /// Words the shipped dictionary reads with <c>oː</c>, which Kokoro says as "stawry"; these are the
+    /// readings Kokoro was trained on.
+    /// </summary>
+    private static readonly Dictionary<string, string> Corrected = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["story"] = "stˈɔɹi",
+        ["stories"] = "stˈɔɹiz",
+        ["storied"] = "stˈɔɹid",
+        ["storyline"] = "stˈɔɹilˌaɪn",
+        ["storylines"] = "stˈɔɹilˌaɪnz",
+        ["storyteller"] = "stˈɔɹitˌɛlɚ",
+        ["storytellers"] = "stˈɔɹitˌɛlɚz",
+        ["storytelling"] = "stˈɔɹitˌɛlɪŋ",
+        ["backstory"] = "bˈækstˌɔɹi",
+        ["backstories"] = "bˈækstˌɔɹiz",
+    };
+
+    /// <summary>A word's reading from the corrections, then the dictionary, or null where neither holds it.</summary>
+    private string? Known(string word) =>
+        Corrected.GetValueOrDefault(word) is { } corrected
+            ? corrected
+            : dictionary?.Lookup(word.ToLowerInvariant()) is { Length: > 0 } known ? known : null;
 
     /// <summary>
     /// The number words back through the ladder, so eighty-five is said the way the dictionary says it
