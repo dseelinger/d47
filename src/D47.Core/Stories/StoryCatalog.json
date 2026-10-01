@@ -28,5 +28,25 @@
     "blurb": "The yard sold you the cheapest Sidewinder on the lot, a rebuild with a clean title. They missed the flight recorder. Its last pilot went missing eleven months ago, and a well-dressed man named Selden Pryce will pay you on delivery to find out why. Every lead takes you somewhere new: a salvage field, a scrap yard, a distress call nobody answered. Every report you send him, he reads very carefully.",
     "inYourWords": "I bought the cheapest Sidewinder on the lot, with a clean title and a few hundred credits left over. The yard said it was wiped by the book. They missed the flight recorder. Every time I start the drive it plays the same four seconds: a woman's voice, calm, reading out a set of coordinates and her name. Ines Harrow. Nobody has seen her in eleven months.",
     "beacon": "The coordinates on the recorder are a Guardian beacon. It was the last place Ines Harrow logged before she went quiet, and the first place anyone looking for her would go."
+  },
+  {
+    "id": "the-borrowed-callsign",
+    "number": 4,
+    "title": "The Borrowed Callsign",
+    "genre": "Fool Triumphant",
+    "tone": "Warm, quick comedy of errors",
+    "blurb": "The registry gave your new Sidewinder a callsign off the recycling list: Lark. By the end of the day dock crews are waving you to the front of the queue, pirates are plotting routes around you, and a reporter has asked for your side of a battle you were nowhere near. Lark is the most famous pilot on the frontier. You have four hundred credits and have never won a fight. People keep calling for Lark anyway, and somebody has to answer.",
+    "inYourWords": "I bought the cheapest Sidewinder in the yard, and the registry gave it a callsign off the recycling list. Lark. The clerk, Ruth Pask, read it back twice and went pale. Since then I have been given free fuel, two offers of marriage and one death threat. I have never won a fight in my life. I have decided not to mention that.",
+    "beacon": "The last entry in Lark's public log is a data-link scan of a Guardian beacon. If people are going to call me Lark, I should know what Lark went out there for."
+  },
+  {
+    "id": "the-far-side",
+    "number": 5,
+    "title": "The Far Side",
+    "genre": "Buddy Love",
+    "tone": "Wry, tender, long-distance friendship",
+    "blurb": "Nico answered your post on the jobs board with a terrible joke and a good offer: split the contracts, you fly the cargo in, Nico flies it out. Nico is funny, generous with advice, and always somewhere you have just missed. A year of shared jobs and late-night messages makes Nico the best friend you have out here. You have never seen Nico's face. Every message arrives nine hours after it was sent. And Nico describes stars you cannot find on any chart.",
+    "inYourWords": "Nobody lends a Sidewinder pilot anything, not even company, so I posted on the jobs board for a partner. One reply came. Nico. Bad jokes, good maths, and a ship Nico will not describe. We split the work: I fly the cargo in and Nico flies it out. We have not met yet. We keep just missing each other.",
+    "beacon": "Nico's messages reach me stamped with the routing code of a Guardian beacon, and they arrive full of crackle. Nico says a data-link scan of the beacon will clear the line. I would like to hear Nico properly."
   }
 ]

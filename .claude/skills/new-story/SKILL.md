@@ -27,7 +27,10 @@ Every story keeps all ten. Check the draft against each before showing it.
    and a fleet carrier for `endgame`. Every level starts with the `covas` core and no Guardian
    cores.
 2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
-   core aboard (#716), and the `breakIntoTwo` beat says so without naming the core.
+   core aboard (#716), and the `breakIntoTwo` beat says so without naming the core. Every story
+   names its own core on the card, chosen to match the story, and its first chapter ends with a
+   `beacon` beat for the scan. No beat kind fires on `DataScanned` yet; record that as a gap
+   against #716.
 3. No core is removed or made worse, Guardian or `covas`, in the app or the fiction. NPCs that exist
    only in the fiction may be lost.
 4. The Commander never loses anything the game holds, and the story never says they did.
@@ -53,8 +56,10 @@ Every story keeps all ten. Check the draft against each before showing it.
 9. Plain prose, and never "wants" where "needs" is meant.
 10. A year at least: the beat sheet follows the Save the Cat beats over the clue schedule in #708.
 
-Within those rules: the setting is soft science fiction, and Elite's lore and d47's own may be bent
-or overturned. In a Buddy Love story the partner exists only in the fiction.
+Within those rules: the setting is soft science fiction in Elite's galaxy of the 34th century, and
+Elite's lore and d47's own may be bent or overturned. Jobs, institutions, objects and slang belong
+to that setting: a registry clerk works at a starport, a reporter files to a newsfeed, and nothing
+is posted, phoned or driven. In a Buddy Love story the partner exists only in the fiction.
 
 Write the story in this session. Do not hand a layer to a subagent to write.
 
@@ -89,8 +94,12 @@ add.
 - **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, or `chatterbox` only
   when the story needs it, #41) and `voice`. Voice `own` is the Commander's recording (#713).
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
-  `inYourWords`, never one with voice `own` (#737). Every primary member needs a picture,
-  `assets/stories/<story-id>.<cast-id>.png`; a member that is not primary may have one. The
+  `inYourWords`, never one with voice `own` (#737). Every story has at least one primary member,
+  and every named cast member gets a picture, `assets/stories/<story-id>.<cast-id>.png`, a square
+  PNG. The page gives an image prompt for each named NPC, matching the style of the pictures
+  already shipped. Prompts set the person in the 34th century: flight suits, station corridors,
+  cockpits and ship interiors, never present-day offices, clothes or devices. A member with voice
+  `own`, or a speaker with no face such as a broadcast or a recorder, gets no prompt. The
   Commander can change any member's voice and picture later (#737), so the pinned voice is a
   default, not a constraint on the text.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is

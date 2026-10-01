@@ -9,7 +9,7 @@
 ## 1.27.0 — Stock stories begin
 
 The Adventures tab has a **Stories** button, opening the stock stories, each written to run for a year.
-The catalog holds three stories in this release, **My Own Mayday**, **Ride Along** and **Black Box**, and more are added to it one at a time.
+The catalog holds five stories in this release, **My Own Mayday**, **Ride Along**, **Black Box**, **The Borrowed Callsign** and **The Far Side**, and more are added to it one at a time.
 The list shows each story's Save the Cat genre, its tone and a blurb saying why you might pick it,
 and a story's page adds the story in your words and why it sends you to a Guardian beacon. **Pick** makes the story's words your Backstory and has the
 ship's AI write chapter one, which begins at once and ends at the Guardian beacon system nearest to
