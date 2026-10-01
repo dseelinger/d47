@@ -98,7 +98,7 @@ add.
   `own`, or a speaker with no face such as a broadcast or a recorder, gets no prompt. The
   Commander can change any member's voice and picture later (#737), so the pinned voice is a
   default, not a constraint on the text.
-- **A romantic lead** has two versions, keyed `man` and `woman` by the Commander's gender (#746):
+- **A romantic lead** has two versions, keyed `forMan` and `forWoman` by the Commander who sees them (#746):
   one gender-neutral name for both ("Alex") or a name for each ("Ellis" and "Ellie"), and a
   default voice and a picture prompt for each. The card never names the lead and calls it by
   role ("the engineer"); hidden text names it with `{name:<cast-id>}` and gives it no pronoun. Until #746 lands, show both versions on the page and keep the story
