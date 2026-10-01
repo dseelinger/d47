@@ -28,6 +28,14 @@ public sealed class StoryDirector(
 
     private JournalLocation _where = JournalLocation.Unknown;
 
+    private bool? _odyssey;
+
+    /// <summary>Why stories are off when the game runs without Odyssey: shown on the Stories page and returned as the refusal.</summary>
+    public const string NeedsOdyssey =
+        "Stories need Elite Dangerous: Odyssey. Most chapters use it: on-foot missions, settlements, exobiology and suits. "
+        + "Your last session ran without it, so stories are off. Odyssey is a low-cost expansion from the Frontier Store, "
+        + "Steam or Epic, and stories start working at the next session after it is installed.";
+
     public StoryStore Stories => stories;
 
     public StoryCatalog Catalog => catalog;
@@ -42,6 +50,26 @@ public sealed class StoryDirector(
         {
             return _writing.Contains(frontierId ?? AdventureStore.NoCommander);
         }
+    }
+
+    /// <summary>Raised when a LoadGame changes whether the game runs with Odyssey.</summary>
+    public event Action? OdysseyChanged;
+
+    /// <summary>
+    /// Whether stories are off for want of Odyssey: the last LoadGame seen ran without it, or the current story's
+    /// last one did. False before any LoadGame is seen.
+    /// </summary>
+    public bool WithoutOdyssey(string? frontierId)
+    {
+        lock (_gate)
+        {
+            if (_odyssey == false)
+            {
+                return true;
+            }
+        }
+
+        return stories.Current(frontierId) is { IsWithoutOdyssey: true };
     }
 
     /// <summary>Whether the last chapter could not be written and waits for <see cref="WriteNextAsync"/>.</summary>
@@ -59,6 +87,11 @@ public sealed class StoryDirector(
         if (catalog.Find(id) is not { } card)
         {
             return Task.FromResult<string?>("There is no story by that name.");
+        }
+
+        if (WithoutOdyssey(frontierId))
+        {
+            return Task.FromResult<string?>(NeedsOdyssey);
         }
 
         if (stories.Current(frontierId) is { } current)
@@ -87,6 +120,11 @@ public sealed class StoryDirector(
     /// <summary>Abandons the current story, keeping its chapters on file, and picks another.</summary>
     public Task<string?> SwitchAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken)
     {
+        if (WithoutOdyssey(frontierId))
+        {
+            return Task.FromResult<string?>(NeedsOdyssey);
+        }
+
         if (stories.Current(frontierId) is { } current)
         {
             if (string.Equals(current.Id, id, StringComparison.OrdinalIgnoreCase))
@@ -166,7 +204,7 @@ public sealed class StoryDirector(
             return null;
         }
 
-        if (story.State != StoryState.Running || standing is not { IsDone: true } || WriteFailed(frontierId) || IsWriting(frontierId))
+        if (story.State != StoryState.Running || story.IsWithoutOdyssey || standing is not { IsDone: true } || WriteFailed(frontierId) || IsWriting(frontierId))
         {
             return null;
         }
@@ -175,8 +213,8 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
-    /// Counts the current story's play sessions, and stamps it the first time the Commander data-links a beacon
-    /// while it runs.
+    /// Counts the current story's play sessions, records the stretches the game runs without Odyssey, and stamps
+    /// it the first time the Commander data-links a beacon while it runs.
     /// </summary>
     public void Observe(JournalEvent journalEvent, string? frontierId)
     {
@@ -184,13 +222,39 @@ public sealed class StoryDirector(
 
         _where = _where.Apply(journalEvent);
 
+        bool? odyssey = null;
+
+        if (journalEvent.Kind == "LoadGame")
+        {
+            odyssey = SessionSummary.OdysseyOf(journalEvent);
+            bool changed;
+
+            lock (_gate)
+            {
+                changed = _odyssey != odyssey;
+                _odyssey = odyssey;
+            }
+
+            if (changed)
+            {
+                OdysseyChanged?.Invoke();
+            }
+        }
+
         if (journalEvent.Kind == "LoadGame"
             && stories.Current(frontierId) is { } playing
             && journalEvent.Timestamp >= playing.PickedAt)
         {
-            stories.Update(frontierId, playing.Id, story => story.LastSessionAt is { } last && journalEvent.Timestamp <= last
-                ? story
-                : story with { Sessions = story.Sessions + 1, LastSessionAt = journalEvent.Timestamp });
+            stories.Update(frontierId, playing.Id, story =>
+            {
+                if (story.LastSessionAt is { } last && journalEvent.Timestamp <= last)
+                {
+                    return story;
+                }
+
+                var counted = story with { Sessions = story.Sessions + 1, LastSessionAt = journalEvent.Timestamp };
+                return odyssey is { } flag ? counted.Loaded(flag, journalEvent.Timestamp) : counted;
+            });
         }
 
         if (journalEvent.Kind == "DataScanned"
@@ -228,7 +292,7 @@ public sealed class StoryDirector(
 
     /// <summary>The clue the running story owes now, or null.</summary>
     public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>
-        stories.Current(frontierId) is { IsOff: false } story && catalog.Secret(story.Id) is not null
+        stories.Current(frontierId) is { IsOff: false, IsWithoutOdyssey: false } story && catalog.Secret(story.Id) is not null
             ? StoryClues.Due(story, now)
             : null;
 
@@ -237,7 +301,7 @@ public sealed class StoryDirector(
     {
         ArgumentNullException.ThrowIfNull(due);
 
-        return stories.Current(frontierId) is { State: StoryState.Running, IsOff: false } story
+        return stories.Current(frontierId) is { State: StoryState.Running, IsOff: false, IsWithoutOdyssey: false } story
                && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
                && story.CluesGiven == due.Index
                && catalog.Secret(story.Id) is { } secret
@@ -270,6 +334,11 @@ public sealed class StoryDirector(
     private async Task<string?> WriteChapterAsync(string? frontierId, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
+
+        if (stories.Current(frontierId) is { IsWithoutOdyssey: true })
+        {
+            return NeedsOdyssey;
+        }
 
         lock (_gate)
         {

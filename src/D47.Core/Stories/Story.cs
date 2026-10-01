@@ -65,6 +65,13 @@ public sealed record Story
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
 
+    /// <summary>The stretches the game ran without Odyssey, oldest first. The last is open until a LoadGame says it is back.</summary>
+    public IReadOnlyList<StoryOffSpan> WithoutOdyssey { get; init; } = [];
+
+    /// <summary>Whether the last LoadGame since the story was picked ran without Odyssey.</summary>
+    [JsonIgnore]
+    public bool IsWithoutOdyssey => WithoutOdyssey.Count > 0 && WithoutOdyssey[^1].To is null;
+
     /// <summary>Whether the Commander has the story switched off.</summary>
     [JsonIgnore]
     public bool IsOff => OffSpans.Count > 0 && OffSpans[^1].To is null;
@@ -76,7 +83,7 @@ public sealed record Story
     [JsonIgnore]
     public string? CurrentChapter => Chapters.Count > 0 ? Chapters[^1] : null;
 
-    /// <summary>Real time since the beacon scan with paused time taken out, or null before the scan.</summary>
+    /// <summary>Real time since the beacon scan with paused, switched-off and without-Odyssey time taken out, or null before the scan.</summary>
     public TimeSpan? SinceBeacon(DateTimeOffset now)
     {
         if (BeaconScanAt is not { } scan)
@@ -107,19 +114,29 @@ public sealed record Story
     public Story SwitchedOn(DateTimeOffset now) =>
         IsOff ? this with { OffSpans = [.. OffSpans.SkipLast(1), OffSpans[^1] with { To = now }] } : this;
 
-    /// <summary>The time the story was switched off between the beacon scan and <paramref name="now"/>.</summary>
+    /// <summary>Records a LoadGame: opens a without-Odyssey stretch when it ran without, and closes one when it ran with.</summary>
+    public Story Loaded(bool odyssey, DateTimeOffset at) => (odyssey, IsWithoutOdyssey) switch
+    {
+        (false, false) => this with { WithoutOdyssey = [.. WithoutOdyssey, new StoryOffSpan(at, null)] },
+        (true, true) when at >= WithoutOdyssey[^1].From => this with { WithoutOdyssey = [.. WithoutOdyssey.SkipLast(1), WithoutOdyssey[^1] with { To = at }] },
+        _ => this,
+    };
+
+    /// <summary>The time the story was switched off or without Odyssey between the beacon scan and <paramref name="now"/>, overlaps counted once.</summary>
     private TimeSpan OffSince(DateTimeOffset scan, DateTimeOffset now)
     {
         var total = TimeSpan.Zero;
+        var reached = scan;
 
-        foreach (var span in OffSpans)
+        foreach (var span in OffSpans.Concat(WithoutOdyssey).OrderBy(span => span.From))
         {
-            var from = span.From > scan ? span.From : scan;
+            var from = span.From > reached ? span.From : reached;
             var to = span.To is { } end && end < now ? end : now;
 
             if (to > from)
             {
                 total += to - from;
+                reached = to;
             }
         }
 

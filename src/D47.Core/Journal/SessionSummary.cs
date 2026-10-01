@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace D47.Core.Journal;
 
 /// <summary>
@@ -44,6 +46,9 @@ public sealed record SessionSummary
     /// <summary>The credit balance Elite last reported, from LoadGame.</summary>
     public long? Balance { get; init; }
 
+    /// <summary>Whether the game ran with Odyssey, from LoadGame; null until one is seen or when it does not say.</summary>
+    public bool? Odyssey { get; init; }
+
     /// <summary>Influence marks reported on completed missions.</summary>
     public InfluenceLedger Influence { get; init; } = InfluenceLedger.Empty;
 
@@ -57,6 +62,16 @@ public sealed record SessionSummary
         ? last - start
         : null;
 
+    /// <summary>A LoadGame's <c>Odyssey</c> flag, or null when it carries none.</summary>
+    public static bool? OdysseyOf(JournalEvent journalEvent)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        return journalEvent.Raw.TryGetProperty("Odyssey", out var flag) && flag.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? flag.GetBoolean()
+            : null;
+    }
+
     public SessionSummary Apply(JournalEvent journalEvent)
     {
         // A fresh session wipes the slate.
@@ -67,6 +82,7 @@ public sealed record SessionSummary
                 StartedAt = journalEvent.Timestamp,
                 LastEventAt = journalEvent.Timestamp,
                 Balance = journalEvent.Long("Credits"),
+                Odyssey = OdysseyOf(journalEvent),
             };
         }
 

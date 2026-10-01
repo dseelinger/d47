@@ -34,6 +34,11 @@ Narration and chatter carry on as before, and your Backstory and Guardian cores 
 you visit while the story is off does not count; its beat waits for the next visit. The switch lasts
 across restarts. Say "resume the story" or tick **Story on** to bring it back.
 
+Stories need Elite Dangerous: Odyssey. When your last session ran without it, the Stories page says
+so, **Pick** and **Switch** are disabled, a running story writes no chapter and gives no clue, and the
+days do not count toward a clue. The story carries on from where it was at the next session with
+Odyssey. A story you switched off stays off.
+
 The local voice says "story", "stories", "storyline" and "backstory" with the vowel of "or", not "stawry".
 
 ## 1.26.0 — Adventures run in chapters

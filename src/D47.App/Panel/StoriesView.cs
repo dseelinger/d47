@@ -62,6 +62,7 @@ public sealed class StoriesView : UserControl
         base.OnAttachedToVisualTree(e);
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
+        _director.OdysseyChanged += OnChanged;
         Rebuild();
     }
 
@@ -70,6 +71,7 @@ public sealed class StoriesView : UserControl
         base.OnDetachedFromVisualTree(e);
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
+        _director.OdysseyChanged -= OnChanged;
     }
 
     /// <summary>The page for a reading crumb.</summary>
@@ -85,6 +87,13 @@ public sealed class StoriesView : UserControl
         _list.Children.Clear();
 
         var current = _director.Stories.Current(_surface.Commander());
+
+        if (_director.WithoutOdyssey(_surface.Commander()))
+        {
+            var notice = AdventuresPage.Text(StoryDirector.NeedsOdyssey, TypeScale.Body);
+            notice.Margin = new Thickness(0, 0, 0, 10);
+            _list.Children.Add(notice);
+        }
 
         if (current is not null)
         {
@@ -221,20 +230,31 @@ public sealed class StoriesView : UserControl
         var bar = AdventuresPage.Buttons();
         bar.Margin = new Thickness(0, 10, 0, 0);
 
+        var withoutOdyssey = _director.WithoutOdyssey(commander);
+
+        if (withoutOdyssey)
+        {
+            page.Children.Add(AdventuresPage.Text(StoryDirector.NeedsOdyssey, TypeScale.Body));
+        }
+
         if (current is null)
         {
-            bar.Children.Add(Act("Pick", () => Start(card, switching: false, status)));
+            var pick = Act("Pick", () => Start(card, switching: false, status));
+            pick.IsEnabled = !withoutOdyssey;
+            bar.Children.Add(pick);
         }
         else if (!string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
         {
-            bar.Children.Add(Act("Switch", () => Confirm(
+            var switchTo = Act("Switch", () => Confirm(
                 "story.switch",
                 "Switch",
                 $"Switch from {current.Title} to {card.Title}?",
                 $"{current.Title} is abandoned and its chapters stay on the Adventures page. Your Backstory becomes this "
                 + "story's words, and your Guardian cores stay as they are.",
                 "Switch",
-                () => Start(card, switching: true, status))));
+                () => Start(card, switching: true, status)));
+            switchTo.IsEnabled = !withoutOdyssey;
+            bar.Children.Add(switchTo);
         }
         else
         {

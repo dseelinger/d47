@@ -290,6 +290,13 @@ pauses the story, and **Resume** on the Stories page begins that chapter again.
 One story runs at a time, kept in `data/story.json`. A story needs a language model and galaxy search,
 the same as asking for an adventure.
 
+Stories need Elite Dangerous: Odyssey, because most chapters use it: on-foot missions, settlements,
+exobiology and suits. D47 reads the `Odyssey` flag on each `LoadGame`. When the last one says
+`"Odyssey":false`, the Stories page says why stories are off, **Pick** and **Switch** are disabled, a
+running story writes no chapter and gives no clue, and the time does not count toward a clue's day. The
+next `LoadGame` with Odyssey brings the story back where it was, and a story you switched off stays off.
+Before D47 has seen a `LoadGame`, stories run.
+
 A story chapter's page never shows its premise, turn or ending, and has no **Edit** button, because
 the chapter was written from the hidden layer.
 
@@ -326,7 +333,7 @@ Resume the Commander's running story after a pause.
 ### Clues
 
 The hidden layer holds three clues. The first may come 7 days after you scan the beacon, the second
-after 60 and the third after 365. Days while the story is paused or switched off do not count, and at most one clue
+after 60 and the third after 365. Days while the story is paused, switched off or without Odyssey do not count, and at most one clue
 comes in any four play sessions. A clue is spoken by the Narrator when narration is on, and otherwise
 by the core aboard, in its own words. It is also posted to Messages. A clue needs a language model
 and personality; without them it waits.
