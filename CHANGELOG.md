@@ -23,9 +23,12 @@ Shinrarta Dezhra, unless you are already in it.
 
 A stock story's hidden layer now gives up three clues over time: the first 7 days after you scan the
 beacon, the second after 60 and the third after 365, with paused days not counted and at most one clue
-in any four play sessions. The Narrator speaks a clue when narration is on, and otherwise the core
-aboard does; each is also posted to Messages. The Narrator, the core, invented chatter, scene chatter
-and the chapter writer now all read the same hidden layer and hint at it without stating it. A story
+in any four play sessions. While stock COVAS is aboard the Narrator speaks every clue, with narration on
+or off; with any other core aboard the Narrator speaks a clue when narration is on, and otherwise the
+core does. Each is also posted to Messages, from whoever spoke it. The Narrator, invented chatter, scene
+chatter, the chapter writer and any core but COVAS now all read the same hidden layer and hint at it
+without stating it. A running story is enough for the Narrator to narrate a lull, with no character
+sheet, Backstory or scenario set. A story
 chapter's page no longer shows its premise, turn or ending, and has no **Edit**, **Remove** or **Write the next chapter** button; **Abandon** is the way to stop one, and **Begin again** resumes it. **Remove** on any adventure now asks before it deletes.
 
 Removing an adventure, or a story leaving the catalog, now clears its messages. An abandoned adventure or story keeps them.

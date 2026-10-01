@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Audio;
 using D47.Core.Journal;
 using D47.Core.Persona;
 using Microsoft.Extensions.Logging;
@@ -350,6 +351,13 @@ public sealed class StoryDirector(
         stories.Current(frontierId) is { IsOff: false } story && Hidden(story.Id) is { } secret
             ? StoryClues.Brief(story, secret)
             : null;
+
+    /// <summary>The hidden layer as this speaker reads it, or null; a stock core's own voice never reads it.</summary>
+    public string? HiddenBrief(string? frontierId, VoiceRole speaker, Persona.Persona core) =>
+        StoryClues.ReadsHiddenStory(speaker, core) ? HiddenBrief(frontierId) : null;
+
+    /// <summary>Whether the current story is running and switched on.</summary>
+    public bool IsRunning(string? frontierId) => stories.Current(frontierId) is { State: StoryState.Running, IsOff: false };
 
     /// <summary>The clue the running story owes now, or null.</summary>
     public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>

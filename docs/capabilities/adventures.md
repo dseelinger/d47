@@ -360,12 +360,16 @@ Resume the Commander's running story after a pause.
 
 The hidden layer holds three clues. The first may come 7 days after you scan the beacon, the second
 after 60 and the third after 365. Days while the story is paused, switched off or without Odyssey do not count, and at most one clue
-comes in any four play sessions. A clue is spoken by the Narrator when narration is on, and otherwise
-by the core aboard, in its own words. It is also posted to Messages. A clue needs a language model
+comes in any four play sessions. While the core aboard is stock COVAS, every clue is spoken by the
+Narrator, with narration on or off. With a Guardian core or a core you wrote aboard, a clue is spoken by
+the Narrator when narration is on, and otherwise by the core, in its own words. A clue is also posted to
+Messages, from whoever spoke it. A clue needs a language model
 and personality; without them it waits.
 
-The Narrator, the core aboard, invented chatter, scene chatter and the chapter writer all read the
-same hidden layer: the story's secret, its end, and the clues you have had so far. They are told to
+The Narrator, invented chatter, scene chatter and the chapter writer all read the same hidden layer:
+the story's secret, its end, and the clues you have had so far. A Guardian core or a core you wrote
+reads it too, in conversation and in its own lines. Stock COVAS never reads it: it is standard
+equipment with no history, so it has nothing to hint at. They are told to
 hint at it and never state it, and to mislead you only about the story, never about fuel, cargo,
 credits, routes, rank or danger. **Privacy and egress** says a hidden story is sent to the language
 model, without quoting it.

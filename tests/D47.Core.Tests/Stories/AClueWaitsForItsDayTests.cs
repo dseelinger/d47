@@ -106,7 +106,7 @@ public sealed class AClueWaitsForItsDayTests
         var callout = new StoryClueCallout(new NearbyFight())
         {
             Due = _ => new StoryClueDue(Id, 0),
-            Narrated = () => true,
+            NarratorOn = () => true,
         };
 
         var docked = GameStatus.Unknown with { Flags = StatusFlags.Docked | StatusFlags.InMainShip, ReadAt = Now };

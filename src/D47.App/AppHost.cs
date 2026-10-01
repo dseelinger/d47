@@ -2172,6 +2172,12 @@ public sealed class AppHost : IDisposable
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
+        storyClue.Core = () => personas.Current;
+
+        foreach (var narrator in callouts.Callouts.OfType<NarratorCallout>())
+        {
+            narrator.StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId);
+        }
 
         var host = self = new AppHost(
             paths,
@@ -2968,7 +2974,7 @@ public sealed class AppHost : IDisposable
 
                 case D47.Core.Stories.StoryClueCallout clue:
                     clue.Enabled = () => settings.Current.Llm.PersonalityEnabled;
-                    clue.Narrated = () => settings.Current.Callouts is { Narrator: true, NarratorSeconds: > 0 };
+                    clue.NarratorOn = () => settings.Current.Callouts is { Narrator: true, NarratorSeconds: > 0 };
                     break;
 
                 case NarratorCallout narrator:
@@ -3042,7 +3048,7 @@ public sealed class AppHost : IDisposable
         // What this Commander's own wording means, put right after (#169).
         Turns.LearnedPhraseFor = LearnedPhraseFor;
         Turns.CommanderId = () => Flying is { Length: > 0 } fid ? fid : null;
-        Turns.HiddenStory = HiddenStory;
+        Turns.HiddenStory = () => HiddenStory(VoiceRole.ShipAi);
         Turns.LearnPhrase = LearnPhrase;
 
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
@@ -4219,7 +4225,7 @@ public sealed class AppHost : IDisposable
                         PriceTable.Default,
                         _logger,
                         humor: HumorFor(HumorGroup.Cores, canBeDirected: false),
-                        hiddenStory: HiddenStory());
+                        hiddenStory: HiddenStory(VoiceRole.ShipAi));
 
                     var generated = await AskAsync(instruction).ConfigureAwait(false);
 
@@ -4252,7 +4258,7 @@ public sealed class AppHost : IDisposable
                         _logger,
                         humor: HumorFor(HumorGroup.Cores, canBeDirected: false),
                         scenario: ScenarioFor(brief, VoiceRole.ShipAi),
-                        hiddenStory: HiddenStory());
+                        hiddenStory: HiddenStory(VoiceRole.ShipAi));
 
                     var generated = await AskAsync(brief.Instruction).ConfigureAwait(false);
 
@@ -5637,7 +5643,9 @@ public sealed class AppHost : IDisposable
                         ? HumorFor(group, directed)
                         : null,
                     scenario: ScenarioFor(brief, announcement.Voice),
-                    hiddenStory: brief.NeedsPersona || announcement.Voice == VoiceRole.Narrator ? HiddenStory() : null);
+                    hiddenStory: brief.NeedsPersona ? HiddenStory(VoiceRole.ShipAi)
+                        : announcement.Voice == VoiceRole.Narrator ? HiddenStory(VoiceRole.Narrator)
+                        : null);
             });
     }
 
@@ -5735,7 +5743,7 @@ public sealed class AppHost : IDisposable
             _logger,
             budget.Token,
             canBeDirected: directed,
-            hiddenStory: HiddenStory()).ConfigureAwait(false);
+            hiddenStory: HiddenStory(VoiceRole.Comms)).ConfigureAwait(false);
 
         // Checked again once written: the Commander may have left the scene while the model was writing.
         if (scene is not null && !SceneCallout.IsStillHappening(scene, _scenes.Snapshot))
@@ -5806,8 +5814,9 @@ public sealed class AppHost : IDisposable
         return heard;
     }
 
-    /// <summary>The running stock story's hidden layer, as every speaker reads it, or null.</summary>
-    private string? HiddenStory() => Stories?.HiddenBrief(GameState.Active?.Identity.FrontierId);
+    /// <summary>The running stock story's hidden layer as this speaker reads it, or null.</summary>
+    private string? HiddenStory(VoiceRole speaker) =>
+        Stories?.HiddenBrief(GameState.Active?.Identity.FrontierId, speaker, Personas.Current);
 
     /// <summary>A due clue, written by the model in the voice the marker names, or null when no line came back.</summary>
     private async Task<Announcement?> ComposeClueAsync(Announcement marker, D47.Core.Stories.StoryClueDue due)
@@ -5838,7 +5847,7 @@ public sealed class AppHost : IDisposable
             budget.Token,
             canBeDirected: directed,
             scenario: ScenarioFor(brief, marker.Voice),
-            hiddenStory: HiddenStory());
+            hiddenStory: HiddenStory(marker.Voice));
 
         var facts = ShipFacts.Of(GameState.Active);
 

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Audio;
 using D47.Core.Callouts;
 
 namespace D47.Core.Stories;
@@ -12,6 +13,17 @@ public static class StoryClues
 {
     /// <summary>Real days after the beacon scan, paused days not counted, before each clue may be spoken.</summary>
     public static readonly IReadOnlyList<int> Days = [7, 60, 365];
+
+    /// <summary>Whether the Narrator speaks a clue: always while the core aboard is stock, otherwise when the Narrator is on.</summary>
+    public static bool Narrated(Persona.Persona? core, bool narratorOn) => core?.Stock == true || narratorOn;
+
+    /// <summary>Whether a speaker reads the hidden layer: every speaker but a stock core's own voice.</summary>
+    public static bool ReadsHiddenStory(VoiceRole speaker, Persona.Persona core)
+    {
+        ArgumentNullException.ThrowIfNull(core);
+
+        return !(speaker == VoiceRole.ShipAi && core.Stock);
+    }
 
     /// <summary>The fewest play sessions between two clues.</summary>
     public const int SessionsApart = 4;

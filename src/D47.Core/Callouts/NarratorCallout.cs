@@ -25,6 +25,9 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// <summary>Whether the character sheet, the backstory or the scenario is set.</summary>
     public Func<bool> HasStory { get; set; } = () => false;
 
+    /// <summary>Whether a stock story is running and switched on for the active Commander.</summary>
+    public Func<bool> StoryRunning { get; set; } = () => false;
+
     /// <summary>The adventures under way, checked for one stalled at its next beat.</summary>
     public Func<IReadOnlyList<AdventureStanding>> Adventures { get; set; } = () => [];
 
@@ -84,7 +87,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         var stalled = Adventures().FirstOrDefault(standing =>
             !_nudged.Contains(standing.Adventure.Key) && AdventureNudge.IsDue(standing, context.Now));
 
-        if (stalled is null && !HasStory())
+        if (stalled is null && !HasStory() && !StoryRunning())
         {
             yield break;
         }

@@ -1142,8 +1142,9 @@ It invents no events, writes no dialogue, asks nothing and advises nothing.
 It speaks only during a lull. The situation has to have held for ninety seconds, there is no fight
 going on, it is never in supercruise, and it keeps the same ninety seconds from any other chatter.
 Each gap lands somewhere between the least and the most time rows, thirty to sixty minutes out of the
-box, and the first narration of a session waits one full gap. With the character sheet, the backstory
-and the scenario all empty, it says nothing.
+box, and the first narration of a session waits one full gap. A stock story that is running and
+switched on counts as a story to tell. With no such story and the character sheet, the backstory and the
+scenario all empty, it says nothing.
 
 **Every narration is written by the model, and sends the whole backstory.** At the defaults that is
 one or two calls an hour on the background model. When the model is unreachable or returns nothing,
