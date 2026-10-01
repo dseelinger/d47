@@ -28,6 +28,8 @@ aboard does; each is also posted to Messages. The Narrator, the core, invented c
 and the chapter writer now all read the same hidden layer and hint at it without stating it. A story
 chapter's page no longer shows its premise, turn or ending, and has no **Edit**, **Remove** or **Write the next chapter** button; **Abandon** is the way to stop one, and **Begin again** resumes it. **Remove** on any adventure now asks before it deletes.
 
+Removing an adventure, or a story leaving the catalog, now clears its messages. An abandoned adventure or story keeps them.
+
 You can pause a running story. Clear **Story on** on the Stories page or the mini panel, or say "pause the
 story", and no beat is said, no clue or nudge is owed, nothing from the story is posted to Messages and
 the story's hidden layer is left out of what the Narrator and the core say. The clue clock stops.

@@ -1047,6 +1047,12 @@ public sealed class AppHost : IDisposable
         // over the files when a stamp moved, which the tick below grants.
         adventureStore.Changed += adventureBook.Reconcile;
 
+        void SweepOrphanMessages() => messageStore.RemoveOrphans(
+            key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, D47.Core.Stories.StoryCatalog.Default));
+
+        SweepOrphanMessages();
+        adventureStore.Changed += SweepOrphanMessages;
+
         var goalMiner = new D47.Core.Goals.GoalMiner(
             loggerFactory.CreateLogger<D47.Core.Goals.GoalMiner>());
 

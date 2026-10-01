@@ -102,6 +102,32 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
         return true;
     }
 
+    /// <summary>Removes every message keyed to something <paramref name="owned"/> rejects; returns the count.</summary>
+    public int RemoveOrphans(Func<string, bool> owned)
+    {
+        ArgumentNullException.ThrowIfNull(owned);
+
+        int removed;
+
+        lock (_gate)
+        {
+            var messages = Loaded();
+            removed = messages.RemoveAll(message => message.AdventureKey is { } key && !owned(key));
+
+            if (removed > 0)
+            {
+                Write(messages);
+            }
+        }
+
+        if (removed > 0)
+        {
+            Changed?.Invoke();
+        }
+
+        return removed;
+    }
+
     private List<D47Message> Loaded()
     {
         if (_messages is not null)
