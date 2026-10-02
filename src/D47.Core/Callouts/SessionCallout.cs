@@ -19,6 +19,9 @@ public sealed class SessionCallout : ICallout
     /// <summary>Off means neither line, whatever else is enabled.</summary>
     public Func<bool> Enabled { get; set; } = () => true;
 
+    /// <summary>Whether the core aboard is a stock core, which says neither line.</summary>
+    public Func<bool> StockCoreAboard { get; set; } = () => false;
+
     /// <summary>The shortest gap between two of the same reaction.</summary>
     public TimeSpan Cooldown { get; set; } = TimeSpan.FromMinutes(30);
 
@@ -74,7 +77,7 @@ public sealed class SessionCallout : ICallout
             return null;
         }
 
-        if (!Enabled())
+        if (!Enabled() || StockCoreAboard())
         {
             return null;
         }

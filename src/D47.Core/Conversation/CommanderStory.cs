@@ -13,6 +13,12 @@ public static class CommanderStory
     public static bool TellsStory(int? variant) =>
         variant is { } index && Math.Abs(index) % StoryEvery == 0;
 
+    /// <summary>The character sheet, or with none, one naming the Commander as the journal does.</summary>
+    public static string? SheetOrName(string? sheet, string? journalName) =>
+        !string.IsNullOrWhiteSpace(sheet) ? sheet
+        : !string.IsNullOrWhiteSpace(journalName) ? $"Commander {journalName.Trim()}."
+        : null;
+
     /// <summary>The text for position 4, or null when there is nothing to say.</summary>
     public static string? Compose(string? sheet, string? story, bool withStory)
     {

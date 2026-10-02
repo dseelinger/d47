@@ -117,6 +117,12 @@ unchanged. To turn it off, untick **COVAS reverb** under **COVAS Voice** on the 
 Advanced setting); **Test** beside it plays a stand-in voice through the reverb at no cost. Guardian
 cores, your own cores and the Narrator are not affected.
 
+While COVAS is aboard it makes no idle remarks: no ambient line, no opening line, and no word when you
+get into or leave a game. The Narrator speaks in those moments instead, every five to ten minutes by
+the In Ship chatter timing, narrating the moment whether or not a story is running, and naming you
+from the journal when there is no character sheet. Turning the Narrator or personality off leaves those
+moments silent. With any other core aboard, nothing changes.
+
 A story beat can now wait for something done a number of times: bounties collected, kill bonds earned,
 missions completed, tons of a commodity sold, or tons refined by mining. Only what you do after the beat
 before it counts, and the story's card shows the running total, such as "Kill bonds for LTT 7786 Labour:

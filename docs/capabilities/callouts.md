@@ -721,7 +721,7 @@ Prospector); then…"* — which is long, and arrives while you are still puttin
 you want to know about your [checklist](checklists.md), ask; it is all still there.
 
 It waits a few seconds after launch so the journal backlog has been folded, says its line once, and
-does not speak again for the life of the process.
+does not speak again for the life of the process. With a stock core such as COVAS aboard it is not said.
 
 The first sentence is written by Directive 47. Where a persona is on, the core finishes the second
 — *"Ready to reconcile the ledger"*, *"Ready to go, for the last time, again"* — in a few words of
@@ -911,6 +911,10 @@ it are never spoken back to back. That one is a rule *between* the two, and it i
 
 Seven situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
 SRV, and on foot.
+
+**A stock core makes no idle remarks.** While COVAS is aboard, this line, the
+[opening line](#continuity) and the word on getting into or leaving a game are not said; the
+[Narrator](#narrator) speaks in their place.
 
 The core aboard writes every remark itself and it is genuinely theirs — Chart will tell you about
 the sky, the Quartermaster about what the run cost. It also knows who it is flying with: your
@@ -1144,10 +1148,20 @@ going on, it is never in supercruise, and it keeps the same ninety seconds from 
 Each gap lands somewhere between the least and the most time rows, thirty to sixty minutes out of the
 box, and the first narration of a session waits one full gap. A stock story that is running and
 switched on counts as a story to tell. With no such story and the character sheet, the backstory and the
-scenario all empty, it says nothing.
+scenario all empty, it says nothing, unless a stock core is aboard (below).
+
+**With a stock core aboard, the Narrator takes the ambient slot.** While the core actually aboard is a
+stock core such as COVAS, the ship's AI makes no idle remarks, and the Narrator speaks in those
+moments instead: its gap is the [In Ship chatter](#ambient) gap, five to ten minutes out of the box,
+and it narrates the moment from the game state whether or not a story is running. The other rules
+above still hold. With no character sheet it names you as the journal does. Turning the Narrator or
+personality off, or setting its least time to 0, leaves those moments silent; so does having no
+language model, since a stock core's idle lines are not replaced by written ones. With a Guardian core or one of your own aboard, nothing
+changes.
 
 **Every narration is written by the model, and sends the whole backstory.** At the defaults that is
-one or two calls an hour on the background model. When the model is unreachable or returns nothing,
+one or two calls an hour on the background model, or six to twelve with a stock core aboard. With no
+character sheet it also sends your Commander name from the journal. When the model is unreachable or returns nothing,
 the Narrator says nothing: there are no stock narrations. With no language model configured these
 rows are absent; with personality off, it is silent.
 

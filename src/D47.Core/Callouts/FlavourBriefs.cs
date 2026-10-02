@@ -529,7 +529,8 @@ public static class FlavourBriefs
             "Narrate this moment in the Commander's story. Two or three sentences, in the third person and the "
             + "past tense, the way a novel's narrator writes. Refer to the Commander by the name the character "
             + "sheet gives, with the pronouns it gives; where it gives no pronouns, use the name and no pronouns. "
-            + "Draw on the backstory and the scenario, and connect them to where the Commander is now. Say only "
+            + "Draw on the backstory and the scenario where they are given, and connect them to where the Commander is "
+            + "now; with neither, narrate the moment itself. Say only "
             + "what the game state and these texts say: invent no events, write no dialogue, ask no question and "
             + "give no advice.",
         NeedsPersona = false,

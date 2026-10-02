@@ -18,6 +18,9 @@ public sealed class ContinuityCallout : ICallout
 
     public string Id => "continuity";
 
+    /// <summary>Whether the core aboard is a stock core; the line falls due and is not said.</summary>
+    public Func<bool> StockCoreAboard { get; set; } = () => false;
+
     /// <summary>
     /// Makes the line due again, for a Commander who has just logged in where another was (Phase 44,
     /// "Welcome back, Commander").
@@ -51,6 +54,11 @@ public sealed class ContinuityCallout : ICallout
         // Said once per session, whatever happens next — and a session starts at launch and at a login by
         // somebody else, which is what Rearm is.
         _said = true;
+
+        if (StockCoreAboard())
+        {
+            yield break;
+        }
 
         yield return new Announcement(Key, Compose(context.Now, _switched ? context.State?.Identity.Name : null))
         {

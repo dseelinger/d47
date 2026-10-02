@@ -12,6 +12,9 @@ public sealed class AmbientCallout : ICallout
     /// <summary>Off means no unprompted remarks, whatever else is enabled.</summary>
     public Func<bool> Enabled { get; set; } = () => true;
 
+    /// <summary>Whether the core aboard is a stock core, which makes no idle remarks.</summary>
+    public Func<bool> StockCoreAboard { get; set; } = () => false;
+
     /// <summary>The shortest gap between two remarks.</summary>
     public TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(15);
 
@@ -42,7 +45,7 @@ public sealed class AmbientCallout : ICallout
         }
 
         // Priming folds the backlog.
-        if (context.IsPriming || !Enabled() || Interval <= TimeSpan.Zero || situation == AmbientSituation.None)
+        if (context.IsPriming || !Enabled() || StockCoreAboard() || Interval <= TimeSpan.Zero || situation == AmbientSituation.None)
         {
             yield break;
         }

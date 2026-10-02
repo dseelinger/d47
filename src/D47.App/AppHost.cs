@@ -2233,6 +2233,31 @@ public sealed class AppHost : IDisposable
             narrator.StoryAsides = storyDirector.MissionAsides;
         }
 
+        // A stock core makes no idle remarks; the Narrator takes the ambient slot.
+        Func<bool> stockCoreAboard = () => personas.Current.Stock;
+
+        foreach (var callout in callouts.Callouts)
+        {
+            switch (callout)
+            {
+                case AmbientCallout ambient:
+                    ambient.StockCoreAboard = stockCoreAboard;
+                    break;
+
+                case ContinuityCallout continuity:
+                    continuity.StockCoreAboard = stockCoreAboard;
+                    break;
+
+                case SessionCallout session:
+                    session.StockCoreAboard = stockCoreAboard;
+                    break;
+
+                case NarratorCallout narrator:
+                    narrator.StockCoreAboard = stockCoreAboard;
+                    break;
+            }
+        }
+
         foreach (var missions in callouts.Callouts.OfType<MissionCallout>())
         {
             missions.StoryAsides = storyDirector.MissionAsides;
@@ -3051,6 +3076,8 @@ public sealed class AppHost : IDisposable
                 case NarratorCallout narrator:
                     narrator.Interval = TimeSpan.FromSeconds(callouts.NarratorSeconds);
                     narrator.Longest = TimeSpan.FromSeconds(callouts.NarratorMaxSeconds);
+                    narrator.StandInInterval = TimeSpan.FromSeconds(callouts.AmbientSeconds);
+                    narrator.StandInLongest = TimeSpan.FromSeconds(callouts.AmbientMaxSeconds);
                     narrator.Enabled = () => settings.Current.Callouts.Narrator && settings.Current.Llm.PersonalityEnabled;
                     narrator.HasStory = () => settings.Current.Llm is var llm
                         && (!string.IsNullOrWhiteSpace(llm.CharacterSheet)
@@ -5728,7 +5755,7 @@ public sealed class AppHost : IDisposable
                         : SpeakerAccent.Join(
                             brief.Speaker,
                             SpeakerAccent.For(CastFor(announcement), announcement, _accent, Settings.Current.Speech.AccentPercent)),
-                    StoryFor(brief),
+                    StoryFor(brief, announcement.Voice),
                     ask,
                     brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
                     Spend,
@@ -5952,7 +5979,7 @@ public sealed class AppHost : IDisposable
             Turns.Provider,
             Turns.BackgroundModel,
             narrated ? brief.Speaker : Personas.RenderBlock(personalityEnabled: true),
-            StoryFor(brief),
+            StoryFor(brief, voice),
             ask,
             Turns.LiveGameState?.Invoke(),
             Spend,
@@ -6164,11 +6191,18 @@ public sealed class AppHost : IDisposable
             announcement.Key);
     }
 
-    /// <summary>Position 4 for a flavour line, to the depth the brief asked for (Phase 43).</summary>
-    private string? StoryFor(FlavourBrief brief) =>
+    /// <summary>
+    /// Position 4 for a flavour line, to the depth the brief asked for (Phase 43). The Narrator, given no
+    /// character sheet, names the Commander from the journal.
+    /// </summary>
+    private string? StoryFor(FlavourBrief brief, VoiceRole speaker = VoiceRole.ShipAi) =>
         brief.NeedsAboutMe
             ? CommanderStory.Compose(
-                Settings.Current.Llm.CharacterSheet, Settings.Current.Llm.AboutMe, withStory: brief.NeedsStory)
+                speaker == VoiceRole.Narrator
+                    ? CommanderStory.SheetOrName(Settings.Current.Llm.CharacterSheet, GameState.Active?.Identity.Name)
+                    : Settings.Current.Llm.CharacterSheet,
+                Settings.Current.Llm.AboutMe,
+                withStory: brief.NeedsStory)
             : null;
 
     /// <summary>The Commander's scenario for a flavour line, or null when the brief or the audience leaves it out.</summary>

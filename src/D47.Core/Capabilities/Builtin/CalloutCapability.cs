@@ -484,7 +484,8 @@ public static class CalloutCapability
                 "Narrator",
                 "A voice of its own that tells your story in the third person during a lull, from your "
                 + "character sheet, your backstory and your scenario. Never in supercruise or during a fight, "
-                + "and silent while all three are empty. Written by the model, which is sent the whole "
+                + "and silent while all three are empty, unless COVAS is aboard: then it speaks in the In Ship "
+                + "chatter gap in place of COVAS's idle remarks. Written by the model, which is sent the whole "
                 + "backstory each time; with no model, or personality off, there is no narration.",
                 "narrator",
                 "the narrator",

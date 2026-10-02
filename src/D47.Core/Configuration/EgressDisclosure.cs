@@ -534,7 +534,7 @@ public static class EgressDisclosure
 
         var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
         var commander = CommanderTextSent(settings.Llm);
-        var narration = commander is not null && Narrates(settings) ? $"The Narrator sends {commander}" : null;
+        var narration = Narrates(settings) ? $"The Narrator sends {NarratorSends(settings.Llm, commander)}" : null;
         var scenes = Scenes(settings);
 
         // The first time in d47's life that the accurate answer to *what is leaving* is *nothing* (Phase 29).
@@ -581,6 +581,14 @@ public static class EgressDisclosure
     private static bool Narrates(D47Settings settings) =>
         settings.Callouts is { Enabled: true, Narrator: true, NarratorSeconds: > 0 }
         && settings.Llm.PersonalityEnabled;
+
+    /// <summary>What a narration carries beyond the game state: the Commander's texts, and with no sheet, the journal name.</summary>
+    private static string NarratorSends(LlmSettings llm, string? commander) =>
+        !string.IsNullOrWhiteSpace(llm.CharacterSheet) ? commander!
+        : commander is null ? JournalName
+        : $"{commander} and {JournalName}";
+
+    private const string JournalName = "your Commander name from the journal";
 
     private const string SceneChatter = "Scene chatter at a settlement, in a ship fight or over a mission sends your current scenario";
 
