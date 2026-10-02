@@ -179,6 +179,9 @@ public sealed record StorySpeaker
     /// <summary>The member as a Commander who is a man, and one who is a woman, meets them; null for one version.</summary>
     public StorySpeakerVersions? Versions { get; init; }
 
+    /// <summary>A recurring character the Commander knows from the card. A primary member always has a picture.</summary>
+    public bool Primary { get; init; }
+
     /// <summary>
     /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
     /// <see cref="StorySpeakerVersions.ForMan"/> version.
@@ -189,11 +192,11 @@ public sealed record StorySpeaker
 
         if (Versions is not { } versions || (woman ? versions.ForWoman ?? versions.ForMan : versions.ForMan ?? versions.ForWoman) is not { } version)
         {
-            return new StorySpeakerShown(Id, Name ?? string.Empty, Provider, Voice ?? string.Empty, $"{storyId}.{Id}");
+            return new StorySpeakerShown(Id, Name ?? string.Empty, Provider, Voice ?? string.Empty, $"{storyId}.{Id}") { Primary = Primary };
         }
 
         var key = woman && versions.ForWoman is not null ? StorySpeakerVersions.ForWomanKey : StorySpeakerVersions.ForManKey;
-        return new StorySpeakerShown(Id, version.Name, version.Provider ?? Provider, version.Voice, $"{storyId}.{Id}.{key}");
+        return new StorySpeakerShown(Id, version.Name, version.Provider ?? Provider, version.Voice, $"{storyId}.{Id}.{key}") { Primary = Primary };
     }
 }
 
@@ -250,10 +253,14 @@ public sealed record StorySpeakerVersions
 }
 
 /// <summary>
-/// A cast member as the current Commander meets them. <see cref="Picture"/> names
-/// <c>assets/stories/&lt;Picture&gt;.png</c>.
+/// A cast member as the current Commander meets them. <see cref="Picture"/> names <c>&lt;Picture&gt;.jpg</c> in
+/// <see cref="AppPaths.Stories"/>.
 /// </summary>
-public sealed record StorySpeakerShown(string Id, string Name, string Provider, string Voice, string Picture);
+public sealed record StorySpeakerShown(string Id, string Name, string Provider, string Voice, string Picture)
+{
+    /// <summary>Whether the member is primary, so has a picture.</summary>
+    public bool Primary { get; init; }
+}
 
 /// <summary>The fifteen Save the Cat beats of one story. A line may be general; the chapter writer fills it in.</summary>
 public sealed record StoryBeats

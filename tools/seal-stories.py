@@ -18,6 +18,8 @@ Each entry: {"id", "secret", "end", "beats", "scan", "clues", "finale", "options
            {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
            such a speaker as {name:<cast-id>}, and the card names neither the token nor either name.
+           A speaker may carry "primary": true, a recurring character the Commander knows from the card;
+           a primary speaker must have a picture when the story is published.
 The scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
@@ -134,6 +136,8 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         if sid in speakers or sid in personas:
             found.append(f"cast {at + 1} has the id {sid}, taken by the ship, the narrator, a persona or another speaker")
         speakers.add(sid)
+        if "primary" in speaker and not isinstance(speaker["primary"], bool):
+            found.append(f"cast {at + 1} ({sid}) has a primary that is not true or false")
         if versions is None:
             found += voice_fault(f"cast {at + 1} ({sid})", speaker.get("provider"), speaker.get("voice"))
             continue

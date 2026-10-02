@@ -67,6 +67,9 @@ public static class EgressDisclosure
     /// <summary>Fetching stock stories: the list, and a story's hidden layer and cast pictures.</summary>
     public const string StockStories = "stockstories";
 
+    /// <summary>The pictures the Commander chose for a story's cast.</summary>
+    public const string ChosenPictures = "pictures";
+
     /// <summary>Every disclosure d47 makes, in a fixed order.</summary>
     public static IReadOnlyList<string> Ids { get; } =
     [
@@ -83,6 +86,7 @@ public static class EgressDisclosure
         SpeechModels,
         Diagnostics,
         JournalFiles,
+        ChosenPictures,
         Donation,
     ];
 
@@ -102,6 +106,7 @@ public static class EgressDisclosure
         StockStories => "Stock stories",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
+        ChosenPictures => "Pictures you chose",
         // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they see.
         Donation => "Shared excerpts and journals",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
@@ -285,6 +290,11 @@ public static class EgressDisclosure
             + "can reach the model as game state when one is configured; see the language model row.",
             summary: "Read from disk and never uploaded. Facts from it can reach the model as game "
                 + "state; see the language model row."),
+
+        ChosenPictures => EgressEntry.Silent(
+            ChosenPictures,
+            NameOf(ChosenPictures),
+            "A picture you choose for a story's character is kept in data\\pictures on this PC and never sent anywhere."),
 
         Donation => DonationEntry(),
 

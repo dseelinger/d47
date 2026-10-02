@@ -19,6 +19,9 @@ public sealed record D47Message
 
     public bool Read { get; init; }
 
+    /// <summary>The speaker's picture name, <c>&lt;story-id&gt;.&lt;cast-id&gt;</c> with a version suffix where the member has two; read through <see cref="Stories.CastPictures"/>.</summary>
+    public string? Picture { get; init; }
+
     /// <summary>The answers the Commander may give, when the message asks for one.</summary>
     public IReadOnlyList<MessageAnswer> Answers { get; init; } = [];
 }

@@ -48,7 +48,7 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
         }
     }
 
-    public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null)
+    public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null, string? picture = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(from);
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
@@ -62,6 +62,7 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
             Body = body,
             AdventureKey = adventureKey,
             Answers = answers ?? [],
+            Picture = picture,
         };
 
         lock (_gate)

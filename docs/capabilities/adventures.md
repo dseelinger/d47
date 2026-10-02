@@ -408,6 +408,29 @@ has no hidden file on disk is fetched.
 the Stories page lists only stories already on disk. The hidden layer is fetched only when you pick
 the story, so a story's secret is not downloaded until you choose it.
 
+### Cast pictures
+
+A speaker may have a picture, downloaded with the story as `<story-id>.<cast-id>.jpg` into
+`data\stories`; a speaker in two versions has one for each, ending `.for-man.jpg` and `.for-woman.jpg`. A
+speaker marked `primary` is a recurring character named on the story's card, and always has one. A line
+that speaker says is posted to Messages with the picture, which the message page shows above the text, at
+most 240 px wide. A line from the ship's AI or the narrator has none.
+
+Under the picture, **Change picture** opens a file picker for a PNG, JPEG, BMP or WebP file under 10 MB.
+D47 reads it, scales it to at most 1024 px on the longer side and keeps it as
+`data\pictures\<story-id>.<cast-id>.png` (with the version suffix for a speaker in two versions). A file
+that cannot be read as a picture is refused with the reason, and nothing is written. From then on every
+message with that picture, earlier ones included, shows your file. **Use the default** deletes it, and the
+story's own picture shows again. Your pictures stay on this PC; nothing is sent anywhere, and the model
+has no tool for them.
+
+```csharp
+public string? For(StorySpeakerShown? speaker) =>
+    speaker is { } shown && IsName(shown.Picture) && (shown.Primary || Find(shown.Picture) is not null)
+        ? shown.Picture
+        : null;
+```
+
 ### How a chapter is fitted to you
 
 **Genre.** Each card has a Save the Cat genre, and the chapter writer is given that genre's three

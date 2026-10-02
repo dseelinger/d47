@@ -2,6 +2,8 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Interface;
@@ -83,6 +85,14 @@ public sealed class MessagesView : UserControl
         var page = new StackPanel { Margin = new Thickness(14), Spacing = 8 };
         page.Children.Add(AdventuresPage.Text(message.Subject, TypeScale.Body));
         page.Children.Add(AdventuresPage.Text(Caption(message), TypeScale.Small, ThemeManager.GreyKey));
+
+        if (_surface?.Pictures is { } pictures && message.Picture is { } picture && pictures.Find(picture) is not null)
+        {
+            var holder = new StackPanel { Spacing = 6 };
+            ShowPicture(holder, pictures, picture);
+            page.Children.Add(holder);
+        }
+
         page.Children.Add(AdventuresPage.Text(message.Body, TypeScale.Body));
 
         if (message.Answers.Count > 0)
@@ -91,6 +101,102 @@ public sealed class MessagesView : UserControl
         }
 
         return new ScrollViewer { Content = page, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+    }
+
+    /// <summary>A cast member's picture, the Commander's own where they chose one, with the buttons that replace it.</summary>
+    private void ShowPicture(StackPanel holder, CastPictures pictures, string picture)
+    {
+        holder.Children.Clear();
+
+        if (pictures.Find(picture) is { } file)
+        {
+            try
+            {
+                using var bytes = new MemoryStream(File.ReadAllBytes(file));
+                holder.Children.Add(new Image
+                {
+                    Source = new Bitmap(bytes),
+                    MaxWidth = 240,
+                    Stretch = Stretch.Uniform,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                });
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                holder.Children.Add(AdventuresPage.Muted("The picture could not be read."));
+            }
+        }
+
+        var status = AdventuresPage.Text(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
+        var change = new Button { Content = "Change picture" };
+        var restore = new Button { Content = "Use the default", IsEnabled = pictures.IsChosen(picture) };
+
+        change.Click += async (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(this)?.StorageProvider is not { CanOpen: true } storage)
+            {
+                status.Text = "No file picker here.";
+                return;
+            }
+
+            var picked = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Choose a picture",
+                AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType("Pictures") { Patterns = CastPictureImport.Patterns }],
+            });
+
+            if (picked.Count == 0)
+            {
+                return;
+            }
+
+            change.IsEnabled = false;
+            string? refusal;
+
+            try
+            {
+                await using var stream = await picked[0].OpenReadAsync();
+                var name = picked[0].Name;
+                refusal = await Task.Run(() => CastPictureImport.Save(stream, name, pictures.Chosen(picture)));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                refusal = $"The picture could not be saved: {ex.Message}";
+            }
+
+            if (refusal is not null)
+            {
+                change.IsEnabled = true;
+                status.Text = refusal;
+                return;
+            }
+
+            ShowPicture(holder, pictures, picture);
+        };
+
+        restore.Click += (_, _) =>
+        {
+            try
+            {
+                pictures.UseDefault(picture);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                status.Text = $"Your picture could not be removed: {ex.Message}";
+                return;
+            }
+
+            ShowPicture(holder, pictures, picture);
+        };
+
+        holder.Children.Add(new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            Spacing = 6,
+            Children = { change, restore },
+        });
+        holder.Children.Add(status);
     }
 
     /// <summary>The options an ending message offers while it is unanswered, and the choice once it is made.</summary>

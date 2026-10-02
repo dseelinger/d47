@@ -10,7 +10,7 @@ Not part of the build. Writes nothing inside the repository.
 
 The script downloads `index.json` from the release (an empty list if there is none), refuses an id already in
 it unless --replace is given, checks the card and hidden entry with `faults` from seal-stories.py and requires a
-picture for every cast member that has one (a member with no picture file is published without one), numbers the card, and builds in the work directory: `<id>.sealed`, a 1024 px
+picture for every primary cast member (any other member with no picture file is published without one), numbers the card, and builds in the work directory: `<id>.sealed`, a 1024 px
 JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and the new `index.json`. It then
 uploads them with `gh release upload`, `index.json` last. --dry-run stops before the upload and lists each
 file with its size. The release is created with --latest=false when missing: UpdateChecker reads the latest
@@ -73,10 +73,13 @@ def download_index(work: pathlib.Path) -> list:
 
 
 def picture_names(entry: dict) -> list:
+    """(name, primary) for every picture the cast can have."""
     names = []
     for speaker in entry.get("cast") or []:
         base = f"{entry['id']}.{speaker['id']}"
-        names += [f"{base}.for-man", f"{base}.for-woman"] if speaker.get("versions") is not None else [base]
+        primary = speaker.get("primary") is True
+        bases = [f"{base}.for-man", f"{base}.for-woman"] if speaker.get("versions") is not None else [base]
+        names += [(name, primary) for name in bases]
     return names
 
 
@@ -125,10 +128,12 @@ def main() -> None:
     sealer = load_sealer()
     problems = [f"{story}: {fault}" for fault in sealer.faults(entry, sealer.persona_ids(), card)]
     sources = {}
-    for name in picture_names(entry):
+    for name, primary in picture_names(entry):
         picture = folder / f"{name}.png"
         if picture.is_file():
             sources[name] = picture
+        elif primary:
+            problems.append(f"{story}: no picture {picture.name}; a primary cast member needs one")
         else:
             print(f"{story}: no picture {picture.name}; published without it")
     if problems:

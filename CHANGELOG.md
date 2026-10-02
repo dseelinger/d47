@@ -12,6 +12,8 @@ Stock stories are downloaded from a GitHub release into `data\stories`: the list
 
 Stock stories are downloaded when you open the Stories page, instead of shipping with the app.
 
+A message from a story character with a picture shows it above the text. **Change picture** replaces it with a PNG, JPEG, BMP or WebP file of your own, kept in `data\pictures` and shown on every message from that character; **Use the default** brings the story's picture back. **Privacy and egress** lists **Pictures you chose**: kept on this PC, never sent.
+
 The Stories page filters stock stories by length and by the Commander they were written for.
 
 With a stock core aboard, a narration can work in one tip on using D47, told as something your Commander had not yet learned. Each feature's tip is said once per Commander. **Tips on using D47** under Narrator in Plan and story callouts turns them off.

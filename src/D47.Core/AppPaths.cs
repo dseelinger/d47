@@ -39,6 +39,7 @@ public sealed class AppPaths
         Donations = Path.Combine(Data, "donations");
         Ships = Path.Combine(Data, "ships");
         Stories = Path.Combine(Data, "stories");
+        Pictures = Path.Combine(Data, "pictures");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
     }
 
@@ -108,6 +109,9 @@ public sealed class AppPaths
 
     /// <summary>The stock stories downloaded after the install: <c>index.json</c> and one <c>.sealed</c> file per picked story.</summary>
     public string Stories { get; }
+
+    /// <summary>The cast pictures the Commander chose in place of a story's own, one <c>.png</c> per picture name.</summary>
+    public string Pictures { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }

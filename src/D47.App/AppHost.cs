@@ -399,6 +399,11 @@ public sealed class AppHost : IDisposable
     /// <summary>Fetches stock stories from the stories release.</summary>
     public StoryDownloader? StoryDownloads { get; private set; }
 
+    private D47.Core.Stories.CastPictures? _castPictures;
+
+    /// <summary>Where a story cast member's picture is read, and the Commander's replacement kept.</summary>
+    public D47.Core.Stories.CastPictures CastPictures => _castPictures ??= new(Paths);
+
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
@@ -6083,14 +6088,23 @@ public sealed class AppHost : IDisposable
         }
 
         var ship = line.Speaker == D47.Core.Stories.StorySpeaker.Ship;
+        var cast = line.Speaker is D47.Core.Stories.StorySpeaker.Ship or D47.Core.Stories.StorySpeaker.Narrator
+            ? null
+            : Stories?.Speaker(commander, line.Speaker);
         var from = line.Speaker switch
         {
             D47.Core.Stories.StorySpeaker.Ship => Personas.Current.Id,
             D47.Core.Stories.StorySpeaker.Narrator => D47.Core.Messages.MessageStore.Narrator,
-            _ => Stories?.Speaker(commander, line.Speaker)?.Name ?? D47.Core.Messages.MessageStore.Narrator,
+            _ => cast?.Name ?? D47.Core.Messages.MessageStore.Narrator,
         };
 
-        Messages?.Post(from, scan.Title, line.Text, DateTimeOffset.Now, D47.Core.Stories.StoryLines.Key(scan.StoryId));
+        Messages?.Post(
+            from,
+            scan.Title,
+            line.Text,
+            DateTimeOffset.Now,
+            D47.Core.Stories.StoryLines.Key(scan.StoryId),
+            picture: CastPictures.For(cast));
         Interlocked.Increment(ref _narratingScans);
 
         _ = Task.Run(async () =>
