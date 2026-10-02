@@ -284,5 +284,18 @@
     "blurb": "Light is slow. Sixty-one years ago a settlement called Lantern burned on a moon in Vardh with eleven hundred people in it, and the light of that night is only now reaching systems sixty-one light years out. Dr. Imogen Strand was nine when it happened. She has spent her life building an instrument that can see a settlement from that far, and she has hired you to fly it. Every light year closer, you watch a year later: Lantern's last good years, its foundry running all night, its ships flying away and not coming back. The record says a reactor failed. Imogen says somebody killed her mother. The light says something else, and someone out there has learned how to make it lie.",
     "inYourWords": "I fly a ship I have paid off and engineered a little, and I keep enough in the bank to get through one bad month. I took Dr. Strand's charter because it paid well and sounded quiet: carry her instrument out into the dark sixty-odd light years from Vardh, keep still, and let it look back. She says that from far enough away, the light of a place is still the place as it was. Sixty-one years ago a settlement called Lantern burned on Vardh 7 a. She was nine, and her mother was in it. She has asked me to take her down to the ice before we start.",
     "beacon": "Imogen's array has to be calibrated against a light source that has not changed in a million years, and there is only one kind she trusts. She has marked the nearest Guardian beacon on my chart and says the instrument is useless until it has had a data-link scan of one."
+  },
+  {
+    "id": "clean-bill",
+    "core": "sentinel",
+    "number": 23,
+    "title": "Clean Bill",
+    "genre": "Dude with a Problem",
+    "level": "midrange",
+    "length": "1-week",
+    "tone": "Close and creeping, then cunning",
+    "blurb": "One cheap salvage run: a hold of meta-alloys from a Thargoid site, a Guardian beacon on the way for a bonus, and a research buyer waiting at the end. That night your ship starts to tick. Something scratches in the cargo rack, frost grows on the inside of your canopy, and the power drains while you sleep. At dawn Hazard Officer Imre Vasko of the Merope port authority is on comms, calm and kind and exact. A Thargoid growth came aboard with the salvage, he says, and you have one week to find it and burn it out before your ship is impounded and stripped to the frame. The mind that came aboard at the beacon has studied war for a million years and never fought one. It is delighted. You are not.",
+    "inYourWords": "I fly a working ship with some engineering on it, and I keep enough in the bank to turn down a bad job. I took this one anyway, because it paid three times the going rate: pick up meta-alloys at a Thargoid site, scan a Guardian beacon on the way for a bonus, and deliver both to a research buyer. The alloys are in the hold now. They are cold to the touch through the crate and they make the cargo rack smell like a struck match. The beacon is one jump away. Easy money, the buyer said. I have heard that before.",
+    "beacon": "The buyer pays a bonus for a beacon data-link log flown in alongside the alloys: Guardian readings and Thargoid metal in the same hold, side by side. So I fly out to the nearest beacon with the cargo still aboard and run the data-link."
   }
 ]
