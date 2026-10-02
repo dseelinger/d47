@@ -183,7 +183,7 @@ public sealed class StoriesView : UserControl
                 AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"),
                 AdventuresPage.Text(card.Blurb, TypeScale.Body));
 
-            var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title);
+            var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title) { Level = ReadPrefix };
             row.PointerPressed += (_, _) => _nav.Drill(crumb);
             _list.Children.Add(row);
         }
@@ -332,7 +332,7 @@ public sealed class StoriesView : UserControl
                 buttons);
 
         row.Margin = new Thickness(0, 0, 0, 10);
-        row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + story.Id, story.Title));
+        row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + story.Id, story.Title) { Level = ReadPrefix });
         return row;
     }
 

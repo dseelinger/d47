@@ -16,6 +16,8 @@ A message from a story character with a picture shows it above the text. **Chang
 
 The Stories page filters stock stories by length and by the Commander they were written for.
 
+Opening one story or message after another replaces the one that was open instead of stacking them, and opening a page that is already open goes back to it. D47 no longer crashes when you click back to a story you just read.
+
 With a stock core aboard, a narration can work in one tip on using D47, told as something your Commander had not yet learned. Each feature's tip is said once per Commander. **Tips on using D47** under Narrator in Plan and story callouts turns them off.
 
 During your first 50 hours of play, a narration with a stock core aboard can also work in one tip on playing Elite, such as fuel scooping after a jump, told in narration from a short hand-written list. Each tip is said once per Commander, and a tip on using D47 comes first. **Tips on playing Elite** under Narrator in Plan and story callouts turns them off.

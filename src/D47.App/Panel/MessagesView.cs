@@ -281,7 +281,7 @@ public sealed class MessagesView : UserControl
 
             var key = message.Key;
             var crumb = message.Subject;
-            row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + key, crumb));
+            row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + key, crumb) { Level = ReadPrefix });
             _list.Children.Add(row);
         }
     }

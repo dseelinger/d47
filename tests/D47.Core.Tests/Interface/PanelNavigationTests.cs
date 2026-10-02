@@ -452,4 +452,22 @@ public class PanelNavigationTests
         Assert.Null(PanelPhrases.Apply("help", nav));
         Assert.Equal(depth, nav.Trail.Count);
     }
+
+    /// <summary>Drilling into a level already in the trail goes back to it, so no key is in the trail twice.</summary>
+    [Fact]
+    public void DrillingToAnOpenLevelGoesBackToIt()
+    {
+        var nav = Furnished();
+        nav.Select(PanelTab.Loadout);
+
+        Assert.True(nav.Drill(new NavCrumb("ship.a", "A")));
+        Assert.True(nav.Drill(new NavCrumb("ship.b", "B")));
+        Assert.True(nav.Drill(new NavCrumb("ship.a", "A again")));
+
+        Assert.Equal(["fleet", "ship.a"], nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal("A again", nav.Trail[^1].Word);
+
+        Assert.True(nav.Drill(new NavCrumb("fleet", "Ships")));
+        Assert.Equal(["fleet"], nav.Trail.Select(crumb => crumb.Key));
+    }
 }

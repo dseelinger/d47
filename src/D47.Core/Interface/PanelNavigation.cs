@@ -350,6 +350,18 @@ public sealed class PanelNavigator
             return true;
         }
 
+        // A key already lower in the trail is returned to, not stacked again: a drill strip cannot show one
+        // level's page in two panes.
+        var earlier = trail.FindIndex(open => open.Key == crumb.Key);
+
+        if (earlier >= 0)
+        {
+            trail.RemoveRange(earlier + 1, trail.Count - earlier - 1);
+            trail[earlier] = crumb;
+            Raise();
+            return true;
+        }
+
         // A level with alternatives replaces the one of its kind that is already open, and takes whatever was
         // below it — see NavCrumb.Level.
         if (crumb.Level is { Length: > 0 } level)
