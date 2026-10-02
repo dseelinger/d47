@@ -209,6 +209,8 @@ Twenty-six triggers, and every one is a comparison on a structured field rather 
 | Reach an engineer stage | `EngineerProgress` for one `Engineer` at `Invited` or `Unlocked`, either form | the engineer's display name |
 | Launch the SRV | `LaunchSRV` events | anything else |
 | Hire crew | `CrewHire` events | anything else |
+| Apply suit mods | each mod in `SuitMods` for a `SuitID`, or in `WeaponMods` for a `SuitModuleID`, that the previous `SuitLoadout` for it lacked, optionally one mod name such as `suit_nightvision` | anything else |
+| Change livery | a `Loadout` whose cosmetic slots (`PaintJob`, `Decal1` to `Decal3`, `ShipName0`, `ShipName1`, `ShipID0`, `ShipID1`, `EngineColour`, `WeaponColour`, `StringLights`, `VesselVoice`, `Bobble01` to `Bobble10`, `ShipKit*`) differ from the previous `Loadout` for the same `ShipID` | anything else |
 
 Only a stock story's chapter one uses the beacon trigger, as its last beat, and you cannot add one on the
 form.
@@ -220,6 +222,7 @@ for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it fr
 mission families are set aside, and no beat uses or counts them: `Mission_Massacre_Skimmer`,
 `Mission_Disable`, `Mission_Hack`, `Mission_OnFoot_Hack`, `Mission_Scan`, `Mission_RS_` and `Mission_DS_`.
 A story steers illegal missions to Anarchy space but does not enforce it. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The chapter writer is given up to five Anarchy systems within reach and must put an illegal mission beat directly after an arrive or dock beat in one of them, or use no illegal family when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission beat is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
+A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is written, so the beat may fire some minutes after the change. A suit, weapon or ship with no earlier loadout is only remembered: its first loadout counts nothing. A livery beat names no paint job, kit or decal. No beat may need an ARX purchase, because the journal cannot show one; the chapter writer is told so.
 The form offers the first six kinds and shows any other beat without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer beat at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer.
 
 Nothing a stranger can choose — a ship name, an in-game message, a mission title — can be a

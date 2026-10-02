@@ -50,8 +50,8 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var beats = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
-        Assert.Contains("one of twenty-six things", beats);
-        Assert.Contains("\"crew\"|\"beacon\"", beats);
+        Assert.Contains("one of twenty-eight things", beats);
+        Assert.Contains("\"livery\"|\"beacon\"", beats);
     }
 
     [Fact]

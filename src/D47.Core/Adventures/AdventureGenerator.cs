@@ -901,7 +901,7 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
 
-        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "twenty-five" : "twenty-six")} things, and nothing else exists:");
+        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "twenty-seven" : "twenty-eight")} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
@@ -933,6 +933,9 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet.");
         text.AppendLine("- \"srv\": the Commander launches the SRV \"count\" times.");
         text.AppendLine("- \"crew\": the Commander hires \"count\" crew members.");
+        text.AppendLine("- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.");
+        text.AppendLine("- \"livery\": the Commander changes their ship's paint, decals, name, colours or kit \"count\" times. It names no item: the Commander uses what they own.");
+        text.AppendLine("No beat may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
         text.AppendLine("Every kind from bounty on is counted, except engineer, which is met once: only what happens after the beat before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
 
         if (beacon is not null)
@@ -998,7 +1001,7 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
             + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
-            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\""
+            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\"|\"suitmod\"|\"livery\""
             + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
             + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "

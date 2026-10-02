@@ -43,6 +43,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
     /// <summary>The system each Commander is in, which a standing begun from nothing starts in.</summary>
     private readonly Dictionary<string, long> _here = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IReadOnlyDictionary<string, string>> _seen = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Which stories are owed a spoken line right now — a beat has fired and the Commander has not
@@ -209,6 +210,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             _standings.Clear();
             _highWater.Clear();
             _here.Clear();
+            _seen.Clear();
         }
 
         foreach (var file in files)
@@ -322,7 +324,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            _standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(commander));
+            _standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(commander), Seen(commander));
             _moments.Enqueue(new AdventureMoment(commander, begun, -1, now));
             Stir(commander, begun.Key);
         }
@@ -484,6 +486,8 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 adventure.Beats[after.Fired.Count - 1].Title,
                 journalEvent.Timestamp);
         }
+
+        _seen[commander] = AdventureWatch.Observe(Seen(commander), journalEvent).Seen;
     }
 
     private AdventureStanding StandingOf(string commander, Adventure adventure)
@@ -495,10 +499,13 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             return ReferenceEquals(standing.Adventure, adventure) ? standing : standing with { Adventure = adventure };
         }
 
-        var fresh = AdventureFold.Start(adventure, Here(commander));
+        var fresh = AdventureFold.Start(adventure, Here(commander), Seen(commander));
         _standings[key] = fresh;
         return fresh;
     }
+
+    private IReadOnlyDictionary<string, string> Seen(string commander) =>
+        _seen.TryGetValue(commander, out var seen) ? seen : AdventureWatch.Nothing;
 
     private long? Here(string commander) => _here.TryGetValue(commander, out var address) ? address : null;
 

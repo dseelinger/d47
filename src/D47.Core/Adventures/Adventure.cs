@@ -96,6 +96,12 @@ public enum TriggerKind
 
     /// <summary><c>CrewHire</c> events.</summary>
     Crew,
+
+    /// <summary>Suit or weapon mods that first appear in a <c>SuitLoadout</c>, optionally of one mod name.</summary>
+    SuitMod,
+
+    /// <summary><c>Loadout</c> events whose cosmetic slots differ from the ship's previous one.</summary>
+    Livery,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -136,7 +142,7 @@ public sealed record AdventureTrigger
     /// <summary>The commodity sold or refined, compared as a folded symbol.</summary>
     public string? Commodity { get; init; }
 
-    /// <summary>The cargo, item, genus, category, signal, wreck or source type, or the name of what is rescued, that a counted beat is limited to.</summary>
+    /// <summary>The cargo, item, genus, category, signal, wreck or source type, the suit mod, or the name of what is rescued, that a counted beat is limited to.</summary>
     public string? Filter { get; init; }
 
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
@@ -199,6 +205,8 @@ public sealed record AdventureTrigger
         TriggerKind.Engineer => $"reach {Stage?.Trim()} with {Engineer?.Trim()}",
         TriggerKind.Srv => $"launch the SRV {Times()}",
         TriggerKind.Crew => $"hire {Counted("crew member", "crew members")}",
+        TriggerKind.SuitMod => $"apply {Counted(SuitMods(one: true), SuitMods(one: false))}",
+        TriggerKind.Livery => $"change your ship's livery {Times()}",
         _ => Kind.ToString(),
     };
 
@@ -231,6 +239,8 @@ public sealed record AdventureTrigger
             TriggerKind.Rescue => $"{Capital(Survivors(one: false))}: {of}",
             TriggerKind.Srv => $"SRV launches: {of}",
             TriggerKind.Crew => $"Crew hired: {of}",
+            TriggerKind.SuitMod => $"{Capital(SuitMods(one: false))}: {of}",
+            TriggerKind.Livery => $"Livery changes: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }
@@ -283,6 +293,9 @@ public sealed record AdventureTrigger
 
     private string Items(bool one) =>
         (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "item" : "items");
+
+    private string SuitMods(bool one) =>
+        (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "suit mod" : "suit mods");
 
     private string Wrecks(bool one) =>
         string.IsNullOrWhiteSpace(Filter) || string.Equals(Filter.Trim(), "Unknown", StringComparison.OrdinalIgnoreCase)

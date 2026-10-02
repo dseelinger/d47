@@ -25,6 +25,9 @@ public sealed record AdventureStanding
     /// <summary>The running total toward the current beat when it is counted: events, or tons sold or refined.</summary>
     public int Counted { get; init; }
 
+    /// <summary>The last suit mods and ship cosmetics seen for each suit, weapon and ship, for <see cref="AdventureWatch"/>.</summary>
+    public IReadOnlyDictionary<string, string> Seen { get; init; } = AdventureWatch.Nothing;
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
@@ -407,6 +410,13 @@ public static class AdventureFold
             standing = standing with { SystemAddress = arrived };
         }
 
+        var observation = AdventureWatch.Observe(standing.Seen, journalEvent);
+
+        if (!ReferenceEquals(observation.Seen, standing.Seen))
+        {
+            standing = standing with { Seen = observation.Seen };
+        }
+
         if (!adventure.IsBegun || standing.IsDone)
         {
             return standing;
@@ -429,14 +439,22 @@ public static class AdventureFold
 
         var current = standing.CurrentBeat;
 
-        if (current is null || !Matches(current.Trigger, journalEvent, standing.SystemAddress))
+        if (current is null)
+        {
+            return standing;
+        }
+
+        var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery;
+        var gained = watched ? AdventureWatch.Amount(current.Trigger, observation) : 0;
+
+        if (watched ? gained == 0 || !current.Trigger.IsResolved : !Matches(current.Trigger, journalEvent, standing.SystemAddress))
         {
             return standing;
         }
 
         if (current.Trigger.IsCounted)
         {
-            var total = (int)Math.Min((long)standing.Counted + Amount(current.Trigger, journalEvent), int.MaxValue);
+            var total = (int)Math.Min((long)standing.Counted + (watched ? gained : Amount(current.Trigger, journalEvent)), int.MaxValue);
 
             if (total < current.Trigger.Count)
             {
@@ -448,6 +466,6 @@ public static class AdventureFold
     }
 
     /// <summary>A fresh standing: begun or not, nothing fired yet, in <paramref name="systemAddress"/> when it is known.</summary>
-    public static AdventureStanding Start(Adventure adventure, long? systemAddress = null) =>
-        new() { Adventure = adventure, SystemAddress = systemAddress };
+    public static AdventureStanding Start(Adventure adventure, long? systemAddress = null, IReadOnlyDictionary<string, string>? seen = null) =>
+        new() { Adventure = adventure, SystemAddress = systemAddress, Seen = seen ?? AdventureWatch.Nothing };
 }
