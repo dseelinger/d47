@@ -50,6 +50,9 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// <summary>The next tip on using D47 for a narration to carry, recorded as taken, or null for none.</summary>
     public Func<NarratorTip?> TakeTip { get; set; } = () => null;
 
+    /// <summary>The next tip on playing Elite for the journal events seen since the last narration, recorded as taken, or null for none.</summary>
+    public Func<IReadOnlySet<string>, NarratorTip?> TakeEliteTip { get; set; } = _ => null;
+
     /// <summary>The shortest gap while a stock core is aboard.</summary>
     public TimeSpan StandInInterval { get; set; } = TimeSpan.FromMinutes(5);
 
@@ -64,12 +67,21 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     private DateTimeOffset _lastSpokenAt;
     private int _picks;
     private readonly HashSet<string> _nudged = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _eventsSeen = new(StringComparer.Ordinal);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var situation = AmbientLines.Situate(context.Status);
         var standsIn = StockCoreAboard();
         var (shortest, longest) = standsIn ? (StandInInterval, StandInLongest) : (Interval, Longest);
+
+        if (!context.IsPriming)
+        {
+            foreach (var journalEvent in context.Events)
+            {
+                _eventsSeen.Add(journalEvent.Kind);
+            }
+        }
 
         if (situation != _situation)
         {
@@ -117,6 +129,9 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         _picks++;
         _lastSpokenAt = context.Now;
 
+        var eventsSeen = _eventsSeen.ToHashSet(StringComparer.Ordinal);
+        _eventsSeen.Clear();
+
         if (stalled is not null)
         {
             _nudged.Add(stalled.Adventure.Key);
@@ -127,7 +142,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             stalled is null ? string.Empty : AdventureNudge.Facts(stalled, lightYears: null))
         {
             StoryAside = stalled is null ? Untold(context.State?.Missions) : null,
-            Tip = stalled is null && standsIn ? TakeTip() : null,
+            Tip = stalled is null && standsIn ? TakeTip() ?? EliteTip(context.State?.Statistics, eventsSeen) : null,
             Urgency = CalloutUrgency.Routine,
             Cooldown = shortest,
             Chatter = shortest,
@@ -135,6 +150,12 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             Variant = _picks - 1,
         };
     }
+
+    /// <summary>A tip on playing Elite, or null once <c>Time_Played</c> is 50 hours or more, or before it is known.</summary>
+    private NarratorTip? EliteTip(CareerStatistics? statistics, IReadOnlySet<string> eventsSeen) =>
+        statistics?.Read("Exploration.Time_Played") is < EliteTips.NewPlayerSeconds
+            ? TakeEliteTip(eventsSeen)
+            : null;
 
     /// <summary>The story's aside for the newest mission on the board that has not had one, or null.</summary>
     private MissionAside? Untold(MissionBoard? board) =>

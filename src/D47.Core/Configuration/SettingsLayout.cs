@@ -490,6 +490,7 @@ public static class SettingsLayout
                                 E("callouts.tradingModeMinHold", under: true),
                                 E("callouts.narrator"),
                                 E("callouts.narratorD47Tips", under: true),
+                                E("callouts.narratorEliteTips", under: true),
                                 E("callouts.narratorSeconds", under: true),
                                 E("callouts.narratorMaxSeconds", under: true),
                                 E("speech.narratorVoice", under: true),

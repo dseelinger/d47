@@ -554,6 +554,9 @@ public sealed record CalloutSettings
     /// <summary>While a stock core is aboard, the Narrator works a tip on using D47 into a narration, once per feature.</summary>
     public bool NarratorD47Tips { get; init; } = true;
 
+    /// <summary>While a stock core is aboard, the Narrator works a tip on playing Elite into a narration during the Commander's first 50 hours.</summary>
+    public bool NarratorEliteTips { get; init; } = true;
+
     /// <summary>The shortest gap between two narrations, in seconds. 0 silences them.</summary>
     public int NarratorSeconds { get; init; } = 1800;
 

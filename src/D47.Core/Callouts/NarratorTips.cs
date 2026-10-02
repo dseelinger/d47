@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
 
-/// <summary>A tip on using D47, taken from a capability page's ELI5 band.</summary>
-public sealed record NarratorTip(string CapabilityId, string Title, string Text);
+/// <summary>A tip on using D47 or, when <paramref name="AboutElite"/> is set, on playing Elite Dangerous.</summary>
+public sealed record NarratorTip(string CapabilityId, string Title, string Text, bool AboutElite = false);
 
 /// <summary>The capabilities whose tip each Commander has been told — <c>data/narrator-tips.json</c>.</summary>
 public sealed class NarratorTipStore(string path, ILogger<NarratorTipStore> logger)
@@ -100,5 +100,63 @@ public static class NarratorTips
         }
 
         return null;
+    }
+}
+
+/// <summary>The hand-written tips on playing Elite Dangerous, each triggered by a journal event.</summary>
+public static class EliteTips
+{
+    /// <summary>A tip is offered only while <c>Exploration.Time_Played</c> is under this many seconds.</summary>
+    public const double NewPlayerSeconds = 50 * 3600;
+
+    public const string IdPrefix = "elite:";
+
+    private const string ResourceName = "D47.Core.EliteTips";
+
+    private static readonly Lazy<IReadOnlyList<(string Key, string Event, string Text)>> Loaded =
+        new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>The first tip, in file order, whose event is in <paramref name="seen"/> and which <paramref name="said"/> rejects.</summary>
+    public static NarratorTip? Next(IReadOnlySet<string> seen, Func<string, bool> said)
+    {
+        ArgumentNullException.ThrowIfNull(seen);
+        ArgumentNullException.ThrowIfNull(said);
+
+        foreach (var (key, trigger, text) in Loaded.Value)
+        {
+            if (seen.Contains(trigger) && !said(IdPrefix + key))
+            {
+                return new NarratorTip(IdPrefix + key, key, text, AboutElite: true);
+            }
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyList<(string Key, string Event, string Text)> Load()
+    {
+        using var stream = typeof(EliteTips).Assembly.GetManifestResourceStream(ResourceName);
+
+        if (stream is null)
+        {
+            return [];
+        }
+
+        using var reader = new StreamReader(stream);
+        var rows = new List<(string, string, string)>();
+
+        while (reader.ReadLine() is { } line)
+        {
+            var cells = line.Split('	');
+
+            if (line.Length == 0 || line[0] == '#' || cells[0] == "key" || cells.Length < 3)
+            {
+                continue;
+            }
+
+            rows.Add((cells[0], cells[1], cells[2]));
+        }
+
+        return rows;
     }
 }

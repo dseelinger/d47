@@ -1161,6 +1161,9 @@ changes.
 
 **With a stock core aboard, a narration can teach you D47.** Each narration works in at most one tip on using D47, told as something your Commander had not yet learned, such as "The Commander had not yet learned that the ship would plot a route if asked." The tips come from the introductions on the help pages, in the order of the help library, and each is said once per Commander; `data\narrator-tips.json` records which. **Tips on using D47** under Narrator in Plan and story callouts turns them off. With a Guardian core or one of your own aboard there are none. A tip goes to the same model as the narration, so it sends nothing more.
 
+**During your first 50 hours, a narration can also teach you Elite.** When `Exploration.Time_Played` in the journal's `Statistics` event is under 50 hours, a narration can work in one tip on playing the game, such as how a fuel scoop refuels the ship, when the journal shows the Commander just did something it relates to, such as a jump. The tips are a short hand-written list that the model only rewords as narration, and each is said once per Commander, recorded in `data
+arrator-tips.json`. Nothing is offered before a `Statistics` event has arrived this session, or from 50 hours on. A narration carries one tip at most, and a tip on using D47 comes first. **Tips on playing Elite** under Narrator in Plan and story callouts turns them off. With a Guardian core or one of your own aboard there are none.
+
 **Every narration is written by the model, and sends the whole backstory.** At the defaults that is
 one or two calls an hour on the background model, or six to twelve with a stock core aboard. With no
 character sheet it also sends your Commander name from the journal. When the model is unreachable or returns nothing,

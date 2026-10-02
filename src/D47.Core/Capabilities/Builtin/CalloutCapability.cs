@@ -77,6 +77,7 @@ public static class CalloutCapability
     /// <summary>The Narrator, telling the Commander's story during a lull.</summary>
     public const string NarratorKey = "callouts.narrator";
     public const string NarratorD47TipsKey = "callouts.narratorD47Tips";
+    public const string NarratorEliteTipsKey = "callouts.narratorEliteTips";
     public const string NarratorSecondsKey = "callouts.narratorSeconds";
     public const string NarratorMaxSecondsKey = "callouts.narratorMaxSeconds";
 
@@ -502,6 +503,16 @@ public static class CalloutCapability
                 "the narrator's tips on using D47",
                 s => s.Callouts.NarratorD47Tips,
                 (s, v) => s with { Callouts = s.Callouts with { NarratorD47Tips = v } },
+                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
+
+            Toggle(
+                NarratorEliteTipsKey,
+                "Tips on playing Elite",
+                "While the stock core is aboard, the Narrator works a tip on playing Elite into its narration during your first 50 hours.",
+                "narrator",
+                "the narrator's tips on playing Elite",
+                s => s.Callouts.NarratorEliteTips,
+                (s, v) => s with { Callouts = s.Callouts with { NarratorEliteTips = v } },
                 appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
         ]);
 

@@ -561,17 +561,21 @@ public static class FlavourBriefs
         };
     }
 
-    /// <summary>A narration that also works in one tip on using D47, in place of giving no advice.</summary>
+    /// <summary>A narration that also works in one tip on using D47 or playing Elite, in place of giving no advice.</summary>
     public static FlavourBrief Teaching(FlavourBrief narration, NarratorTip tip)
     {
         ArgumentNullException.ThrowIfNull(narration);
         ArgumentNullException.ThrowIfNull(tip);
 
+        var subject = tip.AboutElite
+            ? "playing Elite Dangerous, a game the Commander is still learning, "
+            : "using D47, the ship's computer, ";
+
         return narration with
         {
             Instruction =
                 narration.Instruction.Replace("give no advice", "give the Commander no advice", StringComparison.Ordinal)
-                + $" Work in one tip on using D47, the ship's computer, about {tip.Title}: tell it as something the "
+                + $" Work in one tip on {subject}about {tip.Title}: tell it as something the "
                 + "Commander had not yet learned, in narration, for example \"The Commander had not yet learned that ...\". "
                 + "Never address the Commander as \"you\" and never phrase it as an instruction. "
                 + $"What the tip says: {tip.Text}",

@@ -2257,6 +2257,23 @@ public sealed class AppHost : IDisposable
         {
             narrator.StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId);
             narrator.StoryAsides = storyDirector.MissionAsides;
+            narrator.TakeEliteTip = seen =>
+            {
+                if (!settings.Current.Callouts.NarratorEliteTips)
+                {
+                    return null;
+                }
+
+                var frontierId = gameState.Active?.Identity.FrontierId;
+                var tip = EliteTips.Next(seen, id => narratorTipStore.Said(frontierId, id));
+
+                if (tip is not null)
+                {
+                    narratorTipStore.Record(frontierId, tip.CapabilityId);
+                }
+
+                return tip;
+            };
             narrator.TakeTip = () =>
             {
                 if (!settings.Current.Callouts.NarratorD47Tips)
