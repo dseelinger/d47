@@ -12,6 +12,8 @@ Stock stories are downloaded from a GitHub release into `data\stories`: the list
 
 Stock stories are downloaded when you open the Stories page, instead of shipping with the app.
 
+The Stories page filters stock stories by length and by the Commander they were written for.
+
 Abandoning a story, or switching to another, removes the messages it posted. A finished story keeps its messages, and so does an adventure you wrote yourself.
 
 While a stock story is running and switched on, the missions you take are tied to it. Each mission gets one short aside from the story's public layer, in the first of three places: the line the core aboard says when you take it, the faction's mission scene chatter, or a narration during a lull. The aside never changes the mission's name, giver, destination, cargo, reward or deadline. Taking a mission now gets a line even when d47 has no cargo or market fact to give, as long as a language model and personality are on. The chapter writer is told the missions you hold, and may make one's destination an arrive or dock beat. A paused or switched-off story leaves missions alone.

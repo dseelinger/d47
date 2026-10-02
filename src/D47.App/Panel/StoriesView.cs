@@ -25,6 +25,17 @@ public sealed class StoriesView : UserControl
     private readonly StoryDownloader? _downloads;
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly StatusLine _status = new();
+    private readonly StoryFilterMemory? _memory;
+    private readonly StackPanel _filterBar = new() { Spacing = 4, Margin = new Thickness(0, 0, 0, 10), IsVisible = false };
+    private readonly TextBlock _count;
+    private readonly IChoiceControl _level;
+    private readonly IChoiceControl _compare;
+    private readonly IChoiceControl _length;
+    private readonly Control _lengthView;
+    private StoryFilter _filter;
+
+    private static readonly string[] LevelLabels = ["Any level", "New", "Mid-range", "Endgame"];
+    private static readonly string[] CompareLabels = ["Any length", "At least", "Exactly", "At most"];
 
     public StoriesView(AdventureSurface surface, StoryDirector director, PanelNavigator nav, PanelPrompts prompts)
     {
@@ -33,6 +44,33 @@ public sealed class StoriesView : UserControl
         _nav = nav;
         _prompts = prompts;
         _downloads = surface.Downloads;
+        _memory = surface.StoryFilters;
+        _filter = _memory?.Filter ?? new StoryFilter();
+
+        var lengths = StoryPacing.All.Select(pacing => pacing.Name).ToList();
+        var levelView = Choice.Build(LevelLabels, _filter.Level is null ? 0 : Math.Max(0, StoryCard.Levels.ToList().IndexOf(_filter.Level) + 1));
+        var compareView = Choice.Build(CompareLabels, (int)_filter.Compare);
+        var lengthIndex = StoryPacing.Find(_filter.Length) is { } known ? StoryPacing.All.ToList().IndexOf(known) : StoryPacing.All.ToList().IndexOf(StoryPacing.OneMonth);
+        var lengthChoice = Choice.Build(lengths, lengthIndex, alwaysStepper: true);
+
+        (_level, _compare, _length, _lengthView) = (levelView.Choice, compareView.Choice, lengthChoice.Choice, lengthChoice.View);
+        Avalonia.Automation.AutomationProperties.SetName(levelView.View, "Level");
+        Avalonia.Automation.AutomationProperties.SetName(compareView.View, "Length");
+        Avalonia.Automation.AutomationProperties.SetName(lengthChoice.View, "Story length");
+        levelView.View.HorizontalAlignment = HorizontalAlignment.Left;
+        compareView.View.HorizontalAlignment = HorizontalAlignment.Left;
+        lengthChoice.View.HorizontalAlignment = HorizontalAlignment.Left;
+        _lengthView.IsVisible = _filter.Compare != StoryLengthCompare.Any;
+
+        _level.SelectionChanged += (_, _) => FilterChanged();
+        _compare.SelectionChanged += (_, _) => FilterChanged();
+        _length.SelectionChanged += (_, _) => FilterChanged();
+
+        _count = AdventuresPage.Muted(string.Empty);
+        _filterBar.Children.Add(levelView.View);
+        _filterBar.Children.Add(compareView.View);
+        _filterBar.Children.Add(_lengthView);
+        _filterBar.Children.Add(_count);
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var (title, _) = RoutingKit.Title("Stories");
@@ -46,8 +84,10 @@ public sealed class StoriesView : UserControl
         DockPanel.SetDock(title, Dock.Top);
         DockPanel.SetDock(intro, Dock.Top);
         DockPanel.SetDock(_status, Dock.Top);
+        DockPanel.SetDock(_filterBar, Dock.Top);
         root.Children.Add(title);
         root.Children.Add(intro);
+        root.Children.Add(_filterBar);
         root.Children.Add(_status);
         root.Children.Add(new ScrollViewer
         {
@@ -122,7 +162,20 @@ public sealed class StoriesView : UserControl
             _list.Children.Add(AdventuresPage.Muted("No stories yet."));
         }
 
-        foreach (var card in offered.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)))
+        var others = offered.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)).ToList();
+        var shown = others.Where(_filter.Matches).ToList();
+
+        _filterBar.IsVisible = offered.Count > 0;
+        _count.IsVisible = shown.Count > 0 && shown.Count < others.Count;
+        _count.Text = string.Create(CultureInfo.InvariantCulture, $"{shown.Count} of {others.Count} stories.");
+
+        if (shown.Count == 0 && others.Count > 0)
+        {
+            _list.Children.Add(AdventuresPage.Muted("No stories match these filters."));
+            _list.Children.Add(Act("Clear filters", ClearFilters));
+        }
+
+        foreach (var card in shown)
         {
             var finished = _director.Stories.Find(_surface.Commander(), card.Id) is { State: StoryState.Finished };
             var row = Row(
@@ -134,6 +187,25 @@ public sealed class StoriesView : UserControl
             row.PointerPressed += (_, _) => _nav.Drill(crumb);
             _list.Children.Add(row);
         }
+    }
+
+    private void FilterChanged()
+    {
+        var compare = (StoryLengthCompare)Math.Max(0, _compare.SelectedIndex);
+        var level = _level.SelectedIndex > 0 ? StoryCard.Levels[_level.SelectedIndex - 1] : null;
+        var length = _length.SelectedIndex >= 0 ? StoryPacing.All[_length.SelectedIndex].Key : null;
+
+        _filter = new StoryFilter(level, compare, length);
+        _lengthView.IsVisible = compare != StoryLengthCompare.Any;
+        _memory?.Remember(_filter);
+        Rebuild();
+    }
+
+    private void ClearFilters()
+    {
+        _level.SelectedIndex = 0;
+        _compare.SelectedIndex = 0;
+        FilterChanged();
     }
 
     /// <summary>The Story on checkbox for the Commander's current story.</summary>

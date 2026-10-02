@@ -44,6 +44,9 @@ public sealed record ViewState
     /// <summary>Which way the journal's Raw switch was left (#267): the file's own JSON, or sentences.</summary>
     public bool JournalRaw { get; init; }
 
+    /// <summary>How the Stories page was left filtered, or null for no filter.</summary>
+    public D47.Core.Stories.StoryFilter? StoryFilter { get; init; }
+
     /// <summary>Whether the Engineers tab has taken the Colonia eight off its lists (#132).</summary>
     public bool EngineersColoniaHidden { get; init; }
 

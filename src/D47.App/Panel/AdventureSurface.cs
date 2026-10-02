@@ -19,4 +19,5 @@ public sealed record AdventureSurface(
     MessageStore? Messages = null,
     D47.Core.Stories.StoryDirector? Stories = null,
     Func<int?, string?>? AnswerEnding = null,
-    StoryDownloader? Downloads = null);
+    StoryDownloader? Downloads = null,
+    StoryFilterMemory? StoryFilters = null);
