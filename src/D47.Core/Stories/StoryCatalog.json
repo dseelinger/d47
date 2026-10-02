@@ -180,5 +180,18 @@
     "blurb": "Two years after the Thargoid war, the Joint Remembrance Board is giving you the highest citation it has. It is for the Long Hour, when an evacuation pilot held a lane open through a Thargoid swarm and eleven thousand people reached the jump point. The newsfeeds already carry your face, and in three months Commodore Lucan Strade will present the citation himself. There is one problem. You do not remember the hour. Twelve minutes without air in a breached cockpit took all of it, and your flight recorder came back blank. Rhea Calder flew on your wing that day. She will not come to the ceremony, and she has one thing to say about it: don't take it.",
     "inYourWords": "I flew evacuations through the whole war on a wing of three, callsign Ladder: Rhea Calder, Ansel Teague and me. Ansel didn't come home. Since the peace I've built up a fleet carrier, more ships than I can fly and more credits than I need, and mostly I haul cargo nobody is shooting at. Now the Remembrance Board says I held the lane at the Long Hour and saved eleven thousand people. I'd like to believe it. I don't remember a minute of it.",
     "beacon": "The citation says my hour was reconstructed from outside telemetry. An old anti-xeno hand at Veterans Retreat told me what that means: all through the war, the Guardian beacons were listening for Thargoids, and the Board pulled its record from them. If a beacon heard my hour, I'm going to hear it too."
+  },
+  {
+    "id": "standing-order",
+    "core": "warden",
+    "number": 15,
+    "title": "Standing Order",
+    "genre": "Superhero",
+    "level": "endgame",
+    "length": "6-months",
+    "tone": "Generous, then uneasy, then quietly brave",
+    "blurb": "You parked your fleet carrier over a mining outpost on the edge of the bubble for a week's refit. That afternoon raiders came for the outpost's ore, and you had them cleared before your coffee went cold. The miners threw you a party. Ada Corwen, who has run the outpost for thirty years, cried and pretended she had not. There is a great deal one pilot can fix with a carrier, a hangar of engineered ships and more credits than anyone needs, and for the first time in years somebody needs you. So you stay. Your ships fly the patrols, your carrier's market buys the ore, and the outpost has never been safer. Then Rennick Hale, who buys mining claims for a living, docks at the outpost, looks up at your carrier and asks how long you mean to stay.",
+    "inYourWords": "I have a fleet carrier, a hangar of ships engineered as far as they go, and more credits than I will ever spend. Nobody has needed anything from me in years except a docking fee. Last week I parked the carrier over a mining outpost on the edge of the bubble for a refit, and that afternoon raiders came for the outpost's ore. I dealt with them before my coffee went cold. Ada Corwen, who runs the place, threw me a party in the ore hall and asked me to stay a little longer. I said a week. The week is up, and I have not plotted a jump.",
+    "beacon": "The outpost's founders came out here thirty years ago following the signal of a Guardian beacon, and every pilot the outpost counts as its own has flown to a beacon and made a data-link scan of it. Ada has asked me to. Nobody has asked me to belong anywhere in a long time."
   }
 ]
