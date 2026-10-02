@@ -365,6 +365,41 @@ Before D47 has seen a `LoadGame`, stories run.
 A story chapter's page never shows its premise, turn or ending, and has no **Edit** button, because
 the chapter was written from the hidden layer.
 
+### How a chapter is fitted to you
+
+**Genre.** Each card has a Save the Cat genre, and the chapter writer is given that genre's three
+elements, from Blake Snyder: a Buddy Love story keeps an incomplete hero, a counterpart and a
+complication in play. In a Buddy Love story the partner exists only in the fiction; a chapter may offer
+hiring a crew member but never requires it.
+
+**Your ship and credits.** The writer is told your position, your ships, the jump range of the one you
+are in, your credits at the last load, your fleet carrier and your ranks, and sizes counts and
+destinations to them. There is no fixed limit on ships: a chapter may have you save up for one, and a
+later chapter have you buy and board it. A chapter is sized to finish in one to three play sessions, or
+in one session in a story shorter than three months. A longer undertaking, such as engineering, saving
+for a ship or a run of ranks, carries on across chapters.
+
+**Activity, not only travel.** From chapter two on, no more than two of a chapter's beats may be arrive,
+dock, land or scan. A chapter with more is refused.
+
+**The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
+the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
+may go anywhere, as far as Colonia or Sagittarius A*. Below that, the writer is not told it exists.
+
+**The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
+`Statistics` show you have done least, and the chapter must contain one beat of it:
+
+| Activity | Figure |
+| --- | --- |
+| bounty | `Combat.Bounties_Claimed` |
+| bond | `Combat.Combat_Bonds` |
+| mine | `Mining.Quantity_Mined` |
+| organic | `Exobiology.Organic_Data` |
+| rescue | `Search_And_Rescue.SearchRescue_Count` |
+| passenger mission (a `Mission_Passenger` mission) | `Passengers.Passengers_Missions_Delivered` |
+
+A tie goes to the earlier row. Before d47 has seen a `Statistics` event, no activity is picked.
+
 ### Pausing the story
 
 Clear **Story on**, on the Stories page or on the mini panel, or say "pause the story", and the

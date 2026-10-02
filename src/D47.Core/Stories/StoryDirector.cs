@@ -614,8 +614,15 @@ public sealed class StoryDirector(
             ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
             : null;
 
+        var game = Game();
+        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
+        var card = catalog.Find(story.Id);
+        var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story) + 1)
+            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty)
+            : null;
+
         var ask = new AdventureAsk(
-            AdventureReach.Session,
+            longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: new AdventureStory(
@@ -627,13 +634,18 @@ public sealed class StoryDirector(
                 Math.Max(0, (now - story.PickedAt).Days),
                 story.SinceBeacon(now)?.Days,
                 reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System) : null,
-                catalog.Find(story.Id)?.Level,
+                card?.Level,
                 Stage(stage),
                 StoryClues.Beats(secret.Beats, story.Pacing, stage, reach?.InReach != false, finaleChapter),
                 finaleChapter,
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
                 story.Pacing.Name,
-                story.Pacing.FinaleChapters));
+                story.Pacing.FinaleChapters,
+                card?.Genre,
+                card?.Genre is { } genre ? ChapterFit.Elements.GetValueOrDefault(genre) : null,
+                ChapterFit.Size(story.Pacing),
+                longHaul,
+                comfort));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -659,6 +671,11 @@ public sealed class StoryDirector(
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         return null;
     }
+
+    /// <summary>The story's chapters written since the beacon scan; none before it.</summary>
+    private int SinceBeacon(string? frontierId, Story story) => story.BeaconScanAt is { } scanned
+        ? story.Chapters.Count(key => book.Store.Find(frontierId, key) is { } chapter && chapter.Written >= scanned)
+        : 0;
 
     /// <summary>A stage as the chapter writer is told it.</summary>
     private static string Stage(StoryStage stage) => stage switch

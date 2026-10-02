@@ -44,6 +44,17 @@ public sealed record AdventureBeacon(long SystemAddress, string System);
 /// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
 public sealed record AdventureBeaconAway(string System, double LightYears, string Why);
 
+/// <summary>An activity a chapter must contain one beat of; a mission beat matches when its family starts with <see cref="MissionFamily"/>.</summary>
+public sealed record AdventureActivity(string Name, TriggerKind Kind, string? MissionFamily = null)
+{
+    public bool Matches(TriggerKind kind, string? family) =>
+        kind == Kind
+        && (MissionFamily is null || (family is not null && family.Trim().StartsWith(MissionFamily, StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>The beat that matches, as the writer is told it.</summary>
+    public string Beat => MissionFamily is null ? $"a \"{Kind.ToString().ToLowerInvariant()}\" beat" : $"a \"mission\" beat whose family starts with {MissionFamily}";
+}
+
 /// <summary>
 /// The stock story a chapter belongs to: both layers, how long it has run, where it stands in its beat sheet,
 /// and the beacon act one works toward.
@@ -63,7 +74,12 @@ public sealed record AdventureStory(
     int? FinaleChapter = null,
     AdventureBeaconAway? BeaconAway = null,
     string Length = "1 year",
-    int FinaleChapters = 4);
+    int FinaleChapters = 4,
+    string? Genre = null,
+    IReadOnlyList<string>? GenreElements = null,
+    string? ChapterSize = null,
+    bool LongHaul = false,
+    AdventureActivity? Comfort = null);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -132,6 +148,9 @@ public sealed class AdventureGenerator(
         AdventureLength.Long => (8, "opening image, setup, catalyst, debate, midpoint, all is lost, finale, final image"),
         _ => (5, "setup, catalyst, midpoint, all is lost, finale"),
     };
+
+    /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>
+    public const double LongHaulLightYears = 30000;
 
     /// <summary>Light years for a reach, from what the Commander can actually move.</summary>
     public static double Radius(AdventureReach reach, double? jumpRange, bool carrier)
@@ -729,6 +748,8 @@ public sealed class AdventureGenerator(
                 + "true right now wins, and the story's people and events stay.");
         }
 
+        AppendFit(text, story);
+
         text.AppendLine();
         text.Append($"The story has been running for {story.DaysRunning.ToString(CultureInfo.InvariantCulture)} days");
         text.AppendLine(story.DaysSinceBeacon is { } scanned
@@ -754,6 +775,58 @@ public sealed class AdventureGenerator(
                 + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner. That scan is when the "
                 + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That beat may be farther "
                 + "than the reach; every other hop keeps to it.");
+        }
+    }
+
+    /// <summary>The genre's elements, the chapter size, the travel limit, a long haul when allowed, and the comfort-zone activity.</summary>
+    private static void AppendFit(StringBuilder text, AdventureStory story)
+    {
+        if (story.Genre is { Length: > 0 } genre)
+        {
+            text.AppendLine();
+            text.Append($"The story's genre is {genre}");
+            text.AppendLine(story.GenreElements is { Count: > 0 } elements
+                ? $", and every chapter keeps its three elements in play: {string.Join(", ", elements)}."
+                : ".");
+
+            if (genre == "Buddy Love")
+            {
+                text.AppendLine(
+                    "The partner exists only in the fiction. A chapter may offer hiring a crew member (a \"crew\" beat) as part of it, "
+                    + "but never requires it.");
+            }
+        }
+
+        if (story.ChapterSize is { Length: > 0 } size)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"Size this chapter so the Commander can finish it in {size}. Size every count and destination to the facts above: "
+                + "the ship, its jump range, the credits at the last load and the ranks. There is no fixed limit on ships: a chapter "
+                + "may have the Commander save up for a ship, and a later one have them buy and board it. A longer undertaking, such as "
+                + "on-foot or ship engineering, saving for a ship and buying it, or a run of ranks, continues across chapters: when the "
+                + "chapter before left one unfinished, carry it on in this one.");
+        }
+
+        if (story.Chapter > 1)
+        {
+            text.AppendLine(
+                "From chapter two on, this is a story of activity, not only travel: no more than two of the chapter's beats may be "
+                + "\"arrive\", \"dock\", \"land\" or \"scan\". Any mission family that fits the story may be used.");
+        }
+
+        if (story.LongHaul)
+        {
+            text.AppendLine(
+                "The Commander can make a long haul: this chapter may go anywhere in the galaxy, as far as Colonia or Sagittarius A*.");
+        }
+
+        if (story.Comfort is { } comfort)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"This chapter takes the Commander outside their comfort zone: of the activities d47 tracks, {comfort.Name} is the one their "
+                + $"statistics show they have done least. The chapter must contain {comfort.Beat}.");
         }
     }
 
@@ -834,7 +907,9 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
-        text.AppendLine("- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship.");
+        text.AppendLine(ask.Story is null
+            ? "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship."
+            : "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship they own or can afford with the credits at the last load, or one an earlier chapter had them save for.");
         text.AppendLine("- \"bounty\": the Commander collects \"count\" bounties, anywhere.");
         text.AppendLine("- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.");
         text.AppendLine(
@@ -1207,7 +1282,7 @@ public sealed class AdventureGenerator(
                 {
                     refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; name a ship or use another kind of beat.");
                 }
-                else if (!BriefNames(ask.Brief, symbol))
+                else if (ask.Story is null && !BriefNames(ask.Brief, symbol))
                 {
                     refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of beat.");
                 }
@@ -1324,8 +1399,25 @@ public sealed class AdventureGenerator(
             refusals.Add($"The last beat must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
         }
 
+        if (ask.Story is { Chapter: > 1 } && beats.Count(beat => IsTravel(beat.Kind)) is var travel and > MostTravel)
+        {
+            refusals.Add(
+                $"The chapter has {travel} travel beats (arrive, dock, land or scan); from chapter two on, no more than {MostTravel} may be. "
+                + "Make the others activities.");
+        }
+
+        if (ask.Story?.Comfort is { } comfort && !beats.Any(beat => comfort.Matches(beat.Kind, beat.MissionFamily)))
+        {
+            refusals.Add($"This chapter leaves the comfort zone and must contain {comfort.Beat}, for {comfort.Name}.");
+        }
+
         return new Resolved(resolved, refusals);
     }
+
+    /// <summary>Travel beats a story chapter after the first may have.</summary>
+    public const int MostTravel = 2;
+
+    private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan;
 
     /// <summary>The refusal for an illegal mission beat that does not directly follow an arrive or dock in an Anarchy system, or null.</summary>
     private static async Task<string?> IllegalOutsideAnarchyAsync(
@@ -1378,7 +1470,8 @@ public sealed class AdventureGenerator(
         ShipLoadout Ship,
         IReadOnlyList<(string Describe, string? Pad, bool Here)> Fleet,
         CarrierState Carrier,
-        RankState Ranks)
+        RankState Ranks,
+        long? Credits)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -1400,13 +1493,14 @@ public sealed class AdventureGenerator(
             return new Facts(
                 state?.Location.StarSystem,
                 state?.Location.StarPos,
-                Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
+                ask is { Reach: AdventureReach.Anywhere, Story.LongHaul: true } ? LongHaulLightYears : Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
                 ask.Reach,
                 ask.ThisShipOnly,
                 ship,
                 fleet,
                 carrier,
-                state?.Ranks ?? RankState.Empty);
+                state?.Ranks ?? RankState.Empty,
+                state?.Session.Balance);
         }
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
@@ -1443,6 +1537,16 @@ public sealed class AdventureGenerator(
                     ? $"- Ship: {Fleet.First(f => f.Here).Describe} ({Fleet.First(f => f.Here).Pad ?? "unknown"} pad), and the story stays in this ship."
                     : "- Ships the Commander owns, any of which the story may send them to fetch: "
                       + string.Join("; ", Fleet.Select(f => $"{f.Describe} ({f.Pad ?? "unknown"} pad{(f.Here ? ", aboard" : string.Empty)})")) + ".");
+            }
+
+            if (Ship.MaxJumpRange is { } jump)
+            {
+                text.AppendLine($"- Jump range of the ship aboard: {jump.ToString("0.0", CultureInfo.InvariantCulture)} light years.");
+            }
+
+            if (Credits is { } credits)
+            {
+                text.AppendLine($"- Credits at the last load: {credits.ToString("N0", CultureInfo.InvariantCulture)}.");
             }
 
             if (Carrier.Owned)

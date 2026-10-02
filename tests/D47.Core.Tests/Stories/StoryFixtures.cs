@@ -234,6 +234,28 @@ internal sealed class StoryFixtures : IDisposable
         return state;
     }
 
+    /// <summary>
+    /// A Commander in a ship of this type who loaded the game with these credits, after a <c>Statistics</c> event carrying
+    /// <paramref name="statistics"/> as its sections, when given.
+    /// </summary>
+    public static CommanderGameState Loaded(long credits, string ship = "sidewinder", string? statistics = null)
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Test"));
+
+        state.Apply(AdventureFixtures.Event(
+            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"LoadGame", "FID":"F1", "Commander":"Test", "Odyssey":true, "Ship":"{{ship}}", "ShipID":1, "Credits":{{credits}} }"""));
+        state.Apply(AdventureFixtures.Event(
+            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"{{ship}}", "ShipID":1, "MaxJumpRange":30.5, "Modules":[] }"""));
+
+        if (statistics is not null)
+        {
+            state.Apply(AdventureFixtures.Event(
+                $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Statistics", {{statistics}} }"""));
+        }
+
+        return state;
+    }
+
     /// <summary>A point this many light years above the test beacon, out of the galactic plane.</summary>
     public static StarPosition BeyondTheBeacon(double lightYears)
     {
