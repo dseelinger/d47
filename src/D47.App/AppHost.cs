@@ -1032,6 +1032,10 @@ public sealed class AppHost : IDisposable
 
         adventureStore.Poll();
 
+        var narratorTipStore = new NarratorTipStore(
+            Path.Combine(paths.Data, "narrator-tips.json"),
+            loggerFactory.CreateLogger<NarratorTipStore>());
+
         var messageStore = new D47.Core.Messages.MessageStore(
             Path.Combine(paths.Data, "messages.json"),
             loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>());
@@ -2253,6 +2257,23 @@ public sealed class AppHost : IDisposable
         {
             narrator.StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId);
             narrator.StoryAsides = storyDirector.MissionAsides;
+            narrator.TakeTip = () =>
+            {
+                if (!settings.Current.Callouts.NarratorD47Tips)
+                {
+                    return null;
+                }
+
+                var frontierId = gameState.Active?.Identity.FrontierId;
+                var tip = NarratorTips.Next(id => narratorTipStore.Said(frontierId, id));
+
+                if (tip is not null)
+                {
+                    narratorTipStore.Record(frontierId, tip.CapabilityId);
+                }
+
+                return tip;
+            };
         }
 
         // A stock core makes no idle remarks; the Narrator takes the ambient slot.

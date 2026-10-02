@@ -551,6 +551,9 @@ public sealed record CalloutSettings
     /// <summary>The Narrator telling the Commander's story during a lull.</summary>
     public bool Narrator { get; init; } = true;
 
+    /// <summary>While a stock core is aboard, the Narrator works a tip on using D47 into a narration, once per feature.</summary>
+    public bool NarratorD47Tips { get; init; } = true;
+
     /// <summary>The shortest gap between two narrations, in seconds. 0 silences them.</summary>
     public int NarratorSeconds { get; init; } = 1800;
 

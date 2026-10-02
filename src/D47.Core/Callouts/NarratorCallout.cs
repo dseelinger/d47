@@ -47,6 +47,9 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// </summary>
     public Func<bool> StockCoreAboard { get; set; } = () => false;
 
+    /// <summary>The next tip on using D47 for a narration to carry, recorded as taken, or null for none.</summary>
+    public Func<NarratorTip?> TakeTip { get; set; } = () => null;
+
     /// <summary>The shortest gap while a stock core is aboard.</summary>
     public TimeSpan StandInInterval { get; set; } = TimeSpan.FromMinutes(5);
 
@@ -124,6 +127,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             stalled is null ? string.Empty : AdventureNudge.Facts(stalled, lightYears: null))
         {
             StoryAside = stalled is null ? Untold(context.State?.Missions) : null,
+            Tip = stalled is null && standsIn ? TakeTip() : null,
             Urgency = CalloutUrgency.Routine,
             Cooldown = shortest,
             Chatter = shortest,

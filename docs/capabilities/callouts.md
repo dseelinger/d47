@@ -1159,6 +1159,8 @@ personality off, or setting its least time to 0, leaves those moments silent; so
 language model, since a stock core's idle lines are not replaced by written ones. With a Guardian core or one of your own aboard, nothing
 changes.
 
+**With a stock core aboard, a narration can teach you D47.** Each narration works in at most one tip on using D47, told as something your Commander had not yet learned, such as "The Commander had not yet learned that the ship would plot a route if asked." The tips come from the introductions on the help pages, in the order of the help library, and each is said once per Commander; `data\narrator-tips.json` records which. **Tips on using D47** under Narrator in Plan and story callouts turns them off. With a Guardian core or one of your own aboard there are none. A tip goes to the same model as the narration, so it sends nothing more.
+
 **Every narration is written by the model, and sends the whole backstory.** At the defaults that is
 one or two calls an hour on the background model, or six to twelve with a stock core aboard. With no
 character sheet it also sends your Commander name from the journal. When the model is unreachable or returns nothing,
