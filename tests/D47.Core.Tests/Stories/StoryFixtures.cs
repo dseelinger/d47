@@ -36,6 +36,9 @@ internal sealed class StoryFixtures : IDisposable
         Beacon = "The beacon calls.",
     };
 
+    /// <summary>A catalog of the fixture story.</summary>
+    public static StoryCatalog Catalog => new([Card], () => [Secret]);
+
     public static readonly StoryCard Other = Card with { Id = "the-other-story", Number = 2, Title = "The Other Story", Core = "kex", InYourWords = "I was somebody else." };
 
     /// <summary>A hidden layer that keeps every rule of the format.</summary>

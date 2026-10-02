@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -155,16 +156,22 @@ public sealed partial class StoryDownloader
                 }
 
                 var file = picture + ".jpg";
+                var notFound = false;
 
                 if (File.Exists(Path.Combine(_folder, file)))
                 {
                     continue;
                 }
 
-                var picturePartial = await GetAsync(file).ConfigureAwait(false);
+                var picturePartial = await GetAsync(file, noFile => notFound = noFile).ConfigureAwait(false);
 
                 if (picturePartial is null)
                 {
+                    if (notFound)
+                    {
+                        continue;
+                    }
+
                     Discard(hiddenPartial);
                     return false;
                 }
@@ -192,8 +199,8 @@ public sealed partial class StoryDownloader
             ? versions.All().Select(version => $"{entry.Id}.{speaker.Id}.{version.Key}")
             : [$"{entry.Id}.{speaker.Id}"]);
 
-    /// <summary>Fetches <paramref name="file"/> to a temporary file in the stories folder, and returns its path, or null.</summary>
-    private async Task<string?> GetAsync(string file)
+    /// <summary>Fetches <paramref name="file"/> to a temporary file in the stories folder, and returns its path, or null. <paramref name="missing"/> is told when the release answered 404.</summary>
+    private async Task<string?> GetAsync(string file, Action<bool>? missing = null)
     {
         var partial = Path.Combine(_folder, file + ".part");
 
@@ -207,6 +214,7 @@ public sealed partial class StoryDownloader
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogInformation("No stock story file {File}: the stories release returned {Status}.", file, response.StatusCode);
+                missing?.Invoke(response.StatusCode == HttpStatusCode.NotFound);
                 return null;
             }
 

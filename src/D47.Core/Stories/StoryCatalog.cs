@@ -406,22 +406,16 @@ public sealed partial record StorySecret
 }
 
 /// <summary>
-/// The stock stories: <c>StoryCatalog.json</c> (public) and <c>StoryCatalog.sealed</c> (hidden, raw deflate then
-/// base64), both embedded. <c>tools/seal-stories.py</c> decodes and re-encodes the hidden layer.
+/// The stock stories downloaded into the stories folder: public cards from <c>index.json</c>, and each hidden layer
+/// from <c>&lt;id&gt;.sealed</c> (raw deflate then base64).
 /// </summary>
 public sealed class StoryCatalog
 {
-    public const string PublicResource = "D47.Core.StoryCatalog";
-
-    public const string SealedResource = "D47.Core.StoryCatalog.Sealed";
-
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
     };
-
-    private static readonly Lazy<StoryCatalog> Shipped = new(() => new StoryCatalog(ReadPublic(), ReadSealed));
 
     private readonly Lazy<IReadOnlyDictionary<string, StorySecret>> _secrets;
 
@@ -487,18 +481,6 @@ public sealed class StoryCatalog
         return new StoryCatalog(cards, () => secrets);
     }
 
-    /// <summary>The cards and hidden entries of <paramref name="first"/>, then those of <paramref name="second"/> whose id is not in <paramref name="first"/>.</summary>
-    public static StoryCatalog Combine(StoryCatalog first, StoryCatalog second)
-    {
-        ArgumentNullException.ThrowIfNull(first);
-        ArgumentNullException.ThrowIfNull(second);
-
-        var extra = second.Cards.Where(card => first.Find(card.Id) is null).ToList();
-        return new StoryCatalog(
-            [.. first.Cards, .. extra],
-            () => [.. first.Secrets, .. extra.Select(card => second.Secret(card.Id)).OfType<StorySecret>()]);
-    }
-
     private static IReadOnlyList<StoryCard> ReadIndex(string folder, ILogger? logger)
     {
         var path = Path.Combine(folder, IndexFile);
@@ -520,9 +502,6 @@ public sealed class StoryCatalog
             return [];
         }
     }
-
-    /// <summary>The catalog built into this binary.</summary>
-    public static StoryCatalog Default => Shipped.Value;
 
     /// <summary>Every card, in catalog order. Every card is offered.</summary>
     public IReadOnlyList<StoryCard> Cards { get; }
@@ -828,20 +807,4 @@ public sealed class StoryCatalog
         using var deflate = new DeflateStream(packed, CompressionMode.Decompress);
         return JsonSerializer.Deserialize<List<StorySecret>>(deflate, Json) ?? [];
     }
-
-    private static IReadOnlyList<StoryCard> ReadPublic()
-    {
-        using var stream = Resource(PublicResource);
-        return JsonSerializer.Deserialize<List<StoryCard>>(stream, Json) ?? [];
-    }
-
-    private static IReadOnlyList<StorySecret> ReadSealed()
-    {
-        using var reader = new StreamReader(Resource(SealedResource), Encoding.ASCII);
-        return Unseal(reader.ReadToEnd());
-    }
-
-    private static Stream Resource(string name) =>
-        Assembly.GetExecutingAssembly().GetManifestResourceStream(name)
-        ?? throw new InvalidOperationException($"The {name} resource is missing from the build.");
 }

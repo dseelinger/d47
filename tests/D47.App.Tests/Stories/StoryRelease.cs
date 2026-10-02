@@ -17,6 +17,7 @@ internal sealed class StoryRelease : HttpMessageHandler
 
     private readonly ConcurrentDictionary<string, byte[]> _files = new(StringComparer.Ordinal);
     private readonly ConcurrentQueue<string> _asked = new();
+    private readonly ConcurrentBag<string> _failing = [];
 
     public StoryRelease() => Directory.CreateDirectory(Folder);
 
@@ -27,6 +28,8 @@ internal sealed class StoryRelease : HttpMessageHandler
     public (string Suffix, Task Until)? Hold { get; set; }
 
     public IReadOnlyCollection<string> Asked => [.. _asked];
+
+    public void Fail(string file) => _failing.Add(file);
 
     public void Serve(string file, byte[] bytes) => _files[file] = bytes;
 
@@ -63,6 +66,11 @@ internal sealed class StoryRelease : HttpMessageHandler
         if (Hold is { } hold && file.EndsWith(hold.Suffix, StringComparison.Ordinal))
         {
             await hold.Until.ConfigureAwait(false);
+        }
+
+        if (_failing.Contains(file))
+        {
+            return new HttpResponseMessage(HttpStatusCode.InternalServerError);
         }
 
         return _files.TryGetValue(file, out var bytes)

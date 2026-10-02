@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Messages;
 using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using D47.Core.Tests.Adventures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -35,7 +36,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
     }
 
     private int Sweep() =>
-        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, () => StoryCatalog.Default));
+        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, () => StoryFixtures.Catalog));
 
     [Fact]
     public void RemovingAnAdventureTakesItsMessagesAndLeavesTheRest()
@@ -60,7 +61,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
     [Fact]
     public void AClueForAStoryMissingFromTheCatalogGoesAndOneForACatalogStoryStays()
     {
-        var storyId = StoryCatalog.Default.Cards[0].Id;
+        var storyId = StoryFixtures.Catalog.Cards[0].Id;
 
         _messages.Post("narrator", "kept", "x", Noon, $"{StoryClueCallout.KeyPrefix}{storyId}.0");
         _messages.Post("narrator", "gone", "x", Noon, $"{StoryClueCallout.KeyPrefix}no-such-story.0");

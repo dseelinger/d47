@@ -42,9 +42,9 @@ public sealed class AStoryBringsItsCoreAboardTests
     }
 
     [Fact]
-    public void EveryShippedStoryNamesAGuardianCoreOtherThanTheHeretic() =>
+    public void EveryStoryNamesAGuardianCoreOtherThanTheHeretic() =>
         Assert.All(
-            StoryCatalog.Default.Cards,
+            StoryFixtures.Catalog.Cards,
             card =>
             {
                 Assert.True(PersonaCatalog.IsGuardian(card.Core));

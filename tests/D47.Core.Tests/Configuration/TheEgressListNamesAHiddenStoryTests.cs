@@ -1,5 +1,6 @@
 using D47.Core.Configuration;
 using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Configuration;
@@ -30,7 +31,7 @@ public class TheEgressListNamesAHiddenStoryTests
     {
         foreach (var what in new[] { What(), What("http://localhost:11434") })
         {
-            foreach (var secret in StoryCatalog.Default.Secrets)
+            foreach (var secret in StoryFixtures.Catalog.Secrets)
             {
                 foreach (var (_, field) in secret.Texts().Where(text => text.Text.Length > 0))
                 {

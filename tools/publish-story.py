@@ -10,7 +10,7 @@ Not part of the build. Writes nothing inside the repository.
 
 The script downloads `index.json` from the release (an empty list if there is none), refuses an id already in
 it unless --replace is given, checks the card and hidden entry with `faults` from seal-stories.py and requires a
-picture for every cast member, numbers the card, and builds in the work directory: `<id>.sealed`, a 1024 px
+picture for every cast member that has one (a member with no picture file is published without one), numbers the card, and builds in the work directory: `<id>.sealed`, a 1024 px
 JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and the new `index.json`. It then
 uploads them with `gh release upload`, `index.json` last. --dry-run stops before the upload and lists each
 file with its size. The release is created with --latest=false when missing: UpdateChecker reads the latest
@@ -130,7 +130,7 @@ def main() -> None:
         if picture.is_file():
             sources[name] = picture
         else:
-            problems.append(f"{story}: no picture {picture.name}")
+            print(f"{story}: no picture {picture.name}; published without it")
     if problems:
         print("\n".join(problems), file=sys.stderr)
         sys.exit(1)

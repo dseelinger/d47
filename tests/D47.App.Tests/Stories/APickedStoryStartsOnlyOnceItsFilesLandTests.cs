@@ -38,11 +38,24 @@ public sealed class APickedStoryStartsOnlyOnceItsFilesLandTests
     }
 
     [Fact]
-    public async Task AMissingPictureFailsTheDownloadAndLeavesNoHiddenLayerOnDisk()
+    public async Task APictureTheReleaseDoesNotHaveIsSkipped()
     {
         using var release = new StoryRelease();
         release.ServeSealed(StoryReleaseFixture.Secret);
         release.Serve("the-test-story.ren.jpg", [1]);
+        var downloader = release.Downloader();
+
+        Assert.True(await downloader.FetchStory(StoryReleaseFixture.Id));
+        Assert.True(downloader.IsOnDisk(StoryReleaseFixture.Id));
+        Assert.Empty(Directory.GetFiles(release.Folder, "*.part"));
+    }
+
+    [Fact]
+    public async Task APictureThatFailsToDownloadFailsTheStoryAndLeavesNoHiddenLayerOnDisk()
+    {
+        using var release = new StoryRelease();
+        StoryReleaseFixture.ServeAll(release);
+        release.Fail("the-test-story.cray.for-man.jpg");
         var downloader = release.Downloader();
 
         Assert.False(await downloader.FetchStory(StoryReleaseFixture.Id));

@@ -72,10 +72,6 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     };
 
     [Fact]
-    public void TheShippedCatalogKeepsTheFormat() =>
-        Assert.Empty(StoryCatalog.Default.Faults());
-
-    [Fact]
     public void TheFixtureStoryKeepsTheFormat() =>
         Assert.Empty(new StoryCatalog([Card], () => [Secret]).Faults());
 
@@ -84,8 +80,8 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         Assert.Empty(new StoryCatalog([WeekCard], () => [Week]).Faults());
 
     [Fact]
-    public void EveryShippedCardNamesALength() =>
-        Assert.All(StoryCatalog.Default.Cards, card => Assert.NotNull(StoryPacing.Find(card.Length)));
+    public void EveryCardNamesALength() =>
+        Assert.All(StoryFixtures.Catalog.Cards, card => Assert.NotNull(StoryPacing.Find(card.Length)));
 
     [Fact]
     public void AChatterboxSpeakerMayUseTheCommandersOwnVoice() =>

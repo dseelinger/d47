@@ -1050,11 +1050,9 @@ public sealed class AppHost : IDisposable
         // over the files when a stamp moved, which the tick below grants.
         adventureStore.Changed += adventureBook.Reconcile;
 
-        var embeddedStories = D47.Core.Stories.StoryCatalog.Default;
         var storyLogger = loggerFactory.CreateLogger<D47.Core.Stories.StoryCatalog>();
 
-        D47.Core.Stories.StoryCatalog LoadStories() => D47.Core.Stories.StoryCatalog.Combine(
-            embeddedStories, D47.Core.Stories.StoryCatalog.Load(paths.Stories, storyLogger));
+        D47.Core.Stories.StoryCatalog LoadStories() => D47.Core.Stories.StoryCatalog.Load(paths.Stories, storyLogger);
 
         var storyCatalog = LoadStories();
 

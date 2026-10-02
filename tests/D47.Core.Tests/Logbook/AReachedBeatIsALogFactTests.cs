@@ -2,6 +2,7 @@ using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Logbook;
 using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -99,7 +100,7 @@ public sealed class AReachedBeatIsALogFactTests
         var digest = Digest(Chapter("the-marker"));
         var text = string.Join('\n', digest.Facts.Select(fact => fact.Statement + " " + fact.Provenance()));
 
-        var leaks = StoryCatalog.Default.Secrets
+        var leaks = StoryFixtures.Catalog.Secrets
             .SelectMany(secret => secret.Texts().SelectMany(field => Sentences(field.Text).Select(sentence => (secret.Id, field.Field, sentence))))
             .Where(entry => text.Contains(entry.sentence, StringComparison.OrdinalIgnoreCase))
             .Select(entry => $"{entry.Id} ({entry.Field})")
