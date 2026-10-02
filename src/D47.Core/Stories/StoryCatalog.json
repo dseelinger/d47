@@ -206,5 +206,18 @@
     "blurb": "For twenty years Vesna Kaul beat you to every contract worth having, and you never once caught her. Now she is dead, her ship lost on a quiet run, and her will names you, of all the pilots in the galaxy, guardian of a daughter you never knew she had. Linnet is fourteen, furious, and a better natural pilot than anyone on your carrier. She hums in her sleep, the same few notes every night. She has never seen a Guardian beacon. Dr. Corin Wexley, the soft-spoken scientist who paid for her mother's last survey, has asked to meet her. Vesna's will has one more line, underlined twice: never let him.",
     "inYourWords": "I have a fleet carrier, a hangar of ships and more credits than I will ever spend. For twenty years there was one pilot I could never beat, Vesna Kaul, and I think she was half the reason I kept flying. Last week a Pilots Federation clerk told me she was dead, and that her will names me guardian of her daughter. I did not know she had one. Linnet came aboard this morning with one bag, walked past me without a word, and chose the cabin furthest from mine. The carrier has never been this quiet.",
     "beacon": "Linnet hums the same few notes in her sleep, and has all her life. The carrier's comms log matches them to the carrier signal of a Guardian beacon. She has never seen one, and for the first time since she came aboard, she has asked me for something."
+  },
+  {
+    "id": "honest-work",
+    "core": "archivist",
+    "number": 17,
+    "title": "Honest Work",
+    "genre": "Out of the Bottle",
+    "level": "midrange",
+    "length": "1-month",
+    "tone": "Comic, then tender",
+    "blurb": "You are a good pilot and better company, and you have not told the whole truth in years. The cargo was late because of pirates. You visit your father often. And for sixteen years Bram Tolliver, eighty next month and the proudest old man at Hutton Orbital, has believed his child is a lieutenant in the Federal Navy, because that is what your letters say. For his birthday he has asked for one thing: a picture of his lieutenant beside a Guardian beacon, lit. You fly out to take it, and you scan the beacon so it lights for the camera. What comes aboard with the scan cannot abide a false record, and from then on every message your ship sends goes out with a correction attached. Your sister Hanne has questions. So does everyone else.",
+    "inYourWords": "I fly freight and the odd charter in a ship I have put real money into, engineering and all, and I have enough saved that a bad month would not sink me. I am good at the work and better at the talking. When a cargo is late, it was pirates. When my sister Hanne asks, I visit Dad often. My father, Bram, flew Eagles off a Federal Navy carrier for thirty years, and I applied to the Navy flight academy because of him. I washed out at nineteen. I never told him. I wrote to him as a lieutenant instead, and I have been writing ever since. He turns eighty next month at Hutton Orbital, and he has asked for a picture of me at a Guardian beacon, because my last letter said I was posted to a Navy survey of Guardian sites. I am going to get him one.",
+    "beacon": "My letters say I am posted to a Navy survey of Guardian sites. For his eightieth birthday my father has asked for a picture of his lieutenant beside a Guardian beacon, lit up. A beacon only lights for a data-link scan, so I am going to scan one and take the picture."
   }
 ]
