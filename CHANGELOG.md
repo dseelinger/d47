@@ -104,7 +104,7 @@ A story beat can also wait for exploration, on-foot and other activities done a 
 on foot, collecting items, analysing organic samples, mapping bodies, surveying signals such as Thargoid or a
 ring hotspot, landing at a wreck, logging codex entries, selling exploration or organic data, salvaging cargo,
 dropping into a signal source, rescuing, launching the SRV and hiring crew. A beat can also wait for an engineer
-to invite or unlock you, for a new suit or weapon mod to appear in your suit loadout, or for a change to your ship's livery.
+to invite or unlock you (an on-foot engineer is seen only at your next login), for a new suit or weapon mod to appear in your suit loadout, or for a change to your ship's livery.
 These are seen when the game next writes the loadout, so a beat may fire some minutes after the change. The story's card shows the running total.
 
 ## 1.26.0 — Adventures run in chapters

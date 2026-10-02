@@ -125,6 +125,34 @@ public class ActivityBeatsCountTheirOwnEventsTests
     }
 
     [Fact]
+    public void AnOnFootEngineerBeatFiresOnTheStartupListThatShowsTheStage()
+    {
+        var unlocked = new AdventureTrigger { Kind = TriggerKind.Engineer, Engineer = "Domino Green", Stage = "Unlocked" };
+        var invited = new AdventureTrigger { Kind = TriggerKind.Engineer, Engineer = "Domino Green", Stage = "Invited" };
+        const string invitedList = """{ "timestamp":"@", "event":"EngineerProgress", "Engineers":[{ "Engineer":"Domino Green", "EngineerID":400002, "Progress":"Invited" }, { "Engineer":"Hero Ferrari", "EngineerID":400004, "Progress":"Invited" }] }""";
+        const string unlockedList = """{ "timestamp":"@", "event":"EngineerProgress", "Engineers":[{ "Engineer":"Domino Green", "EngineerID":400002, "Progress":"Unlocked", "RankProgress":0, "Rank":0 }] }""";
+        const string listWithoutHer = """{ "timestamp":"@", "event":"EngineerProgress", "Engineers":[{ "Engineer":"Hero Ferrari", "EngineerID":400004, "Progress":"Invited" }] }""";
+
+        Assert.Equal(1, Fold(unlocked, invitedList).Current);
+        Assert.Equal(1, Fold(unlocked, listWithoutHer).Current);
+        Assert.Equal(2, Fold(unlocked, invitedList, unlockedList).Current);
+        Assert.Equal(2, Fold(invited, unlockedList).Current);
+    }
+
+    [Fact]
+    public void AnEngineerBeatMayNameAnyEngineerInTheDirectory()
+    {
+        foreach (var engineer in D47.Core.Knowledge.EngineerDirectory.All)
+        {
+            var trigger = new AdventureTrigger { Kind = TriggerKind.Engineer, Engineer = engineer.Name, Stage = "Unlocked" };
+
+            Assert.Empty(AdventureValidation.EngineerProblems("Beat one", trigger));
+        }
+
+        Assert.Contains(D47.Core.Knowledge.EngineerDirectory.All, engineer => engineer.IsOnFoot);
+    }
+
+    [Fact]
     public void AnOnFootBeatNeedsAPlanetAndNotAStation()
     {
         var trigger = Of(TriggerKind.OnFoot, 1);
