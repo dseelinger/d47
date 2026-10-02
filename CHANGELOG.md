@@ -8,7 +8,7 @@
 
 ## 1.27.0 — Stock stories begin
 
-Stock stories are downloaded from a GitHub release into `data\stories`: the list when the Stories page first opens in a session, and a story's hidden layer and cast pictures when you pick it, with **Downloading** on the button until they land. A story already running is fetched at startup if its file is missing. **Download stock stories** in the Adventures settings turns it off, and **Privacy and egress** lists it.
+Stock stories are downloaded from a GitHub release into `data\stories`: the list when the Stories page first opens in a session, and a story's hidden layer and cast pictures when you pick it, with **Downloading** on the button until they land. A story already running is fetched at startup if its file is missing, and fetches any cast picture added to the release since it was downloaded. **Download stock stories** in the Adventures settings turns it off, and **Privacy and egress** lists it.
 
 Stock stories are downloaded when you open the Stories page, instead of shipping with the app.
 

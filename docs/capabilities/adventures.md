@@ -402,7 +402,8 @@ once and redraws when the new list lands. **Pick** on a story whose hidden file 
 it and every cast picture it names, reads **Downloading** while it does, and starts the story when
 every file is in place. On a failure the page says "The story could not be downloaded. Check your
 connection and pick it again." and nothing starts. At startup, a story that is running or paused and
-has no hidden file on disk is fetched.
+has no hidden file on disk is fetched, and one that has fetches any cast picture the release has and
+`data\stories` does not.
 
 **Download stock stories**, on by default, is in the Adventures settings. Off, nothing is fetched and
 the Stories page lists only stories already on disk. The hidden layer is fetched only when you pick

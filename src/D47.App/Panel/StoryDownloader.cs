@@ -11,7 +11,8 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// Fetches stock stories from the <c>stories-1</c> release into <c>data\stories\</c>: the list once per session, and
-/// a story's hidden layer and cast pictures when it is picked. Every fetch runs on the pool.
+/// a story's hidden layer and cast pictures when it is picked, and a running story's missing files at startup. Every
+/// fetch runs on the pool.
 /// </summary>
 public sealed partial class StoryDownloader
 {
@@ -64,18 +65,21 @@ public sealed partial class StoryDownloader
     public Task<bool> FetchStory(string id) =>
         _allowed() && SafeName(id) ? _inFlight.GetOrAdd(id, key => Task.Run(() => FetchStoryAsync(key))) : Task.FromResult(false);
 
-    /// <summary>Fetches each story in <paramref name="ids"/> whose hidden layer is not on disk.</summary>
+    /// <summary>
+    /// Fetches each story in <paramref name="ids"/> whose hidden layer is not on disk, and each cast picture missing
+    /// from a story that is.
+    /// </summary>
     public Task FetchMissing(IEnumerable<string> ids)
     {
-        var missing = ids.Where(id => !IsOnDisk(id)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var stories = ids.Where(SafeName).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
-        return missing.Count == 0 || !_allowed()
+        return stories.Count == 0 || !_allowed()
             ? Task.CompletedTask
             : Task.Run(async () =>
             {
-                foreach (var id in missing)
+                foreach (var id in stories)
                 {
-                    await FetchStory(id).ConfigureAwait(false);
+                    await (IsOnDisk(id) ? FetchMissingPicturesAsync(id) : FetchStory(id)).ConfigureAwait(false);
                 }
             });
     }
@@ -146,37 +150,10 @@ public sealed partial class StoryDownloader
                 return false;
             }
 
-            foreach (var picture in Pictures(entry))
+            if (await FetchPicturesAsync(entry).ConfigureAwait(false) is null)
             {
-                if (!SafeName(picture))
-                {
-                    _logger.LogInformation("Story {StoryId}: a cast picture has a name that is not a file name.", id);
-                    Discard(hiddenPartial);
-                    return false;
-                }
-
-                var file = picture + ".jpg";
-                var notFound = false;
-
-                if (File.Exists(Path.Combine(_folder, file)))
-                {
-                    continue;
-                }
-
-                var picturePartial = await GetAsync(file, noFile => notFound = noFile).ConfigureAwait(false);
-
-                if (picturePartial is null)
-                {
-                    if (notFound)
-                    {
-                        continue;
-                    }
-
-                    Discard(hiddenPartial);
-                    return false;
-                }
-
-                File.Move(picturePartial, Path.Combine(_folder, file), overwrite: true);
+                Discard(hiddenPartial);
+                return false;
             }
 
             File.Move(hiddenPartial, Path.Combine(_folder, sealedFile), overwrite: true);
@@ -191,6 +168,67 @@ public sealed partial class StoryDownloader
         _logger.LogInformation("Story {StoryId} downloaded.", id);
         Raise();
         return true;
+    }
+
+    private async Task FetchMissingPicturesAsync(string id)
+    {
+        try
+        {
+            var entry = StoryCatalog.Unseal(await File.ReadAllTextAsync(Path.Combine(_folder, id + StoryCatalog.SealedExtension), Encoding.ASCII).ConfigureAwait(false))
+                .FirstOrDefault(candidate => string.Equals(candidate.Id, id, StringComparison.OrdinalIgnoreCase));
+
+            if (entry is not null && await FetchPicturesAsync(entry).ConfigureAwait(false) > 0)
+            {
+                Raise();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or JsonException or InvalidDataException)
+        {
+            _logger.LogInformation("Story {StoryId}: its missing cast pictures could not be fetched ({Error}).", id, ex.GetType().Name);
+        }
+    }
+
+    /// <summary>
+    /// Fetches each cast picture of <paramref name="entry"/> not on disk, skipping one the release does not have.
+    /// Returns how many landed, or null when a name is unsafe or a fetch failed.
+    /// </summary>
+    private async Task<int?> FetchPicturesAsync(StorySecret entry)
+    {
+        var landed = 0;
+
+        foreach (var picture in Pictures(entry))
+        {
+            if (!SafeName(picture))
+            {
+                _logger.LogInformation("Story {StoryId}: a cast picture has a name that is not a file name.", entry.Id);
+                return null;
+            }
+
+            var file = picture + ".jpg";
+            var notFound = false;
+
+            if (File.Exists(Path.Combine(_folder, file)))
+            {
+                continue;
+            }
+
+            var picturePartial = await GetAsync(file, noFile => notFound = noFile).ConfigureAwait(false);
+
+            if (picturePartial is null)
+            {
+                if (notFound)
+                {
+                    continue;
+                }
+
+                return null;
+            }
+
+            File.Move(picturePartial, Path.Combine(_folder, file), overwrite: true);
+            landed++;
+        }
+
+        return landed;
     }
 
     /// <summary>The picture names of every cast member, both versions of one that has versions.</summary>
