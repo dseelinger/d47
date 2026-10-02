@@ -1,6 +1,6 @@
 ---
 name: new-story
-description: Develop one d47 stock story with the maintainer — premise, both layers, and three sample chapters sized to his own journals — on a draft page of its own, revise it until he approves, then add it to the shared review page and the embedded story catalog. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, and three sample chapters sized to his own journals — on a draft page of its own, revise it until he approves, then add it to the shared review page and the embedded story catalog. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
@@ -9,9 +9,9 @@ You develop one stock story with the maintainer, from premise to an approved sto
 He reads both layers, the card and the hidden layer, before anything ships. Nothing is hidden from
 him; the sealing keeps the hidden layer out of the tree's plain text, not out of his sight.
 
-`/new-story <premise>` has named the work, so start on it in that same turn. A bare `/new-story`
-looks for draft pages first (below): if there are any, ask whether to continue one or start
-another; if there are none, ask for a premise.
+`/new-story <anything>` has named the work, so start on it in that same turn: a pitch (below),
+built from whatever the argument fixes. A bare `/new-story` looks for draft pages first (below): if
+there are any, ask whether to continue one or start another; if there are none, pitch one.
 
 ## Turn the voice on first
 
@@ -84,11 +84,36 @@ New titles must not repeat these, or any title in `src/D47.Core/Stories/StoryCat
   The Job, The Claimant, The Catalogue, The Grey Ghost, Terminal, The Long Sleep, The Passenger.
 - Understudy, The Stranger's Kindness, Silent Wing.
 
+## The pitch
+
+The first thing he sees is one pitch, in chat, before any layer, draft page or sample is written.
+
+The maintainer may fix any of the length, level, genre, tone, core or premise, in the argument or in
+reply. Keep what he fixed and choose the rest. Where you choose, favour what the catalog lacks:
+count the cards in `StoryCatalog.json` by genre, by level and length together, and by core, and
+pick a gap unless the story fits something else better. Say in one line which gaps the choice fills.
+
+The genre is one of `StoryCard.Genres`, which has nine genres, not Save the Cat's ten. A story built
+as a tenth genre takes the nearest listed one, and the page records the gap.
+
+The pitch gives:
+
+- a table of the length, level, genre, tone and core, with the core's tagline;
+- the premise: the situation at the pick, and why it fills its length;
+- the secret and the twist in one sentence, then a short paragraph on each;
+- the three explanations a player would most likely guess (rule 11), and why the twist is none of
+  them, with the clues that support it on a second reading;
+- a title not already used.
+
+Check the pitch against all eleven rules before showing it. The pitch fixes the premise, secret and
+twist; once he accepts it, write the rest without asking again, and bring back only a choice the
+pitch did not settle.
+
 ## The length
 
-Agree the length with the maintainer before the premise: one of the seven in `StoryPacing.All`
-(`src/D47.Core/Stories/StoryPacing.cs`), 3 days, 1 week, 2 weeks, 1 month, 3 months, 6 months or
-1 year. Nothing shorter than 3 days is developed; that is an adventure.
+The length is one of the seven in `StoryPacing.All` (`src/D47.Core/Stories/StoryPacing.cs`),
+3 days, 1 week, 2 weeks, 1 month, 3 months, 6 months or 1 year. The maintainer may name it; otherwise
+the pitch chooses it. Nothing shorter than 3 days is developed; that is an adventure.
 
 `StoryPacing` gives each length's key, clue days, finale chapters, stages and `BeatKeys`. Read the
 counts and beat keys from there; this skill keeps no copy.
@@ -186,9 +211,8 @@ marked approved, with a link to the shared page.
 
 ## The steps
 
-1. **Agree the length, then the premise, genre and tone** with the maintainer. Offer two or three concrete premises
-   when he has not given one, each with its genre, tone, and its secret and twist in one sentence
-   that meets rule 11. When he gives a premise without a twist, propose one that meets rule 11.
+1. **Pitch the story** as the pitch section says, and stop for his accept or reject. Write nothing
+   else until he accepts it; on a reject, pitch again with his notes.
 2. **Write both layers** to files in the session scratchpad, outside the repository. Never write
    hidden text into the tree: `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of
    24 characters or more in a repository file.
