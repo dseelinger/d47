@@ -96,6 +96,12 @@ missions completed, tons of a commodity sold, or tons refined by mining. Only wh
 before it counts, and the story's card shows the running total, such as "Kill bonds for LTT 7786 Labour:
 3 of 8". Skimmer massacres, Disable, Hack, Scan and damaged-station missions are not used or counted yet.
 
+A story beat can also wait for exploration, on-foot and other activities done a number of times: stepping out
+on foot, collecting items, analysing organic samples, mapping bodies, surveying signals such as Thargoid or a
+ring hotspot, landing at a wreck, logging codex entries, selling exploration or organic data, salvaging cargo,
+dropping into a signal source, rescuing, launching the SRV and hiring crew. A beat can also wait for an engineer
+to invite or unlock you. The story's card shows the running total.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

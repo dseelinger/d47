@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Globalization;
 using D47.Core.Journal;
 using D47.Core.Persona;
@@ -258,18 +259,89 @@ public static class AdventureFold
                 journalEvent.Kind is "MiningRefined"
                 && SameCommodity(trigger.Commodity, raw.String("Type")),
 
+            TriggerKind.OnFoot =>
+                journalEvent.Kind is "Disembark"
+                && raw.Bool("OnPlanet") && !raw.Bool("OnStation")
+                && AtBody(trigger, raw),
+
+            TriggerKind.Collect =>
+                journalEvent.Kind is "CollectItems"
+                && (SameType(trigger.Filter, raw.String("Type")) || SameType(trigger.Filter, raw.String("Name"))),
+
+            TriggerKind.Organic =>
+                journalEvent.Kind is "ScanOrganic"
+                && string.Equals(raw.String("ScanType"), "Analyse", StringComparison.OrdinalIgnoreCase)
+                && SameType(trigger.Filter, raw.String("Genus")),
+
+            TriggerKind.Map =>
+                journalEvent.Kind is "SAAScanComplete"
+                && AtBody(trigger, raw),
+
+            TriggerKind.Signal =>
+                journalEvent.Kind is "SAASignalsFound"
+                && raw.Items("Signals").Any(signal => SameType(trigger.Filter, signal.String("Type"))),
+
+            TriggerKind.Wreck =>
+                journalEvent.Kind is "Touchdown"
+                && WreckType(raw.String("NearestDestination")) is { } wreck
+                && string.Equals(wreck, string.IsNullOrWhiteSpace(trigger.Filter) ? "Unknown" : trigger.Filter.Trim(), StringComparison.OrdinalIgnoreCase),
+
+            TriggerKind.Codex =>
+                journalEvent.Kind is "CodexEntry"
+                && SameType(trigger.Filter, raw.String("Category")),
+
+            TriggerKind.DataSale =>
+                journalEvent.Kind switch
+                {
+                    "SellExplorationData" or "MultiSellExplorationData" => trigger.Organic != true,
+                    "SellOrganicData" => trigger.Organic != false,
+                    _ => false,
+                },
+
+            TriggerKind.Salvage =>
+                journalEvent.Kind is "CollectCargo"
+                && SameType(trigger.Filter, raw.String("Type")),
+
+            TriggerKind.Uss =>
+                journalEvent.Kind is "USSDrop"
+                && SameType(trigger.Filter, raw.String("USSType")),
+
+            TriggerKind.Rescue =>
+                journalEvent.Kind is "SearchAndRescue"
+                && SameType(trigger.Filter, raw.String("Name")),
+
+            TriggerKind.Engineer =>
+                journalEvent.Kind is "EngineerProgress"
+                && EngineerReached(trigger, raw),
+
+            TriggerKind.Srv => journalEvent.Kind is "LaunchSRV",
+
+            TriggerKind.Crew => journalEvent.Kind is "CrewHire",
+
             _ => false,
         };
     }
 
-    /// <summary>How much one matching event adds to a counted trigger's total: tons for a sale, one otherwise.</summary>
+    /// <summary>How much one matching event adds to a counted trigger's total: tons, items or credits where the kind counts those, one otherwise.</summary>
     public static int Amount(AdventureTrigger trigger, JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(trigger);
         ArgumentNullException.ThrowIfNull(journalEvent);
 
-        return trigger.Kind == TriggerKind.Sell ? Math.Max(journalEvent.Raw.Int("Count") ?? 0, 0) : 1;
+        var raw = journalEvent.Raw;
+
+        return trigger.Kind switch
+        {
+            TriggerKind.Sell => Math.Max(raw.Int("Count") ?? 0, 0),
+            TriggerKind.Collect or TriggerKind.Rescue => Math.Max(raw.Int("Count") ?? 1, 0),
+            TriggerKind.DataSale => (int)Math.Clamp(Credits(journalEvent.Kind, raw), 0, int.MaxValue),
+            _ => 1,
+        };
     }
+
+    private static long Credits(string kind, JsonElement raw) => kind is "SellOrganicData"
+        ? raw.Items("BioData").Sum(entry => (entry.Long("Value") ?? 0) + (entry.Long("Bonus") ?? 0))
+        : raw.Long("TotalEarnings") ?? 0;
 
     private static bool SameFaction(string? wanted, string? actual) =>
         string.IsNullOrWhiteSpace(wanted) || string.Equals(wanted.Trim(), actual?.Trim(), StringComparison.OrdinalIgnoreCase);
@@ -279,6 +351,45 @@ public static class AdventureFold
         string.IsNullOrWhiteSpace(wanted) || (Fold(wanted) is { } folded && folded == Fold(actual));
 
     private static string? Fold(string? commodity) => JournalJson.Symbol(commodity)?.Replace(" ", string.Empty, StringComparison.Ordinal);
+
+    /// <summary>Equal once both lose any <c>$…;</c> wrapping and case, or the wanted word is one underscore-separated part of the actual, as <c>Thargoid</c> is of <c>$SAA_SignalType_Thargoid;</c>.</summary>
+    private static bool SameType(string? wanted, string? actual) =>
+        string.IsNullOrWhiteSpace(wanted)
+        || (JournalJson.Symbol(wanted) is { } folded
+            && JournalJson.Symbol(actual) is { } found
+            && (folded == found || found.Split('_').Contains(folded)));
+
+    private static bool AtBody(AdventureTrigger trigger, JsonElement raw) =>
+        (trigger.SystemAddress is null || raw.Long("SystemAddress") == trigger.SystemAddress)
+        && (trigger.BodyId is null || raw.Int("BodyID") == trigger.BodyId);
+
+    /// <summary>The wreck type in a <c>$Settlement_Unflattened_Wrecked…:</c> destination, or null for any other.</summary>
+    private static string? WreckType(string? destination)
+    {
+        const string prefix = "$Settlement_Unflattened_Wrecked";
+
+        if (destination is null || !destination.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var rest = destination[prefix.Length..];
+        var end = rest.IndexOfAny([':', ';']);
+
+        return end < 0 ? rest : rest[..end];
+    }
+
+    /// <summary>The single-engineer form, or the startup list, shows the engineer at the stage or past it.</summary>
+    private static bool EngineerReached(AdventureTrigger trigger, JsonElement raw)
+    {
+        var wanted = EngineerStages.Rank(trigger.Stage);
+
+        bool Reached(JsonElement entry) =>
+            string.Equals(entry.String("Engineer")?.Trim(), trigger.Engineer?.Trim(), StringComparison.OrdinalIgnoreCase)
+            && EngineerStages.Rank(entry.String("Progress")) >= wanted;
+
+        return Reached(raw) || raw.Items("Engineers").Any(Reached);
+    }
 
     /// <summary>One event against one standing.</summary>
     public static AdventureStanding Apply(AdventureStanding standing, JournalEvent journalEvent)
@@ -325,7 +436,7 @@ public static class AdventureFold
 
         if (current.Trigger.IsCounted)
         {
-            var total = standing.Counted + Amount(current.Trigger, journalEvent);
+            var total = (int)Math.Min((long)standing.Counted + Amount(current.Trigger, journalEvent), int.MaxValue);
 
             if (total < current.Trigger.Count)
             {

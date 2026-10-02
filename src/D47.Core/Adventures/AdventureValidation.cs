@@ -65,7 +65,8 @@ public static class AdventureValidation
 {
     /// <summary>Every kind, in the words the file uses.</summary>
     public static IReadOnlyList<string> Kinds { get; } =
-        ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine"];
+        ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
+         "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew"];
 
     public static bool TryKind(string? text, out TriggerKind kind)
     {
@@ -229,6 +230,10 @@ public static class AdventureValidation
                     }
 
                     break;
+
+                case TriggerKind.Engineer:
+                    problems.AddRange(EngineerProblems(where, beat.Trigger));
+                    break;
             }
         }
 
@@ -256,6 +261,22 @@ public static class AdventureValidation
                 yield return $"{where} names the mission family {family.Trim()}, which is set aside; no beat uses "
                     + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ".";
             }
+        }
+    }
+
+    /// <summary>What is wrong with an engineer trigger: no engineer, or a stage that is not <c>Invited</c> or <c>Unlocked</c>.</summary>
+    public static IEnumerable<string> EngineerProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (string.IsNullOrWhiteSpace(trigger.Engineer))
+        {
+            yield return $"{where} names no engineer.";
+        }
+
+        if (EngineerStages.Rank(trigger.Stage) == 0)
+        {
+            yield return $"{where} names the stage \"{trigger.Stage?.Trim() ?? string.Empty}\"; the stages are {string.Join(", ", EngineerStages.Named)}.";
         }
     }
 

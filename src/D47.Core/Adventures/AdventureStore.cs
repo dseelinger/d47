@@ -329,6 +329,10 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     Faction = beat.Trigger.Faction?.Trim(),
                     MissionFamily = beat.Trigger.MissionFamily?.Trim(),
                     Commodity = beat.Trigger.Commodity?.Trim(),
+                    Filter = beat.Trigger.Filter?.Trim(),
+                    Organic = beat.Trigger.Organic,
+                    Engineer = beat.Trigger.Engineer?.Trim(),
+                    Stage = beat.Trigger.Stage?.Trim(),
                 },
             });
         }
@@ -412,6 +416,10 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     Faction = beat.Trigger.Faction,
                     MissionFamily = beat.Trigger.MissionFamily,
                     Commodity = beat.Trigger.Commodity,
+                    Filter = beat.Trigger.Filter,
+                    Organic = beat.Trigger.Organic,
+                    Engineer = beat.Trigger.Engineer,
+                    Stage = beat.Trigger.Stage,
                 },
                 Line = beat.Line,
             }),
@@ -517,5 +525,13 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public string? MissionFamily { get; set; }
 
         public string? Commodity { get; set; }
+
+        public string? Filter { get; set; }
+
+        public bool? Organic { get; set; }
+
+        public string? Engineer { get; set; }
+
+        public string? Stage { get; set; }
     }
 }

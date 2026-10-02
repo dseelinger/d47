@@ -15,7 +15,7 @@ public enum AdventureSource
 
 /// <summary>
 /// The things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is free").
-/// The last five are counted: they fire once enough of their event has happened since the beat became current.
+/// All after the first seven are counted except engineer: they fire once enough of their event has happened since the beat became current.
 /// </summary>
 public enum TriggerKind
 {
@@ -54,6 +54,48 @@ public enum TriggerKind
 
     /// <summary>Tons refined in <c>MiningRefined</c>, one per event, optionally of one commodity.</summary>
     Mine,
+
+    /// <summary><c>Disembark</c> onto a planet surface, optionally on one body.</summary>
+    OnFoot,
+
+    /// <summary>Items from <c>CollectItems</c>, optionally of one type or name.</summary>
+    Collect,
+
+    /// <summary><c>ScanOrganic</c> analyses, optionally of one genus.</summary>
+    Organic,
+
+    /// <summary><c>SAAScanComplete</c> surface maps, optionally of one body.</summary>
+    Map,
+
+    /// <summary><c>SAASignalsFound</c> bodies with a signal, optionally of one signal type.</summary>
+    Signal,
+
+    /// <summary><c>Touchdown</c> at a crashed ship, optionally of one wreck type.</summary>
+    Wreck,
+
+    /// <summary><c>CodexEntry</c> events, optionally of one category.</summary>
+    Codex,
+
+    /// <summary>Credits from exploration and organic data sales.</summary>
+    DataSale,
+
+    /// <summary><c>CollectCargo</c> events, optionally of one cargo type.</summary>
+    Salvage,
+
+    /// <summary><c>USSDrop</c> events, optionally of one signal source type.</summary>
+    Uss,
+
+    /// <summary>Items from <c>SearchAndRescue</c>, optionally of one name.</summary>
+    Rescue,
+
+    /// <summary><c>EngineerProgress</c> reaching a stage with one engineer. Not counted.</summary>
+    Engineer,
+
+    /// <summary><c>LaunchSRV</c> events.</summary>
+    Srv,
+
+    /// <summary><c>CrewHire</c> events.</summary>
+    Crew,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -94,15 +136,31 @@ public sealed record AdventureTrigger
     /// <summary>The commodity sold or refined, compared as a folded symbol.</summary>
     public string? Commodity { get; init; }
 
+    /// <summary>The cargo, item, genus, category, signal, wreck or source type, or the name of what is rescued, that a counted beat is limited to.</summary>
+    public string? Filter { get; init; }
+
+    /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
+    public bool? Organic { get; init; }
+
+    /// <summary>The engineer an <see cref="TriggerKind.Engineer"/> beat waits on.</summary>
+    public string? Engineer { get; init; }
+
+    /// <summary><c>Invited</c> or <c>Unlocked</c>; an engineer beat is also met by the stage after it.</summary>
+    public string? Stage { get; init; }
+
     /// <summary>Whether this kind fires on a running total rather than on one event.</summary>
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.Mission or TriggerKind.Sell or TriggerKind.Mine;
+        kind >= TriggerKind.Bounty && kind != TriggerKind.Engineer;
+
+    /// <summary>Whether a Commander can write this kind on the authored form.</summary>
+    public static bool IsAuthorable(TriggerKind kind) => kind <= TriggerKind.Beacon;
 
     /// <summary>Whether the ids this kind matches on are all present.</summary>
     public bool IsResolved => IsCounted ? Count >= 1 : Kind switch
     {
+        TriggerKind.Engineer => !string.IsNullOrWhiteSpace(Engineer) && EngineerStages.Rank(Stage) > 0,
         TriggerKind.Arrive => SystemAddress is not null,
         TriggerKind.Dock => MarketId is not null,
         TriggerKind.Land or TriggerKind.Scan => SystemAddress is not null && BodyId is not null,
@@ -127,6 +185,20 @@ public sealed record AdventureTrigger
         TriggerKind.Mission => $"complete {Counted(Missions(one: true), Missions(one: false))}{For()}",
         TriggerKind.Sell => $"sell {Tons()} of {CommodityWord()}{At()}",
         TriggerKind.Mine => $"refine {Tons()} of {CommodityWord()}",
+        TriggerKind.OnFoot => $"step out on foot onto a planet surface {Times()}",
+        TriggerKind.Collect => $"collect {Counted(Items(one: true), Items(one: false))}",
+        TriggerKind.Organic => $"analyse {Counted("organic sample", "organic samples")}{Of()}",
+        TriggerKind.Map => $"map {Counted("body", "bodies")} with the surface mapper",
+        TriggerKind.Signal => $"survey {Counted("body", "bodies")} with {Plain()} signals",
+        TriggerKind.Wreck => $"touch down at {Counted(Wrecks(one: true), Wrecks(one: false))}",
+        TriggerKind.Codex => $"log {Counted("codex entry", "codex entries")}{Of()}",
+        TriggerKind.DataSale => $"sell {Credits()} of {DataWord()} data",
+        TriggerKind.Salvage => $"pick up {Counted(Cargo(one: true), Cargo(one: false))}",
+        TriggerKind.Uss => $"drop into {Counted(Sources(one: true), Sources(one: false))}",
+        TriggerKind.Rescue => $"hand in {Counted(Survivors(one: true), Survivors(one: false))}",
+        TriggerKind.Engineer => $"reach {Stage?.Trim()} with {Engineer?.Trim()}",
+        TriggerKind.Srv => $"launch the SRV {Times()}",
+        TriggerKind.Crew => $"hire {Counted("crew member", "crew members")}",
         _ => Kind.ToString(),
     };
 
@@ -146,6 +218,19 @@ public sealed record AdventureTrigger
             TriggerKind.Bond => $"Kill bonds{For()}: {of}",
             TriggerKind.Mission => $"{Capital(Missions(one: false))}{For()}: {of}",
             TriggerKind.Sell => $"{Capital(CommodityWord())} sold{At()}: {of} t",
+            TriggerKind.OnFoot => $"Surface disembarks: {of}",
+            TriggerKind.Collect => $"{Capital(Items(one: false))}: {of}",
+            TriggerKind.Organic => $"Organic analyses{Of()}: {of}",
+            TriggerKind.Map => $"Bodies mapped: {of}",
+            TriggerKind.Signal => $"Bodies with {Plain()} signals: {of}",
+            TriggerKind.Wreck => $"{Capital(Wrecks(one: false))}: {of}",
+            TriggerKind.Codex => $"Codex entries{Of()}: {of}",
+            TriggerKind.DataSale => $"{Capital(DataWord())} data sold: {of} cr",
+            TriggerKind.Salvage => $"{Capital(Cargo(one: false))}: {of}",
+            TriggerKind.Uss => $"{Capital(Sources(one: false))}: {of}",
+            TriggerKind.Rescue => $"{Capital(Survivors(one: false))}: {of}",
+            TriggerKind.Srv => $"SRV launches: {of}",
+            TriggerKind.Crew => $"Crew hired: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }
@@ -185,6 +270,35 @@ public sealed record AdventureTrigger
 
     private static string Capital(string text) =>
         text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
+
+    private string Times() => Count == 1 ? "once" : $"{(Count ?? 0).ToString(CultureInfo.InvariantCulture)} times";
+
+    private string Credits() => $"{(Count ?? 0).ToString("N0", CultureInfo.InvariantCulture)} cr";
+
+    private string Plain() => string.IsNullOrWhiteSpace(Filter) ? "any" : Plain(Filter);
+
+    private string Of() => string.IsNullOrWhiteSpace(Filter) ? string.Empty : $" of {Plain(Filter)}";
+
+    private static string Plain(string filter) => Journal.JournalJson.Symbol(filter)?.Split('_')[^1] ?? filter.Trim();
+
+    private string Items(bool one) =>
+        (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "item" : "items");
+
+    private string Wrecks(bool one) =>
+        string.IsNullOrWhiteSpace(Filter) || string.Equals(Filter.Trim(), "Unknown", StringComparison.OrdinalIgnoreCase)
+            ? one ? "crashed Thargoid ship" : "crashed Thargoid ships"
+            : $"{Filter.Trim()} {(one ? "wreck" : "wrecks")}";
+
+    private string Cargo(bool one) =>
+        (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "cargo canister" : "cargo canisters");
+
+    private string Sources(bool one) =>
+        (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "signal source" : "signal sources");
+
+    private string Survivors(bool one) =>
+        (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "rescue item" : "rescue items");
+
+    private string DataWord() => Organic switch { true => "organic", false => "cartographic", _ => "exploration" };
 
     private static string? BeaconName(long? address) =>
         address is { } known && GuardianCores.Beacons.TryGetValue(known, out var name) ? name : null;

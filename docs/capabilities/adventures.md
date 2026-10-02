@@ -179,7 +179,7 @@ card says which adventure it follows, and it is accepted, flown and checked like
 
 ### What a beat can be
 
-Twelve triggers, and every one is a comparison on a structured field rather than on a name:
+Twenty-six triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -195,17 +195,31 @@ Twelve triggers, and every one is a comparison on a structured field rather than
 | Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
 | Sell tons | `Count` in `MarketSell`, optionally of one `Type` or at one `MarketID` | the commodity's display name |
 | Refine tons | one ton per `MiningRefined`, optionally of one `Type` | the commodity's display name |
+| Step out on foot | `Disembark` onto a planet, not a station, optionally on one body | anything else |
+| Collect items | `Count` in `CollectItems`, optionally of one `Type` or `Name` | the item's display name |
+| Analyse organics | `ScanOrganic` with `ScanType` `Analyse`, optionally of one `Genus` | `Log` and `Sample` scans |
+| Map bodies | `SAAScanComplete`, optionally of one body | anything else |
+| Survey signals | `SAASignalsFound` with a `Signals` entry of one type, such as `Thargoid` or `Platinum` | the body's name |
+| Land at a wreck | `Touchdown` at a `$Settlement_Unflattened_Wrecked…` destination, of one type; unfiltered, only `Unknown`, a crashed Thargoid ship | the destination's display name |
+| Log codex entries | `CodexEntry`, optionally of one `Category` | the entry's name |
+| Sell data | credits from `SellExplorationData`, `MultiSellExplorationData` and `SellOrganicData`, optionally one of the two kinds | anything else |
+| Salvage cargo | `CollectCargo`, optionally of one `Type` | the cargo's display name |
+| Drop into a signal source | `USSDrop`, optionally of one `USSType` | the source's display name |
+| Rescue | `Count` in `SearchAndRescue`, optionally of one `Name` | anything else |
+| Reach an engineer stage | `EngineerProgress` for one `Engineer` at `Invited` or `Unlocked`, either form | the engineer's display name |
+| Launch the SRV | `LaunchSRV` events | anything else |
+| Hire crew | `CrewHire` events | anything else |
 
 Only a stock story's chapter one uses the beacon trigger, as its last beat, and you cannot add one on the
 form.
 
-The last five are counted. A counted beat fires when its total reaches its count, and only what happens
+Every trigger after the seventh is counted except the engineer stage, which fires once. A counted beat fires when its total reaches its count, and only what happens
 after the beat before it has fired counts. It has no place of its own; a chapter that needs it done
 somewhere puts an arrive or dock beat there first. The card shows the running total, such as "Kill bonds
 for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These
 mission families are set aside, and no beat uses or counts them: `Mission_Massacre_Skimmer`,
 `Mission_Disable`, `Mission_Hack`, `Mission_OnFoot_Hack`, `Mission_Scan`, `Mission_RS_` and `Mission_DS_`.
-The form adds the six kinds above the counted ones and shows a counted beat without changing it.
+The form offers the first six kinds and shows any other beat without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer beat at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer.
 
 Nothing a stranger can choose — a ship name, an in-game message, a mission title — can be a
 trigger. That is the safety property stated as a type rather than as a promise.

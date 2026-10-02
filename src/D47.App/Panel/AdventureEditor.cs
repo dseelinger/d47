@@ -178,9 +178,9 @@ public sealed class AdventureEditor : UserControl
         var buttons = AdventuresPage.Buttons();
         buttons.Margin = new Thickness(0, 4, 0, 0);
 
-        if (beat.Trigger.IsCounted)
+        if (!AdventureTrigger.IsAuthorable(beat.Trigger.Kind))
         {
-            row.Children.Add(AdventuresPage.Text("A counted beat cannot be changed here.", TypeScale.Small, ThemeManager.GreyKey));
+            row.Children.Add(AdventuresPage.Text("This beat cannot be changed here.", TypeScale.Small, ThemeManager.GreyKey));
             return ListRow.Dress(new Border { Child = row });
         }
 

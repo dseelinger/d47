@@ -757,7 +757,7 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
 
-        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "eleven" : "twelve")} things, and nothing else exists:");
+        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "twenty-five" : "twenty-six")} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
@@ -773,7 +773,21 @@ public sealed class AdventureGenerator(
             + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ", or a family starting with one of them.");
         text.AppendLine("- \"sell\": the Commander sells \"count\" tons of \"commodity\" (null for any), at any market.");
         text.AppendLine("- \"mine\": the Commander mines and refines \"count\" tons of \"commodity\" (null for any).");
-        text.AppendLine("bounty, bond, mission, sell and mine are counted: only what happens after the beat before has fired counts, and they have no place of their own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
+        text.AppendLine("- \"onfoot\": the Commander steps out on foot onto a planet surface \"count\" times.");
+        text.AppendLine("- \"collect\": the Commander picks up \"count\" items on foot. \"filter\" is Item, Component or Consumable, or an item's name, or null for any.");
+        text.AppendLine("- \"organic\": the Commander analyses \"count\" organic samples. \"filter\" is a genus such as Aleoida, or null for any.");
+        text.AppendLine("- \"map\": the Commander maps \"count\" bodies with the surface mapper.");
+        text.AppendLine("- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any.");
+        text.AppendLine("- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.");
+        text.AppendLine("- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is a category: Biology or StellarBodies; null for any.");
+        text.AppendLine("- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.");
+        text.AppendLine("- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.");
+        text.AppendLine("- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any.");
+        text.AppendLine("- \"rescue\": the Commander hands in \"count\" rescue items. \"filter\" is the item's name, or null for any.");
+        text.AppendLine("- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet.");
+        text.AppendLine("- \"srv\": the Commander launches the SRV \"count\" times.");
+        text.AppendLine("- \"crew\": the Commander hires \"count\" crew members.");
+        text.AppendLine("Every kind from bounty on is counted, except engineer, which is met once: only what happens after the beat before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
 
         if (beacon is not null)
         {
@@ -838,11 +852,12 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
             + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
-            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\""
+            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\""
             + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
             + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
-            + "\"mission\": string|null, \"commodity\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
+            + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
+            + "\"engineer\": string|null, \"stage\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
 
         return text.ToString();
@@ -914,20 +929,28 @@ public sealed class AdventureGenerator(
         string? Faction,
         string? MissionFamily,
         string? Commodity,
+        string? Filter,
+        bool? Organic,
+        string? Engineer,
+        string? Stage,
         string Line)
     {
-        /// <summary>A counted beat's trigger as written; the place fields are not carried.</summary>
-        public AdventureTrigger Counted() => new()
+        /// <summary>A counted or engineer beat's trigger as written; the place fields are not carried.</summary>
+        public AdventureTrigger Written() => new()
         {
             Kind = Kind,
             Count = Count,
             Faction = Faction,
             MissionFamily = MissionFamily,
             Commodity = Commodity,
+            Filter = Filter,
+            Organic = Organic,
+            Engineer = Engineer,
+            Stage = Stage,
         };
 
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
-        public string Describe() => AdventureTrigger.IsCountedKind(Kind) ? Counted().Describe() : Kind switch
+        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || Kind == TriggerKind.Engineer ? Written().Describe() : Kind switch
         {
             TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
@@ -976,6 +999,10 @@ public sealed class AdventureGenerator(
                         Text(element, "faction"),
                         Text(element, "mission"),
                         Text(element, "commodity"),
+                        Text(element, "filter"),
+                        Flag(element, "organic"),
+                        Text(element, "engineer"),
+                        Text(element, "stage"),
                         Text(element, "line") ?? string.Empty));
                 }
             }
@@ -1002,6 +1029,11 @@ public sealed class AdventureGenerator(
         && element.TryGetProperty(property, out var value)
         && value.ValueKind == JsonValueKind.Object
             ? value
+            : null;
+
+    private static bool? Flag(JsonElement element, string property) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(property, out var value)
+            ? value.ValueKind switch { JsonValueKind.True => true, JsonValueKind.False => false, _ => null }
             : null;
 
     private static int? Integer(JsonElement element, string property)
@@ -1055,9 +1087,23 @@ public sealed class AdventureGenerator(
                     refusals.Add($"{where} is a \"beacon\" beat; only the last beat of the chapter that ends act one may be one.");
                 }
             }
+            else if (beat.Kind == TriggerKind.Engineer)
+            {
+                var written = beat.Written();
+                var problems = AdventureValidation.EngineerProblems(where, written).ToList();
+
+                if (problems.Count > 0)
+                {
+                    refusals.AddRange(problems);
+                }
+                else
+                {
+                    trigger = written;
+                }
+            }
             else if (AdventureTrigger.IsCountedKind(beat.Kind))
             {
-                var counted = beat.Counted();
+                var counted = beat.Written();
                 var problems = AdventureValidation.CountedProblems(where, counted).ToList();
 
                 if (problems.Count > 0)
