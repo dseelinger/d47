@@ -141,5 +141,18 @@
     "blurb": "Horace Penhallow is the most feared critic in human space. One line in Penhallow's Starlanes once emptied a starport bar that had served drinks for two hundred years. Now he has booked a week aboard your fleet carrier for a new edition, and he has brought his own itinerary: ten sights, in order, starting with a Guardian beacon and including the longest supercruise in the bubble. Wynn Odoro, who runs your carrier's bar, says one star will empty it for a decade. You have flown through wars without blinking. You have never been reviewed. Penhallow writes down everything, including you, and he has not smiled once.",
     "inYourWords": "I have a fleet carrier, a hangar of ships and more credits than I can spend, and I have not taken a day off in years. There is always a jump to plot or a market to restock. Yesterday Wynn Odoro, who runs the bar on my carrier, came up to the bridge white as a sheet. Horace Penhallow has booked passage. The Horace Penhallow. He wants a week, a cabin with a view, and a tour of ten sights. Wynn says he reviews everything, the host included. I said I would fly him round for a week. How hard can it be?",
     "beacon": "Sight one on Penhallow's itinerary is a Guardian beacon, scanned by data-link with him watching from the jump seat. He says a review that starts anywhere else is a press release."
+  },
+  {
+    "id": "runner-up",
+    "core": "analyst-prime",
+    "number": 12,
+    "title": "Runner-Up",
+    "genre": "Buddy Love",
+    "level": "endgame",
+    "length": "2-weeks",
+    "tone": "Wry, competitive, then generous",
+    "blurb": "For twenty years you have come second to Delphine Ashcroft. Second to Elite in trade. Second to the edge of the Formidine Rift. Second, by a few minutes, to the first data-link with the Guardian beacon in Synuefe KU-F b44-4, and the plaque at Lave Station still says so. Now Ashcroft is retiring, and she has called you to Lave for one last contest on the old terms: eleven days, three legs, and the loser says it out loud on the Lanes Report. First she asked you to fly back to that beacon and scan it again. She would not say why.",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and there is one name I have never beaten. Delphine Ashcroft and I have raced each other for twenty years, and she has won every time, including the race that matters most to me: the first data-link with the Guardian beacon in Synuefe KU-F b44-4. Her name is on the plaque at Lave Station. Mine is under it. I have not been back to that beacon since. Last week she told me she is retiring, and challenged me to one more contest before she goes. I said yes before she finished the sentence.",
+    "beacon": "Ashcroft asked me to go back to the beacon in Synuefe KU-F b44-4, where she beat me twenty years ago, and scan it again before I come to Lave Station. I have scanned it. Something happened that did not happen the first time."
   }
 ]
