@@ -221,6 +221,19 @@
     "beacon": "My letters say I am posted to a Navy survey of Guardian sites. For his eightieth birthday my father has asked for a picture of his lieutenant beside a Guardian beacon, lit up. A beacon only lights for a data-link scan, so I am going to scan one and take the picture."
   },
   {
+    "id": "dark-horse",
+    "core": "kex",
+    "number": 18,
+    "title": "Dark Horse",
+    "genre": "Fool Triumphant",
+    "level": "midrange",
+    "length": "2-weeks",
+    "tone": "Brisk, sly comedy that turns earnest",
+    "blurb": "Every pilot at Ray Gateway knows your name, and none of them takes you seriously. You are the one at the end of the bar who says the Guardian beacons answer back if you scan them properly, and last month Moss Varley, who runs the bar, opened a book on it. So you flew out and scanned one. While you were gone, somebody put your name on the ballot for Pilots' Steward, the seat on the station board that sets the docking levy and runs the rescue fund. Imogen Thale has held it for fourteen years. The vote is in eleven days, the station newsfeed calls you the joke candidate, and Moss has already had the badges made.",
+    "inYourWords": "I fly a working ship out of Ray Gateway in Diaguandri. I have done some engineering on it, I have savings enough for a bad month, and I have a seat at the end of the pilots' bar that everybody knows is mine. I also have a theory: that the Guardian beacons answer back if you scan them properly. Nobody at the bar believes it. Last month Moss Varley opened a book on it at eleven to one, and I flew out to settle the matter. On the way home the newsfeed told me my name is on the ballot for Pilots' Steward, against Imogen Thale, who has held the seat for fourteen years. I did not put it there. Moss says he has no idea who did, and he has already had badges made.",
+    "beacon": "Moss Varley opened a book at the bar on whether a Guardian beacon answers back when it is scanned properly, at eleven to one against. I flew out to the beacon to settle it, and I have scanned it. I am not saying yet who won the book."
+  },
+  {
     "id": "point-of-order",
     "core": "cora",
     "number": 19,
