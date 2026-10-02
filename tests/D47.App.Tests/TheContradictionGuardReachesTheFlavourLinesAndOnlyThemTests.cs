@@ -5,7 +5,8 @@ namespace D47.App.Tests;
 /// <summary>
 /// The guard between composition and speech runs on the five flavour paths and on nothing else. Four
 /// are in <c>AppHost.cs</c>; the announcement rewrite is in Core's <c>Rewording.cs</c>. An invented
-/// speaker's reply is screened by Core's <c>ChatterLine.cs</c>, with a ship reader from the app.
+/// speaker's reply and the Narrator's reply are screened by Core's <c>ChatterLine.cs</c> and
+/// <c>NarratorLine.cs</c>, each with a ship reader from the app.
 /// </summary>
 public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 {
@@ -53,7 +54,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
             .Order()
             .ToList();
 
-        Assert.Equal(["AppHost.cs", "ChatterLine.cs", "ContradictedClaims.cs", "Rewording.cs"], reaching);
+        Assert.Equal(["AppHost.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs"], reaching);
     }
 
     /// <summary>
@@ -66,8 +67,8 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
         var read = CodeLinesContaining("ShipFacts.Of(");
 
         // Four for the five paths — the two persona paths are branches of one switch and share a
-        // snapshot — and the reader ChatterLine screens each reply against.
-        Assert.Equal(FlavourCallSites, read.Count);
+        // snapshot — and the readers ChatterLine and NarratorLine screen each reply against.
+        Assert.Equal(FlavourCallSites + 1, read.Count);
         Assert.All(read, line => Assert.Contains(
             line,
             new[]

@@ -2173,6 +2173,28 @@ public sealed class AppHost : IDisposable
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<ChatterLine>()));
 
+        // The Narrator, answered by whatever the Commander says shortly after a narration, except what the
+        // ship would run or offer without the model.
+        turns.Lines.Add(new NarratorLine(
+            () => SystemWallClock.Instance.UtcNow,
+            () => personas.ShipName,
+            input => router.MatchSetting(input) is not null
+                     || router.MatchToolCommand(input) is not null
+                     || router.Match(input, InputSource.Spoken) is not null
+                     || router.Book.Candidates(input, InputSource.Spoken).Count > 0
+                     || self?.LearnedPhraseFor(input) is not null,
+            () => self?.HiddenStory(VoiceRole.Narrator),
+            () => string.IsNullOrWhiteSpace(settings.Current.Llm.CharacterSheet)
+                ? CommanderStory.SheetOrName(null, gameState.Active?.Identity.Name)
+                : null,
+            () => turns.BackgroundModel,
+            () => ShipFacts.Of(gameState.Active),
+            loggerFactory.CreateLogger<NarratorLine>())
+        {
+            Said = reply => self?.Messages?.Post(
+                D47.Core.Messages.MessageStore.Narrator, "Narration", reply, DateTimeOffset.Now),
+        });
+
         // The catalogue a generated story may draw its stops from (Phase 47).
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
@@ -6363,9 +6385,13 @@ public sealed class AppHost : IDisposable
         var restore = new AddressedVoice(this, Voice.Voice, Voice.CaptionSpeaker);
 
         // An invented speaker keeps the voice their exchange was heard in.
-        Voice.Voice = addressed.Role == VoiceRole.Comms
-            ? NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role)
-            : Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role);
+        Voice.Voice = addressed.Role switch
+        {
+            VoiceRole.Comms => NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
+            VoiceRole.Narrator => CastFor(new Announcement(NarratorCallout.KeyPrefix, string.Empty) { Voice = VoiceRole.Narrator })
+                .For(VoiceRole.Narrator),
+            _ => Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
+        };
         Voice.SpeakingAs = addressed.Role;
         Voice.CaptionSpeaker = addressed.Name;
 
@@ -6604,6 +6630,11 @@ public sealed class AppHost : IDisposable
                     {
                         Turns.Lines.OfType<ChatterLine>().FirstOrDefault()
                             ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
+                    }
+
+                    if (announcement.Voice == VoiceRole.Narrator)
+                    {
+                        Turns.Lines.OfType<NarratorLine>().FirstOrDefault()?.Heard(announcement.Text);
                     }
 
                     // What the Commander actually heard about a story, kept (asked for 2026-08-22).

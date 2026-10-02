@@ -1166,8 +1166,17 @@ the Narrator says nothing: there are no stock narrations. With no language model
 rows are absent; with personality off, it is silent.
 
 It is captioned *Narrator* and spoken in its own voice from the provider that speaks for your ship,
-chosen under Speech → [Narrator voice](speech.md#narrator-voice). It is never the ship's voice. You
-cannot address the Narrator: saying its name starts no conversation with it.
+chosen under Speech → [Narrator voice](speech.md#narrator-voice). It is never the ship's voice.
+
+**A narration can be answered.** For ninety seconds after the Narrator's last line, whatever you say
+goes to the Narrator, which answers with more narration in the third person and the past tense, taking
+what you said as what your Commander said or did. Each reply restarts the ninety seconds, and a
+narration takes at most four replies. Two things still go to the ship: a command d47 runs or offers
+without the model, such as "gear down", and anything that starts with your ship AI's name, which also
+ends the exchange. The Narrator is offered no tools, so nothing it says can act on the ship. A reply
+that addresses you as "you" is not said, and ends the exchange. Each reply is posted to Messages from
+the Narrator, and goes to the same model as the narration. Outside those ninety seconds, saying
+"Narrator" starts no conversation with it.
 
 > "stop calling out the narrator" / "start calling out the narrator"
 

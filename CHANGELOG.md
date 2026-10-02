@@ -123,6 +123,12 @@ the In Ship chatter timing, narrating the moment whether or not a story is runni
 from the journal when there is no character sheet. Turning the Narrator or personality off leaves those
 moments silent. With any other core aboard, nothing changes.
 
+You can answer a narration. For ninety seconds after the Narrator's last line, whatever you say is
+answered by the Narrator with more narration, in the third person and the past tense, up to four
+replies. A command d47 runs or offers without the model, such as "gear down", still goes to the ship,
+and so does anything that starts with your ship AI's name. Each reply is posted to Messages from the
+Narrator.
+
 A story beat can now wait for something done a number of times: bounties collected, kill bonds earned,
 missions completed, tons of a commodity sold, or tons refined by mining. Only what you do after the beat
 before it counts, and the story's card shows the running total, such as "Kill bonds for LTT 7786 Labour:
