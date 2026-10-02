@@ -624,6 +624,9 @@ public sealed class StoryDirector(
     /// <summary>The title of the story whose posted ending waits for an answer, or null.</summary>
     public string? EndingTitle(string? frontierId) => Unanswered(frontierId) is { EndingPostedAt: not null } story ? story.Title : null;
 
+    /// <summary>The id of the story whose posted ending waits for an answer, or null.</summary>
+    public string? EndingStoryId(string? frontierId) => Unanswered(frontierId) is { EndingPostedAt: not null } story ? story.Id : null;
+
     /// <summary>Records that the ending message was posted, so it is not posted again.</summary>
     public void EndingPosted(string? frontierId, string storyId, DateTimeOffset now) =>
         stories.Update(frontierId, storyId, story => story is { State: StoryState.Finished, EndingPostedAt: null }

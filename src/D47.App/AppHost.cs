@@ -1067,10 +1067,11 @@ public sealed class AppHost : IDisposable
         _ = storyDownloads.FetchMissing(storyStore.AllCurrent().Select(story => story.Id));
 
         void SweepOrphanMessages() => messageStore.RemoveOrphans(
-            key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, () => storyCatalog));
+            key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, storyStore, () => storyCatalog));
 
         SweepOrphanMessages();
         adventureStore.Changed += SweepOrphanMessages;
+        storyStore.Changed += SweepOrphanMessages;
 
         var goalMiner = new D47.Core.Goals.GoalMiner(
             loggerFactory.CreateLogger<D47.Core.Goals.GoalMiner>());
@@ -4186,7 +4187,14 @@ public sealed class AppHost : IDisposable
 
         var line = GuardianCores.Line(waking, storyCore);
 
-        Messages?.Post(Personas.Current.Id, "Guardian cores", line, DateTimeOffset.Now);
+        var storyId = Stories?.Stories.Current(GameState.Active?.Identity.FrontierId)?.Id;
+
+        Messages?.Post(
+            Personas.Current.Id,
+            "Guardian cores",
+            line,
+            DateTimeOffset.Now,
+            storyId is null ? null : D47.Core.Stories.StoryLines.Key(storyId));
 
         _ = Task.Run(async () =>
         {
@@ -5972,7 +5980,7 @@ public sealed class AppHost : IDisposable
             _ => Stories?.Speaker(commander, line.Speaker)?.Name ?? D47.Core.Messages.MessageStore.Narrator,
         };
 
-        Messages?.Post(from, scan.Title, line.Text, DateTimeOffset.Now);
+        Messages?.Post(from, scan.Title, line.Text, DateTimeOffset.Now, D47.Core.Stories.StoryLines.Key(scan.StoryId));
         Interlocked.Increment(ref _narratingScans);
 
         _ = Task.Run(async () =>
@@ -6063,7 +6071,8 @@ public sealed class AppHost : IDisposable
     {
         var commander = GameState.Active?.Identity.FrontierId;
 
-        if (Stories is not { } stories || stories.EndingTitle(commander) is not { } title)
+        if (Stories is not { } stories || stories.EndingTitle(commander) is not { } title
+            || stories.EndingStoryId(commander) is not { } storyId)
         {
             return D47.Core.Stories.StoryAnswer.Refused("No ending is waiting for an answer.");
         }
@@ -6080,7 +6089,7 @@ public sealed class AppHost : IDisposable
 
         foreach (var line in lines)
         {
-            Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now);
+            Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now, D47.Core.Stories.StoryEnding.Key(storyId));
         }
 
         _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", lines));

@@ -12,6 +12,19 @@ public sealed record StoryAnswer(string? Refusal, string After, IReadOnlyList<st
     public static StoryAnswer Refused(string refusal) => new(refusal, string.Empty, []);
 }
 
+/// <summary>The key of a line a story says outside its chapters and its ending.</summary>
+public static class StoryLines
+{
+    public const string KeyPrefix = "story.line.";
+
+    public static string Key(string storyId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(storyId);
+
+        return KeyPrefix + storyId;
+    }
+}
+
 /// <summary>The ending message of a finished story.</summary>
 public static class StoryEnding
 {

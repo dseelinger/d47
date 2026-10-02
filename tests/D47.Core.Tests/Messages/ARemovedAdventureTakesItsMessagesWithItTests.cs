@@ -17,6 +17,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
 
     private readonly AdventureStore _adventures;
     private readonly MessageStore _messages;
+    private readonly StoryStore _stories = StoryStore.InMemory();
 
     public ARemovedAdventureTakesItsMessagesWithItTests()
     {
@@ -36,7 +37,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
     }
 
     private int Sweep() =>
-        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, () => StoryFixtures.Catalog));
+        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, _stories, () => StoryFixtures.Catalog));
 
     [Fact]
     public void RemovingAnAdventureTakesItsMessagesAndLeavesTheRest()
@@ -62,6 +63,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
     public void AClueForAStoryMissingFromTheCatalogGoesAndOneForACatalogStoryStays()
     {
         var storyId = StoryFixtures.Catalog.Cards[0].Id;
+        _stories.Save("F1", new Story { Id = storyId, Title = "T", PublicLayer = "x", PickedAt = Noon });
 
         _messages.Post("narrator", "kept", "x", Noon, $"{StoryClueCallout.KeyPrefix}{storyId}.0");
         _messages.Post("narrator", "gone", "x", Noon, $"{StoryClueCallout.KeyPrefix}no-such-story.0");

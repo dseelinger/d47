@@ -53,6 +53,15 @@ public sealed class StoryStore
     public Story? Find(string? frontierId, string id) =>
         For(frontierId).FirstOrDefault(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Every Commander's stories, in any state.</summary>
+    public IReadOnlyList<(string FrontierId, Story Story)> All()
+    {
+        lock (_gate)
+        {
+            return [.. _byCommander.SelectMany(pair => pair.Value.Select(story => (pair.Key, story)))];
+        }
+    }
+
     /// <summary>The running or paused stories of every Commander.</summary>
     public IReadOnlyList<Story> AllCurrent()
     {

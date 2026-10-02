@@ -315,6 +315,10 @@ unread count. Opening a message marks it read.
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
 message goes first.
 
+Abandoning a story, or switching to another, removes the messages it posted: its beats, nudges, clues,
+beacon scan and ending. A finished story keeps them. The messages of an adventure you wrote yourself stay
+when you abandon it.
+
 ### A nudge when a story stalls
 
 When the next beat has waited through three play sessions and seven days since the last beat or nudge,
