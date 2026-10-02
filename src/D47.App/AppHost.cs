@@ -1358,7 +1358,14 @@ public sealed class AppHost : IDisposable
                 Ledger = spendLedger,
                 Version = version,
             },
-            loggerFactory.CreateLogger<D47.Core.Logbook.LogbookBook>());
+            loggerFactory.CreateLogger<D47.Core.Logbook.LogbookBook>(),
+            () =>
+            {
+                var frontierId = gameState.Active?.Identity.FrontierId;
+
+                return D47.Core.Logbook.LogStoryBeat.From(
+                    adventureBook.Standings(frontierId), id => storyStore.Find(frontierId, id));
+            });
 
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
         // and the device list from it.
@@ -2169,6 +2176,13 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Location.StarPos,
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>());
+
+        goalBook.Story = () =>
+        {
+            var frontierId = gameState.Active?.Identity.FrontierId;
+
+            return D47.Core.Goals.StoryGoal.Of(storyStore.For(frontierId), key => adventureBook.Standing(frontierId, key));
+        };
 
         storyDirector.Gender = () => settings.Current.CommanderGender;
         storyDirector.Game = () => gameState.Active;

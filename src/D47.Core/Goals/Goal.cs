@@ -8,6 +8,9 @@ public enum GoalKind
 
     /// <summary>A goal the Commander invented.</summary>
     Authored,
+
+    /// <summary>The Commander's current or just-finished stock story, computed from the story's own state.</summary>
+    Story,
 }
 
 /// <summary>

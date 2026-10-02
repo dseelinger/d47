@@ -26,6 +26,9 @@ public enum LogFactKind
     /// <summary>Rank, reputation, anything that went up.</summary>
     Progress,
 
+    /// <summary>Adventure and story beats the Commander reached.</summary>
+    Story,
+
     /// <summary>Deaths, rebuys, hull, interdictions that were not the Commander's idea.</summary>
     Mishap,
 

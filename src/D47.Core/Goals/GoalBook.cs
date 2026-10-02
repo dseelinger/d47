@@ -38,6 +38,9 @@ public sealed class GoalBook(
 
     public string? CommanderId => commander();
 
+    /// <summary>The story's standing, or null where there is none to show. Set by the host.</summary>
+    public Func<GoalStanding?> Story { get; set; } = () => null;
+
     /// <summary>The last walk over this Commander's journals, or null where none has been done.</summary>
     public GoalMine? Mine => store.MineFor(commander());
 
@@ -61,7 +64,8 @@ public sealed class GoalBook(
                 .. GoalCatalogue.All(live)
                     .Concat(store.AuthoredBy(commander()))
                     .Where(arc => !aside.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
-                    .Select(arc => GoalEvaluator.Evaluate(arc, live, mine)),
+                    .Select(arc => GoalEvaluator.Evaluate(arc, live, mine))
+                    .Concat(StoryStandings().Where(standing => !aside.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))),
             ];
         }
     }
@@ -76,9 +80,12 @@ public sealed class GoalBook(
         [
             .. GoalCatalogue.All(live)
                 .Concat(store.AuthoredBy(commander()))
-                .Select(arc => GoalEvaluator.Evaluate(arc, live, mine)),
+                .Select(arc => GoalEvaluator.Evaluate(arc, live, mine))
+                .Concat(StoryStandings()),
         ];
     }
+
+    private IEnumerable<GoalStanding> StoryStandings() => Story() is { } standing ? [standing] : [];
 
     public GoalStanding? Find(string? key)
     {

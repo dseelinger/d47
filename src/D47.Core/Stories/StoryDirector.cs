@@ -860,7 +860,7 @@ public sealed class StoryDirector(
             story.SinceBeacon(now)?.Days,
             beacon,
             card?.Level,
-            Stage(stage),
+            StoryClues.StageName(stage),
             StoryClues.Beats(secret.Beats, story.Pacing, stage, beaconInReach, finaleChapter),
             finaleChapter,
             away,
@@ -879,19 +879,6 @@ public sealed class StoryDirector(
     private int SinceBeacon(string? frontierId, Story story) => story.BeaconScanAt is { } scanned
         ? story.Chapters.Count(key => book.Store.Find(frontierId, key) is { } chapter && chapter.Written >= scanned)
         : 0;
-
-    /// <summary>A stage as the chapter writer is told it.</summary>
-    private static string Stage(StoryStage stage) => stage switch
-    {
-        StoryStage.ActOne => "Act one",
-        StoryStage.BreakIntoTwo => "Break into Two",
-        StoryStage.FunAndGames => "Fun and Games",
-        StoryStage.Midpoint => "Midpoint",
-        StoryStage.BadGuysCloseIn => "Bad Guys Close In",
-        StoryStage.AllIsLost => "All Is Lost",
-        StoryStage.DarkNightOfTheSoul => "Dark Night of the Soul",
-        _ => "Finale",
-    };
 
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
     private StorySecret? Hidden(string id) => catalog.Secret(id)?.For(Gender());

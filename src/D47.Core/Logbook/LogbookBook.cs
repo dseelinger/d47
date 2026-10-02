@@ -43,7 +43,8 @@ public sealed class LogbookBook(
     Func<IReadOnlyList<string>> journals,
     Func<DateTimeOffset> now,
     Func<LogbookContext> context,
-    ILogger<LogbookBook> logger)
+    ILogger<LogbookBook> logger,
+    Func<IReadOnlyList<LogStoryBeat>>? storyBeats = null)
 {
     private readonly Lock _gate = new();
 
@@ -84,7 +85,7 @@ public sealed class LogbookBook(
             ? LogRanges.Between(start, end)
             : LogRanges.Resolve(LogRanges.Parse(spanId ?? current.Range), now(), files, logger);
 
-        var digest = digests.Build(files, range);
+        var digest = digests.Build(files, range, storyBeats?.Invoke());
         var host = context();
 
         if (NotReady(host) is { } why)

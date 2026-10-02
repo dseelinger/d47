@@ -119,6 +119,19 @@ public static class StoryClues
         return stages[Math.Clamp(story.CluesGiven, 0, stages.Count - 1)];
     }
 
+    /// <summary>A stage as the chapter writer is told it and the Goals page shows it.</summary>
+    public static string StageName(StoryStage stage) => stage switch
+    {
+        StoryStage.ActOne => "Act one",
+        StoryStage.BreakIntoTwo => "Break into Two",
+        StoryStage.FunAndGames => "Fun and Games",
+        StoryStage.Midpoint => "Midpoint",
+        StoryStage.BadGuysCloseIn => "Bad Guys Close In",
+        StoryStage.AllIsLost => "All Is Lost",
+        StoryStage.DarkNightOfTheSoul => "Dark Night of the Soul",
+        _ => "Finale",
+    };
+
     /// <summary>
     /// The beat-sheet lines the chapter writer gets at a stage of a story paced by <paramref name="pacing"/>, by
     /// their sealed keys.

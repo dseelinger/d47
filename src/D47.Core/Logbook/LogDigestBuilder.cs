@@ -23,6 +23,7 @@ public sealed class LogDigestBuilder(ILogger logger)
         LogFactKind.Closing,
         LogFactKind.Mishap,
         LogFactKind.Progress,
+        LogFactKind.Story,
         LogFactKind.Fleet,
         LogFactKind.Engineering,
         LogFactKind.Exploration,
@@ -33,7 +34,7 @@ public sealed class LogDigestBuilder(ILogger logger)
         LogFactKind.Travel,
     ];
 
-    public LogDigest Build(IReadOnlyList<string> files, LogRange range)
+    public LogDigest Build(IReadOnlyList<string> files, LogRange range, IReadOnlyList<LogStoryBeat>? storyBeats = null)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(range);
@@ -83,6 +84,14 @@ public sealed class LogDigestBuilder(ILogger logger)
             if (used)
             {
                 journals++;
+            }
+        }
+
+        foreach (var beat in storyBeats ?? [])
+        {
+            if (range.Holds(beat.Source.At))
+            {
+                fold.Story(beat);
             }
         }
 
@@ -732,6 +741,16 @@ public sealed class LogDigestBuilder(ILogger logger)
             _opened = true;
             Moment(journalEvent, LogFactKind.Opening, statement);
         }
+
+        public void Story(LogStoryBeat beat) =>
+            _moments.Add(new LogFact
+            {
+                Kind = LogFactKind.Story,
+                Statement = beat.Statement,
+                At = beat.Source.At,
+                Sources = [beat.Source],
+                SourceCount = 1,
+            });
 
         private void Moment(JournalEvent journalEvent, LogFactKind kind, string statement) =>
             _moments.Add(new LogFact

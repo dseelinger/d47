@@ -16,6 +16,9 @@ public sealed record AdventureStanding
     /// <summary>When each beat reached so far fired, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Fired { get; init; } = [];
 
+    /// <summary>The journal event kind that fired each beat in <see cref="Fired"/>, in the same order.</summary>
+    public IReadOnlyList<string> FiredBy { get; init; } = [];
+
     /// <summary>When each <c>LoadGame</c> since acceptance was written, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Loads { get; init; } = [];
 
@@ -512,7 +515,7 @@ public static class AdventureFold
             }
         }
 
-        return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], Counted = 0 };
+        return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0 };
     }
 
     private static ConflictPart Ended(ConflictPart part, AdventureWorld world) =>
@@ -532,7 +535,7 @@ public static class AdventureFold
 
         return total < trigger.Count
             ? standing with { Counted = total, Side = contribution.Side, Parts = parts }
-            : standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], Counted = 0, Side = null, Parts = parts };
+            : standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0, Side = null, Parts = parts };
     }
 
     private static bool SamePart(ConflictPart a, ConflictPart b) =>
