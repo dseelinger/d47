@@ -25,7 +25,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
     private sealed record Surface(Window Window, PanelView Panel, StoryDirector Director);
 
-    private static Surface Open(bool running, StoryCatalog? catalog = null, Func<string?>? gender = null)
+    private static Surface Open(bool running, StoryCatalog? catalog = null, Func<string?>? gender = null, CastPictures? pictures = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-stories-capture"));
         paths.EnsureCreated();
@@ -80,7 +80,8 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
-            Stories: director);
+            Stories: director,
+            Pictures: pictures);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);
@@ -162,6 +163,61 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Save(surface.Window, "stories-card.png");
 
         surface.Window.Close();
+    }
+
+    private static void WriteSquare(string path)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        var square = new Border { Width = 64, Height = 64, Background = Avalonia.Media.Brushes.Goldenrod };
+        square.Measure(new Avalonia.Size(64, 64));
+        square.Arrange(new Avalonia.Rect(0, 0, 64, 64));
+
+        using var bitmap = new RenderTargetBitmap(new Avalonia.PixelSize(64, 64));
+        bitmap.Render(square);
+        bitmap.Save(path, new PngBitmapEncoderOptions());
+    }
+
+    private static List<Image> CastStrip(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<StackPanel>()
+            .Where(strip => Avalonia.Automation.AutomationProperties.GetName(strip) == "Cast")
+            .SelectMany(strip => strip.Children.OfType<Image>())];
+
+    [AvaloniaFact]
+    public void ACardShowsThePicturesOfItsPrimaryCastThatAreOnDisk()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var paths = new AppPaths(TempFolders.Create("d47-cast-strip"));
+        var pictures = new CastPictures(paths);
+        var id = StoryFixture.Story.Id;
+
+        WriteSquare(pictures.Default($"{id}.ren"));
+        WriteSquare(pictures.Default($"{id}.cray.for-woman"));
+        WriteSquare(pictures.Chosen($"{id}.ila"));
+
+        var card = StoryFixture.Story with
+        {
+            CastPictures = [$"{id}.ren", $"{id}.cray.for-man", $"{id}.cray.for-woman", $"{id}.ila", $"{id}.absent"],
+        };
+        var catalog = new StoryCatalog([card, StoryFixture.Other], () => [StoryFixture.Secret]);
+
+        var woman = Open(running: false, catalog, () => CommanderGender.Woman, pictures);
+        var strip = CastStrip(woman.Panel);
+
+        Assert.Equal(3, strip.Count);
+        Assert.All(strip, image => Assert.Equal(44, image.Width));
+        Assert.All(strip, image => Assert.Equal(44, image.Height));
+        Save(woman.Window, "stories-cast-strip.png");
+        woman.Window.Close();
+
+        var unset = Open(running: false, catalog, () => null, pictures);
+        Assert.Equal(2, CastStrip(unset.Panel).Count);
+        unset.Window.Close();
+
+        var none = Open(running: false, new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => [StoryFixture.Secret]), () => CommanderGender.Woman, pictures);
+        Assert.Empty(CastStrip(none.Panel));
+        none.Window.Close();
     }
 
     [AvaloniaFact]

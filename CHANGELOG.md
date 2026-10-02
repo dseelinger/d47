@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A story card on the Stories page shows a picture of each of its main characters below the line naming its length, level and core. A character that comes in two versions shows the one for your Commander's gender, and none until you have said which. The list fetches these pictures with it; the rest of a story's pictures come when you pick it. **Privacy and egress** says so. **Change picture** on a message changes the card's picture too.
+
 Stock stories are downloaded from a GitHub release into `data\stories`: the list when the Stories page first opens in a session, and a story's hidden layer and cast pictures when you pick it, with **Downloading** on the button until they land. A story already running is fetched at startup if its file is missing, and fetches any cast picture added to the release since it was downloaded. **Download stock stories** in the Adventures settings turns it off, and **Privacy and egress** lists it.
 
 Stock stories are downloaded when you open the Stories page, instead of shipping with the app.

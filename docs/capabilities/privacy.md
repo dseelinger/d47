@@ -148,8 +148,9 @@ It is **not** a signature: the hash and the bytes come from the same server, so 
 compromised GitHub. The same caveat applies to the speech models.
 
 **Stock stories** — `github.com`, which redirects to GitHub's asset storage, from the `stories-1`
-release. D47 asks for the list of stock stories the first time the Stories page opens in a session,
-and for a story's hidden layer and cast pictures when you pick it, and keeps them in `data\stories`.
+release. D47 asks for the list of stock stories and the cast pictures it shows the first time the
+Stories page opens in a session, and for a story's hidden layer and every cast picture when you pick
+it, and keeps them in `data\stories`.
 Nothing about you goes with it: no key, no Commander name, no position and nothing from your journal.
 **Download stock stories** in the Adventures settings turns it off, and the Stories page then lists
 only stories already on disk.

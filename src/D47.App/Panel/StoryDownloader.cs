@@ -10,9 +10,9 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Fetches stock stories from the <c>stories-1</c> release into <c>data\stories\</c>: the list once per session, and
-/// a story's hidden layer and cast pictures when it is picked, and a running story's missing files at startup. Every
-/// fetch runs on the pool.
+/// Fetches stock stories from the <c>stories-1</c> release into <c>data\stories\</c>: the list once per session with
+/// the cast pictures it names, a story's hidden layer and cast pictures when it is picked, and a running story's
+/// missing files at startup. Every fetch runs on the pool.
 /// </summary>
 public sealed partial class StoryDownloader
 {
@@ -93,6 +93,8 @@ public sealed partial class StoryDownloader
             return;
         }
 
+        List<string> listed;
+
         try
         {
             using (var stream = File.OpenRead(partial))
@@ -102,6 +104,8 @@ public sealed partial class StoryDownloader
                 {
                     throw new JsonException("The story list is not an array.");
                 }
+
+                listed = CastPictureNames(document.RootElement);
             }
 
             File.Move(partial, Path.Combine(_folder, StoryCatalog.IndexFile), overwrite: true);
@@ -113,7 +117,43 @@ public sealed partial class StoryDownloader
             return;
         }
 
+        var safe = listed.Where(SafeName).Distinct(StringComparer.Ordinal).ToList();
+
+        if (safe.Count < listed.Distinct(StringComparer.Ordinal).Count())
+        {
+            _logger.LogInformation("The story list names a cast picture that is not a file name.");
+        }
+
+        try
+        {
+            await FetchNamedPicturesAsync(safe).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogInformation("The list's cast pictures could not be stored ({Error}).", ex.GetType().Name);
+        }
+
         Raise();
+    }
+
+    /// <summary>Every name in each card's <c>castPictures</c>; a card or entry of another shape contributes none.</summary>
+    private static List<string> CastPictureNames(JsonElement list)
+    {
+        var names = new List<string>();
+
+        foreach (var card in list.EnumerateArray())
+        {
+            if (card.ValueKind != JsonValueKind.Object
+                || !card.TryGetProperty("castPictures", out var pictures)
+                || pictures.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            names.AddRange(pictures.EnumerateArray().Where(name => name.ValueKind == JsonValueKind.String).Select(name => name.GetString()!));
+        }
+
+        return names;
     }
 
     private async Task<bool> FetchStoryAsync(string id)
@@ -194,16 +234,24 @@ public sealed partial class StoryDownloader
     /// </summary>
     private async Task<int?> FetchPicturesAsync(StorySecret entry)
     {
+        var names = Pictures(entry).ToList();
+
+        if (!names.All(SafeName))
+        {
+            _logger.LogInformation("Story {StoryId}: a cast picture has a name that is not a file name.", entry.Id);
+            return null;
+        }
+
+        return await FetchNamedPicturesAsync(names).ConfigureAwait(false);
+    }
+
+    /// <summary>Fetches each of <paramref name="names"/> not on disk. Returns how many landed, or null when a fetch failed.</summary>
+    private async Task<int?> FetchNamedPicturesAsync(IEnumerable<string> names)
+    {
         var landed = 0;
 
-        foreach (var picture in Pictures(entry))
+        foreach (var picture in names)
         {
-            if (!SafeName(picture))
-            {
-                _logger.LogInformation("Story {StoryId}: a cast picture has a name that is not a file name.", entry.Id);
-                return null;
-            }
-
             var file = picture + ".jpg";
             var notFound = false;
 

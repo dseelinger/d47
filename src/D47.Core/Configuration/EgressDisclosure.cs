@@ -64,7 +64,7 @@ public static class EgressDisclosure
     /// <summary>Fetching a hull's large art — the 4K picture and the turntable (#289).</summary>
     public const string HullArt = "hullart";
 
-    /// <summary>Fetching stock stories: the list, and a story's hidden layer and cast pictures.</summary>
+    /// <summary>Fetching stock stories: the list and its cast pictures, and a story's hidden layer and cast pictures.</summary>
     public const string StockStories = "stockstories";
 
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
@@ -226,11 +226,12 @@ public static class EgressDisclosure
                 StockStories,
                 NameOf(StockStories),
                 GitHubReleasesEndpoint,
-                "A request for the list of stock stories when the Stories page first opens in a session, and for a "
-                + "story's hidden layer and cast pictures when you pick one, kept on disk. Nothing else goes with it: "
+                "A request for the list of stock stories when the Stories page first opens in a session, and for the "
+                + "cast pictures shown on the list, kept on disk. A story's own files, its hidden layer and every cast "
+                + "picture, are requested when you pick it. Nothing else goes with it: "
                 + "no key, no Commander name, no position and nothing from your journal.",
                 Active: true,
-                Summary: "A request for the list of stock stories, and for a story's files when you pick it.")
+                Summary: "A request for the list of stock stories and its cast pictures, and for a story's files when you pick it.")
             : EgressEntry.Silent(
                 StockStories,
                 NameOf(StockStories),

@@ -178,10 +178,20 @@ public sealed class StoriesView : UserControl
         foreach (var card in shown)
         {
             var finished = _director.Stories.Find(_surface.Commander(), card.Id) is { State: StoryState.Finished };
-            var row = Row(
+            var parts = new List<Control>
+            {
                 AdventuresPage.RowName(card.Title),
                 AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"),
-                AdventuresPage.Text(card.Blurb, TypeScale.Body));
+            };
+
+            if (CastStrip.For(card, _director.Gender(), _surface.Pictures) is { } cast)
+            {
+                parts.Add(cast);
+            }
+
+            parts.Add(AdventuresPage.Text(card.Blurb, TypeScale.Body));
+
+            var row = Row([.. parts]);
 
             var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title) { Level = ReadPrefix };
             row.PointerPressed += (_, _) => _nav.Drill(crumb);

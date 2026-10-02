@@ -72,8 +72,8 @@ public static class AdventureCapability
                 Label = "Download stock stories",
                 Help =
                     "Stock stories are published as files on a GitHub release, the one the app updates itself from. "
-                    + "D47 fetches the list when the Stories page first opens in a session, and a story's hidden layer "
-                    + "and cast pictures when you pick it, and keeps them in data\\stories.\n\n"
+                    + "D47 fetches the list and the cast pictures it shows when the Stories page first opens in a session, "
+                    + "and a story's hidden layer and every cast picture when you pick it, and keeps them in data\\stories.\n\n"
                     + "Off, nothing is fetched and the Stories page lists only stories already on disk.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "download-stock-stories",

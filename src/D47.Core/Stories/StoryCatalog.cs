@@ -84,6 +84,76 @@ public sealed record StoryCard
     /// <summary>Why this Commander goes to a Guardian beacon.</summary>
     public string? Beacon { get; init; }
 
+    /// <summary>The picture names of the primary cast, in cast order, both version names for a member with versions.</summary>
+    public IReadOnlyList<string> CastPictures { get; init; } = [];
+
+    /// <summary>
+    /// The names in <see cref="CastPictures"/> a Commander of <paramref name="gender"/> sees: each name without a
+    /// version suffix, and for a member with versions the one for the gender, or the other when it is missing. A
+    /// member with versions shows nothing while the gender is unset.
+    /// </summary>
+    public IReadOnlyList<string> PicturesFor(string? gender)
+    {
+        var shown = new List<string>();
+        var versions = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+        var order = new List<string>();
+
+        foreach (var name in CastPictures)
+        {
+            if (VersionOf(name) is not { } split)
+            {
+                order.Add(name);
+                continue;
+            }
+
+            if (!versions.TryGetValue(split.Base, out var keyed))
+            {
+                versions[split.Base] = keyed = new Dictionary<string, string>(StringComparer.Ordinal);
+                order.Add(split.Base);
+            }
+
+            keyed[split.Key] = name;
+        }
+
+        foreach (var entry in order)
+        {
+            if (!versions.TryGetValue(entry, out var keyed))
+            {
+                shown.Add(entry);
+                continue;
+            }
+
+            if (!CommanderGender.IsSet(gender))
+            {
+                continue;
+            }
+
+            var woman = gender == CommanderGender.Woman;
+            var first = woman ? StorySpeakerVersions.ForWomanKey : StorySpeakerVersions.ForManKey;
+            var second = woman ? StorySpeakerVersions.ForManKey : StorySpeakerVersions.ForWomanKey;
+
+            if (keyed.TryGetValue(first, out var name) || keyed.TryGetValue(second, out name))
+            {
+                shown.Add(name);
+            }
+        }
+
+        return shown;
+    }
+
+    private static (string Base, string Key)? VersionOf(string name)
+    {
+        foreach (var key in new[] { StorySpeakerVersions.ForManKey, StorySpeakerVersions.ForWomanKey })
+        {
+            if (name.EndsWith("." + key, StringComparison.Ordinal))
+            {
+                return (name[..^(key.Length + 1)], key);
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>The layer as the model reads it.</summary>
     public string Describe()
     {
@@ -809,6 +879,23 @@ public sealed class StoryCatalog
     /// <summary>Where a card names a member that has versions: by token, or by either version's name.</summary>
     private static IEnumerable<string> CardFaults(StoryCard card, StorySecret secret)
     {
+        var expected = secret.Cast
+            .Where(speaker => speaker.Primary)
+            .SelectMany(speaker => speaker.Versions is { } versions
+                ? versions.All().Select(version => $"{secret.Id}.{speaker.Id}.{version.Key}")
+                : [$"{secret.Id}.{speaker.Id}"])
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var picture in card.CastPictures.Where(picture => !expected.Contains(picture)))
+        {
+            yield return $"castPictures names {picture}, which is not a primary cast member or a version of one.";
+        }
+
+        foreach (var picture in expected.Where(picture => !card.CastPictures.Contains(picture, StringComparer.Ordinal)))
+        {
+            yield return $"castPictures is missing {picture}, a primary cast member's picture.";
+        }
+
         foreach (var speaker in secret.Cast.Where(speaker => speaker.Versions is not null))
         {
             var names = speaker.Versions!.All().Select(version => version.Version.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
