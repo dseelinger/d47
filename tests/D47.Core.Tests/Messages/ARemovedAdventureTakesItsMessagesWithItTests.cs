@@ -35,7 +35,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
     }
 
     private int Sweep() =>
-        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, StoryCatalog.Default));
+        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, () => StoryCatalog.Default));
 
     [Fact]
     public void RemovingAnAdventureTakesItsMessagesAndLeavesTheRest()

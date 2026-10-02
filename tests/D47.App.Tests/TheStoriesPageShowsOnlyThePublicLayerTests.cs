@@ -73,7 +73,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, catalog ?? StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
+            stories, book, () => catalog ?? StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
         {
             Gender = gender ?? (() => null),
         };

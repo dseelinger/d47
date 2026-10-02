@@ -181,10 +181,12 @@ internal sealed class StoryFixtures : IDisposable
 
         var generator = AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy());
 
+        var catalog = new StoryCatalog([card ?? Card, Other], () => [secret, Secret with { Id = Other.Id }]);
+
         Director = new StoryDirector(
             Stories,
             Book,
-            new StoryCatalog([card ?? Card, Other], () => [secret, Secret with { Id = Other.Id }]),
+            () => catalog,
             (ask, now, cancellationToken) =>
             {
                 Asks.Add(ask);

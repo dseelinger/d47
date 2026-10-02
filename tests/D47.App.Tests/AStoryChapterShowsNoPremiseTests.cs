@@ -77,7 +77,7 @@ public class AStoryChapterShowsNoPremiseTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
+            stories, book, () => StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },

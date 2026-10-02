@@ -7,7 +7,7 @@ namespace D47.Core.Messages;
 public static class MessageOwnership
 {
     /// <summary>A clue or ending key is owned while its story is in the catalog; any other key while some Commander has that adventure.</summary>
-    public static bool Owned(string key, AdventureStore adventures, StoryCatalog catalog)
+    public static bool Owned(string key, AdventureStore adventures, Func<StoryCatalog> catalog)
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(adventures);
@@ -15,12 +15,12 @@ public static class MessageOwnership
 
         if (key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal))
         {
-            return catalog.Find(key[StoryEnding.KeyPrefix.Length..]) is not null;
+            return catalog().Find(key[StoryEnding.KeyPrefix.Length..]) is not null;
         }
 
         if (key.StartsWith(StoryClueCallout.KeyPrefix, StringComparison.Ordinal))
         {
-            return StoryClueCallout.Parse(key) is { } clue && catalog.Find(clue.StoryId) is not null;
+            return StoryClueCallout.Parse(key) is { } clue && catalog().Find(clue.StoryId) is not null;
         }
 
         return adventures.Commanders.Any(commander => adventures.Find(commander, key) is not null);

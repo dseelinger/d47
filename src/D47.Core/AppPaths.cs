@@ -38,6 +38,7 @@ public sealed class AppPaths
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
         Donations = Path.Combine(Data, "donations");
         Ships = Path.Combine(Data, "ships");
+        Stories = Path.Combine(Data, "stories");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
     }
 
@@ -104,6 +105,9 @@ public sealed class AppPaths
     /// a card plays, one of each per hull symbol.
     /// </summary>
     public string Ships { get; }
+
+    /// <summary>The stock stories downloaded after the install: <c>index.json</c> and one <c>.sealed</c> file per picked story.</summary>
+    public string Stories { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }

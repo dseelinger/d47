@@ -16,7 +16,7 @@ public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line)
 public sealed class StoryDirector(
     StoryStore stories,
     AdventureBook book,
-    StoryCatalog catalog,
+    Func<StoryCatalog> catalog,
     Func<AdventureAsk, DateTimeOffset, CancellationToken, Task<AdventureOutcome>> write,
     Func<StarPosition?> here,
     Action<string> setBackstory,
@@ -58,13 +58,13 @@ public sealed class StoryDirector(
     public Action<string> SetGender { get; set; } = _ => { };
 
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
-    public bool NeedsGenderFor(string id) => catalog.Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
+    public bool NeedsGenderFor(string id) => catalog().Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
 
     /// <summary>A cast member of the current story as this Commander meets them, or null.</summary>
     public StorySpeakerShown? Speaker(string? frontierId, string castId) =>
-        stories.Current(frontierId) is { } story ? catalog.Secret(story.Id)?.Speaker(castId, Gender()) : null;
+        stories.Current(frontierId) is { } story ? catalog().Secret(story.Id)?.Speaker(castId, Gender()) : null;
 
-    public StoryCatalog Catalog => catalog;
+    public StoryCatalog Catalog => catalog();
 
     /// <summary>The Commander's game state, for whether the ship they are in can reach the beacon.</summary>
     public Func<CommanderGameState?> Game { get; set; } = () => null;
@@ -132,7 +132,7 @@ public sealed class StoryDirector(
     /// <summary>Starts a story when none is current: sets the Backstory and writes chapter one. Returns a refusal or null.</summary>
     public Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        if (catalog.Find(id) is not { } card)
+        if (catalog().Find(id) is not { } card)
         {
             return Task.FromResult<string?>("There is no story by that name.");
         }
@@ -546,7 +546,7 @@ public sealed class StoryDirector(
 
     /// <summary>The Guardian core the current story is written for, or null when no story is current.</summary>
     public Persona.Persona? CoreOf(string? frontierId) =>
-        stories.Current(frontierId) is { } current && catalog.Find(current.Id) is { } card
+        stories.Current(frontierId) is { } current && catalog().Find(current.Id) is { } card
             ? PersonaCatalog.Resolve(card.Core)
             : null;
 
@@ -581,7 +581,7 @@ public sealed class StoryDirector(
 
     /// <summary>The clue the running story owes now, or null.</summary>
     public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>
-        stories.Current(frontierId) is { IsOff: false, IsWithoutOdyssey: false } story && catalog.Secret(story.Id) is not null
+        stories.Current(frontierId) is { IsOff: false, IsWithoutOdyssey: false } story && catalog().Secret(story.Id) is not null
             ? StoryClues.Due(story, now)
             : null;
 
@@ -848,7 +848,7 @@ public sealed class StoryDirector(
         AdventureActivity? comfort,
         AdventureDestination? destination)
     {
-        var card = catalog.Find(story.Id);
+        var card = catalog().Find(story.Id);
 
         return new AdventureStory(
             story.Id,
@@ -881,7 +881,7 @@ public sealed class StoryDirector(
         : 0;
 
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
-    private StorySecret? Hidden(string id) => catalog.Secret(id)?.For(Gender());
+    private StorySecret? Hidden(string id) => catalog().Secret(id)?.For(Gender());
 
     private string UniqueKey(string? frontierId, string wanted)
     {

@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using D47.Core.Persona;
 using D47.Core.Speech;
+using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Stories;
 
@@ -430,6 +431,96 @@ public sealed class StoryCatalog
         _secrets = new(() => secrets().ToDictionary(secret => secret.Id, StringComparer.OrdinalIgnoreCase));
     }
 
+    public const string IndexFile = "index.json";
+
+    public const string SealedExtension = ".sealed";
+
+    /// <summary>
+    /// The stories downloaded into <paramref name="folder"/>: cards from <c>index.json</c>, and the hidden entry of each
+    /// <c>&lt;id&gt;.sealed</c> present. A card without its file is listed with no hidden entry; an entry that is
+    /// unreadable or fails the format is not loaded and is logged by story id and field.
+    /// </summary>
+    public static StoryCatalog Load(string folder, ILogger? logger = null)
+    {
+        var cards = ReadIndex(folder, logger);
+        var secrets = new List<StorySecret>();
+
+        foreach (var card in cards)
+        {
+            var path = Path.Combine(folder, card.Id + SealedExtension);
+
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
+            try
+            {
+                var hidden = Unseal(File.ReadAllText(path, Encoding.ASCII)).FirstOrDefault(entry =>
+                    string.Equals(entry.Id, card.Id, StringComparison.OrdinalIgnoreCase));
+
+                if (hidden is null)
+                {
+                    logger?.LogWarning("Story {StoryId}: the hidden file has no entry for it.", card.Id);
+                    continue;
+                }
+
+                var faults = Faults(card, hidden);
+
+                if (faults.Count == 0)
+                {
+                    secrets.Add(hidden);
+                    continue;
+                }
+
+                foreach (var fault in faults)
+                {
+                    logger?.LogWarning("Downloaded story not loaded: {Fault}", fault);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or JsonException or InvalidDataException)
+            {
+                logger?.LogWarning("Story {StoryId}: the hidden file could not be read ({Error}).", card.Id, ex.GetType().Name);
+            }
+        }
+
+        return new StoryCatalog(cards, () => secrets);
+    }
+
+    /// <summary>The cards and hidden entries of <paramref name="first"/>, then those of <paramref name="second"/> whose id is not in <paramref name="first"/>.</summary>
+    public static StoryCatalog Combine(StoryCatalog first, StoryCatalog second)
+    {
+        ArgumentNullException.ThrowIfNull(first);
+        ArgumentNullException.ThrowIfNull(second);
+
+        var extra = second.Cards.Where(card => first.Find(card.Id) is null).ToList();
+        return new StoryCatalog(
+            [.. first.Cards, .. extra],
+            () => [.. first.Secrets, .. extra.Select(card => second.Secret(card.Id)).OfType<StorySecret>()]);
+    }
+
+    private static IReadOnlyList<StoryCard> ReadIndex(string folder, ILogger? logger)
+    {
+        var path = Path.Combine(folder, IndexFile);
+
+        try
+        {
+            if (!File.Exists(path))
+            {
+                return [];
+            }
+
+            using var stream = File.OpenRead(path);
+            var cards = JsonSerializer.Deserialize<List<StoryCard>>(stream, Json) ?? [];
+            return [.. cards.DistinctBy(card => card.Id, StringComparer.OrdinalIgnoreCase)];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            logger?.LogWarning("The downloaded story list could not be read ({Error}).", ex.GetType().Name);
+            return [];
+        }
+    }
+
     /// <summary>The catalog built into this binary.</summary>
     public static StoryCatalog Default => Shipped.Value;
 
@@ -451,37 +542,13 @@ public sealed class StoryCatalog
     public IReadOnlyList<string> Faults()
     {
         var faults = new List<string>();
-        var personas = new HashSet<string>(
-            [PersonaCatalog.Covas.Id, .. PersonaCatalog.Shipped.Select(persona => persona.Id)], StringComparer.Ordinal);
+        var personas = Personas();
 
         foreach (var card in Cards)
         {
-            if (!StoryCard.Genres.Contains(card.Genre, StringComparer.Ordinal))
-            {
-                faults.Add($"{card.Id}: the genre is not one of the nine Save the Cat genres.");
-            }
-
-            if (!StoryCard.Levels.Contains(card.Level, StringComparer.Ordinal))
-            {
-                faults.Add($"{card.Id}: the level is missing or is not new, midrange or endgame.");
-            }
-
-            if (!PersonaCatalog.IsGuardian(card.Core) || card.Core == PersonaCatalog.Heretic.Id)
-            {
-                faults.Add($"{card.Id}: the core is missing, is not a Guardian core, or is the Heretic.");
-            }
-
-            if (string.IsNullOrWhiteSpace(card.Blurb))
-            {
-                faults.Add($"{card.Id}: the blurb is empty.");
-            }
+            faults.AddRange(CardRuleFaults(card));
 
             var pacing = StoryPacing.Find(card.Length);
-
-            if (pacing is null)
-            {
-                faults.Add($"{card.Id}: the length is missing or is not one of {string.Join(", ", StoryPacing.All.Select(length => length.Key))}.");
-            }
 
             if (Secret(card.Id) is not { } hidden)
             {
@@ -509,6 +576,55 @@ public sealed class StoryCatalog
         }
 
         return faults;
+    }
+
+    /// <summary>Every way one story breaks the format, named by field. Never quotes hidden text.</summary>
+    public static IReadOnlyList<string> Faults(StoryCard card, StorySecret secret)
+    {
+        ArgumentNullException.ThrowIfNull(card);
+        ArgumentNullException.ThrowIfNull(secret);
+
+        var faults = new List<string>(CardRuleFaults(card));
+        faults.AddRange(CardFaults(card, secret).Select(fault => $"{card.Id}: {fault}"));
+
+        if (StoryPacing.Find(card.Length) is { } pacing)
+        {
+            faults.AddRange(PacingFaults(secret, pacing).Select(fault => $"{card.Id}: {fault}"));
+        }
+
+        faults.AddRange(Faults(secret, Personas()).Select(fault => $"{card.Id}: {fault}"));
+        return faults;
+    }
+
+    private static HashSet<string> Personas() =>
+        new([PersonaCatalog.Covas.Id, .. PersonaCatalog.Shipped.Select(persona => persona.Id)], StringComparer.Ordinal);
+
+    private static IEnumerable<string> CardRuleFaults(StoryCard card)
+    {
+        if (!StoryCard.Genres.Contains(card.Genre, StringComparer.Ordinal))
+        {
+            yield return $"{card.Id}: the genre is not one of the ten Save the Cat genres.";
+        }
+
+        if (!StoryCard.Levels.Contains(card.Level, StringComparer.Ordinal))
+        {
+            yield return $"{card.Id}: the level is missing or is not new, midrange or endgame.";
+        }
+
+        if (!PersonaCatalog.IsGuardian(card.Core) || card.Core == PersonaCatalog.Heretic.Id)
+        {
+            yield return $"{card.Id}: the core is missing, is not a Guardian core, or is the Heretic.";
+        }
+
+        if (string.IsNullOrWhiteSpace(card.Blurb))
+        {
+            yield return $"{card.Id}: the blurb is empty.";
+        }
+
+        if (StoryPacing.Find(card.Length) is null)
+        {
+            yield return $"{card.Id}: the length is missing or is not one of {string.Join(", ", StoryPacing.All.Select(length => length.Key))}.";
+        }
     }
 
     private static IEnumerable<string> Faults(StorySecret secret, HashSet<string> personas)

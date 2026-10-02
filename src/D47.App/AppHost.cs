@@ -1047,8 +1047,13 @@ public sealed class AppHost : IDisposable
         // over the files when a stamp moved, which the tick below grants.
         adventureStore.Changed += adventureBook.Reconcile;
 
+        var embeddedStories = D47.Core.Stories.StoryCatalog.Default;
+        var storyCatalog = D47.Core.Stories.StoryCatalog.Combine(
+            embeddedStories,
+            D47.Core.Stories.StoryCatalog.Load(paths.Stories, loggerFactory.CreateLogger<D47.Core.Stories.StoryCatalog>()));
+
         void SweepOrphanMessages() => messageStore.RemoveOrphans(
-            key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, D47.Core.Stories.StoryCatalog.Default));
+            key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, () => storyCatalog));
 
         SweepOrphanMessages();
         adventureStore.Changed += SweepOrphanMessages;
@@ -2171,7 +2176,7 @@ public sealed class AppHost : IDisposable
         var storyDirector = new D47.Core.Stories.StoryDirector(
             storyStore,
             adventureBook,
-            D47.Core.Stories.StoryCatalog.Default,
+            () => storyCatalog,
             adventureGenerator.GenerateAsync,
             () => gameState.Active?.Location.StarPos,
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
