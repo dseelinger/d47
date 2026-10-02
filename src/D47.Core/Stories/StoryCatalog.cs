@@ -12,9 +12,10 @@ namespace D47.Core.Stories;
 /// <summary>A stock story's public layer: what the Commander picks it by.</summary>
 public sealed record StoryCard
 {
-    /// <summary>The Save the Cat genres a card's <see cref="Genre"/> is one of.</summary>
+    /// <summary>The ten Save the Cat genres a card's <see cref="Genre"/> is one of.</summary>
     public static readonly IReadOnlyList<string> Genres =
     [
+        "Monster in the House",
         "Golden Fleece",
         "Dude with a Problem",
         "Whydunit",

@@ -13,6 +13,7 @@ public static class ChapterFit
     /// <summary>Blake Snyder's three elements for each genre in <see cref="StoryCard.Genres"/>.</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Elements = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
     {
+        ["Monster in the House"] = ["a monster", "a house", "a sin"],
         ["Golden Fleece"] = ["a road", "a team", "a prize"],
         ["Dude with a Problem"] = ["an innocent hero", "a sudden event", "life or death"],
         ["Whydunit"] = ["a detective", "a secret", "a dark turn"],

@@ -93,8 +93,7 @@ reply. Keep what he fixed and choose the rest. Where you choose, favour what the
 count the cards in `StoryCatalog.json` by genre, by level and length together, and by core, and
 pick a gap unless the story fits something else better. Say in one line which gaps the choice fills.
 
-The genre is one of `StoryCard.Genres`, which has nine genres, not Save the Cat's ten. A story built
-as a tenth genre takes the nearest listed one, and the page records the gap.
+The genre is one of the ten Save the Cat genres in `StoryCard.Genres`.
 
 The pitch gives:
 
@@ -127,7 +126,7 @@ Read the format from `StoryCard` and `StorySecret` in `src/D47.Core/Stories/Stor
 from `tools/seal-stories.py`. They win over this list, which also names fields that open issues
 add.
 
-- **The card**, in `StoryCatalog.json`: `id`, `number`, `title`, `genre` (one of the nine Save the
+- **The card**, in `StoryCatalog.json`: `id`, `number`, `title`, `genre` (one of the ten Save the
   Cat genres), `tone`, `level` (#739), `blurb` (why a player would pick it, like the back cover of
   a novel), `inYourWords` (the Commander's backstory in the first person, starting at the level),
   `length` (the key of a `StoryPacing`), `beacon` (why they go to scan it; for a story shorter
