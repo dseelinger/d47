@@ -64,6 +64,9 @@ public static class EgressDisclosure
     /// <summary>Fetching a hull's large art — the 4K picture and the turntable (#289).</summary>
     public const string HullArt = "hullart";
 
+    /// <summary>Fetching stock stories: the list, and a story's hidden layer and cast pictures.</summary>
+    public const string StockStories = "stockstories";
+
     /// <summary>Every disclosure d47 makes, in a fixed order.</summary>
     public static IReadOnlyList<string> Ids { get; } =
     [
@@ -76,6 +79,7 @@ public static class EgressDisclosure
         CommunityGoals,
         UpdateCheck,
         HullArt,
+        StockStories,
         SpeechModels,
         Diagnostics,
         JournalFiles,
@@ -95,6 +99,7 @@ public static class EgressDisclosure
         WebSearch => "Web search",
         SpeechModels => "Speech model download",
         HullArt => "Hull pictures",
+        StockStories => "Stock stories",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they see.
@@ -210,6 +215,22 @@ public static class EgressDisclosure
                 "Hull pictures are off, so nothing is fetched, fleet cards show no drawing, and a ship's "
                 + "own page shows no picture and no turntable, even for a hull already on disk.",
                 summary: "Hull pictures are off, so nothing is fetched and no ship shows a picture."),
+
+        StockStories => settings.Ui.StoryDownloads
+            ? new EgressEntry(
+                StockStories,
+                NameOf(StockStories),
+                GitHubReleasesEndpoint,
+                "A request for the list of stock stories when the Stories page first opens in a session, and for a "
+                + "story's hidden layer and cast pictures when you pick one, kept on disk. Nothing else goes with it: "
+                + "no key, no Commander name, no position and nothing from your journal.",
+                Active: true,
+                Summary: "A request for the list of stock stories, and for a story's files when you pick it.")
+            : EgressEntry.Silent(
+                StockStories,
+                NameOf(StockStories),
+                "Stock story downloads are off, so nothing is fetched and the Stories page lists only stories already on disk.",
+                summary: "Stock story downloads are off, so nothing is fetched."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(

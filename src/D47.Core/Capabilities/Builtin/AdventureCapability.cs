@@ -1,3 +1,4 @@
+using D47.Core.Configuration;
 using D47.Core.Stories;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -14,6 +15,8 @@ public static class AdventureCapability
     public const string AnswerEndingTool = "answer_story_ending";
 
     public const string RefuseBeatTool = "refuse_story_beat";
+
+    public const string StoryDownloadsKey = "adventures.storyDownloads";
 
     private const string NoStory = "No story is running.";
 
@@ -60,6 +63,31 @@ public static class AdventureCapability
         // None.
         Keywords = [],
         Display = new CapabilityDisplay { PanelTitle = "Adventures", Order = 59, ShowOnPanel = false },
+
+        Settings =
+        [
+            new SettingRow
+            {
+                Key = StoryDownloadsKey,
+                Label = "Download stock stories",
+                Help =
+                    "Stock stories are published as files on a GitHub release, the one the app updates itself from. "
+                    + "D47 fetches the list when the Stories page first opens in a session, and a story's hidden layer "
+                    + "and cast pictures when you pick it, and keeps them in data\\stories.\n\n"
+                    + "Off, nothing is fetched and the Stories page lists only stories already on disk.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "download-stock-stories",
+                EgressId = EgressDisclosure.StockStories,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.StoryDownloads ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with { StoryDownloads = bool.TryParse(v, out var on) && on },
+                    },
+                },
+            },
+        ],
 
         Tools =
         [

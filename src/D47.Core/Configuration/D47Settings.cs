@@ -932,6 +932,9 @@ public sealed record UiSettings
     /// </summary>
     public bool HullArt { get; init; } = true;
 
+    /// <summary>Whether d47 downloads stock stories and their cast pictures from a GitHub release.</summary>
+    public bool StoryDownloads { get; init; } = true;
+
     /// <summary>Where the panel's tabs are drawn, on both the window and the headset: "top" or "left".</summary>
     public string Tabs { get; init; } = Capabilities.Builtin.InterfaceCapability.TabsTop;
 }

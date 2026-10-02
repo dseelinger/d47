@@ -147,6 +147,13 @@ unpacked if it does not match. That catches a truncated transfer or a mirror ser
 It is **not** a signature: the hash and the bytes come from the same server, so it cannot detect a
 compromised GitHub. The same caveat applies to the speech models.
 
+**Stock stories** — `github.com`, which redirects to GitHub's asset storage, from the `stories-1`
+release. D47 asks for the list of stock stories the first time the Stories page opens in a session,
+and for a story's hidden layer and cast pictures when you pick it, and keeps them in `data\stories`.
+Nothing about you goes with it: no key, no Commander name, no position and nothing from your journal.
+**Download stock stories** in the Adventures settings turns it off, and the Stories page then lists
+only stories already on disk.
+
 **Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
 computer**. With Groq, OpenAI, Deepgram or ElevenLabs selected, `api.groq.com`, `api.openai.com`,
 `api.deepgram.com` or `api.elevenlabs.io` receives the audio of
@@ -316,7 +323,7 @@ that cannot be undone.
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
-{#egress-hullart}
+{#egress-hullart} {#egress-stockstories}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.

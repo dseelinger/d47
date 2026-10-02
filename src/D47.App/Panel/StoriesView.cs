@@ -22,6 +22,7 @@ public sealed class StoriesView : UserControl
     private readonly StoryDirector _director;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
+    private readonly StoryDownloader? _downloads;
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly StatusLine _status = new();
 
@@ -31,6 +32,7 @@ public sealed class StoriesView : UserControl
         _director = director;
         _nav = nav;
         _prompts = prompts;
+        _downloads = surface.Downloads;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var (title, _) = RoutingKit.Title("Stories");
@@ -64,6 +66,13 @@ public sealed class StoriesView : UserControl
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
         _director.OdysseyChanged += OnChanged;
+
+        if (_downloads is not null)
+        {
+            _downloads.Landed += OnChanged;
+            _ = _downloads.AskForList();
+        }
+
         Rebuild();
     }
 
@@ -73,6 +82,11 @@ public sealed class StoriesView : UserControl
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
         _director.OdysseyChanged -= OnChanged;
+
+        if (_downloads is not null)
+        {
+            _downloads.Landed -= OnChanged;
+        }
     }
 
     /// <summary>The page for a reading crumb.</summary>
@@ -101,12 +115,14 @@ public sealed class StoriesView : UserControl
             _list.Children.Add(CurrentCard(current));
         }
 
-        if (current is null && _director.Catalog.Cards.Count == 0)
+        var offered = _director.Catalog.Cards.Where(card => _downloads is not { Enabled: false } || _director.Catalog.Secret(card.Id) is not null).ToList();
+
+        if (current is null && offered.Count == 0)
         {
             _list.Children.Add(AdventuresPage.Muted("No stories yet."));
         }
 
-        foreach (var card in _director.Catalog.Cards.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)))
+        foreach (var card in offered.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)))
         {
             var finished = _director.Stories.Find(_surface.Commander(), card.Id) is { State: StoryState.Finished };
             var row = Row(
@@ -329,7 +345,7 @@ public sealed class StoriesView : UserControl
 
         if (current is null)
         {
-            var pick = Act("Pick", () => Start(card, switching: false, status));
+            var pick = Act("Pick", () => Start(card, switching: false, status, gated));
             pick.IsEnabled = !withoutOdyssey && GenderReady(card);
             bar.Children.Add(gated = pick);
         }
@@ -342,7 +358,7 @@ public sealed class StoriesView : UserControl
                 $"{current.Title} is abandoned and its chapters stay on the Adventures page. Your Backstory becomes this "
                 + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
-                () => Start(card, switching: true, status)));
+                () => Start(card, switching: true, status, gated)));
             switchTo.IsEnabled = !withoutOdyssey && GenderReady(card);
             bar.Children.Add(gated = switchTo);
         }
@@ -391,7 +407,7 @@ public sealed class StoriesView : UserControl
         return stack;
     }
 
-    private void Start(StoryCard card, bool switching, StatusLine status)
+    private void Start(StoryCard card, bool switching, StatusLine status, Button? button)
     {
         if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
         {
@@ -401,6 +417,56 @@ public sealed class StoriesView : UserControl
             return;
         }
 
+        if (_downloads is not null && _director.Catalog.Secret(card.Id) is null)
+        {
+            Download(card, status, button, () => Begin(card, switching, status));
+            return;
+        }
+
+        Begin(card, switching, status);
+    }
+
+    /// <summary>Fetches the story's files with the button reading Downloading, then runs <paramref name="then"/>; on a failure nothing starts.</summary>
+    private void Download(StoryCard card, StatusLine status, Button? button, Action then)
+    {
+        var label = button?.Content;
+
+        if (button is not null)
+        {
+            button.IsEnabled = false;
+            button.Content = "Downloading";
+        }
+
+        status.Say("Downloading…");
+
+        _ = Task.Run(async () =>
+        {
+            var landed = await _downloads!.FetchStory(card.Id).ConfigureAwait(false) && _director.Catalog.Secret(card.Id) is not null;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (button is not null)
+                {
+                    button.Content = label;
+                    button.IsEnabled = true;
+                }
+
+                if (landed)
+                {
+                    then();
+                }
+                else
+                {
+                    status.Fail(DownloadFailed);
+                }
+            });
+        });
+    }
+
+    internal const string DownloadFailed = "The story could not be downloaded. Check your connection and pick it again.";
+
+    private void Begin(StoryCard card, bool switching, StatusLine status)
+    {
         var commander = _surface.Commander();
         var now = _surface.Now();
 

@@ -53,6 +53,15 @@ public sealed class StoryStore
     public Story? Find(string? frontierId, string id) =>
         For(frontierId).FirstOrDefault(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>The running or paused stories of every Commander.</summary>
+    public IReadOnlyList<Story> AllCurrent()
+    {
+        lock (_gate)
+        {
+            return [.. _byCommander.Values.SelectMany(stories => stories).Where(story => story.IsCurrent)];
+        }
+    }
+
     /// <summary>Adds the story or replaces the one with its id.</summary>
     public void Save(string? frontierId, Story story)
     {

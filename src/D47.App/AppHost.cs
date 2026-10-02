@@ -396,6 +396,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The stock story the Commander picked, run as a chain of adventures.</summary>
     public D47.Core.Stories.StoryDirector? Stories { get; private set; }
 
+    /// <summary>Fetches stock stories from the stories release.</summary>
+    public StoryDownloader? StoryDownloads { get; private set; }
+
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
@@ -1048,9 +1051,22 @@ public sealed class AppHost : IDisposable
         adventureStore.Changed += adventureBook.Reconcile;
 
         var embeddedStories = D47.Core.Stories.StoryCatalog.Default;
-        var storyCatalog = D47.Core.Stories.StoryCatalog.Combine(
-            embeddedStories,
-            D47.Core.Stories.StoryCatalog.Load(paths.Stories, loggerFactory.CreateLogger<D47.Core.Stories.StoryCatalog>()));
+        var storyLogger = loggerFactory.CreateLogger<D47.Core.Stories.StoryCatalog>();
+
+        D47.Core.Stories.StoryCatalog LoadStories() => D47.Core.Stories.StoryCatalog.Combine(
+            embeddedStories, D47.Core.Stories.StoryCatalog.Load(paths.Stories, storyLogger));
+
+        var storyCatalog = LoadStories();
+
+        var storyDownloads = new StoryDownloader(
+            paths.Stories,
+            () => settings.Current.Ui.StoryDownloads,
+            loggerFactory.CreateLogger<StoryDownloader>());
+
+        // Replaced before the Stories page redraws, because the page subscribes after this does.
+        storyDownloads.Landed += () => storyCatalog = LoadStories();
+
+        _ = storyDownloads.FetchMissing(storyStore.AllCurrent().Select(story => story.Id));
 
         void SweepOrphanMessages() => messageStore.RemoveOrphans(
             key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, () => storyCatalog));
@@ -2363,6 +2379,7 @@ public sealed class AppHost : IDisposable
         host.Goals = (goalBook, BackfillGoals);
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
+        host.StoryDownloads = storyDownloads;
         endingAnswer.Answer = host.AnswerEnding;
         host.Messages = messageStore;
         host.Galaxy = galaxy;
