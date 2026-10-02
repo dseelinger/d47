@@ -258,5 +258,18 @@
     "blurb": "You wake in your own cockpit, docked at a starport you do not remember reaching, with nine hours missing. Your log says you took a blind charter for no fee and had a privacy clinic take the memory out of your head when it was done. It also says you scanned a Guardian beacon, and the mind that came aboard with that scan is certain something else was in your ship. A message is waiting in your own voice, locked for one day. And at the foot of your boarding ramp stands Anselm Coyle, an Imperial contract recovery agent with beautiful manners, who would like to know where you took her. You have no idea who she is.",
     "inYourWords": "I fly a working ship with some engineering on it, and I have saved enough that I can turn down a job I do not like. I haul, I run charters, and for years I have turned down the blind ones, where the client stays sealed and you sign to have the job taken out of your memory afterwards. Yesterday, apparently, I said yes to one. I woke an hour ago with nine hours gone, a clinic receipt with my own thumbprint on it, and a polite man at the foot of my ramp asking questions I cannot answer. I do not know what I did. I would very much like to know why I did it.",
     "beacon": "I do not remember scanning it. The cockpit recorder kept four minutes of the nine hours: me flying out past the edge of the bubble to a Guardian beacon as if I knew exactly why, and running the data-link without a second's pause. The clinic holds the rest, sealed, with the memory."
+  },
+  {
+    "id": "the-right-seat",
+    "core": "llamo",
+    "number": 21,
+    "title": "The Right Seat",
+    "genre": "Rites of Passage",
+    "level": "midrange",
+    "length": "3-months",
+    "tone": "Quiet and wry, then slowly brave",
+    "blurb": "Fourteen months ago a drive fault dropped your ship out of supercruise beside the rings of Uszaa 2 with eight sightseers aboard. Ice cracked the canopy, you flew the last twenty minutes on emergency oxygen, and everyone lived. The inquiry cleared you. It also recorded that you were off your plotted course when it happened, and nobody, you included, can say why. You have not carried a passenger since. Now Tilly Marsh, who was fourteen and in the front row that day, has started at Agnes Rowntree's flight school at Lave Station, and she has asked for you to sit in the right seat for her training hours. Her father has told you to stay away from her. Agnes has told you to fly the cadets' long solo to a Guardian beacon before you answer either of them.",
+    "inYourWords": "I have a ship that works, some engineering done on it and savings enough for a bad month, and for fourteen months I have flown the same short route through the Lave cluster with the passenger cabin full of crates. I used to fly charters. Then a drive fault dropped me out of supercruise beside the rings of Uszaa 2 with eight people aboard. Everyone lived, and the inquiry cleared me. It also says I was off my plotted course, and I hit my head on the way out of the ring, and I do not remember why I turned. Agnes Rowntree taught me to fly twenty years ago. She says I can haul crates for the rest of my life, or I can come and sit in the right seat for a girl who was on that charter and still means to be a pilot.",
+    "beacon": "Every cadet at Agnes Rowntree's flight school flies one long solo before their licence: out past the edge of the bubble to a Guardian beacon, a data-link scan, and home. I flew mine twenty years ago. Agnes says to fly it again, alone, before I give Tilly my answer."
   }
 ]
