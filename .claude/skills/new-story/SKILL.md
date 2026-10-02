@@ -1,11 +1,11 @@
 ---
 name: new-story
-description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, and three sample chapters sized to his own journals — on a draft page of its own, revise it until he approves, then add it to the shared review page and the embedded story catalog. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, and three sample chapters sized to his own journals — on a draft page of its own, revise it until he approves, then publish it to the stories release. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
 
-You develop one stock story with the maintainer, from premise to an approved story in the catalog.
+You develop one stock story with the maintainer, from premise to a story published to the stories release.
 He reads both layers, the card and the hidden layer, before anything ships. Nothing is hidden from
 him; the sealing keeps the hidden layer out of the tree's plain text, not out of his sight.
 
@@ -74,7 +74,13 @@ Write the story in this session. Do not hand a layer to a subagent to write.
 
 ## Titles already used
 
-New titles must not repeat these, or any title in `src/D47.Core/Stories/StoryCatalog.json`.
+New titles must not repeat these, or any title in the published `index.json`:
+
+```bash
+gh release download stories-1 --pattern index.json --output -
+```
+
+If the release has no `index.json` yet, only the list below applies.
 
 - The Marker, All Expenses Paid, The Counting Rhyme, Stock Class, Postdated, Late Start, Dead Drop,
   Long Distance, Form 47-B, The Countdown, Field Notes, Deputy, The Last Movement, Time Served,
@@ -90,7 +96,7 @@ The first thing he sees is one pitch, in chat, before any layer, draft page or s
 
 The maintainer may fix any of the length, level, genre, tone, core or premise, in the argument or in
 reply. Keep what he fixed and choose the rest. Where you choose, favour what the catalog lacks:
-count the cards in `StoryCatalog.json` by genre, by level and length together, and by core, and
+count the cards in the published `index.json` by genre, by level and length together, and by core, and
 pick a gap unless the story fits something else better. Say in one line which gaps the choice fills.
 
 The genre is one of the ten Save the Cat genres in `StoryCard.Genres`.
@@ -126,14 +132,14 @@ Read the format from `StoryCard` and `StorySecret` in `src/D47.Core/Stories/Stor
 from `tools/seal-stories.py`. They win over this list, which also names fields that open issues
 add.
 
-- **The card**, in `StoryCatalog.json`: `id`, `number`, `title`, `genre` (one of the ten Save the
+- **The card**, `card.json`: `id`, `number`, `title`, `genre` (one of the ten Save the
   Cat genres), `tone`, `level` (#739), `blurb` (why a player would pick it, like the back cover of
   a novel), `inYourWords` (the Commander's backstory in the first person, starting at the level),
   `length` (the key of a `StoryPacing`), `beacon` (why they go to scan it; for a story shorter
   than 1 month, the scan the story opens after) and `core` (#716: the Guardian core the story is written for,
   never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
-  leave them out of the catalog.
-- **The hidden entry**, sealed: `id`, `secret`, `beats` (one line for each key in the length's
+  leave them out of the card.
+- **The hidden entry**, `hidden.json`: `id`, `secret`, `beats` (one line for each key in the length's
   `StoryPacing.BeatKeys`), `clues` and `finale` lines in the counts the length's `StoryPacing`
   gives (`ClueDays.Count` clues, `FinaleChapters` finale lines), a `scan` line for a story of 3 days,
   1 week or 2 weeks (#758) and none for a longer one, `end`, 1 to 4 `options`, each
@@ -143,7 +149,7 @@ add.
   when the story needs it, #41) and `voice`. Voice `own` is the Commander's recording (#713).
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
   `inYourWords`, never one with voice `own` (#737). Every story has at least one primary member,
-  and every named cast member gets a picture, `assets/stories/<story-id>.<cast-id>.png`, a square
+  and every cast member gets a picture, `<story-id>.<cast-id>.png`, a square
   PNG. The page gives an image prompt for each named NPC, matching the style of the pictures
   already shipped. Prompts set the person in the 34th century: flight suits, station corridors,
   cockpits and ship interiors, never present-day offices, clothes or devices. A member with voice
@@ -156,7 +162,7 @@ add.
   role ("the engineer"); hidden text names it with `{name:<cast-id>}` and gives it no pronoun. In the
   sealed entry the member carries `versions` (`forMan`, `forWoman`, each `name`, `voice` and an
   optional `provider`) and no `name` or `voice` of its own; its pictures are
-  `assets/stories/<story-id>.<cast-id>.for-man.png` and `.for-woman.png`.
+  `<story-id>.<cast-id>.for-man.png` and `.for-woman.png`.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 
@@ -168,10 +174,10 @@ publish `description` starts `d47 stock story draft`, which is how a later sessi
 the artifacts with the Artifact tool's `list` action and read the one to continue with `read`,
 writing what comes back to the scratchpad file before editing. Republish the file after every
 change, so the page is never behind the draft. Load the `artifact-design` skill before the first
-publish of a session, and match the look of the shared review page.
+publish of a session.
 
 The draft page shows the card with its length, the whole hidden layer, the three sample chapters marked as
-samples, any gap found (below), and its state: draft or approved.
+samples, any gap found (below), and its state: draft, approved or published.
 
 Directly above the `secret` paragraph, the page gives one sentence stating the secret and the
 twist, so the maintainer can judge both without reading the paragraph. The sentence is a page aid
@@ -196,25 +202,17 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
 - Show the candidates on the draft page under each member's prompt, embedded as data URIs, and
   look at each before showing it: a picture with text, a logo, a present-day setting or the wrong
   person is replaced, not shown.
-- The maintainer picks one per member. At step 7 the picked file is copied to
-  `assets/stories/<story-id>.<cast-id>.png`.
-
-## The shared review page
-
-The maintainer's page "d47 Stock Stories", https://claude.ai/artifact/HNGyX7PhikSQiMuhxxJP3g,
-holds approved stories only. A draft never goes on it. Each card on it shows its length. When the maintainer approves a story, read
-the page with `read`, add the story's section from the draft page with its state set to approved
-and its secret-and-twist sentence above the `secret` paragraph, keep every story already there, and republish to the same `url`. On a publish conflict, merge the
-story into the newer version the tool hands back. Then republish the draft page once more,
-marked approved, with a link to the shared page.
+- The maintainer picks one per member. At step 6 the picked file is copied into the story folder
+  as `<story-id>.<cast-id>.png`.
 
 ## The steps
 
 1. **Pitch the story** as the pitch section says, and stop for his accept or reject. Write nothing
    else until he accepts it; on a reject, pitch again with his notes.
-2. **Write both layers** to files in the session scratchpad, outside the repository. Never write
-   hidden text into the tree: `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of
-   24 characters or more in a repository file.
+2. **Write both layers** to `card.json` and `hidden.json` in the story folder,
+   `<scratchpad>/<story-id>/`, outside the repository. Never write hidden text into the tree:
+   `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of 24 characters or more in a
+   repository file.
 3. **Sketch three sample chapters** against the maintainer's own game state:
    - the chapter that ends at the beacon scan; for a story shorter than 1 month, the `scan` line
      and chapter one,
@@ -248,38 +246,24 @@ marked approved, with a link to the shared page.
 4. **Publish** both layers and the samples on the story's draft page. Once the cast is settled,
    generate the cast pictures and add them to it.
 5. **Revise** on his notes, republishing the draft page after each round, until he approves the
-   story. Nothing goes on the shared review page or into the catalog before then.
-6. **Move it to the shared review page**, as that section describes.
-7. **Add it to the catalog.** Add the card to `src/D47.Core/Stories/StoryCatalog.json` with the next `number`,
-   decode the sealed layer into the scratchpad, add the hidden entry with the same `id`, and
-   encode it. Copy each picked cast picture into `assets/stories/`. Then encode:
+   story. Nothing is published to the release before then.
+6. **Publish on his word.** Copy each picked picture into the story folder, then run
 
    ```bash
-   python tools/seal-stories.py decode <scratchpad>/sealed.json
-   python tools/seal-stories.py encode <scratchpad>/sealed.json
+   python tools/publish-story.py <scratchpad>/<story-id> --dry-run
+   python tools/publish-story.py <scratchpad>/<story-id>
    ```
 
-   Sample chapters never go in the catalog. The app writes chapters when they are due.
-8. **Delete the scratch files**: the drafts, the draft page's HTML file, the image candidates and
-   the decoded layer.
-9. **Build and test**, once the catalog files have changed:
+   The dry run checks the card, the hidden entry and the pictures and lists the files; a fault is
+   printed by id and field and nothing is uploaded. The second command is a GitHub write: run it
+   only after he says to publish. Then republish the draft page marked published and delete the
+   scratch files: the story folder, the draft page's HTML file and the image candidates.
 
-   ```bash
-   dotnet build d47.slnx -c Debug
-   dotnet test tests/D47.Core.Tests --filter "FullyQualifiedName~Story|FullyQualifiedName~Adventure"
-   dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~Gate
-   ```
-
-   The build must have 0 warnings. Add a `CHANGELOG.md` entry under the current unreleased heading
-   naming the story by its title, and mark the story "in the catalog" on the shared review page.
-10. **Commit only when the maintainer says so.** The commit holds the two catalog files, the
-   cast pictures in `assets/stories/` and the changelog, with a subject such as `Add the stock story <title>`. Do not push.
-
-Nothing else in `src/` changes. A story that seems to need a code change is a gap: record it on the
-draft page and name the issue (step 3).
+Publishing changes nothing in the checkout. A story that seems to need a code change is a gap:
+record it on the draft page and name the issue (step 3).
 
 ## Finishing
 
-A turn that hands the story back for review, or lands it, ends with the `/claude-voice` sentence
-as its last tool call, then the written report: the draft page link (and the shared page link once the story
-is approved), what changed this round, and any gap found.
+A turn that hands the story back for review, or publishes it, ends with the `/claude-voice` sentence
+as its last tool call, then the written report: the draft page link, what changed this round, and
+any gap found.
