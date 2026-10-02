@@ -49,7 +49,7 @@ $cores = [ordered]@{
     'Quartermaster' = 'quartermaster'
     'Archivist'     = 'archivist'
     'The Heretic'   = 'heretic'
-    'Custom'        = 'custom'
+    'Custom core'   = 'custom'
 }
 
 # LoopState names, lower case.
