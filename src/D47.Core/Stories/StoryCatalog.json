@@ -193,5 +193,18 @@
     "blurb": "You parked your fleet carrier over a mining outpost on the edge of the bubble for a week's refit. That afternoon raiders came for the outpost's ore, and you had them cleared before your coffee went cold. The miners threw you a party. Ada Corwen, who has run the outpost for thirty years, cried and pretended she had not. There is a great deal one pilot can fix with a carrier, a hangar of engineered ships and more credits than anyone needs, and for the first time in years somebody needs you. So you stay. Your ships fly the patrols, your carrier's market buys the ore, and the outpost has never been safer. Then Rennick Hale, who buys mining claims for a living, docks at the outpost, looks up at your carrier and asks how long you mean to stay.",
     "inYourWords": "I have a fleet carrier, a hangar of ships engineered as far as they go, and more credits than I will ever spend. Nobody has needed anything from me in years except a docking fee. Last week I parked the carrier over a mining outpost on the edge of the bubble for a refit, and that afternoon raiders came for the outpost's ore. I dealt with them before my coffee went cold. Ada Corwen, who runs the place, threw me a party in the ore hall and asked me to stay a little longer. I said a week. The week is up, and I have not plotted a jump.",
     "beacon": "The outpost's founders came out here thirty years ago following the signal of a Guardian beacon, and every pilot the outpost counts as its own has flown to a beacon and made a data-link scan of it. Ada has asked me to. Nobody has asked me to belong anywhere in a long time."
+  },
+  {
+    "id": "next-of-kin",
+    "core": "warden",
+    "number": 16,
+    "title": "Next of Kin",
+    "genre": "Buddy Love",
+    "level": "endgame",
+    "length": "1-year",
+    "tone": "Warm, watchful, a found family on the run",
+    "blurb": "For twenty years Vesna Kaul beat you to every contract worth having, and you never once caught her. Now she is dead, her ship lost on a quiet run, and her will names you, of all the pilots in the galaxy, guardian of a daughter you never knew she had. Linnet is fourteen, furious, and a better natural pilot than anyone on your carrier. She hums in her sleep, the same few notes every night. She has never seen a Guardian beacon. Dr. Corin Strand, the soft-spoken scientist who paid for her mother's last survey, has asked to meet her. Vesna's will has one more line, underlined twice: never let him.",
+    "inYourWords": "I have a fleet carrier, a hangar of ships and more credits than I will ever spend. For twenty years there was one pilot I could never beat, Vesna Kaul, and I think she was half the reason I kept flying. Last week a Pilots Federation clerk told me she was dead, and that her will names me guardian of her daughter. I did not know she had one. Linnet came aboard this morning with one bag, walked past me without a word, and chose the cabin furthest from mine. The carrier has never been this quiet.",
+    "beacon": "Linnet hums the same few notes in her sleep, and has all her life. The carrier's comms log matches them to the carrier signal of a Guardian beacon. She has never seen one, and for the first time since she came aboard, she has asked me for something."
   }
 ]
