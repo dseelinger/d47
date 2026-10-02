@@ -158,8 +158,8 @@ public class ModelChoiceTests
             // Every provider off means the voice one too: Edge Neural is free, not local.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
 
- // And the hull art, which fetches a picture and a turntable on a press.
-            Ui = new UiSettings { HullArt = false },
+            // And the hull art, which fetches a picture and a turntable on a press, and the stock story downloads.
+            Ui = new UiSettings { HullArt = false, StoryDownloads = false },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
