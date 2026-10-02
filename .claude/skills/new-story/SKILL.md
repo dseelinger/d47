@@ -20,7 +20,7 @@ work carries on unchanged.
 
 ## The rules
 
-Every story keeps all ten. Check the draft against each before showing it.
+Every story keeps all eleven. Check the draft against each before showing it.
 
 1. The card names its level, `new`, `midrange` or `endgame` (#739), and the backstory starts there:
    broke in a stock Sidewinder for `new`, a working ship and some savings for `midrange`, a fleet
@@ -57,6 +57,13 @@ Every story keeps all ten. Check the draft against each before showing it.
     on spansh.co.uk, the source d47's `AdventureResolver` looks it up in; a name it does not know
     cannot fire. Where any place of a kind will do, name the kind instead of a place. A place
     mentioned only as flavour, which no beat or clue sends them to, may be invented.
+11. The story has a secret and a twist, and the twist is not predictable. The secret is what is
+    really going on. The twist is the reveal that shows it is not what the clues so far suggested.
+    The twist is fair: the earlier clues support it on a second reading. To test it, before showing
+    the draft, write down the three explanations a player would most likely guess from the card and
+    the first few clues; the twist must be none of them. Stock reveals fail this test unless the
+    story takes them a step further: the patron was the villain, the Commander is a clone or caused
+    it all, the core or the ship is behind it, it was all a test, the dead one is alive.
 
 Within those rules: the setting is soft science fiction in Elite's galaxy of the 34th century, and
 Elite's lore and d47's own may be bent or overturned. Jobs, institutions, objects and slang belong
@@ -142,6 +149,10 @@ publish of a session, and match the look of the shared review page.
 The draft page shows the card with its length, the whole hidden layer, the three sample chapters marked as
 samples, any gap found (below), and its state: draft or approved.
 
+Directly above the `secret` paragraph, the page gives one sentence stating the secret and the
+twist, so the maintainer can judge both without reading the paragraph. The sentence is a page aid
+only and does not go in the sealed entry. Rewrite it whenever the secret changes.
+
 ## Cast pictures
 
 `tools/story-image.py` sends a prompt to the OpenAI Images API with the OpenAI key d47 already
@@ -168,15 +179,16 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
 
 The maintainer's page "d47 Stock Stories", https://claude.ai/artifact/HNGyX7PhikSQiMuhxxJP3g,
 holds approved stories only. A draft never goes on it. Each card on it shows its length. When the maintainer approves a story, read
-the page with `read`, add the story's section from the draft page with its state set to approved,
-keep every story already there, and republish to the same `url`. On a publish conflict, merge the
+the page with `read`, add the story's section from the draft page with its state set to approved
+and its secret-and-twist sentence above the `secret` paragraph, keep every story already there, and republish to the same `url`. On a publish conflict, merge the
 story into the newer version the tool hands back. Then republish the draft page once more,
 marked approved, with a link to the shared page.
 
 ## The steps
 
 1. **Agree the length, then the premise, genre and tone** with the maintainer. Offer two or three concrete premises
-   when he has not given one, each with its genre, tone and twist mechanism.
+   when he has not given one, each with its genre, tone, and its secret and twist in one sentence
+   that meets rule 11. When he gives a premise without a twist, propose one that meets rule 11.
 2. **Write both layers** to files in the session scratchpad, outside the repository. Never write
    hidden text into the tree: `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of
    24 characters or more in a repository file.
