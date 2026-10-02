@@ -154,5 +154,18 @@
     "blurb": "For twenty years you have come second to Delphine Ashcroft. Second to Elite in trade. Second to the edge of the Formidine Rift. Second, by a few minutes, to the first data-link with the Guardian beacon in Synuefe KU-F b44-4, and the plaque at Lave Station still says so. Now Ashcroft is retiring, and she has called you to Lave for one last contest on the old terms: eleven days, three legs, and the loser says it out loud on the Lanes Report. First she asked you to fly back to that beacon and scan it again. She would not say why.",
     "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and there is one name I have never beaten. Delphine Ashcroft and I have raced each other for twenty years, and she has won every time, including the race that matters most to me: the first data-link with the Guardian beacon in Synuefe KU-F b44-4. Her name is on the plaque at Lave Station. Mine is under it. I have not been back to that beacon since. Last week she told me she is retiring, and challenged me to one more contest before she goes. I said yes before she finished the sentence.",
     "beacon": "Ashcroft asked me to go back to the beacon in Synuefe KU-F b44-4, where she beat me twenty years ago, and scan it again before I come to Lave Station. I have scanned it. Something happened that did not happen the first time."
+  },
+  {
+    "id": "the-milk-run",
+    "core": "quartermaster",
+    "number": 13,
+    "title": "The Milk Run",
+    "genre": "Rites of Passage",
+    "level": "endgame",
+    "length": "1-month",
+    "tone": "Quiet, wry and sad",
+    "blurb": "For fifty years Ida Vance has flown the same five stops in the same old Type-6: one refinery and four farms in LHS 2270, a system nobody visits. You left at seventeen and became a pilot the whole bubble knows. You have spoken to her ten times since. Now her heart is failing and she has a month. She has asked for one last run with you, and one detour first: the Guardian beacon where your father died before you were born. Your brother Tobias, who stayed, flies the second ship and has not forgiven you. Your mother keeps a paper ledger she will not let anyone read. You have a fleet carrier, a hangar of ships and more credits than you can spend, and none of it will buy her another month.",
+    "inYourWords": "I left home at seventeen in a Sidewinder and did not look back. My mother, Ida, has flown the same five stops in LHS 2270 for fifty years: one refinery and four farms, the same faces every week, small cargo and smaller money. I needed more than that, and I got it: a fleet carrier, a hangar of engineered ships, and a name people know. We have spoken perhaps ten times in twenty years. Last night she sent word that her heart is failing and she has a month, and she asked me to fly the run with her one last time. My brother Tobias, who stayed, sent nothing.",
+    "beacon": "My father, Cal Vance, died beside a Guardian beacon out past the edge of the bubble, a month before I was born. My mother has never seen the place. Before the run she has asked me to fly her there, and I am going to scan the beacon while she watches."
   }
 ]
