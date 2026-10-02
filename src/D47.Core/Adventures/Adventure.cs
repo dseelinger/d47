@@ -1,3 +1,4 @@
+using System.Globalization;
 using D47.Core.Persona;
 
 namespace D47.Core.Adventures;
@@ -13,8 +14,8 @@ public enum AdventureSource
 }
 
 /// <summary>
-/// The seven things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is
-/// free").
+/// The things a beat can wait for (Phase 47, "The trigger vocabulary is closed and the prose is free").
+/// The last five are counted: they fire once enough of their event has happened since the beat became current.
 /// </summary>
 public enum TriggerKind
 {
@@ -38,6 +39,21 @@ public enum TriggerKind
 
     /// <summary><c>DataScanned</c> while in a Guardian beacon system. Only a stock story's chapter one ends on one.</summary>
     Beacon,
+
+    /// <summary><c>Bounty</c> events.</summary>
+    Bounty,
+
+    /// <summary><c>FactionKillBond</c> events, optionally for one <c>AwardingFaction</c>.</summary>
+    Bond,
+
+    /// <summary><c>MissionCompleted</c> events, optionally for one <c>Faction</c> and one mission family.</summary>
+    Mission,
+
+    /// <summary>Tons sold in <c>MarketSell</c>, optionally of one commodity or at one <c>MarketID</c>.</summary>
+    Sell,
+
+    /// <summary>Tons refined in <c>MiningRefined</c>, one per event, optionally of one commodity.</summary>
+    Mine,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -66,8 +82,26 @@ public sealed record AdventureTrigger
 
     public string? Body { get; init; }
 
+    /// <summary>How many events, or tons for <see cref="TriggerKind.Sell"/> and <see cref="TriggerKind.Mine"/>, a counted beat waits for.</summary>
+    public int? Count { get; init; }
+
+    /// <summary>The faction a bond is awarded by or a mission is completed for, as the journal spells it.</summary>
+    public string? Faction { get; init; }
+
+    /// <summary>A prefix of the mission's <c>Name</c>, such as <c>Mission_Courier</c>.</summary>
+    public string? MissionFamily { get; init; }
+
+    /// <summary>The commodity sold or refined, compared as a folded symbol.</summary>
+    public string? Commodity { get; init; }
+
+    /// <summary>Whether this kind fires on a running total rather than on one event.</summary>
+    public bool IsCounted => IsCountedKind(Kind);
+
+    public static bool IsCountedKind(TriggerKind kind) =>
+        kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.Mission or TriggerKind.Sell or TriggerKind.Mine;
+
     /// <summary>Whether the ids this kind matches on are all present.</summary>
-    public bool IsResolved => Kind switch
+    public bool IsResolved => IsCounted ? Count >= 1 : Kind switch
     {
         TriggerKind.Arrive => SystemAddress is not null,
         TriggerKind.Dock => MarketId is not null,
@@ -88,8 +122,33 @@ public sealed record AdventureTrigger
         TriggerKind.Rank => $"reach {Careers.Word(Career)} rank {Rank}",
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
         TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
+        TriggerKind.Bounty => $"collect {Counted("bounty", "bounties")}",
+        TriggerKind.Bond => $"earn {Counted("kill bond", "kill bonds")}{For()}",
+        TriggerKind.Mission => $"complete {Counted(Missions(one: true), Missions(one: false))}{For()}",
+        TriggerKind.Sell => $"sell {Tons()} of {CommodityWord()}{At()}",
+        TriggerKind.Mine => $"refine {Tons()} of {CommodityWord()}",
         _ => Kind.ToString(),
     };
+
+    /// <summary>A counted beat's running total in words — "Kill bonds for LTT 7786 Labour: 3 of 8" — or null for any other kind.</summary>
+    public string? Progress(int done)
+    {
+        if (!IsCounted)
+        {
+            return null;
+        }
+
+        var of = $"{done.ToString(CultureInfo.InvariantCulture)} of {(Count ?? 0).ToString(CultureInfo.InvariantCulture)}";
+
+        return Kind switch
+        {
+            TriggerKind.Bounty => $"Bounties: {of}",
+            TriggerKind.Bond => $"Kill bonds{For()}: {of}",
+            TriggerKind.Mission => $"{Capital(Missions(one: false))}{For()}: {of}",
+            TriggerKind.Sell => $"{Capital(CommodityWord())} sold{At()}: {of} t",
+            _ => $"{Capital(CommodityWord())} refined: {of} t",
+        };
+    }
 
     /// <summary>
     /// The trigger as a hand-off — "Next: dock at Maren Anchorage in Dyson's Hollow." — said with the
@@ -100,8 +159,32 @@ public sealed record AdventureTrigger
         TriggerKind.Scan =>
             $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
         TriggerKind.Beacon => $"Next: {Describe()} with the ship's data-link scanner.",
+        _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };
+
+    private string Counted(string one, string many) =>
+        Count == 1 ? $"one {one}" : $"{(Count ?? 0).ToString(CultureInfo.InvariantCulture)} {many}";
+
+    private string Tons() => $"{(Count ?? 0).ToString(CultureInfo.InvariantCulture)} t";
+
+    private string For() => string.IsNullOrWhiteSpace(Faction) ? string.Empty : $" for {Faction.Trim()}";
+
+    private string At() => Station is { Length: > 0 } station
+        ? $" at {station}"
+        : MarketId is { } market ? $" at market {market.ToString(CultureInfo.InvariantCulture)}" : string.Empty;
+
+    private string CommodityWord() =>
+        string.IsNullOrWhiteSpace(Commodity)
+            ? "any commodity"
+            : Commodity.TrimStart().StartsWith('$') ? Journal.JournalJson.Symbol(Commodity) ?? Commodity.Trim() : Commodity.Trim();
+
+    /// <summary>"courier missions" for <c>Mission_Courier</c>, "missions" for any.</summary>
+    private string Missions(bool one) =>
+        (MissionFamilies.Word(MissionFamily) is { Length: > 0 } word ? word + " " : string.Empty) + (one ? "mission" : "missions");
+
+    private static string Capital(string text) =>
+        text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
     private static string? BeaconName(long? address) =>
         address is { } known && GuardianCores.Beacons.TryGetValue(known, out var name) ? name : null;

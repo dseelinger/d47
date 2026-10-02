@@ -179,7 +179,7 @@ card says which adventure it follows, and it is accepted, flown and checked like
 
 ### What a beat can be
 
-Seven triggers, and every one is a comparison on a structured field rather than on a name:
+Twelve triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -190,9 +190,22 @@ Seven triggers, and every one is a comparison on a structured field rather than 
 | Reach a rank | career and a number | any rank word |
 | Board a ship | the hull's type | the ship's name |
 | Scan a Guardian beacon | a data-link scan while in a Guardian beacon system's id | the scan's type, or any name |
+| Collect bounties | `Bounty` events | anything else |
+| Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
+| Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
+| Sell tons | `Count` in `MarketSell`, optionally of one `Type` or at one `MarketID` | the commodity's display name |
+| Refine tons | one ton per `MiningRefined`, optionally of one `Type` | the commodity's display name |
 
 Only a stock story's chapter one uses the beacon trigger, as its last beat, and you cannot add one on the
 form.
+
+The last five are counted. A counted beat fires when its total reaches its count, and only what happens
+after the beat before it has fired counts. It has no place of its own; a chapter that needs it done
+somewhere puts an arrive or dock beat there first. The card shows the running total, such as "Kill bonds
+for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These
+mission families are set aside, and no beat uses or counts them: `Mission_Massacre_Skimmer`,
+`Mission_Disable`, `Mission_Hack`, `Mission_OnFoot_Hack`, `Mission_Scan`, `Mission_RS_` and `Mission_DS_`.
+The form adds the six kinds above the counted ones and shows a counted beat without changing it.
 
 Nothing a stranger can choose — a ship name, an in-game message, a mission title — can be a
 trigger. That is the safety property stated as a type rather than as a promise.

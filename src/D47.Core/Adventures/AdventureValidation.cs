@@ -63,8 +63,9 @@ public static class Careers
 /// </summary>
 public static class AdventureValidation
 {
-    /// <summary>The seven, in the words the file uses.</summary>
-    public static IReadOnlyList<string> Kinds { get; } = ["arrive", "dock", "land", "scan", "rank", "board", "beacon"];
+    /// <summary>Every kind, in the words the file uses.</summary>
+    public static IReadOnlyList<string> Kinds { get; } =
+        ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine"];
 
     public static bool TryKind(string? text, out TriggerKind kind)
     {
@@ -75,7 +76,7 @@ public static class AdventureValidation
             return false;
         }
 
-        return Enum.TryParse(text.Trim(), ignoreCase: true, out kind) && Enum.IsDefined(kind);
+        return text.Trim().All(char.IsLetter) && Enum.TryParse(text.Trim(), ignoreCase: true, out kind) && Enum.IsDefined(kind);
     }
 
     /// <summary>What stops this being stored or begun, each naming where and why.</summary>
@@ -160,6 +161,12 @@ public static class AdventureValidation
                 continue;
             }
 
+            if (beat.Trigger.IsCounted)
+            {
+                problems.AddRange(CountedProblems(where, beat.Trigger));
+                continue;
+            }
+
             switch (beat.Trigger.Kind)
             {
                 case TriggerKind.Rank:
@@ -226,6 +233,30 @@ public static class AdventureValidation
         }
 
         return problems;
+    }
+
+    /// <summary>What is wrong with a counted trigger: a count under one, or a mission family that is not one or is set aside.</summary>
+    public static IEnumerable<string> CountedProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (trigger.Count is not >= 1)
+        {
+            yield return $"{where} counts to {trigger.Count?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; a counted beat needs a count of 1 or more.";
+        }
+
+        if (trigger.Kind == TriggerKind.Mission && trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))
+        {
+            if (!family.Trim().StartsWith(MissionFamilies.Prefix, StringComparison.Ordinal))
+            {
+                yield return $"{where} names a mission family \"{family.Trim()}\"; a family starts with {MissionFamilies.Prefix}, such as Mission_Courier.";
+            }
+            else if (MissionFamilies.IsSetAside(family.Trim()))
+            {
+                yield return $"{where} names the mission family {family.Trim()}, which is set aside; no beat uses "
+                    + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ".";
+            }
+        }
     }
 
     /// <summary>One caution sentence naming everything <see cref="Problems"/> found, or null when there is nothing to caution about.</summary>

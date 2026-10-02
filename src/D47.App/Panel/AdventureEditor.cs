@@ -178,6 +178,12 @@ public sealed class AdventureEditor : UserControl
         var buttons = AdventuresPage.Buttons();
         buttons.Margin = new Thickness(0, 4, 0, 0);
 
+        if (beat.Trigger.IsCounted)
+        {
+            row.Children.Add(AdventuresPage.Text("A counted beat cannot be changed here.", TypeScale.Small, ThemeManager.GreyKey));
+            return ListRow.Dress(new Border { Child = row });
+        }
+
         buttons.Children.Add(Small("Title", () => Enter(
             "adventure.beat.title", "Title", "The chapter's name", "A name, never a number.", beat.Title, EntrySurface.Voice,
             value => ReplaceBeat(index, beat with { Title = value.Trim() }),
@@ -242,7 +248,7 @@ public sealed class AdventureEditor : UserControl
                 "adventure.kind",
                 "What happens",
                 "What does this beat wait for?",
-                "The six things a beat can wait for. Nothing else exists.",
+                "The six things a beat you write can wait for.",
                 [
                     new ChoiceOption("arrive", "Arrive at a system"),
                     new ChoiceOption("dock", "Dock at a station"),

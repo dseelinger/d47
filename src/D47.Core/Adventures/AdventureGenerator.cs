@@ -757,13 +757,23 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
 
-        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "six" : "seven")} things, and nothing else exists:");
+        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "eleven" : "twelve")} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine("- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship.");
+        text.AppendLine("- \"bounty\": the Commander collects \"count\" bounties, anywhere.");
+        text.AppendLine("- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.");
+        text.AppendLine(
+            "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
+            + "\"mission\" is the family, the start of the mission's internal name: Mission_Courier, Mission_Delivery, Mission_Massacre, Mission_Assassinate, "
+            + "Mission_Collect, Mission_Salvage, Mission_OnFoot, Mission_AltruismCredits, or another starting Mission_; or null for any mission. Never "
+            + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ", or a family starting with one of them.");
+        text.AppendLine("- \"sell\": the Commander sells \"count\" tons of \"commodity\" (null for any), at any market.");
+        text.AppendLine("- \"mine\": the Commander mines and refines \"count\" tons of \"commodity\" (null for any).");
+        text.AppendLine("bounty, bond, mission, sell and mine are counted: only what happens after the beat before has fired counts, and they have no place of their own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
 
         if (beacon is not null)
         {
@@ -828,10 +838,11 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
             + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
-            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\""
+            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\""
             + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
-            + "\"system\": string, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
-            + "\"rank\": number|null, \"ship\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
+            + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
+            + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
+            + "\"mission\": string|null, \"commodity\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
 
         return text.ToString();
@@ -889,10 +900,34 @@ public sealed class AdventureGenerator(
         }
     }
 
-    private sealed record ReadBeat(string Title, string? Function, TriggerKind Kind, string? System, string? Station, string? Body, string? Career, int? Rank, string? Ship, string Line)
+    private sealed record ReadBeat(
+        string Title,
+        string? Function,
+        TriggerKind Kind,
+        string? System,
+        string? Station,
+        string? Body,
+        string? Career,
+        int? Rank,
+        string? Ship,
+        int? Count,
+        string? Faction,
+        string? MissionFamily,
+        string? Commodity,
+        string Line)
     {
+        /// <summary>A counted beat's trigger as written; the place fields are not carried.</summary>
+        public AdventureTrigger Counted() => new()
+        {
+            Kind = Kind,
+            Count = Count,
+            Faction = Faction,
+            MissionFamily = MissionFamily,
+            Commodity = Commodity,
+        };
+
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
-        public string Describe() => Kind switch
+        public string Describe() => AdventureTrigger.IsCountedKind(Kind) ? Counted().Describe() : Kind switch
         {
             TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
@@ -937,6 +972,10 @@ public sealed class AdventureGenerator(
                         Text(element, "career") ?? Text(element, "ladder") ?? (nested is { } trigger ? Text(trigger, "career") ?? Text(trigger, "ladder") : null),
                         Integer(element, "rank") ?? Integer(element, "to") ?? (nested is { } nestedRank ? Integer(nestedRank, "rank") ?? Integer(nestedRank, "to") ?? Integer(nestedRank, "level") : null),
                         Text(element, "ship"),
+                        Integer(element, "count"),
+                        Text(element, "faction"),
+                        Text(element, "mission"),
+                        Text(element, "commodity"),
                         Text(element, "line") ?? string.Empty));
                 }
             }
@@ -1014,6 +1053,20 @@ public sealed class AdventureGenerator(
                 else
                 {
                     refusals.Add($"{where} is a \"beacon\" beat; only the last beat of the chapter that ends act one may be one.");
+                }
+            }
+            else if (AdventureTrigger.IsCountedKind(beat.Kind))
+            {
+                var counted = beat.Counted();
+                var problems = AdventureValidation.CountedProblems(where, counted).ToList();
+
+                if (problems.Count > 0)
+                {
+                    refusals.AddRange(problems);
+                }
+                else
+                {
+                    trigger = counted;
                 }
             }
             else if (beat.Kind == TriggerKind.Board)

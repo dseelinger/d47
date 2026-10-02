@@ -303,7 +303,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             {
                 problems.Add(new AdventureProblem(
                     where,
-                    $"beat {index + 1} names a trigger \"{beat.Trigger?.Kind ?? string.Empty}\"; the seven are "
+                    $"beat {index + 1} names a trigger \"{beat.Trigger?.Kind ?? string.Empty}\"; the kinds are "
                     + string.Join(", ", AdventureValidation.Kinds)));
                 return null;
             }
@@ -325,6 +325,10 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     System = beat.Trigger.System?.Trim(),
                     Station = beat.Trigger.Station?.Trim(),
                     Body = beat.Trigger.Body?.Trim(),
+                    Count = beat.Trigger.Count,
+                    Faction = beat.Trigger.Faction?.Trim(),
+                    MissionFamily = beat.Trigger.MissionFamily?.Trim(),
+                    Commodity = beat.Trigger.Commodity?.Trim(),
                 },
             });
         }
@@ -404,6 +408,10 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     System = beat.Trigger.System,
                     Station = beat.Trigger.Station,
                     Body = beat.Trigger.Body,
+                    Count = beat.Trigger.Count,
+                    Faction = beat.Trigger.Faction,
+                    MissionFamily = beat.Trigger.MissionFamily,
+                    Commodity = beat.Trigger.Commodity,
                 },
                 Line = beat.Line,
             }),
@@ -501,5 +509,13 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public string? Station { get; set; }
 
         public string? Body { get; set; }
+
+        public int? Count { get; set; }
+
+        public string? Faction { get; set; }
+
+        public string? MissionFamily { get; set; }
+
+        public string? Commodity { get; set; }
     }
 }

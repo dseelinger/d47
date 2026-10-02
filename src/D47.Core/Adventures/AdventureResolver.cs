@@ -88,6 +88,11 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
             return Resolution.Refused($"{where} is a rank beat, which needs no place.");
         }
 
+        if (AdventureTrigger.IsCountedKind(kind))
+        {
+            return Resolution.Refused($"{where} is a counted beat, which has no place of its own.");
+        }
+
         if (string.IsNullOrWhiteSpace(system))
         {
             return Resolution.Refused($"{where} names no system.");
@@ -176,7 +181,7 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
                 }
 
                 default:
-                    return Resolution.Refused($"{where} names a trigger that is not one of the five.");
+                    return Resolution.Refused($"{where} names a trigger that has no place to resolve.");
             }
         }
         catch (GalaxyUnavailableException ex)

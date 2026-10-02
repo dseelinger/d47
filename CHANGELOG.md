@@ -91,6 +91,11 @@ unchanged. To turn it off, untick **COVAS reverb** under **COVAS Voice** on the 
 Advanced setting); **Test** beside it plays a stand-in voice through the reverb at no cost. Guardian
 cores, your own cores and the Narrator are not affected.
 
+A story beat can now wait for something done a number of times: bounties collected, kill bonds earned,
+missions completed, tons of a commodity sold, or tons refined by mining. Only what you do after the beat
+before it counts, and the story's card shows the running total, such as "Kill bonds for LTT 7786 Labour:
+3 of 8". Skimmer massacres, Disable, Hack, Scan and damaged-station missions are not used or counted yet.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

@@ -21,6 +21,9 @@ public sealed record AdventureStanding
     /// <summary>The system the Commander is in, from the last <c>FSDJump</c>, <c>Location</c> or <c>CarrierJump</c> folded, acceptance or not.</summary>
     public long? SystemAddress { get; init; }
 
+    /// <summary>The running total toward the current beat when it is counted: events, or tons sold or refined.</summary>
+    public int Counted { get; init; }
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
@@ -103,7 +106,7 @@ public sealed record AdventureStanding
 
     /// <summary>What the story is waiting for the Commander to do next, in words.</summary>
     public string? NextTrigger() =>
-        Adventure.IsActive && CurrentBeat is { } current ? current.Trigger.Describe() : null;
+        Adventure.IsActive && CurrentBeat is { } current ? current.Trigger.Progress(Counted) ?? current.Trigger.Describe() : null;
 
     /// <summary>The last thing the ship's AI actually said about this story, beat or aside.</summary>
     public AdventureTold? LastSaid() => Adventure.Told.Count > 0 ? Adventure.Told[^1] : null;
@@ -184,7 +187,10 @@ public sealed record AdventureStanding
 /// <summary>The one fold, for the live tick and the startup catch-up alike (Phase 47).</summary>
 public static class AdventureFold
 {
-    /// <summary>Whether one journal event is what this trigger waits for, with the Commander in <paramref name="systemAddress"/>.</summary>
+    /// <summary>
+    /// Whether one journal event is what this trigger waits for, with the Commander in
+    /// <paramref name="systemAddress"/>. For a counted trigger, whether the event counts toward it.
+    /// </summary>
     public static bool Matches(AdventureTrigger trigger, JournalEvent journalEvent, long? systemAddress = null)
     {
         ArgumentNullException.ThrowIfNull(trigger);
@@ -232,9 +238,47 @@ public static class AdventureFold
                 systemAddress == trigger.SystemAddress
                 && GuardianCores.IsBeaconScan(journalEvent, systemAddress),
 
+            TriggerKind.Bounty => journalEvent.Kind is "Bounty",
+
+            TriggerKind.Bond =>
+                journalEvent.Kind is "FactionKillBond"
+                && SameFaction(trigger.Faction, raw.String("AwardingFaction")),
+
+            TriggerKind.Mission =>
+                journalEvent.Kind is "MissionCompleted"
+                && SameFaction(trigger.Faction, raw.String("Faction"))
+                && MissionFamilies.Counts(trigger.MissionFamily, raw.String("Name")),
+
+            TriggerKind.Sell =>
+                journalEvent.Kind is "MarketSell"
+                && SameCommodity(trigger.Commodity, raw.String("Type"))
+                && (trigger.MarketId is null || raw.Long("MarketID") == trigger.MarketId),
+
+            TriggerKind.Mine =>
+                journalEvent.Kind is "MiningRefined"
+                && SameCommodity(trigger.Commodity, raw.String("Type")),
+
             _ => false,
         };
     }
+
+    /// <summary>How much one matching event adds to a counted trigger's total: tons for a sale, one otherwise.</summary>
+    public static int Amount(AdventureTrigger trigger, JournalEvent journalEvent)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        return trigger.Kind == TriggerKind.Sell ? Math.Max(journalEvent.Raw.Int("Count") ?? 0, 0) : 1;
+    }
+
+    private static bool SameFaction(string? wanted, string? actual) =>
+        string.IsNullOrWhiteSpace(wanted) || string.Equals(wanted.Trim(), actual?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Folded symbols with spaces removed, so "$platinum_name;", "platinum" and "Platinum" are one commodity.</summary>
+    private static bool SameCommodity(string? wanted, string? actual) =>
+        string.IsNullOrWhiteSpace(wanted) || (Fold(wanted) is { } folded && folded == Fold(actual));
+
+    private static string? Fold(string? commodity) => JournalJson.Symbol(commodity)?.Replace(" ", string.Empty, StringComparison.Ordinal);
 
     /// <summary>One event against one standing.</summary>
     public static AdventureStanding Apply(AdventureStanding standing, JournalEvent journalEvent)
@@ -279,7 +323,17 @@ public static class AdventureFold
             return standing;
         }
 
-        return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp] };
+        if (current.Trigger.IsCounted)
+        {
+            var total = standing.Counted + Amount(current.Trigger, journalEvent);
+
+            if (total < current.Trigger.Count)
+            {
+                return standing with { Counted = total };
+            }
+        }
+
+        return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], Counted = 0 };
     }
 
     /// <summary>A fresh standing: begun or not, nothing fired yet, in <paramref name="systemAddress"/> when it is known.</summary>
