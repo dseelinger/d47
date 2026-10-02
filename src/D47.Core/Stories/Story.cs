@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using D47.Core.Adventures;
 using D47.Core.Persona;
 
 namespace D47.Core.Stories;
@@ -90,6 +91,9 @@ public sealed record Story
 
     /// <summary>The number of the first finale chapter, once the finale has begun.</summary>
     public int? FinaleFrom { get; init; }
+
+    /// <summary>The landable body the finale ends on, named by finale chapter 1.</summary>
+    public AdventureDestination? FinaleDestination { get; init; }
 
     /// <summary>Which finale chapter, counted from 1, is the current one, or null outside the finale.</summary>
     [JsonIgnore]

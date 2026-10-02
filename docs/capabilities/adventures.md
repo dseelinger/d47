@@ -389,6 +389,20 @@ dock, land or scan. A chapter with more is refused.
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
 may go anywhere, as far as Colonia or Sagittarius A*. Below that, the writer is not told it exists.
 
+**The reach limits one hop.** A chapter's reach is the longest one hop may be, not how far the chapter
+goes: a farther place is reached over several hops.
+
+**The finale's destination.** Finale chapter 1 names where the story ends: a landable body in a real
+system, resolved as a land beat's place is, with no permit needed. It may be at most five hops at the
+chapter's reach from you for each finale chapter after the first, and at least five: with a reach of 360
+light years, 1,800 light years in a story with two finale chapters and 5,400 in one with four. A finale
+chapter 1 with no destination, or one that does not stand, is refused. The destination is kept on the
+story. Each later finale chapter's writer is told the destination, how far it is from you and how many
+finale chapters are left. A finale chapter between the first and the last that starts more than one
+reach from the destination must end closer to it than it started. The last finale chapter's last beat
+is a land beat on the destination, and that one beat may be farther than the reach. A 3-day story's one
+finale chapter both names the destination and lands on it.
+
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
 `Statistics` show you have done least, and the chapter must contain one beat of it:
 

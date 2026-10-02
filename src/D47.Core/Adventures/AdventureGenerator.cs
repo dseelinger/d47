@@ -41,6 +41,19 @@ public sealed record AdventureAsk(
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System);
 
+/// <summary>The landable body a story's finale ends on, named in its first finale chapter.</summary>
+public sealed record AdventureDestination(long SystemAddress, string System, int BodyId, string Body)
+{
+    /// <summary>Hops at the chapter's reach the destination may be from the Commander, per finale chapter after the first and at least once.</summary>
+    public const int HopsPerChapter = 5;
+
+    /// <summary>The farthest the destination may be from the Commander when finale chapter 1 names it.</summary>
+    public static double Limit(double reach, int finaleChapters) => reach * HopsPerChapter * Math.Max(1, finaleChapters - 1);
+
+    /// <summary>A land beat on the destination.</summary>
+    public AdventureTrigger Landing() => new() { Kind = TriggerKind.Land, SystemAddress = SystemAddress, BodyId = BodyId, System = System, Body = Body };
+}
+
 /// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
 public sealed record AdventureBeaconAway(string System, double LightYears, string Why);
 
@@ -79,7 +92,8 @@ public sealed record AdventureStory(
     IReadOnlyList<string>? GenreElements = null,
     string? ChapterSize = null,
     bool LongHaul = false,
-    AdventureActivity? Comfort = null);
+    AdventureActivity? Comfort = null,
+    AdventureDestination? Destination = null);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -122,6 +136,9 @@ public sealed record AdventureRemark(string Remark, string? Reply);
 public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? Refusal, IReadOnlyList<string> Notes)
 {
     public bool Succeeded => Draft is not null;
+
+    /// <summary>The finale's destination, when the draft is finale chapter 1.</summary>
+    public AdventureDestination? Destination { get; init; }
 }
 
 /// <summary>
@@ -174,7 +191,7 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, blocked, []);
         }
 
-        var facts = Facts.Of(state(), ask);
+        var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
@@ -219,7 +236,7 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, blocked, []);
         }
 
-        var facts = Facts.Of(state(), ask);
+        var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
@@ -262,7 +279,7 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, "The model's beats were not something I could read. Try again.", notes);
         }
 
-        var resolved = await DryRunAsync(read.Beats, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
+        var resolved = await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
 
         // One pass back through the turn with the refusals as a remark, before the Commander sees anything —
         // so the common case is that they never see a refusal at all.
@@ -280,7 +297,7 @@ public sealed class AdventureGenerator(
             if (reread is { Beats.Count: > 0 })
             {
                 read = reread;
-                resolved = await DryRunAsync(read.Beats, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
+                resolved = await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -313,7 +330,33 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, read.Reply, string.Join(" ", problems), notes);
         }
 
-        return new AdventureOutcome(adventure, read.Reply, null, notes);
+        return new AdventureOutcome(adventure, read.Reply, null, notes)
+        {
+            Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
+        };
+    }
+
+    /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
+    private async Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken)
+    {
+        if (ask.Story?.Destination is not { } destination || facts.System is not { } here || galaxy() is not { } search)
+        {
+            return facts;
+        }
+
+        if (string.Equals(here, destination.System, StringComparison.OrdinalIgnoreCase))
+        {
+            return facts with { DestinationLightYears = 0 };
+        }
+
+        try
+        {
+            return facts with { DestinationLightYears = await search.DistanceAsync(here, destination.System, cancellationToken).ConfigureAwait(false) };
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return facts;
+        }
     }
 
     private string? Blocked()
@@ -605,7 +648,7 @@ public sealed class AdventureGenerator(
 
         if (ask.Story is { } story)
         {
-            AppendStory(text, story);
+            AppendStory(text, story, facts);
         }
 
         text.AppendLine();
@@ -710,7 +753,7 @@ public sealed class AdventureGenerator(
     /// Both layers of a stock story, its stage and that stage's beats, and in act one the beacon its last beat
     /// arrives at or the reason it cannot yet.
     /// </summary>
-    private static void AppendStory(StringBuilder text, AdventureStory story)
+    private static void AppendStory(StringBuilder text, AdventureStory story, Facts facts)
     {
         text.AppendLine();
         text.AppendLine(
@@ -776,6 +819,57 @@ public sealed class AdventureGenerator(
                 + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That beat may be farther "
                 + "than the reach; every other hop keeps to it.");
         }
+
+        AppendDestination(text, story, facts);
+    }
+
+    /// <summary>In finale chapter 1, the destination to name; in a later finale chapter, the destination, its distance and the chapters left.</summary>
+    private static void AppendDestination(StringBuilder text, AdventureStory story, Facts facts)
+    {
+        if (story.FinaleChapter is not { } finale)
+        {
+            return;
+        }
+
+        var last = finale >= story.FinaleChapters;
+        const string Landing = "That beat may be farther than the reach; every other hop keeps to it.";
+
+        if (finale == 1)
+        {
+            var limit = AdventureDestination.Limit(facts.RadiusLightYears, story.FinaleChapters);
+
+            text.AppendLine();
+            text.AppendLine(
+                "This chapter names where the story's finale ends: one landable body in a real system, where the hidden layer's end takes "
+                + "place, given as \"destination\" with its \"system\" and \"body\". It may be far away, at most "
+                + $"{limit.ToString("0", CultureInfo.InvariantCulture)} light years from the Commander's position, and not in a system that needs a permit.");
+            text.AppendLine(last
+                ? $"This chapter is the whole finale: its last beat is \"land\" on the destination. {Landing}"
+                : "Every finale chapter keeps each hop within the reach, and the finale reaches the destination over its chapters.");
+            return;
+        }
+
+        if (story.Destination is not { } destination)
+        {
+            return;
+        }
+
+        var left = story.FinaleChapters - finale;
+
+        text.AppendLine();
+        text.Append($"The story's finale ends on {destination.Body}, in {destination.System}");
+        text.Append(facts.DestinationLightYears is { } far
+            ? $", {far.ToString("0", CultureInfo.InvariantCulture)} light years from the Commander's position. "
+            : ". ");
+        text.AppendLine(left switch
+        {
+            0 => "No finale chapter is left after this one.",
+            1 => "One finale chapter is left after this one.",
+            _ => $"{left.ToString(CultureInfo.InvariantCulture)} finale chapters are left after this one.",
+        });
+        text.AppendLine(last
+            ? $"This is the last finale chapter: its last beat is \"land\" on {destination.Body} in {destination.System}. {Landing}"
+            : "When this chapter starts farther from the destination than the reach, its last stop must be closer to the destination than where it starts.");
     }
 
     /// <summary>The genre's elements, the chapter size, the travel limit, a long haul when allowed, and the comfort-zone activity.</summary>
@@ -894,7 +988,7 @@ public sealed class AdventureGenerator(
 
         if (ask.Story is { } story)
         {
-            AppendStory(text, story);
+            AppendStory(text, story, facts);
         }
 
         text.AppendLine();
@@ -1006,7 +1100,9 @@ public sealed class AdventureGenerator(
             + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
-            + "\"engineer\": string|null, \"stage\": string|null, \"line\": string}]}. \"reply\" is what you say to the Commander, in your own "
+            + "\"engineer\": string|null, \"stage\": string|null, \"line\": string}]"
+            + (ask.Story?.FinaleChapter == 1 ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
+            + "}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
 
         return text.ToString();
@@ -1111,7 +1207,10 @@ public sealed class AdventureGenerator(
         };
     }
 
-    private sealed record ReadAnswer(string? Opening, string? Reply, IReadOnlyList<ReadBeat> Beats);
+    private sealed record ReadAnswer(string? Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination);
+
+    /// <summary>A place as the model named it.</summary>
+    private sealed record ReadPlace(string? System, string? Body);
 
     private static ReadAnswer? ReadBeats(string json)
     {
@@ -1156,7 +1255,9 @@ public sealed class AdventureGenerator(
                 }
             }
 
-            return new ReadAnswer(Text(root, "opening"), Text(root, "reply"), beats);
+            var destination = Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
+
+            return new ReadAnswer(Text(root, "opening"), Text(root, "reply"), beats, destination);
         }
         catch (JsonException)
         {
@@ -1202,10 +1303,11 @@ public sealed class AdventureGenerator(
 
     // ---- the dry run -----------------------------------------------------------------------
 
-    private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<string> Refusals);
+    private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<string> Refusals, AdventureDestination? Destination);
 
     private async Task<Resolved> DryRunAsync(
         IReadOnlyList<ReadBeat> beats,
+        ReadPlace? named,
         Facts facts,
         IReadOnlyList<NotablePlace> notable,
         AdventureAsk ask,
@@ -1222,6 +1324,17 @@ public sealed class AdventureGenerator(
 
         // The trigger the beat before this one stood on, or null where it was refused.
         AdventureTrigger? lastStood = null;
+
+        var finale = ask.Story?.FinaleChapter;
+        var (destination, unnamed) = finale == 1
+            ? await DestinationAsync(named, facts, ask.Story!, resolver, cancellationToken).ConfigureAwait(false)
+            : (finale is null ? null : ask.Story!.Destination, null);
+        var closing = finale >= ask.Story?.FinaleChapters && destination is not null;
+
+        if (unnamed is not null)
+        {
+            refusals.Add(unnamed);
+        }
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
@@ -1362,7 +1475,8 @@ public sealed class AdventureGenerator(
                     {
                         refusals.Add($"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
                     }
-                    else if (hop is { } far && far > facts.RadiusLightYears)
+                    else if (hop is { } far && far > facts.RadiusLightYears
+                             && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
                     {
                         refusals.Add($"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
                     }
@@ -1397,6 +1511,17 @@ public sealed class AdventureGenerator(
             }
         }
 
+        if (closing && (lastStood is not { Kind: TriggerKind.Land } landed || !AdventureValidation.SameBody(landed, destination!.Landing())))
+        {
+            refusals.Add($"The last beat must be \"land\" on {destination!.Body} in {destination.System}, where the finale ends.");
+        }
+
+        if (finale > 1 && !closing && destination is not null && facts.DestinationLightYears is { } start && start > facts.RadiusLightYears
+            && await NotCloserAsync(previousSystem, destination, start, resolver, cancellationToken).ConfigureAwait(false) is { } notCloser)
+        {
+            refusals.Add(notCloser);
+        }
+
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
             refusals.Add($"The last beat must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
@@ -1414,7 +1539,76 @@ public sealed class AdventureGenerator(
             refusals.Add($"This chapter leaves the comfort zone and must contain {comfort.Beat}, for {comfort.Name}.");
         }
 
-        return new Resolved(resolved, refusals);
+        return new Resolved(resolved, refusals, destination);
+    }
+
+    /// <summary>The destination finale chapter 1 names, resolved as a land beat's place, or why it cannot stand.</summary>
+    private static async Task<(AdventureDestination? Destination, string? Refusal)> DestinationAsync(
+        ReadPlace? named, Facts facts, AdventureStory story, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        const string Where = "The finale's destination";
+
+        if (named is not { System: { } system, Body: { } body })
+        {
+            return (null, "Finale chapter 1 names no destination; give \"destination\" with the system and the landable body where the story ends.");
+        }
+
+        var resolution = await resolver.ResolveAsync(TriggerKind.Land, system, null, body, Where, needsLargePad: false, cancellationToken).ConfigureAwait(false);
+
+        if (resolution.Trigger is not { SystemAddress: { } address, BodyId: { } bodyId, System: { } found, Body: { } landable })
+        {
+            return (null, resolution.Refusal ?? $"{Where} could not be resolved.");
+        }
+
+        if (facts.NeedsPermit(found))
+        {
+            return (null, $"{Where} is in {found}, which needs a permit the Commander may not hold; use a system without one.");
+        }
+
+        if (facts.System is { } here && !string.Equals(here, found, StringComparison.OrdinalIgnoreCase))
+        {
+            var limit = AdventureDestination.Limit(facts.RadiusLightYears, story.FinaleChapters);
+            double? far;
+
+            try
+            {
+                far = await resolver.DistanceAsync(here, found, cancellationToken).ConfigureAwait(false);
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                return (null, $"{Where} could not be measured: {ex.Message}");
+            }
+
+            if (far > limit)
+            {
+                return (null, $"{Where}, {landable} in {found}, is {far:0} light years from the Commander; the finale can cover at most {limit:0}.");
+            }
+        }
+
+        return (new AdventureDestination(address, found, bodyId, landable), null);
+    }
+
+    /// <summary>The refusal for a finale chapter whose last stop is no closer to the destination than its start, or null.</summary>
+    private static async Task<string?> NotCloserAsync(
+        string? lastStop, AdventureDestination destination, double start, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        double? end;
+
+        try
+        {
+            end = lastStop is null ? start
+                : string.Equals(lastStop, destination.System, StringComparison.OrdinalIgnoreCase) ? 0
+                : await resolver.DistanceAsync(lastStop, destination.System, cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return $"The chapter's last stop could not be measured against the finale's destination: {ex.Message}";
+        }
+
+        return end >= start
+            ? $"The chapter starts {start:0} light years from the finale's destination in {destination.System} and its last stop is {end:0} light years from it; "
+              + "its last stop must be closer to the destination than where it starts."
+            : null;
     }
 
     /// <summary>Travel beats a story chapter after the first may have.</summary>
@@ -1474,7 +1668,8 @@ public sealed class AdventureGenerator(
         IReadOnlyList<(string Describe, string? Pad, bool Here)> Fleet,
         CarrierState Carrier,
         RankState Ranks,
-        long? Credits)
+        long? Credits,
+        double? DestinationLightYears = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -1532,7 +1727,7 @@ public sealed class AdventureGenerator(
 
             text.AppendLine("What is true right now, read from the Commander's journal:");
             text.AppendLine($"- Position: {System ?? "unknown"}.");
-            text.AppendLine($"- Reach: {Reach switch { AdventureReach.NearHere => "near here", AdventureReach.Session => "a session's flying", _ => "anywhere" }} — about {RadiusLightYears:0} light years from here, which is also the most any one hop may be.");
+            text.AppendLine($"- Reach: {Reach switch { AdventureReach.NearHere => "near here", AdventureReach.Session => "a session's flying", _ => "anywhere" }} — about {RadiusLightYears:0} light years, the longest one hop may be. A place farther away is reached over several hops.");
 
             if (Fleet.Count > 0)
             {

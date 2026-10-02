@@ -155,6 +155,14 @@ internal sealed class StoryFixtures : IDisposable
         ]}
         """;
 
+    /// <summary><see cref="NextBeats"/> written as finale chapter 1, naming the finale's destination.</summary>
+    public const string NextBeatsNamingTheEnd = """
+        {"opening": "Again.", "reply": "Here.", "destination": {"system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a"}, "beats": [
+          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
+        ]}
+        """;
+
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-stories", Guid.NewGuid().ToString("N"));
 
     public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null)

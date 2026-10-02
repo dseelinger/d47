@@ -645,7 +645,8 @@ public sealed class StoryDirector(
                 card?.Genre is { } genre ? ChapterFit.Elements.GetValueOrDefault(genre) : null,
                 ChapterFit.Size(story.Pacing),
                 longHaul,
-                comfort));
+                comfort,
+                finaleChapter > 1 ? story.FinaleDestination : null));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -667,7 +668,12 @@ public sealed class StoryDirector(
             return refusal;
         }
 
-        stories.Save(frontierId, still with { Chapters = [.. still.Chapters, key], FinaleFrom = finaleFrom });
+        stories.Save(frontierId, still with
+        {
+            Chapters = [.. still.Chapters, key],
+            FinaleFrom = finaleFrom,
+            FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
+        });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         return null;
     }

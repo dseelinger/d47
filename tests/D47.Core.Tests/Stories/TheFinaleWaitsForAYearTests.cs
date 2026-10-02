@@ -36,7 +36,7 @@ public sealed class TheFinaleWaitsForAYearTests
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
             RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeats)));
+            RoundScriptedLlmProvider.Saying(NextBeatsNamingTheEnd)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
