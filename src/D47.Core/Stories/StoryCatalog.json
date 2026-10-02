@@ -128,5 +128,18 @@
     "blurb": "Three hundred and forty miners live at Ukah Mining Territory, on a grey moon in LHS 145, and they have seventy-two hours. The Kade Combine has ringed their system with interdictors and set the terms: leave the mine, or be there when the settlement's shield fails. They are not leaving. Their foreman is Tamsin Rook, who flew on your wing for six years and never asked you for anything. Last night she called, and she still did not ask. You have a fleet carrier, a hangar of ships and three days. Varro Kade has never lost a siege. And from the moment your carrier arrives, he stops caring about the mine.",
     "inYourWords": "I have a fleet carrier, more ships than I can fly in a month, and enough credits that nobody has been able to threaten me in years. Tamsin Rook flew on my wing for six years, then went off to dig rock on a moon in LHS 145 that nobody has heard of. Last night she called. The Kade Combine has blockaded her system, and her settlement's shield has three days of power left. She did not ask me to come. She said she only needed someone to know. I have already plotted the jump.",
     "beacon": "Rook says the Combine's trouble started far past the edge of the bubble, at a Guardian beacon where Kade has kept a ship parked for a year, listening. Before I go to her, I am going to scan that beacon and find out what he is listening for."
+  },
+  {
+    "id": "one-star",
+    "core": "cartographer",
+    "number": 11,
+    "title": "One Star",
+    "genre": "Golden Fleece",
+    "level": "endgame",
+    "length": "1-week",
+    "tone": "Dry, quick comedy that turns warm",
+    "blurb": "Horace Penhallow is the most feared critic in human space. One line in Penhallow's Starlanes once emptied a starport bar that had served drinks for two hundred years. Now he has booked a week aboard your fleet carrier for a new edition, and he has brought his own itinerary: ten sights, in order, starting with a Guardian beacon and including the longest supercruise in the bubble. Wynn Odoro, who runs your carrier's bar, says one star will empty it for a decade. You have flown through wars without blinking. You have never been reviewed. Penhallow writes down everything, including you, and he has not smiled once.",
+    "inYourWords": "I have a fleet carrier, a hangar of ships and more credits than I can spend, and I have not taken a day off in years. There is always a jump to plot or a market to restock. Yesterday Wynn Odoro, who runs the bar on my carrier, came up to the bridge white as a sheet. Horace Penhallow has booked passage. The Horace Penhallow. He wants a week, a cabin with a view, and a tour of ten sights. Wynn says he reviews everything, the host included. I said I would fly him round for a week. How hard can it be?",
+    "beacon": "Sight one on Penhallow's itinerary is a Guardian beacon, scanned by data-link with him watching from the jump seat. He says a review that starts anywhere else is a press release."
   }
 ]
