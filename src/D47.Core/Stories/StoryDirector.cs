@@ -351,7 +351,7 @@ public sealed class StoryDirector(
         var ask = new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
-            Chapter: chapter.Follows is { } follows ? AdventureChapter.Of(book.Store.For(frontierId), follows) : null,
+            Chapter: chapter.Follows is { } follows ? book.ChapterOf(frontierId, follows) : null,
             Story: Asked(
                 story with { Refused = refused },
                 secret,
@@ -768,7 +768,7 @@ public sealed class StoryDirector(
         AdventureChapter? previous = null;
 
         if (story.CurrentChapter is { } last
-            && (previous = AdventureChapter.Of(book.Store.For(frontierId), last)) is null)
+            && (previous = book.ChapterOf(frontierId, last)) is null)
         {
             return "The chapter before is no longer on file.";
         }

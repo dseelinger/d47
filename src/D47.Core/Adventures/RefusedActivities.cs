@@ -94,6 +94,8 @@ public static class RefusedActivities
         TriggerKind.Multicrew => "join another Commander's crew",
         TriggerKind.Squadron => "join a squadron",
         TriggerKind.SquadronFound => "found a squadron",
+        TriggerKind.Conflict => "take part in wars and elections",
+        TriggerKind.Faction => "work for a faction",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }

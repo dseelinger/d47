@@ -67,7 +67,10 @@ public static class AdventureValidation
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
-         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound"];
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction"];
+
+    /// <summary>The war types a conflict beat may be limited to, as the journal spells them.</summary>
+    public static IReadOnlyList<string> WarTypes { get; } = ["war", "civilwar", "election"];
 
     public static bool TryKind(string? text, out TriggerKind kind)
     {
@@ -249,6 +252,18 @@ public static class AdventureValidation
         if (trigger.Count is not >= 1)
         {
             yield return $"{where} counts to {trigger.Count?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; a counted beat needs a count of 1 or more.";
+        }
+
+        if (trigger.Kind == TriggerKind.Faction && string.IsNullOrWhiteSpace(trigger.Faction))
+        {
+            yield return $"{where} works for no faction: it names none.";
+        }
+
+        if (trigger.Kind == TriggerKind.Conflict
+            && !string.IsNullOrWhiteSpace(trigger.Filter)
+            && !WarTypes.Contains(trigger.Filter.Trim(), StringComparer.OrdinalIgnoreCase))
+        {
+            yield return $"{where} names the war type \"{trigger.Filter.Trim()}\"; the war types are {string.Join(", ", WarTypes)}.";
         }
 
         if (trigger.Kind == TriggerKind.Mission && trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))

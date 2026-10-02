@@ -120,6 +120,15 @@ public enum TriggerKind
 
     /// <summary>A <c>SquadronCreated</c> event.</summary>
     SquadronFound,
+
+    /// <summary>
+    /// A kill bond for one side of an active or pending war or civil war in the system the Commander is in, or a mission for one side
+    /// of an active election with an influence mark in the election's system. <see cref="AdventureTrigger.Filter"/> limits it to one war type.
+    /// </summary>
+    Conflict,
+
+    /// <summary><c>+</c> influence marks in the <c>FactionEffects</c> of <c>MissionCompleted</c> for one <see cref="AdventureTrigger.Faction"/>, optionally in one <see cref="AdventureTrigger.SystemAddress"/>.</summary>
+    Faction,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -151,7 +160,7 @@ public sealed record AdventureTrigger
     /// <summary>How many events, or tons for <see cref="TriggerKind.Sell"/> and <see cref="TriggerKind.Mine"/>, a counted beat waits for.</summary>
     public int? Count { get; init; }
 
-    /// <summary>The faction a bond is awarded by or a mission is completed for, as the journal spells it.</summary>
+    /// <summary>The faction a bond is awarded by or a mission is completed for, the side a conflict is fought for, or the faction a faction beat works for, as the journal spells it.</summary>
     public string? Faction { get; init; }
 
     /// <summary>A prefix of the mission's <c>Name</c>, such as <c>Mission_Courier</c>.</summary>
@@ -160,7 +169,7 @@ public sealed record AdventureTrigger
     /// <summary>The commodity sold or refined, compared as a folded symbol.</summary>
     public string? Commodity { get; init; }
 
-    /// <summary>The cargo, item, genus, category, signal, wreck or source type, the suit mod, or the name of what is rescued, that a counted beat is limited to.</summary>
+    /// <summary>The cargo, item, genus, category, signal, wreck or source type, the suit mod, the name of what is rescued, or the war type (<c>war</c>, <c>civilwar</c> or <c>election</c>), that a counted beat is limited to.</summary>
     public string? Filter { get; init; }
 
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
@@ -186,7 +195,7 @@ public sealed record AdventureTrigger
     public static bool IsAuthorable(TriggerKind kind) => kind <= TriggerKind.Beacon;
 
     /// <summary>Whether the ids this kind matches on are all present.</summary>
-    public bool IsResolved => IsCounted ? Count >= 1 : Kind switch
+    public bool IsResolved => IsCounted ? Count >= 1 && (Kind != TriggerKind.Faction || !string.IsNullOrWhiteSpace(Faction)) : Kind switch
     {
         TriggerKind.Engineer => !string.IsNullOrWhiteSpace(Engineer) && EngineerStages.Rank(Stage) > 0,
         TriggerKind.Arrive => SystemAddress is not null,
@@ -236,6 +245,8 @@ public sealed record AdventureTrigger
         TriggerKind.Multicrew => $"join another Commander's crew {Times()}",
         TriggerKind.Squadron => "join a squadron",
         TriggerKind.SquadronFound => "found a squadron",
+        TriggerKind.Conflict => $"take part {Times()} in {WarWord()}{For()}",
+        TriggerKind.Faction => $"earn {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
         _ => Kind.ToString(),
     };
 
@@ -273,6 +284,8 @@ public sealed record AdventureTrigger
             TriggerKind.CarrierJump => $"Carrier jumps: {of}",
             TriggerKind.Wing => $"Wing joins: {of}",
             TriggerKind.Multicrew => $"Crews joined: {of}",
+            TriggerKind.Conflict => $"Contributions to {WarWord()}{For()}: {of}",
+            TriggerKind.Faction => $"Influence marks for {Faction?.Trim()}: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }
@@ -316,6 +329,15 @@ public sealed record AdventureTrigger
     private string Times() => Count == 1 ? "once" : $"{(Count ?? 0).ToString(CultureInfo.InvariantCulture)} times";
 
     private string Credits() => $"{(Count ?? 0).ToString("N0", CultureInfo.InvariantCulture)} cr";
+
+    /// <summary>"a civil war" for <c>civilwar</c>, "a war, civil war or election" for none.</summary>
+    private string WarWord() => Journal.JournalJson.Symbol(Filter) switch
+    {
+        "war" => "a war",
+        "civilwar" => "a civil war",
+        "election" => "an election",
+        _ => "a war, civil war or election",
+    };
 
     private string Plain() => string.IsNullOrWhiteSpace(Filter) ? "any" : Plain(Filter);
 

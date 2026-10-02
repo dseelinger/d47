@@ -604,7 +604,7 @@ public sealed class AdventuresPage : UserControl
             AdventureChapter? chapter = null;
 
             if (follows is not null
-                && (chapter = AdventureChapter.Of(_surface.Book.Store.For(_surface.Commander()), follows)) is null)
+                && (chapter = _surface.Book.ChapterOf(_surface.Commander(), follows)) is null)
             {
                 status.Fail("That adventure is no longer on file.");
                 return;

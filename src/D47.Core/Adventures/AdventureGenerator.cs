@@ -104,6 +104,9 @@ public sealed record AdventureStory(
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
 {
+    /// <summary>The wars and elections the Commander took part in for the chapter, and how each ended once seen to.</summary>
+    public IReadOnlyList<ConflictPart> Conflicts { get; init; } = [];
+
     /// <summary>The chain ending at <paramref name="key"/>, walked back through <see cref="Adventure.Follows"/>; null when the key is not on file.</summary>
     public static AdventureChapter? Of(IReadOnlyList<Adventure> adventures, string key)
     {
@@ -662,7 +665,7 @@ public sealed class AdventureGenerator(
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter);
+            AppendChapter(text, chapter, facts);
         }
 
         if (ask.Story is { } story)
@@ -695,7 +698,7 @@ public sealed class AdventureGenerator(
     /// The chapter before in full — spine, beat titles and what was said — and each one before that as
     /// its name and premise only.
     /// </summary>
-    private static void AppendChapter(StringBuilder text, AdventureChapter chapter)
+    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts)
     {
         var previous = chapter.Previous;
 
@@ -761,12 +764,85 @@ public sealed class AdventureGenerator(
             }
         }
 
+        AppendStandings(text, chapter, facts.Standings);
+
         text.AppendLine();
         text.AppendLine(
             "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
             + "stake is the belief that chapter left open. People, places and things it established may return; "
             + "what it settled stays settled.");
     }
+
+    /// <summary>How the Commander's conflicts ended, and whether each faction they worked for gained influence between visits.</summary>
+    private static void AppendStandings(StringBuilder text, AdventureChapter chapter, SystemStandings? standings)
+    {
+        var factions = chapter.Previous.Beats
+            .Where(beat => beat.Trigger is { Kind: TriggerKind.Faction, Faction: { Length: > 0 } })
+            .Select(beat => beat.Trigger.Faction!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (chapter.Conflicts.Count == 0 && factions.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine("How the Commander's work in the world turned out, as d47 has seen it:");
+
+        foreach (var part in chapter.Conflicts)
+        {
+            text.Append("- ").AppendLine(part.Describe());
+        }
+
+        foreach (var faction in factions)
+        {
+            text.Append("- ").AppendLine(FactionChange(faction, standings));
+        }
+    }
+
+    private static string FactionChange(string faction, SystemStandings? standings)
+    {
+        var changes = (standings?.Systems ?? [])
+            .Select(system => (System: system, Change: standings!.InfluenceChange(system, faction)))
+            .Where(entry => entry.Change is not null)
+            .Select(entry => $"{(entry.Change > 0 ? "rose" : entry.Change < 0 ? "fell" : "held")}"
+                + $"{(entry.Change == 0 ? string.Empty : $" by {Math.Abs(entry.Change!.Value * 100).ToString("0.0", CultureInfo.InvariantCulture)} points")} in {entry.System}")
+            .ToList();
+
+        return changes.Count == 0
+            ? $"The Commander worked missions for {faction}; d47 has not seen its influence on two visits a day apart."
+            : $"The Commander worked missions for {faction}; between visits its influence {string.Join(", ", changes)}.";
+    }
+
+    /// <summary>The active and pending conflicts d47 has seen in systems the Commander has visited, newest reading first.</summary>
+    private static void AppendConflicts(StringBuilder text, SystemStandings? standings)
+    {
+        var seen = (standings?.Systems ?? [])
+            .Select(system => (System: system, Reading: standings!.Latest(system)))
+            .Where(entry => entry.Reading is not null)
+            .OrderByDescending(entry => entry.Reading!.SeenAt)
+            .SelectMany(entry => entry.Reading!.Conflicts
+                .Where(conflict => conflict.Status is "active" or "pending")
+                .Select(conflict => $"- {entry.System}: {conflict.WarType} between {conflict.Faction1.Name} and {conflict.Faction2.Name} ({conflict.Status})"))
+            .Take(MostConflictsListed)
+            .ToList();
+
+        if (seen.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine("Conflicts d47 has seen in systems the Commander has visited, which may have ended since (use them only for a \"conflict\" beat's faction):");
+
+        foreach (var line in seen)
+        {
+            text.AppendLine(line);
+        }
+    }
+
+    private const int MostConflictsListed = 8;
 
     /// <summary>
     /// Both layers of a stock story, its stage and that stage's beats, and in act one the beacon its last beat
@@ -1050,7 +1126,7 @@ public sealed class AdventureGenerator(
         var beacon = ask.Story?.Beacon;
         var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
-        text.AppendLine($"Each beat waits for exactly one of {Number(27 + team.Count + (beacon is null ? 0 : 1))} things, and nothing else exists:");
+        text.AppendLine($"Each beat waits for exactly one of {Number(29 + team.Count + (beacon is null ? 0 : 1))} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
@@ -1089,6 +1165,9 @@ public sealed class AdventureGenerator(
             text.AppendLine(TeamLine(kind));
         }
 
+        text.AppendLine("- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive beat in the conflict's system just before it.");
+        text.AppendLine("- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".");
+        AppendConflicts(text, facts.Standings);
         text.AppendLine("No beat may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
         text.AppendLine("Every kind from bounty on is counted, except engineer and those marked once, which are met once: only what happens after the beat before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
 
@@ -1810,7 +1889,8 @@ public sealed class AdventureGenerator(
         long? Credits,
         bool InSquadron = false,
         double? DestinationLightYears = null,
-        IReadOnlyList<string>? OwnedHulls = null)
+        IReadOnlyList<string>? OwnedHulls = null,
+        SystemStandings? Standings = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -1841,7 +1921,8 @@ public sealed class AdventureGenerator(
                 state?.Ranks ?? RankState.Empty,
                 state?.Session.Balance,
                 state?.Squadron.IsMember == true,
-                OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>()]);
+                OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>()],
+                Standings: state?.Standings);
         }
 
         public bool Owns(string symbol) =>

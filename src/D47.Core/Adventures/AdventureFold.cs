@@ -28,6 +28,12 @@ public sealed record AdventureStanding
     /// <summary>The last suit mods, ship cosmetics and fleet carrier system seen for each suit, weapon, ship and carrier, for <see cref="AdventureWatch"/>.</summary>
     public IReadOnlyDictionary<string, string> Seen { get; init; } = AdventureWatch.Nothing;
 
+    /// <summary>The side the current conflict beat's first counted contribution went to; later contributions count only for it.</summary>
+    public string? Side { get; init; }
+
+    /// <summary>The conflicts the Commander contributed to for a conflict beat, with how each ended once an arrival showed it had.</summary>
+    public IReadOnlyList<ConflictPart> Parts { get; init; } = [];
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
@@ -337,6 +343,10 @@ public static class AdventureFold
 
             TriggerKind.SquadronFound => journalEvent.Kind is "SquadronCreated",
 
+            TriggerKind.Faction =>
+                journalEvent.Kind is "MissionCompleted"
+                && InfluenceLedger.UpMarks(journalEvent, trigger.Faction!, trigger.SystemAddress) > 0,
+
             _ => false,
         };
     }
@@ -354,6 +364,7 @@ public static class AdventureFold
             TriggerKind.Sell => Math.Max(raw.Int("Count") ?? 0, 0),
             TriggerKind.Collect or TriggerKind.Rescue => Math.Max(raw.Int("Count") ?? 1, 0),
             TriggerKind.DataSale => (int)Math.Clamp(Credits(journalEvent.Kind, raw), 0, int.MaxValue),
+            TriggerKind.Faction => InfluenceLedger.UpMarks(journalEvent, trigger.Faction ?? string.Empty, trigger.SystemAddress),
             _ => 1,
         };
     }
@@ -410,8 +421,15 @@ public static class AdventureFold
         return Reached(raw) || raw.Items("Engineers").Any(Reached);
     }
 
-    /// <summary>One event against one standing.</summary>
-    public static AdventureStanding Apply(AdventureStanding standing, JournalEvent journalEvent)
+    /// <summary>One event against one standing, with no conflict beat counting.</summary>
+    public static AdventureStanding Apply(AdventureStanding standing, JournalEvent journalEvent) =>
+        Apply(standing, journalEvent, null);
+
+    /// <summary>
+    /// One event against one standing. <paramref name="world"/> is what the Commander has seen once this event is folded into it;
+    /// without it no conflict beat counts.
+    /// </summary>
+    public static AdventureStanding Apply(AdventureStanding standing, JournalEvent journalEvent, AdventureWorld? world)
     {
         ArgumentNullException.ThrowIfNull(standing);
         ArgumentNullException.ThrowIfNull(journalEvent);
@@ -424,6 +442,11 @@ public static class AdventureFold
             && arrived != standing.SystemAddress)
         {
             standing = standing with { SystemAddress = arrived };
+        }
+
+        if (world is not null && standing.Parts.Any(part => !part.Ended) && journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump")
+        {
+            standing = standing with { Parts = [.. standing.Parts.Select(part => Ended(part, world))] };
         }
 
         var observation = AdventureWatch.Observe(standing.Seen, journalEvent);
@@ -466,6 +489,11 @@ public static class AdventureFold
             return standing;
         }
 
+        if (current.Trigger.Kind == TriggerKind.Conflict)
+        {
+            return ApplyConflict(standing, current.Trigger, journalEvent, world);
+        }
+
         var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump;
         var gained = watched ? AdventureWatch.Amount(current.Trigger, observation) : 0;
 
@@ -485,6 +513,74 @@ public static class AdventureFold
         }
 
         return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], Counted = 0 };
+    }
+
+    private static ConflictPart Ended(ConflictPart part, AdventureWorld world) =>
+        !part.Ended && world.Of(part) is { Ended: true } conflict ? part with { Ended = true, Winner = conflict.Winner } : part;
+
+    private static AdventureStanding ApplyConflict(AdventureStanding standing, AdventureTrigger trigger, JournalEvent journalEvent, AdventureWorld? world)
+    {
+        if (!trigger.IsResolved || world is null || Contribution(trigger, journalEvent, world, standing.Side) is not { } contribution)
+        {
+            return standing;
+        }
+
+        var parts = standing.Parts.Any(part => SamePart(part, contribution))
+            ? standing.Parts
+            : [.. standing.Parts, contribution];
+        var total = standing.Counted + 1;
+
+        return total < trigger.Count
+            ? standing with { Counted = total, Side = contribution.Side, Parts = parts }
+            : standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], Counted = 0, Side = null, Parts = parts };
+    }
+
+    private static bool SamePart(ConflictPart a, ConflictPart b) =>
+        string.Equals(a.System, b.System, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(a.WarType, b.WarType, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(a.Side, b.Side, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(a.Against, b.Against, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The conflict one event contributes to, or null. A kill bond counts for one side of a war or civil war in the system the Commander is
+    /// in; a mission counts for one side of an election when it marks influence in the election's system.
+    /// </summary>
+    private static ConflictPart? Contribution(AdventureTrigger trigger, JournalEvent journalEvent, AdventureWorld world, string? side)
+    {
+        var raw = journalEvent.Raw;
+
+        bool Wanted(SystemConflict conflict, string? faction) =>
+            (string.IsNullOrWhiteSpace(trigger.Filter) || string.Equals(JournalJson.Symbol(trigger.Filter), JournalJson.Symbol(conflict.WarType), StringComparison.Ordinal))
+            && AdventureWorld.Takes(conflict, faction)
+            && SameFaction(trigger.Faction, faction)
+            && SameFaction(side, faction);
+
+        if (journalEvent.Kind is "FactionKillBond" && raw.String("AwardingFaction") is { } awarding && world.System is { } here)
+        {
+            return world.Here()
+                .Where(conflict => JournalJson.Symbol(conflict.WarType) is "war" or "civilwar" && Wanted(conflict, awarding))
+                .Select(conflict => new ConflictPart(here, conflict.WarType, awarding.Trim(), AdventureWorld.Against(conflict, awarding)))
+                .FirstOrDefault();
+        }
+
+        if (journalEvent.Kind is "MissionCompleted" && raw.String("Faction") is { } faction)
+        {
+            foreach (var system in world.Standings.Systems)
+            {
+                foreach (var conflict in world.Open(system))
+                {
+                    if (JournalJson.Symbol(conflict.WarType) == "election"
+                        && Wanted(conflict, faction)
+                        && world.AddressOf(system) is { } address
+                        && InfluenceLedger.UpMarksIn(journalEvent, address) > 0)
+                    {
+                        return new ConflictPart(system, conflict.WarType, faction.Trim(), AdventureWorld.Against(conflict, faction));
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>A fresh standing: begun or not, nothing fired yet, in <paramref name="systemAddress"/> when it is known.</summary>

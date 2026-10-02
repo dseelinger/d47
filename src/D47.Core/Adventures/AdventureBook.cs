@@ -44,6 +44,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// <summary>The system each Commander is in, which a standing begun from nothing starts in.</summary>
     private readonly Dictionary<string, long> _here = new(StringComparer.Ordinal);
     private readonly Dictionary<string, IReadOnlyDictionary<string, string>> _seen = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, AdventureWorld> _world = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Which stories are owed a spoken line right now — a beat has fired and the Commander has not
@@ -190,6 +191,16 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
+    /// <summary>The chapter ending at <paramref name="key"/> with the conflicts its standing shows the Commander took part in; null when the key is not on file.</summary>
+    public AdventureChapter? ChapterOf(string? frontierId, string key)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        return AdventureChapter.Of(store.For(commander), key) is { } chapter
+            ? chapter with { Conflicts = Standing(frontierId, key)?.Parts ?? [] }
+            : null;
+    }
+
     /// <summary>The adventures under way for this Commander — begun, not abandoned, not finished.</summary>
     public IReadOnlyList<AdventureStanding> Active(string? frontierId) =>
         [.. Standings(frontierId).Where(standing => standing.Adventure.IsActive && !standing.IsDone)];
@@ -211,6 +222,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             _highWater.Clear();
             _here.Clear();
             _seen.Clear();
+            _world.Clear();
         }
 
         foreach (var file in files)
@@ -493,6 +505,9 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             _here[commander] = arrived;
         }
 
+        var world = _world.GetValueOrDefault(commander, AdventureWorld.Empty).Apply(journalEvent);
+        _world[commander] = world;
+
         foreach (var adventure in store.For(commander))
         {
             if (!adventure.IsActive)
@@ -508,7 +523,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
             var key = StandingKey(commander, adventure.Key);
             var before = StandingOf(commander, adventure);
-            var after = AdventureFold.Apply(before, journalEvent);
+            var after = AdventureFold.Apply(before, journalEvent, world);
 
             if (ReferenceEquals(before, after))
             {

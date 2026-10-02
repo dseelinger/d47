@@ -16,13 +16,47 @@ public sealed record InfluenceLedger
     /// <summary>Adds the marks of a MissionCompleted event; any other event returns this ledger.</summary>
     public InfluenceLedger Apply(JournalEvent journalEvent)
     {
-        if (journalEvent.Kind != "MissionCompleted")
-        {
-            return this;
-        }
-
         var added = Marks.IsDefault ? ImmutableArray.CreateBuilder<Mark>() : Marks.ToBuilder();
         var changed = false;
+
+        foreach (var mark in Read(journalEvent))
+        {
+            added.Add(mark);
+            changed = true;
+        }
+
+        return changed ? this with { Marks = added.ToImmutable() } : this;
+    }
+
+    /// <summary>The <c>+</c> marks one MissionCompleted event gives <paramref name="faction"/>, in <paramref name="systemAddress"/> when given; zero for any other event.</summary>
+    public static int UpMarks(JournalEvent journalEvent, string faction, long? systemAddress = null)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+        ArgumentNullException.ThrowIfNull(faction);
+
+        return Read(journalEvent)
+            .Where(mark => mark.Up
+                && string.Equals(mark.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase)
+                && (systemAddress is null || mark.SystemAddress == systemAddress))
+            .Sum(mark => Math.Max(mark.Text.Count(character => character == '+'), 1));
+    }
+
+    /// <summary>The <c>+</c> marks one MissionCompleted event gives any faction in <paramref name="systemAddress"/>; zero for any other event.</summary>
+    public static int UpMarksIn(JournalEvent journalEvent, long systemAddress)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        return Read(journalEvent)
+            .Where(mark => mark.Up && mark.SystemAddress == systemAddress)
+            .Sum(mark => Math.Max(mark.Text.Count(character => character == '+'), 1));
+    }
+
+    private static IEnumerable<Mark> Read(JournalEvent journalEvent)
+    {
+        if (journalEvent.Kind != "MissionCompleted")
+        {
+            yield break;
+        }
 
         foreach (var effect in journalEvent.Items("FactionEffects"))
         {
@@ -40,17 +74,12 @@ public sealed record InfluenceLedger
                     _ => (bool?)null,
                 };
 
-                if (up is null)
+                if (up is not null)
                 {
-                    continue;
+                    yield return new Mark(faction, up.Value, influence.String("Influence") is { Length: > 0 } marks ? marks : "+", influence.Long("SystemAddress"));
                 }
-
-                added.Add(new Mark(faction, up.Value, influence.String("Influence") is { Length: > 0 } marks ? marks : "+"));
-                changed = true;
             }
         }
-
-        return changed ? this with { Marks = added.ToImmutable() } : this;
     }
 
     /// <summary>The one-line report, or null when no marks were recorded.</summary>
@@ -103,5 +132,5 @@ public sealed record InfluenceLedger
         return $"{faction.Faction} {string.Join(", ", directions)}";
     }
 
-    private sealed record Mark(string Faction, bool Up, string Text);
+    private sealed record Mark(string Faction, bool Up, string Text, long? SystemAddress = null);
 }
