@@ -243,7 +243,7 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, "The model's beats were not something I could read. Try again.", notes);
         }
 
-        var resolved = await DryRunAsync(read.Beats, facts, notable, ask, cancellationToken).ConfigureAwait(false);
+        var resolved = await DryRunAsync(read.Beats, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
 
         // One pass back through the turn with the refusals as a remark, before the Commander sees anything —
         // so the common case is that they never see a refusal at all.
@@ -261,7 +261,7 @@ public sealed class AdventureGenerator(
             if (reread is { Beats.Count: > 0 })
             {
                 read = reread;
-                resolved = await DryRunAsync(read.Beats, facts, notable, ask, cancellationToken).ConfigureAwait(false);
+                resolved = await DryRunAsync(read.Beats, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -339,6 +339,9 @@ public sealed class AdventureGenerator(
     {
         public static readonly Candidates None = new([], []);
 
+        /// <summary>Up to five Anarchy systems within reach, nearest first.</summary>
+        public IReadOnlyList<SystemSummary> Anarchy { get; init; } = [];
+
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
     }
 
@@ -349,6 +352,8 @@ public sealed class AdventureGenerator(
             return Candidates.None;
         }
 
+        var anarchy = await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
+
         try
         {
             var stations = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
@@ -356,13 +361,78 @@ public sealed class AdventureGenerator(
 
             return new Candidates(
                 [.. stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName))],
-                [.. bodies.Bodies.Where(body => !facts.NeedsPermit(body.SystemName))]);
+                [.. bodies.Bodies.Where(body => !facts.NeedsPermit(body.SystemName))])
+            {
+                Anarchy = anarchy,
+            };
         }
         catch (GalaxyUnavailableException ex)
         {
             notes.Add($"The galaxy search could not list the places within reach ({ex.Message}), so the stops came from the model's own knowledge.");
-            return Candidates.None;
+            return Candidates.None with { Anarchy = anarchy };
         }
+    }
+
+    private static async Task<IReadOnlyList<SystemSummary>> AnarchyAsync(
+        IGalaxyService search, Facts facts, string here, CancellationToken cancellationToken, List<string> notes)
+    {
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["government"] = "Anarchy",
+            ["distance"] = $"0-{facts.RadiusLightYears.ToString("0", CultureInfo.InvariantCulture)}",
+        };
+
+        if (!GalaxyQuery.TryParse(here, requested, size: 5, out var query, out _))
+        {
+            return [];
+        }
+
+        try
+        {
+            var found = await search.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+            return [.. found.Systems.Where(system => IsAnarchy(system.Government) && !facts.NeedsPermit(system.Name)).Take(5)];
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list Anarchy systems ({ex.Message}), so the story avoids illegal missions.");
+            return [];
+        }
+    }
+
+    /// <summary>The Anarchy systems and the rule for illegal mission beats, or the instruction to write none.</summary>
+    private static void AppendAnarchy(StringBuilder text, IReadOnlyList<SystemSummary> anarchy)
+    {
+        var illegal = "any family with " + MissionFamilies.IllegalMarker + " in its name, and " + string.Join(", ", MissionFamilies.Illegal);
+
+        text.AppendLine();
+
+        if (anarchy.Count == 0)
+        {
+            text.AppendLine($"No Anarchy system is known within reach, so write no illegal mission beat: no family that is {illegal}.");
+            return;
+        }
+
+        text.AppendLine("Anarchy systems within reach, from the galaxy search, nearest first:");
+
+        foreach (var system in anarchy)
+        {
+            text.Append("- ").Append(system.Name);
+
+            if (system.Distance is { } distance)
+            {
+                text.Append(" (").Append(distance.ToString("0", CultureInfo.InvariantCulture)).Append(" ly)");
+            }
+
+            text.AppendLine();
+        }
+
+        text.AppendLine(
+            $"A mission family is illegal when it is {illegal}; these are crimes against their target. A \"mission\" beat for an illegal family "
+            + "must come directly after an \"arrive\" or \"dock\" beat in one of these systems, and its line tells the Commander to take a mission "
+            + "whose target settlement is run by an Anarchy faction or, for a ship mission, whose target is in an Anarchy system. "
+            + "An Anarchy-run target reports no crime, but an Anarchy system can hold settlements owned by lawful factions, so the line asks "
+            + "for the target to be checked and does not insist.");
     }
 
     /// <summary>
@@ -747,6 +817,7 @@ public sealed class AdventureGenerator(
         }
 
         AppendCandidates(text, candidates);
+        AppendAnarchy(text, candidates.Anarchy);
 
         if (ask.Story is { } story)
         {
@@ -1060,6 +1131,7 @@ public sealed class AdventureGenerator(
         Facts facts,
         IReadOnlyList<NotablePlace> notable,
         AdventureAsk ask,
+        bool steerIllegal,
         CancellationToken cancellationToken)
     {
         var resolver = new AdventureResolver(galaxy()!);
@@ -1070,9 +1142,14 @@ public sealed class AdventureGenerator(
         // Every place that stood, by its beat number, for the scan-order rule below.
         var placed = new List<(string Where, AdventureTrigger Trigger)>();
 
+        // The trigger the beat before this one stood on, or null where it was refused.
+        AdventureTrigger? lastStood = null;
+
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
             var where = $"Beat {index + 1} ({beat.Title})";
+            var stoodBefore = lastStood;
+            lastStood = null;
             AdventureTrigger? trigger = null;
 
             if (beat.Kind == TriggerKind.Beacon)
@@ -1105,6 +1182,15 @@ public sealed class AdventureGenerator(
             {
                 var counted = beat.Written();
                 var problems = AdventureValidation.CountedProblems(where, counted).ToList();
+
+                if (problems.Count == 0
+                    && steerIllegal
+                    && beat.Kind == TriggerKind.Mission
+                    && MissionFamilies.IsIllegal(counted.MissionFamily)
+                    && await IllegalOutsideAnarchyAsync(where, stoodBefore, resolver, cancellationToken).ConfigureAwait(false) is { } outside)
+                {
+                    problems.Add(outside);
+                }
 
                 if (problems.Count > 0)
                 {
@@ -1219,6 +1305,8 @@ public sealed class AdventureGenerator(
                 }
             }
 
+            lastStood = trigger;
+
             if (trigger is not null)
             {
                 resolved.Add(new AdventureBeat
@@ -1238,6 +1326,32 @@ public sealed class AdventureGenerator(
 
         return new Resolved(resolved, refusals);
     }
+
+    /// <summary>The refusal for an illegal mission beat that does not directly follow an arrive or dock in an Anarchy system, or null.</summary>
+    private static async Task<string?> IllegalOutsideAnarchyAsync(
+        string where, AdventureTrigger? before, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        var rule = $"{where} is an illegal mission, which has to come directly after an arrive or dock beat in an Anarchy system.";
+
+        if (before is not { Kind: TriggerKind.Arrive or TriggerKind.Dock, System: { } system })
+        {
+            return $"{rule} The beat before it is not one.";
+        }
+
+        try
+        {
+            var government = await resolver.GovernmentAsync(system, cancellationToken).ConfigureAwait(false);
+
+            return IsAnarchy(government) ? null : $"{rule} {system} is not an Anarchy system.";
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return $"{where} could not be checked: {ex.Message}";
+        }
+    }
+
+    private static bool IsAnarchy(string? government) =>
+        string.Equals(government, "Anarchy", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether the brief says the hull's name, in any spacing or case.</summary>
     private static bool BriefNames(string? brief, string symbol)

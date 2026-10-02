@@ -20,6 +20,21 @@ public static class MissionFamilies
         ("Mission_DS_", 725),
     ];
 
+    /// <summary>Families that are crimes against their target, besides any name containing <see cref="IllegalMarker"/>.</summary>
+    public static IReadOnlyList<string> Illegal { get; } =
+    [
+        "Mission_OnFoot_Heist",
+        "Mission_OnFoot_Sabotage",
+    ];
+
+    public const string IllegalMarker = "Illegal";
+
+    /// <summary>Whether a mission name or a family is a crime against its target.</summary>
+    public static bool IsIllegal(string? name) =>
+        name is not null
+        && (name.Contains(IllegalMarker, StringComparison.OrdinalIgnoreCase)
+            || Illegal.Any(family => name.StartsWith(family, StringComparison.OrdinalIgnoreCase)));
+
     /// <summary>Whether a mission name or a family starts with a set-aside family.</summary>
     public static bool IsSetAside(string? name) =>
         name is not null && SetAside.Any(entry => name.StartsWith(entry.Family, StringComparison.OrdinalIgnoreCase));

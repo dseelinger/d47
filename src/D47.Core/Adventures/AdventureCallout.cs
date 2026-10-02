@@ -21,6 +21,8 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
     public const string BackstoryPrefix = "adventure-backstory.";
 
+    public const string CrimePrefix = "adventure-crime.";
+
     public const string BackstoryLine =
         "The story has turned. Your Backstory still describes where it began, and it is yours to change.";
 
@@ -34,6 +36,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(20);
 
     private readonly List<AdventureMoment> _waiting = [];
+
+    /// <summary>Missions already warned about this session.</summary>
+    private readonly HashSet<long> _warned = [];
 
     /// <summary>Which stock acknowledgement is next.</summary>
     private int _acks;
@@ -72,6 +77,57 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
         return int.TryParse(tail, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var beat)
             ? (story, beat)
             : null;
+    }
+
+    /// <summary>
+    /// Says once per mission that a settlement is a crime scene for it: the current beat is an illegal
+    /// mission beat and a live mission of that family has this settlement as its target.
+    /// </summary>
+    private IEnumerable<Announcement> CrimeWarnings(CalloutContext context, string? commander)
+    {
+        if (context.State is not { } state || state.Missions.Missions.Count == 0)
+        {
+            yield break;
+        }
+
+        foreach (var journalEvent in context.Events)
+        {
+            if (journalEvent.Kind != "ApproachSettlement"
+                || journalEvent.String("Name") is not { Length: > 0 } settlement
+                || journalEvent.Named("StationGovernment") is not { Length: > 0 } government
+                || government[0] == '$'
+                || string.Equals(government, "Anarchy", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var families = book.Active(commander)
+                .Where(standing => !book.IsSilenced(commander, standing.Adventure, context.Now))
+                .Select(standing => standing.CurrentBeat?.Trigger)
+                .Where(trigger => trigger is { Kind: TriggerKind.Mission } && MissionFamilies.IsIllegal(trigger.MissionFamily))
+                .Select(trigger => trigger!.MissionFamily)
+                .ToList();
+
+            var targets = state.Missions.Missions
+                .Where(mission => string.Equals(mission.DestinationStation, settlement, StringComparison.OrdinalIgnoreCase)
+                    && families.Any(family => MissionFamilies.Counts(family, mission.Name))
+                    && !_warned.Contains(mission.Id))
+                .ToList();
+
+            if (targets.Count == 0)
+            {
+                continue;
+            }
+
+            _warned.UnionWith(targets.Select(mission => mission.Id));
+
+            yield return new Announcement(
+                $"{CrimePrefix}{targets[0].Id.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
+                $"{settlement} is run by a {government} faction. This job is a crime here. An Anarchy-run settlement would leave you clean.")
+            {
+                Urgency = CalloutUrgency.Routine,
+            };
+        }
     }
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
@@ -113,6 +169,11 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                     Urgency = CalloutUrgency.Routine,
                 };
             }
+        }
+
+        foreach (var warning in CrimeWarnings(context, commander))
+        {
+            yield return warning;
         }
 
         if (_waiting.Count == 0)

@@ -21,6 +21,8 @@ layer D47 never shows; **Privacy and egress** says it is sent to the language mo
 A generated adventure or story chapter no longer sends you to a system that needs a permit, such as
 Shinrarta Dezhra, unless you are already in it.
 
+A story chapter that asks for an illegal mission now tries to keep you clean. The chapter's writer is given up to five Anarchy systems near you, and a mission beat for a crime (`Mission_OnFoot_Heist`, `Mission_OnFoot_Sabotage`, or any family with `Illegal` in its name) must come directly after an arrive or dock beat in one of them, with a line telling you to take a mission whose target is run by an Anarchy faction. When none is near, the writer is told to use no illegal mission. While such a beat is current, approaching the target settlement of a live mission of that family, if a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there. Counting is unchanged: any completion of the family counts.
+
 A stock story now runs to its length and ends. A length is 3 days, 1 week, 2 weeks, 1 month, 3 months,
 6 months or 1 year; **The Hillside** runs for 3 days, **One Star** for 1 week, **Runner-Up** for 2 weeks, **The Milk Run** for 1 month, **The Long Hour** for 3 months, and every other story in the catalog for a year. The Stories list shows each story's
 length before its commander level, and a story's page shows it beside the level's guideline. A year's

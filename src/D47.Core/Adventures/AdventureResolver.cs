@@ -23,6 +23,8 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
 {
     private readonly Dictionary<string, (long Address, string Name)> _systems = new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly Dictionary<string, string?> _governments = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>A system by name: its address and the service's spelling, or null if it is not one.</summary>
     public async Task<(long Address, string Name)?> SystemAsync(string name, CancellationToken cancellationToken)
     {
@@ -65,8 +67,15 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
         }
 
         _systems[wanted] = (address, hit.Name);
+        _governments[wanted] = hit.Government;
         return (address, hit.Name);
     }
+
+    /// <summary>The government the galaxy search reports for a system, or null where it reports none or does not know the system.</summary>
+    public async Task<string?> GovernmentAsync(string name, CancellationToken cancellationToken) =>
+        await SystemAsync(name, cancellationToken).ConfigureAwait(false) is null
+            ? null
+            : _governments.GetValueOrDefault(name.Trim());
 
     /// <summary>A trigger from names.</summary>
     /// <param name="where">How to name the beat in a refusal — "Beat 3 (The Anchorage)".</param>
