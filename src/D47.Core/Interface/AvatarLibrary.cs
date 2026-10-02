@@ -10,6 +10,9 @@ public sealed class AvatarLibrary
 
     private readonly Dictionary<LoopState, IReadOnlyList<string>> _frames = [];
 
+    /// <summary>Where the core clips are read from, or null for none.</summary>
+    public string? ClipFolder { get; init; }
+
     /// <summary>Where the Commander drops their own, beside the executable like everything else.</summary>
     public static string FolderFor(AppPaths paths, LoopState state) =>
         Path.Combine(paths.Data, "avatar", state.ToString().ToLowerInvariant());
@@ -17,7 +20,7 @@ public sealed class AvatarLibrary
     /// <summary>Scans every state's folder.</summary>
     public static AvatarLibrary Load(AppPaths paths)
     {
-        var library = new AvatarLibrary();
+        var library = new AvatarLibrary { ClipFolder = paths.AvatarClips };
 
         foreach (var state in Enum.GetValues<LoopState>())
         {
@@ -71,7 +74,7 @@ public sealed class AvatarLibrary
     }
 
     /// <summary>A non-empty file that opens.</summary>
-    private static bool Readable(string file)
+    internal static bool Readable(string file)
     {
         try
         {

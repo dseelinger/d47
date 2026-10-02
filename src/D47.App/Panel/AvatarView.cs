@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.App.Media;
 using D47.Core.Audio;
 using D47.Core.Interface;
 
@@ -26,11 +27,19 @@ public sealed class AvatarView : UserControl
     private readonly Grid _root = new();
 
     private readonly DispatcherTimer _frames = new() { Interval = FrameHold };
+    private readonly DispatcherTimer _clipTimer = new();
 
     private AvatarLibrary? _library;
     private IReadOnlyList<Bitmap> _sequence = [];
     private int _frame;
     private LoopState _state = LoopState.Idle;
+
+    private string? _coreId;
+    private bool _still;
+    private bool _detached;
+    private string? _clipPath;
+    private VideoFrames? _clip;
+    private WriteableBitmap? _clipFrame;
 
     /// <summary>How big the whole mark is, and everything inside it follows (#234).</summary>
     public double Extent
@@ -75,8 +84,69 @@ public sealed class AvatarView : UserControl
         Content = _root;
 
         _frames.Tick += (_, _) => Advance();
+        _clipTimer.Tick += (_, _) => AdvanceClip();
 
         Apply(LoopState.Idle);
+    }
+
+    /// <summary>The core whose clips play, or null for none.</summary>
+    public string? Core
+    {
+        get => _coreId;
+        set
+        {
+            if (string.Equals(_coreId, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _coreId = value;
+            Apply(_state);
+        }
+    }
+
+    /// <summary>Show a clip's first frame only, with no timer.</summary>
+    public bool Still
+    {
+        get => _still;
+        set
+        {
+            _still = value;
+
+            if (value)
+            {
+                _clipTimer.Stop();
+            }
+            else if (_clip is not null)
+            {
+                _clipTimer.Start();
+            }
+        }
+    }
+
+    /// <summary>Whether a timer is advancing frames.</summary>
+    internal bool HasTimer => _clipTimer.IsEnabled || _frames.IsEnabled;
+
+    /// <summary>Looks for the current state's clip again.</summary>
+    public void Reload() => Apply(_state);
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (_detached)
+        {
+            _detached = false;
+            Apply(_state);
+        }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        _detached = true;
+        StopClip();
     }
 
     /// <summary>The Commander's own imagery, or null for none.</summary>
@@ -125,6 +195,16 @@ public sealed class AvatarView : UserControl
             return;
         }
 
+        if (PlayClip(state))
+        {
+            return;
+        }
+
+        ShowMark(state);
+    }
+
+    private void ShowMark(LoopState state)
+    {
         _custom.IsVisible = false;
         _custom.Source = null;
         _ring.IsVisible = true;
@@ -256,8 +336,92 @@ public sealed class AvatarView : UserControl
         _custom.Source = _sequence[_frame];
     }
 
+    private bool PlayClip(LoopState state)
+    {
+        if (_coreId is null
+            || _library?.ClipFolder is not { } folder
+            || CoreClips.For(folder, _coreId, state) is not { } path)
+        {
+            return false;
+        }
+
+        _clipPath = path;
+
+        return OpenClip();
+    }
+
+    /// <summary>Opens <see cref="_clipPath"/> and shows its first frame; false leaves nothing open.</summary>
+    private bool OpenClip()
+    {
+        if (_clipPath is null || VideoFrames.Open(_clipPath) is not { } video)
+        {
+            return false;
+        }
+
+        var frame = video.Frame();
+
+        if (!video.Next(frame))
+        {
+            frame.Dispose();
+            video.Dispose();
+
+            return false;
+        }
+
+        _clip = video;
+        _clipFrame = frame;
+        _custom.Source = frame;
+        _custom.IsVisible = true;
+        _ring.IsVisible = false;
+        _core.IsVisible = false;
+
+        if (!_still)
+        {
+            _clipTimer.Interval = TimeSpan.FromSeconds(1 / Math.Max(1, video.FramesPerSecond));
+            _clipTimer.Start();
+        }
+
+        return true;
+    }
+
+    private void AdvanceClip()
+    {
+        if (_clip is null || _clipFrame is null)
+        {
+            _clipTimer.Stop();
+
+            return;
+        }
+
+        if (_clip.Next(_clipFrame) || (_clip.Rewind() && _clip.Next(_clipFrame)))
+        {
+            _custom.InvalidateVisual();
+
+            return;
+        }
+
+        StopClip();
+        ShowMark(_state);
+    }
+
+    private void StopClip()
+    {
+        _clipTimer.Stop();
+
+        if (ReferenceEquals(_custom.Source, _clipFrame))
+        {
+            _custom.Source = null;
+        }
+
+        _clipFrame?.Dispose();
+        _clip?.Dispose();
+        _clipFrame = null;
+        _clip = null;
+    }
+
     private void StopSequence()
     {
+        StopClip();
         _frames.Stop();
 
         foreach (var bitmap in _sequence)

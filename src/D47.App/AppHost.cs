@@ -2378,6 +2378,7 @@ public sealed class AppHost : IDisposable
 
         // The avatar's own imagery, if the Commander has dropped any in.
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
+        host.Panel.CoreId = personas.Current.Id;
 
         // The buffer the tick closure has been filling since before this instance existed (#51).
         host.JournalLog = journalLog;
@@ -4329,6 +4330,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The new core, saying it is here.</summary>
     private void OnPersonaChanged(PersonaChanged change)
     {
+        Panel.CoreId = change.Current.Id;
+
         // The ship's voice is the core aboard's, so it has to be re-read when the core changes.
         ApplySpeechSettings();
 

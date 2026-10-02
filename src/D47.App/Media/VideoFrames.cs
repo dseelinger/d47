@@ -219,6 +219,29 @@ internal sealed class VideoFrames : IDisposable
         }
     }
 
+    /// <summary>Seeks back to the start so <see cref="Next"/> plays the video again.</summary>
+    internal bool Rewind()
+    {
+        try
+        {
+            var none = Guid.Empty;
+            var start = new Position { Type = 20 };
+
+            if (_reader.SetCurrentPosition(ref none, ref start) != 0)
+            {
+                return false;
+            }
+
+            _ended = false;
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     public void Dispose()
     {
         try
@@ -280,6 +303,18 @@ internal sealed class VideoFrames : IDisposable
         {
             Marshal.ReleaseComObject(buffer);
         }
+    }
+
+    /// <summary>A PROPVARIANT holding a 64-bit integer (VT_I8).</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Position
+    {
+        public ushort Type;
+        public ushort Reserved1;
+        public ushort Reserved2;
+        public ushort Reserved3;
+        public long Value;
+        public long Padding;
     }
 
     [DllImport("mfplat.dll", ExactSpelling = true)]
@@ -414,7 +449,8 @@ internal sealed class VideoFrames : IDisposable
         [PreserveSig]
         int SetCurrentMediaType(uint index, IntPtr reserved, IMFMediaType type);
 
-        void SetCurrentPosition();
+        [PreserveSig]
+        int SetCurrentPosition(ref Guid timeFormat, ref Position position);
 
         [PreserveSig]
         int ReadSample(

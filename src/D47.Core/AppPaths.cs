@@ -40,6 +40,7 @@ public sealed class AppPaths
         Ships = Path.Combine(Data, "ships");
         Stories = Path.Combine(Data, "stories");
         Pictures = Path.Combine(Data, "pictures");
+        AvatarClips = Path.Combine(Data, "avatar-clips");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
     }
 
@@ -112,6 +113,9 @@ public sealed class AppPaths
 
     /// <summary>The cast pictures the Commander chose in place of a story's own, one <c>.png</c> per picture name.</summary>
     public string Pictures { get; }
+
+    /// <summary>The avatar clips, one <c>.mp4</c> per core and loop state.</summary>
+    public string AvatarClips { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }

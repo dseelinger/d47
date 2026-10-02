@@ -142,6 +142,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // The Commander's own avatar frames reach the headset copy too.
         _view.Avatar.Library = avatars;
+        _view.Avatar.Still = true;
 
         if (clipboard is not null)
         {

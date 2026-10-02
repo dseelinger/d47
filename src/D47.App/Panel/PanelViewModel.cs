@@ -125,6 +125,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private bool _hasAsked;
     private string _transcriptText = string.Empty;
     private D47.Core.Audio.LoopState _loopState = D47.Core.Audio.LoopState.Idle;
+    private string? _coreId;
     private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
     private string? _switchesText;
     private string? _startupText;
@@ -267,6 +268,13 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     {
         get => _loopState;
         set => Set(ref _loopState, value);
+    }
+
+    /// <summary>The id of the core aboard, whose clips the avatar plays.</summary>
+    public string? CoreId
+    {
+        get => _coreId;
+        set => Set(ref _coreId, value);
     }
 
     /// <summary>What the microphone is doing (Phase 13, "Show that the microphone is open").</summary>

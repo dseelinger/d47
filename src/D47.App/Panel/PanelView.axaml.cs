@@ -311,6 +311,7 @@ public partial class PanelView : UserControl
 
                 // The avatar follows the loop state.
                 _bound.PropertyChanged += OnModelChanged;
+                Avatar.Core = _bound.CoreId;
                 Avatar.Show(_bound.LoopState);
                 ApplyMicrophone();
                 ApplyAskHint();
@@ -381,6 +382,17 @@ public partial class PanelView : UserControl
 
                 var state = _bound.LoopState;
                 Dispatcher.UIThread.Post(() => Avatar.Show(state));
+                return;
+
+            case nameof(PanelViewModel.CoreId):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    Avatar.Core = _bound.CoreId;
+                    return;
+                }
+
+                var core = _bound.CoreId;
+                Dispatcher.UIThread.Post(() => Avatar.Core = core);
                 return;
 
             case nameof(PanelViewModel.Microphone):
