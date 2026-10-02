@@ -55,6 +55,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Their reputation with the superpowers and with every faction met.</summary>
     public ReputationState Reputation { get; internal set; } = ReputationState.Empty;
 
+    /// <summary>The factions' influence and the conflicts in each system they have been in.</summary>
+    public SystemStandings Standings { get; private set; } = SystemStandings.Empty;
+
     /// <summary>What they have contributed to each engineer.</summary>
     public EngineerContributions Contributions { get; internal set; } = EngineerContributions.Empty;
 
@@ -106,6 +109,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         if (journalEvent.Kind == "NewCommander")
         {
             Reputation = Reputation.WithoutFactions();
+            Standings = SystemStandings.Empty;
             Contributions = EngineerContributions.Empty;
             Loadouts = ShipLoadouts.NoShips;
             Kit = OwnedKit.Empty;
@@ -143,6 +147,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Ranks = Ranks.Apply(journalEvent);
         Statistics = Statistics.Apply(journalEvent);
         Reputation = Reputation.Apply(journalEvent);
+        Standings = Standings.Apply(journalEvent);
         Contributions = Contributions.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Missions = Missions.Apply(journalEvent);
