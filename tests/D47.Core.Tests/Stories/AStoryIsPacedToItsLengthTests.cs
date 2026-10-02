@@ -87,7 +87,7 @@ public sealed class AStoryIsPacedToItsLengthTests
 
         fixtures.Finish("F1", last, Now);
 
-        Assert.Null(fixtures.Director.Tick("F1", Now.AddDays(10)));
+        Assert.Null(await fixtures.Director.Tick("F1", Now.AddDays(10))!);
         Assert.Equal(StoryState.Finished, fixtures.Stories.Find("F1", Id)!.State);
         Assert.Single(fixtures.Asks);
     }

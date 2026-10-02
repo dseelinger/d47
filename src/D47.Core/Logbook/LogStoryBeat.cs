@@ -8,20 +8,26 @@ namespace D47.Core.Logbook;
 public sealed record LogStoryBeat(string Statement, LogSource Source)
 {
     /// <summary>
-    /// The beats reached in <paramref name="standings"/>, oldest first. A beat with no recorded event is left out,
-    /// because a log sentence must trace to one.
+    /// The beats reached in <paramref name="standings"/> and in <paramref name="archived"/> chapters, oldest first. A beat
+    /// with no recorded event is left out, because a log sentence must trace to one.
     /// </summary>
-    public static IReadOnlyList<LogStoryBeat> From(IReadOnlyList<AdventureStanding> standings, Func<string, Story?> story)
+    public static IReadOnlyList<LogStoryBeat> From(
+        IReadOnlyList<AdventureStanding> standings,
+        Func<string, Story?> story,
+        IReadOnlyList<ArchivedChapter>? archived = null)
     {
         ArgumentNullException.ThrowIfNull(standings);
         ArgumentNullException.ThrowIfNull(story);
 
         List<LogStoryBeat> beats = [];
 
-        foreach (var standing in standings)
+        var chapters = standings
+            .Select(standing => (Standing: standing, Story: standing.Adventure.StoryId is { } id ? story(id) : null))
+            .Concat((archived ?? []).Select(chapter => (chapter.Standing, Story: story(chapter.StoryId) is { } run && chapter.Of(run) ? run : null)));
+
+        foreach (var (standing, chapterOf) in chapters)
         {
             var adventure = standing.Adventure;
-            var chapterOf = adventure.StoryId is { } id ? story(id) : null;
 
             for (var index = 0; index < standing.Fired.Count && index < standing.FiredBy.Count && index < adventure.Beats.Count; index++)
             {

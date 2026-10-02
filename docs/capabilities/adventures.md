@@ -365,7 +365,7 @@ chapter ends at the beacon. When it cannot, the chapter has no beacon beat, keep
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
 distance, and whether the jump range, the missing fuel scoop or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is an adventure on this tab. When one finishes, the next is written from it
-and begins. **Switch** abandons the running story, keeps its chapters on file, and picks another.
+and begins. **Switch** abandons the running story and picks another.
 
 A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
 **Pick**, the scan is narrated in the words the story was written with, posted to Messages from its
@@ -609,6 +609,13 @@ model, without quoting it.
 else D47 writes. Only two things are stored — the definition, and the moment you began. Everything
 else is worked out from your journal each time, which is what lets a story you flew with D47 closed
 be up to date the moment you open it.
+
+A stock story keeps only its current chapter and the one before it in `data/adventures.json`. When a
+chapter begins, every earlier chapter of the story moves to `data/story-chapters.jsonl`, one chapter
+per line, with when each of its beats fired; when a story is abandoned, switched or finished, all of
+its chapters move there. Archived chapters leave the Adventures page, the chapter writer still reads
+the last ten of them by name and premise, and your log still lists their beats. Story chapters do not
+count toward the 40 adventures of your own that the file holds.
 
 ### What it does not do yet
 

@@ -7,7 +7,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>Switch and Abandon stop a story, keep what it told, and leave the cores to the story that is current.</summary>
+/// <summary>Switch and Abandon stop a story, keep its chapters in the archive, and leave the cores to the story that is current.</summary>
 public sealed class SwitchingStoriesKeepsTheChaptersTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
@@ -29,7 +29,8 @@ public sealed class SwitchingStoriesKeepsTheChaptersTests
         var old = fixtures.Stories.Find("F1", Id)!;
         Assert.Equal(StoryState.Abandoned, old.State);
         Assert.Equal([first], old.Chapters);
-        Assert.True(fixtures.Book.Store.Find("F1", first)!.IsAbandoned);
+        Assert.DoesNotContain(fixtures.Book.Store.For("F1"), adventure => adventure.StoryId == Id);
+        Assert.True(Assert.Single(fixtures.Director.Archive.For("F1")).Adventure.IsAbandoned);
 
         var current = fixtures.Stories.Current("F1")!;
         Assert.Equal(Other.Id, current.Id);
@@ -48,7 +49,8 @@ public sealed class SwitchingStoriesKeepsTheChaptersTests
 
         Assert.Null(fixtures.Stories.Current("F1"));
         Assert.Equal(StoryState.Ended, fixtures.Stories.Find("F1", Id)!.State);
-        Assert.Single(fixtures.Book.Store.For("F1"));
+        Assert.Empty(fixtures.Book.Store.For("F1"));
+        Assert.Single(fixtures.Director.Archive.For("F1"));
         Assert.Equal(CoreHold.None, fixtures.Cores("F1").Hold);
     }
 

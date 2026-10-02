@@ -175,6 +175,9 @@ public sealed class AdventureGenerator(
         _ => (5, "setup, catalyst, midpoint, all is lost, finale"),
     };
 
+    /// <summary>How many chapters before the previous one the brief names by premise; the rest are counted.</summary>
+    public const int EarlierChaptersShown = 10;
+
     /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>
     public const double LongHaulLightYears = 30000;
 
@@ -695,8 +698,8 @@ public sealed class AdventureGenerator(
     }
 
     /// <summary>
-    /// The chapter before in full — spine, beat titles and what was said — and each one before that as
-    /// its name and premise only.
+    /// The chapter before in full — spine, beat titles and what was said — the <see cref="EarlierChaptersShown"/>
+    /// before that as name and premise only, and how many came before those.
     /// </summary>
     private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts)
     {
@@ -707,10 +710,12 @@ public sealed class AdventureGenerator(
 
         if (chapter.Earlier.Count > 0)
         {
+            var omitted = Math.Max(0, chapter.Earlier.Count - EarlierChaptersShown);
+
             text.AppendLine();
             text.AppendLine("The chapters before that one, oldest first:");
 
-            foreach (var earlier in chapter.Earlier)
+            foreach (var earlier in chapter.Earlier.Skip(omitted))
             {
                 text.Append("- ").Append(earlier.Name);
 
@@ -720,6 +725,13 @@ public sealed class AdventureGenerator(
                 }
 
                 text.AppendLine();
+            }
+
+            if (omitted > 0)
+            {
+                text.AppendLine(omitted == 1
+                    ? "One chapter came before them."
+                    : $"{omitted.ToString(CultureInfo.InvariantCulture)} chapters came before them.");
             }
         }
 

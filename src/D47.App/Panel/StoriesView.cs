@@ -241,7 +241,7 @@ public sealed class StoriesView : UserControl
             "story.abandon",
             "Abandon",
             $"Abandon {story.Title}?",
-            "The story ends here. Its chapters stay on the Adventures page, and any Guardian core it held back is available at once.",
+            "The story ends here. Its chapters leave the Adventures page, and any Guardian core it held back is available at once.",
             "Abandon it",
             () =>
             {
@@ -355,7 +355,7 @@ public sealed class StoriesView : UserControl
                 "story.switch",
                 "Switch",
                 $"Switch from {current.Title} to {card.Title}?",
-                $"{current.Title} is abandoned and its chapters stay on the Adventures page. Your Backstory becomes this "
+                $"{current.Title} is abandoned and its chapters leave the Adventures page. Your Backstory becomes this "
                 + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
                 () => Start(card, switching: true, status, gated)));

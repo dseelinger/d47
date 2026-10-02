@@ -200,7 +200,10 @@ internal sealed class StoryFixtures : IDisposable
             },
             () => Here,
             backstory => Backstory = backstory,
-            NullLogger.Instance);
+            NullLogger.Instance)
+        {
+            Archive = StoryChapterArchive.Open(ArchivePath, NullLogger<StoryChapterArchive>.Instance),
+        };
     }
 
     public RoundScriptedLlmProvider Provider { get; }
@@ -223,6 +226,8 @@ internal sealed class StoryFixtures : IDisposable
     public bool Throws { get; set; }
 
     public string StoryPath => Path.Combine(_folder, "story.json");
+
+    public string ArchivePath => Path.Combine(_folder, "story-chapters.jsonl");
 
     /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>
     public GuardianCores Cores(string frontierId) => new(() => Stories.Current(frontierId)?.CoreHold ?? CoreHold.None);

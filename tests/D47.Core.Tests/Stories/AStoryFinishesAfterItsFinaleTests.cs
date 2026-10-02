@@ -6,7 +6,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>When the fourth finale chapter is done and its clue given, no chapter is written and the story is finished.</summary>
+/// <summary>When the fourth finale chapter is done and its clue given, no chapter is written, the story is finished and its chapters are archived.</summary>
 public sealed class AStoryFinishesAfterItsFinaleTests
 {
     [Fact]
@@ -42,7 +42,9 @@ public sealed class AStoryFinishesAfterItsFinaleTests
         Assert.Equal((Card.Title, Secret.Finale[3].Text), fixtures.Director.Clue("F1", due!));
         fixtures.Director.ClueGiven("F1", due!);
 
-        Assert.Null(fixtures.Director.Tick("F1", Now.AddDays(400)));
+        var archiving = fixtures.Director.Tick("F1", Now.AddDays(400));
+        Assert.NotNull(archiving);
+        Assert.Null(await archiving);
 
         var finished = fixtures.Stories.Find("F1", Id)!;
 
@@ -52,5 +54,8 @@ public sealed class AStoryFinishesAfterItsFinaleTests
         Assert.Null(fixtures.Stories.Current("F1"));
         Assert.Null(fixtures.Director.Tick("F1", Now.AddDays(401)));
         Assert.Single(fixtures.Asks);
+
+        Assert.Empty(fixtures.Book.Store.For("F1"));
+        Assert.Equal(last, Assert.Single(fixtures.Director.Archive.For("F1")).Adventure.Key);
     }
 }

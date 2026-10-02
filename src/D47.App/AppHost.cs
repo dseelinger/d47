@@ -1044,6 +1044,10 @@ public sealed class AppHost : IDisposable
             Path.Combine(paths.Data, "story.json"),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>());
 
+        var storyArchive = D47.Core.Stories.StoryChapterArchive.Open(
+            Path.Combine(paths.Data, "story-chapters.jsonl"),
+            loggerFactory.CreateLogger<D47.Core.Stories.StoryChapterArchive>());
+
         adventureBook.Silenced = (commander, id, at) => storyStore.Find(commander, id)?.WasOffAt(at) == true;
 
         // A hand edit, a Begin or an Abandon all arrive here; the book keeps what it can and asks for a walk
@@ -1384,7 +1388,7 @@ public sealed class AppHost : IDisposable
                 var frontierId = gameState.Active?.Identity.FrontierId;
 
                 return D47.Core.Logbook.LogStoryBeat.From(
-                    adventureBook.Standings(frontierId), id => storyStore.Find(frontierId, id));
+                    adventureBook.Standings(frontierId), id => storyStore.Find(frontierId, id), storyArchive.For(frontierId));
             });
 
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
@@ -2195,7 +2199,13 @@ public sealed class AppHost : IDisposable
             adventureGenerator.GenerateAsync,
             () => gameState.Active?.Location.StarPos,
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
-            loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>());
+            loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>())
+        {
+            Archive = storyArchive,
+        };
+
+        // After the startup catch-up, so each chapter moved keeps when its beats fired.
+        storyDirector.ArchiveChapters();
 
         goalBook.Story = () =>
         {

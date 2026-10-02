@@ -51,6 +51,9 @@ public sealed class StoryDirector(
 
     public StoryStore Stories => stories;
 
+    /// <summary>Where a story's chapters go once they are neither the current chapter nor the one before it.</summary>
+    public StoryChapterArchive Archive { get; set; } = StoryChapterArchive.InMemory();
+
     /// <summary>The Commander's gender as settings hold it: <see cref="CommanderGender.Man"/>, <see cref="CommanderGender.Woman"/> or null.</summary>
     public Func<string?> Gender { get; set; } = () => null;
 
@@ -182,7 +185,7 @@ public sealed class StoryDirector(
         return WriteChapterAsync(frontierId, now, cancellationToken);
     }
 
-    /// <summary>Abandons the current story, keeping its chapters on file, and picks another.</summary>
+    /// <summary>Abandons the current story, moving its chapters to the archive, and picks another.</summary>
     public Task<string?> SwitchAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken)
     {
         if (WithoutOdyssey(frontierId))
@@ -208,7 +211,7 @@ public sealed class StoryDirector(
         return PickAsync(frontierId, id, now, cancellationToken);
     }
 
-    /// <summary>Ends the current story. Its chapters stay on file.</summary>
+    /// <summary>Ends the current story and moves its chapters to the archive.</summary>
     public string? Abandon(string? frontierId, DateTimeOffset now)
     {
         if (stories.Current(frontierId) is not { } current)
@@ -351,7 +354,7 @@ public sealed class StoryDirector(
         var ask = new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
-            Chapter: chapter.Follows is { } follows ? book.ChapterOf(frontierId, follows) : null,
+            Chapter: ChapterAt(frontierId, story, story.Chapters.Count - 2),
             Story: Asked(
                 story with { Refused = refused },
                 secret,
@@ -394,8 +397,8 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
-    /// Pauses a story whose chapter was abandoned or removed, and starts the next chapter on the pool when one
-    /// finishes. Returns the write it started, or null. Does not block.
+    /// Pauses a story whose chapter was abandoned or removed, starts the next chapter on the pool when one finishes,
+    /// and archives a finished story's chapters on the pool. Returns the work it started, or null. Does not block.
     /// </summary>
     public Task<string?>? Tick(string? frontierId, DateTimeOffset now)
     {
@@ -425,13 +428,19 @@ public sealed class StoryDirector(
 
         if (story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
-            if (StoryClues.AtTheEnd(story))
+            if (!StoryClues.AtTheEnd(story))
             {
-                stories.Save(frontierId, story with { State = StoryState.Finished, StoppedAt = now });
-                logger.LogInformation("{Title} is finished", story.Title);
+                return null;
             }
 
-            return null;
+            stories.Save(frontierId, story with { State = StoryState.Finished, StoppedAt = now });
+            logger.LogInformation("{Title} is finished", story.Title);
+
+            return Task.Run(() =>
+            {
+                ArchiveChapters(frontierId);
+                return (string?)null;
+            });
         }
 
         return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
@@ -689,7 +698,62 @@ public sealed class StoryDirector(
 
         stories.Save(frontierId, story with { State = state, StoppedAt = now });
         logger.LogInformation("{Title} is {State}", story.Title, state);
+        ArchiveChapters(frontierId);
     }
+
+    /// <summary>
+    /// Moves every story chapter in the adventure file to the archive except the current story's last two, with when
+    /// each beat fired. Writes both files, so it never runs on the tick.
+    /// </summary>
+    public void ArchiveChapters(string? frontierId)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+        var kept = stories.Current(frontierId)?.Chapters.TakeLast(2).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var moving = book.Store.For(frontierId).Where(adventure => adventure.StoryId is not null && !kept.Contains(adventure.Key)).ToList();
+
+        foreach (var adventure in moving)
+        {
+            var run = stories.For(frontierId).FirstOrDefault(story =>
+                string.Equals(story.Id, adventure.StoryId, StringComparison.OrdinalIgnoreCase)
+                && story.Chapters.Contains(adventure.Key, StringComparer.OrdinalIgnoreCase));
+            var standing = book.Standing(frontierId, adventure.Key);
+
+            Archive.Append(new ArchivedChapter(commander, adventure.StoryId!, run?.PickedAt, adventure, standing?.Fired ?? [], standing?.FiredBy ?? []));
+            book.Remove(frontierId, adventure.Key);
+        }
+
+        if (moving.Count > 0)
+        {
+            logger.LogInformation("Moved {Count} story chapters to the archive", moving.Count);
+        }
+    }
+
+    /// <summary><see cref="ArchiveChapters(string?)"/> for every Commander with adventures on file.</summary>
+    public void ArchiveChapters()
+    {
+        foreach (var commander in book.Store.Commanders)
+        {
+            ArchiveChapters(commander);
+        }
+    }
+
+    /// <summary>
+    /// The chapter at <paramref name="index"/> of the story's chapters in full, with every chapter before it from the
+    /// adventure file or the archive; null when there is none or it is not on file.
+    /// </summary>
+    private AdventureChapter? ChapterAt(string? frontierId, Story story, int index)
+    {
+        if (index < 0 || index >= story.Chapters.Count || book.ChapterOf(frontierId, story.Chapters[index]) is not { } chapter)
+        {
+            return null;
+        }
+
+        return chapter with { Earlier = [.. story.Chapters.Take(index).Select(key => ChapterOf(frontierId, story, key)).OfType<Adventure>()] };
+    }
+
+    /// <summary>A chapter of this run of the story, from the adventure file or the archive.</summary>
+    private Adventure? ChapterOf(string? frontierId, Story story, string key) =>
+        book.Store.Find(frontierId, key) ?? Archive.Find(frontierId, story, key)?.Adventure;
 
     private async Task<string?> WriteChapterAsync(string? frontierId, DateTimeOffset now, CancellationToken cancellationToken)
     {
@@ -770,8 +834,8 @@ public sealed class StoryDirector(
         var number = story.Chapters.Count + 1;
         AdventureChapter? previous = null;
 
-        if (story.CurrentChapter is { } last
-            && (previous = book.ChapterOf(frontierId, last)) is null)
+        if (story.CurrentChapter is not null
+            && (previous = ChapterAt(frontierId, story, story.Chapters.Count - 1)) is null)
         {
             return "The chapter before is no longer on file.";
         }
@@ -820,7 +884,7 @@ public sealed class StoryDirector(
             return "The story changed while its chapter was being written.";
         }
 
-        var key = UniqueKey(frontierId, draft.Key);
+        var key = UniqueKey(frontierId, still, draft.Key);
 
         if ((book.Write(frontierId, draft with { Key = key, StoryId = story.Id }) ?? book.Begin(frontierId, key, now)) is { } refusal)
         {
@@ -834,6 +898,7 @@ public sealed class StoryDirector(
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
+        ArchiveChapters(frontierId);
         return null;
     }
 
@@ -880,20 +945,21 @@ public sealed class StoryDirector(
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>
     private int SinceBeacon(string? frontierId, Story story) => story.BeaconScanAt is { } scanned
-        ? story.Chapters.Count(key => book.Store.Find(frontierId, key) is { } chapter && chapter.Written >= scanned)
+        ? story.Chapters.Count(key => ChapterOf(frontierId, story, key) is { } chapter && chapter.Written >= scanned)
         : 0;
 
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
     private StorySecret? Hidden(string id) => catalog().Secret(id)?.For(Gender());
 
-    private string UniqueKey(string? frontierId, string wanted)
+    /// <summary>A key used by no adventure on file and no chapter of the story, archived ones included.</summary>
+    private string UniqueKey(string? frontierId, Story story, string wanted)
     {
-        var existing = book.Store.For(frontierId);
+        var existing = book.Store.For(frontierId).Select(adventure => adventure.Key).Concat(story.Chapters).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var key = string.IsNullOrWhiteSpace(wanted) ? "chapter" : wanted;
         var candidate = key;
         var suffix = 2;
 
-        while (existing.Any(other => string.Equals(other.Key, candidate, StringComparison.OrdinalIgnoreCase)))
+        while (existing.Contains(candidate))
         {
             candidate = $"{key}-{suffix++}";
         }

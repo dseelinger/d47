@@ -135,7 +135,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             var existing = _byCommander.GetValueOrDefault(commander, []);
             var replacing = existing.Any(other => string.Equals(other.Key, adventure.Key, StringComparison.OrdinalIgnoreCase));
 
-            if (!replacing && existing.Count >= AdventureLimits.MaxAdventures)
+            // Story chapters are not counted: a story archives its finished chapters itself.
+            if (!replacing && adventure.StoryId is null && existing.Count(other => other.StoryId is null) >= AdventureLimits.MaxAdventures)
             {
                 return $"You already have {AdventureLimits.MaxAdventures} adventures, which is the most I hold.";
             }
@@ -188,6 +189,13 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         Changed?.Invoke();
         return true;
     }
+
+    /// <summary>The adventure as this file writes it.</summary>
+    internal static JsonElement ToJson(Adventure adventure) => JsonSerializer.SerializeToElement(ToRecord(adventure), Json);
+
+    /// <summary>An adventure read as this file reads it, or null with the reason added to <paramref name="problems"/>.</summary>
+    internal static Adventure? FromJson(JsonElement element, List<AdventureProblem> problems) =>
+        element.Deserialize<AdventureRecord>(Json) is { } record ? FromRecord(record, problems) : null;
 
     private void Write()
     {

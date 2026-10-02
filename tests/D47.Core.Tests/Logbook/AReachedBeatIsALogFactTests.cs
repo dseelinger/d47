@@ -95,6 +95,36 @@ public sealed class AReachedBeatIsALogFactTests
     }
 
     [Fact]
+    public void ABeatOfAnArchivedChapterIsInTheLog()
+    {
+        var adventure = Chapter("the-marker");
+        var story = TheMarker(adventure);
+        var standing = TwoBeatsReached(adventure);
+        var archived = new ArchivedChapter("F1", story.Id, story.PickedAt, adventure, standing.Fired, standing.FiredBy);
+        var beats = LogStoryBeat.From([], id => id == story.Id ? story : null, [archived]);
+
+        var digest = new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build([], Window, beats);
+        var facts = digest.Facts.Where(fact => fact.Kind == LogFactKind.Story).ToList();
+
+        Assert.Equal(2, facts.Count);
+        Assert.Equal("Reached \"The Count\", chapter 3 of The Marker.", facts[1].Statement);
+        Assert.Equal(Accepted.AddMinutes(3), Assert.Single(facts[1].Sources).At);
+    }
+
+    [Fact]
+    public void AnArchivedChapterOfAnEarlierRunNamesItself()
+    {
+        var adventure = Chapter("the-marker");
+        var story = TheMarker(adventure) with { PickedAt = Accepted.AddDays(-1) };
+        var standing = TwoBeatsReached(adventure);
+        var archived = new ArchivedChapter("F1", story.Id, Accepted.AddDays(-30), adventure, standing.Fired, standing.FiredBy);
+
+        var beats = LogStoryBeat.From([], id => id == story.Id ? story : null, [archived]);
+
+        Assert.All(beats, beat => Assert.EndsWith("in the adventure The Marker, three.", beat.Statement, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void NoSealedTextAppearsInADigestOfAStoryChapter()
     {
         var digest = Digest(Chapter("the-marker"));
