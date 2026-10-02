@@ -148,7 +148,28 @@ public static class FlavourBriefs
 
         if (announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal))
         {
-            return Narration;
+            return announcement.StoryAside is { } told ? NarratingMission(told) : Narration;
+        }
+
+        if (announcement.StoryAside is { } aside
+            && announcement.Key.StartsWith(MissionCallout.AcceptedKey, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    $"The Commander has just taken a mission: {aside.Mission}. "
+                    + (announcement.Text.Length > 0
+                        ? $"Say this about it in your own voice, keeping every fact and number in it: \"{announcement.Text}\" "
+                        : "Remark on it in one short sentence in your own voice. ")
+                    + "Then, in one short aside, tie the mission to the story the Commander is playing, from this excerpt of "
+                    + $"it: {aside.Excerpt} {MissionUnchanged} Two or three sentences in all. Do not ask a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+
+                // The sheet, so it is addressed to somebody.
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
         }
 
         if (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal))
@@ -517,6 +538,25 @@ public static class FlavourBriefs
         NeedsStory = true,
         NeedsScenario = true,
     };
+
+    /// <summary>What every story aside on a mission keeps to.</summary>
+    public const string MissionUnchanged =
+        "Hint at the connection; do not explain the story. Keep the mission's name, giver, destination, cargo, reward "
+        + "and deadline exactly as given, and add nothing about the mission.";
+
+    /// <summary>The narration for a moment when the Commander holds a mission the running story has not yet touched.</summary>
+    public static FlavourBrief NarratingMission(Stories.MissionAside aside)
+    {
+        ArgumentNullException.ThrowIfNull(aside);
+
+        return Narration with
+        {
+            Instruction =
+                Narration.Instruction
+                + $" The Commander holds this mission: {aside.Mission}. Let one clause of the narration tie it to the story "
+                + $"they are playing, from this excerpt of it: {aside.Excerpt} {MissionUnchanged}",
+        };
+    }
 
     /// <summary>The narration for an adventure that has waited too long at its next beat.</summary>
     public static FlavourBrief Nudge(string facts) => Narration with

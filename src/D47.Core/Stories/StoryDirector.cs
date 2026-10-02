@@ -588,6 +588,15 @@ public sealed class StoryDirector(
     /// <summary>Whether the current story is running and switched on.</summary>
     public bool IsRunning(string? frontierId) => stories.Current(frontierId) is { State: StoryState.Running, IsOff: false };
 
+    /// <summary>The asides that tie mission speech to the running story; the app sets its excerpt for the active Commander.</summary>
+    public StoryMissionAsides MissionAsides { get; } = new();
+
+    /// <summary>The running story's excerpt for mission speech, or null unless it is running, switched on and played with Odyssey.</summary>
+    public string? MissionExcerpt(string? frontierId) =>
+        stories.Current(frontierId) is { State: StoryState.Running, IsOff: false, IsWithoutOdyssey: false } story
+            ? catalog().Find(story.Id)?.Excerpt() ?? story.PublicLayer.Split('\n')[0].Trim()
+            : null;
+
     /// <summary>The clue the running story owes now, or null.</summary>
     public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>
         stories.Current(frontierId) is { IsOff: false, IsWithoutOdyssey: false } story && catalog().Secret(story.Id) is not null

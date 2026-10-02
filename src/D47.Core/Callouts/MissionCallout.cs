@@ -3,6 +3,7 @@ using System.Globalization;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Stories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -43,6 +44,9 @@ public sealed class MissionCallout : ICallout
 
     /// <summary>How far past its mark a warning can be and still be said.</summary>
     private static readonly TimeSpan Grace = TimeSpan.FromMinutes(1);
+
+    /// <summary>The running story's asides, or null when stories are not wired.</summary>
+    public StoryMissionAsides? StoryAsides { get; set; }
 
     /// <summary>The service to ask, or null when galaxy search is off.</summary>
     public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
@@ -119,11 +123,28 @@ public sealed class MissionCallout : ICallout
         }
     }
 
-    /// <summary>A mission's cargo against the hold, and a collect mission's commodity against the docked market.</summary>
+    /// <summary>
+    /// A mission's cargo against the hold and a collect mission's commodity against the docked market, with the running
+    /// story's aside. With an aside and no facts the line has no text, for the model to write.
+    /// </summary>
     private Announcement? Accepted(JournalEvent journalEvent, CommanderGameState? state)
     {
-        if (Mission.Of(journalEvent) is not { CommodityLocalised: { } commodity, Count: > 0 and var count } mission
-            || mission.PassengerMission)
+        if (Mission.Of(journalEvent) is not { } mission)
+        {
+            return null;
+        }
+
+        var facts = Facts(mission, state);
+        var aside = StoryAsides?.Take(mission);
+
+        return facts is not null || aside is not null
+            ? new Announcement($"{AcceptedKey}.{mission.Id}", facts ?? string.Empty) { StoryAside = aside }
+            : null;
+    }
+
+    private string? Facts(Mission mission, CommanderGameState? state)
+    {
+        if (mission is not { CommodityLocalised: { } commodity, Count: > 0 and var count } || mission.PassengerMission)
         {
             return null;
         }
@@ -143,9 +164,7 @@ public sealed class MissionCallout : ICallout
             said.Add($"They sell {commodity} here.");
         }
 
-        return said.Count > 0
-            ? new Announcement($"{AcceptedKey}.{mission.Id}", string.Join(' ', said))
-            : null;
+        return said.Count > 0 ? string.Join(' ', said) : null;
     }
 
     /// <summary>Queues a distance lookup to the mission's destination; the answer is said on a later tick.</summary>

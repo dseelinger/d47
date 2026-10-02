@@ -498,8 +498,8 @@ Refuse the beat the Commander's story chapter is waiting on and write a differen
 
 Clear **Story on**, on the Stories page or on the mini panel, or say "pause the story", and the
 running stock story goes quiet until you switch it on again. While it is off no beat is said, no
-nudge or clue is owed, nothing from the story is posted to Messages, and the hidden layer is left out of
-every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
+nudge or clue is owed, nothing from the story is posted to Messages, missions get no story aside, and the
+hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
 Narration and chatter work as they always do, and your Backstory, cores and persona are unchanged.
 
 A place you visit while the story is off does not count. Its beat waits for the next visit. The
@@ -602,6 +602,31 @@ equipment with no history, so it has nothing to hint at. They are told to
 hint at it and never state it, and to mislead you only about the story, never about fuel, cargo,
 credits, routes, rank or danger. **Privacy and egress** says a hidden story is sent to the language
 model, without quoting it.
+
+### Missions in the story
+
+While a stock story is running and switched on, speech about a mission you take carries a short excerpt
+of the story's public layer: its title and tone, and the start of the backstory in your words. Each
+mission gets this once, from the first of three places to speak about it:
+
+- **The accept line.** Taking a mission gets a line from the core aboard that ties it to the story. Where
+  d47 already had something to say, such as a cargo that needs several trips, that line keeps every fact
+  and adds the aside. Without a language model and personality, a mission with nothing else to say gets
+  no line.
+- **Mission scene chatter.** With a scenario set, the people of the faction that gave the mission are
+  told the excerpt too, and one line may touch on it.
+- **Narration.** A narration during a lull ties in the newest mission on your board that has not had its
+  aside.
+
+The aside never changes a mission: its name, giver, destination, cargo, reward and deadline are said as
+the game gives them. The chapter writer is told the missions you hold, and may make one's destination
+system an arrive beat or its station a dock beat, so the mission's trip is also the story's. No beat asks
+you to complete, fail or abandon a mission. While the story is paused or switched off, missions get no
+aside, and a mission taken meanwhile gets its aside once the story is back.
+
+```csharp
+public MissionAside? Take(IReadOnlyList<Mission> missions)
+```
 
 ### Where it lives
 

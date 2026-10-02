@@ -2225,9 +2225,17 @@ public sealed class AppHost : IDisposable
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
         storyClue.Core = () => personas.Current;
 
+        storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
+
         foreach (var narrator in callouts.Callouts.OfType<NarratorCallout>())
         {
             narrator.StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId);
+            narrator.StoryAsides = storyDirector.MissionAsides;
+        }
+
+        foreach (var missions in callouts.Callouts.OfType<MissionCallout>())
+        {
+            missions.StoryAsides = storyDirector.MissionAsides;
         }
 
         var host = self = new AppHost(
@@ -5821,7 +5829,12 @@ public sealed class AppHost : IDisposable
                 scene is null
                     ? NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot,
                         NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario))
-                    : NpcChatter.SceneInstruction(scene, scenario!, roster, marker.Variant ?? 0),
+                    : NpcChatter.SceneInstruction(
+                        scene,
+                        scenario!,
+                        roster,
+                        marker.Variant ?? 0,
+                        scene.Place == ScenePlace.Mission ? Stories?.MissionAsides.Take(scene.Missions ?? []) : null),
                 carrier,
                 Settings.Current.Persona,
                 _humor,
@@ -6498,10 +6511,11 @@ public sealed class AppHost : IDisposable
                     continue;
                 }
 
-                // An ambient remark or a narration the model did not write is not spoken (#245).
-                if (ReferenceEquals(varied, announcement)
-                    && (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
-                        || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal)))
+                // An ambient remark or a narration the model did not write is not spoken (#245), nor a line with no text.
+                if (string.IsNullOrWhiteSpace(varied.Text)
+                    || (ReferenceEquals(varied, announcement)
+                        && (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
+                            || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal))))
                 {
                     continue;
                 }

@@ -463,7 +463,7 @@ public static partial class NpcChatter
     /// The scenario is given whatever the audience setting, as who the speakers are.
     /// </summary>
     public static string SceneInstruction(
-        SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0)
+        SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0, Stories.MissionAside? aside = null)
     {
         ArgumentNullException.ThrowIfNull(beat);
 
@@ -474,8 +474,13 @@ public static partial class NpcChatter
             return MissionSituation(beat)
                 + "The Commander's current scenario: " + scenario.Trim()
                 + " Take from it who these people are and what is going on around them. They do not know who the "
-                + "Commander is or the Commander's real purpose. If these missions do not bear on the scenario, reply "
-                + "with nothing at all: no lines and no other text. "
+                + "Commander is or the Commander's real purpose. "
+                + (aside is null
+                    ? "If these missions do not bear on the scenario, reply with nothing at all: no lines and no other text. "
+                    : $"The Commander is also playing a story, which these people know nothing of: {aside.Excerpt} One line "
+                      + $"may touch on something from it, about these missions: {aside.Mission}. "
+                      + FlavourBriefs.MissionUnchanged + " If these missions bear on neither the scenario nor the story, "
+                      + "reply with nothing at all: no lines and no other text. ")
                 + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(NpcChatterKind.Scene, exchangeIndex))
                 + (cast.Slots.Count > 0 ? Slotted : Unslotted)
                 + SceneContract;

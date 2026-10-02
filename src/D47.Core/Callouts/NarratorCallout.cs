@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Journal;
+using D47.Core.Stories;
 
 namespace D47.Core.Callouts;
 
@@ -27,6 +28,9 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
 
     /// <summary>Whether a stock story is running and switched on for the active Commander.</summary>
     public Func<bool> StoryRunning { get; set; } = () => false;
+
+    /// <summary>The running story's asides, or null when stories are not wired.</summary>
+    public StoryMissionAsides? StoryAsides { get; set; }
 
     /// <summary>The adventures under way, checked for one stalled at its next beat.</summary>
     public Func<IReadOnlyList<AdventureStanding>> Adventures { get; set; } = () => [];
@@ -104,6 +108,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             stalled is null ? Key : NudgePrefix + stalled.Adventure.Key,
             stalled is null ? string.Empty : AdventureNudge.Facts(stalled, lightYears: null))
         {
+            StoryAside = stalled is null ? Untold(context.State?.Missions) : null,
             Urgency = CalloutUrgency.Routine,
             Cooldown = Interval,
             Chatter = Interval,
@@ -111,6 +116,14 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             Variant = _picks - 1,
         };
     }
+
+    /// <summary>The story's aside for the newest mission on the board that has not had one, or null.</summary>
+    private MissionAside? Untold(MissionBoard? board) =>
+        StoryAsides is { } asides && board?.Missions
+            .Where(mission => !asides.Told(mission.Id))
+            .MaxBy(mission => mission.AcceptedAt) is { } newest
+            ? asides.Take(newest)
+            : null;
 
     /// <summary>The adventure a nudge is about, or null when the key is not a nudge.</summary>
     public static string? Nudged(string? key) =>

@@ -936,6 +936,35 @@ public sealed class AdventureGenerator(
         }
 
         AppendDestination(text, story, facts);
+        AppendMissions(text, facts);
+    }
+
+    /// <summary>The most missions a story chapter is told of.</summary>
+    public const int MissionsShown = 10;
+
+    /// <summary>The missions the Commander holds with a destination, which a story chapter may make part of a beat.</summary>
+    private static void AppendMissions(StringBuilder text, Facts facts)
+    {
+        var held = (facts.Missions ?? []).Where(mission => !string.IsNullOrWhiteSpace(mission.DestinationSystem)).Take(MissionsShown).ToList();
+
+        if (held.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine("The missions the Commander holds now:");
+
+        foreach (var mission in held)
+        {
+            text.AppendLine($"- {StoryMissionAsides.Describe(mission)}");
+        }
+
+        text.AppendLine(
+            "A beat may make one of these destinations part of the story, so the mission's trip is also the story's: an "
+            + "\"arrive\" beat in its system, or a \"dock\" beat at its station, within the reach like any other hop. Its line "
+            + "may tie the mission to the story but never changes it: no new cargo, target, reward or deadline. No beat asks "
+            + "the Commander to complete, fail or abandon one of these missions. Using one is a choice, not a requirement.");
     }
 
     /// <summary>In finale chapter 1, the destination to name; in a later finale chapter, the destination, its distance and the chapters left.</summary>
@@ -1902,7 +1931,8 @@ public sealed class AdventureGenerator(
         bool InSquadron = false,
         double? DestinationLightYears = null,
         IReadOnlyList<string>? OwnedHulls = null,
-        SystemStandings? Standings = null)
+        SystemStandings? Standings = null,
+        IReadOnlyList<Mission>? Missions = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -1934,7 +1964,8 @@ public sealed class AdventureGenerator(
                 state?.Session.Balance,
                 state?.Squadron.IsMember == true,
                 OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>()],
-                Standings: state?.Standings);
+                Standings: state?.Standings,
+                Missions: state?.Missions.Missions);
         }
 
         public bool Owns(string symbol) =>

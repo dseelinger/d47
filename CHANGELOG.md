@@ -14,6 +14,8 @@ Stock stories are downloaded when you open the Stories page, instead of shipping
 
 Abandoning a story, or switching to another, removes the messages it posted. A finished story keeps its messages, and so does an adventure you wrote yourself.
 
+While a stock story is running and switched on, the missions you take are tied to it. Each mission gets one short aside from the story's public layer, in the first of three places: the line the core aboard says when you take it, the faction's mission scene chatter, or a narration during a lull. The aside never changes the mission's name, giver, destination, cargo, reward or deadline. Taking a mission now gets a line even when d47 has no cargo or market fact to give, as long as a language model and personality are on. The chapter writer is told the missions you hold, and may make one's destination an arrive or dock beat. A paused or switched-off story leaves missions alone.
+
 A stock story keeps only its current chapter and the one before it on the Adventures page. Earlier chapters move to `data\story-chapters.jsonl` as each new chapter begins, and all of a story's chapters move there when it is abandoned, switched or finished. Story chapters no longer count toward the 40 adventures the Adventures page holds, so a long story keeps writing chapters, and the chapter writer is given the last ten earlier chapters by premise and a count of the rest. Your log still lists the beats of archived chapters.
 
 The Adventures tab has a **Stories** button, opening the stock stories, each written to run for the length on its card.

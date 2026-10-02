@@ -98,6 +98,30 @@ public sealed record StoryCard
         return text.ToString().TrimEnd();
     }
 
+    /// <summary>The most characters of the Commander's words an <see cref="Excerpt"/> carries, beyond the first sentence.</summary>
+    public const int ExcerptWords = 240;
+
+    /// <summary>A short excerpt of the layer: the title and tone, and the Commander's words cut to whole sentences.</summary>
+    public string Excerpt()
+    {
+        var sentences = Regex.Split(InYourWords.Trim(), @"(?<=[.!?])\s+");
+        var words = sentences[0];
+
+        foreach (var sentence in sentences.Skip(1))
+        {
+            if (words.Length + 1 + sentence.Length > ExcerptWords)
+            {
+                break;
+            }
+
+            words += " " + sentence;
+        }
+
+        var heading = Tone is { Length: > 0 } tone ? $"\"{Title}\" — {tone}." : $"\"{Title}\".";
+
+        return $"{heading} In the Commander's words: \"{words}\"";
+    }
+
     internal static void Line(StringBuilder text, string label, string? value)
     {
         if (!string.IsNullOrWhiteSpace(value))

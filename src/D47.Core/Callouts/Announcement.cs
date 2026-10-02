@@ -109,6 +109,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>The beat a scene marker asks an exchange for, or null for anything else.</summary>
     public SceneBeat? Scene { get; init; }
 
+    /// <summary>The running story's aside for a line about a mission, or null. A line with no text is spoken only as the model writes it.</summary>
+    public Stories.MissionAside? StoryAside { get; init; }
+
     /// <summary>The line the conversation page should carry, or null when this belongs on another page.</summary>
     public string? ConversationLine =>
         Transcript is null && Voice == Audio.VoiceRole.ShipAi ? Text : null;
