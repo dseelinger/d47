@@ -245,5 +245,18 @@
     "blurb": "The Ice is two frozen worlds at the edge of Eranin, four thousand miners and one seat on the Eranin Assembly. The only candidate for it was the Speaker's nephew, until you filed against him in a bar, on a bet, with a platform one line long. Four percent of the Ice voted. You won by eleven. You have never read a law, you live in your cockpit, and Dee Mwangi, the refinery foreman, has called you a joke to your face. Speaker Barnaby Quell welcomes you warmly and puts you on a committee that has not met in forty years. Perpetua Gilchrist, Clerk of the Assembly for forty-one years, hands you the rules, all eleven hundred of them. Somebody aboard is going to read every one.",
     "inYourWords": "I have a working ship, some engineering done and savings that one bad month could take. I haul ore for the miners on the Ice, out at the edge of Eranin, and every time I dock I watch the Assembly's freight levy come off their pay. When the Ice's seat came up, the only candidate was the Speaker's nephew. I filed against him in a bar in Azeban City, on a bet, with one line: scrap the levy. I won by eleven votes. I am now the Member for the Ice. I have never read a law in my life, and I have just been handed eleven hundred of them.",
     "beacon": "Speaker Quell put me on the Committee on Xeno-Antiquities. It has not met in forty years and has one item outstanding: a survey of a Guardian beacon that the Assembly paid for and never received. The Clerk says a member who sits on a committee does its work. So I am going to fly out and scan it."
+  },
+  {
+    "id": "blind-charter",
+    "core": "kex",
+    "number": 20,
+    "title": "Blind Charter",
+    "genre": "Whydunit",
+    "level": "midrange",
+    "length": "3-days",
+    "tone": "Tense and wry, kind underneath",
+    "blurb": "You wake in your own cockpit, docked at a starport you do not remember reaching, with nine hours missing. Your log says you took a blind charter for no fee and had a privacy clinic take the memory out of your head when it was done. It also says you scanned a Guardian beacon, and the mind that came aboard with that scan is certain something else was in your ship. A message is waiting in your own voice, locked for one day. And at the foot of your boarding ramp stands Anselm Coyle, an Imperial contract recovery agent with beautiful manners, who would like to know where you took her. You have no idea who she is.",
+    "inYourWords": "I fly a working ship with some engineering on it, and I have saved enough that I can turn down a job I do not like. I haul, I run charters, and for years I have turned down the blind ones, where the client stays sealed and you sign to have the job taken out of your memory afterwards. Yesterday, apparently, I said yes to one. I woke an hour ago with nine hours gone, a clinic receipt with my own thumbprint on it, and a polite man at the foot of my ramp asking questions I cannot answer. I do not know what I did. I would very much like to know why I did it.",
+    "beacon": "I do not remember scanning it. The cockpit recorder kept four minutes of the nine hours: me flying out past the edge of the bubble to a Guardian beacon as if I knew exactly why, and running the data-link without a second's pause. The clinic holds the rest, sealed, with the memory."
   }
 ]
