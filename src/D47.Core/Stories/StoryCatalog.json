@@ -271,5 +271,18 @@
     "blurb": "Fourteen months ago a drive fault dropped your ship out of supercruise beside the rings of Uszaa 2 with eight sightseers aboard. Ice cracked the canopy, you flew the last twenty minutes on emergency oxygen, and everyone lived. The inquiry cleared you. It also recorded that you were off your plotted course when it happened, and nobody, you included, can say why. You have not carried a passenger since. Now Tilly Marsh, who was fourteen and in the front row that day, has started at Agnes Rowntree's flight school at Lave Station, and she has asked for you to sit in the right seat for her training hours. Her father has told you to stay away from her. Agnes has told you to fly the cadets' long solo to a Guardian beacon before you answer either of them.",
     "inYourWords": "I have a ship that works, some engineering done on it and savings enough for a bad month, and for fourteen months I have flown the same short route through the Lave cluster with the passenger cabin full of crates. I used to fly charters. Then a drive fault dropped me out of supercruise beside the rings of Uszaa 2 with eight people aboard. Everyone lived, and the inquiry cleared me. It also says I was off my plotted course, and I hit my head on the way out of the ring, and I do not remember why I turned. Agnes Rowntree taught me to fly twenty years ago. She says I can haul crates for the rest of my life, or I can come and sit in the right seat for a girl who was on that charter and still means to be a pilot.",
     "beacon": "Every cadet at Agnes Rowntree's flight school flies one long solo before their licence: out past the edge of the bubble to a Guardian beacon, a data-link scan, and home. I flew mine twenty years ago. Agnes says to fly it again, alone, before I give Tilly my answer."
+  },
+  {
+    "id": "old-light",
+    "core": "archivist",
+    "number": 22,
+    "title": "Old Light",
+    "genre": "Whydunit",
+    "level": "midrange",
+    "length": "6-months",
+    "tone": "Uneasy, wondering detective story told in starlight",
+    "blurb": "Light is slow. Sixty-one years ago a settlement called Lantern burned on a moon in Vardh with eleven hundred people in it, and the light of that night is only now reaching systems sixty-one light years out. Dr. Imogen Strand was nine when it happened. She has spent her life building an instrument that can see a settlement from that far, and she has hired you to fly it. Every light year closer, you watch a year later: Lantern's last good years, its foundry running all night, its ships flying away and not coming back. The record says a reactor failed. Imogen says somebody killed her mother. The light says something else, and someone out there has learned how to make it lie.",
+    "inYourWords": "I fly a ship I have paid off and engineered a little, and I keep enough in the bank to get through one bad month. I took Dr. Strand's charter because it paid well and sounded quiet: carry her instrument out into the dark sixty-odd light years from Vardh, keep still, and let it look back. She says that from far enough away, the light of a place is still the place as it was. Sixty-one years ago a settlement called Lantern burned on Vardh 7 a. She was nine, and her mother was in it. She has asked me to take her down to the ice before we start.",
+    "beacon": "Imogen's array has to be calibrated against a light source that has not changed in a million years, and there is only one kind she trusts. She has marked the nearest Guardian beacon on my chart and says the instrument is useless until it has had a data-link scan of one."
   }
 ]
