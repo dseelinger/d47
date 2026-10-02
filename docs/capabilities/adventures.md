@@ -415,7 +415,36 @@ finale chapter both names the destination and lands on it.
 | rescue | `Search_And_Rescue.SearchRescue_Count` |
 | passenger mission (a `Mission_Passenger` mission) | `Passengers.Passengers_Missions_Delivered` |
 
-A tie goes to the earlier row. Before d47 has seen a `Statistics` event, no activity is picked.
+A tie goes to the earlier row. Before d47 has seen a `Statistics` event, no activity is picked. An
+activity you have refused in the story is never picked.
+
+### Refusing a beat
+
+A story chapter's current beat has a **Not for me** button, on the chapter's page and on the Stories
+page, and a voice command: "this beat is not for me", "not for me" or "give me a different beat". The
+button asks "Write a different beat?" and, for a beat that asks for an activity, "This story won't ask
+you to collect bounties again." (or whichever activity it is). On yes the ship's AI writes new beats from
+the current one to the end of the chapter. Beats already done stay as they were, the chapter count and the
+clues do not change, and the new beats count only what happens after you refused. A replacement arrive
+beat for a system you had already visited waits for your next arrival there. If the write fails, the beat
+stays as it was and the Stories page says why.
+
+The activity is remembered for the rest of the story. A refusal is kept under the beat's kind, and for a
+mission under the kind and the mission family, so refusing a `Mission_Massacre` beat still allows a
+`Mission_Courier` one. Every later chapter's writer is told which activities are refused, and a chapter
+with a beat for one is refused and rewritten. The Stories page lists them. A beat that names a place
+(arrive, dock, land, scan, board, rank) is replaced and not remembered. The Guardian beacon scan that
+ends act one cannot be refused. A refusal cannot be taken back.
+
+The model is refused this tool.
+
+#### `refuse_story_beat`
+
+Refuse the beat the Commander's story chapter is waiting on and write a different one in its place. The story remembers the activity and does not ask for it again. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
 
 ### Pausing the story
 

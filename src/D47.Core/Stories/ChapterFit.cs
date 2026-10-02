@@ -69,8 +69,8 @@ public static class ChapterFit
     /// <summary>Whether this chapter, counted from the first after the beacon scan, must leave the comfort zone.</summary>
     public static bool IsComfortChapter(int sinceBeacon) => sinceBeacon > 0 && sinceBeacon % ComfortEvery == 0;
 
-    /// <summary>The activity with the lowest figure, ties to the earlier row; null with no <c>Statistics</c> event yet.</summary>
-    public static AdventureActivity? LeastDone(CareerStatistics statistics)
+    /// <summary>The activity with the lowest figure that is not refused, ties to the earlier row; null with no <c>Statistics</c> event yet.</summary>
+    public static AdventureActivity? LeastDone(CareerStatistics statistics, IReadOnlyList<string>? refused = null)
     {
         ArgumentNullException.ThrowIfNull(statistics);
 
@@ -84,6 +84,11 @@ public static class ChapterFit
 
         foreach (var (activity, figure) in Activities)
         {
+            if (RefusedActivities.Refuses(refused, activity.Kind, activity.MissionFamily))
+            {
+                continue;
+            }
+
             var value = statistics.Read(figure) ?? 0;
 
             if (value < lowest)

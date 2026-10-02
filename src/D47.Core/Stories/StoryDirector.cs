@@ -30,6 +30,9 @@ public sealed class StoryDirector(
     /// <summary>Commanders whose last chapter could not be written; the tick does not retry until WriteNextAsync is called.</summary>
     private readonly HashSet<string> _failed = new(StringComparer.Ordinal);
 
+    /// <summary>Commanders with a replacement beat being written.</summary>
+    private readonly HashSet<string> _rewriting = new(StringComparer.Ordinal);
+
     /// <summary>Narrated scans picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryScanDue> _scans = new(StringComparer.Ordinal);
 
@@ -77,6 +80,25 @@ public sealed class StoryDirector(
             return _writing.Contains(frontierId ?? AdventureStore.NoCommander);
         }
     }
+
+    /// <summary>The time a replacement beat takes effect: after it is written, so events during the write do not count toward it.</summary>
+    public Func<DateTimeOffset> Clock { get; set; } = () => DateTimeOffset.UtcNow;
+
+    /// <summary>Whether a replacement beat is being written for this Commander.</summary>
+    public bool IsRewriting(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _rewriting.Contains(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>The beat of the running story's chapter that <see cref="RefuseBeatAsync"/> would replace, or null.</summary>
+    public AdventureBeat? RefusableBeat(string? frontierId) =>
+        stories.Current(frontierId) is { State: StoryState.Running, CurrentChapter: { } key }
+        && book.Standing(frontierId, key) is { IsRefusable: true } standing
+            ? standing.CurrentBeat
+            : null;
 
     /// <summary>Raised when a LoadGame changes whether the game runs with Odyssey.</summary>
     public event Action? OdysseyChanged;
@@ -226,6 +248,150 @@ public sealed class StoryDirector(
         stories.Current(frontierId) is { State: StoryState.Running }
             ? WriteChapterAsync(frontierId, now, cancellationToken)
             : Task.FromResult<string?>("No story is running.");
+
+    /// <summary>
+    /// Replaces the beat the running story's chapter is waiting on, and every beat after it, with new ones, and remembers
+    /// the activity as refused for the rest of the story. Returns a refusal or null; on a refusal the chapter is as it was.
+    /// </summary>
+    public async Task<string?> RefuseBeatAsync(string? frontierId, CancellationToken cancellationToken)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        if (stories.Current(frontierId) is not { } story)
+        {
+            return "No story is running.";
+        }
+
+        if (story.State != StoryState.Running)
+        {
+            return "Resume the story first.";
+        }
+
+        if (WithoutOdyssey(frontierId))
+        {
+            return NeedsOdyssey;
+        }
+
+        if (story.CurrentChapter is not { } key || book.Standing(frontierId, key) is not { Adventure.IsActive: true, IsDone: false } standing
+            || standing.CurrentBeat is not { } beat)
+        {
+            return "The story is not waiting on a beat.";
+        }
+
+        if (!standing.IsRefusable)
+        {
+            return "The Guardian beacon scan ends act one, so that beat cannot be swapped.";
+        }
+
+        if (IsWriting(frontierId))
+        {
+            return "A chapter is being written.";
+        }
+
+        lock (_gate)
+        {
+            if (!_rewriting.Add(commander))
+            {
+                return "A different beat is already being written.";
+            }
+        }
+
+        WritingChanged?.Invoke();
+
+        try
+        {
+            return await RefuseAsync(frontierId, story, standing, beat, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Writing a replacement beat failed");
+            return "The beat could not be written. Try again in a moment.";
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                _rewriting.Remove(commander);
+            }
+
+            WritingChanged?.Invoke();
+        }
+    }
+
+    private async Task<string?> RefuseAsync(string? frontierId, Story story, AdventureStanding standing, AdventureBeat beat, CancellationToken cancellationToken)
+    {
+        if (Hidden(story.Id) is not { } secret)
+        {
+            return $"The hidden layer of {story.Title} is missing from this build.";
+        }
+
+        var chapter = standing.Adventure;
+        var from = standing.Current;
+        var refusedKey = RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily);
+        var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
+
+        // The Story as it stood when this chapter was written: before the chapter itself was counted.
+        var before = story with { Chapters = [.. story.Chapters.SkipLast(1)] };
+        var number = story.Chapters.Count;
+        var finaleChapter = story.FinaleChapter;
+        var stage = finaleChapter is null ? StoryClues.Stage(before) : StoryStage.Finale;
+        var beaconBeat = chapter.Beats[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
+            ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty)
+            : null;
+        var reach = story.BeaconScanAt is null && beaconBeat is null
+            ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
+            : null;
+        var game = Game();
+        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
+        var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story))
+            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, refused)
+            : null;
+        var now = Clock();
+
+        var ask = new AdventureAsk(
+            longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
+            AdventureLength.Evening,
+            Chapter: chapter.Follows is { } follows ? AdventureChapter.Of(book.Store.For(frontierId), follows) : null,
+            Story: Asked(
+                story with { Refused = refused },
+                secret,
+                number,
+                now,
+                stage,
+                finaleChapter,
+                beaconBeat,
+                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
+                reach?.InReach != false,
+                longHaul,
+                comfort,
+                finaleChapter is null ? null : story.FinaleDestination),
+            Rewrite: new AdventureRewrite(chapter, from));
+
+        var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
+
+        if (outcome.Draft is not { } draft)
+        {
+            return outcome.Refusal ?? "Nothing came back.";
+        }
+
+        if (stories.Current(frontierId) is not { State: StoryState.Running } still
+            || still.PickedAt != story.PickedAt
+            || still.Chapters.Count != story.Chapters.Count)
+        {
+            return "The story changed while the beat was being written.";
+        }
+
+        if (book.ReplaceBeats(frontierId, chapter.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)
+        {
+            return refusal;
+        }
+
+        stories.Update(frontierId, story.Id, current =>
+            refusedKey is null || current.Refused.Contains(refusedKey) ? current : current with { Refused = [.. current.Refused, refusedKey] });
+
+        logger.LogInformation("{Title}: beat {Beat} of {Chapter} was refused and replaced", story.Title, from + 1, chapter.Name);
+        return null;
+    }
 
     /// <summary>
     /// Pauses a story whose chapter was abandoned or removed, and starts the next chapter on the pool when one
@@ -616,34 +782,24 @@ public sealed class StoryDirector(
 
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
-        var card = catalog.Find(story.Id);
         var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story) + 1)
-            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty)
+            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, story.Refused)
             : null;
 
         var ask = new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
-            Story: new AdventureStory(
-                story.Id,
-                story.Title,
-                story.PublicLayer,
-                StoryClues.Brief(story, secret),
+            Story: Asked(
+                story,
+                secret,
                 number,
-                Math.Max(0, (now - story.PickedAt).Days),
-                story.SinceBeacon(now)?.Days,
-                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System) : null,
-                card?.Level,
-                Stage(stage),
-                StoryClues.Beats(secret.Beats, story.Pacing, stage, reach?.InReach != false, finaleChapter),
+                now,
+                stage,
                 finaleChapter,
+                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System) : null,
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
-                story.Pacing.Name,
-                story.Pacing.FinaleChapters,
-                card?.Genre,
-                card?.Genre is { } genre ? ChapterFit.Elements.GetValueOrDefault(genre) : null,
-                ChapterFit.Size(story.Pacing),
+                reach?.InReach != false,
                 longHaul,
                 comfort,
                 finaleChapter > 1 ? story.FinaleDestination : null));
@@ -676,6 +832,47 @@ public sealed class StoryDirector(
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         return null;
+    }
+
+    private AdventureStory Asked(
+        Story story,
+        StorySecret secret,
+        int number,
+        DateTimeOffset now,
+        StoryStage stage,
+        int? finaleChapter,
+        AdventureBeacon? beacon,
+        AdventureBeaconAway? away,
+        bool beaconInReach,
+        bool longHaul,
+        AdventureActivity? comfort,
+        AdventureDestination? destination)
+    {
+        var card = catalog.Find(story.Id);
+
+        return new AdventureStory(
+            story.Id,
+            story.Title,
+            story.PublicLayer,
+            StoryClues.Brief(story, secret),
+            number,
+            Math.Max(0, (now - story.PickedAt).Days),
+            story.SinceBeacon(now)?.Days,
+            beacon,
+            card?.Level,
+            Stage(stage),
+            StoryClues.Beats(secret.Beats, story.Pacing, stage, beaconInReach, finaleChapter),
+            finaleChapter,
+            away,
+            story.Pacing.Name,
+            story.Pacing.FinaleChapters,
+            card?.Genre,
+            card?.Genre is { } genre ? ChapterFit.Elements.GetValueOrDefault(genre) : null,
+            ChapterFit.Size(story.Pacing),
+            longHaul,
+            comfort,
+            destination,
+            story.Refused);
     }
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>

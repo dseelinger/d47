@@ -129,6 +129,55 @@ public sealed class StoriesView : UserControl
         return box;
     }
 
+    /// <summary>
+    /// Asks whether to replace the beat the current story's chapter is waiting on, and on yes has a different one written.
+    /// <paramref name="doing"/> runs when the write starts; <paramref name="done"/> gets its refusal, or null.
+    /// </summary>
+    internal static void NotForMe(AdventureSurface surface, PanelPrompts prompts, Action doing, Action<string?> done)
+    {
+        if (surface.Stories is not { } director || director.RefusableBeat(surface.Commander()) is not { } beat)
+        {
+            done("The story is not waiting on a beat.");
+            return;
+        }
+
+        var activity = D47.Core.Adventures.RefusedActivities.Phrase(beat.Trigger.Kind, beat.Trigger.MissionFamily);
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "story.refuse",
+                "Not for me",
+                "Write a different beat?",
+                activity is null ? string.Empty : $"This story won't ask you to {activity} again.",
+                [new ChoiceOption("keep", "Keep it"), new ChoiceOption("yes", "Write a different one")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key != "yes")
+                {
+                    return;
+                }
+
+                if (!surface.ModelAvailable() || !surface.GalaxySearchOn())
+                {
+                    done(!surface.ModelAvailable()
+                        ? "A different beat needs a language model to write it, and none is configured."
+                        : "A different beat needs galaxy search, so its places can be checked. It is off in Settings.");
+                    return;
+                }
+
+                doing();
+
+                _ = Task.Run(async () =>
+                {
+                    var refusal = await director.RefuseBeatAsync(surface.Commander(), CancellationToken.None).ConfigureAwait(false);
+
+                    Dispatcher.UIThread.Post(() => done(refusal));
+                });
+            });
+    }
+
     private Control CurrentCard(Story story)
     {
         var commander = _surface.Commander();
@@ -138,6 +187,25 @@ public sealed class StoriesView : UserControl
         if (story.CurrentChapter is { } key && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
             buttons.Children.Add(Act("Read the chapter", () => _nav.Drill(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name))));
+        }
+
+        if (_director.RefusableBeat(commander) is not null && !_director.IsRewriting(commander))
+        {
+            buttons.Children.Add(Act("Not for me", () => NotForMe(
+                _surface,
+                _prompts,
+                () => _status.Say("Writing a different beat…"),
+                refusal =>
+                {
+                    if (refusal is null)
+                    {
+                        _status.Clear();
+                    }
+                    else
+                    {
+                        _status.Fail(refusal);
+                    }
+                })));
         }
 
         if (story.State == StoryState.Paused)
@@ -167,15 +235,22 @@ public sealed class StoriesView : UserControl
                 }
             }), destructive: true));
 
-        var row = Row(
-            AdventuresPage.RowName(story.Title),
-            AdventuresPage.RowSecondary(Standing(story, commander)),
-            buttons);
+        var row = story.Refused.Count == 0
+            ? Row(AdventuresPage.RowName(story.Title), AdventuresPage.RowSecondary(Standing(story, commander)), buttons)
+            : Row(
+                AdventuresPage.RowName(story.Title),
+                AdventuresPage.RowSecondary(Standing(story, commander)),
+                AdventuresPage.Muted(RefusedLine(story)),
+                buttons);
 
         row.Margin = new Thickness(0, 0, 0, 10);
         row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + story.Id, story.Title));
         return row;
     }
+
+    /// <summary>The activities the Commander refused in this story, in words.</summary>
+    internal static string RefusedLine(Story story) =>
+        "Refused: " + string.Join(", ", story.Refused.Select(D47.Core.Adventures.RefusedActivities.Phrase)) + ".";
 
     private string Standing(Story story, string? commander)
     {
@@ -185,6 +260,11 @@ public sealed class StoriesView : UserControl
         if (_director.IsWriting(commander))
         {
             return $"Your story — writing chapter {next}…";
+        }
+
+        if (_director.IsRewriting(commander))
+        {
+            return "Your story — writing a different beat…";
         }
 
         if (_director.WriteFailed(commander))

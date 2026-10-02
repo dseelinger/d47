@@ -99,6 +99,9 @@ public sealed record Story
     [JsonIgnore]
     public int? FinaleChapter => FinaleFrom is { } from && Chapters.Count >= from ? Chapters.Count - from + 1 : null;
 
+    /// <summary>The activities the Commander refused, as <see cref="RefusedActivities"/> keys. No later beat of this story asks for one.</summary>
+    public IReadOnlyList<string> Refused { get; init; } = [];
+
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
 

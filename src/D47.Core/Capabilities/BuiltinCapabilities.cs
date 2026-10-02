@@ -209,7 +209,10 @@ public static class BuiltinCapabilities
         AdventureCapability.StorySwitch? storySwitch = null,
 
         // Answers a finished story's ending.
-        AdventureCapability.EndingAnswer? endingAnswer = null) =>
+        AdventureCapability.EndingAnswer? endingAnswer = null,
+
+        // Replaces the beat a story chapter is waiting on.
+        AdventureCapability.BeatRefusal? beatRefusal = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -260,7 +263,7 @@ public static class BuiltinCapabilities
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch, endingAnswer),
+        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

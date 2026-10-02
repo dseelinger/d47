@@ -360,6 +360,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             Beats = beats,
             AcceptedAt = record.AcceptedAt,
             AbandonedAt = record.AbandonedAt,
+            RewrittenAt = record.RewrittenAt,
+            RewrittenFrom = record.RewrittenFrom,
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
@@ -426,6 +428,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         ],
         AcceptedAt = adventure.AcceptedAt,
         AbandonedAt = adventure.AbandonedAt,
+        RewrittenAt = adventure.RewrittenAt,
+        RewrittenFrom = adventure.RewrittenFrom,
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
@@ -464,6 +468,10 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public DateTimeOffset? AcceptedAt { get; set; }
 
         public DateTimeOffset? AbandonedAt { get; set; }
+
+        public DateTimeOffset? RewrittenAt { get; set; }
+
+        public int? RewrittenFrom { get; set; }
 
         public AdventureRecord? Previous { get; set; }
 

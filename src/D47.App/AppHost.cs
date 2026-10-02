@@ -1581,6 +1581,7 @@ public sealed class AppHost : IDisposable
 
         var storySwitch = new AdventureCapability.StorySwitch();
         var endingAnswer = new AdventureCapability.EndingAnswer();
+        var beatRefusal = new AdventureCapability.BeatRefusal();
 
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
@@ -1987,7 +1988,8 @@ public sealed class AppHost : IDisposable
                 exobiology: exobiology,
                 cartography: cartography,
                 storySwitch: storySwitch,
-                endingAnswer: endingAnswer));
+                endingAnswer: endingAnswer,
+                beatRefusal: beatRefusal));
 
         buildingRegistry.Dispose();
 
@@ -2174,6 +2176,7 @@ public sealed class AppHost : IDisposable
             "the Commander's gender changed", current => current with { CommanderGender = gender });
 
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
+        beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
         storyClue.Core = () => personas.Current;

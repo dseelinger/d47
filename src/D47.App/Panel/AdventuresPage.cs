@@ -405,6 +405,12 @@ public sealed class AdventuresPage : UserControl
                 page.Children.Add(new AdventureThinking());
             }
 
+            if (_surface.Stories?.IsRewriting(_surface.Commander()) == true)
+            {
+                page.Children.Add(new AdventureThinking());
+                page.Children.Add(Muted("Writing a different beat…"));
+            }
+
             // What to do next, spelled out (asked for 2026-08-22).
             if (standing.NextTrigger() is { } next)
             {
@@ -437,6 +443,11 @@ public sealed class AdventuresPage : UserControl
             // And the book's own event, for the same reason the root takes it: a beat firing advances the
             // step and starts the wait, and neither of those writes the file.
             _surface.Book.StirringChanged += Follow;
+            if (_surface.Stories is { } writer)
+            {
+                writer.WritingChanged += Follow;
+            }
+
             Fill();
         };
 
@@ -444,6 +455,10 @@ public sealed class AdventuresPage : UserControl
         {
             _surface.Book.Store.Changed -= Follow;
             _surface.Book.StirringChanged -= Follow;
+            if (_surface.Stories is { } writer)
+            {
+                writer.WritingChanged -= Follow;
+            }
         };
 
         return scroller;
@@ -472,6 +487,21 @@ public sealed class AdventuresPage : UserControl
                 "Write the next chapter" => Action(label, () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))),
                 _ => Action(label, () => Remove(adventure, confirm: true), destructive: true),
             });
+        }
+
+        if (standing.IsRefusable && _surface.Stories is { } director && !director.IsRewriting(_surface.Commander()))
+        {
+            bar.Children.Add(Action("Not for me", () => StoriesView.NotForMe(
+                _surface,
+                _prompts,
+                () => _surface.Say("Writing a different beat…"),
+                refusal =>
+                {
+                    if (refusal is not null)
+                    {
+                        _surface.Say(refusal);
+                    }
+                })));
         }
 
         return bar;

@@ -315,7 +315,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         // Told is cleared with the stamp: a story begun again is being told again, and the feed the Commander
         // reads is what happened this time round rather than a splice of two runs.
-        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Previous = null, Told = [] };
+        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, RewrittenAt = null, RewrittenFrom = null, Previous = null, Told = [] };
 
         if (store.Save(commander, begun) is { } refusal)
         {
@@ -331,6 +331,57 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         StirringChanged?.Invoke();
         return null;
+    }
+
+    /// <summary>
+    /// Replaces the beats from <paramref name="from"/> on in an adventure that is waiting on that beat. Events before
+    /// <paramref name="at"/> do not count toward the new beats. Returns a refusal or null.
+    /// </summary>
+    public string? ReplaceBeats(string? frontierId, string key, int from, IReadOnlyList<AdventureBeat> beats, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(beats);
+
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_gate)
+        {
+            if (store.Find(commander, key) is not { IsActive: true } adventure
+                || StandingOf(commander, adventure) is not { IsDone: false } standing
+                || standing.Current != from)
+            {
+                return "The story has moved on from that beat.";
+            }
+
+            var rewritten = adventure with
+            {
+                Beats = [.. adventure.Beats.Take(from), .. beats],
+                RewrittenAt = at,
+                RewrittenFrom = from,
+            };
+
+            if (AdventureValidation.Problems(rewritten) is { Count: > 0 } problems)
+            {
+                return string.Join(" ", problems);
+            }
+
+            if (store.Save(commander, rewritten) is { } refusal)
+            {
+                return refusal;
+            }
+
+            _standings[StandingKey(commander, key)] = StandingOf(commander, rewritten) with { Adventure = rewritten, Counted = 0 };
+
+            // A line waiting out its settle window hands off to the beat that was refused.
+            var queued = _moments.Select(moment => SameStory(moment, commander, key) ? moment with { Adventure = rewritten } : moment).ToList();
+            _moments.Clear();
+
+            foreach (var moment in queued)
+            {
+                _moments.Enqueue(moment);
+            }
+
+            return null;
+        }
     }
 
     /// <summary>Stop telling me this.</summary>

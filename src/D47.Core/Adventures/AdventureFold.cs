@@ -91,6 +91,10 @@ public sealed record AdventureStanding
         return buttons;
     }
 
+    /// <summary>Whether a story chapter is waiting on a beat the Commander may refuse: any but the beacon scan that ends act one.</summary>
+    public bool IsRefusable =>
+        Adventure is { StoryId: not null, IsActive: true } && CurrentBeat is { Trigger.Kind: not TriggerKind.Beacon };
+
     /// <summary>How far through, as a count (asked for 2026-08-22).</summary>
     public string? Step()
     {
@@ -440,6 +444,12 @@ public static class AdventureFold
         var current = standing.CurrentBeat;
 
         if (current is null)
+        {
+            return standing;
+        }
+
+        // A replaced beat counts only what happens after the replacement.
+        if (adventure.RewrittenFrom is { } from && standing.Current >= from && journalEvent.Timestamp < adventure.RewrittenAt)
         {
             return standing;
         }

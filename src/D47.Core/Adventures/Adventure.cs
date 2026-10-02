@@ -398,6 +398,12 @@ public sealed record Adventure
     /// <summary>Null unless abandoned.</summary>
     public DateTimeOffset? AbandonedAt { get; init; }
 
+    /// <summary>When the beats from <see cref="RewrittenFrom"/> on were last replaced; events before it do not count toward them.</summary>
+    public DateTimeOffset? RewrittenAt { get; init; }
+
+    /// <summary>The index of the first beat the last replacement wrote.</summary>
+    public int? RewrittenFrom { get; init; }
+
     /// <summary>
     /// The draft before the last revision, kept on a generated adventure that has not begun so Put it
     /// back costs a press and not a model call.

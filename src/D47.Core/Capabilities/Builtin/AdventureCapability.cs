@@ -13,6 +13,8 @@ public static class AdventureCapability
 
     public const string AnswerEndingTool = "answer_story_ending";
 
+    public const string RefuseBeatTool = "refuse_story_beat";
+
     private const string NoStory = "No story is running.";
 
     /// <summary>Switches the Commander's story on or off, returning a refusal or null. The app sets it once the story exists.</summary>
@@ -27,7 +29,13 @@ public static class AdventureCapability
         public Func<int?, StoryAnswer> Answer { get; set; } = _ => StoryAnswer.Refused("No ending is waiting for an answer.");
     }
 
-    public static CapabilityDescriptor Create(StorySwitch? storySwitch = null, EndingAnswer? endingAnswer = null) => new()
+    /// <summary>Replaces the beat the story is waiting on, returning a refusal or null. The app sets it once the story exists.</summary>
+    public sealed class BeatRefusal
+    {
+        public Func<CancellationToken, Task<string?>> Refuse { get; set; } = _ => Task.FromResult<string?>(NoStory);
+    }
+
+    public static CapabilityDescriptor Create(StorySwitch? storySwitch = null, EndingAnswer? endingAnswer = null, BeatRefusal? beatRefusal = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -35,7 +43,7 @@ public static class AdventureCapability
         Summary =
             "Stories the Commander flies, written by them or by the ship's AI, and advanced by "
             + "their own journal. Driven from the Adventures tab; nothing here is callable by the "
-            + "model. The Commander can pause and resume a running story by voice.",
+            + "model. The Commander can pause and resume a running story by voice, and refuse the beat it is waiting on.",
 
         // The phrases that genuinely work.
         Examples =
@@ -46,6 +54,7 @@ public static class AdventureCapability
             "resume the story",
             "accept the ending",
             "choose ending two",
+            "this beat is not for me",
         ],
 
         // None.
@@ -57,6 +66,7 @@ public static class AdventureCapability
             Switch(PauseTool, "Pause the Commander's running story: no beats, nudges, clues or story chatter until it is resumed.", false, ["pause the story", "pause my story"], storySwitch),
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
+            Refuse(beatRefusal),
         ],
     };
 
@@ -90,6 +100,27 @@ public static class AdventureCapability
 
             return Task.FromResult(answer.Refusal is { } refusal ? ToolResult.Error(refusal) : ToolResult.Ok("Your answer is recorded."));
         },
+    };
+
+    private static ToolDefinition Refuse(BeatRefusal? beatRefusal) => new()
+    {
+        Name = RefuseBeatTool,
+        Description =
+            "Refuse the beat the Commander's story chapter is waiting on and write a different one in its place. The story remembers "
+            + "the activity and does not ask for it again. The Commander's choice alone.",
+        Commands =
+        [
+            new ToolCommandPhrase("this beat is not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("give me a different beat", new Dictionary<string, string>(StringComparer.Ordinal)),
+        ],
+
+        // Skipping a beat is the Commander's decision; the model is refused.
+        Protected = true,
+        Handler = async (_, cancellationToken) =>
+            await (beatRefusal?.Refuse(cancellationToken) ?? Task.FromResult<string?>(NoStory)).ConfigureAwait(false) is { } refusal
+                ? ToolResult.Error(refusal)
+                : ToolResult.Ok("That beat is replaced, and the story will not ask for it again."),
     };
 
     private static ToolDefinition Switch(string name, string description, bool on, string[] phrases, StorySwitch? storySwitch) => new()

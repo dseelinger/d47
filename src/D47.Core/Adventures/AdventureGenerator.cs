@@ -36,7 +36,11 @@ public sealed record AdventureAsk(
     bool ThisShipOnly = false,
     string? Brief = null,
     AdventureChapter? Chapter = null,
-    AdventureStory? Story = null);
+    AdventureStory? Story = null,
+    AdventureRewrite? Rewrite = null);
+
+/// <summary>A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.</summary>
+public sealed record AdventureRewrite(Adventure Chapter, int From);
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System);
@@ -93,7 +97,8 @@ public sealed record AdventureStory(
     string? ChapterSize = null,
     bool LongHaul = false,
     AdventureActivity? Comfort = null,
-    AdventureDestination? Destination = null);
+    AdventureDestination? Destination = null,
+    IReadOnlyList<string>? Refused = null);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -195,6 +200,17 @@ public sealed class AdventureGenerator(
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+
+        if (ask.Rewrite is { } rewrite)
+        {
+            var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
+            var tail = await AskJsonAsync(
+                BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
+                4000,
+                cancellationToken).ConfigureAwait(false);
+
+            return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
+        }
 
         var spineJson = await AskJsonAsync(SpineInstruction(ask, facts, notable, candidates), 1500, cancellationToken).ConfigureAwait(false);
 
@@ -310,20 +326,22 @@ public sealed class AdventureGenerator(
                 notes);
         }
 
-        var adventure = new Adventure
-        {
-            Key = AdventureValidation.Key(name),
-            Name = name.Trim(),
-            Source = AdventureSource.Generated,
-            Written = now,
-            WrittenBy = personaId(),
-            Spine = spine,
-            Opening = read.Opening,
-            Beats = resolved.Beats,
-            Previous = previous is null ? null : previous with { Previous = null },
-            Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
-            StoryId = ask.Story?.Id ?? previous?.StoryId,
-        };
+        var adventure = ask.Rewrite is { } rewrite
+            ? rewrite.Chapter with { Beats = [.. rewrite.Chapter.Beats.Take(rewrite.From), .. resolved.Beats] }
+            : new Adventure
+            {
+                Key = AdventureValidation.Key(name),
+                Name = name.Trim(),
+                Source = AdventureSource.Generated,
+                Written = now,
+                WrittenBy = personaId(),
+                Spine = spine,
+                Opening = read.Opening,
+                Beats = resolved.Beats,
+                Previous = previous is null ? null : previous with { Previous = null },
+                Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
+                StoryId = ask.Story?.Id ?? previous?.StoryId,
+            };
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
         {
@@ -834,7 +852,7 @@ public sealed class AdventureGenerator(
         var last = finale >= story.FinaleChapters;
         const string Landing = "That beat may be farther than the reach; every other hop keeps to it.";
 
-        if (finale == 1)
+        if (finale == 1 && story.Destination is null)
         {
             var limit = AdventureDestination.Limit(facts.RadiusLightYears, story.FinaleChapters);
 
@@ -922,6 +940,14 @@ public sealed class AdventureGenerator(
                 $"This chapter takes the Commander outside their comfort zone: of the activities d47 tracks, {comfort.Name} is the one their "
                 + $"statistics show they have done least. The chapter must contain {comfort.Beat}.");
         }
+
+        if (story.Refused is { Count: > 0 } refused)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                "The Commander has refused these activities for this story, and no beat may ask for any of them: "
+                + string.Join("; ", refused.Select(RefusedActivities.Phrase)) + ".");
+        }
     }
 
     private static string BeatsInstruction(
@@ -937,10 +963,21 @@ public sealed class AdventureGenerator(
         IReadOnlyList<AdventureRemark>? exchange,
         string? remark)
     {
-        var (count, sheet) = Structure(ask.Length);
+        var rewrite = ask.Rewrite;
+        var (count, sheet) = rewrite is null
+            ? Structure(ask.Length)
+            : (Math.Max(1, rewrite.Chapter.Beats.Count - rewrite.From),
+               string.Join(", ", rewrite.Chapter.Beats.Skip(rewrite.From).Select(beat => beat.Function ?? "continuation")));
         var text = new StringBuilder();
 
-        if (draft is null)
+        if (rewrite is not null)
+        {
+            text.AppendLine(
+                "You wrote a chapter of a story the Commander is flying, and they are partway through it. They have refused the beat "
+                + "they were on, so write new beats to take its place and the place of every beat after it. The beats already done stay "
+                + "as they are.");
+        }
+        else if (draft is null)
         {
             text.AppendLine(
                 "You have written the spine of a story the Commander will fly. Now write its beats against that "
@@ -962,6 +999,12 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Stake: {spine.Stake}");
         text.AppendLine($"Turn: {spine.Turn}");
         text.AppendLine($"Ending: {spine.Ending}");
+
+        if (rewrite is not null)
+        {
+            AppendDone(text, rewrite);
+        }
+
         text.AppendLine();
         text.Append(facts.Describe());
 
@@ -992,7 +1035,9 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
-        text.AppendLine($"Structure: exactly {count} beats, in this order of function: {sheet}.");
+        text.AppendLine(rewrite is null
+            ? $"Structure: exactly {count} beats, in this order of function: {sheet}."
+            : $"Structure: exactly {count} beats, which replace beat {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
 
         text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "twenty-seven" : "twenty-eight")} things, and nothing else exists:");
@@ -1101,11 +1146,38 @@ public sealed class AdventureGenerator(
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
             + "\"engineer\": string|null, \"stage\": string|null, \"line\": string}]"
-            + (ask.Story?.FinaleChapter == 1 ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
+            + (ask.Story is { FinaleChapter: 1, Destination: null } ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
             + "}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
 
         return text.ToString();
+    }
+
+    /// <summary>The beats already done and the one the Commander refused, so the new beats continue the chapter.</summary>
+    private static void AppendDone(StringBuilder text, AdventureRewrite rewrite)
+    {
+        text.AppendLine();
+
+        if (rewrite.From > 0)
+        {
+            text.AppendLine("The beats the Commander has already done:");
+
+            foreach (var (beat, index) in rewrite.Chapter.Beats.Take(rewrite.From).Select((beat, index) => (beat, index)))
+            {
+                text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()} — \"{beat.Line}\"");
+            }
+        }
+        else
+        {
+            text.AppendLine("The Commander has not done a beat of this chapter yet.");
+        }
+
+        var refused = rewrite.Chapter.Beats[rewrite.From];
+
+        text.AppendLine($"The beat the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — \"{refused.Line}\"");
+        text.AppendLine(
+            "Write a different beat in its place, not the same thing to do and not the same place. Continue from the last beat done; "
+            + "do not restart or retell the chapter. It keeps its spine and its ending.");
     }
 
     private static string Render(Adventure draft)
@@ -1325,8 +1397,11 @@ public sealed class AdventureGenerator(
         // The trigger the beat before this one stood on, or null where it was refused.
         AdventureTrigger? lastStood = null;
 
+        // The beats of a chapter being rewritten that stay, which count toward the chapter's rules.
+        IReadOnlyList<AdventureBeat> kept = ask.Rewrite is { } rewrite ? [.. rewrite.Chapter.Beats.Take(rewrite.From)] : [];
+
         var finale = ask.Story?.FinaleChapter;
-        var (destination, unnamed) = finale == 1
+        var (destination, unnamed) = finale == 1 && ask.Story!.Destination is null
             ? await DestinationAsync(named, facts, ask.Story!, resolver, cancellationToken).ConfigureAwait(false)
             : (finale is null ? null : ask.Story!.Destination, null);
         var closing = finale >= ask.Story?.FinaleChapters && destination is not null;
@@ -1527,16 +1602,29 @@ public sealed class AdventureGenerator(
             refusals.Add($"The last beat must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
         }
 
-        if (ask.Story is { Chapter: > 1 } && beats.Count(beat => IsTravel(beat.Kind)) is var travel and > MostTravel)
+        if (ask.Story is { Chapter: > 1 }
+            && beats.Count(beat => IsTravel(beat.Kind)) + kept.Count(beat => IsTravel(beat.Trigger.Kind)) is var travel and > MostTravel)
         {
             refusals.Add(
                 $"The chapter has {travel} travel beats (arrive, dock, land or scan); from chapter two on, no more than {MostTravel} may be. "
                 + "Make the others activities.");
         }
 
-        if (ask.Story?.Comfort is { } comfort && !beats.Any(beat => comfort.Matches(beat.Kind, beat.MissionFamily)))
+        if (ask.Story?.Comfort is { } comfort
+            && !beats.Any(beat => comfort.Matches(beat.Kind, beat.MissionFamily))
+            && !kept.Any(beat => comfort.Matches(beat.Trigger.Kind, beat.Trigger.MissionFamily)))
         {
             refusals.Add($"This chapter leaves the comfort zone and must contain {comfort.Beat}, for {comfort.Name}.");
+        }
+
+        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
+        {
+            if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily))
+            {
+                refusals.Add(
+                    $"Beat {index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
+                    + "which they refused for this story; use another kind of beat.");
+            }
         }
 
         return new Resolved(resolved, refusals, destination);
