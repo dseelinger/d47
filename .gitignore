@@ -31,3 +31,6 @@ worker/.wrangler/
 
 # The last triage's grid, read by the issue launcher. A snapshot of a queue that moves.
 .claude/triage-state.json
+
+# Avatar clips are published to the avatars-1 release, not committed
+design/avatars/
