@@ -108,8 +108,8 @@ A story beat can also wait for exploration, on-foot and other activities done a 
 on foot, collecting items, analysing organic samples, mapping bodies, surveying signals such as Thargoid or a
 ring hotspot, landing at a wreck, logging codex entries, selling exploration or organic data, salvaging cargo,
 dropping into a signal source, rescuing, launching the SRV and hiring crew. A beat can also wait for an engineer
-to invite or unlock you (an on-foot engineer is seen only at your next login), for a new suit or weapon mod to appear in your suit loadout, or for a change to your ship's livery.
-These are seen when the game next writes the loadout, so a beat may fire some minutes after the change. The story's card shows the running total.
+to invite or unlock you (an on-foot engineer is seen only at your next login), for a new suit or weapon mod to appear in your suit loadout, for a change to your ship's livery, for your fleet carrier to jump to a new system, to buy a fleet carrier, to join a wing or another Commander's crew, or to join or found a squadron. A chapter only asks for the carrier and squadron kinds where you can do them: a fleet carrier at 7,000,000,000 credits or more at the last load and none owned, founding a squadron at 10,000,000 and none joined.
+Suit mods and livery are seen when the game next writes the loadout, so a beat may fire some minutes after the change. The story's card shows the running total.
 
 ## 1.26.0 — Adventures run in chapters
 

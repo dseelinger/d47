@@ -1039,8 +1039,9 @@ public sealed class AdventureGenerator(
             ? $"Structure: exactly {count} beats, in this order of function: {sheet}."
             : $"Structure: exactly {count} beats, which replace beat {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
+        var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
-        text.AppendLine($"Each beat waits for exactly one of {(beacon is null ? "twenty-seven" : "twenty-eight")} things, and nothing else exists:");
+        text.AppendLine($"Each beat waits for exactly one of {Number(27 + team.Count + (beacon is null ? 0 : 1))} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
@@ -1074,8 +1075,13 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"crew\": the Commander hires \"count\" crew members.");
         text.AppendLine("- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.");
         text.AppendLine("- \"livery\": the Commander changes their ship's paint, decals, name, colours or kit \"count\" times. It names no item: the Commander uses what they own.");
+        foreach (var kind in team)
+        {
+            text.AppendLine(TeamLine(kind));
+        }
+
         text.AppendLine("No beat may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
-        text.AppendLine("Every kind from bounty on is counted, except engineer, which is met once: only what happens after the beat before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
+        text.AppendLine("Every kind from bounty on is counted, except engineer and those marked once, which are met once: only what happens after the beat before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
 
         if (beacon is not null)
         {
@@ -1141,6 +1147,7 @@ public sealed class AdventureGenerator(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
             + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
             + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\"|\"suitmod\"|\"livery\""
+            + string.Concat(team.Select(kind => $"|\"{kind.ToString().ToLowerInvariant()}\""))
             + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
             + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
@@ -1152,6 +1159,28 @@ public sealed class AdventureGenerator(
 
         return text.ToString();
     }
+
+    private static string Number(int count) => count switch
+    {
+        27 => "twenty-seven",
+        28 => "twenty-eight",
+        29 => "twenty-nine",
+        30 => "thirty",
+        31 => "thirty-one",
+        32 => "thirty-two",
+        33 => "thirty-three",
+        _ => count.ToString(CultureInfo.InvariantCulture),
+    };
+
+    private static string TeamLine(TriggerKind kind) => kind switch
+    {
+        TriggerKind.CarrierBuy => "- \"carrierbuy\": the Commander buys a fleet carrier, once.",
+        TriggerKind.CarrierJump => "- \"carrierjump\": the Commander's fleet carrier jumps to \"count\" different systems. The Commander need not ride it.",
+        TriggerKind.Wing => "- \"wing\": the Commander joins a wing, or another player joins theirs, \"count\" times. It needs another player, so never make it the only way forward; the Commander can refuse it.",
+        TriggerKind.Multicrew => "- \"multicrew\": the Commander joins another player's ship as crew \"count\" times. It needs another player, so never make it the only way forward; the Commander can refuse it.",
+        TriggerKind.Squadron => "- \"squadron\": the Commander joins a squadron, once.",
+        _ => "- \"squadronfound\": the Commander founds a squadron, once.",
+    };
 
     /// <summary>The beats already done and the one the Commander refused, so the new beats continue the chapter.</summary>
     private static void AppendDone(StringBuilder text, AdventureRewrite rewrite)
@@ -1267,7 +1296,7 @@ public sealed class AdventureGenerator(
         };
 
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
-        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || Kind == TriggerKind.Engineer ? Written().Describe() : Kind switch
+        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || Kind == TriggerKind.Engineer ? Written().Describe() : Kind switch
         {
             TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
@@ -1444,6 +1473,10 @@ public sealed class AdventureGenerator(
                     trigger = written;
                 }
             }
+            else if (AdventureTrigger.IsOnceKind(beat.Kind))
+            {
+                trigger = new AdventureTrigger { Kind = beat.Kind };
+            }
             else if (AdventureTrigger.IsCountedKind(beat.Kind))
             {
                 var counted = beat.Written();
@@ -1619,6 +1652,11 @@ public sealed class AdventureGenerator(
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
+            if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is { } why)
+            {
+                refusals.Add($"Beat {index + 1} ({beat.Title}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" beat, but {why}; use another kind of beat.");
+            }
+
             if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily))
             {
                 refusals.Add(
@@ -1757,6 +1795,7 @@ public sealed class AdventureGenerator(
         CarrierState Carrier,
         RankState Ranks,
         long? Credits,
+        bool InSquadron = false,
         double? DestinationLightYears = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
@@ -1786,7 +1825,8 @@ public sealed class AdventureGenerator(
                 fleet,
                 carrier,
                 state?.Ranks ?? RankState.Empty,
-                state?.Session.Balance);
+                state?.Session.Balance,
+                state?.Squadron.IsMember == true);
         }
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;

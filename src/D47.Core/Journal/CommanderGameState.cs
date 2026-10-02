@@ -29,6 +29,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Their squadron's carrier, if they are in a squadron that has one (#230).</summary>
     public CarrierState SquadronCarrier { get; private set; } = CarrierState.NoSquadron;
 
+    /// <summary>The squadron they are in, if any.</summary>
+    public SquadronState Squadron { get; private set; } = SquadronState.None;
+
     /// <summary>Every other ship they own, and where.</summary>
     public FleetRegistry Fleet { get; internal set; } = FleetRegistry.Empty;
 
@@ -125,6 +128,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Kit = Kit.Apply(journalEvent);
         Carrier = Carrier.Apply(journalEvent);
         SquadronCarrier = SquadronCarrier.Apply(journalEvent);
+        Squadron = Squadron.Apply(journalEvent);
         // After Location, for the reason Colonisation below is: storing a ship happens wherever the Commander
         // is standing, and neither ShipyardSwap nor ShipyardBuy names a place.
         Fleet = Fleet.Apply(journalEvent, Location.StarSystem, Location.StationName);

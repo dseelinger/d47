@@ -26,6 +26,12 @@ public static class ChapterFit
     /// <summary>Credits at the last load from which a chapter may go anywhere.</summary>
     public const long LongHaulCredits = 250_000_000;
 
+    /// <summary>Credits at the last load from which a chapter may have the Commander buy a fleet carrier.</summary>
+    public const long FleetCarrierCredits = 7_000_000_000;
+
+    /// <summary>Credits at the last load from which a chapter may have the Commander found a squadron.</summary>
+    public const long SquadronFoundCredits = 10_000_000;
+
     /// <summary>The hull that allows a long haul whatever the credits: the Caspian Explorer.</summary>
     public const string LongHaulHull = "explorer_nx";
 

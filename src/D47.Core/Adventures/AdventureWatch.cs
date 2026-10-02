@@ -5,9 +5,12 @@ using D47.Core.Journal;
 namespace D47.Core.Adventures;
 
 /// <summary>What one <c>SuitLoadout</c> or <c>Loadout</c> changed against the last one seen for the same suit, weapon or ship.</summary>
-public sealed record AdventureObservation(IReadOnlyDictionary<string, string> Seen, IReadOnlyList<string> NewMods, bool LiveryChanged);
+public sealed record AdventureObservation(IReadOnlyDictionary<string, string> Seen, IReadOnlyList<string> NewMods, bool LiveryChanged, bool CarrierMoved = false);
 
-/// <summary>Compares each loadout with the previous one, for the <see cref="TriggerKind.SuitMod"/> and <see cref="TriggerKind.Livery"/> beats.</summary>
+/// <summary>
+/// Compares each loadout, and each fleet carrier position, with the previous one, for the <see cref="TriggerKind.SuitMod"/>,
+/// <see cref="TriggerKind.Livery"/> and <see cref="TriggerKind.CarrierJump"/> beats.
+/// </summary>
 public static class AdventureWatch
 {
     /// <summary>The ship module slots that are cosmetic, as <c>Loadout</c> names them.</summary>
@@ -35,6 +38,7 @@ public static class AdventureWatch
         {
             "SuitLoadout" => ObserveSuit(seen, journalEvent.Raw),
             "Loadout" => ObserveShip(seen, journalEvent.Raw),
+            "CarrierLocation" => ObserveCarrier(seen, journalEvent.Raw),
             _ => new AdventureObservation(seen, [], false),
         };
     }
@@ -49,6 +53,7 @@ public static class AdventureWatch
         {
             TriggerKind.SuitMod => observation.NewMods.Count(mod => Same(trigger.Filter, mod)),
             TriggerKind.Livery => observation.LiveryChanged ? 1 : 0,
+            TriggerKind.CarrierJump => observation.CarrierMoved ? 1 : 0,
             _ => 0,
         };
     }
@@ -112,6 +117,28 @@ public static class AdventureWatch
         }
 
         return new AdventureObservation(new Dictionary<string, string>(seen, StringComparer.Ordinal) { [key] = signature }, [], known);
+    }
+
+    /// <summary>A fleet carrier's first position is only remembered; a squadron carrier is ignored.</summary>
+    private static AdventureObservation ObserveCarrier(IReadOnlyDictionary<string, string> seen, System.Text.Json.JsonElement raw)
+    {
+        if (string.Equals(raw.String("CarrierType"), "SquadronCarrier", StringComparison.OrdinalIgnoreCase)
+            || raw.Long("CarrierID") is not { } carrier
+            || raw.Long("SystemAddress") is not { } address)
+        {
+            return new AdventureObservation(seen, [], false);
+        }
+
+        var key = "carrier:" + carrier.ToString(CultureInfo.InvariantCulture);
+        var here = address.ToString(CultureInfo.InvariantCulture);
+        var known = seen.TryGetValue(key, out var before);
+
+        if (known && before == here)
+        {
+            return new AdventureObservation(seen, [], false);
+        }
+
+        return new AdventureObservation(new Dictionary<string, string>(seen, StringComparer.Ordinal) { [key] = here }, [], false, known);
     }
 
     private static IEnumerable<string> Names(System.Text.Json.JsonElement element, string property) =>

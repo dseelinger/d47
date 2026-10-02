@@ -179,7 +179,7 @@ card says which adventure it follows, and it is accepted, flown and checked like
 
 ### What a beat can be
 
-Twenty-six triggers, and every one is a comparison on a structured field rather than on a name:
+Thirty-four triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -211,6 +211,12 @@ Twenty-six triggers, and every one is a comparison on a structured field rather 
 | Hire crew | `CrewHire` events | anything else |
 | Apply suit mods | each mod in `SuitMods` for a `SuitID`, or in `WeaponMods` for a `SuitModuleID`, that the previous `SuitLoadout` for it lacked, optionally one mod name such as `suit_nightvision` | anything else |
 | Change livery | a `Loadout` whose cosmetic slots (`PaintJob`, `Decal1` to `Decal3`, `ShipName0`, `ShipName1`, `ShipID0`, `ShipID1`, `EngineColour`, `WeaponColour`, `StringLights`, `VesselVoice`, `Bobble01` to `Bobble10`, `ShipKit*`) differ from the previous `Loadout` for the same `ShipID` | anything else |
+| Buy a fleet carrier | a `CarrierBuy` event, not for a squadron carrier | anything else |
+| Jump the fleet carrier | a `CarrierLocation` whose `SystemAddress` differs from the last one seen for the same `CarrierID`, for a carrier whose `CarrierType` is not `SquadronCarrier` | the carrier's name |
+| Join a wing | `WingJoin` or `WingAdd` events | the other player's name |
+| Join another Commander's crew | `JoinACrew` events | the captain's name |
+| Join a squadron | a `JoinedSquadron` event | the squadron's name |
+| Found a squadron | a `SquadronCreated` event | the squadron's name |
 
 Only a stock story's chapter one uses the beacon trigger, as its last beat, and you cannot add one on the
 form.
@@ -222,7 +228,19 @@ for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it fr
 mission families are set aside, and no beat uses or counts them: `Mission_Massacre_Skimmer`,
 `Mission_Disable`, `Mission_Hack`, `Mission_OnFoot_Hack`, `Mission_Scan`, `Mission_RS_` and `Mission_DS_`.
 A story steers illegal missions to Anarchy space but does not enforce it. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The chapter writer is given up to five Anarchy systems within reach and must put an illegal mission beat directly after an arrive or dock beat in one of them, or use no illegal family when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission beat is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
-A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is written, so the beat may fire some minutes after the change. A suit, weapon or ship with no earlier loadout is only remembered: its first loadout counts nothing. A livery beat names no paint job, kit or decal. No beat may need an ARX purchase, because the journal cannot show one; the chapter writer is told so.
+A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is written, so the beat may fire some minutes after the change. A suit, weapon or ship with no earlier loadout is only remembered: its first loadout counts nothing. A livery beat names no paint job, kit or decal. The first `CarrierLocation` seen for a carrier sets the baseline and counts nothing; a squadron carrier's is ignored. No beat may need an ARX purchase, because the journal cannot show one; the chapter writer is told so.
+
+**Carrier, squadron and team beats.** The chapter writer is told about a kind only where the Commander can do it, and a chapter that contains one it was not told about is refused:
+
+| Kind | Allowed when |
+|---|---|
+| `carrierbuy` (once) | 7,000,000,000 credits at the last load, and no fleet carrier owned |
+| `carrierjump` (counted) | a fleet carrier owned |
+| `wing` and `multicrew` (counted) | always |
+| `squadron` (once) | not in a squadron |
+| `squadronfound` (once) | 10,000,000 credits at the last load, and not in a squadron |
+
+A Commander is in a squadron from a `SquadronStartup`, `JoinedSquadron` or `SquadronCreated` until a `LeftSquadron`, `KickedFromSquadron` or `DisbandedSquadron`, or until the next `LoadGame` without a `SquadronStartup`. A wing or multicrew beat needs another player, so the writer is told the Commander can refuse it, and neither is ever the comfort-zone activity.
 The form offers the first six kinds and shows any other beat without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer beat at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer. An on-foot engineer is written only in that startup list, so an engineer beat naming one fires at the first login after the stage is reached, not at the moment.
 
 Nothing a stranger can choose — a ship name, an in-game message, a mission title — can be a

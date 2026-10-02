@@ -102,6 +102,24 @@ public enum TriggerKind
 
     /// <summary><c>Loadout</c> events whose cosmetic slots differ from the ship's previous one.</summary>
     Livery,
+
+    /// <summary>A <c>CarrierBuy</c> event for a fleet carrier.</summary>
+    CarrierBuy,
+
+    /// <summary>A <c>CarrierLocation</c> event that puts the Commander's fleet carrier in a different system from the last one seen.</summary>
+    CarrierJump,
+
+    /// <summary><c>WingJoin</c> and <c>WingAdd</c> events.</summary>
+    Wing,
+
+    /// <summary><c>JoinACrew</c> events.</summary>
+    Multicrew,
+
+    /// <summary>A <c>JoinedSquadron</c> event.</summary>
+    Squadron,
+
+    /// <summary>A <c>SquadronCreated</c> event.</summary>
+    SquadronFound,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -158,7 +176,11 @@ public sealed record AdventureTrigger
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind >= TriggerKind.Bounty && kind != TriggerKind.Engineer;
+        kind >= TriggerKind.Bounty && kind != TriggerKind.Engineer && !IsOnceKind(kind);
+
+    /// <summary>Whether this kind is met by one event and carries nothing else.</summary>
+    public static bool IsOnceKind(TriggerKind kind) =>
+        kind is TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound;
 
     /// <summary>Whether a Commander can write this kind on the authored form.</summary>
     public static bool IsAuthorable(TriggerKind kind) => kind <= TriggerKind.Beacon;
@@ -173,6 +195,7 @@ public sealed record AdventureTrigger
         TriggerKind.Rank => Career is not null && Rank is not null,
         TriggerKind.Board => ShipType is not null,
         TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
+        TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound => true,
         _ => false,
     };
 
@@ -207,6 +230,12 @@ public sealed record AdventureTrigger
         TriggerKind.Crew => $"hire {Counted("crew member", "crew members")}",
         TriggerKind.SuitMod => $"apply {Counted(SuitMods(one: true), SuitMods(one: false))}",
         TriggerKind.Livery => $"change your ship's livery {Times()}",
+        TriggerKind.CarrierBuy => "buy a fleet carrier",
+        TriggerKind.CarrierJump => $"jump your fleet carrier to {Counted("new system", "new systems")}",
+        TriggerKind.Wing => $"join a wing, or have someone join yours, {Times()}",
+        TriggerKind.Multicrew => $"join another Commander's crew {Times()}",
+        TriggerKind.Squadron => "join a squadron",
+        TriggerKind.SquadronFound => "found a squadron",
         _ => Kind.ToString(),
     };
 
@@ -241,6 +270,9 @@ public sealed record AdventureTrigger
             TriggerKind.Crew => $"Crew hired: {of}",
             TriggerKind.SuitMod => $"{Capital(SuitMods(one: false))}: {of}",
             TriggerKind.Livery => $"Livery changes: {of}",
+            TriggerKind.CarrierJump => $"Carrier jumps: {of}",
+            TriggerKind.Wing => $"Wing joins: {of}",
+            TriggerKind.Multicrew => $"Crews joined: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }

@@ -298,9 +298,9 @@ public sealed class AdventureGeneratorTests
         Assert.Null(Careers.Match(""));
     }
 
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1)
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1, params string[] more)
     {
-        var state = State(combat);
+        var state = State(combat, more);
 
         return new AdventureGenerator(
             () => provider,
@@ -317,7 +317,7 @@ public sealed class AdventureGeneratorTests
     }
 
     /// <summary>A Commander in Oppi, where the 2026-08-22 report was made, holding Trade 7.</summary>
-    private static CommanderGameState State(int combat)
+    private static CommanderGameState State(int combat, string[] more)
     {
         var store = new GameStateStore();
 
@@ -326,7 +326,7 @@ public sealed class AdventureGeneratorTests
                      """{ "timestamp":"2026-08-22T11:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
                      $$"""{ "timestamp":"2026-08-22T11:00:01Z", "event":"Rank", "Combat":{{combat}}, "Trade":7, "Explore":5, "Soldier":0, "Exobiologist":0, "Empire":1, "Federation":1, "CQC":0 }""",
                      """{ "timestamp":"2026-08-22T11:01:00Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[3.68750,-44.62500,131.00000], "Docked":false }""",
-                 })
+                 }.Concat(more))
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed), line);
             store.Apply(parsed!);

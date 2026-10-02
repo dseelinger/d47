@@ -66,7 +66,8 @@ public static class AdventureValidation
     /// <summary>Every kind, in the words the file uses.</summary>
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
-         "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery"];
+         "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound"];
 
     public static bool TryKind(string? text, out TriggerKind kind)
     {

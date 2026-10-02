@@ -25,7 +25,7 @@ public sealed record AdventureStanding
     /// <summary>The running total toward the current beat when it is counted: events, or tons sold or refined.</summary>
     public int Counted { get; init; }
 
-    /// <summary>The last suit mods and ship cosmetics seen for each suit, weapon and ship, for <see cref="AdventureWatch"/>.</summary>
+    /// <summary>The last suit mods, ship cosmetics and fleet carrier system seen for each suit, weapon, ship and carrier, for <see cref="AdventureWatch"/>.</summary>
     public IReadOnlyDictionary<string, string> Seen { get; init; } = AdventureWatch.Nothing;
 
     /// <summary>The index of the beat the story is waiting on.</summary>
@@ -325,6 +325,18 @@ public static class AdventureFold
 
             TriggerKind.Crew => journalEvent.Kind is "CrewHire",
 
+            TriggerKind.CarrierBuy =>
+                journalEvent.Kind is "CarrierBuy"
+                && !string.Equals(raw.String("CarrierType"), "SquadronCarrier", StringComparison.OrdinalIgnoreCase),
+
+            TriggerKind.Wing => journalEvent.Kind is "WingJoin" or "WingAdd",
+
+            TriggerKind.Multicrew => journalEvent.Kind is "JoinACrew",
+
+            TriggerKind.Squadron => journalEvent.Kind is "JoinedSquadron",
+
+            TriggerKind.SquadronFound => journalEvent.Kind is "SquadronCreated",
+
             _ => false,
         };
     }
@@ -454,7 +466,7 @@ public static class AdventureFold
             return standing;
         }
 
-        var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery;
+        var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump;
         var gained = watched ? AdventureWatch.Amount(current.Trigger, observation) : 0;
 
         if (watched ? gained == 0 || !current.Trigger.IsResolved : !Matches(current.Trigger, journalEvent, standing.SystemAddress))

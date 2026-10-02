@@ -88,6 +88,12 @@ public static class RefusedActivities
         TriggerKind.Crew => "hire crew",
         TriggerKind.SuitMod => "apply suit mods",
         TriggerKind.Livery => "change your ship's livery",
+        TriggerKind.CarrierBuy => "buy a fleet carrier",
+        TriggerKind.CarrierJump => "jump a fleet carrier",
+        TriggerKind.Wing => "join a wing",
+        TriggerKind.Multicrew => "join another Commander's crew",
+        TriggerKind.Squadron => "join a squadron",
+        TriggerKind.SquadronFound => "found a squadron",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }
