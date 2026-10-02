@@ -4,6 +4,7 @@ using System.Text.Json;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Stories;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Adventures;
@@ -811,6 +812,14 @@ public sealed class AdventureGenerator(
 
         AppendFit(text, story);
 
+        if (facts.Credits is { } credits)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"A chapter may ask the Commander to spend at most {ChapterFit.MostToSpend(credits).ToString("N0", CultureInfo.InvariantCulture)} credits, on a ship, a fleet carrier or a squadron, "
+                + "so that the purchase leaves them a reserve. A purchase beyond that is a later chapter's, once they have earned the credits.");
+        }
+
         text.AppendLine();
         text.Append($"The story has been running for {story.DaysRunning.ToString(CultureInfo.InvariantCulture)} days");
         text.AppendLine(story.DaysSinceBeacon is { } scanned
@@ -915,7 +924,7 @@ public sealed class AdventureGenerator(
             text.AppendLine(
                 $"Size this chapter so the Commander can finish it in {size}. Size every count and destination to the facts above: "
                 + "the ship, its jump range, the credits at the last load and the ranks. There is no fixed limit on ships: a chapter "
-                + "may have the Commander save up for a ship, and a later one have them buy and board it. A longer undertaking, such as "
+                + "may have the Commander save up for a ship, and a later one have them buy and board it, once the credits cover it. A longer undertaking, such as "
                 + "on-foot or ship engineering, saving for a ship and buying it, or a run of ranks, continues across chapters: when the "
                 + "chapter before left one unfinished, carry it on in this one.");
         }
@@ -1049,7 +1058,7 @@ public sealed class AdventureGenerator(
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine(ask.Story is null
             ? "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship."
-            : "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship they own or can afford with the credits at the last load, or one an earlier chapter had them save for.");
+            : "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
         text.AppendLine("- \"bounty\": the Commander collects \"count\" bounties, anywhere.");
         text.AppendLine("- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.");
         text.AppendLine(
@@ -1510,6 +1519,10 @@ public sealed class AdventureGenerator(
                 {
                     refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of beat.");
                 }
+                else if (ask.Story is not null && ChapterFit.BoardWhy(symbol, facts.Owns(symbol), facts.Credits) is { } why)
+                {
+                    refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, but {why}; save up for it in this chapter and board it in a later one.");
+                }
                 else
                 {
                     trigger = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = symbol };
@@ -1796,7 +1809,8 @@ public sealed class AdventureGenerator(
         RankState Ranks,
         long? Credits,
         bool InSquadron = false,
-        double? DestinationLightYears = null)
+        double? DestinationLightYears = null,
+        IReadOnlyList<string>? OwnedHulls = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -1826,8 +1840,12 @@ public sealed class AdventureGenerator(
                 carrier,
                 state?.Ranks ?? RankState.Empty,
                 state?.Session.Balance,
-                state?.Squadron.IsMember == true);
+                state?.Squadron.IsMember == true,
+                OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>()]);
         }
+
+        public bool Owns(string symbol) =>
+            OwnedHulls?.Any(hull => string.Equals(hull, symbol, StringComparison.OrdinalIgnoreCase)) == true;
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
 

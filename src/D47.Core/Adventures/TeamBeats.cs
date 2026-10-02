@@ -14,11 +14,11 @@ public static class TeamBeats
     public static string? Why(TriggerKind kind, bool ownsCarrier, bool inSquadron, long? credits) => kind switch
     {
         TriggerKind.CarrierBuy when ownsCarrier => "the Commander already owns a fleet carrier",
-        TriggerKind.CarrierBuy when !Holds(credits, ChapterFit.FleetCarrierCredits) => Short(ChapterFit.FleetCarrierCredits),
+        TriggerKind.CarrierBuy when !Holds(credits, ChapterFit.CarrierBuyNeeded) => Short(ChapterFit.CarrierBuyNeeded),
         TriggerKind.CarrierJump when !ownsCarrier => "the Commander owns no fleet carrier",
         TriggerKind.Squadron when inSquadron => "the Commander is already in a squadron",
         TriggerKind.SquadronFound when inSquadron => "the Commander is already in a squadron",
-        TriggerKind.SquadronFound when !Holds(credits, ChapterFit.SquadronFoundCredits) => Short(ChapterFit.SquadronFoundCredits),
+        TriggerKind.SquadronFound when !Holds(credits, ChapterFit.SquadronFoundNeeded) => Short(ChapterFit.SquadronFoundNeeded),
         _ => null,
     };
 

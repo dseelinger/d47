@@ -107,8 +107,9 @@ public class CarrierSquadronAndTeamBeatsTests
     [InlineData(TriggerKind.Multicrew, 0, false, true, true)]
     [InlineData(TriggerKind.Squadron, 0, false, false, true)]
     [InlineData(TriggerKind.Squadron, 0, false, true, false)]
-    [InlineData(TriggerKind.SquadronFound, 10_000_000, false, false, true)]
-    [InlineData(TriggerKind.SquadronFound, 9_000_000, false, false, false)]
+    [InlineData(TriggerKind.CarrierBuy, 5_600_000_000, false, false, false)]
+    [InlineData(TriggerKind.SquadronFound, 20_000_000, false, false, true)]
+    [InlineData(TriggerKind.SquadronFound, 10_000_000, false, false, false)]
     [InlineData(TriggerKind.SquadronFound, 10_000_000, false, true, false)]
     public void AKindIsAllowedOnlyWhereTheCommanderCanDoIt(TriggerKind kind, long credits, bool owns, bool inSquadron, bool allowed)
     {
@@ -195,10 +196,10 @@ public class CarrierSquadronAndTeamBeatsTests
     }
 
     [Fact]
-    public async Task AFoundingChapterNeedsTenMillionCredits()
+    public async Task AFoundingChapterNeedsTwentyMillionCredits()
     {
-        var poor = await Written("squadronfound", LoadGame(9_000_000));
-        var able = await Written("squadronfound", LoadGame(10_000_000));
+        var poor = await Written("squadronfound", LoadGame(19_999_999));
+        var able = await Written("squadronfound", LoadGame(20_000_000));
 
         Assert.Null(poor.Outcome.Draft);
         Assert.NotNull(able.Outcome.Draft);

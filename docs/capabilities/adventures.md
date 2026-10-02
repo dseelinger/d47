@@ -234,11 +234,11 @@ A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is 
 
 | Kind | Allowed when |
 |---|---|
-| `carrierbuy` (once) | 7,000,000,000 credits at the last load, and no fleet carrier owned |
+| `carrierbuy` (once) | 7,000,000,000 credits at the last load (the carrier costs 5,000,000,000, so its reserve rule needs only 5,500,000,000), and no fleet carrier owned |
 | `carrierjump` (counted) | a fleet carrier owned |
 | `wing` and `multicrew` (counted) | always |
 | `squadron` (once) | not in a squadron |
-| `squadronfound` (once) | 10,000,000 credits at the last load, and not in a squadron |
+| `squadronfound` (once) | 20,000,000 credits at the last load: the 10,000,000 it costs and a reserve of the same; and not in a squadron |
 
 A Commander is in a squadron from a `SquadronStartup`, `JoinedSquadron` or `SquadronCreated` until a `LeftSquadron`, `KickedFromSquadron` or `DisbandedSquadron`, or until the next `LoadGame` without a `SquadronStartup`. A wing or multicrew beat needs another player, so the writer is told the Commander can refuse it, and neither is ever the comfort-zone activity.
 The form offers the first six kinds and shows any other beat without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer beat at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer. An on-foot engineer is written only in that startup list, so an engineer beat naming one fires at the first login after the stage is reached, not at the moment.
@@ -406,6 +406,14 @@ dock, land or scan. A chapter with more is refused.
 **The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
 may go anywhere, as far as Colonia or Sagittarius A*. Below that, the writer is not told it exists.
+
+**A credit reserve.** A chapter never spends the Commander to nothing. A story beat that buys something,
+which is a `board` into a hull they do not own, `carrierbuy` or `squadronfound`, is allowed only when the
+credits at the last load cover the price plus a reserve: the price again or 500,000,000, whichever is less.
+Where a fixed threshold above is higher, it applies. A hull already owned is allowed at any balance, and a
+hull with no price in d47's table is refused unless owned. The writer is told the most the chapter may ask
+the Commander to spend, and a chapter that asks for more is refused and written again. Saving up and buying therefore fall in separate
+chapters.
 
 **The reach limits one hop.** A chapter's reach is the longest one hop may be, not how far the chapter
 goes: a farther place is reached over several hops.

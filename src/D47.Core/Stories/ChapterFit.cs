@@ -1,3 +1,4 @@
+using System.Globalization;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 
@@ -31,6 +32,46 @@ public static class ChapterFit
 
     /// <summary>Credits at the last load from which a chapter may have the Commander found a squadron.</summary>
     public const long SquadronFoundCredits = 10_000_000;
+
+    /// <summary>Credits at the last load that a carrier purchase needs.</summary>
+    public static long CarrierBuyNeeded => Needed(FleetCarrierPrice, FleetCarrierCredits);
+
+    /// <summary>Credits at the last load that founding a squadron needs, taking its cost as <see cref="SquadronFoundCredits"/>.</summary>
+    public static long SquadronFoundNeeded => Needed(SquadronFoundCredits, SquadronFoundCredits);
+
+    /// <summary>The most a chapter's purchase may leave the Commander holding beyond its price.</summary>
+    public const long ReserveCap = 500_000_000;
+
+    /// <summary>The price of a fleet carrier, whose <see cref="FleetCarrierCredits"/> threshold is higher than its reserve rule.</summary>
+    public const long FleetCarrierPrice = 5_000_000_000;
+
+    /// <summary>Credits at the last load that a purchase needs: the price plus a reserve of the price or <see cref="ReserveCap"/>, whichever is less, or the threshold where that is higher.</summary>
+    public static long Needed(long price, long threshold = 0) => Math.Max(threshold, price + Math.Min(price, ReserveCap));
+
+    /// <summary>The most a chapter may ask the Commander to spend with this many credits at the last load.</summary>
+    public static long MostToSpend(long credits) => credits >= 2 * ReserveCap ? credits - ReserveCap : Math.Max(0, credits / 2);
+
+    /// <summary>Why a beat boarding this hull cannot stand, or null when the Commander owns it or the credits cover it.</summary>
+    public static string? BoardWhy(string symbol, bool owned, long? credits)
+    {
+        if (owned)
+        {
+            return null;
+        }
+
+        var name = Knowledge.EliteSpecifications.HullName(symbol) ?? symbol;
+
+        if (Knowledge.EliteSpecifications.Ship(symbol)?.Cost is not { } price)
+        {
+            return $"d47 has no price for a {name}, which the Commander does not own";
+        }
+
+        var needed = Needed(price);
+
+        return credits >= needed
+            ? null
+            : $"a {name} costs {price.ToString("N0", CultureInfo.InvariantCulture)} and the Commander needs {needed.ToString("N0", CultureInfo.InvariantCulture)} credits at the last load to buy it";
+    }
 
     /// <summary>The hull that allows a long haul whatever the credits: the Caspian Explorer.</summary>
     public const string LongHaulHull = "explorer_nx";
