@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The face on the panel fetches the clips of the core aboard that it does not have yet, from a GitHub release into `datavatar-clips`, at startup and when you switch core. **Avatar animations** under Persona turns it off, and **Privacy and egress** lists it.
+
 The face on the panel plays a short looping clip for the core aboard in each state, such as listening or thinking, when that clip is in `datavatar-clips`. A state with no clip shows the usual mark, and your own pictures in `datavatar` still come first. The headset panel shows the first frame of the clip and does not animate it.
 
 A story card on the Stories page shows a picture of each of its main characters below the line naming its length, level and core. A character that comes in two versions shows the one for your Commander's gender, and none until you have said which. The list fetches these pictures with it; the rest of a story's pictures come when you pick it. **Privacy and egress** says so. **Change picture** on a message changes the card's picture too.

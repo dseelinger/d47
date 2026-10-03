@@ -64,6 +64,9 @@ public static class EgressDisclosure
     /// <summary>Fetching a hull's large art — the 4K picture and the turntable (#289).</summary>
     public const string HullArt = "hullart";
 
+    /// <summary>Fetching the avatar clips of the core aboard.</summary>
+    public const string AvatarClips = "avatarclips";
+
     /// <summary>Fetching stock stories: the list and its cast pictures, and a story's hidden layer and cast pictures.</summary>
     public const string StockStories = "stockstories";
 
@@ -82,6 +85,7 @@ public static class EgressDisclosure
         CommunityGoals,
         UpdateCheck,
         HullArt,
+        AvatarClips,
         StockStories,
         SpeechModels,
         Diagnostics,
@@ -103,6 +107,7 @@ public static class EgressDisclosure
         WebSearch => "Web search",
         SpeechModels => "Speech model download",
         HullArt => "Hull pictures",
+        AvatarClips => "Avatar animations",
         StockStories => "Stock stories",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
@@ -220,6 +225,22 @@ public static class EgressDisclosure
                 "Hull pictures are off, so nothing is fetched, fleet cards show no drawing, and a ship's "
                 + "own page shows no picture and no turntable, even for a hull already on disk.",
                 summary: "Hull pictures are off, so nothing is fetched and no ship shows a picture."),
+
+        AvatarClips => settings.Ui.AvatarClips
+            ? new EgressEntry(
+                AvatarClips,
+                NameOf(AvatarClips),
+                GitHubReleasesEndpoint,
+                "The id of the core aboard, when D47 has no animation for one of its states yet — at most eight "
+                + "requests per core per session, to github.com. Nothing else goes with it: no key, no Commander "
+                + "name, no position and nothing from your journal.",
+                Active: true,
+                Summary: "The id of the core aboard, when D47 has no animation for one of its states yet.")
+            : EgressEntry.Silent(
+                AvatarClips,
+                NameOf(AvatarClips),
+                "Avatar animations are off, so nothing is fetched and the avatar draws its own mark.",
+                summary: "Avatar animations are off, so nothing is fetched."),
 
         StockStories => settings.Ui.StoryDownloads
             ? new EgressEntry(

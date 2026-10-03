@@ -538,6 +538,16 @@ What the ship you are in flies with, and the button that binds it to the core ab
 
 Not reachable by the model — it reports what a binding is and nothing writes one but you.
 
+#### Avatar animations {#avatar-animations}
+
+Whether the face on the panel may fetch the clips of the core aboard. Each core has one short clip
+per state, such as listening or thinking. When the clip for a state is not in `data/avatar-clips`,
+Directive 47 asks for it from the same GitHub release it updates itself from: at most eight requests
+per core per session, and only the id of the core goes with them. Off, nothing is fetched and a
+state with no clip shows the avatar's own mark; clips already on disk still play.
+
+Not reachable by the model.
+
 #### Cores by ship {#cores-by-ship}
 
 Every ship you have bound and what it flies with, and the button that forgets the one you are in.

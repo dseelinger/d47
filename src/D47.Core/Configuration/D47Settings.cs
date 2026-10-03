@@ -938,6 +938,9 @@ public sealed record UiSettings
     /// </summary>
     public bool HullArt { get; init; } = true;
 
+    /// <summary>Whether d47 fetches the avatar clips of the core aboard.</summary>
+    public bool AvatarClips { get; init; } = true;
+
     /// <summary>Whether d47 downloads stock stories and their cast pictures from a GitHub release.</summary>
     public bool StoryDownloads { get; init; } = true;
 

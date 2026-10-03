@@ -43,6 +43,8 @@ public static class PersonaCapability
     /// <summary>The row that reads the cores the Commander wrote, and opens the editor.</summary>
     public const string OwnKey = "persona.own";
 
+    public const string AvatarClipsKey = "persona.avatarClips";
+
     /// <summary>The core-row value that means "take the binding back".</summary>
     private const string Nobody = "nobody";
 
@@ -214,6 +216,28 @@ public static class PersonaCapability
 
             // Info, so the model cannot reach it.
             Binding = new SettingBinding { Read = _ => SummariseOwn() },
+        },
+        new SettingRow
+        {
+            Key = AvatarClipsKey,
+            Label = "Avatar animations",
+            Help =
+                "The face on the panel plays a short clip for the core aboard in each state. D47 fetches "
+                + "the clips of the core aboard that it does not have yet, from the same GitHub release the "
+                + "app updates itself from, and keeps them in data\\avatar-clips.\n\n"
+                + "Off, nothing is downloaded and the avatar draws its own mark for any state with no clip. "
+                + "Clips already on disk still play.",
+            Kind = SettingKind.Toggle,
+            DocsAnchor = "avatar-animations",
+            EgressId = EgressDisclosure.AvatarClips,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Ui.AvatarClips ? "true" : "false",
+                Write = (s, v) => s with
+                {
+                    Ui = s.Ui with { AvatarClips = bool.TryParse(v, out var on) && on },
+                },
+            },
         },
         ..ships is null ? Array.Empty<SettingRow>() : ShipCoreRows(host, ships),
     ];

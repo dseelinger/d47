@@ -319,6 +319,7 @@ public static class SettingsLayout
                                 E("llm.personality"),
                                 E("persona.introductions"),
                                 E("persona.own"),
+                                E("persona.avatarClips"),
                                 E("llm.characterSheet"),
                                 E("llm.aboutMe"),
                                 E("llm.scenario"),

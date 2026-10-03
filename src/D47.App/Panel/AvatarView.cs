@@ -130,9 +130,19 @@ public sealed class AvatarView : UserControl
     /// <summary>Looks for the current state's clip again.</summary>
     public void Reload() => Apply(_state);
 
+    private void ClipsArrived(string coreId) => Dispatcher.UIThread.Post(() =>
+    {
+        if (string.Equals(coreId, _coreId, StringComparison.Ordinal))
+        {
+            Reload();
+        }
+    });
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+
+        AvatarClipStore.Arrived += ClipsArrived;
 
         if (_detached)
         {
@@ -145,6 +155,7 @@ public sealed class AvatarView : UserControl
     {
         base.OnDetachedFromVisualTree(e);
 
+        AvatarClipStore.Arrived -= ClipsArrived;
         _detached = true;
         StopClip();
     }

@@ -2380,6 +2380,12 @@ public sealed class AppHost : IDisposable
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
         host.Panel.CoreId = personas.Current.Id;
 
+        AvatarClipStore.Enable(
+            paths.AvatarClips,
+            () => settings.Current.Ui.AvatarClips,
+            loggerFactory.CreateLogger("D47.App.Panel.AvatarClipStore"));
+        AvatarClipStore.Want(personas.Current.Id);
+
         // The buffer the tick closure has been filling since before this instance existed (#51).
         host.JournalLog = journalLog;
 
@@ -4331,6 +4337,7 @@ public sealed class AppHost : IDisposable
     private void OnPersonaChanged(PersonaChanged change)
     {
         Panel.CoreId = change.Current.Id;
+        AvatarClipStore.Want(change.Current.Id);
 
         // The ship's voice is the core aboard's, so it has to be re-read when the core changes.
         ApplySpeechSettings();
