@@ -29,8 +29,8 @@ internal sealed class VideoFrames : IDisposable
     /// <summary>MFVideoFormat_RGB32, which is D3DFMT_X8R8G8B8 — B, G, R, unused, in that order.</summary>
     private static readonly Guid Rgb32 = new("00000016-0000-0010-8000-00AA00389B71");
 
-    /// <summary>MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING.</summary>
-    private static readonly Guid EnableVideoProcessing = new("fb394f3d-ccf1-42ee-bbb3-f9b845d5681d");
+    /// <summary>MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING.</summary>
+    private static readonly Guid EnableVideoProcessing = new("0f81da2c-b537-4672-a8b2-a681b17307a3");
 
     private static readonly object Gate = new();
     private static bool _started;

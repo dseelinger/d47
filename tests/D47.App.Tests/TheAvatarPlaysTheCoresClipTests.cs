@@ -172,6 +172,27 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void ClipsOpenedOneAfterAnotherAllPlay()
+    {
+        var path = Place("covas", LoopState.Thinking);
+
+        // The basic video processor crashed the process within a few of these.
+        for (var i = 0; i < 40; i++)
+        {
+            using var video = D47.App.Media.VideoFrames.Open(path)!;
+            var frame = video.Frame();
+            var frames = 0;
+
+            while (video.Next(frame))
+            {
+                frames++;
+            }
+
+            Assert.True(frames > 1);
+        }
+    }
+
+    [AvaloniaFact]
     public void TheAvatarLoopsAClipPastItsEndWithoutDrawingTheMark()
     {
         Place("covas", LoopState.Thinking);
