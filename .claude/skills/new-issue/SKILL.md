@@ -152,10 +152,11 @@ thorough.
 
 `gh issue create` authenticates as `dseelinger`. What you file cannot be told apart from what the
 maintainer filed, and the eligibility test is "either `dseelinger` opened it, or it carries
-`ready`". So an issue you file is eligible for autonomous work the moment it exists.
+`Vetted`". So an issue you file is eligible for autonomous work the moment it exists.
 
-**Never ask the maintainer to add `ready` to an issue you filed on their instruction.** That label
-is for an issue somebody else opened on the repository, which he has read and vetted. Asking him to
+**Never ask the maintainer to add `Vetted` to an issue you filed on their instruction.** That label
+is for an issue somebody else opened on the repository, which he has reviewed and approved for
+design, architecture or implementation. Asking him to
 vet his own request back to him is noise, and it implies work from a stranger could be scheduled
 without him — it cannot, and that is the point of the label.
 

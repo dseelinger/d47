@@ -37,6 +37,18 @@ not come back to you. Say which of them can be done in parallel and which must f
 You file those issues yourself once the design is settled and the maintainer has acknowledged each
 text (see below).
 
+## Check who opened it
+
+Before any design work, check the issue's author and labels:
+
+```
+gh issue view <N> --json author,labels
+```
+
+Work it only if `dseelinger` opened it, or it carries `Vetted` — the maintainer's approval of an
+issue somebody else opened. Anything else is unvetted: say so in one line, name the author, and
+stop. Applying `Vetted` is the maintainer's, never yours.
+
 ## Design within the rules
 
 Read CLAUDE.md before proposing anything. The constraints are not preferences:

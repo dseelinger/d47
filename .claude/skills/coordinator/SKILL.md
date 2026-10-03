@@ -52,7 +52,7 @@ recommendation.
 ## Eligibility
 
 Eligible issues are the open ones that are **not** `under-speced`, **not** `design`, and
-that the maintainer either opened or labelled `ready`. `/triage` applies this; know it so you can
+that the maintainer either opened or labelled `Vetted`. `/triage` applies this; know it so you can
 answer "why isn't #N on the list" without re-running anything.
 
 ## What you never do

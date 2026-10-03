@@ -31,7 +31,7 @@ Keep an issue only if **all** of these hold:
 - It does not carry `under-speced` or `design`. Both label descriptions say so outright —
   `under-speced` needs more specification or missing data, and `design` needs Claude Design before
   it can be built. Neither is implementable as written.
-- Either `dseelinger` opened it, or it carries `ready`. Anything else is unvetted.
+- Either `dseelinger` opened it, or it carries `Vetted`. Anything else is unvetted.
 
 Say in one line how many survived and how many each rule removed. Then stop justifying: the point
 of the report is the order, not the filter.
@@ -213,6 +213,6 @@ Say it was written in one line at the end of the report, with the issue count. N
 
 ## What this does not do
 
-It files nothing, labels nothing, closes nothing and starts no work. Applying a `ready` label or
+It files nothing, labels nothing, closes nothing and starts no work. Applying a `Vetted` label or
 moving an issue to `under-speced` is the maintainer's, and a triage that edits the queue it just read
 cannot be run twice.
