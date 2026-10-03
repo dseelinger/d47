@@ -26,7 +26,7 @@ public sealed class AStoryCardShowsOnlyItsPrimaryCastTests
     [Fact]
     public void TheCardNamesThePicturesOfItsPrimaryMembersInCastOrder()
     {
-        var card = Card with { CastPictures = Primary };
+        var card = Card with { Blurb = "Ren and Ila hear a song.", CastPictures = Primary };
 
         Assert.Empty(new StoryCatalog([card], () => [Cast]).Faults());
         Assert.Equal(Primary, card.PicturesFor(null));

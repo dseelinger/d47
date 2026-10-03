@@ -2283,6 +2283,7 @@ public sealed class AppHost : IDisposable
         storyDirector.Game = () => gameState.Active;
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });
+        storyDirector.Choices = () => settings.Current.StoryVoices;
 
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
@@ -4675,6 +4676,7 @@ public sealed class AppHost : IDisposable
         Voice.Tts = Speaker(VoiceGroup.Aboard);
         Voice.SpeakerFor = Speaker;
         Voice.PinnedFor = CastClient;
+        Voice.CastVoiceFailed = (key, reason) => _castVoiceFailures[key] = reason;
         ReleaseCastClients(all: false);
 
         // Everyone d47 can speak as, filled in from settings.
@@ -5601,19 +5603,14 @@ public sealed class AppHost : IDisposable
     private readonly Lock _castGate = new();
 
     /// <summary>
-    /// The local client a story's cast member speaks through: the slots' own when one is on that provider, otherwise one
-    /// built for the cast. Null for a provider that is not local.
+    /// The client a story's cast member speaks through, metered with every slot: the slots' own when one is on that
+    /// provider, otherwise one built for the cast. Null for a provider id d47 does not have.
     /// </summary>
     private ITtsProvider? CastClient(string providerId)
     {
-        if (!TtsProviderCatalog.IsLocal(providerId))
-        {
-            return null;
-        }
-
         if (_clients.GetValueOrDefault(providerId) is { } shared)
         {
-            return shared;
+            return new MeteredTtsProvider(shared, SpeechSpend);
         }
 
         lock (_castGate)
@@ -5628,9 +5625,73 @@ public sealed class AppHost : IDisposable
                 _castClients[providerId] = built = client;
             }
 
-            return built;
+            return new MeteredTtsProvider(built, SpeechSpend);
         }
     }
+
+    /// <summary>Why a character's chosen voice last failed and the story's own spoke instead, by StoryVoices key.</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _castVoiceFailures = new(StringComparer.Ordinal);
+
+    /// <summary>Why the chosen voice for <paramref name="key"/> last failed, or null.</summary>
+    internal string? CastVoiceFailure(string key) => _castVoiceFailures.GetValueOrDefault(key);
+
+    /// <summary>Sets the voice of the character <paramref name="key"/> names, or with null returns it to the story's own.</summary>
+    internal void ChooseCastVoice(string key, string? providerId, string? voiceId, string? voiceName)
+    {
+        _castVoiceFailures.TryRemove(key, out _);
+
+        if (providerId is null || voiceId is null)
+        {
+            Settings.Replace("a story character's voice was reset", current => current with
+            {
+                StoryVoices = current.StoryVoices.Where(pair => pair.Key != key).ToDictionary(StringComparer.Ordinal),
+            });
+            return;
+        }
+
+        var member = Stories?.CastMember(key);
+        var choice = new StoryVoiceChoice(providerId, voiceId) { Story = member?.Title, Character = member?.Shown.Name, VoiceName = voiceName };
+
+        Settings.Replace("a story character's voice was chosen", current => current with
+        {
+            StoryVoices = new Dictionary<string, StoryVoiceChoice>(current.StoryVoices, StringComparer.Ordinal) { [key] = choice },
+        });
+    }
+
+    /// <summary>The voices <paramref name="providerId"/> lists, for a story character's voice picker.</summary>
+    internal async Task<VoiceCatalogue> CastVoicesAsync(string providerId, CancellationToken cancellationToken)
+    {
+        if (_voicesByProvider.GetValueOrDefault(providerId) is { Count: > 0 } held)
+        {
+            return held;
+        }
+
+        return CastClient(providerId) is { } client
+            ? await client.ListVoicesAsync(cancellationToken).ConfigureAwait(false)
+            : VoiceCatalogue.Silent;
+    }
+
+    /// <summary>The line a story character's Play sample speaks after its name.</summary>
+    internal const string CastSampleSentence = "This is the voice you will hear me speak in.";
+
+    /// <summary>Speaks the character's name and <see cref="CastSampleSentence"/> in <paramref name="voice"/>, on the pool.</summary>
+    internal void PlayCastSample(string name, D47.Core.Stories.PinnedVoice voice) =>
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Voice.AnnounceAsync(new Announcement("story-cast-sample", $"{name}. {CastSampleSentence}")
+                {
+                    Voice = VoiceRole.Crew,
+                    Speaker = name,
+                    Pinned = voice,
+                }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not play a story character's voice sample");
+            }
+        });
 
     /// <summary>Disposes the cast's own clients: every one, or those a slot now has a client for.</summary>
     private void ReleaseCastClients(bool all)
@@ -5649,7 +5710,10 @@ public sealed class AppHost : IDisposable
     internal D47.Core.Stories.CastVoicesHere CastVoicesHere() => new(
         D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder()),
         D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder()),
-        OwnVoice.Exists);
+        OwnVoice.Exists)
+    {
+        HasKey = id => TtsProviderCatalog.Selected(id).KeySecretName is not { } secret || Secrets.Names.Contains(secret),
+    };
 
     /// <summary>Posts the ship's message naming what a story's cast needs before it can speak.</summary>
     private void PostVoicesNotReady(string title, string message) =>
@@ -6378,7 +6442,8 @@ public sealed class AppHost : IDisposable
             line.Text,
             DateTimeOffset.Now,
             D47.Core.Stories.StoryLines.Key(scan.StoryId),
-            picture: CastPictures.For(voice.Cast));
+            picture: CastPictures.For(voice.Cast),
+            cast: voice.Cast?.Picture);
         Interlocked.Increment(ref _narratingScans);
 
         _ = Task.Run(async () =>
@@ -6545,7 +6610,8 @@ public sealed class AppHost : IDisposable
             DateTimeOffset.Now,
             announcement.Key,
             picture: CastPictures.For(voice?.Cast),
-            spoken: spoken);
+            spoken: spoken,
+            cast: voice?.Cast?.Picture);
     }
 
     /// <summary>
@@ -7041,7 +7107,7 @@ public sealed class AppHost : IDisposable
                 : Stories?.LineVoice(commander, beat < 0 ? story.OpeningSpeaker : reached?.Speaker);
 
             D47.Core.Adventures.AdventureMessages.Post(
-                messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, CastPictures.For(voice?.Cast));
+                messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, CastPictures.For(voice?.Cast), voice?.Cast?.Picture);
         }
 
         adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold

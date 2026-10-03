@@ -22,7 +22,8 @@ Each entry: {"id", "secret", "end", "beats", "scan", "clues", "finale", "options
            through. It may carry "effects", a list of {"id", "level"}: Guardian effect ids (GuardianVoice.Table),
            each at a level from 1 to 20, applied in order before the link. An id may be listed once.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
-           a primary speaker must have a picture when the story is published.
+           a primary speaker must have a picture when the story is published, is named in the card's blurb
+           or inYourWords unless it has versions, and never speaks in the voice "own".
 The scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
@@ -201,6 +202,19 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         for sid, names in versioned.items():
             if any(re.search(rf"\b{re.escape(name)}\b", value) for name in names):
                 found.append(f"the card's {field} names cast member {sid}; call the member by role")
+
+    for speaker in cast:
+        if speaker.get("primary") is not True:
+            continue
+        sid = speaker.get("id")
+        versions = speaker.get("versions") if isinstance(speaker.get("versions"), dict) else {}
+        if speaker.get("voice") == "own" or any((v or {}).get("voice") == "own" for v in versions.values()):
+            found.append(f"cast member {sid} is primary and speaks in the Commander's own voice")
+        name = speaker.get("name")
+        if speaker.get("versions") is None and text(name) and not any(
+            re.search(rf"\b{re.escape(name)}\b", (card or {}).get(field) or "") for field in ("blurb", "inYourWords")
+        ):
+            found.append(f"cast member {sid} is primary, and neither blurb nor inYourWords names them")
 
     scanned = [scan] if isinstance(scan, dict) else []
     for name, lines in (("scan line", scanned), ("clue", clues), ("finale line", finale)):

@@ -937,6 +937,22 @@ public sealed class StoryCatalog
             yield return $"castPictures is missing {picture}, a primary cast member's picture.";
         }
 
+        foreach (var speaker in secret.Cast.Where(speaker => speaker.Primary))
+        {
+            if (speaker.Voice == StorySpeaker.Own || speaker.Versions?.All().Any(version => version.Version.Voice == StorySpeaker.Own) == true)
+            {
+                yield return $"{speaker.Id} is primary and speaks in the Commander's own voice.";
+            }
+
+            if (speaker.Versions is null
+                && !string.IsNullOrWhiteSpace(speaker.Name)
+                && !new[] { card.Blurb, card.InYourWords }.Any(text => text is not null
+                    && Regex.IsMatch(text, $@"\b{Regex.Escape(speaker.Name)}\b", RegexOptions.CultureInvariant)))
+            {
+                yield return $"{speaker.Id} is primary, and neither blurb nor inYourWords names them.";
+            }
+        }
+
         foreach (var speaker in secret.Cast.Where(speaker => speaker.Versions is not null))
         {
             var names = speaker.Versions!.All().Select(version => version.Version.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();

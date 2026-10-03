@@ -53,7 +53,7 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger, Mess
     }
 
     /// <summary>Posts a message, keeping <paramref name="spoken"/> as its clip. Writes files, so never call it on the tick.</summary>
-    public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null, string? picture = null, SpokenClip? spoken = null)
+    public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null, string? picture = null, SpokenClip? spoken = null, string? cast = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(from);
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
@@ -69,6 +69,7 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger, Mess
             AdventureKey = adventureKey,
             Answers = answers ?? [],
             Picture = picture,
+            Cast = cast,
         };
 
         if (spoken is not null && SaveClip(key, spoken) is { } file)

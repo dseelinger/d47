@@ -15,6 +15,60 @@ public sealed record PinnedVoice(string ProviderId, string VoiceId)
 
     /// <summary>Guardian effects the speaker's voice passes through, in order.</summary>
     public IReadOnlyList<StorySpeakerEffect>? Effects { get; init; }
+
+    /// <summary>The <see cref="Configuration.D47Settings.StoryVoices"/> key of the member, when the Commander chose this voice.</summary>
+    public string? Key { get; init; }
+
+    /// <summary>The voice the story pinned, spoken when the chosen one fails; null when this is the pinned voice.</summary>
+    public PinnedVoice? Fallback { get; init; }
+}
+
+/// <summary>
+/// A chosen cast voice that speaks a sentence in the story's pinned voice when the chosen provider throws a
+/// <see cref="TtsException"/>, and reports why.
+/// </summary>
+public sealed class FallingBackTtsProvider(ITtsProvider chosen, ITtsProvider pinned, string pinnedVoice, Action<string> failed)
+    : ITtsProvider
+{
+    /// <summary>Whether every sentence goes to the pinned voice without asking the chosen one.</summary>
+    public bool AlwaysFallBack { get; init; }
+
+    public string Id => chosen.Id;
+
+    public string Name => chosen.Name;
+
+    public Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default) =>
+        chosen.ListVoicesAsync(cancellationToken);
+
+    public string Billable(string text) => chosen.Billable(text);
+
+    public string? Phonemes(string text, VoiceSelection voice) => chosen.Phonemes(text, voice);
+
+    public bool ReadsAudioTags => chosen.ReadsAudioTags;
+
+    public bool Performs(string tag) => chosen.Performs(tag);
+
+    public int GroupsSentencesUpTo => chosen.GroupsSentencesUpTo;
+
+    public async Task<AudioClip> SynthesizeAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(voice);
+
+        if (AlwaysFallBack)
+        {
+            return await pinned.SynthesizeAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            return await chosen.SynthesizeAsync(text, voice, cancellationToken).ConfigureAwait(false);
+        }
+        catch (TtsException ex)
+        {
+            failed(ex.Message);
+            return await pinned.SynthesizeAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
+        }
+    }
 }
 
 /// <summary>The sound a story gives a cast member: Guardian effects, then a comms link.</summary>

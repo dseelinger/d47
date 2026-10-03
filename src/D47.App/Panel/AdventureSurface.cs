@@ -22,4 +22,5 @@ public sealed record AdventureSurface(
     StoryDownloader? Downloads = null,
     StoryFilterMemory? StoryFilters = null,
     D47.Core.Stories.CastPictures? Pictures = null,
-    Func<D47Message, string?>? PlayMessage = null);
+    Func<D47Message, string?>? PlayMessage = null,
+    CastVoiceSurface? CastVoices = null);

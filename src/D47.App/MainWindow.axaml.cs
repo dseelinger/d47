@@ -195,7 +195,13 @@ public partial class MainWindow : Window
                     host.StoryDownloads,
                     new StoryFilterMemory(host.ViewState),
                     host.CastPictures,
-                    host.PlayMessage);
+                    host.PlayMessage,
+                    new CastVoiceSurface(
+                        key => host.Stories?.CastMember(key),
+                        host.ChooseCastVoice,
+                        host.CastVoicesAsync,
+                        host.PlayCastSample,
+                        host.CastVoiceFailure));
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));

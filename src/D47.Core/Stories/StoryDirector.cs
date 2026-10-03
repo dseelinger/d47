@@ -80,20 +80,83 @@ public sealed class StoryDirector(
 
     /// <summary>What the cast of story <paramref name="id"/> needs and does not have here; empty when ready or when its hidden layer is not on disk.</summary>
     public IReadOnlyList<string> VoicesMissing(string id) =>
-        catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere()) : [];
+        catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere(), Choices()) : [];
+
+    /// <summary>The voices the Commander chose for story characters, keyed as <see cref="Configuration.D47Settings.StoryVoices"/>.</summary>
+    public Func<IReadOnlyDictionary<string, Configuration.StoryVoiceChoice>> Choices { get; set; } =
+        () => new Dictionary<string, Configuration.StoryVoiceChoice>();
+
+    /// <summary>
+    /// The primary cast of story <paramref name="id"/> as this Commander meets it, in cast order; a member with versions
+    /// is left out while the Commander's gender is unset. Empty when the hidden layer is not on disk.
+    /// </summary>
+    public IReadOnlyList<StoryCastMember> PrimaryCast(string id)
+    {
+        var stories = catalog();
+
+        if (stories.Secret(id) is not { } secret)
+        {
+            return [];
+        }
+
+        var gender = Gender();
+        var title = stories.Find(id)?.Title ?? id;
+
+        return [.. secret.Cast
+            .Where(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(gender)))
+            .Select(member => Member(title, secret, member, gender))];
+    }
+
+    /// <summary>
+    /// The cast member whose <see cref="Configuration.D47Settings.StoryVoices"/> key is <paramref name="key"/>, in any
+    /// story whose hidden layer is on disk, or null.
+    /// </summary>
+    public StoryCastMember? CastMember(string key)
+    {
+        var stories = catalog();
+        var gender = Gender();
+
+        foreach (var secret in stories.Secrets)
+        {
+            foreach (var member in secret.Cast)
+            {
+                foreach (var asked in new[] { gender, CommanderGender.Man, CommanderGender.Woman })
+                {
+                    if (string.Equals(member.Shown(secret.Id, asked).Picture, key, StringComparison.Ordinal))
+                    {
+                        return Member(stories.Find(secret.Id)?.Title ?? secret.Id, secret, member, asked);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private StoryCastMember Member(string title, StorySecret secret, StorySpeaker member, string? gender)
+    {
+        var shown = member.Shown(secret.Id, gender);
+
+        var choices = Choices();
+
+        return new StoryCastMember(secret.Id, title, shown, StoryVoices.Voice(member, shown, null), StoryVoices.Voice(member, shown, choices))
+        {
+            SpeaksName = choices.GetValueOrDefault(shown.Picture)?.VoiceName,
+        };
+    }
 
     /// <summary>Whether the cast of any story whose hidden layer is on disk speaks, in the Commander's version, through <paramref name="providerId"/>.</summary>
     public bool CastUses(string providerId)
     {
         var stories = catalog();
 
-        return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId));
+        return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId, Choices()));
     }
 
     /// <summary>Who speaks a line by <paramref name="speaker"/> in the current story, decided now; null when no story is current.</summary>
     public StoryLineVoice? LineVoice(string? frontierId, string? speaker) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
-            ? StoryVoices.Of(speaker, secret, Gender(), Aboard())
+            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices())
             : null;
 
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
@@ -684,7 +747,7 @@ public sealed class StoryDirector(
                && stories.Current(frontierId) is { } story
                && Hidden(story.Id) is { } secret
                && StoryClues.Line(secret, story.Pacing, due.Index) is { } line
-            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard())
+            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices())
             : null;
     }
 

@@ -446,7 +446,7 @@ line to anyone else is sent back once with the reason, and refused if it comes b
   wrote aboard, that core speaks them. This is decided when the line is spoken.
 - **`narrator`** is the narrator voice set under **Narrator Voice**.
 - **A cast member** speaks in the provider and voice the story pinned to it, Kokoro or Chatterbox, whatever
-  **Where each voice comes from** says. A speaker in two versions speaks in your version's voice, and
+  **Where each voice comes from** says, unless you chose another for it (see [Cast voices](#cast-voices)). A speaker in two versions speaks in your version's voice, and
   changing **Your Commander is** takes effect from the next line. The line goes through that speaker's
   own sound, a comms link at the story's strength and any Guardian effects the story lists, and nothing
   else: no radio for its role and none of the **Guardian Voice Effects** you set for the ship. The model
@@ -458,26 +458,58 @@ as written and the ship then says where you go next. A line may open with a soun
 `[static crackle]`: a voice that performs sounds performs it, and every other voice has it taken out.
 
 ```csharp
-public static StoryLineVoice Of(string? speaker, StorySecret secret, string? gender, Persona.Persona? core)
+public static StoryLineVoice Of(
+    string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null)
 ```
 
 #### A story needs its voices first
 
-A cast member's voice runs on this PC, so a story cannot be picked until every voice its cast needs is
-here. **Pick** and **Switch** are disabled, and the story's page lists what is missing:
+A story cannot be picked until every voice its cast speaks in is ready, the voices you chose included.
+**Pick** and **Switch** are disabled, and the story's page lists what is missing:
 
 - the Chatterbox download and its size, when a member speaks through Chatterbox and it is not downloaded;
 - the Kokoro download and its size, when a member speaks through Kokoro and it is not downloaded;
-- a recording under **Settings**, **Your voice**, when a member speaks in your own voice.
+- a recording under **Settings**, **Your voice**, when a member speaks in your own voice;
+- the provider's API key under **Settings**, **Its voice**, when you chose a provider that needs a key and
+  none is stored.
 
 The **Local voice** and **Chatterbox voice** download rows under **Its voice** appear while a downloaded
 story's cast needs them, even when no slot uses that provider. A pick tried anyway is refused, and the ship
-posts one message to Messages listing the same things. Nothing falls back to another voice.
+posts one message to Messages listing the same things.
 
 If a voice a running story needs stops being ready, for example because the recording was deleted, the
 story is paused within a few seconds, its chapter stops, and the message is posted again. **Resume** is
-refused, with the same list, until the voice is back. No disclosure changes: a cast member's voice never
-leaves this PC, and the ship and the narrator use your own settings.
+refused, with the same list, until the voice is back.
+
+### Cast voices {#cast-voices}
+
+A story's card page has a **Cast** section listing its primary characters, and no one else, before you
+pick the story and while it runs. A character in two versions is listed once **Your Commander is** is set,
+as your version. Each row shows the character's picture, name, and the provider and voice it speaks in,
+with "(the story's voice)" while it is the one the story pinned. **Play sample** speaks the character's name
+and one fixed sentence in that voice. **Change picture** and **Use the default** work as they do on a
+message.
+
+**Change voice**, on the row and on every message from a story character, primary or not, opens a picker
+of every provider that speaks, then of every voice that provider lists, of either gender. The story's own
+voice is marked in the list. The story's text is not rewritten for the voice you choose. Each voice in the
+list can be played first; on a paid provider each sample is billed like any line. **Use the default**
+returns the character to the story's voice. A character that is not primary is listed nowhere until its
+first message arrives.
+
+The choice is kept in `settings.json` under `storyVoices`, keyed `<story-id>.<cast-id>`, with
+`.for-man` or `.for-woman` for a character in two versions. Lines spoken through a paid provider count in
+the speech spend with every other line. If the chosen provider fails a sentence, that sentence is spoken
+in the story's own voice, and the character's row on the card page says why.
+
+A character on a hosted provider sends its lines, which are the story's sealed text, to that provider.
+**Privacy and egress**, under text to speech, names each such character, its story and its provider, with
+that provider's own disclosure, and `get_data_egress` answers from the same entry. A character on Kokoro or
+Chatterbox adds nothing. Only the panel changes these voices; the model has no tool for them.
+
+```csharp
+public static PinnedVoice Voice(StorySpeaker member, StorySpeakerShown shown, IReadOnlyDictionary<string, StoryVoiceChoice>? choices)
+```
 
 ### How a chapter is fitted to you
 

@@ -456,7 +456,9 @@ public static class EgressDisclosure
             .Where(pair => pair.Provider.Speaks)
             .ToList();
 
-        if (speaking.Count == 0)
+        var cast = StoryCast(settings);
+
+        if (speaking.Count == 0 && cast.Count == 0)
         {
             return EgressEntry.Silent(
                 TextToSpeech,
@@ -477,28 +479,49 @@ public static class EgressDisclosure
         var what = new System.Text.StringBuilder();
         what.Append(headline).Append(' ');
 
-        what.Append("Line by line: ");
-        what.AppendJoin(
-            "; ",
-            speaking.Select(pair => $"{pair.Slot.Name} ({pair.Slot.Covers}) → {pair.Provider.Name}"));
-        what.Append(". ");
+        if (speaking.Count > 0)
+        {
+            what.Append("Line by line: ");
+            what.AppendJoin(
+                "; ",
+                speaking.Select(pair => $"{pair.Slot.Name} ({pair.Slot.Covers}) → {pair.Provider.Name}"));
+            what.Append(". ");
+        }
 
-        // Each service's own disclosure, once, whichever slots reached it.
+        if (cast.Count > 0)
+        {
+            what.Append("Story characters, whose lines are the story's sealed text: ");
+            what.AppendJoin(
+                "; ",
+                cast.Select(line => $"{line.Character} in {line.Story} → {line.Provider.Name}"));
+            what.Append(". ");
+        }
+
+        var providers = speaking.Select(pair => pair.Provider).Concat(cast.Select(line => line.Provider)).ToList();
+
+        // Each service's own disclosure, once, whichever slots and characters reached it.
         what.AppendJoin(
             " ",
-            speaking
-                .Select(pair => pair.Provider)
+            providers
                 .DistinctBy(provider => provider.Id)
                 .Select(provider => provider.Egress));
 
         return new EgressEntry(
             TextToSpeech,
             NameOf(TextToSpeech),
-            Destinations(speaking.Select(pair => pair.Provider)),
+            Destinations(providers),
             what.ToString(),
             Active: true,
             Summary: headline);
     }
+
+    /// <summary>Each story character the Commander put on a provider that is not local, in key order.</summary>
+    private static List<(string Story, string Character, Audio.TtsProviderInfo Provider)> StoryCast(D47Settings settings) =>
+        [.. settings.StoryVoices
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => (Pair: pair, Provider: Audio.TtsProviderCatalog.Selected(pair.Value.Provider)))
+            .Where(line => line.Provider.Speaks && !Audio.TtsProviderCatalog.IsLocal(line.Provider.Id))
+            .Select(line => (line.Pair.Value.Story ?? line.Pair.Key, line.Pair.Value.Character ?? line.Pair.Key, line.Provider))];
 
     /// <summary>Where the bytes actually go, each host once, in the order the slots run.</summary>
     private static string Destinations(IEnumerable<Audio.TtsProviderInfo> providers) =>

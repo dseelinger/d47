@@ -59,6 +59,9 @@ public sealed class VoicePipeline(
     /// <summary>The client for a provider id, whatever the slots are on, for a story line pinned to a cast member's voice.</summary>
     public Func<string, ITtsProvider?>? PinnedFor { get; set; }
 
+    /// <summary>Told the StoryVoices key and the reason when a character's chosen voice fails and its pinned voice speaks instead.</summary>
+    public Action<string, string>? CastVoiceFailed { get; set; }
+
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
     /// <summary>Who to name on the captions of the next turn, or null for the ship's AI (#201).</summary>
@@ -230,6 +233,38 @@ public sealed class VoicePipeline(
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// The client for a cast member's voice: for a voice the Commander chose, one that speaks a failed sentence in the
+    /// story's pinned voice, or the pinned voice outright when the chosen provider has no client.
+    /// </summary>
+    private ITtsProvider? CastSpeaker(D47.Core.Stories.PinnedVoice pinned)
+    {
+        var client = PinnedFor?.Invoke(pinned.ProviderId);
+
+        if (pinned.Fallback is not { } fallback || PinnedFor?.Invoke(fallback.ProviderId) is not { } story)
+        {
+            return client;
+        }
+
+        void Failed(string reason)
+        {
+            _logger.LogWarning("A story character's chosen {Provider} voice failed; its pinned voice speaks instead. {Reason}", pinned.ProviderId, reason);
+
+            if (pinned.Key is { } key)
+            {
+                CastVoiceFailed?.Invoke(key, reason);
+            }
+        }
+
+        if (client is null)
+        {
+            Failed($"d47 has no {pinned.ProviderId} voice.");
+            return new D47.Core.Stories.FallingBackTtsProvider(story, story, fallback.VoiceId, _ => { }) { AlwaysFallBack = true };
+        }
+
+        return new D47.Core.Stories.FallingBackTtsProvider(client, story, fallback.VoiceId, Failed);
+    }
+
     /// <summary>Speaks through <paramref name="provider"/> with the treatment already chosen, and returns what was queued.</summary>
     /// <param name="pinned">
     /// Whether the voice is a story cast member's rather than one from settings: a refusal or a failure is logged by the
@@ -318,7 +353,7 @@ public sealed class VoicePipeline(
         // A story's cast member, in the voice the story pinned and with the treatment the story gave them.
         if (announcement.Pinned is { } pinned)
         {
-            if (PinnedFor?.Invoke(pinned.ProviderId) is not { } client)
+            if (CastSpeaker(pinned) is not { } client)
             {
                 _logger.LogWarning("No {Provider} client to speak {Key} in its pinned voice", pinned.ProviderId, announcement.Key);
                 return null;

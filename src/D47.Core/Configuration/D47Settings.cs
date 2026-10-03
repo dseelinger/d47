@@ -22,6 +22,13 @@ public sealed record D47Settings
     /// <summary>"man", "woman" or null: which version of a story's two-version character this Commander meets.</summary>
     public string? CommanderGender { get; init; }
 
+    /// <summary>
+    /// The voice the Commander chose for a story's character, keyed <c>&lt;story-id&gt;.&lt;cast-id&gt;</c>, with
+    /// <c>.for-man</c> or <c>.for-woman</c> for a member with two versions. A missing key is the voice the story pinned.
+    /// </summary>
+    public IReadOnlyDictionary<string, StoryVoiceChoice> StoryVoices { get; init; } =
+        new Dictionary<string, StoryVoiceChoice>(StringComparer.Ordinal);
+
     public LoggingSettings Logging { get; init; } = new();
 
     public LlmSettings Llm { get; init; } = new();
@@ -1041,4 +1048,21 @@ public sealed record DonationSettings
 
     /// <summary>The address a Commander once pasted in, before the build carried its own.</summary>
     public string? Endpoint { get; init; }
+}
+
+/// <summary>A provider and voice chosen for one story character, with the names the egress disclosure gives it.</summary>
+public sealed record StoryVoiceChoice(string Provider, string Voice)
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>The story's title.</summary>
+    public string? Story { get; init; }
+
+    /// <summary>The character's name.</summary>
+    public string? Character { get; init; }
+
+    /// <summary>What the provider calls the voice, for a provider whose voice ids mean nothing to a person.</summary>
+    public string? VoiceName { get; init; }
 }

@@ -406,6 +406,10 @@ public sealed class StoriesView : UserControl
         page.Children.Add(Labelled("In your words", card.InYourWords));
         page.Children.Add(Labelled("The beacon", card.Beacon));
 
+        var cast = new StackPanel { Spacing = 8, Margin = new Thickness(0, 4, 0, 0) };
+        ShowCast(cast, card.Id);
+        page.Children.Add(cast);
+
         var commander = _surface.Commander();
         var current = _director.Stories.Current(commander);
         var bar = AdventuresPage.Buttons();
@@ -422,7 +426,11 @@ public sealed class StoriesView : UserControl
 
         if (_director.NeedsGenderFor(card.Id))
         {
-            page.Children.Add(GenderChoice(() => gated?.IsEnabled = !withoutOdyssey && _director.VoicesMissing(card.Id).Count == 0));
+            page.Children.Add(GenderChoice(() =>
+            {
+                gated?.IsEnabled = !withoutOdyssey && _director.VoicesMissing(card.Id).Count == 0;
+                ShowCast(cast, card.Id);
+            }));
         }
 
         var missing = _director.VoicesMissing(card.Id);
@@ -465,6 +473,61 @@ public sealed class StoriesView : UserControl
         page.Children.Add(status);
 
         return new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+    }
+
+    /// <summary>The Cast section: each primary member with its picture, name and voice, and the controls that change them.</summary>
+    private void ShowCast(StackPanel holder, string storyId)
+    {
+        holder.Children.Clear();
+
+        var members = _director.PrimaryCast(storyId);
+
+        if (members.Count == 0)
+        {
+            return;
+        }
+
+        holder.Children.Add(AdventuresPage.Text("Cast", TypeScale.Small, ThemeManager.GreyKey));
+
+        foreach (var member in members)
+        {
+            var row = new StackPanel { Spacing = 4 };
+            row.Children.Add(AdventuresPage.Text(member.Shown.Name, TypeScale.Body));
+            row.Children.Add(AdventuresPage.Text(CastVoiceChooser.Describe(member), TypeScale.Small, ThemeManager.GreyKey));
+
+            if (member.Speaks.Key is { } chosen && _surface.CastVoices?.Failure(chosen) is { } failed)
+            {
+                row.Children.Add(AdventuresPage.Text($"The chosen voice failed, so the story's own spoke instead: {failed}", TypeScale.Small));
+            }
+
+            var buttons = new List<Control>();
+
+            if (_surface.CastVoices is { } voices)
+            {
+                buttons.Add(Act("Play sample", () => voices.PlaySample(member.Shown.Name, member.Speaks)));
+                buttons.Add(Act("Change voice", () => CastVoiceChooser.Open(_prompts, voices, member.Key, () => ShowCast(holder, storyId))));
+            }
+
+            if (_surface.Pictures is { } pictures)
+            {
+                var pictured = new StackPanel { Spacing = 6 };
+                CastPicturePanel.Show(this, pictured, pictures, member.Shown.Picture, [.. buttons]);
+                row.Children.Add(pictured);
+            }
+            else
+            {
+                var bar = AdventuresPage.Buttons();
+
+                foreach (var button in buttons)
+                {
+                    bar.Children.Add(button);
+                }
+
+                row.Children.Add(bar);
+            }
+
+            holder.Children.Add(row);
+        }
     }
 
     private bool GenderReady(StoryCard card) =>

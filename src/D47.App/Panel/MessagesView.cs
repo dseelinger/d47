@@ -22,10 +22,12 @@ public sealed class MessagesView : UserControl
     private readonly MessageStore _store;
     private readonly PanelNavigator _nav;
     private readonly AdventureSurface? _surface;
+    private readonly PanelPrompts? _prompts;
     private readonly StackPanel _list = new() { Spacing = 2 };
 
-    public MessagesView(MessageStore store, PanelNavigator nav, AdventureSurface? surface = null)
+    public MessagesView(MessageStore store, PanelNavigator nav, AdventureSurface? surface = null, PanelPrompts? prompts = null)
     {
+        _prompts = prompts;
         _store = store;
         _nav = nav;
         _surface = surface;
@@ -86,11 +88,17 @@ public sealed class MessagesView : UserControl
         page.Children.Add(AdventuresPage.Text(message.Subject, TypeScale.Body));
         page.Children.Add(AdventuresPage.Text(Caption(message), TypeScale.Small, ThemeManager.GreyKey));
 
+        var changeVoice = ChangeVoice(message);
+
         if (_surface?.Pictures is { } pictures && message.Picture is { } picture && pictures.Find(picture) is not null)
         {
             var holder = new StackPanel { Spacing = 6 };
-            ShowPicture(holder, pictures, picture);
+            CastPicturePanel.Show(this, holder, pictures, picture, changeVoice is null ? [] : [changeVoice]);
             page.Children.Add(holder);
+        }
+        else if (changeVoice is not null)
+        {
+            page.Children.Add(changeVoice);
         }
 
         page.Children.Add(AdventuresPage.Text(message.Body, TypeScale.Body));
@@ -108,100 +116,17 @@ public sealed class MessagesView : UserControl
         return new ScrollViewer { Content = page, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
     }
 
-    /// <summary>A cast member's picture, the Commander's own where they chose one, with the buttons that replace it.</summary>
-    private void ShowPicture(StackPanel holder, CastPictures pictures, string picture)
+    /// <summary>Change voice, for a message from a story cast member; null for any other sender.</summary>
+    private Button? ChangeVoice(D47Message message)
     {
-        holder.Children.Clear();
-
-        if (pictures.Find(picture) is { } file)
+        if (message.Cast is not { } key || _surface?.CastVoices is not { } voices || _prompts is not { } prompts || voices.Member(key) is null)
         {
-            try
-            {
-                using var bytes = new MemoryStream(File.ReadAllBytes(file));
-                holder.Children.Add(new Image
-                {
-                    Source = new Bitmap(bytes),
-                    MaxWidth = 240,
-                    Stretch = Stretch.Uniform,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                });
-            }
-            catch (Exception ex) when (ex is not OutOfMemoryException)
-            {
-                holder.Children.Add(AdventuresPage.Muted("The picture could not be read."));
-            }
+            return null;
         }
 
-        var status = AdventuresPage.Text(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
-        var change = new Button { Content = "Change picture" };
-        var restore = new Button { Content = "Use the default", IsEnabled = pictures.IsChosen(picture) };
-
-        change.Click += async (_, _) =>
-        {
-            if (TopLevel.GetTopLevel(this)?.StorageProvider is not { CanOpen: true } storage)
-            {
-                status.Text = "No file picker here.";
-                return;
-            }
-
-            var picked = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Choose a picture",
-                AllowMultiple = false,
-                FileTypeFilter = [new FilePickerFileType("Pictures") { Patterns = CastPictureImport.Patterns }],
-            });
-
-            if (picked.Count == 0)
-            {
-                return;
-            }
-
-            change.IsEnabled = false;
-            string? refusal;
-
-            try
-            {
-                await using var stream = await picked[0].OpenReadAsync();
-                var name = picked[0].Name;
-                refusal = await Task.Run(() => CastPictureImport.Save(stream, name, pictures.Chosen(picture)));
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                refusal = $"The picture could not be saved: {ex.Message}";
-            }
-
-            if (refusal is not null)
-            {
-                change.IsEnabled = true;
-                status.Text = refusal;
-                return;
-            }
-
-            ShowPicture(holder, pictures, picture);
-        };
-
-        restore.Click += (_, _) =>
-        {
-            try
-            {
-                pictures.UseDefault(picture);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                status.Text = $"Your picture could not be removed: {ex.Message}";
-                return;
-            }
-
-            ShowPicture(holder, pictures, picture);
-        };
-
-        holder.Children.Add(new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 6,
-            Children = { change, restore },
-        });
-        holder.Children.Add(status);
+        var button = new Button { Content = "Change voice", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+        button.Click += (_, _) => CastVoiceChooser.Open(prompts, voices, key, () => { });
+        return button;
     }
 
     /// <summary>Play, for a message that kept the clip it was spoken in.</summary>
