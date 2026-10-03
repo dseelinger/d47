@@ -396,10 +396,39 @@ public sealed record AdventureBeat
 
     public required AdventureTrigger Trigger { get; init; }
 
-    /// <summary>What the ship's AI says when this beat is reached.</summary>
-    public required string Line { get; init; }
+    /// <summary>What is said when this beat is reached, in order: one line, or up to <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
+    public IReadOnlyList<AdventureLine> Lines { get; init; } = [];
 
-    /// <summary>Who says <see cref="Line"/> in a story chapter: a speaker id of the story, or null for the ship.</summary>
+    /// <summary>The first line's text; setting it replaces that text and keeps the rest.</summary>
+    public string Line
+    {
+        get => Lines.Count > 0 ? Lines[0].Text : string.Empty;
+        init => Lines = [(Lines.Count > 0 ? Lines[0] : new AdventureLine { Text = value }) with { Text = value }, .. Lines.Skip(1)];
+    }
+
+    /// <summary>The first line's speaker; setting it replaces that speaker and keeps the rest.</summary>
+    public string? Speaker
+    {
+        get => Lines.Count > 0 ? Lines[0].Speaker : null;
+        init => Lines = [(Lines.Count > 0 ? Lines[0] : new AdventureLine { Text = string.Empty }) with { Speaker = value }, .. Lines.Skip(1)];
+    }
+
+    public bool Equals(AdventureBeat? other) =>
+        other is not null
+        && Title == other.Title
+        && Function == other.Function
+        && Trigger == other.Trigger
+        && Lines.SequenceEqual(other.Lines);
+
+    public override int GetHashCode() => HashCode.Combine(Title, Function, Trigger, Lines.Count > 0 ? Lines[0] : null);
+}
+
+/// <summary>One line of a beat and who says it.</summary>
+public sealed record AdventureLine
+{
+    public required string Text { get; init; }
+
+    /// <summary>A speaker id of the story, or null for the ship.</summary>
     public string? Speaker { get; init; }
 }
 
@@ -451,6 +480,10 @@ public sealed record Adventure
     public string? OpeningSpeaker { get; init; }
 
     public IReadOnlyList<AdventureBeat> Beats { get; init; } = [];
+
+    /// <summary>The speaker id of one line of a beat, or of the opening at beat -1; null for the ship.</summary>
+    public string? SpeakerOf(int beat, int line) =>
+        beat < 0 ? OpeningSpeaker : Beats.ElementAtOrDefault(beat)?.Lines.ElementAtOrDefault(line)?.Speaker;
 
     /// <summary>When the Commander pressed Begin.</summary>
     public DateTimeOffset? AcceptedAt { get; init; }
@@ -506,6 +539,8 @@ public static class AdventureLimits
 
     /// <summary>A beat's line or the opening.</summary>
     public const int MaxLineLength = 900;
+
+    public const int MaxLinesPerBeat = 3;
 
     public const int MaxSpineLength = 700;
 

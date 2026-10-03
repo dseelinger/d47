@@ -173,7 +173,10 @@ public sealed class AdventureEditor : UserControl
             $"When you {beat.Trigger.Describe()}{(string.IsNullOrWhiteSpace(beat.Function) ? string.Empty : $" — {beat.Function}")}",
             _surface.State()?.Location?.StarSystem));
 
-        row.Children.Add(AdventuresPage.Text($"\"{beat.Line}\"", TypeScale.Body));
+        foreach (var line in beat.Lines)
+        {
+            row.Children.Add(AdventuresPage.Text($"\"{line.Text}\"", TypeScale.Body));
+        }
 
         var buttons = AdventuresPage.Buttons();
         buttons.Margin = new Thickness(0, 4, 0, 0);

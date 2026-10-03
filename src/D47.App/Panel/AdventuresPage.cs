@@ -397,7 +397,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
                 page.Children.Add(Text(spine.Premise, TypeScale.Body));
             }
 
-            Told(page, standing, Here());
+            Told(page, standing, Here(), SpeakerName);
 
             // The wait, drawn (asked for 2026-08-22).
             if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -929,14 +929,22 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     internal static string Sentence(string phrase) =>
         phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..] + ".";
 
+    /// <summary>The name a story speaker id is shown under: the cast member's, "Narrator", or null for the ship.</summary>
+    private string? SpeakerName(string? speaker) => speaker switch
+    {
+        null or D47.Core.Stories.StorySpeaker.Ship => null,
+        D47.Core.Stories.StorySpeaker.Narrator => D47.Core.Audio.VoiceRoles.Called(D47.Core.Audio.VoiceRole.Narrator),
+        _ => _surface.Stories?.Speaker(_surface.Commander(), speaker)?.Name ?? speaker,
+    };
+
     /// <summary>What has actually been said about this story (asked for 2026-08-22).</summary>
-    private static void Told(StackPanel page, AdventureStanding standing, string? here)
+    private static void Told(StackPanel page, AdventureStanding standing, string? here, Func<string?, string?> named)
     {
         var adventure = standing.Adventure;
 
         if (adventure.Told.Count == 0)
         {
-            Authored(page, standing);
+            Authored(page, standing, named);
             return;
         }
 
@@ -944,7 +952,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         {
             var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 0) };
 
-            if (told.Kind == AdventureToldKind.Beat)
+            if (told.Kind == AdventureToldKind.Beat && told.Line > 0)
+            {
+                stack.Margin = new Thickness(0, 4, 0, 0);
+            }
+            else if (told.Kind == AdventureToldKind.Beat)
             {
                 var heading = told.Title is { Length: > 0 } title ? title : adventure.Name;
 
@@ -969,6 +981,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary
                         : Stamped("Aside — ", told.At));
             }
 
+            if (told.Kind == AdventureToldKind.Beat && told.Speaker is { Length: > 0 } speaker)
+            {
+                stack.Children.Add(Text(speaker, TypeScale.Small, ThemeManager.GreyKey));
+            }
+
             stack.Children.Add(Text(told.Text, TypeScale.Body));
             page.Children.Add(stack);
         }
@@ -978,7 +995,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     /// The story so far from the definition, for a story that was flying before anything was being
     /// recorded.
     /// </summary>
-    private static void Authored(StackPanel page, AdventureStanding standing)
+    private static void Authored(StackPanel page, AdventureStanding standing, Func<string?, string?> named)
     {
         var adventure = standing.Adventure;
 
@@ -992,7 +1009,15 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         for (var index = 0; index < shown && index < adventure.Beats.Count; index++)
         {
             var beat = adventure.Beats[index];
-            page.Children.Add(Labelled(Stamped($"{beat.Title} — ", standing.Fired[index]), beat.Line));
+            page.Children.Add(Labelled(Stamped($"{beat.Title} — ", standing.Fired[index]), beat.Lines.Count == 1 && named(beat.Speaker) is null ? beat.Line : null));
+
+            if (beat.Lines.Count > 1 || named(beat.Speaker) is not null)
+            {
+                foreach (var line in beat.Lines)
+                {
+                    page.Children.Add(named(line.Speaker) is { } name ? Labelled(name, line.Text) : Text(line.Text, TypeScale.Body));
+                }
+            }
         }
     }
 

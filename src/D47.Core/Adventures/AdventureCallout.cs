@@ -26,6 +26,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>The hand-off after a beat whose line is not the ship's, said by the ship.</summary>
     public const string HandOffPrefix = "adventure-handoff.";
 
+    /// <summary>A beat's second or third line, keyed <c>adventure-line.&lt;story&gt;.&lt;beat&gt;.&lt;line&gt;</c>.</summary>
+    public const string LinePrefix = "adventure-line.";
+
     public const string BackstoryLine =
         "The story has turned. Your Backstory still describes where it began, and it is yours to change.";
 
@@ -79,6 +82,33 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
         return int.TryParse(tail, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var beat)
             ? (story, beat)
+            : null;
+    }
+
+    /// <summary>
+    /// Which story, beat and line an announcement is, for a beat's first line (<see cref="KeyPrefix"/>) and its
+    /// later ones (<see cref="LinePrefix"/>); null for anything else.
+    /// </summary>
+    public static (string Key, int Beat, int Line)? Spoken(string? announcementKey)
+    {
+        if (Reached(announcementKey) is var (key, beat))
+        {
+            return (key, beat, 0);
+        }
+
+        if (announcementKey is null || !announcementKey.StartsWith(LinePrefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var rest = announcementKey[LinePrefix.Length..];
+        var lineDot = rest.LastIndexOf('.');
+        var beatDot = lineDot > 0 ? rest.LastIndexOf('.', lineDot - 1) : -1;
+
+        return beatDot > 0
+               && int.TryParse(rest[(beatDot + 1)..lineDot], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var index)
+               && int.TryParse(rest[(lineDot + 1)..], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var line)
+            ? (rest[..beatDot], index, line)
             : null;
     }
 
@@ -209,20 +239,25 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 continue;
             }
 
-            // The line and where to go next, as one text: the hand-off is part of what the model is told to
-            // keep when it says this in the core's voice, and what plays when there is no model.
-            var notTheShips = moment.Speaker is { } speaker && speaker != Stories.StorySpeaker.Ship;
+            // A ship line that ends the beat carries where to go next, as one text: the hand-off is part of what the
+            // model is told to keep when it says this in the core's voice, and what plays when there is no model.
+            var lines = moment.Lines;
 
-            yield return new Announcement(moment.Key, notTheShips ? moment.Line : moment.Spoken)
+            for (var index = 0; index < lines.Count; index++)
             {
-                Urgency = CalloutUrgency.Routine,
+                var last = index == lines.Count - 1;
 
-                // The beat index rides along so the brief can say which this is without parsing the key; the
-                // opening is -1.
-                Variant = moment.Beat,
-            };
+                yield return new Announcement(moment.LineKey(index), last && IsShips(lines[index]) ? moment.Spoken(index) : lines[index].Text)
+                {
+                    Urgency = CalloutUrgency.Routine,
 
-            if (notTheShips && moment.HandOff is { } handOff)
+                    // The beat index rides along so the brief can say which this is without parsing the key; the
+                    // opening is -1.
+                    Variant = moment.Beat,
+                };
+            }
+
+            if (lines.Count > 0 && !IsShips(lines[^1]) && moment.HandOff is { } handOff)
             {
                 yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", handOff)
                 {
@@ -243,4 +278,6 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             }
         }
     }
+
+    private static bool IsShips(AdventureLine line) => line.Speaker is not { } speaker || speaker == Stories.StorySpeaker.Ship;
 }

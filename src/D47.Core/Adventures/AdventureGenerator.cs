@@ -382,14 +382,17 @@ public sealed class AdventureGenerator(
             return resolved;
         }
 
-        var unknown = read.Beats.Select(beat => beat.Speaker)
+        var unknown = read.Beats.SelectMany(beat => beat.Lines.Select(line => line.Speaker))
             .Prepend(ask.Rewrite is null ? read.OpeningSpeaker : null)
             .Where(speaker => speaker is not null && Speaker(speaker, story) is null)
             .Distinct(StringComparer.Ordinal)
             .Select(speaker => $"{UnknownSpeaker}\"{speaker}\", who is not one of the story's speakers: {string.Join(", ", Speakers(story))}.")
             .ToList();
 
-        var spoken = resolved with { Beats = [.. resolved.Beats.Select(beat => beat with { Speaker = Speaker(beat.Speaker, story) })] };
+        var spoken = resolved with
+        {
+            Beats = [.. resolved.Beats.Select(beat => beat with { Lines = [.. beat.Lines.Select(line => line with { Speaker = Speaker(line.Speaker, story) })] })],
+        };
         var selfNamed = SelfNaming(spoken.Beats, story)
             .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in beat {found.Index + 1}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
                 + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\".");
@@ -399,16 +402,19 @@ public sealed class AdventureGenerator(
 
     private const string SelfNamed = "A line names its own speaker: ";
 
-    /// <summary>The beats given to a cast member whose line names that member by their shown name.</summary>
-    private static IEnumerable<(int Index, AdventureSpeaker Member)> SelfNaming(IReadOnlyList<AdventureBeat> beats, AdventureStory story)
+    /// <summary>The lines given to a cast member that name that member by their shown name, by beat and line.</summary>
+    private static IEnumerable<(int Index, int Line, AdventureSpeaker Member)> SelfNaming(IReadOnlyList<AdventureBeat> beats, AdventureStory story)
     {
         for (var index = 0; index < beats.Count; index++)
         {
-            var speaker = beats[index].Speaker;
-
-            if ((story.Cast ?? []).FirstOrDefault(member => member.Id == speaker) is { } member && AdventureMention.Holds(beats[index].Line, member.Name))
+            for (var line = 0; line < beats[index].Lines.Count; line++)
             {
-                yield return (index, member);
+                var said = beats[index].Lines[line];
+
+                if ((story.Cast ?? []).FirstOrDefault(member => member.Id == said.Speaker) is { } member && AdventureMention.Holds(said.Text, member.Name))
+                {
+                    yield return (index, line, member);
+                }
             }
         }
     }
@@ -421,11 +427,17 @@ public sealed class AdventureGenerator(
             return resolved;
         }
 
-        var named = SelfNaming(resolved.Beats, story).Select(found => found.Index).ToHashSet();
+        var named = SelfNaming(resolved.Beats, story).Select(found => (found.Index, found.Line)).ToHashSet();
 
         return resolved with
         {
-            Beats = [.. resolved.Beats.Select((beat, index) => named.Contains(index) ? beat with { Speaker = Stories.StorySpeaker.Narrator } : beat)],
+            Beats =
+            [
+                .. resolved.Beats.Select((beat, index) => beat with
+                {
+                    Lines = [.. beat.Lines.Select((line, at) => named.Contains((index, at)) ? line with { Speaker = Stories.StorySpeaker.Narrator } : line)],
+                }),
+            ],
             Refusals = [.. resolved.Refusals.Where(refusal => !refusal.StartsWith(SelfNamed, StringComparison.Ordinal))],
         };
     }
@@ -849,9 +861,9 @@ public sealed class AdventureGenerator(
                 text.Append("- ").AppendLine(previous.Opening);
             }
 
-            foreach (var beat in previous.Beats)
+            foreach (var line in previous.Beats.SelectMany(beat => beat.Lines))
             {
-                text.Append("- ").AppendLine(beat.Line);
+                text.Append("- ").AppendLine(line.Text);
             }
         }
 
@@ -1029,7 +1041,8 @@ public sealed class AdventureGenerator(
             + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
             + "A cast member's line is that person's own words, in the first person, as they would say them: it never names them and "
             + "never describes them. Narration, including any line that describes a cast member, what they did or what they left behind, "
-            + "is given to \"narrator\".");
+            + "is given to \"narrator\". A beat's lines are spoken in the order given. Most beats have one line; give a beat a second "
+            + "or third only where a cast member speaks and the scene also needs narrating.");
 
         if (story.CoreIsStock)
         {
@@ -1344,7 +1357,7 @@ public sealed class AdventureGenerator(
 
                 foreach (var (beat, index) in previousBeats.Select((beat, index) => (beat, index)))
                 {
-                    text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()} — \"{beat.Line}\"");
+                    text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()} — {Quoted(beat.Lines)}");
                 }
             }
 
@@ -1393,8 +1406,8 @@ public sealed class AdventureGenerator(
             + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
-            + "\"engineer\": string|null, \"stage\": string|null, \"line\": string"
-            + (speakers ? ", \"speaker\": string" : string.Empty) + "}]"
+            + "\"engineer\": string|null, \"stage\": string|null, "
+            + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
             + (speakers ? ", \"openingSpeaker\": string" : string.Empty)
             + (ask.Story is { FinaleChapter: 1, Destination: null } ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
             + "}. \"reply\" is what you say to the Commander, in your own "
@@ -1436,7 +1449,7 @@ public sealed class AdventureGenerator(
 
             foreach (var (beat, index) in rewrite.Chapter.Beats.Take(rewrite.From).Select((beat, index) => (beat, index)))
             {
-                text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()} — \"{beat.Line}\"");
+                text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()} — {Quoted(beat.Lines)}");
             }
         }
         else
@@ -1446,11 +1459,15 @@ public sealed class AdventureGenerator(
 
         var refused = rewrite.Chapter.Beats[rewrite.From];
 
-        text.AppendLine($"The beat the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — \"{refused.Line}\"");
+        text.AppendLine($"The beat the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
         text.AppendLine(
             "Write a different beat in its place, not the same thing to do and not the same place. Continue from the last beat done; "
             + "do not restart or retell the chapter. It keeps its spine and its ending.");
     }
+
+    /// <summary>A beat's lines as the model is shown them: each in quotes, after its speaker when one is named.</summary>
+    private static string Quoted(IReadOnlyList<AdventureLine> lines) =>
+        string.Join(" / ", lines.Select(line => line.Speaker is { Length: > 0 } speaker ? $"{speaker}: \"{line.Text}\"" : $"\"{line.Text}\""));
 
     private static string Render(Adventure draft)
     {
@@ -1470,7 +1487,7 @@ public sealed class AdventureGenerator(
 
         foreach (var (beat, index) in draft.Beats.Select((beat, index) => (beat, index)))
         {
-            text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()} — \"{beat.Line}\"");
+            text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()} — {Quoted(beat.Lines)}");
         }
 
         return text.ToString();
@@ -1522,8 +1539,7 @@ public sealed class AdventureGenerator(
         bool? Organic,
         string? Engineer,
         string? Stage,
-        string Line,
-        string? Speaker = null)
+        IReadOnlyList<AdventureLine> Lines)
     {
         /// <summary>A counted or engineer beat's trigger as written; the place fields are not carried.</summary>
         public AdventureTrigger Written() => new()
@@ -1599,8 +1615,7 @@ public sealed class AdventureGenerator(
                         Flag(element, "organic"),
                         Text(element, "engineer"),
                         Text(element, "stage"),
-                        Text(element, "line") ?? string.Empty,
-                        Text(element, "speaker")));
+                        ReadLines(element)));
                 }
             }
 
@@ -1612,6 +1627,31 @@ public sealed class AdventureGenerator(
         {
             return null;
         }
+    }
+
+    /// <summary>A beat's lines: the <c>lines</c> list a story chapter is asked for, or the single <c>line</c> and <c>speaker</c>.</summary>
+    private static IReadOnlyList<AdventureLine> ReadLines(JsonElement beat)
+    {
+        if (beat.TryGetProperty("lines", out var lines) && lines.ValueKind == JsonValueKind.Array)
+        {
+            var read = lines.EnumerateArray()
+                .Select(line => line.ValueKind == JsonValueKind.String
+                    ? new AdventureLine { Text = line.GetString() ?? string.Empty }
+                    : line.ValueKind == JsonValueKind.Object
+                        ? new AdventureLine { Text = Text(line, "text") ?? Text(line, "line") ?? string.Empty, Speaker = Text(line, "speaker") }
+                        : null)
+                .OfType<AdventureLine>()
+                .Where(line => !string.IsNullOrWhiteSpace(line.Text))
+                .Take(AdventureLimits.MaxLinesPerBeat)
+                .ToList();
+
+            if (read.Count > 0)
+            {
+                return read;
+            }
+        }
+
+        return [new AdventureLine { Text = Text(beat, "line") ?? string.Empty, Speaker = Text(beat, "speaker") }];
     }
 
     private static string? Text(JsonElement element, string property) =>
@@ -1866,8 +1906,7 @@ public sealed class AdventureGenerator(
                     Title = beat.Title,
                     Function = beat.Function,
                     Trigger = trigger,
-                    Line = beat.Line,
-                    Speaker = beat.Speaker,
+                    Lines = beat.Lines,
                 });
             }
         }

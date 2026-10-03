@@ -320,8 +320,9 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             {
                 Title = beat.Title?.Trim() ?? string.Empty,
                 Function = beat.Function?.Trim(),
-                Line = beat.Line?.Trim() ?? string.Empty,
-                Speaker = beat.Speaker,
+                Lines = beat.Lines is { Count: > 0 } lines
+                    ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker })]
+                    : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
                 Trigger = new AdventureTrigger
                 {
                     Kind = kind,
@@ -434,8 +435,9 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     Engineer = beat.Trigger.Engineer,
                     Stage = beat.Trigger.Stage,
                 },
-                Line = beat.Line,
-                Speaker = beat.Speaker,
+                Line = beat.Lines.Count == 1 ? beat.Line : null,
+                Speaker = beat.Lines.Count == 1 ? beat.Speaker : null,
+                Lines = beat.Lines.Count == 1 ? null : [.. beat.Lines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker })],
             }),
         ],
         AcceptedAt = adventure.AcceptedAt,
@@ -516,6 +518,16 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public TriggerRecord? Trigger { get; set; }
 
         public string? Line { get; set; }
+
+        public string? Speaker { get; set; }
+
+        /// <summary>Written instead of <see cref="Line"/> and <see cref="Speaker"/> when a beat has more than one line.</summary>
+        public List<LineRecord>? Lines { get; set; }
+    }
+
+    private sealed class LineRecord
+    {
+        public string? Text { get; set; }
 
         public string? Speaker { get; set; }
     }

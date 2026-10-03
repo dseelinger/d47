@@ -151,13 +151,28 @@ public static class AdventureValidation
                 problems.Add($"{where}'s title is {beat.Title.Trim().Length} characters; at most {AdventureLimits.MaxTitleLength}.");
             }
 
-            if (string.IsNullOrWhiteSpace(beat.Line))
+            if (beat.Lines.Count > AdventureLimits.MaxLinesPerBeat)
+            {
+                problems.Add($"{where} has {beat.Lines.Count} lines; at most {AdventureLimits.MaxLinesPerBeat}.");
+            }
+
+            if (beat.Lines.Count == 0 || beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)))
             {
                 problems.Add($"{where} has no line.");
             }
-            else if (beat.Line.Trim().Length > AdventureLimits.MaxLineLength)
+            else
             {
-                problems.Add($"{where}'s line is {beat.Line.Trim().Length} characters; at most {AdventureLimits.MaxLineLength}.");
+                foreach (var line in beat.Lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line.Text))
+                    {
+                        problems.Add($"{where} has an empty line.");
+                    }
+                    else if (line.Text.Trim().Length > AdventureLimits.MaxLineLength)
+                    {
+                        problems.Add($"{where}'s line is {line.Text.Trim().Length} characters; at most {AdventureLimits.MaxLineLength}.");
+                    }
+                }
             }
 
             if (!Enum.IsDefined(beat.Trigger.Kind))

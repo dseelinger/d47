@@ -203,7 +203,8 @@ public static class FlavourBriefs
 
         // A beat of the Commander's adventure, or its opening (Phase 47, "The ship's AI tells it, and the
         // authored beat is the floor").
-        if (announcement.Key.StartsWith(Adventures.AdventureCallout.KeyPrefix, StringComparison.Ordinal))
+        if (announcement.Key.StartsWith(Adventures.AdventureCallout.KeyPrefix, StringComparison.Ordinal)
+            || announcement.Key.StartsWith(Adventures.AdventureCallout.LinePrefix, StringComparison.Ordinal))
         {
             var opening = announcement.Variant < 0;
 

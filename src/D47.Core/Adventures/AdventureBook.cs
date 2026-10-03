@@ -12,14 +12,18 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 {
     public bool IsOpening => Beat < 0;
 
-    public string Line => IsOpening
-        ? Adventure.Opening ?? $"{Adventure.Name} begins."
-        : Adventure.Beats[Beat].Line;
+    /// <summary>What is said, in order: the opening's one line, or the beat's lines.</summary>
+    public IReadOnlyList<AdventureLine> Lines => IsOpening
+        ? [new AdventureLine { Text = Adventure.Opening ?? $"{Adventure.Name} begins.", Speaker = Adventure.OpeningSpeaker }]
+        : Adventure.Beats[Beat].Lines;
+
+    /// <summary>The first line.</summary>
+    public string Line => Lines.Count > 0 ? Lines[0].Text : string.Empty;
 
     public string Title => IsOpening ? Adventure.Name : Adventure.Beats[Beat].Title;
 
     /// <summary>Who says <see cref="Line"/>: a story's speaker id, or null for the ship.</summary>
-    public string? Speaker => IsOpening ? Adventure.OpeningSpeaker : Adventure.Beats[Beat].Speaker;
+    public string? Speaker => Lines.Count > 0 ? Lines[0].Speaker : null;
 
     /// <summary>The beat this one hands over to — the first, after the opening — or null after the last.</summary>
     public AdventureBeat? Next => Adventure.Beats.ElementAtOrDefault(Beat + 1);
@@ -27,8 +31,17 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>Where the Commander goes next, said with the line rather than waited for.</summary>
     public string? HandOff => Next?.Trigger.HandOff();
 
-    /// <summary>The line and the hand-off together, which is what is said.</summary>
-    public string Spoken => HandOff is { } next ? $"{Line} {next}" : Line;
+    /// <summary>Line <paramref name="index"/> and the hand-off together, which is what is said when the ship speaks the last line.</summary>
+    public string Spoken(int index)
+    {
+        var line = index < Lines.Count ? Lines[index].Text : string.Empty;
+        return HandOff is { } next ? $"{line} {next}" : line;
+    }
+
+    /// <summary>The announcement key of line <paramref name="index"/>: <see cref="Key"/> for the first, its own family for the rest.</summary>
+    public string LineKey(int index) => index == 0
+        ? Key
+        : $"{AdventureCallout.LinePrefix}{Adventure.Key}.{Beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}.{index.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
     /// <summary>
     /// Stable per adventure and beat, so the engine's cooldown keys on the beat and not the text.

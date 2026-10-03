@@ -6396,9 +6396,9 @@ public sealed class AppHost : IDisposable
 
         if (Stories is not { } stories
             || Adventures is not { } adventures
-            || D47.Core.Adventures.AdventureCallout.Reached(announcement.Key) is not var (key, beat)
+            || D47.Core.Adventures.AdventureCallout.Spoken(announcement.Key) is not var (key, beat, line)
             || adventures.Book.Store.Find(commander, key) is not { StoryId: not null } chapter
-            || stories.LineVoice(commander, beat < 0 ? chapter.OpeningSpeaker : chapter.Beats.ElementAtOrDefault(beat)?.Speaker) is not { } voice
+            || stories.LineVoice(commander, chapter.SpeakerOf(beat, line)) is not { } voice
             || voice.Role == VoiceRole.ShipAi)
         {
             return null;
@@ -7115,7 +7115,7 @@ public sealed class AppHost : IDisposable
     private void RecordAdventure(Announcement announcement, SpokenClip? spoken)
     {
         if (Adventures is not { } adventures
-            || D47.Core.Adventures.AdventureCallout.Reached(announcement.Key) is not var (key, beat))
+            || D47.Core.Adventures.AdventureCallout.Spoken(announcement.Key) is not var (key, beat, line))
         {
             return;
         }
@@ -7123,13 +7123,10 @@ public sealed class AppHost : IDisposable
         var commander = GameState.Active?.Identity.FrontierId;
         var story = adventures.Book.Store.Find(commander, key);
         var reached = beat >= 0 ? story?.Beats.ElementAtOrDefault(beat) : null;
+        var voice = story?.StoryId is null ? null : Stories?.LineVoice(commander, story.SpeakerOf(beat, line));
 
         if (Messages is { } messages)
         {
-            var voice = story?.StoryId is null
-                ? null
-                : Stories?.LineVoice(commander, beat < 0 ? story.OpeningSpeaker : reached?.Speaker);
-
             D47.Core.Adventures.AdventureMessages.Post(
                 messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, CastPictures.For(voice?.Cast), voice?.Cast?.Picture);
         }
@@ -7140,6 +7137,8 @@ public sealed class AppHost : IDisposable
             Text = announcement.Text,
             At = DateTimeOffset.Now,
             Beat = beat,
+            Line = line,
+            Speaker = voice?.Cast?.Name ?? (voice is { } said ? VoiceRoles.Called(said.Role) : null),
             Title = reached?.Title ?? (beat < 0 ? "Opening" : null),
 
             // Stored rather than derived later: a story edited after a beat has fired would otherwise

@@ -31,6 +31,12 @@ public sealed record AdventureTold
     /// <summary>The beat index, <c>-1</c> for the opening, and <c>-1</c> for an aside.</summary>
     public int Beat { get; init; } = -1;
 
+    /// <summary>Which of the beat's lines this is, from 0.</summary>
+    public int Line { get; init; }
+
+    /// <summary>The name the line was said under, or null for the ship.</summary>
+    public string? Speaker { get; init; }
+
     /// <summary>The beat's title, as it was when it fired.</summary>
     public string? Title { get; init; }
 
