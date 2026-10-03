@@ -1649,6 +1649,8 @@ public sealed class AppHost : IDisposable
                         ? null
                         : (progress, cancellationToken) =>
                             self.SwitchLocalVoiceBuild(build, progress, cancellationToken),
+                    ChatterboxState = () => self?.ChatterboxState() ?? "Not available.",
+                    DownloadChatterbox = () => self is null ? null : self.DownloadChatterbox,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
@@ -3705,6 +3707,63 @@ public sealed class AppHost : IDisposable
     /// <summary>Whether a download is already running, atomic because the button is a press.</summary>
     private int _fetchingVoice;
 
+    internal string ChatterboxFolder() => Path.Combine(Paths.Data, "models", "chatterbox");
+
+    /// <summary>The shipped reference clips, copied beside the executable.</summary>
+    private static string ChatterboxVoicesFolder() => Path.Combine(AppContext.BaseDirectory, "voices", "chatterbox");
+
+    private string ChatterboxState() =>
+        D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder())
+            ? "Installed. Nothing D47 speaks through this provider leaves this machine."
+            : $"Not downloaded. About {D47.Core.Speech.ChatterboxAssets.TotalMegabytes:0} MB, fetched "
+              + "once from huggingface.co.";
+
+    /// <summary>Fetches Chatterbox's model, off the UI thread, then asks it for its voices.</summary>
+    private async Task<string?> DownloadChatterbox(
+        IProgress<double> progress,
+        CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
+        {
+            return "A download is already running.";
+        }
+
+        try
+        {
+            using var installer = new ChatterboxInstaller(
+                ChatterboxFolder(), _loggerFactory.CreateLogger<ChatterboxInstaller>());
+
+            var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
+
+            var result = await Task.Run(
+                () => installer.InstallAsync(reported, cancellationToken),
+                cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation("The Chatterbox download ended as {Outcome}", result.Outcome);
+
+            if (result.Outcome is not (KokoroInstall.Installed or KokoroInstall.AlreadyPresent))
+            {
+                return result.Detail ?? "Chatterbox could not be downloaded.";
+            }
+
+            if (_clients.GetValueOrDefault(TtsProviderCatalog.ChatterboxId) is { } client)
+            {
+                await LoadVoicesAsync(client).ConfigureAwait(false);
+            }
+
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or HttpRequestException)
+        {
+            _logger.LogWarning(ex, "Chatterbox could not be downloaded");
+            return $"Chatterbox could not be downloaded: {ex.Message}";
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _fetchingVoice, 0);
+        }
+    }
+
     /// <summary>What the local voice says the moment it can say anything.</summary>
     private const string LocalVoiceProof =
         "Local voice installed. This is D47, speaking from your own machine. Nothing I say through "
@@ -4061,6 +4120,11 @@ public sealed class AppHost : IDisposable
             KokoroFolder(),
             _loggerFactory.CreateLogger<KokoroTtsProvider>(),
             Paths.PronunciationsFile),
+
+        TtsProviderCatalog.ChatterboxId => new ChatterboxTtsProvider(
+            ChatterboxFolder(),
+            ChatterboxVoicesFolder(),
+            _loggerFactory.CreateLogger<ChatterboxTtsProvider>()),
 
         _ => null,
     };

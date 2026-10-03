@@ -12,7 +12,7 @@ public static class ProviderStatus
     /// <summary>Null for None, which speaks through nothing.</summary>
     public static ChoiceStatus? Of(TtsProviderInfo provider, Func<string, bool> keyStored) =>
         provider.Speaks
-            ? Of(provider.KeySecretName, onThisComputer: provider.Id == TtsProviderCatalog.KokoroId, keyStored)
+            ? Of(provider.KeySecretName, onThisComputer: TtsProviderCatalog.IsLocal(provider.Id), keyStored)
             : null;
 
     private static ChoiceStatus Of(string? keySecretName, bool onThisComputer, Func<string, bool> keyStored) =>

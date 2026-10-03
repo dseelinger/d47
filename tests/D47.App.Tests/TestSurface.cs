@@ -96,6 +96,8 @@ public static class TestSurface
                 // surface these tests bind is then not the one that ships.
                 LocalVoiceState = () => "Not downloaded. About 350 MB, fetched once.",
                 DownloadLocalVoice = () => localVoice ?? ((_, _) => Task.FromResult<string?>(null)),
+                ChatterboxState = () => "Not downloaded. About 691 MB, fetched once from huggingface.co.",
+                DownloadChatterbox = () => (_, _) => Task.FromResult<string?>(null),
 
                 // Supplied rather than left null, for the same reason as the local voice download above.
                 ResetVoices = () => (_, _) => Task.FromResult<string?>(resetVoices?.Invoke() ?? string.Empty),

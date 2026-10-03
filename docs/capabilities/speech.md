@@ -204,12 +204,13 @@ and still costing.
 |---|---|
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
 | `kokoro` | Kokoro, **running on this computer**. Free, no key, and nothing sent anywhere. |
+| `chatterbox` | Chatterbox Turbo, **running on this computer's processor**. Free, no key, and nothing sent anywhere. |
 | `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
 | `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
 | `cartesia` | Cartesia. Paid, needs an API key. **924 voices**, far the largest library here. |
 | `none` | Do not speak. The cues and the thinking loop still play. |
 
-**Kokoro is the only one that sends nothing anywhere, and it is the reason it is here.** Every
+**Kokoro and Chatterbox are the two that send nothing anywhere, and that is why they are here.** Every
 other provider on this list is a service: the words Directive 47 speaks are sent somewhere to be
 turned into audio, and that includes re-voiced in-game messages, which are written by other
 players. Edge is free, but free is not the same as private. Kokoro runs the voice on your own
@@ -288,6 +289,26 @@ ending worked out, which is also how *Buzhang's* works and why no list of words 
 it. The dictionary contains no apostrophes at all — not one of its 274,927 entries — so the handful
 that are not built that way, like *don't* and *won't*, are written down individually. **can't**
 takes the vowel of the voice saying it.
+
+**Chatterbox is the second local voice.** It runs Resemble AI's Chatterbox Turbo on the CPU only,
+never the graphics card, and speaks in one of the [shipped reference voices](#chatterbox-voices).
+Kokoro stays the default local voice.
+
+- **The download is 691 MB**, fetched once from `huggingface.co/ResembleAI/chatterbox-turbo-ONNX`.
+  A **Chatterbox voice** row below the speaking rate, shown while any slot uses Chatterbox, says
+  whether it is here and has a **Download it** button. Every file is checked against a pinned size
+  and SHA-256 before it is kept.
+- **It performs some bracketed directions** rather than reading them out: the ones its tokenizer
+  lists, such as `[laugh]`, `[chuckle]`, `[sigh]` and `[gasp]`. Any other direction is removed
+  before the line is spoken.
+- **Pronunciations apply to Kokoro only.** Chatterbox is given the text as written, so the
+  sound-by-sound handling described below, and your own pronunciation corrections, do not reach it.
+- **It has no speaking rate**, so the rate row is not shown for it.
+- **Every line carries Resemble's Perth watermark.** It is imperceptible, and it cannot be switched
+  off.
+
+It uses as many threads as the processor has performance cores, up to eight. The first line after
+starting D47 also loads the model, so it takes longer than the lines after it.
 
 **OpenAI is the only one that can be told how to *perform*.** Every other provider assigns a voice
 and that is the whole of the choice; OpenAI takes a direction — accent, tone, intonation, delivery —

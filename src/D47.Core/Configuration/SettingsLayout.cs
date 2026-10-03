@@ -105,6 +105,10 @@ public static class SettingsLayout
     public static bool IsSpeechProviderKeyFamily(string key) =>
         key.StartsWith("speech.", StringComparison.Ordinal) && key.EndsWith(".apiKey", StringComparison.Ordinal);
 
+    /// <summary>The download row of each voice that runs on this computer, each shown only while a slot uses it.</summary>
+    public static bool IsLocalVoiceDownloadFamily(string key) =>
+        key is Capabilities.Builtin.SpeechCapability.LocalVoiceKey or Capabilities.Builtin.SpeechCapability.ChatterboxVoiceKey;
+
     public static bool IsVoiceProviderSlotFamily(string key) =>
         key.StartsWith("speech.provider.", StringComparison.Ordinal);
 
@@ -193,7 +197,7 @@ public static class SettingsLayout
                                 E("speech.provider"),
                                 E("speech.voice"),
                                 E("speech.rate"),
-                                E("speech.localVoice"),
+                                F(IsLocalVoiceDownloadFamily),
                                 E("speech.localVoiceBuild"),
                                 F(IsSpeechProviderKeyFamily),
                                 E("speech.elevenlabs.model"),

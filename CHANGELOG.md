@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+**Chatterbox** is a second voice that runs on this computer, offered wherever Kokoro is. It runs Chatterbox Turbo on the processor, needs no key and sends nothing anywhere, and speaks in one of the 12 shipped reference voices. Its model is 691 MB, downloaded once from huggingface.co with **Download it** on the **Chatterbox voice** row, which appears while any slot uses Chatterbox. It performs directions such as `[laugh]` and `[sigh]` instead of reading them out. Pronunciation corrections apply to Kokoro only, there is no speaking rate, and every line carries Resemble's inaudible Perth watermark. **Privacy and egress** names the download under **Speech model download**.
+
 Every panel tab has the same header. Under the tabs, a title line names the tab, gives the page's one-line summary, such as how many engineers you have unlocked, and holds the page's search field and controls, with an orange rule beneath it. The face of the ship's AI is a 104-pixel square at the right of the tabs and the title line. Pages no longer repeat the tab's name as their own title, and a page you have opened from another, such as one engineer, has a smaller title under the breadcrumb.
 
 The mini panel, on the desktop overlay and in the headset, shows the face of the ship's AI at its left edge, as tall as the panel, with the messages beside it at the width they had before. It opens at 792 by 280 instead of 512 by 280. The headset mini panel is 0.526 metres wide instead of 0.34, so its text looks the same size; a width you set yourself is kept. The overlay animates the face, and the headset shows the still frame for the current state.

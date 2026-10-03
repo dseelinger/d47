@@ -279,26 +279,7 @@ public static class EgressDisclosure
                 + "request, on demand."),
 
         // On demand.
-        SpeechModels => Listening.SttProviderCatalog.Selected(settings.Listening.Provider) is { Hosted: true } hosted
-            ? EgressEntry.Silent(
-                SpeechModels,
-                NameOf(SpeechModels),
-                $"{hosted.Name} turns speech into words, so no speech model is downloaded and no request is made.")
-            : settings.Listening.Model == Listening.WhisperModels.NoneId
-            ? EgressEntry.Silent(
-                SpeechModels,
-                NameOf(SpeechModels),
-                "No speech model is selected, so nothing is downloaded and no request is made.")
-            : new EgressEntry(
-                SpeechModels,
-                NameOf(SpeechModels),
-                Listening.WhisperModels.Host,
-                $"The {settings.Listening.Model} speech model is selected. If it is not already on disk, D47 "
-                + "downloads it from this host — once, and only the model file. "
-                + "Nothing about you goes with the request — no audio, no transcript, no key, no identifier. "
-                + "Once downloaded, transcription runs entirely on this machine.",
-                Active: true,
-                Summary: $"The {settings.Listening.Model} speech model, fetched once if not already on disk."),
+        SpeechModels => SpeechModelsEntry(settings),
 
         Diagnostics => EgressEntry.Silent(
             Diagnostics,
@@ -396,6 +377,57 @@ public static class EgressDisclosure
             + "of the turn, at about a penny each.",
             Active: true,
             Summary: $"{provider.Name} runs the search and reads the pages; D47 only ever sees the reply.");
+    }
+
+    /// <summary>The hearing model and the Chatterbox voice model, each fetched once when selected and absent.</summary>
+    private static EgressEntry SpeechModelsEntry(D47Settings settings)
+    {
+        var hearing = Listening.SttProviderCatalog.Selected(settings.Listening.Provider) is { Hosted: true } hosted
+            ? EgressEntry.Silent(
+                SpeechModels,
+                NameOf(SpeechModels),
+                $"{hosted.Name} turns speech into words, so no speech model is downloaded and no request is made.")
+            : settings.Listening.Model == Listening.WhisperModels.NoneId
+            ? EgressEntry.Silent(
+                SpeechModels,
+                NameOf(SpeechModels),
+                "No speech model is selected, so nothing is downloaded and no request is made.")
+            : new EgressEntry(
+                SpeechModels,
+                NameOf(SpeechModels),
+                Listening.WhisperModels.Host,
+                $"The {settings.Listening.Model} speech model is selected. If it is not already on disk, D47 "
+                + "downloads it from this host — once, and only the model file. "
+                + "Nothing about you goes with the request — no audio, no transcript, no key, no identifier. "
+                + "Once downloaded, transcription runs entirely on this machine.",
+                Active: true,
+                Summary: $"The {settings.Listening.Model} speech model, fetched once if not already on disk.");
+
+        var chatterbox = Audio.VoiceGroups.Selected(settings.Speech).Values.Any(id =>
+            string.Equals(id, Audio.TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase));
+
+        if (!chatterbox)
+        {
+            return hearing;
+        }
+
+        var voice =
+            $"Chatterbox is selected to speak. Its model, about {Speech.ChatterboxAssets.TotalMegabytes:0} MB, "
+            + $"is downloaded from {Speech.ChatterboxAssets.Host}/{Speech.ChatterboxAssets.Repository} when "
+            + "you press Download it on the Chatterbox voice row, once. Nothing about you goes with the "
+            + "request — no text, no audio, no key, no identifier.";
+
+        return new EgressEntry(
+            SpeechModels,
+            NameOf(SpeechModels),
+            hearing.Active
+                ? $"{hearing.Destination}, {Speech.ChatterboxAssets.Host}/{Speech.ChatterboxAssets.Repository}"
+                : $"{Speech.ChatterboxAssets.Host}/{Speech.ChatterboxAssets.Repository}",
+            $"{hearing.What} {voice}",
+            Active: true,
+            Summary: hearing.Active
+                ? $"{hearing.Summary} The Chatterbox voice model, fetched once from {Speech.ChatterboxAssets.Host}."
+                : $"The Chatterbox voice model, fetched once from {Speech.ChatterboxAssets.Host}.");
     }
 
     /// <summary>

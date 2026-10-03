@@ -62,7 +62,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
     }
 
     [AvaloniaFact]
-    public void TheVoiceProviderStepperNamesEachOfItsSixAndSaysWhatEachIs()
+    public void TheVoiceProviderStepperNamesEachOfItsSevenAndSaysWhatEachIs()
     {
         var (host, _) = OpenOnHearing();
         host.View.Reveal(SpeechCapability.Id);
@@ -70,7 +70,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
 
         var stepper = StepperFor(host, SpeechCapability.ProviderKey);
 
-        Assert.Equal(6, stepper.ItemsSource.Count);
+        Assert.Equal(7, stepper.ItemsSource.Count);
         Assert.Equal(TtsProviderCatalog.All.Select(provider => provider.Name), stepper.ItemsSource);
 
         var seen = new List<string?>();
@@ -86,7 +86,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
             {
                 TtsProviderCatalog.NoneId => null,
                 TtsProviderCatalog.EdgeId => "FREE",
-                TtsProviderCatalog.KokoroId => "THIS COMPUTER · FREE",
+                TtsProviderCatalog.KokoroId or TtsProviderCatalog.ChatterboxId => "THIS COMPUTER · FREE",
                 _ => "PAID · NEEDS KEY",
             }),
             seen);

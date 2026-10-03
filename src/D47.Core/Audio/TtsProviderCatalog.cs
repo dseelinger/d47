@@ -95,6 +95,8 @@ public static class TtsProviderCatalog
 
     public const string KokoroId = "kokoro";
 
+    public const string ChatterboxId = "chatterbox";
+
     public static TtsProviderInfo None { get; } = new()
     {
         Id = NoneId,
@@ -247,9 +249,35 @@ public static class TtsProviderCatalog
         RateCanBeSet = true,
     };
 
+    /// <summary>Chatterbox Turbo, run on this machine's CPU from reference clips that ship with d47.</summary>
+    public static TtsProviderInfo Chatterbox { get; } = new()
+    {
+        Id = ChatterboxId,
+        Name = "Chatterbox",
+        Label = "Chatterbox",
+        Destination = "nothing sent",
+        Egress =
+            "Nothing is sent anywhere. The voice runs on this computer's processor, so the text D47 "
+            + "speaks — including re-voiced in-game messages written by other players — never leaves "
+            + "it. The model is downloaded once, from huggingface.co, and after that this slot needs "
+            + "no network at all.",
+        Billed = false,
+        VoicesAreStatic = true,
+        VoiceIdsAreOpaque = false,
+        LanguageCanBePinned = true,
+
+        // The model has no speed input.
+        RateCanBeSet = false,
+    };
+
     /// <summary>Every provider, in the order the row offers them. "None" last, like the LLM row.</summary>
     public static IReadOnlyList<TtsProviderInfo> All { get; } =
-        [Edge, Kokoro, ElevenLabs, OpenAi, Cartesia, None];
+        [Edge, Kokoro, Chatterbox, ElevenLabs, OpenAi, Cartesia, None];
+
+    /// <summary>Whether this provider runs on this machine rather than as a service.</summary>
+    public static bool IsLocal(string? id) =>
+        string.Equals(id, KokoroId, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(id, ChatterboxId, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The providers that may speak for one slot.</summary>
     public static IReadOnlyList<TtsProviderInfo> For(VoiceGroupInfo slot) =>

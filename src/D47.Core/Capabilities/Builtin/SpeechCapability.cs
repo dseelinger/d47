@@ -16,6 +16,7 @@ public static class SpeechCapability
     public const string ProviderKey = "speech.provider";
     public const string LocalVoiceKey = "speech.localVoice";
     public const string LocalVoiceBuildKey = "speech.localVoiceBuild";
+    public const string ChatterboxVoiceKey = "speech.chatterbox";
     public const string VoiceKey = "speech.voice";
     public const string RateKey = "speech.rate";
 
@@ -231,6 +232,12 @@ public static class SpeechCapability
 
         /// <summary>Fetches a different build of the local voice model and swaps it in (#139).</summary>
         public Func<string, LongPress?>? SwitchLocalVoiceBuild { get; init; }
+
+        /// <summary>Whether Chatterbox's model is on this machine, and what fetching it would cost.</summary>
+        public Func<string>? ChatterboxState { get; init; }
+
+        /// <summary>Fetches Chatterbox's model.</summary>
+        public Func<LongPress?>? DownloadChatterbox { get; init; }
 
         /// <summary>Stops everything audible, immediately.</summary>
         public required Action Silence { get; init; }
@@ -482,6 +489,30 @@ public static class SpeechCapability
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
+                },
+            },
+            new SettingRow
+            {
+                Key = ChatterboxVoiceKey,
+                Label = "Chatterbox voice",
+                Help =
+                    "Chatterbox runs on this computer's processor, so nothing D47 says through it leaves "
+                    + "it. The model is downloaded once from huggingface.co and after that this needs no "
+                    + "network at all.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "provider",
+                PressLabel = surface.DownloadChatterbox is null ? null : "Download it",
+                PressAsync = surface.DownloadChatterbox is null
+                    ? null
+                    : (progress, cancellationToken) =>
+                        surface.DownloadChatterbox.Invoke() is { } fetch
+                            ? fetch(progress, cancellationToken)
+                            : Task.FromResult<string?>(null),
+                AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
+                    .Any(id => string.Equals(id, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)),
+                Binding = new SettingBinding
+                {
+                    Read = _ => surface.ChatterboxState?.Invoke() ?? "Not available.",
                 },
             },
             new SettingRow
