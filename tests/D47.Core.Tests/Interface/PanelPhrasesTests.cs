@@ -155,6 +155,62 @@ public class PanelPhrasesTests
         Assert.Equal("log", nav.RootKeyOf(PanelTab.Transcript));
     }
 
+    /// <summary>A root of another tab is reached from anywhere by its name (#803).</summary>
+    [Theory]
+    [InlineData("suits", PanelTab.Assets, "suits")]
+    [InlineData("show me the suits", PanelTab.Assets, "suits")]
+    [InlineData("engineers", PanelTab.Navigation, "engineers")]
+    public void ARootOfAnyTabIsReachedByName(string spoken, PanelTab tab, string key)
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
+        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Navigation, new NavCrumb("engineers", "Engineers"));
+
+        Assert.NotNull(PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(tab, nav.Tab);
+        Assert.Equal(key, nav.RootKeyOf(tab));
+    }
+
+    /// <summary>A root registered on another tab answers to its name from Transcript (#803).</summary>
+    [Fact]
+    public void ARootMovedToAnotherTabIsStillSayable()
+    {
+        var nav = new PanelNavigator();
+        nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
+        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Assets, new NavCrumb("checklist", "Checklist"));
+
+        Assert.Equal("Checklist.", PanelPhrases.Apply("checklist", nav));
+        Assert.Equal(PanelTab.Assets, nav.Tab);
+        Assert.Equal("checklist", nav.RootKeyOf(PanelTab.Assets));
+    }
+
+    /// <summary>A tab's name beats a root of the same word on another tab.</summary>
+    [Fact]
+    public void ATabNameWinsOverARootOfTheSameWord()
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Assets, new NavCrumb("assets.checklist", "Checklist"));
+
+        Assert.Equal("Checklist.", PanelPhrases.Apply("checklist", nav));
+        Assert.Equal(PanelTab.Checklist, nav.Tab);
+        Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Assets));
+    }
+
+    /// <summary>A word naming roots on two tabs says nothing about which, so nothing moves.</summary>
+    [Fact]
+    public void AWordTwoTabsShareMovesNothing()
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Assets, new NavCrumb("assets.history", "History"));
+        nav.Register(PanelTab.Navigation, new NavCrumb("navigation.history", "History"));
+
+        Assert.Null(PanelPhrases.Apply("history", nav));
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+        Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Assets));
+    }
+
     [Fact]
     public void SayingTheTabYouAreOnReturnsToItsRoot()
     {
