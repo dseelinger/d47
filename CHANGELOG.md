@@ -16,6 +16,8 @@ A limit on how far a station may be from its star, in the commodity, Market page
 
 Kokoro's Nicole voice (`af_nicole`) is a whisper, so it is no longer chosen for a core, the carrier captain, the tower or the Narrator. Voices for other ships and stations on comms can still be given it, and you can still pick it by hand. A core that was given Nicole automatically gets another voice the next time the voices are paired; one you picked yourself keeps it.
 
+A ship picture that finishes downloading after you leave its page and come back is now put in, instead of the page staying without it until it is rebuilt. A ship picture built for a page you never opened is no longer kept in memory.
+
 Asking for bodies that are not landable no longer returns only landable ones. The body search now treats "landable: no" as not asking about landing at all.
 
 **Chatterbox** is a second voice that runs on this computer, offered wherever Kokoro is. It runs Chatterbox Turbo on the processor, needs no key and sends nothing anywhere, and speaks in one of the 12 shipped reference voices. Its model is 691 MB, downloaded once from huggingface.co with **Download it** on the **Chatterbox voice** row, which appears while any slot uses Chatterbox. It performs directions such as `[laugh]` and `[sigh]` instead of reading them out. Pronunciation corrections apply to Kokoro only, there is no speaking rate, and every line carries Resemble's inaudible Perth watermark. **Privacy and egress** names the download under **Speech model download**.

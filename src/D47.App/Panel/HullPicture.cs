@@ -68,12 +68,30 @@ internal sealed class HullPicture : Grid
             }
         };
 
-        // The fetch lands on a background thread and this is the page it was started for, so the picture is
-        // put in where the Commander is already looking rather than on their next visit.
-        ShipArtStore.Arrived += Landed;
-        DetachedFromVisualTree += (_, _) => ShipArtStore.Arrived -= Landed;
-
         Show();
+    }
+
+    /// <summary>
+    /// Listens for the fetch only while on screen, so the picture is put in where the Commander is already
+    /// looking, and one that is never shown is not held by the store.
+    /// </summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        ShipArtStore.Arrived += Landed;
+
+        if (_picture is null)
+        {
+            Show();
+        }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        ShipArtStore.Arrived -= Landed;
     }
 
     /// <summary>
