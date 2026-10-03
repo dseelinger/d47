@@ -857,7 +857,7 @@ keeps running.
 In jumps. The right answer depends entirely on the trip: every 3 jumps is reassuring over 20 and
 unbearable over 300. Set it to `0` to silence the progress line while keeping the hazard warnings.
 
-#### Long jump threshold {#long-jump-threshold}
+#### Hyperspace tunnel delay {#long-jump-threshold}
 
 In seconds, counted from entering hyperspace.
 

@@ -822,8 +822,8 @@ public static class CalloutCapability
         {
             Key = LongJumpSecondsKey,
             Advanced = true,
-            Label = "A jump is long after",
-            Help = "In seconds, measured from entering hyperspace rather than from starting the jump.",
+            Label = "Hyperspace Tunnel Delay (in seconds)",
+            Help = "Measured from entering hyperspace rather than from starting the jump.",
             Kind = SettingKind.Number,
             Step = 0.5,
             DefaultDisplay = "30",

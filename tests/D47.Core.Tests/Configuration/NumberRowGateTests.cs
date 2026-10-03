@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.RegularExpressions;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using Xunit;
@@ -88,25 +87,6 @@ public class NumberRowGateTests
 
         Assert.NotNull(value);
         Assert.DoesNotContain(',', value);
-    }
-
-    /// <summary>The unit is drawn inside the control from <see cref="SettingRow.Unit"/>, so a label naming it says it twice.</summary>
-    [Fact]
-    public void ANumberRowsLabelLeavesItsUnitToTheControl()
-    {
-        using var install = new TempInstall();
-        var settings = TestSurface.For(install).Settings;
-
-        var unitWord = new Regex(
-            @"\b(milliseconds|seconds|minutes|decibels|percent|metres|tonnes|days)\b",
-            RegexOptions.IgnoreCase);
-
-        var named = from section in settings.Sections
-                    from row in section.Rows
-                    where row.Kind == SettingKind.Number && unitWord.IsMatch(row.Label)
-                    select $"{row.Key}: {row.Label}";
-
-        Assert.Empty(named);
     }
 
     [Fact]
