@@ -23,6 +23,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
     public const string CrimePrefix = "adventure-crime.";
 
+    /// <summary>The hand-off after a beat whose line is not the ship's, said by the ship.</summary>
+    public const string HandOffPrefix = "adventure-handoff.";
+
     public const string BackstoryLine =
         "The story has turned. Your Backstory still describes where it began, and it is yours to change.";
 
@@ -208,7 +211,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             // The line and where to go next, as one text: the hand-off is part of what the model is told to
             // keep when it says this in the core's voice, and what plays when there is no model.
-            yield return new Announcement(moment.Key, moment.Spoken)
+            var notTheShips = moment.Speaker is { } speaker && speaker != Stories.StorySpeaker.Ship;
+
+            yield return new Announcement(moment.Key, notTheShips ? moment.Line : moment.Spoken)
             {
                 Urgency = CalloutUrgency.Routine,
 
@@ -216,6 +221,14 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 // opening is -1.
                 Variant = moment.Beat,
             };
+
+            if (notTheShips && moment.HandOff is { } handOff)
+            {
+                yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", handOff)
+                {
+                    Urgency = CalloutUrgency.Routine,
+                };
+            }
 
             if (!moment.IsOpening
                 && moment.Beat < moment.Adventure.Beats.Count

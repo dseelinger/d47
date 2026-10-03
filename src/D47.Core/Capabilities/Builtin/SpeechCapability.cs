@@ -246,6 +246,9 @@ public static class SpeechCapability
         /// <summary>Fetches Chatterbox's model.</summary>
         public Func<LongPress?>? DownloadChatterbox { get; init; }
 
+        /// <summary>Whether a downloaded story's cast speaks through this local provider, so its download row is offered.</summary>
+        public Func<string, bool>? StoryCastUses { get; init; }
+
         /// <summary>Stops everything audible, immediately.</summary>
         public required Action Silence { get; init; }
 
@@ -506,9 +509,10 @@ public static class SpeechCapability
                             ? fetch(progress, cancellationToken)
                             : Task.FromResult<string?>(null),
 
-                // On screen while any slot speaks through Kokoro, the same rule as a provider's key row.
+                // On screen while any slot speaks through Kokoro, the same rule as a provider's key row, or a story's cast does.
                 AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
-                    .Any(id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)),
+                    .Any(id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase))
+                    || surface.StoryCastUses?.Invoke(TtsProviderCatalog.KokoroId) == true,
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
@@ -532,7 +536,8 @@ public static class SpeechCapability
                             ? fetch(progress, cancellationToken)
                             : Task.FromResult<string?>(null),
                 AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
-                    .Any(id => string.Equals(id, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)),
+                    .Any(id => string.Equals(id, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase))
+                    || surface.StoryCastUses?.Invoke(TtsProviderCatalog.ChatterboxId) == true,
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.ChatterboxState?.Invoke() ?? "Not available.",

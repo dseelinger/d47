@@ -99,7 +99,13 @@ public sealed record AdventureStory(
     bool LongHaul = false,
     AdventureActivity? Comfort = null,
     AdventureDestination? Destination = null,
-    IReadOnlyList<string>? Refused = null);
+    IReadOnlyList<string>? Refused = null,
+    IReadOnlyList<AdventureSpeaker>? Cast = null,
+    string? Core = null,
+    bool CoreIsStock = false);
+
+/// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
+public sealed record AdventureSpeaker(string Id, string Name, string Who);
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -302,7 +308,7 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, "The model's beats were not something I could read. Try again.", notes);
         }
 
-        var resolved = await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
+        var resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
 
         // One pass back through the turn with the refusals as a remark, before the Commander sees anything —
         // so the common case is that they never see a refusal at all.
@@ -320,7 +326,7 @@ public sealed class AdventureGenerator(
             if (reread is { Beats.Count: > 0 })
             {
                 read = reread;
-                resolved = await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false);
+                resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
             }
         }
 
@@ -329,7 +335,9 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(
                 null,
                 read.Reply,
-                "The story names places that cannot stand: " + string.Join(" ", resolved.Refusals),
+                (resolved.Refusals.Any(refusal => refusal.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
+                    ? "The story cannot stand: "
+                    : "The story names places that cannot stand: ") + string.Join(" ", resolved.Refusals),
                 notes);
         }
 
@@ -344,6 +352,7 @@ public sealed class AdventureGenerator(
                 WrittenBy = personaId(),
                 Spine = spine,
                 Opening = read.Opening,
+                OpeningSpeaker = Speaker(read.OpeningSpeaker, ask.Story),
                 Beats = resolved.Beats,
                 Previous = previous is null ? null : previous with { Previous = null },
                 Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
@@ -360,6 +369,38 @@ public sealed class AdventureGenerator(
             Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
         };
     }
+
+    private const string UnknownSpeaker = "A line is given to ";
+
+    /// <summary>The dry run with a refusal added for each line a story chapter gives to a speaker the story does not have.</summary>
+    private static Resolved Speakers(Resolved resolved, ReadAnswer read, AdventureAsk ask)
+    {
+        if (ask.Story is not { } story)
+        {
+            return resolved;
+        }
+
+        var unknown = read.Beats.Select(beat => beat.Speaker)
+            .Prepend(ask.Rewrite is null ? read.OpeningSpeaker : null)
+            .Where(speaker => speaker is not null && Speaker(speaker, story) is null)
+            .Distinct(StringComparer.Ordinal)
+            .Select(speaker => $"{UnknownSpeaker}\"{speaker}\", who is not one of the story's speakers: {string.Join(", ", Speakers(story))}.")
+            .ToList();
+
+        return unknown.Count == 0
+            ? resolved with { Beats = [.. resolved.Beats.Select(beat => beat with { Speaker = Speaker(beat.Speaker, story) })] }
+            : resolved with { Refusals = [.. resolved.Refusals, .. unknown] };
+    }
+
+    /// <summary>The ids a story chapter's lines may name: the ship, the narrator and the cast.</summary>
+    private static IEnumerable<string> Speakers(AdventureStory story) =>
+        [Stories.StorySpeaker.Ship, Stories.StorySpeaker.Narrator, .. (story.Cast ?? []).Select(member => member.Id)];
+
+    /// <summary>The story's own spelling of a speaker id the model wrote in any case, or null when the story has no such speaker.</summary>
+    private static string? Speaker(string? written, AdventureStory? story) =>
+        written is null || story is null
+            ? null
+            : Speakers(story).FirstOrDefault(id => string.Equals(id, written.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
     private async Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken)
@@ -939,6 +980,29 @@ public sealed class AdventureGenerator(
         AppendMissions(text, facts);
     }
 
+    /// <summary>Who may speak a story chapter's lines, and how the ship's lines are read while a stock core is aboard.</summary>
+    private static void AppendSpeakers(StringBuilder text, AdventureStory story)
+    {
+        text.AppendLine();
+        text.AppendLine(
+            "Every line, the opening included, has a speaker, and is written as that speaker says it: \"ship\", the ship's AI aboard"
+            + (story.Core is { Length: > 0 } core ? $" ({core})" : string.Empty)
+            + "; \"narrator\", who tells the story from outside the cockpit; or one of the story's cast, over comms, in a recording "
+            + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's.");
+
+        if (story.CoreIsStock)
+        {
+            text.AppendLine(
+                "The core aboard is stock and does not tell this story: a \"ship\" line is read by the narrator, so write it as "
+                + "narration, about the Commander rather than to them.");
+        }
+
+        foreach (var member in story.Cast ?? [])
+        {
+            text.AppendLine($"- \"{member.Id}\": {member.Name} — {member.Who}");
+        }
+    }
+
     /// <summary>The most missions a story chapter is told of.</summary>
     public const int MissionsShown = 10;
 
@@ -1222,6 +1286,12 @@ public sealed class AdventureGenerator(
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
         text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next beat, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next beat's place, and the line may point them at it.");
         text.AppendLine("Give each beat a short title — a chapter name, never a number.");
+        var speakers = ask.Story is not null;
+
+        if (ask.Story is { } told)
+        {
+            AppendSpeakers(text, told);
+        }
 
         if (previousRefusals is { Count: > 0 })
         {
@@ -1281,7 +1351,9 @@ public sealed class AdventureGenerator(
             + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
-            + "\"engineer\": string|null, \"stage\": string|null, \"line\": string}]"
+            + "\"engineer\": string|null, \"stage\": string|null, \"line\": string"
+            + (speakers ? ", \"speaker\": string" : string.Empty) + "}]"
+            + (speakers ? ", \"openingSpeaker\": string" : string.Empty)
             + (ask.Story is { FinaleChapter: 1, Destination: null } ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
             + "}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
@@ -1408,7 +1480,8 @@ public sealed class AdventureGenerator(
         bool? Organic,
         string? Engineer,
         string? Stage,
-        string Line)
+        string Line,
+        string? Speaker = null)
     {
         /// <summary>A counted or engineer beat's trigger as written; the place fields are not carried.</summary>
         public AdventureTrigger Written() => new()
@@ -1437,7 +1510,10 @@ public sealed class AdventureGenerator(
         };
     }
 
-    private sealed record ReadAnswer(string? Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination);
+    private sealed record ReadAnswer(string? Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination)
+    {
+        public string? OpeningSpeaker { get; init; }
+    }
 
     /// <summary>A place as the model named it.</summary>
     private sealed record ReadPlace(string? System, string? Body);
@@ -1481,13 +1557,14 @@ public sealed class AdventureGenerator(
                         Flag(element, "organic"),
                         Text(element, "engineer"),
                         Text(element, "stage"),
-                        Text(element, "line") ?? string.Empty));
+                        Text(element, "line") ?? string.Empty,
+                        Text(element, "speaker")));
                 }
             }
 
             var destination = Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
 
-            return new ReadAnswer(Text(root, "opening"), Text(root, "reply"), beats, destination);
+            return new ReadAnswer(Text(root, "opening"), Text(root, "reply"), beats, destination) { OpeningSpeaker = Text(root, "openingSpeaker") };
         }
         catch (JsonException)
         {
@@ -1748,6 +1825,7 @@ public sealed class AdventureGenerator(
                     Function = beat.Function,
                     Trigger = trigger,
                     Line = beat.Line,
+                    Speaker = beat.Speaker,
                 });
             }
         }

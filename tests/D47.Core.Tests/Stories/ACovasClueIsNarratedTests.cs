@@ -8,30 +8,23 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>A stock core never speaks a clue: the Narrator does, whatever the Narrator setting. Any other core speaks it when the Narrator is off.</summary>
+/// <summary>A stock core never speaks a story line: the Narrator speaks the ship's lines while it is aboard. Any other core speaks them.</summary>
 public sealed class ACovasClueIsNarratedTests
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WithCovasAboardTheNarratorSpeaksTheClue(bool narratorOn) =>
-        Assert.Equal(VoiceRole.Narrator, ClueVoice(PersonaCatalog.Covas, narratorOn));
+    [Fact]
+    public void WithCovasAboardTheNarratorSpeaksTheShipsClue() =>
+        Assert.Equal(VoiceRole.Narrator, ClueVoice(PersonaCatalog.Covas));
 
     [Fact]
-    public void WithKexAboardKexSpeaksTheClueWhenTheNarratorIsOff() =>
-        Assert.Equal(VoiceRole.ShipAi, ClueVoice(PersonaCatalog.Kex, narratorOn: false));
+    public void WithKexAboardKexSpeaksTheShipsClue() =>
+        Assert.Equal(VoiceRole.ShipAi, ClueVoice(PersonaCatalog.Kex));
 
-    [Fact]
-    public void WithKexAboardTheNarratorSpeaksTheClueWhenItIsOn() =>
-        Assert.Equal(VoiceRole.Narrator, ClueVoice(PersonaCatalog.Kex, narratorOn: true));
-
-    private static VoiceRole ClueVoice(D47.Core.Persona.Persona core, bool narratorOn)
+    private static VoiceRole ClueVoice(D47.Core.Persona.Persona core)
     {
         var callout = new StoryClueCallout(new NearbyFight())
         {
             Due = _ => new StoryClueDue(Id, 0),
-            NarratorOn = () => narratorOn,
-            Core = () => core,
+            VoiceOf = _ => StoryVoices.Of(Secret.Clues[0].Speaker, Secret, gender: null, core),
         };
 
         var docked = GameStatus.Unknown with { Flags = StatusFlags.Docked | StatusFlags.InMainShip, ReadAt = Now };

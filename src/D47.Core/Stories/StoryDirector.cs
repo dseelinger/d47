@@ -60,6 +60,42 @@ public sealed class StoryDirector(
     /// <summary>Stores the Commander's gender; a running story uses it from its next line.</summary>
     public Action<string> SetGender { get; set; } = _ => { };
 
+    /// <summary>The core aboard, which speaks the ship's story lines unless it is stock.</summary>
+    public Func<Persona.Persona?> Aboard { get; set; } = () => null;
+
+    /// <summary>What is on this PC for a cast to speak with. Read at a pick, a resume, and every <see cref="VoiceCheck"/> while a story runs.</summary>
+    public Func<CastVoicesHere> VoicesHere { get; set; } = () => CastVoicesHere.All;
+
+    /// <summary>How often a running story checks that its cast can still speak.</summary>
+    public static readonly TimeSpan VoiceCheck = TimeSpan.FromSeconds(5);
+
+    /// <summary>When the running story's cast was last checked, by Commander.</summary>
+    private readonly Dictionary<string, DateTimeOffset> _voicesChecked = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Raised with a story's title and the ship's message when a pick is refused or a running story is paused because a
+    /// cast voice is not ready.
+    /// </summary>
+    public event Action<string, string>? VoicesNotReady;
+
+    /// <summary>What the cast of story <paramref name="id"/> needs and does not have here; empty when ready or when its hidden layer is not on disk.</summary>
+    public IReadOnlyList<string> VoicesMissing(string id) =>
+        catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere()) : [];
+
+    /// <summary>Whether the cast of any story whose hidden layer is on disk speaks, in the Commander's version, through <paramref name="providerId"/>.</summary>
+    public bool CastUses(string providerId)
+    {
+        var stories = catalog();
+
+        return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId));
+    }
+
+    /// <summary>Who speaks a line by <paramref name="speaker"/> in the current story, decided now; null when no story is current.</summary>
+    public StoryLineVoice? LineVoice(string? frontierId, string? speaker) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
+            ? StoryVoices.Of(speaker, secret, Gender(), Aboard())
+            : null;
+
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
     public bool NeedsGenderFor(string id) => catalog().Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
 
@@ -157,6 +193,11 @@ public sealed class StoryDirector(
                 : $"{current.Title} is your story. Switch to change it.");
         }
 
+        if (Unready(card.Id, card.Title) is { } unready)
+        {
+            return Task.FromResult<string?>(unready);
+        }
+
         setBackstory(card.InYourWords);
 
         var narrated = card.Pacing.NarratedScan;
@@ -205,6 +246,11 @@ public sealed class StoryDirector(
                 return Task.FromResult<string?>($"{current.Title} is already your story.");
             }
 
+            if (catalog().Find(id) is { } card && Unready(card.Id, card.Title) is { } unready)
+            {
+                return Task.FromResult<string?>(unready);
+            }
+
             Stop(frontierId, current, StoryState.Abandoned, now);
         }
 
@@ -229,6 +275,11 @@ public sealed class StoryDirector(
         if (stories.Current(frontierId) is not { State: StoryState.Paused } paused)
         {
             return "No story is paused.";
+        }
+
+        if (VoicesMissing(paused.Id) is { Count: > 0 } missing)
+        {
+            return StoryVoices.Paused(paused.Title, missing);
         }
 
         if (paused.CurrentChapter is { } key && book.Store.Find(frontierId, key) is not null)
@@ -408,6 +459,13 @@ public sealed class StoryDirector(
         }
 
         var standing = book.Standing(frontierId, key);
+
+        if (story.State == StoryState.Running && standing is { Adventure.IsActive: true } && LostAVoice(frontierId, story, now))
+        {
+            book.Abandon(frontierId, key, now);
+            stories.Save(frontierId, story.Paused(now));
+            return null;
+        }
 
         if (story.State == StoryState.Running && standing is null or { Adventure.IsAbandoned: true })
         {
@@ -614,6 +672,19 @@ public sealed class StoryDirector(
                && Hidden(story.Id) is { } secret
                && StoryClues.Text(secret, story.Pacing, due.Index) is { Length: > 0 } clue
             ? (story.Title, clue)
+            : null;
+    }
+
+    /// <summary>Who speaks a due clue, decided now; null when it is not the clue the running story owes.</summary>
+    public StoryLineVoice? ClueVoice(string? frontierId, StoryClueDue due)
+    {
+        ArgumentNullException.ThrowIfNull(due);
+
+        return Clue(frontierId, due) is not null
+               && stories.Current(frontierId) is { } story
+               && Hidden(story.Id) is { } secret
+               && StoryClues.Line(secret, story.Pacing, due.Index) is { } line
+            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard())
             : null;
     }
 
@@ -949,13 +1020,58 @@ public sealed class StoryDirector(
             longHaul,
             comfort,
             destination,
-            story.Refused);
+            story.Refused,
+            [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who))],
+            Aboard()?.Name,
+            Aboard()?.Stock == true);
     }
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>
     private int SinceBeacon(string? frontierId, Story story) => story.BeaconScanAt is { } scanned
         ? story.Chapters.Count(key => ChapterOf(frontierId, story, key) is { } chapter && chapter.Written >= scanned)
         : 0;
+
+    /// <summary>The refusal for a story whose cast cannot speak yet, raising <see cref="VoicesNotReady"/>; null when it can.</summary>
+    private string? Unready(string id, string title)
+    {
+        if (VoicesMissing(id) is not { Count: > 0 } missing)
+        {
+            return null;
+        }
+
+        var message = StoryVoices.CannotStart(title, missing);
+        logger.LogInformation("{Title} was not picked: {Count} voice prerequisite(s) missing", title, missing.Count);
+        VoicesNotReady?.Invoke(title, message);
+        return message;
+    }
+
+    /// <summary>
+    /// Whether the running story's cast has lost a voice, raising <see cref="VoicesNotReady"/> when it has. Checked at
+    /// most once every <see cref="VoiceCheck"/>.
+    /// </summary>
+    private bool LostAVoice(string? frontierId, Story story, DateTimeOffset now)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_gate)
+        {
+            if (_voicesChecked.TryGetValue(commander, out var last) && now >= last && now - last < VoiceCheck)
+            {
+                return false;
+            }
+
+            _voicesChecked[commander] = now;
+        }
+
+        if (VoicesMissing(story.Id) is not { Count: > 0 } missing)
+        {
+            return false;
+        }
+
+        logger.LogInformation("{Title} is paused: {Count} voice prerequisite(s) missing", story.Title, missing.Count);
+        VoicesNotReady?.Invoke(story.Title, StoryVoices.Paused(story.Title, missing));
+        return true;
+    }
 
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
     private StorySecret? Hidden(string id) => catalog().Secret(id)?.For(Gender());

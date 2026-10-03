@@ -398,6 +398,9 @@ public sealed record AdventureBeat
 
     /// <summary>What the ship's AI says when this beat is reached.</summary>
     public required string Line { get; init; }
+
+    /// <summary>Who says <see cref="Line"/> in a story chapter: a speaker id of the story, or null for the ship.</summary>
+    public string? Speaker { get; init; }
 }
 
 /// <summary>
@@ -443,6 +446,9 @@ public sealed record Adventure
 
     /// <summary>The line spoken when it begins — the beat before the first beat.</summary>
     public string? Opening { get; init; }
+
+    /// <summary>Who says <see cref="Opening"/> in a story chapter: a speaker id of the story, or null for the ship.</summary>
+    public string? OpeningSpeaker { get; init; }
 
     public IReadOnlyList<AdventureBeat> Beats { get; init; } = [];
 

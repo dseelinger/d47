@@ -18,6 +18,9 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 
     public string Title => IsOpening ? Adventure.Name : Adventure.Beats[Beat].Title;
 
+    /// <summary>Who says <see cref="Line"/>: a story's speaker id, or null for the ship.</summary>
+    public string? Speaker => IsOpening ? Adventure.OpeningSpeaker : Adventure.Beats[Beat].Speaker;
+
     /// <summary>The beat this one hands over to — the first, after the opening — or null after the last.</summary>
     public AdventureBeat? Next => Adventure.Beats.ElementAtOrDefault(Beat + 1);
 

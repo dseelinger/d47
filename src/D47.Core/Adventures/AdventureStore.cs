@@ -321,6 +321,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                 Title = beat.Title?.Trim() ?? string.Empty,
                 Function = beat.Function?.Trim(),
                 Line = beat.Line?.Trim() ?? string.Empty,
+                Speaker = beat.Speaker,
                 Trigger = new AdventureTrigger
                 {
                     Kind = kind,
@@ -365,6 +366,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                 }
                 : null,
             Opening = record.Opening?.Trim(),
+            OpeningSpeaker = record.OpeningSpeaker,
             Beats = beats,
             AcceptedAt = record.AcceptedAt,
             AbandonedAt = record.AbandonedAt,
@@ -404,6 +406,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             }
             : null,
         Opening = adventure.Opening,
+        OpeningSpeaker = adventure.OpeningSpeaker,
         Beats =
         [
             .. adventure.Beats.Select(beat => new BeatRecord
@@ -432,6 +435,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     Stage = beat.Trigger.Stage,
                 },
                 Line = beat.Line,
+                Speaker = beat.Speaker,
             }),
         ],
         AcceptedAt = adventure.AcceptedAt,
@@ -470,6 +474,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public SpineRecord? Spine { get; set; }
 
         public string? Opening { get; set; }
+
+        public string? OpeningSpeaker { get; set; }
 
         public IReadOnlyList<BeatRecord>? Beats { get; set; }
 
@@ -510,6 +516,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public TriggerRecord? Trigger { get; set; }
 
         public string? Line { get; set; }
+
+        public string? Speaker { get; set; }
     }
 
     private sealed class TriggerRecord

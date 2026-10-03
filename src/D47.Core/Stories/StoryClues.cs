@@ -194,14 +194,17 @@ public static class StoryClues
     }
 
     /// <summary>The text of the clue at <paramref name="index"/> in a story paced by <paramref name="pacing"/>: the clues, then the finale lines.</summary>
-    public static string? Text(StorySecret secret, StoryPacing pacing, int index)
+    public static string? Text(StorySecret secret, StoryPacing pacing, int index) => Line(secret, pacing, index)?.Text;
+
+    /// <summary>The clue at <paramref name="index"/>, with its speaker: the clues, then the finale lines.</summary>
+    public static StoryLine? Line(StorySecret secret, StoryPacing pacing, int index)
     {
         ArgumentNullException.ThrowIfNull(secret);
         ArgumentNullException.ThrowIfNull(pacing);
 
         return index < pacing.ClueDays.Count
-            ? secret.Clues.ElementAtOrDefault(index)?.Text
-            : secret.Finale.ElementAtOrDefault(index - pacing.ClueDays.Count)?.Text;
+            ? secret.Clues.ElementAtOrDefault(index)
+            : secret.Finale.ElementAtOrDefault(index - pacing.ClueDays.Count);
     }
 
     /// <summary>The hidden layer as the narrator, the cores, chatter and the chapter writer all read it.</summary>
@@ -239,6 +242,21 @@ public static class StoryClues
 
         return text.ToString().TrimEnd();
     }
+
+    /// <summary>What the model is asked to write when a cast member of the story speaks a clue.</summary>
+    public static FlavourBrief Speaking(string clue, string name, string? who) => new()
+    {
+        Speaker = $"You are {name}, a character in the stock story the Commander is playing. {who}".TrimEnd(),
+        Instruction =
+            $"Say one line to the Commander as {name}, in {name}'s own words, carrying a clue to the hidden story as a "
+            + "detail they could miss. Hint at what it points to; never state it. One to three sentences. Do not give "
+            + $"advice. The clue: {clue}",
+        NeedsPersona = false,
+        NeedsGameState = true,
+        NeedsAboutMe = false,
+        NeedsScenario = false,
+        NeedsStory = false,
+    };
 
     /// <summary>What the model is asked to write when a clue is spoken.</summary>
     public static FlavourBrief Speaking(string clue, bool narrated) => narrated

@@ -18,11 +18,8 @@ public sealed class StoryClueCallout(NearbyFight fight) : ICallout
     /// <summary>Off means no clue is spoken; a due clue waits.</summary>
     public Func<bool> Enabled { get; set; } = () => true;
 
-    /// <summary>Whether the Narrator setting is on.</summary>
-    public Func<bool> NarratorOn { get; set; } = () => false;
-
-    /// <summary>The core aboard, or null when none is known.</summary>
-    public Func<Persona.Persona?> Core { get; set; } = () => null;
+    /// <summary>Who speaks a due clue, or null for the ship. Only the role is put on the marker.</summary>
+    public Func<StoryClueDue, StoryLineVoice?> VoiceOf { get; set; } = _ => null;
 
     /// <summary>The clue owed now, or null.</summary>
     public Func<DateTimeOffset, StoryClueDue?> Due { get; set; } = _ => null;
@@ -57,7 +54,7 @@ public sealed class StoryClueCallout(NearbyFight fight) : ICallout
         {
             Urgency = CalloutUrgency.Routine,
             Chatter = Quiet,
-            Voice = StoryClues.Narrated(Core(), NarratorOn()) ? VoiceRole.Narrator : VoiceRole.ShipAi,
+            Voice = VoiceOf(due)?.Role ?? VoiceRole.ShipAi,
         };
     }
 

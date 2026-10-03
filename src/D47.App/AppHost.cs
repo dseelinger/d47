@@ -1682,6 +1682,7 @@ public sealed class AppHost : IDisposable
                         return () => host._ownVoiceRecording.Changed -= refresh;
                     },
                     DownloadChatterbox = () => self is null ? null : self.DownloadChatterbox,
+                    StoryCastUses = providerId => self?.Stories?.CastUses(providerId) == true,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
@@ -2287,7 +2288,8 @@ public sealed class AppHost : IDisposable
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
-        storyClue.Core = () => personas.Current;
+        storyClue.VoiceOf = due => storyDirector.ClueVoice(gameState.Active?.Identity.FrontierId, due);
+        storyDirector.Aboard = () => personas.Current;
 
         storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
 
@@ -2529,6 +2531,10 @@ public sealed class AppHost : IDisposable
         host.StoryDownloads = storyDownloads;
         endingAnswer.Answer = host.AnswerEnding;
         host.Messages = messageStore;
+
+        // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.
+        storyDirector.VoicesHere = host.CastVoicesHere;
+        storyDirector.VoicesNotReady += host.PostVoicesNotReady;
 
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
@@ -3189,7 +3195,6 @@ public sealed class AppHost : IDisposable
 
                 case D47.Core.Stories.StoryClueCallout clue:
                     clue.Enabled = () => settings.Current.Llm.PersonalityEnabled;
-                    clue.NarratorOn = () => settings.Current.Callouts is { Narrator: true, NarratorSeconds: > 0 };
                     break;
 
                 case NarratorCallout narrator:
@@ -4669,6 +4674,8 @@ public sealed class AppHost : IDisposable
 
         Voice.Tts = Speaker(VoiceGroup.Aboard);
         Voice.SpeakerFor = Speaker;
+        Voice.PinnedFor = CastClient;
+        ReleaseCastClients(all: false);
 
         // Everyone d47 can speak as, filled in from settings.
         var aboard = VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard);
@@ -5588,6 +5595,66 @@ public sealed class AppHost : IDisposable
     /// <summary>Which client speaks for a slot.</summary>
     private ITtsProvider? Speaker(VoiceGroup group) => _slots.GetValueOrDefault(group);
 
+    /// <summary>Local clients built for a story's cast, for a provider no slot speaks through.</summary>
+    private readonly Dictionary<string, ITtsProvider> _castClients = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Lock _castGate = new();
+
+    /// <summary>
+    /// The local client a story's cast member speaks through: the slots' own when one is on that provider, otherwise one
+    /// built for the cast. Null for a provider that is not local.
+    /// </summary>
+    private ITtsProvider? CastClient(string providerId)
+    {
+        if (!TtsProviderCatalog.IsLocal(providerId))
+        {
+            return null;
+        }
+
+        if (_clients.GetValueOrDefault(providerId) is { } shared)
+        {
+            return shared;
+        }
+
+        lock (_castGate)
+        {
+            if (!_castClients.TryGetValue(providerId, out var built))
+            {
+                if (BuildSpeechClient(providerId) is not { } client)
+                {
+                    return null;
+                }
+
+                _castClients[providerId] = built = client;
+            }
+
+            return built;
+        }
+    }
+
+    /// <summary>Disposes the cast's own clients: every one, or those a slot now has a client for.</summary>
+    private void ReleaseCastClients(bool all)
+    {
+        lock (_castGate)
+        {
+            foreach (var id in _castClients.Keys.Where(id => all || _clients.ContainsKey(id)).ToList())
+            {
+                (_castClients[id] as IDisposable)?.Dispose();
+                _castClients.Remove(id);
+            }
+        }
+    }
+
+    /// <summary>What is on this PC for a story's cast to speak with.</summary>
+    internal D47.Core.Stories.CastVoicesHere CastVoicesHere() => new(
+        D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder()),
+        D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder()),
+        OwnVoice.Exists);
+
+    /// <summary>Posts the ship's message naming what a story's cast needs before it can speak.</summary>
+    private void PostVoicesNotReady(string title, string message) =>
+        Messages?.Post(Personas.Current.Id, title, message, DateTimeOffset.Now);
+
     /// <summary>
     /// Whether a line written for this slot may carry delivery direction — asked of the client that
     /// will speak it, never of the settings (#291).
@@ -6189,38 +6256,75 @@ public sealed class AppHost : IDisposable
     private string? HiddenStory(VoiceRole speaker) =>
         Stories?.HiddenBrief(GameState.Active?.Identity.FrontierId, speaker, Personas.Current);
 
-    /// <summary>A due clue, written by the model in the voice the marker names, or null when no line came back.</summary>
+    /// <summary>A due clue, written by the model as its speaker says it, or null when no line came back.</summary>
     private async Task<Announcement?> ComposeClueAsync(Announcement marker, D47.Core.Stories.StoryClueDue due)
     {
-        if (Stories?.Clue(GameState.Active?.Identity.FrontierId, due) is not var (_, clue))
+        var commander = GameState.Active?.Identity.FrontierId;
+
+        if (Stories?.Clue(commander, due) is not var (_, clue) || Stories.ClueVoice(commander, due) is not { } voice)
         {
             return null;
         }
 
-        var brief = D47.Core.Stories.StoryClues.Speaking(clue, marker.Voice == VoiceRole.Narrator);
+        var brief = voice.Cast is { } cast
+            ? D47.Core.Stories.StoryClues.Speaking(clue, cast.Name, voice.Who)
+            : D47.Core.Stories.StoryClues.Speaking(clue, voice.Narrated);
+        var directed = voice.Pinned is { } pinned ? CastClient(pinned.ProviderId)?.ReadsAudioTags == true : (bool?)null;
 
-        return await ComposeStoryLineAsync(brief, marker.Voice, marker.CommsChannel, marker.Key).ConfigureAwait(false) is { } said
-            ? marker with { Text = said }
+        return await ComposeStoryLineAsync(brief, voice.Role, marker.CommsChannel, marker.Key, directed).ConfigureAwait(false) is { } said
+            ? Voiced(marker with { Text = said }, voice)
             : null;
     }
 
-    /// <summary>A story line the model writes from the brief in the given voice, or null when no line came back.</summary>
-    private async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key)
+    /// <summary>A story line as its speaker says it: the role, and for a cast member the name and the pinned voice.</summary>
+    private static Announcement Voiced(Announcement line, D47.Core.Stories.StoryLineVoice voice) => line with
+    {
+        Voice = voice.Role,
+        Speaker = voice.Cast?.Name,
+        Pinned = voice.Pinned,
+    };
+
+    /// <summary>
+    /// A beat of a story chapter whose line is not the ship's own, voiced by its speaker and said as written; null for
+    /// any other announcement, and for a line the core aboard speaks, which is reworded as every beat is.
+    /// </summary>
+    private Announcement? StoryVoiced(Announcement announcement)
+    {
+        var commander = GameState.Active?.Identity.FrontierId;
+
+        if (Stories is not { } stories
+            || Adventures is not { } adventures
+            || D47.Core.Adventures.AdventureCallout.Reached(announcement.Key) is not var (key, beat)
+            || adventures.Book.Store.Find(commander, key) is not { StoryId: not null } chapter
+            || stories.LineVoice(commander, beat < 0 ? chapter.OpeningSpeaker : chapter.Beats.ElementAtOrDefault(beat)?.Speaker) is not { } voice
+            || voice.Role == VoiceRole.ShipAi)
+        {
+            return null;
+        }
+
+        return Voiced(announcement, voice);
+    }
+
+    /// <summary>
+    /// A story line the model writes from the brief in the given voice, or null when no line came back. The ship's lines
+    /// are written by the core aboard; every other speaker's by the brief's own speaker.
+    /// </summary>
+    private async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key, bool? canBeDirected = null)
     {
         if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
         {
             return null;
         }
 
-        var narrated = voice == VoiceRole.Narrator;
-        var directed = DirectableIn(VoiceGroups.Of(voice, channel));
+        var ship = voice == VoiceRole.ShipAi;
+        var directed = canBeDirected ?? DirectableIn(VoiceGroups.Of(voice, channel));
 
         using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
         Task<string?> AskAsync(string ask) => FlavourTurn.AskAsync(
             Turns.Provider,
             Turns.BackgroundModel,
-            narrated ? brief.Speaker : Personas.RenderBlock(personalityEnabled: true),
+            ship ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
             StoryFor(brief, voice),
             ask,
             Turns.LiveGameState?.Invoke(),
@@ -6264,24 +6368,17 @@ public sealed class AppHost : IDisposable
             return;
         }
 
-        var ship = line.Speaker == D47.Core.Stories.StorySpeaker.Ship;
-        var cast = line.Speaker is D47.Core.Stories.StorySpeaker.Ship or D47.Core.Stories.StorySpeaker.Narrator
-            ? null
-            : Stories?.Speaker(commander, line.Speaker);
-        var from = line.Speaker switch
-        {
-            D47.Core.Stories.StorySpeaker.Ship => Personas.Current.Id,
-            D47.Core.Stories.StorySpeaker.Narrator => D47.Core.Messages.MessageStore.Narrator,
-            _ => cast?.Name ?? D47.Core.Messages.MessageStore.Narrator,
-        };
+        var voice = Stories?.LineVoice(commander, line.Speaker)
+            ?? new D47.Core.Stories.StoryLineVoice(VoiceRole.Narrator, D47.Core.Messages.MessageStore.Narrator);
+        var ship = voice.Role == VoiceRole.ShipAi;
 
         var posted = Messages?.Post(
-            from,
+            voice.From,
             scan.Title,
             line.Text,
             DateTimeOffset.Now,
             D47.Core.Stories.StoryLines.Key(scan.StoryId),
-            picture: CastPictures.For(cast));
+            picture: CastPictures.For(voice.Cast));
         Interlocked.Increment(ref _narratingScans);
 
         _ = Task.Run(async () =>
@@ -6295,10 +6392,7 @@ public sealed class AppHost : IDisposable
                     await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
                 }
 
-                Keep(posted, await SayAsync(new Announcement($"{NarratedScanKey}.{scan.StoryId}", line.Text)
-                {
-                    Voice = ship ? VoiceRole.ShipAi : VoiceRole.Narrator,
-                }).ConfigureAwait(false));
+                Keep(posted, await SayAsync(Voiced(new Announcement($"{NarratedScanKey}.{scan.StoryId}", line.Text), voice)).ConfigureAwait(false));
             }
             catch (Exception ex)
             {
@@ -6440,15 +6534,17 @@ public sealed class AppHost : IDisposable
 
         var commander = GameState.Active?.Identity.FrontierId;
         var title = stories.Clue(commander, due)?.Title ?? due.StoryId;
+        var voice = stories.ClueVoice(commander, due);
 
         stories.ClueGiven(commander, due);
 
         Messages?.Post(
-            announcement.Voice == VoiceRole.Narrator ? D47.Core.Messages.MessageStore.Narrator : Personas.Current.Id,
+            voice?.From ?? (announcement.Voice == VoiceRole.Narrator ? D47.Core.Messages.MessageStore.Narrator : Personas.Current.Id),
             title,
             announcement.Text,
             DateTimeOffset.Now,
             announcement.Key,
+            picture: CastPictures.For(voice?.Cast),
             spoken: spoken);
     }
 
@@ -6801,6 +6897,13 @@ public sealed class AppHost : IDisposable
                     continue;
                 }
 
+                // A story chapter's line for the narrator or a cast member is said as written, in that speaker's voice.
+                if (StoryVoiced(announcement) is { } voiced)
+                {
+                    lines.Add(voiced);
+                    continue;
+                }
+
                 var varied = await VaryAsync(await RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);
 
                 // Nothing true left to say (#338): the model's line and the authored one both contradicted
@@ -6933,8 +7036,12 @@ public sealed class AppHost : IDisposable
 
         if (Messages is { } messages)
         {
+            var voice = story?.StoryId is null
+                ? null
+                : Stories?.LineVoice(commander, beat < 0 ? story.OpeningSpeaker : reached?.Speaker);
+
             D47.Core.Adventures.AdventureMessages.Post(
-                messages, Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken);
+                messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, CastPictures.For(voice?.Cast));
         }
 
         adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
@@ -7720,6 +7827,7 @@ public sealed class AppHost : IDisposable
 
         _clients.Clear();
         _slots.Clear();
+        ReleaseCastClients(all: true);
         _warming.Dispose();
 
         // Before the factory that owns the sink it writes to.

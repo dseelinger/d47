@@ -56,6 +56,9 @@ public sealed class VoicePipeline(
     /// <summary>Which client speaks for a slot.</summary>
     private ITtsProvider? Speaker(VoiceGroup group) => SpeakerFor?.Invoke(group) ?? Tts;
 
+    /// <summary>The client for a provider id, whatever the slots are on, for a story line pinned to a cast member's voice.</summary>
+    public Func<string, ITtsProvider?>? PinnedFor { get; set; }
+
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
     /// <summary>Who to name on the captions of the next turn, or null for the ship's AI (#201).</summary>
@@ -223,8 +226,28 @@ public sealed class VoicePipeline(
             return null;
         }
 
-        var applied = colour ?? Colour(role, overheard: overheard);
+        return await SpeakAsync(provider, text, channel, voice, group, colour ?? Colour(role, overheard: overheard), speaker, captioned, captionSpeaker, role, pinned: false)
+            .ConfigureAwait(false);
+    }
 
+    /// <summary>Speaks through <paramref name="provider"/> with the treatment already chosen, and returns what was queued.</summary>
+    /// <param name="pinned">
+    /// Whether the voice is a story cast member's rather than one from settings: a refusal or a failure is logged by the
+    /// pipeline and neither written out of settings nor counted against the slot's provider.
+    /// </param>
+    private async Task<SpokenClip?> SpeakAsync(
+        ITtsProvider provider,
+        string text,
+        AudioChannel channel,
+        VoiceSelection? voice,
+        string group,
+        Func<AudioClip, AudioClip>? applied,
+        string? speaker,
+        bool captioned,
+        string? captionSpeaker,
+        VoiceRole role,
+        bool pinned)
+    {
         // The voice is a parameter rather than always the ship AI's, because Phase 11 has several things to
         // say that are not the ship AI speaking — a re-voiced in-game message, a carrier's tower, a crew
         // member.
@@ -244,8 +267,11 @@ public sealed class VoicePipeline(
             IsGuardianTreated(role, applied),
             keep: true);
 
-        speech.SynthesisFailed += OnSynthesisFailed;
-        speech.VoiceRejected += OnVoiceRejected;
+        if (!pinned)
+        {
+            speech.SynthesisFailed += OnSynthesisFailed;
+            speech.VoiceRejected += OnVoiceRejected;
+        }
 
         speech.Push(text);
         await speech.CompleteAsync().ConfigureAwait(false);
@@ -288,6 +314,30 @@ public sealed class VoicePipeline(
 
         _logger.LogDebug(
             "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
+
+        // A story's cast member, in the voice the story pinned and with the treatment the story gave them.
+        if (announcement.Pinned is { } pinned)
+        {
+            if (PinnedFor?.Invoke(pinned.ProviderId) is not { } client)
+            {
+                _logger.LogWarning("No {Provider} client to speak {Key} in its pinned voice", pinned.ProviderId, announcement.Key);
+                return null;
+            }
+
+            return await SpeakAsync(
+                    client,
+                    announcement.Text,
+                    announcement.Channel,
+                    new VoiceSelection(pinned.VoiceId),
+                    announcement.Group,
+                    D47.Core.Stories.CastVoice.Treatment(pinned),
+                    announcement.Speaker is { Length: > 0 } member ? member : announcement.Voice.ToString(),
+                    announcement.Transcript is null,
+                    announcement.Speaker,
+                    announcement.Voice,
+                    pinned: true)
+                .ConfigureAwait(false);
+        }
 
         // The role decides whether this is somebody in the ship or somebody transmitting to it.
         return await AnnounceAsync(

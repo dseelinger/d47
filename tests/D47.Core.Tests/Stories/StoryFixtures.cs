@@ -227,6 +227,8 @@ internal sealed class StoryFixtures : IDisposable
 
     public string StoryPath => Path.Combine(_folder, "story.json");
 
+    public string AdventuresPath => Path.Combine(_folder, "adventures.json");
+
     public string ArchivePath => Path.Combine(_folder, "story-chapters.jsonl");
 
     /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>

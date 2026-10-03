@@ -308,8 +308,8 @@ It also costs nothing: none of this is on the advertised tool surface.
 
 ### Messages
 
-Every beat the ship's AI says is also kept as a written message, so a line said during a fight is not
-lost. Open **Messages** on the Adventures tab: newest first, unread in bold, and the button carries the
+Every beat said is also kept as a written message, from whoever said it, so a line said during a fight
+is not lost. Open **Messages** on the Adventures tab: newest first, unread in bold, and the button carries the
 unread count. Opening a message marks it read. A message that was spoken has a **Play** button that
 plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
 
@@ -433,6 +433,52 @@ public string? For(StorySpeakerShown? speaker) =>
         : null;
 ```
 
+### Who speaks a story line {#story-speakers}
+
+Every line of a stock story names its speaker: each clue and finale line, the narrated beacon scan, and in
+each chapter the opening and every beat's line. The chapter writer is told the speakers, with each cast
+member's name and who they are, and returns a speaker for every line it writes. A chapter that gives a
+line to anyone else is sent back once with the reason, and refused if it comes back the same way.
+
+- **`ship`** is the core aboard, in the ship's voice as you set it under **Its voice**. While the core
+  aboard is stock COVAS, a `ship` line is spoken in the narrator voice and posted from the Narrator, and
+  the chapter writer is told so, so it writes those lines as narration. With a Guardian core or a core you
+  wrote aboard, that core speaks them. This is decided when the line is spoken.
+- **`narrator`** is the narrator voice set under **Narrator Voice**.
+- **A cast member** speaks in the provider and voice the story pinned to it, Kokoro or Chatterbox, whatever
+  **Where each voice comes from** says. A speaker in two versions speaks in your version's voice, and
+  changing **Your Commander is** takes effect from the next line. The line goes through that speaker's
+  own sound, a comms link at the story's strength and any Guardian effects the story lists, and nothing
+  else: no radio for its role and none of the **Guardian Voice Effects** you set for the ship. The model
+  writes a cast member's clue as that member, from their name and who they are.
+
+Each line is posted to Messages from its speaker's name, with the speaker's picture and the clip it was
+spoken in. When a chapter's beat belongs to the narrator or a cast member, that speaker says the beat's line
+as written and the ship then says where you go next. A line may open with a sound such as
+`[static crackle]`: a voice that performs sounds performs it, and every other voice has it taken out.
+
+```csharp
+public static StoryLineVoice Of(string? speaker, StorySecret secret, string? gender, Persona.Persona? core)
+```
+
+#### A story needs its voices first
+
+A cast member's voice runs on this PC, so a story cannot be picked until every voice its cast needs is
+here. **Pick** and **Switch** are disabled, and the story's page lists what is missing:
+
+- the Chatterbox download and its size, when a member speaks through Chatterbox and it is not downloaded;
+- the Kokoro download and its size, when a member speaks through Kokoro and it is not downloaded;
+- a recording under **Settings**, **Your voice**, when a member speaks in your own voice.
+
+The **Local voice** and **Chatterbox voice** download rows under **Its voice** appear while a downloaded
+story's cast needs them, even when no slot uses that provider. A pick tried anyway is refused, and the ship
+posts one message to Messages listing the same things. Nothing falls back to another voice.
+
+If a voice a running story needs stops being ready, for example because the recording was deleted, the
+story is paused within a few seconds, its chapter stops, and the message is posted again. **Resume** is
+refused, with the same list, until the voice is back. No disclosure changes: a cast member's voice never
+leaves this PC, and the ship and the narrator use your own settings.
+
 ### How a chapter is fitted to you
 
 **Genre.** Each card has a Save the Cat genre, and the chapter writer is given that genre's three
@@ -552,7 +598,8 @@ Resume the Commander's running story after a pause.
 ### Ending a story
 
 When a stock story's last finale chapter is done, the story is finished and d47 posts its ending to
-Messages, said in the voice that speaks the clues, with the story's options listed under it. Open the
+Messages, said by the Narrator while stock COVAS is aboard or narration is on and otherwise by the core
+aboard, with the story's options listed under it. Open the
 message and press an option, or say "choose ending two". A story with one option takes "accept the ending".
 The answer is kept on the story, and the option's closing line is said and posted. An option can also bring
 cores aboard: each one says its waking line once. Nothing is taken away by any option, and the ending stays
@@ -614,11 +661,11 @@ session. When the last finale chapter is done and its clue given, no further cha
 story is finished, the Stories page shows it as **Finished**, and it no longer holds back any Guardian
 core. A story keeps the length it was picked with.
 
-While the core aboard is stock COVAS, every clue is spoken by the
-Narrator, with narration on or off. With a Guardian core or a core you wrote aboard, a clue is spoken by
-the Narrator when narration is on, and otherwise by the core, in its own words. A clue is also posted to
-Messages, from whoever spoke it. A clue needs a language model
-and personality; without them it waits.
+A clue is spoken by the speaker the story names for it, as [Who speaks a story line](#story-speakers)
+describes: a `ship` clue by the core aboard in its own words, or by the Narrator while stock COVAS is
+aboard; a `narrator` clue by the Narrator; a cast member's clue by that member. The narration setting
+does not change who speaks a clue. A clue is also posted to Messages, from whoever spoke it. A clue needs
+a language model and personality; without them it waits.
 
 The Narrator, invented chatter, scene chatter and the chapter writer all read the same hidden layer:
 the story's secret, its end, and the clues you have had so far. A Guardian core or a core you wrote

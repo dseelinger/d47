@@ -7,10 +7,10 @@ namespace D47.Core.Adventures;
 public static class AdventureMessages
 {
     public static D47Message Post(
-        MessageStore messages, string from, Adventure? story, string key, int beat, string text, DateTimeOffset now, SpokenClip? spoken = null)
+        MessageStore messages, string from, Adventure? story, string key, int beat, string text, DateTimeOffset now, SpokenClip? spoken = null, string? picture = null)
     {
         var reached = beat >= 0 ? story?.Beats.ElementAtOrDefault(beat) : null;
 
-        return messages.Post(from, reached?.Title ?? story?.Name ?? key, text, now, key, spoken: spoken);
+        return messages.Post(from, reached?.Title ?? story?.Name ?? key, text, now, key, picture: picture, spoken: spoken);
     }
 }

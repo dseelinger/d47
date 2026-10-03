@@ -73,6 +73,12 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public string? Speaker { get; init; }
 
+    /// <summary>
+    /// The provider and voice a story's cast member speaks in, whatever the slot settings say, or null for a line
+    /// spoken by its role. A pinned line gets the member's own treatment and nothing else.
+    /// </summary>
+    public Stories.PinnedVoice? Pinned { get; init; }
+
     /// <summary>Whether <see cref="Speaker"/> is a player rather than an NPC.</summary>
     public bool SpeakerIsPlayer { get; init; }
 

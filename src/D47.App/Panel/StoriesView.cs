@@ -422,13 +422,25 @@ public sealed class StoriesView : UserControl
 
         if (_director.NeedsGenderFor(card.Id))
         {
-            page.Children.Add(GenderChoice(() => gated?.IsEnabled = !withoutOdyssey));
+            page.Children.Add(GenderChoice(() => gated?.IsEnabled = !withoutOdyssey && _director.VoicesMissing(card.Id).Count == 0));
+        }
+
+        var missing = _director.VoicesMissing(card.Id);
+
+        if (missing.Count > 0)
+        {
+            page.Children.Add(AdventuresPage.Text("Before this story can start, its voices need:", TypeScale.Small, ThemeManager.GreyKey));
+
+            foreach (var need in missing)
+            {
+                page.Children.Add(AdventuresPage.Text(need, TypeScale.Body));
+            }
         }
 
         if (current is null)
         {
             var pick = Act("Pick", () => Start(card, switching: false, status, gated));
-            pick.IsEnabled = !withoutOdyssey && GenderReady(card);
+            pick.IsEnabled = !withoutOdyssey && GenderReady(card) && missing.Count == 0;
             bar.Children.Add(gated = pick);
         }
         else if (!string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
@@ -441,7 +453,7 @@ public sealed class StoriesView : UserControl
                 + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
                 () => Start(card, switching: true, status, gated)));
-            switchTo.IsEnabled = !withoutOdyssey && GenderReady(card);
+            switchTo.IsEnabled = !withoutOdyssey && GenderReady(card) && missing.Count == 0;
             bar.Children.Add(gated = switchTo);
         }
         else
