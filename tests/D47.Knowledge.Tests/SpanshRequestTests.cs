@@ -57,6 +57,20 @@ public class SpanshRequestTests
     }
 
     [Fact]
+    public void AStationDistanceLimitIsAComparisonNotAMinMaxPair()
+    {
+        var body = JsonDocument.Parse(SpanshRequest.Markets("Sol", 20, 5, 0, maxStationDistance: 1000))
+            .RootElement;
+
+        var arrival = body.GetProperty("filters").GetProperty("distance_to_arrival");
+
+        Assert.Equal("0", arrival.GetProperty("value")[0].GetString());
+        Assert.Equal("1000", arrival.GetProperty("value")[1].GetString());
+        Assert.Equal("<=>", arrival.GetProperty("comparison").GetString());
+        Assert.False(arrival.TryGetProperty("max", out _));
+    }
+
+    [Fact]
     public void TheReferenceSystemIsSentSoDistancesMeanSomething()
     {
         var body = Build(("distance", "20"));

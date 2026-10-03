@@ -317,8 +317,10 @@ internal static class SpanshRequest
     /// Also planetary ports, outposts and settlements (#308).
     /// </param>
     /// <param name="maxStationDistance">
-    /// Light seconds from the star, filtered server-side on <c>distance_to_arrival</c> — confirmed
-    /// against the live index on 2026-09-06 to take the same min/max shape as <c>distance</c> (#308).
+    /// Light seconds from the star, filtered server-side on <c>distance_to_arrival</c> as a
+    /// <c>value</c> pair with <c>comparison</c> <c>&lt;=&gt;</c>. A min/max object is ignored by the
+    /// index: on 2026-10-03, 20 ly around Sol returned 3,601 stations unfiltered and 3,596 with
+    /// 0–1,000 Ls, against 2,394 with the comparison shape (#808).
     /// </param>
     /// <param name="largePad">
     /// Forwarded the same way <see cref="Stations"/> already does (#308).
@@ -356,8 +358,11 @@ internal static class SpanshRequest
             if (maxStationDistance is { } furthest)
             {
                 writer.WriteStartObject("distance_to_arrival");
-                writer.WriteString("min", "0");
-                writer.WriteString("max", Number(furthest));
+                writer.WriteStartArray("value");
+                writer.WriteStringValue("0");
+                writer.WriteStringValue(Number(furthest));
+                writer.WriteEndArray();
+                writer.WriteString("comparison", "<=>");
                 writer.WriteEndObject();
             }
 
