@@ -94,8 +94,8 @@ public class ARayPressOnAnArrowStepsTheNumberTests
     }
 
     [AvaloniaTheory]
-    [InlineData(CalloutCapability.NarratorSecondsKey, "The least time between narrations")]
-    [InlineData(CalloutCapability.NarratorMaxSecondsKey, "The most time between narrations")]
+    [InlineData(CalloutCapability.NarratorSecondsKey, "The least time between narrations (seconds)")]
+    [InlineData(CalloutCapability.NarratorMaxSecondsKey, "The most time between narrations (seconds)")]
     public void ARayPressOnEitherArrowOfANumberRowMovesItByOneStep(string key, string label)
     {
         var (surface, view, settings) = Headset();

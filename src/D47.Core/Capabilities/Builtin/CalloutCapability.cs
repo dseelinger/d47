@@ -641,9 +641,8 @@ public static class CalloutCapability
         {
             Key = NarratorSecondsKey,
             Advanced = true,
-            Label = "The least time between narrations",
-            Help = "In seconds. Each gap lands somewhere between this and the row below; 0 silences the "
-                   + "Narrator.",
+            Label = "The least time between narrations (seconds)",
+            Help = "Each gap lands somewhere between this and the row below; 0 silences the Narrator.",
             Kind = SettingKind.Number,
             DefaultDisplay = "1800",
             DocsAnchor = "narrator",
@@ -666,8 +665,8 @@ public static class CalloutCapability
         {
             Key = NarratorMaxSecondsKey,
             Advanced = true,
-            Label = "The most time between narrations",
-            Help = "In seconds. Equal to the row above pins a fixed cadence; anything below it reads as equal.",
+            Label = "The most time between narrations (seconds)",
+            Help = "Equal to the row above pins a fixed cadence; anything below it reads as equal.",
             Kind = SettingKind.Number,
             DefaultDisplay = "3600",
             DocsAnchor = "narrator",

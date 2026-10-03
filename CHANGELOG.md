@@ -199,6 +199,8 @@ The Callouts setting "Call out biology from" is now labelled "Call out biology f
 
 The Lore setting "How often a system's lore is worth repeating" is now labelled "How often a system's lore is worth repeating (days)", so the label says what the number is. Its help no longer opens with "In days,". The value, its default of 7 and the saved setting are unchanged.
 
+The Narrator settings "The least time between narrations" and "The most time between narrations" are now labelled with "(seconds)", so the labels say what the numbers are. Their help no longer opens with "In seconds.". The values, their defaults of 1800 and 3600 and the saved settings are unchanged.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It
