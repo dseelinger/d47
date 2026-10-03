@@ -17,20 +17,29 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly Lock _gate = new();
     private readonly Lock _load = new();
     private readonly Dictionary<string, IDisposable> _encoded = new(StringComparer.Ordinal);
+    private readonly OwnVoice? _own;
 
     private IChatterboxEngine? _engine;
     private ChatterboxTokeniser? _tokeniser;
     private IReadOnlyList<ChatterboxVoice>? _voices;
+    private IDisposable? _ownEncoded;
+    private int _ownVersion;
 
     /// <param name="modelFolder">Where <see cref="ChatterboxInstaller"/> put the graphs and tokenizer.</param>
     /// <param name="voicesFolder">Where <c>voices.tsv</c> and the reference clips are.</param>
-    public ChatterboxTtsProvider(string modelFolder, string voicesFolder, ILogger<ChatterboxTtsProvider> logger)
+    /// <param name="own">The Commander's own recording, answered as <see cref="OwnVoice.VoiceId"/> and never listed.</param>
+    public ChatterboxTtsProvider(
+        string modelFolder,
+        string voicesFolder,
+        ILogger<ChatterboxTtsProvider> logger,
+        OwnVoice? own = null)
         : this(
             modelFolder,
             voicesFolder,
             logger,
             () => ChatterboxPipeline.Open(modelFolder, PerformanceCores.ForThisMachine()),
-            () => ChatterboxAssets.IsInstalled(modelFolder))
+            () => ChatterboxAssets.IsInstalled(modelFolder),
+            own)
     {
     }
 
@@ -39,13 +48,20 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         string voicesFolder,
         ILogger<ChatterboxTtsProvider> logger,
         Func<IChatterboxEngine> open,
-        Func<bool> installed)
+        Func<bool> installed,
+        OwnVoice? own = null)
     {
         _modelFolder = modelFolder;
         _voicesFolder = voicesFolder;
         _logger = logger;
         _open = open;
         _installed = installed;
+        _own = own;
+
+        if (own is not null)
+        {
+            own.Changed += OnOwnVoiceChanged;
+        }
     }
 
     public string Id => ProviderId;
@@ -91,6 +107,11 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             throw new TtsException("Chatterbox is not downloaded yet. Download it in Settings.");
         }
 
+        if (string.Equals(voice.VoiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
+        {
+            return SpeakOwn(text, cancellationToken);
+        }
+
         var chosen = Voices().FirstOrDefault(v => string.Equals(v.Voice.Id, voice.VoiceId, StringComparison.Ordinal))
             ?? throw new TtsException(voice.VoiceId is { Length: > 0 } unknown
                 ? $"Chatterbox has no voice called {unknown}. Pick one in Settings."
@@ -109,16 +130,65 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 _encoded[chosen.Voice.Id] = encoded;
             }
 
-            var samples = engine.Speak(ids, encoded, cancellationToken);
-
-            if (samples.Length == 0)
-            {
-                return new AudioClip(text, ReadOnlyMemory<byte>.Empty, AudioFormat.Standard);
-            }
-
-            return new AudioClip(text, PcmUpsample.Double(ToPcm(samples)), AudioFormat.Standard);
+            return Clip(text, engine.Speak(ids, encoded, cancellationToken));
         }
     }
+
+    /// <summary>A line in the Commander's recorded voice, encoded from the recording decrypted into memory.</summary>
+    private AudioClip SpeakOwn(string text, CancellationToken cancellationToken)
+    {
+        const string none = "No recording of your voice is saved. Record one in Settings, under Your voice.";
+
+        if (_own is null || !_own.Exists)
+        {
+            throw new TtsException(none);
+        }
+
+        var ids = Tokeniser().Encode(text);
+
+        lock (_gate)
+        {
+            var engine = _engine ??= Open();
+            var version = _own.Version;
+
+            if (_ownEncoded is null || _ownVersion != version)
+            {
+                _ownEncoded?.Dispose();
+                _ownEncoded = null;
+
+                var reference = _own.Load() ?? throw new TtsException(none);
+
+                try
+                {
+                    _ownEncoded = engine.Encode(reference);
+                    _ownVersion = version;
+                }
+                finally
+                {
+                    Array.Clear(reference);
+                }
+            }
+
+            return Clip(text, engine.Speak(ids, _ownEncoded, cancellationToken));
+        }
+    }
+
+    /// <summary>Drops the encoder output for a recording that was replaced or deleted, off the caller's thread.</summary>
+    private void OnOwnVoiceChanged() => _ = Task.Run(DropOwn);
+
+    private void DropOwn()
+    {
+        lock (_gate)
+        {
+            _ownEncoded?.Dispose();
+            _ownEncoded = null;
+        }
+    }
+
+    private static AudioClip Clip(string text, float[] samples) =>
+        samples.Length == 0
+            ? new AudioClip(text, ReadOnlyMemory<byte>.Empty, AudioFormat.Standard)
+            : new AudioClip(text, PcmUpsample.Double(ToPcm(samples)), AudioFormat.Standard);
 
     private IChatterboxEngine Open()
     {
@@ -178,8 +248,16 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
     public void Dispose()
     {
+        if (_own is not null)
+        {
+            _own.Changed -= OnOwnVoiceChanged;
+        }
+
         lock (_gate)
         {
+            _ownEncoded?.Dispose();
+            _ownEncoded = null;
+
             foreach (var encoded in _encoded.Values)
             {
                 encoded.Dispose();

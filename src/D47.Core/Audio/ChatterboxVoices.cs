@@ -75,6 +75,11 @@ public static class ChatterboxVoices
             return "the id is empty.";
         }
 
+        if (string.Equals(fields[0], OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"the id \"{OwnVoice.VoiceId}\" is the Commander's own recorded voice.";
+        }
+
         if (string.IsNullOrWhiteSpace(fields[5]))
         {
             return "the source is empty.";

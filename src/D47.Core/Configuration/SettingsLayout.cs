@@ -231,6 +231,19 @@ public static class SettingsLayout
                             ]),
                     ]),
                 new SettingsPlace(
+                    "your-voice",
+                    "Your voice",
+                    "One recording of you, kept on this PC, for story lines cast in your own voice.",
+                    "speech",
+                    ["record", "my voice", "own voice"],
+                    false,
+                    [
+                        G(
+                            "Your voice",
+                            "Record, hear and delete the recording.",
+                            [E("speech.ownVoice"), E("speech.ownVoice.play"), E("speech.ownVoice.delete")]),
+                    ]),
+                new SettingsPlace(
                     "sounds",
                     "Sounds and levels",
                     "The cues, the thinking bed, and the mixer for every channel.",

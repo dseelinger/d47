@@ -84,6 +84,13 @@ public static class SpeechCapability
     /// <summary>Plays the stand-in voice through the COVAS reverb without billing anything.</summary>
     public const string CovasTestKey = "speech.covasVoice.test";
 
+    /// <summary>The Commander's own recorded voice: record and stop, play back, delete. Panel controls only.</summary>
+    public const string OwnVoiceKey = "speech.ownVoice";
+
+    public const string OwnVoicePlayKey = "speech.ownVoice.play";
+
+    public const string OwnVoiceDeleteKey = "speech.ownVoice.delete";
+
     /// <summary>The secret row key for a voice provider's API key.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
@@ -241,6 +248,22 @@ public static class SpeechCapability
 
         /// <summary>Stops everything audible, immediately.</summary>
         public required Action Silence { get; init; }
+
+        /// <summary>Whether the Commander's own voice is recorded, or what the last take came to.</summary>
+        public Func<string>? OwnVoiceState { get; init; }
+
+        /// <summary>Whether a take of the Commander's own voice is running.</summary>
+        public Func<bool>? OwnVoiceRecording { get; init; }
+
+        /// <summary>Starts a take of the Commander's own voice, or stops the one running.</summary>
+        public Action? RecordOwnVoice { get; init; }
+
+        public Action? PlayOwnVoice { get; init; }
+
+        public Action? DeleteOwnVoice { get; init; }
+
+        /// <summary>Subscribes a refresh to the recording's state, returning the unsubscribe.</summary>
+        public Func<Action, Action>? WatchOwnVoice { get; init; }
 
         /// <summary>Voices the provider speaking for one slot offers, or empty when it cannot say.</summary>
         public Func<VoiceGroup, IReadOnlyList<string>>? Voices { get; init; }
@@ -1049,6 +1072,55 @@ public static class SpeechCapability
                 Binding = new SettingBinding
                 {
                     Read = _ => "Hear the COVAS reverb without paying for it.",
+                },
+            },
+            new SettingRow
+            {
+                Key = OwnVoiceKey,
+                Label = "Your voice",
+                Help =
+                    "Records you reading one sentence aloud, for story lines spoken in your own voice through "
+                    + "Chatterbox. It is kept on this PC, protected for this Windows user, and never sent "
+                    + "anywhere. Every line spoken in it carries Resemble's Perth watermark.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "your-voice",
+                Press = surface.RecordOwnVoice,
+                PressLabel = "Record",
+                PressLabelFor = () => surface.OwnVoiceRecording?.Invoke() == true ? "Stop" : "Record",
+                Watch = surface.WatchOwnVoice,
+                Binding = new SettingBinding
+                {
+                    Read = _ => surface.OwnVoiceState?.Invoke() ?? "Not available.",
+                },
+            },
+            new SettingRow
+            {
+                Key = OwnVoicePlayKey,
+                Label = "Play it back",
+                Help = "Plays your recording on the output device. It is decrypted into memory only.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "your-voice",
+                Press = surface.PlayOwnVoice,
+                PressLabel = "Play",
+                Binding = new SettingBinding
+                {
+                    Read = _ => "Hear the recording that is saved.",
+                },
+            },
+            new SettingRow
+            {
+                Key = OwnVoiceDeleteKey,
+                Label = "Delete it",
+                Help = "Deletes the recording from this PC. Story lines cast in your voice cannot be spoken until you record again.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "your-voice",
+                Press = surface.DeleteOwnVoice,
+                PressLabel = "Delete",
+                ConfirmPress = true,
+                Destructive = true,
+                Binding = new SettingBinding
+                {
+                    Read = _ => "Remove the recording from this PC.",
                 },
             },
             new SettingRow

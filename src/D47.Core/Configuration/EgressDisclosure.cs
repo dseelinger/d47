@@ -73,6 +73,9 @@ public static class EgressDisclosure
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
+    /// <summary>The Commander's own recorded voice, kept on this PC and sent nowhere.</summary>
+    public const string OwnVoice = "ownvoice";
+
     /// <summary>Every disclosure d47 makes, in a fixed order.</summary>
     public static IReadOnlyList<string> Ids { get; } =
     [
@@ -91,6 +94,7 @@ public static class EgressDisclosure
         Diagnostics,
         JournalFiles,
         ChosenPictures,
+        OwnVoice,
         Donation,
     ];
 
@@ -112,6 +116,7 @@ public static class EgressDisclosure
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
+        OwnVoice => "Your recorded voice",
         // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they see.
         Donation => "Shared excerpts and journals",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
@@ -293,6 +298,14 @@ public static class EgressDisclosure
             + "can reach the model as game state when one is configured; see the language model row.",
             summary: "Read from disk and never uploaded. Facts from it can reach the model as game "
                 + "state; see the language model row."),
+
+        OwnVoice => EgressEntry.Silent(
+            OwnVoice,
+            NameOf(OwnVoice),
+            "A recording of your voice, if you make one, is kept in data\\voice\\own.bin on this PC, encrypted "
+            + "for your Windows user, and never sent anywhere. It is decrypted into memory only, to speak story "
+            + "lines in your voice through Chatterbox.",
+            summary: "Kept on this PC, encrypted for your Windows user, and never sent anywhere."),
 
         ChosenPictures => EgressEntry.Silent(
             ChosenPictures,

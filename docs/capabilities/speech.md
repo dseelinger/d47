@@ -1138,6 +1138,36 @@ The clips are utterances from LibriTTS-R, which is licensed CC BY 4.0 (https://w
 | Emrys | male | none | LibriTTS-R speaker 8498, utterance 8498_287357_000015_000001, CC BY 4.0 |
 | Lucan | male | none | LibriTTS-R speaker 2404, utterance 2404_141240_000006_000000, CC BY 4.0 |
 
+#### Your voice {#your-voice}
+
+A story can cast a line in your own voice. Chatterbox speaks it from one recording of you, made in
+**Settings**, under **Voice and hearing**, in **Your voice**.
+
+- **Record** records from the microphone chosen under **Voice Input**, and you read this sentence
+  aloud:
+
+  ```text
+  This is my voice, and d47 may use it for my stories on this PC.
+  ```
+
+  Press **Stop** when you finish, or it stops by itself after 7 seconds. While it records, D47 is
+  not listening for commands, and nothing you say reaches speech recognition.
+- **A take shorter than 5 seconds, or with nothing louder than -40 dBFS, is refused**, and the row
+  says which.
+- **Play** plays the recording back. **Delete** removes it from this PC; press it twice to confirm.
+- **There is no way to import a clip.** The only voice D47 copies is the one speaking into the
+  microphone.
+
+The recording is resampled to 24 kHz mono and kept in `data\voice\own.bin`, encrypted with Windows
+data protection for your Windows user, so it cannot be read by another account or on another PC.
+It is decrypted into memory only, and no WAV of it is written. It is never sent anywhere, and the
+**Your recorded voice** entry under **Privacy and egress** says so. It is not kept by the audio
+recorder either.
+
+No voice picker offers your voice; only a story's cast names it, as the voice `own`. A line cast in
+it with no recording saved is not spoken. Like every Chatterbox line, each one spoken in your voice
+carries Resemble's Perth watermark.
+
 #### What the voice providers receive {#egress}
 
 This row is a table rather than a sentence, because there is no longer one provider to write a

@@ -139,6 +139,16 @@ public sealed class AppHost : IDisposable
         Version = version;
         StartupError = startupError;
 
+        OwnVoice = new OwnVoice(paths.Data, new DpapiSecretProtector());
+        _ownVoiceRecording = new OwnVoiceRecording(
+            OwnVoice,
+            new OwnVoiceCapture(loggerFactory.CreateLogger<OwnVoiceCapture>()),
+            () => Settings.Current.Listening.InputDevice,
+            PauseListening,
+            ResumeListening,
+            PlayOwnVoice,
+            loggerFactory.CreateLogger<OwnVoiceRecording>());
+
         // When each core was last aboard, from previous runs (Phase 35).
         foreach (var (core, at) in viewState.Load().CoresLastAboard)
         {
@@ -623,6 +633,11 @@ public sealed class AppHost : IDisposable
     private readonly BindsWatch _binds;
 
     private readonly WasapiMicrophone _microphone;
+
+    private readonly OwnVoiceRecording _ownVoiceRecording;
+
+    /// <summary>The Commander's own recorded voice, which Chatterbox speaks as <see cref="OwnVoice.VoiceId"/>.</summary>
+    internal OwnVoice OwnVoice { get; }
 
     /// <summary>When the Commander was last heard and understood.</summary>
     private StrongBox<DateTimeOffset?>? _heardAt;
@@ -1650,6 +1665,21 @@ public sealed class AppHost : IDisposable
                         : (progress, cancellationToken) =>
                             self.SwitchLocalVoiceBuild(build, progress, cancellationToken),
                     ChatterboxState = () => self?.ChatterboxState() ?? "Not available.",
+                    OwnVoiceState = () => self?._ownVoiceRecording.State() ?? "Not available.",
+                    OwnVoiceRecording = () => self?._ownVoiceRecording.Recording ?? false,
+                    RecordOwnVoice = () => self?._ownVoiceRecording.Toggle(),
+                    PlayOwnVoice = () => self?._ownVoiceRecording.Play(),
+                    DeleteOwnVoice = () => self?._ownVoiceRecording.Delete(),
+                    WatchOwnVoice = refresh =>
+                    {
+                        if (self is not { } host)
+                        {
+                            return () => { };
+                        }
+
+                        host._ownVoiceRecording.Changed += refresh;
+                        return () => host._ownVoiceRecording.Changed -= refresh;
+                    },
                     DownloadChatterbox = () => self is null ? null : self.DownloadChatterbox,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
@@ -4124,7 +4154,8 @@ public sealed class AppHost : IDisposable
         TtsProviderCatalog.ChatterboxId => new ChatterboxTtsProvider(
             ChatterboxFolder(),
             ChatterboxVoicesFolder(),
-            _loggerFactory.CreateLogger<ChatterboxTtsProvider>()),
+            _loggerFactory.CreateLogger<ChatterboxTtsProvider>(),
+            OwnVoice),
 
         _ => null,
     };
@@ -5164,6 +5195,32 @@ public sealed class AppHost : IDisposable
     /// Rebuilds everything downstream of the listening settings: the device, the key, the gate policy
     /// and the pre-roll.
     /// </summary>
+    /// <summary>Closes the listening microphone for a take of the Commander's voice; true when it was open.</summary>
+    private bool PauseListening()
+    {
+        var open = _microphone.IsCapturing;
+
+        if (open)
+        {
+            _microphone.Close();
+            Listening.Capturing = false;
+        }
+
+        return open;
+    }
+
+    private void ResumeListening()
+    {
+        _microphone.Open(Settings.Current.Listening.InputDevice);
+        Listening.Capturing = _microphone.IsCapturing;
+    }
+
+    private void PlayOwnVoice(AudioClip clip)
+    {
+        Audio.DropGroup(OwnVoiceRecording.PlaybackGroup);
+        Audio.Enqueue(OwnVoiceRecording.Playback(clip));
+    }
+
     private void ApplyListeningSettings()
     {
         var listening = Settings.Current.Listening;
@@ -7576,6 +7633,7 @@ public sealed class AppHost : IDisposable
         _pushToTalk.ForceUp();
         _pushToTalkButton.ForceUp();
         _cancelButton.ForceUp();
+        _ownVoiceRecording.Dispose();
         _microphone.Dispose();
         _transcriber.Dispose();
 
