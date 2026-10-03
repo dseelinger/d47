@@ -201,6 +201,8 @@ The Lore setting "How often a system's lore is worth repeating" is now labelled 
 
 The Narrator settings "The least time between narrations" and "The most time between narrations" are now labelled with "(seconds)", so the labels say what the numbers are. Their help no longer opens with "In seconds.". The values, their defaults of 1800 and 3600 and the saved settings are unchanged.
 
+The Callouts settings "The least time between In Ship chatter", "The most time between In Ship chatter", "The least time between NPC chatter" and "The most time between NPC chatter" are now labelled with "(seconds)", so the labels say what the numbers are. Their help no longer opens with "In seconds,". The values, their defaults and the saved settings are unchanged.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

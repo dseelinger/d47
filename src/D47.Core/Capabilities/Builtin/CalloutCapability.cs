@@ -523,8 +523,8 @@ public static class CalloutCapability
 
             // Reworded twice, and the property name deliberately not either time: for its new sibling (#258),
             // and again on 2026-09-02 when the pair took the name of who is speaking.
-            Label = "The least time between In Ship chatter",
-            Help = "In seconds, between two lines from your ship's AI or your crew. Each gap lands "
+            Label = "The least time between In Ship chatter (seconds)",
+            Help = "Between two lines from your ship's AI or your crew. Each gap lands "
                    + "somewhere between this and the row below, so the chatter never ticks like a "
                    + "clock. Lower is a talkative companion; higher is a quiet one; 0 silences it. "
 
@@ -555,8 +555,8 @@ public static class CalloutCapability
         {
             Key = AmbientMaxSecondsKey,
             Advanced = true,
-            Label = "The most time between In Ship chatter",
-            Help = "In seconds, between two lines from your ship's AI or your crew. Equal to the "
+            Label = "The most time between In Ship chatter (seconds)",
+            Help = "Between two lines from your ship's AI or your crew. Equal to the "
                    + "row above pins a fixed cadence; anything below it reads as equal.",
             Kind = SettingKind.Number,
             DefaultDisplay = "600",
@@ -582,8 +582,8 @@ public static class CalloutCapability
         {
             Key = NpcChatterSecondsKey,
             Advanced = true,
-            Label = "The least time between NPC chatter",
-            Help = "In seconds, between two exchanges among people outside your ship. Each gap "
+            Label = "The least time between NPC chatter (seconds)",
+            Help = "Between two exchanges among people outside your ship. Each gap "
                    + "lands somewhere between this and the row below, so the chatter never ticks "
                    + "like a clock; 0 silences it. "
 
@@ -616,8 +616,8 @@ public static class CalloutCapability
         {
             Key = NpcChatterMaxSecondsKey,
             Advanced = true,
-            Label = "The most time between NPC chatter",
-            Help = "In seconds, between two exchanges among people outside your ship. Equal to "
+            Label = "The most time between NPC chatter (seconds)",
+            Help = "Between two exchanges among people outside your ship. Equal to "
                    + "the row above pins a fixed cadence; anything below it reads as equal.",
             Kind = SettingKind.Number,
             DefaultDisplay = "600",

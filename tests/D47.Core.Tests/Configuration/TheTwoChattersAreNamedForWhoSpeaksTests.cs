@@ -23,11 +23,11 @@ public class TheTwoChattersAreNamedForWhoSpeaksTests
 
     [Theory]
     [InlineData(CalloutCapability.AmbientKey, "In Ship chatter")]
-    [InlineData(CalloutCapability.AmbientSecondsKey, "The least time between In Ship chatter")]
-    [InlineData(CalloutCapability.AmbientMaxSecondsKey, "The most time between In Ship chatter")]
+    [InlineData(CalloutCapability.AmbientSecondsKey, "The least time between In Ship chatter (seconds)")]
+    [InlineData(CalloutCapability.AmbientMaxSecondsKey, "The most time between In Ship chatter (seconds)")]
     [InlineData(CalloutCapability.NpcChatterKey, "NPC chatter")]
-    [InlineData(CalloutCapability.NpcChatterSecondsKey, "The least time between NPC chatter")]
-    [InlineData(CalloutCapability.NpcChatterMaxSecondsKey, "The most time between NPC chatter")]
+    [InlineData(CalloutCapability.NpcChatterSecondsKey, "The least time between NPC chatter (seconds)")]
+    [InlineData(CalloutCapability.NpcChatterMaxSecondsKey, "The most time between NPC chatter (seconds)")]
     public void EachRowIsDrawnUnderTheNewName(string key, string label) =>
         Assert.Equal(label, Row(key).Label);
 
