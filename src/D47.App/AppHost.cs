@@ -3102,7 +3102,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("danger", callouts.Danger, now);
         engine.SetEnabled("fuel", callouts.Fuel, now);
         engine.SetEnabled("route", callouts.Route, now);
-        engine.SetEnabled("long-jump", callouts.LongJump, now);
+        engine.SetEnabled("hyperspace-tunnel-delay", callouts.LongJump, now);
         engine.SetEnabled("arrival", callouts.Arrival, now);
         engine.SetEnabled("materials", callouts.Materials, now);
         engine.SetEnabled("emissions", callouts.Emissions, now);

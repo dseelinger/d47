@@ -422,7 +422,7 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "in-flight",
                     "In flight",
-                    "Danger, fuel, route progress and long jumps.",
+                    "Danger, fuel, route progress and hyperspace tunnel delays.",
                     "callouts",
                     [],
                     false,

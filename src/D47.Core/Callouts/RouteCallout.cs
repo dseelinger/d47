@@ -127,7 +127,7 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
 /// </summary>
 public sealed class LongJumpCallout : ICallout
 {
-    public string Id => "long-jump";
+    public string Id => "hyperspace-tunnel-delay";
 
     /// <summary>Configurable, defaulting to the 20 seconds the checklist specifies.</summary>
     public TimeSpan Threshold { get; set; } = TimeSpan.FromSeconds(20);

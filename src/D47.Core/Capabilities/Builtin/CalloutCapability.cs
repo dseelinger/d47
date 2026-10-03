@@ -189,10 +189,10 @@ public static class CalloutCapability
 
             Toggle(
                 LongJumpKey,
-                "Long jumps",
+                "Hyperspace tunnel delays",
                 "A remark when a hyperspace jump runs longer than usual.",
                 "long-jump",
-                "long jumps",
+                "hyperspace tunnel delays",
                 s => s.Callouts.LongJump,
                 (s, v) => s with { Callouts = s.Callouts with { LongJump = v } }),
 

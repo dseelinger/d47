@@ -163,7 +163,7 @@ I speak up about:
   announced-attack: on
   fuel: on
   route: on
-  long-jump: on
+  hyperspace-tunnel-delay: on
   arrival: on
   materials: on
   rival-territory: on
@@ -359,7 +359,7 @@ loadout Directive 47 can see, and the one it remembers for the ship you are in a
 session's has not arrived — so only a ship it has never watched you fly leaves the clause as
 before.
 
-#### Long jumps {#long-jump}
+#### Hyperspace tunnel delays {#long-jump}
 
 A little conversation during a longer-than-usual jump. It starts once you are actually in
 hyperspace, not when the drive begins charging — throttle up and cancel and you will hear

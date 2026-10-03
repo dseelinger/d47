@@ -191,6 +191,8 @@ Suit mods and livery are seen when the game next writes the loadout, so a beat m
 
 The Callouts setting "A jump is long after" is now labelled "Hyperspace Tunnel Delay (in seconds)", and its help reads "Measured from entering hyperspace rather than from starting the jump." The value, its default of 30 and the saved setting are unchanged.
 
+The Callouts toggle for remarks on a slow hyperspace jump is now "Hyperspace tunnel delays" instead of "Long jumps", so you say "stop calling out hyperspace tunnel delays" to turn it off; "stop calling out long jumps" no longer matches. The settings blurb and the "what are you watching for" list use the same name, the list showing `hyperspace-tunnel-delay: on`.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It
