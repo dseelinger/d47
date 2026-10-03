@@ -1,6 +1,6 @@
 # Handoff: the Navigation tab after the split (2026-10-03)
 
-Design issue: [#321](https://github.com/dseelinger/d47/issues/321). Build issues: [#820](https://github.com/dseelinger/d47/issues/820) (Course and Community Goal go), [#821](https://github.com/dseelinger/d47/issues/821) (Progress beside Plan), [#822](https://github.com/dseelinger/d47/issues/822) (the Search tab). The Best cargo page has no build issue yet.
+Design issues: [#321](https://github.com/dseelinger/d47/issues/321), and [#833](https://github.com/dseelinger/d47/issues/833) for Best cargo. Build issues: [#820](https://github.com/dseelinger/d47/issues/820) (Course and Community Goal go), [#821](https://github.com/dseelinger/d47/issues/821) (Progress beside Plan), [#822](https://github.com/dseelinger/d47/issues/822) (the Search tab), [#849](https://github.com/dseelinger/d47/issues/849) (the Best cargo page).
 Canvas: https://claude.ai/artifact/8mk8NNH1vUX9GVbyJDtdNF (private to the maintainer).
 
 ## What changed
