@@ -40,6 +40,10 @@ public sealed class AvatarView : UserControl
     private string? _clipPath;
     private VideoFrames? _clip;
     private WriteableBitmap? _clipFrame;
+    private readonly List<byte[]> _clipPixels = [];
+    private bool _clipDecoded;
+    private int _clipIndex;
+    private int _clipDirection = 1;
 
     /// <summary>How big the whole mark is, and everything inside it follows (#234).</summary>
     public double Extent
@@ -117,7 +121,7 @@ public sealed class AvatarView : UserControl
             {
                 _clipTimer.Stop();
             }
-            else if (_clip is not null)
+            else if (_clipFrame is not null && !(_clipDecoded && _clipPixels.Count < 2))
             {
                 _clipTimer.Start();
             }
@@ -381,6 +385,11 @@ public sealed class AvatarView : UserControl
 
         _clip = video;
         _clipFrame = frame;
+        _clipPixels.Clear();
+        _clipPixels.Add(ReadPixels(frame));
+        _clipDecoded = false;
+        _clipIndex = 0;
+        _clipDirection = 1;
         _custom.Source = frame;
         _custom.IsVisible = true;
         _ring.IsVisible = false;
@@ -397,22 +406,84 @@ public sealed class AvatarView : UserControl
 
     private void AdvanceClip()
     {
-        if (_clip is null || _clipFrame is null)
+        if (_clipFrame is null)
         {
             _clipTimer.Stop();
 
             return;
         }
 
-        if (_clip.Next(_clipFrame) || (_clip.Rewind() && _clip.Next(_clipFrame)))
+        if (!_clipDecoded)
         {
-            _custom.InvalidateVisual();
+            if (_clip is not null && _clip.Next(_clipFrame))
+            {
+                _clipPixels.Add(ReadPixels(_clipFrame));
+                _clipIndex = _clipPixels.Count - 1;
+                _custom.InvalidateVisual();
+
+                return;
+            }
+
+            _clipDecoded = true;
+            _clip?.Dispose();
+            _clip = null;
+        }
+
+        if (_clipPixels.Count < 2)
+        {
+            _clipTimer.Stop();
 
             return;
         }
 
-        StopClip();
-        ShowMark(_state);
+        (_clipIndex, _clipDirection) = Step(_clipIndex, _clipDirection, _clipPixels.Count);
+        WritePixels(_clipFrame, _clipPixels[_clipIndex]);
+        _custom.InvalidateVisual();
+    }
+
+    /// <summary>The frame after <paramref name="index"/> when a clip plays forward then back; neither end repeats.</summary>
+    internal static (int Index, int Direction) Step(int index, int direction, int count)
+    {
+        if (count < 2)
+        {
+            return (0, 1);
+        }
+
+        var next = index + direction;
+
+        if (next >= count)
+        {
+            return (count - 2, -1);
+        }
+
+        return next < 0 ? (1, 1) : (next, direction);
+    }
+
+    private static byte[] ReadPixels(WriteableBitmap bitmap)
+    {
+        using var frame = bitmap.Lock();
+
+        var width = bitmap.PixelSize.Width * 4;
+        var pixels = new byte[width * bitmap.PixelSize.Height];
+
+        for (var row = 0; row < bitmap.PixelSize.Height; row++)
+        {
+            System.Runtime.InteropServices.Marshal.Copy(frame.Address + (row * frame.RowBytes), pixels, row * width, width);
+        }
+
+        return pixels;
+    }
+
+    private static void WritePixels(WriteableBitmap bitmap, byte[] pixels)
+    {
+        using var frame = bitmap.Lock();
+
+        var width = bitmap.PixelSize.Width * 4;
+
+        for (var row = 0; row < bitmap.PixelSize.Height; row++)
+        {
+            System.Runtime.InteropServices.Marshal.Copy(pixels, row * width, frame.Address + (row * frame.RowBytes), width);
+        }
     }
 
     private void StopClip()
@@ -428,6 +499,7 @@ public sealed class AvatarView : UserControl
         _clip?.Dispose();
         _clipFrame = null;
         _clip = null;
+        _clipPixels.Clear();
     }
 
     private void StopSequence()
