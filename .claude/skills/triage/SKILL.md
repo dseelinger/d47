@@ -65,11 +65,16 @@ lanes. Rank by, in this order:
 1. **Blocking.** A waiting issue ranks after every issue it needs, never before and never first.
    Where one of those is not in the queue — ineligible, or left out — the waiting issue is left out
    too and named in **Not now** with what it waits on.
-2. **Truth.** A `data-accuracy` issue or a crash outranks a nicety. d47 stating something untrue
+2. **Stories.** An issue labelled `stories` ranks ahead of every issue without it, and so does
+   every issue it needs, followed through the needs list until it ends: if a `stories` issue needs
+   #A and #A needs #B, both #A and #B move up with it, whatever their own labels. Rules 3 to 5 order issues within the prioritised set and within
+   the rest, never across the two. A `stories` issue left out under rule 1 goes in **Not now**
+   with the number that is not eligible, so the maintainer can see which issue to vet or specify.
+3. **Truth.** A `data-accuracy` issue or a crash outranks a nicety. d47 stating something untrue
    about Elite is the worst thing it does.
-3. **Adjacency.** Issues touching the same file or subsystem go consecutive, so one session's
+4. **Adjacency.** Issues touching the same file or subsystem go consecutive, so one session's
    context pays for several fixes. This is usually the strongest signal available.
-4. **Certainty.** A cheap, well-diagnosed fix before an expensive, vague one. Each fix is
+5. **Certainty.** A cheap, well-diagnosed fix before an expensive, vague one. Each fix is
    independently releasable, so certain work first is not a compromise.
 
 `needs-repro` sinks. The label means a lead, not a diagnosis, and the session's first hour goes to
@@ -89,7 +94,8 @@ patches in the changelog records what has been worked on, not a rule about numbe
 A group is what ships under one version:
 
 - **2 to 5 issues.** Fewer wastes a release; more delays every fix in it behind the slowest.
-- **They share a subject**, so they fold into one CHANGELOG entry.
+- **They share a subject**, so they fold into one CHANGELOG entry. An issue moved up only because
+  a `stories` issue needs it shares that issue's subject, and can go in its group.
 - **They take the same increment.** A group holding both a fix and a new capability is numbered
   by the capability, which makes the patches in it read as features. Split it instead. A single
   issue that adds or removes a capability is worth its own minor even though it is one issue.
