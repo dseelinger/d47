@@ -89,7 +89,7 @@ public sealed record BodyQuery
 
     public string? ReserveLevel { get; init; }
 
-    /// <summary>Null means "either", which is not the same as false.</summary>
+    /// <summary>True or null; the service reads any value of this filter as true.</summary>
     public bool? Landable { get; init; }
 
     /// <summary>Null means "either".</summary>
@@ -118,6 +118,7 @@ public sealed record BodyQuery
     {
         query = new BodyQuery();
         failure = string.Empty;
+        landable = landable is true ? true : null;
 
         if (!TryMatch("body type", subtype, BodyCatalogue.Subtypes, BodyCatalogue.MatchSubtype, out var matchedSubtype, out failure)
             || !TryMatch("surface signal", signal, BodyCatalogue.Signals, BodyCatalogue.MatchSignal, out var matchedSignal, out failure)

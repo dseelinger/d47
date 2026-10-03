@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Asking for bodies that are not landable no longer returns only landable ones. The body search now treats "landable: no" as not asking about landing at all.
+
 **Chatterbox** is a second voice that runs on this computer, offered wherever Kokoro is. It runs Chatterbox Turbo on the processor, needs no key and sends nothing anywhere, and speaks in one of the 12 shipped reference voices. Its model is 691 MB, downloaded once from huggingface.co with **Download it** on the **Chatterbox voice** row, which appears while any slot uses Chatterbox. It performs directions such as `[laugh]` and `[sigh]` instead of reading them out. Pronunciation corrections apply to Kokoro only, there is no speaking rate, and every line carries Resemble's inaudible Perth watermark. **Privacy and egress** names the download under **Speech model download**.
 
 **Your voice**, under Voice and hearing in Settings, records you reading one sentence aloud so a story can cast lines in your own voice through Chatterbox. **Record** starts it, and **Stop** or 7 seconds ends it; a take under 5 seconds, or one with nothing louder than -40 dBFS, is refused with the reason. **Play** plays it back and **Delete** removes it. There is no way to import a clip. The recording is kept in `data\voice\own.bin`, encrypted for your Windows user, and never sent anywhere; **Privacy and egress** lists it as **Your recorded voice**. No voice picker offers it, and every line spoken in it carries the Perth watermark.

@@ -204,6 +204,26 @@ public class SpanshRequestTests
     }
 
     [Fact]
+    public void LandableFalseSendsNoLandableFilterBecauseTheServiceReadsEveryValueAsTrue()
+    {
+        var filters = Bodies(builder =>
+        {
+            builder.Subtype = "Earth-like world";
+            builder.Landable = false;
+        }).GetProperty("filters");
+
+        Assert.False(filters.TryGetProperty("is_landable", out _));
+    }
+
+    [Fact]
+    public void LandableTrueSendsTheLandableFilter()
+    {
+        var filters = Bodies(builder => builder.Landable = true).GetProperty("filters");
+
+        Assert.Equal("true", filters.GetProperty("is_landable").GetProperty("value")[0].GetString());
+    }
+
+    [Fact]
     public void OnlyValidatedFiltersCanReachTheBody()
     {
         Assert.False(GalaxyQuery.TryParse(

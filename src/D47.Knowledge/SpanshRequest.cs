@@ -199,9 +199,9 @@ internal static class SpanshRequest
             WriteChoice(writer, "rings", query.RingType);
             WriteChoice(writer, "reserve_level", query.ReserveLevel);
 
-            if (query.Landable is { } landable)
+            if (query.Landable is true)
             {
-                WriteChoice(writer, "is_landable", landable ? "true" : "false");
+                WriteChoice(writer, "is_landable", "true");
             }
 
             if (query.Terraformable is { } terraformable)
