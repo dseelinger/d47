@@ -203,6 +203,8 @@ The Narrator settings "The least time between narrations" and "The most time bet
 
 The Callouts settings "The least time between In Ship chatter", "The most time between In Ship chatter", "The least time between NPC chatter" and "The most time between NPC chatter" are now labelled with "(seconds)", so the labels say what the numbers are. Their help no longer opens with "In seconds,". The values, their defaults and the saved settings are unchanged.
 
+The Callouts setting "Trading Mode needs a hold of" is now labelled with "(tonnes)", so the label says what the number is. Its help no longer opens with "In tonnes,". The value, its default of 25 and the saved setting are unchanged.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It
