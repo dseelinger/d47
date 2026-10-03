@@ -172,7 +172,6 @@ public class CapturesDrawTheAppsOwnLookTests
         panel.EnableRouting(new RoutingSurface(() => route, () => "Alpha Centauri", CapabilityRegistry.Build([]), plans, () => true));
         panel.EnableAdventures(new AdventureSurface(
             book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { }));
-        panel.EnableUtilities(new Timekeeper(alarms), alarms, () => Now, () => TimeZoneInfo.Utc);
 
         var view = new SettingsView();
         panel.EnableSettings(() =>

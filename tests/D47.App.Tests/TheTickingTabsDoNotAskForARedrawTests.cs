@@ -79,46 +79,6 @@ public class TheTickingTabsDoNotAskForARedrawTests
             "an engineer ranking that has not moved does not ask to be redrawn");
     }
 
-    /// <summary>The Utilities half.</summary>
-    [AvaloniaFact]
-    public void AClockWhoseDigitsDidNotMoveDoesNotAskForARedraw()
-    {
-        var root = TempFolders.Create("d47-ticking-tabs-tests");
-        var clock = new Clock();
-
-        var alarms = new AlarmStore(
-            Path.Combine(root, "alarms.json"), NullLogger<AlarmStore>.Instance);
-
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-
-        panel.EnableUtilities(new Timekeeper(alarms), alarms, () => clock.Now, () => TimeZoneInfo.Utc);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Utilities;
-        Dispatcher.UIThread.RunJobs();
-
-        panel.TickClocks();
-
-        // Everything on this page reads to the minute — both clocks are HH:mm, and a timer's countdown is
-        // whole minutes — so at 10 Hz the page is asked six hundred times for each change it has.
-        for (var tick = 0; tick < 30; tick++)
-        {
-            clock.Now = clock.Now.AddMilliseconds(100);
-
-            Assert.False(
-                panel.TickClocks(),
-                "a clock whose digits did not change does not ask to be redrawn");
-        }
-
-        // And the other half of the requirement, because a fix that gets stillness by dropping real changes
-        // is a clock that stopped.
-        clock.Now = clock.Now.AddMinutes(2);
-
-        Assert.True(panel.TickClocks(), "a minute that actually ticked is drawn");
-    }
-
     /// <summary>
     /// Draws twice, which leaves the surface clean — a surface that has just been served has nothing
     /// outstanding, and the assertions above are about what happens next.

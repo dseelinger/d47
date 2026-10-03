@@ -143,9 +143,6 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
         var (settings, viewState, paths) = TestSurface.Create();
 
         var checklists = Checklists();
-        var alarms = new AlarmStore(
-            Path.Combine(paths.Data, "alarms.json"), NullLogger<AlarmStore>.Instance);
-        var timekeeper = new Timekeeper(alarms);
         var adventures = AdventureFixture.Surface(paths);
 
         var headset = new VrPanelSurface(
@@ -154,8 +151,6 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
             _ => null,
             settingsPage: () => new Avalonia.Controls.TextBlock { Text = "settings" },
             checklists: checklists,
-            timekeeper: timekeeper,
-            alarmStore: alarms,
             adventures: adventures);
 
         var overlay = new OverlayPanel(
@@ -168,8 +163,6 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
             tabs: new OverlayTabs
             {
                 Checklists = checklists,
-                Timekeeper = timekeeper,
-                Alarms = alarms,
             });
 
         Dispatcher.UIThread.RunJobs();

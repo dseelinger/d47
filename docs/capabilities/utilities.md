@@ -86,7 +86,7 @@ nav_order: 141
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text-muted)">Sounding it hours late as though nothing had happened would be worse than not sounding it.</text>
  <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text-muted)">A chime says something finished; the name says which.</text>
 </svg>
-<p class="body">Cancelling is reachable from this tab and from saying so, and from nowhere else — the AI is not offered it and is refused if it asks. Naming one that matches nothing, or two, is answered rather than guessed at: cancelling the wrong alarm of two is worse than being asked which.</p>
+<p class="body">Cancelling is reachable by saying so, and from nowhere else — the AI is not offered it and is refused if it asks. Naming one that matches nothing, or two, is answered rather than guessed at: cancelling the wrong alarm of two is worse than being asked which.</p>
 </section>
 </div></div>
 </details>
@@ -114,8 +114,7 @@ command line, or with the environment variable `D47_UTILITIES=1` set, and everyt
 is there for that run. Nothing is saved to settings, so the next run without the switch is back
 to off.
 
-Without the switch none of it exists: no Utilities tab on the desktop, in the headset or on the
-overlay strip, no timer or alarm tools, none of the phrases below, and `alarms.json` is not read.
+Without the switch none of it exists: no timer or alarm tools, none of the phrases below, and `alarms.json` is not read.
 Asking the date or the time works either way; that is the [Clock](clock.html).
 
 ### Ask for it
@@ -131,7 +130,7 @@ Cancelling needs no AI configured at all.
 A **timer** is a stretch of time — forty minutes for a mining run. An **alarm** is a moment —
 seven in the morning.
 
-They are set from the Utilities tab or by saying so, and they are named, because the name is how
+They are set by saying so, and they are named, because the name is how
 Directive 47 tells you which one finished.
 
 #### What happens when one goes off
@@ -179,8 +178,8 @@ silently — and the rest of the file still loads.
 
 ### Cancelling is yours
 
-**Not offered to the AI, and refused if it asks.** Cancelling is reachable from the Utilities tab
-and from the phrases above, and from nowhere else. Protected is about *who is asking* rather than
+**Not offered to the AI, and refused if it asks.** Cancelling is reachable from the phrases
+above, and from nowhere else. Protected is about *who is asking* rather than
 *how* — so saying "cancel the alarm" works, and a hostile message arriving in your comms panel
 cannot reach one.
 

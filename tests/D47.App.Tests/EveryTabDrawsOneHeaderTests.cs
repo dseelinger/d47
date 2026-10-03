@@ -35,7 +35,7 @@ public class EveryTabDrawsOneHeaderTests
     private static readonly PanelTab[] Every =
     [
         PanelTab.Transcript, PanelTab.Loadout, PanelTab.Engineers, PanelTab.Checklist,
-        PanelTab.Routing, PanelTab.Adventures, PanelTab.Utilities, PanelTab.Settings,
+        PanelTab.Routing, PanelTab.Adventures, PanelTab.Settings,
     ];
 
     private static JournalEvent Event(string json)
@@ -99,9 +99,6 @@ public class EveryTabDrawsOneHeaderTests
 
         panel.EnableAdventures(new AdventureSurface(
             book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { }));
-
-        var alarms = new AlarmStore(Path.Combine(root, "alarms.json"), NullLogger<AlarmStore>.Instance);
-        panel.EnableUtilities(new Timekeeper(alarms), alarms, () => Now, () => TimeZoneInfo.Utc);
 
         Dispatcher.UIThread.RunJobs();
         return host;

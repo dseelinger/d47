@@ -71,10 +71,6 @@ public partial class App(AppHost? host) : Application
                 // appear here, so this is the only way a Commander in VR sees it (Phase 25).
                 host.Checklists,
 
-                // And the clocks, timers and alarms (Phase 24).
-                host.Timekeeper,
-                host.Alarms,
-
                 // And the fleet (Phase 26), with the suits and the gap beside it (Phase 27).
                 host.Ships,
                 () => host.GameState.Active,
@@ -169,8 +165,6 @@ public partial class App(AppHost? host) : Application
                     GameState = () => host.GameState.Active,
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
-                    Timekeeper = host.Timekeeper,
-                    Alarms = host.Alarms,
                 });
 
             // Through the same route as the other two (Phase 45).

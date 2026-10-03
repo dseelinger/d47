@@ -28,13 +28,4 @@ public sealed record OverlayTabs
 
     /// <summary>The Engineers tab's remembered checkbox filters, one memory shared with the other two surfaces (#132).</summary>
     public D47.App.Panel.EngineerDirectoryMemory? EngineersMemory { get; init; }
-
-    /// <summary>
-    /// The clocks, timers and alarms (Phase 24) — the page whose whole argument is a Commander who
-    /// cannot glance at a wall clock, which is as true over a full-screen game as it is inside a
-    /// headset.
-    /// </summary>
-    public D47.Core.Utilities.Timekeeper? Timekeeper { get; init; }
-
-    public D47.Core.Utilities.AlarmStore? Alarms { get; init; }
 }

@@ -84,7 +84,6 @@ public class TheReworkedChromeRendersToACaptureTests
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("locker", "Suits and weapons"));
         panel.Furnish(PanelTab.Engineers, _ => new TextBlock { Text = "engineers" }, new NavCrumb("engineers", "Engineers"));
-        panel.Furnish(PanelTab.Utilities, _ => new TextBlock { Text = "utilities" }, new NavCrumb("utilities", "Utilities"));
         panel.EnableSettings(() => new TextBlock { Text = "settings" });
         panel.EnableSearch();
 

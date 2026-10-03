@@ -24,9 +24,6 @@ public enum PanelTab
     /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
     Adventures,
 
-    /// <summary>Clocks, timers and alarms (Phase 24).</summary>
-    Utilities,
-
     /// <summary>The settings surface.</summary>
     Settings,
 }

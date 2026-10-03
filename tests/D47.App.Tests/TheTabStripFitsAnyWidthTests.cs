@@ -24,7 +24,6 @@ public class TheTabStripFitsAnyWidthTests
 
         panel.Furnish(PanelTab.Checklist, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
         panel.Furnish(PanelTab.Engineers, _ => new TextBlock(), new NavCrumb("engineers", "Engineers"));
-        panel.Furnish(PanelTab.Utilities, _ => new TextBlock(), new NavCrumb("utilities", "Utilities"));
         panel.EnableSettings(() => new TextBlock());
         panel.EnableHelp(_ => { });
 

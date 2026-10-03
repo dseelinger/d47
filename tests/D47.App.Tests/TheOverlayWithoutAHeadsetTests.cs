@@ -83,7 +83,7 @@ public class TheOverlayWithoutAHeadsetTests
         foreach (var tab in new[]
                  {
                      PanelTab.Settings, PanelTab.Loadout, PanelTab.Checklist,
-                     PanelTab.Engineers, PanelTab.Utilities, PanelTab.Routing,
+                     PanelTab.Engineers, PanelTab.Routing,
                  })
         {
             Assert.False(overlay.Nav.Has(tab), $"The overlay furnished {tab} and was handed nothing for it.");

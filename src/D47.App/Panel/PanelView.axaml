@@ -432,12 +432,6 @@
                          Content="ADVENTURES"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <RadioButton x:Name="UtilitiesTab"
-                         Theme="{StaticResource D47.Tab}"
-                         IsVisible="False"
-                         Content="UTILITIES"
-                         Tapped="OnTabTapped"
-                         IsCheckedChanged="OnTabChecked" />
             <!--
               Hidden until a host says otherwise, and only the desktop window ever does. The headset
               renders this same view, and a 1180-pixel nav column at a metre is not a settings surface

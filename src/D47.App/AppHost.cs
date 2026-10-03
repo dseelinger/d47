@@ -326,9 +326,6 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's checklist, and the proposals waiting on it (Phase 17).</summary>
     public ChecklistService Checklists { get; private set; } = null!;
 
-    /// <summary>The Commander's timers and alarms; null unless the run was started with the switch (#90).</summary>
-    public Timekeeper? Timekeeper { get; private set; }
-
     /// <summary>The Commander's ship builds, joined to the fleet (Phase 26).</summary>
     public ShipPlanService Ships { get; private set; } = null!;
 
@@ -343,9 +340,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Which engineer to go and get next, read across both plan stores (Phase 28).</summary>
     public D47.Core.Engineers.EngineerPlanService Unlocks { get; private set; } = null!;
-
-    /// <summary>Where the alarms are kept; null whenever <see cref="Timekeeper"/> is.</summary>
-    public AlarmStore? Alarms { get; private set; }
 
     /// <summary>
     /// Every phrase d47 already answers to, so the macro editor can refuse one that would shadow a
@@ -2484,13 +2478,11 @@ public sealed class AppHost : IDisposable
         // tool call, an arc's own tick, the Checklist page's card, or a spoken "accept" (#277).
         checklists.Proposals.Added += proposal => host.Panel.AppendProposal(proposal.Id, proposal.Summary);
         checklists.ProposalSettled += (id, accepted, outcome) => host.Panel.SettleProposal(id, accepted, outcome);
-        host.Timekeeper = timersAndAlarms?.Timekeeper;
         host.Ships = shipPlans;
         host.ShipBuilds = shipBuilds;
         host.OnFootPlans = onFootPlans;
         host.Unlocks = unlocks;
         host.OnFootBuilds = onFootBuilds;
-        host.Alarms = timersAndAlarms?.Alarms;
 
         // The Commander switch (Phase 44).
         host.Drift = drift;

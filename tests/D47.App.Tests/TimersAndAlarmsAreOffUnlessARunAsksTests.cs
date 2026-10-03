@@ -1,13 +1,5 @@
-using Avalonia;
-using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
-using D47.App.Headset;
-using D47.App.Panel;
-using D47.App.Theming;
-using D47.App.Timekeeping;
-using D47.App.Windowing;
 using D47.Core;
-using D47.Core.Interface;
+using D47.App.Timekeeping;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -110,88 +102,6 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
         Assert.Contains("3312", live, StringComparison.Ordinal);
         Assert.Contains("2026", live, StringComparison.Ordinal);
         Assert.Contains("Running: mining run", live, StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    /// Off, the desktop panel, the headset and the strip are handed nothing for the tab, and each refuses
-    /// it and stays on the transcript.
-    /// </summary>
-    [AvaloniaFact]
-    public void OffNoSurfaceCarriesTheTab()
-    {
-        TimersAndAlarms.ReadCommandLine([]);
-
-        var (desktop, headset, overlay) = Surfaces();
-
-        foreach (var nav in new[] { desktop.Nav, headset.Nav, overlay.Nav })
-        {
-            Assert.False(nav.Has(PanelTab.Utilities));
-
-            nav.Select(PanelTab.Utilities);
-            Dispatcher.UIThread.RunJobs();
-
-            Assert.Equal(PanelTab.Transcript, nav.Tab);
-        }
-
-        overlay.Close();
-    }
-
-    [AvaloniaFact]
-    public void OnEverySurfaceCarriesTheTab()
-    {
-        TimersAndAlarms.ReadCommandLine([TimersAndAlarms.Flag]);
-
-        var (desktop, headset, overlay) = Surfaces();
-
-        Assert.True(desktop.Nav.Has(PanelTab.Utilities));
-        Assert.True(headset.Nav.Has(PanelTab.Utilities));
-        Assert.True(overlay.Nav.Has(PanelTab.Utilities));
-
-        overlay.Close();
-    }
-
-    /// <summary>The three surfaces, wired the way the host wires them from whatever the switch composed.</summary>
-    private static (PanelView Desktop, VrPanelSurface Headset, OverlayPanel Overlay) Surfaces()
-    {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
-
-        var (settings, viewState, paths) = TestSurface.Create();
-        var clocks = TimersAndAlarms.Create(paths, NullLoggerFactory.Instance);
-        var adventures = AdventureFixture.Surface(paths);
-
-        var desktop = new PanelView { DataContext = new PanelViewModel() };
-
-        if (clocks is not null)
-        {
-            desktop.EnableUtilities(
-                clocks.Timekeeper, clocks.Alarms, () => DateTimeOffset.UnixEpoch, () => TimeZoneInfo.Utc);
-        }
-
-        var headset = new VrPanelSurface(
-            new PanelViewModel(),
-            settings,
-            _ => null,
-            settingsPage: () => new Avalonia.Controls.TextBlock { Text = "settings" },
-            timekeeper: clocks?.Timekeeper,
-            alarmStore: clocks?.Alarms,
-            adventures: adventures);
-
-        var overlay = new OverlayPanel(
-            new PanelViewModel(),
-            settings,
-            viewState,
-            NullLogger<OverlayPanel>.Instance,
-            avatars: null,
-            adventures: adventures,
-            tabs: new OverlayTabs
-            {
-                Timekeeper = clocks?.Timekeeper,
-                Alarms = clocks?.Alarms,
-            });
-
-        Dispatcher.UIThread.RunJobs();
-
-        return (desktop, headset, overlay);
     }
 
     private static AppPaths Paths()

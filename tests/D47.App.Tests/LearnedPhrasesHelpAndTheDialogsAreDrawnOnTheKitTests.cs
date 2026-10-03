@@ -29,11 +29,11 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Utilities tab, Learned phrases, the in-app help page and the shared modal dialogs, rendered on
+/// Learned phrases, the in-app help page and the shared modal dialogs, rendered on
 /// each theme and saved to <see cref="TestSurface.CaptureDirectory"/> for comparison with brief 03
 /// (#406).
 /// </summary>
-public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
+public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
 {
     private static readonly DateTimeOffset Instant = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
 
@@ -63,48 +63,17 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
     [InlineData(ThemeCatalog.Dark, 1280, 860)]
     [InlineData(ThemeCatalog.Light, 1280, 860)]
     [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
-    public void UtilitiesLearnedPhrasesAndHelpAreCaptured(string themeId, double width, double height)
+    public void LearnedPhrasesAndHelpAreCaptured(string themeId, double width, double height)
     {
         using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
 
         var saved = new List<string>
         {
-            CaptureUtilities(themeId, width, height),
             CaptureLearnedPhrases(themeId, width, height),
             CaptureHelp(themeId, width, height),
         };
 
         Assert.All(saved, path => Assert.True(File.Exists(path)));
-    }
-
-    private static string CaptureUtilities(string themeId, double width, double height)
-    {
-        var root = TempFolders.Create("d47-utilities-kit");
-        var alarms = new AlarmStore(Path.Combine(root, "alarms.json"), NullLogger<AlarmStore>.Instance);
-        var timekeeper = new Timekeeper(alarms);
-
-        timekeeper.StartTimer("mining run", TimeSpan.FromMinutes(40), Instant);
-        timekeeper.SetAlarm("wake up", Instant.AddHours(9), Instant);
-
-        var panel = new PanelView
-        {
-            DataContext = new PanelViewModel(),
-            Mode = height < 400 ? PanelMode.Mini : PanelMode.Full,
-        };
-
-        panel.EnableUtilities(timekeeper, alarms, () => Instant, () => TimeZoneInfo.Utc);
-
-        var window = new Window { Content = panel, Width = width, Height = height };
-        window.Show();
-
-        panel.Tab = PanelTab.Utilities;
-        panel.TickClocks();
-        Dispatcher.UIThread.RunJobs();
-
-        var path = Save(window, $"utilities-{themeId}-{width}x{height}.png");
-        window.Close();
-
-        return path;
     }
 
     private static string CaptureLearnedPhrases(string themeId, double width, double height)
@@ -391,45 +360,7 @@ public class UtilitiesHelpAndTheDialogsAreDrawnOnTheKitTests
         }
     }
 
-    [AvaloniaFact]
-    public void TheUtilitiesTitleIsTheScreenTitleAndItsRowsAreListRows()
-    {
-        using var look = AppLook.Put(ThemeCatalog.Elite, null);
-
-        var root = TempFolders.Create("d47-utilities-rows");
-        var alarms = new AlarmStore(Path.Combine(root, "alarms.json"), NullLogger<AlarmStore>.Instance);
-        var timekeeper = new Timekeeper(alarms);
-
-        timekeeper.StartTimer("mining run", TimeSpan.FromMinutes(40), Instant);
-
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableUtilities(timekeeper, alarms, () => Instant, () => TimeZoneInfo.Utc);
-
-        var window = new Window { Content = panel, Width = 1280, Height = 860 };
-        window.Show();
-
-        panel.Tab = PanelTab.Utilities;
-        panel.TickClocks();
-        Dispatcher.UIThread.RunJobs();
-
-        var title = panel.GetVisualDescendants().OfType<TextBlock>()
-            .Single(block => block.Text == "UTILITIES" && block.FontSize == TypeScale.Title);
-
-        Assert.Equal(Ink(ThemeManager.WhiteKey), (title.Foreground as ISolidColorBrush)?.Color);
-
-        var name = panel.GetVisualDescendants().OfType<TextBlock>()
-            .Single(block => block.Text == "MINING RUN");
-
-        var row = name.GetVisualAncestors().OfType<Border>()
-            .First(border => border.Classes.Contains(ListRow.Class));
-
-        Assert.Equal(default, row.BorderThickness);
-
-        window.Close();
-    }
-
     [Theory]
-    [InlineData("Panel/UtilitiesPage.cs")]
     [InlineData("Panel/LearnedPhrasesPage.cs")]
     [InlineData("Panel/HelpPageView.cs")]
     [InlineData("Controls/AudioRecorderPage.cs")]

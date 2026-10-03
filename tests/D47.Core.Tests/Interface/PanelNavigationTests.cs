@@ -360,12 +360,12 @@ public class PanelNavigationTests
         var nav = new PanelNavigator();
 
         nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
-        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks"));
+        nav.Register(PanelTab.Settings, new NavCrumb("clocks", "Clocks"));
 
         nav.Select(PanelTab.Engineers);
         Assert.Equal("engineers", nav.Help);
 
-        nav.Select(PanelTab.Utilities);
+        nav.Select(PanelTab.Settings);
         Assert.Null(nav.Help);
     }
 
@@ -429,8 +429,8 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Utilities, new NavCrumb("clocks", "Clocks") { Help = "no-such-page" });
-        nav.Select(PanelTab.Utilities);
+        nav.Register(PanelTab.Settings, new NavCrumb("clocks", "Clocks") { Help = "no-such-page" });
+        nav.Select(PanelTab.Settings);
 
         Assert.Equal("Help.", PanelPhrases.Apply("help", nav));
         Assert.Equal("help:help", nav.Trail[^1].Key);

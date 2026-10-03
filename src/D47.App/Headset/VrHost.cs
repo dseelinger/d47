@@ -137,8 +137,6 @@ public sealed class VrHost : IDisposable
         string? dumpTo = null,
         Func<Control>? settingsPage = null,
         D47.Core.Checklists.ChecklistService? checklists = null,
-        D47.Core.Utilities.Timekeeper? timekeeper = null,
-        D47.Core.Utilities.AlarmStore? alarmStore = null,
         D47.Core.Ships.ShipPlanService? ships = null,
         Func<D47.Core.Journal.CommanderGameState?>? gameState = null,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
@@ -162,7 +160,7 @@ public sealed class VrHost : IDisposable
 
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
-            checklists, timekeeper, alarmStore, ships, gameState, onFoot, unlocks, goals,
+            checklists, ships, gameState, onFoot, unlocks, goals,
             backfillGoals, adventures, viewState, capabilities, routing,
             modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
@@ -401,9 +399,7 @@ public sealed class VrHost : IDisposable
         {
             Interlocked.Exchange(ref _pending, 0);
 
-            // Before the serve, so a clock that moved is in the frame this tick draws rather than in the next
-            // one.
-            _panel.TickClocks();
+            // Before the serve, so a change is in the frame this tick draws rather than in the next one.
             _panel.TickEngineers();
 
             // And one frame of the "d47 is composing" animation, which is the third reason a headset panel

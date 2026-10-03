@@ -72,8 +72,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         string? dumpTo = null,
         Func<Control>? settingsPage = null,
         D47.Core.Checklists.ChecklistService? checklists = null,
-        D47.Core.Utilities.Timekeeper? timekeeper = null,
-        D47.Core.Utilities.AlarmStore? alarmStore = null,
         D47.Core.Ships.ShipPlanService? ships = null,
         Func<D47.Core.Journal.CommanderGameState?>? gameState = null,
         D47.Core.Loadout.OnFootPlanService? onFoot = null,
@@ -241,17 +239,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableEngineers(unlocks, ships, gameState, onFoot, engineersMemory, checklists);
         }
 
-        if (timekeeper is not null && alarmStore is not null)
-        {
-            // A Commander in a headset is exactly the Commander who cannot glance at a wall clock, which is
-            // most of why this page exists at all (Phase 24).
-            _view.EnableUtilities(
-                timekeeper,
-                alarmStore,
-                () => D47.Core.SystemWallClock.Instance.UtcNow,
-                () => TimeZoneInfo.Local);
-        }
-
         if (viewState is not null)
         {
             // The headset's own tab and roots, back where they were left (#276).
@@ -323,8 +310,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public Controls.ModalDialog? Modal => _modals.Top;
 
     /// <summary>Redraws the clocks, from the headset's own tick.</summary>
-    public void TickClocks() => _dirty |= _view.TickClocks();
-
     /// <summary>
     /// Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody (Phase
     /// 28).

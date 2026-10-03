@@ -299,16 +299,6 @@ public partial class MainWindow : Window
                 && !Panel.Nav.Modal
                 && _onScreen;
 
-            // And the clocks, timers and alarms (Phase 24), for a run started with the switch (#90).
-            if (host.Timekeeper is { } timekeeper && host.Alarms is { } alarms)
-            {
-                Panel.EnableUtilities(
-                    timekeeper,
-                    alarms,
-                    () => D47.Core.SystemWallClock.Instance.UtcNow,
-                    () => TimeZoneInfo.Local);
-            }
-
             // And the same window is the one with a keyboard, so it is the one that gets a search box.
             Panel.EnableSearch();
 
@@ -352,13 +342,7 @@ public partial class MainWindow : Window
             // And a spoken "page down" moves whatever page this surface is showing (#34).
             host.RouteScrolling(Panel.Scroll);
 
-            // A clock is the one page whose content changes with nothing having happened, so it is pushed
-            // rather than pulled (Phase 24).
-            host.Tick.Add("clocks", _ =>
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickClocks()));
-
-            // The engineer pages move for a different reason: nothing has to happen for a clock to change,
-            // and everything has to happen for a ranking to.
+            // The engineer ranking changes when the Commander moves or re-fits, so it is pushed rather than pulled.
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickEngineers()));
 

@@ -39,53 +39,6 @@ public class NumbersAndTimesAreDrawnInMonoTests
     }
 
     [AvaloniaFact]
-    public void TheUtilitiesClocksDrawTheirTimesAndDatesInMono()
-    {
-        using var look = AppLook.Put();
-
-        var root = TempFolders.Create("d47-mono-clocks");
-        var alarms = new AlarmStore(Path.Combine(root, "alarms.json"), NullLogger<AlarmStore>.Instance);
-
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableUtilities(new Timekeeper(alarms), alarms, () => Now, () => TimeZoneInfo.Utc);
-
-        var window = new Window
-        {
-            Content = panel,
-            Width = 900,
-            Height = 700,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Show();
-
-        panel.Tab = PanelTab.Utilities;
-        Dispatcher.UIThread.RunJobs();
-
-        var clocks = panel.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .Where(block => block.Text is "GALACTIC" or "LOCAL")
-            .Select(caption => (StackPanel)caption.Parent!)
-            .ToList();
-
-        Assert.Equal(2, clocks.Count);
-
-        foreach (var clock in clocks)
-        {
-            var time = (TextBlock)clock.Children[1];
-            var date = (TextBlock)clock.Children[2];
-
-            Assert.False(string.IsNullOrEmpty(time.Text));
-            Assert.Equal(Mono, time.FontFamily.Name);
-            Assert.Equal(Mono, date.FontFamily.Name);
-        }
-
-        using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "mono-utilities-clocks.png"), new PngBitmapEncoderOptions());
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void TheStatTilesAreCaptured()
     {
         using var look = AppLook.Put();

@@ -185,21 +185,13 @@ public sealed class OverlayPanel : Window
         {
             _view.EnableEngineers(unlocks, ships, state, tabs.OnFoot, tabs.EngineersMemory, tabs.Checklists);
         }
-
-        if (tabs.Timekeeper is { } timekeeper && tabs.Alarms is { } alarms)
-        {
-            _view.EnableUtilities(
-                timekeeper, alarms, () => D47.Core.SystemWallClock.Instance.UtcNow, () => TimeZoneInfo.Local);
-        }
     }
 
     /// <summary>
-    /// Redraws the pages that change with nothing having happened — the clocks, and the engineer
-    /// ranking when the Commander has moved or re-fitted (Phases 24 and 28).
+    /// Redraws the engineer ranking when the Commander has moved or re-fitted (Phase 28).
     /// </summary>
     private void TickPages()
     {
-        _view.TickClocks();
         _view.TickEngineers();
     }
 

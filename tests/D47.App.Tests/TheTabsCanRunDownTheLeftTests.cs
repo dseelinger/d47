@@ -15,7 +15,7 @@ public class TheTabsCanRunDownTheLeftTests
     private static readonly string[] TabNames =
     [
         "TranscriptTab", "LoadoutTab", "EngineersTab", "ChecklistTab",
-        "RoutingTab", "AdventuresTab", "UtilitiesTab", "SettingsTab",
+        "RoutingTab", "AdventuresTab", "SettingsTab",
     ];
 
     /// <summary>A panel with every tab shown, as the desktop window has them once its hosts have furnished them.</summary>

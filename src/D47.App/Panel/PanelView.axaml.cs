@@ -273,7 +273,6 @@ public partial class PanelView : UserControl
         _tabs[PanelTab.Checklist] = ChecklistTab;
         _tabs[PanelTab.Routing] = RoutingTab;
         _tabs[PanelTab.Adventures] = AdventuresTab;
-        _tabs[PanelTab.Utilities] = UtilitiesTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
         Nav.Changed += (_, _) => ApplyNavigation();
@@ -897,23 +896,7 @@ public partial class PanelView : UserControl
     private D47.Core.Journal.CargoHold? _holdSeen;
     private string _loadoutEngineerStamp = string.Empty;
 
-    /// <summary>Gives this surface the clocks, timers and alarms (Phase 24, "Utilities").</summary>
-    public void EnableUtilities(
-        D47.Core.Utilities.Timekeeper timekeeper,
-        D47.Core.Utilities.AlarmStore alarms,
-        Func<DateTimeOffset> now,
-        Func<TimeZoneInfo> zone)
-    {
-        Furnish(
-            PanelTab.Utilities,
-            _ => _utilities = new UtilitiesPage(timekeeper, alarms, now, zone, Prompts),
-            new NavCrumb("utilities", "Utilities")
-            {
-                Help = D47.Core.Capabilities.Builtin.UtilitiesCapability.Id,
-            });
-    }
-
-    /// <summary>Redraws the clocks, from the host's tick.</summary>
+    /// <summary>Redraws the Adventures pulse, from the host's tick.</summary>
     public bool TickAdventures()
     {
         if (Tab != PanelTab.Adventures)
@@ -933,18 +916,6 @@ public partial class PanelView : UserControl
 
         return moved;
     }
-
-    public bool TickClocks()
-    {
-        if (Tab != PanelTab.Utilities)
-        {
-            return false;
-        }
-
-        return _utilities?.Refresh() ?? false;
-    }
-
-    private UtilitiesPage? _utilities;
 
     /// <summary>
     /// Gives this surface the Routing tab (Phase 37): where the Commander is going, in three readings

@@ -86,6 +86,21 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         window.Close();
     }
 
+    /// <summary>A saved Utilities tab, from a build that had one, opens on Transcript.</summary>
+    [AvaloniaFact]
+    public void AUtilitiesTabSavedByAnEarlierBuildLeavesThePanelOnTranscript()
+    {
+        var store = Store();
+
+        store.Save(store.Load() with { LastTab = "Utilities" });
+
+        var (panel, window) = Shown(store);
+
+        Assert.Equal(PanelTab.Transcript, panel.Tab);
+
+        window.Close();
+    }
+
     /// <summary>
     /// The transcript reading too, which is the one the request named first — and the one that takes
     /// the extra care, because Raw Journal is a root of this tab like the journal itself is.
