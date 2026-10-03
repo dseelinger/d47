@@ -195,7 +195,7 @@ public partial class PanelView : UserControl
         Bubbles.AddHandler(PointerPressedEvent, OnBubblesPointerPressed, handledEventsToo: true);
         Bubbles.AddHandler(PointerMovedEvent, OnBubblesPointerMoved, handledEventsToo: true);
 
-        PageBar.SizeChanged += (_, _) => SizeSearchRow();
+        TitleLine.SizeChanged += (_, _) => SizeSearchRow();
 
         // Tunnelling, so this runs before the TextBox's own key handling inserts a newline or moves the
         // caret on Up/Down.
@@ -1535,30 +1535,70 @@ public partial class PanelView : UserControl
             tab.Theme = theme;
         }
 
-        DockPanel.SetDock(TabStrip, left ? Dock.Left : Dock.Top);
+        PlaceTabStrip(left);
         Tabs.Orientation = left ? Orientation.Vertical : Orientation.Horizontal;
         Tabs.VerticalAlignment = left ? VerticalAlignment.Top : VerticalAlignment.Bottom;
 
-        DockPanel.SetDock(TabStripRule, left ? Dock.Left : Dock.Top);
         TabStripRule.Width = left ? 2 : double.NaN;
         TabStripRule.Height = left ? double.NaN : 2;
         TabStripRule.Margin = left ? new Thickness(0, 16, 16, 0) : default;
 
+        // Down the left, the chrome moves to the title line's right-hand end, beside the avatar.
         if (left)
         {
             TabStrip.Children.Remove(ChromeRow);
-            ChromeSlot.Child = ChromeRow;
+            DockPanel.SetDock(ChromeRow, Dock.Right);
+            TitleLine.Children.Insert(0, ChromeRow);
         }
         else
         {
-            ChromeSlot.Child = null;
+            TitleLine.Children.Remove(ChromeRow);
             TabStrip.Children.Insert(0, ChromeRow);
         }
 
         ChromeRow.VerticalAlignment = left ? VerticalAlignment.Center : VerticalAlignment.Bottom;
 
+        // Down the left, the avatar is the title line's height and sits at its right.
+        TitleLine.Margin = left ? default : new Thickness(0, 12, 0, 2);
+        Avatar.Extent = left ? TitleLine.Height : HeaderAvatarExtent;
+        Avatar.VerticalAlignment = left ? VerticalAlignment.Center : VerticalAlignment.Bottom;
+
         ApplyChrome();
         return true;
+    }
+
+    /// <summary>The avatar's side with the tabs along the top: from the tab row's top to the title rule.</summary>
+    public const double HeaderAvatarExtent = 104;
+
+    /// <summary>Moves the tab strip and its rule into the header grid, or out to the frame as a rail on the left.</summary>
+    private void PlaceTabStrip(bool left)
+    {
+        if (left == ReferenceEquals(TabStrip.Parent, Frame))
+        {
+            return;
+        }
+
+        if (left)
+        {
+            HeaderColumn.Children.Remove(TabStrip);
+            HeaderColumn.Children.Remove(TabStripRule);
+
+            var at = Frame.Children.IndexOf(PageHeader);
+
+            DockPanel.SetDock(TabStrip, Dock.Left);
+            DockPanel.SetDock(TabStripRule, Dock.Left);
+            Frame.Children.Insert(at, TabStripRule);
+            Frame.Children.Insert(at, TabStrip);
+            TabStrip.Margin = new Thickness(0, 16, 0, 0);
+        }
+        else
+        {
+            Frame.Children.Remove(TabStrip);
+            Frame.Children.Remove(TabStripRule);
+            TabStrip.Margin = default;
+            HeaderColumn.Children.Insert(0, TabStripRule);
+            HeaderColumn.Children.Insert(0, TabStrip);
+        }
     }
 
     /// <summary>In the rail, Up and Down move focus to the tab above or below, skipping hidden tabs.</summary>
@@ -2159,6 +2199,8 @@ public partial class PanelView : UserControl
 
         Header.IsVisible = full;
         Banners.IsVisible = full;
+        PageHeader.IsVisible = full;
+        TitleRule.IsVisible = full;
 
         // A furnished tab brings its own footer — the settings surface has the storage line, About and the
         // data folder — so the ask line and the provenance line give way to it rather than sitting under it
@@ -2174,7 +2216,7 @@ public partial class PanelView : UserControl
         // control, the breadcrumb and the search box go with the rest of the chrome.
         TabStrip.IsVisible = full;
         TabStripRule.IsVisible = full;
-        CrumbBar.IsVisible = full && (_tabsDownTheLeft || CrumbRow.Children.Count > 0);
+        CrumbBar.IsVisible = full && CrumbRow.Children.Count > 0;
 
         var modal = ModalPane.Child is not null;
 
@@ -2198,7 +2240,7 @@ public partial class PanelView : UserControl
         PagePane.IsVisible = !transcript && !modal && !miniStory;
 
         // No tab has a frame of its own: the edge is the window's. The page's own bar keeps its inset.
-        PageBar.Margin = transcript ? default : new Thickness(14, 12, 14, 0);
+        PageBar.Margin = transcript ? new Thickness(0, 8, 0, 0) : new Thickness(14, 12, 14, 0);
 
         // The page's own bar.
         ShowSearch();
@@ -2754,6 +2796,7 @@ public partial class PanelView : UserControl
             // The strip's first draw runs on attachment to the visual tree, which on a cold start happens
             // after this method returns and ShowSearch() has already asked whether the page filters.
             page.Drawn += (_, _) => ShowSearch();
+            page.SummaryChanged += (_, _) => ShowTitleLine();
 
             // A strip built after the host furnished this surface still gets handles - the tabs are built on
             // first sight rather than up front, so most of them arrive here (Phase 55).
@@ -4179,6 +4222,7 @@ public partial class PanelView : UserControl
         // On all four readings now (#413).
         ScrollPastReadingItem.IsEnabled = transcript;
 
+        ShowTitleLine();
         ShowPageBar();
         ShowLogSettingsStrip();
     }
@@ -4188,11 +4232,9 @@ public partial class PanelView : UserControl
         PageBar.IsVisible = Mode == PanelMode.Full
                             && ModalPane.Child is null
                             && !Layer.IsVisible
-                            && (ModePicker.IsVisible || SearchRow.IsVisible || RawToggleBox.IsVisible);
+                            && (ModePicker.IsVisible || RawToggleBox.IsVisible);
 
-        // The rule and the 16px below it belong to the transcript's bar.
-        PageBarRule.IsVisible = PageBar.IsVisible && Tab == PanelTab.Transcript;
-        TranscriptPane.Padding = new Thickness(0, PageBarRule.IsVisible ? 16 : 0, 0, 0);
+        TranscriptPane.Padding = new Thickness(0, PageBar.IsVisible ? 16 : 0, 0, 0);
 
         SizeSearchRow();
     }
@@ -4200,17 +4242,26 @@ public partial class PanelView : UserControl
     /// <summary>The search field's width on the Transcript.</summary>
     public const double TranscriptSearchWidth = 340;
 
+    /// <summary>The tab's name, and the summary of the page showing (<see cref="IPageSummary"/>).</summary>
+    private void ShowTitleLine()
+    {
+        Theming.TitleText.Show(PageTitle, _tabs.TryGetValue(Tab, out var tab) ? tab.Content as string ?? string.Empty : string.Empty);
+
+        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
+
+        PageSummary.Text = transcript ? string.Empty : (PagePane.Child as IPageSummary)?.Summary ?? string.Empty;
+    }
+
     /// <summary>
-    /// The search field's width, <see cref="TranscriptSearchWidth"/> on the Transcript and otherwise the page's
-    /// filter width or clamp(240, 32% of the bar, 420), beside the readings when the readings,
-    /// the row's actions and the field all fit across the bar, and on a line of its own below them when
-    /// they do not — where it narrows to what is left, down to 90.
+    /// The search field's width: <see cref="TranscriptSearchWidth"/> on the Transcript and otherwise the page's
+    /// filter width or clamp(240, 32% of the title line, 420), narrowed to leave the H1 and the row's actions
+    /// their room on the title line, down to 90.
     /// </summary>
     private void SizeSearchRow()
     {
-        var bar = PageBar.Bounds.Width;
+        var line = TitleLine.Bounds.Width;
 
-        if (!SearchRow.IsVisible || bar <= 0)
+        if (!SearchRow.IsVisible || line <= 0)
         {
             return;
         }
@@ -4226,41 +4277,33 @@ public partial class PanelView : UserControl
             }
         }
 
-        var readings = 0.0;
-
-        if (ModePicker.IsVisible)
+        // Down the left, the chrome shares the title line too.
+        if (ReferenceEquals(ChromeRow.Parent, TitleLine))
         {
-            ModePicker.Measure(Size.Infinity);
-            readings = ModePicker.DesiredSize.Width;
+            ChromeRow.Measure(Size.Infinity);
+            actions += ChromeRow.DesiredSize.Width;
         }
+
+        PageTitle.Measure(Size.Infinity);
 
         const double Gap = 16;
         var field = Tab == PanelTab.Transcript
             ? TranscriptSearchWidth
-            : (PagePane.Child as IFilterablePage)?.FilterWidth ?? Math.Clamp(bar * 0.32, 240, 420);
+            : (PagePane.Child as IFilterablePage)?.FilterWidth ?? Math.Clamp(line * 0.32, 240, 420);
 
-        if (!SearchInput.IsVisible)
-        {
-            field = 0;
-        }
-        var beside = readings == 0 || readings + Gap + actions + field <= bar;
+        var room = line - PageTitle.DesiredSize.Width - Gap - SearchRow.Margin.Left - actions;
+        var width = Math.Max(90, Math.Min(field, room));
 
-        var dock = beside ? Dock.Right : Dock.Bottom;
-        var margin = beside ? new Thickness(readings == 0 ? 0 : Gap, 0, 0, 0) : new Thickness(0, 8, 0, 0);
-        var width = Math.Max(90, Math.Min(field, bar - actions));
-
-        if (DockPanel.GetDock(SearchRow) == dock && SearchRow.Margin == margin && SearchInput.Width == width)
+        if (SearchInput.Width == width)
         {
             return;
         }
 
-        DockPanel.SetDock(SearchRow, dock);
-        SearchRow.Margin = margin;
         SearchInput.Width = width;
 
-        // Called from PageBar.SizeChanged, inside a layout pass, where the row's new size does not reach the
-        // bar's arrange on its own (#424).
-        PageBar.InvalidateMeasure();
+        // Called from TitleLine.SizeChanged, inside a layout pass, where the row's new size does not reach the
+        // line's arrange on its own (#424).
+        TitleLine.InvalidateMeasure();
     }
 
     /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>

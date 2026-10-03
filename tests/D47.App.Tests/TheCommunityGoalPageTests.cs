@@ -107,15 +107,15 @@ public class TheCommunityGoalPageTests
             course: false,
             market: false);
 
-        var window = new Window { Content = panel, Width = width, Height = 700 };
+        var window = new Window { Content = panel, Width = width, Height = 1000 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
         panel.Tab = PanelTab.Routing;
         Dispatcher.UIThread.RunJobs();
 
-        window.Measure(new Avalonia.Size(width, 700));
-        window.Arrange(new Avalonia.Rect(0, 0, width, 700));
+        window.Measure(new Avalonia.Size(width, 1000));
+        window.Arrange(new Avalonia.Rect(0, 0, width, 1000));
         Dispatcher.UIThread.RunJobs();
 
         return panel;
@@ -366,7 +366,7 @@ public class TheCommunityGoalPageTests
             course: false,
             market: false);
 
-        var window = new Window { Content = panel, Width = 1000, Height = 700 };
+        var window = new Window { Content = panel, Width = 1000, Height = 1000 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
@@ -407,7 +407,7 @@ public class TheCommunityGoalPageTests
             course: false,
             market: false);
 
-        var window = new Window { Content = panel, Width = 1000, Height = 700 };
+        var window = new Window { Content = panel, Width = 1000, Height = 1000 };
         window.Show();
         panel.Tab = PanelTab.Routing;
         Dispatcher.UIThread.RunJobs();
@@ -445,7 +445,7 @@ public class TheCommunityGoalPageTests
             course: false,
             market: false);
 
-        var window = new Window { Content = panel, Width = 1000, Height = 700 };
+        var window = new Window { Content = panel, Width = 1000, Height = 1000 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 

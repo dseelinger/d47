@@ -407,11 +407,11 @@ public class TheConversationLooksLikeOneTests
         var window = into ?? new Window();
 
         window.Width = width;
-        window.Height = 560;
+        window.Height = 640;
         window.Content = panel;
         window.Show();
 
-        var bounds = new Rect(0, 0, width, 560);
+        var bounds = new Rect(0, 0, width, 640);
         window.Measure(bounds.Size);
         window.Arrange(bounds);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -12,7 +12,7 @@ namespace D47.App.Panel;
 /// A tab's drill stack, drawn as however many panes will fit (Phase 25, "Drill in, and find your way
 /// back" and "The panel resizes and zooms").
 /// </summary>
-public sealed class DrillView : UserControl, IFilterablePage, IPageChrome
+public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPageSummary
 {
     /// <summary>The narrowest a pane may be before the strip shows one fewer.</summary>
     public const double MinimumPaneWidth = 380;
@@ -45,6 +45,8 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome
     /// (cold start attaches the strip after the pane already asked) gets asked again.
     /// </summary>
     public event EventHandler? Drawn;
+
+    public event EventHandler? SummaryChanged;
 
     private int _panes = 1;
 
@@ -184,6 +186,11 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome
             {
                 pane = _build(crumb);
                 _built[crumb.Key] = pane;
+
+                if (pane is IPageSummary summary)
+                {
+                    summary.SummaryChanged += (_, _) => SummaryChanged?.Invoke(this, EventArgs.Empty);
+                }
             }
 
             var host = new Border
@@ -308,6 +315,14 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome
     public Control? BarTool => (Deepest as IPageChrome)?.BarTool;
 
     public string? HelpTopic => (Deepest as IPageChrome)?.HelpTopic;
+
+    /// <summary>The summary of the deepest level showing that has one.</summary>
+    public string Summary =>
+        _showing
+            .Select(key => _built.TryGetValue(key, out var pane) ? pane : null)
+            .OfType<IPageSummary>()
+            .LastOrDefault()
+            ?.Summary ?? string.Empty;
 
     /// <summary>Forgets a level's page, so the next visit rebuilds it.</summary>
     public void Forget(string key)

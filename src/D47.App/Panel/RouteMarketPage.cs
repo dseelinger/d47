@@ -99,7 +99,6 @@ public sealed class RouteMarketPage : UserControl
     private void Build()
     {
         _body.Children.Clear();
-        _body.Children.Add(RoutingKit.Title("Market").Row);
 
         if (!_lookupsEnabled())
         {

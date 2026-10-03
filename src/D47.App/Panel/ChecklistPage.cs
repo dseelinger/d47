@@ -16,7 +16,7 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>The checklist, as a tab of the panel (Phase 25, "The checklist leaves its window").</summary>
-public sealed class ChecklistPage : UserControl, IFilterablePage
+public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 {
     /// <summary>The filter entry that means no filter.</summary>
     public const string Everything = "everything";
@@ -94,14 +94,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         VerticalAlignment = VerticalAlignment.Top,
         Classes = { "destructive" },
     };
-
-    /// <summary>The screen title, left out on mini.</summary>
-    private readonly SelectableTextBlock _title = TitleText.Style(
-        new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
-        TypeScale.Title,
-        TitleRank.Screen);
-
-    private readonly Control _titleRow;
 
     private IDisposable? _sized;
     private bool _mini;
@@ -202,12 +194,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
-        TitleText.Show(_title, "Checklist");
-
-        _titleRow = TitleText.Block(_title);
-        _titleRow.Margin = new Thickness(0, 0, 0, 10);
-
-        DockPanel.SetDock(_titleRow, Dock.Top);
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
 
@@ -218,17 +204,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         DockPanel.SetDock(_band, Dock.Top);
 
         // A share of the page, so the list keeps a working share of the tab whatever the window is doing.
-        // Measured below the title and the bar, which the band and the list do not share.
+        // Measured below the bar, which the band and the list do not share.
         SizeChanged += (_, e) =>
         {
-            var below = e.NewSize.Height
-                        - (_titleRow.IsVisible ? _titleRow.Bounds.Height + _titleRow.Margin.Bottom : 0)
-                        - bar.Bounds.Height - bar.Margin.Bottom;
+            var below = e.NewSize.Height - bar.Bounds.Height - bar.Margin.Bottom;
 
             _band.MaxHeight = Math.Max(0, Math.Min(below * BandShare, below - ListKeeps));
         };
 
-        root.Children.Add(_titleRow);
         root.Children.Add(bar);
         root.Children.Add(_band);
         root.Children.Add(_problems);
@@ -312,6 +295,22 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         }
     }
 
+    /// <summary>How many lines the filter or the search left, while either is narrowing the list.</summary>
+    public string Summary { get; private set; } = string.Empty;
+
+    public event EventHandler? SummaryChanged;
+
+    private void Summarise(string summary)
+    {
+        if (summary == Summary)
+        {
+            return;
+        }
+
+        Summary = summary;
+        SummaryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>The surface went mini, or came back.</summary>
     private void OnSurface(PanelMode mode)
     {
@@ -320,9 +319,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
         if (mini != _mini)
         {
             _mini = mini;
-
-            // Mini's height goes to the list, which scrolls under a header that does not.
-            _titleRow.IsVisible = !mini;
             Rebuild();
         }
     }
@@ -338,7 +334,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
             var title = TitleText.Block(TitleText.Build(
                 "Suggestions",
-                _mini ? TypeScale.Heading : TypeScale.Title,
+                TypeScale.Heading,
                 TitleRank.Screen));
 
             title.Margin = new Thickness(0, 0, 0, _mini ? 4 : 10);
@@ -486,6 +482,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
         // How big the answer is, whenever the page is showing less than all of it (reported 2026-08-23, twice
         // in one evening).
+        var summary = string.Empty;
+
         if (open.Count > 0 && (Chosen != Everything || Query.Length > 0))
         {
             var ships = open
@@ -496,10 +494,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage
 
             var lines = open.Count == 1 ? "1 line" : $"{open.Count.ToString(CultureInfo.InvariantCulture)} lines";
 
-            _list.Children.Add(Muted(ships > 1
+            summary = ships > 1
                 ? $"{lines}, across {ships.ToString(CultureInfo.InvariantCulture)} ships."
-                : $"{lines}."));
+                : $"{lines}.";
         }
+
+        Summarise(summary);
 
         // One list, in the Commander's order, and no headings between scopes.
         foreach (var item in open)

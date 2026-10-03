@@ -266,7 +266,7 @@ public sealed class CarrierPage : UserControl
     {
         var name = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
-            _mini ? TypeScale.Heading : TypeScale.Title,
+            TypeScale.Heading,
             TitleRank.Screen);
 
         TitleText.Show(name, Named(carrier));

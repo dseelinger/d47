@@ -28,8 +28,15 @@ using D47.App.Windowing;
 namespace D47.App.Settings;
 
 /// <summary>The settings surface.</summary>
-public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, D47.App.Panel.IPageChrome
+public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, D47.App.Panel.IPageChrome, D47.App.Panel.IPageSummary
 {
+    public string Summary => "Changes apply as you make them.";
+
+    event EventHandler? D47.App.Panel.IPageSummary.SummaryChanged
+    {
+        add { }
+        remove { }
+    }
 
     private readonly List<SectionView> _sections = [];
     private readonly List<RowView> _rows = [];
@@ -837,7 +844,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var crumb = TitleText.Context();
 
         var title = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        TitleText.Style(title, TypeScale.Title, TitleRank.Screen);
+        TitleText.Style(title, TypeScale.Heading, TitleRank.Screen);
 
         var legend = new TextBlock
         {

@@ -105,7 +105,6 @@ public sealed class RouteCommunityGoalPage : UserControl
 
         var body = new StackPanel { Spacing = 12 };
 
-        body.Children.Add(RoutingKit.Title("Community Goal").Row);
         body.Children.Add(_off);
         body.Children.Add(_form);
         body.Children.Add(_results);

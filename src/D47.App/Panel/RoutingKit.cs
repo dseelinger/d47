@@ -18,14 +18,14 @@ internal static class RoutingKit
     public const double ProseWidth = 520;
 
     /// <summary>
-    /// The page's Screen title as a title block, at Heading size while the panel is mini. The text
-    /// can be changed through the returned block; a <paramref name="sentence"/> keeps its own case.
+    /// A drilled page's own title as a title block, at Heading size. The text can be changed through the
+    /// returned block; a <paramref name="sentence"/> keeps its own case.
     /// </summary>
     public static (Control Row, SelectableTextBlock Text) Title(string text, bool sentence = false)
     {
         var block = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
-            TypeScale.Title,
+            TypeScale.Heading,
             TitleRank.Screen,
             sentence);
 
@@ -43,11 +43,7 @@ internal static class RoutingKit
                 ?.GetObservable(PanelView.ModeProperty)
                 .Subscribe(new AnonymousObserver<PanelMode>(panel =>
                 {
-                    var mini = panel == PanelMode.Mini;
-
-                    block.FontSize = mini ? TypeScale.Heading : TypeScale.Title;
-                    block.LetterSpacing = TitleText.Tracking(block.FontSize, TitleRank.Screen, sentence);
-                    row.Margin = new Thickness(0, 0, 0, mini ? 4 : 10);
+                    row.Margin = new Thickness(0, 0, 0, panel == PanelMode.Mini ? 4 : 10);
                 }));
 
         row.DetachedFromVisualTree += (_, _) =>

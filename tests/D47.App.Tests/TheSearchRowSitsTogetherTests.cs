@@ -105,16 +105,16 @@ public class TheSearchRowSitsTogetherTests
         Assert.True(next.Right <= field.Left, "the steppers are not left of the field");
     }
 
-    /// <summary>The Transcript's field is 340 wide at any width with room for it, and pushed to the bar's right-hand end (#430).</summary>
+    /// <summary>The Transcript's field is 340 wide at any width with room for it, and pushed to the title line's right-hand end (#430).</summary>
     [AvaloniaTheory]
-    [InlineData(924)]
+    [InlineData(1024)]
     [InlineData(1400)]
     [InlineData(2400)]
     public void TheTranscriptsFieldIsAFixedWidth(double width)
     {
         var panel = Searching(width);
 
-        var bar = panel.GetControl<DockPanel>("PageBar");
+        var bar = panel.GetControl<DockPanel>("TitleLine");
         var field = panel.GetControl<TextBox>("SearchInput");
         var right = field.TranslatePoint(new Point(field.Bounds.Width, 0), bar)!.Value.X;
 

@@ -20,7 +20,7 @@ public class RevealingOneSettingsSectionTests
             .OfType<StackPanel>()
             .Single(panel => panel.Name == SettingsView.PageHeadName)
             .GetVisualDescendants().OfType<TextBlock>()
-            .Single(text => text.FontSize == Theming.TypeScale.Title)
+            .Single(text => text.FontSize == Theming.TypeScale.Heading)
             .Text;
 
     /// <summary>A reveal opens the page holding the capability, from whichever page was open.</summary>

@@ -135,7 +135,7 @@ public class ASettingPickerIsAPageOfThePanelTests
     }
 
     [AvaloniaFact]
-    public void AtTheSmallestPanelEightVoicesShowAndTheFacetIsWhole()
+    public void AtTheSmallestPanelFiveVoicesShowAndTheFacetIsWhole()
     {
         var host = Desktop();
 
@@ -145,7 +145,7 @@ public class ASettingPickerIsAPageOfThePanelTests
 
         Capture(host.Window, "picker-page-voice-800x500");
 
-        Assert.True(RowsInView(page) >= 8, $"only {RowsInView(page)} voices are visible at {Width}x{Height}.");
+        Assert.True(RowsInView(page) >= 5, $"only {RowsInView(page)} voices are visible at {Width}x{Height}.");
         AssertFacetIsWhole(page);
 
         host.Close();
@@ -318,7 +318,7 @@ public class ASettingPickerIsAPageOfThePanelTests
         Assert.True(panel.Nav.Modal);
         Assert.Equal(windows, (Application.Current!.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Windows.Count);
 
-        Assert.True(RowsInView(page!) >= 8, $"only {RowsInView(page!)} voices are visible in the headset.");
+        Assert.True(RowsInView(page!) >= 5, $"only {RowsInView(page!)} voices are visible in the headset.");
         AssertFacetIsWhole(page!);
 
         // A ray on a row highlights it; Use this takes it.

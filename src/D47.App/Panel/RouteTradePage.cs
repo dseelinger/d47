@@ -61,7 +61,6 @@ public sealed class RouteTradePage : UserControl
     private void Build()
     {
         _cards.Children.Clear();
-        _cards.Children.Add(RoutingKit.Title("Trade route").Row);
 
         if (!_lookupsEnabled())
         {

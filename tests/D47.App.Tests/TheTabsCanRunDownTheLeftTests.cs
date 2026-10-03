@@ -9,7 +9,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Tabs setting's second value: the tabs in a rail down the left, the chrome above the page (#491).</summary>
+/// <summary>The Tabs setting's second value: the tabs in a rail down the left, the chrome on the title line (#491).</summary>
 public class TheTabsCanRunDownTheLeftTests
 {
     private static readonly string[] TabNames =
@@ -44,7 +44,7 @@ public class TheTabsCanRunDownTheLeftTests
     }
 
     [AvaloniaFact]
-    public void TheRailHoldsTheTabsAndTheChromeMovesAboveThePage()
+    public void TheRailHoldsTheTabsAndTheChromeMovesToTheTitleLine()
     {
         using var look = AppLook.Put();
         var (window, panel) = Open(left: true);
@@ -53,8 +53,8 @@ public class TheTabsCanRunDownTheLeftTests
         var chrome = panel.FindControl<Control>("ChromeRow")!;
 
         Assert.Equal(Dock.Left, DockPanel.GetDock(strip));
-        Assert.Same(panel.FindControl<Border>("ChromeSlot"), chrome.Parent);
-        Assert.True(panel.FindControl<Control>("CrumbBar")!.IsVisible);
+        Assert.Same(panel.FindControl<DockPanel>("TitleLine"), chrome.Parent);
+        Assert.False(panel.FindControl<Control>("CrumbBar")!.IsVisible);
 
         var tabs = TabNames.Select(name => panel.FindControl<RadioButton>(name)!).ToList();
         var width = tabs[0].Bounds.Width;
@@ -96,7 +96,8 @@ public class TheTabsCanRunDownTheLeftTests
         var strip = panel.FindControl<DockPanel>("TabStrip")!;
         var chrome = panel.FindControl<Control>("ChromeRow")!;
 
-        Assert.Equal(Dock.Top, DockPanel.GetDock(strip));
+        Assert.Same(panel.FindControl<StackPanel>("HeaderColumn"), strip.Parent);
+        Assert.Same(strip, ((StackPanel)strip.Parent!).Children[0]);
         Assert.Same(strip, chrome.Parent);
         Assert.Same(chrome, strip.Children[0]);
         Assert.False(panel.FindControl<Control>("CrumbBar")!.IsVisible);

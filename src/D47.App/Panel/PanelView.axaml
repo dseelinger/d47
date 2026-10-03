@@ -294,185 +294,274 @@
       window went to it. The model owns the content; how much of it a given surface shows is
       that surface's business.
     -->
-    <DockPanel x:Name="TabStrip" DockPanel.Dock="Top" Margin="0,16,0,0">
+    <!--
+      Every tab's header: the tab row and its 2px rule, then the title line - the tab's name, the page's
+      summary, and the page's controls and search at the right - with the avatar beside all three. With the
+      tabs down the left, TabStrip and TabStripRule move out to the frame and the avatar shrinks to the
+      title line's height.
+    -->
+    <Grid x:Name="PageHeader"
+          DockPanel.Dock="Top"
+          Margin="0,16,0,0"
+          ColumnDefinitions="*,Auto">
+      <StackPanel x:Name="HeaderColumn" VerticalAlignment="Bottom">
+        <DockPanel x:Name="TabStrip">
 
-      <!--
-        The panel's chrome, on the tab row. Right-to-left: avatar, badge, help, resize. Each child is
-        centred in the row, and a hidden one takes no width, so the row sits correctly with any of
-        them missing.
-      -->
-      <StackPanel x:Name="ChromeRow"
-                  DockPanel.Dock="Right"
-                  Orientation="Horizontal"
-                  VerticalAlignment="Bottom"
-                  Margin="{x:Static theming:Gaps.TileBefore}">
-        <Button x:Name="HelpButton"
-                IsVisible="False"
-                VerticalAlignment="Center"
-                Click="OnHelpClick" />
-        <!-- The headset's own way into resize mode (#190), shown only on its full panel with the motion controllers on. -->
-        <Button x:Name="ResizeButton"
-                IsVisible="False"
-                VerticalAlignment="Center"
-                Click="OnResizeClick" />
-        <Border x:Name="PreReleaseBadge"
-                IsVisible="False"
-                VerticalAlignment="Center"
-                Margin="0,0,6,0"
-                Padding="7,2"
-                Background="{DynamicResource D47.A}">
-          <TextBlock x:Name="PreReleaseBadgeText"
-                     Text="PRE-RELEASE"
-                     FontSize="{StaticResource D47.Type.Small}"
-                     FontWeight="Bold"
-                     Foreground="{DynamicResource D47.Knock}" />
-        </Border>
+          <!--
+            The panel's chrome, on the tab row. Right-to-left: badge, help, resize. Each child is
+            centred in the row, and a hidden one takes no width, so the row sits correctly with any of
+            them missing.
+          -->
+          <StackPanel x:Name="ChromeRow"
+                      DockPanel.Dock="Right"
+                      Orientation="Horizontal"
+                      VerticalAlignment="Bottom"
+                      Margin="{x:Static theming:Gaps.TileBefore}">
+            <Button x:Name="HelpButton"
+                    IsVisible="False"
+                    VerticalAlignment="Center"
+                    Click="OnHelpClick" />
+            <!-- The headset's own way into resize mode (#190), shown only on its full panel with the motion controllers on. -->
+            <Button x:Name="ResizeButton"
+                    IsVisible="False"
+                    VerticalAlignment="Center"
+                    Click="OnResizeClick" />
+            <Border x:Name="PreReleaseBadge"
+                    IsVisible="False"
+                    VerticalAlignment="Center"
+                    Margin="0,0,6,0"
+                    Padding="7,2"
+                    Background="{DynamicResource D47.A}">
+              <TextBlock x:Name="PreReleaseBadgeText"
+                         Text="PRE-RELEASE"
+                         FontSize="{StaticResource D47.Type.Small}"
+                         FontWeight="Bold"
+                         Foreground="{DynamicResource D47.Knock}" />
+            </Border>
+
+          </StackPanel>
+
+          <!--
+            No GroupName, deliberately. Avalonia groups named radio buttons across the whole
+            application rather than within a tree, and this view is instantiated twice - once by the
+            window, once by the headset overlay. A shared name put both strips in one group, so the
+            overlay's tabs unchecked the window's as they were built, and the window opened with no
+            tab highlighted until it was clicked. Nameless, they group by their parent panel, which
+            is one strip per surface - which is what a tab strip is.
+
+            Six tabs, and five in the headset: Settings stays hidden there for the reason recorded
+            below. Every tab but Transcript is hidden until a host furnishes it, which is what lets
+            the phases that fill them land one at a time without a dead tab in between - the same
+            rule Settings has followed since Phase 12, generalised.
+
+            A WrapPanel rather than a scrolling strip: a tab too many moves to a second row rather
+            than being clipped or reached through steppers (#355).
+          -->
+          <WrapPanel x:Name="Tabs"
+                     Orientation="Horizontal"
+                     LineSpacing="2"
+                     VerticalAlignment="Bottom">
+            <!--
+              One tab for three readings of one exchange. Conversation and Technical are the same
+              turns at two verbosities and the log is a file read off disk - which is why the busy
+              glyph rides the mode rather than the tab, and why the collapse is three modes rather
+              than a single toggle (list.md Phase 25).
+            -->
+            <RadioButton x:Name="TranscriptTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsChecked="True"
+                         Content="TRANSCRIPT"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <!--
+              Fleet rather than Loadout (#234). Its roots are unchanged - Ships, Suits and Gap - so
+              the root that holds owned vessels keeps the name it already had, and only the tab's own
+              label moved. What that name promises and does not yet deliver is #230.
+            -->
+            <RadioButton x:Name="LoadoutTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="FLEET"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <RadioButton x:Name="EngineersTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="ENGINEERS"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <RadioButton x:Name="ChecklistTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="CHECKLIST"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <!--
+              Where the Commander is going, in three readings of one journey (list.md Phase 37).
+              Beside the transcript from Phase 37 until 2026-09-02, on the grounds that a route is
+              read while flying and the tab a hand reaches for in flight should not be far along.
+              After Fleet, Engineers and Checklist on the Commander's instruction (#272).
+            -->
+            <RadioButton x:Name="RoutingTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="ROUTING"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <!--
+              Stories the Commander flies (list.md Phase 47). After the ledgers on the Commander's
+              instruction, 2026-08-22: a story turns out to be read between trips rather than during
+              one, which is where the ledgers are.
+            -->
+            <RadioButton x:Name="AdventuresTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="ADVENTURES"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <RadioButton x:Name="UtilitiesTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="UTILITIES"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <!--
+              Hidden until a host says otherwise, and only the desktop window ever does. The headset
+              renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
+              so much as a wall - so the tab is absent there rather than present and asking to be
+              remembered about (list.md Phase 12).
+            -->
+            <RadioButton x:Name="SettingsTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="SETTINGS"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+          </WrapPanel>
+
+        </DockPanel>
+
+        <!-- The rule under the tab strip, or down the rail's right edge: 2px A, with no glow. -->
+        <Border x:Name="TabStripRule"
+                Height="2"
+                Background="{DynamicResource D47.A}" />
+
+        <!-- The H1 is the tab's name at every depth; the summary is the page's own (IPageSummary). -->
+        <DockPanel x:Name="TitleLine"
+                   Height="44"
+                   Margin="0,12,0,2">
+          <!--
+            One search affordance for the surface, on the tab that is selected. The transcript pages
+            highlight and step through matches; Settings filters, so the count and the steppers are
+            hidden there. Hidden until a host enables it, which only the desktop window does.
+
+            Every child is docked right, declared right to left, so the field keeps the right-hand end
+            and the steppers do not move as the count changes.
+          -->
+          <DockPanel x:Name="SearchRow"
+                     DockPanel.Dock="Right"
+                     LastChildFill="False"
+                     IsVisible="False"
+                     VerticalAlignment="Center"
+                     Margin="16,0,0,0">
+            <TextBox x:Name="SearchInput"
+                     Classes="search"
+                     DockPanel.Dock="Right"
+                     Width="{x:Static panel:PanelView.TranscriptSearchWidth}"
+                     VerticalAlignment="Center"
+                     PlaceholderText="Search this page"
+                     TextChanged="OnSearchChanged"
+                     KeyDown="OnSearchKeyDown" />
+            <Button x:Name="SearchNext"
+                    DockPanel.Dock="Right"
+                    Margin="6,0,0,0"
+                    Content="&#x203A;"
+                    MinWidth="0"
+                    IsVisible="False"
+                    ToolTip.Tip="Next match (Enter)"
+                    Click="OnSearchNextClick" />
+            <Button x:Name="SearchPrevious"
+                    DockPanel.Dock="Right"
+                    Margin="6,0,0,0"
+                    Content="&#x2039;"
+                    MinWidth="0"
+                    IsVisible="False"
+                    ToolTip.Tip="Previous match (Shift+Enter)"
+                    Click="OnSearchPreviousClick" />
+            <TextBlock x:Name="SearchCount"
+                       DockPanel.Dock="Right"
+                       Margin="6,0,0,0"
+                       VerticalAlignment="Center"
+                       IsVisible="False"
+                       FontSize="{StaticResource D47.Type.Secondary}"
+                       Foreground="{DynamicResource D47.Grey2}" />
+            <!-- Shown only while there is a query. -->
+            <Button x:Name="SearchClear"
+                    DockPanel.Dock="Right"
+                    Margin="6,0,0,0"
+                    Content="CLEAR"
+                    IsVisible="False"
+                    ToolTip.Tip="Clear the search (Esc)"
+                    AutomationProperties.Name="Clear the search"
+                    Click="OnSearchClearClick" />
+            <!--
+              Cuts a scrubbed window around an incident and shows what would leave before anything
+              does. Only on the pages it can cut from, and only where a host has wired it.
+            -->
+            <Button x:Name="DonateButton"
+                    DockPanel.Dock="Right"
+                    Margin="6,0,0,0"
+                    IsVisible="False"
+                    Content="Help improve D47…"
+                    Click="OnDonateClick" />
+            <!-- Copies the whole page as it is shown, not the selection. -->
+            <Button x:Name="CopyButton"
+                    DockPanel.Dock="Right"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    Click="OnCopyClick" />
+            <!-- The page's own control beside the field (IPageChrome.BarTool). Shown on surfaces with no field too. -->
+            <ContentControl x:Name="PageTool"
+                            DockPanel.Dock="Right"
+                            Margin="0,0,12,0"
+                            VerticalAlignment="Center"
+                            IsVisible="False" />
+          </DockPanel>
+          <TextBlock x:Name="PageTitle"
+                     DockPanel.Dock="Left"
+                     VerticalAlignment="Center"
+                     FontFamily="{StaticResource D47.Font.Chrome}"
+                     FontSize="{StaticResource D47.Type.Title}"
+                     FontWeight="Medium"
+                     LetterSpacing="1.12"
+                     Foreground="{DynamicResource D47.White}" />
+          <TextBlock x:Name="PageSummary"
+                     Margin="16,3,0,0"
+                     VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis"
+                     FontFamily="{StaticResource D47.Font.Prose}"
+                     FontSize="{StaticResource D47.Type.Secondary}"
+                     Foreground="{DynamicResource D47.Grey}" />
+        </DockPanel>
 
         <!--
-          The turn state. Sized through Extent rather than Width, because this control sizes its
-          own ring and core inside the box it is given - setting only the outer box drew a
-          40-pixel ring in a 30-pixel space.
+          The turn state, 104px square from the top of the tab row to the rule under the title line. Sized
+          through Extent rather than Width, because this control sizes its own ring and core inside the box.
         -->
-        <panel:AvatarView x:Name="Avatar"
-                          Extent="30"
-                          VerticalAlignment="Center"
-                          Margin="8,0,0,0" />
       </StackPanel>
 
-      <!--
-        No GroupName, deliberately. Avalonia groups named radio buttons across the whole
-        application rather than within a tree, and this view is instantiated twice - once by the
-        window, once by the headset overlay. A shared name put both strips in one group, so the
-        overlay's tabs unchecked the window's as they were built, and the window opened with no
-        tab highlighted until it was clicked. Nameless, they group by their parent panel, which
-        is one strip per surface - which is what a tab strip is.
+      <panel:AvatarView x:Name="Avatar"
+                        Grid.Column="1"
+                        Extent="104"
+                        VerticalAlignment="Bottom"
+                        Margin="16,0,0,0" />
+    </Grid>
 
-        Six tabs, and five in the headset: Settings stays hidden there for the reason recorded
-        below. Every tab but Transcript is hidden until a host furnishes it, which is what lets
-        the phases that fill them land one at a time without a dead tab in between - the same
-        rule Settings has followed since Phase 12, generalised.
-
-        A WrapPanel rather than a scrolling strip: a tab too many moves to a second row rather
-        than being clipped or reached through steppers (#355).
-      -->
-      <WrapPanel x:Name="Tabs"
-                 Orientation="Horizontal"
-                 LineSpacing="2"
-                 VerticalAlignment="Bottom">
-        <!--
-          One tab for three readings of one exchange. Conversation and Technical are the same
-          turns at two verbosities and the log is a file read off disk - which is why the busy
-          glyph rides the mode rather than the tab, and why the collapse is three modes rather
-          than a single toggle (list.md Phase 25).
-        -->
-        <RadioButton x:Name="TranscriptTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsChecked="True"
-                     Content="TRANSCRIPT"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <!--
-          Fleet rather than Loadout (#234). Its roots are unchanged - Ships, Suits and Gap - so
-          the root that holds owned vessels keeps the name it already had, and only the tab's own
-          label moved. What that name promises and does not yet deliver is #230.
-        -->
-        <RadioButton x:Name="LoadoutTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="FLEET"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <RadioButton x:Name="EngineersTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="ENGINEERS"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <RadioButton x:Name="ChecklistTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="CHECKLIST"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <!--
-          Where the Commander is going, in three readings of one journey (list.md Phase 37).
-          Beside the transcript from Phase 37 until 2026-09-02, on the grounds that a route is
-          read while flying and the tab a hand reaches for in flight should not be far along.
-          After Fleet, Engineers and Checklist on the Commander's instruction (#272).
-        -->
-        <RadioButton x:Name="RoutingTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="ROUTING"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <!--
-          Stories the Commander flies (list.md Phase 47). After the ledgers on the Commander's
-          instruction, 2026-08-22: a story turns out to be read between trips rather than during
-          one, which is where the ledgers are.
-        -->
-        <RadioButton x:Name="AdventuresTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="ADVENTURES"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <RadioButton x:Name="UtilitiesTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="UTILITIES"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-        <!--
-          Hidden until a host says otherwise, and only the desktop window ever does. The headset
-          renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
-          so much as a wall - so the tab is absent there rather than present and asking to be
-          remembered about (list.md Phase 12).
-        -->
-        <RadioButton x:Name="SettingsTab"
-                     Theme="{StaticResource D47.Tab}"
-                     IsVisible="False"
-                     Content="SETTINGS"
-                     Tapped="OnTabTapped"
-                     IsCheckedChanged="OnTabChecked" />
-      </WrapPanel>
-
-    </DockPanel>
-
-    <!-- The rule under the tab strip, or down the rail's right edge: 2px A, with no glow. -->
-    <Border x:Name="TabStripRule"
+    <!-- The 1px rule under the title line, the full width of the content. -->
+    <Border x:Name="TitleRule"
             DockPanel.Dock="Top"
-            Height="2"
+            Height="1"
             Background="{DynamicResource D47.A}" />
-
-    <!--
-      Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find
-      your way back").
-
-      Both the back affordance and the you-are-here, because a headset has no title bar to
-      orient by and losing your place is expensive when you cannot glance at a second monitor.
-      The first crumb is the tab itself - the tab is the root rather than the first level - so
-      this row says nothing at a root and is not drawn there, which is also what keeps it from
-      reading as a second strip beside the mode control it replaces.
-
-      Filled in code from the navigator's trail, because a trail can materialise mid-drill: a
-      spoken "open the third weapon slot on the Corsair" lands three levels down and the row has
-      to be right the first time it is drawn.
-    -->
-    <!--
-      With the tabs down the left, ChromeRow moves into ChromeSlot, and this row is drawn on every
-      page. ChromeRow keeps its width; the crumbs are cut off at the slot's edge instead.
-    -->
-    <DockPanel x:Name="CrumbBar"
-               DockPanel.Dock="Top"
-               IsVisible="False"
-               Margin="0,10,0,0">
-      <Border x:Name="ChromeSlot" DockPanel.Dock="Right" VerticalAlignment="Center" />
-      <StackPanel x:Name="CrumbRow"
-                  Orientation="Horizontal"
-                  ClipToBounds="True"
-                  Spacing="0" />
-    </DockPanel>
 
     <!--
       One slot, every page. The transcript and each furnished tab occupy the same place under
@@ -487,92 +576,11 @@
             Background="{DynamicResource D47.Bg}">
       <DockPanel>
 
-      <!--
-        The page's own bar: the readings on the left, the search field pushed right. SearchRow is docked
-        right beside the readings when both fit and below them when not; SizeSearchRow decides.
-      -->
+      <!-- The page's own bar: the readings under the title rule. -->
       <DockPanel x:Name="PageBar"
                  DockPanel.Dock="Top"
                  IsVisible="False"
                  Margin="14,12,14,0">
-        <!--
-          One search affordance for the surface, on the tab that is selected. The transcript pages
-          highlight and step through matches; Settings filters, so the count and the steppers are
-          hidden there. Hidden until a host enables it, which only the desktop window does.
-
-          Every child is docked right, declared right to left, so the field keeps the right-hand end
-          and the steppers do not move as the count changes.
-        -->
-        <DockPanel x:Name="SearchRow"
-                   DockPanel.Dock="Right"
-                   LastChildFill="False"
-                   IsVisible="False"
-                   VerticalAlignment="Center"
-                   Margin="16,0,0,0">
-          <TextBox x:Name="SearchInput"
-                   Classes="search"
-                   DockPanel.Dock="Right"
-                   Width="{x:Static panel:PanelView.TranscriptSearchWidth}"
-                   VerticalAlignment="Center"
-                   PlaceholderText="Search this page"
-                   TextChanged="OnSearchChanged"
-                   KeyDown="OnSearchKeyDown" />
-          <Button x:Name="SearchNext"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="&#x203A;"
-                  MinWidth="0"
-                  IsVisible="False"
-                  ToolTip.Tip="Next match (Enter)"
-                  Click="OnSearchNextClick" />
-          <Button x:Name="SearchPrevious"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="&#x2039;"
-                  MinWidth="0"
-                  IsVisible="False"
-                  ToolTip.Tip="Previous match (Shift+Enter)"
-                  Click="OnSearchPreviousClick" />
-          <TextBlock x:Name="SearchCount"
-                     DockPanel.Dock="Right"
-                     Margin="6,0,0,0"
-                     VerticalAlignment="Center"
-                     IsVisible="False"
-                     FontSize="{StaticResource D47.Type.Secondary}"
-                     Foreground="{DynamicResource D47.Grey2}" />
-          <!-- Shown only while there is a query. -->
-          <Button x:Name="SearchClear"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  Content="CLEAR"
-                  IsVisible="False"
-                  ToolTip.Tip="Clear the search (Esc)"
-                  AutomationProperties.Name="Clear the search"
-                  Click="OnSearchClearClick" />
-          <!--
-            Cuts a scrubbed window around an incident and shows what would leave before anything
-            does. Only on the pages it can cut from, and only where a host has wired it.
-          -->
-          <Button x:Name="DonateButton"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  IsVisible="False"
-                  Content="Help improve D47…"
-                  Click="OnDonateClick" />
-          <!-- Copies the whole page as it is shown, not the selection. -->
-          <Button x:Name="CopyButton"
-                  DockPanel.Dock="Right"
-                  Margin="6,0,0,0"
-                  VerticalAlignment="Center"
-                  Click="OnCopyClick" />
-          <!-- The page's own control beside the field (IPageChrome.BarTool). Shown on surfaces with no field too. -->
-          <ContentControl x:Name="PageTool"
-                          DockPanel.Dock="Right"
-                          Margin="0,0,12,0"
-                          VerticalAlignment="Center"
-                          IsVisible="False" />
-        </DockPanel>
-
         <DockPanel x:Name="ModePicker"
                    VerticalAlignment="Center"
                    IsVisible="False">
@@ -603,13 +611,29 @@
         </DockPanel>
       </DockPanel>
 
-      <!-- The 1px rule under the transcript's bar, 16px below it. -->
-      <Border x:Name="PageBarRule"
-              DockPanel.Dock="Top"
-              IsVisible="False"
-              Height="1"
-              Margin="0,16,0,0"
-              Background="{DynamicResource D47.Line2}" />
+      <!--
+        Where the Commander is, once they are below a root (list.md Phase 25, "Drill in, and find
+        your way back").
+
+        Both the back affordance and the you-are-here, because a headset has no title bar to
+        orient by and losing your place is expensive when you cannot glance at a second monitor.
+        The first crumb is the tab itself - the tab is the root rather than the first level - so
+        this row says nothing at a root and is not drawn there, which is also what keeps it from
+        reading as a second strip beside the mode control it replaces.
+
+        Filled in code from the navigator's trail, because a trail can materialise mid-drill: a
+        spoken "open the third weapon slot on the Corsair" lands three levels down and the row has
+        to be right the first time it is drawn.
+      -->
+      <DockPanel x:Name="CrumbBar"
+                 DockPanel.Dock="Top"
+                 IsVisible="False"
+                 Margin="0,10,0,0">
+        <StackPanel x:Name="CrumbRow"
+                    Orientation="Horizontal"
+                    ClipToBounds="True"
+                    Spacing="0" />
+      </DockPanel>
 
       <!--
         The Log file page's own settings — log levels — pinned to the bottom of the page rather than

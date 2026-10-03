@@ -249,6 +249,22 @@ public abstract class EngineerPageBase : UserControl
 
     protected abstract void Refresh();
 
+    /// <summary>The page's line for the title line; a root page declares <see cref="IPageSummary"/>.</summary>
+    public string Summary { get; private set; } = string.Empty;
+
+    public event EventHandler? SummaryChanged;
+
+    protected void Summarise(string summary)
+    {
+        if (summary == Summary)
+        {
+            return;
+        }
+
+        Summary = summary;
+        SummaryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>
     /// Attach to detach, for the reason <see cref="LoadoutPage"/> spells out (remediation.md 13, item
     /// 1).
@@ -290,10 +306,9 @@ public abstract class EngineerPageBase : UserControl
 }
 
 /// <summary>The directory (Phase 28, "Who can roll this").</summary>
-public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
+public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, IPageSummary
 {
     private readonly PanelNavigator _nav;
-    private readonly TextBlock _summary = LoadoutPages.Toned(string.Empty, ThemeManager.AKey, TypeScale.Body);
 
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly EngineerDirectoryMemory? _memory;
@@ -308,7 +323,6 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     {
         _nav = nav;
         _memory = memory;
-        _summary.Margin = new Thickness(0, 0, 0, 10);
 
         _colonia = LabeledCheckBox.Caps("Hide the Colonia eight");
         _onFoot = LabeledCheckBox.Caps("Hide on-foot engineers");
@@ -341,11 +355,9 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
-        DockPanel.SetDock(_summary, Dock.Top);
         DockPanel.SetDock(checks, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
-        root.Children.Add(_summary);
         root.Children.Add(checks);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
@@ -371,7 +383,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage
     {
         var report = Source.Read();
 
-        _summary.Text = report.Summary();
+        Summarise(report.Summary());
         _list.Children.Clear();
 
         var shown = report.Directory.Where(Matches).Where(NotHidden).ToList();
@@ -609,7 +621,7 @@ public sealed class EngineerPage : EngineerPageBase
     {
         var block = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
-            Mini ? TypeScale.Heading : TypeScale.Title,
+            TypeScale.Heading,
             TitleRank.Screen);
 
         TitleText.Show(block, name);
@@ -716,7 +728,7 @@ public sealed class EngineerPage : EngineerPageBase
 }
 
 /// <summary>The solver (Phase 28, "The fastest way in").</summary>
-public sealed class EngineerRoutePage : EngineerPageBase
+public sealed class EngineerRoutePage : EngineerPageBase, IPageSummary
 {
     private const int Shown = 5;
 
@@ -749,7 +761,7 @@ public sealed class EngineerRoutePage : EngineerPageBase
 
         var report = Source.Read();
 
-        _body.Children.Add(LoadoutPages.Toned(report.Summary(), ThemeManager.AKey, TypeScale.Body));
+        Summarise(report.Summary());
 
         // What the ranking was measured from, said out loud.
         _body.Children.Add(LoadoutPages.Muted(Measured(report)));

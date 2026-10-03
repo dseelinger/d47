@@ -1588,7 +1588,7 @@ public sealed class ItemPage : LoadoutPage
     /// <summary>What the page is about: the screen title.</summary>
     private readonly TextBlock _title = TitleText.Style(
         new TextBlock { TextWrapping = TextWrapping.Wrap },
-        TypeScale.Title,
+        TypeScale.Heading,
         TitleRank.Screen);
 
     private readonly Control _heading;
@@ -1729,10 +1729,6 @@ public sealed class ItemPage : LoadoutPage
         }
 
         TitleText.Show(_title, title ?? string.Empty);
-
-        // Smaller on mini, leaving room for the slot rows.
-        _title.FontSize = Mini ? TypeScale.Heading : TypeScale.Title;
-        _title.LetterSpacing = TitleText.Tracking(_title.FontSize, TitleRank.Screen);
         _heading.IsVisible = title is { Length: > 0 };
 
         Said(summary);

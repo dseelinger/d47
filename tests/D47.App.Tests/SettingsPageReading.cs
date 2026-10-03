@@ -15,9 +15,9 @@ internal static class SettingsPageReading
     public static StackPanel? Head(SettingsView view) =>
         Page(view).Children.OfType<StackPanel>().SingleOrDefault(panel => panel.Name == SettingsView.PageHeadName);
 
-    /// <summary>The open place's title, at Title size.</summary>
+    /// <summary>The open place's title, at Heading size.</summary>
     public static TextBlock Title(SettingsView view) =>
-        Head(view)!.GetVisualDescendants().OfType<TextBlock>().Single(text => text.FontSize == TypeScale.Title);
+        Head(view)!.GetVisualDescendants().OfType<TextBlock>().Single(text => text.FontSize == TypeScale.Heading);
 
     /// <summary>The breadcrumb above the title.</summary>
     public static TextBlock Crumb(SettingsView view) =>

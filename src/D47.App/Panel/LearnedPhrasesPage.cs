@@ -52,7 +52,6 @@ public sealed class LearnedPhrasesPage : UserControl
     private void Build()
     {
         _body.Children.Clear();
-        _body.Children.Add(RoutingKit.Title("Learned phrases").Row);
 
         var fid = _commander()?.Identity.FrontierId;
 

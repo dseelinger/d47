@@ -70,7 +70,6 @@ public sealed class BookmarksPage : UserControl
     private void Build()
     {
         _body.Children.Clear();
-        _body.Children.Add(RoutingKit.Title("Bookmarks").Row);
 
         var fid = _commander()?.Identity.FrontierId;
 

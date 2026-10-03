@@ -55,7 +55,6 @@ public sealed class RouteCoursePage : UserControl
             Spacing = 10,
             Children =
             {
-                RoutingKit.Title("Course").Row,
                 new StackPanel
                 {
                     Spacing = 3,

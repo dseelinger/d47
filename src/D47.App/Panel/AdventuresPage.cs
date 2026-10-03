@@ -15,8 +15,16 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>The Adventures tab (Phase 47).</summary>
-public sealed class AdventuresPage : UserControl
+public sealed class AdventuresPage : UserControl, IPageSummary
 {
+    public string Summary => "Stories you fly, told by the ship's AI. Progress comes from your own journal.";
+
+    event EventHandler? IPageSummary.SummaryChanged
+    {
+        add { }
+        remove { }
+    }
+
     public const string RootKey = "adventures";
 
     public const string ReadPrefix = "adventure.read.";
@@ -75,22 +83,14 @@ public sealed class AdventuresPage : UserControl
         {
             Spacing = 8,
             Margin = new Thickness(0, 0, 0, 10),
-            Children =
-            {
-                Muted("Stories you fly, told by the ship's AI. Progress comes from your own journal."),
-                Buttons(_ask, write, _stories, _messages),
-            },
+            Children = { Buttons(_ask, write, _stories, _messages) },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var (title, _) = RoutingKit.Title("Adventures");
-
-        DockPanel.SetDock(title, Dock.Top);
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
-        root.Children.Add(title);
         root.Children.Add(bar);
         root.Children.Add(_problems);
 

@@ -106,8 +106,11 @@ public class TheTabStripFitsAnyWidthTests
 
         Assert.All(chrome.Children, child => Assert.Equal(VerticalAlignment.Center, child.VerticalAlignment));
 
-        // And the avatar is last in it, which puts it rightmost — the Commander asked for that by name.
-        Assert.IsType<D47.App.Panel.AvatarView>(chrome.Children[^1]);
+        // And the avatar is the header's rightmost column, beside the tab row rather than in it.
+        var avatar = panel.GetControl<D47.App.Panel.AvatarView>("Avatar");
+
+        Assert.Same(panel.GetControl<Grid>("PageHeader"), avatar.Parent);
+        Assert.Equal(1, Grid.GetColumn(avatar));
     }
 
     /// <summary>Copy All is the transcript's and the desktop's.</summary>

@@ -69,7 +69,6 @@ public sealed class RoutePlanPage : UserControl
     private void Build()
     {
         _cards.Children.Clear();
-        _cards.Children.Add(RoutingKit.Title("Plan").Row);
 
         if (!_lookupsEnabled())
         {

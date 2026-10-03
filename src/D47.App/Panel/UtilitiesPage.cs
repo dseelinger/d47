@@ -64,19 +64,14 @@ public sealed class UtilitiesPage : UserControl
             Children = { timer, alarm },
         };
 
-        var (title, _) = RoutingKit.Title("Utilities");
-        _title = title;
-
         var root = new DockPanel { Margin = new Thickness(14) };
 
-        DockPanel.SetDock(title, Dock.Top);
         DockPanel.SetDock(clocks, Dock.Top);
         DockPanel.SetDock(actions, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
 
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
-        root.Children.Add(title);
         root.Children.Add(clocks);
         root.Children.Add(actions);
         root.Children.Add(_problems);
@@ -92,30 +87,6 @@ public sealed class UtilitiesPage : UserControl
         alarms.Changed += () => Dispatcher.UIThread.Post(() => Refresh());
 
         Refresh();
-    }
-
-    /// <summary>The screen title, left out on mini so the running list keeps the height.</summary>
-    private readonly Control _title;
-
-    private IDisposable? _mode;
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-
-        _mode = this.GetSelfAndVisualAncestors()
-            .OfType<PanelView>()
-            .FirstOrDefault()
-            ?.GetObservable(PanelView.ModeProperty)
-            .Subscribe(new AnonymousObserver<PanelMode>(mode => _title.IsVisible = mode != PanelMode.Mini));
-    }
-
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnDetachedFromVisualTree(e);
-
-        _mode?.Dispose();
-        _mode = null;
     }
 
     /// <summary>Redraws the clocks and the running list.</summary>
