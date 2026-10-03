@@ -855,6 +855,7 @@ public static class CalloutCapability
             Kind = SettingKind.Text,
             DefaultDisplay = "(none)",
             DocsAnchor = "home-system",
+            Scope = SettingScope.Commander,
             AppliesWhen = s => s.Callouts is { Enabled: true, Arrival: true },
             Binding = new SettingBinding
             {

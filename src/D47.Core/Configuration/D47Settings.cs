@@ -110,6 +110,9 @@ public sealed record CommanderSettings
     /// something for the Commander whose fleet it counts.
     /// </summary>
     public int? ShipCoreShip { get; init; }
+
+    /// <summary>This Commander's <see cref="CalloutSettings.HomeSystem"/>.</summary>
+    public string? HomeSystem { get; init; }
 }
 
 /// <summary>The Commander's log (Phase 33).</summary>

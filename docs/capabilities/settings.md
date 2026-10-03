@@ -196,7 +196,8 @@ Most settings are the installation's — keys, devices, theme, zoom, hotkeys —
 whoever logs in. A few are about the *person in the chair*, and those are marked **per
 Commander** on the row: the [Character sheet](conversation.md#character-sheet),
 [Backstory](conversation.md#backstory), the [Current scenario](conversation.md#current-scenario)
-and [who knows about it](conversation.md#who-knows-about-it), and which ship the
+and [who knows about it](conversation.md#who-knows-about-it), your
+[Home system](callouts.md#home-system), and which ship the
 [core-binding rows](persona.md#core-for-this-ship) are pointed at. Each Commander sees their own
 value there, and a second Commander on the same machine never sees the first one's story.
 

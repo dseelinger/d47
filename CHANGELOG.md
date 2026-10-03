@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Home system is now set per Commander, like the Character sheet. Each Commander has their own, and the arrival callout and the answer to what d47 is watching for use the home of the Commander who is flying. A home system you had already set stays as the starting value every Commander reads until they set their own.
+
 COVAS now reports flatly. While it is aboard, Core humor is ignored, no line it speaks carries delivery notes such as `[sighs]`, and every announcement, such as a promotion or a notable kill, is said exactly as written without being reworded by the model. Its intro and return lines are said as written too. Questions you ask still go to the model, which is told COVAS is equipment and expresses no emotion. The Guardian cores are unchanged.
 
 A story can now open with fixed lines, spoken when you pick it and before anything else of the story. Each line is said in its speaker's voice and posted to Messages under the story's title, then the narrated beacon scan follows where the story has one, and chapter one's first line comes after both. The lines can name you as Commander and follow the gender set for your Commander, or say "they" when none is set. They are spoken once per pick: resuming a paused story does not repeat them, and picking the story again does. Stories published without an opening start as before.

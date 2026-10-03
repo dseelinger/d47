@@ -30,6 +30,10 @@ public static class CommanderScope
             {
                 ShipCoreShip = overlay.ShipCoreShip ?? stored.Persona.ShipCoreShip,
             },
+            Callouts = stored.Callouts with
+            {
+                HomeSystem = Read(overlay.HomeSystem, stored.Callouts.HomeSystem),
+            },
         };
     }
 
@@ -61,6 +65,10 @@ public static class CommanderScope
             {
                 ShipCoreShip = stored.Persona.ShipCoreShip,
             },
+            Callouts = next.Callouts with
+            {
+                HomeSystem = stored.Callouts.HomeSystem,
+            },
         };
 
         var overlay = OverlayFor(stored, fid) ?? new CommanderSettings { CommanderFid = fid };
@@ -89,6 +97,11 @@ public static class CommanderScope
         if (next.Persona.ShipCoreShip != effective.Persona.ShipCoreShip)
         {
             updated = updated with { ShipCoreShip = next.Persona.ShipCoreShip };
+        }
+
+        if (!string.Equals(next.Callouts.HomeSystem, effective.Callouts.HomeSystem, StringComparison.Ordinal))
+        {
+            updated = updated with { HomeSystem = Written(next.Callouts.HomeSystem) };
         }
 
         if (updated == overlay)
@@ -130,6 +143,7 @@ public static class CommanderScope
             Without(stored, fid, overlay with { Scenario = null }),
             Without(stored, fid, overlay with { ScenarioAudience = null }),
             Without(stored, fid, overlay with { ShipCoreShip = null }),
+            Without(stored, fid, overlay with { HomeSystem = null }),
         ];
     }
 
@@ -146,7 +160,8 @@ public static class CommanderScope
                     && updated.CharacterSheet is null
                     && updated.Scenario is null
                     && updated.ScenarioAudience is null
-                    && updated.ShipCoreShip is null;
+                    && updated.ShipCoreShip is null
+                    && updated.HomeSystem is null;
 
         return stored with { Commanders = empty ? [.. others] : [.. others, updated] };
     }

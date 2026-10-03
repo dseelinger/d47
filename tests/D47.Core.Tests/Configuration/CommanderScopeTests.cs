@@ -35,6 +35,7 @@ public class CommanderScopeTests
                     Scenario = "a scenario",
                     ScenarioAudience = D47.Core.Conversation.ScenarioAudience.Public,
                     ShipCoreShip = 7,
+                    HomeSystem = "Shinrarta Dezhra",
                 },
             ],
         };
@@ -106,6 +107,41 @@ public class CommanderScopeTests
 
         reloaded.Settings.UseCommander("F1", "Alice");
         Assert.Equal("Alice's story", reloaded.Settings.Current.Llm.AboutMe);
+    }
+
+    [Fact]
+    public void EachCommanderKeepsTheirOwnHomeSystem()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+        surface.Settings.Apply(CalloutCapability.HomeSystemKey, "Sol", SettingsCaller.Panel);
+
+        surface.Settings.UseCommander("F1", "Alice");
+        surface.Settings.Apply(CalloutCapability.HomeSystemKey, "Shinrarta Dezhra", SettingsCaller.Panel);
+        Assert.Equal("Shinrarta Dezhra", surface.Settings.Current.Callouts.HomeSystem);
+
+        surface.Settings.UseCommander("F2", "Bob");
+        Assert.Equal("Sol", surface.Settings.Current.Callouts.HomeSystem);
+
+        surface.Settings.UseCommander("F1", "Alice");
+        Assert.Equal("Shinrarta Dezhra", surface.Settings.Current.Callouts.HomeSystem);
+    }
+
+    [Fact]
+    public void SwitchingCommanderAnnouncesTheHomeSystemToTheCalloutsRoute()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install);
+        surface.Settings.Apply(CalloutCapability.HomeSystemKey, "Sol", SettingsCaller.Panel);
+        surface.Settings.UseCommander("F1", "Alice");
+        surface.Settings.Apply(CalloutCapability.HomeSystemKey, "Shinrarta Dezhra", SettingsCaller.Panel);
+
+        var keys = new List<string>();
+        surface.Settings.Changed += change => keys.Add(change.Key);
+        surface.Settings.UseCommander("F2", "Bob");
+
+        Assert.Contains(CalloutCapability.HomeSystemKey, keys);
+        Assert.Equal(SettingsSubsystem.Callouts, SettingsFanout.For(CalloutCapability.HomeSystemKey).Subsystem);
     }
 
     /// <summary>For About Me, empty is meaningful.</summary>
