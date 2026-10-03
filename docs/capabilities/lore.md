@@ -75,7 +75,7 @@ nav_order: 117
  <text x="440" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The difference between a companion and a tour guide who forgot meeting you.</text>
  <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">A Commander whose home system is where most sessions start should not hear the same remark every day.</text>
 </svg>
-<p class="body">The clock survives a restart, so logging off somewhere and coming back an hour later is quiet. A carrier jump counts as arriving — you were asleep in the back, but you are still somewhere new. <em>How often a system's lore is worth repeating</em>, under Lore in Settings, holds the number of days; it defaults to seven and can be set to whatever fits your own play.</p>
+<p class="body">The clock survives a restart, so logging off somewhere and coming back an hour later is quiet. A carrier jump counts as arriving — you were asleep in the back, but you are still somewhere new. <em>How often a system's lore is worth repeating (days)</em>, under Lore in Settings, holds the number of days; it defaults to seven and can be set to whatever fits your own play.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Three states, not two switches.</h2>
@@ -156,7 +156,7 @@ wreck every Commander eventually visits.
 
 **Once per system per week**, and that rule is the whole difference between a companion and a tour
 guide who has forgotten meeting you. A Commander whose home system is where most sessions start
-would otherwise hear the same remark every day. **How often a system's lore is worth repeating**,
+would otherwise hear the same remark every day. **How often a system's lore is worth repeating (days)**,
 under **Settings → Lore**, holds the length of the quiet period in days; it defaults to seven.
 
 The clock survives a restart, so logging off in Shinrarta Dezhra and coming back an hour later is

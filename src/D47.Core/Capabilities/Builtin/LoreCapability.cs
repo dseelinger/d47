@@ -209,8 +209,8 @@ public static class LoreCapability
     {
         Key = CooldownDaysKey,
         Advanced = true,
-        Label = "How often a system's lore is worth repeating",
-        Help = "In days, how long a system stays quiet after being remarked on. Lower means a "
+        Label = "How often a system's lore is worth repeating (days)",
+        Help = "How long a system stays quiet after being remarked on. Lower means a "
                + "return visit is more likely to hear the same remark again; 0 remarks every time.",
         Kind = SettingKind.Number,
         DefaultDisplay = "7",
