@@ -281,6 +281,9 @@ public sealed record PersonaSettings
 
     /// <summary>Whether the pairings have been checked against the gender each core is written with.</summary>
     public bool VoicesGenderChecked { get; init; }
+
+    /// <summary>Whether automatic pairings of a voice that is never cast have been replaced.</summary>
+    public bool NotCastVoicesChecked { get; init; }
 }
 
 /// <summary>Acting on the game (Phase 10).</summary>

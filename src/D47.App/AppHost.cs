@@ -3501,15 +3501,8 @@ public sealed class AppHost : IDisposable
 
         var before = Settings.Current.Persona.Voices;
 
-        var repair = await VoicePairing.WithReplacementsAsync(
-            before,
-            VoicePairing.WithoutMiscastVoices(before, AboardVoices.Voices, _logger),
-            AboardVoices.Voices,
-            Turns.Provider,
-            Turns.BackgroundModel,
-            Spend,
-            PriceTable.Default,
-            _logger).ConfigureAwait(false);
+        var repair = await ReplaceVoicesAsync(
+            before, VoicePairing.WithoutMiscastVoices(before, AboardVoices.Voices, _logger)).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -3517,6 +3510,45 @@ public sealed class AppHost : IDisposable
             {
                 Voices = repair.Voices,
                 VoicesGenderChecked = repair.Complete,
+                PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
+            },
+        });
+
+        ApplySpeechSettings();
+    }
+
+    private Task<VoicePairing.VoiceRepair> ReplaceVoicesAsync(
+        IReadOnlyDictionary<string, string> before, IReadOnlyDictionary<string, string> after) =>
+        VoicePairing.WithReplacementsAsync(
+            before,
+            after,
+            AboardVoices.Voices,
+            Turns.Provider,
+            Turns.BackgroundModel,
+            Spend,
+            PriceTable.Default,
+            _logger);
+
+    /// <summary>Gives a new voice, once, to any core whose automatic pairing is a voice that is never cast.</summary>
+    private async Task RepairNotCastVoicesAsync()
+    {
+        if (Settings.Current.Persona.NotCastVoicesChecked)
+        {
+            return;
+        }
+
+        var before = Settings.Current.Persona.Voices;
+
+        var repair = await ReplaceVoicesAsync(
+            before, VoicePairing.WithoutNotCastPairings(before, Settings.Current.Persona.PairedVoices))
+            .ConfigureAwait(false);
+
+        Settings.Replace("persona.voices", current => current with
+        {
+            Persona = current.Persona with
+            {
+                Voices = repair.Voices,
+                NotCastVoicesChecked = repair.Complete,
                 PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
             },
         });
@@ -3566,6 +3598,7 @@ public sealed class AppHost : IDisposable
             {
                 ForgetVoicesNotListed();
                 await RepairMiscastVoicesAsync().ConfigureAwait(false);
+                await RepairNotCastVoicesAsync().ConfigureAwait(false);
             }
 
             return await PairUnvoicedAsync(forgetFirst, cancellationToken).ConfigureAwait(false);

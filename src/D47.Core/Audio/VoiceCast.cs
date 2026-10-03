@@ -1,3 +1,5 @@
+﻿using D47.Core.Speech;
+
 namespace D47.Core.Audio;
 
 /// <summary>Who is speaking.</summary>
@@ -109,7 +111,7 @@ public sealed class VoiceCast
         new(role == VoiceRole.Narrator ? NarratorVoice() : _roleVoices.GetValueOrDefault(role) ?? DefaultVoice, Rate);
 
     /// <summary>
-    /// The narrator's pinned voice, or the first pool voice that is not the ship's when none is pinned or the
+    /// The narrator's pinned voice, or the first castable pool voice that is not the ship's when none is pinned or the
     /// pinned one is the ship's.
     /// </summary>
     private string? NarratorVoice()
@@ -121,7 +123,8 @@ public sealed class VoiceCast
             return pinned;
         }
 
-        return Pool.FirstOrDefault(voice => !string.Equals(voice, DefaultVoice, StringComparison.OrdinalIgnoreCase))
+        return Pool.FirstOrDefault(voice =>
+                !string.Equals(voice, DefaultVoice, StringComparison.OrdinalIgnoreCase) && KokoroAssets.IsCastable(voice))
             ?? pinned
             ?? DefaultVoice;
     }

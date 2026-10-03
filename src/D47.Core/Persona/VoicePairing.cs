@@ -1,5 +1,6 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Conversation;
+using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Persona;
@@ -101,6 +102,8 @@ public static class VoicePairing
         CancellationToken cancellationToken = default)
     {
         var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        voices = [.. voices.Where(voice => KokoroAssets.IsCastable(voice.Id))];
 
         if (slots.Count == 0 || voices.Count == 0)
         {
@@ -217,6 +220,22 @@ public static class VoicePairing
         }
 
         return kept.Count == paired.Count ? paired : kept;
+    }
+
+    /// <summary>
+    /// The pairings, less any core whose voice is one that is never cast and equals its recorded
+    /// automatic pairing. A hand-picked voice has no matching record and is kept.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> WithoutNotCastPairings(
+        IReadOnlyDictionary<string, string> voices,
+        IReadOnlyDictionary<string, string> recorded)
+    {
+        var kept = voices
+            .Where(pair => KokoroAssets.IsCastable(pair.Value)
+                || !string.Equals(recorded.GetValueOrDefault(pair.Key), pair.Value, StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
+        return kept.Count == voices.Count ? voices : kept;
     }
 
     /// <summary>A voice for one core, chosen at the moment it is needed.</summary>

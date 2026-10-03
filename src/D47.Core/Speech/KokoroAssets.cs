@@ -24,6 +24,13 @@ public static class KokoroAssets
 
     public const string DictionaryRepository = "lookbe/open-phonemizer-onnx";
 
+    /// <summary>Voices never cast automatically to a core, the carrier captain, the tower or the Narrator.</summary>
+    public static readonly IReadOnlyList<string> NotCast = ["af_nicole"];
+
+    /// <summary>Whether a voice id may be cast automatically.</summary>
+    public static bool IsCastable(string? voiceId) =>
+        !NotCast.Contains(voiceId ?? "", StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The build a Commander is running the local voice on, and what choosing it costs (#139).</summary>
     /// <param name="Id">
     /// The name the repository publishes it under, minus <c>model_</c> — which is what the settings
