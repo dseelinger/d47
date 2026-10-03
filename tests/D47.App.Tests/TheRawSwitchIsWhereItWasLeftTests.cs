@@ -148,7 +148,7 @@ public sealed class TheRawSwitchIsWhereItWasLeftTests
         // A single root, the same shape as Fleet's Ships root in the report: no picker of its own to hide
         // behind.
         panel.Furnish(
-            PanelTab.Loadout,
+            PanelTab.Assets,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"));
 
@@ -158,7 +158,7 @@ public sealed class TheRawSwitchIsWhereItWasLeftTests
         Toggle(panel).IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(panel.GetControl<StackPanel>("RawToggleBox").IsVisible);

@@ -63,10 +63,10 @@ nav_order: 127
 <h2><span class="num">1</span> The tab is the top of the stack, not the first step into it.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="A tab sits above a stack of levels, and pressing the tab you are already on returns to its top">
  <rect x="20" y="30" width="840" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="46" y="59" text-anchor="start" font-size="16" font-weight="800" fill="var(--accent)">Loadout</text>
+ <text x="46" y="59" text-anchor="start" font-size="16" font-weight="800" fill="var(--accent)">Asset Mgmt</text>
  <text x="200" y="59" text-anchor="start" font-size="15" fill="var(--text-muted)">← press it again to come straight back here</text>
  <rect x="60" y="82" width="800" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="86" y="111" text-anchor="start" font-size="16" fill="var(--text)">Fleet</text>
+ <text x="86" y="111" text-anchor="start" font-size="16" fill="var(--text)">Ships</text>
  <rect x="100" y="134" width="760" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="126" y="163" text-anchor="start" font-size="16" fill="var(--text)">Corsair</text>
  <rect x="140" y="186" width="720" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -452,16 +452,16 @@ to have. See [Settings](settings.md).
 One bar along the top, and each tab is a surface of its own:
 
 ```text
-Transcript   Fleet   Engineers   Checklist   Routing   Adventures   Utilities   Settings
+Transcript   Stories   Checklist   Asset Mgmt   Engineers   Navigation   Settings
 ```
 
 **The two surfaces carry the same tabs, Settings aside** — the headset has no browser to open the
 site in and no window to show a settings surface inside, so that tab is the window's alone. Every
-other tab reached the headset in its own turn, for its own reason. Checklist and Loadout were both
+other tab reached the headset in its own turn, for its own reason. Checklist and Asset Mgmt were both
 withdrawn on the Commander's own instruction, and Checklist went back first — what a Commander is
-working on is worth reading in the one place there is no other way to read it (Phase 39). Routing
+working on is worth reading in the one place there is no other way to read it (Phase 39). Navigation
 followed it, every root of it: the plan forms were held back for wanting a keyboard, and their
-boxes reach the drawn one the same way the checklist's edit box does. Fleet was held back longest,
+boxes reach the drawn one the same way the checklist's edit box does. Asset Mgmt was held back longest,
 on the reasoning that a three-level drill ending in a search field is a bigger surface than a list
 of short rows — until it turned out that every row the drill leads to is a button or a switch a
 ray already presses. The one control that is not, Ctrl-drag of a slot onto another, has no
@@ -469,15 +469,15 @@ headset path and stays a mouse convenience.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
-**Each tab remembers which of its readings you were on.** Leaving Routing on *Course* and going to
+**Each tab remembers which of its readings you were on.** Leaving Navigation on *Course* and going to
 Engineers comes back to *Course*, and so does closing Directive 47 and opening it again — the
-transcript's reading, Routing's, and every other tab's. Settings comes back scrolled to the section
+transcript's reading, Navigation's, and every other tab's. Settings comes back scrolled to the section
 you left it at, without opening any card you had closed. What is deliberately **not** remembered is
 which tab was showing: the panel opens on the transcript, the way it always has.
 
 #### Drilling in, and finding your way back {#drilling}
 
-Every surface below the transcript is a stack — Fleet, then a ship, then a slot, then a
+Every surface below the transcript is a stack — Ships, then a ship, then a slot, then a
 blueprint. **The tab is the top of that stack, not the first step into it**, which is what makes
 one gesture worth knowing:
 

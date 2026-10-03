@@ -246,7 +246,7 @@ Two ways to run it, one code path:
 - **By voice** \u2014 *"community goal search"* or *"CG search"*. The phrase is matched whole and first
   by the keyword router and pointed at the galaxy tool with the arguments already filled in, so it
   costs no tool-surface bytes and never goes through a model to be reinterpreted.
-- **From the Routing tab** \u2014 the **Community Goal** page, beside Plan, Progress, Course and Market,
+- **From the Navigation tab** \u2014 the **Community Goal** page, beside Plan, Progress, Course and Market,
   has the commodity in a box and a **Run** button. The commodity is the one field that moves;
   the rest is written on the page as the fixed shape of the search.
 

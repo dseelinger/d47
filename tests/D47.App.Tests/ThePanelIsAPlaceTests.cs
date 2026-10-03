@@ -27,7 +27,7 @@ public class ThePanelIsAPlaceTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.Furnish(
-            PanelTab.Loadout,
+            PanelTab.Assets,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("locker", "Suits and weapons"));
@@ -43,7 +43,7 @@ public class ThePanelIsAPlaceTests
 
         Assert.True(panel.GetControl<RadioButton>("TranscriptTab").IsVisible);
 
-        foreach (var name in new[] { "ChecklistTab", "LoadoutTab", "EngineersTab", "SettingsTab" })
+        foreach (var name in new[] { "ChecklistTab", "AssetsTab", "EngineersTab", "SettingsTab" })
         {
             Assert.False(panel.GetControl<RadioButton>(name).IsVisible, name);
         }
@@ -63,7 +63,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(PanelModes.Offered(panel));
@@ -96,7 +96,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(panel.GetControl<DockPanel>("CrumbBar").IsVisible);
@@ -126,7 +126,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
         Dispatcher.UIThread.RunJobs();
 
@@ -145,11 +145,11 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
         Dispatcher.UIThread.RunJobs();
 
-        var tab = panel.GetControl<RadioButton>("LoadoutTab");
+        var tab = panel.GetControl<RadioButton>("AssetsTab");
 
         Assert.True(tab.IsChecked);
 
@@ -165,7 +165,7 @@ public class ThePanelIsAPlaceTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(panel.Nav.AtRoot);
-        Assert.Equal(PanelTab.Loadout, panel.Tab);
+        Assert.Equal(PanelTab.Assets, panel.Tab);
     }
 
     /// <summary>Clicking a mode moves the page, so the control and the property stay one thing.</summary>
@@ -174,12 +174,12 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         PanelModes.Choose(panel, "locker");
 
-        Assert.Equal("locker", panel.Nav.RootKeyOf(PanelTab.Loadout));
+        Assert.Equal("locker", panel.Nav.RootKeyOf(PanelTab.Assets));
     }
 
     /// <summary>Drilling in and reflowing are one mechanism: how many panes fit.</summary>
@@ -191,7 +191,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished(width);
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.GoTo(
             new NavCrumb("ship:12", "Corsair"),
             new NavCrumb("slot:3", "Weapon 3"),
@@ -213,7 +213,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.Drill(new NavCrumb("ship:12", "Corsair"));
         Dispatcher.UIThread.RunJobs();
 
@@ -249,7 +249,7 @@ public class ThePanelIsAPlaceTests
 
         // No navigating away mid-choice.
         Assert.False(panel.Nav.Select(PanelTab.Transcript));
-        Assert.Equal(PanelTab.Loadout, panel.Tab);
+        Assert.Equal(PanelTab.Assets, panel.Tab);
 
         var multi = panel.GetVisualDescendants().OfType<Button>()
             .First(button => button.GetVisualDescendants().OfType<TextBlock>()
@@ -271,7 +271,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         panel.Prompts.Choose(
@@ -299,7 +299,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(panel.GetControl<DockPanel>("PageBar").IsVisible);
@@ -339,7 +339,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         panel.Prompts.Choose(
@@ -371,7 +371,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.Drill(new NavCrumb("ship:12", "Corsair"));
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
@@ -389,7 +389,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.Drill(new NavCrumb("ship:12", "Corsair"));
         Dispatcher.UIThread.RunJobs();
 
@@ -409,7 +409,7 @@ public class ThePanelIsAPlaceTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         var answered = false;

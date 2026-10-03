@@ -68,7 +68,7 @@ public class TheStoriesPageFiltersItsListTests
         var window = new Window { Content = panel, Width = 1280, Height = 860 };
         window.Show();
 
-        panel.Tab = PanelTab.Adventures;
+        panel.Tab = PanelTab.Stories;
         panel.Nav.GoTo(new NavCrumb(StoriesView.RootKey, "Stories"));
         Dispatcher.UIThread.RunJobs();
 

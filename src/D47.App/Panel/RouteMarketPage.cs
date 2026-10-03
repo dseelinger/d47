@@ -12,7 +12,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Where to buy it, and what it costs there (Phase 49, "Asked by voice, and drawn on the Routing tab").
+/// Where to buy it, and what it costs there (Phase 49, "Asked by voice, and drawn on the Navigation tab").
 /// </summary>
 public sealed class RouteMarketPage : UserControl
 {

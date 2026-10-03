@@ -268,11 +268,11 @@ public partial class PanelView : UserControl
         Prompts.LayerChanged += ShowSearch;
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
-        _tabs[PanelTab.Loadout] = LoadoutTab;
-        _tabs[PanelTab.Engineers] = EngineersTab;
+        _tabs[PanelTab.Stories] = StoriesTab;
         _tabs[PanelTab.Checklist] = ChecklistTab;
-        _tabs[PanelTab.Routing] = RoutingTab;
-        _tabs[PanelTab.Adventures] = AdventuresTab;
+        _tabs[PanelTab.Assets] = AssetsTab;
+        _tabs[PanelTab.Engineers] = EngineersTab;
+        _tabs[PanelTab.Navigation] = NavigationTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
         Nav.Changed += (_, _) => ApplyNavigation();
@@ -731,7 +731,7 @@ public partial class PanelView : UserControl
         roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier"));
 
         Furnish(
-            PanelTab.Loadout,
+            PanelTab.Assets,
 
             // _engineers is read lazily, on whichever draw first opens Materials — EnableEngineers is always
             // called too, just not necessarily first (#477).
@@ -747,11 +747,11 @@ public partial class PanelView : UserControl
         AdventuresPage? page = null;
 
         Furnish(
-            PanelTab.Adventures,
+            PanelTab.Stories,
             crumb => crumb.Key == AdventuresPage.RootKey
                 ? page = new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke(), () => _copy)
                 : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
-            new NavCrumb(AdventuresPage.RootKey, "Adventures")
+            new NavCrumb(AdventuresPage.RootKey, "Stories")
             {
                 Help = D47.Core.Capabilities.Builtin.AdventureCapability.Id,
             });
@@ -830,11 +830,11 @@ public partial class PanelView : UserControl
     private Func<D47.Core.Journal.CommanderGameState?>? _engineerState;
 
     /// <summary>
-    /// Redraws the Loadout tab when the journal says the ship changed (remediation.md 17, item 7).
+    /// Redraws the Assets tab when the journal says the ship changed (remediation.md 17, item 7).
     /// </summary>
     public bool TickLoadout()
     {
-        if (_loadoutMode is not { } mode || Tab != PanelTab.Loadout)
+        if (_loadoutMode is not { } mode || Tab != PanelTab.Assets)
         {
             return false;
         }
@@ -899,7 +899,7 @@ public partial class PanelView : UserControl
     /// <summary>Redraws the Adventures pulse, from the host's tick.</summary>
     public bool TickAdventures()
     {
-        if (Tab != PanelTab.Adventures)
+        if (Tab != PanelTab.Stories)
         {
             return false;
         }
@@ -918,7 +918,7 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the Routing tab (Phase 37): where the Commander is going, in three readings
+    /// Gives this surface the Navigation tab (Phase 37): where the Commander is going, in three readings
     /// of one journey.
     /// </summary>
     public void EnableRouting(
@@ -1021,7 +1021,7 @@ public partial class PanelView : UserControl
         }
 
         Furnish(
-            PanelTab.Routing,
+            PanelTab.Navigation,
             crumb =>
             {
                 var page = RoutingPages.Build(crumb, surface, Nav, Prompts, settingsStrip);
@@ -1058,7 +1058,7 @@ public partial class PanelView : UserControl
     /// </summary>
     public bool TickRouting()
     {
-        if (Tab != PanelTab.Routing)
+        if (Tab != PanelTab.Navigation)
         {
             return false;
         }
@@ -1275,9 +1275,9 @@ public partial class PanelView : UserControl
     {
         _roots = memory;
 
-        foreach (var (tab, root) in memory.All)
+        foreach (var (tab, root) in memory.All.ToArray())
         {
-            if (Enum.TryParse<PanelTab>(tab, out var which))
+            if (PanelTabNames.Parse(tab) is { } which)
             {
                 Nav.SelectRoot(which, root);
             }
@@ -2245,12 +2245,12 @@ public partial class PanelView : UserControl
 
         var modal = ModalPane.Child is not null;
 
-        // Mini reading the Adventures tab (asked for 2026-08-22) or the Routing tab's Plan root (#197) — the
+        // Mini reading the Stories tab (asked for 2026-08-22) or the Navigation tab's Plan root (#197) — the
         // rest of Routing keeps drawing its full-size page even at mini's size.
         Control? miniControl = Tab switch
         {
-            PanelTab.Adventures => _adventureMini,
-            PanelTab.Routing when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _routeMini,
+            PanelTab.Stories => _adventureMini,
+            PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _routeMini,
             _ => null,
         };
 

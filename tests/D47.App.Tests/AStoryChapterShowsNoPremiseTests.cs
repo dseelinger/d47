@@ -89,7 +89,7 @@ public class AStoryChapterShowsNoPremiseTests
         var window = new Window { Content = panel, Width = 1280, Height = 860 };
         window.Show();
 
-        panel.Tab = PanelTab.Adventures;
+        panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, book);

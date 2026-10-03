@@ -161,7 +161,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel);

@@ -57,7 +57,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, checklists);

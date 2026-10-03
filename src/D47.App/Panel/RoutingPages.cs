@@ -8,7 +8,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>What the Routing tab is made of, and what each of its pages needs (Phase 37).</summary>
+/// <summary>What the Navigation tab is made of, and what each of its pages needs (Phase 37).</summary>
 /// <param name="Route">The route Elite wrote, for Progress.</param>
 /// <param name="Here">Where the Commander is, for Progress.</param>
 /// <param name="Registry">How every button on this tab acts.</param>
@@ -69,7 +69,7 @@ public sealed record CommunityGoalSurface(
     Func<DateTimeOffset> Now,
     Func<DateTimeOffset, LedgerWindow> Week);
 
-/// <summary>The Routing tab (Phase 37).</summary>
+/// <summary>The Navigation tab (Phase 37).</summary>
 public static class RoutingPages
 {
     /// <summary>Where a route comes from: the three planners.</summary>

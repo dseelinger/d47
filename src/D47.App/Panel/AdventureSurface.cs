@@ -4,7 +4,7 @@ using D47.Core.Messages;
 
 namespace D47.App.Panel;
 
-/// <summary>Everything the Adventures tab reads and the few things it may do (Phase 47).</summary>
+/// <summary>Everything the Stories tab reads and the few things it may do (Phase 47).</summary>
 public sealed record AdventureSurface(
     AdventureBook Book,
     AdventureGenerator Generator,

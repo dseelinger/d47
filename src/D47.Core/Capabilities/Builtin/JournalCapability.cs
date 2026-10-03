@@ -726,7 +726,7 @@ public static partial class JournalCapability
                         + (unpowered.Count > 0
                             ? $" {unpowered.Count} unpowered: {SpokenList.Names([.. unpowered.Select(Said)])}."
                             : "")
-                        + " The full loadout is on Fleet › Ships.";
+                        + " The full loadout is on Asset Mgmt › Ships.";
         }
 
         var content = report.ToString().TrimEnd();

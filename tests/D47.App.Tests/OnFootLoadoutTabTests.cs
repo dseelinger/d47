@@ -60,7 +60,7 @@ public class OnFootLoadoutTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, kit, checklists);
@@ -95,7 +95,7 @@ public class OnFootLoadoutTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, kit, checklists);
@@ -160,7 +160,7 @@ public class OnFootLoadoutTabTests
         // Carrier joined them in #230, on the tab that took its name. Gap became Materials in #302.
         Assert.Equal(
             ["Ships", "Suits", "Materials", "Carrier"],
-            surface.Panel.Nav.Roots(PanelTab.Loadout).Select(root => root.Word));
+            surface.Panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
 
         surface.Window.Close();
     }
@@ -888,6 +888,6 @@ public class OnFootLoadoutTabTests
  // know.
         Assert.Equal(
             ["Ships", "Carrier"],
-            panel.Nav.Roots(PanelTab.Loadout).Select(item => item.Word));
+            panel.Nav.Roots(PanelTab.Assets).Select(item => item.Word));
     }
 }

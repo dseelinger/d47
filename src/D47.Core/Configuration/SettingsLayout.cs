@@ -752,24 +752,24 @@ public static class SettingsLayout
     public static readonly IReadOnlyList<SettingsTabPlace> Tabs =
     [
         new SettingsTabPlace(
-            "fleet-ships", "loadout.ships", true, "Fleet › Ships", [E("ships.remembered"), E("ships.art")]),
+            "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art")]),
         new SettingsTabPlace(
             "routing-community-goal",
             "routing.communityGoal",
             true,
-            "Routing › Community Goal",
+            "Navigation › Community Goal",
             [
                 E("knowledge.inaraKey"),
                 E("callouts.weekBoundaryDay"),
                 E("callouts.weekBoundaryHourUtc", under: true),
             ]),
         new SettingsTabPlace(
-            "adventures", "adventures", true, "Adventures", [E("knowledge.notablePlaces"), E("adventures.storyDownloads")]),
+            "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads")]),
         new SettingsTabPlace(
             "fleet-carrier",
             "loadout.carrier",
             true,
-            "Fleet › Carrier",
+            "Asset Mgmt › Carrier",
             [
                 E("speech.carrierCaptainName"),
                 E("speech.carrierCaptainVoice"),

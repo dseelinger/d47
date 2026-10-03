@@ -208,7 +208,7 @@ Automatic plotting is switched off.
 That is the whole feature, and it is deliberately the primary one. Everything below is a
 convenience on top of it that can fail.
 
-The **Course** page of the window's **Routing** tab is this as a control rather than a sentence,
+The **Course** page of the window's **Navigation** tab is this as a control rather than a sentence,
 in the same order: the name goes on the clipboard, then the map is driven if you asked for that,
 then d47 says whether it took. Every system name drawn anywhere on that tab — a waypoint on the
 route you are flying, a stop on a trade plan — copies when you press it.

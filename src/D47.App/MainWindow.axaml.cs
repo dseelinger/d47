@@ -294,7 +294,7 @@ public partial class MainWindow : Window
             };
 
             host.CommunityGoalSearch.Showing = () =>
-                Panel.Nav.Tab == PanelTab.Routing
+                Panel.Nav.Tab == PanelTab.Navigation
                 && Panel.Nav.Root.Key == RoutingPages.CommunityGoalRoot
                 && !Panel.Nav.Modal
                 && _onScreen;
@@ -346,7 +346,7 @@ public partial class MainWindow : Window
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickEngineers()));
 
-            // And the "d47 is composing" animation on the Adventures tab, by the same route again (asked for
+            // And the "d47 is composing" animation on the Stories tab, by the same route again (asked for
             // 2026-08-22).
             host.Tick.Add("adventures", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickAdventures()));
@@ -680,7 +680,7 @@ public partial class MainWindow : Window
     /// <summary>The settings surface, built the first time the tab is selected.</summary>
     internal AdventureSurface? Adventures { get; }
 
-    /// <summary>What the Routing tab reads and drives, for the headset copy of the panel (#52).</summary>
+    /// <summary>What the Navigation tab reads and drives, for the headset copy of the panel (#52).</summary>
     internal RoutingSurface? Routing { get; }
 
     /// <summary>

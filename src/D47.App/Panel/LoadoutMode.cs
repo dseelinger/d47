@@ -271,7 +271,7 @@ public sealed record LoadoutParts(
 public sealed record LoadoutDraw(string Reading, bool Modelled);
 
 /// <summary>
-/// One mode of the Loadout tab — Ships, or Suits and weapons (Phase 27, "The same page, on foot").
+/// One mode of the Assets tab — Ships, or Suits and weapons (Phase 27, "The same page, on foot").
 /// </summary>
 public interface ILoadoutMode
 {

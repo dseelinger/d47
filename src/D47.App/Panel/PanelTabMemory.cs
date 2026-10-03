@@ -18,7 +18,7 @@ public sealed class PanelTabMemory(ViewStateStore store, bool vr = false)
             _loaded = true;
         }
 
-        return _tab is { } name && Enum.TryParse<PanelTab>(name, out var tab) ? tab : null;
+        return PanelTabNames.Parse(_tab);
     }
 
     /// <summary>Records the tab this surface is on.</summary>

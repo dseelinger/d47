@@ -65,9 +65,9 @@ public class TheRoutingTabTests
     {
         var panel = Laid(new PanelView { DataContext = new PanelViewModel() });
 
-        Assert.False(panel.GetControl<RadioButton>("RoutingTab").IsVisible);
+        Assert.False(panel.GetControl<RadioButton>("NavigationTab").IsVisible);
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
 
         // Not merely undrawn — unreachable.
         Assert.Equal(PanelTab.Transcript, panel.Tab);
@@ -78,11 +78,11 @@ public class TheRoutingTabTests
     {
         var panel = Furnished(Route(Hop("Sol"), Hop("Alpha Centauri", 4)));
 
-        Assert.True(panel.GetControl<RadioButton>("RoutingTab").IsVisible);
+        Assert.True(panel.GetControl<RadioButton>("NavigationTab").IsVisible);
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
 
-        Assert.Equal(PanelTab.Routing, panel.Tab);
+        Assert.Equal(PanelTab.Navigation, panel.Tab);
 
         // The root is the first crumb, and it is a word the Commander can say as well as press.
         Assert.Equal("Progress", panel.Nav.Root.Word);
@@ -95,7 +95,7 @@ public class TheRoutingTabTests
         var hops = Enumerable.Range(0, 40).Select(index => Hop($"Waypoint {index}", index)).ToArray();
         var panel = Furnished(Route(hops), "Waypoint 0");
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         var drawn = TextOf(panel).ToArray();
@@ -110,7 +110,7 @@ public class TheRoutingTabTests
     {
         var panel = Furnished(NavRoute.None);
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(TextOf(panel), text => text.Contains("No route plotted", StringComparison.Ordinal));
@@ -127,7 +127,7 @@ public class TheRoutingTabTests
             Route(Hop("Sol"), Hop("Jackson's Lighthouse", 4, "N"), Hop("Colonia", 9)),
             "Sol");
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(TextOf(panel), text => text.Contains("neutron", StringComparison.Ordinal));
@@ -139,7 +139,7 @@ public class TheRoutingTabTests
     {
         var panel = Furnished(Route(Hop("Sol"), Hop("Somewhere", 4, "ZZ")), "Sol");
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         var drawn = TextOf(panel).ToArray();
@@ -157,7 +157,7 @@ public class TheRoutingTabTests
     {
         var panel = Furnished(Route(Hop("Sol"), Hop("Alpha Centauri", 4)), "Shinrarta Dezhra");
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(
@@ -206,7 +206,7 @@ public class TheRoutingTabTests
     {
         var panel = FullyFurnished(route, plans, here: here);
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
@@ -227,12 +227,12 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder));
 
-            var words = panel.Nav.Roots(PanelTab.Routing).Select(root => root.Word).ToArray();
+            var words = panel.Nav.Roots(PanelTab.Navigation).Select(root => root.Word).ToArray();
 
             Assert.Equal(["Plan", "Progress", "Course"], words);
 
             // And exactly one tab was spent on them.
-            Assert.True(panel.GetControl<RadioButton>("RoutingTab").IsVisible);
+            Assert.True(panel.GetControl<RadioButton>("NavigationTab").IsVisible);
         }
         finally
         {
@@ -254,7 +254,7 @@ public class TheRoutingTabTests
             var opened = 0;
             var panel = FullyFurnished(NavRoute.None, Book(folder), lookups: false, () => opened++);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -278,7 +278,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder));
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -307,7 +307,7 @@ public class TheRoutingTabTests
             var panel = FullyFurnished(NavRoute.None, Book(folder));
 
             Assert.DoesNotContain(
-                panel.Nav.Roots(PanelTab.Routing),
+                panel.Nav.Roots(PanelTab.Navigation),
                 root => root.Key == RoutingPages.TradeRoot);
         }
         finally
@@ -325,13 +325,13 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.TradeRoot);
             Dispatcher.UIThread.RunJobs();
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Contains("TRADE ROUTE", panel.Nav.Roots(PanelTab.Routing).Select(r => r.Word.ToUpperInvariant()));
+            Assert.Contains("TRADE ROUTE", panel.Nav.Roots(PanelTab.Navigation).Select(r => r.Word.ToUpperInvariant()));
             Assert.Contains("TRADE RUN", drawn);
             Assert.Contains(drawn, text => text.Contains("never read from the journal", StringComparison.Ordinal));
         }
@@ -359,7 +359,7 @@ public class TheRoutingTabTests
             var (settings, _, paths) = TestSurface.Create();
             var panel = FullyFurnished(NavRoute.None, Book(folder), settings: settings);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.TradeRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -396,7 +396,7 @@ public class TheRoutingTabTests
             var (settings, _, paths) = TestSurface.Create();
             var panel = FullyFurnished(NavRoute.None, Book(folder), settings: settings);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.TradeRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -440,7 +440,7 @@ public class TheRoutingTabTests
 
             var panel = FullyFurnished(NavRoute.None, plans);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
@@ -477,7 +477,7 @@ public class TheRoutingTabTests
             var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
             var panel = FullyFurnished(NavRoute.None, plans, clipboard: clipboard);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
@@ -510,7 +510,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder));
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, "gone"));
             Dispatcher.UIThread.RunJobs();
@@ -717,7 +717,7 @@ public class TheRoutingTabTests
 
             var panel = FullyFurnished(NavRoute.None, plans, lookups: false);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Mode = PanelMode.Mini;
             Dispatcher.UIThread.RunJobs();
@@ -751,7 +751,7 @@ public class TheRoutingTabTests
                 plans));
 
             Laid(panel);
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Mode = PanelMode.Mini;
             Dispatcher.UIThread.RunJobs();
@@ -810,7 +810,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(Route(Hop("Sol"), Hop("Colonia", 4)), Book(folder));
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.CourseRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -882,7 +882,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder));
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -897,7 +897,7 @@ public class TheRoutingTabTests
             Dispatcher.UIThread.RunJobs();
 
             Assert.False(panel.Nav.Modal);
-            Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Routing));
+            Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
         }
         finally
         {
@@ -918,7 +918,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder));
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -943,7 +943,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.TradeRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -958,7 +958,7 @@ public class TheRoutingTabTests
             Dispatcher.UIThread.RunJobs();
 
             Assert.False(panel.Nav.Modal);
-            Assert.Equal(RoutingPages.TradeRoot, panel.Nav.RootKeyOf(PanelTab.Routing));
+            Assert.Equal(RoutingPages.TradeRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
         }
         finally
         {
@@ -976,7 +976,7 @@ public class TheRoutingTabTests
         {
             var panel = FullyFurnished(NavRoute.None, Book(folder), settings: TestSurface.Settings());
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.TradeRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -1013,7 +1013,7 @@ public class TheRoutingTabTests
                                        tip, @"^What .+ does$"))
                     .ToArray();
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             Dispatcher.UIThread.RunJobs();
 
@@ -1070,7 +1070,7 @@ public class TheRoutingTabTests
 
             var panel = FullyFurnished(NavRoute.None, plans);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
@@ -1104,7 +1104,7 @@ public class TheRoutingTabTests
 
             var panel = FullyFurnished(NavRoute.None, plans);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
@@ -1131,7 +1131,7 @@ public class TheRoutingTabTests
 
             var panel = FullyFurnished(NavRoute.None, plans);
 
-            panel.Tab = PanelTab.Routing;
+            panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
             Dispatcher.UIThread.RunJobs();
@@ -1214,7 +1214,7 @@ public class TheRoutingTabTests
         panel.EnableRouting(new RoutingSurface(() => NavRoute.None, () => "Sol", registry, plans, () => true));
 
         Laid(panel);
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Dispatcher.UIThread.RunJobs();
 

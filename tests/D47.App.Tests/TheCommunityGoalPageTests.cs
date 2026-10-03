@@ -111,7 +111,7 @@ public class TheCommunityGoalPageTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         window.Measure(new Avalonia.Size(width, 1000));
@@ -370,7 +370,7 @@ public class TheCommunityGoalPageTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
  // search.Showing stays at its default of false: the page was never opened, so Ledger.Changed
@@ -409,7 +409,7 @@ public class TheCommunityGoalPageTests
 
         var window = new Window { Content = panel, Width = 1000, Height = 1000 };
         window.Show();
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
         var box = panel.GetVisualDescendants().OfType<TextBox>().Single(b => b.PlaceholderText == "Palladium");
@@ -449,7 +449,7 @@ public class TheCommunityGoalPageTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.DoesNotContain(panel.Nav.Roots(PanelTab.Routing), root => root.Key == RoutingPages.CommunityGoalRoot);
+        Assert.DoesNotContain(panel.Nav.Roots(PanelTab.Navigation), root => root.Key == RoutingPages.CommunityGoalRoot);
     }
 
     [AvaloniaFact]

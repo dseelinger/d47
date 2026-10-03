@@ -42,7 +42,7 @@ public class AHullIsPickedRatherThanGuessedTests
         var window = new Window { Content = panel, Width = 1400, Height = 900 };
 
         window.Show();
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, ships);

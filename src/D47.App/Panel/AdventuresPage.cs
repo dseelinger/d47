@@ -14,7 +14,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Adventures tab (Phase 47).</summary>
+/// <summary>The Stories tab (Phase 47).</summary>
 public sealed class AdventuresPage : UserControl, IPageSummary
 {
     public string Summary => "Stories you fly, told by the ship's AI. Progress comes from your own journal.";

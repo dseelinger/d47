@@ -12,8 +12,8 @@ public class OneThingAtATimeTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Loadout, new NavCrumb("fleet", "Ships"));
-        nav.Select(PanelTab.Loadout);
+        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
+        nav.Select(PanelTab.Assets);
 
         return nav;
     }

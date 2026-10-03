@@ -86,7 +86,7 @@ nav_order: 204
 
 ## The details
 
-The page reached from **Loadout › a ship › a slot › Module** — the list of everything that fits,
+The page reached from **Asset Mgmt › a ship › a slot › Module** — the list of everything that fits,
 and where a build is decided one slot at a time.
 
 ### The line at the top of the page

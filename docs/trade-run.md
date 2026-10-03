@@ -79,7 +79,7 @@ nav_order: 203
 
 ## The details
 
-**Trade route**, its own page on the Routing tab, and the `plot_trade_route` tool behind it. The
+**Trade route**, its own page on the Navigation tab, and the `plot_trade_route` tool behind it. The
 card on it is still called Trade run, the same name the tool's answer and this page go by.
 
 ### What you fill in

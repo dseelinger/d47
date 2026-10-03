@@ -67,7 +67,7 @@ nav_order: 206
 
 ## The details
 
-The card called **Exobiology** on the Routing tab's Plan page, and the `plot_exobiology_route` tool
+The card called **Exobiology** on the Navigation tab's Plan page, and the `plot_exobiology_route` tool
 behind it.
 
 ### What you fill in

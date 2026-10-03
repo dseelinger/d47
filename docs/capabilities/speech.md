@@ -924,7 +924,7 @@ drift apart.
 
 #### Other voices {#carrier-voices}
 
-Directive 47 speaks as more than one person from Phase 11 onwards. These four rows live on Fleet ›
+Directive 47 speaks as more than one person from Phase 11 onwards. These four rows live on Asset Mgmt ›
 Carrier itself rather than in this settings window (#305), at the top of the page they affect.
 
 | Row | Who it is |

@@ -87,7 +87,7 @@ nav_order: 202
 
 ## The details
 
-The card called **Road to Riches** on the Routing tab's Plan page, and the
+The card called **Road to Riches** on the Navigation tab's Plan page, and the
 `plot_exploration_route` tool behind it.
 
 ### What you fill in

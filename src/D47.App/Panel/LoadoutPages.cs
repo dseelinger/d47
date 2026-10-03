@@ -24,12 +24,12 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Loadout tab's pages: an index, then an item, then a slot — drawn once and shown for every mode
+/// The Assets tab's pages: an index, then an item, then a slot — drawn once and shown for every mode
 /// (Phase 26, "Ships"; Phase 27, "The same page, on foot").
 /// </summary>
 public static class LoadoutPages
 {
-    /// <summary>The Loadout tab's Ships root.</summary>
+    /// <summary>The Assets tab's Ships root.</summary>
     public const string FleetRoot = "loadout.ships";
 
     /// <summary>How a ship's crumb is keyed, so a page can be rebuilt from the trail alone.</summary>

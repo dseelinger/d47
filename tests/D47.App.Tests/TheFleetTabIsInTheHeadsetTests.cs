@@ -104,12 +104,12 @@ public class TheFleetTabIsInTheHeadsetTests
     /// <summary>Selects a root and rasterises it, the way the runtime asks for a frame.</summary>
     private static void Draw(VrPanelSurface panel, VrPixels pixels, string root)
     {
-        panel.Nav.Select(PanelTab.Loadout);
-        panel.Nav.SelectRoot(PanelTab.Loadout, root);
+        panel.Nav.Select(PanelTab.Assets);
+        panel.Nav.SelectRoot(PanelTab.Assets, root);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Loadout, panel.Nav.Tab);
-        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Loadout));
+        Assert.Equal(PanelTab.Assets, panel.Nav.Tab);
+        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Assets));
 
         panel.Invalidate();
         panel.Draw(pixels.Address, pixels.RowBytes);
@@ -176,11 +176,11 @@ public class TheFleetTabIsInTheHeadsetTests
         [.. Enum.GetValues<PanelTab>().Where(nav.Has)];
 
     /// <summary>
-    /// The claim itself: the headset carries the tab, and it carries it where the window does — right
-    /// after the transcript rather than at the end of the strip.
+    /// The claim itself: the headset carries the tab, and it carries it where the window does — after
+    /// the transcript and the checklist rather than at the end of the strip.
     /// </summary>
     [AvaloniaFact]
-    public void FleetFollowsTranscriptOnTheHeadsetAsItDoesInTheWindow()
+    public void AssetsFollowsTheChecklistOnTheHeadsetAsItDoesInTheWindow()
     {
         var (panel, _) = Headset();
 
@@ -203,11 +203,9 @@ public class TheFleetTabIsInTheHeadsetTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));
-        Assert.Contains(PanelTab.Loadout, Tabs(panel.Nav));
+        Assert.Contains(PanelTab.Assets, Tabs(panel.Nav));
 
-        var order = Tabs(panel.Nav);
-
-        Assert.Equal(order.IndexOf(PanelTab.Transcript) + 1, order.IndexOf(PanelTab.Loadout));
+        Assert.Equal([PanelTab.Transcript, PanelTab.Checklist, PanelTab.Assets], Tabs(panel.Nav));
     }
 
     /// <summary>Every root the tab has, drawn — the headset's own copy, through the real rasterise.</summary>
@@ -301,13 +299,13 @@ public class TheFleetTabIsInTheHeadsetTests
         Assert.True(panel.Back());
 
         Assert.Single(panel.Nav.Trail);
-        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Loadout));
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
 
         // Nothing left in the drill: the third grip-back carries the panel off the Loadout tab instead,
         // the same as a grip-back at the root of any other tab - and leaves the root it left behind alone.
         Assert.True(panel.Back());
-        Assert.NotEqual(PanelTab.Loadout, panel.Nav.Tab);
-        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Loadout));
+        Assert.NotEqual(PanelTab.Assets, panel.Nav.Tab);
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
     }
 
     /// <summary>

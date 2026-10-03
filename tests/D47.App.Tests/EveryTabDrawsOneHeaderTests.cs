@@ -34,8 +34,8 @@ public class EveryTabDrawsOneHeaderTests
 
     private static readonly PanelTab[] Every =
     [
-        PanelTab.Transcript, PanelTab.Loadout, PanelTab.Engineers, PanelTab.Checklist,
-        PanelTab.Routing, PanelTab.Adventures, PanelTab.Settings,
+        PanelTab.Transcript, PanelTab.Stories, PanelTab.Checklist, PanelTab.Assets,
+        PanelTab.Engineers, PanelTab.Navigation, PanelTab.Settings,
     ];
 
     private static JournalEvent Event(string json)
@@ -128,7 +128,7 @@ public class EveryTabDrawsOneHeaderTests
         {
             Show(panel, tab);
 
-            var name = panel.GetControl<RadioButton>(tab == PanelTab.Loadout ? "LoadoutTab" : $"{tab}Tab").Content as string;
+            var name = panel.GetControl<RadioButton>($"{tab}Tab").Content as string;
 
             Assert.Equal(name, panel.GetControl<TextBlock>("PageTitle").Text);
             Assert.True(panel.GetControl<Control>("TitleRule").IsEffectivelyVisible, $"{tab} draws no title rule");
@@ -176,7 +176,7 @@ public class EveryTabDrawsOneHeaderTests
         foreach (var (tab, expected) in new[]
                  {
                      (PanelTab.Engineers, "1 of "),
-                     (PanelTab.Adventures, "Stories you fly, told by the ship's AI. Progress comes from your own journal."),
+                     (PanelTab.Stories, "Stories you fly, told by the ship's AI. Progress comes from your own journal."),
                      (PanelTab.Settings, "Changes apply as you make them."),
                  })
         {

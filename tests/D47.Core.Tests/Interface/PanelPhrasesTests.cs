@@ -14,7 +14,7 @@ public class PanelPhrasesTests
         nav.Register(PanelTab.Transcript, new NavCrumb("technical", "Technical"));
         nav.Register(PanelTab.Transcript, new NavCrumb("log", "Log file"));
         nav.Register(PanelTab.Checklist, new NavCrumb("checklist", "Checklist"));
-        nav.Register(PanelTab.Loadout, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
 
         return nav;
     }
@@ -47,6 +47,22 @@ public class PanelPhrasesTests
 
         Assert.NotNull(PanelPhrases.Apply(spoken, nav));
         Assert.Equal(PanelTab.Checklist, nav.Tab);
+    }
+
+    /// <summary>A renamed tab is reached by its new name, and the answer says that name (#802).</summary>
+    [Theory]
+    [InlineData("stories", PanelTab.Stories, "Stories.")]
+    [InlineData("open the stories tab", PanelTab.Stories, "Stories.")]
+    [InlineData("assets", PanelTab.Assets, "Assets.")]
+    [InlineData("navigation", PanelTab.Navigation, "Navigation.")]
+    public void ARenamedTabAnswersToItsNewName(string spoken, PanelTab tab, string answer)
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Stories"));
+        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
+
+        Assert.Equal(answer, PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(tab, nav.Tab);
     }
 
     /// <summary>And a phrase that merely contains the word is not a request for the tab.</summary>
@@ -86,7 +102,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
         Assert.NotNull(PanelPhrases.Apply(spoken, nav));
@@ -111,7 +127,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
         Assert.NotNull(PanelPhrases.Apply("corsair", nav));
@@ -123,7 +139,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"));
 
         Assert.Null(PanelPhrases.Apply("corsair", nav));
@@ -144,10 +160,10 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
-        Assert.NotNull(PanelPhrases.Apply("loadout", nav));
+        Assert.NotNull(PanelPhrases.Apply("assets", nav));
         Assert.True(nav.AtRoot);
     }
 

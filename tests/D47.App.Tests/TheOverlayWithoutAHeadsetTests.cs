@@ -78,12 +78,12 @@ public class TheOverlayWithoutAHeadsetTests
         var (overlay, _, _, _) = Open(on: true, eliteInFront: true, stories: true);
 
         Assert.True(overlay.Nav.Has(PanelTab.Transcript));
-        Assert.True(overlay.Nav.Has(PanelTab.Adventures));
+        Assert.True(overlay.Nav.Has(PanelTab.Stories));
 
         foreach (var tab in new[]
                  {
-                     PanelTab.Settings, PanelTab.Loadout, PanelTab.Checklist,
-                     PanelTab.Engineers, PanelTab.Routing,
+                     PanelTab.Settings, PanelTab.Assets, PanelTab.Checklist,
+                     PanelTab.Engineers, PanelTab.Navigation,
                  })
         {
             Assert.False(overlay.Nav.Has(tab), $"The overlay furnished {tab} and was handed nothing for it.");
@@ -107,8 +107,8 @@ public class TheOverlayWithoutAHeadsetTests
         var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
 
         Assert.Equal(PanelTab.Transcript, overlay.Nav.Tab);
-        Assert.False(overlay.Nav.Has(PanelTab.Adventures));
-        Assert.False(overlay.Nav.Select(PanelTab.Adventures));
+        Assert.False(overlay.Nav.Has(PanelTab.Stories));
+        Assert.False(overlay.Nav.Select(PanelTab.Stories));
 
         overlay.Close();
     }

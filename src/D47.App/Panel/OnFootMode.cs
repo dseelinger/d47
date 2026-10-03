@@ -8,13 +8,13 @@ using D47.Core.Loadout;
 
 namespace D47.App.Panel;
 
-/// <summary>The Loadout tab's Suits and weapons mode (Phase 27, "The same page, on foot").</summary>
+/// <summary>The Assets tab's Suits and weapons mode (Phase 27, "The same page, on foot").</summary>
 public sealed class OnFootMode(
     OnFootPlanService kit,
     ChecklistService checklists,
     Func<CommanderGameState?> state) : ILoadoutMode
 {
-    /// <summary>The Loadout tab's Suits root.</summary>
+    /// <summary>The Assets tab's Suits root.</summary>
     public const string Root = "loadout.onfoot";
 
     /// <summary>How an item's crumb is keyed, and a mod slot's below it.</summary>

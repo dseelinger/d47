@@ -18,7 +18,7 @@ namespace D47.App.Panel;
 /// <summary>The systems a Commander has named: adding one from the Elite target, renaming and deleting (#488, #489, #490, #540).</summary>
 public sealed class BookmarksPage : UserControl
 {
-    /// <summary>The Routing tab's newest root.</summary>
+    /// <summary>The Navigation tab's newest root.</summary>
     public const string RootKey = RoutingPages.BookmarksRoot;
 
     private const string RenameKey = "routing.bookmarks.rename";

@@ -147,7 +147,7 @@ public class EliteGlowsAndDarkAndLightDoNotTests
         using var surface = new OffscreenSurface(view, new PixelSize(1180, 880));
         surface.Render();
 
-        var unselected = view.FindControl<RadioButton>("LoadoutTab")!;
+        var unselected = view.FindControl<RadioButton>("AssetsTab")!;
         unselected.ApplyTemplate();
 
         var label = unselected.GetVisualDescendants().OfType<ContentPresenter>().Single(c => c.Name == "PART_ContentPresenter");

@@ -112,7 +112,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel, clipboard);

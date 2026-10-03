@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The panel tabs are renamed and reordered: TRANSCRIPT, STORIES, CHECKLIST, ASSET MGMT, ENGINEERS, NAVIGATION, SETTINGS. Adventures is now Stories, Fleet is now Asset Mgmt and Routing is now Navigation, in the window and the headset. Saying "stories", "assets" or "navigation", or "open the stories tab", opens that tab. Saying "fleet" never opened the Fleet tab, because the voice matched the tab's internal name, Loadout. If d47 was closed on one of the renamed tabs, it reopens on that tab under its new name.
+
 The Bookmarks page has an Add button. It bookmarks what you have targeted in Elite, as saying "bookmark this" does, and asks for a name first; leave it empty to use Elite's name. If nothing is targeted, the page says so and makes no bookmark.
 
 A system name on the Adventures and Bookmarks pages now has a copy button beside it. On Adventures it follows the system in a story's next step and in each beat already told, whether or not you are in that system; the name is still cyan only when it is your current system. On Bookmarks each row has one for its system. Clicking it copies the name and does not open the story.

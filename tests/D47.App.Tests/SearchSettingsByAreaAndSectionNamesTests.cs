@@ -229,15 +229,15 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Box2(panel).Text = "hull";
         Jobs();
 
-        var button = OtherTabsButtons2(view).Single(b => (b.Content as string) == "Open Fleet › Ships");
+        var button = OtherTabsButtons2(view).Single(b => (b.Content as string) == "Open Asset Mgmt › Ships");
 
         Assert.Equal(PanelTab.Settings, panel.Tab);
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Jobs();
 
-        Assert.Equal(PanelTab.Loadout, panel.Tab);
-        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Loadout));
+        Assert.Equal(PanelTab.Assets, panel.Tab);
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
 
         var strip = (StackPanel)fleetStrip!.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
         var content = (StackPanel)strip.Children[1];

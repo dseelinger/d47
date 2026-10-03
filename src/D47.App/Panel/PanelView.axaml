@@ -386,21 +386,10 @@
                          Content="TRANSCRIPT"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <!--
-              Fleet rather than Loadout (#234). Its roots are unchanged - Ships, Suits and Gap - so
-              the root that holds owned vessels keeps the name it already had, and only the tab's own
-              label moved. What that name promises and does not yet deliver is #230.
-            -->
-            <RadioButton x:Name="LoadoutTab"
+            <RadioButton x:Name="StoriesTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
-                         Content="FLEET"
-                         Tapped="OnTabTapped"
-                         IsCheckedChanged="OnTabChecked" />
-            <RadioButton x:Name="EngineersTab"
-                         Theme="{StaticResource D47.Tab}"
-                         IsVisible="False"
-                         Content="ENGINEERS"
+                         Content="STORIES"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
             <RadioButton x:Name="ChecklistTab"
@@ -409,27 +398,22 @@
                          Content="CHECKLIST"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <!--
-              Where the Commander is going, in three readings of one journey (list.md Phase 37).
-              Beside the transcript from Phase 37 until 2026-09-02, on the grounds that a route is
-              read while flying and the tab a hand reaches for in flight should not be far along.
-              After Fleet, Engineers and Checklist on the Commander's instruction (#272).
-            -->
-            <RadioButton x:Name="RoutingTab"
+            <RadioButton x:Name="AssetsTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
-                         Content="ROUTING"
+                         Content="ASSET MGMT"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <!--
-              Stories the Commander flies (list.md Phase 47). After the ledgers on the Commander's
-              instruction, 2026-08-22: a story turns out to be read between trips rather than during
-              one, which is where the ledgers are.
-            -->
-            <RadioButton x:Name="AdventuresTab"
+            <RadioButton x:Name="EngineersTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
-                         Content="ADVENTURES"
+                         Content="ENGINEERS"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <RadioButton x:Name="NavigationTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="NAVIGATION"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
             <!--

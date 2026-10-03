@@ -47,7 +47,7 @@ public class SlotRowsShowWhatTheyDrawTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships);

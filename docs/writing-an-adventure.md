@@ -91,7 +91,7 @@ nav_order: 205
 
 ## The details
 
-The **Write** page on the Adventures tab, reached from *Write an adventure* — and the same form
+The **Write** page on the Stories tab, reached from *Write an adventure* — and the same form
 reached from *Edit* on a story you already have.
 
 ### The three things Save waits for

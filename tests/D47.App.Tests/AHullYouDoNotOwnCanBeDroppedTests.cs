@@ -42,7 +42,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
         var window = new Window { Content = panel, Width = 1200, Height = 700 };
 
         window.Show();
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, ships);

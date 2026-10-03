@@ -733,7 +733,7 @@ A beat of the story you are following, said when you reach the place it waits fo
 (list.md Phase 47). An adventure is a story the ship's AI tells you across a flight — a spine,
 a handful of beats, each anchored to a real place by the one thing the journal can prove: you
 arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
-Adventures tab is where you write one or ask for one; this is the voice it reaches you by.
+Stories tab is where you write one or ask for one; this is the voice it reaches you by.
 
 **A short acknowledgement lands the moment the beat fires** — *"That's it."*, *"There it is."*,
 one of ten — so you know at once that you did the thing, rather than sitting through the wait
@@ -766,7 +766,7 @@ After a beat whose function is a midpoint, a turn or
 where it began. It is said only when a Backstory is set and only if the beat itself was said, so a
 beat dropped in danger drops it too. No model is called and nothing writes to your Backstory.
 
-While a beat is between firing and being said, the Adventures tab shows that the core is
+While a beat is between firing and being said, the Stories tab shows that the core is
 composing, on the desktop window and in the headset alike.
 
 #### Community Goal sales {#community-goal-sales}
@@ -781,7 +781,7 @@ That's 2.1 million up this session.
 ```
 
 The commodity is the one the saved Community Goal search names — Palladium unless you change it on
-the Routing tab's Community Goal page — and the figures come from the ledger described on the
+the Navigation tab's Community Goal page — and the figures come from the ledger described on the
 [community goals page](community-goals.html). Nothing is said while d47 is catching up on a journal
 it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
 keeps counting for the page and for *"how have I done today"*.

@@ -320,7 +320,7 @@ can I go and get*. Alphabetical order answers that for nobody.
 
 The line at the top counts the game's own three states — unlocked, in progress (known about or
 invited), not started — against the whole directory. It does not distinguish a plan blocked on an
-engineer from one blocked on materials; the gap analysis on the Loadout tab cannot tell the two
+engineer from one blocked on materials; the gap analysis on the Asset Mgmt tab cannot tell the two
 apart either.
 
 One pane rather than two: a row already holds the name, where they are and what wants them, so a

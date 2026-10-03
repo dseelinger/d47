@@ -82,7 +82,7 @@ public class TheBookmarksPageTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         panel.Nav.SelectRoot(BookmarksPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
@@ -230,7 +230,7 @@ public class TheBookmarksPageTests
         var surface = Open();
 
         Assert.Contains(
-            surface.Panel.Nav.Roots(PanelTab.Routing),
+            surface.Panel.Nav.Roots(PanelTab.Navigation),
             root => root.Key == BookmarksPage.RootKey && root.Word == "Bookmarks");
 
         surface.Window.Close();
@@ -262,7 +262,7 @@ public class TheBookmarksPageTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Assert.True(panel.Nav.SelectRoot(BookmarksPage.RootKey));
         Dispatcher.UIThread.RunJobs();
 
@@ -441,7 +441,7 @@ public class TheBookmarksPageTests
                 Commander: commander,
                 BookmarkPhrasesTaken: () => []));
 
-        panel.Tab = PanelTab.Routing;
+        panel.Tab = PanelTab.Navigation;
         Assert.True(panel.Nav.SelectRoot(BookmarksPage.RootKey));
 
         return panel;

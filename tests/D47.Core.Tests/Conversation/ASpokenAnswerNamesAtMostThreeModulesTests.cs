@@ -98,7 +98,7 @@ public class ASpokenAnswerNamesAtMostThreeModulesTests
         Assert.Contains("8 modules fitted, 0 engineered.", result.Spoken, StringComparison.Ordinal);
         Assert.Contains("8 unpowered:", result.Spoken, StringComparison.Ordinal);
         Assert.Contains(", and 5 more.", result.Spoken, StringComparison.Ordinal);
-        Assert.Contains("Fleet › Ships", result.Spoken, StringComparison.Ordinal);
+        Assert.Contains("Asset Mgmt › Ships", result.Spoken, StringComparison.Ordinal);
         Assert.Equal(8, Named(result.Content, names));
     }
 

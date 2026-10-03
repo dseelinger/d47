@@ -529,7 +529,7 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
 
     /// <summary>
-    /// The Community Goal supply search, saved once and run by voice or from the Routing tab (#296).
+    /// The Community Goal supply search, saved once and run by voice or from the Navigation tab (#296).
     /// </summary>
     public D47.Core.Knowledge.CommunityGoalSearch CommunityGoalSearch { get; private set; } = new();
 
@@ -1936,7 +1936,7 @@ public sealed class AppHost : IDisposable
                     Now = () => DateTimeOffset.Now,
                 },
 
-                // Where a commodity answer is posted on its way out (Phase 49), so the Routing tab draws what
+                // Where a commodity answer is posted on its way out (Phase 49), so the Navigation tab draws what
                 // was just said rather than asking again.
                 commodityBoard,
 

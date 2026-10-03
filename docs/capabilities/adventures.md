@@ -21,12 +21,12 @@ nav_order: 115
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a story that runs while you fly.</p>
 <section>
-<h2><span class="num">1</span> Ask for one, in the Adventures tab or out loud.</h2>
+<h2><span class="num">1</span> Ask for one, in the Stories tab or out loud.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for an adventure typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell me a story about this system</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press Adventures in the tab strip and pick one there.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press Stories in the tab strip and pick one there.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Either way you get a first beat, and the story waits for you.</text>
 </svg>
 </section>
@@ -149,7 +149,7 @@ The drive behind it is to add story to a sandbox, which sandboxes deeply lack. I
 
 ### Two ways to have one
 
-**Write an adventure** — the editor is a level of the Adventures tab. A name, an opening, then the
+**Write an adventure** — the editor is a level of the Stories tab. A name, an opening, then the
 five spine questions in order, each skippable. Then the beats: what happens, where, and the line.
 Every field is a chooser except the prose, so the form cannot compose something the file would
 refuse.
@@ -309,7 +309,7 @@ It also costs nothing: none of this is on the advertised tool surface.
 ### Messages
 
 Every beat said is also kept as a written message, from whoever said it, so a line said during a fight
-is not lost. Open **Messages** on the Adventures tab: newest first, unread in bold, and the button carries the
+is not lost. Open **Messages** on the Stories tab: newest first, unread in bold, and the button carries the
 unread count. Opening a message marks it read. A message that was spoken has a **Play** button that
 plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
 
@@ -329,7 +329,7 @@ time D47 runs.
 
 ### Stock stories
 
-Open **Stories** on the Adventures tab for the stock stories, each written to run for the length on its
+Open **Stories** on the Stories tab for the stock stories, each written to run for the length on its
 card, a chapter at a time. Until stories are added to the catalog the page says "No stories yet." The
 list shows each story's title, its length, the level of Commander it was written for, a blurb saying why you might pick it, and the
 Guardian core the story is written for. The level is `new` (no engineering done yet), `midrange` (some

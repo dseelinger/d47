@@ -316,7 +316,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public void TickEngineers() => _dirty |= _view.TickEngineers();
 
-    /// <summary>Redraws the Fleet tab when the journal says the ship changed, from the headset's own tick.</summary>
+    /// <summary>Redraws the Assets tab when the journal says the ship changed, from the headset's own tick.</summary>
     public void TickLoadout() => _dirty |= _view.TickLoadout();
 
     /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>

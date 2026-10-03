@@ -24,7 +24,7 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
         root.GetVisualDescendants().OfType<T>().Single(found => found.Name == name);
 
     /// <summary>
-    /// The row is on the Fleet › Ships strip, it says what is stored, and the button runs the rescan.
+    /// The row is on the Asset Mgmt › Ships strip, it says what is stored, and the button runs the rescan.
     /// </summary>
     [AvaloniaFact]
     public async Task TheRowSaysWhatIsStoredAndOffersToRebuildIt()

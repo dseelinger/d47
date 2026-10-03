@@ -28,18 +28,18 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (first, window) = Shown(store);
 
-        first.Tab = PanelTab.Routing;
-        first.Nav.SelectRoot(PanelTab.Routing, RoutingPages.CourseRoot);
+        first.Tab = PanelTab.Navigation;
+        first.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.CourseRoot);
         Jobs();
 
-        Assert.Equal(RoutingPages.CourseRoot, first.Nav.RootKeyOf(PanelTab.Routing));
+        Assert.Equal(RoutingPages.CourseRoot, first.Nav.RootKeyOf(PanelTab.Navigation));
 
         window.Close();
 
         // A second panel over the same store, which is what the next launch has.
         var (next, second) = Shown(store);
 
-        Assert.Equal(RoutingPages.CourseRoot, next.Nav.RootKeyOf(PanelTab.Routing));
+        Assert.Equal(RoutingPages.CourseRoot, next.Nav.RootKeyOf(PanelTab.Navigation));
 
         second.Close();
     }
@@ -55,7 +55,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (first, window) = Shown(store);
 
-        first.Tab = PanelTab.Routing;
+        first.Tab = PanelTab.Navigation;
         Jobs();
 
         window.Close();
@@ -63,7 +63,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         // A second panel over the same store, which is what the next launch has.
         var (next, second) = Shown(store);
 
-        Assert.Equal(PanelTab.Routing, next.Tab);
+        Assert.Equal(PanelTab.Navigation, next.Tab);
 
         second.Close();
     }
@@ -152,12 +152,12 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         var store = Store();
 
         store.Save(store.Load()
-            .With(PanelTab.Routing.ToString(), "routing.somewhere-that-was-renamed")
+            .With(PanelTab.Navigation.ToString(), "routing.somewhere-that-was-renamed")
             .With("Cartography", "a.tab.that.never.existed"));
 
         var (panel, window) = Shown(store);
 
-        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Routing));
+        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
         Assert.Equal(PanelTab.Transcript, panel.Tab);
 
         window.Close();
@@ -236,6 +236,34 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         var (_, view, window) = Settings(settings, viewState, paths);
 
         Assert.Equal(0, view.ActiveSection);
+
+        window.Close();
+    }
+
+    /// <summary>A view state saved before the tabs were renamed reopens the renamed tab (#802).</summary>
+    [Theory]
+    [InlineData("Adventures", PanelTab.Stories)]
+    [InlineData("Loadout", PanelTab.Assets)]
+    [InlineData("Routing", PanelTab.Navigation)]
+    public void ATabSavedUnderItsOldNameReopensUnderItsNewOne(string saved, PanelTab renamed)
+    {
+        var store = Store();
+        store.Save(store.Load() with { LastTab = saved, LastTabVr = saved });
+
+        Assert.Equal(renamed, new PanelTabMemory(store).Remembered());
+        Assert.Equal(renamed, new PanelTabMemory(store, vr: true).Remembered());
+    }
+
+    [AvaloniaFact]
+    public void ARoutingTabSavedOnTheCourseReopensNavigationOnTheCourse()
+    {
+        var store = Store();
+        store.Save(store.Load().With("Routing", RoutingPages.CourseRoot) with { LastTab = "Routing" });
+
+        var (panel, window) = Shown(store);
+
+        Assert.Equal(PanelTab.Navigation, panel.Tab);
+        Assert.Equal(RoutingPages.CourseRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
 
         window.Close();
     }

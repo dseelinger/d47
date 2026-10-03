@@ -116,7 +116,7 @@ public class AdventuresTabTests
         var window = new Window { Content = panel, Width = width, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Adventures;
+        panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, book, said);

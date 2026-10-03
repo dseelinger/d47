@@ -15,10 +15,10 @@ public class TheOverlayFollowsTheWindowTests
     {
         var (window, follower) = Pair(stories: true);
 
-        window.Tab = PanelTab.Adventures;
+        window.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Adventures, follower.Tab);
+        Assert.Equal(PanelTab.Stories, follower.Tab);
 
         window.Tab = PanelTab.Transcript;
         Dispatcher.UIThread.RunJobs();
@@ -31,14 +31,14 @@ public class TheOverlayFollowsTheWindowTests
     {
         var (window, follower) = Pair(stories: true);
 
-        window.Tab = PanelTab.Adventures;
+        window.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
         window.Tab = PanelTab.Checklist;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Checklist, window.Tab);
-        Assert.Equal(PanelTab.Adventures, follower.Tab);
+        Assert.Equal(PanelTab.Stories, follower.Tab);
     }
 
     /// <summary>
@@ -50,10 +50,10 @@ public class TheOverlayFollowsTheWindowTests
     {
         var (window, follower) = Pair(stories: false);
 
-        window.Tab = PanelTab.Adventures;
+        window.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Adventures, window.Tab);
+        Assert.Equal(PanelTab.Stories, window.Tab);
         Assert.Equal(PanelTab.Transcript, follower.Tab);
     }
 

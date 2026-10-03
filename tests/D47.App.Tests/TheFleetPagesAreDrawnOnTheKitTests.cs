@@ -79,7 +79,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

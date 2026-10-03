@@ -127,7 +127,7 @@ public static class BuiltinCapabilities
         // The waits the compound ship commands need (Phase 52).
         Builtin.ShipCommandSurface? shipCommands = null,
 
-        // Where the last commodity answer is posted (Phase 49), so the Routing tab draws what the Commander
+        // Where the last commodity answer is posted (Phase 49), so the Navigation tab draws what the Commander
         // was told rather than searching again.
         Knowledge.CommodityBoard? commodities = null,
 

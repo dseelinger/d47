@@ -15,8 +15,8 @@ public class PanelNavigationTests
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
         nav.Register(PanelTab.Transcript, new NavCrumb("technical", "Technical"));
         nav.Register(PanelTab.Checklist, new NavCrumb("checklist", "Checklist"));
-        nav.Register(PanelTab.Loadout, new NavCrumb("fleet", "Ships"));
-        nav.Register(PanelTab.Loadout, new NavCrumb("locker", "Suits and weapons"));
+        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Assets, new NavCrumb("locker", "Suits and weapons"));
 
         return nav;
     }
@@ -66,7 +66,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.Drill(new NavCrumb("ship:12", "Corsair"));
         nav.Drill(new NavCrumb("slot:3", "Weapon 3"));
 
@@ -87,13 +87,13 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.Drill(new NavCrumb("ship:12", "Corsair"));
 
         nav.Select(PanelTab.Checklist);
         Assert.True(nav.AtRoot);
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         Assert.Equal(["Ships", "Corsair"], nav.Trail.Select(crumb => crumb.Word));
     }
 
@@ -106,7 +106,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.Drill(new NavCrumb("ship:12", "Corsair"));
 
         Assert.True(nav.ToRoot());
@@ -126,7 +126,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
 
         Assert.True(nav.GoTo(
             new NavCrumb("ship:12", "Corsair"),
@@ -147,7 +147,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
 
         Assert.True(nav.GoTo(new NavCrumb("fleet", "Ships"), new NavCrumb("ship:12", "Corsair")));
         Assert.Equal(["fleet", "ship:12"], nav.Trail.Select(crumb => crumb.Key));
@@ -165,7 +165,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
         Assert.False(nav.JumpTo(2));
@@ -179,7 +179,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.GoTo(
             new NavCrumb("ship:12", "Corsair"),
             new NavCrumb("slot:3", "Modules"),
@@ -200,7 +200,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.Drill(new NavCrumb("ship:12", "Corsair"));
 
         Assert.True(nav.Take(new NavCrumb("choose:slot3", "Weapon 3")));
@@ -228,7 +228,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
         nav.Drill(new NavCrumb("ship:12", "Corsair"));
         nav.Take(new NavCrumb("choose:slot3", "Weapon 3"));
 
@@ -264,7 +264,7 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
 
         Assert.True(nav.Drill(new NavCrumb("ship:12", "Corsair")));
         Assert.False(nav.Drill(new NavCrumb("ship:12", "Corsair")));
@@ -281,12 +281,12 @@ public class PanelNavigationTests
         var nav = Furnished();
 
         Assert.Equal(
-            new[] { "conversation", "technical", "fleet", "locker", "checklist" },
+            new[] { "conversation", "technical", "checklist", "fleet", "locker" },
             nav.Destinations.Select(page => page.Root.Key));
 
-        Assert.Equal(PanelTab.Checklist, nav.Destinations[^1].Tab);
-        Assert.Equal("Checklist", nav.Destinations[^1].Describe());
-        Assert.Equal("Suits and weapons (Loadout)", nav.Destinations[3].Describe());
+        Assert.Equal(PanelTab.Checklist, nav.Destinations[2].Tab);
+        Assert.Equal("Checklist", nav.Destinations[2].Describe());
+        Assert.Equal("Suits and weapons (Assets)", nav.Destinations[^1].Describe());
     }
 
     /// <summary>
@@ -299,14 +299,14 @@ public class PanelNavigationTests
         var nav = Furnished();
 
         Assert.True(nav.Show("locker"));
-        Assert.Equal(PanelTab.Loadout, nav.Tab);
+        Assert.Equal(PanelTab.Assets, nav.Tab);
         Assert.Equal("locker", nav.Root.Key);
 
         Assert.False(nav.Show("locker"));
 
         // On the tab showing already, only the mode moves.
         Assert.True(nav.Show("fleet"));
-        Assert.Equal(PanelTab.Loadout, nav.Tab);
+        Assert.Equal(PanelTab.Assets, nav.Tab);
         Assert.Equal("fleet", nav.Root.Key);
     }
 
@@ -458,7 +458,7 @@ public class PanelNavigationTests
     public void DrillingToAnOpenLevelGoesBackToIt()
     {
         var nav = Furnished();
-        nav.Select(PanelTab.Loadout);
+        nav.Select(PanelTab.Assets);
 
         Assert.True(nav.Drill(new NavCrumb("ship.a", "A")));
         Assert.True(nav.Drill(new NavCrumb("ship.b", "B")));

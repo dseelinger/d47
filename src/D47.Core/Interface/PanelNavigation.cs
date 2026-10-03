@@ -6,26 +6,44 @@ public enum PanelTab
     /// <summary>The conversation, at two verbosities, and today's log file.</summary>
     Transcript,
 
-    /// <summary>Ships, suits and weapons, and the arithmetic between them (Phases 26-27).</summary>
-    Loadout,
-
-    /// <summary>Who unlocks what, and how far away they are (Phase 28).</summary>
-    Engineers,
+    /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
+    Stories,
 
     /// <summary>What the Commander is working on, in their own order (Phase 17).</summary>
     Checklist,
+
+    /// <summary>Ships, suits and weapons, and the arithmetic between them (Phases 26-27).</summary>
+    Assets,
+
+    /// <summary>Who unlocks what, and how far away they are (Phase 28).</summary>
+    Engineers,
 
     /// <summary>
     /// Where the Commander is going, in three readings (Phase 37): the plan, the route being flown, and
     /// getting a system name into the game.
     /// </summary>
-    Routing,
-
-    /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
-    Adventures,
+    Navigation,
 
     /// <summary>The settings surface.</summary>
     Settings,
+}
+
+/// <summary>Reads a tab's saved name, including the names of tabs since renamed.</summary>
+public static class PanelTabNames
+{
+    private static readonly Dictionary<string, PanelTab> Former = new(StringComparer.Ordinal)
+    {
+        ["Adventures"] = PanelTab.Stories,
+        ["Loadout"] = PanelTab.Assets,
+        ["Routing"] = PanelTab.Navigation,
+    };
+
+    /// <summary>The tab a saved name means, or null for a name that is no tab.</summary>
+    public static PanelTab? Parse(string? name) =>
+        name is null ? null
+        : Former.TryGetValue(name, out var renamed) ? renamed
+        : Enum.TryParse<PanelTab>(name, out var tab) && Enum.IsDefined(tab) ? tab
+        : null;
 }
 
 /// <summary>

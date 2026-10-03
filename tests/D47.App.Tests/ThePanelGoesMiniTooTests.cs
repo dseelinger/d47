@@ -58,13 +58,13 @@ public class ThePanelGoesMiniTooTests
         var (window, panel) = Open();
 
         panel.EnableAdventures(AdventureFixture.Surface());
-        panel.Tab = PanelTab.Adventures;
+        panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Adventures, panel.Tab);
+        Assert.Equal(PanelTab.Stories, panel.Tab);
         Assert.True(panel.GetControl<Border>("MiniPane").IsVisible);
         Assert.False(panel.GetControl<Border>("TranscriptPane").IsVisible);
 

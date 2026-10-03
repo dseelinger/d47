@@ -47,7 +47,7 @@ public sealed class MessagesView : UserControl
         Rebuild();
     }
 
-    /// <summary>The button label on the Adventures tab, carrying the unread count.</summary>
+    /// <summary>The button label on the Stories tab, carrying the unread count.</summary>
     public static string ButtonLabel(MessageStore store) =>
         store.UnreadCount is > 0 and var unread
             ? $"Messages ({unread.ToString(CultureInfo.InvariantCulture)})"

@@ -429,7 +429,7 @@ Nearest for buying Palladium, Platinum Reach (HR 6012), 53.3 ly. System is on yo
 ```
 
 Price, stock, pad distance from the star and quote age used to be read out here too; they are
-still on the Routing tab table, along with the rest of the ranking, and reading all of it out was
+still on the Navigation tab table, along with the rest of the ranking, and reading all of it out was
 detail the ear paid for and could not act on ([#325](https://github.com/dseelinger/d47/issues/325)).
 The price ordering still reads every station out, as it always did, and still names each one's
 distance from the star wherever the index knows it, because a pad 60,000 light seconds out is the

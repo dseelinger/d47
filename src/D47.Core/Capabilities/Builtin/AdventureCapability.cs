@@ -45,7 +45,7 @@ public static class AdventureCapability
         Name = "Adventures",
         Summary =
             "Stories the Commander flies, written by them or by the ship's AI, and advanced by "
-            + "their own journal. Driven from the Adventures tab; nothing here is callable by the "
+            + "their own journal. Driven from the Stories tab; nothing here is callable by the "
             + "model. The Commander can pause and resume a running story by voice, and refuse the beat it is waiting on.",
 
         // The phrases that genuinely work.

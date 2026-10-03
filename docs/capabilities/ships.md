@@ -217,7 +217,7 @@ your journals it has been read, so the next start picks up exactly where it left
 long that is. Come back after a year away and the first start takes a few seconds longer while it
 reads the gap, and says so in the log.
 
-**Not look right? Rescan.** Fleet › Ships' own "Settings for this page" strip says how many ships
+**Not look right? Rescan.** Asset Mgmt › Ships' own "Settings for this page" strip says how many ships
 are remembered and how stale the oldest of them is, and offers **Rescan my journals**: it reads
 every journal on disk again and rebuilds the lot from scratch. A ship nothing in your journals
 supports stops existing, and one that has been sitting there wrong is put back the way the game
@@ -245,7 +245,7 @@ hull — with whatever history it had.
 
 ### The fleet, and the fleet you intend
 
-The Loadout tab opens on your fleet and answers where each ship is before you drill into anything.
+The Asset Mgmt tab opens on your fleet and answers where each ship is before you drill into anything.
 
 **A hull you do not own is not in the fleet.** It is its own thing, with no ship id, because
 Elite's id is what a ship list is keyed by and a Corsair nobody has bought has none. So
@@ -285,7 +285,7 @@ files for that hull, from the same GitHub release it updates itself from, and ke
 The hull symbol is all that is sent. Not your Commander name, not which ships you own, not where
 you are, nothing from your journal.
 
-**One switch, and turning it off puts every picture away.** Fleet › Ships' own settings strip has
+**One switch, and turning it off puts every picture away.** Asset Mgmt › Ships' own settings strip has
 **Hull pictures**; off, fleet cards are text only, a ship's own page shows no picture and plays no
 turntable, and nothing is fetched — even for a hull whose files are already in `data/ships`. The
 files themselves stay on disk; the setting only stops them being shown. Offline behaves the same

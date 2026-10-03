@@ -99,12 +99,12 @@ public class TheRoutingTabIsInTheHeadsetTests
     /// <summary>Selects a root and rasterises it, the way the runtime asks for a frame.</summary>
     private static void Draw(VrPanelSurface panel, VrPixels pixels, string root)
     {
-        panel.Nav.Select(PanelTab.Routing);
-        panel.Nav.SelectRoot(PanelTab.Routing, root);
+        panel.Nav.Select(PanelTab.Navigation);
+        panel.Nav.SelectRoot(PanelTab.Navigation, root);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Routing, panel.Nav.Tab);
-        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Routing));
+        Assert.Equal(PanelTab.Navigation, panel.Nav.Tab);
+        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Navigation));
 
         panel.Invalidate();
         panel.Draw(pixels.Address, pixels.RowBytes);
@@ -178,11 +178,11 @@ public class TheRoutingTabIsInTheHeadsetTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));
-        Assert.Contains(PanelTab.Routing, Tabs(panel.Nav));
+        Assert.Contains(PanelTab.Navigation, Tabs(panel.Nav));
 
         var order = Tabs(panel.Nav);
 
-        Assert.Equal(order.IndexOf(PanelTab.Checklist) + 1, order.IndexOf(PanelTab.Routing));
+        Assert.Equal(order.IndexOf(PanelTab.Checklist) + 1, order.IndexOf(PanelTab.Navigation));
     }
 
     private static List<PanelTab> Tabs(PanelNavigator nav) =>

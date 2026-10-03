@@ -28,7 +28,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.Furnish(
-            PanelTab.Loadout,
+            PanelTab.Assets,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"));
 
@@ -49,7 +49,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
 
     private static void Drill(PanelView panel)
     {
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.GoTo(
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("ship:12", "Corsair"));
@@ -98,7 +98,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
         var panel = Furnished(width);
         panel.EnableDraggablePanes(Memory(out _));
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         panel.Nav.GoTo(
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("ship:12", "Corsair"),

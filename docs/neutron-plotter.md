@@ -80,7 +80,7 @@ nav_order: 201
  <text x="768" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">168 jumps</text>
  <rect x="20" y="146" width="840" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="178" text-anchor="middle" font-size="16" fill="var(--text)">Spoken, you get the totals and the next handful — which is how a route is flown anyway.</text>
- <text x="440" y="206" text-anchor="middle" font-size="15" fill="var(--text-muted)">The whole thing is kept. The Routing tab draws every waypoint, however it was plotted.</text>
+ <text x="440" y="206" text-anchor="middle" font-size="15" fill="var(--text-muted)">The whole thing is kept. The Navigation tab draws every waypoint, however it was plotted.</text>
 </svg>
 </section>
 <div class="next">
@@ -95,7 +95,7 @@ nav_order: 201
 
 ## The details
 
-The card called **Neutron Plotter** on the Routing tab's Plan page, and the `plot_route` tool
+The card called **Neutron Plotter** on the Navigation tab's Plan page, and the `plot_route` tool
 behind it. It was called *Jump route* until 2026-08-23, which described what the galaxy map already
 does and said nothing about the one thing this does that the map cannot.
 
@@ -147,7 +147,7 @@ The first 5:
 126 more after that. Ask again from further along and I will plot the rest.
 ```
 
-**The cap is on the speaking, not on the plan.** The whole route is kept, and the Routing tab draws
+**The cap is on the speaking, not on the plan.** The whole route is kept, and the Navigation tab draws
 every waypoint of it — including one plotted by voice, because both paths write and read one plan
 rather than each keeping their own.
 

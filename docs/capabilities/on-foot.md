@@ -327,7 +327,7 @@ Consumables carry a separate cap of **100 per item**.
 
 ### The plan, and your checklist
 
-A suit or weapon plan is the on-foot half of the Loadout tab, and it is the Ships page instantiated
+A suit or weapon plan is the on-foot half of the Asset Mgmt tab, and it is the Ships page instantiated
 against the same drill: an index of what you are wearing and carrying, one item, one slot. **It
 stays a second mode rather than a second tab**, because the game separates ship and on-foot hard
 and so does its vocabulary — but nothing about the layout is redrawn.

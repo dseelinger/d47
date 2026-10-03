@@ -148,7 +148,7 @@ Nothing here touches the network. The first two phrases need no AI configured at
 
 A wishlist is a list of things you want. That is what your ship builds and your suit plans already
 are. **This is the arithmetic between them and what is in your hold** — the third mode of the
-Loadout tab, reading across both the others, because a Commander gathering materials does not care
+Asset Mgmt tab, reading across both the others, because a Commander gathering materials does not care
 which ship wanted them.
 
 ### The ledgers are never totalled together

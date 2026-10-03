@@ -73,7 +73,7 @@ public class LoadoutTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, checklists, sitting, clipboard);
@@ -183,11 +183,11 @@ public class LoadoutTabTests
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        Assert.False(panel.FindControl<Control>("LoadoutTab")!.IsVisible);
+        Assert.False(panel.FindControl<Control>("AssetsTab")!.IsVisible);
 
         var surface = Open();
 
-        Assert.True(surface.Panel.FindControl<Control>("LoadoutTab")!.IsVisible);
+        Assert.True(surface.Panel.FindControl<Control>("AssetsTab")!.IsVisible);
 
         surface.Window.Close();
     }
@@ -246,7 +246,7 @@ public class LoadoutTabTests
         surface.Panel.Tab = PanelTab.Checklist;
         Dispatcher.UIThread.RunJobs();
 
-        surface.Panel.Tab = PanelTab.Loadout;
+        surface.Panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

@@ -488,7 +488,7 @@ owns when named — from the loadout last seen for it, dated, rather than refusi
 ```
 
 Spoken, `get_ship` gives the ship's line and metrics, the module count, and the unpowered modules as
-a count with at most three named, then points to Fleet › Ships for the full loadout. The model
+a count with at most three named, then points to Asset Mgmt › Ships for the full loadout. The model
 still receives every fitted module.
 
 `get_fleet` answers about the carrier, and lists the ships only when it was asked to:

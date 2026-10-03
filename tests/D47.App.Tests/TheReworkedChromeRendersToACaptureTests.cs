@@ -79,7 +79,7 @@ public class TheReworkedChromeRendersToACaptureTests
 
         panel.Furnish(PanelTab.Checklist, _ => new TextBlock { Text = "checklist" }, new NavCrumb("checklist", "Checklist"));
         panel.Furnish(
-            PanelTab.Loadout,
+            PanelTab.Assets,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("locker", "Suits and weapons"));
@@ -176,7 +176,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void TheRouteBeingFlown()
     {
-        var (window, panel) = Open(1180, PanelTab.Routing);
+        var (window, panel) = Open(1180, PanelTab.Navigation);
 
         panel.Nav.SelectRoot(RoutingPages.ProgressRoot);
         Save(window, "routing-progress.png");
@@ -186,7 +186,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void ThePlannersAsForms()
     {
-        var (window, panel) = Open(1180, PanelTab.Routing);
+        var (window, panel) = Open(1180, PanelTab.Navigation);
 
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Save(window, "routing-plan.png");
@@ -196,7 +196,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void APlanThatWasMade()
     {
-        var (window, panel) = Open(1180, PanelTab.Routing);
+        var (window, panel) = Open(1180, PanelTab.Navigation);
 
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
@@ -207,7 +207,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void SettingACourse()
     {
-        var (window, panel) = Open(1180, PanelTab.Routing);
+        var (window, panel) = Open(1180, PanelTab.Navigation);
 
         panel.Nav.SelectRoot(RoutingPages.CourseRoot);
         Save(window, "routing-course.png");

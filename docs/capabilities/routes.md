@@ -212,7 +212,7 @@ A Sol-to-Colonia plot is 131 waypoints and 168 jumps. Reading that out is not an
 totals come first and the next handful of waypoints follow — which is how the route is flown
 anyway. You plot the next waypoint when you reach this one.
 
-**That cap belongs to speech, not to the plan.** The whole route is kept, and the **Routing** tab
+**That cap belongs to speech, not to the plan.** The whole route is kept, and the **Navigation** tab
 in the window draws all of it — see [the panel](interface.md#panel). The same tab plots without
 speaking, and a route plotted by voice appears there the moment it is worked out, because both
 paths write and read one plan rather than each keeping their own.
@@ -277,7 +277,7 @@ one.
 #### `plot_route`
 
 A route between two systems that detours through neutron stars where they help — the **Neutron
-Plotter** card on the Routing tab, and [a page of its own](../neutron-plotter.html).
+Plotter** card on the Navigation tab, and [a page of its own](../neutron-plotter.html).
 
 ```json
 {"type":"object","properties":{"efficiency":{"type":"integer","description":"How strictly to hold to the direct line, 1 to 99. Lower finds more neutron stars and so fewer jumps, at the cost of flying further off course. Defaults to 60."},"from":{"type":"string","description":"Where to plot from. Defaults to where the Commander is now."},"jump_range":{"type":"number","description":"The ship\u0027s jump range in light years. Defaults to this ship\u0027s, from the journal. Must be over 10."},"to":{"type":"string","description":"The destination system."}},"required":["to"],"additionalProperties":false}

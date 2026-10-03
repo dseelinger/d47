@@ -72,8 +72,8 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Loadout;
-        panel.Nav.SelectRoot(PanelTab.Loadout, LoadoutPages.CarrierRoot);
+        panel.Tab = PanelTab.Assets;
+        panel.Nav.SelectRoot(PanelTab.Assets, LoadoutPages.CarrierRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

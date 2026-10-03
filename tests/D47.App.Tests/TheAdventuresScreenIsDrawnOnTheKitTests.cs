@@ -129,7 +129,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Adventures;
+        panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel);

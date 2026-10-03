@@ -72,11 +72,11 @@ public sealed class TheHeadsetOpensWhereItWasLeftTests
 
         var headset = Headset(store);
 
-        window.Tab = PanelTab.Routing;
+        window.Tab = PanelTab.Navigation;
         headset.Nav.Select(PanelTab.Checklist);
         Jobs();
 
-        Assert.Equal(PanelTab.Routing.ToString(), store.Load().LastTab);
+        Assert.Equal(PanelTab.Navigation.ToString(), store.Load().LastTab);
         Assert.Equal(PanelTab.Checklist.ToString(), store.Load().LastTabVr);
 
         headset.Dispose();
