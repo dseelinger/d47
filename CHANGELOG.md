@@ -195,6 +195,8 @@ The Callouts toggle for remarks on a slow hyperspace jump is now "Hyperspace tun
 
 The Callouts setting "Report route progress every" is now labelled "Report route progress every N jumps", so the label says what the number counts. Its help no longer opens with "In jumps." The value, its default of 3 and the saved setting are unchanged.
 
+The Callouts setting "Call out biology from" is now labelled "Call out biology from (credits)", so the label says what the number is. Its help no longer opens with "In credits:". The value, its default of 10,000,000 and the saved setting are unchanged.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

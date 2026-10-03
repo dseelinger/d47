@@ -767,8 +767,8 @@ public static class CalloutCapability
         {
             Key = BiologyThresholdKey,
             Advanced = true,
-            Label = "Call out biology from",
-            Help = "In credits: the least a body's biology could reach at best, or was surveyed at, before it is said.",
+            Label = "Call out biology from (credits)",
+            Help = "The least a body's biology could reach at best, or was surveyed at, before it is said.",
             Kind = SettingKind.Number,
             DefaultDisplay = "10000000",
             DocsAnchor = "biology-threshold",
