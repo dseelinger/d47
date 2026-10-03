@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Missions, headset</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../system/tokens/palette.css">
+<link rel="stylesheet" href="../../system/tokens/type.css">
+<link rel="stylesheet" href="../../system/components/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&amp;family=Sintony:wght@400;700&amp;family=JetBrains+Mono&amp;display=swap">
+<style>
+body{margin:0;background:#070606}
+</style>
+</helmet>
+<div class="d47-root d47-window" data-d47-theme="{{theme}}" style="width: 1024px; height: 640px;">
+  <div class="d47-window__body" style="gap: 18px; padding: 16px 20px 16px; min-height: 0;">
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 104px; column-gap: 16px; align-items: end;">
+      <div style="display: flex; flex-direction: column; min-width: 0;">
+        <nav aria-label="Tabs" style="display: flex; flex-wrap: wrap; gap: 2px;">
+          <button type="button" class="d47-tab">Transcript</button>
+          <button type="button" class="d47-tab">Search</button>
+          <button type="button" class="d47-tab">Stories</button>
+          <button type="button" class="d47-tab active" aria-current="page">Commander</button>
+          <button type="button" class="d47-tab">Asset Mgmt</button>
+          <button type="button" class="d47-tab">Navigation</button>
+          <button type="button" class="d47-tab">Settings</button>
+          <button type="button" class="d47-tab" style="margin-left: auto; font-size: 14px; letter-spacing: 0.08em;">Help</button>
+        </nav>
+        <div style="height: 2px; background: var(--d47-a);"></div>
+        <div style="height: 44px; margin-top: 12px; padding-bottom: 6px; display: flex; align-items: center; gap: 16px;">
+          <h1 class="d47-title" style="margin: 0; flex: none; line-height: 1; color: var(--d47-white);">Commander</h1>
+          <p style="margin: 0; padding-top: 3px; flex: 1 1 auto; min-width: 0; font-size: 15px; color: var(--d47-grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">6 missions. 2 hand in here. 21,550,500 credits in rewards.</p>
+          <label class="d47-search" style="width: 260px; height: 44px; flex: none;">
+            <input type="search" aria-label="Search this page" placeholder="Search this page">
+          </label>
+        </div>
+      </div>
+      <img src="avatar.jpg" alt="D47" style="width: 104px; height: 104px; display: block; object-fit: contain;">
+    </div>
+    <div style="margin-top: -18px; display: flex; flex-direction: column;">
+      <div style="height: 1px; background: var(--d47-a);"></div>
+      <nav aria-label="Sections" class="d47-subtabs" style="flex-wrap: wrap; padding-top: 8px;">
+        <button type="button" class="d47-subtab">Checklist</button>
+        <button type="button" class="d47-subtab active" aria-current="page">Missions</button>
+        <button type="button" class="d47-subtab">Standing</button>
+        <button type="button" class="d47-subtab">Statistics</button>
+        <button type="button" class="d47-subtab">This session</button>
+      </nav>
+    </div>
+
+    <div style="flex: 1 1 auto; min-height: 0; display: flex; gap: 20px; align-items: stretch;">
+      <div style="flex: 0 0 360px; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px;">
+        <div class="d47-list d47-scroll" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px;">
+          <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+            <div class="d47-list-head">{{g.head}}</div>
+            <sc-for list="{{g.items}}" as="m" hint-placeholder-count="2">
+              <button type="button" class="d47-list-row {{m.rowCls}}" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="width: 100%; flex: none; margin-bottom: 2px; cursor: pointer;">
+                <span class="d47-list-row__main">
+                  <span class="d47-list-row__name">{{m.title}}</span>
+                  <span class="d47-list-row__sub d47-chrome" style="{{m.subStyle}}">{{m.sub}}</span>
+                </span>
+                <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none;">
+                  <span class="d47-mono" style="{{m.leftStyle}}">{{m.left}}</span>
+                  <span class="d47-mono" style="{{m.payStyle}}">{{m.pay}}</span>
+                </span>
+              </button>
+            </sc-for>
+          </sc-for>
+        </div>
+        <div class="d47-hint">Say: “read the mission board”</div>
+      </div>
+
+      <div class="d47-scroll" style="flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding: 0 8px 0 20px; border-left: 1px solid var(--d47-line2);">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <span class="d47-crumb">Commander › Missions › {{sel.band}}</span>
+          <div class="d47-title-block">
+            <div class="d47-title-block__text" style="min-width: 0;">
+              <span class="d47-title" style="color: var(--d47-white); font-size: 24px;">{{sel.title}}</span>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 2px; align-items: center; flex: none;">
+              <sc-if value="{{sel.canPlot}}" hint-placeholder-val="{{true}}">
+                <button type="button" class="d47-glyph" aria-label="Copy the system name">
+                  <span class="d47-glyph__face"><span class="d47-copy-icon"></span></span>
+                </button>
+                <button type="button" class="d47-tile-button" style="height: 44px;">Plot to hand-in</button>
+              </sc-if>
+              <sc-if value="{{sel.isHere}}" hint-placeholder-val="{{false}}">
+                <span class="d47-chrome" style="font-size: 13px; font-weight: 600; color: var(--d47-cyan);">Hand in here</span>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{sel.noDetail}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <div class="d47-data" style="align-self: flex-start; min-width: 240px;">
+              <span class="d47-data__label">Time left</span>
+              <span class="d47-mono" style="font-size: 22px; line-height: 1.2; color: var(--d47-a);">{{sel.clock}}</span>
+            </div>
+            <div class="d47-data prose">Accepted before the oldest journal D47 has read. The game reports only its name and time left.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{sel.hasDetail}}" hint-placeholder-val="{{true}}">
+          <div class="d47-data-grid">
+            <div class="d47-data">
+              <span class="d47-data__label">{{sel.clockLabel}}</span>
+              <span class="d47-mono" style="font-size: 22px; line-height: 1.2; {{sel.clockStyle}}">{{sel.clock}}</span>
+            </div>
+            <div class="d47-data">
+              <span class="d47-data__label">Reward</span>
+              <span class="d47-mono" style="font-size: 22px; line-height: 1.2; color: var(--d47-a);">{{sel.reward}}</span>
+            </div>
+            <div class="d47-data">
+              <span class="d47-data__label">Accepted</span>
+              <span class="d47-data__value small"><span class="d47-mono" style="font-size: 13px;">{{sel.acceptedAt}}</span><span style="color: var(--d47-grey);"> · </span><span style="font-family: var(--d47-font-prose); font-size: 13px; color: var(--d47-grey);">{{sel.acceptedAgo}}</span></span>
+            </div>
+            <div class="d47-data span-2">
+              <span class="d47-data__label">Hand in at</span>
+              <span class="d47-data__value small"><span style="color: var(--d47-white);">{{sel.station}}</span><span style="color: var(--d47-grey);"> · </span><span style="{{sel.systemStyle}}">{{sel.system}}</span></span>
+            </div>
+            <div class="d47-data">
+              <span class="d47-data__label">Given by</span>
+              <span class="d47-data__value small white">{{sel.faction}}</span>
+            </div>
+            <sc-if value="{{sel.hasTarget}}" hint-placeholder-val="{{false}}">
+              <div class="d47-data span-2">
+                <span class="d47-data__label">Against</span>
+                <span class="d47-data__value small" style="color: var(--d47-red);">{{sel.target}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{sel.hasCargo}}" hint-placeholder-val="{{false}}">
+              <div class="d47-data">
+                <span class="d47-data__label">Cargo</span>
+                <span class="d47-data__value small"><span class="d47-mono" style="font-size: 13px;">{{sel.count}}</span> {{sel.commodity}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{sel.hasPassengers}}" hint-placeholder-val="{{false}}">
+              <div class="d47-data">
+                <span class="d47-data__label">Passengers</span>
+                <span class="d47-data__value small"><span class="d47-mono" style="font-size: 13px;">{{sel.count}}</span> aboard</span>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{sel.hasProgress}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="d47-section-head">Delivery<span class="d47-section-head__aside">from the cargo depot</span></div>
+            <div class="d47-ladder">
+              <div class="d47-ladder__row" style="display: flex; flex-direction: column; align-items: stretch; gap: 8px; background: var(--d47-slab); padding: 10px 14px;">
+                <div style="display: flex; align-items: baseline; gap: 12px;">
+                  <span class="d47-ladder__text">Delivered <span class="d47-mono" style="color: var(--d47-a);">{{sel.delivered}}</span> of <span class="d47-mono" style="color: var(--d47-a);">{{sel.total}}</span></span>
+                  <span style="margin-left: auto; font-size: 13px; color: var(--d47-grey);">Collected <span class="d47-mono" style="color: var(--d47-a);">{{sel.collected}}</span></span>
+                </div>
+                <div class="d47-gauge"><div class="d47-gauge__fill" style="{{sel.fillStyle}}"></div></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{sel.isRedirected}}" hint-placeholder-val="{{false}}">
+          <div class="d47-hint" style="font-size: 13px;">Redirected. The hand-in above is where the game now sends you.</div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+  <div class="d47-scanlines" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["elite","dark","light","elite-palette"],"default":"elite"},"$preview":{"width":1024,"height":640}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: Number(new URLSearchParams(location.search).get('pick')) || 1 };
+  }
+
+  renderVals() {
+    const here = { station: 'Ray Gateway', system: 'Diaguandri' };
+    const missions = [
+      { id: 1, band: 'Expiring within the hour', title: 'Wing delivery: Bertrandite', faction: 'Diaguandri Interstellar', station: 'Mackenzie Relay', system: 'Kremainn', left: '0h 38m', soon: true, reward: 4812000, acceptedAt: '17:06', acceptedAgo: '6 hours ago', count: 120, commodity: 'Bertrandite', cargo: { collected: 120, delivered: 72, total: 120 } },
+      { id: 2, band: 'Hand in here', title: 'Courier: data to Ray Gateway', faction: 'Antai Energy Group', station: 'Ray Gateway', system: 'Diaguandri', left: '3h 12m', reward: 412500, acceptedAt: '21:40', acceptedAgo: '1 hour ago' },
+      { id: 3, band: 'Hand in here', title: 'Source 18 Progenitor Cells', faction: 'Diaguandri Interstellar', station: 'Ray Gateway', system: 'Diaguandri', left: '1d 4h', reward: 1986000, acceptedAt: '19:15', acceptedAgo: '4 hours ago', count: 18, commodity: 'Progenitor Cells' },
+      { id: 4, band: 'Everything else', title: 'Massacre: Kremainn Crimson Gang', faction: 'Diaguandri Interstellar', target: 'Kremainn Crimson Gang', station: 'Hahn Gateway', system: 'Kremainn', redirected: true, left: '2d 11h', reward: 9240000, acceptedAt: '18:52', acceptedAgo: '4 hours ago' },
+      { id: 5, band: 'Everything else', title: 'Transport 4 tourists to Sothis', faction: 'Antai Energy Group', station: 'Newholm Station', system: 'Sothis', left: '5d 2h', reward: 3100000, acceptedAt: '20:03', acceptedAgo: '3 hours ago', count: 4, passengers: true },
+      { id: 6, band: 'Everything else', title: 'Mission_Salvage_Planet', noDetail: true, left: '4d 9h' }
+    ];
+    const credits = (n) => n.toLocaleString('en-US') + ' CR';
+    const picked = this.state.picked;
+    const bands = ['Expiring within the hour', 'Hand in here', 'Everything else'];
+
+    const row = (m) => {
+      const on = m.id === picked;
+      const isHere = m.station === here.station && m.system === here.system;
+      let subStyle = m.noDetail ? 'color: var(--d47-grey);' : isHere ? 'color: var(--d47-cyan);' : 'color: var(--d47-a);';
+      let leftStyle = m.soon ? 'font-size: 14px; color: var(--d47-warn);' : 'font-size: 14px; color: var(--d47-a);';
+      let payStyle = 'font-size: 12px; color: var(--d47-grey);';
+      if (on) {
+        subStyle = 'color: var(--d47-brown);';
+        leftStyle = 'font-size: 14px; color: var(--d47-knock);';
+        payStyle = 'font-size: 12px; color: var(--d47-brown);';
+      }
+      return {
+        title: m.title,
+        sub: m.noDetail ? 'No detail' : m.station + ' · ' + m.system,
+        subStyle: subStyle,
+        left: m.left || '',
+        leftStyle: leftStyle,
+        pay: m.reward ? credits(m.reward) : '',
+        payStyle: payStyle,
+        rowCls: on ? 'selected' : '',
+        pressed: on ? 'true' : 'false',
+        pick: () => this.setState({ picked: m.id })
+      };
+    };
+
+    const groups = bands.map((b) => ({ head: b, items: missions.filter((m) => m.band === b).map(row) })).filter((g) => g.items.length > 0);
+
+    const m = missions.find((x) => x.id === picked) || missions[0];
+    const isHere = m.station === here.station && m.system === here.system;
+    const sel = {
+      band: m.band,
+      title: m.title,
+      noDetail: !!m.noDetail,
+      hasDetail: !m.noDetail,
+      canPlot: !m.noDetail && !isHere,
+      isHere: isHere,
+      clockLabel: m.soon ? 'Time left · under an hour' : 'Time left',
+      clock: m.left || '',
+      clockStyle: m.soon ? 'color: var(--d47-warn);' : 'color: var(--d47-a);',
+      reward: m.reward ? credits(m.reward) : '',
+      acceptedAt: m.acceptedAt || '',
+      acceptedAgo: m.acceptedAgo || '',
+      station: m.station || '',
+      system: m.system || '',
+      systemStyle: m.system === here.system ? 'color: var(--d47-cyan);' : 'color: var(--d47-a);',
+      faction: m.faction || '',
+      hasTarget: !!m.target,
+      target: m.target || '',
+      hasCargo: !!m.commodity,
+      commodity: m.commodity || '',
+      count: m.count || 0,
+      hasPassengers: !!m.passengers,
+      hasProgress: !!m.cargo,
+      delivered: m.cargo ? m.cargo.delivered : 0,
+      collected: m.cargo ? m.cargo.collected : 0,
+      total: m.cargo ? m.cargo.total : 0,
+      fillStyle: m.cargo ? 'width: ' + Math.round(100 * m.cargo.delivered / m.cargo.total) + '%;' : 'width: 0%;',
+      isRedirected: !!m.redirected
+    };
+
+    return { theme: (new URLSearchParams(location.search).get('theme') || this.props.theme || 'elite'), groups: groups, sel: sel };
+  }
+}
+</script>
+</body>
+</html>
