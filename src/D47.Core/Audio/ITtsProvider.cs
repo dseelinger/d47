@@ -156,6 +156,9 @@ public interface ITtsProvider
     /// </summary>
     bool ReadsAudioTags => false;
 
+    /// <summary>Whether this provider performs this one bracketed direction.</summary>
+    bool Performs(string tag) => ReadsAudioTags;
+
     /// <summary>
     /// What this provider will actually put on the wire for <paramref name="text"/>, which for most of
     /// them is the text itself.

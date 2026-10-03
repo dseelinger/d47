@@ -23,6 +23,12 @@ public sealed class FakeTtsProvider : ITtsProvider
     /// </summary>
     public bool ReadsAudioTags { get; init; }
 
+    /// <summary>When set, only these directions are performed and every other one is refused.</summary>
+    public IReadOnlySet<string>? PerformsOnly { get; init; }
+
+    public bool Performs(string tag) =>
+        PerformsOnly is { } only ? only.Contains(tag) : ReadsAudioTags;
+
     /// <summary>Stands in for a provider that would rather be handed several sentences at once.</summary>
     public int GroupsSentencesUpTo { get; init; }
 

@@ -366,6 +366,8 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
 
     public bool ReadsAudioTags => inner.ReadsAudioTags;
 
+    public bool Performs(string tag) => inner.Performs(tag);
+
     public int GroupsSentencesUpTo => inner.GroupsSentencesUpTo;
 
     /// <summary>Not recorded: a sample synthesises nothing and bills nothing.</summary>

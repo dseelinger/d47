@@ -244,7 +244,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
             return;
         }
 
-        var directed = AudioTags.For(plain, _tts.ReadsAudioTags);
+        var directed = AudioTags.For(plain, _tts.Performs);
         var spoken = SpokenUnits.Rewrite(SpokenDesignations.Rewrite(directed));
 
         if (_address is not null)

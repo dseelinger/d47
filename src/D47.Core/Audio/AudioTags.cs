@@ -37,6 +37,29 @@ public static partial class AudioTags
     public static string For(string sentence, bool performed) =>
         performed ? sentence : Strip(sentence);
 
+    /// <summary>The direction kept only where <paramref name="performs"/> accepts it, and removed otherwise.</summary>
+    public static string For(string sentence, Func<string, bool> performs)
+    {
+        if (!Has(sentence))
+        {
+            return sentence;
+        }
+
+        var removed = false;
+        var kept = Tag().Replace(sentence, match =>
+        {
+            if (performs(match.Groups["tag"].Value))
+            {
+                return match.Value;
+            }
+
+            removed = true;
+            return string.Empty;
+        });
+
+        return removed ? Tidy(kept) : sentence;
+    }
+
     /// <summary>
     /// A run of spaces where a tag used to be, and a space before punctuation that followed one.
     /// </summary>
