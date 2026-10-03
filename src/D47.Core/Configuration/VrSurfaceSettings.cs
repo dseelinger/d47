@@ -106,6 +106,9 @@ public sealed record VrSurfaceSettings
     {
         Distance = 0.9,
         Drop = -0.30,
-        Width = 0.34,
+        Width = MiniWidth,
     };
+
+    /// <summary>The mini quad's default width: wide enough for its avatar with the text at its old apparent size.</summary>
+    public const double MiniWidth = 0.526;
 }

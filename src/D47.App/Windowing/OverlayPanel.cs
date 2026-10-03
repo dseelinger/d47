@@ -444,7 +444,7 @@ public sealed class OverlayPanel : Window
         // the legibility of what is already there changes (#89).
         if (!_sized)
         {
-            // The headset's mini panel is fixed at 512x280 because apparent size there is the pixel count and
+            // The headset's mini panel has a fixed default size because apparent size there is the pixel count and
             // the quad's width in metres together.
             Width = PanelResolution.Mini.Width * factor;
             Height = PanelResolution.Mini.Height * factor;

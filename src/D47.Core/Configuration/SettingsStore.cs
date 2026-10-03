@@ -227,6 +227,31 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
                 shared);
         }
 
+        // The mini panel gained an avatar as wide as it is tall, so a quad at the old default width would draw
+        // its text smaller.
+        if (settings.Vr.MiniWidened < MiniWidening)
+        {
+            var mini = settings.Vr.Mini;
+            var widened = mini.Width == WhatMiniWidthUsedToDefaultTo && string.IsNullOrWhiteSpace(mini.Pixels);
+
+            settings = settings with
+            {
+                Vr = settings.Vr with
+                {
+                    Mini = widened ? mini with { Width = VrSurfaceSettings.MiniWidth } : mini,
+                    MiniWidened = MiniWidening,
+                },
+            };
+
+            if (widened)
+            {
+                logger.LogInformation(
+                    "The VR mini panel now carries its avatar; its width went from {Old} m to {New} m",
+                    WhatMiniWidthUsedToDefaultTo,
+                    VrSurfaceSettings.MiniWidth);
+            }
+        }
+
         if (stamp)
         {
             Save(settings);
@@ -312,6 +337,12 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
     /// <summary>Which revision of the pitch repair this build performs.</summary>
     private const int PitchRepair = 1;
+
+    /// <summary>Which revision of the mini-width repair this build performs.</summary>
+    private const int MiniWidening = 1;
+
+    /// <summary>The mini quad's default width before it carried an avatar.</summary>
+    private const double WhatMiniWidthUsedToDefaultTo = 0.34;
 
     /// <summary>The cores' level for a file that had humor switched on.</summary>
     private const int LegacyHumorLevel = 3;

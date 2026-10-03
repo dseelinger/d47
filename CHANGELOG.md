@@ -10,6 +10,8 @@
 
 Every panel tab has the same header. Under the tabs, a title line names the tab, gives the page's one-line summary, such as how many engineers you have unlocked, and holds the page's search field and controls, with an orange rule beneath it. The face of the ship's AI is a 104-pixel square at the right of the tabs and the title line. Pages no longer repeat the tab's name as their own title, and a page you have opened from another, such as one engineer, has a smaller title under the breadcrumb.
 
+The mini panel, on the desktop overlay and in the headset, shows the face of the ship's AI at its left edge, as tall as the panel, with the messages beside it at the width they had before. It opens at 792 by 280 instead of 512 by 280. The headset mini panel is 0.526 metres wide instead of 0.34, so its text looks the same size; a width you set yourself is kept. The overlay animates the face, and the headset shows the still frame for the current state.
+
 The face on the panel fetches the clips of the core aboard that it does not have yet, from a GitHub release into `datavatar-clips`, at startup and when you switch core. **Avatar animations** under Persona turns it off, and **Privacy and egress** lists it.
 
 The face on the panel plays a short looping clip for the core aboard in each state, such as listening or thinking, when that clip is in `datavatar-clips`. A state with no clip shows the usual mark, and your own pictures in `datavatar` still come first. The headset panel shows the first frame of the clip and does not animate it.

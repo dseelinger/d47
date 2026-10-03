@@ -80,6 +80,9 @@ public static class PanelResolution
             Math.Clamp(height, Vr.VrResize.FewestPixels.Height, Vr.VrResize.MostPixels.Height));
     }
 
-    /// <summary>What a mini panel presents at, which is not on this ladder and is not meant to be.</summary>
-    public static readonly (int Width, int Height) Mini = (512, 280);
+    /// <summary>
+    /// What a mini panel presents at, which is not on this ladder and is not meant to be: a square avatar
+    /// the panel's height, then 512 for the text.
+    /// </summary>
+    public static readonly (int Width, int Height) Mini = (792, 280);
 }

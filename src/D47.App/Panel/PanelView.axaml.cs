@@ -169,6 +169,8 @@ public partial class PanelView : UserControl
 
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
         // each would be three expressions no test can reach.
+        SizeChanged += (_, _) => SizeAvatar();
+
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
         {
             // Before the chrome, because it may move the tab and the chrome is drawn from it.
@@ -1560,8 +1562,7 @@ public partial class PanelView : UserControl
 
         // Down the left, the avatar is the title line's height and sits at its right.
         TitleLine.Margin = left ? default : new Thickness(0, 12, 0, 2);
-        Avatar.Extent = left ? TitleLine.Height : HeaderAvatarExtent;
-        Avatar.VerticalAlignment = left ? VerticalAlignment.Center : VerticalAlignment.Bottom;
+        SizeAvatar();
 
         ApplyChrome();
         return true;
@@ -1569,6 +1570,51 @@ public partial class PanelView : UserControl
 
     /// <summary>The avatar's side with the tabs along the top: from the tab row's top to the title rule.</summary>
     public const double HeaderAvatarExtent = 104;
+
+    /// <summary>Puts the avatar in mini's rail at the left edge, or back at the header's right.</summary>
+    private void PlaceAvatar()
+    {
+        var mini = Mode == PanelMode.Mini;
+
+        MiniRail.IsVisible = mini;
+        MiniRailRule.IsVisible = mini;
+
+        if (mini != ReferenceEquals(Avatar.Parent, MiniRail))
+        {
+            if (mini)
+            {
+                PageHeader.Children.Remove(Avatar);
+                MiniRail.Child = Avatar;
+                Avatar.Margin = default;
+            }
+            else
+            {
+                MiniRail.Child = null;
+                PageHeader.Children.Add(Avatar);
+                Avatar.Margin = new Thickness(16, 0, 0, 0);
+            }
+        }
+
+        SizeAvatar();
+    }
+
+    /// <summary>Mini's avatar is a square the panel's height; the header's follows where the tabs are.</summary>
+    private void SizeAvatar()
+    {
+        if (Mode == PanelMode.Mini)
+        {
+            if (Bounds.Height > 0)
+            {
+                Avatar.Extent = Bounds.Height;
+            }
+
+            Avatar.VerticalAlignment = VerticalAlignment.Center;
+            return;
+        }
+
+        Avatar.Extent = _tabsDownTheLeft ? TitleLine.Height : HeaderAvatarExtent;
+        Avatar.VerticalAlignment = _tabsDownTheLeft ? VerticalAlignment.Center : VerticalAlignment.Bottom;
+    }
 
     /// <summary>Moves the tab strip and its rule into the header grid, or out to the frame as a rail on the left.</summary>
     private void PlaceTabStrip(bool left)
@@ -2217,6 +2263,8 @@ public partial class PanelView : UserControl
         TabStrip.IsVisible = full;
         TabStripRule.IsVisible = full;
         CrumbBar.IsVisible = full && CrumbRow.Children.Count > 0;
+
+        PlaceAvatar();
 
         var modal = ModalPane.Child is not null;
 

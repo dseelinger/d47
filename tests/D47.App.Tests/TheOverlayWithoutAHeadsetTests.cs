@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Input;
 using D47.App.Panel;
 using D47.App.Theming;
@@ -525,6 +526,74 @@ public class TheOverlayWithoutAHeadsetTests
         overlay.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "overlay-mini.png"),
             new PngBitmapEncoderOptions());
+
+        overlay.Close();
+    }
+
+    /// <summary>A square avatar the strip's height at its left edge, a 1px rule, then the text as wide as before (#778).</summary>
+    [AvaloniaFact]
+    public void TheAvatarStandsAtTheLeftAsTallAsTheStrip()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+        var view = overlay.GetVisualDescendants().OfType<PanelView>().Single();
+
+        Assert.Equal(792, overlay.Width);
+        Assert.Equal(280, overlay.Height);
+
+        var avatar = view.GetControl<AvatarView>("Avatar");
+
+        Assert.Same(view.GetControl<Border>("MiniRail"), avatar.Parent);
+        Assert.Equal(new Rect(0, 0, 280, 280), avatar.Bounds);
+
+        var rule = view.GetControl<Border>("MiniRailRule");
+
+        Assert.True(rule.IsVisible);
+        Assert.Equal(280, rule.Bounds.X);
+        Assert.Equal(1, rule.Bounds.Width);
+
+        Assert.Equal(281, view.GetControl<DockPanel>("Frame").Bounds.X - 28);
+
+        overlay.Close();
+    }
+
+    /// <summary>A size the Commander dragged keeps the avatar square at its height; the text takes the rest.</summary>
+    [AvaloniaFact]
+    public void ADraggedStripKeepsItsAvatarSquare()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+        var view = overlay.GetVisualDescendants().OfType<PanelView>().Single();
+
+        overlay.Position = new PixelPoint(100, 100);
+        overlay.Place();
+
+        var corner = new Point(overlay.Width - 2, overlay.Height - 2);
+        var dragged = corner + new Vector(200, 60);
+
+        overlay.MouseDown(corner, MouseButton.Left);
+        overlay.MouseMove(dragged);
+        overlay.MouseUp(dragged, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(340, view.GetControl<AvatarView>("Avatar").Bounds.Width, 3);
+        Assert.Equal(340, view.GetControl<AvatarView>("Avatar").Bounds.Height, 3);
+
+        overlay.Close();
+    }
+
+    /// <summary>Back in the header when the same view goes full.</summary>
+    [AvaloniaFact]
+    public void TheAvatarGoesBackToTheHeaderWhenThePanelIsFull()
+    {
+        var (overlay, _, _, _) = Open(on: true, eliteInFront: true);
+        var view = overlay.GetVisualDescendants().OfType<PanelView>().Single();
+
+        view.Mode = PanelMode.Full;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(view.GetControl<Grid>("PageHeader"), view.GetControl<AvatarView>("Avatar").Parent);
+        Assert.Equal(PanelView.HeaderAvatarExtent, view.GetControl<AvatarView>("Avatar").Extent);
+        Assert.False(view.GetControl<Border>("MiniRail").IsVisible);
+        Assert.False(view.GetControl<Border>("MiniRailRule").IsVisible);
 
         overlay.Close();
     }

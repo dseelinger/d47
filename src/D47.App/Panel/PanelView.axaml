@@ -81,6 +81,19 @@
   </UserControl.Resources>
 
   <Panel>
+  <DockPanel x:Name="Surface">
+
+  <!--
+    Mini's avatar column: a square the panel's height at the left edge, then a 1px rule. The avatar moves
+    here from the header while the panel is mini.
+  -->
+  <Border x:Name="MiniRail" DockPanel.Dock="Left" IsVisible="False" />
+  <Border x:Name="MiniRailRule"
+          DockPanel.Dock="Left"
+          Width="1"
+          IsVisible="False"
+          Background="{DynamicResource D47.Line2}" />
+
   <DockPanel x:Name="Frame" Margin="28,20,28,24">
 
     <!--
@@ -883,6 +896,7 @@
       </DockPanel>
     </Border>
 
+  </DockPanel>
   </DockPanel>
 
   <!--

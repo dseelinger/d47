@@ -356,6 +356,9 @@ public sealed record VrSettings
 
     /// <summary>Which revision of the panel-pitch repair this file has had.</summary>
     public int PitchRepaired { get; init; }
+
+    /// <summary>Which revision of the mini-width repair this file has had.</summary>
+    public int MiniWidened { get; init; }
 }
 
 /// <summary>The microphone and the key that opens it (Phase 6).</summary>
