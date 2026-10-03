@@ -193,6 +193,8 @@ The Callouts setting "A jump is long after" is now labelled "Hyperspace Tunnel D
 
 The Callouts toggle for remarks on a slow hyperspace jump is now "Hyperspace tunnel delays" instead of "Long jumps", so you say "stop calling out hyperspace tunnel delays" to turn it off; "stop calling out long jumps" no longer matches. The settings blurb and the "what are you watching for" list use the same name, the list showing `hyperspace-tunnel-delay: on`.
 
+The Callouts setting "Report route progress every" is now labelled "Report route progress every N jumps", so the label says what the number counts. Its help no longer opens with "In jumps." The value, its default of 3 and the saved setting are unchanged.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

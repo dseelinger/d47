@@ -690,8 +690,8 @@ public static class CalloutCapability
         {
             Key = RouteEveryKey,
             Advanced = true,
-            Label = "Report route progress every",
-            Help = "In jumps. Every 3 is reassuring on a short trip and unbearable on a long one; 0 silences it.",
+            Label = "Report route progress every N jumps",
+            Help = "Every 3 is reassuring on a short trip and unbearable on a long one; 0 silences it.",
             Kind = SettingKind.Number,
             DefaultDisplay = "3",
             DocsAnchor = "route-interval",
