@@ -4,8 +4,12 @@
 Not part of the build. `faults` checks one hidden entry and its card; the hidden layer is published as
 `<id>.sealed` (raw-deflated JSON, then base64) by `publish-story.py`.
 
-Each entry: {"id", "secret", "end", "beats", "scan", "clues", "finale", "options", "cast"}, paced by the
-"length" on its card, one of the keys of LENGTHS.
+Each entry: {"id", "secret", "end", "beats", "opening", "scan", "clues", "finale", "options", "cast"}, paced by
+the "length" on its card, one of the keys of LENGTHS.
+  opening  optional, a story of any length: one or more lines said word for word, in order, at the pick, before
+           the scan line and chapter one. Left out when the story has none; never an empty list.
+           An opening line may carry {commander} ("Commander" and the Commander's name), {their} (his, her or
+           their) and {they} (he, she or they), resolved as the line is spoken, and {name:<cast-id>}; no other token.
   scan     a story of NARRATED lengths only: one line, the Commander's beacon scan before the story opens,
            narrated word for word at the pick. A longer story has none and flies to a real beacon.
   beats    one non-empty line for each beat of the length's sheet, keyed as in BEATS, and no other.
@@ -24,7 +28,7 @@ Each entry: {"id", "secret", "end", "beats", "scan", "clues", "finale", "options
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
            a primary speaker must have a picture when the story is published, is named in the card's blurb
            or inYourWords unless it has versions, and never speaks in the voice "own".
-The scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
+Every opening line, the scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
 import pathlib
@@ -55,6 +59,8 @@ SPEAKERS = ("ship", "narrator")
 VERSIONS = ("forMan", "forWoman")
 CARD_FIELDS = ("blurb", "inYourWords", "beacon")
 NAME_TOKEN = re.compile(r"\{name:([^{}\s]+)\}")
+ANY_TOKEN = re.compile(r"\{[^{}]*\}")
+OPENING_TOKEN = re.compile(r"\{(?:commander|their|they|name:[^{}\s]+)\}")
 
 
 def text(value) -> bool:
@@ -99,6 +105,9 @@ def hidden_texts(entry: dict):
         yield field, entry.get(field)
     for beat, line in (entry.get("beats") or {}).items():
         yield f"beat {beat}", line
+    for at, line in enumerate(entry.get("opening") or []):
+        if isinstance(line, dict):
+            yield f"opening line {at + 1}", line.get("text")
     if isinstance(entry.get("scan"), dict):
         yield "scan line", entry["scan"].get("text")
     for name, key in (("clue", "clues"), ("finale line", "finale")):
@@ -216,8 +225,18 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         ):
             found.append(f"cast member {sid} is primary, and neither blurb nor inYourWords names them")
 
+    opening = entry.get("opening")
+    if "opening" in entry and (not isinstance(opening, list) or not opening):
+        found.append("an opening that is not a list of one or more lines; leave it out when the story has none")
+        opening = []
+    opening = [line if isinstance(line, dict) else {} for line in opening or []]
+    for at, line in enumerate(opening):
+        unknown = sorted({token for token in ANY_TOKEN.findall(line.get("text") or "") if not OPENING_TOKEN.fullmatch(token)})
+        if unknown:
+            found.append(f"opening line {at + 1} has the token {', '.join(unknown)}, not {{commander}}, {{their}}, {{they}} or {{name:<cast-id>}}")
+
     scanned = [scan] if isinstance(scan, dict) else []
-    for name, lines in (("scan line", scanned), ("clue", clues), ("finale line", finale)):
+    for name, lines in (("opening line", opening), ("scan line", scanned), ("clue", clues), ("finale line", finale)):
         for at, line in enumerate(lines):
             if not text(line.get("text")):
                 found.append(f"{name} {at + 1} has no text")

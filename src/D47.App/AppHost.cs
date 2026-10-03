@@ -1149,6 +1149,7 @@ public sealed class AppHost : IDisposable
         var scenes = new SceneTracker();
         var handInOffer = new D47.Core.Conversation.HandInOffer();
         var storyClue = new D47.Core.Stories.StoryClueCallout(fight);
+        Func<string?, bool>? storyOpeningRef = null;
 
         var callouts = BuildCallouts(
             settings,
@@ -1168,7 +1169,8 @@ public sealed class AppHost : IDisposable
             scenes,
             handInOffer,
             marketBook,
-            storyClue);
+            storyClue,
+            commander => storyOpeningRef?.Invoke(commander) == true);
 
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
@@ -2537,6 +2539,9 @@ public sealed class AppHost : IDisposable
         storyDirector.VoicesHere = host.CastVoicesHere;
         storyDirector.VoicesNotReady += host.PostVoicesNotReady;
 
+        // A story's opening is said before any beat of its chapter one.
+        storyOpeningRef = commander => storyDirector.OpeningWaits(commander) || host.IsSayingOpening;
+
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
         {
@@ -2843,10 +2848,18 @@ public sealed class AppHost : IDisposable
                 }
             }
 
-            // A narrated scan is said before the cores it wakes; the story's core comes aboard once the line has been said.
-            if (storyDirector.TakeNarratedScan(commander) is { } narrated)
+            // The opening is said first, then a narrated scan, before the cores it wakes; the story's core comes aboard
+            // once the scan line has been said.
+            var opening = storyDirector.TakeOpening(commander);
+            var narrated = storyDirector.TakeNarratedScan(commander);
+
+            if (opening is not null || narrated is not null)
             {
-                host.NarrateScan(narrated, commander);
+                host.NarrateStart(opening, narrated, commander);
+            }
+
+            if (narrated is not null)
+            {
                 wakings.Add(CoreWaking.Cores, storyDirector.CoreOf(commander), NarratedScanKey, context.Now);
             }
 
@@ -2931,7 +2944,8 @@ public sealed class AppHost : IDisposable
         SceneTracker scenes,
         D47.Core.Conversation.HandInOffer handInOffer,
         D47.Core.Knowledge.MarketBook marketBook,
-        D47.Core.Stories.StoryClueCallout storyClue)
+        D47.Core.Stories.StoryClueCallout storyClue,
+        Func<string?, bool> storyOpening)
     {
         var sceneCallout = new SceneCallout(scenes);
         var surveyedBiology = new SurveyedBiologyCallout(loggers.CreateLogger<SurveyedBiologyCallout>());
@@ -3013,6 +3027,7 @@ public sealed class AppHost : IDisposable
             {
                 HasBackstory = () => !string.IsNullOrWhiteSpace(settings.Current.Llm.AboutMe),
                 NudgeBackstory = () => settings.Current.Callouts.BackstoryNudge,
+                Held = storyOpening,
             })
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
@@ -6453,36 +6468,45 @@ public sealed class AppHost : IDisposable
     /// <summary>What a waking held behind a narrated scan line waits on, in place of a chapter key.</summary>
     private const string NarratedScanKey = "story.scan";
 
-    /// <summary>Narrated scan lines posted and not yet said.</summary>
+    /// <summary>The key prefix of a story's opening lines as they are said.</summary>
+    private const string OpeningKey = "story.opening";
+
+    /// <summary>Narrated scan lines waiting to be said.</summary>
     private int _narratingScans;
 
-    /// <summary>Whether a narrated scan line has been posted and not yet said.</summary>
+    /// <summary>Whether a narrated scan line is waiting to be said.</summary>
     private bool IsNarratingScan => Volatile.Read(ref _narratingScans) > 0;
 
+    /// <summary>Openings whose last line has not yet been said.</summary>
+    private int _sayingOpenings;
+
+    /// <summary>Whether a story's opening is still being said, which holds back the beats of its chapter one.</summary>
+    private bool IsSayingOpening => Volatile.Read(ref _sayingOpenings) > 0;
+
     /// <summary>
-    /// Posts a story's narrated beacon scan to Messages from its speaker and says it word for word: the ship in the
-    /// voice aboard, anyone else in the Narrator's. Called on the tick thread; the speaking runs on the pool.
+    /// Says a picked story's opening lines in order, then its narrated beacon scan, each posted to Messages from its
+    /// speaker and said word for word: the ship in the voice aboard, a cast member in theirs, anyone else in the
+    /// Narrator's. Called on the tick thread; the speaking runs on the pool.
     /// </summary>
-    private void NarrateScan(D47.Core.Stories.StoryScanDue scan, string? commander)
+    private void NarrateStart(D47.Core.Stories.StoryOpeningDue? opening, D47.Core.Stories.StoryScanDue? scan, string? commander)
     {
-        if (scan.Line is not { } line)
+        var openingLines = opening?.Lines ?? [];
+        var scanLine = scan?.Line;
+
+        if (openingLines.Count == 0 && scanLine is null)
         {
             return;
         }
 
-        var voice = Stories?.LineVoice(commander, line.Speaker)
-            ?? new D47.Core.Stories.StoryLineVoice(VoiceRole.Narrator, D47.Core.Messages.MessageStore.Narrator);
-        var ship = voice.Role == VoiceRole.ShipAi;
+        if (openingLines.Count > 0)
+        {
+            Interlocked.Increment(ref _sayingOpenings);
+        }
 
-        var posted = Messages?.Post(
-            voice.From,
-            scan.Title,
-            line.Text,
-            DateTimeOffset.Now,
-            D47.Core.Stories.StoryLines.Key(scan.StoryId),
-            picture: CastPictures.For(voice.Cast),
-            cast: voice.Cast?.Picture);
-        Interlocked.Increment(ref _narratingScans);
+        if (scanLine is not null)
+        {
+            Interlocked.Increment(ref _narratingScans);
+        }
 
         _ = Task.Run(async () =>
         {
@@ -6490,23 +6514,73 @@ public sealed class AppHost : IDisposable
 
             try
             {
-                if (ship)
+                if (opening is not null && openingLines.Count > 0)
                 {
-                    await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+                    try
+                    {
+                        foreach (var line in openingLines)
+                        {
+                            try
+                            {
+                                await NarrateLineAsync(OpeningKey, opening.StoryId, opening.Title, line, commander).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "A line of the story opening could not be spoken");
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        Interlocked.Decrement(ref _sayingOpenings);
+                    }
                 }
 
-                Keep(posted, await SayAsync(Voiced(new Announcement($"{NarratedScanKey}.{scan.StoryId}", line.Text), voice)).ConfigureAwait(false));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "The narrated beacon scan could not be spoken");
+                if (scan is not null && scanLine is not null)
+                {
+                    try
+                    {
+                        await NarrateLineAsync(NarratedScanKey, scan.StoryId, scan.Title, scanLine, commander).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "The narrated beacon scan could not be spoken");
+                    }
+                    finally
+                    {
+                        Interlocked.Decrement(ref _narratingScans);
+                    }
+                }
             }
             finally
             {
                 _speaking.Release();
-                Interlocked.Decrement(ref _narratingScans);
             }
         });
+    }
+
+    /// <summary>Posts one fixed story line to Messages and says it, with its Commander tokens resolved now. Call holding <see cref="_speaking"/>.</summary>
+    private async Task NarrateLineAsync(string key, string storyId, string title, D47.Core.Stories.StoryLine line, string? commander)
+    {
+        var voice = Stories?.LineVoice(commander, line.Speaker)
+            ?? new D47.Core.Stories.StoryLineVoice(VoiceRole.Narrator, D47.Core.Messages.MessageStore.Narrator);
+        var text = D47.Core.Stories.StorySecret.ForCommander(line.Text, GameState.Active?.Identity.Name, Stories?.Gender());
+
+        var posted = Messages?.Post(
+            voice.From,
+            title,
+            text,
+            DateTimeOffset.Now,
+            D47.Core.Stories.StoryLines.Key(storyId),
+            picture: CastPictures.For(voice.Cast),
+            cast: voice.Cast?.Picture);
+
+        if (voice.Role == VoiceRole.ShipAi)
+        {
+            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+        }
+
+        Keep(posted, await SayAsync(Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
     }
 
     /// <summary>

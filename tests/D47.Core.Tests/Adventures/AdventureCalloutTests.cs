@@ -100,6 +100,23 @@ public class AdventureCalloutTests : IDisposable
     }
 
     [Fact]
+    public void AHeldOpeningWaitsUntilTheHoldLifts()
+    {
+        var (book, _) = Wired();
+        var held = true;
+        var callout = new AdventureCallout(book) { Held = commander => held && commander == "F1" };
+        book.Abandon("F1", "the-lantern-route", Accepted);
+        book.Begin("F1", "the-lantern-route", Accepted.AddMinutes(1));
+
+        Assert.Empty(callout.Examine(At(Accepted.AddMinutes(1), [])));
+        Assert.Empty(callout.Examine(At(Accepted.AddMinutes(2), [])));
+
+        held = false;
+
+        Assert.Equal("adventure.the-lantern-route.opening", Assert.Single(callout.Examine(At(Accepted.AddMinutes(3), []))).Key);
+    }
+
+    [Fact]
     public void ABeatDueMidDangerIsDroppedAndNotSaidLate()
     {
         var (book, callout) = Wired();

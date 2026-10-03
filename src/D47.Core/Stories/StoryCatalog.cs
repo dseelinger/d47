@@ -410,6 +410,9 @@ public sealed partial record StorySecret
 
     public StoryBeats Beats { get; init; } = new();
 
+    /// <summary>Fixed lines said in order at the pick, before the scan line and chapter one; null when the story has none.</summary>
+    public IReadOnlyList<StoryLine>? Opening { get; init; }
+
     /// <summary>The Commander's beacon scan before the story opens, narrated at the pick; only a story whose length narrates the scan has one.</summary>
     public StoryLine? Scan { get; init; }
 
@@ -496,6 +499,7 @@ public sealed partial record StorySecret
                 Finale = Maybe(Beats.Finale),
                 FinalImage = Maybe(Beats.FinalImage),
             },
+            Opening = Opening is null ? null : [.. Opening.Select(line => line with { Text = Resolve(line.Text) })],
             Scan = Scan is null ? null : Scan with { Text = Resolve(Scan.Text) },
             Clues = [.. Clues.Select(line => line with { Text = Resolve(line.Text) })],
             Finale = [.. Finale.Select(line => line with { Text = Resolve(line.Text) })],
@@ -508,9 +512,43 @@ public sealed partial record StorySecret
     [GeneratedRegex(@"\{name:([^{}\s]+)\}")]
     public static partial Regex NameToken();
 
-    /// <summary>The scan line, then every clue and finale line, named by its place.</summary>
+    /// <summary>A <c>{commander}</c>, <c>{their}</c> or <c>{they}</c> token; group 1 is the word.</summary>
+    [GeneratedRegex(@"\{(commander|their|they)\}")]
+    public static partial Regex CommanderToken();
+
+    /// <summary>Any <c>{…}</c> token.</summary>
+    [GeneratedRegex(@"\{[^{}]*\}")]
+    private static partial Regex AnyToken();
+
+    /// <summary>A whole token a story line may carry: a Commander token or a name token.</summary>
+    [GeneratedRegex(@"^\{(?:commander|their|they|name:[^{}\s]+)\}$")]
+    private static partial Regex KnownToken();
+
+    /// <summary>The <c>{…}</c> tokens in <paramref name="text"/> that are neither a Commander token nor a name token.</summary>
+    public static IEnumerable<string> UnknownTokens(string text) =>
+        AnyToken().Matches(text).Select(match => match.Value).Where(token => !KnownToken().IsMatch(token)).Distinct(StringComparer.Ordinal);
+
+    /// <summary>
+    /// <paramref name="text"/> with its Commander tokens replaced for a Commander called <paramref name="name"/> of
+    /// <paramref name="gender"/>: "Commander" and the name, or "Commander" alone; "his", "her" or "their"; "he", "she"
+    /// or "they". Resolve as the line is spoken, not at the pick.
+    /// </summary>
+    public static string ForCommander(string text, string? name, string? gender)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        return CommanderToken().Replace(text, match => match.Groups[1].Value switch
+        {
+            "commander" => string.IsNullOrWhiteSpace(name) ? "Commander" : $"Commander {name.Trim()}",
+            "their" => gender switch { CommanderGender.Man => "his", CommanderGender.Woman => "her", _ => "their" },
+            _ => gender switch { CommanderGender.Man => "he", CommanderGender.Woman => "she", _ => "they" },
+        });
+    }
+
+    /// <summary>The opening lines, the scan line, then every clue and finale line, named by its place.</summary>
     public IEnumerable<(string Field, StoryLine Line)> Lines() =>
-        (Scan is null ? [] : new[] { ("scan", Scan) })
+        (Opening ?? []).Select((line, at) => ($"opening[{at.ToString(CultureInfo.InvariantCulture)}]", line))
+            .Concat(Scan is null ? [] : new[] { ("scan", Scan) })
             .Concat(Clues.Select((line, at) => ($"clues[{at.ToString(CultureInfo.InvariantCulture)}]", line))
             .Concat(Finale.Select((line, at) => ($"finale[{at.ToString(CultureInfo.InvariantCulture)}]", line))));
 }
@@ -818,6 +856,25 @@ public sealed class StoryCatalog
                 {
                     yield return $"{field} names {cast} with a token, and {cast} has no versions.";
                 }
+            }
+        }
+
+        if (secret.Opening is { Count: 0 })
+        {
+            yield return "opening is empty; leave it out when the story has none.";
+        }
+
+        foreach (var (at, line) in (secret.Opening ?? []).Select((line, at) => (at, line)))
+        {
+            var name = $"opening[{at.ToString(CultureInfo.InvariantCulture)}]";
+
+            if (string.IsNullOrWhiteSpace(line.Text))
+            {
+                yield return $"{name} has no text.";
+            }
+            else if (StorySecret.UnknownTokens(line.Text).Any())
+            {
+                yield return $"{name} has a token that is not {{commander}}, {{their}}, {{they}} or {{name:<cast-id>}}.";
             }
         }
 

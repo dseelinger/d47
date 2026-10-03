@@ -38,6 +38,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>Whether the Backstory nudge is switched on.</summary>
     public Func<bool> NudgeBackstory { get; init; } = () => true;
 
+    /// <summary>Whether a Commander's reached beats wait, unsaid, behind lines that must be said first.</summary>
+    public Func<string?, bool> Held { get; init; } = _ => false;
+
     /// <summary>How long a reached beat waits before it is said.</summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(20);
 
@@ -218,7 +221,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                        && (context.Status.Has(StatusFlags.InDanger) || context.Status.Has(StatusFlags.BeingInterdicted));
 
         var due = _waiting
-            .Where(moment => moment.IsOpening || context.Now - moment.At >= Settle)
+            .Where(moment => (moment.IsOpening || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
             .ToList();
 
         foreach (var moment in due)

@@ -9,6 +9,9 @@ namespace D47.Core.Stories;
 /// <summary>A story picked with a narrated beacon scan, waiting for the tick to say its scan line and wake the cores. <see cref="Line"/> is null when the entry has none.</summary>
 public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line);
 
+/// <summary>A story picked with fixed opening lines, waiting for the tick to say them before anything else of the story.</summary>
+public sealed record StoryOpeningDue(string StoryId, string Title, IReadOnlyList<StoryLine> Lines);
+
 /// <summary>
 /// Runs a stock story as a chain of adventures: Pick writes and begins chapter one, and a finished chapter has
 /// the next written and begun.
@@ -35,6 +38,9 @@ public sealed class StoryDirector(
 
     /// <summary>Narrated scans picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryScanDue> _scans = new(StringComparer.Ordinal);
+
+    /// <summary>Openings picked and not yet taken by the tick, by Commander.</summary>
+    private readonly Dictionary<string, StoryOpeningDue> _openings = new(StringComparer.Ordinal);
 
     private JournalLocation _where = JournalLocation.Unknown;
 
@@ -278,11 +284,24 @@ public sealed class StoryDirector(
         stories.Save(frontierId, story);
         logger.LogInformation("Picked the story {Title}", card.Title);
 
-        if (narrated)
+        var hidden = Hidden(card.Id);
+
+        lock (_gate)
         {
-            lock (_gate)
+            var who = frontierId ?? AdventureStore.NoCommander;
+
+            if (hidden?.Opening is { Count: > 0 } opening)
             {
-                _scans[frontierId ?? AdventureStore.NoCommander] = new StoryScanDue(card.Id, card.Title, Hidden(card.Id)?.Scan);
+                _openings[who] = new StoryOpeningDue(card.Id, card.Title, opening);
+            }
+            else
+            {
+                _openings.Remove(who);
+            }
+
+            if (narrated)
+            {
+                _scans[who] = new StoryScanDue(card.Id, card.Title, hidden?.Scan);
             }
         }
 
@@ -672,6 +691,37 @@ public sealed class StoryDirector(
                && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
             ? due
             : null;
+    }
+
+    /// <summary>
+    /// The opening of the story just picked, once, while it is still the running story; the caller says its lines before
+    /// the narrated scan and chapter one. Null when none waits.
+    /// </summary>
+    public StoryOpeningDue? TakeOpening(string? frontierId)
+    {
+        StoryOpeningDue? due;
+
+        lock (_gate)
+        {
+            if (!_openings.Remove(frontierId ?? AdventureStore.NoCommander, out due))
+            {
+                return null;
+            }
+        }
+
+        return stories.Current(frontierId) is { State: StoryState.Running } story
+               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
+            ? due
+            : null;
+    }
+
+    /// <summary>Whether an opening has been picked and not yet taken by <see cref="TakeOpening"/>.</summary>
+    public bool OpeningWaits(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _openings.ContainsKey(frontierId ?? AdventureStore.NoCommander);
+        }
     }
 
     /// <summary>The Guardian core the current story is written for, or null when no story is current.</summary>

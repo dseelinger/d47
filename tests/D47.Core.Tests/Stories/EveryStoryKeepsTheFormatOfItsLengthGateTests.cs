@@ -35,6 +35,13 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
 
     private static readonly StorySpeaker Speaker = Secret.Cast[0];
 
+    /// <summary>An opening of a call from the cast and a Narrator line naming the Commander.</summary>
+    private static readonly IReadOnlyList<StoryLine> Opening =
+    [
+        new("Mayday, mayday.", Speaker.Id),
+        new("{commander} heard {their} own voice, which {they} knew.", StorySpeaker.Narrator),
+    ];
+
     private static (string Named, StoryCard Card, StorySecret? Secret) Broken(string rule) => rule switch
     {
         "genre" => ("genre", Card with { Genre = "Western" }, Secret),
@@ -74,6 +81,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "effect-listed-twice" => ("twice", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 5), new("glitch", 9)] }] }),
         "line-without-speaker" => ("no speaker", Card, Secret with { Clues = [Secret.Clues[0] with { Speaker = "" }, .. Secret.Clues.Skip(1)] }),
         "line-by-a-stranger" => ("not the ship, the narrator or in the cast", Card, Secret with { Finale = [Secret.Finale[0] with { Speaker = "stranger" }, .. Secret.Finale.Skip(1)] }),
+        "opening-by-a-stranger" => ("opening[0] is spoken by stranger", Card, Secret with { Opening = [Opening[0] with { Speaker = "stranger" }] }),
+        "empty-opening" => ("opening is empty", Card, Secret with { Opening = [] }),
+        "opening-without-text" => ("opening[1] has no text", Card, Secret with { Opening = [Opening[0], Opening[1] with { Text = " " }] }),
+        "opening-with-another-token" => ("opening[0] has a token", Card, Secret with { Opening = [Opening[0] with { Text = "Mayday on {date}." }] }),
         _ => throw new ArgumentOutOfRangeException(nameof(rule), rule, null),
     };
 
@@ -84,6 +95,13 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [Fact]
     public void AWeekLongStoryWithAWeeksLinesAndBeatsKeepsTheFormat() =>
         Assert.Empty(new StoryCatalog([WeekCard], () => [Week]).Faults());
+
+    [Fact]
+    public void AStoryOfAnyLengthMayOpenWithFixedLines()
+    {
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Opening = Opening }]).Faults());
+        Assert.Empty(new StoryCatalog([WeekCard], () => [Week with { Opening = Opening }]).Faults());
+    }
 
     [Fact]
     public void EveryCardNamesALength() =>
@@ -137,6 +155,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("effect-listed-twice")]
     [InlineData("line-without-speaker")]
     [InlineData("line-by-a-stranger")]
+    [InlineData("opening-by-a-stranger")]
+    [InlineData("empty-opening")]
+    [InlineData("opening-without-text")]
+    [InlineData("opening-with-another-token")]
     public void ABrokenRuleIsAFault(string rule)
     {
         var (named, card, secret) = Broken(rule);
