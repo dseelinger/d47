@@ -304,7 +304,8 @@ public static class EgressDisclosure
             NameOf(OwnVoice),
             "A recording of your voice, if you make one, is kept in data\\voice\\own.bin on this PC, encrypted "
             + "for your Windows user, and never sent anywhere. It is decrypted into memory only, to speak story "
-            + "lines in your voice through Chatterbox.",
+            + "lines in your voice through Chatterbox. A message spoken in your voice keeps its clip in "
+            + "data\\messages\\, encrypted the same way, and deleting the recording deletes those clips.",
             summary: "Kept on this PC, encrypted for your Windows user, and never sent anywhere."),
 
         ChosenPictures => EgressEntry.Silent(

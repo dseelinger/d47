@@ -1162,11 +1162,28 @@ The recording is resampled to 24 kHz mono and kept in `data\voice\own.bin`, encr
 data protection for your Windows user, so it cannot be read by another account or on another PC.
 It is decrypted into memory only, and no WAV of it is written. It is never sent anywhere, and the
 **Your recorded voice** entry under **Privacy and egress** says so. It is not kept by the audio
-recorder either.
+recorder either. A message spoken in your voice keeps its clip encrypted the same way; see
+[Spoken messages keep their clip](#kept-clips).
 
 No voice picker offers your voice; only a story's cast names it, as the voice `own`. A line cast in
 it with no recording saved is not spoken. Like every Chatterbox line, each one spoken in your voice
 carries Resemble's Perth watermark.
+
+#### Spoken messages keep their clip {#kept-clips}
+
+A line that is posted to **Messages** as it is said, such as a story beat, a clue, a nudge, a beacon
+scan or an ending, keeps the audio that was played. Open the message and press **Play** to hear it
+again, on the speech channel and captioned with the message's text. Pressing **Play** on another
+message stops the first. A message that was not spoken has no **Play** button.
+
+Play does not synthesise the line again, so a paid provider is not billed twice, the line sounds the
+same, and a voice you have since removed can still be heard. Each message records the provider and
+voice that spoke it.
+
+The clips are kept in `data\messages\`, one file per message. A message spoken in your own voice
+keeps its clip encrypted for your Windows user, like the recording; every other clip is a WAV. When a
+message leaves Messages, at the 200 limit or with its story, its clip is deleted. Deleting your
+recording deletes every clip spoken in it and keeps those messages' text.
 
 #### What the voice providers receive {#egress}
 

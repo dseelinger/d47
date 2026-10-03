@@ -1058,7 +1058,8 @@ public sealed class AppHost : IDisposable
 
         var messageStore = new D47.Core.Messages.MessageStore(
             Path.Combine(paths.Data, "messages.json"),
-            loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>());
+            loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>(),
+            new D47.Core.Messages.MessageClips(Path.Combine(paths.Data, "messages"), new DpapiSecretProtector()));
 
         var adventureBook = new D47.Core.Adventures.AdventureBook(
             adventureStore, loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>());
@@ -2528,6 +2529,20 @@ public sealed class AppHost : IDisposable
         host.StoryDownloads = storyDownloads;
         endingAnswer.Answer = host.AnswerEnding;
         host.Messages = messageStore;
+
+        // Deleting the recording deletes every clip spoken in it; the messages keep their text.
+        host.OwnVoice.Changed += () =>
+        {
+            if (!host.OwnVoice.Exists)
+            {
+                _ = Task.Run(messageStore.ForgetOwnVoice);
+            }
+        };
+
+        if (!host.OwnVoice.Exists)
+        {
+            _ = Task.Run(messageStore.ForgetOwnVoice);
+        }
         host.Galaxy = galaxy;
         host.JournalDirectory = journalDirectory;
         host.History = history;
@@ -4401,7 +4416,7 @@ public sealed class AppHost : IDisposable
 
         var storyId = Stories?.Stories.Current(GameState.Active?.Identity.FrontierId)?.Id;
 
-        Messages?.Post(
+        var posted = Messages?.Post(
             Personas.Current.Id,
             "Guardian cores",
             line,
@@ -4415,7 +4430,7 @@ public sealed class AppHost : IDisposable
             try
             {
                 await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-                await SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false);
+                Keep(posted, await SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false));
             }
             catch (Exception ex)
             {
@@ -5221,6 +5236,36 @@ public sealed class AppHost : IDisposable
         Audio.Enqueue(OwnVoiceRecording.Playback(clip));
     }
 
+    /// <summary>The group a message's kept clip plays in, so Play on another message stops the first.</summary>
+    internal const string MessagePlaybackGroup = "message-playback";
+
+    /// <summary>
+    /// Plays the clip a spoken message kept, on the speech channel and captioned with its text. Returns why it
+    /// cannot, or null once it is queued. Reads the file, so call it off the UI thread.
+    /// </summary>
+    public string? PlayMessage(D47.Core.Messages.D47Message message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        if (Messages?.ClipOf(message) is not { } clip)
+        {
+            return message.Clip is null
+                ? "That message was not spoken."
+                : "Its recording could not be read on this PC.";
+        }
+
+        Audio.DropGroup(MessagePlaybackGroup);
+        Audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = PcmConverter.ToStandard(clip),
+            Group = MessagePlaybackGroup,
+            Caption = message.Body,
+        });
+
+        return null;
+    }
+
     private void ApplyListeningSettings()
     {
         var listening = Settings.Current.Listening;
@@ -5873,7 +5918,8 @@ public sealed class AppHost : IDisposable
                 && text.Contains(name, StringComparison.OrdinalIgnoreCase))
             .Select(name => name!)];
 
-    private async Task SayAsync(Announcement announcement)
+    /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
+    private async Task<SpokenClip?> SayAsync(Announcement announcement)
     {
         // The voice takes the pronoun; everything written below keeps the name, so a Commander scrolling back
         // can always see which system "it" was.
@@ -5903,7 +5949,7 @@ public sealed class AppHost : IDisposable
             Turns.Said(spoken);
         }
 
-        await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
+        return await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
     }
 
     /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
@@ -6229,7 +6275,7 @@ public sealed class AppHost : IDisposable
             _ => cast?.Name ?? D47.Core.Messages.MessageStore.Narrator,
         };
 
-        Messages?.Post(
+        var posted = Messages?.Post(
             from,
             scan.Title,
             line.Text,
@@ -6249,10 +6295,10 @@ public sealed class AppHost : IDisposable
                     await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
                 }
 
-                await SayAsync(new Announcement($"{NarratedScanKey}.{scan.StoryId}", line.Text)
+                Keep(posted, await SayAsync(new Announcement($"{NarratedScanKey}.{scan.StoryId}", line.Text)
                 {
                     Voice = ship ? VoiceRole.ShipAi : VoiceRole.Narrator,
-                }).ConfigureAwait(false);
+                }).ConfigureAwait(false));
             }
             catch (Exception ex)
             {
@@ -6296,7 +6342,7 @@ public sealed class AppHost : IDisposable
 
                 var options = due.Options.Select(option => new D47.Core.Messages.MessageAnswer(option.Id, option.Label)).ToList();
 
-                Messages?.Post(
+                var posted = Messages?.Post(
                     voice == VoiceRole.Narrator ? D47.Core.Messages.MessageStore.Narrator : Personas.Current.Id,
                     due.Title,
                     said,
@@ -6305,7 +6351,7 @@ public sealed class AppHost : IDisposable
                     options);
 
                 stories.EndingPosted(commander, due.StoryId, DateTimeOffset.Now);
-                await SpeakStoryLinesAsync(key, [said]).ConfigureAwait(false);
+                await SpeakStoryLinesAsync(key, [(said, posted)]).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -6342,16 +6388,16 @@ public sealed class AppHost : IDisposable
         var lines = new List<string> { answer.After };
         lines.AddRange(answer.Wakings);
 
-        foreach (var line in lines)
-        {
-            Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now, D47.Core.Stories.StoryEnding.Key(storyId));
-        }
+        var posted = lines
+            .Select(line => (line, Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now, D47.Core.Stories.StoryEnding.Key(storyId))))
+            .ToList();
 
-        _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", lines));
+        _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", posted));
         return answer;
     }
 
-    private async Task SpeakStoryLinesAsync(string key, IReadOnlyList<string> lines)
+    /// <summary>Says each line in the ship's voice, keeping each clip on the message posted for it.</summary>
+    private async Task SpeakStoryLinesAsync(string key, IReadOnlyList<(string Line, D47.Core.Messages.D47Message? Posted)> lines)
     {
         await _speaking.WaitAsync().ConfigureAwait(false);
 
@@ -6359,9 +6405,9 @@ public sealed class AppHost : IDisposable
         {
             await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
 
-            foreach (var line in lines)
+            foreach (var (line, posted) in lines)
             {
-                await SayAsync(new Announcement(key, line)).ConfigureAwait(false);
+                Keep(posted, await SayAsync(new Announcement(key, line)).ConfigureAwait(false));
             }
         }
         catch (Exception ex)
@@ -6374,8 +6420,17 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>Keeps a spoken clip on the message posted for it. Called on the pool once synthesis has finished.</summary>
+    private void Keep(D47.Core.Messages.D47Message? posted, SpokenClip? spoken)
+    {
+        if (posted is not null && spoken is not null)
+        {
+            Messages?.Attach(posted.Key, spoken);
+        }
+    }
+
     /// <summary>A spoken clue, marked given and posted to Messages from whoever said it.</summary>
-    private void RecordClue(Announcement announcement)
+    private void RecordClue(Announcement announcement, SpokenClip? spoken)
     {
         if (Stories is not { } stories
             || D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is not { } due)
@@ -6393,7 +6448,8 @@ public sealed class AppHost : IDisposable
             title,
             announcement.Text,
             DateTimeOffset.Now,
-            announcement.Key);
+            announcement.Key,
+            spoken: spoken);
     }
 
     /// <summary>
@@ -6801,7 +6857,7 @@ public sealed class AppHost : IDisposable
                         beat = 0;
                     }
 
-                    await SayAsync(announcement).ConfigureAwait(false);
+                    var spoken = await SayAsync(announcement).ConfigureAwait(false);
 
                     if (JoinsConversation(announcement))
                     {
@@ -6821,9 +6877,9 @@ public sealed class AppHost : IDisposable
                     }
 
                     // What the Commander actually heard about a story, kept (asked for 2026-08-22).
-                    RecordAdventure(announcement);
-                    RecordNudge(announcement);
-                    RecordClue(announcement);
+                    RecordAdventure(announcement, spoken);
+                    RecordNudge(announcement, spoken);
+                    RecordClue(announcement, spoken);
 
                     // After the fact has been spoken, and not awaited: the search is a round trip through
                     // somebody else's index, and the rest of this batch is where a danger callout would be
@@ -6863,7 +6919,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>A beat, as it was said, onto the story's own feed (asked for 2026-08-22).</summary>
-    private void RecordAdventure(Announcement announcement)
+    private void RecordAdventure(Announcement announcement, SpokenClip? spoken)
     {
         if (Adventures is not { } adventures
             || D47.Core.Adventures.AdventureCallout.Reached(announcement.Key) is not var (key, beat))
@@ -6878,7 +6934,7 @@ public sealed class AppHost : IDisposable
         if (Messages is { } messages)
         {
             D47.Core.Adventures.AdventureMessages.Post(
-                messages, Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now);
+                messages, Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken);
         }
 
         adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
@@ -6928,7 +6984,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>A spoken nudge, posted to Messages from the narrator and kept on the story's feed.</summary>
-    private void RecordNudge(Announcement announcement)
+    private void RecordNudge(Announcement announcement, SpokenClip? spoken)
     {
         if (Adventures is not { } adventures
             || D47.Core.Callouts.NarratorCallout.Nudged(announcement.Key) is not { } key)
@@ -6940,7 +6996,7 @@ public sealed class AppHost : IDisposable
         var story = adventures.Book.Standing(commander, key);
         var now = DateTimeOffset.Now;
 
-        Messages?.Post("narrator", story?.Adventure.Name ?? key, announcement.Text, now, key);
+        Messages?.Post("narrator", story?.Adventure.Name ?? key, announcement.Text, now, key, spoken: spoken);
 
         adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
         {

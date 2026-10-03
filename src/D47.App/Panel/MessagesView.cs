@@ -95,6 +95,11 @@ public sealed class MessagesView : UserControl
 
         page.Children.Add(AdventuresPage.Text(message.Body, TypeScale.Body));
 
+        if (message.Clip is not null && _surface?.PlayMessage is { } play)
+        {
+            page.Children.Add(Playing(message, play));
+        }
+
         if (message.Answers.Count > 0)
         {
             page.Children.Add(Answering(message));
@@ -197,6 +202,17 @@ public sealed class MessagesView : UserControl
             Children = { change, restore },
         });
         holder.Children.Add(status);
+    }
+
+    /// <summary>Play, for a message that kept the clip it was spoken in.</summary>
+    private static StackPanel Playing(D47Message message, Func<D47Message, string?> play)
+    {
+        var status = AdventuresPage.Text(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
+        var button = new Button { Content = "Play", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+
+        button.Click += async (_, _) => status.Text = await Task.Run(() => play(message)) ?? string.Empty;
+
+        return new StackPanel { Spacing = 4, Children = { button, status } };
     }
 
     /// <summary>The options an ending message offers while it is unanswered, and the choice once it is made.</summary>

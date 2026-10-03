@@ -24,7 +24,16 @@ public sealed record D47Message
 
     /// <summary>The answers the Commander may give, when the message asks for one.</summary>
     public IReadOnlyList<MessageAnswer> Answers { get; init; } = [];
+
+    /// <summary>The file name of the clip that was played, under <see cref="MessageClips.Folder"/>, when the message was spoken.</summary>
+    public string? Clip { get; init; }
+
+    /// <summary>The provider and voice that spoke the clip.</summary>
+    public MessageVoice? Voice { get; init; }
 }
 
 /// <summary>One answer a message offers.</summary>
 public sealed record MessageAnswer(string Id, string Label);
+
+/// <summary>The provider id and voice id a message was spoken in.</summary>
+public sealed record MessageVoice(string Provider, string? Id);

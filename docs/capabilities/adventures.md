@@ -310,7 +310,8 @@ It also costs nothing: none of this is on the advertised tool surface.
 
 Every beat the ship's AI says is also kept as a written message, so a line said during a fight is not
 lost. Open **Messages** on the Adventures tab: newest first, unread in bold, and the button carries the
-unread count. Opening a message marks it read.
+unread count. Opening a message marks it read. A message that was spoken has a **Play** button that
+plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
 
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
 message goes first.

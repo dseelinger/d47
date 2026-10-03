@@ -194,7 +194,8 @@ public partial class MainWindow : Window
                     option => host.AnswerEnding(option).Refusal,
                     host.StoryDownloads,
                     new StoryFilterMemory(host.ViewState),
-                    host.CastPictures);
+                    host.CastPictures,
+                    host.PlayMessage);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));

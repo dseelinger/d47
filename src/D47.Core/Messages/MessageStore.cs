@@ -1,11 +1,15 @@
 using System.Text.Json;
+using D47.Core.Audio;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Messages;
 
-/// <summary>The Commander's messages on disk — <c>data/messages.json</c>, append-only and capped.</summary>
-public sealed class MessageStore(string path, ILogger<MessageStore> logger)
+/// <summary>
+/// The Commander's messages on disk — <c>data/messages.json</c>, append-only and capped — with the clips spoken
+/// messages keep, deleted with their message.
+/// </summary>
+public sealed class MessageStore(string path, ILogger<MessageStore> logger, MessageClips? clips = null)
 {
     public const string Narrator = "narrator";
 
@@ -48,14 +52,16 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
         }
     }
 
-    public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null, string? picture = null)
+    /// <summary>Posts a message, keeping <paramref name="spoken"/> as its clip. Writes files, so never call it on the tick.</summary>
+    public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null, string? picture = null, SpokenClip? spoken = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(from);
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
 
+        var key = Guid.NewGuid().ToString("N");
         var message = new D47Message
         {
-            Key = Guid.NewGuid().ToString("N"),
+            Key = key,
             Sent = sent,
             From = from,
             Subject = subject,
@@ -65,6 +71,11 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
             Picture = picture,
         };
 
+        if (spoken is not null && SaveClip(key, spoken) is { } file)
+        {
+            message = message with { Clip = file, Voice = new MessageVoice(spoken.Provider, spoken.VoiceId) };
+        }
+
         lock (_gate)
         {
             var messages = Loaded();
@@ -73,7 +84,10 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
             while (messages.Count > Capacity)
             {
                 var oldestRead = messages.FindIndex(other => other.Read);
-                messages.RemoveAt(oldestRead >= 0 ? oldestRead : 0);
+                var at = oldestRead >= 0 ? oldestRead : 0;
+
+                DeleteClip(messages[at]);
+                messages.RemoveAt(at);
             }
 
             Write(messages);
@@ -81,6 +95,86 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
 
         Changed?.Invoke();
         return message;
+    }
+
+    /// <summary>
+    /// Keeps <paramref name="spoken"/> as the clip of a message already posted; false when the message has gone.
+    /// Writes files, so never call it on the tick.
+    /// </summary>
+    public bool Attach(string key, SpokenClip spoken)
+    {
+        ArgumentNullException.ThrowIfNull(spoken);
+
+        if (SaveClip(key, spoken) is not { } file)
+        {
+            return false;
+        }
+
+        lock (_gate)
+        {
+            var messages = Loaded();
+            var index = messages.FindIndex(message => message.Key == key);
+
+            if (index < 0)
+            {
+                clips?.Delete(file);
+                return false;
+            }
+
+            if (messages[index].Clip is { } earlier && earlier != file)
+            {
+                clips?.Delete(earlier);
+            }
+
+            messages[index] = messages[index] with { Clip = file, Voice = new MessageVoice(spoken.Provider, spoken.VoiceId) };
+            Write(messages);
+        }
+
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>The message's clip, read and decrypted into memory, or null when it has none or it cannot be read.</summary>
+    public AudioClip? ClipOf(D47Message message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        return message.Clip is { } file ? clips?.Load(file, message.Body) : null;
+    }
+
+    /// <summary>
+    /// Deletes every clip spoken in the Commander's own voice and keeps those messages' text; returns the count.
+    /// </summary>
+    public int ForgetOwnVoice()
+    {
+        var forgotten = 0;
+
+        lock (_gate)
+        {
+            var messages = Loaded();
+
+            for (var i = 0; i < messages.Count; i++)
+            {
+                if (messages[i].Clip is { } file && MessageClips.IsProtected(file))
+                {
+                    clips?.Delete(file);
+                    messages[i] = messages[i] with { Clip = null, Voice = null };
+                    forgotten++;
+                }
+            }
+
+            if (forgotten > 0)
+            {
+                Write(messages);
+            }
+        }
+
+        if (forgotten > 0)
+        {
+            Changed?.Invoke();
+        }
+
+        return forgotten;
     }
 
     /// <summary>Marks one read; false when there is no such message or it already was.</summary>
@@ -114,6 +208,12 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
         lock (_gate)
         {
             var messages = Loaded();
+
+            foreach (var message in messages.Where(message => message.AdventureKey is { } key && !owned(key)))
+            {
+                DeleteClip(message);
+            }
+
             removed = messages.RemoveAll(message => message.AdventureKey is { } key && !owned(key));
 
             if (removed > 0)
@@ -149,8 +249,44 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger)
             _messages = [];
         }
 
+        SweepClips(_messages);
         return _messages;
     }
+
+    private string? SaveClip(string key, SpokenClip spoken)
+    {
+        if (clips is null || spoken.Parts.Count == 0)
+        {
+            return null;
+        }
+
+        // Read first: the first read sweeps files no message names, which would take this one.
+        lock (_gate)
+        {
+            Loaded();
+        }
+
+        try
+        {
+            return clips.Save(key, spoken);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException)
+        {
+            logger.LogWarning(ex, "Could not keep the clip for message {Key}", key);
+            return null;
+        }
+    }
+
+    private void DeleteClip(D47Message message)
+    {
+        if (message.Clip is { } file)
+        {
+            clips?.Delete(file);
+        }
+    }
+
+    private void SweepClips(List<D47Message> messages) =>
+        clips?.Sweep(messages.Select(message => message.Clip).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase));
 
     private void Write(List<D47Message> messages)
     {

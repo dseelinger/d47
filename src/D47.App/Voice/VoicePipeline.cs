@@ -196,7 +196,7 @@ public sealed class VoicePipeline(
         return result;
     }
 
-    /// <summary>Says something without a turn behind it.</summary>
+    /// <summary>Says something without a turn behind it, and returns what was queued to play.</summary>
     /// <param name="speaker">
     /// Who is talking, for the log line that records which voice said it.
     /// </param>
@@ -205,7 +205,7 @@ public sealed class VoicePipeline(
     /// over-the-air role gets a radio link, the ship AI gets its Guardian treatment where one is
     /// switched on, and every other role is unchanged (#225).
     /// </param>
-    public async Task AnnounceAsync(
+    public async Task<SpokenClip?> AnnounceAsync(
         string text,
         AudioChannel channel = AudioChannel.Speech,
         VoiceSelection? voice = null,
@@ -220,7 +220,7 @@ public sealed class VoicePipeline(
     {
         if (Speaker(slot) is not { } provider)
         {
-            return;
+            return null;
         }
 
         var applied = colour ?? Colour(role, overheard: overheard);
@@ -241,13 +241,16 @@ public sealed class VoicePipeline(
             Synthesised,
             captionSpeaker,
             _address,
-            IsGuardianTreated(role, applied));
+            IsGuardianTreated(role, applied),
+            keep: true);
 
         speech.SynthesisFailed += OnSynthesisFailed;
         speech.VoiceRejected += OnVoiceRejected;
 
         speech.Push(text);
         await speech.CompleteAsync().ConfigureAwait(false);
+
+        return speech.Kept;
     }
 
     /// <summary>The group a persona's introduction or gap reaction is spoken in.</summary>
@@ -261,8 +264,8 @@ public sealed class VoicePipeline(
         await AnnounceAsync(text, AudioChannel.Speech, voice, PersonaGroup, speaker: "D47").ConfigureAwait(false);
     }
 
-    /// <summary>Speaks one unprompted callout (Phase 8).</summary>
-    public async Task AnnounceAsync(Announcement announcement, VoiceSelection? voice = null)
+    /// <summary>Speaks one unprompted callout (Phase 8), and returns what was queued to play.</summary>
+    public async Task<SpokenClip?> AnnounceAsync(Announcement announcement, VoiceSelection? voice = null)
     {
         if (announcement.Urgency == CalloutUrgency.Urgent)
         {
@@ -287,7 +290,7 @@ public sealed class VoicePipeline(
             "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
         // The role decides whether this is somebody in the ship or somebody transmitting to it.
-        await AnnounceAsync(
+        return await AnnounceAsync(
                 announcement.Text,
                 announcement.Channel,
                 voice,

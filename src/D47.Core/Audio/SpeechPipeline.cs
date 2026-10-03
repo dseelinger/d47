@@ -88,6 +88,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>Whether the voice has already been written down for this utterance.</summary>
     private int _recorded;
 
+    /// <summary>The clips queued to play, in order, when the caller asked for them to be kept; otherwise null.</summary>
+    private readonly List<AudioClip>? _kept;
+
     /// <summary><param name="Text"> The written form: no delivery direction in it, ever.</summary>
     /// <param name="Text">The written form: no delivery direction in it, ever.</param>
     /// <param name="Directed">
@@ -113,7 +116,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         Action<SynthesisNote>? noted = null,
         string? captionSpeaker = null,
         SpokenAddress? address = null,
-        bool guardianTreated = false)
+        bool guardianTreated = false,
+        bool keep = false)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -128,6 +132,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _noted = noted;
         _captionSpeaker = captionSpeaker;
         _address = address;
+        _kept = keep ? [] : null;
 
         // Shut up has to reach synthesis, not just the queue.
         _arbiter.Silenced += Abandon;
@@ -140,6 +145,13 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
     /// <summary>Raised with a voice id the provider refused, once per pipeline.</summary>
     public event Action<string>? VoiceRejected;
+
+    /// <summary>
+    /// What was queued to play, once <see cref="CompleteAsync"/> has returned, or null when nothing was or the
+    /// pipeline was not asked to keep it.
+    /// </summary>
+    public SpokenClip? Kept =>
+        _kept is { Count: > 0 } kept ? new SpokenClip([.. kept], _tts.Id, _voice.VoiceId) : null;
 
     /// <summary>How many sentences failed to render.</summary>
     public int Failures => Volatile.Read(ref _failures);
@@ -445,6 +457,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
                     Group = _group,
                     Caption = _captioned ? Attributed(spoken.Text) : null,
                 });
+
+                _kept?.Add(spoken.Clip);
 
                 // Accumulated here rather than where the text arrived, because this is the point a sentence
                 // is actually going to be heard.
