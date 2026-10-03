@@ -82,8 +82,8 @@ public static class SettingsLayout
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
     /// entries, all Advanced, so 0 shown); <c>voice</c> holds nine ship's voice rows, the provider slot
-    /// family, the two COVAS Voice rows (Advanced), the Guardian Voice Effects preset row and five cost rows (18
-    /// entries); <c>persona</c>
+    /// family, the two COVAS Voice rows (Advanced), the Narrator Voice row, the Guardian Voice Effects preset row and
+    /// five cost rows (19 entries); <c>persona</c>
     /// spells out a humor level and frequency for each of three groups (17 entries, the six humor rows
     /// Advanced); <c>voice-input</c> holds the hearing provider
     /// beside the microphone, wake word and corrections rows (16 entries, the hosted providers' keys one
@@ -207,6 +207,10 @@ public static class SettingsLayout
                             "COVAS Voice",
                             "How the stock COVAS core sounds.",
                             [E("speech.covasVoice.reverb"), E("speech.covasVoice.test")]),
+                        G(
+                            "Narrator Voice",
+                            "Who reads the Narrator's lines.",
+                            [E("speech.narratorVoice")]),
                         G(
                             "Guardian Voice Effects",
                             "Optional treatments for the ship AI's voice, all off by default and global to every core.",
@@ -493,7 +497,6 @@ public static class SettingsLayout
                                 E("callouts.narratorEliteTips", under: true),
                                 E("callouts.narratorSeconds", under: true),
                                 E("callouts.narratorMaxSeconds", under: true),
-                                E("speech.narratorVoice", under: true),
                             ]),
                     ]),
                 new SettingsPlace(

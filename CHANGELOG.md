@@ -193,7 +193,7 @@ are now. It waits for a quiet moment: never in supercruise, never during a fight
 after other chatter. It says nothing while all three texts are empty. Its lines are captioned
 *Narrator* and spoken in a voice that is never your ship's. The rows are Settings › Callouts ›
 Plans and stories › **Narrator**, on by default, with the least and most time between narrations
-(thirty and sixty minutes) and **Narrator voice**. Each narration is written by the language model
+(thirty and sixty minutes); its voice is Settings › Voice and hearing › Its voice › **Narrator voice**. Each narration is written by the language model
 and sends your whole backstory; with no model, or personality off, there is no narration, and Privacy
 and egress now says when the Narrator sends your texts.
 
