@@ -1096,6 +1096,27 @@ When the attempts run out, it tells you:
 I couldn't reach the model after 3 tries. Overloaded.
 ```
 
+#### Chatterbox voices {#chatterbox-voices}
+
+D47 ships 12 reference clips for the Chatterbox voice, in `assets/voices/chatterbox/` beside `voices.tsv`. Each is a 24 kHz mono 16-bit WAV of 5 to 7 seconds. A row whose clip is missing, is not 24 kHz mono, is outside that length, or has no source is left out, and the reason goes in the log. The clips are not in `data\`, so a Commander cannot add one.
+
+The clips are utterances from LibriTTS-R, which is licensed CC BY 4.0 (https://www.openslr.org/141/). `tools/gen-chatterbox-voices.py` picked them from `train-clean-360`.
+
+| Voice | Gender | Suggested role | Source |
+| --- | --- | --- | --- |
+| Marlow | female | ShipAi | LibriTTS-R speaker 4356, utterance 4356_6498_000003_000005, CC BY 4.0 |
+| Isolde | female | Comms | LibriTTS-R speaker 3638, utterance 3638_696_000006_000003, CC BY 4.0 |
+| Tamsin | female | CarrierCaptain | LibriTTS-R speaker 8699, utterance 8699_291107_000003_000001, CC BY 4.0 |
+| Verity | female | none | LibriTTS-R speaker 1463, utterance 1463_134463_000003_000004, CC BY 4.0 |
+| Odette | female | none | LibriTTS-R speaker 100, utterance 100_121669_000009_000000, CC BY 4.0 |
+| Linnea | female | none | LibriTTS-R speaker 4899, utterance 4899_32637_000009_000000, CC BY 4.0 |
+| Corwin | male | ShipAi | LibriTTS-R speaker 176, utterance 176_122025_000004_000000, CC BY 4.0 |
+| Alder | male | Narrator | LibriTTS-R speaker 2299, utterance 2299_6524_000003_000003, CC BY 4.0 |
+| Benedict | male | TowerControl | LibriTTS-R speaker 8066, utterance 8066_114256_000005_000003, CC BY 4.0 |
+| Tobias | male | Crew | LibriTTS-R speaker 2531, utterance 2531_156718_000009_000000, CC BY 4.0 |
+| Emrys | male | none | LibriTTS-R speaker 8498, utterance 8498_287357_000015_000001, CC BY 4.0 |
+| Lucan | male | none | LibriTTS-R speaker 2404, utterance 2404_141240_000006_000000, CC BY 4.0 |
+
 #### What the voice providers receive {#egress}
 
 This row is a table rather than a sentence, because there is no longer one provider to write a

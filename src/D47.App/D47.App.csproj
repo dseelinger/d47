@@ -50,6 +50,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\assets\voices\chatterbox\*"
+          Link="voices\chatterbox\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="D47.App.Tests" />
   </ItemGroup>
 

@@ -1,0 +1,13 @@
+id	name	gender	locale	role	source
+marlow	Marlow	female	en	ShipAi	LibriTTS-R speaker 4356, utterance 4356_6498_000003_000005, CC BY 4.0
+isolde	Isolde	female	en	Comms	LibriTTS-R speaker 3638, utterance 3638_696_000006_000003, CC BY 4.0
+tamsin	Tamsin	female	en	CarrierCaptain	LibriTTS-R speaker 8699, utterance 8699_291107_000003_000001, CC BY 4.0
+verity	Verity	female	en		LibriTTS-R speaker 1463, utterance 1463_134463_000003_000004, CC BY 4.0
+odette	Odette	female	en		LibriTTS-R speaker 100, utterance 100_121669_000009_000000, CC BY 4.0
+linnea	Linnea	female	en		LibriTTS-R speaker 4899, utterance 4899_32637_000009_000000, CC BY 4.0
+corwin	Corwin	male	en	ShipAi	LibriTTS-R speaker 176, utterance 176_122025_000004_000000, CC BY 4.0
+alder	Alder	male	en	Narrator	LibriTTS-R speaker 2299, utterance 2299_6524_000003_000003, CC BY 4.0
+benedict	Benedict	male	en	TowerControl	LibriTTS-R speaker 8066, utterance 8066_114256_000005_000003, CC BY 4.0
+tobias	Tobias	male	en	Crew	LibriTTS-R speaker 2531, utterance 2531_156718_000009_000000, CC BY 4.0
+emrys	Emrys	male	en		LibriTTS-R speaker 8498, utterance 8498_287357_000015_000001, CC BY 4.0
+lucan	Lucan	male	en		LibriTTS-R speaker 2404, utterance 2404_141240_000006_000000, CC BY 4.0
