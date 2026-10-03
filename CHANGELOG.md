@@ -22,6 +22,8 @@ A limit on how far a station may be from its star, in the commodity, Market page
 
 Kokoro's Nicole voice (`af_nicole`) is a whisper, so it is no longer chosen for a core, the carrier captain, the tower or the Narrator. Voices for other ships and stations on comms can still be given it, and you can still pick it by hand. A core that was given Nicole automatically gets another voice the next time the voices are paired; one you picked yourself keeps it.
 
+In the headset, the mini panel's avatar is now a square the panel's height inside its rail, showing the whole picture. Before, it could be drawn several times larger than the rail and cropped to part of the face, and its size changed during a session.
+
 A ship picture that finishes downloading after you leave its page and come back is now put in, instead of the page staying without it until it is rebuilt. A ship picture built for a page you never opened is no longer kept in memory.
 
 Asking for bodies that are not landable no longer returns only landable ones. The body search now treats "landable: no" as not asking about landing at all.

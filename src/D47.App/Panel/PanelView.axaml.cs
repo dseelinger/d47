@@ -169,8 +169,6 @@ public partial class PanelView : UserControl
 
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
         // each would be three expressions no test can reach.
-        SizeChanged += (_, _) => SizeAvatar();
-
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
         {
             // Before the chrome, because it may move the tab and the chrome is drawn from it.
@@ -1603,17 +1601,25 @@ public partial class PanelView : UserControl
     {
         if (Mode == PanelMode.Mini)
         {
-            if (Bounds.Height > 0)
-            {
-                Avatar.Extent = Bounds.Height;
-            }
-
+            // Sized in MeasureOverride, from the height this pass is offering.
             Avatar.VerticalAlignment = VerticalAlignment.Center;
+            InvalidateMeasure();
             return;
         }
 
         Avatar.Extent = _tabsDownTheLeft ? TitleLine.Height : HeaderAvatarExtent;
         Avatar.VerticalAlignment = _tabsDownTheLeft ? VerticalAlignment.Center : VerticalAlignment.Bottom;
+    }
+
+    /// <summary>Sizes mini's avatar to the height being measured, so the rail never lags a mode change or a resize.</summary>
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        if (Mode == PanelMode.Mini && double.IsFinite(availableSize.Height) && availableSize.Height > 0)
+        {
+            Avatar.Extent = availableSize.Height;
+        }
+
+        return base.MeasureOverride(availableSize);
     }
 
     /// <summary>Moves the tab strip and its rule into the header grid, or out to the frame as a rail on the left.</summary>
