@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Navigation, Best cargo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="d47.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Saira:wght@500;600&amp;family=Sintony:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="d47-root win" data-d47-theme="{{theme}}" style="width: 1280px; height: 860px;">
+  <div class="tbar">
+    <div class="mark"></div>
+    <div class="brand">DIRECTIVE 47</div>
+    <div class="ver">1.6.3</div>
+    <div class="tbar__end">
+      <div class="avatar">JD</div>
+      <button class="help">HELP</button>
+      <div class="wc">—</div>
+      <div class="wc">□</div>
+      <div class="wc">✕</div>
+    </div>
+  </div>
+  <div class="body">
+    <nav class="tabs" aria-label="Tabs">
+      <button class="tab">Transcript</button>
+      <button class="tab">Search</button>
+      <button class="tab">Stories</button>
+      <button class="tab">Commander</button>
+      <button class="tab">Asset Mgmt</button>
+      <button class="tab active">Navigation</button>
+      <button class="tab">Settings</button>
+    </nav>
+    <div class="tabs-rule"></div>
+    <div class="subtabs" role="radiogroup" aria-label="Navigation pages">
+      <button class="subtab">Plan</button>
+      <button class="subtab">Bookmarks</button>
+      <button class="subtab">Market</button>
+      <button class="subtab active">Best cargo</button>
+      <button class="subtab">Trade route</button>
+      <button class="subtab">On this body</button>
+      <button class="subtab">Unsold data</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 26px; padding-top: 22px; max-width: 1100px;">
+      <div class="titleblock">
+        <div class="titleblock__text">
+          <div class="context">Buying at</div>
+          <div class="title here">Parise Gateway</div>
+          <div class="sys here" style="font-size: 13px; letter-spacing: .06em;">LTT 7786 · DOCKED</div>
+        </div>
+        <div class="figure">
+          <div class="figure__label">Free hold</div>
+          <div class="figure__value" style="color: var(--d47-yellow);">256 T</div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px; align-items: stretch;">
+          <label class="field is-focus">
+            <span class="field__pre">Sell in</span>
+            <input type="text" value="Diaguandri" aria-label="System to sell in">
+          </label>
+          <button class="tile">Route end · Diaguandri</button>
+          <button class="tile">Find cargo</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="hint" style="flex: 1;">Uses your trade route filters: <span style="color: var(--d47-white);">large pad only · no surface ports · prices under 24 h · stations within 5,000 ls</span>. Limpets are left out of the hold.</div>
+          <a class="tile" href="#" style="height: 36px;">Change filters</a>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="ghead">
+          <span class="ghead__name">What to carry to <span style="color: var(--d47-a);">Diaguandri</span></span>
+          <span class="ghead__desc">Most credits for the whole load first.</span>
+          <span class="ghead__aside" style="align-self: center;"><button class="tile" style="height: 32px; padding: 0 12px;">Plot Diaguandri</button></span>
+        </div>
+        <div class="lhead" style="grid-template-columns: 22px minmax(0,1.3fr) minmax(0,1.1fr) 100px 96px 130px 150px;">
+          <span>#</span><span>Commodity</span><span>Sell at</span><span class="r">Profit / t</span><span class="r">Tonnes</span><span class="r on">Total ▼</span><span></span>
+        </div>
+        <sc-for list="{{picks}}" as="p" hint-placeholder-count="6">
+          <div class="lrow" style="grid-template-columns: 22px minmax(0,1.3fr) minmax(0,1.1fr) 100px 96px 130px 150px;">
+            <span class="rank">{{p.rank}}</span>
+            <span class="nm">{{p.commodity}}</span>
+            <span class="sys">{{p.station}}</span>
+            <span class="num r">{{p.profit}}</span>
+            <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 0;">
+              <span class="num white">{{p.tonnes}}</span>
+              <span class="sub" style="font-size: 10px;">{{p.limit}}</span>
+            </span>
+            <span class="num r" style="font-size: 14px;">{{p.total}}</span>
+            <span class="gauge"><span class="gauge__fill" style="width: {{p.share}};"></span></span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Say: “what should I buy here to sell in Diaguandri”</span>
+      <span class="foot__end">Prices looked up · <span class="mono">19:42</span></span>
+    </div>
+  </div>
+  <div class="scan"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["elite","dark","light","elite-palette"],"default":"elite"},"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const rows = [
+      ['Superconductors', 'Ray Gateway', 9412, 256, 'HOLD'],
+      ['Power Generators', 'Ray Gateway', 4880, 256, 'HOLD'],
+      ['Robotics', 'Fraser Hub', 3210, 180, 'SUPPLY'],
+      ['Computer Components', 'Ray Gateway', 1904, 256, 'HOLD'],
+      ['Titanium', 'Ross Terminal', 1120, 212, 'DEMAND'],
+      ['Aluminium', 'Ray Gateway', 410, 256, 'HOLD'],
+    ];
+    const fmt = (n) => n.toLocaleString('en-GB');
+    const top = rows[0][2] * rows[0][3];
+    const picks = rows.map((r, i) => ({
+      rank: String(i + 1),
+      commodity: r[0],
+      station: r[1],
+      profit: fmt(r[2]),
+      tonnes: fmt(r[3]),
+      limit: r[4],
+      total: fmt(r[2] * r[3]),
+      share: Math.max(2, Math.round((r[2] * r[3]) / top * 100)) + '%',
+    }));
+    return { theme: this.props.theme ?? 'elite', picks };
+  }
+}
+</script>
+</body>
+</html>

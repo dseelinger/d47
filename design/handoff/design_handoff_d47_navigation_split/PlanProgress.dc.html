@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Navigation, Plan beside Progress</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="d47.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Saira:wght@500;600&amp;family=Sintony:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="d47-root win" data-d47-theme="{{theme}}" style="width: 1280px; height: 1060px;">
+  <div class="tbar">
+    <div class="mark"></div>
+    <div class="brand">DIRECTIVE 47</div>
+    <div class="ver">1.6.3</div>
+    <div class="tbar__end">
+      <div class="avatar">JD</div>
+      <button class="help">HELP</button>
+      <div class="wc">—</div>
+      <div class="wc">□</div>
+      <div class="wc">✕</div>
+    </div>
+  </div>
+  <div class="body">
+    <nav class="tabs" aria-label="Tabs">
+      <button class="tab">Transcript</button>
+      <button class="tab">Search</button>
+      <button class="tab">Stories</button>
+      <button class="tab">Commander</button>
+      <button class="tab">Asset Mgmt</button>
+      <button class="tab active">Navigation</button>
+      <button class="tab">Settings</button>
+    </nav>
+    <div class="tabs-rule"></div>
+    <div class="subtabs" style="padding-bottom: 6px;">
+      <nav class="crumb" aria-label="Breadcrumb" style="padding: 6px 0 5px;"><a href="#">Plan</a><span class="sep">›</span><span style="color: var(--d47-white);">Progress</span></nav>
+    </div>
+
+    <div class="strip">
+      <div class="pane" style="flex: 0 0 520px;">
+        <div class="titleblock">
+          <div class="titleblock__text">
+            <div class="context">Plan a route</div>
+            <div class="title">Plan</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 2px;"><button class="tile selected" aria-pressed="true">Progress</button></div>
+
+        <div class="group">
+          <div class="ghead"><span class="ghead__name">Neutron Plotter</span></div>
+          <div class="dgrid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+            <label class="data"><span class="data__label">Destination</span><span class="field" style="height: 36px;"><input type="text" value="Colonia" placeholder="a system" style="padding-left: 10px;"></span></label>
+            <label class="data"><span class="data__label">From</span><span class="field" style="height: 36px;"><input type="text" placeholder="where you are now" style="padding-left: 10px;"></span></label>
+            <label class="data"><span class="data__label">Jump range (ly)</span><span class="field" style="height: 36px;"><input type="text" placeholder="68.4" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+            <label class="data"><span class="data__label">Efficiency</span><span class="field" style="height: 36px;"><input type="text" value="60" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+          </div>
+          <div style="display: flex; justify-content: flex-end; padding-top: 2px;"><button class="tile">Plot it</button></div>
+        </div>
+
+        <div class="group">
+          <div class="ghead"><span class="ghead__name">Road to Riches</span></div>
+          <div class="dgrid" style="grid-template-columns: 0.8fr 0.8fr 2fr;">
+            <label class="data"><span class="data__label">Stops</span><span class="field" style="height: 36px;"><input type="text" value="10" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+            <label class="data"><span class="data__label">Radius (ly)</span><span class="field" style="height: 36px;"><input type="text" value="500" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+            <label class="data"><span class="data__label">Least worth stopping for (cr)</span><span class="field" style="height: 36px;"><input type="text" value="500,000" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 2px;">
+            <label style="display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--d47-white); font-size: 14px;"><span style="width: 16px; height: 16px; background: var(--d47-a); color: var(--d47-knock); font-size: 12px; display: flex; align-items: center; justify-content: center;">✓</span>Come back to the start</label>
+            <button class="tile">Plot it</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="ghead"><span class="ghead__name">Exobiology</span></div>
+          <div class="dgrid" style="grid-template-columns: 0.8fr 0.8fr 2fr;">
+            <label class="data"><span class="data__label">Stops</span><span class="field" style="height: 36px;"><input type="text" value="10" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+            <label class="data"><span class="data__label">Radius (ly)</span><span class="field" style="height: 36px;"><input type="text" value="200" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+            <label class="data"><span class="data__label">Least worth stopping for (cr)</span><span class="field" style="height: 36px;"><input type="text" value="1,000,000" style="padding-left: 10px; font-family: var(--d47-font-mono); font-size: 14px;"></span></label>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 2px;">
+            <label style="display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--d47-white); font-size: 14px;"><span style="width: 16px; height: 16px; background: var(--d47-a); color: var(--d47-knock); font-size: 12px; display: flex; align-items: center; justify-content: center;">✓</span>Come back to the start</label>
+            <button class="tile">Plot it</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane" style="flex: 1 1 0;">
+        <div class="titleblock">
+          <div class="titleblock__text">
+            <div class="context">Progress</div>
+            <div class="title"><span style="color: var(--d47-cyan);">LTT 7786</span> <span style="color: var(--d47-grey);">→</span> <span style="color: var(--d47-a);">Colonia</span></div>
+          </div>
+          <div class="figure">
+            <div class="figure__label">To go</div>
+            <div class="figure__value">21,940 LY</div>
+          </div>
+        </div>
+        <div class="hint" style="margin-top: -10px;"><span class="mono" style="color: var(--d47-a);">38</span> jumps left · <span class="mono" style="color: var(--d47-a);">21,940</span> ly to go · <span class="mono" style="color: var(--d47-a);">41</span> systems on the route</div>
+        <div class="group">
+          <sc-for list="{{hops}}" as="h" hint-placeholder-count="10">
+            <div class="lrow" style="grid-template-columns: 28px minmax(0, 1fr) 110px 170px;">
+              <span class="rank">{{h.n}}</span>
+              <span class="{{h.cls}}">{{h.name}}</span>
+              <span class="sub">{{h.star}}</span>
+              <span class="state {{h.tagCls}}" style="text-align: right;">{{h.tag}}</span>
+            </div>
+          </sc-for>
+          <div class="hint" style="padding: 8px 14px 0;">and 31 more systems</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Say: “how far to go”</span>
+      <span class="foot__end">Kept current by the journal · <span class="mono">19:42</span></span>
+    </div>
+  </div>
+  <div class="scan"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["elite","dark","light","elite-palette"],"default":"elite"},"$preview":{"width":1280,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const rows = [
+      ['LTT 7786', 'K', 'HERE', 'cyan'],
+      ['Synuefe EN-H d11-96', 'Neutron', 'Supercharge here', ''],
+      ['Synuefe XR-H d11-102', 'F', '', ''],
+      ['Col 173 Sector LY-Q d5-8', 'Neutron', 'Supercharge here', ''],
+      ['Col 173 Sector QD-N b21-1', 'L', 'No scoop', 'warn'],
+      ['Col 173 Sector GS-K d8-41', 'Neutron', 'Supercharge here', ''],
+      ['Swoiwns XK-L c21-3', 'G', '', ''],
+      ['Swoiwns HN-B d14-77', 'Neutron', 'Supercharge here', ''],
+      ['Boewnst KS-S c20-959', '', 'Scoop unknown', 'grey'],
+      ['Boewnst AA-A h112', 'Neutron', 'Supercharge here', ''],
+    ];
+    const hops = rows.map((r, i) => ({
+      n: String(i + 1),
+      name: r[0],
+      cls: r[3] === 'cyan' ? 'sys here' : 'sys',
+      star: r[1],
+      tag: r[2],
+      tagCls: r[3] === 'warn' ? '' : r[3],
+    }));
+    hops.forEach((h, i) => { if (rows[i][3] === 'warn') { h.tagCls = 'warn'; } });
+    return { theme: this.props.theme ?? 'elite', hops };
+  }
+}
+</script>
+</body>
+</html>

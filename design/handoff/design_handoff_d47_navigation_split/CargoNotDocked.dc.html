@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Best cargo, not docked</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="d47.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Saira:wght@500;600&amp;family=Sintony:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="d47-root" data-d47-theme="{{theme}}" style="width: 940px; height: 330px; padding: 24px 28px; display: flex; flex-direction: column; gap: 22px;">
+  <div class="titleblock">
+    <div class="titleblock__text">
+      <div class="context">Buying at</div>
+      <div class="title" style="color: var(--d47-grey);">Not docked</div>
+      <div class="sys here" style="font-size: 13px; letter-spacing: .06em;">LTT 7786</div>
+    </div>
+    <div class="figure">
+      <div class="figure__label">Free hold</div>
+      <div class="figure__value" style="color: var(--d47-yellow);">256 T</div>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px;">
+    <label class="field">
+      <span class="field__pre">Sell in</span>
+      <input type="text" value="" placeholder="a system" aria-label="System to sell in">
+    </label>
+    <button class="tile disabled">Find cargo</button>
+  </div>
+  <div class="notice warning">
+    <div class="notice__main">
+      <div class="notice__label">Not docked</div>
+      <div class="notice__text">Best cargo reads the market at the station you are docked at. Dock somewhere with a commodity market and this page fills in.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["elite","dark","light","elite-palette"],"default":"elite"},"$preview":{"width":940,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'elite' };
+  }
+}
+</script>
+</body>
+</html>
