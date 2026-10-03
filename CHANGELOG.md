@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A story chapter's lines given to a cast member are now written as that person's own words, in the first person. Before, narration that described the dock hand or the caller was tagged with their id and read out in their voice. Description of a place, the ship or what a person left behind goes to the narrator, and every line is written plainly, without a closing aphorism or the story's own premise repeated. A cast line that names its own speaker is sent back for one rewrite, and if it still does, the narrator reads it and the chapter is kept. Chapters already written keep their lines.
+
 Avatar clips now play forward to their last frame and then backward to their first, repeatedly. Before, each clip jumped back to its first frame at the end of every loop, which showed as a visible jump.
 
 Every line d47 speaks is now on the Transcript. Before, only the callouts spoken from the main queue were: the narrated beacon scan when you pick a story, a story ending and the lines after you answer it, the Guardian cores waking line, a lore search result, an autonomous action's line, and a keyboard action's acknowledgement were spoken with no Transcript line. In-game comms and chatter you only overheard are on the Transcript too, under the sender's name; chatter you could not answer still cannot be answered. A story ending written for the Narrator is now spoken in the Narrator's voice instead of the ship's.

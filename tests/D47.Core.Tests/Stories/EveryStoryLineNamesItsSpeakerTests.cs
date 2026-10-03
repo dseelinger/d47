@@ -199,6 +199,80 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Contains("\"stranger\"", refusal, StringComparison.Ordinal);
     }
 
+    private const string BeatsWhereHarrowNamesHimself = """
+        {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
+          {"title": "The Mayday", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Harrow keeps a quiet office.", "speaker": "harrow"},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
+        ]}
+        """;
+
+    [Fact]
+    public async Task ACastLineThatNamesItsOwnSpeakerIsRefusedThenPassesWhenRewritten()
+    {
+        using var fixtures = new StoryFixtures(
+            new RoundScriptedLlmProvider(
+                RoundScriptedLlmProvider.Saying(Spine),
+                RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself),
+                RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "I keep a quiet office.", StringComparison.Ordinal))),
+            Cast);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
+        var rewritePrompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+
+        Assert.Contains("A line names its own speaker: \"Harrow\" in beat 1", rewritePrompt, StringComparison.Ordinal);
+        Assert.Equal("harrow", chapter.Beats[0].Speaker);
+        Assert.Equal("I keep a quiet office.", chapter.Beats[0].Line);
+    }
+
+    [Fact]
+    public async Task ACastLineThatStillNamesItsSpeakerAfterTheRewriteGoesToTheNarrator()
+    {
+        using var fixtures = new StoryFixtures(
+            new RoundScriptedLlmProvider(
+                RoundScriptedLlmProvider.Saying(Spine),
+                RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself),
+                RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself)),
+            Cast);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
+
+        Assert.Equal(StorySpeaker.Narrator, chapter.Beats[0].Speaker);
+        Assert.Equal("Harrow keeps a quiet office.", chapter.Beats[0].Line);
+    }
+
+    [Fact]
+    public async Task ACastNameInsideAnotherWordIsNotSelfNaming()
+    {
+        using var fixtures = new StoryFixtures(
+            Scripted(BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "Harrowing, isn't it.", StringComparison.Ordinal)),
+            Cast);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
+
+        Assert.Equal("harrow", chapter.Beats[0].Speaker);
+        Assert.Equal(2, fixtures.Provider.Requests.Count);
+    }
+
+    [Fact]
+    public async Task TheChapterWriterIsToldToWriteCastLinesInTheirOwnWordsAndEveryLinePlainly()
+    {
+        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon));
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+
+        Assert.Contains("is that person's own words, in the first person", prompt, StringComparison.Ordinal);
+        Assert.Contains("Write every line plainly", prompt, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task TheChapterWriterIsToldTheSpeakersAndThatAStockCoreDoesNotTellTheStory()
     {

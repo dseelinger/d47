@@ -330,6 +330,8 @@ public sealed class AdventureGenerator(
             }
         }
 
+        resolved = NarrateSelfNaming(resolved, ask);
+
         if (resolved.Refusals.Count > 0)
         {
             return new AdventureOutcome(
@@ -387,9 +389,45 @@ public sealed class AdventureGenerator(
             .Select(speaker => $"{UnknownSpeaker}\"{speaker}\", who is not one of the story's speakers: {string.Join(", ", Speakers(story))}.")
             .ToList();
 
-        return unknown.Count == 0
-            ? resolved with { Beats = [.. resolved.Beats.Select(beat => beat with { Speaker = Speaker(beat.Speaker, story) })] }
-            : resolved with { Refusals = [.. resolved.Refusals, .. unknown] };
+        var spoken = resolved with { Beats = [.. resolved.Beats.Select(beat => beat with { Speaker = Speaker(beat.Speaker, story) })] };
+        var selfNamed = SelfNaming(spoken.Beats, story)
+            .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in beat {found.Index + 1}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
+                + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\".");
+
+        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed] };
+    }
+
+    private const string SelfNamed = "A line names its own speaker: ";
+
+    /// <summary>The beats given to a cast member whose line names that member by their shown name.</summary>
+    private static IEnumerable<(int Index, AdventureSpeaker Member)> SelfNaming(IReadOnlyList<AdventureBeat> beats, AdventureStory story)
+    {
+        for (var index = 0; index < beats.Count; index++)
+        {
+            var speaker = beats[index].Speaker;
+
+            if ((story.Cast ?? []).FirstOrDefault(member => member.Id == speaker) is { } member && AdventureMention.Holds(beats[index].Line, member.Name))
+            {
+                yield return (index, member);
+            }
+        }
+    }
+
+    /// <summary>Gives each line that still names its own speaker to the narrator and drops that refusal.</summary>
+    private static Resolved NarrateSelfNaming(Resolved resolved, AdventureAsk ask)
+    {
+        if (ask.Story is not { } story)
+        {
+            return resolved;
+        }
+
+        var named = SelfNaming(resolved.Beats, story).Select(found => found.Index).ToHashSet();
+
+        return resolved with
+        {
+            Beats = [.. resolved.Beats.Select((beat, index) => named.Contains(index) ? beat with { Speaker = Stories.StorySpeaker.Narrator } : beat)],
+            Refusals = [.. resolved.Refusals.Where(refusal => !refusal.StartsWith(SelfNamed, StringComparison.Ordinal))],
+        };
     }
 
     /// <summary>The ids a story chapter's lines may name: the ship, the narrator and the cast.</summary>
@@ -988,7 +1026,10 @@ public sealed class AdventureGenerator(
             "Every line, the opening included, has a speaker, and is written as that speaker says it: \"ship\", the ship's AI aboard"
             + (story.Core is { Length: > 0 } core ? $" ({core})" : string.Empty)
             + "; \"narrator\", who tells the story from outside the cockpit; or one of the story's cast, over comms, in a recording "
-            + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's.");
+            + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
+            + "A cast member's line is that person's own words, in the first person, as they would say them: it never names them and "
+            + "never describes them. Narration, including any line that describes a cast member, what they did or what they left behind, "
+            + "is given to \"narrator\".");
 
         if (story.CoreIsStock)
         {
@@ -1284,6 +1325,7 @@ public sealed class AdventureGenerator(
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
+        text.AppendLine("Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral (\"That will hold.\", \"It will keep.\"). Do not repeat the spine's premise, want, stake, turn or ending as a line.");
         text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next beat, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next beat's place, and the line may point them at it.");
         text.AppendLine("Give each beat a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;

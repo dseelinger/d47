@@ -128,7 +128,7 @@ public static class AdventureMention
     /// title first — a Commander asks about "the Anchorage" and about "Maren Anchorage", and neither is
     /// the string the beat was titled with.
     /// </summary>
-    private static bool Holds(string haystack, string? needle)
+    public static bool Holds(string haystack, string? needle)
     {
         if (needle is null)
         {
