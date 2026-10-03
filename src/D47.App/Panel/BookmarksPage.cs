@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
@@ -25,6 +26,7 @@ public sealed class BookmarksPage : UserControl
     private readonly Func<CommanderGameState?> _commander;
     private readonly Func<IReadOnlyCollection<string>> _takenPhrases;
     private readonly PanelPrompts _prompts;
+    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly StackPanel _body = new();
 
@@ -32,8 +34,10 @@ public sealed class BookmarksPage : UserControl
         BookmarkStore store,
         Func<CommanderGameState?> commander,
         Func<IReadOnlyCollection<string>> takenPhrases,
-        PanelPrompts prompts)
+        PanelPrompts prompts,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _store = store;
         _commander = commander;
         _takenPhrases = takenPhrases;
@@ -142,6 +146,11 @@ public sealed class BookmarksPage : UserControl
                     ThemeManager.GreyKey),
             },
         };
+
+        if (_copy is { } copy)
+        {
+            words.Children.Insert(2, CopyGlyph.For(bookmark.System, copy));
+        }
 
         var row = new DockPanel();
         DockPanel.SetDock(buttons, Dock.Right);

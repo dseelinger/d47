@@ -45,6 +45,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     private readonly AdventureSurface _surface;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
+    private readonly Func<Func<string, Task<bool>>?>? _copy;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly Notice _problems = new() { IsVisible = false };
@@ -64,8 +65,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     private bool _showAside;
 
     public AdventuresPage(
-        AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null)
+        AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null,
+        Func<Func<string, Task<bool>>?>? copy = null)
     {
+        _copy = copy;
         _surface = surface;
         _nav = nav;
         _prompts = prompts;
@@ -289,7 +292,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
 
         if (standing.NextTrigger() is { } next)
         {
-            body.Children.Add(Trigger($"Next: {next}.", Here()));
+            body.Children.Add(Trigger($"Next: {next}.", Here(), standing.CurrentBeat?.Trigger.System, Copy()));
         }
 
         if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -397,7 +400,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
                 page.Children.Add(Text(spine.Premise, TypeScale.Body));
             }
 
-            Told(page, standing, Here(), SpeakerName);
+            Told(page, standing, Here(), SpeakerName, Copy());
 
             // The wait, drawn (asked for 2026-08-22).
             if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -414,7 +417,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             // What to do next, spelled out (asked for 2026-08-22).
             if (standing.NextTrigger() is { } next)
             {
-                page.Children.Add(Labelled("Next", null, Trigger(Sentence(next), Here())));
+                page.Children.Add(Labelled("Next", null, Trigger(Sentence(next), Here(), standing.CurrentBeat?.Trigger.System, Copy())));
             }
 
             if (standing.IsDone && adventure.Beats.Count > 0)
@@ -862,6 +865,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     /// <summary>The Commander's current system, from the app's own state.</summary>
     private string? Here() => _surface.State()?.Location?.StarSystem;
 
+    private Func<string, Task<bool>>? Copy() => _copy?.Invoke();
+
     private static Control Labelled(string label, string? text, Control? content = null) =>
         Labelled(Text(label, TypeScale.Small, ThemeManager.GreyKey), text, content);
 
@@ -902,6 +907,41 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         return block;
     }
 
+    /// <summary>
+    /// <see cref="Trigger(string, string?)"/> with a copy glyph straight after <paramref name="system"/> where the
+    /// text names it. Without a copy delegate, or when the text does not name it, it is the plain trigger.
+    /// </summary>
+    internal static Control Trigger(string text, string? here, string? system, Func<string, Task<bool>>? copy)
+    {
+        if (copy is null || Naming(text, system) is not { } at)
+        {
+            return Trigger(text, here);
+        }
+
+        var end = at + system!.Length;
+        var name = new Run(text[at..end]);
+
+        if (string.Equals(system, here, StringComparison.OrdinalIgnoreCase))
+        {
+            Themed(name, TextElement.ForegroundProperty, ThemeManager.CyanKey);
+        }
+
+        var before = Text("", TypeScale.Secondary, ThemeManager.AKey);
+        before.Text = null;
+        before.Inlines = [new Run(text[..at]), name];
+
+        var row = new WrapPanel { Orientation = Orientation.Horizontal };
+        row.Children.Add(before);
+        row.Children.Add(CopyGlyph.For(system, copy));
+
+        if (end < text.Length)
+        {
+            row.Children.Add(Text(text[end..], TypeScale.Secondary, ThemeManager.AKey));
+        }
+
+        return row;
+    }
+
     /// <summary>Where <paramref name="text"/> names <paramref name="system"/> as a whole name, or null.</summary>
     internal static int? Naming(string text, string? system)
     {
@@ -938,7 +978,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     };
 
     /// <summary>What has actually been said about this story (asked for 2026-08-22).</summary>
-    private static void Told(StackPanel page, AdventureStanding standing, string? here, Func<string?, string?> named)
+    private static void Told(StackPanel page, AdventureStanding standing, string? here, Func<string?, string?> named, Func<string, Task<bool>>? copy)
     {
         var adventure = standing.Adventure;
 
@@ -964,7 +1004,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary
 
                 if (told.Trigger is { Length: > 0 } trigger)
                 {
-                    stack.Children.Add(Trigger(Sentence(trigger), here));
+                    var system = told.Beat >= 0 && told.Beat < adventure.Beats.Count ? adventure.Beats[told.Beat].Trigger.System : null;
+                    stack.Children.Add(Trigger(Sentence(trigger), here, system, copy));
                 }
             }
             else if (told.Kind == AdventureToldKind.Nudge)

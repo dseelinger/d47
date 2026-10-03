@@ -750,7 +750,7 @@ public partial class PanelView : UserControl
         Furnish(
             PanelTab.Adventures,
             crumb => crumb.Key == AdventuresPage.RootKey
-                ? page = new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke())
+                ? page = new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke(), () => _copy)
                 : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
             new NavCrumb(AdventuresPage.RootKey, "Adventures")
             {

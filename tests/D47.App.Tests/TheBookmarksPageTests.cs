@@ -38,7 +38,8 @@ public class TheBookmarksPageTests
         bool seed = true,
         string fid = "F1",
         bool commanderKnown = true,
-        IReadOnlyCollection<string>? taken = null)
+        IReadOnlyCollection<string>? taken = null,
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
     {
         var root = TempFolders.Create("d47-bookmarks-page-tests");
 
@@ -59,7 +60,8 @@ public class TheBookmarksPageTests
                 () => null,
                 Bookmarks: store,
                 Commander: () => gameState?.Active,
-                BookmarkPhrasesTaken: () => taken ?? []));
+                BookmarkPhrasesTaken: () => taken ?? [],
+                Clipboard: clipboard));
 
         var window = new Window { Content = panel, Width = 1100, Height = 900 };
 
@@ -84,6 +86,37 @@ public class TheBookmarksPageTests
     {
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>Each row's glyph writes the bookmark's system (#864).</summary>
+    [AvaloniaFact]
+    public void ARowCopiesItsSystem()
+    {
+        var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
+        var surface = Open(clipboard: clipboard);
+
+        var glyph = Assert.Single(
+            surface.Panel.GetVisualDescendants().OfType<Button>(),
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
+
+        Click(glyph);
+
+        Assert.Equal(["Deciat"], clipboard.Written);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>A surface with no clipboard draws no glyph (#864).</summary>
+    [AvaloniaFact]
+    public void ASurfaceWithNoClipboardDrawsNoGlyph()
+    {
+        var surface = Open();
+
+        Assert.DoesNotContain(
+            surface.Panel.GetVisualDescendants().OfType<Button>(),
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
+
+        surface.Window.Close();
     }
 
     /// <summary>The root is on the Routing tab, beside Course.</summary>

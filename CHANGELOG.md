@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A system name on the Adventures and Bookmarks pages now has a copy button beside it. On Adventures it follows the system in a story's next step and in each beat already told, whether or not you are in that system; the name is still cyan only when it is your current system. On Bookmarks each row has one for its system. Clicking it copies the name and does not open the story.
+
 Home system is now set per Commander, like the Character sheet. Each Commander has their own, and the arrival callout and the answer to what d47 is watching for use the home of the Commander who is flying. A home system you had already set stays as the starting value every Commander reads until they set their own.
 
 COVAS now reports flatly. While it is aboard, Core humor is ignored, no line it speaks carries delivery notes such as `[sighs]`, and every announcement, such as a promotion or a notable kill, is said exactly as written without being reworded by the model. Its intro and return lines are said as written too. Questions you ask still go to the model, which is told COVAS is equipment and expresses no emotion. The Guardian cores are unchanged.
