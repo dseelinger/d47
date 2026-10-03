@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    Cuts a release: runs the suite CI does not, works out the next version and asks the workflow
-    to build it.
+    Cuts a release: runs the suite CI does not, publishes the avatar clips, works out the next
+    version and asks the workflow to build it.
 
 .DESCRIPTION
     Everything that matters happens in `.github/workflows/release.yml` — this decides the number,
@@ -66,6 +66,10 @@ Write-Host "$latest -> v$next"
 Write-Host 'Running the suite...'
 dotnet test d47.slnx -c Release --nologo
 if ($LASTEXITCODE -ne 0) { throw 'The suite failed. Nothing dispatched.' }
+
+# The clips are not committed, so the runner cannot publish them. Uploads only what avatars-1 lacks.
+Write-Host 'Publishing avatar clips...'
+& "$PSScriptRoot\publish-avatars.ps1"
 
 # `gh workflow run` names no run, so the newest id before dispatch is what the watcher waits past.
 $before = gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId'
