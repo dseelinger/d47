@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Every line d47 speaks is now on the Transcript. Before, only the callouts spoken from the main queue were: the narrated beacon scan when you pick a story, a story ending and the lines after you answer it, the Guardian cores waking line, a lore search result, an autonomous action's line, and a keyboard action's acknowledgement were spoken with no Transcript line. In-game comms and chatter you only overheard are on the Transcript too, under the sender's name; chatter you could not answer still cannot be answered. A story ending written for the Narrator is now spoken in the Narrator's voice instead of the ship's.
+
 A limit on how far a station may be from its star, in the commodity, Market page, Community Goal and trade searches, is now applied by Spansh instead of only afterwards on this PC. Spansh ignored the old form, so pages were filled with distant stations that were then dropped, and a search could return fewer stations than exist in range.
 
 Kokoro's Nicole voice (`af_nicole`) is a whisper, so it is no longer chosen for a core, the carrier captain, the tower or the Narrator. Voices for other ships and stations on comms can still be given it, and you can still pick it by hand. A core that was given Nicole automatically gets another voice the next time the voices are paired; one you picked yourself keeps it.

@@ -8,10 +8,10 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The lines of an exchange the Commander may answer join the Conversation page, and every invented
-/// speaker is shown there as "{Name} (invented)" — both their overheard lines and their replies (#633).
+/// Invented speakers are shown as "{Name} (invented)" for their lines and their replies; whether a line
+/// can be answered is carried on the announcement and does not decide whether it is shown (#633).
 /// </summary>
-public class AnAnswerableExchangeJoinsTheConversationAsInventedTests
+public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
 {
     private static Announcement Line(NpcChatterKind kind, int exchange) =>
         new(NpcChatter.LineKey, "Nice lines on that hull, Commander.")
@@ -26,18 +26,21 @@ public class AnAnswerableExchangeJoinsTheConversationAsInventedTests
         };
 
     [Fact]
-    public void AHailJoinsUnderItsInventedName()
+    public void AHailIsNamedByItsInventedName()
     {
         var hail = Line(NpcChatterKind.Hail, 3);
 
-        Assert.True(AppHost.JoinsConversation(hail));
+        Assert.True(hail.Invented!.Answerable);
         Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(hail));
     }
 
     [Fact]
-    public void AControllerExchangeStaysOut()
+    public void AControllerExchangeIsNamedByItsInventedNameAndCannotBeAnswered()
     {
-        Assert.False(AppHost.JoinsConversation(Line(NpcChatterKind.Controller, 3)));
+        var controller = Line(NpcChatterKind.Controller, 3);
+
+        Assert.False(controller.Invented!.Answerable);
+        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(controller));
     }
 
     [Fact]

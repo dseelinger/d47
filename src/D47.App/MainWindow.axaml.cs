@@ -477,17 +477,12 @@ public partial class MainWindow : Window
         _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n"));
 
-        // A callout spoken to the Commander joins the conversation too, attributed to whoever said it
-        // (#276).
+        // Every spoken line joins the conversation, attributed to whoever said it.
         _host.CalloutSaid += (text, speaker, sourceKey) => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey));
 
         // And what happened to the conversation rather than in it - the core changing under it.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
-
-        // In-game comms are deliberately not written to the transcript (#260), and the reasoning is the one
-        // they were kept off the conversation with in the first place: a station and a police interceptor are
-        // not talking to the Commander's companion, and a station approach brings a lot of them.
 
         Panel.SetTabsDownTheLeft(_host.Settings.Current.Ui.Tabs == InterfaceCapability.TabsLeft);
 

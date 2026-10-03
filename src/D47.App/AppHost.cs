@@ -6085,6 +6085,8 @@ public sealed class AppHost : IDisposable
     /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
     private async Task<SpokenClip?> SayAsync(Announcement announcement)
     {
+        var written = announcement;
+
         // The voice takes the pronoun; everything written below keeps the name, so a Commander scrolling back
         // can always see which system "it" was.
         // Not a narration, which is prose and keeps its names.
@@ -6108,12 +6110,15 @@ public sealed class AppHost : IDisposable
         else if (announcement.ConversationLine is { Length: > 0 } spoken)
         {
             // Onto the story's own feed, so "why did you say that" can answer about a callout too
-            // (remediation.md 17, item 4). The Conversation page itself is joined from the drain loop,
-            // attributed to whoever actually said it (#276).
+            // (remediation.md 17, item 4).
             Turns.Said(spoken);
         }
 
-        return await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
+        var clip = await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
+
+        // The Transcript keeps the names the voice replaced with a pronoun.
+        CalloutSaid?.Invoke(written.Text, ConversationSpeaker(written), written.Key);
+        return clip;
     }
 
     /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
@@ -6543,7 +6548,7 @@ public sealed class AppHost : IDisposable
                     options);
 
                 stories.EndingPosted(commander, due.StoryId, DateTimeOffset.Now);
-                await SpeakStoryLinesAsync(key, [(said, posted)]).ConfigureAwait(false);
+                await SpeakStoryLinesAsync(key, voice, [(said, posted)]).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -6584,22 +6589,25 @@ public sealed class AppHost : IDisposable
             .Select(line => (line, Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now, D47.Core.Stories.StoryEnding.Key(storyId))))
             .ToList();
 
-        _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", posted));
+        _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", VoiceRole.ShipAi, posted));
         return answer;
     }
 
-    /// <summary>Says each line in the ship's voice, keeping each clip on the message posted for it.</summary>
-    private async Task SpeakStoryLinesAsync(string key, IReadOnlyList<(string Line, D47.Core.Messages.D47Message? Posted)> lines)
+    /// <summary>Says each line in the given voice, keeping each clip on the message posted for it.</summary>
+    private async Task SpeakStoryLinesAsync(string key, VoiceRole voice, IReadOnlyList<(string Line, D47.Core.Messages.D47Message? Posted)> lines)
     {
         await _speaking.WaitAsync().ConfigureAwait(false);
 
         try
         {
-            await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+            if (voice == VoiceRole.ShipAi)
+            {
+                await EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+            }
 
             foreach (var (line, posted) in lines)
             {
-                Keep(posted, await SayAsync(new Announcement(key, line)).ConfigureAwait(false));
+                Keep(posted, await SayAsync(new Announcement(key, line) { Voice = voice }).ConfigureAwait(false));
             }
         }
         catch (Exception ex)
@@ -6936,18 +6944,6 @@ public sealed class AppHost : IDisposable
         Turns.Said(line);
     }
 
-    /// <summary>
-    /// Whether a spoken callout is heard closely enough to join the Conversation page — everything but
-    /// invented chatter the Commander may not answer and a relay they only overheard (#276).
-    /// </summary>
-    internal static bool JoinsConversation(Announcement announcement) =>
-        announcement.Invented is { Answerable: true }
-        || (!announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal)
-            && (announcement.CommsChannel == "player"
-                || (!announcement.Key.StartsWith("message.", StringComparison.Ordinal)
-                    && announcement.Key != IncomingMessages.CarrierCannedKey
-                    && announcement.Key != IncomingMessages.AuthorityCannedKey)));
-
     /// <summary>The chip the Conversation page names this speaker with.</summary>
     internal static string ConversationSpeaker(Announcement announcement) =>
         announcement.Speaker is { Length: > 0 } speaker
@@ -7060,11 +7056,6 @@ public sealed class AppHost : IDisposable
                     }
 
                     var spoken = await SayAsync(announcement).ConfigureAwait(false);
-
-                    if (JoinsConversation(announcement))
-                    {
-                        CalloutSaid?.Invoke(announcement.Text, ConversationSpeaker(announcement), announcement.Key);
-                    }
 
                     // Only a line actually spoken can be answered.
                     if (announcement.Invented is { } chatter)
