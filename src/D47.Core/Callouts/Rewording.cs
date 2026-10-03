@@ -24,7 +24,8 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
         int rewordPercent,
         Func<ShipFacts> facts,
         string? commanderName,
-        Func<FlavourBrief, string, CancellationToken, Task<FlavourReply>> ask)
+        Func<FlavourBrief, string, CancellationToken, Task<FlavourReply>> ask,
+        Func<bool>? stockCoreAboard = null)
     {
         ArgumentNullException.ThrowIfNull(announcement);
         ArgumentNullException.ThrowIfNull(facts);
@@ -46,6 +47,11 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
         if (FlavourBriefs.For(announcement, personalityEnabled) is not { } brief)
         {
             return AsWritten(announcement, "personality off", ship, commanderName, checkFacts: false);
+        }
+
+        if (brief.NeedsPersona && stockCoreAboard?.Invoke() == true)
+        {
+            return AsWritten(announcement, "stock core", ship, commanderName, checkFacts: false);
         }
 
         // Decided before any model call, so the as-written side makes none (#214).

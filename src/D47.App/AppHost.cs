@@ -3291,7 +3291,7 @@ public sealed class AppHost : IDisposable
 
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
         // describes the voice a Commander will actually hear.
-        Turns.CanBeDirected = () => DirectableIn(VoiceGroup.Aboard);
+        Turns.CanBeDirected = () => !Personas.Current.Stock && DirectableIn(VoiceGroup.Aboard);
         Turns.HumorFor = HumorFor;
 
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's thirteen
@@ -4571,7 +4571,8 @@ public sealed class AppHost : IDisposable
                         humor: HumorFor(HumorGroup.Cores, canBeDirected: false),
                         hiddenStory: HiddenStory(VoiceRole.ShipAi));
 
-                    var generated = await AskAsync(instruction).ConfigureAwait(false);
+                    // A stock core says its authored line and asks no model.
+                    var generated = change.Current.Stock ? null : await AskAsync(instruction).ConfigureAwait(false);
 
                     // Checked rather than merely non-null: a rewording brief answered with the model talking
                     // about itself is not a line this core said (GitHub issue 46).
@@ -4584,7 +4585,8 @@ public sealed class AppHost : IDisposable
                            ?? ContradictedClaims.Sayable(
                                change.Current.Return, facts, _logger, "persona.return");
                 }
-                else if (FlavourBriefs.Introducing(
+                else if (!change.Current.Stock
+                         && FlavourBriefs.Introducing(
                              change.Current.Intro,
                              Settings.Current.Llm.PersonalityEnabled) is { } brief)
                 {
@@ -6153,7 +6155,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The humor instruction for one line from a group, or null on a miss.</summary>
     private string? HumorFor(HumorGroup group, bool canBeDirected) =>
-        _humor.ForLine(Humor.DialFor(Settings.Current.Persona, group), canBeDirected);
+        _humor.ForLine(Humor.DialFor(Settings.Current.Persona, group, Personas.Current.Stock), canBeDirected);
 
     /// <summary>
     /// The same announcement, said in character, when there is a model to ask and it is one of the
@@ -6196,7 +6198,8 @@ public sealed class AppHost : IDisposable
                     hiddenStory: brief.NeedsPersona ? HiddenStory(VoiceRole.ShipAi)
                         : announcement.Voice == VoiceRole.Narrator ? HiddenStory(VoiceRole.Narrator)
                         : null);
-            });
+            },
+            stockCoreAboard: () => Personas.Current.Stock);
     }
 
     /// <summary>The cast invented chatter is voiced from.</summary>

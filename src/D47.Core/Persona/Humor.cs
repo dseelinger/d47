@@ -93,10 +93,15 @@ public static class Humor
     public static HumorGroup GroupOf(VoiceRole? role) =>
         role is VoiceRole.CarrierCaptain or VoiceRole.TowerControl ? HumorGroup.Carrier : HumorGroup.Npcs;
 
-    /// <summary>One group's settings.</summary>
-    public static HumorDial DialFor(PersonaSettings settings, HumorGroup group)
+    /// <summary>One group's settings. A stock core aboard silences the Cores group.</summary>
+    public static HumorDial DialFor(PersonaSettings settings, HumorGroup group, bool stockCoreAboard = false)
     {
         ArgumentNullException.ThrowIfNull(settings);
+
+        if (stockCoreAboard && group == HumorGroup.Cores)
+        {
+            return HumorDial.Off;
+        }
 
         return group switch
         {

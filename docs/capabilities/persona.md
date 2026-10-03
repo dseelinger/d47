@@ -507,6 +507,8 @@ carrier's captain and tower).
   or v3), the model is offered `[laughs]` and `[chuckles]` as well. Any other voice has them
   stripped.
 - **Warnings never get humor**, at any level.
+- **COVAS ignores Core humor.** While the stock core is aboard, no line it speaks gets humor or
+  delivery notes, whatever the level.
 
 In an NPC exchange that includes your carrier's tower or captain, d47 rolls once for the invented
 speakers and once for the crew, and tells the model which result belongs to which.

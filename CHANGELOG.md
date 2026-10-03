@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+COVAS now reports flatly. While it is aboard, Core humor is ignored, no line it speaks carries delivery notes such as `[sighs]`, and every announcement, such as a promotion or a notable kill, is said exactly as written without being reworded by the model. Its intro and return lines are said as written too. Questions you ask still go to the model, which is told COVAS is equipment and expresses no emotion. The Guardian cores are unchanged.
+
 A story can now open with fixed lines, spoken when you pick it and before anything else of the story. Each line is said in its speaker's voice and posted to Messages under the story's title, then the narrated beacon scan follows where the story has one, and chapter one's first line comes after both. The lines can name you as Commander and follow the gender set for your Commander, or say "they" when none is set. They are spoken once per pick: resuming a paused story does not repeat them, and picking the story again does. Stories published without an opening start as before.
 
 A story chapter's lines given to a cast member are now written as that person's own words, in the first person. Before, narration that described the dock hand or the caller was tagged with their id and read out in their voice. Description of a place, the ship or what a person left behind goes to the narrator, and every line is written plainly, without a closing aphorism or the story's own premise repeated. A cast line that names its own speaker is sent back for one rewrite, and if it still does, the narrator reads it and the chapter is kept. Chapters already written keep their lines.
