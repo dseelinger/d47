@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Journal reading pane prototype</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Saira:wght@500;600&amp;family=Sintony:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+[data-d47-theme='elite'],[data-d47-theme='elite-palette']{--d47-bg:#070606;--d47-bar:#0F0D0C;--d47-slab:#232120;--d47-white:#EDE9E3;--d47-grey:#A09B94;--d47-grey2:#6E6A65;--d47-a:#FF7A1A;--d47-knock:#140800;--d47-brown:#6B2F00;--d47-cyan:#33D6E8;--d47-blue:#1FA8F5;--d47-yellow:#F5D426;--d47-red:#F0343F;--d47-warn:#FFA41C;--d47-scan:.5}
+[data-d47-theme='dark']{--d47-bg:#1E1E1E;--d47-bar:#2D2D2D;--d47-slab:#252526;--d47-white:#D4D4D4;--d47-grey:#9D9D9D;--d47-grey2:#606060;--d47-a:#3794FF;--d47-knock:#0B1F33;--d47-brown:#1C4A7E;--d47-cyan:#4EC9B0;--d47-blue:#569CD6;--d47-yellow:#DCDCAA;--d47-red:#F48771;--d47-warn:#CCA700;--d47-scan:0}
+[data-d47-theme='light']{--d47-bg:#F4F1EB;--d47-bar:#E6E1D8;--d47-slab:#E4DFD6;--d47-white:#1C1917;--d47-grey:#5E5852;--d47-grey2:#9E9993;--d47-a:#B84E00;--d47-knock:#FFFFFF;--d47-brown:#E7B9A3;--d47-cyan:#007C8A;--d47-blue:#0B6BCB;--d47-yellow:#8A6D00;--d47-red:#C8192B;--d47-warn:#A04A00;--d47-scan:0}
+[data-d47-theme]{--d47-tile:color-mix(in oklab,var(--d47-a) 20%,var(--d47-bg));--d47-tile2:color-mix(in oklab,var(--d47-a) 30%,var(--d47-bg));--d47-line:color-mix(in oklab,var(--d47-a) 55%,var(--d47-bg));--d47-line2:color-mix(in oklab,var(--d47-a) 28%,var(--d47-bg));--d47-red-ground:color-mix(in oklab,var(--d47-red) 12%,var(--d47-bg))}
+.d47-root{position:relative;box-sizing:border-box;background:var(--d47-bg);color:var(--d47-white);font-family:'Sintony',system-ui,sans-serif;font-size:15px}
+.pane{box-sizing:border-box;padding:20px 24px 32px;display:flex;flex-direction:column;gap:18px;border-left:1px solid var(--d47-line2)}
+.hd{display:flex;flex-direction:column;gap:6px}
+.hl{margin:0;font-family:'Sintony',system-ui,sans-serif;font-weight:400;font-size:20px;line-height:1.3;color:var(--d47-white)}
+.when{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--d47-grey)}
+.when .t{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--d47-a)}
+.rows{display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:148px minmax(0,1fr);column-gap:16px;row-gap:4px;align-items:start;background:var(--d47-slab);padding:10px 14px}
+.row.full{grid-template-columns:minmax(0,1fr)}
+.lab{position:relative;padding-top:1px;font-family:'Saira',system-ui,sans-serif;font-size:12px;font-weight:500;line-height:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)}
+.lab.tipped{cursor:help}
+.lab.tipped:hover,.lab.tipped:focus,.lab.is-hover{color:var(--d47-white);outline:none}
+.ltip{display:none;position:absolute;left:-15px;top:calc(100% + 10px);z-index:4;width:300px;box-sizing:border-box;padding:8px 10px;background:var(--d47-bg);border:1px solid var(--d47-a);font-family:'Sintony',system-ui,sans-serif;font-size:13px;font-weight:400;line-height:1.45;letter-spacing:0;text-transform:none;color:var(--d47-white)}
+.ltip .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--d47-a)}
+.lab.tipped:hover .ltip,.lab.tipped:focus .ltip,.lab.is-hover .ltip{display:block}
+.vals{display:flex;flex-wrap:wrap;align-items:center;row-gap:4px;min-width:0;font-family:'Saira',system-ui,sans-serif;font-size:15px;font-weight:500;line-height:20px;color:var(--d47-a)}
+.v{color:var(--d47-a)}
+.v.name{color:var(--d47-white)}
+.v.here{color:var(--d47-cyan)}
+.v.red{color:var(--d47-red)}
+.n{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;font-weight:400}
+.it{display:inline-flex;align-items:center;min-width:0;max-width:100%}
+.sep{color:var(--d47-grey);padding:0 8px}
+.dec{position:relative;cursor:help;text-decoration:underline dotted;text-decoration-color:var(--d47-grey);text-decoration-thickness:1px;text-underline-offset:5px;outline:none}
+.dec:hover,.dec:focus,.dec.is-hover{text-decoration-color:var(--d47-a)}
+.dtip{display:none;position:absolute;left:-11px;top:calc(100% + 8px);z-index:4;height:32px;box-sizing:border-box;padding:0 10px;align-items:center;gap:10px;white-space:nowrap;background:var(--d47-bg);border:1px solid var(--d47-a)}
+.dtip .k{font-family:'Saira',system-ui,sans-serif;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)}
+.dtip .tok{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:400;color:var(--d47-white)}
+.dec:hover .dtip,.dec:focus .dtip,.dec.is-hover .dtip{display:flex}
+.lnk{position:relative;display:inline-flex;align-items:center;height:44px;margin:-12px 0;padding:0;border:0;background:none;cursor:pointer;font:inherit;outline:none}
+.lnk__face{display:inline-flex;align-items:center;gap:10px;height:30px;padding:0 10px;background:var(--d47-tile);color:var(--d47-white);font-family:'Saira',system-ui,sans-serif;font-size:15px;font-weight:500}
+.lnk__go{color:var(--d47-a);font-size:15px}
+.lnk:hover .lnk__face,.lnk:focus-visible .lnk__face,.lnk.is-hover .lnk__face{background:var(--d47-tile2)}
+.lnk:active .lnk__face,.lnk.is-pressed .lnk__face{background:var(--d47-a);color:var(--d47-knock)}
+.lnk:active .lnk__go,.lnk.is-pressed .lnk__go{color:var(--d47-knock)}
+.ktip{display:none;position:absolute;left:calc(100% + 6px);top:6px;height:32px;padding:0 10px;align-items:center;background:var(--d47-bg);border:1px solid var(--d47-a);color:var(--d47-white);font-family:'Saira',system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;z-index:4}
+.lnk:hover .ktip,.lnk:focus-visible .ktip,.lnk.is-hover .ktip{display:flex}
+.said{color:var(--d47-grey);font-family:'Sintony',system-ui,sans-serif;font-size:15px;font-weight:400;line-height:22px;white-space:pre-wrap;overflow-wrap:anywhere}
+.more{display:inline-flex;align-items:center;height:44px;margin:-12px 0 -12px 12px;padding:0;border:0;background:none;cursor:pointer;outline:none}
+.more__face{display:inline-flex;align-items:center;gap:0;white-space:pre;height:26px;padding:0 10px;background:var(--d47-tile);color:var(--d47-a);font-family:'Saira',system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.more__face .n{font-size:12px;letter-spacing:0}
+.more:hover .more__face,.more:focus-visible .more__face,.more.is-hover .more__face{background:var(--d47-tile2)}
+.band{display:flex;flex-direction:column}
+.disc{display:flex;align-items:center;gap:10px;width:100%;height:44px;box-sizing:border-box;padding:0 6px 0 2px;margin:0;background:none;border:0;border-bottom:1px solid var(--d47-a);color:var(--d47-white);cursor:pointer;text-align:left;outline:none}
+.disc:hover,.disc:focus-visible,.disc.is-hover{background:var(--d47-tile)}
+.tri{width:14px;flex:none;text-align:center;color:var(--d47-a);font-family:'Segoe UI Symbol','Saira',system-ui,sans-serif;font-size:10px}
+.dh{flex:none;font-family:'Saira',system-ui,sans-serif;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.peek{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Sintony',system-ui,sans-serif;font-size:13px;color:var(--d47-grey)}
+.cnt{margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--d47-grey)}
+.para{margin:12px 0 0;max-width:62ch;font-size:15px;line-height:1.55;color:var(--d47-white)}
+.fields{display:flex;flex-direction:column;margin-top:4px;user-select:text;cursor:text}
+.f{display:grid;grid-template-columns:212px minmax(0,1fr);column-gap:16px;row-gap:2px;padding:5px 2px;border-bottom:1px solid var(--d47-line2);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;line-height:18px}
+.fk{color:var(--d47-grey);overflow-wrap:anywhere}
+.fv{color:var(--d47-white);white-space:pre-wrap;overflow-wrap:anywhere}
+.narrow .row{grid-template-columns:minmax(0,1fr)}
+.narrow .f{grid-template-columns:minmax(0,1fr)}
+.narrow .ltip{width:260px}
+.empty-l{margin:0;font-size:20px;line-height:1.3;color:var(--d47-grey)}
+.empty-p{margin:0;max-width:44ch;font-size:14px;line-height:1.5;color:var(--d47-grey)}
+.scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.3) 0 1px,transparent 1px 3px);opacity:var(--d47-scan)}
+.jl{width:300px;flex:none;box-sizing:border-box;padding:12px 0;display:flex;flex-direction:column;gap:2px}
+.jl__head{padding:4px 12px 10px;font-family:'Saira',system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)}
+.jl__item{display:flex;gap:10px;align-items:baseline;width:100%;min-height:44px;box-sizing:border-box;padding:12px;margin:0;border:0;background:none;text-align:left;cursor:pointer;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;line-height:18px;color:var(--d47-white);outline:none}
+.jl__item .tm{flex:none;color:var(--d47-grey)}
+.jl__item:hover,.jl__item:focus-visible{background:var(--d47-tile)}
+.jl__item.sel{background:var(--d47-a);color:var(--d47-knock)}
+.jl__item.sel .tm{color:var(--d47-brown)}
+.jl__note{padding:14px 12px 0;font-size:12px;line-height:1.5;color:var(--d47-grey)}
+</style>
+</helmet>
+<div class="d47-root" data-d47-theme="{{theme}}" style="width: 950px; min-height: 1300px; display: flex; align-items: stretch">
+<nav class="jl" aria-label="Journal events">
+<div class="jl__head">Journal file · newest first</div>
+<sc-for list="{{list}}" as="it" hint-placeholder-count="4"><button class="{{it.cls}}" type="button" onClick="{{it.pick}}"><span class="tm">{{it.time}}</span><span>{{it.text}}</span></button></sc-for>
+<p class="jl__note">Prototype: pick an event; pick it again to clear the selection.</p>
+</nav>
+<main class="pane" style="flex: 1 1 650px; min-width: 0">
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+<div class="hd"><p class="empty-l">No event selected</p></div>
+<p class="empty-p">Select an event in the list. D47 shows it here in words, with every field the journal wrote one fold below.</p>
+</sc-if>
+<sc-if value="{{has}}" hint-placeholder-val="{{true}}">
+<div class="hd"><h2 class="hl">{{ev.head}}</h2><div class="when"><span class="t">{{ev.time}}</span><span>·</span><span>{{ev.age}}</span></div></div>
+<div class="rows">
+<sc-for list="{{ev.rows}}" as="r" hint-placeholder-count="4"><div class="{{r.cls}}"><sc-if value="{{r.label}}" hint-placeholder-val="{{true}}"><span class="{{r.labCls}}" tabindex="0">{{r.label}}<sc-if value="{{r.hasTip}}" hint-placeholder-val="{{false}}"><span class="ltip"><span class="k">{{r.tipKey}}</span> — {{r.tipText}}</span></sc-if></span></sc-if><div class="vals"><sc-for list="{{r.vals}}" as="v" hint-placeholder-count="2"><span class="it"><sc-if value="{{v.isP}}" hint-placeholder-val="{{true}}"><span class="{{v.vcls}}">{{v.a}}<span class="n">{{v.n}}</span>{{v.b}}</span></sc-if><sc-if value="{{v.isD}}" hint-placeholder-val="{{false}}"><span class="{{v.vcls}}" tabindex="0">{{v.a}}<span class="n">{{v.n}}</span>{{v.b}}<span class="dtip"><span class="k">Journal</span><span class="tok">{{v.tok}}</span></span></span></sc-if><sc-if value="{{v.isL}}" hint-placeholder-val="{{false}}"><button class="lnk" type="button"><span class="lnk__face">{{v.a}}<span class="lnk__go">›</span></span><span class="ktip">{{v.tip}}</span></button></sc-if><sc-if value="{{v.isS}}" hint-placeholder-val="{{false}}"><span class="said">{{v.a}}</span></sc-if><sc-if value="{{v.sep}}" hint-placeholder-val="{{false}}"><span class="sep">·</span></sc-if></span><sc-if value="{{v.isM}}" hint-placeholder-val="{{false}}"><button class="more" type="button" onClick="{{v.toggle}}"><span class="more__face"><span class="n">{{v.n}}</span>{{v.label}}</span></button></sc-if></sc-for></div></div></sc-for>
+</div>
+<sc-if value="{{ev.hasMeaning}}" hint-placeholder-val="{{true}}">
+<section class="band"><button class="disc" type="button" aria-expanded="{{ariaM}}" onClick="{{toggleMeaning}}"><span class="tri">{{triM}}</span><span class="dh">What this means</span><sc-if value="{{meaningShut}}" hint-placeholder-val="{{false}}"><span class="peek">{{ev.meaning}}</span></sc-if></button><sc-if value="{{meaningOpen}}" hint-placeholder-val="{{true}}"><p class="para">{{ev.meaning}}</p></sc-if></section>
+</sc-if>
+<section class="band"><button class="disc" type="button" aria-expanded="{{ariaF}}" onClick="{{toggleFields}}"><span class="tri">{{triF}}</span><span class="dh">Every field</span><span class="cnt">{{ev.count}}</span></button><sc-if value="{{fieldsOpen}}" hint-placeholder-val="{{false}}"><div class="fields"><sc-for list="{{ev.fields}}" as="f" hint-placeholder-count="6"><div class="f"><span class="fk">{{f.k}}</span><span class="fv">{{f.v}}</span></div></sc-for></div></sc-if></section>
+</sc-if>
+</main>
+<div class="scan"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["elite", "dark", "light", "elite-palette"], "default": "elite"}, "$preview": {"width": 950, "height": 1300}}'>
+class Component extends DCLogic {
+
+constructor(props) { super(props); this.state = { sel: 'docked', meaning: true, fields: false, all: false }; }
+renderVals() {
+  const data = [{"id": "message", "head": "Message received", "time": "21:40", "age": "just now", "list": "Message received from CMDR Placeholder", "meaning": "Elite writes ReceiveText for every message that reaches your comms panel. d47 treats a player's message as data, shows it as written, and never sends it to a model.", "hasMeaning": true, "fields": [{"k": "timestamp", "v": "2026-10-03T20:40:11Z"}, {"k": "event", "v": "ReceiveText"}, {"k": "From", "v": "Placeholder"}, {"k": "Message", "v": "look **here** $foo;"}, {"k": "Channel", "v": "local"}], "rows": [{"label": "From", "hasTip": true, "tipKey": "From", "tipText": "the name the sender chose. Shown as written", "more": 0, "vals": [{"isP": false, "isD": false, "isL": false, "isS": true, "a": "CMDR Placeholder", "n": "", "b": "", "tok": "", "tip": "", "vcls": ""}]}, {"label": "Channel", "hasTip": true, "tipKey": "Channel", "tipText": "where the message came from: local, wing, squadron, player or npc", "more": 0, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "local", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}]}, {"label": "Message", "hasTip": true, "tipKey": "Message", "tipText": "typed by a player. Shown exactly as written, never read as formatting", "more": 0, "vals": [{"isP": false, "isD": false, "isL": false, "isS": true, "a": "look **here** $foo;", "n": "", "b": "", "tok": "", "tip": "", "vcls": ""}]}]}, {"id": "docked", "head": "Docked at BNH-T2F, LTT 7786", "time": "23:11", "age": "4 minutes ago", "list": "Docked at BNH-T2F, LTT 7786", "meaning": "Elite writes Docked when your ship finishes landing at a station, outpost or carrier. d47 reads it to know where you are, and it is how your carrier's callsign is learned, at the airlock.", "hasMeaning": true, "fields": [{"k": "timestamp", "v": "2026-09-29T21:01:23Z"}, {"k": "event", "v": "Docked"}, {"k": "StationName", "v": "BNH-T2F"}, {"k": "StationType", "v": "FleetCarrier"}, {"k": "Taxi", "v": "false"}, {"k": "Multicrew", "v": "false"}, {"k": "StarSystem", "v": "LTT 7786"}, {"k": "SystemAddress", "v": "633608311522"}, {"k": "MarketID", "v": "3715429376"}, {"k": "StationFaction", "v": "{\"Name\":\"FleetCarrier\"}"}, {"k": "StationGovernment", "v": "$government_Carrier;"}, {"k": "StationGovernment_Localised", "v": "Private Ownership"}, {"k": "StationServices", "v": "[\"dock\",\"autodock\",\"commodities\",\"contacts\",\"crewlounge\",\"rearm\",\"refuel\",\"repair\",\"engineer\",\"flightcontroller\",\"stationoperations\",\"stationMenu\",\"carriermanagement\",\"carrierfuel\",\"socialspace\"]"}, {"k": "StationEconomy", "v": "$economy_Carrier;"}, {"k": "StationEconomy_Localised", "v": "Private Enterprise"}, {"k": "StationEconomies", "v": "[{\"Name\":\"$economy_Carrier;\",\"Name_Localised\":\"Private Enterprise\",\"Proportion\":1.0}]"}, {"k": "DistFromStarLS", "v": "213.287350"}, {"k": "LandingPads", "v": "{\"Small\":4,\"Medium\":4,\"Large\":8}"}], "rows": [{"label": "Station", "hasTip": true, "tipKey": "StationType · DistFromStarLS", "tipText": "the kind of station, and how far it sits from the system's arrival star", "more": 0, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "Fleet Carrier", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "", "n": "213", "b": " ls from the star", "tok": "", "tip": "", "vcls": "v"}]}, {"label": "Run by", "hasTip": true, "tipKey": "StationFaction · StationGovernment · StationEconomy", "tipText": "who controls the station, how it is governed, and what it trades in", "more": 0, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "FleetCarrier", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v name"}, {"isP": false, "isD": true, "isL": false, "isS": false, "a": "Private Ownership", "n": "", "b": "", "tok": "$government_Carrier;", "tip": "", "vcls": "v dec"}, {"isP": false, "isD": true, "isL": false, "isS": false, "a": "Private Enterprise", "n": "", "b": "", "tok": "$economy_Carrier;", "tip": "", "vcls": "v dec"}]}, {"label": "Landing pads", "hasTip": true, "tipKey": "LandingPads", "tipText": "how many pads of each size the station has. A large ship needs a large pad", "more": 0, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "", "n": "4", "b": " small", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "", "n": "4", "b": " medium", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "", "n": "8", "b": " large", "tok": "", "tip": "", "vcls": "v"}]}, {"label": "You can do here", "hasTip": true, "tipKey": "StationServices", "tipText": "what the station offers. Docking and menu entries are left out", "more": 6, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "Commodities", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Contacts", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Crew lounge", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Rearm", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Refuel", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Repair", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Engineer", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Carrier management", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Carrier fuel", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "Social space", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}]}, {"label": "Station Economies", "hasTip": true, "tipKey": "StationEconomies", "tipText": "the station's economies, largest share first. They decide what its market buys and sells", "more": 0, "vals": [{"isP": false, "isD": true, "isL": false, "isS": false, "a": "Private Enterprise", "n": "", "b": "", "tok": "$economy_Carrier;", "tip": "", "vcls": "v dec"}]}]}, {"id": "shields", "head": "Shields back up", "time": "19:55", "age": "2 hours ago", "list": "Shields back up", "meaning": "", "hasMeaning": false, "fields": [{"k": "timestamp", "v": "2026-09-29T19:55:04Z"}, {"k": "event", "v": "ShieldState"}, {"k": "ShieldsUp", "v": "true"}], "rows": [{"label": "Shields Up", "hasTip": false, "tipKey": "", "tipText": "", "more": 0, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "Yes", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}]}]}, {"id": "eng", "head": "Professor Palin applied Engine Dirty, grade 5", "time": "00:38", "age": "13 days ago", "list": "Professor Palin applied Engine Dirty, grade 5", "meaning": "Elite writes EngineerCraft each time an engineer applies a blueprint roll to one of your modules. d47 reads it to keep your engineered modules and the materials you hold up to date.", "hasMeaning": true, "fields": [{"k": "timestamp", "v": "2026-09-20T00:38:02Z"}, {"k": "event", "v": "EngineerCraft"}, {"k": "Slot", "v": "MainEngines"}, {"k": "Module", "v": "int_engine_size4_class5"}, {"k": "ApplyExperimentalEffect", "v": "special_engine_overloaded"}, {"k": "Ingredients", "v": "[{\"Name\":\"iron\",\"Count\":5},{\"Name\":\"hybridcapacitors\",\"Name_Localised\":\"Hybrid Capacitors\",\"Count\":3},{\"Name\":\"securityfirmware\",\"Name_Localised\":\"Security Firmware Patch\",\"Count\":1}]"}, {"k": "Engineer", "v": "Professor Palin"}, {"k": "EngineerID", "v": "300220"}, {"k": "BlueprintID", "v": "128673659"}, {"k": "BlueprintName", "v": "Engine_Dirty"}, {"k": "Level", "v": "5"}, {"k": "Quality", "v": "1.000000"}, {"k": "ExperimentalEffect", "v": "special_engine_overloaded"}, {"k": "ExperimentalEffect_Localised", "v": "Drag Drives"}, {"k": "Modifiers", "v": "[{\"Label\":\"Integrity\",\"Value\":74.800003,\"OriginalValue\":88.0,\"LessIsGood\":0},{\"Label\":\"PowerDraw\",\"Value\":5.5104,\"OriginalValue\":4.92,\"LessIsGood\":1},{\"Label\":\"EngineOptimalMass\",\"Value\":367.5,\"OriginalValue\":420.0,\"LessIsGood\":0},{\"Label\":\"EngineOptPerformance\",\"Value\":145.599991,\"OriginalValue\":100.0,\"LessIsGood\":0},{\"Label\":\"EngineHeatRate\",\"Value\":2.288,\"OriginalValue\":1.3,\"LessIsGood\":1}]"}], "rows": [{"label": "Engineer", "hasTip": true, "tipKey": "Engineer · EngineerID", "tipText": "the engineer who did the work", "more": 0, "vals": [{"isP": false, "isD": false, "isL": true, "isS": false, "a": "Professor Palin", "n": "", "b": "", "tok": "", "tip": "Open on the Engineers tab", "vcls": ""}]}, {"label": "Module", "hasTip": true, "tipKey": "Slot · Module", "tipText": "the module that was changed, by size and class", "more": 0, "vals": [{"isP": false, "isD": true, "isL": false, "isS": false, "a": "", "n": "4A", "b": " Thrusters", "tok": "int_engine_size4_class5", "tip": "", "vcls": "v dec"}]}, {"label": "Blueprint", "hasTip": true, "tipKey": "BlueprintName · Level", "tipText": "the modification and the grade applied", "more": 0, "vals": [{"isP": true, "isD": false, "isL": false, "isS": false, "a": "Engine Dirty", "n": "", "b": "", "tok": "", "tip": "", "vcls": "v"}, {"isP": true, "isD": false, "isL": false, "isS": false, "a": "grade ", "n": "5", "b": "", "tok": "", "tip": "", "vcls": "v"}]}, {"label": "Experimental", "hasTip": true, "tipKey": "ExperimentalEffect", "tipText": "the experimental effect on the module, if any", "more": 0, "vals": [{"isP": false, "isD": true, "isL": false, "isS": false, "a": "Drag Drives", "n": "", "b": "", "tok": "special_engine_overloaded", "tip": "", "vcls": "v dec"}]}, {"label": "Ingredients", "hasTip": true, "tipKey": "Ingredients", "tipText": "the materials this roll used, with how many of each", "more": 0, "vals": [{"isP": false, "isD": true, "isL": false, "isS": false, "a": "Iron × ", "n": "5", "b": "", "tok": "iron", "tip": "", "vcls": "v dec"}, {"isP": false, "isD": true, "isL": false, "isS": false, "a": "Hybrid Capacitors × ", "n": "3", "b": "", "tok": "hybridcapacitors", "tip": "", "vcls": "v dec"}, {"isP": false, "isD": true, "isL": false, "isS": false, "a": "Security Firmware Patch × ", "n": "1", "b": "", "tok": "securityfirmware", "tip": "", "vcls": "v dec"}]}]}];
+  const s = this.state;
+  const list = data.map((e) => ({
+    time: e.time, text: e.list,
+    cls: 'jl__item' + (e.id === s.sel ? ' sel' : ''),
+    pick: () => this.setState(e.id === s.sel ? { sel: null } : { sel: e.id, fields: false, all: false }),
+  }));
+  const raw = data.find((e) => e.id === s.sel);
+  let ev = null;
+  if (raw) {
+    ev = Object.assign({}, raw, {
+      count: raw.fields.length,
+      rows: raw.rows.map((r) => {
+        let vals = r.vals;
+        let more = null;
+        if (r.more && vals.length > r.more) {
+          if (s.all) { more = { label: 'Fewer', n: '' }; }
+          else { more = { label: ' more', n: '+' + String(vals.length - r.more) }; vals = vals.slice(0, r.more); }
+        }
+        const out = vals.map((v, i) => Object.assign({}, v, { sep: i < vals.length - 1, isM: false }));
+        if (more) out.push({ isM: true, sep: false, isP: false, isD: false, isL: false, isS: false, label: more.label, n: more.n, toggle: () => this.setState({ all: !s.all }) });
+        return Object.assign({}, r, { vals: out, isFull: !r.label, cls: r.label ? 'row' : 'row full', labCls: r.hasTip ? 'lab tipped' : 'lab' });
+      }),
+    });
+  }
+  const theme = this.props.theme ?? 'elite';
+  return {
+    theme, list, ev, has: !!ev, empty: !ev,
+    meaningOpen: s.meaning, meaningShut: !s.meaning, triM: s.meaning ? '\u25BC' : '\u25B6', ariaM: String(s.meaning),
+    fieldsOpen: s.fields, triF: s.fields ? '\u25BC' : '\u25B6', ariaF: String(s.fields),
+    toggleMeaning: () => this.setState({ meaning: !s.meaning }),
+    toggleFields: () => this.setState({ fields: !s.fields }),
+  };
+}
+
+}
+</script>
+</body>
+</html>
