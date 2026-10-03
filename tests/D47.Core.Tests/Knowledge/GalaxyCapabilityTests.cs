@@ -411,24 +411,25 @@ public class GalaxyCapabilityTests
     }
 
     [Fact]
-    public async Task LeavingLandableOutIsNotTheSameAsAskingForUnlandableBodies()
+    public async Task LandableFalseIsReadAsNotAskingAboutLanding()
     {
         using var install = new TempInstall();
         var (registry, galaxy) = Build(install);
 
         await registry.InvokeAsync(
             "find_body",
-            Args(("body_type", "Water world")),
-            TestContext.Current.CancellationToken);
-
-        Assert.Null(galaxy.LastBodyQuery?.Landable);
-
-        await registry.InvokeAsync(
-            "find_body",
             Args(("body_type", "Water world"), ("landable", "false")),
             TestContext.Current.CancellationToken);
 
-        Assert.False(galaxy.LastBodyQuery?.Landable);
+        Assert.NotNull(galaxy.LastBodyQuery);
+        Assert.Null(galaxy.LastBodyQuery.Landable);
+
+        await registry.InvokeAsync(
+            "find_body",
+            Args(("body_type", "Water world"), ("landable", "true")),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(galaxy.LastBodyQuery?.Landable);
     }
 
     [Fact]
