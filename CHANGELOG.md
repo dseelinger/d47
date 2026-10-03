@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Bookmarks page has an Add button. It bookmarks what you have targeted in Elite, as saying "bookmark this" does, and asks for a name first; leave it empty to use Elite's name. If nothing is targeted, the page says so and makes no bookmark.
+
 A system name on the Adventures and Bookmarks pages now has a copy button beside it. On Adventures it follows the system in a story's next step and in each beat already told, whether or not you are in that system; the name is still cyan only when it is your current system. On Bookmarks each row has one for its system. Clicking it copies the name and does not open the story.
 
 Home system is now set per Commander, like the Character sheet. Each Commander has their own, and the arrival callout and the answer to what d47 is watching for use the home of the Commander who is flying. A home system you had already set stays as the starting value every Commander reads until they set their own.

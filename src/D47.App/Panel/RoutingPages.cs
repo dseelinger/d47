@@ -170,7 +170,7 @@ public static class RoutingPages
 
     private static Control Bookmarks(RoutingSurface surface, PanelPrompts prompts) =>
         surface is { Bookmarks: { } store, Commander: { } commander }
-            ? new BookmarksPage(store, commander, surface.BookmarkPhrasesTaken ?? (() => []), prompts, Copy(surface))
+            ? new BookmarksPage(store, commander, surface.BookmarkPhrasesTaken ?? (() => []), prompts, Copy(surface), surface.Registry)
             : Missing("Bookmarks are not available on this surface.");
 
     private static Control CommunityGoal(RoutingSurface surface, Func<Control?>? settingsStrip) =>

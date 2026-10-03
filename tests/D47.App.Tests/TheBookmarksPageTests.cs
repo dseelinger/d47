@@ -4,6 +4,8 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -39,7 +41,8 @@ public class TheBookmarksPageTests
         string fid = "F1",
         bool commanderKnown = true,
         IReadOnlyCollection<string>? taken = null,
-        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
+        GameStatus? target = null)
     {
         var root = TempFolders.Create("d47-bookmarks-page-tests");
 
@@ -54,10 +57,22 @@ public class TheBookmarksPageTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
+        var registry = CapabilityRegistry.Build(
+        [
+            BookmarksCapability.Create(
+                store,
+                () => fid,
+                () => target ?? GameStatus.Unknown,
+                () => null,
+                () => PhraseBook.From(CapabilityRegistry.Build([]), []),
+                () => At),
+        ]);
+
         panel.EnableRouting(
             new RoutingSurface(
                 () => new NavRoute(),
                 () => null,
+                registry,
                 Bookmarks: store,
                 Commander: () => gameState?.Active,
                 BookmarkPhrasesTaken: () => taken ?? [],
@@ -115,6 +130,95 @@ public class TheBookmarksPageTests
         Assert.DoesNotContain(
             surface.Panel.GetVisualDescendants().OfType<Button>(),
             button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
+
+        surface.Window.Close();
+    }
+
+    private static GameStatus Targeting(string system) =>
+        new() { Destination = new StatusDestination(1, 0, system) };
+
+    private static void Type(Surface surface, string text)
+    {
+        var box = surface.Panel.GetVisualDescendants().OfType<TextBox>().Last();
+
+        box.Text = text;
+        Dispatcher.UIThread.RunJobs();
+
+        Click(Named(surface.Panel, "Done"));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>Add with no name bookmarks the target under Elite's name, as "bookmark this" does (#540).</summary>
+    [AvaloniaFact]
+    public void AddWithNoNameBookmarksTheTargetUnderElitesName()
+    {
+        var surface = Open(target: Targeting("LTT 7786"));
+
+        Click(Named(surface.Panel, "Add"));
+        Type(surface, string.Empty);
+
+        Assert.Equal("LTT 7786", surface.Store.Find("F1", "LTT 7786")?.System);
+        Assert.Contains(Drawn(surface.Panel), text => text.Contains("LTT 7786", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Add with a name gives the bookmark that name (#540).</summary>
+    [AvaloniaFact]
+    public void AddWithANameTakesThatName()
+    {
+        var surface = Open(target: Targeting("LTT 7786"));
+
+        Click(Named(surface.Panel, "Add"));
+        Type(surface, "Mining Spot");
+
+        Assert.Equal("LTT 7786", surface.Store.Find("F1", "Mining Spot")?.System);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>A name that breaks the rules is refused in the prompt and nothing is made (#540).</summary>
+    [AvaloniaFact]
+    public void AddWithABadNameIsRefusedInThePrompt()
+    {
+        var surface = Open(target: Targeting("LTT 7786"));
+
+        Click(Named(surface.Panel, "Add"));
+        Type(surface, "Current CG");
+
+        Assert.Null(surface.Store.Find("F1", "LTT 7786"));
+        Assert.Contains(Drawn(surface.Panel), text => text.Contains("Current CG", StringComparison.Ordinal));
+        Assert.Single(surface.Store.For("F1"));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>With nothing targeted, Add shows the tool's refusal and creates nothing (#540).</summary>
+    [AvaloniaFact]
+    public void AddWithNothingTargetedSaysSoAndMakesNothing()
+    {
+        var surface = Open();
+
+        Click(Named(surface.Panel, "Add"));
+        Type(surface, string.Empty);
+
+        Assert.Contains(
+            Drawn(surface.Panel),
+            text => text.Contains("Nothing is targeted. Select a system or a station first.", StringComparison.Ordinal));
+
+        Assert.Single(surface.Store.For("F1"));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>The empty state names the button as well as the phrase (#540).</summary>
+    [AvaloniaFact]
+    public void TheEmptyStateNamesTheAddButton()
+    {
+        var surface = Open(seed: false);
+
+        Assert.Contains(Drawn(surface.Panel), text => text.Contains("press Add", StringComparison.Ordinal));
+        Assert.NotNull(Named(surface.Panel, "Add"));
 
         surface.Window.Close();
     }
