@@ -66,6 +66,12 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "cast-named-ship" => ("taken", Card, Secret with { Cast = [Speaker with { Id = StorySpeaker.Ship }] }),
         "cast-named-narrator" => ("taken", Card, Secret with { Cast = [Speaker with { Id = StorySpeaker.Narrator }] }),
         "cast-named-for-a-persona" => ("taken", Card, Secret with { Cast = [Speaker with { Id = "warden" }] }),
+        "link-above-one" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Link = 1.5 }] }),
+        "link-below-zero" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Link = -0.1 }] }),
+        "unknown-effect" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("nothing", 5)] }] }),
+        "effect-level-zero" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 0)] }] }),
+        "effect-level-twenty-one" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 21)] }] }),
+        "effect-listed-twice" => ("twice", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 5), new("glitch", 9)] }] }),
         "line-without-speaker" => ("no speaker", Card, Secret with { Clues = [Secret.Clues[0] with { Speaker = "" }, .. Secret.Clues.Skip(1)] }),
         "line-by-a-stranger" => ("not the ship, the narrator or in the cast", Card, Secret with { Finale = [Secret.Finale[0] with { Speaker = "stranger" }, .. Secret.Finale.Skip(1)] }),
         _ => throw new ArgumentOutOfRangeException(nameof(rule), rule, null),
@@ -82,6 +88,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [Fact]
     public void EveryCardNamesALength() =>
         Assert.All(StoryFixtures.Catalog.Cards, card => Assert.NotNull(StoryPacing.Find(card.Length)));
+
+    [Fact]
+    public void ASpeakerWithALinkAndEffectsKeepsTheFormat() =>
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Link = 0.05, Effects = [new("glitch", 20)] }] }]).Faults());
 
     [Fact]
     public void AChatterboxSpeakerMayUseTheCommandersOwnVoice() =>
@@ -119,6 +129,12 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("cast-named-ship")]
     [InlineData("cast-named-narrator")]
     [InlineData("cast-named-for-a-persona")]
+    [InlineData("link-above-one")]
+    [InlineData("link-below-zero")]
+    [InlineData("unknown-effect")]
+    [InlineData("effect-level-zero")]
+    [InlineData("effect-level-twenty-one")]
+    [InlineData("effect-listed-twice")]
     [InlineData("line-without-speaker")]
     [InlineData("line-by-a-stranger")]
     public void ABrokenRuleIsAFault(string rule)

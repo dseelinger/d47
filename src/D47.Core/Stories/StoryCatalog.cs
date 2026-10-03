@@ -252,6 +252,12 @@ public sealed record StorySpeaker
     /// <summary>A recurring character the Commander knows from the card. A primary member always has a picture.</summary>
     public bool Primary { get; init; }
 
+    /// <summary>Signal strength, 0 to 1, of the comms link the member is heard through; null for none.</summary>
+    public double? Link { get; init; }
+
+    /// <summary>Guardian effects the member's voice passes through, in order.</summary>
+    public IReadOnlyList<StorySpeakerEffect>? Effects { get; init; }
+
     /// <summary>
     /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
     /// <see cref="StorySpeakerVersions.ForMan"/> version.
@@ -291,6 +297,9 @@ public sealed record StorySpeakerVersion
 
     public required string Voice { get; init; }
 }
+
+/// <summary>One Guardian effect on a cast member's voice: a <see cref="Audio.GuardianEffect.Id"/> and a level, 1 to 20.</summary>
+public sealed record StorySpeakerEffect(string Id, int Level);
 
 /// <summary>A cast member's two versions, keyed by the Commander who meets them, never by the character.</summary>
 public sealed record StorySpeakerVersions
@@ -761,6 +770,11 @@ public sealed class StoryCatalog
 
             speakers.Add(speaker.Id ?? string.Empty);
 
+            foreach (var fault in SoundFaults(name, speaker))
+            {
+                yield return fault;
+            }
+
             if (speaker.Versions is not { } versions)
             {
                 if (VoiceFault(name, speaker.Provider, speaker.Voice) is { } fault)
@@ -816,6 +830,33 @@ public sealed class StoryCatalog
             else if (!speakers.Contains(line.Speaker))
             {
                 yield return $"{field} is spoken by {line.Speaker}, who is not the ship, the narrator or in the cast.";
+            }
+        }
+    }
+
+    private static IEnumerable<string> SoundFaults(string name, StorySpeaker speaker)
+    {
+        if (speaker.Link is { } link && !(link >= 0 && link <= 1))
+        {
+            yield return $"{name} has a link outside 0 to 1.";
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var effect in speaker.Effects ?? [])
+        {
+            if (Audio.GuardianVoice.Find(effect.Id ?? string.Empty) is null)
+            {
+                yield return $"{name} has the effect {effect.Id}, which is not a Guardian effect.";
+            }
+            else if (!seen.Add(effect.Id!))
+            {
+                yield return $"{name} lists the effect {effect.Id} twice.";
+            }
+
+            if (effect.Level is < Audio.GuardianVoice.LowestLevel or > Audio.GuardianVoice.HighestLevel)
+            {
+                yield return $"{name} has the effect {effect.Id} at level {effect.Level.ToString(CultureInfo.InvariantCulture)}, outside {Audio.GuardianVoice.LowestLevel.ToString(CultureInfo.InvariantCulture)} to {Audio.GuardianVoice.HighestLevel.ToString(CultureInfo.InvariantCulture)}.";
             }
         }
     }

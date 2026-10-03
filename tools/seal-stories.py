@@ -18,6 +18,9 @@ Each entry: {"id", "secret", "end", "beats", "scan", "clues", "finale", "options
            {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
            such a speaker as {name:<cast-id>}, and the card names neither the token nor either name.
+           A speaker may carry "link", a number from 0 to 1: the signal strength of the comms link it is heard
+           through. It may carry "effects", a list of {"id", "level"}: Guardian effect ids (GuardianVoice.Table),
+           each at a level from 1 to 20, applied in order before the link. An id may be listed once.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
            a primary speaker must have a picture when the story is published.
 The scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
@@ -55,6 +58,34 @@ NAME_TOKEN = re.compile(r"\{name:([^{}\s]+)\}")
 
 def text(value) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def guardian_ids() -> set:
+    source = (REPO / "src" / "D47.Core" / "Audio" / "GuardianVoice.cs").read_text(encoding="utf-8")
+    return set(re.findall(r'Id = "([^"]+)"', source))
+
+
+def sound_fault(who: str, speaker: dict) -> list:
+    found = []
+    link = speaker.get("link")
+    if "link" in speaker and (isinstance(link, bool) or not isinstance(link, (int, float)) or not 0 <= link <= 1):
+        found.append(f"{who} has a link outside 0 to 1")
+    effects = speaker.get("effects")
+    if "effects" in speaker and not isinstance(effects, list):
+        return found + [f"{who} has effects that are not a list"]
+    known = guardian_ids()
+    seen = set()
+    for effect in effects or []:
+        eid = effect.get("id") if isinstance(effect, dict) else None
+        level = effect.get("level") if isinstance(effect, dict) else None
+        if eid not in known:
+            found.append(f"{who} has the effect {eid}, which is not a Guardian effect")
+        elif eid in seen:
+            found.append(f"{who} lists the effect {eid} twice")
+        seen.add(eid)
+        if isinstance(level, bool) or not isinstance(level, int) or not 1 <= level <= 20:
+            found.append(f"{who} has the effect {eid} at a level outside 1 to 20")
+    return found
 
 
 def persona_ids() -> set:
@@ -136,6 +167,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         if sid in speakers or sid in personas:
             found.append(f"cast {at + 1} has the id {sid}, taken by the ship, the narrator, a persona or another speaker")
         speakers.add(sid)
+        found += sound_fault(f"cast {at + 1} ({sid})", speaker)
         if "primary" in speaker and not isinstance(speaker["primary"], bool):
             found.append(f"cast {at + 1} ({sid}) has a primary that is not true or false")
         if versions is None:
