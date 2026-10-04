@@ -600,14 +600,16 @@ public partial class PanelView : UserControl
 
         ChecklistPage? page = null;
 
+        _checklistBuild = crumb => crumb.Key switch
+        {
+            ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
+                                            ?? new TextBlock { Text = "Nothing waiting." },
+            _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
+        };
+
         Furnish(
             PanelTab.Commander,
-            crumb => crumb.Key switch
-            {
-                ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
-                                                ?? new TextBlock { Text = "Nothing waiting." },
-                _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
-            },
+            BuildCommander,
             new NavCrumb("checklist", "Checklist")
             {
                 // The suggestions level drilled from here inherits it: a proposal is still the checklist's
@@ -633,9 +635,53 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the fleet, what the Commander is wearing, and the arithmetic between them
-    /// (Phase 26, "Ships"; Phase 27, "Suits and weapons, and the gap").
+    /// Gives this surface Commander › Standing (#552). Called before <see cref="EnableChecklist"/>, so the
+    /// root lands first.
     /// </summary>
+    public void EnableStanding(Func<D47.Core.Journal.CommanderGameState?> state)
+    {
+        _commanderClock = new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
+
+        _standingBuild = _ => _standing = new StandingPage(state, () => _commanderName?.Invoke(), _commanderClock);
+
+        Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(StandingPage.RootKey, "Standing")
+            {
+                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
+            });
+    }
+
+    /// <summary>Redraws Commander › Standing and its footer when the journal has moved them on.</summary>
+    public bool TickCommander()
+    {
+        if (Tab != PanelTab.Commander)
+        {
+            return false;
+        }
+
+        var changed = _commanderClock?.Tick() ?? false;
+
+        if (_standing is { } standing && Nav.RootKeyOf(PanelTab.Commander) == StandingPage.RootKey)
+        {
+            changed |= standing.Tick();
+        }
+
+        return changed;
+    }
+
+    /// <summary>Draws a Commander level: Standing, or whatever the checklist roots draw.</summary>
+    private Control BuildCommander(NavCrumb crumb) =>
+        crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
+        : _checklistBuild is { } checklist ? checklist(crumb)
+        : new TextBlock { Text = "Nothing here." };
+
+    private Func<NavCrumb, Control>? _standingBuild;
+    private Func<NavCrumb, Control>? _checklistBuild;
+    private StandingPage? _standing;
+    private D47.App.Controls.JournalClock? _commanderClock;
+
     /// <summary>
     /// Gives this surface a clipboard, so every system name the panel draws can carry a copy glyph
     /// (#157).

@@ -161,6 +161,8 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
+            // Commander › Standing, ahead of the checklist so it is the tab's first root (#552).
+            Panel.EnableStanding(() => host.GameState.Active);
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
             // The stories the Commander flies (Phase 47). **Both surfaces from 2026-08-22**, on the
@@ -319,6 +321,10 @@ public partial class MainWindow : Window
             // And the ship pages, for the same reason and by the same route (remediation.md 17, item 7).
             host.Tick.Add("loadout", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickLoadout()));
+
+            // And Commander › Standing, by the same route again (#552).
+            host.Tick.Add("commander", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickCommander()));
 
             // And the route being flown, by the same route again (Phase 37).
             host.Tick.Add("routing", _ =>

@@ -96,6 +96,52 @@ public static class Gauge
         return track;
     }
 
+    /// <summary>
+    /// A <c>line2</c> track with a 1px Grey zero mark at its centre, filled from the mark by
+    /// <paramref name="value"/>, clamped to −1–1: A rightwards when positive, Red leftwards when negative.
+    /// Null draws the mark alone.
+    /// </summary>
+    public static Grid CentreTrack(double? value)
+    {
+        var clamped = value is { } v && double.IsFinite(v) ? Math.Clamp(v, -1, 1) : 0;
+        var below = Math.Max(0, -clamped);
+        var above = Math.Max(0, clamped);
+
+        var track = new Grid
+        {
+            Height = TrackHeight * 2,
+            ColumnDefinitions = new ColumnDefinitions
+            {
+                new(new GridLength(1 - below, GridUnitType.Star)),
+                new(new GridLength(below, GridUnitType.Star)),
+                new(new GridLength(above, GridUnitType.Star)),
+                new(new GridLength(1 - above, GridUnitType.Star)),
+            },
+        };
+
+        var ground = new Border { Height = TrackHeight, VerticalAlignment = VerticalAlignment.Center };
+        Themed(ground, Border.BackgroundProperty, ThemeManager.Line2Key);
+        Grid.SetColumnSpan(ground, 4);
+        track.Children.Add(ground);
+
+        var negative = new Border { Height = TrackHeight, VerticalAlignment = VerticalAlignment.Center };
+        Themed(negative, Border.BackgroundProperty, ThemeManager.RedKey);
+        Grid.SetColumn(negative, 1);
+        track.Children.Add(negative);
+
+        var positive = new Border { Height = TrackHeight, VerticalAlignment = VerticalAlignment.Center };
+        Themed(positive, Border.BackgroundProperty, ThemeManager.AKey);
+        Grid.SetColumn(positive, 2);
+        track.Children.Add(positive);
+
+        var zero = new Border { Width = 1, HorizontalAlignment = HorizontalAlignment.Center };
+        Themed(zero, Border.BackgroundProperty, ThemeManager.GreyKey);
+        Grid.SetColumnSpan(zero, 4);
+        track.Children.Add(zero);
+
+        return track;
+    }
+
     public static string FillKey(GaugeFill kind) => kind switch
     {
         GaugeFill.Capacity => ThemeManager.YellowKey,
