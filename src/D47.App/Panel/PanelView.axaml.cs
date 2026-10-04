@@ -653,6 +653,26 @@ public partial class PanelView : UserControl
             });
     }
 
+    /// <summary>
+    /// Gives this surface Commander › Statistics (#553). Called after <see cref="EnableStanding"/> and before
+    /// <see cref="EnableChecklist"/>, so the root lands second.
+    /// </summary>
+    public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state)
+    {
+        _commanderClock ??= new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
+        var clock = _commanderClock;
+
+        _statisticsBuild = _ => _statistics = new StatisticsPage(state, clock, () => ClearSearch());
+
+        Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(StatisticsPage.RootKey, "Statistics")
+            {
+                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
+            });
+    }
+
     /// <summary>Redraws Commander › Standing and its footer when the journal has moved them on.</summary>
     public bool TickCommander()
     {
@@ -668,18 +688,26 @@ public partial class PanelView : UserControl
             changed |= standing.Tick();
         }
 
+        if (_statistics is { } statistics && Nav.RootKeyOf(PanelTab.Commander) == StatisticsPage.RootKey)
+        {
+            changed |= statistics.Tick();
+        }
+
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Standing, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Standing, Statistics, or whatever the checklist roots draw.</summary>
     private Control BuildCommander(NavCrumb crumb) =>
         crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
+        : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };
 
     private Func<NavCrumb, Control>? _standingBuild;
     private Func<NavCrumb, Control>? _checklistBuild;
     private StandingPage? _standing;
+    private Func<NavCrumb, Control>? _statisticsBuild;
+    private StatisticsPage? _statistics;
     private D47.App.Controls.JournalClock? _commanderClock;
 
     /// <summary>

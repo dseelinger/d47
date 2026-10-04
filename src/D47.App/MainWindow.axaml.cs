@@ -163,6 +163,7 @@ public partial class MainWindow : Window
             // item that moved it out of a Window.
             // Commander › Standing, ahead of the checklist so it is the tab's first root (#552).
             Panel.EnableStanding(() => host.GameState.Active);
+            Panel.EnableStatistics(() => host.GameState.Active);
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
 
             // The stories the Commander flies (Phase 47). **Both surfaces from 2026-08-22**, on the

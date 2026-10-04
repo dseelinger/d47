@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -11,7 +10,7 @@ namespace D47.Core.Capabilities.Builtin;
 /// Everything d47 knows about the game from the journal (Phase 2, "TheApp knows where you are"; Phase
 /// 7, "Knowing the game").
 /// </summary>
-public static partial class JournalCapability
+public static class JournalCapability
 {
     public const string Id = "journal";
 
@@ -1514,10 +1513,10 @@ public static partial class JournalCapability
 
             if (figures.Count == 0)
             {
-                return $"No {ReadableStatistic(wanted)} figures in your career statistics{asOf}.";
+                return $"No {CareerStatistics.Label(wanted)} figures in your career statistics{asOf}.";
             }
 
-            report.AppendLine($"{ReadableStatistic(wanted)}{asOf}:");
+            report.AppendLine($"{CareerStatistics.Label(wanted)}{asOf}:");
             AppendStatistics(report, figures);
             return report.ToString().TrimEnd();
         }
@@ -1534,7 +1533,7 @@ public static partial class JournalCapability
             }
 
             report.AppendLine();
-            report.AppendLine($"{ReadableStatistic(section)}:");
+            report.AppendLine($"{CareerStatistics.Label(section)}:");
             AppendStatistics(report, figures);
         }
 
@@ -1545,74 +1544,8 @@ public static partial class JournalCapability
     {
         foreach (var (key, value) in figures)
         {
-            report.AppendLine($"  {ReadableStatistic(key)}: {FormatStatistic(key, value)}");
+            report.AppendLine($"  {CareerStatistics.Label(key)}: {CareerStatistics.Format(key, value)}");
         }
-    }
-
-    private static readonly IReadOnlyDictionary<string, string> ReadableStatisticNames =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["FLEETCARRIER"] = "Fleet carrier",
-        };
-
-    /// <summary>
-    /// A section or figure name in words — the table above where a key reads badly split on its
-    /// underscores and at each lower-to-upper case change otherwise, so a key Frontier adds later is
-    /// still reported (#263).
-    /// </summary>
-    private static string ReadableStatistic(string key) =>
-        ReadableStatisticNames.TryGetValue(key, out var name)
-            ? name
-            : string.Join(
-                ' ',
-                CamelBoundary().Replace(key, "_").Split('_', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(word => char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant()));
-
-    [GeneratedRegex("(?<=[a-z])(?=[A-Z])")]
-    private static partial Regex CamelBoundary();
-
-    /// <summary>
-    /// A figure in its unit, guessed from what the key names: Merc Coins for a <c>MercCoins_</c> figure;
-    /// credits for a profit, a spend or a wealth figure; light years for a distance; hours and minutes
-    /// for a time (#263).
-    /// </summary>
-    private static string FormatStatistic(string key, double value)
-    {
-        if (key.StartsWith("MercCoins", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{value:N0} Merc Coins";
-        }
-
-        if (key.Contains("Distance", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{value:0.##} ly";
-        }
-
-        if (key.Contains("Time", StringComparison.OrdinalIgnoreCase))
-        {
-            return FormatStatisticDuration(value);
-        }
-
-        if (key.Contains("Profit", StringComparison.OrdinalIgnoreCase)
-            || key.Contains("Wealth", StringComparison.OrdinalIgnoreCase)
-            || key.Contains("Debt", StringComparison.OrdinalIgnoreCase)
-            || key.Contains("Spent", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{value:N0} cr";
-        }
-
-        return value == Math.Floor(value) ? value.ToString("N0") : value.ToString("0.##");
-    }
-
-    private static string FormatStatisticDuration(double totalSeconds)
-    {
-        var span = TimeSpan.FromSeconds(totalSeconds);
-        var hours = (int)span.TotalHours;
-        var minutes = span.Minutes;
-
-        return hours > 0
-            ? $"{hours}h {minutes}m"
-            : $"{minutes} minute{(minutes == 1 ? "" : "s")}";
     }
 
     private static string Speak(FlightMode mode) => mode switch
