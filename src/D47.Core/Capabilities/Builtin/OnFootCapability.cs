@@ -544,39 +544,39 @@ public static class OnFootCapability
                     : $"I have no on-foot material called \"{wanted}\". Did you mean {Join(near)}?";
         }
 
-        var active = commander();
-        var held = active?.Suit.CountOf(material.Symbol) ?? 0;
+        var wantedCount = Number(arguments, "wanted") ?? 1;
+
+        if (MicroResourceGuide.For(material.Symbol, commander(), wantedCount) is not { } detail)
+        {
+            return $"I have no on-foot material called \"{wanted}\".";
+        }
 
         var report = new StringBuilder();
 
         report.Append(CultureInfo.InvariantCulture,
-            $"{material.Name} — {material.Category ?? "an on-foot material"}. You have {held}.");
+            $"{material.Name} — {material.Category ?? "an on-foot material"}. You have {detail.Held}.");
         report.AppendLine();
 
         report.AppendLine(material.Origins.Count == 0
             ? "  I have no sourcing for it."
             : $"  Found in: {Join(material.Origins)}.");
 
-        // The locker cap is per category and it is 1,000 — measured, because the sources disagreed.
-        if (active?.Suit is { IsKnown: true } inventory && material.Category is { } category)
+        if (detail.InventoryKnown
+            && material.Category is not null
+            && detail.LockerCategoryTotal > OnFootRules.LockerCapacityPerCategory * 3 / 4)
         {
-            var total = inventory.ShipLockerTotal(CategoryOf(category));
-
-            if (total > OnFootRules.LockerCapacityPerCategory * 3 / 4)
-            {
-                report.AppendLine(CultureInfo.InvariantCulture,
-                    $"  Your locker holds {total} of a {OnFootRules.LockerCapacityPerCategory} cap on "
-                    + $"{CategoryOf(category)}, and the cap is per category rather than per item.");
-            }
+            report.AppendLine(CultureInfo.InvariantCulture,
+                $"  Your locker holds {detail.LockerCategoryTotal} of a {OnFootRules.LockerCapacityPerCategory} cap on "
+                + $"{detail.Kind}, and the cap is per category rather than per item.");
         }
 
-        report.Append(Barter(material, Number(arguments, "wanted") ?? 1, active));
+        report.Append(Barter(material, detail));
 
         return report.ToString();
     }
 
     /// <summary>What the Bartender would take for it, which is arithmetic rather than a guess.</summary>
-    private static string Barter(MaterialEntry material, int wanted, CommanderGameState? active)
+    private static string Barter(MaterialEntry material, MicroResourceDetail detail)
     {
         if (material.BarterCost is not { } cost)
         {
@@ -590,33 +590,20 @@ public static class OnFootCapability
             $"  The Bartender charges {cost} barter value for each.");
         report.AppendLine();
 
-        var offers = MaterialCatalogue.All
-            .Where(other => other.BarterValue is not null && other.Symbol != material.Symbol)
-            .Select(other => (other, Held: active?.Suit.CountOf(other.Symbol) ?? 0))
-            .Where(pair => pair.Held > 0)
-            .Select(pair => (
-                pair.other,
-                pair.Held,
-                Cost: OnFootRules.BarterCostOf(wanted, pair.other.BarterValue, cost)))
-            .Where(pair => pair.Cost is { } needed && needed <= pair.Held)
-            .OrderBy(pair => pair.Cost)
-            .Take(5)
-            .ToArray();
-
-        if (offers.Length == 0)
+        if (detail.Exchanges.Count == 0)
         {
             report.Append("  Nothing you are carrying covers a trade for it.");
             return report.ToString();
         }
 
         report.Append(CultureInfo.InvariantCulture,
-            $"  For {wanted}, you could hand over any of:");
+            $"  For {detail.Exchanges[0].Get}, you could hand over any of:");
         report.AppendLine();
 
-        foreach (var offer in offers)
+        foreach (var offer in detail.Exchanges.Take(5))
         {
             report.Append(CultureInfo.InvariantCulture,
-                $"    {offer.Cost} × {offer.other.Name} (you have {offer.Held})");
+                $"    {offer.Give} × {offer.Offered.Name} (you have {offer.Held})");
             report.AppendLine();
         }
 
@@ -626,15 +613,6 @@ public static class OnFootCapability
 
         return report.ToString();
     }
-
-    /// <summary>Elite's four locker tabs, from the category the material table carries.</summary>
-    private static string CategoryOf(string category) => category switch
-    {
-        "Component" => "Components",
-        "Consumable" => "Consumables",
-        "Data" => "Data",
-        _ => "Items",
-    };
 
     private static string? Text(ToolArguments arguments, string name) =>
         arguments.TryGetString(name, out var value) && value.Trim().Length > 0 ? value.Trim() : null;
