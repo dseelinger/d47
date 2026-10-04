@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Adventures;
+using D47.Core.Diagnostics.Donation;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -23,18 +24,25 @@ public sealed class StoryStore
     private readonly ILogger? _logger;
     private readonly Lock _gate = new();
     private Dictionary<string, IReadOnlyList<Story>> _byCommander;
+    private Dictionary<string, string> _voters;
 
-    private StoryStore(string? path, ILogger? logger, Dictionary<string, IReadOnlyList<Story>> byCommander)
+    private StoryStore(string? path, ILogger? logger, Dictionary<string, IReadOnlyList<Story>> byCommander, Dictionary<string, string> voters)
     {
         _path = path;
         _logger = logger;
         _byCommander = byCommander;
+        _voters = voters;
     }
 
     /// <summary>Held in memory only.</summary>
-    public static StoryStore InMemory() => new(null, null, new(StringComparer.Ordinal));
+    public static StoryStore InMemory() => new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal));
 
-    public static StoryStore Open(string path, ILogger<StoryStore> logger) => new(path, logger, Read(path, logger));
+    public static StoryStore Open(string path, ILogger<StoryStore> logger)
+    {
+        var (byCommander, voters) = Read(path, logger);
+
+        return new(path, logger, byCommander, voters);
+    }
 
     public event Action? Changed;
 
@@ -68,6 +76,37 @@ public sealed class StoryStore
         lock (_gate)
         {
             return [.. _byCommander.Values.SelectMany(stories => stories).Where(story => story.IsCurrent)];
+        }
+    }
+
+    /// <summary>The Commander's voter token, or null until they first rate a story.</summary>
+    public string? Voter(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _voters.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>The Commander's voter token, minted and saved the first time it is asked for. It is not the donor token.</summary>
+    public string EnsureVoter(string? frontierId)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_gate)
+        {
+            if (_voters.TryGetValue(commander, out var existing))
+            {
+                return existing;
+            }
+
+            var minted = DonorToken.NewToken();
+
+            _voters = new Dictionary<string, string>(_voters, StringComparer.Ordinal) { [commander] = minted };
+
+            Write();
+
+            return minted;
         }
     }
 
@@ -141,10 +180,17 @@ public sealed class StoryStore
         {
             Commanders =
             [
-                .. _byCommander
-                    .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                    .Where(pair => pair.Value.Count > 0)
-                    .Select(pair => new CommanderRecord { FrontierId = pair.Key, Stories = pair.Value }),
+                .. _byCommander.Keys
+                    .Concat(_voters.Keys)
+                    .Distinct(StringComparer.Ordinal)
+                    .Order(StringComparer.Ordinal)
+                    .Where(key => _byCommander.GetValueOrDefault(key)?.Count > 0 || _voters.ContainsKey(key))
+                    .Select(key => new CommanderRecord
+                    {
+                        FrontierId = key,
+                        Voter = _voters.GetValueOrDefault(key),
+                        Stories = _byCommander.GetValueOrDefault(key) ?? [],
+                    }),
             ],
         };
 
@@ -158,20 +204,28 @@ public sealed class StoryStore
         }
     }
 
-    private static Dictionary<string, IReadOnlyList<Story>> Read(string path, ILogger logger)
+    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters) Read(string path, ILogger logger)
     {
         var loaded = new Dictionary<string, IReadOnlyList<Story>>(StringComparer.Ordinal);
+        var voters = new Dictionary<string, string>(StringComparer.Ordinal);
 
         if (!File.Exists(path))
         {
-            return loaded;
+            return (loaded, voters);
         }
 
         try
         {
             foreach (var commander in JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json)?.Commanders ?? [])
             {
-                loaded[commander.FrontierId ?? AdventureStore.NoCommander] = commander.Stories ?? [];
+                var key = commander.FrontierId ?? AdventureStore.NoCommander;
+
+                loaded[key] = commander.Stories ?? [];
+
+                if (DonorToken.IsWellFormed(commander.Voter))
+                {
+                    voters[key] = commander.Voter!;
+                }
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -179,7 +233,7 @@ public sealed class StoryStore
             logger.LogError(ex, "Could not read {Path}; no story is running", path);
         }
 
-        return loaded;
+        return (loaded, voters);
     }
 
     private sealed class Document
@@ -190,6 +244,8 @@ public sealed class StoryStore
     private sealed class CommanderRecord
     {
         public string? FrontierId { get; set; }
+
+        public string? Voter { get; set; }
 
         public IReadOnlyList<Story>? Stories { get; set; }
     }

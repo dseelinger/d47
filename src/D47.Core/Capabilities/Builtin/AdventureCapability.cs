@@ -18,6 +18,8 @@ public static class AdventureCapability
 
     public const string StoryDownloadsKey = "adventures.storyDownloads";
 
+    public const string StoryRatingsKey = "adventures.storyRatings";
+
     private const string NoStory = "No story is running.";
 
     /// <summary>Switches the Commander's story on or off, returning a refusal or null. The app sets it once the story exists.</summary>
@@ -84,6 +86,27 @@ public static class AdventureCapability
                     Write = (s, v) => s with
                     {
                         Ui = s.Ui with { StoryDownloads = bool.TryParse(v, out var on) && on },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = StoryRatingsKey,
+                Label = "Story ratings",
+                Help =
+                    "D47 fetches every stock story's average rating when the Stories page first opens in a session, "
+                    + "and sends your stars when you rate a story you have picked. A vote carries the story, your stars "
+                    + "and a random number made on this PC for your Commander. Off, nothing is fetched or sent and the "
+                    + "Stories page shows no ratings.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "story-ratings",
+                EgressId = EgressDisclosure.StoryRatings,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Ui.StoryRatings ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Ui = s.Ui with { StoryRatings = bool.TryParse(v, out var on) && on },
                     },
                 },
             },

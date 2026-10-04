@@ -963,6 +963,9 @@ public sealed record UiSettings
     /// <summary>Whether d47 downloads stock stories and their cast pictures from a GitHub release.</summary>
     public bool StoryDownloads { get; init; } = true;
 
+    /// <summary>Whether d47 fetches stock stories' average ratings and sends the Commander's own stars.</summary>
+    public bool StoryRatings { get; init; } = true;
+
     /// <summary>Where the panel's tabs are drawn, on both the window and the headset: "top" or "left".</summary>
     public string Tabs { get; init; } = Capabilities.Builtin.InterfaceCapability.TabsTop;
 }
@@ -1057,6 +1060,12 @@ public sealed record DonationSettings
 
     /// <summary>The address a Commander once pasted in, before the build carried its own.</summary>
     public string? Endpoint { get; init; }
+}
+
+/// <summary>Where story ratings are fetched and votes sent.</summary>
+public static class StoryRatingSettings
+{
+    public const string Address = "https://d47-ratings.dseelinger.workers.dev";
 }
 
 /// <summary>A provider and voice chosen for one story character, with the names the egress disclosure gives it.</summary>

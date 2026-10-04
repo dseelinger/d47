@@ -410,6 +410,25 @@ has no hidden file on disk is fetched, and one that has fetches any cast picture
 **Download stock stories**, on by default, is in the Adventures settings. Off, nothing is fetched and
 the Stories page lists only stories already on disk.
 
+### Story ratings {#story-ratings}
+
+D47 can show every stock story's average rating, from 1 to 5 stars, and send your own. Ratings live on
+a Worker at `https://d47-ratings.dseelinger.workers.dev`, not on GitHub. The first time the Stories page
+opens in a session, D47 fetches every story's average and vote count. A story's stars are the average
+rounded to the nearest half, so 3.74 is 3.5 and 3.75 is 4. The Stories page can keep only stories of a
+least star rating, 4, 3, 2 or 1 stars and up, and can sort by highest rated: more stars first, then more
+votes, then catalogue order. A story with no votes fails every star filter and sorts last.
+
+Only a story you have picked can be rated, in any state. Your vote is kept on the story in
+`data\story.json`, with a flag while it, or taking it back, has not reached the Worker. A vote carries
+the story, your stars and a random number made on this PC the first time you rate, one per Commander and
+kept in `data\story.json` with that Commander's stories. It is not your donation identifier, and your
+Frontier ID is never sent. Reinstalling without `data\` makes a new number, so one person can then vote
+twice. No voice command or model tool rates a story.
+
+**Story ratings**, on by default, is in the Adventures settings. Off, nothing is fetched or sent and the
+Stories page shows no ratings.
+
 ### Cast pictures
 
 A speaker may have a picture, downloaded with the story as `<story-id>.<cast-id>.jpg` into

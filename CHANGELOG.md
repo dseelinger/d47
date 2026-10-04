@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Settings > Stories has a new switch, Story ratings, on by default. Off, nothing is fetched or sent. D47's Privacy and egress list has a matching Story ratings entry naming the address and saying what a vote carries: the story, your stars and a random number made on this PC for your Commander, and no Frontier ID, Commander name, key, position or journal content. Stars appear on the Stories page in a later change.
+
 The Materials page has a new sidebar item, FARMING › Farming route. It lists the known farming sites nearest to you first. Each site is a card showing its kind, the material, the system and body with the surface coordinates, and the distance in light years. When you are in a site's system, that system is cyan and the distance reads HERE. Each system name has a copy button. Under each card are how to collect the material, whether a relog respawns it, and what it trades down to at a material trader. The ALL / RAW / MANUFACTURED / ENCODED control above the cards shows only that kind of site. The list is redrawn when you change system.
 
 Asking for your sampling progress now says how far apart samples of a genus must be and how many metres are still to go, or that you are far enough. It uses a distance per genus from community sources, since Frontier publishes none. For a genus without a figure it says what it said before: how far you have moved and the closest gap the game has accepted from you.

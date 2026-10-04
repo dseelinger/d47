@@ -99,6 +99,12 @@ public sealed record Story
     [JsonIgnore]
     public int? FinaleChapter => FinaleFrom is { } from && Chapters.Count >= from ? Chapters.Count - from + 1 : null;
 
+    /// <summary>The Commander's own vote for this story, 1 to 5, or null.</summary>
+    public int? Rating { get; init; }
+
+    /// <summary>Whether a vote or a withdrawal has not yet reached the ratings Worker.</summary>
+    public bool RatingPending { get; init; }
+
     /// <summary>The activities the Commander refused, as <see cref="RefusedActivities"/> keys. No later beat of this story asks for one.</summary>
     public IReadOnlyList<string> Refused { get; init; } = [];
 

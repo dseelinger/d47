@@ -159,7 +159,7 @@ public class ModelChoiceTests
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
 
             // And the hull art, which fetches a picture and a turntable on a press, and the stock story downloads.
-            Ui = new UiSettings { HullArt = false, AvatarClips = false, StoryDownloads = false },
+            Ui = new UiSettings { HullArt = false, AvatarClips = false, StoryDownloads = false, StoryRatings = false },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

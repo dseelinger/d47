@@ -155,6 +155,13 @@ Nothing about you goes with it: no key, no Commander name, no position and nothi
 **Download stock stories** in the Adventures settings turns it off, and the Stories page then lists
 only stories already on disk.
 
+**Story ratings** — `d47-ratings.dseelinger.workers.dev`. D47 asks for every stock story's average
+rating the first time the Stories page opens in a session, and sends a vote when you rate a story you
+have picked or take your rating back. A vote carries the story, your stars and a random number made on
+this PC for your Commander, which is not your donation identifier. Nothing else goes with it: no
+Frontier ID, no Commander name, no key, no position and nothing from your journal. **Story ratings** in
+the Adventures settings turns it off, and nothing is then fetched or sent.
+
 **Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
 computer**. With Groq, OpenAI, Deepgram or ElevenLabs selected, `api.groq.com`, `api.openai.com`,
 `api.deepgram.com` or `api.elevenlabs.io` receives the audio of
@@ -324,7 +331,7 @@ that cannot be undone.
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
-{#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-pictures} {#egress-ownvoice}
+{#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.

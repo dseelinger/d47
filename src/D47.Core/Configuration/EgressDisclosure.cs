@@ -70,6 +70,9 @@ public static class EgressDisclosure
     /// <summary>Fetching stock stories: the list and its cast pictures, and a story's hidden layer and cast pictures.</summary>
     public const string StockStories = "stockstories";
 
+    /// <summary>Fetching stock stories' average ratings and sending the Commander's own stars.</summary>
+    public const string StoryRatings = "storyratings";
+
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
@@ -90,6 +93,7 @@ public static class EgressDisclosure
         HullArt,
         AvatarClips,
         StockStories,
+        StoryRatings,
         SpeechModels,
         Diagnostics,
         JournalFiles,
@@ -113,6 +117,7 @@ public static class EgressDisclosure
         HullArt => "Hull pictures",
         AvatarClips => "Avatar animations",
         StockStories => "Stock stories",
+        StoryRatings => "Story ratings",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
@@ -263,6 +268,24 @@ public static class EgressDisclosure
                 NameOf(StockStories),
                 "Stock story downloads are off, so nothing is fetched and the Stories page lists only stories already on disk.",
                 summary: "Stock story downloads are off, so nothing is fetched."),
+
+        StoryRatings => settings.Ui.StoryRatings
+            ? new EgressEntry(
+                StoryRatings,
+                NameOf(StoryRatings),
+                StoryRatingSettings.Address,
+                "A request for every stock story's average rating when the Stories page first opens in a session, "
+                + "and a vote when you rate a story you have picked, or take your rating back. A vote carries the story, "
+                + "your stars and a random number made on this PC for your Commander, which is not your donation "
+                + "identifier. Nothing else goes with it: no Frontier ID, no Commander name, no key, no position and "
+                + "nothing from your journal.",
+                Active: true,
+                Summary: "Every story's average rating when the Stories page first opens, and your stars when you rate a story, with a random number made on this PC.")
+            : EgressEntry.Silent(
+                StoryRatings,
+                NameOf(StoryRatings),
+                "Story ratings are off, so nothing is fetched or sent.",
+                summary: "Story ratings are off, so nothing is fetched or sent."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(
