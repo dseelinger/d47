@@ -274,6 +274,25 @@ public partial class PanelView : UserControl
         _tabs[PanelTab.Navigation] = NavigationTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
+        foreach (var (tab, button) in _tabs)
+        {
+            if (TabGlyph.PathFor(tab) is { } path)
+            {
+                TabGlyph.SetData(button, Geometry.Parse(path));
+            }
+
+            Avalonia.Automation.AutomationProperties.SetName(button, button.Content as string);
+            button.PropertyChanged += (_, e) =>
+            {
+                if (e.Property == IsVisibleProperty)
+                {
+                    FitTabs();
+                }
+            };
+        }
+
+        Tabs.SizeChanged += (_, _) => FitTabs();
+
         Nav.Changed += (_, _) => ApplyNavigation();
 
         ApplyNavigation();
@@ -1576,9 +1595,46 @@ public partial class PanelView : UserControl
         TitleLine.Margin = left ? default : new Thickness(0, 12, 0, 2);
         SizeAvatar();
 
+        FitTabs();
         ApplyChrome();
         return true;
     }
+
+    /// <summary>
+    /// Along the top, every tab shows its glyph when the visible tabs' words do not fit on one row, and
+    /// every tab its word when they do. Down the left, always the words.
+    /// </summary>
+    private void FitTabs()
+    {
+        var available = Tabs.Bounds.Width;
+        var glyphs = !_tabsDownTheLeft && available > 0 && LabelledRowWidth() > available;
+
+        foreach (var tab in Tabs.Children.OfType<RadioButton>())
+        {
+            tab.Classes.Set(TabGlyph.Class, glyphs);
+            ToolTip.SetTip(tab, glyphs ? tab.Content : null);
+        }
+    }
+
+    /// <summary>The width one row of the visible tabs needs with their words showing, whether or not they are.</summary>
+    private double LabelledRowWidth() =>
+        Tabs.Children.OfType<RadioButton>().Where(tab => tab.IsVisible).Sum(tab =>
+        {
+            var word = new TextBlock
+            {
+                Text = tab.Content as string,
+                FontFamily = tab.FontFamily,
+                FontSize = tab.FontSize,
+                FontWeight = tab.FontWeight,
+                LetterSpacing = tab.LetterSpacing,
+            };
+
+            word.Measure(Size.Infinity);
+
+            return Math.Ceiling(word.DesiredSize.Width)
+                + tab.Padding.Left + tab.Padding.Right
+                + tab.Margin.Left + tab.Margin.Right;
+        });
 
     /// <summary>The avatar's side with the tabs along the top: from the tab row's top to the title rule.</summary>
     public const double HeaderAvatarExtent = 104;

@@ -367,8 +367,8 @@
             the phases that fill them land one at a time without a dead tab in between - the same
             rule Settings has followed since Phase 12, generalised.
 
-            A WrapPanel rather than a scrolling strip: a tab too many moves to a second row rather
-            than being clipped or reached through steppers (#355).
+            Along the top, when the words do not fit on one row, every tab shows its glyph instead
+            (FitTabs). Down the left it is a vertical WrapPanel and the words always show.
           -->
           <WrapPanel x:Name="Tabs"
                      Orientation="Horizontal"

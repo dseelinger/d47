@@ -35,7 +35,7 @@ public class TheTabStripFitsAnyWidthTests
         return panel;
     }
 
-    /// <summary>Every tab shows the word alone — no icon, on any width (#355).</summary>
+    /// <summary>A tab's content is its word at any width; a narrow strip swaps it for a glyph in the template (#806).</summary>
     [AvaloniaFact]
     public void ATabShowsItsWordAloneAtAnyWidth()
     {
@@ -56,32 +56,6 @@ public class TheTabStripFitsAnyWidthTests
         var tab = wide.GetControl<RadioButton>("TranscriptTab");
 
         Assert.DoesNotContain("Cascadia", tab.FontFamily.Name, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Too narrow for every tab on one line: the strip wraps a tab onto a second row rather than
-    /// clipping it or scrolling to reach it (#355).
-    /// </summary>
-    [AvaloniaFact]
-    public void ANarrowStripWrapsRatherThanClipping()
-    {
-        var panel = Furnished(512);
-        var tabs = panel.GetControl<WrapPanel>("Tabs");
-
-        var rows = tabs.Children
-            .OfType<RadioButton>()
-            .Where(t => t.IsVisible)
-            .Select(t => t.Bounds.Y)
-            .Distinct()
-            .Count();
-
-        Assert.True(rows > 1, "the tabs stayed on one row at 512px");
-
-        Assert.All(
-            tabs.Children.OfType<RadioButton>().Where(t => t.IsVisible),
-            t => Assert.True(
-                t.Bounds.Right <= tabs.Bounds.Width + 0.5,
-                $"{t.Name} sits at x={t.Bounds.Right} outside a {tabs.Bounds.Width}-wide strip"));
     }
 
     /// <summary>

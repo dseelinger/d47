@@ -1,10 +1,12 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:theming="clr-namespace:D47.App.Theming">
+                    xmlns:theming="clr-namespace:D47.App.Theming"
+                    xmlns:panel="clr-namespace:D47.App.Panel">
 
   <!--
     A tab: a flat Tile with A ink, 44 tall, 2px from its neighbour. Tile2 on hover. Solid A with
     Knock ink on keyboard focus or press, and when selected, where it also glows. The strip sits on a 2px A rule.
+    With the glyph class, a 44 × 44 tile showing its TabGlyph.Data at 20px in place of the word.
 
     Built on RadioButton rather than on Buttons and a hand-rolled selected flag, because
     mutually-exclusive selection, keyboard arrows and the accessibility role all come with it.
@@ -27,20 +29,34 @@
       <ControlTemplate>
         <theming:BloomStack x:Name="Glow" Tier="Normal" IsLit="False">
           <Border x:Name="Shape" Background="{TemplateBinding Background}">
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              Padding="{TemplateBinding Padding}"
-                              Foreground="{TemplateBinding Foreground}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center">
-              <!-- Unclipped: beside the lit glow at a fractional render scaling, a clipped label
-                   loses its last letter. -->
-              <ContentPresenter.ContentTemplate>
-                <DataTemplate>
-                  <TextBlock Text="{Binding}" ClipToBounds="False" />
-                </DataTemplate>
-              </ContentPresenter.ContentTemplate>
-            </ContentPresenter>
+            <Panel>
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                Padding="{TemplateBinding Padding}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                <!-- Unclipped: beside the lit glow at a fractional render scaling, a clipped label
+                     loses its last letter. -->
+                <ContentPresenter.ContentTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding}" ClipToBounds="False" />
+                  </DataTemplate>
+                </ContentPresenter.ContentTemplate>
+              </ContentPresenter>
+              <Path x:Name="Glyph"
+                    IsVisible="False"
+                    Width="{x:Static panel:TabGlyph.Size}"
+                    Height="{x:Static panel:TabGlyph.Size}"
+                    Stretch="None"
+                    Data="{TemplateBinding panel:TabGlyph.Data}"
+                    Stroke="{TemplateBinding Foreground}"
+                    StrokeThickness="1.6"
+                    StrokeJoin="Miter"
+                    StrokeLineCap="Square"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Panel>
           </Border>
         </theming:BloomStack>
       </ControlTemplate>
@@ -69,6 +85,16 @@
     <Style Selector="^:disabled">
       <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
       <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
+    </Style>
+
+    <Style Selector="^.glyph">
+      <Setter Property="Width" Value="{x:Static panel:TabGlyph.Tile}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="IsVisible" Value="False" />
+      </Style>
+      <Style Selector="^ /template/ Path#Glyph">
+        <Setter Property="IsVisible" Value="True" />
+      </Style>
     </Style>
 
   </ControlTheme>

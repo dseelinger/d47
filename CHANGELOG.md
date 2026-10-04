@@ -10,6 +10,8 @@
 
 The panel tabs are renamed and reordered: TRANSCRIPT, STORIES, COMMANDER, ASSET MGMT, NAVIGATION, SETTINGS. Adventures is now Stories, Fleet is now Asset Mgmt and Routing is now Navigation, in the window and the headset. Saying "stories", "assets" or "navigation", or "open the stories tab", opens that tab. Saying "fleet" never opened the Fleet tab, because the voice matched the tab's internal name, Loadout. Saying the name of a page on any tab, such as "suits", now opens that tab on that page from wherever you are; a tab's own name still wins, and a word two tabs' pages share opens nothing. If d47 was closed on one of the renamed tabs, it reopens on that tab under its new name.
 
+When the window is too narrow for every tab's name on one row, every tab shows a small picture instead of its name, all at once, rather than wrapping onto a second row. Hover over one to see its name; the page title still names the open tab. Widen the window and the names come back. With tabs down the left, the names always show.
+
 HELP and the PRE-RELEASE badge are now in the window's title bar. The badge sits right after the version number, and HELP sits just before the minimise button. The tab row holds only the tabs. In the headset, HELP and the badge stay at the end of the tab row.
 
 Engineers is no longer a tab of its own. It is the last page of Asset Mgmt, whose pages now read SHIPS, SUITS, CARRIER, MATERIALS, ENGINEERS, in the window, the headset and the overlay. The Route is no longer a second page beside the directory: press Route on the Engineers page to open it, and Back returns to the directory. Saying "engineers" from any tab still opens it. If d47 was closed on the Engineers tab, it reopens on its default tab.
