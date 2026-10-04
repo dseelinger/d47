@@ -20,12 +20,14 @@ work carries on unchanged.
 
 ## The rules
 
-Every story keeps all eleven. Check the draft against each before showing it.
+Every story keeps all twelve. Check the draft against each before showing it.
 
 1. The card names its level, `new`, `midrange` or `endgame` (#739), and the backstory starts there:
    broke in a stock Sidewinder for `new`, a working ship and some savings for `midrange`, a fleet
    and a fleet carrier for `endgame`. Every level starts with the `covas` core and no Guardian
-   cores.
+   cores. The ship and the money are fixed by level. Who the Commander is, why they fly and who they
+   have are chosen like the genre: the pitch avoids circumstances that a published card of the same
+   level already uses.
 2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
    core aboard (#716), and the `breakIntoTwo` beat says so without naming the core. Every story
    names its own core on the card, chosen to match the story. From 1 month up, its first chapter
@@ -65,6 +67,13 @@ Every story keeps all eleven. Check the draft against each before showing it.
     story takes them a step further: the patron was the villain, the Commander is a clone or caused
     it all, the core or the ship is behind it, it was all a test, the dead one is alive.
 
+    The twist is one of two kinds. A hidden deception: someone or something is not what it seemed.
+    A reversal of the goal: what the Commander set out to do turns out to be the wrong thing, or to
+    be theirs to give rather than to get. The pitch names which kind, and favours the reversal when
+    the closest published stories (see The pitch) are deceptions.
+12. Every clue ends on a new question, a new threat or a reversal, never only an answer. Finale
+    lines and `end` are exempt.
+
 Within those rules: the setting is soft science fiction in Elite's galaxy of the 34th century, and
 Elite's lore and d47's own may be bent or overturned. Jobs, institutions, objects and slang belong
 to that setting: a registry clerk works at a starport, a reporter files to a newsfeed, and nothing
@@ -96,8 +105,11 @@ The first thing he sees is one pitch, in chat, before any layer or draft page is
 
 The maintainer may fix any of the length, level, genre, tone, core or premise, in the argument or in
 reply. Keep what he fixed and choose the rest. Where you choose, favour what the catalog lacks:
-count the cards in the published `index.json` by genre, by level and length together, and by core, and
-pick a gap unless the story fits something else better. Say in one line which gaps the choice fills.
+count the cards in the published `index.json` by genre, by level and length together, by core, and by
+the opening word of the tone, and favour the one used least. Also count the cards with a romantic lead
+(a `castPictures` name ending `.for-man` or `.for-woman`), and favour a story led by its romance where
+that count is low. Pick a gap unless the story fits something else better. Say in one line which gaps
+the choice fills.
 
 The genre is one of the ten Save the Cat genres in `StoryCard.Genres`.
 
@@ -105,12 +117,18 @@ The pitch gives:
 
 - a table of the length, level, genre, tone and core, with the core's tagline;
 - the premise: the situation at the pick, and why it fills its length;
-- the secret and the twist in one sentence, then a short paragraph on each;
+- the stakes: who or what is lost if the Commander fails, in one sentence;
+- the hook: the question a player needs answered enough to come back for the next clue;
+- the secret and the twist in one sentence, then a short paragraph on each, and the twist's kind
+  (rule 11);
 - the three explanations a player would most likely guess (rule 11), and why the twist is none of
   them, with the clues that support it on a second reading;
+- the three closest published stories, named from the `index.json` blurbs and tones, with one line
+  each on what this story does differently. A pitch that differs from one of them only in setting or
+  cast is pitched again;
 - a title not already used.
 
-Check the pitch against all eleven rules before showing it. The pitch fixes the premise, secret and
+Check the pitch against all twelve rules before showing it. The pitch fixes the premise, secret and
 twist; once he accepts it, write the rest without asking again, and bring back only a choice the
 pitch did not settle.
 
@@ -133,12 +151,19 @@ from `tools/seal-stories.py`. They win over this list, which also names fields t
 add.
 
 - **The card**, `card.json`: `id`, `number`, `title`, `genre` (one of the ten Save the
-  Cat genres), `tone`, `level` (#739), `blurb` (why a player would pick it, like the back cover of
-  a novel), `inYourWords` (the Commander's backstory in the first person, starting at the level),
-  `length` (the key of a `StoryPacing`), `beacon` (why they go to scan it; for a story shorter
+  Cat genres), `tone`, `level` (#739), `blurb`, `inYourWords` (the Commander's
+  backstory in the first person, starting at the level), `length` (the key of a `StoryPacing`), `beacon` (why they go to scan it; for a story shorter
   than 1 month, the scan the story opens after) and `core` (#716: the Guardian core the story is written for,
   never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
   leave them out of the card.
+- **The tone** is a feel word or two, then the kind of story, for example "dark, haunted mystery" or
+  "desperate survival thriller". Voice words (wry, warm, dry, quiet, cosy) may follow but never open
+  it. It does not chain "then turns" clauses.
+- **The blurb** is four parts, in order: the situation that hooks, how it escalates, what is lost if
+  the Commander fails, and the question left open. The loss is in the fiction (an NPC, a love, a
+  colony, a war, the truth), within rules 3 and 4. It uses no praise words such as brilliant,
+  masterful, stunning, unforgettable or original. A primary cast member with one name is
+  still named in the `blurb` or `inYourWords`, which `tools/seal-stories.py` checks.
 - **The hidden entry**, `hidden.json`: `id`, `secret`, `beats` (one line for each key in the length's
   `StoryPacing.BeatKeys`), `clues` and `finale` lines in the counts the length's `StoryPacing`
   gives (`ClueDays.Count` clues, `FinaleChapters` finale lines), a `scan` line for a story of 3 days,
