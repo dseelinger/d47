@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -330,7 +331,7 @@ public sealed class AdventureGenerator(
             }
         }
 
-        resolved = NarrateSelfNaming(resolved, ask);
+        resolved = KeepNarratorAsItself(NarrateSelfNaming(resolved, ask));
 
         if (resolved.Refusals.Count > 0)
         {
@@ -397,8 +398,58 @@ public sealed class AdventureGenerator(
             .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in beat {found.Index + 1}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
                 + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\".");
 
-        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed] };
+        var firstPerson = NarratedFirstPerson(spoken.Beats, read, story, ask.Rewrite is null)
+            .Select(where => $"{NarratorAsItself}{where} is read by the narrator and speaks in the first person or to the Commander; "
+                + "the narrator tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", never speaks to the Commander, "
+                + "and never offers, asks or waits for anything. Rewrite it as narration.");
+
+        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed, .. firstPerson] };
     }
+
+    private const string NarratorAsItself = "The narrator speaks as itself: ";
+
+    private static readonly Regex Words = new(@"[A-Za-z]+(?:['’][A-Za-z]+)*", RegexOptions.CultureInvariant);
+
+    private static readonly HashSet<string> FirstPersonWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "me", "my", "mine", "myself", "we", "we're", "we'll", "we've", "us", "our", "ours",
+    };
+
+    private static readonly HashSet<string> FirstPersonI = new(StringComparer.Ordinal) { "I", "I'm", "I'll", "I've", "I'd" };
+
+    /// <summary>Whether the text holds a first-person word as a whole word; "I" only in capitals.</summary>
+    private static bool FirstPerson(string? text) =>
+        !string.IsNullOrEmpty(text)
+        && Words.Matches(text).Any(word =>
+        {
+            var plain = word.Value.Replace('’', '\'');
+
+            return FirstPersonI.Contains(plain) || FirstPersonWords.Contains(plain);
+        });
+
+    /// <summary>The opening and the beats whose narrator-read lines are in the first person; a stock core's ship lines, and a line with no speaker, are the narrator's.</summary>
+    private static IEnumerable<string> NarratedFirstPerson(IReadOnlyList<AdventureBeat> beats, ReadAnswer read, AdventureStory story, bool opening)
+    {
+        bool Narrated(string? speaker) =>
+            speaker == Stories.StorySpeaker.Narrator || (story.CoreIsStock && (speaker is null || speaker == Stories.StorySpeaker.Ship));
+
+        if (opening && Narrated(Speaker(read.OpeningSpeaker, story)) && FirstPerson(read.Opening))
+        {
+            yield return "The opening";
+        }
+
+        for (var index = 0; index < beats.Count; index++)
+        {
+            if (beats[index].Lines.Any(line => Narrated(line.Speaker) && FirstPerson(line.Text)))
+            {
+                yield return $"Beat {index + 1}";
+            }
+        }
+    }
+
+    /// <summary>Drops the narrator first-person refusals, so a line that is still in the first person after the rewrite stands.</summary>
+    private static Resolved KeepNarratorAsItself(Resolved resolved) =>
+        resolved with { Refusals = [.. resolved.Refusals.Where(refusal => !refusal.StartsWith(NarratorAsItself, StringComparison.Ordinal))] };
 
     private const string SelfNamed = "A line names its own speaker: ";
 
@@ -1037,7 +1088,8 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Every line, the opening included, has a speaker, and is written as that speaker says it: \"ship\", the ship's AI aboard"
             + (story.Core is { Length: > 0 } core ? $" ({core})" : string.Empty)
-            + "; \"narrator\", who tells the story from outside the cockpit; or one of the story's cast, over comms, in a recording "
+            + "; \"narrator\", who tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", "
+            + "never speaks to the Commander, and never offers, asks or waits for anything; or one of the story's cast, over comms, in a recording "
             + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
             + "A cast member's line is that person's own words, in the first person, as they would say them: it never names them and "
             + "never describes them. Narration, including any line that describes a cast member, what they did or what they left behind, "
@@ -1047,8 +1099,9 @@ public sealed class AdventureGenerator(
         if (story.CoreIsStock)
         {
             text.AppendLine(
-                "The core aboard is stock and does not tell this story: a \"ship\" line is read by the narrator, so write it as "
-                + "narration, about the Commander rather than to them.");
+                "The core aboard is stock and does not tell this story: a \"ship\" line is read by the narrator, so it is the "
+                + "narrator's line and follows the same rule: narration in the third person, about the Commander rather than to them, "
+                + "never \"I\", \"me\" or \"we\", and never an offer, a question or a wait.");
         }
 
         foreach (var member in story.Cast ?? [])
