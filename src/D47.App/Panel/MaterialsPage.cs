@@ -15,7 +15,10 @@ using D47.Core.Loadout;
 
 namespace D47.App.Panel;
 
-/// <summary>Fleet › Materials: a sidebar of views over the gap and the ship-material ledgers, opening on Needed by plans.</summary>
+/// <summary>
+/// Fleet › Materials: a sidebar of views over the gap, the ship-material ledgers and the farming route, opening on
+/// Needed by plans.
+/// </summary>
 public sealed class MaterialsPage : UserControl
 {
     public const string RootKey = LoadoutPages.GapRoot;
@@ -37,6 +40,17 @@ public sealed class MaterialsPage : UserControl
 
     public const string Met = "✓ MET";
 
+    public const string FarmingView = "farming";
+
+    public const string FarmingHead = "Known farming sites, nearest to you first.";
+
+    public const string PositionUnknown = "Your position is not known yet, so the sites are in the table's order.";
+
+    public const string Here = "HERE";
+
+    /// <summary>The farming route's filter, in the order the Segmented control shows it; the first is no filter.</summary>
+    public static readonly IReadOnlyList<string> FarmingFilters = ["All", "Raw", "Manufactured", "Encoded"];
+
     /// <summary>Names the click-outside layer, for a test to press without aiming at the dialog itself.</summary>
     internal const string DetailBackdropName = "MaterialsDetailBackdrop";
 
@@ -48,15 +62,25 @@ public sealed class MaterialsPage : UserControl
     private readonly GapSource _gap;
     private readonly EngineerSource? _engineers;
     private readonly PanelNavigator? _nav;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
+    private readonly StackPanel _sites = new() { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
+    private int _farmingFilter;
+    private Segment? _filter;
 
-    public MaterialsPage(GapSource gap, JournalClock clock, EngineerSource? engineers = null, PanelNavigator? nav = null)
+    public MaterialsPage(
+        GapSource gap,
+        JournalClock clock,
+        EngineerSource? engineers = null,
+        PanelNavigator? nav = null,
+        Func<string, Task<bool>>? copy = null)
     {
         _gap = gap;
         _engineers = engineers;
         _nav = nav;
+        _copy = copy;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
@@ -92,6 +116,12 @@ public sealed class MaterialsPage : UserControl
         if (ledgers.FirstOrDefault(card => ViewOf(card) == _gap.View) is { } ledger)
         {
             Ledger(ledger);
+            return;
+        }
+
+        if (_gap.View == FarmingView)
+        {
+            Farming();
             return;
         }
 
@@ -152,7 +182,7 @@ public sealed class MaterialsPage : UserControl
     public static NavCrumb DetailCrumb(MaterialEntry material) =>
         new(DetailPrefix + material.Symbol, material.Name) { Level = DetailPrefix, Whole = true };
 
-    /// <summary>The sidebar every Materials page draws: Needed by plans, then the five ship ledgers.</summary>
+    /// <summary>The sidebar every Materials page draws: Needed by plans, the five ship ledgers, then the farming route.</summary>
     internal static Sidebar SidebarOf(
         GapReport report, IReadOnlyList<MaterialCard> ledgers, string view, Action<string> select)
     {
@@ -168,6 +198,9 @@ public sealed class MaterialsPage : UserControl
                 new SidebarGroup(
                     "Ship materials",
                     [.. ledgers.Select(card => new SidebarItem(ViewOf(card), card.Name, Count(card.Rows.Count)))]),
+                new SidebarGroup(
+                    "Farming",
+                    [new SidebarItem(FarmingView, "Farming route", Count(FarmingRoute.For(null).Stops.Count))]),
             ],
             view,
             select);
@@ -239,6 +272,203 @@ public sealed class MaterialsPage : UserControl
         {
             _body.Children.Add(Grade(head, cap, rows, Open));
         }
+    }
+
+    private void Farming()
+    {
+        _body.Children.Add(TitleText.Block(
+            TitleText.Build("Farming route", TypeScale.Title, TitleRank.Screen),
+            TitleText.Context("Materials ›")));
+        _body.Children.Add(Hint(FarmingHead, new Thickness(0, 10, 0, 0)));
+
+        var filter = _filter = new Segment
+        {
+            ItemsSource = FarmingFilters,
+            SelectedIndex = _farmingFilter,
+            Height = TypeScale.MinimumTarget,
+            MaxWidth = 560,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 18, 0, 0),
+        };
+        filter.SelectionChanged += (_, _) => Filter(filter.SelectedIndex);
+
+        _body.Children.Add(filter);
+        _body.Children.Add(_sites);
+
+        Sites();
+    }
+
+    /// <summary>Narrows the farming route to one of <see cref="FarmingFilters"/>.</summary>
+    internal void Filter(int index)
+    {
+        _farmingFilter = Math.Clamp(index, 0, FarmingFilters.Count - 1);
+
+        if (_filter is { } filter)
+        {
+            filter.SelectedIndex = _farmingFilter;
+        }
+
+        Sites();
+    }
+
+    /// <summary>Redraws the site cards under the farming route's filter.</summary>
+    private void Sites()
+    {
+        var route = FarmingRoute.For(_gap.State(), _farmingFilter > 0 ? FarmingFilters[_farmingFilter] : null);
+
+        _sites.Children.Clear();
+
+        if (!route.PositionKnown)
+        {
+            _sites.Children.Add(Hint(PositionUnknown, new Thickness(0, 0, 0, 10)));
+        }
+
+        foreach (var stop in route.Stops)
+        {
+            _sites.Children.Add(SiteCard(stop, _copy));
+        }
+    }
+
+    /// <summary>
+    /// One site on slab: kinds, the material, system and body with coordinates, and the distance or
+    /// <c>HERE</c>; then how to collect, respawn and trade down under a Line2 rule.
+    /// </summary>
+    private static Border SiteCard(FarmingStop stop, Func<string, Task<bool>>? copy)
+    {
+        var kinds = Chrome(stop.Kind ?? "Material", ThemeManager.GreyKey);
+        kinds.HorizontalAlignment = HorizontalAlignment.Left;
+
+        var name = new TextBlock
+        {
+            Text = stop.Material.ToUpperInvariant(),
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Subheading,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Subheading * Fonts.ChromeTracking,
+            Margin = new Thickness(0, 2, 0, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var place = new TextBlock
+        {
+            Text = $"{stop.System} {stop.Body}".ToUpperInvariant(),
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Control,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        LoadoutPages.Themed(place, TextBlock.ForegroundProperty, stop.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey);
+
+        var coordinates = new TextBlock
+        {
+            Text = "· " + stop.Coordinates,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Control,
+            Margin = new Thickness(copy is null ? 6 : 0, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        LoadoutPages.Themed(coordinates, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        var where = new StackPanel { Orientation = Orientation.Horizontal, Children = { place } };
+
+        if (copy is not null)
+        {
+            var glyph = CopyGlyph.For(stop.System, copy);
+            glyph.VerticalAlignment = VerticalAlignment.Center;
+            where.Children.Add(glyph);
+        }
+        else
+        {
+            where.Margin = new Thickness(0, 4, 0, 0);
+        }
+
+        where.Children.Add(coordinates);
+
+        var head = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        head.Children.Add(new StackPanel { Children = { kinds, name, where } });
+
+        if (Distance(stop) is { } reading)
+        {
+            var distance = Mono(reading, stop.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey);
+            distance.FontSize = TypeScale.Secondary;
+            distance.VerticalAlignment = VerticalAlignment.Top;
+            distance.Margin = new Thickness(16, 0, 0, 0);
+            Grid.SetColumn(distance, 1);
+            head.Children.Add(distance);
+        }
+
+        var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*"), ColumnSpacing = 24 };
+        facts.Children.Add(Fact(0, "How to collect", $"Collect {stop.Material} from the {stop.Method}."));
+        facts.Children.Add(Fact(
+            1,
+            "Respawn",
+            stop.RespawnsOnRelog
+                ? "A relog to the main menu respawns it."
+                : "Does not reliably respawn on a relog. Move on to the next cluster or tree."));
+        facts.Children.Add(Fact(2, "Trade down", TradeDownText(stop)));
+
+        var rule = new Border
+        {
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            Margin = new Thickness(0, 12, 0, 0),
+            Padding = new Thickness(0, 10, 0, 0),
+            Child = facts,
+        };
+        LoadoutPages.Themed(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
+
+        var card = new Border
+        {
+            Padding = new Thickness(14, 12),
+            Child = new StackPanel { Children = { head, rule } },
+        };
+        LoadoutPages.Themed(card, Border.BackgroundProperty, ThemeManager.TileKey);
+
+        return card;
+    }
+
+    /// <summary><c>HERE</c> in the site's system, <c>1,040.8 LY</c> elsewhere, null where the position is not known.</summary>
+    public static string? Distance(FarmingStop stop) =>
+        stop.IsHere ? Here
+        : stop.Distance is { } ly ? ly.ToString("N1", CultureInfo.InvariantCulture) + " LY"
+        : null;
+
+    /// <summary>One trade per line, nearest grade first: <c>1 × G4 raw › 3 × G3</c>; a dash when there is none.</summary>
+    public static string TradeDownText(FarmingStop stop)
+    {
+        var top = MaterialCatalogue.Find(stop.Site.MaterialSymbol)?.Grade is { } grade ? Count(grade) : "?";
+        var kind = (stop.Kind ?? string.Empty).ToLowerInvariant();
+
+        var lines = stop.TradeDowns
+            .OrderByDescending(trade => trade.ToGrade)
+            .Select(trade => $"{Count(trade.Give)} × G{top} {kind} › {Count(trade.Get)} × G{Count(trade.ToGrade)}")
+            .ToList();
+
+        if (stop.TradesAcross)
+        {
+            lines.Add("Also 6:1 across into any other encoded group.");
+        }
+
+        return lines.Count > 0 ? string.Join('\n', lines) : "—";
+    }
+
+    private static StackPanel Fact(int column, string label, string text)
+    {
+        var heading = Chrome(label, ThemeManager.GreyKey);
+        heading.HorizontalAlignment = HorizontalAlignment.Left;
+
+        var value = new TextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 4, 0, 0),
+        };
+        LoadoutPages.Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var fact = new StackPanel { Children = { heading, value } };
+        Grid.SetColumn(fact, column);
+        return fact;
     }
 
     private static Control Grade(string head, int? cap, IReadOnlyList<MaterialRow> rows, Action<MaterialEntry> open)
