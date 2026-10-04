@@ -3570,6 +3570,37 @@ public sealed class AppHost : IDisposable
         ApplySpeechSettings();
     }
 
+    /// <summary>Re-casts the COVAS core once where its voice is the automatic pairing.</summary>
+    private async Task RecastAutomaticCovasAsync()
+    {
+        if (Settings.Current.Persona.CovasRecastChecked)
+        {
+            return;
+        }
+
+        var before = Settings.Current.Persona.Voices;
+        var covas = PersonaCatalog.Covas.Id;
+        var automatic = before.TryGetValue(covas, out var voice)
+            && string.Equals(Settings.Current.Persona.PairedVoices.GetValueOrDefault(covas), voice, StringComparison.OrdinalIgnoreCase);
+
+        var repair = automatic
+            ? await ReplaceVoicesAsync(before, before.Where(pair => pair.Key != covas).ToDictionary(pair => pair.Key, pair => pair.Value))
+                .ConfigureAwait(false)
+            : new VoicePairing.VoiceRepair(before, Complete: true);
+
+        Settings.Replace("persona.voices", current => current with
+        {
+            Persona = current.Persona with
+            {
+                Voices = repair.Voices,
+                CovasRecastChecked = repair.Complete,
+                PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
+            },
+        });
+
+        ApplySpeechSettings();
+    }
+
     /// <summary>
     /// Removes every ship voice the aboard provider's list does not offer, so the pairing that follows
     /// gives those cores a voice from the list.
@@ -3613,6 +3644,7 @@ public sealed class AppHost : IDisposable
                 ForgetVoicesNotListed();
                 await RepairMiscastVoicesAsync().ConfigureAwait(false);
                 await RepairNotCastVoicesAsync().ConfigureAwait(false);
+                await RecastAutomaticCovasAsync().ConfigureAwait(false);
             }
 
             return await PairUnvoicedAsync(forgetFirst, cancellationToken).ConfigureAwait(false);

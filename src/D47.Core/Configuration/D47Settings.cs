@@ -287,6 +287,9 @@ public sealed record PersonaSettings
 
     /// <summary>Whether automatic pairings of a voice that is never cast have been replaced.</summary>
     public bool NotCastVoicesChecked { get; init; }
+
+    /// <summary>Whether an automatic COVAS voice has been re-cast as a calm British woman.</summary>
+    public bool CovasRecastChecked { get; init; }
 }
 
 /// <summary>Acting on the game (Phase 10).</summary>

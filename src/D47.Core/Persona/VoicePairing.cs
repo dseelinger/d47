@@ -113,10 +113,23 @@ public static class VoicePairing
         random ??= Random.Shared;
 
         var used = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var slotCount = slots.Count;
         var english = voices.Where(SpeaksEnglish).ToArray();
         IReadOnlyList<VoiceInfo> offered = english.Length > 0 ? english : voices;
 
-        if (provider is not null)
+        if (slots.FirstOrDefault(slot => slot.Id == PersonaCatalog.Covas.Id) is { } covas
+            && CovasCandidates(offered.Where(voice => !used.Contains(voice.Id)).ToArray()) is { Length: > 0 } candidates)
+        {
+            var voice = await CastFromAsync(
+                candidates, covas, provider, model, spend, prices, logger, random, cancellationToken)
+                .ConfigureAwait(false);
+
+            used.Add(voice);
+            chosen[covas.Id] = voice;
+            slots = [.. slots.Where(slot => slot != covas)];
+        }
+
+        if (provider is not null && slots.Count > 0)
         {
             var free = offered.Where(voice => !used.Contains(voice.Id)).ToArray();
             var answered = await AskInRoundsAsync(
@@ -146,10 +159,56 @@ public static class VoicePairing
         logger?.LogInformation(
             "Paired {Count} of {Slots} voices ({Model})",
             chosen.Count,
-            slots.Count,
+            slotCount,
             provider is null ? "no model" : "model");
 
         return chosen;
+    }
+
+    /// <summary>
+    /// The first non-empty of: female British voices with "calm" in the name or description, female British
+    /// voices, female voices. Empty when no voice is labelled female.
+    /// </summary>
+    private static VoiceInfo[] CovasCandidates(IReadOnlyList<VoiceInfo> free)
+    {
+        var british = VoicePool.British(free);
+        var women = free.Where(voice => VoicePool.GenderOf(voice.Gender) == Audio.VoiceGender.Feminine).ToArray();
+        var britishWomen = women.Where(voice => british.Contains(voice.Id)).ToArray();
+
+        return new[]
+        {
+            britishWomen.Where(voice => IsCalm(voice.Name) || IsCalm(voice.Description)).ToArray(),
+            britishWomen,
+            women,
+        }.FirstOrDefault(tier => tier.Length > 0) ?? [];
+    }
+
+    private static bool IsCalm(string? text) => text?.Contains("calm", StringComparison.OrdinalIgnoreCase) == true;
+
+    /// <summary>One voice from <paramref name="candidates"/>: the model's choice, else one at random.</summary>
+    private static async Task<string> CastFromAsync(
+        VoiceInfo[] candidates,
+        Slot slot,
+        ILlmProvider? provider,
+        string? model,
+        SpendTracker? spend,
+        PriceTable? prices,
+        ILogger? logger,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        if (provider is not null)
+        {
+            var answered = await AskInRoundsAsync(
+                candidates, [slot], provider, model, spend, prices, logger, cancellationToken).ConfigureAwait(false);
+
+            if (answered.GetValueOrDefault(slot.Id) is { } wanted)
+            {
+                return wanted;
+            }
+        }
+
+        return candidates[random.Next(candidates.Length)].Id;
     }
 
     /// <summary>
