@@ -190,7 +190,7 @@ issue worker commits and does not push, so the working diff is empty by the time
 **Pre-release** sits in the release row but is violet, because it opens a session rather than
 running a script to the end: it runs the suite, fixes what fails and pushes `main`, and Patch or
 Minor comes after it.
-The release keys ask Y/N in the terminal first, and `release.ps1` follows the run to the end on its
+The release keys start at once, with no confirmation prompt, and `release.ps1` follows the run to the end on its
 own — a separate watch key duplicates it. **Major is deliberately not on the deck**: cut one with
 `tools\release.ps1 -Major`.
 
