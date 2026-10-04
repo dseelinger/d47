@@ -229,6 +229,8 @@ The Callouts setting "Trading Mode needs a hold of" is now labelled with "(tonne
 
 A story's dock beats now go only to stations where the ship can land. The station search's small, medium and large pad counts decide it, so a medium ship is no longer sent to a station with only small pads. A story that stays in the current ship uses that ship's pad; otherwise it uses the smallest pad of any ship you own. A station whose pad counts are unknown is still allowed.
 
+A story's dock beats no longer go to a settlement in a system with a war or civil war, active or pending, because its docks may be closed for fighting on the ground. Starports and outposts in that system are still allowed, and an election does not count. Whether the system is at war comes from whichever is newer: your own journal's last reading of the system, or the galaxy search's record of it.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

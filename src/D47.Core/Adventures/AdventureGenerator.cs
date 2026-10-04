@@ -588,8 +588,19 @@ public sealed class AdventureGenerator(
             var stations = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
             var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
 
+            var resolver = new AdventureResolver(search, facts.Standings);
+            var open = new List<StationSummary>();
+
+            foreach (var station in stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName) && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))))
+            {
+                if (!await resolver.ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false))
+                {
+                    open.Add(station);
+                }
+            }
+
             return new Candidates(
-                [.. stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName) && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad)))],
+                open,
                 [.. bodies.Bodies.Where(body => !facts.NeedsPermit(body.SystemName))])
             {
                 Anarchy = anarchy,
@@ -1761,7 +1772,7 @@ public sealed class AdventureGenerator(
         bool steerIllegal,
         CancellationToken cancellationToken)
     {
-        var resolver = new AdventureResolver(galaxy()!);
+        var resolver = new AdventureResolver(galaxy()!, facts.Standings);
         var resolved = new List<AdventureBeat>();
         var refusals = new List<string>();
         var previousSystem = facts.System;

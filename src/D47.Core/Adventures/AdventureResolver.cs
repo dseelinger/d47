@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.Core.Adventures;
@@ -19,11 +20,14 @@ public sealed record Resolution(AdventureTrigger? Trigger, string? Refusal)
 /// Turns the names a person or a model wrote into the ids the journal will match, through the galaxy
 /// service (Phase 47).
 /// </summary>
-public sealed class AdventureResolver(IGalaxyService galaxy)
+/// <param name="standings">The Commander's own readings of systems, weighed against the galaxy search's for war.</param>
+public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? standings = null)
 {
     private readonly Dictionary<string, (long Address, string Name)> _systems = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<string, string?> _governments = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<string, (bool AtWar, DateTimeOffset? ReportedAt)> _wars = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A system by name: its address and the service's spelling, or null if it is not one.</summary>
     public async Task<(long Address, string Name)?> SystemAsync(string name, CancellationToken cancellationToken)
@@ -68,8 +72,36 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
 
         _systems[wanted] = (address, hit.Name);
         _governments[wanted] = hit.Government;
+        _wars[wanted] = (hit.AtWar, hit.ReportedAt);
         return (address, hit.Name);
     }
+
+    /// <summary>
+    /// Whether a system has a war or civil war, active or pending, by whichever is newer: the Commander's
+    /// own journal reading or the galaxy search's record. False where neither knows the system.
+    /// </summary>
+    public async Task<bool> AtWarAsync(string name, CancellationToken cancellationToken)
+    {
+        var reading = standings?.Latest(name.Trim());
+        var record = (AtWar: false, ReportedAt: (DateTimeOffset?)null);
+        var known = await SystemAsync(name, cancellationToken).ConfigureAwait(false) is not null
+                    && _wars.TryGetValue(name.Trim(), out record);
+
+        if (reading is not null && (!known || record.ReportedAt is not { } reported || reading.SeenAt >= reported))
+        {
+            return reading.Conflicts.Any(conflict =>
+                conflict.WarType is "war" or "civilwar" && conflict.Status is "active" or "pending");
+        }
+
+        return known && record.AtWar;
+    }
+
+    private static bool IsSettlement(StationSummary station) =>
+        string.Equals(station.Type, "Settlement", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Whether a dock beat may not name this station: a settlement in a system at war.</summary>
+    public async Task<bool> ClosedByWarAsync(StationSummary station, CancellationToken cancellationToken) =>
+        IsSettlement(station) && await AtWarAsync(station.SystemName, cancellationToken).ConfigureAwait(false);
 
     /// <summary>The government the galaxy search reports for a system, or null where it reports none or does not know the system.</summary>
     public async Task<string?> GovernmentAsync(string name, CancellationToken cancellationToken) =>
@@ -145,6 +177,11 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
                     if (needsPad is { } pad && !match.Admits(pad))
                     {
                         return Resolution.Refused($"{where} docks at {match.Name}, which has no {PadWord(pad)} pad or larger, and the ship for this story needs one.");
+                    }
+
+                    if (IsSettlement(match) && await AtWarAsync(found.Name, cancellationToken).ConfigureAwait(false))
+                    {
+                        return Resolution.Refused($"{where} docks at {match.Name}, a settlement in {found.Name}, which is at war; its docks may be closed for fighting on the ground.");
                     }
 
                     return Resolution.Of(new AdventureTrigger

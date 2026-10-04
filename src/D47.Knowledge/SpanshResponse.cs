@@ -539,8 +539,18 @@ internal static class SpanshResponse
                 .Where(presence => presence.ValueKind == JsonValueKind.Object && String(presence, "name") is not null)
                 .Select(presence => new FactionPresence(String(presence, "name")!, Number(presence, "influence")))]
             : [],
+        AtWar = element.TryGetProperty("minor_faction_presences", out var states)
+                && states.ValueKind == JsonValueKind.Array
+                && states.EnumerateArray().Any(presence => HasWar(presence, "active_states") || HasWar(presence, "pending_states")),
         ReportedAt = Timestamp(element, "updated_at"),
     };
+
+    private static bool HasWar(JsonElement presence, string name) =>
+        presence.ValueKind == JsonValueKind.Object
+        && presence.TryGetProperty(name, out var states)
+        && states.ValueKind == JsonValueKind.Array
+        && states.EnumerateArray().Any(state =>
+            state.ValueKind == JsonValueKind.String && state.GetString() is "War" or "Civil War");
 
     /// <summary>Where the search measured from, in galactic coordinates.</summary>
     public static (double X, double Y, double Z)? ReadReferenceCoordinates(JsonDocument document)

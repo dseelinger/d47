@@ -31,6 +31,9 @@ public sealed record SystemSummary
     /// <summary>The minor factions present, as last reported.</summary>
     public IReadOnlyList<FactionPresence> Factions { get; init; } = [];
 
+    /// <summary>Whether any faction present has a War or Civil War, active or pending, as last reported.</summary>
+    public bool AtWar { get; init; }
+
     /// <summary>When the service last had a report of this system.</summary>
     public DateTimeOffset? ReportedAt { get; init; }
 }
