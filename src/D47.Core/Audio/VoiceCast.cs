@@ -123,11 +123,29 @@ public sealed class VoiceCast
             return pinned;
         }
 
-        return Pool.FirstOrDefault(voice =>
-                !string.Equals(voice, DefaultVoice, StringComparison.OrdinalIgnoreCase) && KokoroAssets.IsCastable(voice))
+        var candidates = Pool
+            .Where(voice => !string.Equals(voice, DefaultVoice, StringComparison.OrdinalIgnoreCase) && KokoroAssets.IsCastable(voice))
+            .ToList();
+        var english = candidates.Where(voice => NarratorAccents.Contains(AccentOf(voice) ?? "")).ToList();
+
+        return english.FirstOrDefault(DescribedAsNarration)
+            ?? english.FirstOrDefault()
+            ?? candidates.FirstOrDefault()
             ?? pinned
             ?? DefaultVoice;
     }
+
+    /// <summary>The accents an unpinned Narrator may be given.</summary>
+    private static readonly HashSet<string> NarratorAccents = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "American", "British", "English", "Scottish", "Welsh", "Irish", "Australian", "New Zealand", "Canadian",
+    };
+
+    /// <summary>Whether a voice's name or description mentions narration.</summary>
+    private bool DescribedAsNarration(string voiceId) =>
+        Voices.TryGetValue(voiceId, out var voice)
+        && (voice.Label.Contains("narrat", StringComparison.OrdinalIgnoreCase)
+            || voice.Description?.Contains("narrat", StringComparison.OrdinalIgnoreCase) == true);
 
     /// <summary>
     /// What one sender sounds like, assigning them a voice the first time and keeping it after that.

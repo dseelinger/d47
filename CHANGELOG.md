@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Narrator's default voice, for anyone who has not chosen one, is now a voice with an American, British, English, Scottish, Welsh, Irish, Australian, New Zealand or Canadian accent. A voice described as narration is preferred; if there is none, the first voice with one of those accents is used; if the voice list has no such voice, the Narrator keeps the voice it had before. A Narrator voice you picked yourself is kept.
+
 The COVAS core's voice, where d47 chose it, is now a calm British woman: a female British voice described as calm if the voice list has one, otherwise a female British voice, otherwise a female voice. A COVAS voice you picked yourself is kept. An installation whose COVAS voice d47 chose is re-cast once, the next time voices are paired.
 
 The panel tabs are renamed and reordered: TRANSCRIPT, STORIES, COMMANDER, ASSET MGMT, NAVIGATION, SETTINGS. Adventures is now Stories, Fleet is now Asset Mgmt and Routing is now Navigation, in the window and the headset. Saying "stories", "assets" or "navigation", or "open the stories tab", opens that tab. Saying "fleet" never opened the Fleet tab, because the voice matched the tab's internal name, Loadout. Saying the name of a page on any tab, such as "suits", now opens that tab on that page from wherever you are; a tab's own name still wins, and a word two tabs' pages share opens nothing. If d47 was closed on one of the renamed tabs, it reopens on that tab under its new name.
