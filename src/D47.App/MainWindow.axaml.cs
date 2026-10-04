@@ -264,7 +264,11 @@ public partial class MainWindow : Window
                 // rename may not take.
                 Bookmarks: host.Bookmarks,
                 Commander: () => host.GameState.Active,
-                BookmarkPhrasesTaken: host.BookmarkPhrasesTaken);
+                BookmarkPhrasesTaken: host.BookmarkPhrasesTaken,
+
+                // On this body (#555).
+                Status: () => host.LiveStatus,
+                WorthIfMapped: (system, body) => host.History.Cartography?.IfMapped(system, body));
 
             Panel.EnableRouting(Routing);
 

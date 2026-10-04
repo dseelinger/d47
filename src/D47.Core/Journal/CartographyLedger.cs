@@ -223,6 +223,29 @@ public sealed class CartographyLedger(string? path, ILogger logger)
         }
     }
 
+    /// <summary>What a planet would pay if the Commander mapped it efficiently now; null without a scan giving its class and mass.</summary>
+    public long? IfMapped(long system, int bodyId)
+    {
+        lock (_gate)
+        {
+            if (!_bodies.TryGetValue((system, bodyId), out var body)
+                || body.PlanetClass is not { } planetClass
+                || body.MassEm is not { } mass)
+            {
+                return null;
+            }
+
+            return CartographicValue.Planet(
+                planetClass,
+                body.TerraformState,
+                mass,
+                wasDiscovered: body.Flags.Count == 0 || body.Flags.Values.Any(flags => flags.Discovered),
+                wasMapped: body.Flags.Count == 0 || body.Flags.Values.Any(flags => flags.Mapped),
+                mapped: true,
+                efficient: true);
+        }
+    }
+
     /// <summary>Clears <paramref name="commander"/>'s total as of <paramref name="at"/>, and writes the time to <c>path</c>.</summary>
     public void Reset(string commander, DateTimeOffset at)
     {

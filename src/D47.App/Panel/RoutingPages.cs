@@ -45,7 +45,11 @@ public sealed record RoutingSurface(
     // may not take.
     BookmarkStore? Bookmarks = null,
     Func<CommanderGameState?>? Commander = null,
-    Func<IReadOnlyCollection<string>>? BookmarkPhrasesTaken = null);
+    Func<IReadOnlyCollection<string>>? BookmarkPhrasesTaken = null,
+
+    // On this body (#555): the live position, and what an unmapped planet would pay if mapped.
+    Func<GameStatus>? Status = null,
+    Func<long, int, long?>? WorthIfMapped = null);
 
 /// <summary>The Navigation tab (Phase 37).</summary>
 public static class RoutingPages

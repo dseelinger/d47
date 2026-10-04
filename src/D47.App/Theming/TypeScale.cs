@@ -6,6 +6,9 @@ public static class TypeScale
     /// <summary>The minimum edge, in either dimension, of an interactive control's hit target.</summary>
     public const double MinimumTarget = 44;
 
+    /// <summary>A live reading that is the point of its block, such as the distance walked since the last sample.</summary>
+    public const double Reading = 32;
+
     /// <summary>A screen title.</summary>
     public const double Title = 28;
 

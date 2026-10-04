@@ -6120,6 +6120,9 @@ public sealed class AppHost : IDisposable
 
     private Func<Core.Journal.GameStatus> _liveStatus = () => Core.Journal.GameStatus.Unknown;
 
+    /// <summary>The last <c>Status.json</c> the tick read.</summary>
+    public Core.Journal.GameStatus LiveStatus => _liveStatus();
+
     /// <summary>Whether the next carrier exchange may make his owning it the subject (#88).</summary>
     private readonly NpcChatterOwnershipSpotlight _carrierSpotlight = new();
 

@@ -1063,7 +1063,8 @@ public partial class PanelView : UserControl
         bool progress = true,
         bool market = true,
         bool trade = true,
-        bool bookmarks = true)
+        bool bookmarks = true,
+        bool body = true)
     {
         var roots = new List<NavCrumb>();
 
@@ -1104,6 +1105,15 @@ public partial class PanelView : UserControl
             });
         }
 
+        // After the existing roots (#555).
+        if (body && surface.Commander is not null)
+        {
+            roots.Add(new NavCrumb(BodyPage.RootKey, "On this body")
+            {
+                Help = D47.Core.Capabilities.Builtin.ExobiologyCapability.Id,
+            });
+        }
+
         if (roots.Count == 0)
         {
             return;
@@ -1123,6 +1133,11 @@ public partial class PanelView : UserControl
             PanelTab.Navigation,
             crumb =>
             {
+                if (crumb.Key == BodyPage.RootKey && surface.Commander is { } commander)
+                {
+                    return _bodyPage = new BodyPage(commander, surface.Status, surface.WorthIfMapped);
+                }
+
                 var page = RoutingPages.Build(crumb, surface, Nav, Prompts);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
@@ -1170,6 +1185,9 @@ public partial class PanelView : UserControl
             return false;
         }
 
+        // On this body follows the game's position, so it ticks ahead of the route's guard.
+        var body = _bodyPage is { } bodyPage && Nav.RootKeyOf(PanelTab.Navigation) == BodyPage.RootKey && bodyPage.Tick();
+
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();
 
@@ -1180,7 +1198,7 @@ public partial class PanelView : UserControl
             && string.Equals(here, _routeWhere, StringComparison.Ordinal)
             && Nullable.Equals(range, _routeRangeSeen))
         {
-            return false;
+            return body;
         }
 
         _routeSeen = route;
@@ -1206,6 +1224,7 @@ public partial class PanelView : UserControl
     }
 
     private RouteProgressPage? _routeProgress;
+    private BodyPage? _bodyPage;
     private RoutePlanPage? _routePlan;
     private RouteTradePage? _routeTrade;
     private RoutePlanResultPage? _routeResult;
