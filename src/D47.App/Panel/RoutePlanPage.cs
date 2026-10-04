@@ -35,6 +35,14 @@ public sealed class RoutePlanPage : UserControl
 
     private readonly StackPanel _cards = new();
 
+    /// <summary>Opens Progress beside this page, drawn selected while Progress is open.</summary>
+    private readonly Button _progress = new()
+    {
+        Content = "Progress",
+        HorizontalAlignment = HorizontalAlignment.Left,
+        Margin = new Thickness(0, 0, 0, 12),
+    };
+
     /// <summary>The narrowest a planner is laid out before the two stack.</summary>
     private const double PlannerWidth = 440;
 
@@ -55,6 +63,9 @@ public sealed class RoutePlanPage : UserControl
         _here = here;
         _jumpRange = jumpRange;
 
+        _progress.Click += (_, _) => _nav.Drill(RoutingPages.ProgressCrumb);
+        ShowProgressOpen();
+
         Content = new ScrollViewer
         {
             Padding = new Thickness(14),
@@ -66,9 +77,45 @@ public sealed class RoutePlanPage : UserControl
         Build();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _nav.Changed += OnNavigated;
+        ShowProgressOpen();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _nav.Changed -= OnNavigated;
+    }
+
+    private void OnNavigated(object? sender, EventArgs e) => ShowProgressOpen();
+
+    /// <summary>Whether Progress has the level beside Plan.</summary>
+    public bool ProgressOpen =>
+        _nav.TrailOf(PanelTab.Navigation).Any(crumb => crumb.Key == RoutingPages.ProgressKey);
+
+    private void ShowProgressOpen()
+    {
+        if (ProgressOpen)
+        {
+            RoutingKit.Themed(_progress, BackgroundProperty, "D47.A");
+            RoutingKit.Themed(_progress, ForegroundProperty, "D47.Knock");
+        }
+        else
+        {
+            _progress.ClearValue(BackgroundProperty);
+            _progress.ClearValue(ForegroundProperty);
+        }
+    }
+
     private void Build()
     {
         _cards.Children.Clear();
+
+        // Drawn with lookups off as well: Progress reads the route Elite wrote and needs none.
+        _cards.Children.Add(_progress);
 
         if (!_lookupsEnabled())
         {

@@ -91,18 +91,35 @@ public class TheRoutingTabIsInTheHeadsetTests
     }
 
     /// <summary>Selects a root and rasterises it, the way the runtime asks for a frame.</summary>
-    private static void Draw(VrPanelSurface panel, VrPixels pixels, string root)
+    /// <summary>Draws a root alone, or Plan › Progress for <see cref="RoutingPages.ProgressKey"/>.</summary>
+    private static void Draw(VrPanelSurface panel, VrPixels pixels, string page)
     {
+        var root = page == RoutingPages.ProgressKey ? RoutingPages.PlanRoot : page;
+
         panel.Nav.Select(PanelTab.Navigation);
         panel.Nav.SelectRoot(PanelTab.Navigation, root);
+
+        if (page == RoutingPages.ProgressKey)
+        {
+            panel.Nav.GoTo(RoutingPages.ProgressCrumb);
+        }
+        else
+        {
+            panel.Nav.ToRoot();
+        }
+
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Navigation, panel.Nav.Tab);
         Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Navigation));
 
-        panel.Invalidate();
-        panel.Draw(pixels.Address, pixels.RowBytes);
-        Dispatcher.UIThread.RunJobs();
+        // Twice: the first layout settles how many panes fit, and the strip redraws after it.
+        for (var pass = 0; pass < 2; pass++)
+        {
+            panel.Invalidate();
+            panel.Draw(pixels.Address, pixels.RowBytes);
+            Dispatcher.UIThread.RunJobs();
+        }
     }
 
     /// <summary>How many colours the submitted buffer has, up to the point the answer is settled.</summary>
@@ -179,13 +196,42 @@ public class TheRoutingTabIsInTheHeadsetTests
         Assert.Equal(order.IndexOf(PanelTab.Commander) + 1, order.IndexOf(PanelTab.Navigation));
     }
 
+    /// <summary>The headset opens the tab on Plan › Progress, with the breadcrumb.</summary>
+    [AvaloniaFact]
+    public void TheHeadsetOpensOnProgressBesidePlan()
+    {
+        var (panel, pixels, _) = Headset();
+
+        panel.Nav.Select(PanelTab.Navigation);
+        Dispatcher.UIThread.RunJobs();
+        panel.Invalidate();
+        panel.Draw(pixels.Address, pixels.RowBytes);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(
+            [RoutingPages.PlanRoot, RoutingPages.ProgressKey],
+            panel.Nav.Trail.Select(crumb => crumb.Key));
+
+        var pages = panel.Board.View.GetVisualDescendants().OfType<Control>().ToList();
+
+        Assert.Contains(pages, control => control is TextBlock { Text: "Shinrarta Dezhra" });
+
+        var crumbs = panel.Board.View.GetVisualDescendants()
+            .OfType<StackPanel>()
+            .First(row => row.Name == "CrumbRow")
+            .Children.OfType<Button>()
+            .Select(crumb => crumb.Content as string);
+
+        Assert.Equal(["Plan", "Progress"], crumbs);
+    }
+
     private static List<PanelTab> Tabs(PanelNavigator nav) =>
         [.. Enum.GetValues<PanelTab>().Where(nav.Has)];
 
     /// <summary>Every root the tab has, drawn — the headset's own copy, through the real rasterise.</summary>
     [AvaloniaTheory]
     [InlineData(RoutingPages.PlanRoot)]
-    [InlineData(RoutingPages.ProgressRoot)]
+    [InlineData(RoutingPages.ProgressKey)]
     [InlineData(RoutingPages.MarketRoot)]
     public void EveryRootRastersInTheHeadset(string root)
     {
@@ -251,7 +297,7 @@ public class TheRoutingTabIsInTheHeadsetTests
     {
         var (panel, pixels, clipboard) = Headset();
 
-        Draw(panel, pixels, RoutingPages.ProgressRoot);
+        Draw(panel, pixels, RoutingPages.ProgressKey);
 
         var row = panel.Board.View.GetVisualDescendants()
             .OfType<TextBlock>()

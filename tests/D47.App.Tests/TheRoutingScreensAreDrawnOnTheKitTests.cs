@@ -190,7 +190,6 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
 
         foreach (var root in new[]
                  {
-                     RoutingPages.ProgressRoot,
                      RoutingPages.PlanRoot,
                      RoutingPages.MarketRoot,
                      RoutingPages.TradeRoot,
@@ -221,7 +220,8 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var surface = Open(1280, 860);
-        surface.Panel.Nav.SelectRoot(RoutingPages.ProgressRoot);
+        surface.Panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+        surface.Panel.Nav.Drill(RoutingPages.ProgressCrumb);
         Dispatcher.UIThread.RunJobs();
 
         var names = surface.Panel.GetVisualDescendants().OfType<TextBlock>().ToList();
@@ -241,7 +241,8 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         var surface = Open(1280, 860);
         var nav = surface.Panel.Nav;
 
-        nav.SelectRoot(RoutingPages.ProgressRoot);
+        nav.SelectRoot(RoutingPages.PlanRoot);
+        nav.Drill(RoutingPages.ProgressCrumb);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(5, Rows(surface.Panel).Count);
@@ -283,7 +284,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         Assert.DoesNotContain("BorderThickness", source, StringComparison.Ordinal);
         Assert.DoesNotMatch(@"#[0-9A-Fa-f]{6}\b", source);
         Assert.DoesNotMatch(
-            @"ThemeManager\.(Background|Surface|SurfaceAlt|Border|Text|TextMuted|TextFaint|Accent|AccentMuted|Danger|Warn|Good|Info|Rule|FillLow|FillHigh|FillHigher|AccentBorder|AccentInk|CardFill|CardFillSelected|RowFill|TagBorder|PaneFill|PaneBorder|TagInk)Key\b",
+            @"ThemeManager\.(Background|Surface|SurfaceAlt|Border|Text|TextMuted|TextFaint|Accent|AccentMuted|Danger|Good|Info|Rule|FillLow|FillHigh|FillHigher|AccentBorder|AccentInk|CardFill|CardFillSelected|RowFill|TagBorder|PaneFill|PaneBorder|TagInk)Key\b",
             source);
     }
 

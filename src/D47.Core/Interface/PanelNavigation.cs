@@ -16,8 +16,8 @@ public enum PanelTab
     Assets,
 
     /// <summary>
-    /// Where the Commander is going, in three readings (Phase 37): the plan, the route being flown, and
-    /// getting a system name into the game.
+    /// Where the Commander is going: Plan with the route being flown beside it, bookmarks, markets and
+    /// trade routes.
     /// </summary>
     Navigation,
 
@@ -194,10 +194,10 @@ public sealed class PanelNavigator
         Trail.Count > 0 ? Trail[0] : new NavCrumb(Tab.ToString(), Tab.ToString());
 
     /// <summary>Root first, leaf last.</summary>
-    public IReadOnlyList<NavCrumb> Trail =>
-        _current.TryGetValue(Tab, out var root) && _trails.TryGetValue(root, out var trail)
-            ? trail
-            : [];
+    public IReadOnlyList<NavCrumb> Trail => TrailOf(Tab);
+
+    /// <summary>The trail a tab is on, whether or not it is the tab showing.</summary>
+    public IReadOnlyList<NavCrumb> TrailOf(PanelTab tab) => (IReadOnlyList<NavCrumb>?)Mutable(tab) ?? [];
 
     /// <summary>Nothing to go back to.</summary>
     public bool AtRoot => Trail.Count <= 1;
@@ -242,6 +242,10 @@ public sealed class PanelNavigator
 
     /// <summary>One level deeper.</summary>
     public bool Drill(NavCrumb crumb) => !Modal && Push(crumb);
+
+    /// <summary>One level deeper on a tab's current root, whether or not that tab is showing.</summary>
+    public bool Drill(PanelTab tab, NavCrumb crumb) =>
+        Mutable(tab) is { } trail && !trail[^1].Modal && Push(trail, crumb);
 
     /// <summary>Pushes a level that holds the panel until it is dismissed - a chooser.</summary>
     public bool Take(NavCrumb crumb) => Push(crumb with { Modal = true });
@@ -339,10 +343,10 @@ public sealed class PanelNavigator
         return true;
     }
 
-    private bool Push(NavCrumb crumb)
-    {
-        var trail = Mutable();
+    private bool Push(NavCrumb crumb) => Push(Mutable(), crumb);
 
+    private bool Push(List<NavCrumb>? trail, NavCrumb crumb)
+    {
         if (trail is null)
         {
             return false;
@@ -394,8 +398,10 @@ public sealed class PanelNavigator
         return true;
     }
 
-    private List<NavCrumb>? Mutable() =>
-        _current.TryGetValue(Tab, out var root) && _trails.TryGetValue(root, out var trail)
+    private List<NavCrumb>? Mutable() => Mutable(Tab);
+
+    private List<NavCrumb>? Mutable(PanelTab tab) =>
+        _current.TryGetValue(tab, out var root) && _trails.TryGetValue(root, out var trail)
             ? trail
             : null;
 

@@ -34,17 +34,12 @@ public class TheRoutingTabTests
         return panel;
     }
 
-    /// <summary>
-    /// The tab with Progress alone: a surface that furnishes one root and not the others, which is
-    /// what the flags are for.
-    /// </summary>
+    /// <summary>The tab with nothing to plot with: Plan says so, and Progress beside it reads the route.</summary>
     private static PanelView Furnished(NavRoute route, string? here = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableRouting(
-            new RoutingSurface(() => route, () => here),
-            plan: false);
+        panel.EnableRouting(new RoutingSurface(() => route, () => here));
 
         return Laid(panel);
     }
@@ -52,7 +47,9 @@ public class TheRoutingTabTests
     private static IEnumerable<string> TextOf(PanelView panel) =>
         panel.GetVisualDescendants()
             .OfType<TextBlock>()
-            .Select(block => block.Text ?? string.Empty)
+            .Select(block => block.Inlines is { Count: > 0 } inlines
+                ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
+                : block.Text ?? string.Empty)
             .Where(text => text.Length > 0);
 
     /// <summary>
@@ -84,7 +81,8 @@ public class TheRoutingTabTests
         Assert.Equal(PanelTab.Navigation, panel.Tab);
 
         // The root is the first crumb, and it is a word the Commander can say as well as press.
-        Assert.Equal("Progress", panel.Nav.Root.Word);
+        Assert.Equal("Plan", panel.Nav.Root.Word);
+        Assert.Equal("Progress", panel.Nav.Trail[^1].Word);
     }
 
     /// <summary>The item that justifies the tab: every hop, not the next handful.</summary>
@@ -129,7 +127,7 @@ public class TheRoutingTabTests
         panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(TextOf(panel), text => text.Contains("neutron", StringComparison.Ordinal));
+        Assert.Contains("SUPERCHARGE HERE", TextOf(panel));
     }
 
     /// <summary>A class d47 does not recognise is drawn as not knowing, never as "no".</summary>
@@ -213,12 +211,9 @@ public class TheRoutingTabTests
         return panel;
     }
 
-    /// <summary>
-    /// Two readings of one journey, in one tab and one mode control — the same collapse Transcript
-    /// makes for Conversation, Technical and the log file.
-    /// </summary>
+    /// <summary>Progress is a level opened beside Plan, and the mode control does not offer it.</summary>
     [AvaloniaFact]
-    public void TheTabCarriesPlanAndProgressRatherThanATabEach()
+    public void ProgressIsALevelBesidePlanRatherThanARoot()
     {
         var folder = Scratch();
 
@@ -228,15 +223,163 @@ public class TheRoutingTabTests
 
             var words = panel.Nav.Roots(PanelTab.Navigation).Select(root => root.Word).ToArray();
 
-            Assert.Equal(["Plan", "Progress"], words);
+            Assert.Equal(["Plan"], words);
+            Assert.Equal(
+                [RoutingPages.PlanRoot, RoutingPages.ProgressKey],
+                panel.Nav.TrailOf(PanelTab.Navigation).Select(crumb => crumb.Key));
 
-            // And exactly one tab was spent on them.
             Assert.True(panel.GetControl<RadioButton>("NavigationTab").IsVisible);
         }
         finally
         {
             Directory.Delete(folder, recursive: true);
         }
+    }
+
+    private static Button ProgressTile(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<RoutePlanPage>().Single()
+            .GetVisualDescendants().OfType<Button>().First(button => button.Content as string == "Progress");
+
+    private static string[] Crumbs(PanelView panel) =>
+        [.. panel.GetControl<StackPanel>("CrumbRow").Children.OfType<Button>().Select(crumb => crumb.Content as string ?? string.Empty)];
+
+    /// <summary>At desktop width the tab opens with Plan and Progress side by side.</summary>
+    [AvaloniaFact]
+    public void TheTabOpensOnPlanAndProgressSideBySide()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = new PanelView { DataContext = new PanelViewModel() };
+
+            panel.EnableRouting(new RoutingSurface(
+                () => Route(Hop("Sol"), Hop("Colonia", 9)),
+                () => "Sol",
+                CapabilityRegistry.Build([]),
+                Book(folder),
+                () => true));
+
+            Laid(panel, 1280);
+            panel.Tab = PanelTab.Navigation;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(["Plan", "Progress"], Crumbs(panel));
+            Assert.True(panel.GetVisualDescendants().OfType<RoutePlanPage>().Single().IsEffectivelyVisible);
+            Assert.True(panel.GetVisualDescendants().OfType<RouteProgressPage>().Single().IsEffectivelyVisible);
+            Assert.Contains("Colonia", TextOf(panel));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>A plan result and Progress take turns in the one level beside Plan.</summary>
+    [AvaloniaFact]
+    public void AResultAndProgressTakeTurnsBesidePlan()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var plans = Book(folder);
+            RecordJumpPlan(plans);
+
+            var panel = FullyFurnished(NavRoute.None, plans);
+
+            panel.Tab = PanelTab.Navigation;
+            Dispatcher.UIThread.RunJobs();
+
+            var tile = ProgressTile(panel);
+            var plan = panel.GetVisualDescendants().OfType<RoutePlanPage>().Single();
+
+            Assert.True(plan.ProgressOpen);
+
+            panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(
+                [RoutingPages.PlanRoot, $"{RoutingPages.ResultPrefix}{RoutePlanKind.Jump}"],
+                panel.Nav.Trail.Select(crumb => crumb.Key));
+            Assert.False(plan.ProgressOpen);
+
+            tile.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(
+                [RoutingPages.PlanRoot, RoutingPages.ProgressKey],
+                panel.Nav.Trail.Select(crumb => crumb.Key));
+            Assert.True(plan.ProgressOpen);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Leaving Progress leaves Plan alone; going back to the tab does not open it again.</summary>
+    [AvaloniaFact]
+    public void BackFromProgressLeavesPlanAlone()
+    {
+        var panel = Furnished(Route(Hop("Sol")));
+
+        panel.Tab = PanelTab.Navigation;
+        Assert.True(panel.Nav.Back());
+
+        panel.Tab = PanelTab.Transcript;
+        panel.Tab = PanelTab.Navigation;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal([RoutingPages.PlanRoot], panel.Nav.Trail.Select(crumb => crumb.Key));
+    }
+
+    /// <summary>With galaxy lookups off, Plan still offers Progress, and Progress draws the plotted route.</summary>
+    [AvaloniaFact]
+    public void WithLookupsOffPlanStillOpensProgress()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var panel = FullyFurnished(Route(Hop("Sol"), Hop("Colonia", 9)), Book(folder), lookups: false);
+
+            panel.Tab = PanelTab.Navigation;
+            Dispatcher.UIThread.RunJobs();
+
+            var drawn = TextOf(panel).ToArray();
+
+            Assert.Contains(drawn, text => text.Contains("Route planning is switched off", StringComparison.Ordinal));
+            Assert.NotNull(ProgressTile(panel));
+            Assert.Contains("Colonia", drawn);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>A jump redraws Progress while the tab is showing.</summary>
+    [AvaloniaFact]
+    public void AJumpRedrawsProgressWhileTheTabIsShowing()
+    {
+        var route = Route(Hop("Sol"), Hop("Colonia", 9));
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableRouting(new RoutingSurface(() => route, () => "Sol"));
+        Laid(panel);
+
+        panel.Tab = PanelTab.Navigation;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(TextOf(panel), text => text.Contains("Achenar", StringComparison.Ordinal));
+
+        route = Route(Hop("Sol"), Hop("Achenar", 4), Hop("Colonia", 9));
+
+        Assert.True(panel.TickRouting());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Achenar", TextOf(panel));
     }
 
     /// <summary>
@@ -1278,7 +1421,9 @@ public class TheRoutingTabTests
 
             Plot(panel, "Colonia");
 
-            Assert.Equal(RoutingPages.PlanRoot, panel.Nav.Trail[^1].Key);
+            Assert.Equal(
+                [RoutingPages.PlanRoot, RoutingPages.ProgressKey],
+                panel.Nav.Trail.Select(crumb => crumb.Key));
             Assert.Null(plans.Last(RoutePlanKind.Jump));
         }
         finally

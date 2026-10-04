@@ -389,7 +389,7 @@ public class TheBookmarksPageTests
     {
         var surface = Open(seed: false);
 
-        Assert.True(surface.Panel.Nav.SelectRoot(RoutingPages.ProgressRoot));
+        Assert.True(surface.Panel.Nav.SelectRoot(RoutingPages.PlanRoot));
         Dispatcher.UIThread.RunJobs();
         Assert.True(surface.Panel.Nav.SelectRoot(BookmarksPage.RootKey));
         Dispatcher.UIThread.RunJobs();

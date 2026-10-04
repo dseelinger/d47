@@ -470,4 +470,33 @@ public class PanelNavigationTests
         Assert.True(nav.Drill(new NavCrumb("fleet", "Ships")));
         Assert.Equal(["fleet"], nav.Trail.Select(crumb => crumb.Key));
     }
+
+    /// <summary>A tab that is not showing can be drilled, and the tab showing is left as it was.</summary>
+    [Fact]
+    public void ATabNotShowingCanBeDrilledWithoutShowingIt()
+    {
+        var nav = Furnished();
+
+        Assert.True(nav.Drill(PanelTab.Assets, new NavCrumb("ship:1", "Cobra")));
+
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+        Assert.True(nav.AtRoot);
+        Assert.Equal(["fleet", "ship:1"], nav.TrailOf(PanelTab.Assets).Select(crumb => crumb.Key));
+    }
+
+    /// <summary>Two crumbs of one level take turns in it rather than stacking.</summary>
+    [Fact]
+    public void TwoCrumbsOfOneLevelTakeTurns()
+    {
+        var nav = Furnished();
+
+        nav.Drill(new NavCrumb("progress", "Progress") { Level = "beside" });
+        nav.Drill(new NavCrumb("result", "Sol to Colonia") { Level = "beside" });
+
+        Assert.Equal(["conversation", "result"], nav.Trail.Select(crumb => crumb.Key));
+
+        nav.Drill(new NavCrumb("progress", "Progress") { Level = "beside" });
+
+        Assert.Equal(["conversation", "progress"], nav.Trail.Select(crumb => crumb.Key));
+    }
 }

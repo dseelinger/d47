@@ -933,8 +933,8 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface the Navigation tab (Phase 37): where the Commander is going, in three readings
-    /// of one journey.
+    /// Gives this surface the Navigation tab (Phase 37): where the Commander is going. Progress is a level
+    /// beside Plan rather than a root, and needs <paramref name="plan"/>.
     /// </summary>
     public void EnableRouting(
         RoutingSurface surface,
@@ -954,15 +954,7 @@ public partial class PanelView : UserControl
             });
         }
 
-        if (progress)
-        {
-            roots.Add(new NavCrumb(RoutingPages.ProgressRoot, "Progress")
-            {
-                Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
-            });
-        }
-
-        // After Progress, because a bookmark is a place to plot to (#490).
+        // After Plan, because a bookmark is a place to plot to (#490).
         if (bookmarks && surface.Bookmarks is not null)
         {
             roots.Add(new NavCrumb(RoutingPages.BookmarksRoot, "Bookmarks")
@@ -1021,6 +1013,15 @@ public partial class PanelView : UserControl
                 return page;
             },
             [.. roots]);
+
+        // Each launch opens Plan with Progress beside it; once the Commander leaves it, Plan stays alone.
+        if (plan
+            && progress
+            && Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.PlanRoot
+            && Nav.TrailOf(PanelTab.Navigation).Count == 1)
+        {
+            Nav.Drill(PanelTab.Navigation, RoutingPages.ProgressCrumb);
+        }
 
         // A plot made anywhere - this tab's own button, or a spoken tool call - leaves the Plan page one
         // redraw out of date, because "Show most recent" is drawn from the book. Mini reads the same

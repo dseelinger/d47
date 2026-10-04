@@ -28,18 +28,17 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (first, window) = Shown(store);
 
-        first.Tab = PanelTab.Navigation;
-        first.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.ProgressRoot);
+        first.Page = TranscriptPage.Log;
         Jobs();
 
-        Assert.Equal(RoutingPages.ProgressRoot, first.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(TranscriptPage.Log, first.Page);
 
         window.Close();
 
         // A second panel over the same store, which is what the next launch has.
         var (next, second) = Shown(store);
 
-        Assert.Equal(RoutingPages.ProgressRoot, next.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(TranscriptPage.Log, next.Page);
 
         second.Close();
     }
@@ -267,6 +266,23 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         Assert.Equal(PanelTab.Navigation, panel.Tab);
         Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+
+        window.Close();
+    }
+
+    /// <summary>Progress was a root once; a view state that remembered it opens Plan › Progress.</summary>
+    [AvaloniaFact]
+    public void ARoutingTabSavedOnProgressReopensOnPlanBesideProgress()
+    {
+        var store = Store();
+        store.Save(store.Load().With("Routing", "routing.progress") with { LastTab = "Routing" });
+
+        var (panel, window) = Shown(store);
+
+        Assert.Equal(PanelTab.Navigation, panel.Tab);
+        Assert.Equal(
+            [RoutingPages.PlanRoot, RoutingPages.ProgressKey],
+            panel.Nav.Trail.Select(crumb => crumb.Key));
 
         window.Close();
     }

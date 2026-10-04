@@ -53,8 +53,8 @@ public static class RoutingPages
     /// <summary>Where a route comes from: the three planners.</summary>
     public const string PlanRoot = "routing.plan";
 
-    /// <summary>The route being flown, read from the file Elite writes locally.</summary>
-    public const string ProgressRoot = "routing.progress";
+    /// <summary>The route being flown, read from the file Elite writes locally: a level beside Plan.</summary>
+    public const string ProgressKey = "routing.progress";
 
     /// <summary>Where to buy a commodity, or where to dump one (Phase 49).</summary>
     public const string MarketRoot = "routing.market";
@@ -68,9 +68,19 @@ public static class RoutingPages
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
     public const string ResultPrefix = "routing.result:";
 
+    /// <summary>The level right of a root, which Progress and a plan result take in turn.</summary>
+    public const string BesideLevel = "routing.beside";
+
     /// <summary>The crumb for a plan that was made.</summary>
     public static NavCrumb ResultCrumb(RoutePlanKind kind, string headline) =>
-        new($"{ResultPrefix}{kind}", headline) { Level = "routing.result" };
+        new($"{ResultPrefix}{kind}", headline) { Level = BesideLevel };
+
+    /// <summary>The crumb for the route being flown.</summary>
+    public static NavCrumb ProgressCrumb { get; } = new(ProgressKey, "Progress")
+    {
+        Level = BesideLevel,
+        Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
+    };
 
     /// <summary>Draws whichever root or level a crumb names.</summary>
     public static Control Build(
@@ -87,13 +97,11 @@ public static class RoutingPages
         return crumb.Key switch
         {
             PlanRoot => Plan(surface, nav),
+            ProgressKey => new RouteProgressPage(surface.Route, surface.Here, Copy(surface)),
             MarketRoot => Market(surface),
             TradeRoot => Trade(surface, nav),
             BookmarksRoot => Bookmarks(surface, prompts),
-
-            // Progress is the fallback rather than Plan, because it is the mode that works with nothing
-            // switched on and nothing typed.
-            _ => new RouteProgressPage(surface.Route, surface.Here, Copy(surface)),
+            _ => Missing("There is no such page on this tab."),
         };
     }
 

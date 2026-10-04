@@ -178,7 +178,8 @@ public class TheReworkedChromeRendersToACaptureTests
     {
         var (window, panel) = Open(1180, PanelTab.Navigation);
 
-        panel.Nav.SelectRoot(RoutingPages.ProgressRoot);
+        panel.Nav.SelectRoot(RoutingPages.PlanRoot);
+        panel.Nav.Drill(RoutingPages.ProgressCrumb);
         Save(window, "routing-progress.png");
     }
 
