@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Controls.Documents;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -193,6 +194,18 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         var head = Assert.IsType<TextBlock>(trigger.Children[0]);
         Assert.IsAssignableFrom<ISolidColorBrush>(((Run)head.Inlines![1]).Foreground);
         Assert.IsType<Button>(trigger.Children[1]);
+    }
+
+    [AvaloniaFact]
+    public void TheTextOnEitherSideOfAStoriesGlyphIsCentredOnIt()
+    {
+        var trigger = Assert.IsType<WrapPanel>(
+            AdventuresPage.Trigger($"Arrive at {Far}.", "Sol", Far, _ => Task.FromResult(true)));
+
+        var glyph = Assert.IsType<Button>(trigger.Children[1]);
+        Assert.Equal(VerticalAlignment.Center, glyph.VerticalAlignment);
+        Assert.Equal(VerticalAlignment.Center, Assert.IsType<TextBlock>(trigger.Children[0]).VerticalAlignment);
+        Assert.Equal(VerticalAlignment.Center, Assert.IsType<TextBlock>(trigger.Children[2]).VerticalAlignment);
     }
 
     [AvaloniaFact]

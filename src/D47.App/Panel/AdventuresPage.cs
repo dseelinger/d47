@@ -929,6 +929,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         var before = Text("", TypeScale.Secondary, ThemeManager.AKey);
         before.Text = null;
         before.Inlines = [new Run(text[..at]), name];
+        before.VerticalAlignment = VerticalAlignment.Center;
 
         var row = new WrapPanel { Orientation = Orientation.Horizontal };
         row.Children.Add(before);
@@ -936,7 +937,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary
 
         if (end < text.Length)
         {
-            row.Children.Add(Text(text[end..], TypeScale.Secondary, ThemeManager.AKey));
+            var after = Text(text[end..], TypeScale.Secondary, ThemeManager.AKey);
+            after.VerticalAlignment = VerticalAlignment.Center;
+            row.Children.Add(after);
         }
 
         return row;
