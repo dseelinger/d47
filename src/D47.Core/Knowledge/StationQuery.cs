@@ -1,5 +1,13 @@
 namespace D47.Core.Knowledge;
 
+/// <summary>A landing pad size, smallest first.</summary>
+public enum PadSize
+{
+    Small,
+    Medium,
+    Large,
+}
+
 /// <summary>One station, cut down to what answers "where do I buy this".</summary>
 public sealed record StationSummary
 {
@@ -22,6 +30,32 @@ public sealed record StationSummary
     public string? Type { get; init; }
 
     public bool HasLargePad { get; init; }
+
+    /// <summary>Pads of each size; null where the search does not give the count.</summary>
+    public int? SmallPads { get; init; }
+
+    public int? MediumPads { get; init; }
+
+    public int? LargePads { get; init; }
+
+    /// <summary>Whether a ship needing this pad or larger can dock. True where no pad count is known.</summary>
+    public bool Admits(PadSize size)
+    {
+        if (SmallPads is null && MediumPads is null && LargePads is null)
+        {
+            return true;
+        }
+
+        return (size <= PadSize.Small && SmallPads > 0) || (size <= PadSize.Medium && MediumPads > 0) || LargePads > 0;
+    }
+
+    /// <summary>The pad sizes the station is known to have, smallest first.</summary>
+    public IReadOnlyList<PadSize> KnownPads =>
+    [
+        .. new[] { (PadSize.Small, SmallPads), (PadSize.Medium, MediumPads), (PadSize.Large, LargePads) }
+            .Where(pad => pad.Item2 > 0)
+            .Select(pad => pad.Item1),
+    ];
 
     /// <summary>Raw, Manufactured or Encoded where the station has a material trader.</summary>
     public string? TraderType { get; init; }

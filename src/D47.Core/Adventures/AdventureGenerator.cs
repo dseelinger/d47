@@ -589,7 +589,7 @@ public sealed class AdventureGenerator(
             var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
 
             return new Candidates(
-                [.. stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName))],
+                [.. stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName) && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad)))],
                 [.. bodies.Bodies.Where(body => !facts.NeedsPermit(body.SystemName))])
             {
                 Anarchy = anarchy,
@@ -664,6 +664,11 @@ public sealed class AdventureGenerator(
             + "for the target to be checked and does not insist.");
     }
 
+    private static string PadsOf(StationSummary station) =>
+        station.KnownPads is { Count: > 0 } known
+            ? string.Join(" and ", known.Select(size => size.ToString().ToLowerInvariant())) + (known.Count > 1 ? " pads" : " pad")
+            : station.HasLargePad ? "large pad" : "no large pad";
+
     /// <summary>
     /// The candidates, one line per system nearest first, so the model reads a system's stations and
     /// its landable bodies together and can put two beats in one place.
@@ -680,7 +685,7 @@ public sealed class AdventureGenerator(
         foreach (var station in candidates.Stations)
         {
             var entry = Entry(station.SystemName, station.Distance);
-            entry.Stations.Add($"{station.Name} ({(station.HasLargePad ? "large pad" : "no large pad")})");
+            entry.Stations.Add($"{station.Name} ({PadsOf(station)})");
         }
 
         foreach (var body in candidates.Bodies)
@@ -1894,7 +1899,7 @@ public sealed class AdventureGenerator(
             else
             {
                 var resolution = await resolver.ResolveAsync(
-                    beat.Kind, beat.System, beat.Station, beat.Body, where, facts.NeedsLargePad(ask.ThisShipOnly), cancellationToken)
+                    beat.Kind, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(ask.ThisShipOnly), cancellationToken)
                     .ConfigureAwait(false);
 
                 if (resolution.Trigger is not { } place)
@@ -2024,7 +2029,7 @@ public sealed class AdventureGenerator(
             return (null, "Finale chapter 1 names no destination; give \"destination\" with the system and the landable body where the story ends.");
         }
 
-        var resolution = await resolver.ResolveAsync(TriggerKind.Land, system, null, body, Where, needsLargePad: false, cancellationToken).ConfigureAwait(false);
+        var resolution = await resolver.ResolveAsync(TriggerKind.Land, system, null, body, Where, needsPad: null, cancellationToken).ConfigureAwait(false);
 
         if (resolution.Trigger is not { SystemAddress: { } address, BodyId: { } bodyId, System: { } found, Body: { } landable })
         {
@@ -2192,16 +2197,24 @@ public sealed class AdventureGenerator(
         public bool NeedsPermit(string? system) =>
             PermitSystemTable.Locked(system) && !string.Equals(system, System, StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>Whether a beat's station has to have a large pad for anyone to dock there.</summary>
-        public bool NeedsLargePad(bool thisShipOnly)
+        /// <summary>
+        /// The smallest pad a dock beat's station must have: the current ship's when the story stays in it,
+        /// otherwise the smallest of any ship in the fleet. Null where a ship's pad is unknown.
+        /// </summary>
+        public PadSize? NeedsPad(bool thisShipOnly)
         {
             if (thisShipOnly || Fleet.Count == 0)
             {
-                return string.Equals(Fleet.FirstOrDefault(f => f.Here).Pad ?? PadOf(Ship.Type), "large", StringComparison.OrdinalIgnoreCase);
+                return ParsePad(Fleet.FirstOrDefault(f => f.Here).Pad ?? PadOf(Ship.Type));
             }
 
-            return Fleet.All(f => string.Equals(f.Pad, "large", StringComparison.OrdinalIgnoreCase));
+            var pads = Fleet.Select(f => ParsePad(f.Pad)).ToList();
+
+            return pads.Any(pad => pad is null) ? null : pads.Min();
         }
+
+        private static PadSize? ParsePad(string? pad) =>
+            Enum.TryParse<PadSize>(pad, ignoreCase: true, out var size) ? size : null;
 
         public string Describe()
         {

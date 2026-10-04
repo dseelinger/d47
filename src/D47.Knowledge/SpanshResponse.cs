@@ -490,6 +490,9 @@ internal static class SpanshResponse
         DistanceToArrival = Number(element, "distance_to_arrival"),
         Type = String(element, "type"),
         HasLargePad = Boolean(element, "has_large_pad"),
+        SmallPads = Count(element, "small_pads"),
+        MediumPads = Count(element, "medium_pads"),
+        LargePads = Count(element, "large_pads"),
 
         // Null where the station has a trader the index cannot classify — one in fifty, and a real state
         // rather than a parse failure.
@@ -573,6 +576,9 @@ internal static class SpanshResponse
         && value.TryGetInt64(out var number)
             ? number
             : null;
+
+    private static int? Count(JsonElement element, string name) =>
+        Integer(element, name) is { } number && number is >= 0 and <= int.MaxValue ? (int)number : null;
 
     private static bool Boolean(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;

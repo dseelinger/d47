@@ -77,19 +77,18 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
             ? null
             : _governments.GetValueOrDefault(name.Trim());
 
+    private static string PadWord(PadSize size) => size.ToString().ToLowerInvariant();
+
     /// <summary>A trigger from names.</summary>
     /// <param name="where">How to name the beat in a refusal — "Beat 3 (The Anchorage)".</param>
-    /// <param name="needsLargePad">
-    /// Whether a station has to have a large pad for anyone to dock there, read from the fleet by the
-    /// caller.
-    /// </param>
+    /// <param name="needsPad">The smallest pad a dock beat's station must have, or null for none.</param>
     public async Task<Resolution> ResolveAsync(
         TriggerKind kind,
         string? system,
         string? station,
         string? body,
         string where,
-        bool needsLargePad,
+        PadSize? needsPad,
         CancellationToken cancellationToken)
     {
         if (kind == TriggerKind.Rank)
@@ -143,9 +142,9 @@ public sealed class AdventureResolver(IGalaxyService galaxy)
                         return Resolution.Refused($"{where} names a station, \"{station.Trim()}\", that is not in {found.Name}.");
                     }
 
-                    if (needsLargePad && !match.HasLargePad)
+                    if (needsPad is { } pad && !match.Admits(pad))
                     {
-                        return Resolution.Refused($"{where} docks at {match.Name}, which has no large pad, and the ship for this story needs one.");
+                        return Resolution.Refused($"{where} docks at {match.Name}, which has no {PadWord(pad)} pad or larger, and the ship for this story needs one.");
                     }
 
                     return Resolution.Of(new AdventureTrigger

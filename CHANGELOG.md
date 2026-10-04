@@ -227,6 +227,8 @@ The Callouts settings "The least time between In Ship chatter", "The most time b
 
 The Callouts setting "Trading Mode needs a hold of" is now labelled with "(tonnes)", so the label says what the number is. Its help no longer opens with "In tonnes,". The value, its default of 25 and the saved setting are unchanged.
 
+A story's dock beats now go only to stations where the ship can land. The station search's small, medium and large pad counts decide it, so a medium ship is no longer sent to a station with only small pads. A story that stays in the current ship uses that ship's pad; otherwise it uses the smallest pad of any ship you own. A station whose pad counts are unknown is still allowed.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

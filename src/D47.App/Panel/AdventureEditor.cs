@@ -393,7 +393,7 @@ public sealed class AdventureEditor : UserControl
                 named.Trigger.Station,
                 named.Trigger.Body,
                 $"Beat {(index + 1).ToString(CultureInfo.InvariantCulture)} ({named.Title})",
-                needsLargePad: false,
+                needsPad: null,
                 CancellationToken.None).ConfigureAwait(false);
 
             Dispatcher.UIThread.Post(() =>
