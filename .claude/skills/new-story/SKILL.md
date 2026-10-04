@@ -1,6 +1,6 @@
 ---
 name: new-story
-description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, and three sample chapters sized to his own journals — on a draft page of its own, revise it until he approves, then publish it to the stories release. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers — on a draft page of its own, revise it until he approves, then publish it to the stories release. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
@@ -46,7 +46,7 @@ Every story keeps all eleven. Check the draft against each before showing it.
    Set aside until their spikes are flown: skimmer massacres (`Mission_Massacre_Skimmer`, #721),
    Disable (`Mission_Disable*`, #722), Hack (`Mission_Hack*`, `Mission_OnFoot_Hack*`, #723), Scan
    (`Mission_Scan`, #724) and damaged-station missions (`Mission_RS_*`, `Mission_DS_*`, #725). No
-   beat, clue or sample chapter uses them.
+   beat or clue uses them.
 6. No clue or ending depends on an earlier choice.
 7. Hidden text never tells a core that another Guardian mind is alive. Other cores are spoken of
    only as Guardians of the past.
@@ -92,7 +92,7 @@ If the release has no `index.json` yet, only the list below applies.
 
 ## The pitch
 
-The first thing he sees is one pitch, in chat, before any layer, draft page or sample is written.
+The first thing he sees is one pitch, in chat, before any layer or draft page is written.
 
 The maintainer may fix any of the length, level, genre, tone, core or premise, in the argument or in
 reply. Keep what he fixed and choose the rest. Where you choose, favour what the catalog lacks:
@@ -176,8 +176,8 @@ writing what comes back to the scratchpad file before editing. Republish the fil
 change, so the page is never behind the draft. Load the `artifact-design` skill before the first
 publish of a session.
 
-The draft page shows the card with its length, the whole hidden layer, the three sample chapters marked as
-samples, any gap found (below), and its state: draft, approved or published.
+The draft page shows the card with its length, the whole hidden layer, any gap found (below), and its
+state: draft, approved or published.
 
 Directly above the `secret` paragraph, the page gives one sentence stating the secret and the
 twist, so the maintainer can judge both without reading the paragraph. The sentence is a page aid
@@ -190,20 +190,20 @@ holds (`openai.apiKey`, decrypted in memory from the installed app's `secrets.js
 `dev-install`'s). Never print, copy or write out the key. Each call is billed to that key.
 
 ```bash
-python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name <story-id>.<cast-id> -n 3 --out <scratchpad>/images
+python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name <story-id>.<cast-id> --out <scratchpad>/images
 ```
 
-- Three candidates per picture, square, at the default `high` quality and the default model
+- One picture per member, never more: the script's default of one, written as
+  `<story-id>.<cast-id>-1.png`, square, at the default `high` quality and the default model
   `gpt-image-2.5-flare`. `--quality low` is for trying a prompt; `--model` and `--list-models`
-  pick another model. A romantic lead gets three for each version, named `.for-man` and
+  pick another model. A romantic lead gets one for each version, named `.for-man` and
   `.for-woman`.
 - Generate once the cast is settled, not every round. Regenerate only the members whose prompt
-  changed or whose candidates the maintainer turned down.
-- Show the candidates on the draft page under each member's prompt, embedded as data URIs, and
-  look at each before showing it: a picture with text, a logo, a present-day setting or the wrong
-  person is replaced, not shown.
-- The maintainer picks one per member. At step 6 the picked file is copied into the story folder
-  as `<story-id>.<cast-id>.png`.
+  changed or whose picture the maintainer turned down, one picture each time.
+- Show each picture on the draft page under its member's prompt, embedded as a data URI, and look
+  at it before showing it: a picture with text, a logo, a present-day setting or the wrong person
+  is regenerated, not shown.
+- At step 6 each member's picture is copied into the story folder as `<story-id>.<cast-id>.png`.
 
 ## The steps
 
@@ -213,41 +213,15 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
    `<scratchpad>/<story-id>/`, outside the repository. Never write hidden text into the tree:
    `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of 24 characters or more in a
    repository file.
-3. **Sketch three sample chapters** against the maintainer's own game state:
-   - the chapter that ends at the beacon scan; for a story shorter than 1 month, the `scan` line
-     and chapter one,
-   - a chapter from the middle of the story,
-   - a comfort-zone chapter as #711 defines it; for a story shorter than 1 month, which has none,
-     its last finale chapter.
-
-   Read the state with
-
-   ```bash
-   python .claude/skills/new-story/game-state.py
-   ```
-
-   which takes the credits from the last `LoadGame`, the ship and jump range from the last
-   `Loadout`, the ranks from the last `Rank` and the activity figures from the last `Statistics`,
-   in `%USERPROFILE%\Saved Games\Frontier Developments\Elite Dangerous\Journal.*.log`, and prints
-   whether the #711 long-haul threshold is reached and the comfort-zone pick.
-
-   Name each beat by its kind and filter from the tables in rule 5's issues, with counts sized to
-   that state, and keep the chapter rules the app enforces:
-   - from chapter two on, at most two of five beats are `arrive`, `dock`, `land` or `scan` (#711);
-   - a chapter fits one to three play sessions; a longer undertaking (engineering, saving for a
-     ship then buying it, a run of ranks) continues across ordinary chapters (#711);
-   - a beat that spends credits needs the price plus a reserve of the price again or 500,000,000,
-     whichever is less, at the last load, so saving and buying fall in separate chapters (#735);
-   - the finale stays within a session's flying unless the long-haul threshold in #711 is reached.
-     A story that needs a long-haul finale is a gap against #728 until that is decided.
-
-   Where a beat the story needs cannot be expressed that way, say so on the page and name the
-   issue it would change. Do not invent a kind.
-4. **Publish** both layers and the samples on the story's draft page. Once the cast is settled,
+3. **Check for gaps.** Where the story needs something the format or rule 5's beat kinds cannot
+   express, record it on the draft page as a gap and name the issue it would change. Do not
+   invent a kind. A finale that needs long-haul flying is a gap against #728 until that is
+   decided.
+4. **Publish** both layers on the story's draft page. Once the cast is settled,
    generate the cast pictures and add them to it.
 5. **Revise** on his notes, republishing the draft page after each round, until he approves the
    story. Nothing is published to the release before then.
-6. **Publish on his word.** Copy each picked picture into the story folder, then run
+6. **Publish on his word.** Copy each member's picture into the story folder, then run
 
    ```bash
    python tools/publish-story.py <scratchpad>/<story-id> --dry-run
@@ -257,7 +231,7 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
    The dry run checks the card, the hidden entry and the pictures and lists the files; a fault is
    printed by id and field and nothing is uploaded. The second command is a GitHub write: run it
    only after he says to publish. Then republish the draft page marked published and delete the
-   scratch files: the story folder, the draft page's HTML file and the image candidates.
+   scratch files: the story folder, the draft page's HTML file and the generated images.
 
 Publishing changes nothing in the checkout. A story that seems to need a code change is a gap:
 record it on the draft page and name the issue (step 3).
