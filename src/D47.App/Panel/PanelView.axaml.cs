@@ -1064,7 +1064,8 @@ public partial class PanelView : UserControl
         bool market = true,
         bool trade = true,
         bool bookmarks = true,
-        bool body = true)
+        bool body = true,
+        bool unsold = true)
     {
         var roots = new List<NavCrumb>();
 
@@ -1114,6 +1115,15 @@ public partial class PanelView : UserControl
             });
         }
 
+        // After On this body (#556).
+        if (unsold && surface.Commander is not null && (surface.Exobiology is not null || surface.Cartography is not null))
+        {
+            roots.Add(new NavCrumb(UnsoldPage.RootKey, "Unsold data")
+            {
+                Help = D47.Core.Capabilities.Builtin.ExobiologyCapability.Id,
+            });
+        }
+
         if (roots.Count == 0)
         {
             return;
@@ -1136,6 +1146,15 @@ public partial class PanelView : UserControl
                 if (crumb.Key == BodyPage.RootKey && surface.Commander is { } commander)
                 {
                     return _bodyPage = new BodyPage(commander, surface.Status, surface.WorthIfMapped);
+                }
+
+                if (crumb.Key == UnsoldPage.RootKey && surface.Commander is { } carrying)
+                {
+                    return _unsoldPage = new UnsoldPage(
+                        carrying,
+                        surface.Exobiology ?? (() => null),
+                        surface.Cartography ?? (() => null),
+                        surface.Registry);
                 }
 
                 var page = RoutingPages.Build(crumb, surface, Nav, Prompts);
@@ -1187,6 +1206,7 @@ public partial class PanelView : UserControl
 
         // On this body follows the game's position, so it ticks ahead of the route's guard.
         var body = _bodyPage is { } bodyPage && Nav.RootKeyOf(PanelTab.Navigation) == BodyPage.RootKey && bodyPage.Tick();
+        body |= _unsoldPage is { } unsoldPage && Nav.RootKeyOf(PanelTab.Navigation) == UnsoldPage.RootKey && unsoldPage.Tick();
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();
@@ -1225,6 +1245,7 @@ public partial class PanelView : UserControl
 
     private RouteProgressPage? _routeProgress;
     private BodyPage? _bodyPage;
+    private UnsoldPage? _unsoldPage;
     private RoutePlanPage? _routePlan;
     private RouteTradePage? _routeTrade;
     private RoutePlanResultPage? _routeResult;

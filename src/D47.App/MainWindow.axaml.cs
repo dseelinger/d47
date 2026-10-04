@@ -268,7 +268,11 @@ public partial class MainWindow : Window
 
                 // On this body (#555).
                 Status: () => host.LiveStatus,
-                WorthIfMapped: (system, body) => host.History.Cartography?.IfMapped(system, body));
+                WorthIfMapped: (system, body) => host.History.Cartography?.IfMapped(system, body),
+
+                // Unsold data (#556).
+                Exobiology: () => host.History.Exobiology,
+                Cartography: () => host.History.Cartography);
 
             Panel.EnableRouting(Routing);
 

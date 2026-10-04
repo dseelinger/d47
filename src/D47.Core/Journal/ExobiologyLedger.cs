@@ -72,6 +72,8 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
 
     private bool _historyFolded;
 
+    private int _revision;
+
     /// <summary>Whether the journals older than this session have been folded in.</summary>
     public bool HistoryFolded
     {
@@ -81,6 +83,27 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
             {
                 return _historyFolded;
             }
+        }
+    }
+
+    /// <summary>Changes whenever events are folded or a reset is made or read.</summary>
+    public int Revision
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _revision;
+            }
+        }
+    }
+
+    /// <summary>When <paramref name="commander"/> last reset the total, or null when never.</summary>
+    public DateTimeOffset? ResetAt(string commander)
+    {
+        lock (_gate)
+        {
+            return _resets.TryGetValue(commander, out var at) ? at : null;
         }
     }
 
@@ -102,6 +125,8 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
                 {
                     _resets[fid] = at;
                 }
+
+                _revision++;
             }
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
@@ -120,6 +145,11 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
             foreach (var journalEvent in events)
             {
                 Fold(journalEvent, ref _current);
+            }
+
+            if (events.Count > 0)
+            {
+                _revision++;
             }
         }
     }
@@ -157,6 +187,7 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
         lock (_gate)
         {
             _historyFolded = true;
+            _revision++;
         }
     }
 
@@ -227,6 +258,7 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
         lock (_gate)
         {
             _resets[commander] = at;
+            _revision++;
             resets = new Dictionary<string, DateTimeOffset>(_resets, StringComparer.Ordinal);
         }
 
