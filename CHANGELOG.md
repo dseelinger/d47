@@ -233,6 +233,8 @@ A story's dock beats no longer go to a settlement in a system with a war or civi
 
 When you request docking at the station a story chapter is sending you to and the station answers that its docks are offline, d47 says once that the docks there are offline and writes a different beat in that one's place, without being asked. The new beat does not name that station, and when it is written d47 says where to go next. Docking stays allowed for the rest of the story, and a second denial at the same station while the beat is written says nothing more. This uses one call to the language model.
 
+The same now happens for an adventure you asked for that is not part of a story. When its current beat sends you to a station whose docks are offline, d47 says so, writes a different beat from that one on, avoiding that station, and says where to go next. Beats already done stay as they were. With a story and an adventure both under way, only the one sent to the closed station is written again.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

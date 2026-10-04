@@ -1292,7 +1292,8 @@ public sealed class AdventureGenerator(
         if (rewrite is not null)
         {
             text.AppendLine(
-                "You wrote a chapter of a story the Commander is flying, and they are partway through it. "
+                (ask.Story is null ? "You wrote an adventure" : "You wrote a chapter of a story")
+                + " the Commander is flying, and they are partway through it. "
                 + (rewrite.ClosedMarketId is null
                     ? "They have refused the beat they were on"
                     : "The station the beat they were on docks at has its docks offline")

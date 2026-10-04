@@ -37,6 +37,9 @@ public sealed class StoryDirector(
     /// <summary>Commanders with a replacement beat being written.</summary>
     private readonly HashSet<string> _rewriting = new(StringComparer.Ordinal);
 
+    /// <summary>Adventures outside a story with a replacement beat being written, by Commander and key.</summary>
+    private readonly HashSet<string> _rewritingAdventures = new(StringComparer.Ordinal);
+
     /// <summary>Narrated scans picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryScanDue> _scans = new(StringComparer.Ordinal);
 
@@ -407,8 +410,8 @@ public sealed class StoryDirector(
 
     /// <summary>
     /// When the journal says the station the current beat docks at has its docks offline, says so through
-    /// <see cref="Says"/> and has the beat written again on the pool, then says the new beat's hand-off. Returns the work
-    /// it started, or null. Does not block.
+    /// <see cref="Says"/> and has the beat written again on the pool, then says the new beat's hand-off. Covers the running
+    /// story's chapter and every active adventure outside a story. Returns the work it started, or null. Does not block.
     /// </summary>
     public Task<string?>? DockOffline(JournalEvent journalEvent, string? frontierId)
     {
@@ -416,32 +419,124 @@ public sealed class StoryDirector(
 
         if (journalEvent.Kind != "DockingDenied"
             || !string.Equals(journalEvent.String("Reason"), "DockOffline", StringComparison.OrdinalIgnoreCase)
-            || journalEvent.Long("MarketID") is not { } market
-            || !TryRewritable(frontierId, out var at, out _)
-            || journalEvent.Timestamp < at.Story.PickedAt
-            || at.Beat.Trigger is not { Kind: TriggerKind.Dock } trigger
-            || trigger.MarketId != market
-            || !Claim(frontierId))
+            || journalEvent.Long("MarketID") is not { } market)
         {
             return null;
         }
 
-        Says?.Invoke($"The docks at {trigger.Station ?? journalEvent.String("StationName") ?? "that station"} are offline.");
+        var work = new List<Func<Task<string?>>>();
+        string? station = null;
+
+        if (TryRewritable(frontierId, out var at, out _)
+            && journalEvent.Timestamp >= at.Story.PickedAt
+            && at.Beat.Trigger is { Kind: TriggerKind.Dock } trigger
+            && trigger.MarketId == market
+            && Claim(frontierId))
+        {
+            station = trigger.Station;
+            work.Add(() => HandOffAfter(frontierId, at.Standing.Adventure.Key, RewriteAsync(frontierId, at, market, CancellationToken.None)));
+        }
+
+        foreach (var standing in book.Active(frontierId))
+        {
+            if (standing.Adventure is { StoryId: null, AcceptedAt: { } accepted } adventure
+                && journalEvent.Timestamp >= accepted
+                && standing.CurrentBeat?.Trigger is { Kind: TriggerKind.Dock } beat
+                && beat.MarketId == market
+                && ClaimAdventure(frontierId, adventure.Key))
+            {
+                station ??= beat.Station;
+                work.Add(() => HandOffAfter(frontierId, adventure.Key, RewriteAdventureAsync(frontierId, standing, market)));
+            }
+        }
+
+        if (work.Count == 0)
+        {
+            return null;
+        }
+
+        Says?.Invoke($"The docks at {station ?? journalEvent.String("StationName") ?? "that station"} are offline.");
 
         return Task.Run(async () =>
         {
-            var refusal = await RewriteAsync(frontierId, at, market, CancellationToken.None).ConfigureAwait(false);
-            var said = refusal is null
-                ? book.Standing(frontierId, at.Standing.Adventure.Key)?.CurrentBeat?.Trigger.HandOff()
-                : $"A different beat could not be written. {refusal}";
+            string? first = null;
 
-            if (said is not null)
+            foreach (var rewrite in work)
             {
-                Says?.Invoke(said);
+                first ??= await rewrite().ConfigureAwait(false);
             }
 
-            return refusal;
+            return first;
         });
+    }
+
+    /// <summary>Says the hand-off of the beat that replaced the one at <paramref name="key"/>, or why none could be written.</summary>
+    private async Task<string?> HandOffAfter(string? frontierId, string key, Task<string?> rewrite)
+    {
+        var refusal = await rewrite.ConfigureAwait(false);
+        var said = refusal is null
+            ? book.Standing(frontierId, key)?.CurrentBeat?.Trigger.HandOff()
+            : $"A different beat could not be written. {refusal}";
+
+        if (said is not null)
+        {
+            Says?.Invoke(said);
+        }
+
+        return refusal;
+    }
+
+    /// <summary>Marks an adventure outside a story as having a replacement beat written; false when one already is.</summary>
+    private bool ClaimAdventure(string? frontierId, string key)
+    {
+        lock (_gate)
+        {
+            return _rewritingAdventures.Add(AdventureClaim(frontierId, key));
+        }
+    }
+
+    private static string AdventureClaim(string? frontierId, string key) => $"{frontierId ?? AdventureStore.NoCommander}\n{key}";
+
+    /// <summary>Writes the beats of an adventure outside a story again from its current beat, avoiding the closed station, and releases the claim.</summary>
+    private async Task<string?> RewriteAdventureAsync(string? frontierId, AdventureStanding standing, long closedMarketId)
+    {
+        var adventure = standing.Adventure;
+        var from = standing.Current;
+
+        try
+        {
+            var ask = new AdventureAsk(
+                AdventureReach.Session,
+                Chapter: adventure.Follows is { } follows ? book.ChapterOf(frontierId, follows) : null,
+                Rewrite: new AdventureRewrite(adventure, from, closedMarketId));
+
+            var outcome = await write(ask, Clock(), CancellationToken.None).ConfigureAwait(false);
+
+            if (outcome.Draft is not { } draft)
+            {
+                return outcome.Refusal ?? "Nothing came back.";
+            }
+
+            if (book.ReplaceBeats(frontierId, adventure.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)
+            {
+                return refusal;
+            }
+
+            logger.LogInformation("{Adventure}: beat {Beat} was replaced, its docks offline", adventure.Name, from + 1);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "{Adventure}: the replacement beat could not be written", adventure.Name);
+            return "The beat could not be written.";
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                _rewritingAdventures.Remove(AdventureClaim(frontierId, adventure.Key));
+            }
+        }
     }
 
     /// <summary>Raised with a line to say unprompted: a dock beat's station has its docks offline, then the beat that replaces it.</summary>
