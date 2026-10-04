@@ -90,6 +90,20 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
         Assert.Equal(Mix(bg, a, 0.28), Published(ThemeManager.Line2Key));
     }
 
+    [AvaloniaTheory]
+    [InlineData(ThemeCatalog.Elite)]
+    [InlineData(ThemeCatalog.Dark)]
+    [InlineData(ThemeCatalog.Light)]
+    [InlineData(ThemeCatalog.ElitePaletteId)]
+    public void TheYellowTrackIsYellowMixedOntoSlab(string themeId)
+    {
+        Manager().Apply(themeId);
+
+        Assert.Equal(
+            Mix(Published(ThemeManager.SlabKey), Published(ThemeManager.YellowKey), 0.22),
+            Published(ThemeManager.YellowTrackKey));
+    }
+
     [AvaloniaFact]
     public void TheHudMatrixMovesAAndLeavesTheNeutrals()
     {

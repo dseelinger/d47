@@ -77,6 +77,9 @@ public sealed record Palette
     /// <summary><see cref="Warn"/> at 12% onto <see cref="Bg"/>, in OKLab: the ground of a warning notice.</summary>
     public Color WarnGround => Mix(Bg, Warn, 0.12);
 
+    /// <summary><see cref="Yellow"/> at 22% onto <see cref="Slab"/>, in OKLab: the track under a capacity bar.</summary>
+    public Color YellowTrack => Mix(Slab, Yellow, 0.22);
+
     /// <summary>Passes the coloured tokens through Elite's HUD matrix, leaving the neutrals as they are.</summary>
     public Palette RecolouredBy(GuiColourMatrix matrix) => this with
     {

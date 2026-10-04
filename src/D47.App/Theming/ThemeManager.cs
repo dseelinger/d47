@@ -46,6 +46,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary><see cref="Palette.WarnGround"/>.</summary>
     public const string WarnGroundKey = "D47.WarnGround";
 
+    /// <summary><see cref="Palette.YellowTrack"/>.</summary>
+    public const string YellowTrackKey = "D47.YellowTrack";
+
     /// <summary>Black at 72% — a layer chooser's dimming behind its card, in every theme.</summary>
     public const string ScrimKey = "D47.Scrim";
 
@@ -69,7 +72,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public static IReadOnlyList<string> Roles { get; } =
     [
         .. Tokens,
-        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, RedTileKey, RedGroundKey, WarnGroundKey,
+        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, RedTileKey, RedGroundKey, WarnGroundKey, YellowTrackKey,
     ];
 
     /// <summary>Each token key and its colour in <paramref name="palette"/>.</summary>
@@ -167,6 +170,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[RedTileKey] = new SolidColorBrush(palette.RedTile);
         resources[RedGroundKey] = new SolidColorBrush(palette.RedGround);
         resources[WarnGroundKey] = new SolidColorBrush(palette.WarnGround);
+        resources[YellowTrackKey] = new SolidColorBrush(palette.YellowTrack);
 
         // Null on a theme that does not glow, which turns both off: an unset Effect or Background paints nothing.
         foreach (var tier in Enum.GetValues<BloomTier>())
