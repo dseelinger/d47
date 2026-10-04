@@ -336,8 +336,8 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
-        nav.Select(PanelTab.Engineers);
+        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
+        nav.Select(PanelTab.Assets);
 
         Assert.Equal("engineers", nav.Help);
 
@@ -359,10 +359,10 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
+        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
         nav.Register(PanelTab.Settings, new NavCrumb("clocks", "Clocks"));
 
-        nav.Select(PanelTab.Engineers);
+        nav.Select(PanelTab.Assets);
         Assert.Equal("engineers", nav.Help);
 
         nav.Select(PanelTab.Settings);
@@ -378,8 +378,8 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
-        nav.Select(PanelTab.Engineers);
+        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
+        nav.Select(PanelTab.Assets);
 
         Assert.True(nav.Take(new NavCrumb("help:engineers", "Help")));
 
@@ -393,15 +393,15 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
-        nav.Select(PanelTab.Engineers);
+        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
+        nav.Select(PanelTab.Assets);
 
         Assert.Equal("Help.", PanelPhrases.Apply("help", nav));
         Assert.True(nav.Modal);
         Assert.Equal("help:engineers", nav.Trail[^1].Key);
 
         // And back out again by the word that backs out of anything.
-        Assert.Equal("Back to Directory.", PanelPhrases.Apply("back", nav));
+        Assert.Equal("Back to Engineers.", PanelPhrases.Apply("back", nav));
         Assert.False(nav.Modal);
     }
 
@@ -415,8 +415,8 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
-        nav.Select(PanelTab.Engineers);
+        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
+        nav.Select(PanelTab.Assets);
 
         Assert.Null(PanelPhrases.Apply("help me plot a route to Deciat", nav));
         Assert.Null(PanelPhrases.Apply("who can help with thrusters", nav));
@@ -442,8 +442,8 @@ public class PanelNavigationTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Engineers, new NavCrumb("directory", "Directory") { Help = "engineers" });
-        nav.Select(PanelTab.Engineers);
+        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
+        nav.Select(PanelTab.Assets);
 
         Assert.Equal("Help.", PanelPhrases.Apply("help", nav));
 

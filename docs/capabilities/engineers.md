@@ -21,8 +21,8 @@ nav_order: 108
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps from locked to a route you can fly.</p>
 <section>
-<h2><span class="num">1</span> Open the Engineers tab and read the Directory.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Engineers tab">
+<h2><span class="num">1</span> Open Engineers on the Asset Mgmt tab and read the directory.</h2>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Engineers page">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Engineers</text>
@@ -46,8 +46,8 @@ nav_order: 108
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Accept the Route, and it becomes a checklist.</h2>
-<svg viewBox="0 0 880 208" role="img" aria-label="The Route tab">
+<h2><span class="num">3</span> Press Route, accept it, and it becomes a checklist.</h2>
+<svg viewBox="0 0 880 208" role="img" aria-label="The Route page">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Route</text>
@@ -89,7 +89,7 @@ nav_order: 108
 <p class="intro">Who can improve your ship, where they are, and who to go and get next.</p>
 <section>
 <h2><span class="num">1</span> Two lists.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="The tab has two roots, the Directory and the Route">
+<svg viewBox="0 0 880 250" role="img" aria-label="Two lists: the directory, and the Route opened from it">
  <rect x="30" y="30" width="390" height="160" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="90" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">DIRECTORY</text>
  <text x="225" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">everybody — all 38 of them</text>
@@ -296,10 +296,11 @@ generator and asserted by a test, so it cannot silently stop applying.
 **The observed half still comes first where the two meet.** An engineer who has invited you *is* a
 referral that has already happened, and no table can be more right about that than your own journal.
 
-### The Engineers tab
+### The Engineers page
 
-Two roots. The **Directory** is everybody, ordered by what you can act on today; the **Route** is
-the solver. Drilling a directory row opens the one engineer behind it. The search box filters on
+The last root of the Asset Mgmt tab. The directory is everybody, ordered by what you can act on
+today; its **Route** button opens the solver as a level beside it, and Back returns to the
+directory. Drilling a directory row opens the one engineer behind it. The search box filters on
 the name, the system and what they grade.
 
 #### Who can I go and get

@@ -73,7 +73,7 @@ public class TheOpenEngineerIsOutlinedTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Engineers;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

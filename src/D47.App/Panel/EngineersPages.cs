@@ -16,14 +16,21 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The Engineers tab (Phase 28).</summary>
+/// <summary>The Engineers root of the Asset Mgmt tab (Phase 28).</summary>
 public static class EngineersPages
 {
-    /// <summary>The tab's first root: everybody, in the order they can be acted on.</summary>
+    /// <summary>The root: everybody, in the order they can be acted on.</summary>
     public const string DirectoryRoot = "engineers.directory";
 
-    /// <summary>Its second: the solver.</summary>
-    public const string RouteRoot = "engineers.route";
+    /// <summary>The solver, a level drilled from the directory.</summary>
+    public const string RouteKey = "engineers.route";
+
+    /// <summary>The crumb the directory's Route tile pushes.</summary>
+    public static NavCrumb RouteCrumb { get; } =
+        new(RouteKey, "Route") { Help = D47.Core.Capabilities.Builtin.EngineerCapability.Id };
+
+    /// <summary>Whether a crumb is one of these pages rather than another root's.</summary>
+    public static bool Owns(NavCrumb crumb) => crumb.Key.StartsWith("engineers.", StringComparison.Ordinal);
 
     /// <summary>How one engineer's crumb is keyed, so a page rebuilds from the trail alone.</summary>
     public const string WhoPrefix = "engineers.who:";
@@ -41,7 +48,7 @@ public static class EngineersPages
             return new EngineerPage(source, crumb.Key[WhoPrefix.Length..], nav, copy);
         }
 
-        return crumb.Key == RouteRoot
+        return crumb.Key == RouteKey
             ? new EngineerRoutePage(source, nav, memory)
             : new EngineerDirectoryPage(source, nav, memory);
     }
@@ -349,7 +356,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             ItemSpacing = 2,
             LineSpacing = 2,
             Margin = new Thickness(0, 0, 0, 10),
-            Children = { _colonia, _onFoot },
+            Children = { _colonia, _onFoot, LoadoutPages.Press("Route", () => nav.Drill(EngineersPages.RouteCrumb)) },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };

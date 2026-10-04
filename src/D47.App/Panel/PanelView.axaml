@@ -404,12 +404,6 @@
                          Content="ASSET MGMT"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <RadioButton x:Name="EngineersTab"
-                         Theme="{StaticResource D47.Tab}"
-                         IsVisible="False"
-                         Content="ENGINEERS"
-                         Tapped="OnTabTapped"
-                         IsCheckedChanged="OnTabChecked" />
             <RadioButton x:Name="NavigationTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"

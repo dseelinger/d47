@@ -12,11 +12,8 @@ public enum PanelTab
     /// <summary>What the Commander is working on, in their own order (Phase 17).</summary>
     Checklist,
 
-    /// <summary>Ships, suits and weapons, and the arithmetic between them (Phases 26-27).</summary>
+    /// <summary>Ships, suits, the carrier, materials and engineers (Phases 26-28).</summary>
     Assets,
-
-    /// <summary>Who unlocks what, and how far away they are (Phase 28).</summary>
-    Engineers,
 
     /// <summary>
     /// Where the Commander is going, in three readings (Phase 37): the plan, the route being flown, and

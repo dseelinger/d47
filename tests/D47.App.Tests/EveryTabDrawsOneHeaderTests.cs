@@ -35,7 +35,7 @@ public class EveryTabDrawsOneHeaderTests
     private static readonly PanelTab[] Every =
     [
         PanelTab.Transcript, PanelTab.Stories, PanelTab.Checklist, PanelTab.Assets,
-        PanelTab.Engineers, PanelTab.Navigation, PanelTab.Settings,
+        PanelTab.Navigation, PanelTab.Settings,
     ];
 
     private static JournalEvent Event(string json)
@@ -175,12 +175,18 @@ public class EveryTabDrawsOneHeaderTests
 
         foreach (var (tab, expected) in new[]
                  {
-                     (PanelTab.Engineers, "1 of "),
+                     (PanelTab.Assets, "1 of "),
                      (PanelTab.Stories, "Stories you fly, told by the ship's AI. Progress comes from your own journal."),
                      (PanelTab.Settings, "Changes apply as you make them."),
                  })
         {
             Show(panel, tab);
+
+            if (tab == PanelTab.Assets)
+            {
+                panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
+                Dispatcher.UIThread.RunJobs();
+            }
 
             Assert.StartsWith(expected, summary.Text);
 
@@ -206,7 +212,7 @@ public class EveryTabDrawsOneHeaderTests
         var panel = host.Panel;
         var avatar = panel.GetControl<AvatarView>("Avatar");
 
-        Show(panel, PanelTab.Engineers);
+        Show(panel, PanelTab.Assets);
 
         Assert.Equal(new Size(PanelView.HeaderAvatarExtent, PanelView.HeaderAvatarExtent), avatar.Bounds.Size);
         Assert.Equal(Top(panel, "TabStrip"), Top(panel, "Avatar"), 0.5);
@@ -221,7 +227,8 @@ public class EveryTabDrawsOneHeaderTests
         var host = Open();
         var panel = host.Panel;
 
-        Show(panel, PanelTab.Engineers);
+        Show(panel, PanelTab.Assets);
+        panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
 
         var liz = EngineerDirectory.All.Single(engineer => engineer.Name == "Liz Ryder");
 
@@ -229,7 +236,7 @@ public class EveryTabDrawsOneHeaderTests
         Dispatcher.UIThread.RunJobs();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("ENGINEERS", panel.GetControl<TextBlock>("PageTitle").Text);
+        Assert.Equal("ASSET MGMT", panel.GetControl<TextBlock>("PageTitle").Text);
         Assert.True(panel.GetControl<Control>("CrumbBar").IsVisible);
 
         Assert.Contains(

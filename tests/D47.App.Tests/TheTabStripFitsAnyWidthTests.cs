@@ -20,10 +20,10 @@ public class TheTabStripFitsAnyWidthTests
             PanelTab.Assets,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"),
-            new NavCrumb("locker", "Suits and weapons"));
+            new NavCrumb("locker", "Suits and weapons"),
+            new NavCrumb("engineers", "Engineers"));
 
         panel.Furnish(PanelTab.Checklist, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
-        panel.Furnish(PanelTab.Engineers, _ => new TextBlock(), new NavCrumb("engineers", "Engineers"));
         panel.EnableSettings(() => new TextBlock());
         panel.EnableHelp(_ => { });
 

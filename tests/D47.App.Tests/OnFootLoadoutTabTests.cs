@@ -66,7 +66,7 @@ public class OnFootLoadoutTabTests
         return new Surface(window, panel, ships, kit, checklists);
     }
 
-    /// <summary>The same surface, with the Engineers tab enabled too, so the Materials gate can name a route.</summary>
+    /// <summary>The same surface, with the Engineers root enabled too, so the Materials gate can name a route.</summary>
     private static Surface OpenWithEngineers()
     {
         var root = TempFolders.Create("d47-onfoot-loadout-tests");
@@ -153,13 +153,12 @@ public class OnFootLoadoutTabTests
     /// does its vocabulary, but nothing about the layout is redrawn.
     /// </summary>
     [AvaloniaFact]
-    public void TheTabHasThreeModes()
+    public void TheTabHasItsFiveRootsInOrder()
     {
-        var surface = Open();
+        var surface = OpenWithEngineers();
 
-        // Carrier joined them in #230, on the tab that took its name. Gap became Materials in #302.
         Assert.Equal(
-            ["Ships", "Suits", "Materials", "Carrier"],
+            ["Ships", "Suits", "Carrier", "Materials", "Engineers"],
             surface.Panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
 
         surface.Window.Close();

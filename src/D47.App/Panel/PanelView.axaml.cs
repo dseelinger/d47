@@ -271,7 +271,6 @@ public partial class PanelView : UserControl
         _tabs[PanelTab.Stories] = StoriesTab;
         _tabs[PanelTab.Checklist] = ChecklistTab;
         _tabs[PanelTab.Assets] = AssetsTab;
-        _tabs[PanelTab.Engineers] = EngineersTab;
         _tabs[PanelTab.Navigation] = NavigationTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
@@ -713,10 +712,6 @@ public partial class PanelView : UserControl
                 Help = D47.Core.Capabilities.Builtin.OnFootCapability.Id,
             });
 
-            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Materials")
-            {
-                Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
-            });
         }
 
         // The carrier, on the tab that took its name (#230).
@@ -730,15 +725,29 @@ public partial class PanelView : UserControl
         // simply shows no mark.
         roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier"));
 
-        Furnish(
-            PanelTab.Assets,
+        if (onFoot is not null)
+        {
+            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Materials")
+            {
+                Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
+            });
+        }
 
-            // _engineers is read lazily, on whichever draw first opens Materials — EnableEngineers is always
-            // called too, just not necessarily first (#477).
-            crumb => LoadoutPages.Build(
-                crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers),
-            [.. roots]);
+        // _engineers is read lazily, on whichever draw first opens Materials (#477).
+        _loadoutBuild = crumb => LoadoutPages.Build(
+            crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers);
+
+        Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
     }
+
+    /// <summary>Draws an Asset Mgmt level: the engineer pages, or whatever the loadout roots draw.</summary>
+    private Control BuildAssets(NavCrumb crumb) =>
+        EngineersPages.Owns(crumb) && _engineerBuild is { } engineers ? engineers(crumb)
+        : _loadoutBuild is { } loadout ? loadout(crumb)
+        : new TextBlock { Text = "Nothing here." };
+
+    private Func<NavCrumb, Control>? _loadoutBuild;
+    private Func<NavCrumb, Control>? _engineerBuild;
 
     /// <summary>Gives this surface the Commander's adventures (Phase 47).</summary>
     /// <param name="settingsStrip">Adventures' own settings, on the tab they only affect (#218).</param>
@@ -761,7 +770,10 @@ public partial class PanelView : UserControl
         ApplyChrome();
     }
 
-    /// <summary>Gives this surface the engineer directory and the solver (Phase 28, "Engineers").</summary>
+    /// <summary>
+    /// Gives this surface the engineer directory and the solver, as the last root of Asset Mgmt (Phase 28).
+    /// Called after <see cref="EnableLoadout"/>, so the root lands last.
+    /// </summary>
     public void EnableEngineers(
         D47.Core.Engineers.EngineerPlanService unlocks,
         D47.Core.Ships.ShipPlanService ships,
@@ -794,20 +806,23 @@ public partial class PanelView : UserControl
         _engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
         _engineerState = state;
 
-        // The first tab whose help is drawn in the panel rather than opened in a browser.
-        var help = D47.Core.Capabilities.Builtin.EngineerCapability.Id;
+        _engineerBuild = crumb => EngineersPages.Build(crumb, source, Nav, memory, _copy);
 
         Furnish(
-            PanelTab.Engineers,
-            crumb => EngineersPages.Build(crumb, source, Nav, memory, _copy),
-            new NavCrumb(EngineersPages.DirectoryRoot, "Directory") { Help = help },
-            new NavCrumb(EngineersPages.RouteRoot, "Route") { Help = help });
+            PanelTab.Assets,
+            BuildAssets,
+            new NavCrumb(EngineersPages.DirectoryRoot, "Engineers")
+            {
+                Help = D47.Core.Capabilities.Builtin.EngineerCapability.Id,
+            });
     }
 
     /// <summary>Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody.</summary>
     public bool TickEngineers()
     {
-        if (_engineers is not { } source || Tab != PanelTab.Engineers)
+        if (_engineers is not { } source
+            || Tab != PanelTab.Assets
+            || Nav.RootKeyOf(PanelTab.Assets) != EngineersPages.DirectoryRoot)
         {
             return false;
         }

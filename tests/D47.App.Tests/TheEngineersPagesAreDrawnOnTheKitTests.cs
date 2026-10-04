@@ -89,7 +89,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Engineers;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel);
@@ -134,7 +134,8 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
         panel.Nav.Drill(EngineersPages.Crumb(Named("Marco Qwent")));
         var marco = Save(surface.Window, $"engineers-marco-{themeId}-{width}x{height}.png");
 
-        Assert.True(panel.Nav.SelectRoot(EngineersPages.RouteRoot));
+        panel.Nav.ToRoot();
+        Assert.True(panel.Nav.Drill(EngineersPages.RouteCrumb));
         var route = Save(surface.Window, $"engineers-route-{themeId}-{width}x{height}.png");
 
         surface.Window.Close();

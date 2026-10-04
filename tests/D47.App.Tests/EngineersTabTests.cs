@@ -97,7 +97,7 @@ public class EngineersTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Engineers;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, checklists);
@@ -111,18 +111,40 @@ public class EngineersTabTests
             .First(button => button.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text is { } said && said.Contains(label, StringComparison.Ordinal)));
 
-    /// <summary>
-    /// Two roots of one tab, on the same reading as Loadout's three: the Directory and the Route are
-    /// two answers to which engineer, not two destinations.
-    /// </summary>
+    /// <summary>The route is a level drilled from the directory's Route tile, and Back returns to it.</summary>
     [AvaloniaFact]
-    public void TheTabHasTwoModes()
+    public void TheRouteTileOpensTheRouteAsALevel()
     {
         var surface = Open();
 
-        Assert.Equal(
-            ["Directory", "Route"],
-            surface.Panel.Nav.Roots(PanelTab.Engineers).Select(root => root.Word));
+        Assert.Equal(["Engineers"], surface.Panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
+
+        Press(surface.Panel, "Route").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Engineers", "Route"], surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(D47.Core.Capabilities.Builtin.EngineerCapability.Id, surface.Panel.Nav.Help);
+
+        Assert.True(surface.Panel.GoBack());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Engineers"], surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Saying "engineers" on another tab opens the Engineers root of Asset Mgmt.</summary>
+    [AvaloniaFact]
+    public void SayingEngineersFromAnotherTabOpensTheRoot()
+    {
+        var surface = Open();
+
+        surface.Panel.Tab = PanelTab.Transcript;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotNull(PanelPhrases.Apply("engineers", surface.Panel.Nav));
+        Assert.Equal(PanelTab.Assets, surface.Panel.Nav.Tab);
+        Assert.Equal(EngineersPages.DirectoryRoot, surface.Panel.Nav.RootKeyOf(PanelTab.Assets));
 
         surface.Window.Close();
     }
@@ -186,7 +208,7 @@ public class EngineersTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["Directory", "Felicity Farseer"],
+            ["Engineers", "Felicity Farseer"],
             surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         var shown = Text(surface.Panel);
@@ -232,7 +254,7 @@ public class EngineersTabTests
     {
         var surface = Open();
 
-        Assert.True(surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot));
+        Assert.True(surface.Panel.Nav.Drill(EngineersPages.RouteCrumb));
         Dispatcher.UIThread.RunJobs();
 
         var shown = Text(surface.Panel);
@@ -299,7 +321,7 @@ public class EngineersTabTests
     {
         var surface = Open();
 
-        Assert.True(surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot));
+        Assert.True(surface.Panel.Nav.Drill(EngineersPages.RouteCrumb));
         Dispatcher.UIThread.RunJobs();
 
         var firstDrawn = Text(surface.Panel)
@@ -364,12 +386,12 @@ public class EngineersTabTests
         Press(surface.Panel, "LIZ RYDER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Equal(["Engineers", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
 
         Press(surface.Panel, "FELICITY FARSEER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Directory", "Felicity Farseer"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Equal(["Engineers", "Felicity Farseer"], surface.Panel.Nav.Trail.Select(c => c.Word));
         Assert.Single(surface.Panel.GetVisualDescendants().OfType<EngineerPage>());
 
         // And the same by way of the directory, which is what the second report tried.
@@ -379,7 +401,7 @@ public class EngineersTabTests
         Press(surface.Panel, "LIZ RYDER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Directory", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
+        Assert.Equal(["Engineers", "Liz Ryder"], surface.Panel.Nav.Trail.Select(c => c.Word));
         Assert.Single(surface.Panel.GetVisualDescendants().OfType<EngineerPage>());
 
         surface.Window.Close();
@@ -465,7 +487,7 @@ public class EngineersTabTests
         Check(surface.Panel, "Hide on-foot engineers").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        surface.Panel.Nav.SelectRoot(EngineersPages.RouteRoot);
+        surface.Panel.Nav.Drill(EngineersPages.RouteCrumb);
         Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(Text(surface.Panel), line => line == "Jude Navarro");
@@ -502,7 +524,7 @@ public class EngineersTabTests
 
         var firstWindow = new Window { Content = firstPanel, Width = 900, Height = 700 };
         firstWindow.Show();
-        firstPanel.Tab = PanelTab.Engineers;
+        firstPanel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Check(firstPanel, "Hide the Colonia eight").IsChecked = true;
@@ -518,7 +540,7 @@ public class EngineersTabTests
 
         var secondWindow = new Window { Content = secondPanel, Width = 900, Height = 700 };
         secondWindow.Show();
-        secondPanel.Tab = PanelTab.Engineers;
+        secondPanel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Check(secondPanel, "Hide the Colonia eight").IsChecked);
@@ -603,7 +625,7 @@ public class EngineersTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Engineers;
+        panel.Tab = PanelTab.Assets;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(

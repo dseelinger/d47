@@ -62,7 +62,7 @@ public class TheTickingTabsDoNotAskForARedrawTests
             onFoot: new OnFootPlanService(kit, checklists, () => state),
             unlocks: new EngineerPlanService(builds, kit, checklists, () => state));
 
-        Assert.True(panel.Nav.Select(PanelTab.Engineers), "the headset furnishes the Engineers tab");
+        Assert.True(panel.Nav.Select(PanelTab.Assets), "the headset furnishes Asset Mgmt");
         Dispatcher.UIThread.RunJobs();
 
         Settle(panel);
