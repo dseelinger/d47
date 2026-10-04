@@ -1,0 +1,15 @@
+# The story ratings endpoint. Deploying is `wrangler deploy` from this folder; README.md has the
+# provisioning commands.
+
+name = "d47-ratings"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "d47-ratings"
+database_id = "REPLACE-WITH-THE-ID-PRINTED-BY-wrangler-d1-create"
