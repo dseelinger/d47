@@ -133,21 +133,6 @@ public class OnFootLoadoutTabTests
                              || button.GetVisualDescendants().OfType<TextBlock>()
                                  .Any(text => text.Text == label));
 
-    /// <summary>The Ship / On foot segment, which is built of radio buttons rather than plain buttons.</summary>
-    private static RadioButton Segment(PanelView panel, string label) =>
-        panel.GetVisualDescendants().OfType<RadioButton>().First(button => (button.Content as string) == label);
-
-    /// <summary>
-    /// The Materials page itself, and its own text only — the surface around it says things like "Raw
-    /// materials" too, in an unrelated bubble, and a page-scoped search is the one that means what it says.
-    /// </summary>
-    private static (GapPage Page, IReadOnlyList<string> Text) MaterialsPage(PanelView panel)
-    {
-        var page = panel.GetVisualDescendants().OfType<GapPage>().First();
-
-        return (page, [.. page.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)]);
-    }
-
     /// <summary>
     /// Three roots of one tab rather than three tabs: the game separates ship and on-foot hard and so
     /// does its vocabulary, but nothing about the layout is redrawn.
@@ -676,83 +661,6 @@ public class OnFootLoadoutTabTests
     }
 
     /// <summary>
-    /// The Materials page shows every catalogue card, in the tracker's own order, for both halves of the
-    /// switch, and never shows the filter button #301's tracker replaced (#302).
-    /// </summary>
-    [AvaloniaFact]
-    public void TheMaterialsPageShowsShipAndOnFootCardsInOrder()
-    {
-        var surface = Open();
-
-        Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
-        Dispatcher.UIThread.RunJobs();
-
-        var shipHeaders = new[] { "RAW", "MANUFACTURED", "ENCODED", "GUARDIAN", "THARGOID" };
-        var shownOnShip = MaterialsPage(surface.Panel).Text;
-
-        Assert.Equal(shipHeaders, shownOnShip.Where(line => shipHeaders.Contains(line)));
-        Assert.DoesNotContain(
-            shownOnShip,
-            line => line.Contains("Counting what you do not own yet", StringComparison.Ordinal));
-
-        // A radio button checks itself from the pointer handling behind OnClick, not from the routed Click
-        // event a plain button fires — so the test drives the property the same way a press would land it.
-        Segment(surface.Panel, "On foot").IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
-
-        var onFootHeaders = new[] { "ITEMS", "COMPONENTS", "CONSUMABLES", "DATA" };
-        var shownOnFoot = MaterialsPage(surface.Panel).Text;
-
-        Assert.Equal(onFootHeaders, shownOnFoot.Where(line => onFootHeaders.Contains(line)));
-
-        surface.Window.Close();
-    }
-
-    /// <summary>
-    /// Clicking a card row opens its detail in the page's own visual tree — never a <c>Flyout</c>, which
-    /// the headset never sees — and a click outside it closes it (#302).
-    /// </summary>
-    [AvaloniaFact]
-    public void ClickingAMaterialRowOpensItsDetailAndOutsideClosesIt()
-    {
-        var surface = Open();
-
-        Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
-        Dispatcher.UIThread.RunJobs();
-
-        Row(surface.Panel, "IRON").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        var shown = Text(surface.Panel);
-
-        Assert.Contains("Held: 20", shown);
-        Assert.Contains("Raw material", shown);
-        Assert.Contains("HOW TO OBTAIN", shown);
-        Assert.Contains("CAPACITY", shown);
-        Assert.DoesNotContain(shown, line => line is "ORIGINS" or "WANTED BY" or "CLOSING THE SHORTFALL");
-
-        var backdrop = surface.Panel.GetVisualDescendants().OfType<Border>()
-            .First(border => border.Name == GapPage.DetailBackdropName);
-
-        backdrop.RaiseEvent(new PointerPressedEventArgs(
-            backdrop,
-            new Pointer(1, PointerType.Mouse, isPrimary: true),
-            surface.Panel,
-            new Avalonia.Point(1, 1),
-            0,
-            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
-            KeyModifiers.None));
-
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.DoesNotContain(
-            Text(surface.Panel),
-            line => line.Contains("Held: 20", StringComparison.Ordinal));
-
-        surface.Window.Close();
-    }
-
-    /// <summary>
     /// The engineer gate answers the four questions the issue asked for, one line per job rather than one
     /// per slot, names nobody by their journal slot, and blocks the same set the Engineers page's own route
     /// claims (#477).
@@ -799,30 +707,6 @@ public class OnFootLoadoutTabTests
         surface.Window.Close();
     }
 
-    /// <summary>The material detail dialog for Polonium, for a human to look at (#472).</summary>
-    [AvaloniaFact]
-    public void TheMaterialDetailRendersToACapture()
-    {
-        using var look = AppLook.Put();
-
-        var surface = Open();
-
-        surface.Window.Width = 1024;
-        surface.Window.Height = 760;
-
-        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
-        Dispatcher.UIThread.RunJobs();
-
-        Row(surface.Panel, "POLONIUM").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-material-detail.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
-
-        surface.Window.Close();
-    }
-
     /// <summary>Both new pages at the size the headset renders them, for a human to look at.</summary>
     [AvaloniaFact]
     public void TheSuitsAndGapPagesRenderToACapture()
@@ -837,6 +721,9 @@ public class OnFootLoadoutTabTests
         surface.Kit.Plan(suit.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Night Vision"));
         surface.Kit.Intend("Dominator");
 
+        var ship = surface.Ships.BuildFor(12, "anaconda", "Sacred Wings");
+        surface.Ships.Plan(ship.Id, new SlotPlan("MainEngines") { Blueprint = "Dirty Drive Tuning", Grade = 5, Module = "Thrusters" });
+
         surface.Window.Width = 1024;
         surface.Window.Height = 640;
 
@@ -847,6 +734,8 @@ public class OnFootLoadoutTabTests
             Path.Combine(TestSurface.CaptureDirectory, "loadout-suits.png"),
             new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
 
+        surface.Window.Width = 1280;
+        surface.Window.Height = 1000;
         surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 

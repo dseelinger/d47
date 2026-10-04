@@ -809,12 +809,14 @@ public partial class PanelView : UserControl
                     onFoot.Store.Builds,
                     state(),
                     includeIntended: true,
-                    checklists.SlotFor),
-                state);
+                    checklists.SlotFor));
 
             // Either store moving changes the subtraction, and neither knows about the other.
             ships.Store.Changed += gap.Invalidate;
             onFoot.Store.Changed += gap.Invalidate;
+
+            _gap = gap;
+            _materialsClock = new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
         }
 
         // Per root, because this tab's roots are three different subjects.
@@ -856,7 +858,7 @@ public partial class PanelView : UserControl
 
         // _engineers is read lazily, on whichever draw first opens Materials (#477).
         _loadoutBuild = crumb => LoadoutPages.Build(
-            crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers);
+            crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock);
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
     }
@@ -1014,7 +1016,23 @@ public partial class PanelView : UserControl
             mode.Invalidate();
             _onFootMode?.Invalidate();
             _carrier?.Invalidate();
+            _gap?.Invalidate();
             changed = true;
+        }
+
+        // The Materials page measures plans against the inventory, which moves without either store saying so.
+        if (_gap is { } gap && Nav.RootKeyOf(PanelTab.Assets) == LoadoutPages.GapRoot)
+        {
+            changed |= _materialsClock?.Tick() ?? false;
+
+            (object?, object?, object?) inventory = (_loadoutState?.Invoke()?.Materials, _loadoutState?.Invoke()?.Suit, hold);
+
+            if (!Equals(inventory, _inventorySeen))
+            {
+                _inventorySeen = inventory;
+                gap.Invalidate();
+                changed = true;
+            }
         }
 
         return changed;
@@ -1025,6 +1043,9 @@ public partial class PanelView : UserControl
 
     private ShipsMode? _loadoutMode;
     private OnFootMode? _onFootMode;
+    private GapSource? _gap;
+    private D47.App.Controls.JournalClock? _materialsClock;
+    private (object?, object?, object?) _inventorySeen;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;

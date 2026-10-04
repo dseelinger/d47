@@ -19,6 +19,9 @@ public sealed record GapDemand(string What, int Units)
     /// <summary>The module kind the blueprint is fitted to — "Thrusters", "Multi-cannon", "Maverick Suit".</summary>
     public string? Module { get; init; }
 
+    /// <summary>The build the slot belongs to.</summary>
+    public GapBuildKey? Build { get; init; }
+
     /// <summary>The module and blueprint, with no ship or slot — "Thrusters · Dirty Drive Tuning 5".</summary>
     public string Purpose() =>
         (Module, Blueprint) switch
@@ -35,6 +38,39 @@ public sealed record GapDemand(string What, int Units)
     /// <summary>The demand with the blueprint named, for the one-material answer.</summary>
     public string Fully() =>
         Blueprint is { Length: > 0 } blueprint ? $"{What} · {blueprint}" : What;
+}
+
+/// <summary>A ship, a suit or a hand weapon.</summary>
+public enum GapBuildKind
+{
+    Ship,
+    Suit,
+    Weapon,
+}
+
+/// <summary>Which build something came from: its kind and its <c>Id</c>.</summary>
+public sealed record GapBuildKey(GapBuildKind Kind, string Id);
+
+/// <summary>One material one build needs, against everything held.</summary>
+public sealed record GapBuildLine(MaterialEntry Material, int Needed, int Held)
+{
+    public int Short => Math.Max(0, Needed - Held);
+}
+
+/// <summary>One live build measured alone against everything held, met materials included.</summary>
+public sealed record GapBuild(GapBuildKey Key, string Name, IReadOnlyList<GapBuildLine> Lines)
+{
+    /// <summary>The hull's name, for a ship.</summary>
+    public string? Hull { get; init; }
+
+    /// <summary>How many slots have a plan.</summary>
+    public int Plans { get; init; }
+
+    /// <summary>The planned grade, for a suit or weapon, where one is planned.</summary>
+    public int? Grade { get; init; }
+
+    /// <summary>How many of its materials are short.</summary>
+    public int Short => Lines.Count(line => line.Short > 0);
 }
 
 /// <summary>What a material trader would charge to cover a shortfall (Phase 27, "Gap analysis").</summary>
@@ -81,6 +117,9 @@ public sealed record GapLedger(MaterialLedger Ledger, string Name, IReadOnlyList
 public sealed record GapReport
 {
     public IReadOnlyList<GapLedger> Ledgers { get; init; } = [];
+
+    /// <summary>Every live build with a material total, in the order the stores list them.</summary>
+    public IReadOnlyList<GapBuild> Builds { get; init; } = [];
 
     /// <summary>Requests the Commander's rank cannot reach at all.</summary>
     public IReadOnlyList<string> Gates { get; init; } = [];
@@ -138,6 +177,7 @@ public static class PlanGap
         var gates = new List<string>();
         var uncovered = new List<string>();
         var assumed = new List<string>();
+        var builds = new List<(GapBuildKey Key, string Name, string? Hull, int Plans, int? Grade, Dictionary<string, int> Needed)>();
 
         var plans = 0;
         var intended = 0;
@@ -163,6 +203,18 @@ public static class PlanGap
 
             plans++;
 
+            var shipKey = new GapBuildKey(GapBuildKind.Ship, build.Id);
+            var shipNeeded = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var shipName = build.Name is { Length: > 0 } name ? name : build.HullName;
+
+            builds.Add((
+                shipKey,
+                build.IsOwned ? shipName : $"{shipName}, intended",
+                build.HullName,
+                planned.Count,
+                null,
+                shipNeeded));
+
             foreach (var slot in planned)
             {
                 // Costed one slot at a time so the answer knows who asked.
@@ -186,6 +238,8 @@ public static class PlanGap
                     $" on {slot.Slot}",
                     Named(slot.Blueprint, slot.Grade),
                     ModuleOf(slot, slotName, fitted, shipSlot),
+                    shipKey,
+                    shipNeeded,
                     needed,
                     held,
                     wanted,
@@ -217,6 +271,10 @@ public static class PlanGap
             plans++;
 
             var scope = build.Scope ?? ChecklistScope.Universal;
+            var kitKey = new GapBuildKey(build.IsWeapon ? GapBuildKind.Weapon : GapBuildKind.Suit, build.Id);
+            var kitNeeded = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            builds.Add((kitKey, build.Describe(), null, slots.Count, build.PlannedGrade, kitNeeded));
 
             foreach (var slot in slots)
             {
@@ -233,6 +291,8 @@ public static class PlanGap
                     $" on {build.Equipment}",
                     Named(slot.Modification, slot.Grade ?? 0),
                     build.Equipment,
+                    kitKey,
+                    kitNeeded,
                     needed,
                     held,
                     wanted,
@@ -271,6 +331,25 @@ public static class PlanGap
         return new GapReport
         {
             Ledgers = ledgers,
+            Builds = [.. builds
+                .Select(build => new GapBuild(
+                    build.Key,
+                    build.Name,
+                    [.. build.Needed
+                        .Select(entry => (Material: MaterialCatalogue.Find(entry.Key), entry.Value))
+                        .Where(pair => pair.Material is not null)
+                        .Select(pair => new GapBuildLine(
+                            pair.Material!,
+                            pair.Value,
+                            held.GetValueOrDefault(pair.Material!.Symbol)))
+                        .OrderByDescending(line => line.Short)
+                        .ThenBy(line => line.Material.Name, StringComparer.Ordinal)])
+                {
+                    Hull = build.Hull,
+                    Plans = build.Plans,
+                    Grade = build.Grade,
+                })
+                .Where(build => build.Lines.Count > 0)],
             Gates = gates,
             Uncovered = uncovered,
             Assumed = assumed,
@@ -316,6 +395,8 @@ public static class PlanGap
         string tail,
         string? blueprint,
         string? module,
+        GapBuildKey build,
+        Dictionary<string, int> buildNeeded,
         Dictionary<string, int> needed,
         Dictionary<string, int> held,
         Dictionary<string, List<GapDemand>> wanted,
@@ -328,6 +409,7 @@ public static class PlanGap
             var symbol = ingredient.Material.Symbol;
 
             needed[symbol] = needed.GetValueOrDefault(symbol) + ingredient.Needed;
+            buildNeeded[symbol] = buildNeeded.GetValueOrDefault(symbol) + ingredient.Needed;
             held[symbol] = ingredient.Held;
 
             if (!wanted.TryGetValue(symbol, out var asked))
@@ -344,7 +426,7 @@ public static class PlanGap
             }
             else
             {
-                asked.Add(new GapDemand(who, ingredient.Needed) { Blueprint = blueprint, Module = module });
+                asked.Add(new GapDemand(who, ingredient.Needed) { Blueprint = blueprint, Module = module, Build = build });
             }
         }
 
