@@ -717,7 +717,7 @@ public static class ChecklistCapability
         Help = "What you are working on: your own lines, your ship builds and your construction sites. "
                + "Computed items cannot be ticked by hand — they follow your journal.",
         Kind = SettingKind.Info,
-        DocsAnchor = "the-checklist-tab",
+        DocsAnchor = "the-checklist-page",
         Binding = new SettingBinding { Read = _ => Summarise(checklists) },
     };
 
@@ -733,7 +733,7 @@ public static class ChecklistCapability
                + "column both disappear. Your own lines are never affected either way.",
         Kind = SettingKind.Toggle,
         DefaultDisplay = "off",
-        DocsAnchor = "the-checklist-tab",
+        DocsAnchor = "the-checklist-page",
         Binding = new SettingBinding
         {
             Read = s => s.Checklists.RemoveFulfilled ? "true" : "false",
