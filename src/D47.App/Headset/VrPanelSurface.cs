@@ -171,6 +171,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // Commander › Standing, ahead of the checklist so it is the tab's first root (#552).
             _view.EnableStanding(gameState);
             _view.EnableStatistics(gameState);
+            _view.EnableSession(gameState);
         }
 
         if (checklists is not null)
@@ -319,7 +320,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public void TickEngineers() => _dirty |= _view.TickEngineers();
 
-    /// <summary>Redraws Commander › Standing and Statistics when the journal moves them on, from the headset's own tick.</summary>
+    /// <summary>Redraws the Commander pages when the journal moves them on, from the headset's own tick.</summary>
     public void TickCommander() => _dirty |= _view.TickCommander();
 
     /// <summary>Redraws the Assets tab when the journal says the ship changed, from the headset's own tick.</summary>

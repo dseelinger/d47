@@ -673,7 +673,27 @@ public partial class PanelView : UserControl
             });
     }
 
-    /// <summary>Redraws Commander › Standing and its footer when the journal has moved them on.</summary>
+    /// <summary>
+    /// Gives this surface Commander › This session (#554). Called after <see cref="EnableStatistics"/> and before
+    /// <see cref="EnableChecklist"/>, so the root lands third.
+    /// </summary>
+    public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state)
+    {
+        _commanderClock ??= new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
+        var clock = _commanderClock;
+
+        _sessionBuild = _ => _session = new SessionPage(state, clock);
+
+        Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(SessionPage.RootKey, "This session")
+            {
+                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
+            });
+    }
+
+    /// <summary>Redraws the Commander page showing and its footer when the journal has moved them on.</summary>
     public bool TickCommander()
     {
         if (Tab != PanelTab.Commander)
@@ -693,13 +713,19 @@ public partial class PanelView : UserControl
             changed |= statistics.Tick();
         }
 
+        if (_session is { } session && Nav.RootKeyOf(PanelTab.Commander) == SessionPage.RootKey)
+        {
+            changed |= session.Tick();
+        }
+
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Standing, Statistics, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Standing, Statistics, This session, or whatever the checklist roots draw.</summary>
     private Control BuildCommander(NavCrumb crumb) =>
         crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
+        : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };
 
@@ -708,6 +734,8 @@ public partial class PanelView : UserControl
     private StandingPage? _standing;
     private Func<NavCrumb, Control>? _statisticsBuild;
     private StatisticsPage? _statistics;
+    private Func<NavCrumb, Control>? _sessionBuild;
+    private SessionPage? _session;
     private D47.App.Controls.JournalClock? _commanderClock;
 
     /// <summary>
