@@ -426,6 +426,14 @@ kept in `data\story.json` with that Commander's stories. It is not your donation
 Frontier ID is never sent. Reinstalling without `data\` makes a new number, so one person can then vote
 twice. No voice command or model tool rates a story.
 
+Each card on the Stories page shows its stars and vote count, or five empty stars and "(No ratings yet)". The filter bar's
+**Rating** and **Sort** choices set the least star rating and the order, and **Clear filters** resets
+them. A story's page shows its average under the title. For a story you have picked it also shows
+**Your rating**: click a star to rate, click your current rating again to take it back, or use Left,
+Right and Delete once the stars have focus. A vote that could not be sent says so, and is sent again
+the next time the Stories page opens. When the averages cannot be fetched, every story shows as unrated,
+with no error, and they are asked for again the next time the page opens.
+
 **Story ratings**, on by default, is in the Adventures settings. Off, nothing is fetched or sent and the
 Stories page shows no ratings.
 

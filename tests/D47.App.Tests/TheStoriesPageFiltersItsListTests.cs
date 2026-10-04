@@ -132,7 +132,7 @@ public class TheStoriesPageFiltersItsListTests
 
         Press(page.Panel, 1, 1);
 
-        var stepper = page.Panel.GetVisualDescendants().OfType<Stepper>().Single();
+        var stepper = page.Panel.GetVisualDescendants().OfType<Stepper>().Single(control => Avalonia.Automation.AutomationProperties.GetName(control) == "Story length");
         Assert.True(stepper.IsEffectivelyVisible);
         Assert.Equal(7, stepper.ItemsSource.Count);
         Assert.Equal("1 month", stepper.SelectedItem);

@@ -23,6 +23,7 @@ public sealed class StoriesView : UserControl
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
     private readonly StoryDownloader? _downloads;
+    private readonly StoryRatingClient? _ratings;
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly StatusLine _status = new();
     private readonly StoryFilterMemory? _memory;
@@ -32,10 +33,15 @@ public sealed class StoriesView : UserControl
     private readonly IChoiceControl _compare;
     private readonly IChoiceControl _length;
     private readonly Control _lengthView;
+    private readonly IChoiceControl _minStars;
+    private readonly IChoiceControl _sort;
+    private readonly StackPanel _ratingFilters = new() { Spacing = 4 };
     private StoryFilter _filter;
 
     private static readonly string[] LevelLabels = ["Any level", "New", "Mid-range", "Endgame"];
     private static readonly string[] CompareLabels = ["Any length", "At least", "Exactly", "At most"];
+    private static readonly string[] RatingLabels = ["Any rating", "4 stars & up", "3 stars & up", "2 stars & up", "1 star & up"];
+    private static readonly string[] SortLabels = ["Catalogue order", "Highest rated"];
 
     public StoriesView(AdventureSurface surface, StoryDirector director, PanelNavigator nav, PanelPrompts prompts)
     {
@@ -44,6 +50,7 @@ public sealed class StoriesView : UserControl
         _nav = nav;
         _prompts = prompts;
         _downloads = surface.Downloads;
+        _ratings = surface.Ratings;
         _memory = surface.StoryFilters;
         _filter = _memory?.Filter ?? new StoryFilter();
 
@@ -66,10 +73,24 @@ public sealed class StoriesView : UserControl
         _compare.SelectionChanged += (_, _) => FilterChanged();
         _length.SelectionChanged += (_, _) => FilterChanged();
 
+        var ratingView = Choice.Build(RatingLabels, _filter.MinStars is { } least ? Math.Clamp(5 - least, 0, RatingLabels.Length - 1) : 0);
+        var sortView = Choice.Build(SortLabels, (int)_filter.Sort);
+
+        (_minStars, _sort) = (ratingView.Choice, sortView.Choice);
+        Avalonia.Automation.AutomationProperties.SetName(ratingView.View, "Rating");
+        Avalonia.Automation.AutomationProperties.SetName(sortView.View, "Sort");
+        ratingView.View.HorizontalAlignment = HorizontalAlignment.Left;
+        sortView.View.HorizontalAlignment = HorizontalAlignment.Left;
+        _minStars.SelectionChanged += (_, _) => FilterChanged();
+        _sort.SelectionChanged += (_, _) => FilterChanged();
+        _ratingFilters.Children.Add(ratingView.View);
+        _ratingFilters.Children.Add(sortView.View);
+
         _count = AdventuresPage.Muted(string.Empty);
         _filterBar.Children.Add(levelView.View);
         _filterBar.Children.Add(compareView.View);
         _filterBar.Children.Add(_lengthView);
+        _filterBar.Children.Add(_ratingFilters);
         _filterBar.Children.Add(_count);
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -113,6 +134,12 @@ public sealed class StoriesView : UserControl
             _ = _downloads.AskForList();
         }
 
+        if (_ratings is not null)
+        {
+            _ratings.Changed += OnChanged;
+            OpenRatings(_ratings, _status);
+        }
+
         Rebuild();
     }
 
@@ -127,7 +154,24 @@ public sealed class StoriesView : UserControl
         {
             _downloads.Landed -= OnChanged;
         }
+
+        if (_ratings is not null)
+        {
+            _ratings.Changed -= OnChanged;
+        }
     }
+
+    /// <summary>Fetches the averages and resends pending votes, and shows a failure on <paramref name="status"/>.</summary>
+    private static void OpenRatings(StoryRatingClient ratings, StatusLine status) => _ = Task.Run(async () =>
+    {
+        if (await ratings.Open().ConfigureAwait(false) is { } failure)
+        {
+            Dispatcher.UIThread.Post(() => status.Fail(failure));
+        }
+    });
+
+    /// <summary>The ratings shown, or null when the Story ratings setting is off.</summary>
+    private StoryRatings? Ratings => _ratings is { Enabled: true } client ? client.Ratings : null;
 
     /// <summary>The page for a reading crumb.</summary>
     public Control? Build(NavCrumb crumb) =>
@@ -163,9 +207,12 @@ public sealed class StoriesView : UserControl
         }
 
         var others = offered.Where(card => !string.Equals(card.Id, current?.Id, StringComparison.OrdinalIgnoreCase)).ToList();
-        var shown = others.Where(_filter.Matches).ToList();
+        var ratings = Ratings;
+        var filter = ratings is null ? _filter with { MinStars = null, Sort = StorySort.Catalogue } : _filter;
+        var shown = filter.Order(others.Where(card => filter.Matches(card, ratings ?? StoryRatings.Empty)), ratings ?? StoryRatings.Empty).ToList();
 
         _filterBar.IsVisible = offered.Count > 0;
+        _ratingFilters.IsVisible = ratings is not null;
         _count.IsVisible = shown.Count > 0 && shown.Count < others.Count;
         _count.Text = string.Create(CultureInfo.InvariantCulture, $"{shown.Count} of {others.Count} stories.");
 
@@ -183,6 +230,11 @@ public sealed class StoriesView : UserControl
                 AdventuresPage.RowName(card.Title),
                 AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"),
             };
+
+            if (ratings is not null)
+            {
+                parts.Add(Average(ratings.Get(card.Id)));
+            }
 
             if (CastStrip.For(card, _director.Gender(), _surface.Pictures) is { } cast)
             {
@@ -205,7 +257,10 @@ public sealed class StoriesView : UserControl
         var level = _level.SelectedIndex > 0 ? StoryCard.Levels[_level.SelectedIndex - 1] : null;
         var length = _length.SelectedIndex >= 0 ? StoryPacing.All[_length.SelectedIndex].Key : null;
 
-        _filter = new StoryFilter(level, compare, length);
+        var minStars = _minStars.SelectedIndex > 0 ? 5 - _minStars.SelectedIndex : (int?)null;
+        var sort = (StorySort)Math.Max(0, _sort.SelectedIndex);
+
+        _filter = new StoryFilter(level, compare, length, minStars, sort);
         _lengthView.IsVisible = compare != StoryLengthCompare.Any;
         _memory?.Remember(_filter);
         Rebuild();
@@ -215,6 +270,8 @@ public sealed class StoriesView : UserControl
     {
         _level.SelectedIndex = 0;
         _compare.SelectedIndex = 0;
+        _minStars.SelectedIndex = 0;
+        _sort.SelectedIndex = 0;
         FilterChanged();
     }
 
@@ -434,6 +491,11 @@ public sealed class StoriesView : UserControl
 
         page.Children.Add(RoutingKit.Title(card.Title).Row);
 
+        if (_ratings is { Enabled: true } client)
+        {
+            page.Children.Add(RatingSection(client, card.Id, status));
+        }
+
         page.Children.Add(AdventuresPage.Muted($"{card.Pacing.Name} · {card.LevelGuideline}"));
 
         if (card.Tone is { Length: > 0 } tone)
@@ -512,6 +574,72 @@ public sealed class StoriesView : UserControl
         page.Children.Add(bar);
 
         return page;
+    }
+
+    private static Control Average(StoryRating? rating) => StarRating.Summary(rating);
+
+    /// <summary>
+    /// A story's average, and the Commander's own stars once they have picked it; redrawn in place while shown, so the
+    /// stars keep keyboard focus across a vote.
+    /// </summary>
+    private StackPanel RatingSection(StoryRatingClient client, string id, StatusLine status)
+    {
+        var section = new StackPanel { Spacing = 4 };
+        var average = new ContentControl();
+        var label = AdventuresPage.Text("Your rating", TypeScale.Small, ThemeManager.GreyKey);
+        var mine = StarRating.Interactive(null);
+        var pickFirst = AdventuresPage.Muted("Pick this story to rate it.");
+        var pending = AdventuresPage.Muted("Not sent yet; it will be sent next time the Stories page opens.");
+
+        label.Margin = new Thickness(0, 4, 0, 0);
+        section.Children.Add(average);
+        section.Children.Add(label);
+        section.Children.Add(mine);
+        section.Children.Add(pending);
+        section.Children.Add(pickFirst);
+
+        void Refresh()
+        {
+            var story = _director.Stories.Find(_surface.Commander(), id);
+
+            average.Content = Average(client.Ratings.Get(id));
+            label.IsVisible = mine.IsVisible = story is not null;
+            pickFirst.IsVisible = story is null;
+            pending.IsVisible = story is { RatingPending: true };
+            mine.Value = story?.Rating ?? 0;
+        }
+
+        void Changed() => Dispatcher.UIThread.Post(Refresh);
+
+        mine.Rated += stars =>
+        {
+            var commander = _surface.Commander();
+
+            _ = Task.Run(async () =>
+            {
+                var sent = await (stars is { } given ? client.Rate(commander, id, given) : client.Clear(commander, id)).ConfigureAwait(false);
+
+                if (!sent)
+                {
+                    Dispatcher.UIThread.Post(() => status.Fail(StoryRatingClient.SendFailed));
+                }
+            });
+        };
+
+        section.AttachedToVisualTree += (_, _) =>
+        {
+            client.Changed += Changed;
+            _director.Stories.Changed += Changed;
+            Refresh();
+        };
+        section.DetachedFromVisualTree += (_, _) =>
+        {
+            client.Changed -= Changed;
+            _director.Stories.Changed -= Changed;
+        };
+
+        Refresh();
+        return section;
     }
 
     /// <summary>The Cast section: each primary member with its picture, name and voice, and the controls that change them.</summary>

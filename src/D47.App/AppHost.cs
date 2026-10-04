@@ -403,6 +403,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Fetches stock stories from the stories release.</summary>
     public StoryDownloader? StoryDownloads { get; private set; }
 
+    /// <summary>Fetches stock stories' average ratings and sends the Commander's votes.</summary>
+    public StoryRatingClient? StoryRatings { get; private set; }
+
     private D47.Core.Stories.CastPictures? _castPictures;
 
     /// <summary>Where a story cast member's picture is read, and the Commander's replacement kept.</summary>
@@ -1088,6 +1091,11 @@ public sealed class AppHost : IDisposable
         storyDownloads.Landed += () => storyCatalog = LoadStories();
 
         _ = storyDownloads.FetchMissing(storyStore.AllCurrent().Select(story => story.Id));
+
+        var storyRatings = new StoryRatingClient(
+            storyStore,
+            () => settings.Current.Ui.StoryRatings,
+            loggerFactory.CreateLogger<StoryRatingClient>());
 
         void SweepOrphanMessages() => messageStore.RemoveOrphans(
             key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, storyStore, () => storyCatalog));
@@ -2524,6 +2532,7 @@ public sealed class AppHost : IDisposable
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
         host.StoryDownloads = storyDownloads;
+        host.StoryRatings = storyRatings;
         endingAnswer.Answer = host.AnswerEnding;
         host.Messages = messageStore;
 

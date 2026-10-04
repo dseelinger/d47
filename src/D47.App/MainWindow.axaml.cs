@@ -199,7 +199,8 @@ public partial class MainWindow : Window
                         host.ChooseCastVoice,
                         host.CastVoicesAsync,
                         host.PlayCastSample,
-                        host.CastVoiceFailure));
+                        host.CastVoiceFailure),
+                    host.StoryRatings);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));

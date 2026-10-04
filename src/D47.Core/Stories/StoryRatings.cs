@@ -30,6 +30,14 @@ public sealed class StoryRatings
     public StoryRatings With(string id, StoryRating rating) =>
         new(new Dictionary<string, StoryRating>(_byStory, StringComparer.OrdinalIgnoreCase) { [id] = rating });
 
+    /// <summary>A copy with the story's rating removed, for a story left with no votes.</summary>
+    public StoryRatings Without(string id)
+    {
+        var byStory = new Dictionary<string, StoryRating>(_byStory, StringComparer.OrdinalIgnoreCase);
+        byStory.Remove(id);
+        return new(byStory);
+    }
+
     /// <summary>Reads the body of <c>GET /ratings</c>; null when it is not JSON or its <c>format</c> is not <see cref="Format"/>. A story without a usable rating is left out.</summary>
     public static StoryRatings? Parse(string json)
     {
