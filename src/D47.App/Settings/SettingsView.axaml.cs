@@ -3128,7 +3128,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             // Its own panel, found up the tree rather than handed in.
             if (this.GetSelfAndVisualAncestors().OfType<Panel.PanelView>().FirstOrDefault() is { } panel)
             {
-                panel.Tab = D47.Core.Interface.PanelTab.Checklist;
+                panel.Nav.Show("checklist");
             }
 
             // The tab writes the file; this is what puts the new summary on the row without waiting for

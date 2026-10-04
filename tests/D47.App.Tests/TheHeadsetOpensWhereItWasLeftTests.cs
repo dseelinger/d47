@@ -22,7 +22,7 @@ public sealed class TheHeadsetOpensWhereItWasLeftTests
 
         var first = Headset(store);
 
-        first.Nav.Select(PanelTab.Checklist);
+        first.Nav.Select(PanelTab.Commander);
         Jobs();
 
         first.Dispose();
@@ -30,7 +30,7 @@ public sealed class TheHeadsetOpensWhereItWasLeftTests
         // A second headset over the same store, which is what the next launch has.
         var second = Headset(store);
 
-        Assert.Equal(PanelTab.Checklist, second.Nav.Tab);
+        Assert.Equal(PanelTab.Commander, second.Nav.Tab);
 
         second.Dispose();
     }
@@ -73,11 +73,11 @@ public sealed class TheHeadsetOpensWhereItWasLeftTests
         var headset = Headset(store);
 
         window.Tab = PanelTab.Navigation;
-        headset.Nav.Select(PanelTab.Checklist);
+        headset.Nav.Select(PanelTab.Commander);
         Jobs();
 
         Assert.Equal(PanelTab.Navigation.ToString(), store.Load().LastTab);
-        Assert.Equal(PanelTab.Checklist.ToString(), store.Load().LastTabVr);
+        Assert.Equal(PanelTab.Commander.ToString(), store.Load().LastTabVr);
 
         headset.Dispose();
     }

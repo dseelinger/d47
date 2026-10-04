@@ -45,7 +45,7 @@ public class ChecklistTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -86,11 +86,11 @@ public class ChecklistTabTests
         var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        Assert.False(panel.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.False(panel.FindControl<Control>("CommanderTab")!.IsVisible);
 
         panel.EnableChecklist(checklists);
 
-        Assert.True(panel.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.True(panel.FindControl<Control>("CommanderTab")!.IsVisible);
     }
 
     /// <summary>And the headset's own instantiation has it too.</summary>
@@ -110,7 +110,7 @@ public class ChecklistTabTests
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(surface)!;
 
-        Assert.True(view.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.True(view.FindControl<Control>("CommanderTab")!.IsVisible);
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class ChecklistTabTests
         var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
         var (window, panel) = Open(checklists);
 
-        Assert.True(panel.FindControl<Control>("ChecklistTab")!.IsVisible);
+        Assert.True(panel.FindControl<Control>("CommanderTab")!.IsVisible);
 
         window.Close();
     }
@@ -366,7 +366,7 @@ public class ChecklistTabTests
         var window = new Window { Content = panel, Width = 1024, Height = 640 };
         window.Show();
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         window.CaptureRenderedFrame()!.Save(
@@ -420,7 +420,7 @@ public class ChecklistTabTests
         var window = new Window { Content = panel, Width = 1024, Height = 400 };
         window.Show();
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         window.CaptureRenderedFrame()!.Save(

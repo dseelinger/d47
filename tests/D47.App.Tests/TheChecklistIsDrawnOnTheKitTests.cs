@@ -63,7 +63,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, checklists);

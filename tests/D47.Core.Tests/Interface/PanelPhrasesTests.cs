@@ -1,4 +1,4 @@
-using D47.Core.Interface;
+﻿using D47.Core.Interface;
 using Xunit;
 
 namespace D47.Core.Tests.Interface;
@@ -13,7 +13,7 @@ public class PanelPhrasesTests
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
         nav.Register(PanelTab.Transcript, new NavCrumb("technical", "Technical"));
         nav.Register(PanelTab.Transcript, new NavCrumb("log", "Log file"));
-        nav.Register(PanelTab.Checklist, new NavCrumb("checklist", "Checklist"));
+        nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
         nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
 
         return nav;
@@ -46,7 +46,7 @@ public class PanelPhrasesTests
         var nav = Furnished();
 
         Assert.NotNull(PanelPhrases.Apply(spoken, nav));
-        Assert.Equal(PanelTab.Checklist, nav.Tab);
+        Assert.Equal(PanelTab.Commander, nav.Tab);
     }
 
     /// <summary>A renamed tab is reached by its new name, and the answer says that name (#802).</summary>
@@ -191,10 +191,10 @@ public class PanelPhrasesTests
     public void ATabNameWinsOverARootOfTheSameWord()
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Assets, new NavCrumb("assets.checklist", "Checklist"));
+        nav.Register(PanelTab.Assets, new NavCrumb("assets.commander", "Commander"));
 
-        Assert.Equal("Checklist.", PanelPhrases.Apply("checklist", nav));
-        Assert.Equal(PanelTab.Checklist, nav.Tab);
+        Assert.Equal("Commander.", PanelPhrases.Apply("commander", nav));
+        Assert.Equal(PanelTab.Commander, nav.Tab);
         Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Assets));
     }
 

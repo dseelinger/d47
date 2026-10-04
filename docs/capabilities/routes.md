@@ -46,7 +46,7 @@ nav_order: 106
 </section>
 <section>
 <h2><span class="num">3</span> Accept it, and it becomes a checklist.</h2>
-<svg viewBox="0 0 880 208" role="img" aria-label="The Checklist tab">
+<svg viewBox="0 0 880 208" role="img" aria-label="The Checklist page">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Checklist</text>

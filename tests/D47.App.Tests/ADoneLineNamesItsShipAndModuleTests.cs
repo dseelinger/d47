@@ -68,7 +68,7 @@ public class ADoneLineNamesItsShipAndModuleTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -143,7 +143,7 @@ public class ADoneLineNamesItsShipAndModuleTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableChecklist(checklists);
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
 
         AppLook.Capture(panel, "checklist-named-line.png");
     }

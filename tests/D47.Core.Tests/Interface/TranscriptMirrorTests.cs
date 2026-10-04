@@ -1,4 +1,4 @@
-using D47.Core.Interface;
+﻿using D47.Core.Interface;
 using Xunit;
 
 namespace D47.Core.Tests.Interface;
@@ -21,7 +21,7 @@ public class TranscriptMirrorTests
         nav.Register(PanelTab.Transcript, new NavCrumb(Conversation, "Conversation"));
         nav.Register(PanelTab.Transcript, new NavCrumb(Technical, "Technical"));
         nav.Register(PanelTab.Transcript, new NavCrumb(Log, "Log file"));
-        nav.Register(PanelTab.Checklist, new NavCrumb("checklist", "Checklist"));
+        nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
 
         return nav;
     }
@@ -61,7 +61,7 @@ public class TranscriptMirrorTests
     {
         var (window, headset, _) = Mirrored();
 
-        Assert.True(window.Select(PanelTab.Checklist));
+        Assert.True(window.Select(PanelTab.Commander));
         Assert.True(window.Drill(new NavCrumb("item", "An item")));
 
         Assert.Equal(PanelTab.Transcript, headset.Tab);
@@ -72,7 +72,7 @@ public class TranscriptMirrorTests
 
         Assert.Equal(Log, headset.RootKeyOf(PanelTab.Transcript));
         Assert.Equal(PanelTab.Transcript, headset.Tab);
-        Assert.Equal(PanelTab.Checklist, window.Tab);
+        Assert.Equal(PanelTab.Commander, window.Tab);
         Assert.Equal(2, window.Trail.Count);
     }
 
@@ -139,21 +139,25 @@ public class TranscriptMirrorTests
         Assert.Equal(Technical, headset.RootKeyOf(PanelTab.Transcript));
     }
 
-    /// <summary>The spoken route is an initiator, not a second mechanism.</summary>
+    /// <summary>
+    /// The spoken route is an initiator, not a second mechanism: the mirror carries the reading, and the
+    /// phrase then moves each surface's tab as the switch route does (#803).
+    /// </summary>
     [Fact]
-    public void APhraseAppliedToEverySurfaceIsCarriedOnceAndDeclinedOnce()
+    public void APhraseAppliedToEverySurfaceIsCarriedOnceAndMovesEachTab()
     {
         var (window, headset, _) = Mirrored();
         var navigators = new[] { window, headset };
 
-        Assert.True(headset.Select(PanelTab.Checklist));
+        Assert.True(headset.Select(PanelTab.Commander));
         Assert.True(headset.Drill(new NavCrumb("item", "An item")));
 
         var said = navigators.Select(nav => PanelPhrases.Apply("technical", nav)).ToList();
 
-        Assert.Equal(["Technical.", null], said);
+        Assert.Equal(["Technical.", "Technical."], said);
         Assert.Equal(Technical, headset.RootKeyOf(PanelTab.Transcript));
-        Assert.Equal(PanelTab.Checklist, headset.Tab);
+        Assert.Equal(PanelTab.Transcript, headset.Tab);
+        Assert.Null(PanelPhrases.Apply("technical", headset));
     }
 
     /// <summary>The switch route likewise.</summary>
@@ -162,12 +166,12 @@ public class TranscriptMirrorTests
     {
         var (window, headset, _) = Mirrored();
 
-        Assert.True(headset.Select(PanelTab.Checklist));
+        Assert.True(headset.Select(PanelTab.Commander));
 
         Assert.True(window.Show(Log));
 
         Assert.Equal(Log, headset.RootKeyOf(PanelTab.Transcript));
-        Assert.Equal(PanelTab.Checklist, headset.Tab);
+        Assert.Equal(PanelTab.Commander, headset.Tab);
 
         Assert.True(headset.Show(Log));
 
@@ -201,9 +205,9 @@ public class TranscriptMirrorTests
     {
         var (window, mini, _) = Following();
 
-        Assert.True(window.Select(PanelTab.Checklist));
+        Assert.True(window.Select(PanelTab.Commander));
 
-        Assert.Equal(PanelTab.Checklist, mini.Tab);
+        Assert.Equal(PanelTab.Commander, mini.Tab);
     }
 
     /// <summary>
@@ -215,7 +219,7 @@ public class TranscriptMirrorTests
     {
         var (window, mini, _) = Following();
 
-        window.Select(PanelTab.Checklist);
+        window.Select(PanelTab.Commander);
         window.Select(PanelTab.Transcript);
         Assert.True(window.SelectRoot(PanelTab.Transcript, Log));
 
@@ -228,12 +232,12 @@ public class TranscriptMirrorTests
     {
         var (window, mini, _) = Following();
 
-        mini.Select(PanelTab.Checklist);
+        mini.Select(PanelTab.Commander);
 
         Assert.True(window.Select(PanelTab.Settings));
 
         Assert.Equal(PanelTab.Settings, window.Tab);
-        Assert.Equal(PanelTab.Checklist, mini.Tab);
+        Assert.Equal(PanelTab.Commander, mini.Tab);
     }
 
     /// <summary>One-way, which is the half that protects a Commander in a headset.</summary>
@@ -242,7 +246,7 @@ public class TranscriptMirrorTests
     {
         var (window, mini, _) = Following();
 
-        Assert.True(mini.Select(PanelTab.Checklist));
+        Assert.True(mini.Select(PanelTab.Commander));
 
         Assert.Equal(PanelTab.Transcript, window.Tab);
     }
@@ -252,17 +256,17 @@ public class TranscriptMirrorTests
     {
         var (window, mini, _) = Following();
 
-        window.Select(PanelTab.Checklist);
+        window.Select(PanelTab.Commander);
         mini.Select(PanelTab.Transcript);
 
         Assert.Equal(PanelTab.Transcript, mini.Tab);
-        Assert.Equal(PanelTab.Checklist, window.Tab);
+        Assert.Equal(PanelTab.Commander, window.Tab);
 
         // The window moving again leads it back, which is the "until".
         window.Select(PanelTab.Transcript);
-        window.Select(PanelTab.Checklist);
+        window.Select(PanelTab.Commander);
 
-        Assert.Equal(PanelTab.Checklist, mini.Tab);
+        Assert.Equal(PanelTab.Commander, mini.Tab);
     }
 
     /// <summary>The transcript half is untouched and still symmetrical.</summary>

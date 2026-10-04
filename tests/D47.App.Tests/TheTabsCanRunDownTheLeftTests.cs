@@ -14,7 +14,7 @@ public class TheTabsCanRunDownTheLeftTests
 {
     private static readonly string[] TabNames =
     [
-        "TranscriptTab", "StoriesTab", "ChecklistTab", "AssetsTab",
+        "TranscriptTab", "StoriesTab", "CommanderTab", "AssetsTab",
         "NavigationTab", "SettingsTab",
     ];
 

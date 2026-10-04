@@ -240,9 +240,10 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         window.Close();
     }
 
-    /// <summary>A view state saved before the tabs were renamed reopens the renamed tab (#802).</summary>
+    /// <summary>A view state saved before the tabs were renamed reopens the renamed tab (#802, #805).</summary>
     [Theory]
     [InlineData("Adventures", PanelTab.Stories)]
+    [InlineData("Checklist", PanelTab.Commander)]
     [InlineData("Loadout", PanelTab.Assets)]
     [InlineData("Routing", PanelTab.Navigation)]
     public void ATabSavedUnderItsOldNameReopensUnderItsNewOne(string saved, PanelTab renamed)

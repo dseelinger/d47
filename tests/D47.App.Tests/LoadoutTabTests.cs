@@ -243,7 +243,7 @@ public class LoadoutTabTests
         // The name upper case, and the hull on its own line beneath it (#278).
         Assert.Contains("BAD IDEA", Text(surface.Panel));
 
-        surface.Panel.Tab = PanelTab.Checklist;
+        surface.Panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         surface.Panel.Tab = PanelTab.Assets;

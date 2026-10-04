@@ -392,10 +392,10 @@
                          Content="STORIES"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <RadioButton x:Name="ChecklistTab"
+            <RadioButton x:Name="CommanderTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
-                         Content="CHECKLIST"
+                         Content="COMMANDER"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
             <RadioButton x:Name="AssetsTab"

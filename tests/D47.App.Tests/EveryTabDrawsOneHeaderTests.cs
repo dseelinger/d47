@@ -34,7 +34,7 @@ public class EveryTabDrawsOneHeaderTests
 
     private static readonly PanelTab[] Every =
     [
-        PanelTab.Transcript, PanelTab.Stories, PanelTab.Checklist, PanelTab.Assets,
+        PanelTab.Transcript, PanelTab.Stories, PanelTab.Commander, PanelTab.Assets,
         PanelTab.Navigation, PanelTab.Settings,
     ];
 

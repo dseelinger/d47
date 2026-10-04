@@ -182,7 +182,7 @@ public class TheRoutingTabIsInTheHeadsetTests
 
         var order = Tabs(panel.Nav);
 
-        Assert.Equal(order.IndexOf(PanelTab.Checklist) + 1, order.IndexOf(PanelTab.Navigation));
+        Assert.Equal(order.IndexOf(PanelTab.Commander) + 1, order.IndexOf(PanelTab.Navigation));
     }
 
     private static List<PanelTab> Tabs(PanelNavigator nav) =>

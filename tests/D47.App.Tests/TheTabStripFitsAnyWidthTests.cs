@@ -23,7 +23,7 @@ public class TheTabStripFitsAnyWidthTests
             new NavCrumb("locker", "Suits and weapons"),
             new NavCrumb("engineers", "Engineers"));
 
-        panel.Furnish(PanelTab.Checklist, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
+        panel.Furnish(PanelTab.Commander, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
         panel.EnableSettings(() => new TextBlock());
         panel.EnableHelp(_ => { });
 
@@ -127,7 +127,7 @@ public class TheTabStripFitsAnyWidthTests
 
         Assert.Equal(D47.App.Controls.CopyGlyph.Name, Avalonia.Automation.AutomationProperties.GetName(copy));
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(copy.IsVisible);

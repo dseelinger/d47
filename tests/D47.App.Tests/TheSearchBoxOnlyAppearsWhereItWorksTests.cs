@@ -67,7 +67,7 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(BoxShown(panel));
@@ -98,7 +98,7 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
 
         Assert.False(BoxShown(panel));
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(BoxShown(panel));

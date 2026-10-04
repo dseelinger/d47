@@ -321,11 +321,11 @@ public class ScrollingTheReadingAboveTheFoldTests : IDisposable
         var fixture = Said();
 
         fixture.Panel.Furnish(
-            PanelTab.Checklist,
+            PanelTab.Commander,
             _ => new TextBlock { Text = "checklist" },
             new NavCrumb("checklist", "Checklist"));
 
-        fixture.Panel.Tab = PanelTab.Checklist;
+        fixture.Panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotEqual(PanelTab.Transcript, fixture.Panel.Tab);

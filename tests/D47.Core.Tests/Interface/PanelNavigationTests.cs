@@ -1,4 +1,4 @@
-using D47.Core.Interface;
+﻿using D47.Core.Interface;
 using Xunit;
 
 namespace D47.Core.Tests.Interface;
@@ -14,7 +14,7 @@ public class PanelNavigationTests
 
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
         nav.Register(PanelTab.Transcript, new NavCrumb("technical", "Technical"));
-        nav.Register(PanelTab.Checklist, new NavCrumb("checklist", "Checklist"));
+        nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
         nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
         nav.Register(PanelTab.Assets, new NavCrumb("locker", "Suits and weapons"));
 
@@ -52,9 +52,9 @@ public class PanelNavigationTests
     {
         var nav = Furnished();
 
-        nav.Register(PanelTab.Checklist, new NavCrumb("checklist", "Checklist"));
+        nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
 
-        Assert.Single(nav.Roots(PanelTab.Checklist));
+        Assert.Single(nav.Roots(PanelTab.Commander));
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public class PanelNavigationTests
         nav.Select(PanelTab.Assets);
         nav.Drill(new NavCrumb("ship:12", "Corsair"));
 
-        nav.Select(PanelTab.Checklist);
+        nav.Select(PanelTab.Commander);
         Assert.True(nav.AtRoot);
 
         nav.Select(PanelTab.Assets);
@@ -206,7 +206,7 @@ public class PanelNavigationTests
         Assert.True(nav.Take(new NavCrumb("choose:slot3", "Weapon 3")));
         Assert.True(nav.Modal);
 
-        Assert.False(nav.Select(PanelTab.Checklist));
+        Assert.False(nav.Select(PanelTab.Commander));
         Assert.False(nav.SelectRoot("locker"));
         Assert.False(nav.Drill(new NavCrumb("elsewhere", "Elsewhere")));
         Assert.False(nav.GoTo(new NavCrumb("ship:14", "Python")));
@@ -254,7 +254,7 @@ public class PanelNavigationTests
 
         Assert.Equal(0, raised);
 
-        Assert.True(nav.Select(PanelTab.Checklist));
+        Assert.True(nav.Select(PanelTab.Commander));
         Assert.Equal(1, raised);
     }
 
@@ -284,8 +284,8 @@ public class PanelNavigationTests
             new[] { "conversation", "technical", "checklist", "fleet", "locker" },
             nav.Destinations.Select(page => page.Root.Key));
 
-        Assert.Equal(PanelTab.Checklist, nav.Destinations[2].Tab);
-        Assert.Equal("Checklist", nav.Destinations[2].Describe());
+        Assert.Equal(PanelTab.Commander, nav.Destinations[2].Tab);
+        Assert.Equal("Checklist (Commander)", nav.Destinations[2].Describe());
         Assert.Equal("Suits and weapons (Assets)", nav.Destinations[^1].Describe());
     }
 

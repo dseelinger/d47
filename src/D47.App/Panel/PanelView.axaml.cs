@@ -269,7 +269,7 @@ public partial class PanelView : UserControl
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
         _tabs[PanelTab.Stories] = StoriesTab;
-        _tabs[PanelTab.Checklist] = ChecklistTab;
+        _tabs[PanelTab.Commander] = CommanderTab;
         _tabs[PanelTab.Assets] = AssetsTab;
         _tabs[PanelTab.Navigation] = NavigationTab;
         _tabs[PanelTab.Settings] = SettingsTab;
@@ -582,7 +582,7 @@ public partial class PanelView : UserControl
         ChecklistPage? page = null;
 
         Furnish(
-            PanelTab.Checklist,
+            PanelTab.Commander,
             crumb => crumb.Key switch
             {
                 ChecklistPage.SuggestionsKey => page?.BuildSuggestions()

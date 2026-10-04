@@ -34,10 +34,10 @@ public class TheOverlayFollowsTheWindowTests
         window.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        window.Tab = PanelTab.Checklist;
+        window.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Checklist, window.Tab);
+        Assert.Equal(PanelTab.Commander, window.Tab);
         Assert.Equal(PanelTab.Stories, follower.Tab);
     }
 
@@ -87,7 +87,7 @@ public class TheOverlayFollowsTheWindowTests
 
         window.EnableSettings(() => new TextBlock { Text = "settings" });
         window.Furnish(
-            PanelTab.Checklist, _ => new TextBlock { Text = "checklist" },
+            PanelTab.Commander, _ => new TextBlock { Text = "checklist" },
             new NavCrumb("checklist", "Checklist"));
 
         var adventures = AdventureFixture.Surface();

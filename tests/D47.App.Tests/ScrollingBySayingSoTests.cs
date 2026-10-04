@@ -123,11 +123,11 @@ public class ScrollingBySayingSoTests
         }
 
         panel.Furnish(
-            PanelTab.Checklist,
+            PanelTab.Commander,
             _ => new ScrollViewer { Content = tall },
             new NavCrumb("checklist", "Checklist"));
 
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         var transcript = panel.GetControl<ScrollViewer>("TranscriptScroller").Offset.Y;

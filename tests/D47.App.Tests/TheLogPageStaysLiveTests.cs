@@ -168,14 +168,14 @@ public class TheLogPageStaysLiveTests
     {
         var (window, view, _) = Open(() => "[12:00:00] steady\n");
 
-        view.Furnish(PanelTab.Checklist, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
+        view.Furnish(PanelTab.Commander, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
 
         view.Page = TranscriptPage.Log;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(view.FollowingLog);
 
-        view.Tab = PanelTab.Checklist;
+        view.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(view.FollowingLog, "another tab's page left the log being read behind it.");

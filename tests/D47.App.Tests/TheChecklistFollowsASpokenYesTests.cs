@@ -36,7 +36,7 @@ public class TheChecklistFollowsASpokenYesTests
         var window = new Window { Content = panel, Width = 1600, Height = 700 };
 
         window.Show();
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, checklists);

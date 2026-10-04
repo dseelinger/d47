@@ -49,12 +49,12 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
     {
         var (_, overlay) = Both();
 
-        Assert.True(overlay.Nav.Has(PanelTab.Checklist));
+        Assert.True(overlay.Nav.Has(PanelTab.Commander));
 
-        overlay.Nav.Select(PanelTab.Checklist);
+        overlay.Nav.Select(PanelTab.Commander);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Checklist, overlay.Nav.Tab);
+        Assert.Equal(PanelTab.Commander, overlay.Nav.Tab);
 
         overlay.Close();
     }
@@ -81,10 +81,10 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
         Assert.Equal(PanelTab.Transcript, panel.Tab);
 
         // While the checklist, at the same size on the same surface, is taken.
-        panel.Nav.Select(PanelTab.Checklist);
+        panel.Nav.Select(PanelTab.Commander);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Checklist, panel.Tab);
+        Assert.Equal(PanelTab.Commander, panel.Tab);
     }
 
     /// <summary>
@@ -108,7 +108,7 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
         panel.Classes.Add("output-only");
 
         panel.EnableChecklist(checklists);
-        panel.Nav.Select(PanelTab.Checklist);
+        panel.Nav.Select(PanelTab.Commander);
 
         var window = new Avalonia.Controls.Window
         {
@@ -120,7 +120,7 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Checklist, panel.Tab);
+        Assert.Equal(PanelTab.Commander, panel.Tab);
 
         window.CaptureRenderedFrame()!.Save(
             Path.Combine(TestSurface.CaptureDirectory, "overlay-checklist.png"),

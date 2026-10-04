@@ -205,7 +205,7 @@ public class TheFleetTabIsInTheHeadsetTests
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));
         Assert.Contains(PanelTab.Assets, Tabs(panel.Nav));
 
-        Assert.Equal([PanelTab.Transcript, PanelTab.Checklist, PanelTab.Assets], Tabs(panel.Nav));
+        Assert.Equal([PanelTab.Transcript, PanelTab.Commander, PanelTab.Assets], Tabs(panel.Nav));
     }
 
     /// <summary>Every root the tab has, drawn — the headset's own copy, through the real rasterise.</summary>

@@ -26,13 +26,13 @@ nav_order: 111
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">put "buy a fuel scoop" on my list</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or open the Checklist tab and press + to type one in.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or open Checklist on the Commander tab and press + to type one in.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Routes, engineering plans and goals land here on their own.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Tick things off by saying so.</h2>
-<svg viewBox="0 0 880 232" role="img" aria-label="The checklist tab, with items in three groups and one of them ticked">
+<svg viewBox="0 0 880 232" role="img" aria-label="The checklist page, with items in three groups and one of them ticked">
  <rect x="20" y="16" width="840" height="200" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="15" font-weight="700" fill="var(--text-muted)">HERE</text>
  <rect x="44" y="66" width="22" height="22" fill="var(--accent)"/>
@@ -218,7 +218,7 @@ six still open.
 **Deleting is changing your mind.** A different act, and it can happen whether or not the item was
 ever finished.
 
-**"Delete completed items"**, on the Checklist tab's control bar, does that in bulk: every Done
+**"Delete completed items"**, on the Checklist page's control bar, does that in bulk: every Done
 line, whatever list it is in or where it came from, gone in one confirmed press. It looks at the
 whole checklist rather than what the current filter or search is showing, and is greyed out when
 nothing is Done. A plan proposal still waiting to be accepted loses the same lines from what it
@@ -268,7 +268,7 @@ Accepting is unreachable from the AI entirely. Say it, or press the button:
 after a turn that did not resolve it — the full sentence the first time, a short *"one proposal is
 still waiting on you"* for the next two, and after that nothing.
 
-Going quiet is not forgetting. It stays on the Checklist tab, with its count on the bar, until you
+Going quiet is not forgetting. It stays on the Checklist page, with its count on the bar, until you
 answer it. What stops is the talking.
 
 This used to repeat the full sentence after *every* turn, forever, which is how a Commander learns
@@ -282,9 +282,9 @@ the checklist lines use, so you hear *"7A Shield Generator"* rather than `Slot01
 revision still names exactly what it changes. The slot-by-slot detail is what the proposal view on
 the panel is for.
 
-### The Checklist tab
+### The Checklist page
 
-**A tab of the panel**, on the bar beside Transcript — and on the headset panel too, which is the
+**The first page of the Commander tab**, on the bar after Stories — and on the headset panel too, which is the
 whole reason it moved: it used to be a separate window, and a window cannot appear in VR at all,
 so a Commander with a headset on could not see their checklist.
 
@@ -604,7 +604,7 @@ surface: protected is a property of the caller, not of the modality.
 
 **Ordering, on the same boundary.** The order is your answer to what you are working on next,
 which is not a thing an in-game message gets to rearrange — so this is reachable from the
-Checklist tab and from the phrases below, and refused if the AI asks for it.
+Checklist page and from the phrases below, and refused if the AI asks for it.
 
 Say **"move it up"**, **"move it down"**, **"move it to the top"** or **"put it at the bottom"**.
 *It* means the selected line — the one the tab is drawing a highlight round, which is also the line

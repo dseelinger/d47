@@ -152,7 +152,7 @@ public class TheChecklistIsInTheHeadsetTests
         var (panel, view, _, _) = Headset();
         using var _disposable = panel;
 
-        Assert.Equal(PanelTab.Checklist, view.Tab);
+        Assert.Equal(PanelTab.Commander, view.Tab);
 
         // Away and back, so the phrase is answered rather than merely not refused: a tab nobody furnished has
         // no root for a phrase to land on, and the answer is the tab's own name.
@@ -161,7 +161,7 @@ public class TheChecklistIsInTheHeadsetTests
 
         // And the tab that stayed behind.
         Assert.Null(PanelPhrases.Apply("show me the loadout", panel.Nav));
-        Assert.Equal(PanelTab.Checklist, view.Tab);
+        Assert.Equal(PanelTab.Commander, view.Tab);
     }
 
     /// <summary>

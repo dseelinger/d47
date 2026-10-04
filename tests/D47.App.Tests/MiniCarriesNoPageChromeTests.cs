@@ -54,7 +54,7 @@ public class MiniCarriesNoPageChromeTests
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(panel)!;
 
-        view.Tab = PanelTab.Checklist;
+        view.Tab = PanelTab.Commander;
 
         Serve(panel);
 

@@ -40,7 +40,7 @@ public class TheSearchBoxSurvivesAColdStartTests
         // Selected before the panel is under a shown window, so the strip attaches to the visual tree
         // — and draws for the first time — only once Show() runs below, after this method already
         // asked whether the page filters.
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
 
         var window = new Window { Content = panel, Width = 1200, Height = 700 };
 

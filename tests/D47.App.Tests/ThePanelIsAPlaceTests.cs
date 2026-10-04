@@ -43,7 +43,7 @@ public class ThePanelIsAPlaceTests
 
         Assert.True(panel.GetControl<RadioButton>("TranscriptTab").IsVisible);
 
-        foreach (var name in new[] { "ChecklistTab", "AssetsTab", "SettingsTab" })
+        foreach (var name in new[] { "CommanderTab", "AssetsTab", "SettingsTab" })
         {
             Assert.False(panel.GetControl<RadioButton>(name).IsVisible, name);
         }

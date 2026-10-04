@@ -9,8 +9,8 @@ public enum PanelTab
     /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
     Stories,
 
-    /// <summary>What the Commander is working on, in their own order (Phase 17).</summary>
-    Checklist,
+    /// <summary>The Commander's own record, starting with the checklist (#805).</summary>
+    Commander,
 
     /// <summary>Ships, suits, the carrier, materials and engineers (Phases 26-28).</summary>
     Assets,
@@ -31,6 +31,7 @@ public static class PanelTabNames
     private static readonly Dictionary<string, PanelTab> Former = new(StringComparer.Ordinal)
     {
         ["Adventures"] = PanelTab.Stories,
+        ["Checklist"] = PanelTab.Commander,
         ["Loadout"] = PanelTab.Assets,
         ["Routing"] = PanelTab.Navigation,
     };
@@ -83,8 +84,8 @@ public sealed record PanelDestination(PanelTab Tab, NavCrumb Root)
 {
     /// <summary>
     /// How it reads in a list of every destination: the root's word, and the tab when the word alone
-    /// would not say which tab — "Technical (Transcript)", but "Checklist" rather than "Checklist
-    /// (Checklist)".
+    /// would not say which tab — "Technical (Transcript)", but "Stories" rather than "Stories
+    /// (Stories)".
     /// </summary>
     public string Describe() =>
         string.Equals(Root.Word, Tab.ToString(), StringComparison.OrdinalIgnoreCase)

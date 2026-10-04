@@ -77,7 +77,7 @@ public class TheReworkedChromeRendersToACaptureTests
             Plans(),
             () => true));
 
-        panel.Furnish(PanelTab.Checklist, _ => new TextBlock { Text = "checklist" }, new NavCrumb("checklist", "Checklist"));
+        panel.Furnish(PanelTab.Commander, _ => new TextBlock { Text = "checklist" }, new NavCrumb("checklist", "Checklist"));
         panel.Furnish(
             PanelTab.Assets,
             crumb => new TextBlock { Text = crumb.Word },
@@ -166,7 +166,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void AFurnishedPage()
     {
-        var (window, _) = Open(1200, PanelTab.Checklist);
+        var (window, _) = Open(1200, PanelTab.Commander);
 
         Save(window, "chrome-checklist.png");
         window.Close();

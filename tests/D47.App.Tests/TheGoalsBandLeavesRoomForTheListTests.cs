@@ -46,7 +46,7 @@ public class TheGoalsBandLeavesRoomForTheListTests
         var window = _window = new Window { Content = panel, Width = 1200, Height = height };
 
         window.Show();
-        panel.Tab = PanelTab.Checklist;
+        panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, checklists);
