@@ -241,17 +241,9 @@ under eight hours old, a large pad, a station within 50,000 light seconds of the
 10,000 in stock, no surface stations, no carriers. Every one of those is now a knob on the galaxy
 search's `find_nearest_station`, and this is the one place they are set together.
 
-Two ways to run it, one code path:
-
-- **By voice** \u2014 *"community goal search"* or *"CG search"*. The phrase is matched whole and first
-  by the keyword router and pointed at the galaxy tool with the arguments already filled in, so it
-  costs no tool-surface bytes and never goes through a model to be reinterpreted.
-- **From the Navigation tab** \u2014 the **Community Goal** page, beside Plan, Progress, Course and Market,
-  has the commodity in a box and a **Run** button. The commodity is the one field that moves;
-  the rest is written on the page as the fixed shape of the search.
-
-Saying *"refresh"* while that page is showing runs it again. It is the first refresh command in
-d47, and it is kept to that page so the bare word cannot be claimed by this forever.
+Say *"community goal search"* or *"CG search"* to run it. The phrase is matched whole and first
+by the keyword router and pointed at the galaxy tool with the arguments already filled in, so it
+costs no tool-surface bytes and never goes through a model to be reinterpreted.
 
 #### Where it measures from
 
@@ -265,7 +257,7 @@ a contribution or a sign-up is the evidence — and otherwise the most recently 
 whose `Expiry` has passed is never the origin. With no live goal there is nothing else to measure
 from, so it falls back to wherever the ship is.
 
-**Both the page and the spoken answer say which it was**, because "nearest" reads the same
+**The spoken answer says which it was**, because "nearest" reads the same
 whichever place it was asked from:
 
 ```text
@@ -276,8 +268,7 @@ on your clipboard.
 and the heading above the ranking reads *"Palladium near Ega, the goal's system, nearest first"*.
 
 To ask it from the ship on purpose — what is close enough to reach right now — say **"CG search
-from here"** (or *"community goal search from here"*, and *"refresh from here"* while the page is
-up). That is not a setting: which of the two questions you want is a property of the sentence, not
+from here"** (or *"community goal search from here"*). That is not a setting: which of the two questions you want is a property of the sentence, not
 of the installation. The clipboard and *"set a course"* keep working from wherever the ship is
 either way, since plotting is the ship's business — but the **distance column is measured from
 whatever the search was asked from**, the same number that ranks the list, and the heading above
@@ -304,7 +295,7 @@ What the goal's commodity has made or lost, **net of what the cargo cost** \u201
 zero \u2014 cargo that was never bought \u2014 it falls back to the average of your own `MarketBuy` events
 for the commodity, and failing that the sale is gross, which is the accurate figure for a mined load.
 
-Three stretches, all on the Community Goal page; only the first is spoken automatically, and the
+Three stretches; only the first is spoken automatically, and the
 other two are answers to a question
 ([#332](https://github.com/dseelinger/d47/issues/332), [#340](https://github.com/dseelinger/d47/issues/340),
 [#342](https://github.com/dseelinger/d47/issues/342)):
@@ -342,8 +333,8 @@ Palladium: 3 million up this week \u2014 3 sales, 300 tonnes, 15,000,000 cr in a
 
 #### The week boundary {#week-boundary}
 
-Which day, UTC, and which hour "this week" turns over on \u2014 two advanced rows, Thursday and 07:00
-by default. Frontier has moved this boundary before, so it is a setting rather than a constant; it
+Which day, UTC, and which hour "this week" turns over on \u2014 two advanced rows under Community goal
+sales on the Settings page, Thursday and 07:00 by default. Frontier has moved this boundary before, so it is a setting rather than a constant; it
 is a fact about their schedule and not about d47.
 
 ### Tools

@@ -45,22 +45,6 @@ public sealed class CommunityGoalSearch
         "run the cg search from here",
     ];
 
-    /// <summary>What reruns it while the page is up.</summary>
-    public static readonly IReadOnlyList<string> RefreshSpellings =
-    [
-        "refresh",
-        "refresh that",
-        "refresh the search",
-    ];
-
-    /// <summary>The refresh phrases that rerun it from the ship instead of from the goal (#331).</summary>
-    public static readonly IReadOnlyList<string> RefreshFromHereSpellings =
-    [
-        "refresh from here",
-        "refresh that from here",
-        "refresh the search from here",
-    ];
-
     private readonly Lock _gate = new();
 
     private string _commodity = DefaultCommodity;
@@ -84,12 +68,6 @@ public sealed class CommunityGoalSearch
             }
         }
     }
-
-    /// <summary>
-    /// Whether the Community Goal page is on screen right now, which is when "refresh" means this
-    /// search.
-    /// </summary>
-    public Func<bool> Showing { get; set; } = () => false;
 
     /// <summary>The Commander's community goal board, for the system to measure from (#331).</summary>
     public Func<CommunityGoalBoard?> Board { get; set; } = () => null;
@@ -147,10 +125,7 @@ public sealed class CommunityGoalSearch
         return string.Equals(mine, theirs, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// The router's vocabulary for this search: the run phrases always, the refresh phrases only while
-    /// the page is showing.
-    /// </summary>
+    /// <summary>The router's vocabulary for this search.</summary>
     public IEnumerable<DynamicCommand> Phrases()
     {
         var fromGoal = Values(fromShip: false);
@@ -162,21 +137,6 @@ public sealed class CommunityGoalSearch
         }
 
         foreach (var phrase in FromHereSpellings)
-        {
-            yield return new DynamicCommand(phrase, GalaxyCapability.Id, MaterialSeam.MarketTool, fromShip);
-        }
-
-        if (!Showing())
-        {
-            yield break;
-        }
-
-        foreach (var phrase in RefreshSpellings)
-        {
-            yield return new DynamicCommand(phrase, GalaxyCapability.Id, MaterialSeam.MarketTool, fromGoal);
-        }
-
-        foreach (var phrase in RefreshFromHereSpellings)
         {
             yield return new DynamicCommand(phrase, GalaxyCapability.Id, MaterialSeam.MarketTool, fromShip);
         }

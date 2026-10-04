@@ -36,9 +36,6 @@ public sealed record RoutingSurface(
     // The jump range of the ship being flown, for the placeholder that says d47 will supply it (#253).
     Func<double?>? JumpRange = null,
 
-    // The Community Goal page's own needs (#296): the saved search, the ledger, and who and when to ask them
-    // about.
-    CommunityGoalSurface? CommunityGoal = null,
     D47.Core.Capabilities.Builtin.IClipboard? Clipboard = null,
 
     // The Trade route page's own saved values, read and written through this (#311).
@@ -50,25 +47,6 @@ public sealed record RoutingSurface(
     Func<CommanderGameState?>? Commander = null,
     Func<IReadOnlyCollection<string>>? BookmarkPhrasesTaken = null);
 
-/// <summary>What the Community Goal page reads and drives (#296).</summary>
-/// <param name="Search">The saved query — its commodity is the one field the page edits.</param>
-/// <param name="Ledger">What the commodity has made or lost, folded from the journals.</param>
-/// <param name="Commander">
-/// The Frontier id the ledger is asked about; null asks about the last one seen.
-/// </param>
-/// <param name="Now">The clock, injected like everywhere else the ledger is measured from.</param>
-/// <param name="Week">
-/// The Elite week a moment falls in (#332), reading the boundary setting — a function rather than the
-/// page calling <see cref="CommodityLedger.Week"/> itself, so the page needs no settings dependency of
-/// its own for two numbers it only ever passes straight through.
-/// </param>
-public sealed record CommunityGoalSurface(
-    CommunityGoalSearch Search,
-    CommodityLedger Ledger,
-    Func<string?> Commander,
-    Func<DateTimeOffset> Now,
-    Func<DateTimeOffset, LedgerWindow> Week);
-
 /// <summary>The Navigation tab (Phase 37).</summary>
 public static class RoutingPages
 {
@@ -78,14 +56,8 @@ public static class RoutingPages
     /// <summary>The route being flown, read from the file Elite writes locally.</summary>
     public const string ProgressRoot = "routing.progress";
 
-    /// <summary>A system name onto the clipboard, and into the galaxy map.</summary>
-    public const string CourseRoot = "routing.course";
-
     /// <summary>Where to buy a commodity, or where to dump one (Phase 49).</summary>
     public const string MarketRoot = "routing.market";
-
-    /// <summary>The Community Goal supply search and its ledger (#296).</summary>
-    public const string CommunityGoalRoot = "routing.communityGoal";
 
     /// <summary>The Trade route page: the plotter's saved hops, jumps and switches (#311).</summary>
     public const string TradeRoot = "routing.trade";
@@ -105,8 +77,7 @@ public static class RoutingPages
         NavCrumb crumb,
         RoutingSurface surface,
         PanelNavigator nav,
-        PanelPrompts prompts,
-        Func<Control?>? settingsStrip = null)
+        PanelPrompts prompts)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
@@ -116,9 +87,7 @@ public static class RoutingPages
         return crumb.Key switch
         {
             PlanRoot => Plan(surface, nav),
-            CourseRoot => Course(surface),
             MarketRoot => Market(surface),
-            CommunityGoalRoot => CommunityGoal(surface, settingsStrip),
             TradeRoot => Trade(surface, nav),
             BookmarksRoot => Bookmarks(surface, prompts),
 
@@ -139,13 +108,6 @@ public static class RoutingPages
                 surface.Here,
                 surface.JumpRange)
             : Missing("Plotting is not available on this surface.");
-
-    private static Control Course(RoutingSurface surface) =>
-        surface.Registry is { } registry
-            ? new RouteCoursePage(
-                registry,
-                () => surface.Route() is { IsPlotted: true } route ? route.Hops[^1].StarSystem : null)
-            : Missing("Setting a course is not available on this surface.");
 
     private static Control Market(RoutingSurface surface) =>
         surface is { Registry: { } registry, Commodities: { } board }
@@ -172,19 +134,6 @@ public static class RoutingPages
         surface is { Bookmarks: { } store, Commander: { } commander }
             ? new BookmarksPage(store, commander, surface.BookmarkPhrasesTaken ?? (() => []), prompts, Copy(surface), surface.Registry)
             : Missing("Bookmarks are not available on this surface.");
-
-    private static Control CommunityGoal(RoutingSurface surface, Func<Control?>? settingsStrip) =>
-        surface is { Registry: { } registry, Commodities: { } board, CommunityGoal: { } goal }
-            ? new RouteCommunityGoalPage(
-                registry,
-                board,
-                goal,
-                surface.LookupsEnabled ?? (() => false),
-                surface.OpenSettings,
-                Copy(surface),
-                settingsStrip?.Invoke(),
-                surface.Here)
-            : Missing("The Community Goal search is not available on this surface.");
 
     private static Control Result(NavCrumb crumb, RoutingSurface surface)
     {

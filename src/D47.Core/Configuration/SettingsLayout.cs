@@ -89,9 +89,10 @@ public static class SettingsLayout
     /// beside the microphone, wake word and corrections rows (16 entries, the hosted providers' keys one
     /// family entry of which at most one row applies at a time, and every speech-recognition row
     /// Advanced); <c>chatter</c> holds the scene chatter row beside NPC chatter as well as the seven
-    /// messages rows and the accent row (15 entries, the chatter rows Advanced).
+    /// messages rows and the accent row (15 entries, the chatter rows Advanced); <c>plans-and-stories</c>
+    /// holds the callout toggles beside the two week-boundary rows (16 entries, the week rows Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input", "chatter"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input", "chatter", "plans-and-stories"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -300,7 +301,7 @@ public static class SettingsLayout
                     [],
                     false,
                     [
-                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("knowledge.galaxy")]),
+                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("knowledge.galaxy"), E("knowledge.inaraKey")]),
                     ]),
                 new SettingsPlace(
                     "turn-fails",
@@ -506,6 +507,8 @@ public static class SettingsLayout
                                 E("callouts.adventure"),
                                 E("callouts.backstoryNudge", under: true),
                                 E("callouts.communityGoalSales"),
+                                E("callouts.weekBoundaryDay", under: true),
+                                E("callouts.weekBoundaryHourUtc", under: true),
                                 E("callouts.missions"),
                                 E("callouts.domain"),
                                 E("callouts.tradingMode"),
@@ -753,16 +756,6 @@ public static class SettingsLayout
     [
         new SettingsTabPlace(
             "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art")]),
-        new SettingsTabPlace(
-            "routing-community-goal",
-            "routing.communityGoal",
-            true,
-            "Navigation › Community Goal",
-            [
-                E("knowledge.inaraKey"),
-                E("callouts.weekBoundaryDay"),
-                E("callouts.weekBoundaryHourUtc", under: true),
-            ]),
         new SettingsTabPlace(
             "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads")]),
         new SettingsTabPlace(

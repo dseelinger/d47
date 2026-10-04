@@ -42,6 +42,20 @@ public class SettingsLayoutTests
     }
 
     [Fact]
+    public void TheCommunityGoalRowsLiveOnTheSettingsPageTests()
+    {
+        var groups = SettingsLayout.Areas
+            .SelectMany(area => area.Places)
+            .SelectMany(place => place.Groups)
+            .ToDictionary(group => group.Title, group => group.Entries.Select(entry => entry.Key).ToArray());
+
+        Assert.Contains("knowledge.inaraKey", groups["Outside sources"]);
+        Assert.Contains("callouts.weekBoundaryDay", groups["Plan and story callouts"]);
+        Assert.Contains("callouts.weekBoundaryHourUtc", groups["Plan and story callouts"]);
+        Assert.DoesNotContain(SettingsLayout.Tabs, tab => tab.Id == "routing-community-goal");
+    }
+
+    [Fact]
     public void EveryEntryResolvesToAtLeastOneRowTests()
     {
         var surface = Surface();

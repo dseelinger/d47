@@ -44,8 +44,7 @@ public class TheRoutingTabTests
 
         panel.EnableRouting(
             new RoutingSurface(() => route, () => here),
-            plan: false,
-            course: false);
+            plan: false);
 
         return Laid(panel);
     }
@@ -215,11 +214,11 @@ public class TheRoutingTabTests
     }
 
     /// <summary>
-    /// Three readings of one journey, in one tab and one mode control — the same collapse Transcript
+    /// Two readings of one journey, in one tab and one mode control — the same collapse Transcript
     /// makes for Conversation, Technical and the log file.
     /// </summary>
     [AvaloniaFact]
-    public void TheTabCarriesThreeModesRatherThanThreeTabs()
+    public void TheTabCarriesPlanAndProgressRatherThanATabEach()
     {
         var folder = Scratch();
 
@@ -229,7 +228,7 @@ public class TheRoutingTabTests
 
             var words = panel.Nav.Roots(PanelTab.Navigation).Select(root => root.Word).ToArray();
 
-            Assert.Equal(["Plan", "Progress", "Course"], words);
+            Assert.Equal(["Plan", "Progress"], words);
 
             // And exactly one tab was spent on them.
             Assert.True(panel.GetControl<RadioButton>("NavigationTab").IsVisible);
@@ -790,36 +789,6 @@ public class TheRoutingTabTests
             Dispatcher.UIThread.RunJobs();
 
             Assert.Contains("NEUTRON PLOTTER", TextOf(panel));
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
-    }
-
-    /// <summary>
-    /// Course opens on the system the Commander is already going to, which is the one they usually
-    /// want, and says that the clipboard is the half that always works.
-    /// </summary>
-    [AvaloniaFact]
-    public void CourseStartsFromWhereTheRouteEnds()
-    {
-        var folder = Scratch();
-
-        try
-        {
-            var panel = FullyFurnished(Route(Hop("Sol"), Hop("Colonia", 4)), Book(folder));
-
-            panel.Tab = PanelTab.Navigation;
-            panel.Nav.SelectRoot(RoutingPages.CourseRoot);
-            Dispatcher.UIThread.RunJobs();
-
-            var boxes = panel.GetVisualDescendants().OfType<TextBox>().Select(box => box.Text).ToArray();
-
-            Assert.Contains("Colonia", boxes);
-            Assert.Contains(
-                TextOf(panel),
-                text => text.Contains("clipboard first", StringComparison.Ordinal));
         }
         finally
         {

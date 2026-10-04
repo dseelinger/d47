@@ -54,12 +54,6 @@ public partial class MainWindow : Window
     /// <summary>Whether the input waiting in the ask box got there by being spoken.</summary>
     private bool _spoken;
 
-    /// <summary>Whether the window is actually on screen — not minimised, and visible.</summary>
-    private volatile bool _onScreen = true;
-
-    /// <summary>Reads the two window halves on the UI thread, for <see cref="_onScreen"/>.</summary>
-    private void SampleOnScreen() => _onScreen = WindowState != WindowState.Minimized && IsVisible;
-
     public MainWindow() : this(host: null)
     {
     }
@@ -257,17 +251,6 @@ public partial class MainWindow : Window
                 // What the Neutron Plotter's jump range placeholder quotes (#253).
                 () => host.GameState.Active?.Ship.MaxJumpRange,
 
-                // And the Community Goal page (#296): the saved search, its ledger, and who and when to ask
-                // them about.
-                new CommunityGoalSurface(
-                    host.CommunityGoalSearch,
-                    host.CommodityLedger,
-                    () => host.GameState.Active?.Identity.FrontierId,
-                    () => DateTimeOffset.Now,
-                    at => CommodityLedger.Week(
-                        at,
-                        host.Settings.Current.Callouts.WeekBoundaryDay,
-                        host.Settings.Current.Callouts.WeekBoundaryHourUtc)),
                 Clipboard: host.Clipboard,
 
                 // The Trade route page's own saved values (#311).
@@ -279,25 +262,7 @@ public partial class MainWindow : Window
                 Commander: () => host.GameState.Active,
                 BookmarkPhrasesTaken: host.BookmarkPhrasesTaken);
 
-            Panel.EnableRouting(
-                Routing, settingsStrip: () => BuildSettingsStrip(RoutingPages.CommunityGoalRoot));
-
-            // "Refresh" by voice means this search only while its page is what the window is showing (#296),
-            // and the window is the one thing that knows that.
-            SampleOnScreen();
-            PropertyChanged += (_, change) =>
-            {
-                if (change.Property == WindowStateProperty || change.Property == IsVisibleProperty)
-                {
-                    SampleOnScreen();
-                }
-            };
-
-            host.CommunityGoalSearch.Showing = () =>
-                Panel.Nav.Tab == PanelTab.Navigation
-                && Panel.Nav.Root.Key == RoutingPages.CommunityGoalRoot
-                && !Panel.Nav.Modal
-                && _onScreen;
+            Panel.EnableRouting(Routing);
 
             // And the same window is the one with a keyboard, so it is the one that gets a search box.
             Panel.EnableSearch();

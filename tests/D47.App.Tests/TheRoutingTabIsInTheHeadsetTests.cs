@@ -48,13 +48,7 @@ public class TheRoutingTabIsInTheHeadsetTests
             null,
             new CommodityBoard(),
             () => 34.5,
-            new CommunityGoalSurface(
-                new CommunityGoalSearch { Showing = () => true },
-                new CommodityLedger(),
-                () => "F1",
-                () => new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
-                at => CommodityLedger.Week(at, DayOfWeek.Thursday, 7)),
-            clipboard);
+            Clipboard: clipboard);
 
     private static ChecklistService Checklists(string folder) =>
         new(
@@ -192,9 +186,7 @@ public class TheRoutingTabIsInTheHeadsetTests
     [AvaloniaTheory]
     [InlineData(RoutingPages.PlanRoot)]
     [InlineData(RoutingPages.ProgressRoot)]
-    [InlineData(RoutingPages.CourseRoot)]
     [InlineData(RoutingPages.MarketRoot)]
-    [InlineData(RoutingPages.CommunityGoalRoot)]
     public void EveryRootRastersInTheHeadset(string root)
     {
         var (panel, pixels, _) = Headset();

@@ -144,8 +144,7 @@ section's rows, and its **?** opens the page for the part of Directive 47 it is 
 
 A few rows are on the tab they concern instead, under **Settings for this page**: Rescan my
 journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices on Asset Mgmt ›
-Carrier, the Inara API key and the week's turn on Navigation › Community Goal, and Notable places for
-adventures on Stories.
+Carrier, and Notable places for adventures on Stories.
 
 ### Ask for it
 

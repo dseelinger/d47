@@ -138,13 +138,6 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
             Mode = height < 400 ? PanelMode.Mini : PanelMode.Full,
         };
 
-        var goal = new CommunityGoalSurface(
-            new CommunityGoalSearch { Showing = () => true },
-            new CommodityLedger(),
-            () => "F1234",
-            () => DateTimeOffset.UtcNow,
-            at => CommodityLedger.Week(at, DayOfWeek.Thursday, 7));
-
         panel.EnableRouting(new RoutingSurface(
             Route,
             () => Here,
@@ -154,7 +147,6 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
             () => { },
             Board(),
             JumpRange: () => 64.2,
-            CommunityGoal: goal,
             Clipboard: new D47.Core.Capabilities.Builtin.RecordingClipboard(),
             Settings: settings));
 
@@ -200,9 +192,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
                  {
                      RoutingPages.ProgressRoot,
                      RoutingPages.PlanRoot,
-                     RoutingPages.CourseRoot,
                      RoutingPages.MarketRoot,
-                     RoutingPages.CommunityGoalRoot,
                      RoutingPages.TradeRoot,
                  })
         {
@@ -278,13 +268,11 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
 
     [Theory]
     [InlineData("RoutingPages.cs")]
-    [InlineData("RouteCoursePage.cs")]
     [InlineData("RoutePlanPage.cs")]
     [InlineData("RoutePlanResultPage.cs")]
     [InlineData("RouteProgressPage.cs")]
     [InlineData("RouteTradePage.cs")]
     [InlineData("RouteMarketPage.cs")]
-    [InlineData("RouteCommunityGoalPage.cs")]
     [InlineData("RouteMini.cs")]
     public void TheRoutingSourceDrawsOnlyInTheNewTokens(string file)
     {

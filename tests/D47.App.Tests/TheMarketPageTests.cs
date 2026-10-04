@@ -70,8 +70,7 @@ public class TheMarketPageTests
                 Commodities: board,
                 Clipboard: clipboard),
             plan: false,
-            progress: false,
-            course: false);
+            progress: false);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
@@ -302,8 +301,7 @@ public class TheMarketPageTests
                 OpenSettings: null,
                 Commodities: new CommodityBoard()),
             plan: false,
-            progress: false,
-            course: false);
+            progress: false);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();

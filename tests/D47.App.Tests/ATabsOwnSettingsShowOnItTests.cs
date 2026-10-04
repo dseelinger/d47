@@ -117,30 +117,6 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
-    /// <summary>
-    /// Every row on the Community Goal tab place is Advanced, so this is also the fold test: none of
-    /// them are hidden even though "Show every setting" is off.
-    /// </summary>
-    [AvaloniaFact]
-    public void TheStripsRowsAreNeverFolded()
-    {
-        var (settings, viewState, paths) = TestSurface.Create();
-
-        Assert.False(settings.Current.Ui.ShowEverySetting);
-
-        var (view, window) = OpenStrip(settings, viewState, paths, "routing-community-goal");
-
-        var texts = view.GetVisualDescendants().OfType<TextBlock>()
-            .Select(block => block.Text)
-            .ToList();
-
-        Assert.Contains("Inara API key", texts);
-        Assert.Contains("The week turns on", texts);
-        Assert.Contains("…at this hour, UTC", texts);
-
-        window.Close();
-    }
-
     /// <summary>The cap tracks the host page's height, not a fixed pixel value (#340).</summary>
     [AvaloniaFact]
     public void AnOpenStripIsNeverTallerThanHalfThePage()
@@ -280,72 +256,13 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
-    [AvaloniaFact]
-    public void TheCommunityGoalPageDrawsTheGivenStripAndKeepsItAcrossARefresh()
-    {
-        var board = new CommodityBoard();
-
-        var goal = new CommunityGoalSurface(
-            new CommunityGoalSearch(),
-            new CommodityLedger(),
-            () => null,
-            () => DateTimeOffset.UtcNow,
-            at => CommodityLedger.Week(at, DayOfWeek.Thursday, 7));
-
-        var routing = new RoutingSurface(
-            () => new NavRoute(),
-            () => "Ega",
-            D47.Core.Capabilities.CapabilityRegistry.Build([]),
-            Plans: null,
-            LookupsEnabled: () => false,
-            OpenSettings: null,
-            Commodities: board,
-            CommunityGoal: goal);
-
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        var marker = new TextBlock { Name = "StripMarker", Text = "strip" };
-
-        panel.EnableRouting(
-            routing, plan: false, progress: false, course: false, market: false, settingsStrip: () => marker);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Navigation;
-        Dispatcher.UIThread.RunJobs();
-
-        // Outside the page's ScrollViewer, so scrolling the results does not move it (#340).
-        Assert.Null(marker.FindAncestorOfType<ScrollViewer>());
-
-        var host = (Control)marker.GetVisualParent()!;
-
-        Assert.Equal(Dock.Bottom, DockPanel.GetDock(marker));
-        Assert.True(
-            Math.Abs(host.Bounds.Height - marker.Bounds.Bottom) < 1.0,
-            $"expected the strip flush with the bottom of its {host.GetType().Name}, "
-            + $"got host height {host.Bounds.Height} and strip bottom {marker.Bounds.Bottom}");
-
-        // The page's own Refresh() redraws its results and ledger; the strip is not among them.
-        board.Post(new CommodityPosting(
-            new CommodityQuery("Palladium", MaxDistance: 250, OrderBy: CommodityOrder.Distance, Limit: 10),
-            CommodityAnswer.Empty,
-            "Shinrarta Dezhra",
-            DateTimeOffset.UtcNow));
-        board.Announce();
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Contains(panel.GetVisualDescendants(), c => c.Name == "StripMarker");
-
-        window.Close();
-    }
-
     /// <summary>Every SettingsTabPlace.RootKey is a root furnished on a tab.</summary>
     [AvaloniaFact]
     public void EveryTabPlaceRootKeyIsARootThisAppFurnishes()
     {
         var known = new[]
         {
-            LoadoutPages.FleetRoot, LoadoutPages.CarrierRoot, RoutingPages.CommunityGoalRoot, AdventuresPage.RootKey,
+            LoadoutPages.FleetRoot, LoadoutPages.CarrierRoot, AdventuresPage.RootKey,
             "checklist", PanelView.LogRoot,
         };
 

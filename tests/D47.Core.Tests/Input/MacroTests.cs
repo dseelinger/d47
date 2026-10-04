@@ -121,12 +121,12 @@ public class MacroTests : IDisposable
     [Fact]
     public void AMacroCannotTakeAPhraseADynamicCommandAlreadyClaims()
     {
-        // PhrasesAlreadyTaken must include the phrases claimed by dynamic commands, like the Community Goal search's "refresh".
+        // PhrasesAlreadyTaken must include the phrases claimed by dynamic commands, like the Community Goal search's "cg search".
         Write("""
-        { "macros": [ { "name": "refresh", "steps": [ { "action": "lights" } ] } ] }
+        { "macros": [ { "name": "cg search", "steps": [ { "action": "lights" } ] } ] }
         """);
 
-        var search = new CommunityGoalSearch { Showing = () => true };
+        var search = new CommunityGoalSearch();
         var reserved = search.Phrases().Select(phrase => phrase.Phrase).ToArray();
 
         var store = Store();

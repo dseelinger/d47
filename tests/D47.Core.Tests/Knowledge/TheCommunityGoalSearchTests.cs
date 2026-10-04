@@ -300,31 +300,6 @@ public class TheCommunityGoalSearchTests
         Assert.Equal(CommunityGoalSearch.DefaultCommodity, search.Commodity);
     }
 
-    [Fact]
-    public void RefreshIsACommandOnlyWhileThePageIsShowing()
-    {
-        var showing = false;
-        var search = new CommunityGoalSearch { Showing = () => showing };
-
-        Assert.DoesNotContain(search.Phrases(), command => command.Phrase == "refresh");
-
-        showing = true;
-
-        var refresh = Assert.Single(search.Phrases(), command => command.Phrase == "refresh");
-
-        Assert.Equal("find_nearest_station", refresh.ToolName);
-        Assert.Equal("Palladium", refresh.Arguments["commodity"]);
-
- // Its from-the-ship twin comes and goes with it.
-        var here = Assert.Single(search.Phrases(), command => command.Phrase == "refresh from here");
-
-        Assert.Equal(CommunityGoalSearch.ShipTag, here.Arguments["tag"]);
-
-        showing = false;
-
-        Assert.DoesNotContain(search.Phrases(), command => command.Phrase == "refresh from here");
-    }
-
     [Theory]
     [InlineData("Palladium", "palladium", true)]
     [InlineData("Palladium", "Palladium", true)]

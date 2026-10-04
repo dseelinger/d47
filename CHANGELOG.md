@@ -14,6 +14,8 @@ Engineers is no longer a tab of its own. It is the last page of Asset Mgmt, whos
 
 The Checklist tab is now the Commander tab, and the checklist is its first page, in the window, the headset and the overlay. Suggestions and Activities still open from the checklist. Saying "checklist" from any tab opens the checklist, and saying "commander" opens the tab. The Open the checklist button in Settings opens Commander on the checklist. If d47 was closed on the Checklist tab, it reopens on Commander.
 
+The Course and Community Goal pages are gone from the Navigation tab, which now reads PLAN, PROGRESS, BOOKMARKS, MARKET, TRADE ROUTE. Setting a course by voice, the Community Goal tools and the sale callout work as before. Saying "refresh" no longer reruns the Community Goal search, because it only worked while that page was open; "community goal search" still runs it. The Inara API key is now in Outside sources on the Settings page, and the week-boundary day and hour are under Community goal sales in Plan and story callouts. If d47 was closed on either page, it reopens on Plan.
+
 The Bookmarks page has an Add button. It bookmarks what you have targeted in Elite, as saying "bookmark this" does, and asks for a name first; leave it empty to use Elite's name. If nothing is targeted, the page says so and makes no bookmark.
 
 A system name on the Adventures and Bookmarks pages now has a copy button beside it. On Adventures it follows the system in a story's next step and in each beat already told, whether or not you are in that system; the name is still cyan only when it is your current system. On Bookmarks each row has one for its system. Clicking it copies the name and does not open the story.

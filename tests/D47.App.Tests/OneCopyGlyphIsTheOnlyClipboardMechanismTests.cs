@@ -49,7 +49,6 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
         foreach (var name in new[]
                  {
                      "LoadoutPages.cs",
-                     "RouteCommunityGoalPage.cs",
                      "RoutePlanResultPage.cs",
                      "RouteProgressPage.cs",
                      "RouteMarketPage.cs",

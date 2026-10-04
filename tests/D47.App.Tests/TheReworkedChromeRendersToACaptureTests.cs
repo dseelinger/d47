@@ -202,14 +202,4 @@ public class TheReworkedChromeRendersToACaptureTests
         panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
         Save(window, "routing-result.png");
     }
-
-    /// <summary>Course: the clipboard, and the drive that can fail.</summary>
-    [AvaloniaFact]
-    public void SettingACourse()
-    {
-        var (window, panel) = Open(1180, PanelTab.Navigation);
-
-        panel.Nav.SelectRoot(RoutingPages.CourseRoot);
-        Save(window, "routing-course.png");
-    }
 }

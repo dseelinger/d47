@@ -47,23 +47,6 @@ public class MinimiseSafetyTests
         window.Close();
     }
 
-    /// <summary><c>CommunityGoalSearch.Showing</c> is wired from the window's <c>WindowState</c> and <c>IsVisible</c> as well as nav state, so "refresh" cannot fire an unseen search while the window is minimised or covered.</summary>
-    [AvaloniaFact]
-    public void AMinimisedWindowReportsItsOwnStateForAVisibilityGateToRead()
-    {
-        var window = new MainWindow(host: null);
-        window.Show();
-
-        Assert.NotEqual(WindowState.Minimized, window.WindowState);
-
-        window.WindowState = WindowState.Minimized;
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        Assert.Equal(WindowState.Minimized, window.WindowState);
-
-        window.Close();
-    }
-
     [AvaloniaFact]
     public void TheHeadsetPanelStillRendersWithNoMainWindowAtAll()
     {

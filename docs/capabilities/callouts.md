@@ -780,8 +780,7 @@ not.
 That's 2.1 million up this session.
 ```
 
-The commodity is the one the saved Community Goal search names — Palladium unless you change it on
-the Navigation tab's Community Goal page — and the figures come from the ledger described on the
+The commodity is the one the saved Community Goal search names, Palladium, and the figures come from the ledger described on the
 [community goals page](community-goals.html). Nothing is said while d47 is catching up on a journal
 it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
 keeps counting for the page and for *"how have I done today"*.

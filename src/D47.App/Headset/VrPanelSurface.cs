@@ -184,11 +184,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             // Every root, Plan included (#52): a form's boxes are plain text boxes and so reach the offscreen
             // board, which has taken a spelled or dictated value since #51. Settings opens on this surface
             // rather than on the window's, the same as Sourcing above.
-            _view.EnableRouting(
-                routing with { OpenSettings = () => _view.Tab = PanelTab.Settings },
-                settingsStrip: buildSettingsStrip is null
-                    ? null
-                    : () => buildSettingsStrip(RoutingPages.CommunityGoalRoot));
+            _view.EnableRouting(routing with { OpenSettings = () => _view.Tab = PanelTab.Settings });
 
             if (routing.Plans is { } plans)
             {

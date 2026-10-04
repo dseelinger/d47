@@ -82,29 +82,6 @@ public sealed class AFieldSaysWhatIsWrongOnItselfTests
     }
 
     [AvaloniaFact]
-    public void ACourseWithNoSystemSaysSoOnTheField()
-    {
-        using var look = AppLook.Put();
-
-        var page = new RouteCoursePage(CapabilityRegistry.Build([]));
-        var window = new Window { Content = page, Width = 640, Height = 480 };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var box = page.GetVisualDescendants().OfType<TextBox>().Single();
-        Assert.Equal(TypeScale.MinimumTarget, box.Bounds.Height);
-
-        var copy = page.GetVisualDescendants().OfType<Button>().First(button => Equals(button.Content, "Copy"));
-        copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Contains(FieldMessage.ErrorClass, box.Classes);
-        Assert.Equal("Name a system first.", Text(box).Text);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void AFormFieldIsFortyFourTall()
     {
         using var look = AppLook.Put();

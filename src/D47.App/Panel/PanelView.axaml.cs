@@ -940,14 +940,9 @@ public partial class PanelView : UserControl
         RoutingSurface surface,
         bool plan = true,
         bool progress = true,
-        bool course = true,
         bool market = true,
-        bool communityGoal = true,
         bool trade = true,
-        bool bookmarks = true,
-
-        // Community Goal's own settings, on the tab they only affect (#218).
-        Func<Control?>? settingsStrip = null)
+        bool bookmarks = true)
     {
         var roots = new List<NavCrumb>();
 
@@ -967,15 +962,7 @@ public partial class PanelView : UserControl
             });
         }
 
-        if (course)
-        {
-            roots.Add(new NavCrumb(RoutingPages.CourseRoot, "Course")
-            {
-                Help = D47.Core.Capabilities.Builtin.NavigationCapability.Id,
-            });
-        }
-
-        // Beside Course, because a bookmark is a place to plot to (#490).
+        // After Progress, because a bookmark is a place to plot to (#490).
         if (bookmarks && surface.Bookmarks is not null)
         {
             roots.Add(new NavCrumb(RoutingPages.BookmarksRoot, "Bookmarks")
@@ -994,23 +981,7 @@ public partial class PanelView : UserControl
             });
         }
 
-        // After Market, because it is the errand's special case (#296): one saved question and the ledger of
-        // what it earned.
-        if (communityGoal && surface.Commodities is { } commodities && surface.CommunityGoal is { } goal)
-        {
-            roots.Add(new NavCrumb(RoutingPages.CommunityGoalRoot, "Community Goal")
-            {
-                Help = D47.Core.Capabilities.Builtin.CommunityGoalCapability.Id,
-            });
-
-            // An answer or a sale landing anywhere — by voice, from the page's own button, from the journal —
-            // leaves the Community Goal page one redraw out of date, for the reason the plan book below is
-            // one subscription (#296).
-            commodities.Posted += () => _routeCommunityGoal?.Refresh();
-            goal.Ledger.Changed += () => _routeCommunityGoal?.Refresh();
-        }
-
-        // After Community Goal, because it is the newest of the five (#311): its own saved hops, jumps and
+        // After Market, because it is the newest (#311): its own saved hops, jumps and
         // switches, split out of the Plan page's Trade run card.
         if (trade && surface.Plans is not null && surface.Settings is not null)
         {
@@ -1039,13 +1010,12 @@ public partial class PanelView : UserControl
             PanelTab.Navigation,
             crumb =>
             {
-                var page = RoutingPages.Build(crumb, surface, Nav, Prompts, settingsStrip);
+                var page = RoutingPages.Build(crumb, surface, Nav, Prompts);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;
                 _routePlan = page as RoutePlanPage ?? _routePlan;
                 _routeTrade = page as RouteTradePage ?? _routeTrade;
-                _routeCommunityGoal = page as RouteCommunityGoalPage ?? _routeCommunityGoal;
                 _routeResult = page as RoutePlanResultPage ?? _routeResult;
 
                 return page;
@@ -1116,7 +1086,6 @@ public partial class PanelView : UserControl
     private RouteProgressPage? _routeProgress;
     private RoutePlanPage? _routePlan;
     private RouteTradePage? _routeTrade;
-    private RouteCommunityGoalPage? _routeCommunityGoal;
     private RoutePlanResultPage? _routeResult;
     private AdventureMini? _adventureMini;
     private RouteMini? _routeMini;
