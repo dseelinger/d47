@@ -4,12 +4,23 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>Where the Materials page gets its arithmetic, and how it knows to redo it.</summary>
-public sealed class GapSource(Func<GapReport> report, Func<CommanderGameState?> state)
+public sealed class GapSource(
+    Func<GapReport> report,
+    Func<CommanderGameState?> state,
+    Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
 {
-    /// <summary>Raised when either store changed, or the inventory moved.</summary>
+    /// <summary>Raised when either store changed, the inventory moved, the system changed or galaxy search was switched.</summary>
     public event Action? Changed;
 
+    /// <summary>The sidebar view the Materials pages show; the detail page sets it before going back.</summary>
+    public string View { get; set; } = MaterialsPage.NeededView;
+
     public GapReport Report() => report();
+
+    public CommanderGameState? State() => state();
+
+    /// <summary>The galaxy service, or null while "Look things up in the galaxy" is off.</summary>
+    public D47.Core.Knowledge.IGalaxyService? Galaxy() => galaxy?.Invoke();
 
     /// <summary>Every catalogue material grouped into ledger cards, needs taken from <paramref name="gap"/>.</summary>
     public MaterialTrackerReport Tracker(GapReport gap) => MaterialTracker.Of(state(), gap);

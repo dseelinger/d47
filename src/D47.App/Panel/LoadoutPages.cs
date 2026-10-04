@@ -100,7 +100,14 @@ public static class LoadoutPages
 
         if (crumb.Key == GapRoot && gap is not null)
         {
-            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers);
+            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav);
+        }
+
+        if (crumb.Key.StartsWith(MaterialsPage.DetailPrefix, StringComparison.Ordinal)
+            && gap is not null
+            && MaterialCatalogue.Find(crumb.Key[MaterialsPage.DetailPrefix.Length..]) is { } material)
+        {
+            return new MaterialDetailPage(gap, nav, material, materialsClock ?? new JournalClock(() => null));
         }
 
         var root = modes.FirstOrDefault(mode => mode.RootKey == crumb.Key) ?? modes[0];

@@ -119,7 +119,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // behaved before: reachable by voice and the hotkey only.
         Action? enterResize = null,
         Action<string>? stepZoom = null,
-        Action? leaveResize = null)
+        Action? leaveResize = null,
+
+        // The galaxy service while its setting is on, for material detail.
+        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
     {
         _dumpTo = dumpTo;
 
@@ -232,7 +235,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                     : () => buildSettingsStrip(LoadoutPages.FleetRoot),
                 carrierSettingsStrip: buildSettingsStrip is null
                     ? null
-                    : () => buildSettingsStrip(LoadoutPages.CarrierRoot));
+                    : () => buildSettingsStrip(LoadoutPages.CarrierRoot),
+                galaxy: galaxy);
         }
 
         // `ships`, `gameState` and `onFoot` are read again below - Engineers needs all three too.

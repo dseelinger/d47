@@ -18,6 +18,13 @@ public enum TradeDirection
 /// <summary>One material trader exchange: give <see cref="Give"/> of this material, get <see cref="Get"/> of the target.</summary>
 public sealed record MaterialTrade(TradeDirection Direction, int ToGrade, int Give, int Get);
 
+/// <summary>
+/// One material trader exchange that gives this material: <see cref="Give"/> of <see cref="From"/>, or of
+/// any grade-<see cref="FromGrade"/> material in another line of the category when <see cref="From"/> is
+/// null, for <see cref="Get"/>.
+/// </summary>
+public sealed record MaterialTradeIn(TradeDirection Direction, MaterialEntry? From, int FromGrade, int Give, int Get);
+
 /// <summary>Everything the material detail answer says about one material.</summary>
 /// <param name="Held">What the Commander holds, or null before the journal's materials snapshot.</param>
 /// <param name="Capacity">The most the Commander can hold, or null for a material with no grade.</param>
@@ -81,6 +88,50 @@ public static class MaterialGuide
             FarmingAdvice.HowToObtain(entry),
             Trades(entry));
     }
+
+    /// <summary>
+    /// The trades that end in this material: up from the grade below, down from the grade above, and
+    /// across from another line at the same grade. Empty for a material no trader deals in.
+    /// </summary>
+    public static IReadOnlyList<MaterialTradeIn> TradesInto(MaterialEntry entry)
+    {
+        var trades = new List<MaterialTradeIn>();
+
+        if (!entry.IsTradeable || entry.Grade is not { } grade)
+        {
+            return trades;
+        }
+
+        var line = MaterialCatalogue.InLine(entry.Line);
+
+        void Add(TradeDirection direction, int from, bool sameLine)
+        {
+            if (EngineeringRules.TradeRate(from, grade, sameLine) is not { } exchange)
+            {
+                return;
+            }
+
+            var source = sameLine ? line.FirstOrDefault(material => material.Grade == from) : null;
+
+            if (sameLine && source is null)
+            {
+                return;
+            }
+
+            trades.Add(new MaterialTradeIn(direction, source, from, exchange.Paid, exchange.Received));
+        }
+
+        Add(TradeDirection.Up, grade - 1, sameLine: true);
+        Add(TradeDirection.Down, grade + 1, sameLine: true);
+        Add(TradeDirection.Across, grade, sameLine: false);
+
+        return trades;
+    }
+
+    /// <summary>Whether <see cref="NearestAsync"/> has a search for this material.</summary>
+    public static bool Searchable(MaterialEntry entry) =>
+        string.Equals(entry.Category, "Raw", StringComparison.OrdinalIgnoreCase)
+        || EmissionRules.Holding(entry.Symbol) is not null;
 
     private static List<MaterialTrade> Trades(MaterialEntry entry)
     {

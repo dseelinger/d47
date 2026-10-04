@@ -219,7 +219,8 @@ public partial class MainWindow : Window
                 () => host.ModulePower,
                 () => host.Settings.Current.Ui.HullArt,
                 settingsStrip: () => BuildSettingsStrip(LoadoutPages.FleetRoot),
-                carrierSettingsStrip: () => BuildSettingsStrip(LoadoutPages.CarrierRoot));
+                carrierSettingsStrip: () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
+                galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null);
 
             // Where the hull art is read from, in the order it is searched.
             ShipArt.Folder = host.Paths.Ships;

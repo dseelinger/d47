@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Engineers;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
@@ -29,7 +30,10 @@ public sealed class MaterialsPage : UserControl
 
     public const string NoPlans = "No live plan needs a material.";
 
-    public const string LedgerHead = "Each held against the storage cap for its grade.";
+    public const string LedgerHead = "Each held against the storage cap for its grade. Choose one to see where to find it.";
+
+    /// <summary>How a material detail crumb is keyed: the prefix, then the material's symbol.</summary>
+    public const string DetailPrefix = "loadout.material:";
 
     public const string Met = "✓ MET";
 
@@ -43,17 +47,16 @@ public sealed class MaterialsPage : UserControl
 
     private readonly GapSource _gap;
     private readonly EngineerSource? _engineers;
+    private readonly PanelNavigator? _nav;
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
-    private string _view = NeededView;
 
-    public MaterialsPage(GapSource gap, JournalClock clock, EngineerSource? engineers = null)
+    public MaterialsPage(GapSource gap, JournalClock clock, EngineerSource? engineers = null, PanelNavigator? nav = null)
     {
         _gap = gap;
         _engineers = engineers;
-
-        gap.Changed += OnChanged;
+        _nav = nav;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
@@ -81,25 +84,12 @@ public sealed class MaterialsPage : UserControl
 
         var report = _gap.Report();
         var ledgers = _gap.Tracker(report).Ship;
-        var needed = report.Builds
-            .SelectMany(build => build.Lines)
-            .Select(line => line.Material.Symbol)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Count();
 
-        _sidebar.Content = new Sidebar(
-            [
-                new SidebarGroup("Plans", [new SidebarItem(NeededView, "Needed by plans", Count(needed))]),
-                new SidebarGroup(
-                    "Ship materials",
-                    [.. ledgers.Select(card => new SidebarItem(ViewOf(card), card.Name, Count(card.Rows.Count)))]),
-            ],
-            _view,
-            Select);
+        _sidebar.Content = SidebarOf(report, ledgers, _gap.View, Select);
 
         _body.Children.Clear();
 
-        if (ledgers.FirstOrDefault(card => ViewOf(card) == _view) is { } ledger)
+        if (ledgers.FirstOrDefault(card => ViewOf(card) == _gap.View) is { } ledger)
         {
             Ledger(ledger);
             return;
@@ -132,24 +122,22 @@ public sealed class MaterialsPage : UserControl
 
         foreach (var build in report.Builds)
         {
-            _body.Children.Add(Group(build));
+            _body.Children.Add(Group(build, Open));
         }
     }
 
     /// <summary>The head's kind line: <c>Anaconda · 2 plans · 4 SHORT</c>, <c>Suit · grade 5 · 1 SHORT</c>.</summary>
-    public static string KindLine(GapBuild build)
-    {
-        var kind = build.Key.Kind switch
-        {
-            GapBuildKind.Ship =>
-                $"{build.Hull} · {Count(build.Plans)} plan{(build.Plans == 1 ? string.Empty : "s")}",
-            _ when build.Grade is { } grade =>
-                $"{KindWord(build.Key.Kind)} · grade {Count(grade)}",
-            _ => KindWord(build.Key.Kind),
-        };
+    public static string KindLine(GapBuild build) => $"{KindOf(build)} · {Count(build.Short)} SHORT";
 
-        return $"{kind} · {Count(build.Short)} SHORT";
-    }
+    /// <summary>What the build is: <c>Anaconda · 2 plans</c>, <c>Suit · grade 5</c>.</summary>
+    public static string KindOf(GapBuild build) => build.Key.Kind switch
+    {
+        GapBuildKind.Ship =>
+            $"{build.Hull} · {Count(build.Plans)} plan{(build.Plans == 1 ? string.Empty : "s")}",
+        _ when build.Grade is { } grade =>
+            $"{KindWord(build.Key.Kind)} · grade {Count(grade)}",
+        _ => KindWord(build.Key.Kind),
+    };
 
     /// <summary>RAW, MANUFACTURED or ENCODED for a ship material, ON FOOT for a locker item.</summary>
     public static string LedgerOf(MaterialEntry material) => material.Ledger switch
@@ -160,9 +148,36 @@ public sealed class MaterialsPage : UserControl
         _ => "UNKNOWN",
     };
 
+    /// <summary>The crumb that drills to one material's detail page.</summary>
+    public static NavCrumb DetailCrumb(MaterialEntry material) =>
+        new(DetailPrefix + material.Symbol, material.Name) { Level = DetailPrefix, Whole = true };
+
+    /// <summary>The sidebar every Materials page draws: Needed by plans, then the five ship ledgers.</summary>
+    internal static Sidebar SidebarOf(
+        GapReport report, IReadOnlyList<MaterialCard> ledgers, string view, Action<string> select)
+    {
+        var needed = report.Builds
+            .SelectMany(build => build.Lines)
+            .Select(line => line.Material.Symbol)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+
+        return new Sidebar(
+            [
+                new SidebarGroup("Plans", [new SidebarItem(NeededView, "Needed by plans", Count(needed))]),
+                new SidebarGroup(
+                    "Ship materials",
+                    [.. ledgers.Select(card => new SidebarItem(ViewOf(card), card.Name, Count(card.Rows.Count)))]),
+            ],
+            view,
+            select);
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _gap.Changed -= OnChanged;
+        _gap.Changed += OnChanged;
         Refresh();
     }
 
@@ -200,8 +215,17 @@ public sealed class MaterialsPage : UserControl
 
     internal void Select(string view)
     {
-        _view = view;
+        _gap.View = view;
         Refresh();
+    }
+
+    /// <summary>Drills to a ship material's detail page; an on-foot row opens nothing here.</summary>
+    internal void Open(MaterialEntry material)
+    {
+        if (material.Ledger == MaterialLedger.Material)
+        {
+            _nav?.Drill(DetailCrumb(material));
+        }
     }
 
     private void Ledger(MaterialCard card)
@@ -213,11 +237,11 @@ public sealed class MaterialsPage : UserControl
 
         foreach (var (head, cap, rows) in GroupsOf(card))
         {
-            _body.Children.Add(Grade(head, cap, rows));
+            _body.Children.Add(Grade(head, cap, rows, Open));
         }
     }
 
-    private static Control Grade(string head, int? cap, IReadOnlyList<MaterialRow> rows)
+    private static Control Grade(string head, int? cap, IReadOnlyList<MaterialRow> rows, Action<MaterialEntry> open)
     {
         var name = TitleText.Build(head, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
@@ -252,7 +276,7 @@ public sealed class MaterialsPage : UserControl
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             }
 
-            var tile = Tile(rows[i]);
+            var tile = Tile(rows[i], open);
             Grid.SetRow(tile, i / 3);
             Grid.SetColumn(tile, i % 3);
             grid.Children.Add(tile);
@@ -266,7 +290,7 @@ public sealed class MaterialsPage : UserControl
     }
 
     /// <summary>One material: name, <c>NEED n</c> when a plan needs it, held in A or Yellow at cap, and a capacity bar.</summary>
-    private static Border Tile(MaterialRow row)
+    private static Border Tile(MaterialRow row, Action<MaterialEntry> open)
     {
         var name = new TextBlock
         {
@@ -314,12 +338,13 @@ public sealed class MaterialsPage : UserControl
             },
         };
         Hover(tile);
+        Pressable(tile, () => open(row.Material));
 
         return tile;
     }
 
     /// <summary>A 3px Yellow fill over a YellowTrack ground, clamped to 0–1.</summary>
-    private static Grid CapacityBar(double fill)
+    internal static Grid CapacityBar(double fill)
     {
         var clamped = Math.Clamp(double.IsFinite(fill) ? fill : 0, 0, 1);
 
@@ -347,7 +372,7 @@ public sealed class MaterialsPage : UserControl
     }
 
     /// <summary>Fills a row or tile with Tile, and Tile2 while the pointer is over it.</summary>
-    private static void Hover(Border target)
+    internal static void Hover(Border target)
     {
         var fill = Themed(target, Border.BackgroundProperty, ThemeManager.TileKey);
         target.PointerEntered += (_, _) =>
@@ -369,9 +394,20 @@ public sealed class MaterialsPage : UserControl
         _ => "Ship",
     };
 
-    private static string Count(int n) => n.ToString(CultureInfo.InvariantCulture);
+    /// <summary>Runs the action when the target is pressed, with a hand cursor over it.</summary>
+    internal static void Pressable(Control target, Action press)
+    {
+        target.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
+        target.PointerPressed += (_, e) =>
+        {
+            e.Handled = true;
+            press();
+        };
+    }
 
-    private static Control Group(GapBuild build)
+    internal static string Count(int n) => n.ToString(CultureInfo.InvariantCulture);
+
+    private static Control Group(GapBuild build, Action<MaterialEntry> open)
     {
         var name = TitleText.Build(build.Name, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
@@ -390,7 +426,7 @@ public sealed class MaterialsPage : UserControl
 
         foreach (var line in build.Lines)
         {
-            rows.Children.Add(Row(line));
+            rows.Children.Add(Row(line, open));
         }
 
         return new StackPanel
@@ -421,7 +457,7 @@ public sealed class MaterialsPage : UserControl
         return new Border { Padding = new Thickness(14, 0), Child = grid };
     }
 
-    private static Border Row(GapBuildLine line)
+    private static Border Row(GapBuildLine line, Action<MaterialEntry> open)
     {
         var name = new TextBlock
         {
@@ -460,13 +496,18 @@ public sealed class MaterialsPage : UserControl
         };
         Hover(row);
 
+        if (line.Material.Ledger == MaterialLedger.Material)
+        {
+            Pressable(row, () => open(line.Material));
+        }
+
         return row;
     }
 
     private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
         target.Bind(property, target.GetResourceObservable(key));
 
-    private static TextBlock Chrome(string text, string key)
+    internal static TextBlock Chrome(string text, string key)
     {
         var block = new TextBlock
         {
@@ -482,7 +523,7 @@ public sealed class MaterialsPage : UserControl
         return block;
     }
 
-    private static TextBlock Mono(string text, string key)
+    internal static TextBlock Mono(string text, string key)
     {
         var block = new TextBlock
         {
@@ -496,7 +537,7 @@ public sealed class MaterialsPage : UserControl
         return block;
     }
 
-    private static TextBlock Hint(string text, Thickness margin)
+    internal static TextBlock Hint(string text, Thickness margin)
     {
         var hint = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap, Margin = margin };
         LoadoutPages.Themed(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);

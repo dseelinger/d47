@@ -778,7 +778,10 @@ public partial class PanelView : UserControl
         Func<Control?>? settingsStrip = null,
 
         // The captain and tower's own settings, on the tab they only affect (#218, #305).
-        Func<Control?>? carrierSettingsStrip = null)
+        Func<Control?>? carrierSettingsStrip = null,
+
+        // The galaxy service while “Look things up in the galaxy” is on, else null; material detail searches it.
+        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt);
 
@@ -810,7 +813,8 @@ public partial class PanelView : UserControl
                     state(),
                     includeIntended: true,
                     checklists.SlotFor),
-                state);
+                state,
+                galaxy);
 
             // Either store moving changes the subtraction, and neither knows about the other.
             ships.Store.Changed += gap.Invalidate;
@@ -1026,7 +1030,10 @@ public partial class PanelView : UserControl
         {
             changed |= _materialsClock?.Tick() ?? false;
 
-            (object?, object?, object?) inventory = (_loadoutState?.Invoke()?.Materials, _loadoutState?.Invoke()?.Suit, hold);
+            // The system and the galaxy setting decide what material detail searches.
+            var live = _loadoutState?.Invoke();
+            (object?, object?, object?, string?, bool) inventory =
+                (live?.Materials, live?.Suit, hold, live?.Location.StarSystem, gap.Galaxy() is not null);
 
             if (!Equals(inventory, _inventorySeen))
             {
@@ -1046,7 +1053,7 @@ public partial class PanelView : UserControl
     private OnFootMode? _onFootMode;
     private GapSource? _gap;
     private D47.App.Controls.JournalClock? _materialsClock;
-    private (object?, object?, object?) _inventorySeen;
+    private (object?, object?, object?, string?, bool) _inventorySeen;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;

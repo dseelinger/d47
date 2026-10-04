@@ -154,7 +154,8 @@ public sealed class VrHost : IDisposable
 
         // The same builder the window uses for a tab's own strip, on the same terms as settingsPage
         // above (#218).
-        Func<string, Control?>? buildSettingsStrip = null)
+        Func<string, Control?>? buildSettingsStrip = null,
+        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
     {
         VrHost? self = null;
 
@@ -164,6 +165,7 @@ public sealed class VrHost : IDisposable
             backfillGoals, adventures, viewState, capabilities, routing,
             modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
+            galaxy: galaxy,
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
             // handles carry.
