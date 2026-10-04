@@ -162,7 +162,7 @@ public static class EngineeringCapability
                         AllowedValues = StationQuery.TraderTypes,
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(FarmingRoute(commander, arguments)),
+                Handler = (arguments, _) => Task.FromResult(FarmingRouteAnswer(commander, arguments)),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineering", Order = 52 },
@@ -435,7 +435,7 @@ public static class EngineeringCapability
             return ToolResult.Ok(MaterialSeam.NotThisOne(material, MaterialSeam.MaterialTool));
         }
 
-        report.Append(Held(material, active));
+        report.Append(Held(MaterialGuide.For(material.Symbol, active)!));
 
         arguments.TryGetString("near", out var near);
         near ??= active?.Location.StarSystem;
@@ -443,7 +443,8 @@ public static class EngineeringCapability
         var found = new Sourced();
 
         report.Append(await SourceAsync(
-            galaxy, material, near, found, active?.Ship.MaxJumpRange, cancellationToken).ConfigureAwait(false));
+            galaxy, material, active, near, found, active?.Ship.MaxJumpRange, cancellationToken)
+            .ConfigureAwait(false));
         report.Append(Netting(material, active));
 
         // The offer last, under the answer, because it is about what to do next rather than part of what was
@@ -474,20 +475,13 @@ public static class EngineeringCapability
     }
 
     /// <summary>What the Commander has of it now.</summary>
-    private static string Held(MaterialEntry material, CommanderGameState? active)
-    {
-        if (active?.Materials is not { SnapshotSeen: true } inventory)
+    private static string Held(MaterialDetail detail) =>
+        (detail.Held, detail.Capacity) switch
         {
-            return string.Empty;
-        }
-
-        var held = inventory.CountOf(material.Symbol);
-        var cap = material.Grade is { } grade ? MaterialGrades.CapacityOfGrade(grade) : null;
-
-        return cap is { } capacity
-            ? $"You hold {held} of a possible {capacity}." + Environment.NewLine
-            : $"You hold {held}." + Environment.NewLine;
-    }
+            (null, _) => string.Empty,
+            ({ } held, { } capacity) => $"You hold {held} of a possible {capacity}." + Environment.NewLine,
+            ({ } held, null) => $"You hold {held}." + Environment.NewLine,
+        };
 
     /// <summary>Where to go for it.</summary>
     private sealed class Sourced
@@ -498,6 +492,7 @@ public static class EngineeringCapability
     private static async Task<string> SourceAsync(
         IGalaxyService? galaxy,
         MaterialEntry material,
+        CommanderGameState? active,
         string? near,
         Sourced found,
         double? jumpRange,
@@ -515,27 +510,17 @@ public static class EngineeringCapability
             report.AppendLine("Found at: " + string.Join("; ", material.Origins) + ".");
         }
 
-        if (galaxy is not null)
+        try
         {
-            var isRaw = string.Equals(material.Category, "Raw", StringComparison.OrdinalIgnoreCase);
+            var places = await MaterialGuide
+                .NearestAsync(material.Symbol, active, galaxy, cancellationToken, near)
+                .ConfigureAwait(false);
 
-            try
-            {
-                if (isRaw)
-                {
-                    report.Append(
-                        await BodiesAsync(galaxy, material, near, found, cancellationToken).ConfigureAwait(false));
-                }
-                else if (EmissionRules.Holding(material.Symbol) is { } group)
-                {
-                    report.Append(
-                        await SystemsAsync(galaxy, group, near, found, cancellationToken).ConfigureAwait(false));
-                }
-            }
-            catch (GalaxyUnavailableException failure)
-            {
-                report.AppendLine($"I could not reach the galaxy search: {failure.Message}");
-            }
+            report.Append(Places(places, found));
+        }
+        catch (GalaxyUnavailableException failure)
+        {
+            report.AppendLine($"I could not reach the galaxy search: {failure.Message}");
         }
 
         // The farming site is the better clipboard offer where one exists — it names an exact place to go
@@ -548,137 +533,42 @@ public static class EngineeringCapability
         return report.ToString();
     }
 
-    private static async Task<string> BodiesAsync(
-        IGalaxyService galaxy,
-        MaterialEntry material,
-        string? near,
-        Sourced found,
-        CancellationToken cancellationToken)
+    private static string Places(MaterialPlaces places, Sourced found)
     {
-        // Three of the twenty-eight raw materials are not in the index at all, so a search for one comes back
-        // empty — and empty reads as "there is none near you".
-        if (BodyCatalogue.MatchSurfaceMaterial(material.Name) is not { } indexed)
+        if (places.Message is not null)
         {
-            return $"The body index does not carry {material.Name}, so I cannot search for it — that is a "
-                   + "gap in the index rather than a shortage in the galaxy." + Environment.NewLine;
+            return places.Message + Environment.NewLine;
         }
 
-        var result = await galaxy
-            .FindBodiesAsync(BodyQuery.ForMaterial(near, indexed, maxDistance: 50, size: 20), cancellationToken)
-            .ConfigureAwait(false);
-
-        if (result.Bodies.Count == 0)
+        if (places.Places.Count == 0)
         {
-            return $"No landable body within 50 light years is recorded as carrying {material.Name}."
-                   + Environment.NewLine;
-        }
-
-        // The index will not sort on share and will not filter on it, so the ranking is local and the
-        // sentence says what it is over. "The best of what I fetched" is true; "the best in the galaxy" would
-        // not be.
-        var ranked = result.Bodies
-            .Select(body => (Body: body, Share: body.Materials
-                .Where(entry => string.Equals(entry.Name, indexed, StringComparison.OrdinalIgnoreCase))
-                .Select(entry => entry.Share)
-                .DefaultIfEmpty(0)
-                .Max()))
-            .OrderByDescending(pair => pair.Share)
-            .Take(5)
-            .ToArray();
-
-        var report = new StringBuilder();
-
-        report.AppendLine(
-            $"Richest of the {result.Bodies.Count} nearest landable bodies carrying it"
-            + (result.Reference is { } reference ? $", from {reference}:" : ":"));
-
-        // The system rather than the body: a body name is not something the galaxy map takes, and pasting a
-        // destination into it is the errand this ends.
-        found.System = ranked[0].Body.SystemName;
-
-        foreach (var (body, share) in ranked)
-        {
-            report.Append($"  {body.Name} — {share.ToString("0.0", CultureInfo.InvariantCulture)}%");
-
-            if (body.Distance is { } distance)
-            {
-                report.Append($", {distance.ToString("0.0", CultureInfo.InvariantCulture)} ly");
-            }
-
-            report.AppendLine();
-        }
-
-        return report.ToString();
-    }
-
-    /// <summary>
-    /// Where a high-grade-emission material can be found, from <see cref="EmissionRules"/> — the same
-    /// table the callout answers from.
-    /// </summary>
-    private static async Task<string> SystemsAsync(
-        IGalaxyService galaxy,
-        EmissionGroup group,
-        string? near,
-        Sourced found,
-        CancellationToken cancellationToken)
-    {
-        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["distance"] = "50",
-            ["allegiance"] = group.Allegiance,
-        };
-
-        // Only where the group is about one.
-        if (group.States.Count > 0)
-        {
-            requested["state"] = string.Join(",", group.States.Select(Spaced));
-        }
-
-        // Asked for well beyond the five that get read out, because the population floor is applied
-        // afterwards and a page of sparsely populated systems would otherwise leave nothing.
-        if (!GalaxyQuery.TryParse(near, requested, size: 50, out var query, out var failure))
-        {
-            return failure + Environment.NewLine;
-        }
-
-        var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
-
-        var populous = result.Systems
-            .Where(system => system.Population is { } people && people >= EmissionRules.MinimumPopulation)
-            .Take(5)
-            .ToList();
-
-        var described =
-            $"{group.Allegiance}-aligned"
-            + (group.States.Count > 0 ? $", in {string.Join(" or ", group.States.Select(Spaced))}" : string.Empty)
-            + $", over {EmissionRules.MinimumPopulation.ToString("N0", CultureInfo.InvariantCulture)} people";
-
-        if (populous.Count == 0)
-        {
-            // Said as the filter rather than as "nothing found", so a Commander can tell a genuine shortage
-            // from a search that was looking for the wrong thing.
-            return $"No system within 50 light years is {described}." + Environment.NewLine;
+            return string.Empty;
         }
 
         var report = new StringBuilder();
 
-        // "Reported" rather than "in".
-        report.AppendLine($"Nearest systems reported {described}:");
+        report.AppendLine(places.Heading);
 
-        found.System = populous[0].Name;
+        // The system rather than the body: a body name is not something the galaxy map takes.
+        found.System = places.FirstSystem;
 
-        foreach (var system in populous)
+        foreach (var place in places.Places)
         {
-            report.Append($"  {system.Name}");
+            report.Append("  ").Append(place.Place);
 
-            if (system.Distance is { } distance)
-            {
-                report.Append($" — {distance.ToString("0.0", CultureInfo.InvariantCulture)} ly");
-            }
+            var distance = place.Distance is { } ly
+                ? ly.ToString("0.0", CultureInfo.InvariantCulture) + " ly"
+                : null;
 
-            if (system.Population is { } population)
+            var parts = places.Kind == MaterialPlaceKind.Body
+                ? new[] { place.Note, distance }
+                : [distance, place.Note];
+
+            var text = string.Join(", ", parts.Where(part => !string.IsNullOrEmpty(part)));
+
+            if (text.Length > 0)
             {
-                report.Append($", population {population.ToString("N0", CultureInfo.InvariantCulture)}");
+                report.Append(" — ").Append(text);
             }
 
             report.AppendLine();
@@ -825,77 +715,56 @@ public static class EngineeringCapability
 
     // ---- The fastest route through the farming sites -------------------------------------------------
 
-    private static ToolResult FarmingRoute(Func<CommanderGameState?> commander, ToolArguments arguments)
+    private static ToolResult FarmingRouteAnswer(Func<CommanderGameState?> commander, ToolArguments arguments)
     {
         arguments.TryGetString("type", out var type);
 
-        var sites = FarmingSites.All.Where(site => !site.IsAlternate).ToList();
+        var active = commander();
+        var route = FarmingRoute.For(active, type);
 
-        if (!string.IsNullOrWhiteSpace(type))
+        if (route.Stops.Count == 0)
         {
-            sites = [.. sites.Where(site =>
-                string.Equals(FarmingSites.CategoryOf(site), type, StringComparison.OrdinalIgnoreCase))];
-
-            if (sites.Count == 0)
-            {
-                return ToolResult.Ok($"No farming site is recorded for {type.Trim()}.");
-            }
+            return ToolResult.Ok($"No farming site is recorded for {type?.Trim()}.");
         }
 
-        var active = commander();
-        var from = active?.Location.StarPos;
         var jumpRange = active?.Ship.MaxJumpRange;
-
-        var ordered = from is { } here
-            ? [.. sites.OrderBy(site => site.Position.DistanceTo(here))]
-            : sites;
-
         var report = new StringBuilder();
 
-        report.AppendLine(from is not null
+        report.AppendLine(route.PositionKnown
             ? "Fastest route, nearest first:"
             : "Fastest route, in the table's own order — your position is not known:");
 
-        foreach (var site in ordered)
+        foreach (var stop in route.Stops)
         {
-            report.AppendLine("  " + FarmingRouteStep(site, jumpRange));
+            report.AppendLine("  " + FarmingRouteStep(stop, jumpRange));
         }
 
         return ToolResult.Ok(report.ToString().TrimEnd());
     }
 
-    private static string FarmingRouteStep(FarmingSite site, double? jumpRange)
+    private static string FarmingRouteStep(FarmingStop stop, double? jumpRange)
     {
-        var top = MaterialCatalogue.Find(site.MaterialSymbol);
         var report = new StringBuilder(
-            $"{site.System} {site.Body} — collect {top?.Name ?? site.MaterialSymbol} ({site.Method}), "
-            + $"{site.Coordinates}");
+            $"{stop.System} {stop.Body} — collect {stop.Material} ({stop.Method}), {stop.Coordinates}");
 
-        report.Append(site.RespawnsOnRelog
+        report.Append(stop.RespawnsOnRelog
             ? ", a relog respawns it."
             : ". Does not reliably respawn on a relog — move on to the next cluster or tree.");
 
-        if (top is { Grade: { } topGrade, Line: not null })
+        if (stop.TradeDowns.Count > 0)
         {
-            var trades = Enumerable.Range(1, topGrade - 1)
-                .Select(grade => EngineeringRules.TradeRate(topGrade, grade, sameLine: true) is { } exchange
-                    ? $"{exchange.Paid} for {exchange.Received} into grade {grade}"
-                    : null)
-                .Where(trade => trade is not null)
-                .ToArray();
-
-            if (trades.Length > 0)
-            {
-                report.Append(" Trades down: ").Append(string.Join(", ", trades)).Append('.');
-            }
+            report.Append(" Trades down: ")
+                .Append(string.Join(", ", stop.TradeDowns.Select(
+                    trade => $"{trade.Give} for {trade.Get} into grade {trade.ToGrade}")))
+                .Append('.');
         }
 
-        if (string.Equals(site.TopsGroup, "encoded-encryption-files", StringComparison.Ordinal))
+        if (stop.TradesAcross)
         {
             report.Append(" Also trades 6 for 1 across into any other encoded group.");
         }
 
-        if (site.JumpRangeWarning)
+        if (stop.Site.JumpRangeWarning)
         {
             report.Append(' ').Append(FarmingSites.JumpRangeAdvice(jumpRange));
         }

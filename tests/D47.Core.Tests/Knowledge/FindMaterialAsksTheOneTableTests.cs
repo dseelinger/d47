@@ -69,15 +69,15 @@ public class FindMaterialAsksTheOneTableTests
 
     /// <summary>There is one table.</summary>
     [Fact]
-    public void TheCapabilityDerivesNoConditionsOfItsOwn()
+    public void TheGuideDerivesNoConditionsOfItsOwn()
     {
         var source = File.ReadAllText(Path.Combine(
-            RepositoryRoot(), "src", "D47.Core", "Capabilities", "Builtin", "EngineeringCapability.cs"));
+            RepositoryRoot(), "src", "D47.Core", "Knowledge", "MaterialGuide.cs"));
 
         Assert.DoesNotContain("StateOf", source, StringComparison.Ordinal);
         Assert.Contains("EmissionRules.Holding", source, StringComparison.Ordinal);
 
-        // The population floor is the capability's to apply, and it must come from the table rather than be
+        // The population floor is the guide's to apply, and it must come from the table rather than be
         // written out again as a number.
         Assert.Contains("EmissionRules.MinimumPopulation", source, StringComparison.Ordinal);
     }

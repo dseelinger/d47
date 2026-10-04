@@ -257,7 +257,7 @@ public static class FarmingAdvice
     }
 
     /// <summary>A journal state as a Commander reads it — "CivilWar" as "Civil War".</summary>
-    private static string Spaced(string state) =>
+    internal static string Spaced(string state) =>
         string.Concat(state.Select((letter, at) =>
             at > 0 && char.IsUpper(letter) ? $" {letter}" : letter.ToString()));
 
