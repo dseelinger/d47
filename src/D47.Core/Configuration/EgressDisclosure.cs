@@ -254,10 +254,10 @@ public static class EgressDisclosure
                 GitHubReleasesEndpoint,
                 "A request for the list of stock stories when the Stories page first opens in a session, and for the "
                 + "cast pictures shown on the list, kept on disk. A story's own files, its hidden layer and every cast "
-                + "picture, are requested when you pick it. Nothing else goes with it: "
+                + "picture, are requested when you open its page. Nothing else goes with it: "
                 + "no key, no Commander name, no position and nothing from your journal.",
                 Active: true,
-                Summary: "A request for the list of stock stories and its cast pictures, and for a story's files when you pick it.")
+                Summary: "A request for the list of stock stories and its cast pictures, and for a story's files when you open its page.")
             : EgressEntry.Silent(
                 StockStories,
                 NameOf(StockStories),

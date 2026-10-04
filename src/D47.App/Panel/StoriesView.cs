@@ -391,6 +391,46 @@ public sealed class StoriesView : UserControl
         }
 
         var status = new StatusLine();
+        var body = new ContentControl { Content = ReadingBody(card, status) };
+
+        page.Children.Add(body);
+        page.Children.Add(status);
+        FetchOnView(card, body, status);
+
+        return new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+    }
+
+    /// <summary>Fetches the hidden layer of a story whose page is open, then redraws the page if it is still the one shown.</summary>
+    private void FetchOnView(StoryCard card, ContentControl body, StatusLine status)
+    {
+        if (_downloads is not { Enabled: true } downloads || _director.Catalog.Secret(card.Id) is not null)
+        {
+            return;
+        }
+
+        var key = ReadPrefix + card.Id;
+
+        _ = Task.Run(async () =>
+        {
+            if (!await downloads.FetchStory(card.Id).ConfigureAwait(false) || _director.Catalog.Secret(card.Id) is null)
+            {
+                return;
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_nav.TrailOf(PanelTab.Stories) is [.., var open] && open.Key == key)
+                {
+                    body.Content = ReadingBody(_director.Catalog.Find(card.Id) ?? card, status);
+                }
+            });
+        });
+    }
+
+    /// <summary>Everything on a story's page above its status line.</summary>
+    private StackPanel ReadingBody(StoryCard card, StatusLine status)
+    {
+        var page = new StackPanel { Spacing = 8 };
 
         page.Children.Add(RoutingKit.Title(card.Title).Row);
 
@@ -470,9 +510,8 @@ public sealed class StoriesView : UserControl
         }
 
         page.Children.Add(bar);
-        page.Children.Add(status);
 
-        return new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        return page;
     }
 
     /// <summary>The Cast section: each primary member with its picture, name and voice, and the controls that change them.</summary>

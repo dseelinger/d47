@@ -78,6 +78,8 @@ Stock stories are downloaded from a GitHub release into `data\stories`: the list
 
 Stock stories are downloaded when you open the Stories page, instead of shipping with the app.
 
+Opening a story's page now downloads its hidden layer and cast pictures if they are not on disk, and the page redraws with its **Cast** section when they land, without picking the story first. Before, a story you had not picked showed its cast in the list but no **Cast** section on its page. **Download stock stories** off still fetches nothing, and **Privacy and egress** now says a story's files are requested when you open its page.
+
 A message from a story character with a picture shows it above the text. **Change picture** replaces it with a PNG, JPEG, BMP or WebP file of your own, kept in `data\pictures` and shown on every message from that character; **Use the default** brings the story's picture back. **Privacy and egress** lists **Pictures you chose**: kept on this PC, never sent.
 
 The Stories page filters stock stories by length and by the Commander they were written for.

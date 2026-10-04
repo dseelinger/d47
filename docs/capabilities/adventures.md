@@ -399,16 +399,16 @@ the chapter was written from the hidden layer.
 
 Stock stories are files on the `stories-1` release of the repository. The first time the Stories page
 opens in a session, D47 fetches `index.json` into `data\stories`, shows the stories already on disk at
-once and redraws when the new list lands. **Pick** on a story whose hidden file is not on disk fetches
-it and every cast picture it names, reads **Downloading** while it does, and starts the story when
-every file is in place. On a failure the page says "The story could not be downloaded. Check your
+once and redraws when the new list lands. Opening a story's page fetches its hidden file and every
+cast picture it names when the hidden file is not on disk, and the page redraws with its **Cast**
+section when they land. **Pick** on a story whose hidden file is still not on disk fetches it, reads
+**Downloading** while it does, and starts the story when every file is in place. On a failure the page says "The story could not be downloaded. Check your
 connection and pick it again." and nothing starts. At startup, a story that is running or paused and
 has no hidden file on disk is fetched, and one that has fetches any cast picture the release has and
 `data\stories` does not.
 
 **Download stock stories**, on by default, is in the Adventures settings. Off, nothing is fetched and
-the Stories page lists only stories already on disk. The hidden layer is fetched only when you pick
-the story, so a story's secret is not downloaded until you choose it.
+the Stories page lists only stories already on disk.
 
 ### Cast pictures
 

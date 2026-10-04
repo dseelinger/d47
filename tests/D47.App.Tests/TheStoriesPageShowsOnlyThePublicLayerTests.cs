@@ -5,6 +5,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.App.Tests.Stories;
 using D47.App.Theming;
 using D47.Core;
 using D47.Core.Adventures;
@@ -25,7 +26,13 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
     private sealed record Surface(Window Window, PanelView Panel, StoryDirector Director);
 
-    private static Surface Open(bool running, StoryCatalog? catalog = null, Func<string?>? gender = null, CastPictures? pictures = null)
+    private static Surface Open(
+        bool running,
+        StoryCatalog? catalog = null,
+        Func<string?>? gender = null,
+        CastPictures? pictures = null,
+        Func<StoryCatalog>? catalogs = null,
+        StoryDownloader? downloads = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-stories-capture"));
         paths.EnsureCreated();
@@ -73,7 +80,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, () => catalog ?? StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
+            stories, book, catalogs ?? (() => catalog ?? StoryFixture.Catalog), generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
         {
             Gender = gender ?? (() => null),
         };
@@ -81,7 +88,8 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
             Stories: director,
-            Pictures: pictures);
+            Pictures: pictures,
+            Downloads: downloads);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);
@@ -248,6 +256,89 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Assert.True(Pick().IsEnabled);
         Assert.False(panel.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == StoryDirector.NeedsGender).IsEffectivelyVisible);
         Save(surface.Window, "stories-card-gender-set.png");
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Pumps the dispatcher until <paramref name="done"/> holds or five seconds pass.</summary>
+    private static bool Until(Func<bool> done)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+
+        while (!done() && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(20);
+        }
+
+        return done();
+    }
+
+    private static readonly StorySecret PrimaryRen = StoryReleaseFixture.Secret with
+    {
+        Cast = [.. StoryReleaseFixture.Secret.Cast.Select(member => member.Id == "ren" ? member with { Primary = true } : member)],
+    };
+
+    [AvaloniaFact]
+    public void OpeningAStorysPageFetchesItsHiddenLayerAndThenDrawsItsCast()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+        using var release = new StoryRelease();
+        StoryReleaseFixture.ServeAll(release);
+        release.ServeSealed(PrimaryRen);
+        var gate = new TaskCompletionSource();
+        release.Hold = (StoryCatalog.SealedExtension, gate.Task);
+
+        var downloads = release.Downloader();
+        var id = StoryReleaseFixture.Id;
+        var catalog = new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => []);
+        downloads.Landed += () =>
+        {
+            if (downloads.IsOnDisk(id))
+            {
+                catalog = new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => [PrimaryRen]);
+            }
+        };
+
+        var surface = Open(running: false, gender: () => CommanderGender.Woman, catalogs: () => catalog, downloads: downloads);
+        var panel = surface.Panel;
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + id, StoryFixture.Story.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Until(() => release.Asked.Contains(id + StoryCatalog.SealedExtension)));
+        Assert.False(Shows(panel, "Cast"));
+        Assert.False(Shows(panel, "Ren"));
+
+        gate.SetResult();
+
+        Assert.True(Until(() => Shows(panel, "Ren")));
+        Assert.True(Shows(panel, "Cast"));
+        Assert.Contains("Pick", Buttons(panel));
+        Assert.Equal(1, release.Asked.Count(file => file == id + StoryCatalog.SealedExtension));
+        NoHiddenSentence(panel);
+        Save(surface.Window, "stories-card-cast-fetched.png");
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void WithDownloadsOffOpeningAStorysPageFetchesNothing()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+        using var release = new StoryRelease();
+        StoryReleaseFixture.ServeAll(release);
+
+        var downloads = release.Downloader(allowed: false);
+        var empty = new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => []);
+        var surface = Open(running: false, catalogs: () => empty, downloads: downloads);
+
+        surface.Panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryReleaseFixture.Id, StoryFixture.Story.Title));
+        Dispatcher.UIThread.RunJobs();
+        Thread.Sleep(200);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(release.Asked);
 
         surface.Window.Close();
     }

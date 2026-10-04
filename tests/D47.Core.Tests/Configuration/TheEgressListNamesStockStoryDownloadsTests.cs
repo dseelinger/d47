@@ -25,7 +25,8 @@ public class TheEgressListNamesStockStoryDownloadsTests
         Assert.Equal(EgressDisclosure.GitHubReleasesEndpoint, entry.Destination);
         Assert.Contains("the list of stock stories when the Stories page first opens in a session", entry.What, StringComparison.Ordinal);
         Assert.Contains("the cast pictures shown on the list, kept on disk", entry.What, StringComparison.Ordinal);
-        Assert.Contains("A story's own files, its hidden layer and every cast picture, are requested when you pick it", entry.What, StringComparison.Ordinal);
+        Assert.Contains("A story's own files, its hidden layer and every cast picture, are requested when you open its page", entry.What, StringComparison.Ordinal);
+        Assert.Contains("a story's files when you open its page", entry.Summary, StringComparison.Ordinal);
         Assert.Contains("no key, no Commander name, no position and nothing from your journal", entry.What, StringComparison.Ordinal);
     }
 
