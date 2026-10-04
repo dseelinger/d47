@@ -4,12 +4,15 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>Where the Materials page gets its arithmetic, and how it knows to redo it.</summary>
-public sealed class GapSource(Func<GapReport> report)
+public sealed class GapSource(Func<GapReport> report, Func<CommanderGameState?> state)
 {
     /// <summary>Raised when either store changed, or the inventory moved.</summary>
     public event Action? Changed;
 
     public GapReport Report() => report();
+
+    /// <summary>Every catalogue material grouped into ledger cards, needs taken from <paramref name="gap"/>.</summary>
+    public MaterialTrackerReport Tracker(GapReport gap) => MaterialTracker.Of(state(), gap);
 
     public void Invalidate() => Changed?.Invoke();
 }

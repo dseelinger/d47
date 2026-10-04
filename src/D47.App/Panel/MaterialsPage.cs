@@ -14,7 +14,7 @@ using D47.Core.Loadout;
 
 namespace D47.App.Panel;
 
-/// <summary>Fleet › Materials: a sidebar of views over the gap, opening on Needed by plans (#557).</summary>
+/// <summary>Fleet › Materials: a sidebar of views over the gap and the ship-material ledgers, opening on Needed by plans.</summary>
 public sealed class MaterialsPage : UserControl
 {
     public const string RootKey = LoadoutPages.GapRoot;
@@ -29,6 +29,8 @@ public sealed class MaterialsPage : UserControl
 
     public const string NoPlans = "No live plan needs a material.";
 
+    public const string LedgerHead = "Each held against the storage cap for its grade.";
+
     public const string Met = "✓ MET";
 
     /// <summary>Names the click-outside layer, for a test to press without aiming at the dialog itself.</summary>
@@ -36,11 +38,15 @@ public sealed class MaterialsPage : UserControl
 
     private const string Columns = "*,150,110,90,200";
 
+    /// <summary>The order a Guardian or Thargoid ledger lists its journal categories in.</summary>
+    private static readonly string[] Categories = ["Raw", "Manufactured", "Encoded"];
+
     private readonly GapSource _gap;
     private readonly EngineerSource? _engineers;
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
+    private string _view = NeededView;
 
     public MaterialsPage(GapSource gap, JournalClock clock, EngineerSource? engineers = null)
     {
@@ -74,6 +80,7 @@ public sealed class MaterialsPage : UserControl
         CloseDetail();
 
         var report = _gap.Report();
+        var ledgers = _gap.Tracker(report).Ship;
         var needed = report.Builds
             .SelectMany(build => build.Lines)
             .Select(line => line.Material.Symbol)
@@ -81,10 +88,23 @@ public sealed class MaterialsPage : UserControl
             .Count();
 
         _sidebar.Content = new Sidebar(
-            [new SidebarGroup("Plans", [new SidebarItem(NeededView, "Needed by plans", Count(needed))])],
-            NeededView);
+            [
+                new SidebarGroup("Plans", [new SidebarItem(NeededView, "Needed by plans", Count(needed))]),
+                new SidebarGroup(
+                    "Ship materials",
+                    [.. ledgers.Select(card => new SidebarItem(ViewOf(card), card.Name, Count(card.Rows.Count)))]),
+            ],
+            _view,
+            Select);
 
         _body.Children.Clear();
+
+        if (ledgers.FirstOrDefault(card => ViewOf(card) == _view) is { } ledger)
+        {
+            Ledger(ledger);
+            return;
+        }
+
         _body.Children.Add(TitleText.Block(
             TitleText.Build("Needed by plans", TypeScale.Title, TitleRank.Screen),
             TitleText.Context("Materials ›")));
@@ -152,7 +172,195 @@ public sealed class MaterialsPage : UserControl
         _gap.Changed -= OnChanged;
     }
 
+    /// <summary>The sidebar key of a ledger card: <c>raw</c>, <c>guardian</c>.</summary>
+    public static string ViewOf(MaterialCard card) => card.Name.ToLowerInvariant();
+
+    /// <summary>
+    /// A ledger's groups, one per grade; Guardian and Thargoid split by journal category first, headed
+    /// <c>Manufactured · Grade 3</c>.
+    /// </summary>
+    public static IReadOnlyList<(string Head, int? Cap, IReadOnlyList<MaterialRow> Rows)> GroupsOf(MaterialCard card)
+    {
+        var byCategory = card.Name is "Guardian" or "Thargoid";
+
+        return [.. card.Rows
+            .GroupBy(row => (Category: byCategory ? row.Material.Category : null, row.Material.Grade))
+            .OrderBy(group => group.Key.Category is { } category ? Array.IndexOf(Categories, category) : 0)
+            .ThenBy(group => group.Key.Grade)
+            .Select(group =>
+            {
+                var grade = group.Key.Grade is { } g ? $"Grade {Count(g)}" : "Ungraded";
+                var head = group.Key.Category is { } category ? $"{category} · {grade}" : grade;
+
+                return (head, group.First().Capacity, (IReadOnlyList<MaterialRow>)[.. group]);
+            })];
+    }
+
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
+
+    internal void Select(string view)
+    {
+        _view = view;
+        Refresh();
+    }
+
+    private void Ledger(MaterialCard card)
+    {
+        _body.Children.Add(TitleText.Block(
+            TitleText.Build(card.Name, TypeScale.Title, TitleRank.Screen),
+            TitleText.Context("Materials ›")));
+        _body.Children.Add(Hint(LedgerHead, new Thickness(0, 10, 0, 0)));
+
+        foreach (var (head, cap, rows) in GroupsOf(card))
+        {
+            _body.Children.Add(Grade(head, cap, rows));
+        }
+    }
+
+    private static Control Grade(string head, int? cap, IReadOnlyList<MaterialRow> rows)
+    {
+        var name = TitleText.Build(head, TypeScale.Section, TitleRank.Group);
+        name.VerticalAlignment = VerticalAlignment.Center;
+
+        var heading = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { name } };
+
+        if (cap is { } limit)
+        {
+            var capText = new TextBlock
+            {
+                Text = $"CAP {Count(limit)}",
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.MetaSmall,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            LoadoutPages.Themed(capText, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            heading.Children.Add(capText);
+        }
+
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,*,*"),
+            ColumnSpacing = 2,
+            RowSpacing = 2,
+            Margin = new Thickness(0, 10, 0, 0),
+        };
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (i % 3 == 0)
+            {
+                grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            }
+
+            var tile = Tile(rows[i]);
+            Grid.SetRow(tile, i / 3);
+            Grid.SetColumn(tile, i % 3);
+            grid.Children.Add(tile);
+        }
+
+        return new StackPanel
+        {
+            Margin = new Thickness(0, 28, 0, 0),
+            Children = { TitleText.GroupRow(heading), grid },
+        };
+    }
+
+    /// <summary>One material: name, <c>NEED n</c> when a plan needs it, held in A or Yellow at cap, and a capacity bar.</summary>
+    private static Border Tile(MaterialRow row)
+    {
+        var name = new TextBlock
+        {
+            Text = row.Material.Name.ToUpperInvariant(),
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Control,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var atCap = row.Capacity is { } cap && row.Held >= cap;
+        var held = Mono(Count(row.Held), atCap ? ThemeManager.YellowKey : ThemeManager.AKey);
+        held.Margin = new Thickness(8, 0, 0, 0);
+        Grid.SetColumn(held, 2);
+
+        var words = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Children = { name, held } };
+
+        if (row.Needed > 0)
+        {
+            var need = new TextBlock
+            {
+                Text = $"NEED {Count(row.Needed)}",
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.MetaSmall,
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            LoadoutPages.Themed(need, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            Grid.SetColumn(need, 1);
+            words.Children.Add(need);
+        }
+
+        var bar = CapacityBar(row.Capacity is { } limit and > 0 ? (double)row.Held / limit : 0);
+        DockPanel.SetDock(bar, Dock.Bottom);
+
+        var tile = new Border
+        {
+            Height = TypeScale.MinimumTarget,
+            Child = new DockPanel
+            {
+                Children = { bar, new Border { Padding = new Thickness(12, 0), Child = words } },
+            },
+        };
+        Hover(tile);
+
+        return tile;
+    }
+
+    /// <summary>A 3px Yellow fill over a YellowTrack ground, clamped to 0–1.</summary>
+    private static Grid CapacityBar(double fill)
+    {
+        var clamped = Math.Clamp(double.IsFinite(fill) ? fill : 0, 0, 1);
+
+        var bar = new Grid
+        {
+            Height = 3,
+            ColumnDefinitions = new ColumnDefinitions
+            {
+                new(new GridLength(clamped, GridUnitType.Star)),
+                new(new GridLength(1 - clamped, GridUnitType.Star)),
+            },
+        };
+
+        var ground = new Border();
+        LoadoutPages.Themed(ground, Border.BackgroundProperty, ThemeManager.YellowTrackKey);
+        Grid.SetColumnSpan(ground, 2);
+
+        var filled = new Border();
+        LoadoutPages.Themed(filled, Border.BackgroundProperty, ThemeManager.YellowKey);
+
+        bar.Children.Add(ground);
+        bar.Children.Add(filled);
+
+        return bar;
+    }
+
+    /// <summary>Fills a row or tile with Tile, and Tile2 while the pointer is over it.</summary>
+    private static void Hover(Border target)
+    {
+        var fill = Themed(target, Border.BackgroundProperty, ThemeManager.TileKey);
+        target.PointerEntered += (_, _) =>
+        {
+            fill.Dispose();
+            fill = Themed(target, Border.BackgroundProperty, ThemeManager.Tile2Key);
+        };
+        target.PointerExited += (_, _) =>
+        {
+            fill.Dispose();
+            fill = Themed(target, Border.BackgroundProperty, ThemeManager.TileKey);
+        };
+    }
 
     private static string KindWord(GapBuildKind kind) => kind switch
     {
@@ -250,17 +458,7 @@ public sealed class MaterialsPage : UserControl
                 Children = { name, ledger, amounts, shortfall, gauge },
             },
         };
-        var fill = Themed(row, Border.BackgroundProperty, ThemeManager.TileKey);
-        row.PointerEntered += (_, _) =>
-        {
-            fill.Dispose();
-            fill = Themed(row, Border.BackgroundProperty, ThemeManager.Tile2Key);
-        };
-        row.PointerExited += (_, _) =>
-        {
-            fill.Dispose();
-            fill = Themed(row, Border.BackgroundProperty, ThemeManager.TileKey);
-        };
+        Hover(row);
 
         return row;
     }

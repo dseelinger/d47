@@ -809,7 +809,8 @@ public partial class PanelView : UserControl
                     onFoot.Store.Builds,
                     state(),
                     includeIntended: true,
-                    checklists.SlotFor));
+                    checklists.SlotFor),
+                state);
 
             // Either store moving changes the subtraction, and neither knows about the other.
             ships.Store.Changed += gap.Invalidate;
