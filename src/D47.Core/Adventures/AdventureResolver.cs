@@ -29,6 +29,9 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
 
     private readonly Dictionary<string, (bool AtWar, DateTimeOffset? ReportedAt)> _wars = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>A station whose docks are offline, which a dock beat may not name.</summary>
+    public long? ClosedMarketId { get; init; }
+
     /// <summary>A system by name: its address and the service's spelling, or null if it is not one.</summary>
     public async Task<(long Address, string Name)?> SystemAsync(string name, CancellationToken cancellationToken)
     {
@@ -172,6 +175,11 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
                     if (match?.MarketId is null)
                     {
                         return Resolution.Refused($"{where} names a station, \"{station.Trim()}\", that is not in {found.Name}.");
+                    }
+
+                    if (match.MarketId == ClosedMarketId)
+                    {
+                        return Resolution.Refused($"{where} docks at {match.Name}, whose docks are offline.");
                     }
 
                     if (needsPad is { } pad && !match.Admits(pad))

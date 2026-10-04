@@ -41,8 +41,11 @@ public sealed record AdventureAsk(
     AdventureStory? Story = null,
     AdventureRewrite? Rewrite = null);
 
-/// <summary>A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.</summary>
-public sealed record AdventureRewrite(Adventure Chapter, int From);
+/// <summary>
+/// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
+/// <see cref="ClosedMarketId"/> is a station whose docks are offline, which no new beat may dock at.
+/// </summary>
+public sealed record AdventureRewrite(Adventure Chapter, int From, long? ClosedMarketId = null);
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System);
@@ -591,7 +594,10 @@ public sealed class AdventureGenerator(
             var resolver = new AdventureResolver(search, facts.Standings);
             var open = new List<StationSummary>();
 
-            foreach (var station in stations.Stations.Where(station => !facts.NeedsPermit(station.SystemName) && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))))
+            foreach (var station in stations.Stations.Where(station =>
+                         !facts.NeedsPermit(station.SystemName)
+                         && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
+                         && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
             {
                 if (!await resolver.ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false))
                 {
@@ -1286,8 +1292,11 @@ public sealed class AdventureGenerator(
         if (rewrite is not null)
         {
             text.AppendLine(
-                "You wrote a chapter of a story the Commander is flying, and they are partway through it. They have refused the beat "
-                + "they were on, so write new beats to take its place and the place of every beat after it. The beats already done stay "
+                "You wrote a chapter of a story the Commander is flying, and they are partway through it. "
+                + (rewrite.ClosedMarketId is null
+                    ? "They have refused the beat they were on"
+                    : "The station the beat they were on docks at has its docks offline")
+                + ", so write new beats to take its place and the place of every beat after it. The beats already done stay "
                 + "as they are.");
         }
         else if (draft is null)
@@ -1528,10 +1537,22 @@ public sealed class AdventureGenerator(
 
         var refused = rewrite.Chapter.Beats[rewrite.From];
 
-        text.AppendLine($"The beat the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
-        text.AppendLine(
-            "Write a different beat in its place, not the same thing to do and not the same place. Continue from the last beat done; "
-            + "do not restart or retell the chapter. It keeps its spine and its ending.");
+        if (rewrite.ClosedMarketId is null)
+        {
+            text.AppendLine($"The beat the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
+            text.AppendLine("Write a different beat in its place, not the same thing to do and not the same place.");
+        }
+        else
+        {
+            var station = refused.Trigger.Station ?? "that station";
+
+            text.AppendLine($"The beat the Commander was on: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
+            text.AppendLine(
+                $"{station}'s docks are offline, so the Commander cannot dock there. Write a different beat in its place. It may dock "
+                + $"somewhere else, but no beat may name {station}.");
+        }
+
+        text.AppendLine("Continue from the last beat done; do not restart or retell the chapter. It keeps its spine and its ending.");
     }
 
     /// <summary>A beat's lines as the model is shown them: each in quotes, after its speaker when one is named.</summary>
@@ -1772,7 +1793,7 @@ public sealed class AdventureGenerator(
         bool steerIllegal,
         CancellationToken cancellationToken)
     {
-        var resolver = new AdventureResolver(galaxy()!, facts.Standings);
+        var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId };
         var resolved = new List<AdventureBeat>();
         var refusals = new List<string>();
         var previousSystem = facts.System;
@@ -2160,7 +2181,8 @@ public sealed class AdventureGenerator(
         double? DestinationLightYears = null,
         IReadOnlyList<string>? OwnedHulls = null,
         SystemStandings? Standings = null,
-        IReadOnlyList<Mission>? Missions = null)
+        IReadOnlyList<Mission>? Missions = null,
+        long? ClosedMarketId = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -2193,7 +2215,8 @@ public sealed class AdventureGenerator(
                 state?.Squadron.IsMember == true,
                 OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>()],
                 Standings: state?.Standings,
-                Missions: state?.Missions.Missions);
+                Missions: state?.Missions.Missions,
+                ClosedMarketId: ask.Rewrite?.ClosedMarketId);
         }
 
         public bool Owns(string symbol) =>

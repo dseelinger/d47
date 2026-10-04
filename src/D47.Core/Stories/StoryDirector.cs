@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Journal;
@@ -391,52 +392,124 @@ public sealed class StoryDirector(
     /// </summary>
     public async Task<string?> RefuseBeatAsync(string? frontierId, CancellationToken cancellationToken)
     {
-        var commander = frontierId ?? AdventureStore.NoCommander;
+        if (!TryRewritable(frontierId, out var at, out var refusal))
+        {
+            return refusal;
+        }
+
+        if (!Claim(frontierId))
+        {
+            return "A different beat is already being written.";
+        }
+
+        return await RewriteAsync(frontierId, at, closedMarketId: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// When the journal says the station the current beat docks at has its docks offline, says so through
+    /// <see cref="Says"/> and has the beat written again on the pool, then says the new beat's hand-off. Returns the work
+    /// it started, or null. Does not block.
+    /// </summary>
+    public Task<string?>? DockOffline(JournalEvent journalEvent, string? frontierId)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        if (journalEvent.Kind != "DockingDenied"
+            || !string.Equals(journalEvent.String("Reason"), "DockOffline", StringComparison.OrdinalIgnoreCase)
+            || journalEvent.Long("MarketID") is not { } market
+            || !TryRewritable(frontierId, out var at, out _)
+            || journalEvent.Timestamp < at.Story.PickedAt
+            || at.Beat.Trigger is not { Kind: TriggerKind.Dock } trigger
+            || trigger.MarketId != market
+            || !Claim(frontierId))
+        {
+            return null;
+        }
+
+        Says?.Invoke($"The docks at {trigger.Station ?? journalEvent.String("StationName") ?? "that station"} are offline.");
+
+        return Task.Run(async () =>
+        {
+            var refusal = await RewriteAsync(frontierId, at, market, CancellationToken.None).ConfigureAwait(false);
+            var said = refusal is null
+                ? book.Standing(frontierId, at.Standing.Adventure.Key)?.CurrentBeat?.Trigger.HandOff()
+                : $"A different beat could not be written. {refusal}";
+
+            if (said is not null)
+            {
+                Says?.Invoke(said);
+            }
+
+            return refusal;
+        });
+    }
+
+    /// <summary>Raised with a line to say unprompted: a dock beat's station has its docks offline, then the beat that replaces it.</summary>
+    public event Action<string>? Says;
+
+    private sealed record BeatAt(Story Story, AdventureStanding Standing, AdventureBeat Beat);
+
+    /// <summary>The running story's current beat when it can be written again, or the refusal saying why not.</summary>
+    private bool TryRewritable(string? frontierId, [NotNullWhen(true)] out BeatAt? at, [NotNullWhen(false)] out string? refusal)
+    {
+        at = null;
+        refusal = null;
 
         if (stories.Current(frontierId) is not { } story)
         {
-            return "No story is running.";
+            refusal = "No story is running.";
         }
-
-        if (story.State != StoryState.Running)
+        else if (story.State != StoryState.Running)
         {
-            return "Resume the story first.";
+            refusal = "Resume the story first.";
         }
-
-        if (WithoutOdyssey(frontierId))
+        else if (WithoutOdyssey(frontierId))
         {
-            return NeedsOdyssey;
+            refusal = NeedsOdyssey;
         }
-
-        if (story.CurrentChapter is not { } key || book.Standing(frontierId, key) is not { Adventure.IsActive: true, IsDone: false } standing
-            || standing.CurrentBeat is not { } beat)
+        else if (story.CurrentChapter is not { } key || book.Standing(frontierId, key) is not { Adventure.IsActive: true, IsDone: false } standing
+                 || standing.CurrentBeat is not { } beat)
         {
-            return "The story is not waiting on a beat.";
+            refusal = "The story is not waiting on a beat.";
         }
-
-        if (!standing.IsRefusable)
+        else if (!standing.IsRefusable)
         {
-            return "The Guardian beacon scan ends act one, so that beat cannot be swapped.";
+            refusal = "The Guardian beacon scan ends act one, so that beat cannot be swapped.";
         }
-
-        if (IsWriting(frontierId))
+        else if (IsWriting(frontierId))
         {
-            return "A chapter is being written.";
+            refusal = "A chapter is being written.";
+        }
+        else
+        {
+            at = new BeatAt(story, standing, beat);
+            return true;
         }
 
+        return false;
+    }
+
+    /// <summary>Marks a replacement beat as being written; false when one already is.</summary>
+    private bool Claim(string? frontierId)
+    {
         lock (_gate)
         {
-            if (!_rewriting.Add(commander))
+            if (!_rewriting.Add(frontierId ?? AdventureStore.NoCommander))
             {
-                return "A different beat is already being written.";
+                return false;
             }
         }
 
         WritingChanged?.Invoke();
+        return true;
+    }
 
+    /// <summary>Writes the replacement a <see cref="Claim"/> was taken for, and releases the claim.</summary>
+    private async Task<string?> RewriteAsync(string? frontierId, BeatAt at, long? closedMarketId, CancellationToken cancellationToken)
+    {
         try
         {
-            return await RefuseAsync(frontierId, story, standing, beat, cancellationToken).ConfigureAwait(false);
+            return await RefuseAsync(frontierId, at.Story, at.Standing, at.Beat, closedMarketId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -447,14 +520,15 @@ public sealed class StoryDirector(
         {
             lock (_gate)
             {
-                _rewriting.Remove(commander);
+                _rewriting.Remove(frontierId ?? AdventureStore.NoCommander);
             }
 
             WritingChanged?.Invoke();
         }
     }
 
-    private async Task<string?> RefuseAsync(string? frontierId, Story story, AdventureStanding standing, AdventureBeat beat, CancellationToken cancellationToken)
+    private async Task<string?> RefuseAsync(
+        string? frontierId, Story story, AdventureStanding standing, AdventureBeat beat, long? closedMarketId, CancellationToken cancellationToken)
     {
         if (Hidden(story.Id) is not { } secret)
         {
@@ -463,7 +537,7 @@ public sealed class StoryDirector(
 
         var chapter = standing.Adventure;
         var from = standing.Current;
-        var refusedKey = RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily);
+        var refusedKey = closedMarketId is null ? RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily) : null;
         var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
 
         // The Story as it stood when this chapter was written: before the chapter itself was counted.
@@ -501,7 +575,7 @@ public sealed class StoryDirector(
                 longHaul,
                 comfort,
                 finaleChapter is null ? null : story.FinaleDestination),
-            Rewrite: new AdventureRewrite(chapter, from));
+            Rewrite: new AdventureRewrite(chapter, from, closedMarketId));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -525,7 +599,12 @@ public sealed class StoryDirector(
         stories.Update(frontierId, story.Id, current =>
             refusedKey is null || current.Refused.Contains(refusedKey) ? current : current with { Refused = [.. current.Refused, refusedKey] });
 
-        logger.LogInformation("{Title}: beat {Beat} of {Chapter} was refused and replaced", story.Title, from + 1, chapter.Name);
+        logger.LogInformation(
+            "{Title}: beat {Beat} of {Chapter} was replaced, {Why}",
+            story.Title,
+            from + 1,
+            chapter.Name,
+            closedMarketId is null ? "refused" : "its docks offline");
         return null;
     }
 

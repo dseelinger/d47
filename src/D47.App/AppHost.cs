@@ -2530,6 +2530,7 @@ public sealed class AppHost : IDisposable
         // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.
         storyDirector.VoicesHere = host.CastVoicesHere;
         storyDirector.VoicesNotReady += host.PostVoicesNotReady;
+        storyDirector.Says += host.SayAside;
 
         // A story's opening is said before any beat of its chapter one.
         storyOpeningRef = commander => storyDirector.OpeningWaits(commander) || host.IsSayingOpening;
@@ -2837,6 +2838,12 @@ public sealed class AppHost : IDisposable
                     var chapter = storyStore.Current(commander)?.CurrentChapter;
                     var core = waking == CoreWaking.Cores ? storyDirector.CoreOf(commander) : null;
                     wakings.Add(waking, core, chapter is not null && adventureBook.IsStirring(commander, chapter) ? chapter : null, context.Now);
+                }
+
+                // A dock beat whose station has its docks offline is written again on the pool.
+                if (!context.IsFirst)
+                {
+                    _ = storyDirector.DockOffline(journalEvent, commander);
                 }
             }
 
