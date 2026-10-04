@@ -40,6 +40,9 @@ public sealed record ExobiologyEntry
 
     /// <summary>Every galactic region a surveyed body carrying this species sits in.</summary>
     public required IReadOnlyList<string> Regions { get; init; }
+
+    /// <summary>Metres a sample must be from the last of its species; null where the table has none.</summary>
+    public int? ColonyDistance { get; init; }
 }
 
 /// <summary>
@@ -75,6 +78,11 @@ public static class ExobiologyCatalogue
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
     public static IReadOnlyList<ExobiologyEntry> All => Loaded.Value;
+
+    /// <summary>The colony distance in metres for a genus, or null where the table has none.</summary>
+    public static int? ColonyDistance(string genus) =>
+        Loaded.Value.FirstOrDefault(entry => string.Equals(entry.Genus, genus, StringComparison.OrdinalIgnoreCase))
+            ?.ColonyDistance;
 
     /// <summary>
     /// Every species whose surveyed columns and ranges contain the body's conditions. With
@@ -210,6 +218,7 @@ public static class ExobiologyCatalogue
             PressureLow = pressureLow,
             PressureHigh = pressureHigh,
             Regions = List(cells, 13),
+            ColonyDistance = Integer(cells, 14),
         };
     }
 

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Asking for your sampling progress now says how far apart samples of a genus must be and how many metres are still to go, or that you are far enough. It uses a distance per genus from community sources, since Frontier publishes none. For a genus without a figure it says what it said before: how far you have moved and the closest gap the game has accepted from you.
+
 On the Stories tab, the copy button after a system name is now level with the text it follows, and so is the full stop after it. It sat about half a line low on the story card, the story's Next line and each told beat's trigger line.
 
 The Narrator's default voice, for anyone who has not chosen one, is now a voice with an American, British, English, Scottish, Welsh, Irish, Australian, New Zealand or Canadian accent. A voice described as narration is preferred; if there is none, the first voice with one of those accents is used; if the voice list has no such voice, the Narrator keeps the voice it had before. A Narrator voice you picked yourself is kept.

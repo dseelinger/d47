@@ -603,9 +603,9 @@ Stratum Paleas analysed. That run is complete.
 ```
 
 The distance is what the callout is for — you can see the genus and you can count to three, but nobody can
-judge four hundred metres across a ridge, and getting it wrong wastes the sample. Directive 47 says
-how far you moved and **never whether it was far enough**: that figure is in the species' Codex entry
-in-game, and no table of it ships here. See [Exobiology](exobiology.md) for why.
+judge four hundred metres across a ridge, and getting it wrong wastes the sample. The callout
+says how far you moved and not whether it was far enough; asking for your sampling progress adds the
+colony distance. See [Exobiology](exobiology.md).
 
 #### First footfall {#footfall}
 

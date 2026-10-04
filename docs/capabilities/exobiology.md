@@ -97,17 +97,15 @@ nav_order: 118
 <p class="body">A scan that found nothing is a real answer, and the one that saves you a landing — <em>no biological signals, nothing here to sample</em>. That is different from “I have not looked”, and the two are worded differently on purpose.</p>
 </section>
 <section>
-<h2><span class="num">3</span> It will not tell you whether you have gone far enough.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Sampling progress reports an upper bound learned from your own play, never the required distance">
+<h2><span class="num">3</span> It says how far there is still to go.</h2>
+<svg viewBox="0 0 880 252" role="img" aria-label="Sampling progress reports the genus' colony distance and how many metres are still to go">
  <rect x="20" y="36" width="840" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="72" text-anchor="start" font-size="16" fill="var(--text)">Stratum Paleas — 2 of 3, 1 to go.  341 metres from your last specimen.</text>
- <text x="46" y="102" text-anchor="start" font-size="15" fill="var(--text)">The closest I have seen Stratum accepted is 502 metres, over 4 samples.</text>
- <text x="46" y="130" text-anchor="start" font-size="14" fill="var(--text-muted)">That is an upper bound on what it needs, not the figure — the Codex entry has that.</text>
- <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A sourcing decision rather than a gap.</text>
- <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text)">The real figure is published by the game itself, in the species’ own Codex entry.</text>
- <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">A community wiki copied into a shipped table is Directive 47 laundering somebody’s forum post.</text>
+ <text x="46" y="102" text-anchor="start" font-size="15" fill="var(--text)">Stratum needs 500 metres between samples. 159 m to go.</text>
+ <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The distance is a community figure, per genus.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text)">Frontier publishes no table; the Codex entry is the authority.</text>
 </svg>
-<p class="body">What it does instead is learn. A specimen the game accepted is proof the distance you travelled was sufficient, so the smallest accepted gap is an upper bound — measured from your own play, carried with its sample size, and never presented as the figure itself. It needs no source and gets better the more you sample.</p>
+<p class="body">The table carries a colony distance in metres for each genus, taken from community sources because Frontier publishes none. For a genus it lists, the answer says the distance and how many metres are still to go, or that you are far enough. For a genus it does not list, the answer says only how far you have moved and the closest gap the game has accepted from you, which is an upper bound and never the requirement.</p>
 </section>
 <section>
 <h2><span class="num">4</span> A plotted route cannot contain a first footfall.</h2>
@@ -222,23 +220,19 @@ actually have while driving away from the last specimen:
 ```text
 Stratum Paleas — 2 of 3, 1 to go.
   341 metres from your last specimen.
-  The closest I have seen Stratum accepted is 502 metres, over 4 samples. That is an upper
-  bound on what it needs, not the figure — the Codex entry has that.
+  Stratum needs 500 metres between samples. 159 m to go.
 
 Finished here: Bacterium Cerbrus.
 ```
 
-**Directive 47 will not tell you whether you have gone far enough, and that is a sourcing decision
-rather than a gap.** The required spacing is published by the game in the species' own Codex entry.
-Every machine-readable copy of it outside the game is a community wiki, and this project's rule is
-that what a web search finds stays a sentence — the same sentence copied into a shipped table is
-Directive 47 laundering somebody's forum post into its own voice, and it cannot be corrected without
-a new release. The Codex is two clicks away and is authoritative; a table here would be neither.
+**The colony distance is a community figure.** Frontier publishes no table of it; the species' own
+Codex entry in the game is the authority. `Exobiology.tsv` holds one value per genus in its
+`colony_distance` column, taken from ArtemisScannerTracker, HerzbubeWiki's EDExobiology page and
+EDCoPilot's callouts. A genus with no value is answered as before.
 
-**What it does instead is learn.** A specimen the game accepted is proof that the distance you
+**Where there is no value, it learns.** A specimen the game accepted is proof that the distance you
 travelled was sufficient, so the smallest accepted gap is an upper bound on the requirement —
 measured from your own play, carried with its sample size, and never presented as the figure itself.
-It needs no source and gets better the more you sample.
 
 Three things this rests on, all measured:
 
@@ -318,7 +312,7 @@ What your own surface scan found. Names genera; never quotes a value.
 #### `get_sampling_progress`
 
 How many specimens you have taken on this body, how far you have moved since the last one, and what
-is already finished here. Never says whether the distance was enough.
+is already finished here. For a genus with a known colony distance, also says how far is still to go.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

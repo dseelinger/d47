@@ -18,3 +18,33 @@ is zero, and prints a notice to drop the entry once spansh reports a non-zero va
 CURATED_VALUES = {
     "Radicoida Unica": 119_037,
 }
+
+# genus -> metres a sample must be from the last one of the same species. Frontier publishes no
+# table, so these are community figures: ArtemisScannerTracker's organicinfo.py
+# (https://github.com/Balvald/ArtemisScannerTracker), HerzbubeWiki's EDExobiology page
+# (https://wiki.herzbube.ch/wiki/EDExobiology) and EDCoPilot's spoken callouts. Only the numbers
+# are taken. A genus not listed has no value.
+COLONY_DISTANCES = {
+    "Aleoida": 150,
+    "Bacterium": 500,
+    "Cactoida": 300,
+    "Clypeus": 150,
+    "Concha": 150,
+    "Electricae": 1000,
+    "Fonticulua": 500,
+    "Frutexa": 150,
+    "Fumerola": 100,
+    "Fungoida": 300,
+    "Osseus": 800,
+    "Recepta": 150,
+    "Stratum": 500,
+    "Tubus": 800,
+    "Tussock": 200,
+    "Amphora Plant": 100,
+    "Anemone": 100,
+    "Bark Mounds": 100,
+    "Brain Tree": 100,
+    "Radicoida": 15,
+    "Shards": 100,
+    "Tubers": 100,
+}

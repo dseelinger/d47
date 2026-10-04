@@ -89,9 +89,8 @@ public static class ExobiologyCapability
                 Description =
                     "What the Commander has sampled on the body they are on: which genus, how many "
                     + "specimens of the three, how far they have moved since the last one, and what "
-                    + "is already finished here. Does not say whether they have moved far enough — "
-                    + "the required distance is in the species' Codex entry in-game, and D47 ships "
-                    + "no table of it.",
+                    + "is already finished here. For a genus with a known colony distance it also "
+                    + "says how many metres are still to go, or that they are far enough.",
                 Parameters = [],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Sampling(commander(), status))),
             },
@@ -303,7 +302,9 @@ public static class ExobiologyCapability
 
             // The live half, and the only reason this is a tool rather than only a callout: a Commander
             // driving away from the last specimen wants the number now, not when the next sample lands.
-            if (state.Sampling.MetresSinceLast(genus, here) is { } metres)
+            var moved = state.Sampling.MetresSinceLast(genus, here);
+
+            if (moved is { } metres)
             {
                 report.AppendLine($"  {OrganicSampling.Metres(metres)} from your last specimen.");
             }
@@ -314,9 +315,13 @@ public static class ExobiologyCapability
                     + "needs you to be on the surface.");
             }
 
-            // Measured from this Commander's own accepted samples, and quoted as what it is: an upper bound
-            // on the requirement, with its sample size, never the requirement itself.
-            if (state.Sampling.ClosestAccepted(genus.Genus) is { } closest)
+            var colony = ExobiologyCatalogue.ColonyDistance(genus.Genus);
+
+            if (colony is { } required)
+            {
+                report.AppendLine($"  {genus.Genus} needs {required} metres between samples. {ToGo(required, moved)}".TrimEnd());
+            }
+            else if (state.Sampling.ClosestAccepted(genus.Genus) is { } closest)
             {
                 report.AppendLine(
                     $"  The closest I have seen {genus.Genus} accepted is "
@@ -531,4 +536,12 @@ public static class ExobiologyCapability
         when.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " game time";
 
     private static string Number(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
+
+    private static string ToGo(int required, double? moved) =>
+        moved switch
+        {
+            null => "",
+            { } metres when metres >= required => "You are far enough.",
+            { } metres => $"{Math.Ceiling(required - metres).ToString("0", CultureInfo.InvariantCulture)} m to go.",
+        };
 }
