@@ -139,4 +139,23 @@ public class SpokenReferentTests
             $"{Name} is unexplored.",
             Say(referent, $"{Name} is unexplored.", TimeSpan.FromSeconds(5)));
     }
+
+    /// <summary>After a station's name, "it" would point at the station.</summary>
+    [Fact]
+    public void ASystemAfterAStationKeepsItsName()
+    {
+        var referent = new SpokenReferent();
+
+        Assert.Equal(
+            "Ship's log, LTT 7786. Next: dock at Wolff's Haven in LTT 7786.",
+            referent.Speak("Ship's log, LTT 7786. Next: dock at Wolff's Haven in LTT 7786.", ["LTT 7786"], Start));
+
+        Assert.Equal(
+            "Dock at Wolff's Haven in LTT 7786.",
+            referent.Speak("Dock at Wolff's Haven in LTT 7786.", ["LTT 7786"], Start + TimeSpan.FromSeconds(5)));
+
+        Assert.Equal(
+            "Arrived in it. No stations in it.",
+            referent.Speak("Arrived in LTT 7786. No stations in LTT 7786.", ["LTT 7786"], Start + TimeSpan.FromSeconds(9)));
+    }
 }

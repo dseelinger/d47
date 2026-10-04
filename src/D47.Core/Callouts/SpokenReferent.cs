@@ -80,7 +80,7 @@ public sealed class SpokenReferent
         while (at >= 0)
         {
             built.Append(text, from, at - from);
-            built.Append(Fitted(text, at, Pronoun));
+            built.Append(FollowsAPlace(text, at) ? text.Substring(at, name.Length) : Fitted(text, at, Pronoun));
 
             from = at + name.Length;
             at = text.IndexOf(name, from, StringComparison.OrdinalIgnoreCase);
@@ -89,6 +89,56 @@ public sealed class SpokenReferent
         built.Append(text, from, text.Length - from);
 
         return built.ToString();
+    }
+
+    /// <summary>True for "&lt;Name&gt; in/at &lt;system&gt;", where "it" would point at the name before it.</summary>
+    private static bool FollowsAPlace(string text, int at)
+    {
+        var end = at;
+
+        while (end > 0 && char.IsWhiteSpace(text[end - 1]))
+        {
+            end--;
+        }
+
+        var preposition = text.AsSpan(0, end);
+
+        if (!preposition.EndsWith(" in", StringComparison.OrdinalIgnoreCase)
+            && !preposition.EndsWith(" at", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var wordEnd = end - 3;
+
+        while (wordEnd > 0 && char.IsWhiteSpace(text[wordEnd - 1]))
+        {
+            wordEnd--;
+        }
+
+        var wordStart = wordEnd;
+
+        while (wordStart > 0 && !char.IsWhiteSpace(text[wordStart - 1]))
+        {
+            wordStart--;
+        }
+
+        return wordStart < wordEnd
+            && char.IsUpper(text[wordStart])
+            && !StartsASentence(text, wordStart);
+    }
+
+    private static bool StartsASentence(string text, int at)
+    {
+        for (var back = at - 1; back >= 0; back--)
+        {
+            if (!char.IsWhiteSpace(text[back]))
+            {
+                return text[back] is '.' or '!' or '?' or ':';
+            }
+        }
+
+        return true;
     }
 
     /// <summary>The pronoun with the capitalisation the position needs.</summary>

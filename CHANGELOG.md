@@ -235,6 +235,8 @@ When you request docking at the station a story chapter is sending you to and th
 
 The same now happens for an adventure you asked for that is not part of a story. When its current beat sends you to a station whose docks are offline, d47 says so, writes a different beat from that one on, avoiding that station, and says where to go next. Beats already done stay as they were. With a story and an adventure both under way, only the one sent to the closed station is written again.
 
+A system name that follows a station or body name, as in "dock at Wolff's Haven in LTT 7786", is now always spoken as the name. Before, a repeat of the system in that position was spoken as "it", which read as the station. Other repeats still become "it".
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It
