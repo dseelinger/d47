@@ -90,8 +90,9 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         CaptionStrip.Apply(window);
         window.Show();
 
-        var row = window.GetVisualDescendants().OfType<StackPanel>()
-            .Single(p => p.Children.OfType<TextBlock>().Any(t => t.Text == "0.1.0"));
+        // The version shares a row of its own with anything drawn after it.
+        var version = window.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "0.1.0");
+        var row = (StackPanel)((StackPanel)version.Parent!).Parent!;
 
         Assert.Equal(18, row.Margin.Left);
         Assert.Equal(14, row.Spacing);

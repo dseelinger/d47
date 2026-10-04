@@ -61,16 +61,9 @@ public class EveryTabDrawsOneHeaderTests
         return store.Active!;
     }
 
-    /// <summary>The desktop panel, 1280 wide unless told otherwise, with every tab furnished from real pages.</summary>
-    private static SettingsHost Open(double width = Width)
+    /// <summary>Furnishes Stories, Commander, Asset Mgmt and Navigation from real pages.</summary>
+    internal static void FurnishEveryTabButSettings(PanelView panel)
     {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .Apply(TestSurface.Settings().Current.Ui.Theme);
-
-        var (settings, viewState, paths) = TestSurface.Create();
-        var host = SettingsHost.Open(settings, viewState, paths, width: width, height: Height);
-        var panel = host.Panel;
-
         var root = TempFolders.Create("d47-one-header");
         var state = State();
 
@@ -99,6 +92,19 @@ public class EveryTabDrawsOneHeaderTests
 
         panel.EnableAdventures(new AdventureSurface(
             book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { }));
+    }
+
+    /// <summary>The desktop panel, 1280 wide unless told otherwise, with every tab furnished from real pages.</summary>
+    private static SettingsHost Open(double width = Width)
+    {
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .Apply(TestSurface.Settings().Current.Ui.Theme);
+
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths, width: width, height: Height);
+        var panel = host.Panel;
+
+        FurnishEveryTabButSettings(panel);
 
         Dispatcher.UIThread.RunJobs();
         return host;

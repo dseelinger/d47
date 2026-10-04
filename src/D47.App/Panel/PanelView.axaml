@@ -323,7 +323,7 @@
           <!--
             The panel's chrome, on the tab row. Right-to-left: badge, help, resize. Each child is
             centred in the row, and a hidden one takes no width, so the row sits correctly with any of
-            them missing.
+            them missing. On the desktop, help and the badge are in the window's title bar instead.
           -->
           <StackPanel x:Name="ChromeRow"
                       DockPanel.Dock="Right"

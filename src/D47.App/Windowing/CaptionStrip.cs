@@ -38,7 +38,10 @@ public static class CaptionStrip
     /// <param name="showMinimize">
     /// Off for every dialog; <see cref="Dialogs.Over(Window, Window, string)"/> passes false.
     /// </param>
-    public static void Apply(Window window, bool showMinimize = true)
+    /// <param name="afterVersion">Drawn 10px after the version: the main window's pre-release badge.</param>
+    /// <param name="beforeButtons">Drawn just before the window controls: the main window's HELP.</param>
+    public static void Apply(
+        Window window, bool showMinimize = true, Control? afterVersion = null, Control? beforeButtons = null)
     {
         var content = window.Content as Control;
         window.Content = null;
@@ -46,6 +49,11 @@ public static class CaptionStrip
         Button? maximizeButton = null;
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+
+        if (beforeButtons is not null)
+        {
+            buttons.Children.Add(beforeButtons);
+        }
 
         if (showMinimize)
         {
@@ -113,6 +121,13 @@ public static class CaptionStrip
         diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AKey));
 
 
+        var versionRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { version } };
+
+        if (afterVersion is not null)
+        {
+            versionRow.Children.Add(afterVersion);
+        }
+
         var drag = new Border
         {
             Background = Brushes.Transparent,
@@ -125,7 +140,7 @@ public static class CaptionStrip
                 {
                     new BloomStack { Tier = BloomTier.High, VerticalAlignment = VerticalAlignment.Center, Child = diamond },
                     new BloomStack { Tier = BloomTier.High, VerticalAlignment = VerticalAlignment.Center, Child = name },
-                    version,
+                    versionRow,
                 },
             },
         };

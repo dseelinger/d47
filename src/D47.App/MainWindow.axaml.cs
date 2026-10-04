@@ -342,8 +342,9 @@ public partial class MainWindow : Window
         }
 
         // Last, so it wraps whatever ZoomHost left behind rather than being zoomed along with the panel
-        // (#286).
-        CaptionStrip.Apply(this);
+        // (#286). HELP and the pre-release badge sit in this window's title bar; the headset's panel keeps its own.
+        var (badge, help) = Panel.MoveChromeToTitleBar();
+        CaptionStrip.Apply(this, afterVersion: badge, beforeButtons: help);
     }
 
     /// <summary>What the panel is showing.</summary>

@@ -1455,11 +1455,69 @@ public partial class PanelView : UserControl
     /// </summary>
     private bool OutputOnly => Classes.Contains("output-only");
 
-    private void ShowHelpAffordance() =>
-        HelpButton.IsVisible = !OutputOnly
+    private void ShowHelpAffordance()
+    {
+        var shown = !OutputOnly
             && (_openHelp is not null
                 || HelpPageView.Exists(Nav.Help)
                 || HelpPageView.Exists(HelpLevel.Index));
+
+        HelpButton.IsVisible = shown && _titleBar is null;
+
+        if (_titleBar is { } titleBar)
+        {
+            titleBar.Help.IsVisible = shown;
+        }
+    }
+
+    /// <summary>HELP and the pre-release badge in the window's title bar, once the window has taken them.</summary>
+    private (Button Help, Border Badge, TextBlock BadgeText)? _titleBar;
+
+    /// <summary>
+    /// Builds HELP and the pre-release badge for the desktop window's title bar and hides this panel's own
+    /// pair, which the headset keeps. Both copies follow <see cref="EnableHelp"/> and <see cref="ShowChannel"/>.
+    /// </summary>
+    public (Control Badge, Control Help) MoveChromeToTitleBar()
+    {
+        var help = new Button
+        {
+            Name = "TitleBarHelp",
+            Height = Windowing.CaptionStrip.StripHeight,
+            FontSize = Theming.TypeScale.Caption,
+            Margin = new Thickness(0, 0, 2, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsVisible = false,
+        };
+        Controls.Glyphs.Quiet(help, "HELP", "Open the documentation");
+        help.Click += OnHelpClick;
+
+        var text = new TextBlock
+        {
+            Name = "TitleBarBadgeText",
+            FontFamily = new FontFamily(Theming.Fonts.ChromeFamily),
+            FontSize = Theming.TypeScale.MetaSmall,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        text.Bind(TextBlock.ForegroundProperty, text.GetResourceObservable(Theming.ThemeManager.WarnKey));
+
+        var badge = new Border
+        {
+            Name = "TitleBarBadge",
+            Height = 22,
+            Padding = new Thickness(7, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsVisible = false,
+            Child = text,
+        };
+        badge.Bind(Border.BackgroundProperty, badge.GetResourceObservable(Theming.ThemeManager.WarnGroundKey));
+
+        _titleBar = (help, badge, text);
+        PreReleaseBadge.IsVisible = false;
+        ShowHelpAffordance();
+
+        return (badge, help);
+    }
 
     /// <summary>How this surface enters resize mode, when a host has given it a way (#190).</summary>
     private Action? _enterResize;
@@ -1661,18 +1719,27 @@ public partial class PanelView : UserControl
 
     private void OnResizeClick(object? sender, RoutedEventArgs e) => _enterResize?.Invoke();
 
-    /// <summary>Shows the pre-release mark beside the help glyph, or takes it away (#92).</summary>
+    /// <summary>Shows the pre-release mark, on the tab row or in the title bar, or takes it away (#92).</summary>
     public void ShowChannel(D47.Core.Updates.ReleaseChannel channel)
     {
         // The wording comes from Core with the rest of it, so the badge cannot say one thing while the title
         // bar and About say another - which is the whole reason that text lives there.
         var marker = D47.Core.Updates.ReleaseChannelText.Short(channel);
 
-        PreReleaseBadge.IsVisible = !OutputOnly && marker is not null;
+        var shown = !OutputOnly && marker is not null;
+        var word = marker?.ToUpperInvariant();
 
-        if (marker is not null)
+        PreReleaseBadge.IsVisible = shown && _titleBar is null;
+
+        if (word is not null)
         {
-            PreReleaseBadgeText.Text = marker.ToUpperInvariant();
+            PreReleaseBadgeText.Text = word;
+        }
+
+        if (_titleBar is { } titleBar)
+        {
+            titleBar.Badge.IsVisible = shown;
+            titleBar.BadgeText.Text = word ?? titleBar.BadgeText.Text;
         }
     }
 

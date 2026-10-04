@@ -11,7 +11,7 @@ namespace D47.App.Tests;
 /// <summary>The panel's way into the documentation site.</summary>
 public class HelpButtonTests
 {
-    /// <summary>It is what is left in the header's right-hand corner.</summary>
+    /// <summary>It is in the title bar, before the window controls.</summary>
     [AvaloniaFact]
     public void TheHeaderCarriesAHelpButtonAndNoGear()
     {
@@ -21,7 +21,7 @@ public class HelpButtonTests
 
         var buttons = window.GetVisualDescendants().OfType<Button>().Select(b => b.Name).ToList();
 
-        Assert.Contains("HelpButton", buttons);
+        Assert.Contains("TitleBarHelp", buttons);
         Assert.DoesNotContain("SettingsButton", buttons);
 
         window.Close();
