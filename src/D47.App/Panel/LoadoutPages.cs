@@ -71,8 +71,16 @@ public static class LoadoutPages
         EngineerSource? engineers = null,
 
         // The Materials footer's time.
-        JournalClock? materialsClock = null)
+        JournalClock? materialsClock = null,
+
+        // Draws Fleet › Ships › Compare, and puts its tile on the Ships index (#562).
+        Func<Control>? compare = null)
     {
+        if (crumb.Key == ComparePage.Key && compare is not null)
+        {
+            return compare();
+        }
+
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
             return new CarrierPage(carrier, copy: copy, settingsStrip: carrierSettingsStrip?.Invoke());
@@ -120,7 +128,11 @@ public static class LoadoutPages
         var root = modes.FirstOrDefault(mode => mode.RootKey == crumb.Key) ?? modes[0];
 
         return new IndexPage(
-            root, nav, prompts, root.RootKey == FleetRoot ? settingsStrip?.Invoke() : null);
+            root,
+            nav,
+            prompts,
+            root.RootKey == FleetRoot ? settingsStrip?.Invoke() : null,
+            root.RootKey == FleetRoot && compare is not null ? () => nav.Drill(ComparePage.Crumb) : null);
     }
 
     /// <summary>The crumb for a ship, and for a slot of it.</summary>
@@ -1399,7 +1411,12 @@ public sealed class IndexPage : LoadoutPage
 
     private readonly ScrollViewer _scroller;
 
-    public IndexPage(ILoadoutMode mode, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null)
+    public IndexPage(
+        ILoadoutMode mode,
+        PanelNavigator nav,
+        PanelPrompts prompts,
+        Control? settingsStrip = null,
+        Action? compare = null)
         : base(mode)
     {
         _nav = nav;
@@ -1412,6 +1429,15 @@ public sealed class IndexPage : LoadoutPage
 
         DockPanel.SetDock(intend, Dock.Left);
         head.Children.Add(intend);
+
+        if (compare is not null)
+        {
+            var tile = LoadoutPages.Press("Compare", compare);
+            tile.Name = "CompareShips";
+            tile.Margin = new Thickness(2, 0, 0, 0);
+            DockPanel.SetDock(tile, Dock.Left);
+            head.Children.Add(tile);
+        }
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtIndex);
