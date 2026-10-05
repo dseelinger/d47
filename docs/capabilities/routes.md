@@ -491,6 +491,37 @@ distance. Where nothing at the destination pays more than you bought for, it say
 Nothing here sells at a profit in Sothis.
 ```
 
+#### `plot_carrier_route`
+
+"Plot my carrier to Colonia" plots your own fleet carrier's jumps through spansh's carrier plotter.
+It reads four figures from the last carrier management reading — the tank, the tritium in the hold,
+the capacity and the used capacity — and sends them with the start and the destination. It moves nothing: a
+carrier jump is still yours to schedule in game.
+
+```json
+{"type":"object","properties":{"from":{"type":"string","description":"Where to plot from. Defaults to where the carrier is now."},"return_trip":{"type":"boolean","description":"Come back to the start, counting the tritium for both legs. Defaults to true."},"to":{"type":"string","description":"The system the carrier should go to."}},"required":["to"],"additionalProperties":false}
+```
+
+**The return trip is on by default.** A one-way plot lands the carrier with an empty tank and an
+empty reserve, so the plot that counts is the one that brings it home. The answer gives the jumps,
+the tritium for the whole journey, the restock stops (three named, the rest a count), how many
+waypoints have a pristine icy ring to mine from, and how old the management reading is:
+
+```text
+Sol to Colonia and back: 90 jumps, 6,084 t of tritium for the whole journey.
+Restock 1,000 t at Sol, 964 t at Pyraleau OA-Q c21-5, 964 t at Clooku GK-S c19-54 and 4 more stops.
+40 waypoints have a pristine icy ring to mine tritium from.
+Tank and hold read from carrier management 2 days ago.
+```
+
+Used capacity is the carrier's total capacity less its free space, so crew, shipyard and outfitting
+stock and reserved market space all count: fuel burn follows mass, and cargo is mass. The tritium in
+the hold is counted inside that figure, never beside it. Where the hold's tritium has not been seen,
+the plot assumes none and says so.
+
+It refuses rather than guessing: a squadron carrier, a Commander with no carrier, or a carrier whose
+management panel has never been opened gets a sentence saying which, and nothing is recorded.
+
 ### Notes for anyone reading the code
 
 The route endpoints have a property the search endpoints do not: **they echo back the parameters

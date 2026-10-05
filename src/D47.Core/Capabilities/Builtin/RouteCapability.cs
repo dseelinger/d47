@@ -268,6 +268,38 @@ public static class RouteCapability
             },
             new ToolDefinition
             {
+                Name = "plot_carrier_route",
+                Description =
+                    "Plot the Commander's own fleet carrier's jumps to a system, with the tritium the whole "
+                    + "journey burns and where to restock. Reads the carrier's tank, the tritium in its hold "
+                    + "and its used capacity from the last carrier management reading. Moves nothing.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "to",
+                        Type = ToolParameterType.String,
+                        Description = "The system the carrier should go to.",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "from",
+                        Type = ToolParameterType.String,
+                        Description = "Where to plot from. Defaults to where the carrier is now.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "return_trip",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Come back to the start, counting the tritium for both legs. Defaults to true.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    PlotCarrierAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = "plot_next_stop",
                 Description =
                     "Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a "
@@ -567,6 +599,129 @@ public static class RouteCapability
     private const int StopsSpoken = 3;
 
     private const int BodiesSpoken = 4;
+
+    private static async Task<ToolResult> PlotCarrierAsync(
+        IRouteService? routes,
+        Func<CommanderGameState?> commander,
+        Configuration.SettingsService settings,
+        RoutePlanBook? plans,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (!Ready(routes, settings))
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        arguments.TryGetString("to", out var to);
+        arguments.TryGetString("from", out var from);
+
+        if (!CarrierRouteQuery.TryFrom(
+                commander()?.Carrier ?? CarrierState.None,
+                from,
+                to ?? string.Empty,
+                Flag(arguments, "return_trip") ?? true,
+                out var query,
+                out var failure))
+        {
+            return ToolResult.Error(failure);
+        }
+
+        var returnTrip = query.Destinations.Count > 1;
+        var destination = query.Destinations[0];
+
+        try
+        {
+            var route = await routes!.PlotCarrierAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (route is null || route.Waypoints.Count == 0)
+            {
+                return ToolResult.Ok($"No carrier route from {query.Source} to {destination}.");
+            }
+
+            var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
+
+            plans?.Record(
+                route,
+                query.CarrierId,
+                $"{query.Source} to {destination}{(returnTrip ? " and back" : "")}",
+                at);
+
+            return ToolResult.Ok(Describe(route, query, destination, returnTrip, at));
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    private static string Describe(
+        CarrierRoute route,
+        CarrierRouteQuery query,
+        string destination,
+        bool returnTrip,
+        DateTimeOffset at)
+    {
+        var report = new StringBuilder();
+        var jumps = route.Waypoints.Count(waypoint => waypoint.Distance > 0);
+
+        report.AppendLine(
+            $"{query.Source} to {destination}{(returnTrip ? " and back" : "")}: {jumps} jump{(jumps == 1 ? "" : "s")}, "
+            + $"{Tonnes(route.TotalTritium)} of tritium for the whole journey.");
+
+        var restocks = route.RestockStops;
+
+        if (restocks.Count > 0)
+        {
+            var named = restocks
+                .Take(RestocksSpoken)
+                .Select(stop => $"{Tonnes(stop.RestockAmount)} at {stop.Name}")
+                .ToList();
+
+            if (restocks.Count > RestocksSpoken)
+            {
+                var more = restocks.Count - RestocksSpoken;
+                named.Add($"{more} more stop{(more == 1 ? "" : "s")}");
+            }
+
+            report.AppendLine($"Restock {Join(named)}.");
+        }
+
+        var mineable = route.Waypoints.Count(waypoint => waypoint is { HasIcyRing: true, IsSystemPristine: true });
+
+        report.AppendLine(
+            mineable == 0
+                ? "No waypoint has a pristine icy ring to mine tritium from."
+                : $"{mineable} waypoint{(mineable == 1 ? " has" : "s have")} a pristine icy ring to mine tritium from.");
+
+        if (query.StatsSeenAt is { } read)
+        {
+            report.AppendLine(
+                $"Tank and hold read from carrier management {Persona.TelemetryDelta.Spoken(at - read)} ago.");
+        }
+
+        if (query.TritiumUncertain)
+        {
+            report.AppendLine(
+                query.TritiumStored == 0
+                    ? "The tritium in the hold is not known, so the plot assumed none."
+                    : $"The plot assumed {Tonnes(query.TritiumStored)} of tritium in the hold; an open trade "
+                      + "order may have changed it.");
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private const int RestocksSpoken = 3;
+
+    private static string Tonnes(int tonnes) => $"{tonnes.ToString("N0", CultureInfo.InvariantCulture)} t";
+
+    private static string Join(IReadOnlyList<string> parts) => parts.Count switch
+    {
+        1 => parts[0],
+        _ => $"{string.Join(", ", parts.Take(parts.Count - 1))} and {parts[^1]}",
+    };
 
     private static async Task<ToolResult> PlanTradeAsync(
         ITradePlanService? trade,

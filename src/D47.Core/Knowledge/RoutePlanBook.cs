@@ -19,6 +19,9 @@ public enum RoutePlanKind
 
     /// <summary>A circuit of systems with surveyed biology.</summary>
     Exobiology,
+
+    /// <summary>A fleet carrier's jumps and the tritium they burn.</summary>
+    Carrier,
 }
 
 /// <summary>The last plan of one kind, as it was answered (Phase 37, "One last plan").</summary>
@@ -42,6 +45,11 @@ public sealed record StoredRoutePlan
     public TradeRoute? Trade { get; init; }
 
     public ExobiologyRoute? Exobiology { get; init; }
+
+    public CarrierRoute? Carrier { get; init; }
+
+    /// <summary>The carrier a <see cref="RoutePlanKind.Carrier"/> plan was plotted for.</summary>
+    public long? CarrierId { get; init; }
 
     /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
     public int? Reached { get; init; }
@@ -103,6 +111,16 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
             PlottedAt = at,
             Headline = headline,
             Exobiology = route,
+        });
+
+    public void Record(CarrierRoute route, long? carrierId, string headline, DateTimeOffset at) =>
+        Keep(new StoredRoutePlan
+        {
+            Kind = RoutePlanKind.Carrier,
+            PlottedAt = at,
+            Headline = headline,
+            Carrier = route,
+            CarrierId = carrierId,
         });
 
     /// <summary>
