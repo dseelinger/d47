@@ -30,6 +30,9 @@ public sealed record GoalArc
 
     public GoalKind Kind { get; init; } = GoalKind.Derived;
 
+    /// <summary>The top rank of a rank arc's ladder — "Elite V", "King", "Admiral" — and null on any other arc.</summary>
+    public string? Top { get; init; }
+
     /// <summary>The unit the figures are in — "engineers", "hulls", "systems", "light years".</summary>
     public string? Unit { get; init; }
 

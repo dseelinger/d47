@@ -48,6 +48,7 @@ public static class GoalCatalogue
             Key = RankPrefix + career.Career.ToLowerInvariant(),
             Name = career.Name,
             Done = $"{career.Career} rank {RankStanding.EliteTop} — Elite V.",
+            Top = "Elite V",
             Helper = career.Helper,
         }),
 
@@ -56,6 +57,7 @@ public static class GoalCatalogue
             Key = RankPrefix + navy.Career.ToLowerInvariant(),
             Name = navy.Name,
             Done = $"{navy.Career} rank {NavyTop} — {navy.Top}.",
+            Top = navy.Top,
         }),
 
         new GoalArc

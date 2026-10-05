@@ -35,26 +35,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
     private readonly Func<DateTimeOffset> _now;
 
-    /// <summary>The arcs band, rebuilt with the page because an arc's figure moves with the journal.</summary>
+    /// <summary>The goals, rebuilt with the page because a goal's figure moves with the journal.</summary>
     private readonly StackPanel _arcs = new() { Spacing = 2 };
 
-    /// <summary>The band's window onto the arcs (remediation.md 11, item 4).</summary>
+    /// <summary>The goals mode: the height below the bar, scrolling only when the goals are taller.</summary>
     private readonly ScrollViewer _band = new()
     {
-        Name = "GoalsBand",
-
-        // Outside the scroller, so the gap between the band and the list survives being scrolled to the
-        // bottom.
-        Margin = new Thickness(0, 0, 0, 10),
+        Name = "GoalsView",
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         IsVisible = false,
     };
 
-    /// <summary>The goals band, opened and closed (#203).</summary>
+    /// <summary>Switches the page between the list and the goals (#646).</summary>
     private readonly CheckBox _arcsToggle;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
+
+    private readonly ScrollViewer _listView = new()
+    {
+        Name = "ChecklistView",
+        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+    };
+
+    /// <summary>Suggestions and Add, hidden in goals mode.</summary>
+    private readonly StackPanel _right = new() { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
     private readonly Notice _problems = new() { IsVisible = false };
 
     private readonly Stepper _scopeCombo = new()
@@ -106,16 +112,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>Which line is selected.</summary>
     private ChecklistItemId? Selected => _checklists.Selected;
 
-    /// <summary>Whether the arcs are showing.</summary>
+    /// <summary>Whether the page is in goals mode.</summary>
     private bool _showArcs;
-
-    /// <summary>The most of the page the arcs may take, as a share of it (remediation.md 11, item 4).</summary>
-    private const double BandShare = 0.45;
-
-    /// <summary>
-    /// What the list keeps whatever the band would like, in pixels: enough rows to still be a list.
-    /// </summary>
-    private const double ListKeeps = 110;
 
     /// <summary>The floor under anything on this page a ray has to hit, in pixels.</summary>
     private const double TouchTarget = 30;
@@ -174,12 +172,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10), ItemSpacing = 8, LineSpacing = 8 }
             .AsChrome();
 
-        var right = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = Gaps.Tile,
-            Children = { _suggestions, add },
-        };
+        _right.Children.Add(_suggestions);
+        _right.Children.Add(add);
 
         // The arcs live beside the scope filter rather than above the whole page: they are another way of
         // reading the same list, which is what the bar is for.
@@ -190,7 +184,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         // The filter group first, so a bar that wraps drops "Add a line" to the second row rather than the
         // thing the page is filtered by.
         bar.Children.Add(_controls);
-        bar.Children.Add(right);
+        bar.Children.Add(_right);
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
@@ -200,27 +194,13 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
         _band.Content = _arcs;
-
-        DockPanel.SetDock(_band, Dock.Top);
-
-        // A share of the page, so the list keeps a working share of the tab whatever the window is doing.
-        // Measured below the bar, which the band and the list do not share.
-        SizeChanged += (_, e) =>
-        {
-            var below = e.NewSize.Height - bar.Bounds.Height - bar.Margin.Bottom;
-
-            _band.MaxHeight = Math.Max(0, Math.Min(below * BandShare, below - ListKeeps));
-        };
+        _listView.Content = _list;
 
         root.Children.Add(bar);
-        root.Children.Add(_band);
         root.Children.Add(_problems);
-        root.Children.Add(new ScrollViewer
-        {
-            Content = _list,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        });
+
+        // One of the two fills the height below the bar; the other is hidden.
+        root.Children.Add(new Grid { Children = { _listView, _band } });
 
         Content = root;
 
@@ -443,7 +423,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         // Beside the engineer filter and nowhere else, and only where there is such work to include — a
         // control that can only ever change nothing is a control that reads as broken.
-        var offerPartial = Chosen == ChecklistService.HereKey
+        var goalsMode = _showArcs && _goals is not null;
+
+        _scopeCombo.IsVisible = !goalsMode;
+        _deleteCompleted.IsVisible = !goalsMode;
+        _right.IsVisible = !goalsMode;
+        _listView.IsVisible = !goalsMode;
+
+        var offerPartial = !goalsMode
+                           && Chosen == ChecklistService.HereKey
                            && (_checklists.IncludePartialGrades || _checklists.HasPartialWorkHere());
 
         _partial.IsChecked = _checklists.IncludePartialGrades;
@@ -460,6 +448,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _deleteCompleted.IsEnabled = _checklists.HasCompleted;
 
         RebuildArcs();
+
+        // The list keeps its filter, query and selection in the service, so unticking redraws it as it was.
+        if (goalsMode)
+        {
+            Summarise(string.Empty);
+            _problems.IsVisible = false;
+            return;
+        }
 
         // In the order the Commander cares about: what can be done now, where they are standing —
         // with their own hand-moves as the tiebreak.
@@ -521,7 +517,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         ShowProblems();
     }
 
-    /// <summary>The arcs band (Phase 34, "The checklist points at the arc").</summary>
+    /// <summary>The goals mode (Phase 34, "The checklist points at the arc").</summary>
     private void RebuildArcs()
     {
         _arcs.Children.Clear();
@@ -588,14 +584,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         body.Children.Add(Named(standing.Arc.Name, standing.IsDone ? Met : null, sentence: false));
 
-        // The figure, then the bar — and no bar at all where the fraction is unknown.
+        // The figure, then the bars — and no bar at all where the fraction is unknown.
         body.Children.Add(ListRow.Sub(new TextBlock { Text = Aside(standing), TextWrapping = TextWrapping.Wrap }));
 
-        if (standing.Fraction is { } fraction)
+        foreach (var bar in Bars(standing))
         {
-            var bar = D47.App.Controls.Gauge.Track(fraction, ThemeManager.AKey);
             bar.Margin = new Thickness(0, 4, 0, 0);
-
             body.Children.Add(bar);
         }
 
@@ -616,6 +610,52 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         return card;
     }
+
+    /// <summary>
+    /// A rank goal's ladder bar and rung bar, each labelled; any other goal's single bar, unlabelled. A finished
+    /// goal draws a full ladder and no rung.
+    /// </summary>
+    private static IEnumerable<Control> Bars(D47.Core.Goals.GoalStanding standing)
+    {
+        var ladder = standing.IsDone ? 1 : standing.Fraction;
+
+        if (standing.Arc.Top is not { } top)
+        {
+            if (ladder is { } only)
+            {
+                yield return D47.App.Controls.Gauge.Track(only, ThemeManager.AKey);
+            }
+
+            yield break;
+        }
+
+        if (ladder is { } fraction)
+        {
+            yield return Labelled($"To {top}", Percent(fraction), fraction);
+        }
+
+        if (standing.IsDone || standing.NextRank is not { } next)
+        {
+            yield break;
+        }
+
+        yield return standing.Rung is { } rung
+            ? Labelled($"To {next}", Percent(rung), rung)
+            : D47.App.Controls.Gauge.Heading($"To {next}", "not known yet", ThemeManager.GreyKey);
+    }
+
+    private static StackPanel Labelled(string label, string value, double fill) => new()
+    {
+        Spacing = 2,
+        Children =
+        {
+            D47.App.Controls.Gauge.Heading(label, value, ThemeManager.AKey),
+            D47.App.Controls.Gauge.Track(fill, ThemeManager.AKey),
+        },
+    };
+
+    private static string Percent(double fraction) =>
+        ((int)Math.Floor(fraction * 100)).ToString(CultureInfo.InvariantCulture) + "%";
 
     /// <summary>The caption under an arc: where it stands, where the figure came from, and its age.</summary>
     private string Aside(D47.Core.Goals.GoalStanding standing)

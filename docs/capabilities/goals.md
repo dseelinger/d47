@@ -205,8 +205,10 @@ either, set it aside — it goes off the page and stays off until you ask for it
 
 ### Ages come from your journals
 
-Nothing happens until you ask. Turn on **Goals** on the Checklist bar — it says how many arcs are
-running, and goes on saying so once the band is open — and press **Read my journals**. One pass
+Nothing happens until you ask. Tick **Goals** on the Checklist bar — it says how many arcs are
+running — and the goals replace the list until you untick it. Each rank goal has two bars: one to
+the top of its ladder, labelled **To Elite V**, **To King** or **To Admiral**, and one to the next
+rank. Press **Read my journals** at the bottom of the goals. One pass
 over the journals already on your disk gives every arc its start date. It is arithmetic over
 events on your own machine — **nothing leaves it, and no journal is ever sent to a model.**
 
