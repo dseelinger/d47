@@ -296,7 +296,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotCarrierAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
+                    PlotCarrierAsync(routes, trade, commander, settings, plans, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -602,6 +602,7 @@ public static class RouteCapability
 
     private static async Task<ToolResult> PlotCarrierAsync(
         IRouteService? routes,
+        ITradePlanService? trade,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
         RoutePlanBook? plans,
@@ -649,7 +650,10 @@ public static class RouteCapability
                 at,
                 query.StatsSeenAt);
 
-            return ToolResult.Ok(Describe(route, query, destination, returnTrip, at));
+            var supply = await TritiumSupplyAsync(trade, destination, returnTrip, at, cancellationToken)
+                .ConfigureAwait(false);
+
+            return ToolResult.Ok(Describe(route, query, destination, returnTrip, at) + supply);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -715,6 +719,70 @@ public static class RouteCapability
     }
 
     private const int RestocksSpoken = 3;
+
+    /// <summary>One jump of a fleet carrier, in light years.</summary>
+    private const double CarrierJumpRange = 500;
+
+    private const string NL = "\n";
+
+    /// <summary>Where tritium is sold around the destination, as a sentence to append, or empty when it cannot be said.</summary>
+    private static async Task<string> TritiumSupplyAsync(
+        ITradePlanService? trade,
+        string destination,
+        bool returnTrip,
+        DateTimeOffset at,
+        CancellationToken cancellationToken)
+    {
+        if (trade is null)
+        {
+            return string.Empty;
+        }
+
+        CommodityAnswer answer;
+
+        try
+        {
+            var query = new CommodityQuery(
+                "Tritium",
+                MaxDistance: CarrierJumpRange,
+                IncludeCarriers: true,
+                Limit: int.MaxValue,
+                OrderBy: CommodityOrder.Distance);
+
+            answer = await trade
+                .FindCommodityAsync(new CommoditySearch(destination, null, query), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return string.Empty;
+        }
+
+        var station = answer.Offers.FirstOrDefault(offer => !offer.Market.IsCarrier);
+
+        if (station is not null)
+        {
+            var reported = station.Market.UpdatedAt is { } when
+                ? $", reported {GalaxyCapability.Since(at - when)}"
+                : ", reported undated";
+
+            return $"{NL}Tritium is sold at {station.Market.Station} ({station.Market.System}){reported}.";
+        }
+
+        if (!answer.Complete)
+        {
+            return string.Empty;
+        }
+
+        var carriers = answer.Offers.Count;
+
+        var supply = carriers > 0
+            ? $"No station within one jump of {destination} sells tritium; {carriers} carrier{(carriers == 1 ? "" : "s")} "
+              + $"list{(carriers == 1 ? "s" : "")} it, at carrier prices, and those listings move."
+            : $"Nothing within one jump of {destination} sells tritium.";
+
+        return returnTrip ? $"{NL}{supply}" : $"{NL}{supply} Plot it as a round trip and carry the whole total.";
+    }
 
     private static string Tonnes(int tonnes) => $"{tonnes.ToString("N0", CultureInfo.InvariantCulture)} t";
 

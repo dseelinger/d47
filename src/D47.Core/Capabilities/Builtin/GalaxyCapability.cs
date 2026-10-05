@@ -933,6 +933,25 @@ public static class GalaxyCapability
                     new CommoditySearch(near, currentStation?.Invoke(), query, maxPriceAge), cancellationToken)
                 .ConfigureAwait(false);
 
+            var carriersOnly = false;
+
+            if (answer.Offers.Count == 0 && !query.IncludeCarriers)
+            {
+                var retried = query with { IncludeCarriers = true };
+
+                var withCarriers = await trade
+                    .FindCommodityAsync(
+                        new CommoditySearch(near, currentStation?.Invoke(), retried, maxPriceAge), cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (withCarriers.Offers.Count > 0)
+                {
+                    query = retried;
+                    answer = withCarriers;
+                    carriersOnly = true;
+                }
+            }
+
             // Posted on the way out, so the Navigation tab draws the answer the Commander was just told rather
             // than running a second search that could disagree with it (Phase 49; the arrangement
             // RoutePlanBook already makes for routes).
@@ -945,6 +964,11 @@ public static class GalaxyCapability
             }
 
             var said = DescribeCommodity(query, answer, near, maxPriceAge, askedAge, askedLimit);
+
+            if (carriersOnly)
+            {
+                said = $"No station has it; carriers only, at carrier prices, and those listings move. {said}";
+            }
 
             // Nearest first means the nearest is the answer, and the answer is a place to go (#325) — so the
             // winning system goes on the clipboard unconditionally, the same way plot_course puts one there,
@@ -1249,7 +1273,7 @@ public static class GalaxyCapability
     }
 
     /// <summary>How long ago a report was taken, in the words a Commander would use.</summary>
-    private static string Since(TimeSpan old) => old switch
+    internal static string Since(TimeSpan old) => old switch
     {
         { TotalHours: < 1 } => "within the hour",
         { TotalHours: < 24 } => $"{old.TotalHours:0} hours ago",
