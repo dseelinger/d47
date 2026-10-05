@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+While you are pledged and D47 has read your rank, the model now also knows the perks that rank holds and whose territory you are in, so it can weigh them when you ask "what should I do here" or "where should I sell this". For example: "Powerplay perks at rank 8, in Li Yong-Rui's territory: rebuy -40%, exploration data sales +20%. This system is Li Yong-Rui's." A rival's system is named, and a system with no controlling Power says so. Nothing is added at rank 0 or for a Power D47 has no table for.
+
 You can now ask what a Powerplay rank gives: "what does my next Powerplay rank give me" or "what would Mahon give me". D47 says the perks and rebuy reductions held at that rank, up to three of the modules unlocked and a count of the rest, what the next rank gives, and the next perk and the first module with their ranks. For your own Power each rank also says how many merits away it is, once D47 has read your merits: "Rank 9, 1,708 merits away, gives a mini care package." Another Power is answered at rank 100 unless you name a rank, without merits. With no pledge and no Power named, D47 asks you to name one. The help site has a new page, Powerplay ranks.
 
 Asking how to get a Powerplay module now names the rank that unlocks it. If you are pledged and below that rank, D47 says so: "Li Yong-Rui unlocks it at rank 34; you are rank 8, 201,708 merits short." The merits part is left out until D47 has read your merits. At or past the rank it says "Li Yong-Rui unlocks it at rank 34, and you are rank 40." With no pledge it says "Every Power unlocks it; Li Yong-Rui soonest, at rank 34." Other items are answered as before.

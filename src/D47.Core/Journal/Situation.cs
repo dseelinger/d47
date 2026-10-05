@@ -1,3 +1,4 @@
+using D47.Core.Knowledge;
 using System.Text;
 
 namespace D47.Core.Journal;
@@ -415,7 +416,82 @@ public static class Situation
             : "";
 
         lines.Add($"Powerplay: pledged to {pledge.Power}, {rank}{merits}.");
+
+        if (pledge.Rank > 0 && PerksLine(state) is { } perks)
+        {
+            lines.Add(perks);
+        }
     }
+
+    /// <summary>The perks held at the pledged rank and whether this system is the Power's territory; null when the Power is not in the table or the rank holds none.</summary>
+    private static string? PerksLine(CommanderGameState state)
+    {
+        var pledge = state.Pledge;
+        var rewards = PowerplayRanks.RewardsFor(pledge.Power);
+
+        if (rewards.Count == 0)
+        {
+            return null;
+        }
+
+        var held = Math.Min(pledge.Rank, PowerplayRanks.LastTabulatedRank);
+
+        var current = rewards
+            .Where(r => r.Rank <= held
+                && r.Kind is PowerplayRewardKind.Perk or PowerplayRewardKind.RebuyOwnTerritory or PowerplayRewardKind.RebuyRival)
+            .GroupBy(r => (r.Kind, r.Subject))
+            .Select(g => g.Last())
+            .OrderBy(r => r.Kind)
+            .ThenBy(r => r.Rank)
+            .ToList();
+
+        if (current.Count == 0)
+        {
+            return null;
+        }
+
+        var name = rewards[0].Power;
+
+        var own = current
+            .Where(r => r.Kind != PowerplayRewardKind.RebuyRival)
+            .Select(r => $"{(r.Kind == PowerplayRewardKind.RebuyOwnTerritory ? "rebuy" : PowerplayRanks.PerkLabel(r.Subject) ?? r.Subject)} {Signed(r.Value)}")
+            .ToList();
+
+        var rival = current
+            .Where(r => r.Kind == PowerplayRewardKind.RebuyRival)
+            .Select(r => $"rebuy {Signed(r.Value)} when a rival Power's ship kills you")
+            .ToList();
+
+        var text = new StringBuilder($"Powerplay perks at rank {pledge.Rank}");
+
+        if (own.Count > 0)
+        {
+            text.Append($", in {name}'s territory: {string.Join(", ", own)}");
+        }
+
+        if (rival.Count > 0)
+        {
+            text.Append(own.Count > 0 ? "; outside it, " : $": outside {name}'s territory, ").Append(string.Join(", ", rival));
+        }
+
+        text.Append('.');
+
+        var location = state.Location;
+
+        if (location.StarSystem is not null)
+        {
+            text.Append(location.ControllingPower is { Length: > 0 } controlling
+                ? string.Equals(controlling, pledge.Power, StringComparison.OrdinalIgnoreCase)
+                    ? $" This system is {name}'s."
+                    : $" This system is controlled by {controlling}."
+                : " This system has no controlling Power.");
+        }
+
+        return text.ToString();
+    }
+
+    private static string Signed(int? value) =>
+        value is { } v ? $"{(v < 0 ? "-" : "+")}{Math.Abs(v)}%" : "";
 
     private static void AppendSession(CommanderGameState state, List<string> lines)
     {
