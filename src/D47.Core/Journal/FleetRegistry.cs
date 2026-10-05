@@ -6,6 +6,9 @@ public sealed record StoredShip(int ShipId, string Type, string? Name, string St
     /// <summary>The station it is parked at, where the event says.</summary>
     public string? StationName { get; init; }
 
+    /// <summary>The market it is parked at — a fleet carrier's is its <c>CarrierID</c>.</summary>
+    public long? MarketId { get; init; }
+
     public long? Value { get; init; }
 
     /// <summary>Being transferred right now, so it is neither here nor there yet.</summary>
@@ -110,6 +113,7 @@ public sealed record FleetRegistry
     {
         var system = journalEvent.String("StarSystem");
         var station = journalEvent.String("StationName");
+        var market = journalEvent.Long("MarketID");
 
         // ShipsHere carries no StarSystem of its own — it is implicitly wherever the event was written.
         var here = journalEvent.Items("ShipsHere").Select(element => new StoredShip(
@@ -119,6 +123,7 @@ public sealed record FleetRegistry
             system ?? "unknown")
         {
             StationName = station,
+            MarketId = market,
             Value = element.Long("Value"),
             Here = true,
         });
@@ -129,6 +134,7 @@ public sealed record FleetRegistry
             element.String("Name"),
             element.String("StarSystem") ?? "unknown")
         {
+            MarketId = element.Long("ShipMarketID"),
             Value = element.Long("Value"),
             InTransit = element.Bool("InTransit"),
             TransferPrice = element.Long("TransferPrice"),
@@ -167,6 +173,7 @@ public sealed record FleetRegistry
             atSystem ?? "unknown")
         {
             StationName = atStation,
+            MarketId = journalEvent.Long("MarketID"),
 
             // "Here" is relative to the snapshot, which is the only place this registry knows.
             Here = atSystem is not null

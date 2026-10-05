@@ -1493,6 +1493,47 @@ public sealed class ChecklistService(
         });
     }
 
+    /// <summary>Records one proposal per kit line, each accepted or declined on its own; returns how many are waiting.</summary>
+    public int ProposeKit(IReadOnlyList<KitLine> lines)
+    {
+        var waitingCount = 0;
+
+        foreach (var line in lines)
+        {
+            var proposal = new ChecklistProposal
+            {
+                Id = "pending",
+                CommanderFid = Fid,
+                Kind = ProposalKind.Add,
+                Scope = line.Scope,
+                Source = ChecklistSource.ExpeditionKit,
+                Summary = Trim($"Add \"{line.Text}\" to the {line.Scope} list"),
+                Items =
+                [
+                    new ChecklistItem
+                    {
+                        Key = ChecklistKeys.NotePrefix + "proposed-0",
+                        Scope = line.Scope,
+                        Kind = ChecklistItemKind.Authored,
+                        Text = line.Text,
+                        Provenance = ChecklistProvenance.Quoted,
+                    },
+                ],
+            };
+
+            proposals.Add(proposal);
+
+            if (proposals.PendingFor(Fid).Any(waiting => waiting.Source == ChecklistSource.ExpeditionKit
+                                                        && waiting.Scope.Same(line.Scope)
+                                                        && waiting.Items.Any(item => item.Text == line.Text)))
+            {
+                waitingCount++;
+            }
+        }
+
+        return waitingCount;
+    }
+
     /// <summary>Proposes that a line is finished, re-opened or gone.</summary>
     public string ProposeChange(string phrase, ProposalKind change)
     {

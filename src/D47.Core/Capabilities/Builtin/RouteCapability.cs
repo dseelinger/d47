@@ -37,7 +37,8 @@ public static class RouteCapability
         Configuration.SettingsService settings,
         RoutePlanBook? plans = null,
         Func<DateTimeOffset>? now = null,
-        NavigationSurface? navigation = null) => new()
+        NavigationSurface? navigation = null,
+        Checklists.ChecklistService? checklists = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -296,7 +297,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotCarrierAsync(routes, trade, commander, settings, plans, now, arguments, cancellationToken),
+                    PlotCarrierAsync(routes, trade, commander, settings, plans, now, checklists, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -607,6 +608,7 @@ public static class RouteCapability
         Configuration.SettingsService settings,
         RoutePlanBook? plans,
         Func<DateTimeOffset>? now,
+        Checklists.ChecklistService? checklists,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -653,7 +655,7 @@ public static class RouteCapability
             var supply = await TritiumSupplyAsync(trade, destination, returnTrip, at, cancellationToken)
                 .ConfigureAwait(false);
 
-            return ToolResult.Ok(Describe(route, query, destination, returnTrip, at) + supply);
+            return ToolResult.Ok(Describe(route, query, destination, returnTrip, at) + supply + KitOffer(route, commander(), checklists));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -719,6 +721,22 @@ public static class RouteCapability
     }
 
     private const int RestocksSpoken = 3;
+
+    /// <summary>The expedition kit offer when the route leaves the bubble, or empty.</summary>
+    private static string KitOffer(CarrierRoute route, CommanderGameState? state, Checklists.ChecklistService? checklists)
+    {
+        if (checklists is null || state is null || !Checklists.ExpeditionKit.LeavesTheBubble(route))
+        {
+            return string.Empty;
+        }
+
+        var waiting = checklists.ProposeKit(Checklists.ExpeditionKit.For(state));
+
+        return waiting == 0
+            ? string.Empty
+            : $"{NL}This route leaves the bubble, so I have proposed {waiting} expedition kit line{(waiting == 1 ? "" : "s")} "
+              + "for your checklist. Accept or decline each one; nothing goes on the list until you do.";
+    }
 
     /// <summary>One jump of a fleet carrier, in light years.</summary>
     private const double CarrierJumpRange = 500;

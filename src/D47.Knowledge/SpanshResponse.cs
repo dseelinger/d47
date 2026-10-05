@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.Knowledge;
@@ -260,7 +261,12 @@ internal static class SpanshResponse
             (int)(Integer(jump, "tritium_in_market") ?? 0),
             Flag(jump, "has_icy_ring"),
             Flag(jump, "is_system_pristine"),
-            Flag(jump, "is_desired_destination")))]);
+            Flag(jump, "is_desired_destination"))
+        {
+            Position = Number(jump, "x") is { } x && Number(jump, "y") is { } y && Number(jump, "z") is { } z
+                ? new StarPosition(x, y, z)
+                : null,
+        })]);
     }
 
     /// <summary>A boolean spansh writes as true, false, 1 or 0.</summary>

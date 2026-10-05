@@ -294,6 +294,8 @@ public class SpanshRouteServiceTests
         Assert.Equal(7, route.RestockStops.Count);
         Assert.Equal("Sol", route.RestockStops[0].Name);
         Assert.Equal(1_000, route.RestockStops[0].RestockAmount);
+        Assert.Equal(new D47.Core.Journal.StarPosition(-198.75, 27.9375, 457.90625), route.Waypoints[1].Position);
+        Assert.All(route.Waypoints, waypoint => Assert.NotNull(waypoint.Position));
         Assert.Equal(["/api/fleetcarrier/route", "/api/results/JOB-1"], recorder.Paths);
     }
 

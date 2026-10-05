@@ -96,6 +96,9 @@ public enum ChecklistSource
 
     /// <summary>A delivery or collect mission on the board (<see cref="MissionLines"/>).</summary>
     Mission,
+
+    /// <summary>The kit offered when a carrier route leaves the bubble (<see cref="ExpeditionKit"/>).</summary>
+    ExpeditionKit,
 }
 
 /// <summary>Where an item stands.</summary>

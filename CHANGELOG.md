@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A carrier route that goes more than 1,000 light years from both Sol and Colonia now ends with an offer of an expedition kit for your checklist, one proposal per line, each accepted or declined on its own. Nothing is added until you accept a line. The lines cover a fuel scoop for each ship stored at the carrier without one, a tritium mining kit when no ship there is fitted to mine, AFMU and repair limpet controllers, an SRV bay and spare SRVs when no ship there has a bay, a Detailed Surface Scanner for each ship there without one, and limpets on the carrier market. You tick them by hand.
+
 When the carrier's tritium warning fires and the stored plan for that carrier is past its last restock stop, the warning now names up to three pristine waypoints with an icy ring, nearest first, and the ships you have fitted for mining, or says none is.
 
 Plotting a carrier route now also says where tritium is sold within one jump (500 light years) of the destination. A station that sells it is named with how long ago it was reported. If only carriers list it, the answer says so, at carrier prices, and that those listings move; if nothing does, it says that. A one-way plot with no station supply adds "Plot it as a round trip and carry the whole total." Asking for the nearest station selling a commodity, when no station does, now searches again with carriers and labels the result "carriers only, at carrier prices". The Galaxy search entry under Privacy and egress now says a carrier plot asks api.ardent-insight.com where tritium is sold around the destination.

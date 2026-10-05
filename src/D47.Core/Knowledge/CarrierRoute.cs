@@ -16,7 +16,11 @@ public sealed record CarrierWaypoint(
     int ReserveInHold,
     bool HasIcyRing,
     bool IsSystemPristine,
-    bool IsDestination);
+    bool IsDestination)
+{
+    /// <summary>Spansh's x, y, z, or null where the jump does not carry them.</summary>
+    public StarPosition? Position { get; init; }
+}
 
 public sealed record CarrierRoute(IReadOnlyList<CarrierWaypoint> Waypoints)
 {
