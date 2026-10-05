@@ -10,6 +10,9 @@ public interface IStarSystemService
 
     /// <summary>Systems named like what was typed, the exact match first, at most five.</summary>
     Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken);
+
+    /// <summary>Powerplay systems near a system, nearest first, the system itself left out.</summary>
+    Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken);
 }
 
 /// <summary>A system whose name matched what was typed.</summary>
@@ -81,6 +84,24 @@ public sealed record PowerplayStanding
 
     /// <summary>Every power present, the controlling one included.</summary>
     public IReadOnlyList<string> Powers { get; init; } = [];
+}
+
+/// <summary>An Exploited, Fortified or Stronghold system near another.</summary>
+public sealed record PowerplayNeighbour(
+    string Name,
+    double Distance,
+    string? ControllingPower,
+    string? State,
+    double? ControlProgress,
+    IReadOnlyList<string> Powers);
+
+/// <summary>The Powerplay systems near one system: at most <see cref="Limit"/>, and how many matched.</summary>
+public sealed record PowerplayNeighbourhood(int Total, IReadOnlyList<PowerplayNeighbour> Systems)
+{
+    public const int Limit = 100;
+
+    /// <summary>Light years a system in this state reaches: 30 for a Stronghold, 20 otherwise.</summary>
+    public static double PowerplayReach(string? state) => state == "Stronghold" ? 30 : 20;
 }
 
 /// <summary>What sort of place a station is.</summary>

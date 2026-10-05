@@ -289,6 +289,49 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
+    /// <summary>The systems an Exploited, Fortified or Stronghold state covers within a distance, nearest first.</summary>
+    public static string PowerplayNear(string referenceSystem, double lightYears)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+
+            writer.WriteStartObject("distance");
+            writer.WriteString("min", "0");
+            writer.WriteString("max", Number(lightYears));
+            writer.WriteEndObject();
+
+            writer.WriteStartObject("power_state");
+            writer.WriteStartArray("value");
+            writer.WriteStringValue("Exploited");
+            writer.WriteStringValue("Fortified");
+            writer.WriteStringValue("Stronghold");
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
+
+            writer.WriteStartArray("sort");
+            writer.WriteStartObject();
+            writer.WriteStartObject("distance");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+
+            writer.WriteNumber("size", PowerplayNeighbourhood.Limit);
+            writer.WriteNumber("page", 0);
+            writer.WriteString("reference_system", referenceSystem);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
     private static void WriteChoice(Utf8JsonWriter writer, string name, string? value)
     {
         if (value is null)

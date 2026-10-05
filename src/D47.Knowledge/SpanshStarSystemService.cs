@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -90,6 +91,53 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
         }
 
         return matches;
+    }
+
+    public async Task<PowerplayNeighbourhood> PowerplayNearAsync(
+        string system,
+        double lightYears,
+        CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(SpanshRequest.PowerplayNear(system, lightYears), Encoding.UTF8, "application/json");
+
+        using var document = await SpanshGalaxyService.SendAsync(
+            _logger,
+            token => _http.PostAsync("api/systems/search", content, token),
+            "the Powerplay search",
+            cancellationToken,
+            budget: SearchBudget).ConfigureAwait(false);
+
+        var root = document!.RootElement;
+        var neighbours = new List<PowerplayNeighbour>();
+        var sawItself = false;
+
+        foreach (var result in root.Items("results"))
+        {
+            if (result.String("name") is not { } name || result.Double("distance") is not { } distance)
+            {
+                continue;
+            }
+
+            if (distance == 0 && string.Equals(name, system, StringComparison.OrdinalIgnoreCase))
+            {
+                sawItself = true;
+                continue;
+            }
+
+            neighbours.Add(new PowerplayNeighbour(
+                name,
+                distance,
+                result.String("controlling_power"),
+                result.String("power_state"),
+                result.Double("power_state_control_progress"),
+                [.. result.Items("power")
+                    .Where(power => power.ValueKind == JsonValueKind.String)
+                    .Select(power => power.GetString()!)]));
+        }
+
+        var total = root.Int("count") ?? neighbours.Count;
+
+        return new PowerplayNeighbourhood(Math.Max(0, sawItself ? total - 1 : total), neighbours);
     }
 
     private static StarSystemProfile ReadProfile(JsonElement system, long systemAddress)
