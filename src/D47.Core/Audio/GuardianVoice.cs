@@ -465,7 +465,7 @@ public static partial class GuardianVoice
     private const double SemitoneReferenceHz = 440;
 
     /// <summary>The highest peak the levelled result may reach.</summary>
-    private const double Ceiling = 0.98;
+    internal const double Ceiling = 0.98;
 
     /// <summary>The phase-vocoder frame, as a duration; rounded to a power of two at the clip's rate.</summary>
     private const double FrameSeconds = 2048.0 / 48_000;
@@ -583,6 +583,10 @@ public static partial class GuardianVoice
         core.Stock
             ? speech.CovasReverb ? CovasVoice.Apply : null
             : ColourFor(speech, core.VoiceHint.Gender);
+
+    /// <summary>The treatment as a running filter, for a stock core with the COVAS reverb on; otherwise null.</summary>
+    public static Func<IPcmFilter>? RunningColourFor(SpeechSettings speech, D47.Core.Persona.Persona core) =>
+        core.Stock && speech.CovasReverb ? CovasVoice.Filter : null;
 
     /// <summary>The ship AI's treatment for the settings in force, or null when no effect is ticked (#225).</summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
@@ -1548,34 +1552,6 @@ public static partial class GuardianVoice
         }
 
         return wet;
-    }
-
-    /// <summary><c>y[n] = x[n] + g·y[n−D]</c>, run for <paramref name="length"/> samples.</summary>
-    internal static double[] FeedbackComb(double[] signal, int delay, double feedback, int length)
-    {
-        var line = new FeedbackCombLine(delay, feedback);
-        var output = new double[length];
-
-        for (var index = 0; index < length; index++)
-        {
-            output[index] = line.Next(index < signal.Length ? signal[index] : 0);
-        }
-
-        return output;
-    }
-
-    /// <summary><c>y[n] = −g·x[n] + x[n−D] + g·y[n−D]</c>.</summary>
-    internal static double[] Allpass(double[] signal, int delay, double gain)
-    {
-        var line = new AllpassLine(delay, gain);
-        var output = new double[signal.Length];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            output[index] = line.Next(signal[index]);
-        }
-
-        return output;
     }
 
     private static double[] Mix(double[] first, double firstGain, double[] second, double secondGain)

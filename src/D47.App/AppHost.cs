@@ -4774,6 +4774,7 @@ public sealed class AppHost : IDisposable
         Voice.CuesEnabled = speech.CuesEnabled;
         Voice.BedEnabled = speech.ThinkingBedEnabled;
         Voice.GuardianColour = GuardianVoice.ColourFor(speech, Personas.Current);
+        Voice.GuardianRunning = GuardianVoice.RunningColourFor(speech, Personas.Current);
 
         Turns.Retry = SpeechCapability.RetryFrom(speech);
 

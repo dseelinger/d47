@@ -10,6 +10,9 @@
 
   <ItemGroup>
     <None Include="..\D47.Knowledge.Tests\Fixtures\spansh-fleetcarrier-route-*.json" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\assets\voices\chatterbox\*.wav"
+          Link="voices\chatterbox\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

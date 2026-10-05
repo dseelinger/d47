@@ -21,68 +21,164 @@ public static class CovasVoice
     private const double Wet = 0.6;
     private const double TailSeconds = 0.8;
 
-    /// <summary>The clip with the reverb added, a faded tail appended, and the result at the dry clip's loudness.</summary>
+    /// <summary>
+    /// The makeup gain applied to every sample: the lowest whole-clip RMS levelling (<see cref="GuardianVoice.Level"/>)
+    /// over the speech clips <c>TheCovasGainIsTheLowestLevellingOfSpokenClipsTests</c> names, rounded down.
+    /// </summary>
+    internal const double Gain = 0.661;
+
+    /// <summary>The reverb as a running filter on <see cref="AudioFormat.Standard"/> PCM.</summary>
+    public static IPcmFilter Filter() => new Reverb(AudioFormat.Standard);
+
+    /// <summary>The clip through <see cref="Filter"/>: the reverb added, a faded tail appended, at <see cref="Gain"/>.</summary>
     public static AudioClip Apply(AudioClip clip)
     {
-        var channels = Math.Max(1, clip.Format.Channels);
-        var frames = clip.Pcm.Length / (2 * channels);
-
-        if (frames == 0)
+        if (clip.Pcm.Length / (2 * Math.Max(1, clip.Format.Channels)) == 0)
         {
             return clip;
         }
 
-        var rate = clip.Format.SampleRate > 0 ? clip.Format.SampleRate : AudioFormat.Standard.SampleRate;
-        var dry = GuardianVoice.Decode(clip.Pcm.Span, channels, frames);
-        var treated = new double[channels][];
+        var filter = new Reverb(clip.Format);
+        var body = filter.Push(clip.Pcm.Span);
+        var tail = filter.Finish();
+        var pcm = new byte[body.Length + tail.Length];
 
-        for (var channel = 0; channel < channels; channel++)
-        {
-            treated[channel] = Reverb(dry[channel], rate);
-        }
+        body.CopyTo(pcm, 0);
+        tail.CopyTo(pcm, body.Length);
 
         return clip with
         {
             Name = $"{clip.Name} (covas)",
-            Pcm = GuardianVoice.Encode(treated, GuardianVoice.Level(dry, treated, frames)),
+            Pcm = pcm,
         };
     }
 
-    private static double[] Reverb(double[] signal, int rate)
+    /// <summary>One channel with the reverb and the faded tail, before <see cref="Gain"/>.</summary>
+    internal static double[] Reverberate(double[] signal, int rate)
     {
-        var tail = (int)Math.Round(TailSeconds * rate);
-        var total = signal.Length + tail;
-        var wet = new double[total];
+        var room = new Room(rate);
+        var tail = TailFrames(rate);
+        var output = new double[signal.Length + tail];
 
-        foreach (var (delayMs, feedback) in Combs)
+        for (var index = 0; index < signal.Length; index++)
         {
-            var comb = GuardianVoice.FeedbackComb(signal, GuardianVoice.Samples(delayMs, rate), feedback, total);
-
-            for (var index = 0; index < total; index++)
-            {
-                wet[index] += comb[index] / Combs.Length;
-            }
+            output[index] = room.Next(signal[index]);
         }
 
-        foreach (var delayMs in AllpassMs)
+        for (var index = 0; index < tail; index++)
         {
-            wet = GuardianVoice.Allpass(wet, GuardianVoice.Samples(delayMs, rate), AllpassGain);
-        }
-
-        var output = new double[total];
-
-        for (var index = 0; index < total; index++)
-        {
-            var sample = (Dry * (index < signal.Length ? signal[index] : 0)) + (Wet * wet[index]);
-
-            if (index >= signal.Length)
-            {
-                sample *= (double)(total - 1 - index) / tail;
-            }
-
-            output[index] = sample;
+            output[signal.Length + index] = room.Next(0) * Fade(index, tail);
         }
 
         return output;
+    }
+
+    private static int TailFrames(int rate) => (int)Math.Round(TailSeconds * rate);
+
+    private static double Fade(int index, int tail) => (double)(tail - 1 - index) / tail;
+
+    /// <summary>Interleaved 16-bit PCM, one <see cref="Room"/> a channel.</summary>
+    private sealed class Reverb : IPcmFilter
+    {
+        private readonly Room[] _rooms;
+        private readonly int _tail;
+        private byte[] _held = [];
+        private bool _finished;
+
+        public Reverb(AudioFormat format)
+        {
+            var rate = format.SampleRate > 0 ? format.SampleRate : AudioFormat.Standard.SampleRate;
+
+            _rooms = [.. Enumerable.Range(0, Math.Max(1, format.Channels)).Select(_ => new Room(rate))];
+            _tail = TailFrames(rate);
+        }
+
+        public byte[] Push(ReadOnlySpan<byte> pcm)
+        {
+            if (_finished)
+            {
+                throw new InvalidOperationException("The reverb has already been finished.");
+            }
+
+            var input = pcm;
+
+            if (_held.Length > 0)
+            {
+                var joined = new byte[_held.Length + pcm.Length];
+
+                _held.CopyTo(joined, 0);
+                pcm.CopyTo(joined.AsSpan(_held.Length));
+                input = joined;
+            }
+            var whole = input.Length - (input.Length % (2 * _rooms.Length));
+            var output = new byte[whole];
+
+            for (var at = 0; at < whole; at += 2)
+            {
+                var sample = (short)(input[at] | (input[at + 1] << 8)) / 32768.0;
+
+                Write(output, at, _rooms[at / 2 % _rooms.Length].Next(sample));
+            }
+
+            _held = input[whole..].ToArray();
+            return output;
+        }
+
+        public byte[] Finish()
+        {
+            if (_finished)
+            {
+                return [];
+            }
+
+            _finished = true;
+
+            var output = new byte[_tail * _rooms.Length * 2];
+
+            for (var frame = 0; frame < _tail; frame++)
+            {
+                for (var channel = 0; channel < _rooms.Length; channel++)
+                {
+                    Write(output, ((frame * _rooms.Length) + channel) * 2, _rooms[channel].Next(0) * Fade(frame, _tail));
+                }
+            }
+
+            return output;
+        }
+
+        private static void Write(byte[] pcm, int at, double sample)
+        {
+            var value = (short)Math.Clamp(Math.Round(sample * Gain * 32767.0), short.MinValue, short.MaxValue);
+
+            pcm[at] = (byte)(value & 0xFF);
+            pcm[at + 1] = (byte)((value >> 8) & 0xFF);
+        }
+    }
+
+    /// <summary>The dry sample plus the wet: four parallel combs averaged, then two allpasses in series.</summary>
+    private sealed class Room(int rate)
+    {
+        private readonly GuardianVoice.FeedbackCombLine[] _combs =
+            [.. Combs.Select(comb => new GuardianVoice.FeedbackCombLine(GuardianVoice.Samples(comb.DelayMs, rate), comb.Feedback))];
+
+        private readonly GuardianVoice.AllpassLine[] _allpasses =
+            [.. AllpassMs.Select(delayMs => new GuardianVoice.AllpassLine(GuardianVoice.Samples(delayMs, rate), AllpassGain))];
+
+        public double Next(double input)
+        {
+            var wet = 0.0;
+
+            foreach (var comb in _combs)
+            {
+                wet += comb.Next(input) / Combs.Length;
+            }
+
+            foreach (var allpass in _allpasses)
+            {
+                wet = allpass.Next(wet);
+            }
+
+            return (Dry * input) + (Wet * wet);
+        }
     }
 }

@@ -60,6 +60,12 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private readonly bool _guardianTreated;
 
     /// <summary>
+    /// Makes a fresh filter for each clip, which then plays while it arrives in place of <see cref="_colour"/>;
+    /// or null.
+    /// </summary>
+    private readonly Func<IPcmFilter>? _running;
+
+    /// <summary>
     /// Who this is, for the log line — a sender's name, a role, or null when the caller has nothing
     /// more specific to say than the group already does.
     /// </summary>
@@ -104,7 +110,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// performs it.
     /// </param>
     /// <param name="Clip">The whole clip, coloured; null when <paramref name="Arriving"/> is set.</param>
-    /// <param name="Arriving">The clip still arriving, uncoloured; null when <paramref name="Clip"/> is set.</param>
+    /// <param name="Arriving">
+    /// The clip still arriving, uncoloured or through <see cref="_running"/>; null when <paramref name="Clip"/> is set.
+    /// </param>
     private sealed record Spoken(string Text, string Directed, AudioClip? Clip, ArrivingClip? Arriving);
 
     public SpeechPipeline(
@@ -125,7 +133,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         string? captionSpeaker = null,
         SpokenAddress? address = null,
         bool guardianTreated = false,
-        bool keep = false)
+        bool keep = false,
+        Func<IPcmFilter>? running = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -135,6 +144,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _channel = channel;
         _colour = colour;
         _guardianTreated = guardianTreated;
+        _running = running;
         _speaker = speaker;
         _captioned = captioned;
         _noted = noted;
@@ -336,7 +346,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
     }
 
     /// <summary>
-    /// An uncoloured clip still arriving is queued as it is; anything else is awaited whole and coloured.
+    /// A clip still arriving is queued as it arrives, through a fresh running filter where there is one, or as it is
+    /// when uncoloured. Anything else is awaited whole and treated.
     /// </summary>
     private async Task<Spoken> ArrivedAsync(
         string sentence,
@@ -345,16 +356,27 @@ public sealed class SpeechPipeline : IAsyncDisposable
         ArrivingClip arriving,
         long started)
     {
-        if (_colour is null && !arriving.IsComplete)
+        var treated = _running is null ? null : arriving.Through(_running());
+
+        if ((treated is not null || _colour is null) && !arriving.IsComplete)
         {
             _ = NoteWhenWholeAsync(sentence, spoken, arriving, started);
-            return new Spoken(sentence, directed, Clip: null, arriving);
+            return new Spoken(sentence, directed, Clip: null, treated ?? arriving);
         }
 
         var clip = await arriving.Whole.ConfigureAwait(false);
         Note(sentence, spoken, arriving, started);
 
-        return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip), Arriving: null);
+        if (treated is not null)
+        {
+            clip = await treated.Whole.ConfigureAwait(false);
+        }
+        else if (_colour is not null)
+        {
+            clip = _colour(clip);
+        }
+
+        return new Spoken(sentence, directed, clip, Arriving: null);
     }
 
     /// <summary>Notes an arriving clip once it is whole; one that fails part-way counts as a failure.</summary>
@@ -402,7 +424,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
             // Which side of the hull this came from, because "it did not sound like a radio" is otherwise a
             // report with nothing to check it against.
-            _colour is null ? "in the room" : _guardianTreated ? "guardian-treated" : "over the air");
+            _colour is null && _running is null ? "in the room" : _guardianTreated ? "guardian-treated" : "over the air");
     }
 
     /// <summary>

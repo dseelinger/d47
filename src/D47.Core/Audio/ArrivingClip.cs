@@ -17,6 +17,9 @@ public sealed class ArrivingClip
     private volatile bool _complete;
     private long _firstAppendedAt;
 
+    /// <summary>Completed, and replaced, whenever bytes arrive or the clip ends.</summary>
+    private TaskCompletionSource _grew = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     public ArrivingClip(string name)
     {
         Name = name;
@@ -95,6 +98,11 @@ public sealed class ArrivingClip
             _carry = (held + pcm.Length) % 2 == 1 ? pcm[^1] : null;
 
             Volatile.Write(ref _length, length + whole);
+
+            if (whole > 0)
+            {
+                Grew();
+            }
         }
     }
 
@@ -112,6 +120,7 @@ public sealed class ArrivingClip
 
             clip = new AudioClip(Name, _pcm.AsSpan(0, (int)_length).ToArray(), Format);
             _complete = true;
+            Grew();
         }
 
         _whole.TrySetResult(clip);
@@ -131,6 +140,7 @@ public sealed class ArrivingClip
             }
 
             _complete = true;
+            Grew();
         }
 
         if (error is OperationCanceledException cancelled)
@@ -160,6 +170,74 @@ public sealed class ArrivingClip
         var count = (int)Math.Min(buffer.Length, length - position);
         pcm.AsSpan((int)position, count).CopyTo(buffer);
         return count;
+    }
+
+    /// <summary>
+    /// A new clip carrying this one's PCM through <paramref name="filter"/> as it arrives. It ends when this one
+    /// does: complete with the filter's tail appended, or failed or cancelled the same way.
+    /// </summary>
+    public ArrivingClip Through(IPcmFilter filter)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+
+        var treated = new ArrivingClip(Name);
+        _ = PumpAsync(filter, treated);
+        return treated;
+    }
+
+    private async Task PumpAsync(IPcmFilter filter, ArrivingClip treated)
+    {
+        var buffer = new byte[16 * 1024];
+        var position = 0L;
+
+        try
+        {
+            while (true)
+            {
+                await ArrivedPast(position).ConfigureAwait(false);
+
+                // Complete before reading: once complete, what is read after it is everything.
+                var complete = IsComplete;
+                int read;
+
+                while ((read = Read(position, buffer)) > 0)
+                {
+                    position += read;
+                    treated.Append(filter.Push(buffer.AsSpan(0, read)));
+                }
+
+                if (complete)
+                {
+                    break;
+                }
+            }
+
+            await Whole.ConfigureAwait(false);
+
+            treated.Append(filter.Finish());
+            treated.Complete();
+        }
+        catch (Exception ex)
+        {
+            treated.Fail(ex);
+        }
+    }
+
+    /// <summary>Completes once more than <paramref name="position"/> bytes have arrived or the clip has ended.</summary>
+    private Task ArrivedPast(long position)
+    {
+        lock (_gate)
+        {
+            return _length > position || _complete ? Task.CompletedTask : _grew.Task;
+        }
+    }
+
+    /// <summary>Wakes whatever is waiting in <see cref="ArrivedPast"/>. Called holding <see cref="_gate"/>.</summary>
+    private void Grew()
+    {
+        var grew = _grew;
+        _grew = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        grew.TrySetResult();
     }
 
     private byte[] Reserve(long needed)

@@ -67,15 +67,6 @@ public class ACovasVoiceHasALightReverbTests
     }
 
     [Fact]
-    public void DuringTheBurstTheLevelIsWithinOneDecibelOfTheInput()
-    {
-        var input = Samples(Burst());
-        var output = Samples(Covas(new SpeechSettings()));
-
-        Assert.InRange(Db(Rms(output, 0, BurstSamples) / Rms(input, 0, BurstSamples)), -1, 1);
-    }
-
-    [Fact]
     public void AfterTheBurstItFallsTwentyDecibelsWithin300MsAndSixtyWithin650Ms()
     {
         var input = Samples(Burst());

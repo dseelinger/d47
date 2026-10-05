@@ -81,7 +81,7 @@ public static partial class GuardianVoice
     }
 
     /// <summary><c>y[n] = x[n] + g·y[n−D]</c>, one sample at a time.</summary>
-    private sealed class FeedbackCombLine(int delay, double feedback)
+    internal sealed class FeedbackCombLine(int delay, double feedback)
     {
         private readonly int _delay = delay;
         private readonly double _feedback = feedback;
@@ -98,7 +98,7 @@ public static partial class GuardianVoice
     }
 
     /// <summary><c>y[n] = −g·x[n] + x[n−D] + g·y[n−D]</c>, one sample at a time.</summary>
-    private sealed class AllpassLine(int delay, double gain)
+    internal sealed class AllpassLine(int delay, double gain)
     {
         private readonly int _delay = delay;
         private readonly double _gain = gain;

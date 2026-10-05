@@ -80,6 +80,12 @@ public sealed class VoicePipeline(
     public Func<AudioClip, AudioClip>? GuardianColour { get; set; }
 
     /// <summary>
+    /// <see cref="GuardianColour"/> as a running filter, so the ship AI plays while it arrives; null where the
+    /// treatment needs the whole clip.
+    /// </summary>
+    public Func<IPcmFilter>? GuardianRunning { get; set; }
+
+    /// <summary>
     /// Who speaks the reply in progress. Guardian treatment reaches only <see cref="VoiceRole.ShipAi"/>, and a
     /// role heard over the air gets a radio link (#225).
     /// </summary>
@@ -147,7 +153,8 @@ public sealed class VoicePipeline(
                                 noted: Synthesised,
                                 captionSpeaker: CaptionSpeaker,
                                 address: _address,
-                                guardianTreated: IsGuardianTreated(role, colour));
+                                guardianTreated: IsGuardianTreated(role, colour),
+                                running: Running(role, colour));
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -300,7 +307,8 @@ public sealed class VoicePipeline(
             captionSpeaker,
             _address,
             IsGuardianTreated(role, applied),
-            keep: true);
+            keep: true,
+            running: pinned ? null : Running(role, applied));
 
         if (!pinned)
         {
@@ -466,6 +474,10 @@ public sealed class VoicePipeline(
     /// </summary>
     private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1, bool overheard = false) =>
         RadioVoice.Colours(role, signal, overheard) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
+
+    /// <summary><see cref="GuardianRunning"/> where the resolved colour is the ship AI's own treatment; otherwise null.</summary>
+    private Func<IPcmFilter>? Running(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>
+        role == VoiceRole.ShipAi && colour is not null && colour == GuardianColour ? GuardianRunning : null;
 
     /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
     private static bool IsGuardianTreated(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>
