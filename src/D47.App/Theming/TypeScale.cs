@@ -15,6 +15,9 @@ public static class TypeScale
     /// <summary>A group heading.</summary>
     public const double Heading = 21;
 
+    /// <summary>A journal event's headline on the Journal page.</summary>
+    public const double Headline = 20;
+
     /// <summary>The value of a screen title's figure.</summary>
     public const double Figure = 18;
 

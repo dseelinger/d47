@@ -891,6 +891,14 @@ public sealed class HandledEventsGateTests
         /// <summary>The kind is looked up in a collection: the names are whatever its initializer lists.</summary>
         private void Membership(ExpressionSyntax collection, SemanticModel model, ExpressionSyntax kind)
         {
+            // A Lazy table's Value: the names are whatever the Lazy's own declaration gives.
+            if (collection is MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Value" } lazy
+                && model.GetTypeInfo(lazy.Expression).Type is INamedTypeSymbol { Name: "Lazy", ContainingNamespace.Name: "System" })
+            {
+                Membership(lazy.Expression, model, kind);
+                return;
+            }
+
             var symbol = model.GetSymbolInfo(collection).Symbol;
             var declaration = symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
 

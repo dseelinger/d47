@@ -55,6 +55,9 @@ public sealed class TheJournalIsAReadingTests
         return log;
     }
 
+    private static JournalReadingPane Reading(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<JournalReadingPane>().Single();
+
     private static ListBox List(PanelView panel) =>
         panel.GetVisualDescendants().OfType<ListBox>().Single(box => box.Name == "JournalList");
 
@@ -184,14 +187,12 @@ public sealed class TheJournalIsAReadingTests
         panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
-        var model = (PanelViewModel)panel.DataContext!;
-
-        Assert.Contains("Jameson Memorial", model.JournalDetailText);
+        Assert.Contains("Jameson Memorial", Reading(panel).Shown!.Said);
 
         List(panel).SelectedIndex = 1;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Kusauts", model.JournalDetailText);
+        Assert.Contains("Kusauts", Reading(panel).Shown!.Said);
 
         window.Close();
     }
@@ -224,8 +225,7 @@ public sealed class TheJournalIsAReadingTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Same(kusauts, model.JournalSelected);
-        Assert.Equal(kusauts.Raw, model.JournalDetailText);
-        Assert.Equal(kusauts.Raw, panel.GetControl<SelectableTextBlock>("JournalDetail").Text);
+        Assert.Same(kusauts, Reading(panel).Shown);
 
         window.Close();
     }

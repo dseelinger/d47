@@ -777,16 +777,10 @@
                     IsHitTestVisible="False"
                     Background="{DynamicResource D47.Line2}" />
 
-            <ScrollViewer Grid.Column="2" x:Name="JournalDetailScroller" Padding="14,0,0,0">
-              <!--
-                Selectable, because the reason to open this pane at all is usually to put a field
-                into a bug report. Same control and the same free copy the live log gets.
-              -->
-              <SelectableTextBlock x:Name="JournalDetail"
-                                   FontFamily="{StaticResource D47.Font.Mono}"
-                                   FontSize="{StaticResource D47.Type.Secondary}"
-                                   TextWrapping="NoWrap" />
-            </ScrollViewer>
+            <!-- Holds the JournalReadingPane, set in code. -->
+            <ScrollViewer Grid.Column="2"
+                          x:Name="JournalDetailScroller"
+                          HorizontalScrollBarVisibility="Disabled" />
           </Grid>
 
           <!--

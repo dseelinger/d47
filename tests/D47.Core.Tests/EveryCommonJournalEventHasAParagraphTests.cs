@@ -33,6 +33,13 @@ public class EveryCommonJournalEventHasAParagraphTests
     }
 
     [Fact]
+    public void EveryCuratedKindHasAParagraph()
+    {
+        Assert.NotEmpty(EventReadings.CuratedKinds);
+        Assert.All(EventReadings.CuratedKinds, kind => Assert.NotNull(JournalExplainers.For(kind)));
+    }
+
+    [Fact]
     public void EveryHeadingOnThePageIsAKindTheJournalKnows()
     {
         Assert.All(JournalExplainers.Kinds, kind => Assert.True(HandledEvents.All.Contains(kind), kind));

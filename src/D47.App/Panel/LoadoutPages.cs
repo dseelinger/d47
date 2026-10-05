@@ -145,7 +145,7 @@ public static class LoadoutPages
 
     /// <summary>The crumb for a ship, and for a slot of it.</summary>
     public static NavCrumb Ship(D47.Core.Ships.FleetEntry entry) =>
-        new(ShipPrefix + (entry.Build?.Id ?? entry.Hull), entry.Name ?? entry.HullName);
+        new(ShipPrefix + ShipsMode.Key(entry), entry.Name ?? entry.HullName) { Level = ShipPrefix };
 
     public static NavCrumb Slot(string buildId, string slot) =>
         new($"{SlotPrefix}{buildId}|{slot}", slot);

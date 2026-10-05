@@ -107,13 +107,18 @@ where the newest line actually is. A control that names a direction has to be ri
 
 ### The two panes
 
-The list of sentences is on the left and the chosen event's own fields are on the right,
-pretty-printed exactly as Elite wrote them. **The divider between them can be dragged**, and where
-you leave it is remembered.
+The list of sentences is on the left. The right pane reads the chosen event: its sentence, the
+time and how long ago, a row for each thing it says, a paragraph on what the event is, and
+**Every field**, folded, which lists every field exactly as Elite wrote it. **The divider between
+the panes can be dragged**, and where you leave it is remembered.
 
-The two are not redundant. The sentence is prose written by Directive 47 and can be wrong about
-what an event meant; the fields cannot be, because they are the file. A bug report made from the
-right-hand pane is worth something.
+A value Directive 47 decoded from one of Frontier's tokens is underlined with dots; hover it to see
+the token. A row label that the reading knows explains its field when hovered. An engineer, or a
+ship you still own, is a link to its page. A row with more than six values shows six and a
+**+N more** tile for the rest.
+
+The rows are Directive 47's reading and can be wrong about what an event meant; the fields cannot
+be, because they are the file. Open Every field to copy one into a bug report.
 
 ### Searching it
 
@@ -155,8 +160,8 @@ paid for it.
 A station, an NPC or a channel notice draws as the sender and what they said — *"Evans Port:
 Docking request granted."* Those are Frontier's own words.
 
-**A message another Commander typed draws as "Message received"**, with their words in the fields
-pane beside it. That is on purpose. Another player's text is untrusted input, and a summary line
+**A message another Commander typed draws as "Message received"**, with their words in the reading
+pane beside it, in grey and exactly as typed. That is on purpose. Another player's text is untrusted input, and a summary line
 carrying it could be made to read like one of Directive 47's own event lines. Select the line and
 you can read the message; it is one click, and it is plainly somebody's data rather than the
 page's prose.

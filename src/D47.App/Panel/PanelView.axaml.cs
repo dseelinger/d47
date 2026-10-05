@@ -167,6 +167,9 @@ public partial class PanelView : UserControl
     {
         InitializeComponent();
 
+        _journalPane = new JournalReadingPane(OpenReadingLink, () => _currentSystem?.Invoke(), Watch);
+        JournalDetailScroller.Content = _journalPane;
+
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
         // each would be three expressions no test can reach.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
@@ -785,6 +788,8 @@ public partial class PanelView : UserControl
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt);
 
+        _shipPlans = ships;
+
         // Kept, so the tick has something to invalidate (remediation.md 17, item 7).
         _loadoutMode = shipsMode;
         _loadoutState = state;
@@ -1073,6 +1078,7 @@ public partial class PanelView : UserControl
     private D47.App.Controls.JournalClock? _materialsClock;
     private (object?, object?, object?, string?, bool) _inventorySeen;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
+    private D47.Core.Ships.ShipPlanService? _shipPlans;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;
     private D47.Core.Journal.CarrierState? _squadronSeen;
@@ -3316,7 +3322,7 @@ public partial class PanelView : UserControl
         if (Model is not { } model)
         {
             JournalList.ItemsSource = null;
-            JournalDetail.Text = string.Empty;
+            _journalPane.Show(null);
             return;
         }
 
@@ -3344,7 +3350,7 @@ public partial class PanelView : UserControl
 
         JournalList.SelectedIndex = selected;
 
-        JournalDetail.Text = selected >= 0 ? model.JournalDetailText : string.Empty;
+        _journalPane.Show(selected >= 0 ? chosen : null);
 
         ShowJournalCount(shown.Count, model.Journal.Count);
     }
@@ -3400,7 +3406,45 @@ public partial class PanelView : UserControl
         }
 
         model.JournalSelected = entry;
-        JournalDetail.Text = model.JournalDetailText;
+        _journalPane.Show(entry);
+    }
+
+    private readonly JournalReadingPane _journalPane;
+
+    /// <summary>What pressing a link in the reading does, or null where it draws as plain text.</summary>
+    private Action? OpenReadingLink(D47.Core.Journal.ReadingLink link)
+    {
+        if (!int.TryParse(link.Key, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var id))
+        {
+            return null;
+        }
+
+        var (root, crumb) = link.Kind switch
+        {
+            D47.Core.Journal.ReadingLinkKind.Engineer
+                when D47.Core.Knowledge.EngineerDirectory.ById(id) is { } engineer
+                => (EngineersPages.DirectoryRoot, EngineersPages.Crumb(engineer)),
+            D47.Core.Journal.ReadingLinkKind.Ship
+                when _shipPlans?.Fleet().FirstOrDefault(entry =>
+                    entry.IsOwned && (entry.Stored?.ShipId == id || entry.Build?.ShipId == id)) is { } ship
+                => (LoadoutPages.FleetRoot, LoadoutPages.Ship(ship)),
+            _ => (string.Empty, (NavCrumb?)null),
+        };
+
+        if (crumb is null || !Nav.Destinations.Any(destination => destination.Root.Key == root))
+        {
+            return null;
+        }
+
+        return () =>
+        {
+            Nav.Show(root);
+
+            if (Nav.Root.Key == root)
+            {
+                Nav.GoTo(crumb);
+            }
+        };
     }
 
     /// <summary>Whether the fields are drawn beside the list.</summary>

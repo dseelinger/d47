@@ -50,6 +50,9 @@ public static partial class EventReadings
         ["ColonisationConstructionDepot"] = CurateConstructionDepot,
     };
 
+    /// <summary>Every kind that has rows of its own rather than only mechanical ones.</summary>
+    public static IReadOnlyCollection<string> CuratedKinds => Curations.Keys;
+
     public static EventReading For(JournalEntry entry)
     {
         JsonDocument document;

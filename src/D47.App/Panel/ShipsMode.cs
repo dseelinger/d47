@@ -2002,7 +2002,8 @@ public sealed class ShipsMode(
 
     private IReadOnlyList<ShipModule> Modules(ShipBuild build) => Picture(build)?.Loadout.Modules ?? [];
 
-    private static string Key(FleetEntry entry) =>
+    /// <summary>The key a fleet entry's page is drilled by.</summary>
+    internal static string Key(FleetEntry entry) =>
         entry.Build?.Id
         ?? (entry.Stored is { } stored
             ? Unplanned + stored.ShipId.ToString(CultureInfo.InvariantCulture)

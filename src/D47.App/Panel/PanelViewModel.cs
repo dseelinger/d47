@@ -227,9 +227,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Where <see cref="JournalRawText"/> comes from.</summary>
     public Func<bool, string>? JournalDocumentSource { get; set; }
 
-    /// <summary>The fields behind the selected line, or empty when nothing is selected.</summary>
-    public string JournalDetailText => JournalSelected?.Raw ?? string.Empty;
-
     /// <summary>Re-reads the journal from the log.</summary>
     public void RefreshJournal()
     {
