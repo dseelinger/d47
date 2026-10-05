@@ -104,8 +104,8 @@ public static class GapCapability
         var intended = !arguments.TryGetBoolean("include_unowned", out var include) || include;
 
         var report = PlanGap.Of(
-            ships?.Store.Builds ?? [],
-            onFoot?.Store.Builds ?? [],
+            ships?.Mine ?? [],
+            onFoot?.Mine ?? [],
             commander?.Invoke(),
             intended);
 
@@ -243,8 +243,8 @@ public static class GapCapability
         }
 
         var report = PlanGap.Of(
-            ships?.Store.Builds ?? [],
-            onFoot?.Store.Builds ?? [],
+            ships?.Mine ?? [],
+            onFoot?.Mine ?? [],
             commander?.Invoke(),
             includeIntended: true);
 

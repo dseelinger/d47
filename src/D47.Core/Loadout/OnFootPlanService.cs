@@ -75,6 +75,16 @@ public sealed class OnFootPlanService(
 {
     public OnFootBuildStore Store => store;
 
+    /// <summary>Whose plans are being read and written.</summary>
+    private string Fid => state()?.Identity.FrontierId ?? string.Empty;
+
+    /// <summary>This Commander's builds. Every read here goes through this, never the whole file.</summary>
+    public IReadOnlyList<OnFootBuild> Mine => store.BuildsFor(Fid);
+
+    /// <summary>This Commander's build with this identity, or null.</summary>
+    public OnFootBuild? Find(string buildId) =>
+        Mine.FirstOrDefault(build => string.Equals(build.Id, buildId, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// The suit and weapons as the page shows them: everything the ledger says the Commander owns, the
     /// one being worn marked carried, then everything else planned that is not owned yet.
@@ -83,7 +93,7 @@ public sealed class OnFootPlanService(
     {
         var loadout = state()?.OnFoot;
         var owned = state()?.Kit ?? OwnedKit.Empty;
-        var builds = store.Builds;
+        var builds = Mine;
         var entries = new List<KitEntry>();
         var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -204,12 +214,16 @@ public sealed class OnFootPlanService(
     /// <summary>Starts a build for something the Commander owns, or hands back the one already there.</summary>
     public OnFootBuild BuildFor(OnFootKind kind, long itemId, string equipment)
     {
-        if (store.ForItem(kind, itemId) is { } existing)
+        if (store.ForItem(Fid, kind, itemId) is { } existing)
         {
             return existing;
         }
 
-        var build = new OnFootBuild(NextId(), equipment, kind, itemId);
+        var build = new OnFootBuild(NextId(), equipment, kind, itemId)
+        {
+            CommanderFid = Fid,
+            CommanderName = state()?.Identity.Name,
+        };
 
         store.Save([.. store.Builds, build]);
         return build;
@@ -223,7 +237,11 @@ public sealed class OnFootPlanService(
             return null;
         }
 
-        var build = new OnFootBuild(NextId(), entry.Name, entry.Kind, ItemId: null);
+        var build = new OnFootBuild(NextId(), entry.Name, entry.Kind, ItemId: null)
+        {
+            CommanderFid = Fid,
+            CommanderName = state()?.Identity.Name,
+        };
 
         store.Save([.. store.Builds, build]);
         return build;
@@ -232,7 +250,7 @@ public sealed class OnFootPlanService(
     /// <summary>Plans one slot, replacing whatever was planned there.</summary>
     public bool Plan(string buildId, KitPlan slot)
     {
-        if (store.Find(buildId) is not { } build || !OnFootBuild.IsSlot(slot.Slot))
+        if (Find(buildId) is not { } build || !OnFootBuild.IsSlot(slot.Slot))
         {
             return false;
         }
@@ -244,7 +262,7 @@ public sealed class OnFootPlanService(
     /// <summary>Takes a slot's plan out, leaving the rest of the build alone.</summary>
     public bool Clear(string buildId, string slot)
     {
-        if (store.Find(buildId) is not { } build || build.For(slot) is null)
+        if (Find(buildId) is not { } build || build.For(slot) is null)
         {
             return false;
         }
@@ -272,7 +290,7 @@ public sealed class OnFootPlanService(
     /// <summary>Drops a build, and says what it left behind.</summary>
     public string Delete(string buildId)
     {
-        if (store.Find(buildId) is not { } build)
+        if (Find(buildId) is not { } build)
         {
             return "There is no such build.";
         }
@@ -300,7 +318,7 @@ public sealed class OnFootPlanService(
     /// <summary>Offers a build to the checklist (Phase 27).</summary>
     public string Promote(string buildId)
     {
-        if (store.Find(buildId) is not { } build)
+        if (Find(buildId) is not { } build)
         {
             return "There is no such build.";
         }
@@ -333,6 +351,12 @@ public sealed class OnFootPlanService(
     /// </summary>
     public IReadOnlyList<string> Observe(IEnumerable<JournalEvent> events)
     {
+        // Builds from before the file carried a Commander are claimed by the first one seen.
+        if (state()?.Identity is { FrontierId.Length: > 0 } identity)
+        {
+            store.Adopt(identity.FrontierId, identity.Name);
+        }
+
         var said = new List<string>();
 
         foreach (var journalEvent in events)
@@ -366,7 +390,7 @@ public sealed class OnFootPlanService(
                 continue;
             }
 
-            var candidates = store.Builds
+            var candidates = Mine
                 .Where(build => !build.IsOwned
                                 && build.Kind == kind
                                 && string.Equals(build.Equipment, entry.Name, StringComparison.OrdinalIgnoreCase))
@@ -386,12 +410,12 @@ public sealed class OnFootPlanService(
     /// <summary>Binds a prospective build to a real journal id.</summary>
     public string Adopt(string buildId, long itemId)
     {
-        if (store.Find(buildId) is not { } build)
+        if (Find(buildId) is not { } build)
         {
             return "There is no such build.";
         }
 
-        if (store.ForItem(build.Kind, itemId) is { } already && already.Id != buildId)
+        if (store.ForItem(Fid, build.Kind, itemId) is { } already && already.Id != buildId)
         {
             return $"Item {itemId.ToString(CultureInfo.InvariantCulture)} already has a build, and an item has one.";
         }
@@ -404,7 +428,7 @@ public sealed class OnFootPlanService(
     /// <summary>Unbinds a build from an item that has been sold, and keeps the build (#274).</summary>
     private string? Disown(OnFootKind kind, long itemId)
     {
-        if (store.ForItem(kind, itemId) is not { } build)
+        if (store.ForItem(Fid, kind, itemId) is not { } build)
         {
             return null;
         }

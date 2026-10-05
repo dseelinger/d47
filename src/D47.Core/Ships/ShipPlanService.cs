@@ -87,7 +87,7 @@ public sealed class ShipPlanService(
     private string? CommanderName => state()?.Identity.Name;
 
     /// <summary>This Commander's builds — every read here goes through this, never the whole file.</summary>
-    private IReadOnlyList<ShipBuild> Mine => store.BuildsFor(Fid);
+    public IReadOnlyList<ShipBuild> Mine => store.BuildsFor(Fid);
 
     /// <summary>This Commander's build for a journal ship id, or null when nothing is planned.</summary>
     public ShipBuild? ForShip(int shipId) => store.ForShip(Fid, shipId);

@@ -22,7 +22,10 @@ public sealed class EngineerPlanService(
     public EngineerReport Report() =>
         // This Commander's ship builds only — ship ids are per Commander, so another Commander's plans on the
         // same installation are not demand this report should be counting.
-        UnlockPlanner.Of(ships.BuildsFor(state()?.Identity.FrontierId), onFoot.Builds, state());
+        UnlockPlanner.Of(
+            ships.BuildsFor(state()?.Identity.FrontierId),
+            onFoot.BuildsFor(state()?.Identity.FrontierId),
+            state());
 
     /// <summary>
     /// The ranking as a Commander hears it: the best few, each with the sentence that explains where it

@@ -69,9 +69,32 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
     public OnFootBuild? Find(string id) =>
         Builds.FirstOrDefault(build => string.Equals(build.Id, id, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The build bound to a journal id, or null when nothing is planned for it.</summary>
-    public OnFootBuild? ForItem(OnFootKind kind, long itemId) =>
-        Builds.FirstOrDefault(build => build.ItemId == itemId && build.Kind == kind);
+    /// <summary>One Commander's build bound to a journal id, or null when nothing is planned for it.</summary>
+    public OnFootBuild? ForItem(string? fid, OnFootKind kind, long itemId) =>
+        Builds.FirstOrDefault(build =>
+            build.ItemId == itemId
+            && build.Kind == kind
+            && string.Equals(build.CommanderFid, fid ?? string.Empty, StringComparison.Ordinal));
+
+    /// <summary>Everything one Commander has planned, owned items and intended ones alike.</summary>
+    public IReadOnlyList<OnFootBuild> BuildsFor(string? fid) =>
+        [.. Builds.Where(build =>
+            string.Equals(build.CommanderFid, fid ?? string.Empty, StringComparison.Ordinal))];
+
+    /// <summary>Stamps this Commander's id onto every build from before the file carried one.</summary>
+    public bool Adopt(string fid, string? name = null)
+    {
+        if (fid.Length == 0 || !Builds.Any(build => build.CommanderFid.Length == 0))
+        {
+            return false;
+        }
+
+        Save([.. Builds.Select(build => build.CommanderFid.Length == 0
+            ? build with { CommanderFid = fid, CommanderName = name }
+            : build)]);
+
+        return true;
+    }
 
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
@@ -124,6 +147,8 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
         {
             Kit = [.. builds.Take(MaxBuilds).Select(build => new BuildLine
             {
+                CommanderFid = build.CommanderFid.Length > 0 ? build.CommanderFid : null,
+                CommanderName = build.CommanderName,
                 Id = build.Id,
                 Equipment = build.Equipment,
                 Kind = build.Kind,
@@ -209,10 +234,14 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
                 continue;
             }
 
-            // One build per item, enforced where the file is read rather than only where it is written: a
-            // hand edit is exactly the route that would otherwise produce two.
+            // One build per item and Commander, enforced where the file is read rather than only where it is
+            // written: a hand edit is exactly the route that would otherwise produce two.
+            var fid = (line.CommanderFid ?? string.Empty).Trim();
+
             if (line.ItemId is { } itemId
-                && builds.Any(existing => existing.ItemId == itemId && existing.Kind == line.Kind))
+                && builds.Any(existing => existing.ItemId == itemId
+                                          && existing.Kind == line.Kind
+                                          && string.Equals(existing.CommanderFid, fid, StringComparison.Ordinal)))
             {
                 problems.Add(new OnFootBuildProblem(
                     equipment, $"item {itemId} already has a build, and an item has one."));
@@ -266,7 +295,11 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
                 slots.Add(new KitPlan(name, slot.Grade, Blank(slot.Modification)));
             }
 
-            builds.Add(new OnFootBuild(id, equipment, line.Kind, line.ItemId, slots));
+            builds.Add(new OnFootBuild(id, equipment, line.Kind, line.ItemId, slots)
+            {
+                CommanderFid = fid,
+                CommanderName = Blank(line.CommanderName),
+            });
         }
 
         lock (_gate)
@@ -290,6 +323,10 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
 
     private sealed record BuildLine
     {
+        public string? CommanderFid { get; init; }
+
+        public string? CommanderName { get; init; }
+
         public string? Id { get; init; }
 
         public string? Equipment { get; init; }

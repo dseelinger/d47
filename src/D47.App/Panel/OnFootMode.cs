@@ -672,7 +672,7 @@ public sealed class OnFootMode(
     /// </summary>
     private OnFootBuild? Resolve(string key)
     {
-        if (kit.Store.Find(key) is { } build)
+        if (kit.Find(key) is { } build)
         {
             return build;
         }

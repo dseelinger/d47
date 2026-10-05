@@ -808,8 +808,8 @@ public partial class PanelView : UserControl
         {
             gap = new GapSource(
                 () => D47.Core.Loadout.PlanGap.Of(
-                    ships.Store.Builds,
-                    onFoot.Store.Builds,
+                    ships.Mine,
+                    onFoot.Mine,
                     state(),
                     includeIntended: true,
                     checklists.SlotFor),

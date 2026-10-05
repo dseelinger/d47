@@ -66,6 +66,12 @@ public sealed record OnFootBuild(
 
     public IReadOnlyList<KitPlan> Slots { get; init; } = Slots ?? [];
 
+    /// <summary>Whose plan this is: the Frontier id, or empty for a build from before the file carried one.</summary>
+    public string CommanderFid { get; init; } = string.Empty;
+
+    /// <summary>The Commander's name when the build was written, for a person reading a shared file.</summary>
+    public string? CommanderName { get; init; }
+
     /// <summary>Whether the Commander owns this item, or merely intends to.</summary>
     public bool IsOwned => ItemId is not null;
 
