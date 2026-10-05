@@ -468,6 +468,8 @@ public interface IRouteService
 
     /// <summary>The fourth plot type (Phase 18, "Find the exobiology").</summary>
     Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken);
+
+    Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken);
 }
 
 /// <summary>The seam to whatever gathers markets and plans a trade route over them (Phase 36).</summary>

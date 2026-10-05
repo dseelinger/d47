@@ -42,6 +42,9 @@ public class ExobiologyCapabilityTests
             return Task.FromResult(Route);
         }
 
+        public Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<CarrierRoute?>(null);
+
         public Task<PlottedRoute?> PlotAsync(RouteQuery q, CancellationToken t) =>
             Task.FromResult<PlottedRoute?>(null);
 

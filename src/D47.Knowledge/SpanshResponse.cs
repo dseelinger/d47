@@ -241,6 +241,34 @@ internal static class SpanshResponse
         return new ExobiologyRoute(stops);
     }
 
+    /// <summary>A fleet carrier route.</summary>
+    public static CarrierRoute? ReadCarrier(JsonElement result)
+    {
+        if (result.ValueKind != JsonValueKind.Object || !result.TryGetProperty("jumps", out _))
+        {
+            return null;
+        }
+
+        return new CarrierRoute([.. result.Items("jumps").Select(jump => new CarrierWaypoint(
+            String(jump, "name") ?? "an unnamed system",
+            Number(jump, "distance") ?? 0,
+            Number(jump, "distance_to_destination") ?? 0,
+            (int)(Integer(jump, "fuel_in_tank") ?? 0),
+            (int)(Integer(jump, "fuel_used") ?? 0),
+            Flag(jump, "must_restock"),
+            (int)(Integer(jump, "restock_amount") ?? 0),
+            (int)(Integer(jump, "tritium_in_market") ?? 0),
+            Flag(jump, "has_icy_ring"),
+            Flag(jump, "is_system_pristine"),
+            Flag(jump, "is_desired_destination")))]);
+    }
+
+    /// <summary>A boolean spansh writes as true, false, 1 or 0.</summary>
+    private static bool Flag(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value)
+        && (value.ValueKind == JsonValueKind.True
+            || (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number) && number != 0));
+
     /// <summary>The bodies of one <c>api/system</c> record that carry a landmark value above zero.</summary>
     public static SystemBiology ReadSystemBiology(JsonDocument document, long systemAddress)
     {

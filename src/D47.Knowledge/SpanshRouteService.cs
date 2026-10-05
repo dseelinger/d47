@@ -109,10 +109,31 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
         return result is null ? null : SpanshResponse.ReadExobiology(result.Value);
     }
 
+    public async Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken)
+    {
+        List<KeyValuePair<string, string>> form =
+        [
+            new("source", query.Source),
+            .. query.Destinations.Select(destination => new KeyValuePair<string, string>("destinations", destination)),
+            new("capacity_used", query.CapacityUsed.ToString(CultureInfo.InvariantCulture)),
+            new("tritium_stored", query.TritiumStored.ToString(CultureInfo.InvariantCulture)),
+            new("fuel_loaded", query.FuelLoaded.ToString(CultureInfo.InvariantCulture)),
+            new("capacity", query.Capacity.ToString(CultureInfo.InvariantCulture)),
+        ];
+
+        var result = await RunAsync(
+            "api/fleetcarrier/route",
+            form,
+            "the carrier route plotter",
+            cancellationToken).ConfigureAwait(false);
+
+        return result is null ? null : SpanshResponse.ReadCarrier(result.Value);
+    }
+
     /// <summary>Submit, then poll until it stops being queued.</summary>
     private async Task<JsonElement?> RunAsync(
         string path,
-        Dictionary<string, string> parameters,
+        IEnumerable<KeyValuePair<string, string>> parameters,
         string what,
         CancellationToken cancellationToken)
     {

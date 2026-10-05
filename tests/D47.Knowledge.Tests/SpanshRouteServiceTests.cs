@@ -260,4 +260,84 @@ public class SpanshRouteServiceTests
 
         Assert.Equal("/api/exobiology/route", recorder.Paths[0]);
     }
+
+    private static CarrierRouteQuery CarrierQuery()
+    {
+        var carrier = new D47.Core.Journal.CarrierState
+        {
+            CallSign = "K7Q-B4X",
+            StarSystem = "Sol",
+            Capacity = 25_000,
+            FreeSpace = 25_000,
+            FuelLevel = 0,
+        };
+
+        Assert.True(CarrierRouteQuery.TryFrom(carrier, null, "Colonia", true, out var query, out _));
+        return query;
+    }
+
+    [Fact]
+    public async Task ACarrierPlotParsesTheRecordedReturnTripToColonia()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, File.ReadAllText(Path.Combine(
+                AppContext.BaseDirectory, "Fixtures", "spansh-fleetcarrier-route-sol-colonia-sol.json"))));
+
+        using var service = Service(recorder, out _);
+
+        var route = await service.PlotCarrierAsync(CarrierQuery(), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(route);
+        Assert.Equal(92, route.Waypoints.Count);
+        Assert.Equal(6_084, route.TotalTritium);
+        Assert.Equal(7, route.RestockStops.Count);
+        Assert.Equal("Sol", route.RestockStops[0].Name);
+        Assert.Equal(1_000, route.RestockStops[0].RestockAmount);
+        Assert.Equal(["/api/fleetcarrier/route", "/api/results/JOB-1"], recorder.Paths);
+    }
+
+    [Fact]
+    public async Task ACarrierPlotSubmitsOneDestinationPerEntryAndTheHoldFigures()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, """{"status":"ok","result":{"jumps":[]}}"""));
+
+        using var service = Service(recorder, out _);
+
+        await service.PlotCarrierAsync(CarrierQuery(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            "source=Sol&destinations=Colonia&destinations=Sol&capacity_used=0&tritium_stored=0&fuel_loaded=0&capacity=25000",
+            recorder.Requests[0]);
+    }
+
+    [Fact]
+    public async Task ACarrierPlotPollsOnTheInjectedDelay()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, Queued),
+            (HttpStatusCode.OK, """{"status":"ok","result":{"jumps":[]}}"""));
+
+        using var service = Service(recorder, out var waits);
+
+        await service.PlotCarrierAsync(CarrierQuery(), TestContext.Current.CancellationToken);
+
+        Assert.Single(waits);
+    }
+
+    [Fact]
+    public async Task ACarrierPlotRefusalReachesTheCommanderInSpanshsWords()
+    {
+        var recorder = new Recorder((HttpStatusCode.BadRequest, """{"error":"Could not find finishing system"}"""));
+
+        using var service = Service(recorder, out _);
+
+        var failure = await Assert.ThrowsAsync<GalaxyUnavailableException>(
+            () => service.PlotCarrierAsync(CarrierQuery(), TestContext.Current.CancellationToken));
+
+        Assert.Contains("Could not find finishing system", failure.Message, StringComparison.Ordinal);
+    }
 }
