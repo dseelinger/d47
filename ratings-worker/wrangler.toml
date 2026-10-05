@@ -12,4 +12,4 @@ enabled = false
 [[d1_databases]]
 binding = "DB"
 database_name = "d47-ratings"
-database_id = "REPLACE-WITH-THE-ID-PRINTED-BY-wrangler-d1-create"
+database_id = "fa6a50a6-6a34-4964-ba9f-e921dd7068cb"
