@@ -3350,7 +3350,7 @@ public partial class PanelView : UserControl
 
         JournalList.SelectedIndex = selected;
 
-        _journalPane.Show(selected >= 0 ? chosen : null);
+        ShowJournalEntry(model, selected >= 0 ? chosen : null);
 
         ShowJournalCount(shown.Count, model.Journal.Count);
     }
@@ -3406,7 +3406,19 @@ public partial class PanelView : UserControl
         }
 
         model.JournalSelected = entry;
-        _journalPane.Show(entry);
+        ShowJournalEntry(model, entry);
+    }
+
+    /// <summary>A new selection draws What this means open the first time its kind is read in this run; a redraw keeps the band.</summary>
+    private void ShowJournalEntry(PanelViewModel model, D47.Core.Journal.JournalEntry? entry)
+    {
+        if (entry is null || ReferenceEquals(entry, _journalPane.Shown))
+        {
+            _journalPane.Show(entry);
+            return;
+        }
+
+        _journalPane.Show(entry, model.TeachKind(entry.Kind));
     }
 
     private readonly JournalReadingPane _journalPane;

@@ -74,8 +74,11 @@ internal sealed class JournalReadingPane : Border
         Show(null);
     }
 
-    /// <summary>Draws an entry; the same entry, compared by reference, is not drawn again.</summary>
-    public void Show(JournalEntry? entry)
+    /// <summary>
+    /// Draws an entry, with What this means open or folded; the same entry, compared by reference, is not
+    /// drawn again.
+    /// </summary>
+    public void Show(JournalEntry? entry, bool meaningOpen = true)
     {
         if (_drawn && ReferenceEquals(entry, _shown))
         {
@@ -112,7 +115,7 @@ internal sealed class JournalReadingPane : Border
 
         if (JournalExplainers.For(entry.Kind) is { } paragraph)
         {
-            _content.Children.Add(Meaning(paragraph));
+            _content.Children.Add(Meaning(paragraph, meaningOpen));
         }
 
         _content.Children.Add(EveryField(reading.Plumbing));
@@ -531,7 +534,7 @@ internal sealed class JournalReadingPane : Border
 
     // ---- Folds ---------------------------------------------------------------------------------------
 
-    private StackPanel Meaning(string paragraph)
+    private StackPanel Meaning(string paragraph, bool open)
     {
         var body = Text(paragraph, Prose, TypeScale.Secondary, FontWeight.Normal, ThemeManager.WhiteKey);
         body.LineHeight = TypeScale.Secondary * 1.55;
@@ -546,7 +549,7 @@ internal sealed class JournalReadingPane : Border
         preview.Margin = new Thickness(12, 0, 0, 0);
         preview.VerticalAlignment = VerticalAlignment.Center;
 
-        return Fold("WHAT THIS MEANS", body, open: true, preview, aside: null, "ReadingMeaning");
+        return Fold("WHAT THIS MEANS", body, open, preview, aside: null, "ReadingMeaning");
     }
 
     private StackPanel EveryField(IReadOnlyList<PlumbingField> fields)

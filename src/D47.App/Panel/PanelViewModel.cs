@@ -201,6 +201,15 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         }
     }
 
+    private readonly HashSet<string> _taughtKinds = new(StringComparer.Ordinal);
+
+    /// <summary>The event kinds whose paragraph has been shown open in this run.</summary>
+    public IReadOnlyCollection<string> TaughtKinds => _taughtKinds;
+
+    /// <summary>True the first time a kind with a paragraph is selected, and records it; a kind with none is never recorded.</summary>
+    public bool TeachKind(string kind) =>
+        D47.Core.Journal.JournalExplainers.For(kind) is not null && _taughtKinds.Add(kind);
+
     /// <summary>Whether the fields are shown beside the list.</summary>
     public bool JournalDetail
     {
