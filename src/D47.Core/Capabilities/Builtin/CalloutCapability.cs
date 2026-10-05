@@ -43,6 +43,7 @@ public static class CalloutCapability
     public const string KillsKey = "callouts.kills";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string PowerplayMeritsKey = "callouts.powerplayMerits";
+    public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -362,6 +363,15 @@ public static class CalloutCapability
                 "powerplay merits",
                 s => s.Callouts.PowerplayMerits,
                 (s, v) => s with { Callouts = s.Callouts with { PowerplayMerits = v } }),
+
+            Toggle(
+                PowerplaySalvageKey,
+                "Powerplay salvage",
+                "A warning before you jump away from your Power's system with salvage you scooped there and have not handed in.",
+                "powerplay-salvage",
+                "powerplay salvage",
+                s => s.Callouts.PowerplaySalvage,
+                (s, v) => s with { Callouts = s.Callouts with { PowerplaySalvage = v } }),
 
             Toggle(
                 ChecklistKey,

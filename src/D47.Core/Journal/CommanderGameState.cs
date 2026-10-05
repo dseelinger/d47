@@ -70,6 +70,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Which Power they fly for, if any (Phase 15).</summary>
     public PowerplayPledge Pledge { get; private set; } = PowerplayPledge.None;
 
+    /// <summary>Salvage scooped in the current system while it was their Power's own.</summary>
+    public ScoopedSalvage Salvage { get; private set; } = ScoopedSalvage.None;
+
     /// <summary>Construction sites they have visited (Phase 17).</summary>
     public ColonisationSites Colonisation { get; private set; } = ColonisationSites.Empty;
 
@@ -152,6 +155,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Missions = Missions.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
+        Salvage = Salvage.Apply(journalEvent, Location, Pledge);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
         Sampling = Sampling.Apply(journalEvent, at);

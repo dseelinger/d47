@@ -491,6 +491,9 @@ public sealed record CalloutSettings
     /// <summary>Which way the Powerplay merit modifier leans, on arriving in a system.</summary>
     public bool PowerplayMerits { get; init; } = true;
 
+    /// <summary>Salvage scooped in your Power's system, on jumping away without handing it in.</summary>
+    public bool PowerplaySalvage { get; init; } = true;
+
     /// <summary>
     /// A checklist item the journal has just changed its mind about, and the last unit a plan needed
     /// (Phase 17).

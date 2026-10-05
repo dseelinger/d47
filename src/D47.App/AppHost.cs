@@ -2979,6 +2979,7 @@ public sealed class AppHost : IDisposable
             })
 
             .Add(new PowerplayMeritsCallout())
+            .Add(new PowerplaySalvageCallout())
 
             // Phase 23.
             .Add(new LoreCallout(lore, loreVisits))
@@ -3087,6 +3088,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("rebuy", callouts.Rebuy, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);
+        engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);

@@ -54,6 +54,9 @@ public static class PowerplayRules
     /// <summary>Reinforcing, in addition, in a system the galaxy map marks for reinforcement.</summary>
     public static readonly PowerplayRule MarkedReinforcement = new(35, "4.3.0.0", GameVersion, CheckedOn);
 
+    /// <summary>Salvage collected in the Commander's own Power's system earns reinforcement merits only when handed in at a Power contact in that system; escape pods earn none.</summary>
+    public static readonly PowerplayRule OwnSalvageHandIn = new(0, "4.2.2.0", GameVersion, CheckedOn);
+
     public static IReadOnlyList<PowerplayRule> All { get; } =
     [
         OwnReinforcement,
@@ -63,6 +66,7 @@ public static class PowerplayRules
         UnoccupiedAcquisition,
         MarkedUndermining,
         MarkedReinforcement,
+        OwnSalvageHandIn,
     ];
 
     /// <summary>Which rule applies where the pledged Commander is; None for an unpledged Commander or a state the rules do not cover.</summary>

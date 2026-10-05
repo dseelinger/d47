@@ -479,9 +479,29 @@ come from Frontier's update notes, last checked against game version 4.4.1.1 on 
 | Acquiring an unoccupied system | 0% | 4.1.2.103 |
 | Undermining, in addition, in a system marked for undermining | +25% | 4.3.0.0 |
 | Reinforcing, in addition, in a system marked for reinforcement | +35% | 4.3.0.0 |
+| Salvage scooped in your own Power's system, handed in at a Power contact in that system | reinforcement merits; escape pods earn none | 4.2.2.0 |
 
 In a rival's system this and Rival Power territory both speak. Turn this one off with the
 `powerplay-merits` row.
+
+#### Powerplay salvage {#powerplay-salvage}
+
+Salvage scooped in a system your own Power controls earns reinforcement merits only when you hand
+it in at a Power contact in that same system. Directive 47 counts the salvage you scoop there and,
+when you start a hyperspace jump with some of it still aboard, says so before the jump commits, while
+you can still cancel the countdown.
+
+```text
+You are leaving 47 Arietis with nine Wreckage Components and one Black Box scooped here. They only earn merits handed in at a Power contact in this system.
+```
+
+At most three commodities are named; the rest are a count. A hand-in at a station, ejecting the
+cargo, dying or arriving in another system (a carrier jump included) removes it from the count, and
+the count never exceeds what your cargo manifest holds. Occupied and damaged escape pods are counted
+but never warned about, because Frontier suspended their merits on 2024-11-19. Salvage scooped in an
+unoccupied or rival system is not counted, and a supercruise jump says nothing. Undermining salvage
+is not covered: no source names where it is handed in. The rule is in the table above, last checked
+against game version 4.4.1.1 on 2026-09-28. Turn this one off with the `powerplay-salvage` row.
 
 #### Checklist changes {#checklist}
 
