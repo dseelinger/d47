@@ -27,7 +27,7 @@ public sealed record StarSystemSurface(
 /// One star system's record from Spansh: the Commander's own while following them, or any system typed or
 /// opened.
 /// </summary>
-public sealed class StarSystemPage : UserControl, IPageSummary
+public sealed partial class StarSystemPage : UserControl, IPageSummary, IFilterablePage
 {
     public const string RootKey = "search.system";
 
@@ -69,6 +69,8 @@ public sealed class StarSystemPage : UserControl, IPageSummary
     private string _typed = string.Empty;
     private IReadOnlyList<SystemNameMatch> _matches = [];
     private CancellationTokenSource? _inFlight;
+    private Section _section;
+    private bool _filtering;
 
     public StarSystemPage(StarSystemSurface surface)
     {
@@ -114,6 +116,12 @@ public sealed class StarSystemPage : UserControl, IPageSummary
         NoMatch,
     }
 
+    private enum Section
+    {
+        Overview,
+        Stations,
+    }
+
     private sealed record Shown(long Address, string Name);
 
     public string Summary => SummaryText;
@@ -123,6 +131,9 @@ public sealed class StarSystemPage : UserControl, IPageSummary
         add { }
         remove { }
     }
+
+    /// <summary>Raised when <see cref="Filters"/> changes, so the panel shows or hides its field.</summary>
+    public event EventHandler? FiltersChanged;
 
     /// <summary>Whether the page follows the Commander's own system.</summary>
     public bool Following => _following;
@@ -220,6 +231,12 @@ public sealed class StarSystemPage : UserControl, IPageSummary
 
     private void Open(long address, string name, bool following)
     {
+        if (_opened?.Address != address)
+        {
+            _section = Section.Overview;
+            _stationFilter = new StationFilter { Query = _stationFilter.Query };
+        }
+
         _following = following;
         _opened = new Shown(address, name);
         _profile = null;
@@ -372,8 +389,20 @@ public sealed class StarSystemPage : UserControl, IPageSummary
 
     private void Draw()
     {
+        DrawBody();
+
+        if (Filters != _filtering)
+        {
+            _filtering = Filters;
+            FiltersChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void DrawBody()
+    {
         _redrawn = true;
         _body.Children.Clear();
+        _stationTable = null;
 
         if (_view == View.Off)
         {
@@ -426,7 +455,8 @@ public sealed class StarSystemPage : UserControl, IPageSummary
 
             case View.Ready when _profile is { } profile:
                 _body.Children.Add(Heading(profile.ReportedAt));
-                _body.Children.Add(Overview(profile));
+                _body.Children.Add(Sections(profile));
+                _body.Children.Add(_section == Section.Stations ? Stations(profile) : Overview(profile));
                 break;
         }
     }
@@ -550,7 +580,7 @@ public sealed class StarSystemPage : UserControl, IPageSummary
         return new StackPanel { Spacing = 2, Children = { label, value } };
     }
 
-    private static StackPanel Overview(StarSystemProfile profile)
+    private StackPanel Overview(StarSystemProfile profile)
     {
         var grid = new Grid
         {
@@ -577,7 +607,7 @@ public sealed class StarSystemPage : UserControl, IPageSummary
         Place(grid, 2, 3, 1, StatTile.Build(
             "Bodies", profile.Bodies.Count.ToString(CultureInfo.InvariantCulture), StatInk.Number));
 
-        return new StackPanel { Spacing = 24, Children = { grid, Factions(profile) } };
+        return new StackPanel { Spacing = 24, Children = { grid, KindTiles(profile), Factions(profile) } };
     }
 
     private static void Place(Grid grid, int row, int column, int span, Control cell)
@@ -821,7 +851,7 @@ public sealed class StarSystemPage : UserControl, IPageSummary
         return tag;
     }
 
-    private static StackPanel GroupHead(string name, string description, string count)
+    private static StackPanel GroupHead(string name, string description, string? count = null)
     {
         var heading = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
         TitleText.Style(heading, TypeScale.Section, TitleRank.Group);
@@ -833,7 +863,7 @@ public sealed class StarSystemPage : UserControl, IPageSummary
 
         var counted = new TextBlock
         {
-            Text = count.ToUpperInvariant(),
+            Text = count?.ToUpperInvariant(),
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Meta,
             VerticalAlignment = VerticalAlignment.Center,

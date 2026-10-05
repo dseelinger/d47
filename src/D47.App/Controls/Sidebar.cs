@@ -32,6 +32,7 @@ public sealed class Sidebar : Border
 
     private readonly Action<string>? _select;
     private readonly List<Row> _rows = [];
+    private readonly StackPanel _column = new() { Spacing = 2 };
     private string? _selected;
 
     public Sidebar(IReadOnlyList<SidebarGroup> groups, string? selected = null, Action<string>? select = null, string? note = null)
@@ -45,8 +46,6 @@ public sealed class Sidebar : Border
         BorderThickness = new Thickness(0, 0, 1, 0);
         Themed(this, BorderBrushProperty, ThemeManager.Line2Key);
 
-        var column = new StackPanel { Spacing = 2 };
-
         if (note is not null)
         {
             var said = new TextBlock
@@ -57,7 +56,7 @@ public sealed class Sidebar : Border
                 Margin = new Thickness(0, 0, 0, 12),
             };
             Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            column.Children.Add(said);
+            _column.Children.Add(said);
         }
 
         for (var g = 0; g < groups.Count; g++)
@@ -66,19 +65,26 @@ public sealed class Sidebar : Border
 
             if (group.Heading is { } heading)
             {
-                column.Children.Add(Heading(heading, g == 0 ? 0 : GroupGap));
+                _column.Children.Add(Heading(heading, g == 0 ? 0 : GroupGap));
             }
 
             foreach (var item in group.Items)
             {
                 var row = new Row(item, group.Heading is null ? 12 : 15, this);
                 _rows.Add(row);
-                column.Children.Add(row.Shape);
+                _column.Children.Add(row.Shape);
             }
         }
 
-        Child = column;
+        Child = _column;
         Paint();
+    }
+
+    /// <summary>A further group after the rows: a heading drawn as the others are, and the caller's controls under it.</summary>
+    public void Add(string heading, IEnumerable<Control> controls)
+    {
+        _column.Children.Add(Heading(heading, GroupGap));
+        _column.Children.AddRange(controls);
     }
 
     /// <summary>The key of the selected row, or null when none is.</summary>

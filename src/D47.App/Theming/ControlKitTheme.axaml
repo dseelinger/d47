@@ -368,6 +368,9 @@
           </DataTemplate>
         </Setter>
       </Style>
+      <Style Selector="^.composed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="ContentTemplate" Value="{x:Null}" />
+      </Style>
 
       <Style Selector="^.sentence">
         <Setter Property="FontFamily" Value="{StaticResource D47.Font.Prose}" />

@@ -1315,7 +1315,13 @@ public partial class PanelView : UserControl
     public void EnableStarSystem(StarSystemSurface surface) =>
         Furnish(
             PanelTab.Search,
-            _ => _starSystem = new StarSystemPage(surface),
+            _ =>
+            {
+                _starSystem = new StarSystemPage(surface);
+                _starSystem.FiltersChanged += (_, _) => ShowSearch();
+
+                return _starSystem;
+            },
             new NavCrumb(StarSystemPage.RootKey, "System") { Help = D47.Core.Capabilities.Builtin.GalaxyCapability.Id });
 
     /// <summary>
