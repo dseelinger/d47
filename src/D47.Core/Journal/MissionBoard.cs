@@ -119,6 +119,8 @@ public sealed record MissionBoard
 {
     public static readonly MissionBoard Empty = new();
 
+    public static readonly TimeSpan SoonWindow = TimeSpan.FromHours(1);
+
     public IReadOnlyList<Mission> Missions { get; init; } = [];
 
     /// <summary>
@@ -140,6 +142,31 @@ public sealed record MissionBoard
     /// <summary>The missions with an expiry, soonest first, then those without.</summary>
     public IReadOnlyList<Mission> BySoonest() =>
         [.. Missions.OrderBy(mission => mission.Expiry ?? DateTimeOffset.MaxValue).ThenBy(mission => mission.Id)];
+
+    /// <summary>Expiring within the hour, then handed in where the Commander is docked, then the rest; soonest expiry first in each.</summary>
+    public IReadOnlyList<Mission> Ranked(DateTimeOffset? now, JournalLocation location)
+    {
+        bool Soon(Mission mission) =>
+            now is { } clock && mission.Expiry is { } expiry && expiry > clock && expiry - clock <= SoonWindow;
+
+        bool Here(Mission mission) =>
+            location.Docked
+            && location.StationName is { Length: > 0 } station
+            && string.Equals(mission.DestinationStation, station, StringComparison.OrdinalIgnoreCase);
+
+        bool Expired(Mission mission) => now is { } clock && mission.Expiry <= clock;
+
+        int Band(Mission mission) => Soon(mission) ? 0 : Here(mission) ? 1 : 2;
+
+        return
+        [
+            .. Missions
+                .OrderBy(Band)
+                .ThenBy(mission => Band(mission) == 2 && Expired(mission))
+                .ThenBy(mission => mission.Expiry ?? DateTimeOffset.MaxValue)
+                .ThenBy(mission => mission.Id),
+        ];
+    }
 
     /// <summary>The live missions whose destination is the settlement, or whose target is its faction.</summary>
     public IReadOnlyList<Mission> Concerning(string? settlement, string? faction) =>

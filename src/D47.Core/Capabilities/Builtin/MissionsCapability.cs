@@ -13,8 +13,6 @@ public static class MissionsCapability
 
     private const int MaxNamed = 3;
 
-    private static readonly TimeSpan SoonWindow = TimeSpan.FromHours(1);
-
     private static readonly IReadOnlyDictionary<string, string> Nothing =
         new Dictionary<string, string>(StringComparer.Ordinal);
 
@@ -85,7 +83,7 @@ public static class MissionsCapability
             return said.Append("There are no missions on your board.").ToString();
         }
 
-        var ranked = Rank(missions, clock, state!.Location);
+        var ranked = state!.Missions.Ranked(clock, state.Location);
 
         said.Append(missions.Count == 1 ? "You have one mission. " : $"You have {Number(missions.Count)} missions. ");
 
@@ -110,31 +108,6 @@ public static class MissionsCapability
         }
 
         return said.ToString().TrimEnd();
-    }
-
-    /// <summary>Expiring within the hour, then handed in where the Commander is docked, then the rest; soonest expiry first in each.</summary>
-    private static List<Mission> Rank(IReadOnlyList<Mission> missions, DateTimeOffset? now, JournalLocation location)
-    {
-        bool Soon(Mission mission) =>
-            now is { } clock && mission.Expiry is { } expiry && expiry > clock && expiry - clock <= SoonWindow;
-
-        bool Here(Mission mission) =>
-            location.Docked
-            && location.StationName is { Length: > 0 } station
-            && string.Equals(mission.DestinationStation, station, StringComparison.OrdinalIgnoreCase);
-
-        bool Expired(Mission mission) => now is { } clock && mission.Expiry <= clock;
-
-        int Band(Mission mission) => Soon(mission) ? 0 : Here(mission) ? 1 : 2;
-
-        return
-        [
-            .. missions
-                .OrderBy(Band)
-                .ThenBy(mission => Band(mission) == 2 && Expired(mission))
-                .ThenBy(mission => mission.Expiry ?? DateTimeOffset.MaxValue)
-                .ThenBy(mission => mission.Id),
-        ];
     }
 
     private static string Name(Mission mission, DateTimeOffset? now)
