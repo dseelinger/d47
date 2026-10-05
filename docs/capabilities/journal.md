@@ -503,10 +503,12 @@ still receives every fitted module.
 ```
 
 `get_fleet_loadouts` reads the remembered loadouts rather than the flown one, and filters and ranks
-in the tool so the model is comparing figures rather than deriving them:
+in the tool so the model is comparing figures rather than deriving them. With `mining` it lists only
+ships fitted with a mining laser or Volley Repeater, a collector controller and a refinery, each with
+those modules named; a ship whose loadout lists no modules is reported as not seen fitted:
 
 ```json
-{"type":"object","properties":{"min_cargo":{"type":"integer","description":"List only ships with at least this many tonnes of cargo capacity."},"order_by":{"type":"string","description":"Rank the ships by this figure, largest first. Listed by name otherwise.","enum":["jump_range","cargo"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"min_cargo":{"type":"integer","description":"List only ships with at least this many tonnes of cargo capacity."},"mining":{"type":"boolean","description":"List only ships fitted for tritium mining \u2014 a mining laser or Volley Repeater, a collector controller and a refinery \u2014 each with the modules that show it."},"order_by":{"type":"string","description":"Rank the ships by this figure, largest first. Listed by name otherwise.","enum":["jump_range","cargo"]}},"required":[],"additionalProperties":false}
 ```
 
 `get_stored_modules` takes an optional fragment to narrow the list:

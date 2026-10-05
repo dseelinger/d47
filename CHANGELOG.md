@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Asking which of your ships are fit for mining lists the ones carrying a mining laser or Volley Repeater, a collector controller and a refinery, naming those modules. Ships missing one are named with what they lack, such as "no refinery", and a ship whose fitted modules were never read is reported as not seen fitted.
+
 The Navigation tab's Plan page has a Carrier Route card for your own fleet carrier. Fill in To; From defaults to the carrier's system, and "Come back to the start" is on by default. There are no fields for the tank, hold tritium or used capacity: they are read from the carrier, as with "plot my carrier to Colonia". The plotted route is headed "Carrier route", with the total tritium and when carrier management was last read, and lists each jump with its distance, the tritium it uses and what is left in the tank, marking restock stops with the tonnes needed and systems with a pristine icy ring. A carrier whose management panel has never been opened gets "Open carrier management once so I can read the hold." on the card. Fleet › Carrier has a "Plan a carrier route" button that opens the card with From set to the carrier's system.
 
 A planner on the Plan page that answers without plotting, such as a refusal or "No route from…", now keeps that answer on its card. It was cleared as soon as it appeared.

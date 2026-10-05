@@ -185,6 +185,14 @@ public static class JournalCapability
                             Description = "Rank the ships by this figure, largest first. Listed by name otherwise.",
                             AllowedValues = ["jump_range", "cargo"],
                         },
+                        new ToolParameter
+                        {
+                            Name = "mining",
+                            Type = ToolParameterType.Boolean,
+                            Description =
+                                "List only ships fitted for tritium mining — a mining laser or Volley Repeater, "
+                                + "a collector controller and a refinery — each with the modules that show it.",
+                        },
                     ],
                     Handler = (arguments, _) => Task.FromResult(
                         ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments, Unread(state())))),
@@ -1013,16 +1021,62 @@ public static class JournalCapability
             return report.ToString().TrimEnd();
         }
 
-        var wanted = remembered;
+        var candidates = remembered;
+        var fits = new Dictionary<int, MiningFit>();
+        var notes = new StringBuilder();
+
+        if (arguments.TryGetBoolean("mining", out var mining) && mining)
+        {
+            var unseen = new List<string>();
+            var unfit = new List<string>();
+
+            foreach (var ship in remembered)
+            {
+                switch (MiningFit.For(ship.Value.Loadout))
+                {
+                    case null:
+                        unseen.Add(ship.Value.Loadout.Describe() ?? "unnamed ship");
+                        break;
+                    case { IsFit: true } fit:
+                        fits[ship.Key] = fit;
+                        break;
+                    case var lacking:
+                        unfit.Add($"{ship.Value.Loadout.Describe()} ({lacking.Evidence})");
+                        break;
+                }
+            }
+
+            candidates = [.. remembered.Where(ship => fits.ContainsKey(ship.Key))];
+
+            if (unfit.Count > 0)
+            {
+                notes.AppendLine($"Not fitted for mining: {string.Join("; ", unfit)}.");
+            }
+
+            if (unseen.Count > 0)
+            {
+                notes.AppendLine($"Not seen fitted, so not covered: {string.Join(", ", unseen)}.");
+            }
+
+            if (candidates.Count == 0)
+            {
+                report.AppendLine("No ship I remember is fitted for tritium mining.");
+                report.Append(notes);
+                Uncovered(report, active);
+                return report.ToString().TrimEnd();
+            }
+        }
+
+        var wanted = candidates;
 
         if (arguments.TryGetInt32("min_cargo", out var minimum))
         {
-            wanted = [.. remembered.Where(ship => ship.Value.Loadout.CargoCapacity >= minimum)];
+            wanted = [.. candidates.Where(ship => ship.Value.Loadout.CargoCapacity >= minimum)];
         }
 
         if (wanted.Count == 0)
         {
-            var largest = remembered
+            var largest = candidates
                 .Select(ship => ship.Value.Loadout)
                 .Where(loadout => loadout.CargoCapacity is not null)
                 .OrderByDescending(loadout => loadout.CargoCapacity)
@@ -1094,9 +1148,15 @@ public static class JournalCapability
                 report.Append(", " + string.Join(", ", figures));
             }
 
+            if (fits.TryGetValue(ship.Key, out var evidence))
+            {
+                report.Append($", {evidence.Evidence}");
+            }
+
             report.AppendLine(AsOf(ship.Value.SeenAt));
         }
 
+        report.Append(notes);
         Uncovered(report, active);
         return report.ToString().TrimEnd();
     }
