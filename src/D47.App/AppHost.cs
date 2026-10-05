@@ -825,6 +825,13 @@ public sealed class AppHost : IDisposable
 
         bookmarks.Load();
 
+        // Every run, not only behind the timers switch (#90).
+        var journalReminders = new D47.Core.Reminders.JournalReminderStore(
+            Path.Combine(paths.Data, "journal-reminders.json"),
+            loggerFactory.CreateLogger<D47.Core.Reminders.JournalReminderStore>());
+
+        journalReminders.Poll();
+
         // The Commander's ship builds (Phase 26), before the history walk that looks for the ships they name.
         var shipBuilds = new ShipBuildStore(
             Path.Combine(paths.Data, "ships.json"),
@@ -1169,6 +1176,7 @@ public sealed class AppHost : IDisposable
             handInOffer,
             marketBook,
             storyClue,
+            journalReminders,
             commander => storyOpeningRef?.Invoke(commander) == true);
 
         // Acting on the game without being asked (Phase 10, item 2).
@@ -2916,6 +2924,7 @@ public sealed class AppHost : IDisposable
         D47.Core.Conversation.HandInOffer handInOffer,
         D47.Core.Knowledge.MarketBook marketBook,
         D47.Core.Stories.StoryClueCallout storyClue,
+        D47.Core.Reminders.JournalReminderStore journalReminders,
         Func<string?, bool> storyOpening)
     {
         var sceneCallout = new SceneCallout(scenes);
@@ -2970,6 +2979,7 @@ public sealed class AppHost : IDisposable
             .Add(new ProspectorCallout())
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
+            .Add(new D47.Core.Reminders.JournalReminderCallout(journalReminders) { Capacity = MaterialGrades.CapacityOf })
 
             // Low on purpose.
             .Add(new RivalTerritoryCallout
@@ -3107,6 +3117,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);
         engine.SetEnabled("missions", callouts.Missions, now);
+        engine.SetEnabled("reminders", callouts.Reminders, now);
 
         foreach (var callout in engine.Callouts)
         {
@@ -6145,10 +6156,12 @@ public sealed class AppHost : IDisposable
             Turns.Said(spoken);
         }
 
-        var clip = await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
+        // Joined only now, so the conversation feed above never carries it.
+        var clip = await Voice.AnnounceAsync(announcement with { Text = announcement.Heard, Verbatim = null }, voice)
+            .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Text, ConversationSpeaker(written, Personas.ShipName), written.Key);
+        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key);
         return clip;
     }
 

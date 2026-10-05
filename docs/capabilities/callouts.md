@@ -874,6 +874,27 @@ less the upkeep since. It is said once for each recorded balance, and again afte
 Nothing is said before d47 has a weekly figure, for a squadron carrier or one you do not own, or
 while d47 is catching up on a journal it did not watch being written.
 
+#### Reminders {#reminders}
+
+A reminder waits for a moment in the game and is said once when the journal reaches it
+([#642](https://github.com/dseelinger/d47/issues/642)). The moments are your next docking, docking at
+a named station, arriving in a named system, docking at your own carrier, your hold becoming empty or
+full, a named material reaching its capacity, and your next session.
+
+```text
+You asked me to remind you when you docked. Buy limpets before you leave.
+```
+
+The first sentence is about the moment, and the core aboard may say it in its own words. The rest is
+your sentence, said exactly as you gave it and never sent to a language model. Station and system names
+match the whole name, ignoring case. A squadron carrier is not your own carrier. The hold and material
+moments are the change, not the state: a reminder for a full hold set while the hold is full waits for
+it to empty and fill again, and none is said before d47 has read the hold. Nothing is said while d47 is
+catching up on a journal it did not watch being written.
+
+Reminders are kept per Commander in `journal-reminders.json` in the `data` folder, and another
+Commander's are never said. A reminder that has been said is removed at the next game load.
+
 #### Mission hand-ins and expiry {#missions}
 
 D47 speaks about the missions on your [mission board](missions.html) at four moments

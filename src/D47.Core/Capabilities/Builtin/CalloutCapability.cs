@@ -50,6 +50,7 @@ public static class CalloutCapability
     public const string CarrierFuelKey = "callouts.carrierFuel";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
     public const string MissionsKey = "callouts.missions";
+    public const string RemindersKey = "callouts.reminders";
     public const string DomainKey = "callouts.domain";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
@@ -453,6 +454,17 @@ public static class CalloutCapability
                 "mission callouts",
                 s => s.Callouts.Missions,
                 (s, v) => s with { Callouts = s.Callouts with { Missions = v } }),
+
+            Toggle(
+                RemindersKey,
+                "Reminders",
+                "A reminder you set for a moment in the game — your next docking, a station, a system, your own "
+                + "carrier, an empty or full hold, a full material, your next session — said once when it comes, "
+                + "ending in your own words. With none set, nothing is said.",
+                "reminders",
+                "reminders",
+                s => s.Callouts.Reminders,
+                (s, v) => s with { Callouts = s.Callouts with { Reminders = v } }),
 
             Toggle(
                 DomainKey,

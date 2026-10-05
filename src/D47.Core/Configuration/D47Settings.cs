@@ -594,6 +594,9 @@ public sealed record CalloutSettings
     /// <summary>Missions handed in at the station docked at or left, and their expiry warnings (#662).</summary>
     public bool Missions { get; init; } = true;
 
+    /// <summary>Journal-triggered reminders, spoken once when their moment comes.</summary>
+    public bool Reminders { get; init; } = true;
+
     /// <summary>A remark on the subject the core aboard pays attention to (#611). Choosing a core never changes it.</summary>
     public bool Domain { get; init; } = true;
 

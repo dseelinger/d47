@@ -288,6 +288,26 @@ public static class FlavourBriefs
             };
         }
 
+        // A journal reminder's lead-in. The Commander's sentence rides on Verbatim and never reaches the brief.
+        if (announcement.Key.StartsWith(Reminders.JournalReminderCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "The Commander asked you earlier for a reminder at this moment, and the moment has come. Say "
+                    + $"one short sentence in your own voice that leads into it, from this: \"{announcement.Text}\" "
+                    + "Keep any station, system or material name exactly as given. The reminder itself is said "
+                    + "straight after you, in the Commander's own words, so do not say what it is, guess at it or "
+                    + "ask about it.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+
+                // The sheet, so it is addressed to somebody.
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
+        }
+
         // A notable kill.
         if (announcement.Key.StartsWith(KillCallout.KeyPrefix, StringComparison.Ordinal))
         {

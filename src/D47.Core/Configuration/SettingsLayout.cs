@@ -497,14 +497,14 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "plans-and-stories",
                     "Plans and stories",
-                    "Checklist changes, continuity, adventures, community goal sales, your core's subject, what to buy and the Narrator.",
+                    "Checklist changes, reminders, continuity, adventures, community goal sales, your core's subject, what to buy and the Narrator.",
                     "callouts",
                     [],
                     false,
                     [
                         G(
                             "Plan and story callouts",
-                            "What D47 says about your checklist, adventures, community goals, trades and what your core pays attention to, and the Narrator telling your story.",
+                            "What D47 says about your checklist and reminders, adventures, community goals, trades and what your core pays attention to, and the Narrator telling your story.",
                             [
                                 E("callouts.checklist"),
                                 E("callouts.continuity"),
@@ -514,6 +514,7 @@ public static class SettingsLayout
                                 E("callouts.weekBoundaryDay", under: true),
                                 E("callouts.weekBoundaryHourUtc", under: true),
                                 E("callouts.missions"),
+                                E("callouts.reminders"),
                                 E("callouts.domain"),
                                 E("callouts.tradingMode"),
                                 E("callouts.tradingModeMinHold", under: true),
