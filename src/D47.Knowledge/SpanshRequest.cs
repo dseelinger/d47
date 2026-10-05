@@ -84,7 +84,7 @@ internal static class SpanshRequest
 
             writer.WriteStartObject("distance");
             writer.WriteString("min", "0");
-            writer.WriteString("max", Number(query.MaxDistance));
+            writer.WriteString("max", Number(query.Unbounded ? UnboundedMax : query.MaxDistance));
             writer.WriteEndObject();
 
             if (query.Ship is not null)

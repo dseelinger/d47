@@ -81,6 +81,9 @@ public sealed record StationQuery
     /// <summary>Maximum light years from the reference.</summary>
     public double MaxDistance { get; init; } = 50;
 
+    /// <summary>Searches the whole galaxy; <see cref="MaxDistance"/> is ignored.</summary>
+    public bool Unbounded { get; init; }
+
     /// <summary>The catalogue name of a module to be sold there, if that is the question.</summary>
     public string? Module { get; init; }
 

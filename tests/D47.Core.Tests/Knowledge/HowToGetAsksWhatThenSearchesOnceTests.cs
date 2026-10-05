@@ -191,4 +191,62 @@ public class HowToGetAsksWhatThenSearchesOnceTests
         Assert.False(result.IsError);
         Assert.Contains("Anaconda", result.Content, StringComparison.Ordinal);
     }
+
+    private static StationSearchResult Sellers(int total) => new(
+        "Sol",
+        total,
+        total == 0 ? [] : [new StationSummary { Name = "Abel Laboratory", SystemName = "Arque", Distance = 98 }]);
+
+    private static async Task<(string Content, StationQuery? Query)> AskModule(int total)
+    {
+        using var install = new TempInstall();
+        var (registry, galaxy) = Build(install);
+        galaxy.Stations = Sellers(total);
+
+        var result = await registry.InvokeAsync(
+            "how_to_get", Args(("item", "Enhanced Performance Thrusters")), TestContext.Current.CancellationToken);
+
+        return (result.Content, galaxy.LastStationQuery);
+    }
+
+    [Fact]
+    public async Task AModuleIsSearchedForAtAnyDistanceAndTheNearestIsNamed()
+    {
+        var (content, query) = await AskModule(500);
+
+        Assert.True(query?.Unbounded);
+        Assert.Contains("Nearest: Abel Laboratory (Arque), 98 ly.", content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Only", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AFewSellersAreCounted()
+    {
+        var (content, _) = await AskModule(6);
+
+        Assert.Contains("Only 6 stations are reported to sell it.", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TwentySellersAreStillCountedAndTwentyOneAreNot()
+    {
+        Assert.Contains("Only 20 stations", (await AskModule(20)).Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Only", (await AskModule(21)).Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task OneSellerIsSaidInTheSingular()
+    {
+        var (content, _) = await AskModule(1);
+
+        Assert.Contains("Only 1 station is reported to sell it.", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task NoSellerIsSaidPlainly()
+    {
+        var (content, _) = await AskModule(0);
+
+        Assert.Contains("No station is reported to sell it.", content, StringComparison.Ordinal);
+    }
 }

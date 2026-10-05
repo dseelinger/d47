@@ -1557,9 +1557,11 @@ public static class GalaxyCapability
                 return null;
             }
 
-            var stations = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+            var stations = await galaxy
+                .FindStationsAsync(query with { Unbounded = true }, cancellationToken)
+                .ConfigureAwait(false);
 
-            return NearestStation(stations, query.MaxDistance);
+            return NearestSeller(stations);
         }
 
         if (acquisition.Kind == AcquisitionKind.Commodity
@@ -1621,6 +1623,26 @@ public static class GalaxyCapability
         }
 
         return null;
+    }
+
+    private const int FewSellers = 20;
+
+    private static string NearestSeller(StationSearchResult result)
+    {
+        if (result.Total == 0 || result.Stations.Count == 0)
+        {
+            return "No station is reported to sell it.";
+        }
+
+        var nearest = result.Stations[0];
+        var said = $"Nearest: {nearest.Name} ({nearest.SystemName})"
+                   + (nearest.Distance is { } distance ? $", {distance:0.#} ly." : ".");
+
+        return result.Total <= FewSellers
+            ? said + (result.Total == 1
+                ? " Only 1 station is reported to sell it."
+                : $" Only {result.Total} stations are reported to sell it.")
+            : said;
     }
 
     private static string NearestStation(StationSearchResult result, double maxDistance) =>
