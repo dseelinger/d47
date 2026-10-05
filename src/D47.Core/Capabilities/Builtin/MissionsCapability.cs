@@ -42,7 +42,8 @@ public static class MissionsCapability
                 Description =
                     "Read the Commander's accepted missions: up to three, ranked by what can be acted on "
                     + "(expiring within the hour, then handed in at the docked station, then soonest expiry), "
-                    + "each with its destination and time left, then a count of the rest and the total reward.",
+                    + "each with its destination and time left, then a count of the rest and the total reward. "
+                    + "Set all to list every mission with its faction, cargo, destination, progress, time left and reward.",
                 Parameters =
                 [
                     new ToolParameter
@@ -53,6 +54,14 @@ public static class MissionsCapability
                             "Set when the Commander asks which missions to take; the answer then says that "
                             + "missions on offer at a station are not in the journal.",
                     },
+                    new ToolParameter
+                    {
+                        Name = "all",
+                        Type = ToolParameterType.Boolean,
+                        Description =
+                            "Set when the Commander asks about a particular mission, or about more than the three "
+                            + "most urgent; lists every mission, one line each, in the same order.",
+                    },
                 ],
                 Commands =
                 [
@@ -62,12 +71,16 @@ public static class MissionsCapability
                     new ToolCommandPhrase("read the mission board", Nothing),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                    Describe(state(), now(), arguments.TryGetBoolean("offered", out var offered) && offered))),
+                    Describe(
+                        state(),
+                        now(),
+                        arguments.TryGetBoolean("offered", out var offered) && offered,
+                        arguments.TryGetBoolean("all", out var all) && all))),
             },
         ],
     };
 
-    public static string Describe(CommanderGameState? state, DateTimeOffset now, bool offered = false)
+    public static string Describe(CommanderGameState? state, DateTimeOffset now, bool offered = false, bool all = false)
     {
         var missions = state?.Missions.Missions ?? [];
         var clock = now == DateTimeOffset.MinValue ? (DateTimeOffset?)null : now;
@@ -84,6 +97,11 @@ public static class MissionsCapability
         }
 
         var ranked = state!.Missions.Ranked(clock, state.Location);
+
+        if (all)
+        {
+            return said.Append(DescribeAll(ranked, clock)).ToString();
+        }
 
         said.Append(missions.Count == 1 ? "You have one mission. " : $"You have {Number(missions.Count)} missions. ");
 
@@ -108,6 +126,71 @@ public static class MissionsCapability
         }
 
         return said.ToString().TrimEnd();
+    }
+
+    private static string DescribeAll(IReadOnlyList<Mission> ranked, DateTimeOffset? now)
+    {
+        var lines = new List<string>
+        {
+            ranked.Count == 1 ? "You have one mission." : $"You have {ranked.Count} missions, most urgent first.",
+        };
+
+        for (var index = 0; index < ranked.Count; index++)
+        {
+            lines.Add($"{index + 1}. {Detail(ranked[index], now)}");
+        }
+
+        return string.Join('\n', lines);
+    }
+
+    private static string Detail(Mission mission, DateTimeOffset? now)
+    {
+        if (!mission.HasDetail)
+        {
+            return $"{mission.Title}, no detail on record.";
+        }
+
+        var fields = new List<string> { mission.Title };
+
+        if (mission.Faction is { } faction)
+        {
+            fields.Add($"for {faction}");
+        }
+
+        if (mission.PassengerCount is { } passengers)
+        {
+            fields.Add($"{passengers} {Plural(passengers, "passenger")}");
+        }
+        else if (mission.Count is { } count)
+        {
+            fields.Add($"{count} {mission.CommodityLocalised ?? mission.Commodity}".TrimEnd());
+        }
+        else if ((mission.CommodityLocalised ?? mission.Commodity) is { } commodity)
+        {
+            fields.Add(commodity);
+        }
+
+        if (mission.Destination is { } destination)
+        {
+            fields.Add($"to {destination}");
+        }
+
+        if (mission.Cargo is { Total: > 0 } cargo)
+        {
+            fields.Add($"{cargo.Delivered} of {cargo.Total} delivered");
+        }
+
+        if (now is { } clock && mission.Expiry is { } expiry)
+        {
+            fields.Add(TimeLeft(expiry - clock));
+        }
+
+        if (mission.Reward is { } reward)
+        {
+            fields.Add($"{reward.ToString("N0", CultureInfo.InvariantCulture)} credits");
+        }
+
+        return string.Join(", ", fields) + ".";
     }
 
     private static string Name(Mission mission, DateTimeOffset? now)
