@@ -1,7 +1,8 @@
 """Resolves an issue number, or a lane letter, to the issue to start and the model and effort
 triage chose for it.
 
-A lane letter resolves to the first issue in that lane with no "Fixes #N" commit on main.
+A lane letter resolves to the first issue in that lane that is neither closed on GitHub nor named
+by a "Fixes #N" commit on main.
 
 Prints "<model> <effort> <number>" on stdout for the launcher to capture, and a line saying where
 that came from on stderr, which the launcher shows but does not read. Anything unreadable, unknown
@@ -64,6 +65,13 @@ def landed():
     return set(re.findall(r'^Fixes #(\d+)\s*$', log, re.MULTILINE))
 
 
+def closed(number):
+    """True when GitHub reports the issue closed. False when gh fails, so the issue is offered."""
+    result = subprocess.run(['gh', 'issue', 'view', str(number), '--json', 'state', '-q', '.state'],
+                            capture_output=True, text=True, encoding='utf-8', check=False, cwd=REPO)
+    return result.returncode == 0 and result.stdout.strip() == 'CLOSED'
+
+
 def next_in_lane(state, letter):
     """(number, None), or (None, a note saying why there is none)."""
     when = age(state.get('generated')) or 'age unknown'
@@ -72,9 +80,9 @@ def next_in_lane(state, letter):
         return None, 'Triage ({0}) has no lane {1}. Run /triage lanes.'.format(when, letter)
     done = landed()
     for number in lane:
-        if str(number) not in done:
+        if str(number) not in done and not closed(number):
             return str(number), None
-    return None, 'Lane {0} is finished: every issue in it has merged.'.format(letter)
+    return None, 'Lane {0} is finished: every issue in it has merged or closed.'.format(letter)
 
 
 def resolve(state, number):
