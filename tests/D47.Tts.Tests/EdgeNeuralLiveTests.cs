@@ -51,6 +51,25 @@ public class EdgeNeuralLiveTests
     }
 
     [Fact]
+    public async Task AStreamedSentenceArrivesAndCompletes()
+    {
+        Assert.SkipUnless(Enabled, "set D47_TTS_LIVE=1 to run tests that contact Microsoft");
+
+        using var provider = Provider();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        var clip = await provider.StreamAsync(
+            "Docking granted, Commander. Pad three.",
+            new VoiceSelection("en-GB-SoniaNeural"),
+            timeout.Token);
+
+        var whole = await clip.Whole.WaitAsync(timeout.Token);
+
+        Assert.NotEmpty(whole.Pcm.ToArray());
+        Assert.True(clip.IsComplete);
+    }
+
+    [Fact]
     public async Task AnUnknownVoiceFailsAsATtsExceptionRatherThanSomethingElse()
     {
         Assert.SkipUnless(Enabled, "set D47_TTS_LIVE=1 to run tests that contact Microsoft");

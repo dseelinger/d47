@@ -12,6 +12,7 @@
     <None Include="..\..\assets\voices\chatterbox\*"
           Link="voices\chatterbox\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="fixtures\*.mp3" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

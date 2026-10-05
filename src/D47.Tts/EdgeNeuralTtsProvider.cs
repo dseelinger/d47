@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using D47.Core.Audio;
@@ -94,33 +95,9 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
             throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.");
         }
 
-        var now = DateTimeOffset.UtcNow;
-        using var socket = new ClientWebSocket();
-
-        socket.Options.SetRequestHeader("Pragma", "no-cache");
-        socket.Options.SetRequestHeader("Cache-Control", "no-cache");
-        socket.Options.SetRequestHeader("Origin", EdgeProtocol.Origin);
-        socket.Options.SetRequestHeader("User-Agent", EdgeProtocol.UserAgent);
-        socket.Options.SetRequestHeader("Accept-Language", "en-US,en;q=0.9");
-        socket.Options.SetRequestHeader("Cookie", EdgeProtocol.MuidCookie());
-
-        var url = $"{SynthesisUrl}?TrustedClientToken={EdgeProtocol.TrustedClientToken}" +
-                  $"&{EdgeProtocol.SecurityQuery(now)}&ConnectionId={Guid.NewGuid():N}";
-
         try
         {
-            await socket.ConnectAsync(new Uri(url), cancellationToken).ConfigureAwait(false);
-
-            await SendAsync(socket, EdgeProtocol.Configuration(now), cancellationToken).ConfigureAwait(false);
-            await SendAsync(
-                socket,
-                EdgeProtocol.SsmlRequest(
-                    text,
-                    voiceId,
-                    voice.Rate,
-                    Guid.NewGuid().ToString("N"),
-                    now),
-                cancellationToken).ConfigureAwait(false);
+            using var socket = await OpenAsync(text, voiceId, voice.Rate, cancellationToken).ConfigureAwait(false);
 
             var mp3 = await ReceiveAudioAsync(socket, cancellationToken).ConfigureAwait(false);
 
@@ -145,6 +122,150 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         }
     }
 
+    /// <summary>
+    /// The same request as <see cref="SynthesizeAsync"/>; returns once the first audio frame has been decoded
+    /// and appended, and keeps appending as frames arrive.
+    /// </summary>
+    public async Task<ArrivingClip> StreamAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default)
+    {
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.");
+        }
+
+        ClientWebSocket? socket = null;
+        var reading = false;
+
+        try
+        {
+            socket = await OpenAsync(text, voiceId, voice.Rate, cancellationToken).ConfigureAwait(false);
+
+            var frames = ReceiveFramesAsync(socket, cancellationToken).GetAsyncEnumerator(cancellationToken);
+            var arriving = new ArrivingClip(text);
+            var decoder = new Mp3StreamDecoder(EdgeProtocol.SourceSampleRate, 1);
+            var upsample = new PcmUpsampler();
+
+            try
+            {
+                if (!await frames.MoveNextAsync().ConfigureAwait(false))
+                {
+                    throw new TtsException($"Edge Neural returned no audio for \"{Excerpt(text)}\".");
+                }
+
+                arriving.Append(upsample.Push(decoder.Push(frames.Current)));
+            }
+            catch
+            {
+                decoder.Dispose();
+                await frames.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+
+            // Owns the socket from here.
+            reading = true;
+            _ = AppendRestAsync(socket, frames, decoder, upsample, arriving, text);
+            return arriving;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TtsException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TtsException($"Edge Neural could not speak \"{Excerpt(text)}\": {ex.Message}", ex);
+        }
+        finally
+        {
+            if (!reading)
+            {
+                socket?.Dispose();
+            }
+        }
+    }
+
+    private async Task AppendRestAsync(
+        ClientWebSocket socket,
+        IAsyncEnumerator<byte[]> frames,
+        Mp3StreamDecoder decoder,
+        PcmUpsampler upsample,
+        ArrivingClip arriving,
+        string text)
+    {
+        try
+        {
+            while (await frames.MoveNextAsync().ConfigureAwait(false))
+            {
+                arriving.Append(upsample.Push(decoder.Push(frames.Current)));
+            }
+
+            arriving.Append(upsample.Finish());
+            arriving.Complete();
+        }
+        catch (OperationCanceledException cancelled)
+        {
+            arriving.Fail(cancelled);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Edge Neural stopped sending \"{Text}\" part-way", Excerpt(text));
+
+            arriving.Fail(ex as TtsException
+                          ?? new TtsException($"Edge Neural could not finish \"{Excerpt(text)}\": {ex.Message}", ex));
+        }
+        finally
+        {
+            decoder.Dispose();
+            await frames.DisposeAsync().ConfigureAwait(false);
+            socket.Dispose();
+        }
+    }
+
+    /// <summary>A connected socket with the configuration and the SSML already sent.</summary>
+    private static async Task<ClientWebSocket> OpenAsync(
+        string text,
+        string voiceId,
+        double rate,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var socket = new ClientWebSocket();
+
+        try
+        {
+            socket.Options.SetRequestHeader("Pragma", "no-cache");
+            socket.Options.SetRequestHeader("Cache-Control", "no-cache");
+            socket.Options.SetRequestHeader("Origin", EdgeProtocol.Origin);
+            socket.Options.SetRequestHeader("User-Agent", EdgeProtocol.UserAgent);
+            socket.Options.SetRequestHeader("Accept-Language", "en-US,en;q=0.9");
+            socket.Options.SetRequestHeader("Cookie", EdgeProtocol.MuidCookie());
+
+            var url = $"{SynthesisUrl}?TrustedClientToken={EdgeProtocol.TrustedClientToken}" +
+                      $"&{EdgeProtocol.SecurityQuery(now)}&ConnectionId={Guid.NewGuid():N}";
+
+            await socket.ConnectAsync(new Uri(url), cancellationToken).ConfigureAwait(false);
+
+            await SendAsync(socket, EdgeProtocol.Configuration(now), cancellationToken).ConfigureAwait(false);
+            await SendAsync(
+                socket,
+                EdgeProtocol.SsmlRequest(text, voiceId, rate, Guid.NewGuid().ToString("N"), now),
+                cancellationToken).ConfigureAwait(false);
+
+            return socket;
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
+    }
+
     private static Task SendAsync(ClientWebSocket socket, string message, CancellationToken cancellationToken) =>
         socket.SendAsync(
             Encoding.UTF8.GetBytes(message),
@@ -158,6 +279,20 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         CancellationToken cancellationToken)
     {
         var audio = new MemoryStream();
+
+        await foreach (var chunk in ReceiveFramesAsync(socket, cancellationToken).ConfigureAwait(false))
+        {
+            audio.Write(chunk);
+        }
+
+        return audio.ToArray();
+    }
+
+    /// <summary>The audio of each binary frame, ending at the turn end or a close.</summary>
+    private static async IAsyncEnumerable<byte[]> ReceiveFramesAsync(
+        ClientWebSocket socket,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         var buffer = new byte[16 * 1024];
 
         while (socket.State == WebSocketState.Open)
@@ -171,7 +306,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    return audio.ToArray();
+                    yield break;
                 }
 
                 frame.Write(buffer, 0, result.Count);
@@ -184,16 +319,19 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
             {
                 if (Encoding.UTF8.GetString(bytes).Contains("Path:turn.end", StringComparison.Ordinal))
                 {
-                    return audio.ToArray();
+                    yield break;
                 }
 
                 continue;
             }
 
-            audio.Write(EdgeProtocol.AudioOf(bytes));
-        }
+            var audio = EdgeProtocol.AudioOf(bytes);
 
-        return audio.ToArray();
+            if (!audio.IsEmpty)
+            {
+                yield return audio.ToArray();
+            }
+        }
     }
 
     /// <summary>"Microsoft Sonia Online (Natural) - English (United Kingdom)" is not a label.</summary>
@@ -204,7 +342,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     }
 
     /// <summary>MP3 to 16-bit PCM through the OS codec.</summary>
-    private static byte[] Decode(byte[] mp3)
+    internal static byte[] Decode(byte[] mp3)
     {
         using var reader = new NAudio.Wave.Mp3FileReader(new MemoryStream(mp3));
 
