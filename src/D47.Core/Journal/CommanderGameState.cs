@@ -73,6 +73,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Salvage scooped in the current system while it was their Power's own.</summary>
     public ScoopedSalvage Salvage { get; private set; } = ScoopedSalvage.None;
 
+    /// <summary>The mining run in progress and the last one finished.</summary>
+    public MiningRuns Mining { get; private set; } = MiningRuns.None;
+
     /// <summary>Construction sites they have visited (Phase 17).</summary>
     public ColonisationSites Colonisation { get; private set; } = ColonisationSites.Empty;
 
@@ -158,6 +161,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Missions), "your missions", state => state.Missions),
         new(nameof(Pledge), "your Powerplay pledge", state => state.Pledge),
         new(nameof(Salvage), "your scooped salvage", state => state.Salvage),
+        new(nameof(Mining), "your mining runs", state => state.Mining),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
         new(nameof(Sampling), "your organic samples", state => state.Sampling),
@@ -240,6 +244,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Missions = Missions.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
         Salvage = Salvage.Apply(journalEvent, Location, Pledge);
+        Mining = Mining.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
         Sampling = Sampling.Apply(journalEvent, at);
