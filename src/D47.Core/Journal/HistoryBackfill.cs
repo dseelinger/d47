@@ -13,13 +13,13 @@ public enum HistoryState
     /// <summary>Walking.</summary>
     Running,
 
-    /// <summary>Finished; the seven dictionaries are there.</summary>
+    /// <summary>Finished; the eight dictionaries are there.</summary>
     Done,
 
-    /// <summary>Threw; the seven dictionaries are not there and never will be.</summary>
+    /// <summary>Threw; the eight dictionaries are not there and never will be.</summary>
     Failed,
 
-    /// <summary>Told to stop part-way; the seven dictionaries are not there and never will be.</summary>
+    /// <summary>Told to stop part-way; the eight dictionaries are not there and never will be.</summary>
     Stopped,
 }
 
@@ -93,6 +93,9 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, UnlockEvidence>? Evidence { get; private set; }
 
+    /// <summary>Each Commander's finished mining runs that refined something, oldest first (#610).</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<MiningRun>>? MiningRuns { get; private set; }
+
     /// <summary>
     /// Walks the five, in order, on the calling thread. A second call does nothing: the answer is wanted
     /// once. Cancelling stops it at the next journal file and leaves it <see cref="HistoryState.Stopped"/>,
@@ -159,6 +162,13 @@ public sealed class HistoryBackfill
                 () => UnlockEvidenceBackfill.FromHistory(
                     Directory,
                     Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
+                    cancellation));
+
+            MiningRuns = Timed(
+                "mining backfill",
+                () => MiningBackfill.FromHistory(
+                    Files(),
+                    Loggers.CreateLogger(nameof(MiningBackfill)),
                     cancellation));
 
             if (Exobiology is { } exobiology)

@@ -354,7 +354,11 @@ public static class BuiltinCapabilities
             journalReminders,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
             now ?? (() => DateTimeOffset.MinValue)),
-        MiningCapability.Create(miningTargets, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
+        MiningCapability.Create(
+            miningTargets,
+            () => gameState.Active?.Identity.FrontierId ?? string.Empty,
+            () => history?.State ?? Journal.HistoryState.Done,
+            fid => history?.MiningRuns?.GetValueOrDefault(fid)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

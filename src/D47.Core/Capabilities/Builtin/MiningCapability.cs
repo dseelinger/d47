@@ -1,9 +1,10 @@
 using System.Globalization;
+using D47.Core.Journal;
 using D47.Core.Mining;
 
 namespace D47.Core.Capabilities.Builtin;
 
-/// <summary>The mining target the prospector callout judges each rock against.</summary>
+/// <summary>The mining target the prospector callout judges each rock against, and the limpets a haul takes.</summary>
 public static class MiningCapability
 {
     public const string Id = "mining";
@@ -12,7 +13,13 @@ public static class MiningCapability
 
     public const string ClearTool = "clear_mining_target";
 
-    public static CapabilityDescriptor Create(MiningTargetStore? store, Func<string> frontierId) => new()
+    public const string EstimateTool = "estimate_limpets";
+
+    public static CapabilityDescriptor Create(
+        MiningTargetStore? store,
+        Func<string> frontierId,
+        Func<HistoryState>? history = null,
+        Func<string, IReadOnlyList<MiningRun>?>? pastRuns = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -65,6 +72,33 @@ public static class MiningCapability
                 ],
                 Handler = (_, _) => Task.FromResult(Clear(store, frontierId())),
             },
+            new ToolDefinition
+            {
+                Name = EstimateTool,
+                Description =
+                    "Estimate how many collector and prospector limpets it takes to mine a number of tonnes, "
+                    + "from the Commander's own past mining runs. With a material, uses the runs that mined "
+                    + "mostly that material when there are at least three.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "tonnes",
+                        Type = ToolParameterType.Number,
+                        Description = "The tonnes to mine.",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "material",
+                        Type = ToolParameterType.String,
+                        Description = "The material to mine. Leave out for any.",
+                        AllowedValues = MiningTarget.Materials,
+                    },
+                ],
+                Handler = (arguments, _) => Task.FromResult(
+                    Estimate(frontierId(), history?.Invoke() ?? HistoryState.Done, pastRuns, arguments)),
+            },
         ],
     };
 
@@ -108,5 +142,47 @@ public static class MiningCapability
         }
 
         return ToolResult.Ok(store.Clear(frontierId) ? "Mining target cleared." : "There was no mining target set.");
+    }
+
+    private static ToolResult Estimate(
+        string frontierId,
+        HistoryState history,
+        Func<string, IReadOnlyList<MiningRun>?>? pastRuns,
+        ToolArguments arguments)
+    {
+        if (!arguments.TryGetDouble("tonnes", out var tonnes) || tonnes <= 0)
+        {
+            return ToolResult.Error("Say how many tonnes, more than zero.");
+        }
+
+        string? material = null;
+
+        if (arguments.TryGetString("material", out var spoken) && spoken.Length > 0)
+        {
+            material = MiningTarget.Match(spoken);
+
+            if (material is null)
+            {
+                return ToolResult.Error(
+                    $"I do not know that material. I can estimate for {string.Join(", ", MiningTarget.Materials)}.");
+            }
+        }
+
+        switch (history)
+        {
+            case HistoryState.Pending or HistoryState.Running:
+                return ToolResult.Ok("I have not finished reading the journal history yet, so I cannot estimate limpets.");
+            case HistoryState.Failed or HistoryState.Stopped:
+                return ToolResult.Ok("Reading the journal history did not finish, so I cannot estimate limpets.");
+        }
+
+        if (frontierId.Length == 0)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there are no mining runs to estimate from.");
+        }
+
+        var runs = pastRuns?.Invoke(frontierId) ?? [];
+
+        return ToolResult.Ok(LimpetEstimate.Describe(runs, tonnes, material) ?? "I have no mining runs to estimate from.");
     }
 }

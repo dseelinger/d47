@@ -41,6 +41,25 @@ The materials are the ring hotspot materials plus Gold, Silver, Osmium, Palladiu
 
 Prospector results go back to naming every material in the rock, richest first.
 
+### How many limpets
+
+> "how many limpets for ten tonnes of osmium"
+
+The answer comes from your own finished mining runs, read from your journals when d47 starts: the
+tonnes you refined against the collectors and prospectors you launched. Each count is rounded up to
+whole limpets.
+
+```text
+About 2 collectors and 4 prospectors for 10 tonnes, from your 36 past runs of any material: a collector every 5.7 tonnes, a prospector every 3.3 tonnes.
+```
+
+With a material, the ratio comes from the runs where that material was the one refined most, once
+there are at least three of them. Otherwise it comes from every run, and the answer says so. A run
+counts once it ends by docking or by the ship being destroyed, and only if it refined something. Until
+d47 has finished reading your older journals it says so and gives no number.
+
+This needs the language model, since the number of tonnes is in the sentence.
+
 ### The rest of mining
 
 - **Prospector results** and **Core asteroids** are rows on the [Callouts](callouts.md) page, each
@@ -61,6 +80,12 @@ Prospector results go back to naming every material in the rock, richest first.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `estimate_limpets`
+
+```json
+{"type":"object","properties":{"material":{"type":"string","description":"The material to mine. Leave out for any.","enum":["Alexandrite","Bauxite","Benitoite","Bertrandite","Bromellite","Cobalt","Coltan","Gallite","Gold","Grandidierite","Haematite","Hydrogen Peroxide","Indite","Lepidolite","Liquid oxygen","Lithium Hydroxide","Low Temperature Diamonds","Methane Clathrate","Methanol Monohydrate Crystals","Monazite","Musgravite","Osmium","Painite","Palladium","Platinum","Praseodymium","Rhodplumsite","Rutile","Samarium","Serendibite","Silver","Tritium","Uraninite","Void Opal","Water"]},"tonnes":{"type":"number","description":"The tonnes to mine."}},"required":["tonnes"],"additionalProperties":false}
 ```
 
 </details>
