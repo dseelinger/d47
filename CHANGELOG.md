@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Commander tab's sub-tabs now read Checklist, Standing, Statistics, This session, on the window and in the headset, and the tab opens on Checklist. A root you last had open is still restored.
+
 A carrier route that goes more than 1,000 light years from both Sol and Colonia now ends with an offer of an expedition kit for your checklist, one proposal per line, each accepted or declined on its own. Nothing is added until you accept a line. The lines cover a fuel scoop for each ship stored at the carrier without one, a tritium mining kit when no ship there is fitted to mine, AFMU and repair limpet controllers, an SRV bay and spare SRVs when no ship there has a bay, a Detailed Surface Scanner for each ship there without one, and limpets on the carrier market. You tick them by hand.
 
 When the carrier's tritium warning fires and the stored plan for that carrier is past its last restock stop, the warning now names up to three pristine waypoints with an icy ring, nearest first, and the ships you have fitted for mining, or says none is.

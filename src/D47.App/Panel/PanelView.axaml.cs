@@ -638,8 +638,8 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface Commander › Standing (#552). Called before <see cref="EnableChecklist"/>, so the
-    /// root lands first.
+    /// Gives this surface Commander › Standing (#552). Called after <see cref="EnableChecklist"/>, so the
+    /// root lands second.
     /// </summary>
     public void EnableStanding(Func<D47.Core.Journal.CommanderGameState?> state)
     {
@@ -657,8 +657,8 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface Commander › Statistics (#553). Called after <see cref="EnableStanding"/> and before
-    /// <see cref="EnableChecklist"/>, so the root lands second.
+    /// Gives this surface Commander › Statistics (#553). Called after <see cref="EnableStanding"/>, so the
+    /// root lands third.
     /// </summary>
     public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state)
     {
@@ -677,8 +677,8 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
-    /// Gives this surface Commander › This session (#554). Called after <see cref="EnableStatistics"/> and before
-    /// <see cref="EnableChecklist"/>, so the root lands third.
+    /// Gives this surface Commander › This session (#554). Called after <see cref="EnableStatistics"/>, so the
+    /// root lands fourth.
     /// </summary>
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state)
     {

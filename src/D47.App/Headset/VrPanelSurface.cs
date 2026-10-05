@@ -169,18 +169,18 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableSettings(settingsPage, learnedPhrases: phrases);
         }
 
-        if (gameState is not null)
-        {
-            // Commander › Standing, ahead of the checklist so it is the tab's first root (#552).
-            _view.EnableStanding(gameState);
-            _view.EnableStatistics(gameState);
-            _view.EnableSession(gameState);
-        }
-
         if (checklists is not null)
         {
             // What the Commander is working on, back in the headset (Phase 39).
             _view.EnableChecklist(checklists, goals, backfillGoals);
+        }
+
+        if (gameState is not null)
+        {
+            // Commander roots land in call order: Checklist, Standing, Statistics, This session.
+            _view.EnableStanding(gameState);
+            _view.EnableStatistics(gameState);
+            _view.EnableSession(gameState);
         }
 
         // The journal's raw reading, in the headset (#231).
