@@ -2990,6 +2990,7 @@ public sealed class AppHost : IDisposable
             .Add(tradingMode)
             .Add(new ProspectorCallout { Target = () => miningTargets.For(gameState.Active?.Identity.FrontierId) })
             .Add(new CoreAsteroidCallout())
+            .Add(new RingHotspotsCallout { Target = () => miningTargets.For(gameState.Active?.Identity.FrontierId) })
             .Add(new ChecklistCallout(checklists))
             .Add(new D47.Core.Reminders.JournalReminderCallout(journalReminders) { Capacity = MaterialGrades.CapacityOf })
 
@@ -3119,6 +3120,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("trading-mode", callouts.TradingMode, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);
+        engine.SetEnabled("ring-hotspots", callouts.RingHotspots, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
         engine.SetEnabled("ambient", callouts.Ambient, now);
         engine.SetEnabled("narrator", callouts.Narrator, now);

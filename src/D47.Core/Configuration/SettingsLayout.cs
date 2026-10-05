@@ -492,6 +492,7 @@ public static class SettingsLayout
                                 E("callouts.limpetPercent", under: true),
                                 E("callouts.prospector"),
                                 E("callouts.coreAsteroid"),
+                                E("callouts.ringHotspots"),
                             ]),
                     ]),
                 new SettingsPlace(

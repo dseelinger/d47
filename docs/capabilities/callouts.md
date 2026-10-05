@@ -661,6 +661,26 @@ It is spoken as a routine line rather than an urgent one — urgent speaks over 
 being said and is reserved for danger and fuel. A core is exciting; it is not a safety matter, and
 announcing one across a hull warning would be the priority exactly backwards.
 
+#### Ring hotspots {#ring-hotspots}
+
+When you map a ring with the Detailed Surface Scanner, its hotspots, most first, at most three, with
+the rest as a count. A ring is said once per session:
+
+```text
+A Ring: 6 Monazite, 4 Platinum, 3 Serendibite, and 2 more.
+```
+
+With a [mining target](mining.md) set, the target leads when the ring has it, and still counts toward
+the three. When the ring lacks it, the line says so:
+
+```text
+A Ring: 4 Platinum. Also 6 Monazite, 3 Serendibite, and 2 more.
+A Ring: no Void Opal. 6 Monazite, 4 Platinum, 3 Serendibite, and 2 more.
+```
+
+Planets and belts are not spoken. Hotspots of rings you have not mapped are not known to the journal;
+ask "find me a painite hotspot" for those.
+
 #### Sampling progress {#sampling}
 
 Each organic specimen as it lands, with the distance you covered to get it:

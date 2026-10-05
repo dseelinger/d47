@@ -506,6 +506,9 @@ public sealed record CalloutSettings
     /// <summary>A core asteroid (Phase 18).</summary>
     public bool CoreAsteroid { get; init; } = true;
 
+    /// <summary>A mapped ring's hotspots (#608).</summary>
+    public bool RingHotspots { get; init; } = true;
+
     /// <summary>Organic sampling progress on the surface (Phase 18).</summary>
     public bool Sampling { get; init; } = true;
 

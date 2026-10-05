@@ -29,6 +29,7 @@ public static class CalloutCapability
     public const string ProspectorKey = "callouts.prospector";
 
     public const string CoreAsteroidKey = "callouts.coreAsteroid";
+    public const string RingHotspotsKey = "callouts.ringHotspots";
 
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
@@ -259,6 +260,16 @@ public static class CalloutCapability
                 "core asteroids",
                 s => s.Callouts.CoreAsteroid,
                 (s, v) => s with { Callouts = s.Callouts with { CoreAsteroid = v } }),
+
+            Toggle(
+                RingHotspotsKey,
+                "Ring hotspots",
+                "When you map a ring, its hotspots, most first. With a mining target set, the target leads, or "
+                + "the line says the ring has none.",
+                "ring-hotspots",
+                "ring hotspots",
+                s => s.Callouts.RingHotspots,
+                (s, v) => s with { Callouts = s.Callouts with { RingHotspots = v } }),
 
             Toggle(
                 SamplingKey,
