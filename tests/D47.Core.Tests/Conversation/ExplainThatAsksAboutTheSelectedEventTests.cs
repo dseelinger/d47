@@ -95,6 +95,36 @@ public class ExplainThatAsksAboutTheSelectedEventTests
     }
 
     [Fact]
+    public async Task AKindWithAParagraphCarriesItAfterTheEvent()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("You docked.");
+        var docked = Entry(
+            """{"timestamp":"2026-09-28T21:35:00Z","event":"Docked","StationName":"Jameson Memorial"}""");
+
+        await Ask(install, provider, docked);
+
+        var asked = Asked(provider);
+        var paragraph = JournalExplainers.For("Docked")!;
+        var eventEnd = asked.IndexOf("</journal_event>", StringComparison.Ordinal);
+
+        Assert.Contains("d47's own help text", asked, StringComparison.Ordinal);
+        Assert.True(asked.IndexOf(paragraph, StringComparison.Ordinal) > eventEnd);
+    }
+
+    [Fact]
+    public async Task AKindWithNoParagraphCarriesNoHelpText()
+    {
+        using var install = new TempInstall();
+        var provider = FakeLlmProvider.Answering("No free pad.");
+
+        await Ask(install, provider, DockingDenied());
+
+        Assert.Null(JournalExplainers.For("DockingDenied"));
+        Assert.DoesNotContain("d47's own help text", Asked(provider), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task WithNothingSelectedNoModelIsAsked()
     {
         using var install = new TempInstall();

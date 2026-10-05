@@ -34,8 +34,15 @@ public static class JournalEventGrounding
         + "<journal_event>\n"
         + (Stripped(entry) ?? JsonSerializer.Serialize(new { timestamp = entry.Timestamp, @event = entry.Kind }))
         + "\n</journal_event>\n"
+        + Help(entry.Kind)
         + "Explain what this event is and what it means for the Commander using only these fields. Where "
         + "the fields say little, say that plainly rather than filling the gap.\n\n";
+
+    private static string Help(string kind) =>
+        JournalExplainers.For(kind) is { } paragraph
+            ? "d47's own help text for this kind of event, written by d47 and not read from the journal:\n"
+              + "<d47_help>\n" + paragraph + "\n</d47_help>\n"
+            : string.Empty;
 
     /// <summary>The event's JSON with player-typed text replaced by <see cref="Withheld"/>, or null when it does not parse.</summary>
     public static string? Stripped(JournalEntry entry)

@@ -8,7 +8,7 @@
 
 ## 1.27.0 — Stock stories begin
 
-Saying "explain that" or "explain that event" asks the language model about the event selected on the Journal page. The event goes to the model as Elite wrote it, except that the text of any message another player typed, or that you typed, is replaced with "[withheld: typed by a player]"; who sent it, on which channel and when are still sent. With nothing selected, the answer is "Nothing is selected on the Journal page." and nothing is sent. The Language model entry under Privacy and egress now says this.
+Saying "explain that" or "explain that event" asks the language model about the event selected on the Journal page. The event goes to the model as Elite wrote it, except that the text of any message another player typed, or that you typed, is replaced with "[withheld: typed by a player]"; who sent it, on which channel and when are still sent. Where the Journal page has a paragraph for that kind of event, it is sent after the event, so the spoken answer and the paragraph agree. With nothing selected, the answer is "Nothing is selected on the Journal page." and nothing is sent. The Language model entry under Privacy and egress now says this.
 
 The Journal page's reading now has a WHAT THIS CHANGED band between What this means and Every field, open by default, saying what d47 took from the selected event, such as "This event updated: docked at BNH-T2F". An event that changed nothing reads "Nothing in d47's picture changed.", which is a normal answer for most events, and an event that never reached your state has no band. Folded, the band shows the receipt as a one-line preview, and selecting another event opens it again.
 
