@@ -446,6 +446,43 @@ something to you. The message a Power's security sends does exist and does name 
 arrives about a second before the shot, which is a caption rather than a warning. So this says the
 thing it actually knows — that where you are is hostile — instead of implying somebody is close.
 
+#### Powerplay merits {#powerplay-merits}
+
+If you fly for a Power, Directive 47 says which way the merit modifier leans the first time you
+enter normal space in a Powerplay system in a session. It says nothing in an unoccupied system, and
+nothing for a Powerplay state it has no rule for.
+
+```text
+Reinforcing here earns reduced merits. Nobody has undermined this system this cycle.
+Rivals have undermined this system this cycle. Reinforcing pays more here than in a quiet system, while that lasts.
+Undermining here earns fifteen percent more merits.
+```
+
+The first two are for your own Power's system, the third for a rival's. In your own system the
+journal gives the undermining total for the cycle, not for the past 24 hours, so it can say whether
+anything undermined the system but not where on the sliding scale the system sits. Ask "what's the
+merit multiplier here" and the model answers from the situation line, which carries the figures:
+
+```text
+Merits here: reinforcing −35%, and −20% more because nobody has undermined this system this cycle; +35% more if the galaxy map marks it for reinforcement.
+```
+
+The galaxy map's marked systems are not in the journal, so those bonuses always carry "if". The rules
+come from Frontier's update notes, last checked against game version 4.4.1.1 on 2026-09-28:
+
+| Rule | Modifier | Since |
+| --- | --- | --- |
+| Reinforcing your own Power's system | −35% | 4.1.2.0 |
+| Reinforcing, in addition, in a system nothing undermined in the past 24 hours | −20% | 4.1.2.103 |
+| Reinforcing, in addition, in the most undermined systems | +30% | 4.1.2.103 |
+| Undermining a rival Power's system | +15% | 4.1.2.103 |
+| Acquiring an unoccupied system | 0% | 4.1.2.103 |
+| Undermining, in addition, in a system marked for undermining | +25% | 4.3.0.0 |
+| Reinforcing, in addition, in a system marked for reinforcement | +35% | 4.3.0.0 |
+
+In a rival's system this and Rival Power territory both speak. Turn this one off with the
+`powerplay-merits` row.
+
 #### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.

@@ -42,6 +42,7 @@ public static class CalloutCapability
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string KillsKey = "callouts.kills";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
+    public const string PowerplayMeritsKey = "callouts.powerplayMerits";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -352,6 +353,15 @@ public static class CalloutCapability
                 "enemy territory",
                 s => s.Callouts.RivalTerritory,
                 (s, v) => s with { Callouts = s.Callouts with { RivalTerritory = v } }),
+
+            Toggle(
+                PowerplayMeritsKey,
+                "Powerplay merits",
+                "Which way the merit modifier leans, on first entering normal space in a Powerplay system you can reinforce or undermine.",
+                "powerplay-merits",
+                "powerplay merits",
+                s => s.Callouts.PowerplayMerits,
+                (s, v) => s with { Callouts = s.Callouts with { PowerplayMerits = v } }),
 
             Toggle(
                 ChecklistKey,

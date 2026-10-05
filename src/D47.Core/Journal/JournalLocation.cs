@@ -84,6 +84,15 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// <summary>The Power controlling this system, or null where nobody does (Phase 15).</summary>
     public string? ControllingPower { get; init; }
 
+    /// <summary>The system's Powerplay state (Unoccupied, Exploited, Fortified, Stronghold), or null where the journal gives none.</summary>
+    public string? PowerplayState { get; init; }
+
+    /// <summary>Control score added by reinforcement this cycle, or null where the journal gives none.</summary>
+    public long? PowerplayStateReinforcement { get; init; }
+
+    /// <summary>Control score added by undermining this cycle, or null where the journal gives none.</summary>
+    public long? PowerplayStateUndermining { get; init; }
+
     /// <summary>The current system's population, or null where it has not been read this session.</summary>
     public long? Population { get; init; }
 
@@ -121,6 +130,9 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
 
             // Assigned rather than coalesced, unlike everything above it.
             ControllingPower = journalEvent.String("ControllingPower"),
+            PowerplayState = journalEvent.String("PowerplayState"),
+            PowerplayStateReinforcement = journalEvent.Long("PowerplayStateReinforcement"),
+            PowerplayStateUndermining = journalEvent.Long("PowerplayStateUndermining"),
             Population = journalEvent.Long("Population"),
 
             // Neither event carries a star class, and both can move the Commander somewhere new — so a class
@@ -149,6 +161,9 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Mode = FlightMode.Supercruise,
             FuelMain = journalEvent.Double("FuelLevel") ?? FuelMain,
             ControllingPower = journalEvent.String("ControllingPower"),
+            PowerplayState = journalEvent.String("PowerplayState"),
+            PowerplayStateReinforcement = journalEvent.Long("PowerplayStateReinforcement"),
+            PowerplayStateUndermining = journalEvent.Long("PowerplayStateUndermining"),
             Population = journalEvent.Long("Population"),
 
             // Not discarded on arrival — moved. StartJump named this system and its class when the jump

@@ -2978,6 +2978,8 @@ public sealed class AppHost : IDisposable
                 RememberExplainedDay = day => viewState.Save(viewState.Load() with { RivalExplainedOn = day }),
             })
 
+            .Add(new PowerplayMeritsCallout())
+
             // Phase 23.
             .Add(new LoreCallout(lore, loreVisits))
 
@@ -3084,6 +3086,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("kills", callouts.Kills, now);
         engine.SetEnabled("rebuy", callouts.Rebuy, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
+        engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);

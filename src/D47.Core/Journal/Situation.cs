@@ -421,6 +421,11 @@ public static class Situation
         {
             lines.Add(perks);
         }
+
+        if (PowerplayRules.SituationLine(pledge, state.Location) is { } modifier)
+        {
+            lines.Add(modifier);
+        }
     }
 
     /// <summary>The perks held at the pledged rank and whether this system is the Power's territory; null when the Power is not in the table or the rank holds none.</summary>

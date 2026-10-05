@@ -444,6 +444,7 @@ public static class SettingsLayout
                                 E("callouts.announcedAttack"),
                                 E("callouts.kills"),
                                 E("callouts.rivalTerritory"),
+                                E("callouts.powerplayMerits"),
                             ]),
                     ]),
                 new SettingsPlace(

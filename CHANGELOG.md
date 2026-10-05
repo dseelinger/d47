@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Pledged to a Power, Directive 47 now says which way the merit modifier leans the first time you enter normal space in one of its systems in a session: reduced merits for reinforcing your own Power's quiet system, better pay once rivals have undermined it, fifteen percent more for undermining a rival's. It says nothing in an unoccupied system. Asking "what's the merit multiplier here" is answered with the figures, with the galaxy map's marked-system bonuses given as "if" because the journal does not say which systems are marked. The new Powerplay merits row under Callouts turns the spoken line off.
+
 The Set aside button on a goal is now Remove. Below the goals, a Removed list names each removed goal with a Recover button that puts it back where it was, and is hidden when nothing is removed. By voice, "remove the mercenary goal" and "recover the mercenary goal" do the same. Goals you had already set aside appear in the Removed list.
 
 ElevenLabs, OpenAI, Cartesia and Edge speech now starts playing while the rest of it is still arriving, so the first words of an answer come sooner. This applies to a voice with no treatment on it. A voice with radio, Guardian or COVAS reverb treatment still plays once the whole sentence group has arrived, as before.
