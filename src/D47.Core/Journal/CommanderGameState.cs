@@ -157,6 +157,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(CommunityGoals), "community goals", state => state.CommunityGoals),
         new(nameof(Missions), "your missions", state => state.Missions),
         new(nameof(Pledge), "your Powerplay pledge", state => state.Pledge),
+        new(nameof(Salvage), "your scooped salvage", state => state.Salvage),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
         new(nameof(Sampling), "your organic samples", state => state.Sampling),
