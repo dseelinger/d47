@@ -190,10 +190,20 @@ whose files you still cannot name goes in the cluster of the subsystem its title
 The default is 3 lanes; `/triage lanes <N>` sets another number. Each lane has one session
 building the solution at a time, so more lanes than that contend for the machine.
 
-- Never split a cluster.
+- Never split a cluster across lanes.
+- **The lanes should finish at the same time.** Weigh each issue as one and an `opus` / `high`
+  issue as two, and size the lanes to within one of each other. A lane that empties early leaves
+  its machine share idle while the others still run.
+- The lanes set the queue's length, not the other way round. When a lane is short, take the next
+  eligible issues in rank order whose files conflict with no laned cluster, and add them to the
+  short lane, with their release groups, until it matches. Read their bodies first, as for any
+  laned issue.
+- When one cluster is longer than the others can match, cut it from the end. Its later issues go
+  to **Not now** as waiting for the next run. They are not moved to another lane.
 - More clusters than lanes: put whole clusters together until the count fits, keeping the lanes
-  close in length. Count an `opus` / `high` issue as two.
-- Fewer clusters than lanes: report fewer lanes. Do not split a cluster to fill one.
+  close in weight.
+- Fewer clusters than lanes: fill from the rest of the queue first. Report fewer lanes only when
+  no eligible issue is left that is unblocked and conflicts with no lane.
 - Within a lane, issues keep their order from the queue.
 - Letter the lanes `A`, `B`, `C`… by the queue position of each lane's first issue.
 
