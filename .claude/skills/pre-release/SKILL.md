@@ -24,6 +24,26 @@ Before the build, run `git worktree list`. A worktree under `.claude/worktrees/`
 an issue. Its merge would move `main` while the suite runs, or land after the push and miss the
 release. Name each one and ask whether to wait; start nothing until the maintainer answers.
 
+## Clear what finished lanes left
+
+Once no lane is running, remove what `/issue-worker` leaves behind after a merge. Do it without
+asking.
+
+```bash
+git worktree prune
+git branch --list 'issue/*'
+ls -A .claude/worktrees
+```
+
+- **Folders.** A folder under `.claude/worktrees/` that `git worktree list` does not show is a
+  leftover. Usually it holds copies of tracked files that a lock kept from being removed. Compare
+  each file with the main checkout, ignoring line endings
+  (`diff -q --strip-trailing-cr <file> <main copy>`). Delete the folder if every file matches or is
+  an older version of a file that `main` has since changed. If a file exists only in the folder,
+  keep the folder, name the file and ask.
+- **Branches.** Delete merged `issue/*` branches with `git branch -d`, which refuses an unmerged
+  one. Report an unmerged branch and leave it. Do not touch branches with other names.
+
 ## The gate is one command
 
 ```bash
@@ -153,6 +173,7 @@ Short, and in this order:
 3. What was pushed: the commit subjects, or one line saying the branch was already current. Say
    plainly when nothing was pushed because the suite was red.
 4. The preconditions that are still false, one line each. Nothing when they all hold.
+   Then one line for the lane leftovers removed, if there were any, and each one kept and why.
 5. The release line, when the suite is green:
 
    ```
@@ -168,5 +189,5 @@ No preamble and no description of what the suite is. He ran this to find out whe
 ## What this does not do
 
 It dispatches nothing, tags nothing, renumbers no changelog heading and chooses no version. It
-runs the gate, fixes what it can, pushes `main` when the suite is green, and says where the tree
-stands. Cutting the release is `tools\release.ps1`, and it is the maintainer's.
+clears finished lanes, runs the gate, fixes what it can, pushes `main` when the suite is green,
+and says where the tree stands. Cutting the release is `tools\release.ps1`, and it is the maintainer's.
