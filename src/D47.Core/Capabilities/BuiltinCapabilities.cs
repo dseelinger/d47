@@ -235,7 +235,8 @@ public static class BuiltinCapabilities
             // for the two voice commands (#325).
             navigation.Clipboard,
             lastFoundSystem,
-            () => gameState.Active?.Reputation.Factions.Keys.ToArray() ?? []),
+            () => gameState.Active?.Reputation.Factions.Keys.ToArray() ?? [],
+            () => gameState.Active),
         RouteCapability.Create(
             routes,
             trade,

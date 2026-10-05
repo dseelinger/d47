@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Asking how to get a Powerplay module now names the rank that unlocks it. If you are pledged and below that rank, D47 says so: "Li Yong-Rui unlocks it at rank 34; you are rank 8, 201,708 merits short." The merits part is left out until D47 has read your merits. At or past the rank it says "Li Yong-Rui unlocks it at rank 34, and you are rank 40." With no pledge it says "Every Power unlocks it; Li Yong-Rui soonest, at rank 34." Other items are answered as before.
+
 The button that opens a tab's own settings now reads "Page settings" instead of "Settings for this page", on Asset Mgmt › Ships, Asset Mgmt › Carrier, Stories and the other tabs that have one. The arrow and the count are unchanged.
 
 Your carrier captain now warns when your own carrier's balance covers less than four weeks of upkeep. It speaks when you dock at the carrier and when you plot a jump, giving the weeks covered and the weekly figure: "Sacred Fire's account covers three more weeks of upkeep at 9,700,000 a week." Where upkeep has been taken off the recorded balance since it was read, it says so. It speaks once for each recorded balance, and again after the game is loaded. It is silent until d47 has a weekly upkeep figure, and for squadron carriers and carriers you do not own. Settings > Callouts has a new switch, Carrier upkeep, on by default; "stop warning me about carrier upkeep" turns it off.

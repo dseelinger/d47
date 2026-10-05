@@ -579,6 +579,13 @@ than answered. `how_to_get` asks `AcquisitionGuide` instead, which already resol
 every one of those catalogues, and answers in order: what the thing is, how it is acquired in
 words, what has to be reached or held first, and any further detail the table carries.
 
+For a Powerplay module, a sentence follows the pledge: the rank the Power unlocks it at, said against
+the Commander's own rank and merits. A pledged Commander below the rank hears the shortfall, for
+example "Li Yong-Rui unlocks it at rank 34; you are rank 8, 201,708 merits short."; the merits
+clause waits until the journal has reported them. At or past the rank it says so, and with a pledge
+but no rank reported yet it names the unlock rank alone. With no pledge it says "Every Power unlocks
+it; Li Yong-Rui soonest, at rank 34." A pledge to a Power the rank table does not list adds nothing.
+
 At most one search follows, the first of these that applies: a shipyard or outfitting search for a
 ship or module; a commodity market search for anything bought or sold by the tonne; a body search
 for something mined from a ring, with the material as the hotspot filter; a station search for the

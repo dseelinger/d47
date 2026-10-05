@@ -93,7 +93,10 @@ public static class GalaxyCapability
         Conversation.LastFoundSystem? lastFound = null,
 
         // The minor factions this Commander's journals name, which a spoken faction is corrected against.
-        Func<IReadOnlyCollection<string>>? factions = null) => new()
+        Func<IReadOnlyCollection<string>>? factions = null,
+
+        // The Powerplay pledge, which how_to_get reads to name the rank that unlocks a module.
+        Func<Journal.CommanderGameState?>? gameState = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -470,7 +473,7 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    HowToGetAsync(galaxy, trade, currentSystem, settings, arguments, cancellationToken),
+                    HowToGetAsync(galaxy, trade, currentSystem, settings, gameState, arguments, cancellationToken),
             },
         ],
         Settings =
@@ -1375,6 +1378,7 @@ public static class GalaxyCapability
         ITradePlanService? trade,
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
+        Func<Journal.CommanderGameState?>? gameState,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1402,7 +1406,7 @@ public static class GalaxyCapability
             return ToolResult.Ok($"I know {acquisition.Name}, but I have no sourcing for it.");
         }
 
-        var said = HowToGetSaid(acquisition);
+        var said = HowToGetSaid(acquisition, gameState?.Invoke()?.Pledge);
 
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
         {
@@ -1431,8 +1435,8 @@ public static class GalaxyCapability
         }
     }
 
-    /// <summary>What the thing is, its methods in words, the Gate, and the Detail — in that order.</summary>
-    private static string HowToGetSaid(Acquisition acquisition)
+    /// <summary>What the thing is, its methods in words, the Gate, the Powerplay rank, and the Detail — in that order.</summary>
+    private static string HowToGetSaid(Acquisition acquisition, Journal.PowerplayPledge? pledge)
     {
         var said = new StringBuilder();
 
@@ -1450,6 +1454,11 @@ public static class GalaxyCapability
             said.Append(" It needs ").Append(gate).Append('.');
         }
 
+        if (PowerplayUnlockSaid(acquisition, pledge) is { } unlock)
+        {
+            said.Append(' ').Append(unlock);
+        }
+
         if (acquisition.Detail is { Length: > 0 } detail)
         {
             said.Append(' ').Append(detail);
@@ -1461,6 +1470,64 @@ public static class GalaxyCapability
         }
 
         return said.ToString();
+    }
+
+    /// <summary>The rank a Power unlocks a Powerplay module at, said against the pledge; null for any other item.</summary>
+    private static string? PowerplayUnlockSaid(Acquisition acquisition, Journal.PowerplayPledge? pledge)
+    {
+        if (acquisition.Kind != AcquisitionKind.Module)
+        {
+            return null;
+        }
+
+        var entitlement = EliteSpecifications.Modules
+            .FirstOrDefault(module => string.Equals(module.Name, acquisition.Name, StringComparison.Ordinal)
+                && module.NeedsPledge)
+            ?.Entitlement;
+
+        if (entitlement is null)
+        {
+            return null;
+        }
+
+        if (pledge is { IsPledged: true })
+        {
+            if (PowerplayRanks.RankUnlocking(pledge.Power, entitlement) is not { } unlockRank)
+            {
+                return null;
+            }
+
+            var power = PowerplayRanks.RewardsFor(pledge.Power)[0].Power;
+            var unlocks = $"{power} unlocks it at rank {unlockRank}";
+
+            if (pledge.Rank <= 0)
+            {
+                return $"{unlocks}.";
+            }
+
+            if (pledge.Rank >= unlockRank)
+            {
+                return $"{unlocks}, and you are rank {pledge.Rank}.";
+            }
+
+            var shortBy = pledge.Merits is { } merits && PowerplayRanks.MeritsNeeded(unlockRank) is { } needed
+                ? Math.Max(0, needed - merits)
+                : 0;
+
+            return shortBy > 0
+                ? $"{unlocks}; you are rank {pledge.Rank}, {shortBy:N0} merits short."
+                : $"{unlocks}; you are rank {pledge.Rank}.";
+        }
+
+        var soonest = PowerplayRanks.Powers
+            .Select(power => (Power: power, Rank: PowerplayRanks.RankUnlocking(power, entitlement)))
+            .Where(entry => entry.Rank is not null)
+            .OrderBy(entry => entry.Rank)
+            .FirstOrDefault();
+
+        return soonest.Rank is { } soonestRank
+            ? $"Every Power unlocks it; {soonest.Power} soonest, at rank {soonestRank}."
+            : null;
     }
 
     /// <summary>At most one search, the first rule below that applies; null where none does.</summary>
