@@ -283,7 +283,11 @@ public static class HelpTaxonomy
                 HelpNode.Leaf(
                     "Timers and alarms",
                     "Set timers and alarms that say their own name.",
-                    "utilities"))),
+                    "utilities"),
+                HelpNode.Leaf(
+                    "Journal reminders",
+                    "Set a reminder in your own words for when you next dock, arrive somewhere, or play again.",
+                    "reminders"))),
     ];
 
     /// <summary>Every leaf in the tree, depth first.</summary>

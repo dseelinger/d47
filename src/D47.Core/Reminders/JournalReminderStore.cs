@@ -194,6 +194,26 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
         return removed;
     }
 
+    /// <summary>Removes one reminder and writes the file; false when the Commander holds no reminder with that id.</summary>
+    public bool Remove(string frontierId, string id)
+    {
+        lock (_gate)
+        {
+            var held = _byCommander.GetValueOrDefault(frontierId, []);
+
+            if (_unreadable || held.All(reminder => reminder.Id != id))
+            {
+                return false;
+            }
+
+            Replace(frontierId, [.. held.Where(reminder => reminder.Id != id)]);
+        }
+
+        Save();
+        Changed?.Invoke();
+        return true;
+    }
+
     /// <summary>Call holding <see cref="_gate"/>.</summary>
     private void Replace(string frontierId, IReadOnlyList<JournalReminder> reminders) =>
         _byCommander = new Dictionary<string, IReadOnlyList<JournalReminder>>(_byCommander, StringComparer.Ordinal)

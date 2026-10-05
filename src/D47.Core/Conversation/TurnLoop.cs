@@ -1002,13 +1002,53 @@ public sealed class TurnLoop(
         yield return new TurnEvent.Completed(new TurnResult(outcome, TurnRoute.Offer, text, Effort: null, Cost: null));
     }
 
-    /// <summary>Steps 1-3, which never reach the model.</summary>
+    /// <summary>Steps 0-3, which never reach the model.</summary>
     private async IAsyncEnumerable<TurnEvent> ModelFreeAsync(
         string input,
         InputSource source,
         Routing routing,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        // 0. Free text the declared phrases below cannot capture.
+        if (capabilities.Find(Capabilities.Builtin.RemindersCapability.Id) is not null
+            && Reminders.JournalReminderPhrase.Read(input, timersRegistered: capabilities.Find(Capabilities.Builtin.UtilitiesCapability.Id) is not null)
+                is { } reminder)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var reminded = reminder switch
+            {
+                Reminders.JournalReminderReading.Set set => await capabilities
+                    .InvokeAsync(
+                        Capabilities.Builtin.RemindersCapability.SetTool,
+                        Capabilities.Builtin.RemindersCapability.ArgumentsFor(set),
+                        cancellationToken)
+                    .ConfigureAwait(false),
+                Reminders.JournalReminderReading.Cancel cancel => await capabilities
+                    .InvokeAsync(
+                        Capabilities.Builtin.RemindersCapability.CancelTool,
+                        new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["words"] = cancel.Words }),
+                        cancellationToken)
+                    .ConfigureAwait(false),
+                Reminders.JournalReminderReading.Declined declined => ToolResult.Ok(declined.Reply),
+                _ => ToolResult.Error("That is not a reminder I can set."),
+            };
+
+            logger.LogInformation("Reminder grammar read \"{Said}\" as {Reading}", input, reminder.GetType().Name);
+
+            Said(reminded.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(reminded.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                reminded.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                reminded.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 1.
         if (settings is not null && keywordRouter.MatchSetting(input) is { } settingCommand)
         {

@@ -212,7 +212,10 @@ public static class BuiltinCapabilities
         AdventureCapability.EndingAnswer? endingAnswer = null,
 
         // Replaces the beat a story chapter is waiting on.
-        AdventureCapability.BeatRefusal? beatRefusal = null) =>
+        AdventureCapability.BeatRefusal? beatRefusal = null,
+
+        // The Commander's journal reminders (#643).
+        Reminders.JournalReminderStore? journalReminders = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -344,6 +347,10 @@ public static class BuiltinCapabilities
         PrivacyCapability.Create(
             settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations),
         SettingsCapability.Create(settings),
+        RemindersCapability.Create(
+            journalReminders,
+            () => gameState.Active?.Identity.FrontierId ?? string.Empty,
+            now ?? (() => DateTimeOffset.MinValue)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

@@ -2073,7 +2073,8 @@ public sealed class AppHost : IDisposable
                 cartography: cartography,
                 storySwitch: storySwitch,
                 endingAnswer: endingAnswer,
-                beatRefusal: beatRefusal));
+                beatRefusal: beatRefusal,
+                journalReminders: journalReminders));
 
         buildingRegistry.Dispose();
 
