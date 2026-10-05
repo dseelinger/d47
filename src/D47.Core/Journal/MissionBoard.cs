@@ -111,6 +111,12 @@ public sealed record Mission(long Id, string Name)
     };
 }
 
+public enum MissionOutcome { Completed, Failed, Abandoned }
+
+/// <summary>A mission that ended since the latest <c>Missions</c> snapshot.</summary>
+/// <param name="Paid">The reward a <c>MissionCompleted</c> paid; null for a failed or abandoned mission.</param>
+public sealed record FinishedMission(Mission Mission, MissionOutcome Outcome, DateTimeOffset At, long? Paid);
+
 /// <summary>
 /// The Commander's live missions, keyed on <c>MissionID</c>. The <c>Missions</c> snapshot written
 /// at login decides what is live; the accept, redirect and depot events supply the detail.
@@ -128,6 +134,9 @@ public sealed record MissionBoard
     /// does not bring them back.
     /// </summary>
     public IReadOnlySet<long> Ended { get; init; } = new HashSet<long>();
+
+    /// <summary>Missions ended since the latest <c>Missions</c> snapshot, newest first.</summary>
+    public IReadOnlyList<FinishedMission> Finished { get; init; } = [];
 
     /// <summary>When a <c>Missions</c> snapshot was last folded, or null where none has been.</summary>
     public DateTimeOffset? SnapshotAt { get; init; }
@@ -261,10 +270,23 @@ public sealed record MissionBoard
             return this;
         }
 
+        var outcome = journalEvent.Kind switch
+        {
+            "MissionCompleted" => MissionOutcome.Completed,
+            "MissionFailed" => MissionOutcome.Failed,
+            _ => MissionOutcome.Abandoned,
+        };
+
+        var finished = For(id) ?? Mission.Of(journalEvent);
+
         return this with
         {
             Missions = [.. Missions.Where(mission => mission.Id != id)],
             Ended = new HashSet<long>(Ended) { id },
+            Finished = finished is null
+                ? Finished
+                : [new FinishedMission(finished, outcome, journalEvent.Timestamp,
+                    outcome == MissionOutcome.Completed ? journalEvent.Long("Reward") : null), .. Finished],
             SeenAt = Later(journalEvent.Timestamp),
         };
     }
@@ -295,6 +317,7 @@ public sealed record MissionBoard
         {
             Missions = live,
             Ended = new HashSet<long>(),
+            Finished = [],
             SnapshotAt = journalEvent.Timestamp,
             SeenAt = Later(journalEvent.Timestamp),
         };
