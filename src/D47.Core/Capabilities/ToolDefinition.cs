@@ -41,6 +41,9 @@ public sealed record ToolResult
     /// <summary>What the Commander hears — the short form where a tool set one, the content otherwise.</summary>
     public string Spoken => ShortForm is { Length: > 0 } form ? form : Content;
 
+    /// <summary>The one engineer or ship the answer is about, or null.</summary>
+    public PageRef? Page { get; init; }
+
     public static ToolResult Ok(string content) => new() { IsError = false, Content = content };
 
     /// <summary>A result the Commander hears as <paramref name="shortForm"/> and the model reads in full.</summary>

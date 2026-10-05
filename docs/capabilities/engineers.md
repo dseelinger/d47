@@ -246,6 +246,12 @@ The Commander has them unlocked at grade 5, 40% to the next.
 nobody, and for those eleven that *is* the answer — silence reads as a missing referral rather than
 as an absent one.
 
+An answer about one engineer also opens that engineer's page on the panel and in the headset,
+whatever they were showing. `find_engineer` does this when it settled on one engineer, by name or as
+the only one in a system, and `get_engineer_prerequisites` does it for the engineer named. A list of
+engineers, or a name d47 does not know, leaves the panel where it was. A surface holding a chooser
+open does not move.
+
 ### The chain of unlocks
 
 ```text

@@ -100,7 +100,7 @@ public static class EngineerCapability
                             + "current system when left out.",
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Find(commander, arguments))),
+                Handler = (arguments, _) => Task.FromResult(Find(commander, arguments)),
             },
 
             new ToolDefinition
@@ -120,7 +120,7 @@ public static class EngineerCapability
                     },
                 ],
                 Commands = [.. EngineerDirectory.All.SelectMany(PrerequisitePhrases)],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Prerequisites(commander, arguments))),
+                Handler = (arguments, _) => Task.FromResult(Prerequisites(commander, arguments)),
             },
 
             new ToolDefinition
@@ -353,20 +353,29 @@ public static class EngineerCapability
         yield return new ToolCommandPhrase($"what does {engineer.Name} still need", arguments);
     }
 
-    private static string Prerequisites(Func<CommanderGameState?> commander, ToolArguments arguments)
+    private static ToolResult Prerequisites(Func<CommanderGameState?> commander, ToolArguments arguments)
     {
         arguments.TryGetString("engineer", out var name);
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            return "Name an engineer.";
+            return ToolResult.Ok("Name an engineer.");
         }
 
         if (EngineerDirectory.ByName(name) is not { } engineer)
         {
-            return Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name));
+            return ToolResult.Ok(Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name)));
         }
 
+        return About(engineer, Remaining(commander, engineer));
+    }
+
+    /// <summary>A result about one engineer, which opens their page.</summary>
+    private static ToolResult About(Engineer engineer, string content) =>
+        ToolResult.Ok(content) with { Page = PageRef.Engineer(engineer.Id) };
+
+    private static string Remaining(Func<CommanderGameState?> commander, Engineer engineer)
+    {
         var evidence = Engineers.UnlockEvidence.From(commander());
 
         if (evidence.Progress?.For(engineer.Id)?.IsUnlocked == true)
@@ -397,7 +406,7 @@ public static class EngineerCapability
     private static string Names(IReadOnlyList<EngineerStanding> standings) =>
         string.Join(", ", standings.Select(standing => standing.Name));
 
-    private static string Find(Func<CommanderGameState?> commander, ToolArguments arguments)
+    private static ToolResult Find(Func<CommanderGameState?> commander, ToolArguments arguments)
     {
         arguments.TryGetString("engineer", out var name);
         arguments.TryGetString("grades", out var kind);
@@ -406,32 +415,32 @@ public static class EngineerCapability
         if (!string.IsNullOrWhiteSpace(name))
         {
             return EngineerDirectory.ByName(name) is { } engineer
-                ? Describe(engineer, commander())
-                : Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name));
+                ? About(engineer, Describe(engineer, commander()))
+                : ToolResult.Ok(Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name)));
         }
 
         if (!string.IsNullOrWhiteSpace(kind))
         {
-            return ByKind(commander, kind);
+            return ToolResult.Ok(ByKind(commander, kind));
         }
 
         // A system, named or the Commander's own, is asked for by leaving both of the above out.
         var resolved = string.IsNullOrWhiteSpace(system) ? commander()?.Location.StarSystem : system.Trim();
 
         return string.IsNullOrWhiteSpace(resolved)
-            ? "Name an engineer, or say what kind of module needs grading."
+            ? ToolResult.Ok("Name an engineer, or say what kind of module needs grading.")
             : BySystem(commander, resolved);
     }
 
-    private static string BySystem(Func<CommanderGameState?> commander, string system)
+    private static ToolResult BySystem(Func<CommanderGameState?> commander, string system)
     {
         var here = EngineerDirectory.InSystem(system);
 
         return here.Count switch
         {
-            0 => $"No engineer of mine is based in {system}.",
-            1 => Describe(here[0], commander()),
-            _ => string.Join("\n\n", here.Select(engineer => Describe(engineer, commander()))),
+            0 => ToolResult.Ok($"No engineer of mine is based in {system}."),
+            1 => About(here[0], Describe(here[0], commander())),
+            _ => ToolResult.Ok(string.Join("\n\n", here.Select(engineer => Describe(engineer, commander())))),
         };
     }
 

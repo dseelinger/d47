@@ -3485,32 +3485,21 @@ public partial class PanelView : UserControl
             return null;
         }
 
-        var (root, crumb) = link.Kind switch
+        D47.Core.Capabilities.PageRef? page = link.Kind switch
         {
-            D47.Core.Journal.ReadingLinkKind.Engineer
-                when D47.Core.Knowledge.EngineerDirectory.ById(id) is { } engineer
-                => (EngineersPages.DirectoryRoot, EngineersPages.Crumb(engineer)),
-            D47.Core.Journal.ReadingLinkKind.Ship
-                when _shipPlans?.Fleet().FirstOrDefault(entry =>
-                    entry.IsOwned && (entry.Stored?.ShipId == id || entry.Build?.ShipId == id)) is { } ship
-                => (LoadoutPages.FleetRoot, LoadoutPages.Ship(ship)),
-            _ => (string.Empty, (NavCrumb?)null),
+            D47.Core.Journal.ReadingLinkKind.Engineer => D47.Core.Capabilities.PageRef.Engineer(id),
+            D47.Core.Journal.ReadingLinkKind.Ship when _shipPlans is not null => D47.Core.Capabilities.PageRef.Ship(id),
+            _ => null,
         };
 
-        if (crumb is null || !Nav.Destinations.Any(destination => destination.Root.Key == root))
+        if (page is null
+            || PageTrail.For(page, () => _shipPlans!.Fleet()) is not { } target
+            || !Nav.Destinations.Any(destination => destination.Root.Key == target.Root))
         {
             return null;
         }
 
-        return () =>
-        {
-            Nav.Show(root);
-
-            if (Nav.Root.Key == root)
-            {
-                Nav.GoTo(crumb);
-            }
-        };
+        return () => PageTrail.Open(Nav, target.Root, target.Crumb);
     }
 
     /// <summary>Whether the fields are drawn beside the list.</summary>

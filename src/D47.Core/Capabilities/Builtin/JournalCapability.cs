@@ -737,7 +737,9 @@ public static class JournalCapability
         }
 
         var content = report.ToString().TrimEnd();
-        return shortForm is null ? ToolResult.Ok(content) : ToolResult.Ok(content, shortForm);
+        var result = shortForm is null ? ToolResult.Ok(content) : ToolResult.Ok(content, shortForm);
+
+        return ship.ShipId is { } shipId ? result with { Page = PageRef.Ship(shipId) } : result;
     }
 
     /// <summary>

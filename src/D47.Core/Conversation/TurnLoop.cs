@@ -51,7 +51,8 @@ public sealed record TurnResult(
     string Text,
     ThinkingEffort? Effort,
     TurnCost? Cost,
-    string? Model = null);
+    string? Model = null,
+    PageRef? Page = null);
 
 public abstract record TurnEvent
 {
@@ -1103,7 +1104,8 @@ public sealed class TurnLoop(
                 TurnRoute.ActionCommand,
                 actioned.Spoken,
                 Effort: null,
-                Cost: null));
+                Cost: null,
+                Page: actioned.IsError ? null : actioned.Page));
             yield break;
         }
 
@@ -1129,7 +1131,8 @@ public sealed class TurnLoop(
                 TurnRoute.KeywordRouter,
                 result.Spoken,
                 Effort: null,
-                Cost: null));
+                Cost: null,
+                Page: result.IsError ? null : result.Page));
         }
     }
 
@@ -1218,6 +1221,9 @@ public sealed class TurnLoop(
         // answered rather than run again — the second identical call is not tried, and whatever it does the
         // first time (an announcement included) does not happen twice (#87).
         var triedThisTurn = new Dictionary<string, ToolResult>();
+
+        // The page of the last result this turn that named one.
+        PageRef? page = null;
 
         // Whether the round that just finished spoke any text, so the next round's text is not run onto
         // the end of it without a space (#87).
@@ -1457,6 +1463,11 @@ public sealed class TurnLoop(
 
                 results.Add(new ConversationContent.ToolResult(call.Id, result.Content, result.IsError));
 
+                if (!result.IsError && result.Page is { } named)
+                {
+                    page = named;
+                }
+
                 if (result.Relayed)
                 {
                     relayed.Add(result.Spoken);
@@ -1550,7 +1561,7 @@ public sealed class TurnLoop(
             longestGap.TotalSeconds);
 
         yield return new TurnEvent.Completed(new TurnResult(
-            turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel));
+            turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel, page));
     }
 
     /// <summary>

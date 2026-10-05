@@ -5223,6 +5223,9 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>Opens the page a Commander's question was about on every surface (#575).</summary>
+    public void Open(PageRef page) => PageTrail.OpenEverywhere(page, _surfaces, () => Ships.Fleet());
+
     /// <summary>How each surface moves the page it is showing (#34).</summary>
     private readonly List<Func<Core.Interface.PanelScrollStep, Core.Interface.PanelScrollOutcome>> _scrollers = [];
 

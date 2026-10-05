@@ -956,6 +956,12 @@ public partial class MainWindow : Window
                         case TurnEvent.Completed completed:
                             // And onto the story's own feed, if it was about one (asked for 2026-08-22).
                             _host.NoteTurn(input, completed.Result.Text);
+
+                            if (completed.Result.Page is { } page)
+                            {
+                                _host.Open(page);
+                            }
+
                             break;
                     }
                 });
