@@ -8,12 +8,15 @@ namespace D47.Core.Audio;
 /// <param name="Phonemes">
 /// The phoneme string the phonemiser emitted, for a provider that speaks phonemes rather than text.
 /// </param>
+/// <param name="Elapsed">From the request to the whole clip.</param>
+/// <param name="FirstAudio">From the request to the first byte, for a clip that arrived in parts; otherwise null.</param>
 public sealed record SynthesisNote(
     string Text,
     string Provider,
     string? Voice,
     string? Phonemes,
-    TimeSpan Elapsed);
+    TimeSpan Elapsed,
+    TimeSpan? FirstAudio = null);
 
 /// <summary>One reply, spoken.</summary>
 public sealed class SpeechPipeline : IAsyncDisposable
@@ -89,7 +92,10 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private int _recorded;
 
     /// <summary>The clips queued to play, in order, when the caller asked for them to be kept; otherwise null.</summary>
-    private readonly List<AudioClip>? _kept;
+    private readonly List<Task<AudioClip>>? _kept;
+
+    /// <summary>Every clip queued while still arriving; written by the drain, and <see cref="CompleteAsync"/> waits for them.</summary>
+    private readonly List<Task<AudioClip>> _arriving = [];
 
     /// <summary><param name="Text"> The written form: no delivery direction in it, ever.</summary>
     /// <param name="Text">The written form: no delivery direction in it, ever.</param>
@@ -97,7 +103,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// The same words with the direction still in place, where any was written and the provider
     /// performs it.
     /// </param>
-    private sealed record Spoken(string Text, string Directed, AudioClip Clip);
+    /// <param name="Clip">The whole clip, coloured; null when <paramref name="Arriving"/> is set.</param>
+    /// <param name="Arriving">The clip still arriving, uncoloured; null when <paramref name="Clip"/> is set.</param>
+    private sealed record Spoken(string Text, string Directed, AudioClip? Clip, ArrivingClip? Arriving);
 
     public SpeechPipeline(
         AudioArbiter arbiter,
@@ -151,7 +159,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// pipeline was not asked to keep it.
     /// </summary>
     public SpokenClip? Kept =>
-        _kept is { Count: > 0 } kept ? new SpokenClip([.. kept], _tts.Id, _voice.VoiceId) : null;
+        _kept?.Where(clip => clip.IsCompletedSuccessfully).Select(clip => clip.Result).ToList() is { Count: > 0 } kept
+            ? new SpokenClip(kept, _tts.Id, _voice.VoiceId)
+            : null;
 
     /// <summary>How many sentences failed to render.</summary>
     public int Failures => Volatile.Read(ref _failures);
@@ -225,6 +235,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
         _rendered.Writer.TryComplete();
         await _drain.ConfigureAwait(false);
+
+        // Disposal cancels synthesis, so a clip still arriving would be cut short by it.
+        await ((Task)Task.WhenAll(_arriving)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
     }
 
     /// <summary>Stop.</summary>
@@ -286,16 +299,15 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         try
         {
-            var started = System.Diagnostics.Stopwatch.StartNew();
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
 
-            var clip = await _tts
-                .SynthesizeAsync(spoken, _voice, _abandon.Token)
+            var arriving = await _tts
+                .StreamAsync(spoken, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
             Record();
-            Note(sentence, spoken, started.Elapsed);
 
-            return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip));
+            return await ArrivedAsync(sentence, spoken, directed, arriving, started).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -320,6 +332,47 @@ public sealed class SpeechPipeline : IAsyncDisposable
             _logger.LogWarning(ex, "Could not synthesise a sentence; it will not be spoken");
             SynthesisFailed?.Invoke(ex.Message);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// An uncoloured clip still arriving is queued as it is; anything else is awaited whole and coloured.
+    /// </summary>
+    private async Task<Spoken> ArrivedAsync(
+        string sentence,
+        string spoken,
+        string directed,
+        ArrivingClip arriving,
+        long started)
+    {
+        if (_colour is null && !arriving.IsComplete)
+        {
+            _ = NoteWhenWholeAsync(sentence, spoken, arriving, started);
+            return new Spoken(sentence, directed, Clip: null, arriving);
+        }
+
+        var clip = await arriving.Whole.ConfigureAwait(false);
+        Note(sentence, spoken, arriving, started);
+
+        return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip), Arriving: null);
+    }
+
+    /// <summary>Notes an arriving clip once it is whole; one that fails part-way counts as a failure.</summary>
+    private async Task NoteWhenWholeAsync(string sentence, string spoken, ArrivingClip arriving, long started)
+    {
+        try
+        {
+            await arriving.Whole.ConfigureAwait(false);
+            Note(sentence, spoken, arriving, started);
+        }
+        catch (OperationCanceledException)
+        {
+            // Abandoned.
+        }
+        catch (Exception ex)
+        {
+            Interlocked.Increment(ref _failures);
+            SynthesisFailed?.Invoke(ex.Message);
         }
     }
 
@@ -353,21 +406,31 @@ public sealed class SpeechPipeline : IAsyncDisposable
     }
 
     /// <summary>
-    /// Hands one sentence's rendering to whoever is recording, and does nothing at all when nobody is.
+    /// Hands one sentence's rendering to whoever is recording, and logs a streamed group's timing at Debug.
     /// </summary>
-    private void Note(string sentence, string spoken, TimeSpan elapsed)
+    private void Note(string sentence, string spoken, ArrivingClip arriving, long started)
     {
-        if (_noted is not { } noted)
+        var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(started);
+        TimeSpan? firstAudio = arriving.FirstAppendedAt is { } first
+            ? System.Diagnostics.Stopwatch.GetElapsedTime(started, first)
+            : null;
+
+        if (firstAudio is { } heard)
         {
-            return;
+            _logger.LogDebug(
+                "{Provider} streamed a group: FirstAudio {FirstAudio:0} ms, whole clip {Elapsed:0} ms",
+                _tts.Name,
+                heard.TotalMilliseconds,
+                elapsed.TotalMilliseconds);
         }
 
-        noted(new SynthesisNote(
+        _noted?.Invoke(new SynthesisNote(
             sentence,
             _tts.Name,
             Named(_voice),
             _tts.Phonemes(spoken, _voice),
-            elapsed));
+            elapsed,
+            firstAudio));
     }
 
     /// <summary>
@@ -400,16 +463,15 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         try
         {
-            var started = System.Diagnostics.Stopwatch.StartNew();
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
 
-            var clip = await _tts
-                .SynthesizeAsync(spoken, _voice, _abandon.Token)
+            var arriving = await _tts
+                .StreamAsync(spoken, _voice, _abandon.Token)
                 .ConfigureAwait(false);
 
             Record();
-            Note(sentence, spoken, started.Elapsed);
 
-            return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip));
+            return await ArrivedAsync(sentence, spoken, directed, arriving, started).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -454,11 +516,19 @@ public sealed class SpeechPipeline : IAsyncDisposable
                 {
                     Channel = _channel,
                     Clip = spoken.Clip,
+                    Arriving = spoken.Arriving,
                     Group = _group,
                     Caption = _captioned ? Attributed(spoken.Text) : null,
                 });
 
-                _kept?.Add(spoken.Clip);
+                var whole = spoken.Arriving?.Whole ?? Task.FromResult(spoken.Clip!);
+
+                if (spoken.Arriving is not null)
+                {
+                    _arriving.Add(whole);
+                }
+
+                _kept?.Add(whole);
 
                 // Accumulated here rather than where the text arrived, because this is the point a sentence
                 // is actually going to be heard.

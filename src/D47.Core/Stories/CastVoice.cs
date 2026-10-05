@@ -69,6 +69,26 @@ public sealed class FallingBackTtsProvider(ITtsProvider chosen, ITtsProvider pin
             return await pinned.SynthesizeAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
         }
     }
+
+    public async Task<ArrivingClip> StreamAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(voice);
+
+        if (AlwaysFallBack)
+        {
+            return await pinned.StreamAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            return await chosen.StreamAsync(text, voice, cancellationToken).ConfigureAwait(false);
+        }
+        catch (TtsException ex)
+        {
+            failed(ex.Message);
+            return await pinned.StreamAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
+        }
+    }
 }
 
 /// <summary>The sound a story gives a cast member: Guardian effects, then a comms link.</summary>

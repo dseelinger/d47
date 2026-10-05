@@ -388,6 +388,24 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
         return clip;
     }
 
+    /// <summary>Records the spend once the clip has fully arrived; a faulted or cancelled clip records nothing.</summary>
+    public async Task<ArrivingClip> StreamAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default)
+    {
+        var arriving = await inner.StreamAsync(text, voice, cancellationToken).ConfigureAwait(false);
+        var billed = inner.Billable(text).Length;
+
+        _ = arriving.Whole.ContinueWith(
+            whole => spend.Record(inner.Id, billed, group, whole.Result.Duration),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+
+        return arriving;
+    }
+
     /// <summary>Deliberately does not forward.</summary>
     public void Dispose()
     {

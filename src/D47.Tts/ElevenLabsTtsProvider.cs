@@ -327,34 +327,14 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.");
         }
 
-        var url = $"{BaseUrl}/text-to-speech/{Uri.EscapeDataString(voiceId)}?output_format=pcm_24000";
+        var url = SynthesisUrl(voiceId, streamed: false);
 
         // Queued rather than refused.
         await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Add("xi-api-key", key);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
-            var model = Model;
-
-            request.Content = JsonContent.Create(
-                new SynthesisRequest
-                {
-                    Text = Billable(text),
-                    ModelId = model,
-                    LanguageCode = Language,
-
-                    // Omitted entirely for a model that does not read it, rather than sent and ignored. v3
-                    // accepts 0.5 through 2.0 and acts on none of it, so a speed on the wire would be a
-                    // number in the request log that never changed a sound — and a request that carries no
-                    // rate is one nobody can misread later.
-                    VoiceSettings = ElevenLabsModels.ReadsRate(model)
-                        ? new VoiceSettings { Speed = SpeedFor(voice.Rate) }
-                        : null,
-                },
-                options: Json);
+            using var request = SynthesisRequestFor(url, key, text, voice);
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -392,6 +372,162 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         {
             _inFlight.Release();
         }
+    }
+
+    /// <summary>
+    /// The same request sent to <c>/stream</c>; returns once the status is read, and appends the body as it
+    /// arrives. Holds a place in <see cref="_inFlight"/> until the body ends.
+    /// </summary>
+    public async Task<ArrivingClip> StreamAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default)
+    {
+        if (_key() is not { Length: > 0 } key)
+        {
+            throw new TtsException("No ElevenLabs API key is stored. Add one in Settings.");
+        }
+
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.");
+        }
+
+        var url = SynthesisUrl(voiceId, streamed: true);
+
+        await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        HttpResponseMessage? response = null;
+        var reading = false;
+
+        try
+        {
+            using var request = SynthesisRequestFor(url, key, text, voice);
+
+            response = await _http
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var (reason, fault) = await DescribeAsync(response, text, voiceId, cancellationToken)
+                    .ConfigureAwait(false);
+
+                throw new TtsException(reason, fault: fault);
+            }
+
+            var arriving = new ArrivingClip(text);
+
+            // Owns the response and the place in _inFlight from here.
+            reading = true;
+            _ = ReadBodyAsync(response, arriving, text, cancellationToken);
+
+            return arriving;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TtsException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TtsException($"ElevenLabs could not speak \"{Excerpt(text)}\": {ex.Message}", ex);
+        }
+        finally
+        {
+            if (!reading)
+            {
+                response?.Dispose();
+                _inFlight.Release();
+            }
+        }
+    }
+
+    /// <summary>Appends a streamed body to <paramref name="arriving"/>, upsampled, and ends it.</summary>
+    private async Task ReadBodyAsync(
+        HttpResponseMessage response,
+        ArrivingClip arriving,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using (response)
+            {
+                var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+                await using (body.ConfigureAwait(false))
+                {
+                    var upsample = new PcmUpsampler();
+                    var buffer = new byte[16 * 1024];
+                    var received = 0L;
+                    int read;
+
+                    while ((read = await body.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                    {
+                        received += read;
+                        arriving.Append(upsample.Push(buffer.AsSpan(0, read)));
+                    }
+
+                    if (received == 0)
+                    {
+                        throw new TtsException($"ElevenLabs returned no audio for \"{Excerpt(text)}\".");
+                    }
+
+                    arriving.Append(upsample.Finish());
+                    arriving.Complete();
+                }
+            }
+        }
+        catch (OperationCanceledException cancelled)
+        {
+            arriving.Fail(cancelled);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ElevenLabs stopped sending \"{Text}\" part-way", Excerpt(text));
+
+            arriving.Fail(ex as TtsException
+                          ?? new TtsException($"ElevenLabs could not finish \"{Excerpt(text)}\": {ex.Message}", ex));
+        }
+        finally
+        {
+            _inFlight.Release();
+        }
+    }
+
+    private static string SynthesisUrl(string voiceId, bool streamed) =>
+        $"{BaseUrl}/text-to-speech/{Uri.EscapeDataString(voiceId)}{(streamed ? "/stream" : string.Empty)}?output_format=pcm_24000";
+
+    /// <summary>The synthesis request, the same body for the whole and the streamed endpoint.</summary>
+    private HttpRequestMessage SynthesisRequestFor(string url, string key, string text, VoiceSelection voice)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Headers.Add("xi-api-key", key);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+        var model = Model;
+
+        request.Content = JsonContent.Create(
+            new SynthesisRequest
+            {
+                Text = Billable(text),
+                ModelId = model,
+                LanguageCode = Language,
+
+                // Omitted entirely for a model that does not read it, rather than sent and ignored. v3
+                // accepts 0.5 through 2.0 and acts on none of it, so a speed on the wire would be a
+                // number in the request log that never changed a sound — and a request that carries no
+                // rate is one nobody can misread later.
+                VoiceSettings = ElevenLabsModels.ReadsRate(model)
+                    ? new VoiceSettings { Speed = SpeedFor(voice.Rate) }
+                    : null,
+            },
+            options: Json);
+
+        return request;
     }
 
     /// <summary>d47's normalised rate to this provider's speed.</summary>

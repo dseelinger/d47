@@ -15,6 +15,7 @@ public sealed class ArrivingClip
     private long _length;
     private byte? _carry;
     private volatile bool _complete;
+    private long _firstAppendedAt;
 
     public ArrivingClip(string name)
     {
@@ -47,6 +48,12 @@ public sealed class ArrivingClip
     /// <summary>Whether everything that will arrive has; once true, <see cref="Length"/> is final.</summary>
     public bool IsComplete => _complete;
 
+    /// <summary>
+    /// The <see cref="System.Diagnostics.Stopwatch"/> timestamp of the first append, or null for a clip that
+    /// arrived whole or has had nothing appended.
+    /// </summary>
+    public long? FirstAppendedAt => Volatile.Read(ref _firstAppendedAt) is var at and not 0 ? at : null;
+
     /// <summary>The finished clip; faults or cancels with it.</summary>
     public Task<AudioClip> Whole => _whole.Task;
 
@@ -58,6 +65,11 @@ public sealed class ArrivingClip
             if (_complete || pcm.IsEmpty)
             {
                 return;
+            }
+
+            if (_firstAppendedAt == 0)
+            {
+                Volatile.Write(ref _firstAppendedAt, System.Diagnostics.Stopwatch.GetTimestamp());
             }
 
             var length = _length;

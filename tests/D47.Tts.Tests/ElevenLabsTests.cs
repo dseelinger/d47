@@ -140,6 +140,31 @@ public class ElevenLabsLiveTests
     }
 
     [Fact]
+    public async Task AStreamedSentenceArrivesAsAudioInTheArbitersFormat()
+    {
+        Assert.SkipWhen(
+            string.IsNullOrWhiteSpace(Key),
+            "set D47_ELEVENLABS_KEY to run tests that contact ElevenLabs");
+
+        using var provider = Provider();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+        var voices = (await provider.ListVoicesAsync(timeout.Token)).Voices;
+        Assert.NotEmpty(voices);
+
+        var arriving = await provider.StreamAsync(
+            "Frame shift charged. Whenever you're ready, Commander.",
+            new VoiceSelection(voices[0].Id),
+            timeout.Token);
+
+        var clip = await arriving.Whole.WaitAsync(timeout.Token);
+
+        Assert.Equal(AudioFormat.Standard, clip.Format);
+        Assert.NotNull(arriving.FirstAppendedAt);
+        Assert.True(clip.Duration > TimeSpan.FromSeconds(1), $"only {clip.Duration} of audio came back");
+    }
+
+    [Fact]
     public async Task AWrongKeySaysSoInWordsAnAccountHolderCanActOn()
     {
         Assert.SkipWhen(

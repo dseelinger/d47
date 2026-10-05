@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+ElevenLabs speech now starts playing while the rest of it is still arriving, so the first words of an answer come sooner. This applies to a voice with no treatment on it. A voice with radio, Guardian or COVAS reverb treatment still plays once the whole sentence group has arrived, as before.
+
 The five career goals are now named Elite V in Combat, Elite V in Trade, Elite V in Exploration, Elite V as a Mercenary and Elite V in Exobiology, and their progress counts the percent into your current rank: Trade rank 12 at 56% reads "Elite IV, 56% into it" and is 12.56 of 13. Elite ranks now say their percent, except Elite V. The Imperial Navy and Federal Navy goals now finish at rank 14, King and Admiral, where before they finished at Prince and Vice Admiral.
 
 The Journal page's right pane now reads the selected event instead of showing its JSON. It shows the event's sentence, the time and how long ago, a row for each thing the event says, a paragraph on what the event is, and Every field, folded, which lists every field as Elite wrote it and can be selected and copied. A value decoded from a game token is underlined with dots and shows the token on hover; a row label explains its field on hover. An engineer, or a ship you still own, opens its page on the Engineers or Ships tab. A row with more than six values shows six and a "+4 more" tile. The system you are in is drawn in cyan, a warning such as "You are wanted here." in red, and another player's message in grey exactly as typed. Below about 480 pixels wide, labels sit above their values.

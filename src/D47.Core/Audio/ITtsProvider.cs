@@ -138,6 +138,14 @@ public interface ITtsProvider
         VoiceSelection voice,
         CancellationToken cancellationToken = default);
 
+    /// <summary>One group, playable while it arrives. Completes once the provider has accepted the request.</summary>
+    /// <remarks>A refusal raises <see cref="TtsException"/> here, before any clip is returned.</remarks>
+    async Task<ArrivingClip> StreamAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default) =>
+        ArrivingClip.Of(await SynthesizeAsync(text, voice, cancellationToken).ConfigureAwait(false));
+
     /// <summary>
     /// The provider's own free sample of one listed voice, rendered to <see cref="AudioFormat.Standard"/>,
     /// or null where it offers none. Bills nothing (#106).
