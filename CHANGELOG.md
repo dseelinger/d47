@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+When the carrier's tritium warning fires and the stored plan for that carrier is past its last restock stop, the warning now names up to three pristine waypoints with an icy ring, nearest first, and the ships you have fitted for mining, or says none is.
+
 Plotting a carrier route now also says where tritium is sold within one jump (500 light years) of the destination. A station that sells it is named with how long ago it was reported. If only carriers list it, the answer says so, at carrier prices, and that those listings move; if nothing does, it says that. A one-way plot with no station supply adds "Plot it as a round trip and carry the whole total." Asking for the nearest station selling a commodity, when no station does, now searches again with carriers and labels the result "carriers only, at carrier prices". The Galaxy search entry under Privacy and egress now says a carrier plot asks api.ardent-insight.com where tritium is sold around the destination.
 
 Asking which of your ships are fit for mining lists the ones carrying a mining laser or Volley Repeater, a collector controller and a refinery, naming those modules. Ships missing one are named with what they lack, such as "no refinery", and a ship whose fitted modules were never read is reported as not seen fitted.

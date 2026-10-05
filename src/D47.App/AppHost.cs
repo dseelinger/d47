@@ -1175,6 +1175,7 @@ public sealed class AppHost : IDisposable
             scenes,
             handInOffer,
             marketBook,
+            planBook,
             storyClue,
             journalReminders,
             commander => storyOpeningRef?.Invoke(commander) == true);
@@ -2923,6 +2924,7 @@ public sealed class AppHost : IDisposable
         SceneTracker scenes,
         D47.Core.Conversation.HandInOffer handInOffer,
         D47.Core.Knowledge.MarketBook marketBook,
+        D47.Core.Knowledge.RoutePlanBook planBook,
         D47.Core.Stories.StoryClueCallout storyClue,
         D47.Core.Reminders.JournalReminderStore journalReminders,
         Func<string?, bool> storyOpening)
@@ -2963,7 +2965,7 @@ public sealed class AppHost : IDisposable
 
             // Phase 11.
             .Add(new CarrierCallout())
-            .Add(new CarrierFuelCallout())
+            .Add(new CarrierFuelCallout { Plan = () => planBook.Last(D47.Core.Knowledge.RoutePlanKind.Carrier) })
             .Add(new CarrierUpkeepCallout())
 
             .Add(new MissionCallout { Offer = handInOffer, Markets = marketBook, Log = loggers.CreateLogger<MissionCallout>() })
