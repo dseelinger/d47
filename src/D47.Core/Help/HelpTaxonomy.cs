@@ -117,7 +117,11 @@ public static class HelpTaxonomy
                 HelpNode.Leaf(
                     "Missions",
                     "Read your mission board aloud, and keep a checklist line for each delivery.",
-                    "missions")),
+                    "missions"),
+                HelpNode.Leaf(
+                    "Powerplay ranks",
+                    "Ask what a Powerplay rank gives, for your own Power or any other, and what the next rank and the first module need.",
+                    "powerplay")),
             HelpNode.Category(
                 "The galaxy itself",
                 "What a place is, beyond what it can sell you.",
