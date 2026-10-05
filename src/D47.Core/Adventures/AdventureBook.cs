@@ -29,7 +29,7 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     public AdventureBeat? Next => Adventure.Beats.ElementAtOrDefault(Beat + 1);
 
     /// <summary>Where the Commander goes next, said with the line rather than waited for.</summary>
-    public string? HandOff => Next?.Trigger.HandOff();
+    public string? HandOff => Next?.HandOff();
 
     /// <summary>Line <paramref name="index"/> and the hand-off together, which is what is said when the ship speaks the last line.</summary>
     public string Spoken(int index)

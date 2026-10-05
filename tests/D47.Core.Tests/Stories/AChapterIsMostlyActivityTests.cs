@@ -11,10 +11,10 @@ public sealed class AChapterIsMostlyActivityTests
 {
     private const string ThreeTravelBeats = """
         {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Anchorage", "function": "catalyst", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Anchorage", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."},
           {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Paid."},
-          {"title": "The Lantern Again", "function": "all is lost", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back again."},
+          {"title": "The Lantern Again", "function": "all is lost", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back again."},
           {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
         ]}
         """;

@@ -11,8 +11,8 @@ public sealed class ALongHaulNeedsTheCreditsTests
 {
     private const string BeatsToColonia = """
         {"opening": "Far.", "reply": "Here.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "system": "Colonia", "line": "Twenty-two thousand light years."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "line": "Twenty-two thousand light years."},
           {"title": "The Bounties", "function": "resolution", "kind": "bounty", "count": 3, "line": "Paid."}
         ]}
         """;

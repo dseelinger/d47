@@ -1419,6 +1419,13 @@ public sealed class AdventureGenerator(
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first objective; the last objective's line is the ending.");
         text.AppendLine("Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral (\"That will hold.\", \"It will keep.\"). Do not repeat the spine's premise, want, stake, turn or ending as a line.");
         text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next objective, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next objective's place, and the line may point them at it.");
+        text.AppendLine(
+            "Give every arrive, dock, land and scan objective a \"reason\": one plain sentence, said before the Commander sets off, "
+            + "saying what is at that place that matters to the story — never a place reached for its own sake. It says what is there, "
+            + "not what the Commander must do there, and it never says what the objective's line will say. It may name an invented "
+            + "person who is at the place, such as a comms specialist who reads signals like the burst, a visiting scholar, or a doctor "
+            + "who can say whether the voices are real; the Commander is told about that person and never meets them, and what the "
+            + "person said or left is the objective's line. Every other kind has a null reason.");
         text.AppendLine("Give each objective a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;
 
@@ -1436,7 +1443,7 @@ public sealed class AdventureGenerator(
 
                 foreach (var (beat, index) in previousBeats.Select((beat, index) => (beat, index)))
                 {
-                    text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()} — {Quoted(beat.Lines)}");
+                    text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()}{Why(beat.Reason)} — {Quoted(beat.Lines)}");
                 }
             }
 
@@ -1482,7 +1489,7 @@ public sealed class AdventureGenerator(
             + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\"|\"suitmod\"|\"livery\""
             + string.Concat(team.Select(kind => $"|\"{kind.ToString().ToLowerInvariant()}\""))
             + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
-            + "\"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
+            + "\"reason\": string|null, \"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
             + "\"engineer\": string|null, \"stage\": string|null, "
@@ -1560,6 +1567,9 @@ public sealed class AdventureGenerator(
     private static string Quoted(IReadOnlyList<AdventureLine> lines) =>
         string.Join(" / ", lines.Select(line => line.Speaker is { Length: > 0 } speaker ? $"{speaker}: \"{line.Text}\"" : $"\"{line.Text}\""));
 
+    /// <summary>A travel beat's reason as the model is shown it, or nothing.</summary>
+    private static string Why(string? reason) => reason is { Length: > 0 } ? $" — reason: \"{reason}\"" : string.Empty;
+
     private static string Render(Adventure draft)
     {
         var text = new StringBuilder();
@@ -1578,7 +1588,7 @@ public sealed class AdventureGenerator(
 
         foreach (var (beat, index) in draft.Beats.Select((beat, index) => (beat, index)))
         {
-            text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()} — {Quoted(beat.Lines)}");
+            text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Trigger.Describe()}{Why(beat.Reason)} — {Quoted(beat.Lines)}");
         }
 
         return text.ToString();
@@ -1616,6 +1626,7 @@ public sealed class AdventureGenerator(
         string Title,
         string? Function,
         TriggerKind Kind,
+        string? Reason,
         string? System,
         string? Station,
         string? Body,
@@ -1692,6 +1703,7 @@ public sealed class AdventureGenerator(
                         Text(element, "title") ?? "Untitled",
                         Text(element, "function"),
                         kind,
+                        Text(element, "reason"),
                         Text(element, "system"),
                         Text(element, "station"),
                         Text(element, "body"),
@@ -2001,6 +2013,7 @@ public sealed class AdventureGenerator(
                 {
                     Title = beat.Title,
                     Function = beat.Function,
+                    Reason = IsTravel(trigger.Kind) ? beat.Reason : null,
                     Trigger = trigger,
                     Lines = beat.Lines,
                 });
@@ -2021,6 +2034,16 @@ public sealed class AdventureGenerator(
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
             refusals.Add($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
+        }
+
+        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
+        {
+            if (IsTravel(beat.Kind) && beat.Reason is null)
+            {
+                refusals.Add(
+                    $"Objective {index + 1} ({beat.Title}) is a travel objective with no \"reason\"; give it one plain sentence saying "
+                    + "what is at that place that matters to the story.");
+            }
         }
 
         if (ask.Story is { Chapter: > 1 }

@@ -21,13 +21,13 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
 
     private const string DockAtTheLantern = """
         {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "system": "Ossen's Lantern", "station": "Lantern Dock", "line": "Here instead."}
+          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": "Lantern Dock", "line": "Here instead."}
         ]}
         """;
 
     private const string DockAtTheAnchorage = """
         {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Here instead."}
+          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Here instead."}
         ]}
         """;
 
@@ -111,7 +111,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         Assert.Contains("You wrote an adventure the Commander is flying", prompt);
         Assert.Contains("Maren Anchorage's docks are offline", prompt);
         Assert.Equal(2, fixtures.Provider.CallCount);
-        Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern."], said);
+        Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern. Someone there knows about the burst."], said);
     }
 
     [Fact]

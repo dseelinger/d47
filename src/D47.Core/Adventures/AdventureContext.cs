@@ -17,7 +17,9 @@ public static class AdventureContext
         + "no act for that, and the only thing the Commander can do in the story is fly to the next "
         + "objective. Speak from inside it between objectives: wonder, foreshadow, apply pressure, notice where "
         + "the Commander is relative to it — but state no new fact about the story, and do not recite "
-        + "it. Asked what to do next, say where the next objective is in plain words and nothing beyond it. "
+        + "it. Asked what to do next, say where the next objective is in plain words, with its reason when "
+        + "it has one, and nothing beyond that. Asked why the Commander is going there, answer from that "
+        + "reason and invent none. "
         + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
         + "say which is which.";
 
@@ -95,7 +97,8 @@ public static class AdventureContext
             if (standing.CurrentBeat is { } current)
             {
                 var function = string.IsNullOrWhiteSpace(current.Function) ? string.Empty : $" ({current.Function})";
-                Line(block, $"Now: {current.Title}{function}", $"waiting to {current.Trigger.Describe()}.");
+                var reason = string.IsNullOrWhiteSpace(current.Reason) ? string.Empty : $" Reason: {current.Reason.Trim()}";
+                Line(block, $"Now: {current.Title}{function}", $"waiting to {current.Trigger.Describe()}.{reason}");
             }
         }
 

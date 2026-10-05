@@ -320,6 +320,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             {
                 Title = beat.Title?.Trim() ?? string.Empty,
                 Function = beat.Function?.Trim(),
+                Reason = string.IsNullOrWhiteSpace(beat.Reason) ? null : beat.Reason.Trim(),
                 Lines = beat.Lines is { Count: > 0 } lines
                     ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker })]
                     : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
@@ -414,6 +415,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
             {
                 Title = beat.Title,
                 Function = beat.Function,
+                Reason = beat.Reason,
                 Trigger = new TriggerRecord
                 {
                     Kind = beat.Trigger.Kind.ToString().ToLowerInvariant(),
@@ -514,6 +516,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
         public string? Title { get; set; }
 
         public string? Function { get; set; }
+
+        public string? Reason { get; set; }
 
         public TriggerRecord? Trigger { get; set; }
 

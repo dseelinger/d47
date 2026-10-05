@@ -24,8 +24,8 @@ public sealed class AdventureGeneratorTests
     /// </summary>
     private const string GoodBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "body": null, "career": null, "rank": null, "line": "To one name."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "body": null, "career": null, "rank": null, "line": "To one name."},
           {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
@@ -33,8 +33,8 @@ public sealed class AdventureGeneratorTests
     /// <summary>The same story with its middle beat a Colonia-distance hop on a "near here" ask.</summary>
     private const string FarBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
-          {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "system": "Colonia", "station": null, "body": null, "career": null, "rank": null, "line": "Twenty-two thousand light years."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
+          {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "station": null, "body": null, "career": null, "rank": null, "line": "Twenty-two thousand light years."},
           {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trade", "rank": 8, "line": "It balances."}
         ]}
         """;
@@ -135,7 +135,7 @@ public sealed class AdventureGeneratorTests
 
         var retry = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("Your previous draft of the objectives:", retry);
-        Assert.Contains("1. The Lantern (setup) — arrive: Ossen's Lantern — \"Scoop here.\"", retry);
+        Assert.Contains("1. The Lantern (setup) — arrive: Ossen's Lantern — reason: \"Someone there knows about the burst.\" — \"Scoop here.\"", retry);
         Assert.Contains("2. Where The Freight Went (turn) — arrive: Colonia", retry);
         Assert.Contains("3. The Column Will Not Balance (resolution) — rank: Trade 8", retry);
         Assert.Contains("Objective 2 (Where The Freight Went) is 21886 light years from the previous stop; the reach is 80.", retry);
@@ -151,9 +151,9 @@ public sealed class AdventureGeneratorTests
     {
         const string landThenScan = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Consignee", "function": "turn", "kind": "land", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Dust."},
-              {"title": "Disposition", "function": "resolution", "kind": "scan", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Four hundred tonnes."}
+              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+              {"title": "The Consignee", "function": "turn", "kind": "land", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Dust."},
+              {"title": "Disposition", "function": "resolution", "kind": "scan", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Four hundred tonnes."}
             ]}
             """;
 
@@ -191,7 +191,7 @@ public sealed class AdventureGeneratorTests
     {
         const string nested = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
               {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "rank": {"career": "Trade", "rank": "8"}, "line": "It balances."}
             ]}
             """;
@@ -207,7 +207,7 @@ public sealed class AdventureGeneratorTests
 
     private const string BoardBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Hull", "function": "turn", "kind": "board", "ship": "Cobra MkIII", "line": "Sign for it."}
         ]}
         """;
@@ -247,7 +247,7 @@ public sealed class AdventureGeneratorTests
     {
         const string careerless = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
               {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "rank": 8, "line": "It balances."}
             ]}
             """;
@@ -269,7 +269,7 @@ public sealed class AdventureGeneratorTests
     {
         const string elite = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
+              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
               {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Combat", "rank": 8, "line": "It balances."}
             ]}
             """;

@@ -131,10 +131,10 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
             Destination: destination));
 
     internal static string Arrive(string system) =>
-        $$"""{"title": "To {{system}}", "function": "setup", "kind": "arrive", "system": "{{system}}", "line": "Here."}""";
+        $$"""{"title": "To {{system}}", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "{{system}}", "line": "Here."}""";
 
     internal static string Land(string system, string body) =>
-        $$"""{"title": "Down on {{body}}", "function": "finale", "kind": "land", "system": "{{system}}", "body": "{{body}}", "line": "Down."}""";
+        $$"""{"title": "Down on {{body}}", "function": "finale", "kind": "land", "reason": "Someone there knows about the burst.", "system": "{{system}}", "body": "{{body}}", "line": "Down."}""";
 
     internal static string Beats(string first, string? second = null, (string System, string Body)? destination = null) =>
         $$"""{"opening": "Go.", "reply": "Here.", "beats": [{{first}}{{(second is null ? string.Empty : ", " + second)}}]{{(destination is { } place ? $$""", "destination": {"system": "{{place.System}}", "body": "{{place.Body}}"}""" : string.Empty)}}}""";

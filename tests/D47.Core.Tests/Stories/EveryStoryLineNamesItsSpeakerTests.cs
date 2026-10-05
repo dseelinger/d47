@@ -37,16 +37,16 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
 
     private const string BeatsWithSpeakers = """
         {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "The Mayday", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Anyone. Please.", "speaker": "caller"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
+          {"title": "The Mayday", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Anyone. Please.", "speaker": "caller"},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
           {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;
 
     private const string BeatsWithAStranger = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here.", "speaker": "stranger"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here.", "speaker": "stranger"},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
           {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;
@@ -201,8 +201,8 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
 
     private const string BeatsWhereHarrowNamesHimself = """
         {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "The Mayday", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Harrow keeps a quiet office.", "speaker": "harrow"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
+          {"title": "The Mayday", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Harrow keeps a quiet office.", "speaker": "harrow"},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
           {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;

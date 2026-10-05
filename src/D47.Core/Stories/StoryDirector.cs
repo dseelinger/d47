@@ -475,7 +475,7 @@ public sealed class StoryDirector(
     {
         var refusal = await rewrite.ConfigureAwait(false);
         var said = refusal is null
-            ? book.Standing(frontierId, key)?.CurrentBeat?.Trigger.HandOff()
+            ? book.Standing(frontierId, key)?.CurrentBeat?.HandOff()
             : $"A different objective could not be written. {refusal}";
 
         if (said is not null)

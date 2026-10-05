@@ -14,11 +14,11 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
 
     private const string Beats = """
         {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "Yard Paint", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "lines": [
+          {"title": "Yard Paint", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "lines": [
             {"text": "NARRATED", "speaker": "narrator"},
             {"text": "CAST", "speaker": "dock-hand"}
           ]},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "SHIP", "speaker": "ship"}]},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "SHIP", "speaker": "ship"}]},
           {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;

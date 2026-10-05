@@ -283,6 +283,8 @@ A generated adventure or story chapter no longer has a beat that tells you to ar
 
 Stories and adventures now call each step the Commander flies to an objective, not a beat. The Stories, Adventures and Messages pages, the story tools and the Adventure objectives callout setting say so, and so does what d47 and its language model say about the story. "This objective is not for me" and "give me a different objective" refuse the current objective; "this beat is not for me" and "give me a different beat" still work. Saved adventures are unchanged.
 
+When a generated story or adventure sends you to arrive in a system, dock, land or scan, it now says why, in one sentence after where to go: "Next: dock at Sellings Holdings in HIP 97950. A comms specialist there reads signals like the burst." Asked why you are going there, d47 answers from that sentence rather than saying it has no reason. The person a reason names is someone you hear about, not someone you meet. Objectives written before this change have no reason and are said as before.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

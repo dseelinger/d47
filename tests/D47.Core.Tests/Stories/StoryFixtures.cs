@@ -109,8 +109,8 @@ internal sealed class StoryFixtures : IDisposable
 
     public const string BeatsToTheBeacon = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
           {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;
@@ -119,7 +119,7 @@ internal sealed class StoryFixtures : IDisposable
     public const string BeatsWithAnEarlyBeacon = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
           {"title": "Too Soon", "function": "setup", "kind": "beacon", "line": "Not yet."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
           {"title": "The Beacon", "function": "resolution", "kind": "beacon", "line": "Scan it."}
         ]}
         """;
@@ -127,15 +127,15 @@ internal sealed class StoryFixtures : IDisposable
     /// <summary>A beacon written by the model in the old form, as an arrival.</summary>
     public const string BeatsArrivingAtTheBeacon = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Beacon", "function": "resolution", "kind": "arrive", "system": "IC 2391 Sector MX-T b3-6", "line": "Scan it."}
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Beacon", "function": "resolution", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "IC 2391 Sector MX-T b3-6", "line": "Scan it."}
         ]}
         """;
 
     public const string BeatsElsewhere = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."}
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."}
         ]}
         """;
 
@@ -146,23 +146,23 @@ internal sealed class StoryFixtures : IDisposable
 
     public const string NextBeatsWithABeacon = """
         {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
           {"title": "The Beacon Again", "function": "resolution", "kind": "beacon", "line": "Again."}
         ]}
         """;
 
     public const string NextBeats = """
         {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
+          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
         ]}
         """;
 
     /// <summary><see cref="NextBeats"/> written as finale chapter 1, naming the finale's destination.</summary>
     public const string NextBeatsNamingTheEnd = """
         {"opening": "Again.", "reply": "Here.", "destination": {"system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a"}, "beats": [
-          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
+          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
         ]}
         """;
 

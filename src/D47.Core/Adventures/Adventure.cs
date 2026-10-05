@@ -394,6 +394,9 @@ public sealed record AdventureBeat
     /// <summary>Its place in the structure — setup, catalyst, midpoint, all is lost, finale.</summary>
     public string? Function { get; init; }
 
+    /// <summary>What is at a travel beat's place that matters to the story; said in the hand-off, before arrival.</summary>
+    public string? Reason { get; init; }
+
     public required AdventureTrigger Trigger { get; init; }
 
     /// <summary>What is said when this beat is reached, in order: one line, or up to <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
@@ -417,10 +420,15 @@ public sealed record AdventureBeat
         other is not null
         && Title == other.Title
         && Function == other.Function
+        && Reason == other.Reason
         && Trigger == other.Trigger
         && Lines.SequenceEqual(other.Lines);
 
-    public override int GetHashCode() => HashCode.Combine(Title, Function, Trigger, Lines.Count > 0 ? Lines[0] : null);
+    public override int GetHashCode() => HashCode.Combine(Title, Function, Reason, Trigger, Lines.Count > 0 ? Lines[0] : null);
+
+    /// <summary>The trigger's hand-off, followed by the reason when there is one.</summary>
+    public string HandOff() =>
+        string.IsNullOrWhiteSpace(Reason) ? Trigger.HandOff() : $"{Trigger.HandOff()} {Reason.Trim()}";
 }
 
 /// <summary>One line of a beat and who says it.</summary>

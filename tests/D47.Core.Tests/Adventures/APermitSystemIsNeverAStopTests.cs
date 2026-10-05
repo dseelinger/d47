@@ -20,17 +20,17 @@ public sealed class APermitSystemIsNeverAStopTests
 
     private const string ToShinrarta = """
         {"opening": "Somebody raised a glass.", "reply": "Here.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Memorial", "function": "turn", "kind": "dock", "system": "Shinrarta Dezhra", "station": "Jameson Memorial", "line": "The bar."},
-          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Paid."}
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Memorial", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Shinrarta Dezhra", "station": "Jameson Memorial", "line": "The bar."},
+          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Paid."}
         ]}
         """;
 
     private const string Elsewhere = """
         {"opening": "Somebody raised a glass.", "reply": "Here.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Hollow", "function": "turn", "kind": "arrive", "system": "Dyson's Hollow", "line": "The bar."},
-          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Paid."}
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Hollow", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "line": "The bar."},
+          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Paid."}
         ]}
         """;
 

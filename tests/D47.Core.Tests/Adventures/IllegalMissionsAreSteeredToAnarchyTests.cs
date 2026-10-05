@@ -115,7 +115,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     {
         var arrive = system is null
             ? string.Empty
-            : $$"""{"title": "The Arrival", "function": "setup", "kind": "arrive", "system": "{{system}}", "station": null, "body": null, "career": null, "rank": null, "line": "Here."},""";
+            : $$"""{"title": "The Arrival", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "{{system}}", "station": null, "body": null, "career": null, "rank": null, "line": "Here."},""";
 
         return $$"""
             {"opening": "A job.", "reply": "Here it is.", "beats": [

@@ -19,13 +19,13 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
 
     private const string DockAtTheLantern = """
         {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "system": "Ossen's Lantern", "station": "Lantern Dock", "line": "Here instead."}
+          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": "Lantern Dock", "line": "Here instead."}
         ]}
         """;
 
     private const string DockAtTheAnchorage = """
         {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Same Dock", "function": "catalyst", "kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Here again."}
+          {"title": "Same Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Here again."}
         ]}
         """;
 
@@ -85,7 +85,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.Equal(["The Lantern", "Another Dock"], chapter.Beats.Select(beat => beat.Title));
         Assert.Equal(1001, chapter.Beats[1].Trigger.MarketId);
         Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
-        Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern."], said);
+        Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern. Someone there knows about the burst."], said);
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }
 
