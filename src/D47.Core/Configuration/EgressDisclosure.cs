@@ -171,6 +171,8 @@ public static class EgressDisclosure
                     ? "With Trading Mode on, plotting a route while docked sends the destination system's "
                     + "name to spansh.co.uk; switching Trading Mode off stops it. "
                     : string.Empty)
+                + "While the Search tab's System page is open and following you, arriving in a system sends "
+                + "that system's address to spansh.co.uk, to read its record. "
                 + "No key, no identifier, and nothing else from your journal.",
                 Active: true,
                 Summary: "Sends the system name and search filters you ask about, and your location "

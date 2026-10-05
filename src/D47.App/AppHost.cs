@@ -415,6 +415,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
+    /// <summary>One system's full record, for the Search tab's System page.</summary>
+    public D47.Core.Knowledge.IStarSystemService? StarSystems { get; private set; }
+
     /// <summary>The system names d47 holds, for the finder that picks them out of text (#156).</summary>
     public D47.Core.Knowledge.SystemsInPlay? SystemsInPlay { get; private set; }
 
@@ -1618,6 +1621,9 @@ public sealed class AppHost : IDisposable
             surveyed.Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null;
         }
 
+        var starSystems = new D47.Knowledge.SpanshStarSystemService(
+            loggerFactory.CreateLogger<D47.Knowledge.SpanshStarSystemService>());
+
         var routePlanner = new D47.Knowledge.SpanshRouteService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshRouteService>());
 
@@ -2539,6 +2545,7 @@ public sealed class AppHost : IDisposable
             _ = Task.Run(messageStore.ForgetOwnVoice);
         }
         host.Galaxy = galaxy;
+        host.StarSystems = starSystems;
         host.JournalDirectory = journalDirectory;
         host.History = history;
         host._startedLogging = startedLogging;

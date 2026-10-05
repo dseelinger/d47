@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A new Search tab, on the window and in the headset, opens on a System page showing a star system's record as Spansh last had it. It opens on the system you are in and follows you: each time you arrive somewhere new while the page is showing, it reads that system. Type any system name in the SYSTEM field and press Enter to open it instead; a name with no exact match lists up to five close names to choose from. A typed system stays until you press BACK TO MY SYSTEM. The page shows when the system was last reported to Spansh, its economy, government, allegiance, security, population, controlling faction and its state, whether it needs a permit, its main star, its coordinates and how many bodies it has, then each minor faction with its influence and its active and pending states. The page shares the "Look things up in the galaxy" setting and asks Spansh for nothing while it is off. The Galaxy search entry under Privacy and egress now says that the page, while open and following you, sends each system you arrive in to spansh.co.uk.
+
 Speech settings, under Narrator Voice, now has six rows for crew voices: First officer, Helm, Comms, Science officer, Security officer and Navigation. Each is picked from your ship's voice provider and applies to that role on every ship; left empty it reads "Same as other crew". A single seat can also hold a voice of its own, which applies only while that provider speaks for your ship. No page picks a seat's own voice yet.
 
 The Commander tab's sub-tabs now read Checklist, Standing, Statistics, This session, on the window and in the headset, and the tab opens on Checklist. A root you last had open is still restored.

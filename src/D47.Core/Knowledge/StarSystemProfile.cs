@@ -172,6 +172,12 @@ public sealed record BodyProfile
     /// <summary>A star's class and subclass, "K7".</summary>
     public string? SpectralClass { get; init; }
 
+    /// <summary>A star's luminosity class, "V".</summary>
+    public string? Luminosity { get; init; }
+
+    /// <summary>Whether this is the system's main star.</summary>
+    public bool IsMainStar { get; init; }
+
     public double? SolarMasses { get; init; }
 
     public double? SolarRadius { get; init; }

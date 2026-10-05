@@ -122,7 +122,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Action? leaveResize = null,
 
         // The galaxy service while its setting is on, for material detail.
-        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
+        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
+
+        // The Search tab's System page, on the window's record.
+        Panel.StarSystemSurface? starSystem = null)
     {
         _dumpTo = dumpTo;
 
@@ -239,6 +242,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                 galaxy: galaxy);
         }
 
+        if (starSystem is not null)
+        {
+            _view.EnableStarSystem(starSystem with { OpenSettings = () => _view.Tab = PanelTab.Settings });
+        }
+
         // `ships`, `gameState` and `onFoot` are read again below - Engineers needs all three too.
 
         if (unlocks is not null && ships is not null && gameState is not null)
@@ -342,6 +350,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>Redraws the route being flown, from the headset's own tick (#52).</summary>
     public void TickRouting() => _dirty |= _view.TickRouting();
+
+    /// <summary>Lets the System page follow the Commander, from the headset's own tick.</summary>
+    public void TickSearch() => _dirty |= _view.TickSearch();
 
     /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
     public D47.Core.Interface.PanelNavigator Nav => _view.Nav;

@@ -115,7 +115,10 @@ public partial class App(AppHost? host) : Application
                 window is null ? null : window.BuildSettingsStrip,
 
                 // And the galaxy search material detail runs, while its setting is on.
-                galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null);
+                galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
+
+                // And the Search tab's System page, on the window's record.
+                starSystem: window?.StarSystem);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

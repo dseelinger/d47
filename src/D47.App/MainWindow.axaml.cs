@@ -278,6 +278,18 @@ public partial class MainWindow : Window
 
             Panel.EnableRouting(Routing);
 
+            // One star system's record from Spansh, handed to the headset copy too.
+            if (host.StarSystems is { } systems)
+            {
+                StarSystem = new StarSystemSurface(
+                    systems,
+                    () => host.GameState.Active?.Location,
+                    () => host.Settings.Current.Knowledge.GalaxySearch,
+                    OpenSettings);
+
+                Panel.EnableStarSystem(StarSystem);
+            }
+
             // And the same window is the one with a keyboard, so it is the one that gets a search box.
             Panel.EnableSearch();
 
@@ -341,6 +353,10 @@ public partial class MainWindow : Window
             // And the route being flown, by the same route again (Phase 37).
             host.Tick.Add("routing", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickRouting()));
+
+            // And the System page, which follows the Commander from system to system.
+            host.Tick.Add("search", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickSearch()));
 
             // And every tab back on the reading it was left on (#268).
             Panel.RememberRoots(new PanelRootMemory(host.ViewState));
@@ -666,6 +682,9 @@ public partial class MainWindow : Window
 
     /// <summary>What the Navigation tab reads and drives, for the headset copy of the panel (#52).</summary>
     internal RoutingSurface? Routing { get; }
+
+    /// <summary>The Search tab's System page, built here and handed to the headset copy.</summary>
+    internal StarSystemSurface? StarSystem { get; }
 
     /// <summary>
     /// Attaches a <see cref="SettingsView"/> to the host's services — the settings page, or one tab's

@@ -276,6 +276,8 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             DistanceToArrival = body.Double("distanceToArrival"),
             ParentId = Parent(body),
             SpectralClass = body.String("spectralClass"),
+            Luminosity = body.String("luminosity"),
+            IsMainStar = body.Bool("mainStar"),
             SolarMasses = body.Double("solarMasses"),
             SolarRadius = body.Double("solarRadius"),
             EarthMasses = body.Double("earthMasses"),

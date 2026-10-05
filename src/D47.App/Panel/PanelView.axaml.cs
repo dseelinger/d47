@@ -1311,6 +1311,20 @@ public partial class PanelView : UserControl
         return true;
     }
 
+    /// <summary>Gives this surface the Search tab, with the System page as its root.</summary>
+    public void EnableStarSystem(StarSystemSurface surface) =>
+        Furnish(
+            PanelTab.Search,
+            _ => _starSystem = new StarSystemPage(surface),
+            new NavCrumb(StarSystemPage.RootKey, "System") { Help = D47.Core.Capabilities.Builtin.GalaxyCapability.Id });
+
+    /// <summary>
+    /// Lets the System page follow the Commander, from the host's tick, only while Search is the open tab;
+    /// true when it redrew.
+    /// </summary>
+    public bool TickSearch() => Tab == PanelTab.Search && _starSystem is { } page && page.Tick();
+
+    private StarSystemPage? _starSystem;
     private RouteProgressPage? _routeProgress;
     private BodyPage? _bodyPage;
     private UnsoldPage? _unsoldPage;

@@ -217,6 +217,9 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
         Assert.Equal(0, primary.BodyId);
         Assert.Null(primary.ParentId);
         Assert.Equal("K7", primary.SpectralClass);
+        Assert.Equal("V", primary.Luminosity);
+        Assert.True(primary.IsMainStar);
+        Assert.Equal(1, profile.Bodies.Count(b => b.IsMainStar));
         Assert.Equal("K (Yellow-Orange) Star", primary.SubType);
         Assert.Equal(0.78125, primary.SolarMasses);
         Assert.True(primary.Scoopable);

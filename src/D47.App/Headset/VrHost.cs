@@ -155,7 +155,8 @@ public sealed class VrHost : IDisposable
         // The same builder the window uses for a tab's own strip, on the same terms as settingsPage
         // above (#218).
         Func<string, Control?>? buildSettingsStrip = null,
-        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
+        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
+        Panel.StarSystemSurface? starSystem = null)
     {
         VrHost? self = null;
 
@@ -166,6 +167,7 @@ public sealed class VrHost : IDisposable
             modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
             galaxy: galaxy,
+            starSystem: starSystem,
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
             // handles carry.
@@ -411,6 +413,9 @@ public sealed class VrHost : IDisposable
             // And the route being flown, which is the fourth: a jump moves the Progress page with nothing
             // having been pressed (#52).
             _panel.TickRouting();
+
+            // And the System page, which redraws on an arrival or a Spansh answer.
+            _panel.TickSearch();
 
             // And the fleet, for the same reason as Engineers above: nothing has to happen for the ship
             // underneath the Commander to change (#53).
