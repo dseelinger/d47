@@ -6,6 +6,9 @@ public enum PanelTab
     /// <summary>The conversation, at two verbosities, and today's log file.</summary>
     Transcript,
 
+    /// <summary>Looking things up: the star system page first, more kinds of search after it.</summary>
+    Search,
+
     /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
     Stories,
 

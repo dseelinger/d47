@@ -271,6 +271,7 @@ public partial class PanelView : UserControl
         Prompts.LayerChanged += ShowSearch;
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
+        _tabs[PanelTab.Search] = SearchTab;
         _tabs[PanelTab.Stories] = StoriesTab;
         _tabs[PanelTab.Commander] = CommanderTab;
         _tabs[PanelTab.Assets] = AssetsTab;
@@ -2605,7 +2606,7 @@ public partial class PanelView : UserControl
     /// Draws everything the navigator decides: which tab is checked, which modes the segmented control
     /// offers, what the breadcrumb says, and which page is in the slot.
     /// </summary>
-    private static bool MiniShows(PanelTab tab) => tab != PanelTab.Settings;
+    private static bool MiniShows(PanelTab tab) => tab is not (PanelTab.Settings or PanelTab.Search);
 
     /// <summary>Keeps mini on a page mini actually has, and puts back what it took (Phase 51).</summary>
     /// <param name="remember">Whether the tab being left is the one to give back.</param>

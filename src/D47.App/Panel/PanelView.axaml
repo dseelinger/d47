@@ -386,6 +386,12 @@
                          Content="TRANSCRIPT"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
+            <RadioButton x:Name="SearchTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="SEARCH"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
             <RadioButton x:Name="StoriesTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
