@@ -268,8 +268,9 @@ started inside the worktree has no `EnterWorktree` to exit, and holds the folder
 directory, so the removal may leave the folder behind. That is expected: `/pre-release` clears it.
 
 When the issue does not land — it is bigger than it looked, the build or tests cannot be made
-green, or a conflict cannot be resolved as described below — stop and ask, as for any issue. Leave
-the worktree and branch in place and say where they are. The rest of its lane waits on it.
+green, or the rebase conflicts in a file other than `CHANGELOG.md` (see below) — stop and ask, as
+for any issue. Leave the worktree and branch in place and say where they are. The rest of its lane
+waits on it.
 
 ### Merging into main
 
@@ -295,9 +296,19 @@ Rebase conflicts:
 
 - `CHANGELOG.md` conflicts are expected, since every issue adds entries at the top. Keep both,
   this one under the unreleased heading `main` has, and leave `main`'s entries as they are.
-- A conflict in any other file means triage judged two issues independent and they are not.
-  Resolve it when both sides' changes can be kept as written, run the checks, and name the file in
-  the report. Otherwise `git rebase --abort` and stop.
+- A conflict in any other file means triage judged two issues independent and they are not. Do not
+  resolve it. `git rebase --abort`, so the branch holds the commit as it was before the rebase, and
+  stop. Leave the worktree and branch in place. The report names each conflicting file and the
+  commits on `main` that changed it since the branch point
+  (`git log --format='%h %s' issue/<N>..main -- <file>`), and says the lane is paused at this
+  issue.
+
+A paused lane starts nothing new: the issue before the next one has no `Fixes #N` commit, so the
+check at the top of **Lanes** stops it. The other lanes keep running. The maintainer resumes the
+paused issue, usually once the other lanes have finished, by starting `/issue-worker <N>` again.
+That session finds the worktree and branch already there, enters the worktree, rebases onto `main`,
+resolves the conflict against everything merged in the meantime, runs the checks, and merges as
+above.
 
 Never create a merge commit, never force anything, and never push. The rebase changes the commit's
 hash, which matters to nothing: it is still local.
@@ -393,7 +404,8 @@ An issue worked in a worktree adds two steps after the review: merge it into `ma
 worktree, as **Lanes** says. `/test-drive` then runs from the main checkout, so the build under test
 holds everything merged so far from every lane; say so in the line above the steps. The report
 ends with the next issue in this lane, if there is one: the Issue key given the lane letter starts
-it.
+it. When the merge stopped on a conflict, there is no test drive and no next issue: the report
+names the conflict and says the lane is paused.
 
 This applies equally when the work lands on a turn started by a background agent's completion
 notice rather than by the maintainer.
