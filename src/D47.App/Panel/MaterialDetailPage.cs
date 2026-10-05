@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 
@@ -106,7 +107,13 @@ public sealed class MaterialDetailPage : UserControl
             c.Rows.Any(row => string.Equals(row.Material.Symbol, _material.Symbol, StringComparison.OrdinalIgnoreCase)));
         var ledger = card?.Name ?? _material.Category ?? "Material";
 
-        _sidebar.Content = MaterialsPage.SidebarOf(report, ledgers, _gap.View, Back);
+        _sidebar.Content = MaterialsPage.SidebarOf(
+            report,
+            ledgers,
+            _gap.State()?.Suit ?? SuitInventory.Empty,
+            MaterialsPage.NeedsOf(_gap.Tracker(report)),
+            _gap.View,
+            Back);
 
         Search();
 
@@ -292,7 +299,7 @@ public sealed class MaterialDetailPage : UserControl
         return new StackPanel { Spacing = 2, Children = { crumbs, title } };
     }
 
-    private static TextBlock Crumb(string text, Action press)
+    internal static TextBlock Crumb(string text, Action press)
     {
         var crumb = TitleText.Context(text);
         MaterialsPage.Pressable(crumb, press);
@@ -341,7 +348,7 @@ public sealed class MaterialDetailPage : UserControl
         return grid;
     }
 
-    private static Border Cell(int column, string label, Control value)
+    internal static Border Cell(int column, string label, Control value)
     {
         value.HorizontalAlignment = HorizontalAlignment.Left;
         value.Margin = new Thickness(0, 4, 0, 0);
@@ -351,14 +358,14 @@ public sealed class MaterialDetailPage : UserControl
         return tile;
     }
 
-    private static Border Tile(Control child)
+    internal static Border Tile(Control child)
     {
         var tile = new Border { Padding = new Thickness(14, 12), Child = child };
         LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.TileKey);
         return tile;
     }
 
-    private static TextBlock Value(string text)
+    internal static TextBlock Value(string text)
     {
         var block = new TextBlock
         {
@@ -372,7 +379,7 @@ public sealed class MaterialDetailPage : UserControl
         return block;
     }
 
-    private static Control Section(string head, string? hint, Control content)
+    internal static Control Section(string head, string? hint, Control content)
     {
         var name = TitleText.Build(head, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
@@ -395,16 +402,16 @@ public sealed class MaterialDetailPage : UserControl
         };
     }
 
-    private static StackPanel Rows() => new() { Spacing = 2 };
+    internal static StackPanel Rows() => new() { Spacing = 2 };
 
-    private static Border Slab(Control child)
+    internal static Border Slab(Control child)
     {
         var slab = new Border { Padding = new Thickness(14, 12), Child = child };
         LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.TileKey);
         return slab;
     }
 
-    private static TextBlock Prose(string text, string key = ThemeManager.WhiteKey)
+    internal static TextBlock Prose(string text, string key = ThemeManager.WhiteKey)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
         LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
@@ -412,7 +419,7 @@ public sealed class MaterialDetailPage : UserControl
     }
 
     /// <summary>A 44px row on Tile, its columns laid out by <paramref name="columns"/>.</summary>
-    private static Border Row(string columns, params Control[] cells)
+    internal static Border Row(string columns, params Control[] cells)
     {
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(columns) };
 
@@ -428,7 +435,7 @@ public sealed class MaterialDetailPage : UserControl
     }
 
     /// <summary><c>build · kind | NEED n | SHORT n</c> or <c>✓ MET</c>.</summary>
-    private static Border NeedRow(GapBuild build, GapBuildLine line)
+    internal static Border NeedRow(GapBuild build, GapBuildLine line)
     {
         var name = new TextBlock
         {
@@ -531,7 +538,7 @@ public sealed class MaterialDetailPage : UserControl
             Quantity(trade.Get, _material.Name));
     }
 
-    private static StackPanel Quantity(int count, string name)
+    internal static StackPanel Quantity(int count, string name)
     {
         var number = MaterialsPage.Mono(MaterialsPage.Count(count), ThemeManager.AKey);
         var times = MaterialsPage.Mono("×", ThemeManager.AKey);

@@ -48,6 +48,22 @@ public sealed class MaterialsPage : UserControl
 
     public const string Here = "HERE";
 
+    public const string BackpackView = "backpack";
+
+    public const string LockerView = "locker";
+
+    public const string BackpackHead = "What you carry on foot right now. The game doesn't give backpack caps, so these are counts.";
+
+    public const string LockerHead = "Everything stored aboard, against the locker cap for each kind.";
+
+    public const string NothingCarried = "Nothing on foot is held here.";
+
+    /// <summary>How an on-foot detail crumb is keyed: the prefix, then the resource's symbol.</summary>
+    public const string OnFootPrefix = "loadout.onfoot:";
+
+    /// <summary>The order the Backpack and Ship locker views list Elite's four kinds in.</summary>
+    public static readonly IReadOnlyList<string> OnFootKinds = ["Items", "Components", "Data", "Consumables"];
+
     /// <summary>The farming route's filter, in the order the Segmented control shows it; the first is no filter.</summary>
     public static readonly IReadOnlyList<string> FarmingFilters = ["All", "Raw", "Manufactured", "Encoded"];
 
@@ -109,7 +125,10 @@ public sealed class MaterialsPage : UserControl
         var report = _gap.Report();
         var ledgers = _gap.Tracker(report).Ship;
 
-        _sidebar.Content = SidebarOf(report, ledgers, _gap.View, Select);
+        var suit = _gap.State()?.Suit ?? SuitInventory.Empty;
+        var needs = NeedsOf(_gap.Tracker(report));
+
+        _sidebar.Content = SidebarOf(report, ledgers, suit, needs, _gap.View, Select);
 
         _body.Children.Clear();
 
@@ -122,6 +141,12 @@ public sealed class MaterialsPage : UserControl
         if (_gap.View == FarmingView)
         {
             Farming();
+            return;
+        }
+
+        if (_gap.View is BackpackView or LockerView)
+        {
+            OnFoot(_gap.View == LockerView, suit, needs);
             return;
         }
 
@@ -182,9 +207,72 @@ public sealed class MaterialsPage : UserControl
     public static NavCrumb DetailCrumb(MaterialEntry material) =>
         new(DetailPrefix + material.Symbol, material.Name) { Level = DetailPrefix, Whole = true };
 
-    /// <summary>The sidebar every Materials page draws: Needed by plans, the five ship ledgers, then the farming route.</summary>
+    /// <summary>The crumb that drills to one on-foot resource's detail page.</summary>
+    public static NavCrumb OnFootCrumb(MaterialEntry material) =>
+        new(OnFootPrefix + material.Symbol, material.Name) { Level = OnFootPrefix, Whole = true };
+
+    /// <summary>What live plans need of each on-foot resource, by symbol.</summary>
+    public static IReadOnlyDictionary<string, int> NeedsOf(MaterialTrackerReport tracker) =>
+        tracker.OnFoot
+            .SelectMany(card => card.Rows)
+            .Where(row => row.Needed > 0)
+            .GroupBy(row => row.Material.Symbol, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Max(row => row.Needed), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>One held on-foot resource: its name, the catalogue entry where there is one, the count and what plans need.</summary>
+    public sealed record OnFootTile(string Name, MaterialEntry? Material, int Held, int Needed);
+
+    /// <summary>
+    /// The held items grouped by kind in <see cref="OnFootKinds"/> order, the same resource summed and empty kinds
+    /// left out; tiles keep the order Elite wrote them in.
+    /// </summary>
+    public static IReadOnlyList<(string Kind, int Held, IReadOnlyList<OnFootTile> Tiles)> OnFootGroups(
+        IReadOnlyList<SuitItem> items, IReadOnlyDictionary<string, int> needs) =>
+        [.. OnFootKinds
+            .Select(kind =>
+            {
+                var tiles = items
+                    .Where(item => item.Count > 0 && string.Equals(item.Kind, kind, StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(item => JournalJson.Symbol(item.Name) ?? item.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(group =>
+                    {
+                        var material = MaterialCatalogue.Find(group.Key);
+                        var name = material?.Name ?? group.First().Speak();
+                        var needed = material is null ? 0 : needs.GetValueOrDefault(material.Symbol);
+
+                        return new OnFootTile(name, material, group.Sum(item => item.Count), needed);
+                    })
+                    .ToList();
+
+                return (Kind: kind, Held: tiles.Sum(tile => tile.Held), Tiles: (IReadOnlyList<OnFootTile>)tiles);
+            })
+            .Where(group => group.Tiles.Count > 0)];
+
+    /// <summary>A Backpack group's head figure, <c>4 HELD</c>; the backpack has no cap to draw.</summary>
+    public static string BackpackFigure(int held) => $"{Thousands(held)} HELD";
+
+    /// <summary>
+    /// A Ship locker group's head figure: <c>647 / 1,000</c> against the per-kind cap, or
+    /// <c>66 HELD · CAP 100 EACH</c> for Consumables, whose cap is per item.
+    /// </summary>
+    public static string LockerFigure(string kind, int held) =>
+        kind == "Consumables"
+            ? $"{Thousands(held)} HELD · CAP {Thousands(OnFootRules.ConsumableCapacityPerItem)} EACH"
+            : $"{Thousands(held)} / {Thousands(OnFootRules.LockerCapacityPerCategory)}";
+
+    internal static string Thousands(int n) => n.ToString("N0", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// The sidebar every Materials page draws: Needed by plans, the five ship ledgers, the backpack and ship
+    /// locker, then the farming route.
+    /// </summary>
     internal static Sidebar SidebarOf(
-        GapReport report, IReadOnlyList<MaterialCard> ledgers, string view, Action<string> select)
+        GapReport report,
+        IReadOnlyList<MaterialCard> ledgers,
+        SuitInventory suit,
+        IReadOnlyDictionary<string, int> needs,
+        string view,
+        Action<string> select)
     {
         var needed = report.Builds
             .SelectMany(build => build.Lines)
@@ -198,6 +286,12 @@ public sealed class MaterialsPage : UserControl
                 new SidebarGroup(
                     "Ship materials",
                     [.. ledgers.Select(card => new SidebarItem(ViewOf(card), card.Name, Count(card.Rows.Count)))]),
+                new SidebarGroup(
+                    "On foot",
+                    [
+                        new SidebarItem(BackpackView, "Backpack", Count(TileCount(suit.Backpack, needs))),
+                        new SidebarItem(LockerView, "Ship locker", Count(TileCount(suit.ShipLocker, needs))),
+                    ]),
                 new SidebarGroup(
                     "Farming",
                     [new SidebarItem(FarmingView, "Farming route", Count(FarmingRoute.For(null).Stops.Count))]),
@@ -244,6 +338,9 @@ public sealed class MaterialsPage : UserControl
             })];
     }
 
+    private static int TileCount(IReadOnlyList<SuitItem> items, IReadOnlyDictionary<string, int> needs) =>
+        OnFootGroups(items, needs).Sum(group => group.Tiles.Count);
+
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 
     internal void Select(string view)
@@ -252,13 +349,60 @@ public sealed class MaterialsPage : UserControl
         Refresh();
     }
 
-    /// <summary>Drills to a ship material's detail page; an on-foot row opens nothing here.</summary>
+    /// <summary>Drills to a ship material's or an on-foot resource's detail page; a cargo row opens nothing.</summary>
     internal void Open(MaterialEntry material)
     {
         if (material.Ledger == MaterialLedger.Material)
         {
             _nav?.Drill(DetailCrumb(material));
         }
+        else if (material.Ledger == MaterialLedger.ShipLocker)
+        {
+            _nav?.Drill(OnFootCrumb(material));
+        }
+    }
+
+    private void OnFoot(bool locker, SuitInventory suit, IReadOnlyDictionary<string, int> needs)
+    {
+        _body.Children.Add(TitleText.Block(
+            TitleText.Build(locker ? "Ship locker" : "Backpack", TypeScale.Title, TitleRank.Screen),
+            TitleText.Context("Materials › On foot ›")));
+        _body.Children.Add(Hint(locker ? LockerHead : BackpackHead, new Thickness(0, 10, 0, 0)));
+
+        var groups = OnFootGroups(locker ? suit.ShipLocker : suit.Backpack, needs);
+
+        if (groups.Count == 0)
+        {
+            _body.Children.Add(Hint(NothingCarried, new Thickness(0, 18, 0, 0)));
+            return;
+        }
+
+        foreach (var (kind, held, tiles) in groups)
+        {
+            var figure = locker ? LockerFigure(kind, held) : BackpackFigure(held);
+            var perItemCap = locker && kind == "Consumables" ? OnFootRules.ConsumableCapacityPerItem : (int?)null;
+
+            _body.Children.Add(TileGroup(kind, figure, [.. tiles.Select(tile => OnFootTileOf(tile, perItemCap))]));
+        }
+    }
+
+    /// <summary>One held resource: name, <c>NEED n</c> when a plan needs it, and the count, Yellow at a per-item cap.</summary>
+    private Border OnFootTileOf(OnFootTile tile, int? cap)
+    {
+        var border = new Border
+        {
+            Height = TypeScale.MinimumTarget,
+            Padding = new Thickness(12, 0),
+            Child = TileWords(tile.Name, tile.Needed, tile.Held, cap is { } limit && tile.Held >= limit),
+        };
+        Hover(border);
+
+        if (tile.Material is { } material)
+        {
+            Pressable(border, () => Open(material));
+        }
+
+        return border;
     }
 
     private void Ledger(MaterialCard card)
@@ -471,24 +615,28 @@ public sealed class MaterialsPage : UserControl
         return fact;
     }
 
-    private static Control Grade(string head, int? cap, IReadOnlyList<MaterialRow> rows, Action<MaterialEntry> open)
+    private static Control Grade(string head, int? cap, IReadOnlyList<MaterialRow> rows, Action<MaterialEntry> open) =>
+        TileGroup(head, cap is { } limit ? $"CAP {Count(limit)}" : null, [.. rows.Select(row => Tile(row, open))]);
+
+    /// <summary>A group head with an optional mono figure, then the tiles in a 3-column grid, 2px apart.</summary>
+    private static Control TileGroup(string head, string? figure, IReadOnlyList<Control> tiles)
     {
         var name = TitleText.Build(head, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
 
         var heading = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { name } };
 
-        if (cap is { } limit)
+        if (figure is not null)
         {
-            var capText = new TextBlock
+            var figureText = new TextBlock
             {
-                Text = $"CAP {Count(limit)}",
+                Text = figure,
                 FontFamily = new FontFamily(Fonts.MonoFamily),
                 FontSize = TypeScale.MetaSmall,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            LoadoutPages.Themed(capText, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            heading.Children.Add(capText);
+            LoadoutPages.Themed(figureText, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            heading.Children.Add(figureText);
         }
 
         var grid = new Grid
@@ -499,14 +647,14 @@ public sealed class MaterialsPage : UserControl
             Margin = new Thickness(0, 10, 0, 0),
         };
 
-        for (var i = 0; i < rows.Count; i++)
+        for (var i = 0; i < tiles.Count; i++)
         {
             if (i % 3 == 0)
             {
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             }
 
-            var tile = Tile(rows[i], open);
+            var tile = tiles[i];
             Grid.SetRow(tile, i / 3);
             Grid.SetColumn(tile, i % 3);
             grid.Children.Add(tile);
@@ -522,9 +670,29 @@ public sealed class MaterialsPage : UserControl
     /// <summary>One material: name, <c>NEED n</c> when a plan needs it, held in A or Yellow at cap, and a capacity bar.</summary>
     private static Border Tile(MaterialRow row, Action<MaterialEntry> open)
     {
+        var atCap = row.Capacity is { } cap && row.Held >= cap;
+        var words = new Border { Padding = new Thickness(12, 0), Child = TileWords(row.Material.Name, row.Needed, row.Held, atCap) };
+
+        var bar = CapacityBar(row.Capacity is { } limit and > 0 ? (double)row.Held / limit : 0);
+        DockPanel.SetDock(bar, Dock.Bottom);
+
+        var tile = new Border
+        {
+            Height = TypeScale.MinimumTarget,
+            Child = new DockPanel { Children = { bar, words } },
+        };
+        Hover(tile);
+        Pressable(tile, () => open(row.Material));
+
+        return tile;
+    }
+
+    /// <summary>A tile's line: the name, <c>NEED n</c> in mono grey when needed, and the count in A, or Yellow at cap.</summary>
+    private static Grid TileWords(string text, int needed, int held, bool atCap)
+    {
         var name = new TextBlock
         {
-            Text = row.Material.Name.ToUpperInvariant(),
+            Text = text.ToUpperInvariant(),
             FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Control,
             FontWeight = FontWeight.SemiBold,
@@ -534,18 +702,17 @@ public sealed class MaterialsPage : UserControl
         };
         LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var atCap = row.Capacity is { } cap && row.Held >= cap;
-        var held = Mono(Count(row.Held), atCap ? ThemeManager.YellowKey : ThemeManager.AKey);
-        held.Margin = new Thickness(8, 0, 0, 0);
-        Grid.SetColumn(held, 2);
+        var count = Mono(Count(held), atCap ? ThemeManager.YellowKey : ThemeManager.AKey);
+        count.Margin = new Thickness(8, 0, 0, 0);
+        Grid.SetColumn(count, 2);
 
-        var words = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Children = { name, held } };
+        var words = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Children = { name, count } };
 
-        if (row.Needed > 0)
+        if (needed > 0)
         {
             var need = new TextBlock
             {
-                Text = $"NEED {Count(row.Needed)}",
+                Text = $"NEED {Count(needed)}",
                 FontFamily = new FontFamily(Fonts.MonoFamily),
                 FontSize = TypeScale.MetaSmall,
                 Margin = new Thickness(8, 0, 0, 0),
@@ -556,21 +723,7 @@ public sealed class MaterialsPage : UserControl
             words.Children.Add(need);
         }
 
-        var bar = CapacityBar(row.Capacity is { } limit and > 0 ? (double)row.Held / limit : 0);
-        DockPanel.SetDock(bar, Dock.Bottom);
-
-        var tile = new Border
-        {
-            Height = TypeScale.MinimumTarget,
-            Child = new DockPanel
-            {
-                Children = { bar, new Border { Padding = new Thickness(12, 0), Child = words } },
-            },
-        };
-        Hover(tile);
-        Pressable(tile, () => open(row.Material));
-
-        return tile;
+        return words;
     }
 
     /// <summary>A 3px Yellow fill over a YellowTrack ground, clamped to 0–1.</summary>
@@ -726,7 +879,7 @@ public sealed class MaterialsPage : UserControl
         };
         Hover(row);
 
-        if (line.Material.Ledger == MaterialLedger.Material)
+        if (line.Material.Ledger is MaterialLedger.Material or MaterialLedger.ShipLocker)
         {
             Pressable(row, () => open(line.Material));
         }

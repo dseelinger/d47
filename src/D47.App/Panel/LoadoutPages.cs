@@ -110,6 +110,13 @@ public static class LoadoutPages
             return new MaterialDetailPage(gap, nav, material, materialsClock ?? new JournalClock(() => null));
         }
 
+        if (crumb.Key.StartsWith(MaterialsPage.OnFootPrefix, StringComparison.Ordinal)
+            && gap is not null
+            && MaterialCatalogue.Find(crumb.Key[MaterialsPage.OnFootPrefix.Length..]) is { Ledger: MaterialLedger.ShipLocker } resource)
+        {
+            return new OnFootDetailPage(gap, nav, resource, materialsClock ?? new JournalClock(() => null));
+        }
+
         var root = modes.FirstOrDefault(mode => mode.RootKey == crumb.Key) ?? modes[0];
 
         return new IndexPage(
