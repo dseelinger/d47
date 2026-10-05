@@ -68,7 +68,7 @@ gh issue view <number> --json body --jq '[.body | scan("(?:^|[^`])Needs first:[^
 ```
 
 A needed issue is done when it is closed on GitHub, or when a commit on local `main` carries the
-line `Fixes #N` — the Night Shift commits without pushing, so its work is not closed until morning:
+line `Fixes #N` — work committed but not yet pushed is not closed on GitHub:
 
 ```bash
 for n in <needed numbers>; do
