@@ -1962,7 +1962,12 @@ public sealed class AdventureGenerator(
                         }
                     }
 
-                    if (facts.NeedsPermit(place.System))
+                    if (place.Kind == TriggerKind.Arrive && previousSystem is not null && string.Equals(previousSystem, place.System, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // An arrive beat fires only on a jump into the system, so one where the Commander already is never fires.
+                        refusals.Add($"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan beat.");
+                    }
+                    else if (facts.NeedsPermit(place.System))
                     {
                         refusals.Add($"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
                     }

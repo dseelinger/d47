@@ -279,6 +279,8 @@ The same now happens for an adventure you asked for that is not part of a story.
 
 A system name that follows a station or body name, as in "dock at Wolff's Haven in LTT 7786", is now always spoken as the name. Before, a repeat of the system in that position was spoken as "it", which read as the station. Other repeats still become "it".
 
+A generated adventure or story chapter no longer has a beat that tells you to arrive at the system you are already in, whether you are there when the chapter starts or the beat before it took you there. Such a beat could not be completed until you jumped out and back or logged in again. d47 now has the language model write a different beat in its place.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It
