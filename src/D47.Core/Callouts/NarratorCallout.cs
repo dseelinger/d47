@@ -41,23 +41,8 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// <summary>The longest; each gap lands somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
     public TimeSpan Longest { get; set; } = TimeSpan.FromMinutes(60);
 
-    /// <summary>
-    /// Whether the core aboard is a stock core. The Narrator then takes the ambient slot: the stand-in gap,
-    /// and a narration whether or not there is a story.
-    /// </summary>
+    /// <summary>Whether the core aboard is a stock core. The Narrator then narrates whether or not there is a story.</summary>
     public Func<bool> StockCoreAboard { get; set; } = () => false;
-
-    /// <summary>The next tip on using D47 for a narration to carry, recorded as taken, or null for none.</summary>
-    public Func<NarratorTip?> TakeTip { get; set; } = () => null;
-
-    /// <summary>The next tip on playing Elite for the journal events seen since the last narration, recorded as taken, or null for none.</summary>
-    public Func<IReadOnlySet<string>, NarratorTip?> TakeEliteTip { get; set; } = _ => null;
-
-    /// <summary>The shortest gap while a stock core is aboard.</summary>
-    public TimeSpan StandInInterval { get; set; } = TimeSpan.FromMinutes(5);
-
-    /// <summary>The longest gap while a stock core is aboard.</summary>
-    public TimeSpan StandInLongest { get; set; } = TimeSpan.FromMinutes(10);
 
     /// <summary>How long a situation has to hold before it is narrated.</summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(90);
@@ -67,21 +52,10 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     private DateTimeOffset _lastSpokenAt;
     private int _picks;
     private readonly HashSet<string> _nudged = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _eventsSeen = new(StringComparer.Ordinal);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var situation = AmbientLines.Situate(context.Status);
-        var standsIn = StockCoreAboard();
-        var (shortest, longest) = standsIn ? (StandInInterval, StandInLongest) : (Interval, Longest);
-
-        if (!context.IsPriming)
-        {
-            foreach (var journalEvent in context.Events)
-            {
-                _eventsSeen.Add(journalEvent.Kind);
-            }
-        }
 
         if (situation != _situation)
         {
@@ -93,7 +67,6 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         if (context.IsPriming
             || !Enabled()
             || Interval <= TimeSpan.Zero
-            || shortest <= TimeSpan.Zero
             || situation == AmbientSituation.None
             || context.Status.Has(StatusFlags.Supercruise))
         {
@@ -107,13 +80,13 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             yield break;
         }
 
-        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap(shortest, longest))
+        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
         {
             yield break;
         }
 
         if (fight.On(context.Now, context.Status)
-            || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, shortest))
+            || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval))
         {
             yield break;
         }
@@ -121,16 +94,13 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         var stalled = Adventures().FirstOrDefault(standing =>
             !_nudged.Contains(standing.Adventure.Key) && AdventureNudge.IsDue(standing, context.Now));
 
-        if (stalled is null && !standsIn && !HasStory() && !StoryRunning())
+        if (stalled is null && !StockCoreAboard() && !HasStory() && !StoryRunning())
         {
             yield break;
         }
 
         _picks++;
         _lastSpokenAt = context.Now;
-
-        var eventsSeen = _eventsSeen.ToHashSet(StringComparer.Ordinal);
-        _eventsSeen.Clear();
 
         if (stalled is not null)
         {
@@ -142,20 +112,13 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             stalled is null ? string.Empty : AdventureNudge.Facts(stalled, lightYears: null))
         {
             StoryAside = stalled is null ? Untold(context.State?.Missions) : null,
-            Tip = stalled is null && standsIn ? TakeTip() ?? EliteTip(context.State?.Statistics, eventsSeen) : null,
             Urgency = CalloutUrgency.Routine,
-            Cooldown = shortest,
-            Chatter = shortest,
+            Cooldown = Interval,
+            Chatter = Interval,
             Voice = VoiceRole.Narrator,
             Variant = _picks - 1,
         };
     }
-
-    /// <summary>A tip on playing Elite, or null once <c>Time_Played</c> is 50 hours or more, or before it is known.</summary>
-    private NarratorTip? EliteTip(CareerStatistics? statistics, IReadOnlySet<string> eventsSeen) =>
-        statistics?.Read("Exploration.Time_Played") is < EliteTips.NewPlayerSeconds
-            ? TakeEliteTip(eventsSeen)
-            : null;
 
     /// <summary>The story's aside for the newest mission on the board that has not had one, or null.</summary>
     private MissionAside? Untold(MissionBoard? board) =>
@@ -171,17 +134,17 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             ? key[NudgePrefix.Length..]
             : null;
 
-    /// <summary>This cycle's wait, somewhere in [<paramref name="shortest"/>, <paramref name="longest"/>].</summary>
-    private TimeSpan Gap(TimeSpan shortest, TimeSpan longest)
+    /// <summary>This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
+    private TimeSpan Gap()
     {
-        if (longest <= shortest)
+        if (Longest <= Interval)
         {
-            return shortest;
+            return Interval;
         }
 
         var fraction = unchecked((uint)(_picks + Offset) * 2654435761u) / 4294967296.0;
 
-        return shortest + (longest - shortest) * fraction;
+        return Interval + (Longest - Interval) * fraction;
     }
 
     /// <summary>Added to the pick count so this callout's gaps differ from the ambient and chatter callouts' gaps.</summary>

@@ -1173,7 +1173,7 @@ story in the third person and the past tense, the way a novel's narrator writes,
 [character sheet](conversation.md#character-sheet), your [Backstory](conversation.md#backstory) and
 your [current scenario](conversation.md#current-scenario), connected to where you are now. It names you as the
 character sheet does, with the pronouns it gives; with none given, it uses your name and no pronouns.
-It invents no events, writes no dialogue, asks nothing and advises nothing.
+It invents no events, writes no dialogue, asks nothing and gives no advice or instruction.
 
 It speaks only during a lull. The situation has to have held for ninety seconds, there is no fight
 going on, it is never in supercruise, and it keeps the same ninety seconds from any other chatter.
@@ -1184,20 +1184,14 @@ scenario all empty, it says nothing, unless a stock core is aboard (below).
 
 **With a stock core aboard, the Narrator takes the ambient slot.** While the core actually aboard is a
 stock core such as COVAS, the ship's AI makes no idle remarks, and the Narrator speaks in those
-moments instead: its gap is the [In Ship chatter](#ambient) gap, five to ten minutes out of the box,
-and it narrates the moment from the game state whether or not a story is running. The other rules
-above still hold. With no character sheet it names you as the journal does. Turning the Narrator or
+moments instead: its gap is the same thirty to sixty minutes, and it narrates the moment from the
+game state whether or not a story is running. The other rules above still hold. With no character sheet it names you as the journal does. Turning the Narrator or
 personality off, or setting its least time to 0, leaves those moments silent; so does having no
 language model, since a stock core's idle lines are not replaced by written ones. With a Guardian core or one of your own aboard, nothing
 changes.
 
-**With a stock core aboard, a narration can teach you D47.** Each narration works in at most one tip on using D47, told as something your Commander had not yet learned, such as "The Commander had not yet learned that the ship would plot a route if asked." The tips come from the introductions on the help pages, in the order of the help library, and each is said once per Commander; `data\narrator-tips.json` records which. **Tips on using D47** under Narrator in Plan and story callouts turns them off. With a Guardian core or one of your own aboard there are none. A tip goes to the same model as the narration, so it sends nothing more.
-
-**During your first 50 hours, a narration can also teach you Elite.** When `Exploration.Time_Played` in the journal's `Statistics` event is under 50 hours, a narration can work in one tip on playing the game, such as how a fuel scoop refuels the ship, when the journal shows the Commander just did something it relates to, such as a jump. The tips are a short hand-written list that the model only rewords as narration, and each is said once per Commander, recorded in `data
-arrator-tips.json`. Nothing is offered before a `Statistics` event has arrived this session, or from 50 hours on. A narration carries one tip at most, and a tip on using D47 comes first. **Tips on playing Elite** under Narrator in Plan and story callouts turns them off. With a Guardian core or one of your own aboard there are none.
-
 **Every narration is written by the model, and sends the whole backstory.** At the defaults that is
-one or two calls an hour on the background model, or six to twelve with a stock core aboard. With no
+one or two calls an hour on the background model. With no
 character sheet it also sends your Commander name from the journal. When the model is unreachable or returns nothing,
 the Narrator says nothing: there are no stock narrations. With no language model configured these
 rows are absent; with personality off, it is silent.

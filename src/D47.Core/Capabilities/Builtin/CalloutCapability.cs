@@ -79,8 +79,6 @@ public static class CalloutCapability
 
     /// <summary>The Narrator, telling the Commander's story during a lull.</summary>
     public const string NarratorKey = "callouts.narrator";
-    public const string NarratorD47TipsKey = "callouts.narratorD47Tips";
-    public const string NarratorEliteTipsKey = "callouts.narratorEliteTips";
     public const string NarratorSecondsKey = "callouts.narratorSeconds";
     public const string NarratorMaxSecondsKey = "callouts.narratorMaxSeconds";
 
@@ -509,33 +507,13 @@ public static class CalloutCapability
                 "Narrator",
                 "A voice of its own that tells your story in the third person during a lull, from your "
                 + "character sheet, your backstory and your scenario. Never in supercruise or during a fight, "
-                + "and silent while all three are empty, unless COVAS is aboard: then it speaks in the In Ship "
-                + "chatter gap in place of COVAS's idle remarks. Written by the model, which is sent the whole "
+                + "and silent while all three are empty, unless COVAS is aboard: then it speaks in place of "
+                + "COVAS's idle remarks. Written by the model, which is sent the whole "
                 + "backstory each time; with no model, or personality off, there is no narration.",
                 "narrator",
                 "the narrator",
                 s => s.Callouts.Narrator,
                 (s, v) => s with { Callouts = s.Callouts with { Narrator = v } },
-                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
-
-            Toggle(
-                NarratorD47TipsKey,
-                "Tips on using D47",
-                "While the stock core is aboard, the Narrator works a tip on using D47 into its narration, once for each feature.",
-                "narrator",
-                "the narrator's tips on using D47",
-                s => s.Callouts.NarratorD47Tips,
-                (s, v) => s with { Callouts = s.Callouts with { NarratorD47Tips = v } },
-                appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
-
-            Toggle(
-                NarratorEliteTipsKey,
-                "Tips on playing Elite",
-                "While the stock core is aboard, the Narrator works a tip on playing Elite into its narration during your first 50 hours.",
-                "narrator",
-                "the narrator's tips on playing Elite",
-                s => s.Callouts.NarratorEliteTips,
-                (s, v) => s with { Callouts = s.Callouts with { NarratorEliteTips = v } },
                 appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
         ]);
 

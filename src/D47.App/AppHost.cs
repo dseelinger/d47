@@ -1050,10 +1050,6 @@ public sealed class AppHost : IDisposable
 
         adventureStore.Poll();
 
-        var narratorTipStore = new NarratorTipStore(
-            Path.Combine(paths.Data, "narrator-tips.json"),
-            loggerFactory.CreateLogger<NarratorTipStore>());
-
         var messageStore = new D47.Core.Messages.MessageStore(
             Path.Combine(paths.Data, "messages.json"),
             loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>(),
@@ -2303,40 +2299,6 @@ public sealed class AppHost : IDisposable
         {
             narrator.StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId);
             narrator.StoryAsides = storyDirector.MissionAsides;
-            narrator.TakeEliteTip = seen =>
-            {
-                if (!settings.Current.Callouts.NarratorEliteTips)
-                {
-                    return null;
-                }
-
-                var frontierId = gameState.Active?.Identity.FrontierId;
-                var tip = EliteTips.Next(seen, id => narratorTipStore.Said(frontierId, id));
-
-                if (tip is not null)
-                {
-                    narratorTipStore.Record(frontierId, tip.CapabilityId);
-                }
-
-                return tip;
-            };
-            narrator.TakeTip = () =>
-            {
-                if (!settings.Current.Callouts.NarratorD47Tips)
-                {
-                    return null;
-                }
-
-                var frontierId = gameState.Active?.Identity.FrontierId;
-                var tip = NarratorTips.Next(id => narratorTipStore.Said(frontierId, id));
-
-                if (tip is not null)
-                {
-                    narratorTipStore.Record(frontierId, tip.CapabilityId);
-                }
-
-                return tip;
-            };
         }
 
         // A stock core makes no idle remarks; the Narrator takes the ambient slot.
@@ -3229,8 +3191,6 @@ public sealed class AppHost : IDisposable
                 case NarratorCallout narrator:
                     narrator.Interval = TimeSpan.FromSeconds(callouts.NarratorSeconds);
                     narrator.Longest = TimeSpan.FromSeconds(callouts.NarratorMaxSeconds);
-                    narrator.StandInInterval = TimeSpan.FromSeconds(callouts.AmbientSeconds);
-                    narrator.StandInLongest = TimeSpan.FromSeconds(callouts.AmbientMaxSeconds);
                     narrator.Enabled = () => settings.Current.Callouts.Narrator && settings.Current.Llm.PersonalityEnabled;
                     narrator.HasStory = () => settings.Current.Llm is var llm
                         && (!string.IsNullOrWhiteSpace(llm.CharacterSheet)

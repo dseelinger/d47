@@ -6,14 +6,12 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>With a stock core aboard, the Narrator speaks at the ambient gap, with or without a story.</summary>
+/// <summary>With a stock core aboard, the Narrator speaks at its own gap, with or without a story.</summary>
 public class TheNarratorTakesTheAmbientSlotTests
 {
     private static readonly DateTimeOffset T0 = new(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);
 
     private static readonly TimeSpan OwnGap = TimeSpan.FromMinutes(30);
-
-    private static readonly TimeSpan AmbientGap = TimeSpan.FromMinutes(5);
 
     private const StatusFlags Docked = StatusFlags.Docked | StatusFlags.InMainShip;
 
@@ -22,8 +20,6 @@ public class TheNarratorTakesTheAmbientSlotTests
         {
             Interval = OwnGap,
             Longest = OwnGap,
-            StandInInterval = AmbientGap,
-            StandInLongest = AmbientGap,
             HasStory = () => story,
             StockCoreAboard = stock,
         };
@@ -32,18 +28,18 @@ public class TheNarratorTakesTheAmbientSlotTests
         new(now, false, null, GameStatus.Unknown with { Flags = flags }, NavRoute.None, []);
 
     [Fact]
-    public void WithCovasAboardAndNoStoryTheNarratorSpeaksAfterTheAmbientGap()
+    public void WithCovasAboardAndNoStoryTheNarratorSpeaksNoSoonerThanItsOwnGap()
     {
         var narrator = Narrator(() => true);
         _ = narrator.Examine(At(T0)).ToArray();
 
-        Assert.Empty(narrator.Examine(At(T0 + AmbientGap - TimeSpan.FromSeconds(1))));
+        Assert.Empty(narrator.Examine(At(T0 + OwnGap - TimeSpan.FromSeconds(1))));
 
-        var said = Assert.Single(narrator.Examine(At(T0 + AmbientGap + TimeSpan.FromSeconds(1))));
+        var said = Assert.Single(narrator.Examine(At(T0 + OwnGap + TimeSpan.FromSeconds(1))));
 
         Assert.Equal(NarratorCallout.Key, said.Key);
         Assert.Equal(VoiceRole.Narrator, said.Voice);
-        Assert.Equal(AmbientGap, said.Cooldown);
+        Assert.Equal(OwnGap, said.Cooldown);
     }
 
     [Fact]
@@ -67,12 +63,11 @@ public class TheNarratorTakesTheAmbientSlotTests
     }
 
     [Fact]
-    public void WithAnotherCoreAboardTheNarratorKeepsItsOwnGapAndNeedsAStory()
+    public void WithAnotherCoreAboardTheNarratorNeedsAStory()
     {
         var withStory = Narrator(() => false, story: true);
         _ = withStory.Examine(At(T0)).ToArray();
 
-        Assert.Empty(withStory.Examine(At(T0 + AmbientGap + TimeSpan.FromSeconds(1))));
         Assert.Single(withStory.Examine(At(T0 + OwnGap + TimeSpan.FromSeconds(1))));
 
         var withoutStory = Narrator(() => false);
@@ -82,17 +77,27 @@ public class TheNarratorTakesTheAmbientSlotTests
     }
 
     [Fact]
-    public void TheGapFollowsTheCoreAboardMidSession()
+    public void TwoNarrationsAreNeverCloserThanTheLeastOrFurtherThanTheMost()
     {
-        var stock = false;
-        var narrator = Narrator(() => stock);
-        _ = narrator.Examine(At(T0)).ToArray();
+        var narrator = Narrator(() => true);
+        narrator.Interval = TimeSpan.FromMinutes(30);
+        narrator.Longest = TimeSpan.FromMinutes(60);
 
-        Assert.Empty(narrator.Examine(At(T0 + AmbientGap * 2)));
+        var now = T0;
+        _ = narrator.Examine(At(now)).ToArray();
 
-        stock = true;
+        for (var round = 0; round < 8; round++)
+        {
+            var last = now;
+            now += TimeSpan.FromSeconds(1);
 
-        Assert.Single(narrator.Examine(At(T0 + AmbientGap * 2 + TimeSpan.FromSeconds(1))));
+            while (!narrator.Examine(At(now)).Any())
+            {
+                now += TimeSpan.FromSeconds(30);
+            }
+
+            Assert.InRange(now - last, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(60) + TimeSpan.FromSeconds(31));
+        }
     }
 
     [Fact]
@@ -112,5 +117,14 @@ public class TheNarratorTakesTheAmbientSlotTests
         Assert.Equal("Commander Jameson.", CommanderStory.SheetOrName("  ", " Jameson "));
         Assert.Equal("Vale, she/her.", CommanderStory.SheetOrName("Vale, she/her.", "Jameson"));
         Assert.Null(CommanderStory.SheetOrName(null, null));
+    }
+
+    [Fact]
+    public void ASettingsFileThatStillHoldsTheTipSwitchesLoads()
+    {
+        var loaded = System.Text.Json.JsonSerializer.Deserialize<D47.Core.Configuration.CalloutSettings>(
+            "{\"NarratorD47Tips\":true,\"NarratorEliteTips\":false,\"NarratorSeconds\":1800}");
+
+        Assert.Equal(1800, loaded!.NarratorSeconds);
     }
 }
