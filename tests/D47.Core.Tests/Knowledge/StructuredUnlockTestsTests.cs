@@ -10,15 +10,56 @@ namespace D47.Core.Tests.Knowledge;
 public class StructuredUnlockTestsTests
 {
     [Fact]
-    public void TwentySixEngineersCarryAMeetingTest()
+    public void ThirtyFourEngineersCarryAMeetingTest()
     {
-        Assert.Equal(26, EngineerDirectory.All.Count(engineer => engineer.MeetingTest is not null));
+        Assert.Equal(34, EngineerDirectory.All.Count(engineer => engineer.MeetingTest is not null));
     }
 
     [Fact]
     public void TwentyThreeEngineersCarryAnUnlockTest()
     {
         Assert.Equal(23, EngineerDirectory.All.Count(engineer => engineer.UnlockTest is not null));
+    }
+
+    [Theory]
+    [InlineData("Jude Navarro", UnlockTest.TallyKind.Missions, 10, "Mission_OnFoot_Reboot", null)]
+    [InlineData("Terra Velasquez", UnlockTest.TallyKind.Missions, 6, "Mission_OnFoot_Heist_Covert", null)]
+    [InlineData("Eleanor Bresa", UnlockTest.TallyKind.Visits, 5, "", "Colonia")]
+    [InlineData("Rosa Dayette", UnlockTest.TallyKind.Sales, 10, "culinaryrecipes,cocktailrecipes", "Colonia")]
+    [InlineData("Kit Fowler", UnlockTest.TallyKind.Sales, 5, "opinionpolls", null)]
+    [InlineData("Yarden Bond", UnlockTest.TallyKind.Sales, 5, "smearcampaignplans", null)]
+    [InlineData("Wellington Beck", UnlockTest.TallyKind.Sales, 15,
+        "multimediaentertainment,classicentertainment,catmedia", null)]
+    [InlineData("Oden Geiger", UnlockTest.TallyKind.Sales, 20,
+        "geneticsample,employeegeneticdata,geneticresearch", null)]
+    public void EightOdysseyMeetingsAreTallies(
+        string name, UnlockTest.TallyKind kind, long atLeast, string names, string? system)
+    {
+        var tally = Assert.IsType<UnlockTest.Tally>(EngineerDirectory.ByName(name)?.MeetingTest);
+
+        Assert.Equal(kind, tally.Kind);
+        Assert.Equal(atLeast, tally.AtLeast);
+        Assert.Equal(names, string.Join(',', tally.Names));
+        Assert.Equal(system, tally.StarSystem);
+    }
+
+    [Fact]
+    public void YiShenHasNoMeetingTest()
+    {
+        Assert.Null(EngineerDirectory.ByName("Yi Shen")?.MeetingTest);
+    }
+
+    [Theory]
+    [InlineData("tally")]
+    [InlineData("tally missions")]
+    [InlineData("tally missions ten Mission_OnFoot_Reboot")]
+    [InlineData("tally parcels 10 Mission_OnFoot_Reboot")]
+    [InlineData("tally missions 10 -")]
+    [InlineData("tally visits 5 Colonia")]
+    [InlineData("tally sales 5 opinionpolls Colonia extra")]
+    public void AMalformedTallyCellParsesToNothing(string cell)
+    {
+        Assert.Null(UnlockTest.Parse(cell));
     }
 
     [Fact]

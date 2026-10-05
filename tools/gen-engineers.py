@@ -211,18 +211,24 @@ BRIS_DEKKER_UNLOCK_OVERRIDE = ("Colonel Bris Dekker", "contribution Bond 1000000
 
 # Every row this generator's patterns do not turn into a test, with the reason — so a row with
 # neither a test nor a reason fails the run rather than shipping silently empty.
+# Meetings counted by an event rather than a figure the journal totals, as `tally <missions|sales|visits>
+# <at-least> <names|-> [<star system>]`. Missions name journal mission-name stems; sales name
+# `Materials.tsv` ship-locker items, resolved to symbols; visits name none. Keyed by relaxed engineer name.
+MEETING_TALLIES = {
+    "judenavarro": ("missions", 10, ["Mission_OnFoot_Reboot"], None),
+    "terravelasquez": ("missions", 6, ["Mission_OnFoot_Heist_Covert"], None),
+    "eleanorbresa": ("visits", 5, [], "Colonia"),
+    "rosadayette": ("sales", 10, ["Culinary Recipes", "Cocktail Recipes"], "Colonia"),
+    "kitfowler": ("sales", 5, ["Opinion Polls"], None),
+    "yardenbond": ("sales", 5, ["Smear Campaign Plans"], None),
+    "wellingtonbeck": ("sales", 15, ["Multimedia Entertainment", "Classic Entertainment", "Cat Media"], None),
+    "odengeiger": ("sales", 20, ["Biological Sample", "Employee Genetic Data", "Genetic Research"], None),
+}
+
 MEETING_TEST_REASONS = {
     "marcoqwent": "an invitation, which EngineerProgress already decides",
     "melbrandon": "an invitation, which EngineerProgress already decides",
     "zacariahnemo": "an invitation, which EngineerProgress already decides",
-    "eleanorbresa": "Settlements_Visited is not limited to Colonia",
-    "judenavarro": "no matching counter",
-    "kitfowler": "no matching counter",
-    "odengeiger": "no matching counter",
-    "rosadayette": "no matching counter",
-    "terravelasquez": "no matching counter",
-    "wellingtonbeck": "no matching counter",
-    "yardenbond": "no matching counter",
     "yishen": "no matching counter",
 }
 
@@ -422,8 +428,33 @@ def statistic_test(prose: str) -> str | None:
     return None
 
 
-def meeting_test(key: str, prose: str) -> str | None:
-    return rank_test(prose) or reputation_test(prose) or statistic_test(prose)
+def tally_test(key: str, symbols: dict[str, tuple[str, str]]) -> str | None:
+    """The meeting's counted event, to `tally <kind> <at-least> <names|-> [<star system>]`."""
+    if key not in MEETING_TALLIES:
+        return None
+
+    kind, at_least, names, system = MEETING_TALLIES[key]
+
+    if kind == "sales":
+        resolved = []
+
+        for name in names:
+            symbol, ledger = symbols[relax(name)]
+
+            if ledger != "ship-locker":
+                raise SystemExit(f"{name} is not a ship-locker item")
+
+            resolved.append(symbol)
+
+        names = resolved
+
+    cell = f"tally {kind} {at_least} {','.join(names) or '-'}"
+    return f"{cell} {system}" if system else cell
+
+
+def meeting_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> str | None:
+    return (rank_test(prose) or reputation_test(prose) or statistic_test(prose)
+            or tally_test(key, symbols))
 
 
 def unlock_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> str | None:
@@ -818,7 +849,7 @@ def main() -> None:
         ])
 
         meeting_prose, unlock_prose = links.get("meeting", ""), links.get("unlock", "")
-        meeting = meeting_test(key, meeting_prose) if meeting_prose else None
+        meeting = meeting_test(key, meeting_prose, symbols) if meeting_prose else None
         unlock = unlock_test(key, unlock_prose, symbols) if unlock_prose else None
 
         if meeting is not None:

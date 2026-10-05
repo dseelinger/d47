@@ -52,6 +52,16 @@ public abstract record UnlockTest
     /// </summary>
     public sealed record Contribution(string Type, string? Symbol, long Quantity) : UnlockTest;
 
+    /// <summary>What a <see cref="Tally"/> counts.</summary>
+    public enum TallyKind { Missions, Sales, Visits }
+
+    /// <summary>
+    /// A count of one event. <paramref name="Names"/> are mission-name stems for missions, micro-resource
+    /// symbols for sales and empty for visits; <paramref name="StarSystem"/> restricts where it counts.
+    /// </summary>
+    public sealed record Tally(TallyKind Kind, long AtLeast, IReadOnlyList<string> Names, string? StarSystem)
+        : UnlockTest;
+
     /// <summary>
     /// One cell of <c>meeting_test</c> or <c>unlock_test</c>, read by the grammar the generator writes.
     /// Null for an empty cell or one this grammar does not recognise.
@@ -87,6 +97,18 @@ public abstract record UnlockTest
             "contribution" when words.Length == 4
                 && long.TryParse(words[3], CultureInfo.InvariantCulture, out var quantity) =>
                 new Contribution(words[1], words[2], quantity),
+
+            "tally" when words.Length is 4 or 5
+                && Enum.TryParse<TallyKind>(words[1], ignoreCase: true, out var kind)
+                && Enum.IsDefined(kind)
+                && long.TryParse(words[2], CultureInfo.InvariantCulture, out var count)
+                && (words[3] == "-") == (kind == TallyKind.Visits)
+                && (words.Length == 4 || words[4].Length > 0) =>
+                new Tally(
+                    kind,
+                    count,
+                    words[3] == "-" ? [] : words[3].Split(','),
+                    words.Length == 5 ? words[4] : null),
 
             _ => null,
         };
