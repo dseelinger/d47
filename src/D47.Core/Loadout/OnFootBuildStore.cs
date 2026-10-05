@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
 
@@ -81,19 +82,65 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
         [.. Builds.Where(build =>
             string.Equals(build.CommanderFid, fid ?? string.Empty, StringComparison.Ordinal))];
 
-    /// <summary>Stamps this Commander's id onto every build from before the file carried one.</summary>
-    public bool Adopt(string fid, string? name = null)
+    /// <summary>
+    /// Stamps a Commander's id onto every build from before the file carried one. A build whose item is in
+    /// one Commander's ledger goes to that Commander; the rest go to the Commander who received most of
+    /// those, or to this one when none matched or two tie.
+    /// </summary>
+    public bool Adopt(string fid, string? name = null, IReadOnlyDictionary<string, OwnedKit>? ledgers = null)
     {
         if (fid.Length == 0 || !Builds.Any(build => build.CommanderFid.Length == 0))
         {
             return false;
         }
 
-        Save([.. Builds.Select(build => build.CommanderFid.Length == 0
-            ? build with { CommanderFid = fid, CommanderName = name }
-            : build)]);
+        var owners = Builds
+            .Where(build => build.CommanderFid.Length == 0)
+            .ToDictionary(build => build.Id, build => OwnerOf(build, ledgers));
+
+        var top = owners.Values
+            .Where(owner => owner is not null)
+            .GroupBy(owner => owner!, StringComparer.Ordinal)
+            .Select(group => (Fid: group.Key, Count: group.Count()))
+            .OrderByDescending(group => group.Count)
+            .Take(2)
+            .ToList();
+
+        var rest = top.Count == 1 || (top.Count == 2 && top[0].Count > top[1].Count) ? top[0].Fid : fid;
+
+        string? NameFor(string owner) => owner == fid
+            ? name
+            : Builds.FirstOrDefault(build => build.CommanderFid == owner && build.CommanderName is not null)
+                ?.CommanderName;
+
+        Save([.. Builds.Select(build =>
+        {
+            if (build.CommanderFid.Length > 0)
+            {
+                return build;
+            }
+
+            var owner = owners[build.Id] ?? rest;
+            return build with { CommanderFid = owner, CommanderName = NameFor(owner) };
+        })]);
 
         return true;
+    }
+
+    private static string? OwnerOf(OnFootBuild build, IReadOnlyDictionary<string, OwnedKit>? ledgers)
+    {
+        if (build.ItemId is not { } itemId || ledgers is null)
+        {
+            return null;
+        }
+
+        return ledgers
+            .OrderBy(entry => entry.Key, StringComparer.Ordinal)
+            .Where(entry => build.Kind == OnFootKind.Suit
+                ? entry.Value.Suits.ContainsKey(itemId)
+                : build.Kind == OnFootKind.Weapon && entry.Value.Weapons.ContainsKey(itemId))
+            .Select(entry => entry.Key)
+            .FirstOrDefault();
     }
 
     /// <summary>Re-reads if the file changed.</summary>

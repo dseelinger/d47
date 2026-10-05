@@ -47,8 +47,11 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
                         Path.Combine(_install.Root, "checklist-proposals.json"),
                         NullLogger<ChecklistProposalStore>.Instance),
                     () => Active),
-                () => Active);
+                () => Active,
+                () => Ledgers);
         }
+
+        public Dictionary<string, OwnedKit> Ledgers { get; } = [];
 
         public OnFootBuildStore Store { get; }
 
@@ -127,26 +130,134 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
         Assert.All(world.Store.Builds, build => Assert.Null(build.ItemId));
     }
 
+    private static OwnedKit Owning(long suitId, long weaponId) => new()
+    {
+        Suits = new Dictionary<long, OwnedSuit> { [suitId] = new OwnedSuit(suitId, "tacticalsuit_class1", 1, [], default) },
+        Weapons = new Dictionary<long, OwnedWeapon> { [weaponId] = new OwnedWeapon(weaponId, "wpn_m_assaultrifle_laser_fauto", 1, [], default) },
+    };
+
+    private static void Write(Harness world, string json)
+    {
+        File.WriteAllText(world.Store.Path, json);
+        world.Store.Poll();
+    }
+
     [Fact]
-    public void AFileFromBeforeCommandersWereRecordedGoesToTheFirstCommanderSeen()
+    public void OldBuildsGoToTheCommanderWhoseLedgerHoldsTheItemEvenWhenAnotherIsSeenFirst()
     {
         using var world = new Harness();
-        File.WriteAllText(
-            world.Store.Path,
-            """{"kit":[{"id":"kit-1","equipment":"Maverick Suit","kind":"suit"}]}""");
+        world.Ledgers["F1"] = Owning(11, 21);
+        world.Ledgers["F2"] = new OwnedKit();
 
-        world.Store.Poll();
-
-        world.Active = Commander("F1", "Jameson");
-        world.Kit.Observe([]);
+        Write(world, """
+            {"kit":[
+              {"id":"a","equipment":"Maverick Suit","kind":"suit","itemId":11},
+              {"id":"b","equipment":"Karma AR-50","kind":"weapon","itemId":21}]}
+            """);
 
         world.Active = Commander("F2", "Other");
         world.Kit.Observe([]);
 
-        Assert.Empty(world.Kit.Kit());
+        Assert.Empty(world.Kit.Mine);
+        Assert.All(world.Store.Builds, build => Assert.Equal("F1", build.CommanderFid));
+    }
 
-        world.Active = Commander("F1", "Jameson");
-        Assert.Single(world.Kit.Kit());
+    [Fact]
+    public void AnIntendedBuildAndASoldItemGoWithTheCommanderWhoOwnsTheRest()
+    {
+        using var world = new Harness();
+        world.Ledgers["F1"] = Owning(11, 21);
+
+        Write(world, """
+            {"kit":[
+              {"id":"a","equipment":"Maverick Suit","kind":"suit","itemId":11},
+              {"id":"b","equipment":"Karma AR-50","kind":"weapon","itemId":21},
+              {"id":"c","equipment":"Dominator Suit","kind":"suit"},
+              {"id":"d","equipment":"Karma P-15","kind":"weapon","itemId":99}]}
+            """);
+
+        world.Active = Commander("F2", "Other");
+        world.Kit.Observe([]);
+
+        Assert.Empty(world.Kit.Mine);
+        Assert.Equal(4, world.Store.BuildsFor("F1").Count);
+    }
+
+    [Fact]
+    public void AFileMatchingNoLedgerGoesToTheFirstCommanderSeen()
+    {
+        using var world = new Harness();
+        world.Ledgers["F1"] = Owning(11, 21);
+
+        Write(world, """
+            {"kit":[
+              {"id":"a","equipment":"Maverick Suit","kind":"suit","itemId":98},
+              {"id":"b","equipment":"Dominator Suit","kind":"suit"}]}
+            """);
+
+        world.Active = Commander("F2", "Other");
+        world.Kit.Observe([]);
+
+        Assert.Equal(2, world.Kit.Mine.Count);
+    }
+
+    [Fact]
+    public void TwoCommandersTyingForTheMostBuildsLeaveTheRestWithTheFirstSeen()
+    {
+        using var world = new Harness();
+        world.Ledgers["F1"] = Owning(11, 21);
+        world.Ledgers["F2"] = Owning(12, 22);
+        world.Ledgers["F3"] = new OwnedKit();
+
+        Write(world, """
+            {"kit":[
+              {"id":"a","equipment":"Maverick Suit","kind":"suit","itemId":11},
+              {"id":"b","equipment":"Maverick Suit","kind":"suit","itemId":12},
+              {"id":"c","equipment":"Dominator Suit","kind":"suit"}]}
+            """);
+
+        world.Active = Commander("F3", "Third");
+        world.Kit.Observe([]);
+
+        Assert.Equal("c", Assert.Single(world.Kit.Mine).Id);
+        Assert.Equal("a", Assert.Single(world.Store.BuildsFor("F1")).Id);
+        Assert.Equal("b", Assert.Single(world.Store.BuildsFor("F2")).Id);
+    }
+
+    [Fact]
+    public void AMatchedOwnerIsNamedFromTheirActiveIdentityOnlyWhenKnown()
+    {
+        using var world = new Harness();
+        world.Ledgers["F1"] = Owning(11, 21);
+
+        Write(world, """
+            {"kit":[
+              {"id":"a","equipment":"Maverick Suit","kind":"suit","itemId":11},
+              {"id":"z","commanderFid":"F1","commanderName":"Jameson","equipment":"Dominator Suit","kind":"suit"}]}
+            """);
+
+        world.Active = Commander("F2", "Other");
+        world.Kit.Observe([]);
+
+        Assert.All(world.Store.Builds, build => Assert.Equal("Jameson", build.CommanderName));
+    }
+
+    [Fact]
+    public void ABuildAlreadyCarryingACommanderIsNotChanged()
+    {
+        using var world = new Harness();
+        world.Ledgers["F1"] = Owning(11, 21);
+
+        Write(world, """
+            {"kit":[
+              {"id":"a","commanderFid":"F2","equipment":"Maverick Suit","kind":"suit","itemId":11},
+              {"id":"b","equipment":"Dominator Suit","kind":"suit"}]}
+            """);
+
+        world.Active = Commander("F3", "Third");
+        world.Kit.Observe([]);
+
+        Assert.Equal("F2", world.Store.Find("a")!.CommanderFid);
     }
 
     [Fact]

@@ -1367,7 +1367,7 @@ public sealed class AppHost : IDisposable
         onFootBuilds.Poll();
 
         var onFootPlans = new D47.Core.Loadout.OnFootPlanService(
-            onFootBuilds, checklists, () => gameState.Active);
+            onFootBuilds, checklists, () => gameState.Active, () => kit.All);
 
         // The engineer solver (Phase 28).
         var unlocks = new D47.Core.Engineers.EngineerPlanService(

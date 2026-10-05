@@ -71,7 +71,8 @@ public sealed record KitEntry(
 public sealed class OnFootPlanService(
     OnFootBuildStore store,
     ChecklistService checklists,
-    Func<CommanderGameState?> state)
+    Func<CommanderGameState?> state,
+    Func<IReadOnlyDictionary<string, OwnedKit>>? ledgers = null)
 {
     public OnFootBuildStore Store => store;
 
@@ -351,10 +352,10 @@ public sealed class OnFootPlanService(
     /// </summary>
     public IReadOnlyList<string> Observe(IEnumerable<JournalEvent> events)
     {
-        // Builds from before the file carried a Commander are claimed by the first one seen.
+        // Builds from before the file carried a Commander go to the Commander whose ledger holds the item.
         if (state()?.Identity is { FrontierId.Length: > 0 } identity)
         {
-            store.Adopt(identity.FrontierId, identity.Name);
+            store.Adopt(identity.FrontierId, identity.Name, ledgers?.Invoke());
         }
 
         var said = new List<string>();
