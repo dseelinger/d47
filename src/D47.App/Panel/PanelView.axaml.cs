@@ -785,7 +785,10 @@ public partial class PanelView : UserControl
         Func<Control?>? carrierSettingsStrip = null,
 
         // The galaxy service while “Look things up in the galaxy” is on, else null; material detail searches it.
-        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
+        Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
+
+        // The seats on the ship flown, on Fleet › Crew (#847).
+        CrewSeatsHost? crewSeats = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt);
 
@@ -880,7 +883,7 @@ public partial class PanelView : UserControl
             crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state),
             () => _storedModulesPage = new StoredModulesPage(state),
-            () => _crewPage = new CrewPage(state),
+            () => _crewPage = new CrewPage(state, crewSeats),
             PlanCarrierRoute);
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
