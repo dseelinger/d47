@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits the queue into lanes that run in parallel, each issue in its own worktree. Reports only; files, labels and starts nothing. Use when the user invokes /triage or /triage lanes, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes".
+description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits the queue into lanes that run in parallel — each issue its own session, in its own worktree. Reports only; files, labels and starts nothing. Use when the user invokes /triage or /triage lanes, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes".
 ---
 
 # Triage
@@ -163,9 +163,10 @@ is a triage the maintainer learns to skip, and then the one that mattered goes u
 Only when invoked as `/triage lanes`, or `/triage lanes <N>` to set the number of lanes. A plain
 `/triage` produces no lanes and writes none.
 
-A lane is a list of issues that one session works in order, each issue in its own worktree and
-merged into `main` when it lands (`/issue-worker lane <letter>` defines how). Lanes run at the same
-time as each other. So the split is about one thing: two lanes must not edit the same code.
+A lane is a list of issues worked in order, one session per issue on that issue's own model and
+effort, each in its own worktree and merged into `main` when it lands (`/issue-worker` defines
+how). The next issue in a lane starts once the one before it has merged. Lanes run at the same time
+as each other. So the split is about one thing: two lanes must not edit the same code.
 
 ### What must share a lane
 
@@ -186,8 +187,8 @@ whose files you still cannot name goes in the cluster of the subsystem its title
 
 ### From clusters to lanes
 
-The default is 3 lanes; `/triage lanes <N>` sets another number. Each lane is a session building
-the solution, so more lanes than that contend for the machine.
+The default is 3 lanes; `/triage lanes <N>` sets another number. Each lane has one session
+building the solution at a time, so more lanes than that contend for the machine.
 
 - Never split a cluster.
 - More clusters than lanes: put whole clusters together until the count fits, keeping the lanes
@@ -198,13 +199,6 @@ the solution, so more lanes than that contend for the machine.
 
 Release groups are unchanged and independent of lanes. A group can span lanes; it is ready to cut
 once every issue in it has merged, whichever lane ran it.
-
-### The lane's model and effort
-
-One session works the whole lane and cannot change its own model, so the lane runs on the strongest
-model among its issues (`opus` over `sonnet` over `haiku`), at the highest effort among the issues
-on that model. Where a single issue lifts a lane of `sonnet` / `medium` work to `opus`, say so in
-one sentence under the table, so the maintainer can decide to run that issue on its own instead.
 
 ### The main checkout
 
@@ -246,21 +240,21 @@ Markdown, and short. Three parts:
 
    | Lane | Release | # | Issue | Model | Effort | Review |
    | --- | --- | --- | --- | --- | --- | --- |
-   | A — `opus` `medium` | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | `sonnet` | `medium` | |
+   | A | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | `sonnet` | `medium` | |
    | | 1.25.0 — Missions rank the same everywhere | [841](https://github.com/dseelinger/d47/issues/841) | Rank the Situation missions like the board | `opus` | `medium` | |
-   | B — `sonnet` `medium` | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | `sonnet` | `medium` | |
+   | B | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | `sonnet` | `medium` | |
 
-   The lane's letter, model and effort go in its first row. A group can span lanes, so the Release
-   cell is filled on every row of an issue in a group. Model and Effort stay per issue: they are
-   what the issue is worth, and what the Issue key uses when the issue is started on its own.
+   The lane's letter goes in its first row. A group can span lanes, so the Release cell is filled
+   on every row of an issue in a group.
 3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
    why, including each waiting issue left out and the numbers it waits on. Omit the section when
    there is nothing.
 
 No launch lines. The Stream Deck's Issue key starts a session from the grid below, with
 `/issue-worker` as its opening command, so the finish line that skill defines is in its first
-message. A pasted line would bypass the skill. The same key starts a lane: given a lane letter
-instead of an issue number, it opens `/issue-worker lane <letter>` on the lane's model and effort.
+message. A pasted line would bypass the skill. Given a lane letter instead of an issue number, the
+same key starts that lane's next issue — the first one with no `Fixes #N` commit on `main` — on
+that issue's model and effort.
 
 No preamble, no summary of what triage is, no restating the rules above. The maintainer ran this to
 find out what to do next.
@@ -291,13 +285,12 @@ effort chosen here, so a row missing from this file is a session that starts on 
   `sonnet`/`medium` for anything else.
 - `release` and `review` are optional; leave them out where the table's cell is blank.
 - In lanes mode, each laned issue also carries `"lane": "A"`, and the file gains a top-level
-  `lanes` object: each lane's model, effort, and its issue numbers in work order. A plain
-  `/triage` writes neither.
+  `lanes` object: each lane's issue numbers in work order. A plain `/triage` writes neither.
 
   ```json
   "lanes": {
-    "A": {"model": "opus", "effort": "medium", "issues": ["794", "841"]},
-    "B": {"model": "sonnet", "effort": "medium", "issues": ["834", "835", "837"]}
+    "A": ["794", "841"],
+    "B": ["834", "835", "837"]
   }
   ```
 - Write the whole file each run. It is this triage's grid, not a record that accumulates.
