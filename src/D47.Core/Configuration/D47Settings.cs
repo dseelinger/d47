@@ -585,6 +585,9 @@ public sealed record CalloutSettings
     /// <summary>The running session total after every sale of the Community Goal commodity (#296).</summary>
     public bool CommunityGoalSales { get; init; } = true;
 
+    /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
+    public bool CarrierFuel { get; init; } = true;
+
     /// <summary>Missions handed in at the station docked at or left, and their expiry warnings (#662).</summary>
     public bool Missions { get; init; } = true;
 

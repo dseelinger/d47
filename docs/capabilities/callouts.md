@@ -785,6 +785,23 @@ The commodity is the one the saved Community Goal search names, Palladium, and t
 it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
 keeps counting for the page and for *"how have I done today"*.
 
+#### Carrier fuel {#carrier-fuel}
+
+When your own carrier's tritium is less than two full-range jumps at its current load, the carrier
+captain says so, on docking at it and on plotting its jump
+([#834](https://github.com/dseelinger/d47/issues/834)). A full jump costs
+`5 + range × (25,000 + used + tritium) / 200,000` tonnes, where used is the carrier's capacity less
+its free space, so the threshold moves with the load.
+
+```text
+Sacred Fire has 150 tonnes of tritium; a full jump at this load burns 88.
+```
+
+It is said once for each tritium reading, and again after the game is loaded. Where the carrier has
+jumped since the reading, the line adds how old the reading is and that the tank can only be lower.
+A squadron carrier, or one you do not own, is not announced. Nothing is said while d47 is catching up
+on a journal it did not watch being written.
+
 #### Mission hand-ins and expiry {#missions}
 
 D47 speaks about the missions on your [mission board](missions.html) at four moments

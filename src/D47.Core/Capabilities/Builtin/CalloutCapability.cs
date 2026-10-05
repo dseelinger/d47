@@ -44,6 +44,8 @@ public static class CalloutCapability
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
+
+    public const string CarrierFuelKey = "callouts.carrierFuel";
     public const string MissionsKey = "callouts.missions";
     public const string DomainKey = "callouts.domain";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
@@ -401,6 +403,16 @@ public static class CalloutCapability
                 "community goal sales",
                 s => s.Callouts.CommunityGoalSales,
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalSales = v } }),
+
+            Toggle(
+                CarrierFuelKey,
+                "Carrier fuel",
+                "On docking at your own carrier or plotting its jump, when its tritium is less than two "
+                + "full jumps at its current load. Said once for each reading.",
+                "carrier-fuel",
+                "carrier fuel",
+                s => s.Callouts.CarrierFuel,
+                (s, v) => s with { Callouts = s.Callouts with { CarrierFuel = v } }),
 
             Toggle(
                 MissionsKey,

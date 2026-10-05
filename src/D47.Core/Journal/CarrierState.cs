@@ -103,6 +103,9 @@ public sealed record CarrierState
     /// <summary>How far it can jump now, in light years.</summary>
     public double? JumpRange { get; init; }
 
+    /// <summary>The longest jump it can make, in light years, from <c>JumpRangeMax</c>.</summary>
+    public double? MaxJumpRange { get; init; }
+
     /// <summary>Whether it is booked to be scrapped.</summary>
     public bool PendingDecommission { get; init; }
 
@@ -304,6 +307,7 @@ public sealed record CarrierState
             Capacity = journalEvent.Object("SpaceUsage")?.Int("TotalCapacity") ?? Capacity,
             FreeSpace = journalEvent.Object("SpaceUsage")?.Int("FreeSpace") ?? FreeSpace,
             JumpRange = journalEvent.Double("JumpRangeCurr") ?? JumpRange,
+            MaxJumpRange = journalEvent.Double("JumpRangeMax") ?? MaxJumpRange,
             PendingDecommission = journalEvent.Bool("PendingDecommission"),
             Services = Crew(journalEvent) is { Count: > 0 } crew ? crew : Services,
         },

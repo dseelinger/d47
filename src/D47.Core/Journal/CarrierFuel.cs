@@ -22,4 +22,28 @@ public static class CarrierFuel
 
         return (jumps * distance, jumps);
     }
+
+    /// <summary>The tank is low below this many full-range jumps.</summary>
+    public const int ReserveJumps = 2;
+
+    /// <summary>Tonnes burned by a jump of the maximum range at the carrier's current load, or null until the reading is whole.</summary>
+    public static double? FullJumpCost(CarrierState carrier)
+    {
+        ArgumentNullException.ThrowIfNull(carrier);
+
+        if (carrier.MaxJumpRange is not { } range
+            || carrier.Capacity is not { } capacity
+            || carrier.FreeSpace is not { } free
+            || carrier.FuelLevel is not { } fuel)
+        {
+            return null;
+        }
+
+        var used = capacity - free;
+
+        return 5 + range * (25_000 + used + fuel) / 200_000;
+    }
+
+    public static bool IsLow(CarrierState carrier) =>
+        FullJumpCost(carrier) is { } cost && carrier.FuelLevel < cost * ReserveJumps;
 }
