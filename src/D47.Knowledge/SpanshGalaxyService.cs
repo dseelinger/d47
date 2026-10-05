@@ -50,6 +50,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     {
         using var content = new StringContent(SpanshRequest.Search(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
+            _logger,
             token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
             cancellationToken).ConfigureAwait(false);
@@ -64,6 +65,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     {
         using var content = new StringContent(SpanshRequest.Stations(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
+            _logger,
             token => _http.PostAsync("api/stations/search", content, token),
             "the station search",
             cancellationToken).ConfigureAwait(false);
@@ -75,6 +77,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     {
         using var content = new StringContent(SpanshRequest.Bodies(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
+            _logger,
             token => _http.PostAsync("api/bodies/search", content, token),
             "the body search",
             cancellationToken).ConfigureAwait(false);
@@ -89,6 +92,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     {
         using var content = new StringContent(SpanshRequest.Colonisation(query), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
+            _logger,
             token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
             cancellationToken,
@@ -100,6 +104,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     public async Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
     {
         using var document = await SendAsync(
+            _logger,
             token => _http.GetAsync($"api/system/{systemAddress}", token),
             "the system lookup",
             cancellationToken,
@@ -148,6 +153,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         using var content = new StringContent(SpanshRequest.Search(probe), Encoding.UTF8, "application/json");
 
         using var document = await SendAsync(
+            _logger,
             token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
             cancellationToken,
@@ -160,10 +166,11 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     private static readonly Dictionary<string, string> Nearest =
         new(StringComparer.Ordinal) { ["distance"] = "0-1" };
 
-    /// <summary>One request, with every way it can go wrong turned into a sentence.</summary>
+    /// <summary>One request to Spansh, with every way it can go wrong turned into a sentence.</summary>
     /// <param name="missingWhen">The status that means "there is no such record" rather than a fault.</param>
     /// <param name="budget">How long to wait, defaulting to <see cref="Ordinary"/>.</param>
-    private async Task<JsonDocument?> SendAsync(
+    internal static async Task<JsonDocument?> SendAsync(
+        ILogger logger,
         Func<CancellationToken, Task<HttpResponseMessage>> send,
         string what,
         CancellationToken cancellationToken,
@@ -185,12 +192,12 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("{What} did not answer within the timeout", what);
+            logger.LogWarning("{What} did not answer within the timeout", what);
             throw new GalaxyUnavailableException($"{Capitalise(what)} took too long to answer.");
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogWarning(ex, "{What} could not be reached", what);
+            logger.LogWarning(ex, "{What} could not be reached", what);
             throw new GalaxyUnavailableException($"I couldn't reach {what} — check the network connection.");
         }
 
@@ -198,7 +205,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         {
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("{What} answered {Status}", what, (int)response.StatusCode);
+                logger.LogWarning("{What} answered {Status}", what, (int)response.StatusCode);
 
                 if (response.StatusCode == missingWhen)
                 {
@@ -232,12 +239,12 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("{What} did not finish answering within the timeout", what);
+                logger.LogWarning("{What} did not finish answering within the timeout", what);
                 throw new GalaxyUnavailableException($"{Capitalise(what)} took too long to answer.");
             }
             catch (JsonException ex)
             {
-                _logger.LogWarning(ex, "{What} answered with something that was not JSON", what);
+                logger.LogWarning(ex, "{What} answered with something that was not JSON", what);
                 throw new GalaxyUnavailableException($"{Capitalise(what)} answered with something I couldn't read.");
             }
         }
