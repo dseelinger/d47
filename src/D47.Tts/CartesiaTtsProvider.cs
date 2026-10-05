@@ -184,34 +184,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
         try
         {
-            using var request = Request(HttpMethod.Post, "/tts/bytes", key);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
-
-            request.Content = JsonContent.Create(
-                new SpeechRequest
-                {
-                    ModelId = DefaultModel,
-                    Transcript = text,
-
-                    // No `__experimental_controls`, and that is the finding rather than an oversight: the
-                    // speed inside it is validated and inert, so sending one would be d47 asking for
-                    // something it has measured not to happen (docs/spikes/cartesia-voices-and-speed.md §3).
-                    Voice = new VoiceRef { Id = voiceId },
-
-                    // Raw samples rather than a container, so nothing has to be decoded on the way to the
-                    // arbiter — the same trade both paid providers already make.
-                    OutputFormat = new OutputFormat
-                    {
-                        Container = "raw",
-                        Encoding = "pcm_s16le",
-                        SampleRate = SampleRate,
-                    },
-
-                    // Pinned, which is the property that makes this provider eligible for a slot carrying
-                    // another player's words.
-                    Language = Language,
-                },
-                options: Json);
+            using var request = SpeechRequestFor(key, text, voiceId);
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -250,6 +223,120 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
         {
             _inFlight.Release();
         }
+    }
+
+    /// <summary>
+    /// The same request, read as it arrives: returns once the status is read, and appends the body as it
+    /// comes. Holds a place in <see cref="_inFlight"/> until the body ends.
+    /// </summary>
+    public async Task<ArrivingClip> StreamAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default)
+    {
+        if (_key() is not { Length: > 0 } key)
+        {
+            throw new TtsException(
+                "No Cartesia API key is stored. Add one in Settings.",
+                fault: TtsFault.KeyRejected);
+        }
+
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            throw new TtsException("No Cartesia voice has been chosen. Pick one in Settings.");
+        }
+
+        await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        HttpResponseMessage? response = null;
+        var reading = false;
+
+        try
+        {
+            using var request = SpeechRequestFor(key, text, voiceId);
+
+            response = await _http
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw await DescribeAsync(response, text, voiceId, cancellationToken).ConfigureAwait(false);
+            }
+
+            var arriving = new ArrivingClip(text);
+
+            // Owns the response and the place in _inFlight from here.
+            reading = true;
+            _ = StreamedPcm.AppendAsync(
+                response,
+                arriving,
+                "Cartesia",
+                text,
+                _logger,
+                () => _inFlight.Release(),
+                TtsFault.Unreachable,
+                cancellationToken);
+
+            return arriving;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TtsException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TtsException(
+                $"Cartesia could not speak \"{Excerpt(text)}\": {ex.Message}",
+                ex,
+                TtsFault.Unreachable);
+        }
+        finally
+        {
+            if (!reading)
+            {
+                response?.Dispose();
+                _inFlight.Release();
+            }
+        }
+    }
+
+    private static HttpRequestMessage SpeechRequestFor(string key, string text, string voiceId)
+    {
+        var request = Request(HttpMethod.Post, "/tts/bytes", key);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+
+        request.Content = JsonContent.Create(
+            new SpeechRequest
+            {
+                ModelId = DefaultModel,
+                Transcript = text,
+
+                // No `__experimental_controls`, and that is the finding rather than an oversight: the
+                // speed inside it is validated and inert, so sending one would be d47 asking for
+                // something it has measured not to happen (docs/spikes/cartesia-voices-and-speed.md §3).
+                Voice = new VoiceRef { Id = voiceId },
+
+                // Raw samples rather than a container, so nothing has to be decoded on the way to the
+                // arbiter — the same trade both paid providers already make.
+                OutputFormat = new OutputFormat
+                {
+                    Container = "raw",
+                    Encoding = "pcm_s16le",
+                    SampleRate = SampleRate,
+                },
+
+                // Pinned, which is the property that makes this provider eligible for a slot carrying
+                // another player's words.
+                Language = Language,
+            },
+            options: Json);
+
+        return request;
     }
 
     /// <summary>One page of voices, from either shape the endpoint answers in.</summary>

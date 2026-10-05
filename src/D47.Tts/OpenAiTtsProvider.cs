@@ -119,31 +119,7 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, SpeechUrl);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
-
-            request.Content = JsonContent.Create(
-                new SpeechRequest
-                {
-                    Model = DefaultModel,
-                    // Sent as written. `ITtsProvider.Billable` is left at its default because this provider
-                    // rewrites nothing on the way out — ElevenLabs overrides it only because it spells
-                    // numerals, and it is the rewritten length that lands on that bill.
-                    Input = text,
-                    Voice = voiceId,
-
-                    // Raw samples rather than a container, so nothing has to be decoded on the way to the
-                    // arbiter — the same trade ElevenLabs makes with pcm_24000.
-                    ResponseFormat = "pcm",
-                    Speed = SpeedFor(voice.Rate),
-
-                    // Omitted entirely when there is nobody to perform — the field is nullable and is left
-                    // out of the JSON on null, so a slot with no core sends exactly the request it sent
-                    // before this existed (#49).
-                    Instructions = Blank(_direction?.Invoke()),
-                },
-                options: Json);
+            using var request = SpeechRequestFor(key, text, voiceId, voice);
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -182,6 +158,117 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
         {
             _inFlight.Release();
         }
+    }
+
+    /// <summary>
+    /// The same request, read as it arrives: returns once the status is read, and appends the body as it
+    /// comes. Holds a place in <see cref="_inFlight"/> until the body ends.
+    /// </summary>
+    public async Task<ArrivingClip> StreamAsync(
+        string text,
+        VoiceSelection voice,
+        CancellationToken cancellationToken = default)
+    {
+        if (_key() is not { Length: > 0 } key)
+        {
+            throw new TtsException(
+                "No OpenAI API key is stored. Add one in Settings.",
+                fault: TtsFault.KeyRejected);
+        }
+
+        if (voice.VoiceId is not { Length: > 0 } voiceId)
+        {
+            throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.");
+        }
+
+        await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        HttpResponseMessage? response = null;
+        var reading = false;
+
+        try
+        {
+            using var request = SpeechRequestFor(key, text, voiceId, voice);
+
+            response = await _http
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw await DescribeAsync(response, text, cancellationToken).ConfigureAwait(false);
+            }
+
+            var arriving = new ArrivingClip(text);
+
+            // Owns the response and the place in _inFlight from here.
+            reading = true;
+            _ = StreamedPcm.AppendAsync(
+                response,
+                arriving,
+                "OpenAI",
+                text,
+                _logger,
+                () => _inFlight.Release(),
+                TtsFault.Unreachable,
+                cancellationToken);
+
+            return arriving;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TtsException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new TtsException(
+                $"OpenAI could not speak \"{Excerpt(text)}\": {ex.Message}",
+                ex,
+                TtsFault.Unreachable);
+        }
+        finally
+        {
+            if (!reading)
+            {
+                response?.Dispose();
+                _inFlight.Release();
+            }
+        }
+    }
+
+    private HttpRequestMessage SpeechRequestFor(string key, string text, string voiceId, VoiceSelection voice)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, SpeechUrl);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+
+        request.Content = JsonContent.Create(
+            new SpeechRequest
+            {
+                Model = DefaultModel,
+                // Sent as written. `ITtsProvider.Billable` is left at its default because this provider
+                // rewrites nothing on the way out — ElevenLabs overrides it only because it spells
+                // numerals, and it is the rewritten length that lands on that bill.
+                Input = text,
+                Voice = voiceId,
+
+                // Raw samples rather than a container, so nothing has to be decoded on the way to the
+                // arbiter — the same trade ElevenLabs makes with pcm_24000.
+                ResponseFormat = "pcm",
+                Speed = SpeedFor(voice.Rate),
+
+                // Omitted entirely when there is nobody to perform — the field is nullable and is left
+                // out of the JSON on null, so a slot with no core sends exactly the request it sent
+                // before this existed (#49).
+                Instructions = Blank(_direction?.Invoke()),
+            },
+            options: Json);
+
+        return request;
     }
 
     /// <summary>One character, synthesised and thrown away, to prove a key (Phase 58).</summary>

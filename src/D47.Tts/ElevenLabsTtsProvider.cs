@@ -420,7 +420,15 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
             // Owns the response and the place in _inFlight from here.
             reading = true;
-            _ = ReadBodyAsync(response, arriving, text, cancellationToken);
+            _ = StreamedPcm.AppendAsync(
+                response,
+                arriving,
+                "ElevenLabs",
+                text,
+                _logger,
+                () => _inFlight.Release(),
+                TtsFault.Unknown,
+                cancellationToken);
 
             return arriving;
         }
@@ -443,59 +451,6 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                 response?.Dispose();
                 _inFlight.Release();
             }
-        }
-    }
-
-    /// <summary>Appends a streamed body to <paramref name="arriving"/>, upsampled, and ends it.</summary>
-    private async Task ReadBodyAsync(
-        HttpResponseMessage response,
-        ArrivingClip arriving,
-        string text,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            using (response)
-            {
-                var body = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-
-                await using (body.ConfigureAwait(false))
-                {
-                    var upsample = new PcmUpsampler();
-                    var buffer = new byte[16 * 1024];
-                    var received = 0L;
-                    int read;
-
-                    while ((read = await body.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
-                    {
-                        received += read;
-                        arriving.Append(upsample.Push(buffer.AsSpan(0, read)));
-                    }
-
-                    if (received == 0)
-                    {
-                        throw new TtsException($"ElevenLabs returned no audio for \"{Excerpt(text)}\".");
-                    }
-
-                    arriving.Append(upsample.Finish());
-                    arriving.Complete();
-                }
-            }
-        }
-        catch (OperationCanceledException cancelled)
-        {
-            arriving.Fail(cancelled);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "ElevenLabs stopped sending \"{Text}\" part-way", Excerpt(text));
-
-            arriving.Fail(ex as TtsException
-                          ?? new TtsException($"ElevenLabs could not finish \"{Excerpt(text)}\": {ex.Message}", ex));
-        }
-        finally
-        {
-            _inFlight.Release();
         }
     }
 
