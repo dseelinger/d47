@@ -600,6 +600,12 @@ public sealed record CalloutSettings
     /// <summary>A warning when a joined community goal has eight hours or less left (#640).</summary>
     public bool CommunityGoalExpiry { get; init; } = true;
 
+    /// <summary>A reminder once per session when it has run for <see cref="SessionLengthHours"/> (#641).</summary>
+    public bool SessionLength { get; init; }
+
+    /// <summary>The session length, in hours, that triggers <see cref="SessionLength"/>: 2, 3, 4 or 6.</summary>
+    public int SessionLengthHours { get; init; } = 4;
+
     /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
     public bool CarrierFuel { get; init; } = true;
 

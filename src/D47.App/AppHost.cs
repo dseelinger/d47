@@ -2366,6 +2366,10 @@ public sealed class AppHost : IDisposable
                 case NarratorCallout narrator:
                     narrator.StockCoreAboard = stockCoreAboard;
                     break;
+
+                case SessionLengthCallout length:
+                    length.Hours = () => settings.Current.Callouts.SessionLengthHours;
+                    break;
             }
         }
 
@@ -3050,6 +3054,7 @@ public sealed class AppHost : IDisposable
             // Where a sale of the Community Goal commodity leaves the session, net of cost (#296).
             .Add(new CommunityGoalSaleCallout(ledger, communityGoal))
             .Add(new CommunityGoalExpiryCallout())
+            .Add(new SessionLengthCallout())
 
             // A remark on the subject the core aboard pays attention to (#611).
             .Add(new DomainCallout())
@@ -3164,6 +3169,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
         engine.SetEnabled("community-goal-expiry", callouts.CommunityGoalExpiry, now);
+        engine.SetEnabled("session-length", callouts.SessionLength, now);
         engine.SetEnabled("domain", callouts.Domain, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);

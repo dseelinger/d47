@@ -53,6 +53,8 @@ public static class CalloutCapability
 
     public const string CarrierFuelKey = "callouts.carrierFuel";
     public const string CommunityGoalExpiryKey = "callouts.communityGoalExpiry";
+    public const string SessionLengthKey = "callouts.sessionLength";
+    public const string SessionLengthHoursKey = "callouts.sessionLengthHours";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
     public const string MissionsKey = "callouts.missions";
     public const string RemindersKey = "callouts.reminders";
@@ -480,6 +482,16 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalExpiry = v } }),
 
             Toggle(
+                SessionLengthKey,
+                "Session length",
+                "A reminder once, when a session has run as long as you choose. It is a choice about your wellbeing, not a nag.",
+                "session-length",
+                "how long I have been flying",
+                s => s.Callouts.SessionLength,
+                (s, v) => s with { Callouts = s.Callouts with { SessionLength = v } },
+                defaultOn: false),
+
+            Toggle(
                 CarrierFuelKey,
                 "Carrier fuel",
                 "On docking at your own carrier or plotting its jump, when its tritium is less than two "
@@ -603,6 +615,32 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { Narrator = v } },
                 appliesWhen: s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId),
         ]);
+
+        rows.Add(new SettingRow
+        {
+            Key = SessionLengthHoursKey,
+            Advanced = true,
+            Label = "…after this many hours",
+            Help = "How long a session runs before the reminder above is said.",
+            Kind = SettingKind.Choice,
+            Choices = ["2", "3", "4", "6"],
+            DefaultDisplay = "4",
+            DocsAnchor = "session-length",
+            AppliesWhen = s => s.Callouts is { Enabled: true, SessionLength: true },
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.SessionLengthHours.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with
+                    {
+                        SessionLengthHours = v is "2" or "3" or "4" or "6"
+                            ? int.Parse(v, CultureInfo.InvariantCulture)
+                            : s.Callouts.SessionLengthHours,
+                    },
+                },
+            },
+        });
 
         rows.Add(new SettingRow
         {

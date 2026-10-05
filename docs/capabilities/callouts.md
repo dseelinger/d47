@@ -929,6 +929,21 @@ when d47 starts is said on the first tick after it has caught up. Nothing is sai
 catching up on a journal it did not watch being written. Switching this off silences this warning and
 nothing else.
 
+#### Session length {#session-length}
+
+A reminder, said once, when a session has run for the length you choose: 2, 3, 4 or 6 hours, 4 by
+default ([#641](https://github.com/dseelinger/d47/issues/641)). It is off by default. It is a choice
+about your wellbeing, not a nag.
+
+```text
+You have been flying 4 hours, Commander.
+```
+
+A session starts at the latest `LoadGame` in the journal and ends at `Shutdown`. Starting the game
+again re-arms the reminder. Restarting d47 in the middle of a session keeps the start the journal
+recorded. Nothing is said while d47 is catching up on a journal it did not watch being written. It is
+separate from the welcome-back line, so either can be switched off without the other.
+
 #### Carrier fuel {#carrier-fuel}
 
 When your own carrier's tritium is less than two full-range jumps at its current load, the carrier

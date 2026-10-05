@@ -51,6 +51,7 @@ public static class CrewDomains
         "lore",
         "scenes",
         "session",
+        "session-length",
         "adventure",
         "story-clue",
         "carrier",
