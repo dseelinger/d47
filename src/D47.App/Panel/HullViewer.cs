@@ -151,7 +151,8 @@ internal sealed class HullViewer : Control
     {
         if (_bitmap is { } bitmap)
         {
-            context.DrawImage(bitmap, new Rect(Bounds.Size));
+            // At 96 DPI the bitmap's size and its pixel size agree, so the whole frame is drawn at any display scaling.
+            context.DrawImage(bitmap, new Rect(0, 0, bitmap.PixelSize.Width, bitmap.PixelSize.Height), new Rect(Bounds.Size));
         }
     }
 
@@ -191,7 +192,7 @@ internal sealed class HullViewer : Control
         {
             _bitmap?.Dispose();
             _bitmap = new WriteableBitmap(
-                new PixelSize(width, height), new Vector(96 * scale, 96 * scale), PixelFormat.Bgra8888, AlphaFormat.Premul);
+                new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
             _pixels = new uint[width * height];
         }
 
