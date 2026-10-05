@@ -26,7 +26,7 @@ nav_order: 145
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">my goal is to buy a Python</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"I want to unlock all the engineers" — "get me to Elite in exploration"</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"I want to unlock all the engineers" — "get me to Elite V in exploration"</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">A goal is the year. Your checklist is the week.</text>
 </svg>
 </section>
@@ -40,7 +40,7 @@ nav_order: 145
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">68%</text>
  <text x="44" y="130" font-size="16" fill="var(--text)">Unlock every engineer</text>
  <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">21 of 38</text>
- <text x="44" y="168" font-size="16" fill="var(--text)">Elite in exploration</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">Elite V in exploration</text>
  <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">Trailblazer</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">D47 works the progress out of your journal. Nothing to tick.</text>
 </svg>
@@ -177,13 +177,13 @@ Where the journal cannot say, d47 says so rather than guessing:
 
 | Arc | Done when | Where the figure comes from |
 |---|---|---|
-| Elite in Combat | Combat rank 13 — Elite V | Live journal state |
-| Elite in Trade | Trade rank 13 — Elite V | Live journal state |
-| Elite in Exploration | Explore rank 13 — Elite V | Live journal state |
-| Elite as a Mercenary | Soldier rank 13 — Elite V | Live journal state |
-| Elite in Exobiology | Exobiologist rank 13 — Elite V | Live journal state |
-| Imperial Navy | Empire rank 13 — King | Live journal state |
-| Federal Navy | Federation rank 13 — Admiral | Live journal state |
+| Elite V in Combat | Combat rank 13 — Elite V | Live journal state |
+| Elite V in Trade | Trade rank 13 — Elite V | Live journal state |
+| Elite V in Exploration | Explore rank 13 — Elite V | Live journal state |
+| Elite V as a Mercenary | Soldier rank 13 — Elite V | Live journal state |
+| Elite V in Exobiology | Exobiologist rank 13 — Elite V | Live journal state |
+| Imperial Navy | Empire rank 14 — King | Live journal state |
+| Federal Navy | Federation rank 14 — Admiral | Live journal state |
 | Powerplay rank | Powerplay rank 100 | Your live pledge |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
 | The ship collection | One of every hull, owned at once | Your fleet, plus what you are flying |
@@ -213,11 +213,11 @@ events on your own machine — **nothing leaves it, and no journal is ever sent 
 A read looks like this:
 
 ```
-Elite in Combat: Mostly Harmless, 39% into it. Running 11 months.
-Elite in Trade: Tycoon, 40% into it. Running 13 months.
-Elite in Exploration: Pathfinder, 12% into it. Running 13 months.
-Elite as a Mercenary: Defenceless.
-Elite in Exobiology: Directionless.
+Elite V in Combat: Mostly Harmless, 39% into it. Running 11 months.
+Elite V in Trade: Tycoon, 40% into it. Running 13 months.
+Elite V in Exploration: Pathfinder, 12% into it. Running 13 months.
+Elite V as a Mercenary: Defenceless.
+Elite V in Exobiology: Directionless.
 Imperial Navy: Serf, 4% into it. Running 8 months.
 Federal Navy: Cadet, 61% into it. Running 8 months.
 Powerplay rank: rank 8 of 100 with Li Yong-Rui. Running 8 months.

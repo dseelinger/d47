@@ -14,6 +14,9 @@ public sealed record RankStanding(string Career, int Rank)
     /// <summary>The rank at which a career ladder is finished — Elite V.</summary>
     public const int EliteTop = 13;
 
+    /// <summary>The rank at which a navy ladder is finished.</summary>
+    public const int NavyTop = 14;
+
     /// <summary>Percent into the current rank, from the <c>Progress</c> event.</summary>
     public int? Percent { get; init; }
 
@@ -31,12 +34,32 @@ public sealed record RankStanding(string Career, int Rank)
             ? Percent is { } navyPercent ? $"{navyNamed}, {navyPercent}% into it" : navyNamed
             : Percent is { } numberedNavyPercent ? $"rank {Rank}, {numberedNavyPercent}% into it" : $"rank {Rank}"
         : IsElite
-        ? EliteName(Rank)
+        ? Rank < EliteTop && Percent is { } elitePercent ? $"{EliteName(Rank)}, {elitePercent}% into it" : EliteName(Rank)
         : CareerRankNames.Name(Career, Rank) is { } named
             ? Percent is { } namedPercent ? $"{named}, {namedPercent}% into it" : named
             : Percent is { } numberedPercent
                 ? $"rank {Rank} of {Elite}, {numberedPercent}% into it"
                 : $"rank {Rank} of {Elite}";
+
+    /// <summary>The top rank of this ladder: Elite V for a career, 14 for a navy.</summary>
+    public int Top => IsCareer ? EliteTop : NavyTop;
+
+    /// <summary>The name of the rank above this one, or null at the top of the ladder.</summary>
+    public string? NextName()
+    {
+        if (Rank < 0 || Rank >= Top)
+        {
+            return null;
+        }
+
+        var next = Rank + 1;
+
+        return !IsCareer
+            ? new RankStanding(Career, next).NavyName()
+            : next >= Elite
+                ? EliteName(next)
+                : CareerRankNames.Name(Career, next);
+    }
 
     /// <summary>The named rung of a navy ladder; the journal and <see cref="NavalRanks"/> share the 0 to 14 scale.</summary>
     private string? NavyName() => Career switch

@@ -40,6 +40,9 @@ public static class GoalEvaluator
     public static IReadOnlyList<GoalStanding> All(CommanderGameState? state, GoalMine? mine) =>
         [.. GoalCatalogue.All(state).Select(arc => Evaluate(arc, state, mine))];
 
+    private static double? Rung(RankStanding live) =>
+        live.Percent is { } percent && live.Rank < live.Top ? Math.Clamp(percent, 0, 100) / 100.0 : null;
+
     /// <summary>A career ladder.</summary>
     private static GoalStanding Rank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark)
     {
@@ -54,6 +57,8 @@ public static class GoalEvaluator
                 AsOf = state.Ranks.TakenAt,
                 Started = mark?.Started,
                 Note = live.Describe(),
+                Rung = Rung(live),
+                NextRank = live.NextName(),
                 IsDone = live.IsMaxRank,
             };
         }
@@ -69,6 +74,7 @@ public static class GoalEvaluator
                 AsOf = mark.AsOf,
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
+                NextRank = new RankStanding(career, (int)mined).NextName(),
                 IsDone = mined >= RankStanding.EliteTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
@@ -88,6 +94,8 @@ public static class GoalEvaluator
                 AsOf = state.Ranks.TakenAt,
                 Started = mark?.Started,
                 Note = live.Describe(),
+                Rung = Rung(live),
+                NextRank = live.NextName(),
                 IsDone = live.Rank >= GoalCatalogue.NavyTop,
             };
         }
@@ -103,6 +111,7 @@ public static class GoalEvaluator
                 AsOf = mark.AsOf,
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
+                NextRank = new RankStanding(career, (int)mined).NextName(),
                 IsDone = mined >= GoalCatalogue.NavyTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };

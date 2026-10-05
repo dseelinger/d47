@@ -22,7 +22,7 @@ public sealed record GoalArc
     /// <summary>Stable, and what a set-aside and a promoted checklist line are keyed by.</summary>
     public required string Key { get; init; }
 
-    /// <summary>What the Commander calls it — "Elite in Exploration".</summary>
+    /// <summary>What the Commander calls it — "Elite V in Exploration".</summary>
     public required string Name { get; init; }
 
     /// <summary>The definition of done, in words, because an arc nobody can state the end of is a mood.</summary>
@@ -85,9 +85,15 @@ public sealed record GoalStanding
 
     public bool IsDone { get; init; }
 
-    /// <summary>0 to 1, or null where either half is unknown.</summary>
+    /// <summary>0 to 1 into the current rank, or null where the percent is unknown, the rank is the top, or the arc is not a rank.</summary>
+    public double? Rung { get; init; }
+
+    /// <summary>The name of the rank above the current one, or null at the top or on an arc that is not a rank.</summary>
+    public string? NextRank { get; init; }
+
+    /// <summary>0 to 1 over the whole arc, or null where either half is unknown.</summary>
     public double? Fraction => Have is { } have && Need is { } need && need > 0
-        ? Math.Clamp((double)have / need, 0, 1)
+        ? Math.Clamp((have + (Rung ?? 0)) / need, 0, 1)
         : null;
 
     /// <summary>How long it has been running, against the instant it is asked at.</summary>

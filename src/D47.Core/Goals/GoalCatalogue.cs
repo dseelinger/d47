@@ -14,8 +14,8 @@ public static class GoalCatalogue
 
     public const string Powerplay = "powerplay";
 
-    /// <summary>The rank at which a navy ladder is finished — journal numbering, 0 to 13.</summary>
-    public const int NavyTop = 13;
+    /// <summary>The rank at which a navy ladder is finished — journal numbering, 0 to 14.</summary>
+    public const int NavyTop = RankStanding.NavyTop;
 
     /// <summary>The rank the Powerplay arc runs to.</summary>
     public const int PowerplayTop = 100;
@@ -23,11 +23,11 @@ public static class GoalCatalogue
     /// <summary>One career arc per ladder that ends in Elite, in the order the journal writes them.</summary>
     private static readonly (string Career, string Name, string? Helper)[] Careers =
     [
-        ("Combat", "Elite in Combat", null),
-        ("Trade", "Elite in Trade", "plot_trade_route"),
-        ("Explore", "Elite in Exploration", "plot_exploration_route"),
-        ("Soldier", "Elite as a Mercenary", null),
-        ("Exobiologist", "Elite in Exobiology", "plot_exobiology_route"),
+        ("Combat", "Elite V in Combat", null),
+        ("Trade", "Elite V in Trade", "plot_trade_route"),
+        ("Explore", "Elite V in Exploration", "plot_exploration_route"),
+        ("Soldier", "Elite V as a Mercenary", null),
+        ("Exobiologist", "Elite V in Exobiology", "plot_exobiology_route"),
     ];
 
     /// <summary>The journal's key for each navy ladder an arc is offered for.</summary>
@@ -47,7 +47,7 @@ public static class GoalCatalogue
         {
             Key = RankPrefix + career.Career.ToLowerInvariant(),
             Name = career.Name,
-            Done = $"{career.Career} rank {Journal.RankStanding.EliteTop} — Elite V.",
+            Done = $"{career.Career} rank {RankStanding.EliteTop} — Elite V.",
             Helper = career.Helper,
         }),
 
