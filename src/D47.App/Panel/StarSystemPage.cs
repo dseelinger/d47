@@ -120,6 +120,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     {
         Overview,
         Stations,
+        Bodies,
     }
 
     private sealed record Shown(long Address, string Name);
@@ -456,7 +457,12 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             case View.Ready when _profile is { } profile:
                 _body.Children.Add(Heading(profile.ReportedAt));
                 _body.Children.Add(Sections(profile));
-                _body.Children.Add(_section == Section.Stations ? Stations(profile) : Overview(profile));
+                _body.Children.Add(_section switch
+                {
+                    Section.Stations => Stations(profile),
+                    Section.Bodies => Bodies(profile),
+                    _ => Overview(profile),
+                });
                 break;
         }
     }

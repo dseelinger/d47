@@ -147,14 +147,19 @@ public sealed partial class StarSystemPage
     {
         var sections = new Segment
         {
-            ItemsSource = ["Overview", $"Stations {profile.Stations.Count.ToString(CultureInfo.InvariantCulture)}"],
+            ItemsSource =
+            [
+                "Overview",
+                $"Stations {profile.Stations.Count.ToString(CultureInfo.InvariantCulture)}",
+                $"Bodies {profile.Bodies.Count.ToString(CultureInfo.InvariantCulture)}",
+            ],
             SelectedIndex = (int)_section,
         };
         Avalonia.Automation.AutomationProperties.SetName(sections, "Sections");
         sections.SelectionChanged += (_, _) => ShowSection((Section)sections.SelectedIndex);
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*") };
-        Grid.SetColumnSpan(sections, 2);
+        Grid.SetColumnSpan(sections, 3);
         grid.Children.Add(sections);
 
         return grid;

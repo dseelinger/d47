@@ -33,7 +33,7 @@ public sealed class TheSystemPageListsItsStationsTests
 {
     private const long Ltt7786 = 633608311522;
 
-    private sealed class Systems(StarSystemProfile profile) : IStarSystemService
+    internal sealed class Systems(StarSystemProfile profile) : IStarSystemService
     {
         private int _asked;
 
@@ -56,7 +56,7 @@ public sealed class TheSystemPageListsItsStationsTests
     private static StarSystemSurface Surface(Systems systems) =>
         new(systems, () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 }, () => true);
 
-    private static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180)
+    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180)
     {
         var systems = new Systems(Ltt7786Profile());
         var panel = new PanelView { DataContext = new PanelViewModel() };
@@ -90,7 +90,7 @@ public sealed class TheSystemPageListsItsStationsTests
     private static bool Shows(Control root, string text) =>
         root.GetVisualDescendants().OfType<TextBlock>().Any(block => block.IsEffectivelyVisible && block.Text == text);
 
-    private static void Section(Control root, string label)
+    internal static void Section(Control root, string label)
     {
         var sections = root.GetVisualDescendants().OfType<Segment>().Single(segment => AutomationProperties.GetName(segment) == "Sections");
         sections.GetLogicalDescendants().OfType<RadioButton>()
@@ -388,7 +388,7 @@ public sealed class TheSystemPageListsItsStationsTests
     }
 
     /// <summary>LTT 7786 as Spansh had it on 2026-10-05, read through the real service.</summary>
-    private static StarSystemProfile Ltt7786Profile()
+    internal static StarSystemProfile Ltt7786Profile()
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);
 
