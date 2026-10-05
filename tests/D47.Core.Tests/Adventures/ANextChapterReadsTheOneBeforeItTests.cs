@@ -97,7 +97,7 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
         Assert.Contains("Stake: Third stake.", prompt);
         Assert.Contains("Turn: Third turn.", prompt);
         Assert.Contains("Ending: Third ending.", prompt);
-        Assert.Contains("Beats: " + string.Join("; ", LanternRoute().Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")), prompt);
+        Assert.Contains("Objectives: " + string.Join("; ", LanternRoute().Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")), prompt);
         Assert.Contains("- The beacon still runs, said aloud.", prompt);
         Assert.Contains("- (the Commander asked \"who pays?\") Nobody paid for it.", prompt);
         Assert.Contains("its stake is the belief that chapter left open", prompt);

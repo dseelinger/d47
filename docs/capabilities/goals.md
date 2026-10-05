@@ -136,7 +136,7 @@ nav_order: 145
 </section>
 <section>
 <h2><span class="num">5</span> Your current story is a goal too.</h2>
-<p class="body">The stock story you are running appears beside the others, with its clues given out of the story’s total and its stage and current beat as the note, for example “Bad Guys Close In, clue 11 of 18. Now: kill bonds for LTT 7786 Labour, 3 of 8”. The note says so when the story is paused or switched off, a finished story shows as done, and an abandoned one is not shown. You can set it aside like any other goal, but it cannot be written, put on the checklist or ticked: it is worked out from the story itself.</p>
+<p class="body">The stock story you are running appears beside the others, with its clues given out of the story’s total and its stage and current objective as the note, for example “Bad Guys Close In, clue 11 of 18. Now: kill bonds for LTT 7786 Labour, 3 of 8”. The note says so when the story is paused or switched off, a finished story shows as done, and an abandoned one is not shown. You can set it aside like any other goal, but it cannot be written, put on the checklist or ticked: it is worked out from the story itself.</p>
 </section>
 </div></div>
 </details>

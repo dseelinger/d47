@@ -411,7 +411,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             if (_surface.Stories?.IsRewriting(_surface.Commander()) == true)
             {
                 page.Children.Add(new AdventureThinking());
-                page.Children.Add(Muted("Writing a different beat…"));
+                page.Children.Add(Muted("Writing a different objective…"));
             }
 
             // What to do next, spelled out (asked for 2026-08-22).
@@ -497,7 +497,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             bar.Children.Add(Action("Not for me", () => StoriesView.NotForMe(
                 _surface,
                 _prompts,
-                () => _surface.Say("Writing a different beat…"),
+                () => _surface.Say("Writing a different objective…"),
                 refusal =>
                 {
                     if (refusal is not null)

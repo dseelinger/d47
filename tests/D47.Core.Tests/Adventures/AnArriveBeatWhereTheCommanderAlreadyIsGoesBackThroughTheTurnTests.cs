@@ -35,7 +35,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
 
         var retry = await RetryAfter(arriveHere);
 
-        Assert.Contains("Beat 1 (Home Ledger) arrives at Oppi, but the Commander is already there at that point;", retry);
+        Assert.Contains("Objective 1 (Home Ledger) arrives at Oppi, but the Commander is already there at that point;", retry);
         Assert.DoesNotContain("Beat 2 (The Anchorage)", retry.Split("cannot stand")[1]);
     }
 
@@ -52,7 +52,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
 
         var retry = await RetryAfter(landThenArrive);
 
-        Assert.Contains("Beat 2 (The Lantern) arrives at Ossen's Lantern, but the Commander is already there at that point;", retry);
+        Assert.Contains("Objective 2 (The Lantern) arrives at Ossen's Lantern, but the Commander is already there at that point;", retry);
         Assert.DoesNotContain("Beat 1 (The Consignee)", retry.Split("cannot stand")[1]);
     }
 

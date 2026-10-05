@@ -128,8 +128,8 @@ nav_order: 144
 <p class="body">Prose over a long session is the largest single request Directive 47 will ever make, so it never happens by itself: no schedule, no trigger, no callout starts one. Working out that price reads your journals here and sends nothing.</p>
 </section>
 <section>
-<h2><span class="num">5</span> Adventure and story beats are facts too.</h2>
-<p class="body">Each adventure beat you reach in the window becomes a fact of its own, sourced to the journal event that fired it, such as a <code>Docked</code> for a dock beat. A story chapter’s beat names the story and the chapter, for example “Reached "The Anchorage", chapter 3 of The Marker.” Nothing from a story’s hidden layer is ever put in the log.</p>
+<h2><span class="num">5</span> Adventure and story objectives are facts too.</h2>
+<p class="body">Each adventure objective you reach in the window becomes a fact of its own, sourced to the journal event that fired it, such as a <code>Docked</code> for a dock objective. A story chapter’s objective names the story and the chapter, for example “Reached "The Anchorage", chapter 3 of The Marker.” Nothing from a story’s hidden layer is ever put in the log.</p>
 </section>
 </div></div>
 </details>

@@ -128,12 +128,12 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
     {
         if (kind == TriggerKind.Rank)
         {
-            return Resolution.Refused($"{where} is a rank beat, which needs no place.");
+            return Resolution.Refused($"{where} is a rank objective, which needs no place.");
         }
 
         if (AdventureTrigger.IsCountedKind(kind))
         {
-            return Resolution.Refused($"{where} is a counted beat, which has no place of its own.");
+            return Resolution.Refused($"{where} is a counted objective, which has no place of its own.");
         }
 
         if (string.IsNullOrWhiteSpace(system))

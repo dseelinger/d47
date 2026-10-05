@@ -15,9 +15,9 @@ public static class AdventureContext
         "Adventure — a story the Commander agreed to hear, told by you. The places in it are real and "
         + "the people in it may not be, and nobody in it can be met, spoken to or watched: the game has "
         + "no act for that, and the only thing the Commander can do in the story is fly to the next "
-        + "beat. Speak from inside it between beats: wonder, foreshadow, apply pressure, notice where "
+        + "objective. Speak from inside it between objectives: wonder, foreshadow, apply pressure, notice where "
         + "the Commander is relative to it — but state no new fact about the story, and do not recite "
-        + "it. Asked what to do next, say where the next beat is in plain words and nothing beyond it. "
+        + "it. Asked what to do next, say where the next objective is in plain words and nothing beyond it. "
         + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
         + "say which is which.";
 
@@ -88,7 +88,7 @@ public static class AdventureContext
 
                 if (standing.LastBeat is { } last && standing.LastFiredAt is { } at)
                 {
-                    Line(block, $"Last beat, {last.Title}, {Ago(now - at)}", last.Line);
+                    Line(block, $"Last objective, {last.Title}, {Ago(now - at)}", last.Line);
                 }
             }
 

@@ -57,7 +57,7 @@ public sealed class ALongHaulNeedsTheCreditsTests
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Short, Story: Story(longHaul: false)), Now, CancellationToken.None);
 
-        Assert.Contains("Beat 2 (Where The Freight Went) is 21886 light years from the previous stop", outcome.Refusal);
+        Assert.Contains("Objective 2 (Where The Freight Went) is 21886 light years from the previous stop", outcome.Refusal);
         Assert.DoesNotContain("Colonia or Sagittarius", provider.Requests[0].Prompt.History[0].Text);
     }
 

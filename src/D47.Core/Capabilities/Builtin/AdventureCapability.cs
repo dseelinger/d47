@@ -48,7 +48,7 @@ public static class AdventureCapability
         Summary =
             "Stories the Commander flies, written by them or by the ship's AI, and advanced by "
             + "their own journal. Driven from the Stories tab; nothing here is callable by the "
-            + "model. The Commander can pause and resume a running story by voice, and refuse the beat it is waiting on.",
+            + "model. The Commander can pause and resume a running story by voice, and refuse the objective it is waiting on.",
 
         // The phrases that genuinely work.
         Examples =
@@ -59,7 +59,7 @@ public static class AdventureCapability
             "resume the story",
             "accept the ending",
             "choose ending two",
-            "this beat is not for me",
+            "this objective is not for me",
         ],
 
         // None.
@@ -114,7 +114,7 @@ public static class AdventureCapability
 
         Tools =
         [
-            Switch(PauseTool, "Pause the Commander's running story: no beats, nudges, clues or story chatter until it is resumed.", false, ["pause the story", "pause my story"], storySwitch),
+            Switch(PauseTool, "Pause the Commander's running story: no objectives, nudges, clues or story chatter until it is resumed.", false, ["pause the story", "pause my story"], storySwitch),
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
             Refuse(beatRefusal),
@@ -157,12 +157,14 @@ public static class AdventureCapability
     {
         Name = RefuseBeatTool,
         Description =
-            "Refuse the beat the Commander's story chapter is waiting on and write a different one in its place. The story remembers "
+            "Refuse the objective the Commander's story chapter is waiting on and write a different one in its place. The story remembers "
             + "the activity and does not ask for it again. The Commander's choice alone.",
         Commands =
         [
-            new ToolCommandPhrase("this beat is not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("this objective is not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
             new ToolCommandPhrase("not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("give me a different objective", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("this beat is not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
             new ToolCommandPhrase("give me a different beat", new Dictionary<string, string>(StringComparer.Ordinal)),
         ],
 
@@ -171,7 +173,7 @@ public static class AdventureCapability
         Handler = async (_, cancellationToken) =>
             await (beatRefusal?.Refuse(cancellationToken) ?? Task.FromResult<string?>(NoStory)).ConfigureAwait(false) is { } refusal
                 ? ToolResult.Error(refusal)
-                : ToolResult.Ok("That beat is replaced, and the story will not ask for it again."),
+                : ToolResult.Ok("That objective is replaced, and the story will not ask for it again."),
     };
 
     private static ToolDefinition Switch(string name, string description, bool on, string[] phrases, StorySwitch? storySwitch) => new()

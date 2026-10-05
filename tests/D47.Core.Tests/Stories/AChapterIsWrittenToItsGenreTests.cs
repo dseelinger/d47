@@ -20,7 +20,7 @@ public sealed class AChapterIsWrittenToItsGenreTests
         var brief = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("The story's genre is Buddy Love, and every chapter keeps its three elements in play: an incomplete hero, a counterpart, a complication.", brief);
-        Assert.Contains("A chapter may offer hiring a crew member (a \"crew\" beat) as part of it, but never requires it.", brief);
+        Assert.Contains("A chapter may offer hiring a crew member (a \"crew\" objective) as part of it, but never requires it.", brief);
     }
 
     [Fact]

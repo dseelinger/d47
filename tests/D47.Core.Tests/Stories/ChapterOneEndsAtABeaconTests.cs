@@ -43,7 +43,7 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
-        Assert.Contains($"its last beat is \"beacon\", the Commander scanning the Guardian beacon in {Beacon}", prompt);
+        Assert.Contains($"its last objective is \"beacon\", the Commander scanning the Guardian beacon in {Beacon}", prompt);
         Assert.Contains("chapter 1 of \"The Test Story\"", prompt);
         Assert.Contains(Card.InYourWords, prompt);
         Assert.Contains(Secret.Secret, prompt);
@@ -64,13 +64,13 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains($"The last beat must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", refusal);
+        Assert.Contains($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", refusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
         Assert.Empty(fixtures.Stories.Current("F1")!.Chapters);
         Assert.True(fixtures.Director.WriteFailed("F1"));
 
         // The refusal went back through the beats turn once before the Commander saw it.
-        Assert.Contains("The last beat must be", fixtures.Provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("The last objective must be", fixtures.Provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains("The last beat must be \"beacon\"", refusal);
+        Assert.Contains("The last objective must be \"beacon\"", refusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
 
@@ -97,7 +97,7 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains("Beat 1 (Too Soon) is a \"beacon\" beat; only the last beat of the chapter that ends act one may be one.", refusal);
+        Assert.Contains("Objective 1 (Too Soon) is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.", refusal);
         Assert.DoesNotContain("Beat 3", refusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
@@ -117,7 +117,7 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.WriteNextAsync("F1", Now.AddDays(1), CancellationToken.None);
 
-        Assert.Contains("Beat 2 (The Beacon Again) is a \"beacon\" beat", refusal);
+        Assert.Contains("Objective 2 (The Beacon Again) is a \"beacon\" objective", refusal);
         Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
         Assert.DoesNotContain("\"beacon\"", fixtures.Provider.Requests[2].Prompt.History[0].Text);
     }

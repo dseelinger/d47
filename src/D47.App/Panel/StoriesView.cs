@@ -292,7 +292,7 @@ public sealed class StoriesView : UserControl
     {
         if (surface.Stories is not { } director || director.RefusableBeat(surface.Commander()) is not { } beat)
         {
-            done("The story is not waiting on a beat.");
+            done("The story is not waiting on an objective.");
             return;
         }
 
@@ -302,7 +302,7 @@ public sealed class StoriesView : UserControl
             new ChoiceRequest(
                 "story.refuse",
                 "Not for me",
-                "Write a different beat?",
+                "Write a different objective?",
                 activity is null ? string.Empty : $"This story won't ask you to {activity} again.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("yes", "Write a different one")],
                 null,
@@ -317,8 +317,8 @@ public sealed class StoriesView : UserControl
                 if (!surface.ModelAvailable() || !surface.GalaxySearchOn())
                 {
                     done(!surface.ModelAvailable()
-                        ? "A different beat needs a language model to write it, and none is configured."
-                        : "A different beat needs galaxy search, so its places can be checked. It is off in Settings.");
+                        ? "A different objective needs a language model to write it, and none is configured."
+                        : "A different objective needs galaxy search, so its places can be checked. It is off in Settings.");
                     return;
                 }
 
@@ -349,7 +349,7 @@ public sealed class StoriesView : UserControl
             buttons.Children.Add(Act("Not for me", () => NotForMe(
                 _surface,
                 _prompts,
-                () => _status.Say("Writing a different beat…"),
+                () => _status.Say("Writing a different objective…"),
                 refusal =>
                 {
                     if (refusal is null)
@@ -419,7 +419,7 @@ public sealed class StoriesView : UserControl
 
         if (_director.IsRewriting(commander))
         {
-            return "Your story — writing a different beat…";
+            return "Your story — writing a different objective…";
         }
 
         if (_director.WriteFailed(commander))
@@ -429,7 +429,7 @@ public sealed class StoriesView : UserControl
 
         if (story.IsOff)
         {
-            return "Your story — switched off. No beats, nudges or clues until you switch it on.";
+            return "Your story — switched off. No objectives, nudges or clues until you switch it on.";
         }
 
         return story.State == StoryState.Paused

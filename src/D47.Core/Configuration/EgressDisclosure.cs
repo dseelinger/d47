@@ -688,7 +688,7 @@ public static class EgressDisclosure
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
             + " Asking for an adventure sends where you are, the ships you own and your ranks; asking for the next "
-            + "chapter of one also sends the adventure it follows — its spine, its beats and what was said as you flew it — "
+            + "chapter of one also sends the adventure it follows — its spine, its objectives and what was said as you flew it — "
             + "and the name and premise of each chapter before that. A chapter of a stock story also sends the story's "
             + "card. While a stock story runs, every line the model writes in character, and each chapter, also carries "
             + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows."

@@ -201,7 +201,7 @@ public sealed class MessagesView : UserControl
 
         if (messages.Count == 0)
         {
-            _list.Children.Add(AdventuresPage.Muted("No messages yet. Story beats arrive here as they are said."));
+            _list.Children.Add(AdventuresPage.Muted("No messages yet. Story objectives arrive here as they are said."));
             return;
         }
 

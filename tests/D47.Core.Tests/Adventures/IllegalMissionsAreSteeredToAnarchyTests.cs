@@ -42,7 +42,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("Beat 2 (The Job) is an illegal mission", outcome.Refusal);
+        Assert.Contains("Objective 2 (The Job) is an illegal mission", outcome.Refusal);
         Assert.Contains("Ossen's Lantern is not an Anarchy system", outcome.Refusal);
     }
 
@@ -64,7 +64,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("The beat before it is not one", outcome.Refusal);
+        Assert.Contains("The objective before it is not one", outcome.Refusal);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
         Assert.Contains("Anarchy systems within reach, from the galaxy search, nearest first:", brief);
         Assert.Contains("- Dyson's Hollow (5 ly)", brief);
         Assert.DoesNotContain("- Ossen's Lantern (5 ly)", brief);
-        Assert.Contains("directly after an \"arrive\" or \"dock\" beat in one of these systems", brief);
+        Assert.Contains("directly after an \"arrive\" or \"dock\" objective in one of these systems", brief);
         Assert.Contains("an Anarchy system can hold settlements owned by lawful factions", brief);
     }
 
@@ -93,7 +93,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.Contains("No Anarchy system is known within reach, so write no illegal mission beat", brief);
+        Assert.Contains("No Anarchy system is known within reach, so write no illegal mission objective", brief);
         Assert.DoesNotContain("Anarchy systems within reach, from the galaxy search", brief);
 
         // The rule is not checked, so the draft stands.

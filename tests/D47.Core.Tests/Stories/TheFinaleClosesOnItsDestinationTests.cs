@@ -29,7 +29,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
         var outcome = await Write(Ask(finale: 4, destination: EdgeMoon), beats, beats);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("The last beat must be \"land\" on Edge Moon 1 a in Edge Moon, where the finale ends.", outcome.Refusal);
+        Assert.Contains("The last objective must be \"land\" on Edge Moon 1 a in Edge Moon, where the finale ends.", outcome.Refusal);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
         Assert.True(landed.Succeeded, landed.Refusal);
         Assert.Equal(EdgeMoon, landed.Destination);
         Assert.False(refused.Succeeded);
-        Assert.Contains("The last beat must be \"land\" on Edge Moon 1 a in Edge Moon", refused.Refusal);
+        Assert.Contains("The last objective must be \"land\" on Edge Moon 1 a in Edge Moon", refused.Refusal);
     }
 
     [Fact]

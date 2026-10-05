@@ -402,7 +402,7 @@ public sealed class StoryDirector(
 
         if (!Claim(frontierId))
         {
-            return "A different beat is already being written.";
+            return "A different objective is already being written.";
         }
 
         return await RewriteAsync(frontierId, at, closedMarketId: null, cancellationToken).ConfigureAwait(false);
@@ -476,7 +476,7 @@ public sealed class StoryDirector(
         var refusal = await rewrite.ConfigureAwait(false);
         var said = refusal is null
             ? book.Standing(frontierId, key)?.CurrentBeat?.Trigger.HandOff()
-            : $"A different beat could not be written. {refusal}";
+            : $"A different objective could not be written. {refusal}";
 
         if (said is not null)
         {
@@ -528,7 +528,7 @@ public sealed class StoryDirector(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "{Adventure}: the replacement beat could not be written", adventure.Name);
-            return "The beat could not be written.";
+            return "The objective could not be written.";
         }
         finally
         {
@@ -565,11 +565,11 @@ public sealed class StoryDirector(
         else if (story.CurrentChapter is not { } key || book.Standing(frontierId, key) is not { Adventure.IsActive: true, IsDone: false } standing
                  || standing.CurrentBeat is not { } beat)
         {
-            refusal = "The story is not waiting on a beat.";
+            refusal = "The story is not waiting on an objective.";
         }
         else if (!standing.IsRefusable)
         {
-            refusal = "The Guardian beacon scan ends act one, so that beat cannot be swapped.";
+            refusal = "The Guardian beacon scan ends act one, so that objective cannot be swapped.";
         }
         else if (IsWriting(frontierId))
         {
@@ -609,7 +609,7 @@ public sealed class StoryDirector(
         catch (Exception ex)
         {
             logger.LogError(ex, "Writing a replacement beat failed");
-            return "The beat could not be written. Try again in a moment.";
+            return "The objective could not be written. Try again in a moment.";
         }
         finally
         {
@@ -683,7 +683,7 @@ public sealed class StoryDirector(
             || still.PickedAt != story.PickedAt
             || still.Chapters.Count != story.Chapters.Count)
         {
-            return "The story changed while the beat was being written.";
+            return "The story changed while the objective was being written.";
         }
 
         if (book.ReplaceBeats(frontierId, chapter.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)

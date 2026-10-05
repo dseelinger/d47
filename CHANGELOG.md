@@ -281,6 +281,8 @@ A system name that follows a station or body name, as in "dock at Wolff's Haven 
 
 A generated adventure or story chapter no longer has a beat that tells you to arrive at the system you are already in, whether you are there when the chapter starts or the beat before it took you there. Such a beat could not be completed until you jumped out and back or logged in again. d47 now has the language model write a different beat in its place.
 
+Stories and adventures now call each step the Commander flies to an objective, not a beat. The Stories, Adventures and Messages pages, the story tools and the Adventure objectives callout setting say so, and so does what d47 and its language model say about the story. "This objective is not for me" and "give me a different objective" refuse the current objective; "this beat is not for me" and "give me a different beat" still work. Saved adventures are unchanged.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

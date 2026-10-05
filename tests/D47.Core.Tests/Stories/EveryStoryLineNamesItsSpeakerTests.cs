@@ -222,7 +222,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
         var rewritePrompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
-        Assert.Contains("A line names its own speaker: \"Harrow\" in beat 1", rewritePrompt, StringComparison.Ordinal);
+        Assert.Contains("A line names its own speaker: \"Harrow\" in objective 1", rewritePrompt, StringComparison.Ordinal);
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
         Assert.Equal("I keep a quiet office.", chapter.Beats[0].Line);
     }

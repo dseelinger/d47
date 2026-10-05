@@ -130,12 +130,12 @@ public sealed class ARefusedBeatIsReplacedTests
 
         var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
-        Assert.Contains("The beats the Commander has already done:", prompt);
+        Assert.Contains("The objectives the Commander has already done:", prompt);
         Assert.Contains("1. The Lantern", prompt);
         Assert.Contains("3. Second Blood", prompt);
-        Assert.Contains("The beat the Commander refused: The Wing", prompt);
-        Assert.Contains("exactly 2 beats, which replace beat 4 to the end of the chapter", prompt);
-        Assert.Contains("refused these activities for this story, and no beat may ask for any of them: earn combat kill bonds", prompt);
+        Assert.Contains("The objective the Commander refused: The Wing", prompt);
+        Assert.Contains("exactly 2 objectives, which replace objective 4 to the end of the chapter", prompt);
+        Assert.Contains("refused these activities for this story, and no objective may ask for any of them: earn combat kill bonds", prompt);
     }
 
     [Fact]

@@ -74,7 +74,7 @@ public sealed record AdventureActivity(string Name, TriggerKind Kind, string? Mi
         && (MissionFamily is null || (family is not null && family.Trim().StartsWith(MissionFamily, StringComparison.OrdinalIgnoreCase)));
 
     /// <summary>The beat that matches, as the writer is told it.</summary>
-    public string Beat => MissionFamily is null ? $"a \"{Kind.ToString().ToLowerInvariant()}\" beat" : $"a \"mission\" beat whose family starts with {MissionFamily}";
+    public string Beat => MissionFamily is null ? $"a \"{Kind.ToString().ToLowerInvariant()}\" objective" : $"a \"mission\" objective whose family starts with {MissionFamily}";
 }
 
 /// <summary>
@@ -302,14 +302,14 @@ public sealed class AdventureGenerator(
     {
         if (beatsJson is null)
         {
-            return new AdventureOutcome(null, null, "The model did not write the beats. Try again in a moment.", notes);
+            return new AdventureOutcome(null, null, "The model did not write the objectives. Try again in a moment.", notes);
         }
 
         var read = ReadBeats(beatsJson);
 
         if (read is null || read.Beats.Count == 0)
         {
-            return new AdventureOutcome(null, null, "The model's beats were not something I could read. Try again.", notes);
+            return new AdventureOutcome(null, null, "The model's objectives were not something I could read. Try again.", notes);
         }
 
         var resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
@@ -318,7 +318,7 @@ public sealed class AdventureGenerator(
         // so the common case is that they never see a refusal at all.
         if (resolved.Refusals.Count > 0)
         {
-            notes.Add($"Rewrote {resolved.Refusals.Count} beat(s) the first draft could not stand on.");
+            notes.Add($"Rewrote {resolved.Refusals.Count} objective(s) the first draft could not stand on.");
 
             var again = await AskJsonAsync(
                 BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, exchange: null, remark: null),
@@ -398,7 +398,7 @@ public sealed class AdventureGenerator(
             Beats = [.. resolved.Beats.Select(beat => beat with { Lines = [.. beat.Lines.Select(line => line with { Speaker = Speaker(line.Speaker, story) })] })],
         };
         var selfNamed = SelfNaming(spoken.Beats, story)
-            .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in beat {found.Index + 1}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
+            .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in objective {found.Index + 1}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
                 + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\".");
 
         var firstPerson = NarratedFirstPerson(spoken.Beats, read, story, ask.Rewrite is null)
@@ -445,7 +445,7 @@ public sealed class AdventureGenerator(
         {
             if (beats[index].Lines.Any(line => Narrated(line.Speaker) && FirstPerson(line.Text)))
             {
-                yield return $"Beat {index + 1}";
+                yield return $"Objective {index + 1}";
             }
         }
     }
@@ -655,7 +655,7 @@ public sealed class AdventureGenerator(
 
         if (anarchy.Count == 0)
         {
-            text.AppendLine($"No Anarchy system is known within reach, so write no illegal mission beat: no family that is {illegal}.");
+            text.AppendLine($"No Anarchy system is known within reach, so write no illegal mission objective: no family that is {illegal}.");
             return;
         }
 
@@ -674,8 +674,8 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine(
-            $"A mission family is illegal when it is {illegal}; these are crimes against their target. A \"mission\" beat for an illegal family "
-            + "must come directly after an \"arrive\" or \"dock\" beat in one of these systems, and its line tells the Commander to take a mission "
+            $"A mission family is illegal when it is {illegal}; these are crimes against their target. A \"mission\" objective for an illegal family "
+            + "must come directly after an \"arrive\" or \"dock\" objective in one of these systems, and its line tells the Commander to take a mission "
             + "whose target settlement is run by an Anarchy faction or, for a ship mission, whose target is in an Anarchy system. "
             + "An Anarchy-run target reports no crime, but an Anarchy system can hold settlements owned by lawful factions, so the line asks "
             + "for the target to be checked and does not insist.");
@@ -856,7 +856,7 @@ public sealed class AdventureGenerator(
             "Answer with one JSON object and nothing else, with these string fields: \"name\" (the story's title, a few "
             + "words), \"premise\" (one paragraph), \"want\" (the outer goal — what the Commander is after in this story), "
             + "\"stake\" (the inner one — the belief the story tests and what it would cost to be wrong), \"turn\" (where "
-            + "it stops being what it looked like), \"ending\" (what the last beat means). Each under 600 characters.");
+            + "it stops being what it looked like), \"ending\" (what the last objective means). Each under 600 characters.");
 
         return text.ToString();
     }
@@ -907,7 +907,7 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Stake: {previous.Spine?.Stake}");
         text.AppendLine($"Turn: {previous.Spine?.Turn}");
         text.AppendLine($"Ending: {previous.Spine?.Ending}");
-        text.AppendLine("Beats: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
+        text.AppendLine("Objectives: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
 
         if (previous.Told.Count > 0)
         {
@@ -1010,7 +1010,7 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
-        text.AppendLine("Conflicts d47 has seen in systems the Commander has visited, which may have ended since (use them only for a \"conflict\" beat's faction):");
+        text.AppendLine("Conflicts d47 has seen in systems the Commander has visited, which may have ended since (use them only for a \"conflict\" objective's faction):");
 
         foreach (var line in seen)
         {
@@ -1085,7 +1085,7 @@ public sealed class AdventureGenerator(
             text.AppendLine(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
-                + "This chapter has no beacon beat and keeps every hop within the reach. It works toward a ship that can make "
+                + "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
                 + "the trip: credits, a better ship, a fuel scoop or a longer jump range.");
         }
 
@@ -1093,9 +1093,9 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine();
             text.AppendLine(
-                $"This chapter ends act one at a Guardian beacon: its last beat is \"beacon\", the Commander "
+                $"This chapter ends act one at a Guardian beacon: its last objective is \"beacon\", the Commander "
                 + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner. That scan is when the "
-                + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That beat may be farther "
+                + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That objective may be farther "
                 + "than the reach; every other hop keeps to it.");
         }
 
@@ -1115,7 +1115,7 @@ public sealed class AdventureGenerator(
             + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
             + "A cast member's line is that person's own words, in the first person, as they would say them: it never names them and "
             + "never describes them. Narration, including any line that describes a cast member, what they did or what they left behind, "
-            + "is given to \"narrator\". A beat's lines are spoken in the order given. Most beats have one line; give a beat a second "
+            + "is given to \"narrator\". An objective's lines are spoken in the order given. Most objectives have one line; give an objective a second "
             + "or third only where a cast member speaks and the scene also needs narrating.");
 
         if (story.CoreIsStock)
@@ -1154,9 +1154,9 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine(
-            "A beat may make one of these destinations part of the story, so the mission's trip is also the story's: an "
-            + "\"arrive\" beat in its system, or a \"dock\" beat at its station, within the reach like any other hop. Its line "
-            + "may tie the mission to the story but never changes it: no new cargo, target, reward or deadline. No beat asks "
+            "An objective may make one of these destinations part of the story, so the mission's trip is also the story's: an "
+            + "\"arrive\" objective in its system, or a \"dock\" objective at its station, within the reach like any other hop. Its line "
+            + "may tie the mission to the story but never changes it: no new cargo, target, reward or deadline. No objective asks "
             + "the Commander to complete, fail or abandon one of these missions. Using one is a choice, not a requirement.");
     }
 
@@ -1169,7 +1169,7 @@ public sealed class AdventureGenerator(
         }
 
         var last = finale >= story.FinaleChapters;
-        const string Landing = "That beat may be farther than the reach; every other hop keeps to it.";
+        const string Landing = "That objective may be farther than the reach; every other hop keeps to it.";
 
         if (finale == 1 && story.Destination is null)
         {
@@ -1181,7 +1181,7 @@ public sealed class AdventureGenerator(
                 + "place, given as \"destination\" with its \"system\" and \"body\". It may be far away, at most "
                 + $"{limit.ToString("0", CultureInfo.InvariantCulture)} light years from the Commander's position, and not in a system that needs a permit.");
             text.AppendLine(last
-                ? $"This chapter is the whole finale: its last beat is \"land\" on the destination. {Landing}"
+                ? $"This chapter is the whole finale: its last objective is \"land\" on the destination. {Landing}"
                 : "Every finale chapter keeps each hop within the reach, and the finale reaches the destination over its chapters.");
             return;
         }
@@ -1205,7 +1205,7 @@ public sealed class AdventureGenerator(
             _ => $"{left.ToString(CultureInfo.InvariantCulture)} finale chapters are left after this one.",
         });
         text.AppendLine(last
-            ? $"This is the last finale chapter: its last beat is \"land\" on {destination.Body} in {destination.System}. {Landing}"
+            ? $"This is the last finale chapter: its last objective is \"land\" on {destination.Body} in {destination.System}. {Landing}"
             : "When this chapter starts farther from the destination than the reach, its last stop must be closer to the destination than where it starts.");
     }
 
@@ -1223,7 +1223,7 @@ public sealed class AdventureGenerator(
             if (genre == "Buddy Love")
             {
                 text.AppendLine(
-                    "The partner exists only in the fiction. A chapter may offer hiring a crew member (a \"crew\" beat) as part of it, "
+                    "The partner exists only in the fiction. A chapter may offer hiring a crew member (a \"crew\" objective) as part of it, "
                     + "but never requires it.");
             }
         }
@@ -1242,7 +1242,7 @@ public sealed class AdventureGenerator(
         if (story.Chapter > 1)
         {
             text.AppendLine(
-                "From chapter two on, this is a story of activity, not only travel: no more than two of the chapter's beats may be "
+                "From chapter two on, this is a story of activity, not only travel: no more than two of the chapter's objectives may be "
                 + "\"arrive\", \"dock\", \"land\" or \"scan\". Any mission family that fits the story may be used.");
         }
 
@@ -1264,7 +1264,7 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine();
             text.AppendLine(
-                "The Commander has refused these activities for this story, and no beat may ask for any of them: "
+                "The Commander has refused these activities for this story, and no objective may ask for any of them: "
                 + string.Join("; ", refused.Select(RefusedActivities.Phrase)) + ".");
         }
     }
@@ -1295,23 +1295,23 @@ public sealed class AdventureGenerator(
                 (ask.Story is null ? "You wrote an adventure" : "You wrote a chapter of a story")
                 + " the Commander is flying, and they are partway through it. "
                 + (rewrite.ClosedMarketId is null
-                    ? "They have refused the beat they were on"
-                    : "The station the beat they were on docks at has its docks offline")
-                + ", so write new beats to take its place and the place of every beat after it. The beats already done stay "
+                    ? "They have refused the objective they were on"
+                    : "The station the objective they were on docks at has its docks offline")
+                + ", so write new objectives to take its place and the place of every objective after it. The objectives already done stay "
                 + "as they are.");
         }
         else if (draft is null)
         {
             text.AppendLine(
-                "You have written the spine of a story the Commander will fly. Now write its beats against that "
-                + "spine. A beat is a dramatic function anchored to a place: the Commander reaches the place in "
-                + "their ship, and you say the beat's line. The trigger is where the function lands on the galaxy.");
+                "You have written the spine of a story the Commander will fly. Now write its objectives against that "
+                + "spine. An objective is a dramatic function anchored to a place: the Commander reaches the place in "
+                + "their ship, and you say the objective's line. The trigger is where the function lands on the galaxy.");
         }
         else
         {
             text.AppendLine(
                 "You wrote a draft of a story the Commander will fly, and they are reasoning with you about it "
-                + "before agreeing to it. Revise the whole draft — spine and beats — in the light of their remark, "
+                + "before agreeing to it. Revise the whole draft — spine and objectives — in the light of their remark, "
                 + "keeping everything they did not object to.");
         }
 
@@ -1359,16 +1359,16 @@ public sealed class AdventureGenerator(
 
         text.AppendLine();
         text.AppendLine(rewrite is null
-            ? $"Structure: exactly {count} beats, in this order of function: {sheet}."
-            : $"Structure: exactly {count} beats, which replace beat {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
+            ? $"Structure: exactly {count} objectives, in this order of function: {sheet}."
+            : $"Structure: exactly {count} objectives, which replace objective {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
         var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
-        text.AppendLine($"Each beat waits for exactly one of {Number(29 + team.Count + (beacon is null ? 0 : 1))} things, and nothing else exists:");
+        text.AppendLine($"Each objective waits for exactly one of {Number(29 + team.Count + (beacon is null ? 0 : 1))} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
-        text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan beat comes before a land beat on the same body, never after it, and no body is scanned twice.");
+        text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine(ask.Story is null
             ? "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship."
@@ -1393,7 +1393,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.");
         text.AppendLine("- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any.");
         text.AppendLine("- \"rescue\": the Commander hands in \"count\" rescue items. \"filter\" is the item's name, or null for any.");
-        text.AppendLine("- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that beat fires at the next login after the stage is reached, not at the moment.");
+        text.AppendLine("- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that objective fires at the next login after the stage is reached, not at the moment.");
         text.AppendLine("- \"srv\": the Commander launches the SRV \"count\" times.");
         text.AppendLine("- \"crew\": the Commander hires \"count\" crew members.");
         text.AppendLine("- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.");
@@ -1403,23 +1403,23 @@ public sealed class AdventureGenerator(
             text.AppendLine(TeamLine(kind));
         }
 
-        text.AppendLine("- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive beat in the conflict's system just before it.");
+        text.AppendLine("- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.");
         text.AppendLine("- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".");
         AppendConflicts(text, facts.Standings);
-        text.AppendLine("No beat may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
-        text.AppendLine("Every kind from bounty on is counted, except engineer and those marked once, which are met once: only what happens after the beat before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock beat there just before it.");
+        text.AppendLine("No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
+        text.AppendLine("Every kind from bounty on is counted, except engineer and those marked once, which are met once: only what happens after the objective before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock objective there just before it.");
 
         if (beacon is not null)
         {
-            text.AppendLine($"- \"beacon\": the Commander scans the Guardian beacon in {beacon.System}. The last beat and no other; write its kind, title and line, and leave the place to d47.");
+            text.AppendLine($"- \"beacon\": the Commander scans the Guardian beacon in {beacon.System}. The last objective and no other; write its kind, title and line, and leave the place to d47.");
         }
 
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
-        text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier beats' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first beat; the last beat's line is the ending.");
+        text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first objective; the last objective's line is the ending.");
         text.AppendLine("Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral (\"That will hold.\", \"It will keep.\"). Do not repeat the spine's premise, want, stake, turn or ending as a line.");
-        text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next beat, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next beat's place, and the line may point them at it.");
-        text.AppendLine("Give each beat a short title — a chapter name, never a number.");
+        text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next objective, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next objective's place, and the line may point them at it.");
+        text.AppendLine("Give each objective a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;
 
         if (ask.Story is { } told)
@@ -1432,7 +1432,7 @@ public sealed class AdventureGenerator(
             if (previousBeats is { Count: > 0 })
             {
                 text.AppendLine();
-                text.AppendLine("Your previous draft of the beats:");
+                text.AppendLine("Your previous draft of the objectives:");
 
                 foreach (var (beat, index) in previousBeats.Select((beat, index) => (beat, index)))
                 {
@@ -1441,7 +1441,7 @@ public sealed class AdventureGenerator(
             }
 
             text.AppendLine();
-            text.AppendLine("Some of those beats cannot stand, for these reasons. Keep the beats that were not refused and rewrite the refused ones so that none of these remain:");
+            text.AppendLine("Some of those objectives cannot stand, for these reasons. Keep the objectives that were not refused and rewrite the refused ones so that none of these remain:");
 
             foreach (var refusal in previousRefusals)
             {
@@ -1524,7 +1524,7 @@ public sealed class AdventureGenerator(
 
         if (rewrite.From > 0)
         {
-            text.AppendLine("The beats the Commander has already done:");
+            text.AppendLine("The objectives the Commander has already done:");
 
             foreach (var (beat, index) in rewrite.Chapter.Beats.Take(rewrite.From).Select((beat, index) => (beat, index)))
             {
@@ -1533,27 +1533,27 @@ public sealed class AdventureGenerator(
         }
         else
         {
-            text.AppendLine("The Commander has not done a beat of this chapter yet.");
+            text.AppendLine("The Commander has not done an objective of this chapter yet.");
         }
 
         var refused = rewrite.Chapter.Beats[rewrite.From];
 
         if (rewrite.ClosedMarketId is null)
         {
-            text.AppendLine($"The beat the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
-            text.AppendLine("Write a different beat in its place, not the same thing to do and not the same place.");
+            text.AppendLine($"The objective the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
+            text.AppendLine("Write a different objective in its place, not the same thing to do and not the same place.");
         }
         else
         {
             var station = refused.Trigger.Station ?? "that station";
 
-            text.AppendLine($"The beat the Commander was on: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
+            text.AppendLine($"The objective the Commander was on: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
             text.AppendLine(
-                $"{station}'s docks are offline, so the Commander cannot dock there. Write a different beat in its place. It may dock "
-                + $"somewhere else, but no beat may name {station}.");
+                $"{station}'s docks are offline, so the Commander cannot dock there. Write a different objective in its place. It may dock "
+                + $"somewhere else, but no objective may name {station}.");
         }
 
-        text.AppendLine("Continue from the last beat done; do not restart or retell the chapter. It keeps its spine and its ending.");
+        text.AppendLine("Continue from the last objective done; do not restart or retell the chapter. It keeps its spine and its ending.");
     }
 
     /// <summary>A beat's lines as the model is shown them: each in quotes, after its speaker when one is named.</summary>
@@ -1821,7 +1821,7 @@ public sealed class AdventureGenerator(
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
-            var where = $"Beat {index + 1} ({beat.Title})";
+            var where = $"Objective {index + 1} ({beat.Title})";
             var stoodBefore = lastStood;
             lastStood = null;
             AdventureTrigger? trigger = null;
@@ -1835,7 +1835,7 @@ public sealed class AdventureGenerator(
                 }
                 else
                 {
-                    refusals.Add($"{where} is a \"beacon\" beat; only the last beat of the chapter that ends act one may be one.");
+                    refusals.Add($"{where} is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.");
                 }
             }
             else if (beat.Kind == TriggerKind.Engineer)
@@ -1883,11 +1883,11 @@ public sealed class AdventureGenerator(
             {
                 if (EliteSpecifications.HullSymbol(beat.Ship) is not { } symbol)
                 {
-                    refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; name a ship or use another kind of beat.");
+                    refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; name a ship or use another kind of objective.");
                 }
                 else if (ask.Story is null && !BriefNames(ask.Brief, symbol))
                 {
-                    refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of beat.");
+                    refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of objective.");
                 }
                 else if (ask.Story is not null && ChapterFit.BoardWhy(symbol, facts.Owns(symbol), facts.Credits) is { } why)
                 {
@@ -1906,7 +1906,7 @@ public sealed class AdventureGenerator(
                 if (career is null)
                 {
                     refusals.Add(beat.Career is null
-                        ? $"{where} is a rank beat but names no career; \"career\" must be one of {careers}."
+                        ? $"{where} is a rank objective but names no career; \"career\" must be one of {careers}."
                         : $"{where} names a career \"{beat.Career}\" that is not one of {careers}.");
                 }
                 else
@@ -1915,13 +1915,13 @@ public sealed class AdventureGenerator(
 
                     if (held >= RankStanding.Elite)
                     {
-                        refusals.Add($"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already Elite; make it another career or another kind of beat.");
+                        refusals.Add($"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already Elite; make it another career or another kind of objective.");
                     }
                     else if (beat.Rank is not { } rank || rank <= held || rank > RankStanding.Elite)
                     {
                         refusals.Add(
                             $"{where} asks for {Careers.Word(career)} rank {beat.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; the Commander holds {held}, "
-                            + $"so the beat must name {held + 1}{(held + 1 < RankStanding.Elite ? $" or {held + 2}" : string.Empty)}.");
+                            + $"so the objective must name {held + 1}{(held + 1 < RankStanding.Elite ? $" or {held + 2}" : string.Empty)}.");
                     }
                     else
                     {
@@ -1965,7 +1965,7 @@ public sealed class AdventureGenerator(
                     if (place.Kind == TriggerKind.Arrive && previousSystem is not null && string.Equals(previousSystem, place.System, StringComparison.OrdinalIgnoreCase))
                     {
                         // An arrive beat fires only on a jump into the system, so one where the Commander already is never fires.
-                        refusals.Add($"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan beat.");
+                        refusals.Add($"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan objective.");
                     }
                     else if (facts.NeedsPermit(place.System))
                     {
@@ -2009,7 +2009,7 @@ public sealed class AdventureGenerator(
 
         if (closing && (lastStood is not { Kind: TriggerKind.Land } landed || !AdventureValidation.SameBody(landed, destination!.Landing())))
         {
-            refusals.Add($"The last beat must be \"land\" on {destination!.Body} in {destination.System}, where the finale ends.");
+            refusals.Add($"The last objective must be \"land\" on {destination!.Body} in {destination.System}, where the finale ends.");
         }
 
         if (finale > 1 && !closing && destination is not null && facts.DestinationLightYears is { } start && start > facts.RadiusLightYears
@@ -2020,14 +2020,14 @@ public sealed class AdventureGenerator(
 
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
-            refusals.Add($"The last beat must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
+            refusals.Add($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
         }
 
         if (ask.Story is { Chapter: > 1 }
             && beats.Count(beat => IsTravel(beat.Kind)) + kept.Count(beat => IsTravel(beat.Trigger.Kind)) is var travel and > MostTravel)
         {
             refusals.Add(
-                $"The chapter has {travel} travel beats (arrive, dock, land or scan); from chapter two on, no more than {MostTravel} may be. "
+                $"The chapter has {travel} travel objectives (arrive, dock, land or scan); from chapter two on, no more than {MostTravel} may be. "
                 + "Make the others activities.");
         }
 
@@ -2042,14 +2042,14 @@ public sealed class AdventureGenerator(
         {
             if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is { } why)
             {
-                refusals.Add($"Beat {index + 1} ({beat.Title}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" beat, but {why}; use another kind of beat.");
+                refusals.Add($"Objective {index + 1} ({beat.Title}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" objective, but {why}; use another kind of objective.");
             }
 
             if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily))
             {
                 refusals.Add(
-                    $"Beat {index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
-                    + "which they refused for this story; use another kind of beat.");
+                    $"Objective {index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
+                    + "which they refused for this story; use another kind of objective.");
             }
         }
 
@@ -2134,11 +2134,11 @@ public sealed class AdventureGenerator(
     private static async Task<string?> IllegalOutsideAnarchyAsync(
         string where, AdventureTrigger? before, AdventureResolver resolver, CancellationToken cancellationToken)
     {
-        var rule = $"{where} is an illegal mission, which has to come directly after an arrive or dock beat in an Anarchy system.";
+        var rule = $"{where} is an illegal mission, which has to come directly after an arrive or dock objective in an Anarchy system.";
 
         if (before is not { Kind: TriggerKind.Arrive or TriggerKind.Dock, System: { } system })
         {
-            return $"{rule} The beat before it is not one.";
+            return $"{rule} The objective before it is not one.";
         }
 
         try

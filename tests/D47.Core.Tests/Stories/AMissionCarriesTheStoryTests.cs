@@ -140,7 +140,7 @@ public sealed class AMissionCarriesTheStoryTests
         var prompt = provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("The missions the Commander holds now:\n- Courier 7 for Ossen Union, to Maren Anchorage, Dyson's Hollow", prompt.ReplaceLineEndings("\n"));
-        Assert.Contains("an \"arrive\" beat in its system, or a \"dock\" beat at its station", prompt);
+        Assert.Contains("an \"arrive\" objective in its system, or a \"dock\" objective at its station", prompt);
     }
 
     private static CalloutContext Lull(DateTimeOffset now, CommanderGameState state) =>

@@ -27,19 +27,19 @@ nav_order: 115
  <text x="44" y="57" font-size="17" fill="var(--text)">tell me a story about this system</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press Stories in the tab strip and pick one there.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Either way you get a first beat, and the story waits for you.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Either way you get a first objective, and the story waits for you.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Fly. The next beat arrives when your journal earns it.</h2>
-<svg viewBox="0 0 880 168" role="img" aria-label="A jump or a docking in the journal moves the story to its next beat">
+<h2><span class="num">2</span> Fly. The next objective arrives when your journal earns it.</h2>
+<svg viewBox="0 0 880 168" role="img" aria-label="A jump or a docking in the journal moves the story to its next objective">
  <rect x="20" y="24" width="250" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">YOU JUMP</text>
  <text x="145" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">or dock, or scan</text>
  <line x1="282" y1="60" x2="306" y2="60" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="320,60 304,52 304,68" fill="var(--accent-muted)"/>
  <rect x="334" y="24" width="526" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="597" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE NEXT BEAT IS SPOKEN</text>
+ <text x="597" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE NEXT OBJECTIVE IS SPOKEN</text>
  <text x="597" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your ship AI's own voice</text>
  <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Say "where am I up to" to hear the story so far.</text>
 </svg>
@@ -66,7 +66,7 @@ nav_order: 115
 <p class="intro">A story you fly, told by the ship's AI, moved along by your own journal.</p>
 <section>
 <h2><span class="num">1</span> A story, not a list of stops.</h2>
-<svg viewBox="0 0 880 300" role="img" aria-label="A spine of premise, want, stake, turn and ending, with beats hung on real places">
+<svg viewBox="0 0 880 300" role="img" aria-label="A spine of premise, want, stake, turn and ending, with objectives hung on real places">
  <rect x="20" y="20" width="360" height="216" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="52" y="58" font-size="19" font-weight="800" fill="var(--accent)">THE SPINE</text>
  <text x="52" y="96" font-size="16" fill="var(--text)">what it is about</text>
@@ -77,18 +77,18 @@ nav_order: 115
  <line x1="398" y1="128" x2="428" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="442,128 426,120 426,136" fill="var(--accent-muted)"/>
  <rect x="458" y="20" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="484" y="56" font-size="16" fill="var(--text)">a beat, standing on a real place</text>
+ <text x="484" y="56" font-size="16" fill="var(--text)">an objective, standing on a real place</text>
  <rect x="458" y="92" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="484" y="128" font-size="16" fill="var(--text)">a beat, standing on a real place</text>
+ <text x="484" y="128" font-size="16" fill="var(--text)">an objective, standing on a real place</text>
  <rect x="458" y="164" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="484" y="200" font-size="16" fill="var(--text)">a beat, standing on a real place</text>
+ <text x="484" y="200" font-size="16" fill="var(--text)">an objective, standing on a real place</text>
  <text x="440" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">The shape is written first. The places are where that shape can stand.</text>
  <text x="440" y="294" text-anchor="middle" font-size="16" fill="var(--text-muted)">Which is why D47 is never asked for five stops — it is asked for a story.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Your journal moves it. There is nothing to tick.</h2>
-<svg viewBox="0 0 880 268" role="img" aria-label="A beat fires when you reach its place, and nothing before you began counts">
+<svg viewBox="0 0 880 268" role="img" aria-label="An objective fires when you reach its place, and nothing before you began counts">
  <rect x="20" y="30" width="250" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU BEGIN IT</text>
  <text x="145" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">the clock starts here</text>
@@ -103,7 +103,7 @@ nav_order: 115
  <text x="754" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">IT SPEAKS</text>
  <text x="754" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">and says where next</text>
  <rect x="20" y="148" width="840" height="60" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="185" text-anchor="middle" font-size="16" fill="var(--text)">Nothing you did before you began counts, and only the current beat can fire.</text>
+ <text x="440" y="185" text-anchor="middle" font-size="16" fill="var(--text)">Nothing you did before you began counts, and only the current objective can fire.</text>
  <text x="440" y="242" text-anchor="middle" font-size="16" fill="var(--text-muted)">Fly with D47 closed and it catches up when you start it. Wander off and the story waits —</text>
  <text x="440" y="264" text-anchor="middle" font-size="16" fill="var(--text-muted)">going somewhere else is what a sandbox is for.</text>
 </svg>
@@ -119,10 +119,10 @@ nav_order: 115
  <text x="824" y="136" text-anchor="end" font-size="16" fill="var(--text)">the turn, and what the ending meant</text>
  <rect x="20" y="172" width="840" height="62" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="56" y="210" font-size="18" font-weight="700" fill="var(--danger)">never</text>
- <text x="824" y="210" text-anchor="end" font-size="16" fill="var(--text)">the beats ahead of you</text>
+ <text x="824" y="210" text-anchor="end" font-size="16" fill="var(--text)">the objectives ahead of you</text>
  <text x="440" y="268" text-anchor="middle" font-size="16" fill="var(--text-muted)">A storyteller who knows the ending leaks it. So the AI is simply never told what is coming.</text>
 </svg>
-<p class="body">Foreshadowing still happens — it is written <em>into</em> the earlier beats, by the turn that did know the ending. Between beats the ship's AI wonders aloud in character and never states a new fact about the story, so nothing it says on a quiet stretch can contradict a beat you have not reached.</p>
+<p class="body">Foreshadowing still happens — it is written <em>into</em> the earlier objectives, by the turn that did know the ending. Between objectives the ship's AI wonders aloud in character and never states a new fact about the story, so nothing it says on a quiet stretch can contradict an objective you have not reached.</p>
 </section>
 </div></div>
 </details>
@@ -142,7 +142,7 @@ nav_order: 115
 
 An adventure is a story: someone wants something, there is a belief the events exist to test, a
 turn where it stops being what it looked like, and an ending that means something. It is told by
-the ship's AI, anchored to the galaxy by beats, accepted by you, and advanced by your own journal.
+the ship's AI, anchored to the galaxy by objectives, accepted by you, and advanced by your own journal.
 
 The drive behind it is to add story to a sandbox, which sandboxes deeply lack. It is deliberately
 **not** a checklist of things to complete.
@@ -150,7 +150,7 @@ The drive behind it is to add story to a sandbox, which sandboxes deeply lack. I
 ### Two ways to have one
 
 **Write an adventure** — the editor is a level of the Stories tab. A name, an opening, then the
-five spine questions in order, each skippable. Then the beats: what happens, where, and the line.
+five spine questions in order, each skippable. Then the objectives: what happens, where, and the line.
 Every field is a chooser except the prose, so the form cannot compose something the file would
 refuse.
 
@@ -160,7 +160,7 @@ choosers, each with a default, so pressing *Go* on an untouched form is a comple
 - **Reach** — how far the story may go: *near here*, *a session's flying*, *anywhere*. Turned into
   light years by what you can actually move — your ship's jump range, or your carrier's if you have
   one.
-- **Length** — which structure. *Short* is three beats, setup and turn and resolution. *An evening*
+- **Length** — which structure. *Short* is three objectives, setup and turn and resolution. *An evening*
   is five. *Long* is eight or more. The count follows from the structure rather than the other way
   round.
 - **Using** — *this ship only*, or *anything I own*. Shown only when you have a choice.
@@ -172,12 +172,12 @@ ships: your fleet and what each hull can do, whether you have a carrier and wher
 are, who is aboard, and your ranks.
 
 **Write the next chapter** — on a finished adventure's page, the same form for the story that
-follows it. The AI reads the finished one in full — its spine, its beats and what was said as you
+follows it. The AI reads the finished one in full — its spine, its objectives and what was said as you
 flew it — and each chapter before that by name and premise only. The new story's want follows from
 how the last one turned and ended, and its stake is the belief the last one left open. The draft
 card says which adventure it follows, and it is accepted, flown and checked like any other.
 
-### What a beat can be
+### What an objective can be
 
 Thirty-four triggers, and every one is a comparison on a structured field rather than on a name:
 
@@ -220,21 +220,21 @@ Thirty-four triggers, and every one is a comparison on a structured field rather
 | Take part in a conflict | a `FactionKillBond` whose `AwardingFaction` is one side of an active or pending war or civil war in the system the Commander is in; or a `MissionCompleted` for one side of an active election whose `FactionEffects` mark influence in the election's system. Optionally one `WarType` (`war`, `civilwar` or `election`) and one side | anything else |
 | Work for a faction | `+` marks in the `FactionEffects` of a `MissionCompleted` for one faction, optionally in one `SystemAddress`; `++++` counts as four | anything else |
 
-Only a stock story's chapter one uses the beacon trigger, as its last beat, and you cannot add one on the
+Only a stock story's chapter one uses the beacon trigger, as its last objective, and you cannot add one on the
 form.
 
-Every trigger after the seventh is counted except the engineer stage, which fires once. A counted beat fires when its total reaches its count, and only what happens
-after the beat before it has fired counts. It has no place of its own; a chapter that needs it done
-somewhere puts an arrive or dock beat there first. The card shows the running total, such as "Kill bonds
+Every trigger after the seventh is counted except the engineer stage, which fires once. A counted objective fires when its total reaches its count, and only what happens
+after the objective before it has fired counts. It has no place of its own; a chapter that needs it done
+somewhere puts an arrive or dock objective there first. The card shows the running total, such as "Kill bonds
 for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These
-mission families are set aside, and no beat uses or counts them: `Mission_Massacre_Skimmer`,
+mission families are set aside, and no objective uses or counts them: `Mission_Massacre_Skimmer`,
 `Mission_Disable`, `Mission_Hack`, `Mission_OnFoot_Hack`, `Mission_Scan`, `Mission_RS_` and `Mission_DS_`.
-A story steers illegal missions to Anarchy space but does not enforce it. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The chapter writer is given up to five Anarchy systems within reach and must put an illegal mission beat directly after an arrive or dock beat in one of them, or use no illegal family when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission beat is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
-A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is written, so the beat may fire some minutes after the change. A suit, weapon or ship with no earlier loadout is only remembered: its first loadout counts nothing. A livery beat names no paint job, kit or decal. The first `CarrierLocation` seen for a carrier sets the baseline and counts nothing; a squadron carrier's is ignored. No beat may need an ARX purchase, because the journal cannot show one; the chapter writer is told so.
+A story steers illegal missions to Anarchy space but does not enforce it. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The chapter writer is given up to five Anarchy systems within reach and must put an illegal mission objective directly after an arrive or dock objective in one of them, or use no illegal family when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission objective is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
+A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is written, so the objective may fire some minutes after the change. A suit, weapon or ship with no earlier loadout is only remembered: its first loadout counts nothing. A livery objective names no paint job, kit or decal. The first `CarrierLocation` seen for a carrier sets the baseline and counts nothing; a squadron carrier's is ignored. No objective may need an ARX purchase, because the journal cannot show one; the chapter writer is told so.
 
-**Conflict and faction beats.** A conflict beat counts taking part, not winning: a conflict lasts days and other players move it. The side is the faction the first counted contribution went to, and contributions to the other side do not count. A bond in a system with no active or pending conflict does not count. d47 reads the conflicts from the `Conflicts` of `FSDJump`, `Location` and `CarrierJump`, as they stood when the Commander last arrived, so a war that began after that arrival is not seen until the next one. When a later arrival shows the conflict ended (an empty `Status`), the standing records whether the side with more `WonDays` was the Commander's, and the next chapter's brief says so. For a faction beat, the next chapter's brief says whether the faction's influence rose or fell between two visits a day apart. The writer is told both kinds and up to eight active or pending conflicts in systems the Commander has visited; a conflict beat may name no faction and leave the Commander to find one. A faction beat counts mission marks only; trade, data sales and bounties do not count as faction work.
+**Conflict and faction objectives.** A conflict objective counts taking part, not winning: a conflict lasts days and other players move it. The side is the faction the first counted contribution went to, and contributions to the other side do not count. A bond in a system with no active or pending conflict does not count. d47 reads the conflicts from the `Conflicts` of `FSDJump`, `Location` and `CarrierJump`, as they stood when the Commander last arrived, so a war that began after that arrival is not seen until the next one. When a later arrival shows the conflict ended (an empty `Status`), the standing records whether the side with more `WonDays` was the Commander's, and the next chapter's brief says so. For a faction objective, the next chapter's brief says whether the faction's influence rose or fell between two visits a day apart. The writer is told both kinds and up to eight active or pending conflicts in systems the Commander has visited; a conflict objective may name no faction and leave the Commander to find one. A faction objective counts mission marks only; trade, data sales and bounties do not count as faction work.
 
-**Carrier, squadron and team beats.** The chapter writer is told about a kind only where the Commander can do it, and a chapter that contains one it was not told about is refused:
+**Carrier, squadron and team objectives.** The chapter writer is told about a kind only where the Commander can do it, and a chapter that contains one it was not told about is refused:
 
 | Kind | Allowed when |
 |---|---|
@@ -244,8 +244,8 @@ A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is 
 | `squadron` (once) | not in a squadron |
 | `squadronfound` (once) | 20,000,000 credits at the last load: the 10,000,000 it costs and a reserve of the same; and not in a squadron |
 
-A Commander is in a squadron from a `SquadronStartup`, `JoinedSquadron` or `SquadronCreated` until a `LeftSquadron`, `KickedFromSquadron` or `DisbandedSquadron`, or until the next `LoadGame` without a `SquadronStartup`. A wing or multicrew beat needs another player, so the writer is told the Commander can refuse it, and neither is ever the comfort-zone activity.
-The form offers the first six kinds and shows any other beat without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer beat at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer. An on-foot engineer is written only in that startup list, so an engineer beat naming one fires at the first login after the stage is reached, not at the moment.
+A Commander is in a squadron from a `SquadronStartup`, `JoinedSquadron` or `SquadronCreated` until a `LeftSquadron`, `KickedFromSquadron` or `DisbandedSquadron`, or until the next `LoadGame` without a `SquadronStartup`. A wing or multicrew objective needs another player, so the writer is told the Commander can refuse it, and neither is ever the comfort-zone activity.
+The form offers the first six kinds and shows any other objective without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer objective at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer. An on-foot engineer is written only in that startup list, so an engineer objective naming one fires at the first login after the stage is reached, not at the moment.
 
 Nothing a stranger can choose — a ship name, an in-game message, a mission title — can be a
 trigger. That is the safety property stated as a type rather than as a promise.
@@ -261,38 +261,38 @@ offered it, and a miss refuses the whole draft by name.
 never sends you to a permit-locked system such as Shinrarta Dezhra or Sol, unless you are already in it.
 
 **Invented people are told about, never met.** The game has no act for meeting anyone, and the only
-thing you can actually do in a story is fly to the next beat. Ask the core whether one of them was
+thing you can actually do in a story is fly to the next objective. Ask the core whether one of them was
 real and it says they are someone in the story.
 
 ### Where you are in it, and what it says
 
-A beat speaks when it fires, and hands over to the next one in the same breath:
+An objective speaks when it fires, and hands over to the next one in the same breath:
 
 ```text
 The log's last entry is dated the day the beacon went quiet.
 Next: dock at Maren Anchorage in Dyson's Hollow.
 ```
 
-The hand-off names the place and the act and nothing else — never the next beat's title or its
+The hand-off names the place and the act and nothing else — never the next objective's title or its
 line, which is the spoiler rule holding. A scan's hand-off says *how*, because "scan X" sent a
 Commander looking for a detailed surface scanner when the ship's own scanner was what the story
 meant. It also says that going there counts: a body already scanned writes no second `Scan`, so a
-scan beat is satisfied by the approach as well, and a story cannot strand a Commander on somewhere
+scan objective is satisfied by the approach as well, and a story cannot strand a Commander on somewhere
 they had already been.
 
 **No counts where you read.** The card says the story's name and where it is — *not yet begun*, the
-current beat's title, or *finished*. *Beat 3 of 7* is checklist language and stays off the card.
+current objective's title, or *finished*. *Objective 3 of 7* is checklist language and stays off the card.
 
 ### Stopping, and starting again
 
-**Abandon** a begun adventure and it stops telling you: no beat fires, the AI drops it from what it
-knows, and a beat waiting out its settle window is discarded. The record stays, folded away at the
+**Abandon** a begun adventure and it stops telling you: no objective fires, the AI drops it from what it
+knows, and an objective waiting out its settle window is discarded. The record stays, folded away at the
 foot of the list with what it reached. **Begin again** on an abandoned one starts from the opening
 with a fresh stamp — nothing that happened in the gap counts, because a start is a start.
 
 Abandoning is also how a begun adventure gets edited: abandon it, change it, begin again.
 
-**Remove** deletes the record. For a begun one it asks first, because an adventure three beats in
+**Remove** deletes the record. For a begun one it asks first, because an adventure three objectives in
 is work you did.
 
 Both are yours alone, reachable from the panel and nowhere else.
@@ -308,7 +308,7 @@ It also costs nothing: none of this is on the advertised tool surface.
 
 ### Messages
 
-Every beat said is also kept as a written message, from whoever said it, so a line said during a fight
+Every objective said is also kept as a written message, from whoever said it, so a line said during a fight
 is not lost. Open **Messages** on the Stories tab: newest first, unread in bold, and the button carries the
 unread count. Opening a message marks it read. A message that was spoken has a **Play** button that
 plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
@@ -316,15 +316,15 @@ plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
 message goes first.
 
-Abandoning a story, or switching to another, removes the messages it posted: its beats, nudges, clues,
+Abandoning a story, or switching to another, removes the messages it posted: its objectives, nudges, clues,
 beacon scan and ending. A finished story keeps them. The messages of an adventure you wrote yourself stay
 when you abandon it.
 
 ### A nudge when a story stalls
 
-When the next beat has waited through three play sessions and seven days since the last beat or nudge,
-the Narrator's next narration leans toward it. It may hint at where the beat waits; it never quotes the
-beat's line. It is posted to Messages from the narrator, and each adventure is nudged at most once each
+When the next objective has waited through three play sessions and seven days since the last objective or nudge,
+the Narrator's next narration leans toward it. It may hint at where the objective waits; it never quotes the
+objective's line. It is posted to Messages from the narrator, and each adventure is nudged at most once each
 time D47 runs.
 
 ### Stock stories
@@ -362,7 +362,7 @@ begins. Act one ends when you scan the Guardian beacon nearest to you with the s
 scanner; arriving in the beacon's system is not enough. Before each act-one chapter D47 checks whether
 the ship you are in can reach that beacon: it can when you own a fleet carrier, or when the beacon is at
 most 20 jumps away at the ship's maximum jump range and a fuel scoop is fitted. When it can, the
-chapter ends at the beacon. When it cannot, the chapter has no beacon beat, keeps to a session's
+chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
 distance, and whether the jump range, the missing fuel scoop or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is an adventure on this tab. When one finishes, the next is written from it
@@ -371,7 +371,7 @@ and begins. **Switch** abandons the running story and picks another.
 A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
 **Pick**, the scan is narrated in the words the story was written with, posted to Messages from its
 speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
-chapter one begins in act one with no beacon beat. The story's days count from the pick. A story of 1
+chapter one begins in act one with no beacon objective. The story's days count from the pick. A story of 1
 month or longer keeps the real scan.
 **Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
 pauses the story, and **Resume** on the Stories page begins that chapter again.
@@ -463,7 +463,7 @@ public string? For(StorySpeakerShown? speaker) =>
 ### Who speaks a story line {#story-speakers}
 
 Every line of a stock story names its speaker: each clue and finale line, the narrated beacon scan, and in
-each chapter the opening and every beat's line. The chapter writer is told the speakers, with each cast
+each chapter the opening and every objective's line. The chapter writer is told the speakers, with each cast
 member's name and who they are, and returns a speaker for every line it writes. A chapter that gives a
 line to anyone else is sent back once with the reason, and refused if it comes back the same way.
 
@@ -480,7 +480,7 @@ line to anyone else is sent back once with the reason, and refused if it comes b
   writes a cast member's clue as that member, from their name and who they are.
 
 Each line is posted to Messages from its speaker's name, with the speaker's picture and the clip it was
-spoken in. When a chapter's beat belongs to the narrator or a cast member, that speaker says the beat's line
+spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line
 as written and the ship then says where you go next. A line may open with a sound such as
 `[static crackle]`: a voice that performs sounds performs it, and every other voice has it taken out.
 
@@ -552,14 +552,14 @@ later chapter have you buy and board it. A chapter is sized to finish in one to 
 in one session in a story shorter than three months. A longer undertaking, such as engineering, saving
 for a ship or a run of ranks, carries on across chapters.
 
-**Activity, not only travel.** From chapter two on, no more than two of a chapter's beats may be arrive,
+**Activity, not only travel.** From chapter two on, no more than two of a chapter's objectives may be arrive,
 dock, land or scan. A chapter with more is refused.
 
 **The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
 may go anywhere, as far as Colonia or Sagittarius A*. Below that, the writer is not told it exists.
 
-**A credit reserve.** A chapter never spends the Commander to nothing. A story beat that buys something,
+**A credit reserve.** A chapter never spends the Commander to nothing. A story objective that buys something,
 which is a `board` into a hull they do not own, `carrierbuy` or `squadronfound`, is allowed only when the
 credits at the last load cover the price plus a reserve: the price again or 500,000,000, whichever is less.
 Where a fixed threshold above is higher, it applies. A hull already owned is allowed at any balance, and a
@@ -571,18 +571,18 @@ chapters.
 goes: a farther place is reached over several hops.
 
 **The finale's destination.** Finale chapter 1 names where the story ends: a landable body in a real
-system, resolved as a land beat's place is, with no permit needed. It may be at most five hops at the
+system, resolved as a land objective's place is, with no permit needed. It may be at most five hops at the
 chapter's reach from you for each finale chapter after the first, and at least five: with a reach of 360
 light years, 1,800 light years in a story with two finale chapters and 5,400 in one with four. A finale
 chapter 1 with no destination, or one that does not stand, is refused. The destination is kept on the
 story. Each later finale chapter's writer is told the destination, how far it is from you and how many
 finale chapters are left. A finale chapter between the first and the last that starts more than one
-reach from the destination must end closer to it than it started. The last finale chapter's last beat
-is a land beat on the destination, and that one beat may be farther than the reach. A 3-day story's one
+reach from the destination must end closer to it than it started. The last finale chapter's last objective
+is a land objective on the destination, and that one objective may be farther than the reach. A 3-day story's one
 finale chapter both names the destination and lands on it.
 
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
-`Statistics` show you have done least, and the chapter must contain one beat of it:
+`Statistics` show you have done least, and the chapter must contain one objective of it:
 
 | Activity | Figure |
 | --- | --- |
@@ -596,21 +596,21 @@ finale chapter both names the destination and lands on it.
 A tie goes to the earlier row. Before d47 has seen a `Statistics` event, no activity is picked. An
 activity you have refused in the story is never picked.
 
-### Refusing a beat
+### Refusing an objective
 
-A story chapter's current beat has a **Not for me** button, on the chapter's page and on the Stories
-page, and a voice command: "this beat is not for me", "not for me" or "give me a different beat". The
-button asks "Write a different beat?" and, for a beat that asks for an activity, "This story won't ask
-you to collect bounties again." (or whichever activity it is). On yes the ship's AI writes new beats from
-the current one to the end of the chapter. Beats already done stay as they were, the chapter count and the
-clues do not change, and the new beats count only what happens after you refused. A replacement arrive
-beat for a system you had already visited waits for your next arrival there. If the write fails, the beat
+A story chapter's current objective has a **Not for me** button, on the chapter's page and on the Stories
+page, and a voice command: "this objective is not for me", "not for me" or "give me a different objective". The
+button asks "Write a different objective?" and, for an objective that asks for an activity, "This story won't ask
+you to collect bounties again." (or whichever activity it is). On yes the ship's AI writes new objectives from
+the current one to the end of the chapter. Objectives already done stay as they were, the chapter count and the
+clues do not change, and the new objectives count only what happens after you refused. A replacement arrive
+objective for a system you had already visited waits for your next arrival there. If the write fails, the objective
 stays as it was and the Stories page says why.
 
-The activity is remembered for the rest of the story. A refusal is kept under the beat's kind, and for a
-mission under the kind and the mission family, so refusing a `Mission_Massacre` beat still allows a
+The activity is remembered for the rest of the story. A refusal is kept under the objective's kind, and for a
+mission under the kind and the mission family, so refusing a `Mission_Massacre` objective still allows a
 `Mission_Courier` one. Every later chapter's writer is told which activities are refused, and a chapter
-with a beat for one is refused and rewritten. The Stories page lists them. A beat that names a place
+with an objective for one is refused and rewritten. The Stories page lists them. An objective that names a place
 (arrive, dock, land, scan, board, rank) is replaced and not remembered. The Guardian beacon scan that
 ends act one cannot be refused. A refusal cannot be taken back.
 
@@ -618,7 +618,7 @@ The model is refused this tool.
 
 #### `refuse_story_beat`
 
-Refuse the beat the Commander's story chapter is waiting on and write a different one in its place. The story remembers the activity and does not ask for it again. The Commander's choice alone.
+Refuse the objective the Commander's story chapter is waiting on and write a different one in its place. The story remembers the activity and does not ask for it again. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -627,12 +627,12 @@ Refuse the beat the Commander's story chapter is waiting on and write a differen
 ### Pausing the story
 
 Clear **Story on**, on the Stories page or on the mini panel, or say "pause the story", and the
-running stock story goes quiet until you switch it on again. While it is off no beat is said, no
+running stock story goes quiet until you switch it on again. While it is off no objective is said, no
 nudge or clue is owed, nothing from the story is posted to Messages, missions get no story aside, and the
 hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
 Narration and chatter work as they always do, and your Backstory, cores and persona are unchanged.
 
-A place you visit while the story is off does not count. Its beat waits for the next visit. The
+A place you visit while the story is off does not count. Its objective waits for the next visit. The
 switch is kept in `data/story.json`, so it lasts across restarts. Say "resume the story" or tick
 **Story on** to bring it back.
 
@@ -640,7 +640,7 @@ Both phrases are the model-free router's, and the model is refused them.
 
 #### `pause_story`
 
-Pause the Commander's running story: no beats, nudges, clues or story chatter until it is resumed.
+Pause the Commander's running story: no objectives, nudges, clues or story chatter until it is resumed.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -680,7 +680,7 @@ Each story card has one of seven lengths, and the story is paced to it. Every st
 year long. The days count from the beacon scan, or from the pick where the scan is narrated; days while the story is paused, switched off or without
 Odyssey do not count.
 
-| Length | Clues come due on day | Finale from day | Finale chapters | Clues in all | Beat sheet |
+| Length | Clues come due on day | Finale from day | Finale chapters | Clues in all | Objective sheet |
 | --- | --- | --- | --- | --- | --- |
 | 3 days | 1 | 2 | 1 | 2 | short |
 | 1 week | 1, 3 | 5 | 2 | 4 | short |
@@ -707,11 +707,11 @@ and for chapter one after a narrated scan, and Break into Two with no clue yet; 
 | 6 months | 1–4 | 5 | 6 | 7 | 8 |
 | 1 year | 1–8 | 9 | 10–12 | 13 | 14 |
 
-Each chapter's writer is told the stage and given that stage's lines from the beat sheet, and nothing from
-later stages. The full sheet has all fifteen beats. The short sheet has only the beats of the stages its
+Each chapter's writer is told the stage and given that stage's lines from the objective sheet, and nothing from
+later stages. The full sheet has all fifteen objectives. The short sheet has only the objectives of the stages its
 length reaches: Opening Image and Catalyst in act one, Break into Two once the beacon is in reach, then
 Fun and Games, Midpoint and All Is Lost where the length has them, the Finale, and the Final Image in the
-last finale chapter. A 3-day story's beats are Opening Image, Catalyst, Break into Two, Midpoint, Finale
+last finale chapter. A 3-day story's objectives are Opening Image, Catalyst, Break into Two, Midpoint, Finale
 and Final Image.
 
 The finale begins with the first chapter written once every clue before it is given and the finale's day
@@ -751,7 +751,7 @@ mission gets this once, from the first of three places to speak about it:
 
 The aside never changes a mission: its name, giver, destination, cargo, reward and deadline are said as
 the game gives them. The chapter writer is told the missions you hold, and may make one's destination
-system an arrive beat or its station a dock beat, so the mission's trip is also the story's. No beat asks
+system an arrive objective or its station a dock objective, so the mission's trip is also the story's. No objective asks
 you to complete, fail or abandon a mission. While the story is paused or switched off, missions get no
 aside, and a mission taken meanwhile gets its aside once the story is back.
 
@@ -768,14 +768,14 @@ be up to date the moment you open it.
 
 A stock story keeps only its current chapter and the one before it in `data/adventures.json`. When a
 chapter begins, every earlier chapter of the story moves to `data/story-chapters.jsonl`, one chapter
-per line, with when each of its beats fired; when a story is abandoned, switched or finished, all of
+per line, with when each of its objectives fired; when a story is abandoned, switched or finished, all of
 its chapters move there. Archived chapters leave the Adventures page, the chapter writer still reads
-the last ten of them by name and premise, and your log still lists their beats. Story chapters do not
+the last ten of them by name and premise, and your log still lists their objectives. Story chapters do not
 count toward the 40 adventures of your own that the file holds.
 
 ### What it does not do yet
 
-- **Branching.** One current beat, and only it can match; a beat that would match out of order is
+- **Branching.** One current objective, and only it can match; an objective that would match out of order is
   ignored rather than banked.
 - **Importing** somebody else's adventure. The store file is already the format, so this is a copy
   and a validate when it comes.

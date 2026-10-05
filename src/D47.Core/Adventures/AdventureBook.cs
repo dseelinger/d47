@@ -377,7 +377,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 || StandingOf(commander, adventure) is not { IsDone: false } standing
                 || standing.Current != from)
             {
-                return "The story has moved on from that beat.";
+                return "The story has moved on from that objective.";
             }
 
             var rewritten = adventure with

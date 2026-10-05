@@ -266,7 +266,7 @@ public static class AdventureValidation
 
         if (trigger.Count is not >= 1)
         {
-            yield return $"{where} counts to {trigger.Count?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; a counted beat needs a count of 1 or more.";
+            yield return $"{where} counts to {trigger.Count?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; a counted objective needs a count of 1 or more.";
         }
 
         if (trigger.Kind == TriggerKind.Faction && string.IsNullOrWhiteSpace(trigger.Faction))
@@ -289,7 +289,7 @@ public static class AdventureValidation
             }
             else if (MissionFamilies.IsSetAside(family.Trim()))
             {
-                yield return $"{where} names the mission family {family.Trim()}, which is set aside; no beat uses "
+                yield return $"{where} names the mission family {family.Trim()}, which is set aside; no objective uses "
                     + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ".";
             }
         }
@@ -458,6 +458,6 @@ public static class AdventureValidation
 
     private static string Where(int index, AdventureBeat beat) =>
         string.IsNullOrWhiteSpace(beat.Title)
-            ? $"Beat {(index + 1).ToString(CultureInfo.InvariantCulture)}"
-            : $"Beat {(index + 1).ToString(CultureInfo.InvariantCulture)} ({beat.Title.Trim()})";
+            ? $"Objective {(index + 1).ToString(CultureInfo.InvariantCulture)}"
+            : $"Objective {(index + 1).ToString(CultureInfo.InvariantCulture)} ({beat.Title.Trim()})";
 }

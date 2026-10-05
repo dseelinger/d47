@@ -168,7 +168,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         };
 
         Assert.Contains(
-            "Beat 1 (Wrong) waits for a Guardian beacon scan in a system with no Guardian beacon.",
+            "Objective 1 (Wrong) waits for a Guardian beacon scan in a system with no Guardian beacon.",
             AdventureValidation.Problems(chapter));
         Assert.Empty(AdventureValidation.Problems(ChapterOne()));
         Assert.True(AdventureValidation.TryKind("beacon", out var kind));

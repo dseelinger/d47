@@ -52,7 +52,7 @@ public class AShipBeatWaitsForTheShipTests
 
         var problem = Assert.Single(AdventureValidation.Problems(adventure));
 
-        Assert.Contains("Beat 1 (Boarding)", problem);
+        Assert.Contains("Objective 1 (Boarding)", problem);
         Assert.Contains("starbarge", problem);
     }
 

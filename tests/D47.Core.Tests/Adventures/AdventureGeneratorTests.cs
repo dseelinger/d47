@@ -94,7 +94,7 @@ public sealed class AdventureGeneratorTests
         Assert.Contains("never \"ask the clerk\"", beats);
 
         Assert.Contains("nobody in it can be met, spoken to or watched", AdventureContext.Label);
-        Assert.Contains("Asked what to do next, say where the next beat is", AdventureContext.Label);
+        Assert.Contains("Asked what to do next, say where the next objective is", AdventureContext.Label);
     }
 
  /// <summary>Every generation turn asks for no warmth, the refusal pass included.</summary>
@@ -131,15 +131,15 @@ public sealed class AdventureGeneratorTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Equal(3, provider.CallCount);
-        Assert.Contains(outcome.Notes, note => note.StartsWith("Rewrote 1 beat", StringComparison.Ordinal));
+        Assert.Contains(outcome.Notes, note => note.StartsWith("Rewrote 1 objective", StringComparison.Ordinal));
 
         var retry = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("Your previous draft of the beats:", retry);
+        Assert.Contains("Your previous draft of the objectives:", retry);
         Assert.Contains("1. The Lantern (setup) — arrive: Ossen's Lantern — \"Scoop here.\"", retry);
         Assert.Contains("2. Where The Freight Went (turn) — arrive: Colonia", retry);
         Assert.Contains("3. The Column Will Not Balance (resolution) — rank: Trade 8", retry);
-        Assert.Contains("Beat 2 (Where The Freight Went) is 21886 light years from the previous stop; the reach is 80.", retry);
-        Assert.Contains("Keep the beats that were not refused", retry);
+        Assert.Contains("Objective 2 (Where The Freight Went) is 21886 light years from the previous stop; the reach is 80.", retry);
+        Assert.Contains("Keep the objectives that were not refused", retry);
 
         // What survived is the retry's draft, not the first one.
         Assert.Equal(["The Lantern", "The Anchorage", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
@@ -167,7 +167,7 @@ public sealed class AdventureGeneratorTests
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Equal(3, provider.CallCount);
         Assert.Contains(
-            "Beat 3 (Disposition) scans Ossen's Lantern 2 a after Beat 2 (The Consignee) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.",
+            "Objective 3 (Disposition) scans Ossen's Lantern 2 a after Objective 2 (The Consignee) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.",
             provider.Requests[2].Prompt.History[0].Text);
     }
 
@@ -260,7 +260,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("Beat 2 (The Column Will Not Balance) is a rank beat but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC.", outcome.Refusal);
+        Assert.Contains("Objective 2 (The Column Will Not Balance) is a rank objective but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC.", outcome.Refusal);
         Assert.DoesNotContain("\"\"", outcome.Refusal);
     }
 
@@ -282,7 +282,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy(), combat: 8).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("where the Commander is already Elite; make it another career or another kind of beat", outcome.Refusal);
+        Assert.Contains("where the Commander is already Elite; make it another career or another kind of objective", outcome.Refusal);
     }
 
     [Fact]

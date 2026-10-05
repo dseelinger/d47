@@ -72,7 +72,7 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
         Assert.Null(fixtures.Asks[1].Story!.Comfort);
         Assert.Equal("passenger mission", fixtures.Asks[2].Story!.Comfort?.Name);
         Assert.Contains(
-            "The chapter must contain a \"mission\" beat whose family starts with Mission_Passenger.",
+            "The chapter must contain a \"mission\" objective whose family starts with Mission_Passenger.",
             fixtures.Provider.Requests[4].Prompt.History[0].Text);
     }
 
@@ -92,7 +92,7 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
             CancellationToken.None);
 
         Assert.Contains(
-            "This chapter leaves the comfort zone and must contain a \"mission\" beat whose family starts with Mission_Passenger, for passenger mission.",
+            "This chapter leaves the comfort zone and must contain a \"mission\" objective whose family starts with Mission_Passenger, for passenger mission.",
             outcome.Refusal);
     }
 }

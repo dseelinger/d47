@@ -27,8 +27,8 @@ public sealed class AChapterIsMostlyActivityTests
 
         var outcome = await Generate(provider, chapter: 2);
 
-        Assert.Contains("The chapter has 3 travel beats (arrive, dock, land or scan); from chapter two on, no more than 2 may be.", outcome.Refusal);
-        Assert.Contains("no more than two of the chapter's beats may be", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("The chapter has 3 travel objectives (arrive, dock, land or scan); from chapter two on, no more than 2 may be.", outcome.Refusal);
+        Assert.Contains("no more than two of the chapter's objectives may be", provider.Requests[1].Prompt.History[0].Text);
     }
 
     [Fact]

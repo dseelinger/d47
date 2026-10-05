@@ -56,7 +56,7 @@ public class AdventureContextTests
         var block = Block(After(1));
 
         Assert.Contains("So far: The Lantern", block);
-        Assert.Contains("Last beat, The Lantern, ", block);
+        Assert.Contains("Last objective, The Lantern, ", block);
         Assert.Contains("Scoop here.", block);
         Assert.Contains("Now: The Survey (catalyst)", block);
 

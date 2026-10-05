@@ -117,7 +117,7 @@ public class SuitModAndLiveryBeatsTests
 
         var brief = provider.Requests[1].Prompt.History[0].Text;
 
-        Assert.Contains("No beat may need an ARX purchase", brief);
+        Assert.Contains("No objective may need an ARX purchase", brief);
         Assert.Contains("\"suitmod\"", brief);
         Assert.Contains("\"livery\"", brief);
     }

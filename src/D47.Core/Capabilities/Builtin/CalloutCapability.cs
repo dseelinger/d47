@@ -373,8 +373,8 @@ public static class CalloutCapability
 
             Toggle(
                 AdventureKey,
-                "Adventure beats",
-                "A beat of the story you are following, said when you reach the place it waits for. Off "
+                "Adventure objectives",
+                "An objective of the story you are following, said when you reach the place it waits for. Off "
                 + "leaves the story in the conversation and stops it being read out.",
                 "adventure",
                 "the adventure",
@@ -384,9 +384,9 @@ public static class CalloutCapability
             Toggle(
                 BackstoryNudgeKey,
                 "Backstory reminder",
-                "After an adventure beat that turns the story, one plain line saying your Backstory still "
+                "After an adventure objective that turns the story, one plain line saying your Backstory still "
                 + "describes where it began and is yours to change. Said only when you have a Backstory, and "
-                + "only if the beat itself was said. No model writes or changes it.",
+                + "only if the objective itself was said. No model writes or changes it.",
                 "backstory-nudge",
                 "the backstory reminder",
                 s => s.Callouts.BackstoryNudge,

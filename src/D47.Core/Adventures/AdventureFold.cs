@@ -156,14 +156,14 @@ public sealed record AdventureStanding
 
         if (Adventure.IsBegun && !IsDone && !Adventure.IsAbandoned && LastFiredAt is { } last)
         {
-            parts.Add($"Last beat {Ago(now - last)}.");
+            parts.Add($"Last objective {Ago(now - last)}.");
         }
 
         if (Adventure.IsBegun && Adventure.Beats.Count > 0)
         {
             parts.Add(
                 $"({Math.Min(Fired.Count, Adventure.Beats.Count).ToString(CultureInfo.InvariantCulture)} of "
-                + $"{Adventure.Beats.Count.ToString(CultureInfo.InvariantCulture)} beats)");
+                + $"{Adventure.Beats.Count.ToString(CultureInfo.InvariantCulture)} objectives)");
         }
 
         return string.Join(" ", parts);

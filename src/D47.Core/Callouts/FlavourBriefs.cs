@@ -214,7 +214,7 @@ public static class FlavourBriefs
                     (opening
                         ? "The Commander has just agreed to hear a story you are telling, and this is how it "
                           + "opens. "
-                        : "The Commander has just reached a beat of the story you are telling them. ")
+                        : "The Commander has just reached an objective of the story you are telling them. ")
                     + "Say this in your own voice, keeping every fact, name and number in it and adding none: "
                     + $"\"{announcement.Text}\" Show the place and what is in it; never tell the Commander "
                     + "what they feel. Two to four sentences, spoken in a cockpit. If the text ends by saying "
@@ -588,7 +588,7 @@ public static class FlavourBriefs
     {
         Instruction =
             Narration.Instruction
-            + " The Commander's adventure has waited a long time at its next beat. Let this narration lean "
+            + " The Commander's adventure has waited a long time at its next objective. Let this narration lean "
             + "toward it: you may hint at where it waits, but do not order the Commander there and do not say "
             + "what happens there. Mention fuel, jump range, cargo, credits, danger or rank only as the game "
             + $"state gives them. What you know of the adventure: {facts}",

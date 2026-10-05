@@ -48,7 +48,7 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.DoesNotContain(outcome.Draft!.Beats, beat => beat.Trigger.System == "Shinrarta Dezhra");
         Assert.Contains(
-            "Beat 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold",
+            "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold",
             provider.Requests[2].Prompt.History[0].Text);
     }
 
