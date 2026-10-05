@@ -2,7 +2,10 @@ using System.Numerics;
 
 namespace D47.Core.Hulls;
 
-/// <summary>Hull and background colours, BGRA premultiplied as Avalonia's Bgra8888 bitmap stores them.</summary>
+/// <summary>
+/// The colour of a fully lit face and of the background, BGRA premultiplied as Avalonia's Bgra8888 bitmap
+/// stores them. Less lit faces mix towards the background.
+/// </summary>
 public readonly record struct HullShade(uint Hull, uint Background);
 
 /// <summary>Draws a hull mesh into a pixel buffer on the CPU, with no window or GPU.</summary>
@@ -46,13 +49,22 @@ public static class HullRasteriser
         Parallel.For(0, bands, i => frame.DrawBand(height * i / bands, height * (i + 1) / bands));
     }
 
-    /// <summary>Scales a premultiplied colour's channels by intensity, keeping alpha and capping each channel at it.</summary>
-    public static uint Lit(uint colour, float intensity)
+    /// <summary>How lit a face is, 0 to 1, from the cosine between its normal and the light and the light level.</summary>
+    public static float Lighting(float facing, float light) =>
+        Math.Clamp((Ambient + ((1f - Ambient) * Math.Max(0f, facing))) * light, 0f, 1f);
+
+    /// <summary>The background at 0, the hull colour at 1, and a per-channel mix between.</summary>
+    public static uint Mix(HullShade shade, float lit)
     {
-        var a = colour >> 24;
-        var i = Math.Max(0f, intensity);
-        uint Channel(int shift) => Math.Min(a, (uint)MathF.Round(((colour >> shift) & 0xFF) * i));
-        return (a << 24) | (Channel(16) << 16) | (Channel(8) << 8) | Channel(0);
+        var t = Math.Clamp(lit, 0f, 1f);
+        uint Channel(int shift)
+        {
+            var from = (shade.Background >> shift) & 0xFF;
+            var to = (shade.Hull >> shift) & 0xFF;
+            return (uint)MathF.Round(from + ((to - (float)from) * t));
+        }
+
+        return (Channel(24) << 24) | (Channel(16) << 16) | (Channel(8) << 8) | Channel(0);
     }
 
     private sealed class Buffers
@@ -119,7 +131,7 @@ public static class HullRasteriser
                     n = -n;
                 }
 
-                b.Intensity[v] = Ambient + ((1f - Ambient) * light * MathF.Max(0f, Vector3.Dot(n, LightDirection)));
+                b.Intensity[v] = Lighting(MathF.Max(0f, Vector3.Dot(n, LightDirection)), light);
             }
         }
 
@@ -234,7 +246,7 @@ public static class HullRasteriser
                     }
 
                     depth[row + x] = z;
-                    pixels[row + x] = Lit(shade.Hull, (w0 * ia) + (w1 * ib) + (w2 * ic));
+                    pixels[row + x] = Mix(shade, (w0 * ia) + (w1 * ib) + (w2 * ic));
                 }
             }
         }

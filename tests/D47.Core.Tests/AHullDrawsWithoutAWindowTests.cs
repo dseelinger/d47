@@ -57,7 +57,7 @@ public class AHullDrawsWithoutAWindowTests(ITestOutputHelper output)
         var pixels = Draw(mesh, HullCamera.Rest(mesh));
 
         Assert.NotEqual(Shade.Background, Centre(pixels));
-        Assert.True((Centre(pixels) & 0xFF) > (HullRasteriser.Lit(Shade.Hull, HullRasteriser.Ambient) & 0xFF));
+        Assert.True((Centre(pixels) & 0xFF) > (HullRasteriser.Mix(Shade, HullRasteriser.Ambient) & 0xFF));
         foreach (var corner in new[] { 0, Size - 1, Size * (Size - 1), (Size * Size) - 1 })
         {
             Assert.Equal(Shade.Background, pixels[corner]);
@@ -65,15 +65,29 @@ public class AHullDrawsWithoutAWindowTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public void WithTheLightOffEveryHullPixelIsTheAmbientShade()
+    public void WithTheLightOffTheHullIsTheBackground()
     {
         var mesh = Cube();
         var pixels = Draw(mesh, HullCamera.Rest(mesh).Turn(40, 30) with { Light = 0f });
 
-        var ambient = HullRasteriser.Lit(Shade.Hull, HullRasteriser.Ambient);
-        var hull = pixels.Where(p => p != Shade.Background).ToArray();
-        Assert.NotEmpty(hull);
-        Assert.All(hull, p => Assert.Equal(ambient, p));
+        Assert.All(pixels, p => Assert.Equal(Shade.Background, p));
+    }
+
+    [Fact]
+    public void ALitFaceStandsFurtherFromALightGroundThanAnUnlitOne()
+    {
+        var light = new HullShade(0xFF101418, 0xFFF0F0F0);
+
+        static int Distance(uint a, uint b) =>
+            Math.Abs((int)(a & 0xFF) - (int)(b & 0xFF))
+            + Math.Abs((int)((a >> 8) & 0xFF) - (int)((b >> 8) & 0xFF))
+            + Math.Abs((int)((a >> 16) & 0xFF) - (int)((b >> 16) & 0xFF));
+
+        var lit = HullRasteriser.Mix(light, HullRasteriser.Lighting(1f, 1f));
+        var unlit = HullRasteriser.Mix(light, HullRasteriser.Lighting(0f, 1f));
+
+        Assert.True(Distance(lit, light.Background) > Distance(unlit, light.Background));
+        Assert.NotEqual(light.Hull, unlit);
     }
 
     [Fact]

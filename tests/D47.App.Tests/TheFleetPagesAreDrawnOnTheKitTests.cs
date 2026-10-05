@@ -155,6 +155,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
     [InlineData("LoadoutPages.cs")]
     [InlineData("LoadoutMode.cs")]
     [InlineData("HullPicture.cs")]
+    [InlineData("HullViewer.cs")]
     [InlineData("ShipArt.cs")]
     public void TheFleetSourceDrawsOnlyInTheNewTokens(string file)
     {

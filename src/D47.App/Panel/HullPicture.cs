@@ -7,8 +7,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Hulls;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -40,6 +43,8 @@ internal sealed class HullPicture : Grid
     private readonly StackPanel _column;
 
     private Bitmap? _picture;
+    private HullMesh? _mesh;
+    private HullPose? _pose;
 
     internal HullPicture(string? hull, Control? beside)
     {
@@ -81,10 +86,8 @@ internal sealed class HullPicture : Grid
 
         ShipArtStore.Arrived += Landed;
 
-        if (_picture is null)
-        {
-            Show();
-        }
+        // Again on every attach: whether this copy of the panel is the headset's is only known once attached.
+        Show();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -119,8 +122,22 @@ internal sealed class HullPicture : Grid
         _picture = ShipArt.Close4K(_hull);
         _fitted.Source = _picture;
 
+        var mesh = ShipArt.Mesh(_hull);
+
+        if (!ReferenceEquals(mesh, _mesh))
+        {
+            _mesh = mesh;
+            _pose = mesh is null ? null : new HullPose(mesh);
+        }
+
         Lay();
     }
+
+    /// <summary>The headset panel keeps the still.</summary>
+    private bool Headset => this.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") == true;
+
+    /// <summary>The pose to draw a turnable hull at, or null where the still is drawn instead.</summary>
+    private HullPose? Turnable => Headset ? null : _pose;
 
     /// <summary>Draws the picture and the words at the chosen size.</summary>
     private void Lay()
@@ -129,7 +146,9 @@ internal sealed class HullPicture : Grid
         ColumnDefinitions.Clear();
         RowDefinitions.Clear();
 
-        if (_picture is null)
+        var pose = Turnable;
+
+        if (_picture is null && pose is null)
         {
             // No picture is the ordinary state for a hull nothing has rendered, and the page has to read
             // exactly as it did before this control existed.
@@ -141,10 +160,18 @@ internal sealed class HullPicture : Grid
             return;
         }
 
-        // The column is built once and moved between the layouts, never rebuilt.
-        Marks();
+        Control picture;
 
-        var picture = _column;
+        if (pose is not null)
+        {
+            picture = Viewer(pose);
+        }
+        else
+        {
+            // The column is built once and moved between the layouts, never rebuilt.
+            Marks();
+            picture = _column;
+        }
 
         if (_size == HullPictureSize.Beside && _beside is not null)
         {
@@ -209,14 +236,79 @@ internal sealed class HullPicture : Grid
         Lay();
     }
 
+    /// <summary>The marks strip, the turnable hull and the hint line under it.</summary>
+    private StackPanel Viewer(HullPose pose)
+    {
+        var viewer = new HullViewer(pose);
+        var frame = new Border { BorderThickness = new Thickness(1), BorderBrush = Brushes.Transparent, Child = viewer };
+        IDisposable? focusInk = null;
+
+        viewer.GotFocus += (_, _) =>
+        {
+            focusInk?.Dispose();
+            focusInk = frame.Bind(
+                Border.BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
+        };
+        viewer.LostFocus += (_, _) =>
+        {
+            focusInk?.Dispose();
+            focusInk = null;
+            frame.BorderBrush = Brushes.Transparent;
+        };
+
+        var sizes = new Segment
+        {
+            ItemsSource = ["BESIDE", "WIDE"],
+            SelectedIndex = _size == HullPictureSize.Beside ? 0 : 1,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(sizes, "Half the pane with the figures beside it, or the width of the pane");
+        sizes.SelectionChanged += (_, _) =>
+            Resize(sizes.SelectedIndex == 0 ? HullPictureSize.Beside : HullPictureSize.Wide);
+
+        var whole = HullMarks.Glyph("□", "Whole window");
+        whole.Click += (_, _) => Expand();
+
+        var (label, level) = HullMarks.Light(pose);
+        level.Width = 200;
+
+        // Two groups, so the size marks drop under the light marks where Beside leaves too little width.
+        var strip = new WrapPanel
+        {
+            ItemSpacing = 24,
+            LineSpacing = 4,
+            Margin = new Thickness(0, 0, 16, 0),
+            Children =
+            {
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { label, level, HullMarks.Reset(pose) } },
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { sizes, whole } },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 4,
+            Margin = new Thickness(0, 0, 0, 12),
+            Children = { strip, frame, HullMarks.Hint(HullMarks.Hints) },
+        };
+    }
+
     private void Expand()
     {
-        if (_picture is not { } picture || OverlayLayer.GetOverlayLayer(this) is not { } layer)
+        if (OverlayLayer.GetOverlayLayer(this) is not { } layer)
         {
             return;
         }
 
-        layer.Children.Add(new HullPictureFull(picture, layer));
+        if (Turnable is { } pose)
+        {
+            layer.Children.Add(new HullViewerFull(pose, EliteSpecifications.HullName(_hull) ?? _hull ?? string.Empty, layer));
+        }
+        else if (_picture is { } picture)
+        {
+            layer.Children.Add(new HullPictureFull(picture, layer));
+        }
     }
 }
 
