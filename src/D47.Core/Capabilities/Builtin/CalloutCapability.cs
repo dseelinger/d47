@@ -33,6 +33,7 @@ public static class CalloutCapability
     public const string MiningSummaryKey = "callouts.miningSummary";
     public const string HoldFullKey = "callouts.holdFull";
     public const string UnsoldDataAtRiskKey = "callouts.unsoldDataAtRisk";
+    public const string OutstandingCrimesKey = "callouts.outstandingCrimes";
 
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
@@ -307,6 +308,16 @@ public static class CalloutCapability
                 "unsold data warning",
                 s => s.Callouts.UnsoldDataAtRisk,
                 (s, v) => s with { Callouts = s.Callouts with { UnsoldDataAtRisk = v } }),
+
+            Toggle(
+                OutstandingCrimesKey,
+                "Unpaid fines and bounties",
+                "On arriving in a system where a faction you owe fines or bounties is present, on the ship you "
+                + "are flying or on foot. Names the largest debt, at most once an hour for each system.",
+                "outstanding-crimes",
+                "unpaid fines warning",
+                s => s.Callouts.OutstandingCrimes,
+                (s, v) => s with { Callouts = s.Callouts with { OutstandingCrimes = v } }),
 
             Toggle(
                 SamplingKey,

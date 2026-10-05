@@ -865,6 +865,10 @@ public sealed class AppHost : IDisposable
 
         cartography.Load();
 
+        // Unpaid fines and bounties, rebuilt by the same walk (#639).
+        var crimes = new D47.Core.Journal.OutstandingCrimes(
+            loggerFactory.CreateLogger<D47.Core.Journal.OutstandingCrimes>());
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -880,6 +884,7 @@ public sealed class AppHost : IDisposable
             NameFile = heardNames,
             Exobiology = exobiology,
             Cartography = cartography,
+            Crimes = crimes,
             Step = StartupTimer.Step,
         };
 
@@ -1180,6 +1185,7 @@ public sealed class AppHost : IDisposable
             gameState,
             exobiology,
             cartography,
+            crimes,
             fight,
             scenes,
             handInOffer,
@@ -1255,6 +1261,7 @@ public sealed class AppHost : IDisposable
             // Before the callouts too, so an analysis is in the unsold total the sampling callout speaks.
             exobiology.Apply(events, gameState.Active?.Identity.FrontierId);
             cartography.Apply(events, gameState.Active?.Identity.FrontierId);
+            crimes.Apply(events, gameState.Active?.Identity.FrontierId);
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
             planBook.Apply(events);
@@ -2962,6 +2969,7 @@ public sealed class AppHost : IDisposable
         GameStateStore gameState,
         D47.Core.Journal.ExobiologyLedger exobiology,
         D47.Core.Journal.CartographyLedger cartography,
+        D47.Core.Journal.OutstandingCrimes crimes,
         NearbyFight fight,
         SceneTracker scenes,
         D47.Core.Conversation.HandInOffer handInOffer,
@@ -3019,6 +3027,7 @@ public sealed class AppHost : IDisposable
             .Add(new FootfallCallout())
             .Add(new MappingCallout { Ledger = cartography })
             .Add(new UnsoldDataAtRiskCallout(cartography, exobiology))
+            .Add(new OutstandingCrimesCallout(crimes))
             .Add(surveyedBiology)
             .Add(biology)
             .Add(tradingMode)
@@ -3163,6 +3172,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("mining-summary", callouts.MiningSummary, now);
         engine.SetEnabled("hold-full", callouts.HoldFull, now);
         engine.SetEnabled("unsold-data-at-risk", callouts.UnsoldDataAtRisk, now);
+        engine.SetEnabled("outstanding-crimes", callouts.OutstandingCrimes, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
         engine.SetEnabled("ambient", callouts.Ambient, now);
         engine.SetEnabled("narrator", callouts.Narrator, now);

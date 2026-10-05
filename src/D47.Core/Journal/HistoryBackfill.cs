@@ -59,6 +59,9 @@ public sealed class HistoryBackfill
     /// <summary>The unsold mapped bodies, folded the same way (#527).</summary>
     public CartographyLedger? Cartography { get; init; }
 
+    /// <summary>The unpaid fines and bounties, folded the same way (#639).</summary>
+    public OutstandingCrimes? Crimes { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -185,6 +188,15 @@ public sealed class HistoryBackfill
                 Timed("cartography backfill", () =>
                 {
                     cartography.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Crimes is { } crimes)
+            {
+                Timed("crime backfill", () =>
+                {
+                    crimes.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

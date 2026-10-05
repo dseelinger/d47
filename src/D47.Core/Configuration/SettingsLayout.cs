@@ -521,6 +521,7 @@ public static class SettingsLayout
                                 E("callouts.weekBoundaryDay", under: true),
                                 E("callouts.weekBoundaryHourUtc", under: true),
                                 E("callouts.missions"),
+                                E("callouts.outstandingCrimes"),
                                 E("callouts.reminders"),
                                 E("callouts.domain"),
                                 E("callouts.tradingMode"),

@@ -518,6 +518,9 @@ public sealed record CalloutSettings
     /// <summary>A warning when unsold exploration data enters danger (#638).</summary>
     public bool UnsoldDataAtRisk { get; init; } = true;
 
+    /// <summary>An unpaid fine or bounty owed to a faction in the system arrived in (#639).</summary>
+    public bool OutstandingCrimes { get; init; } = true;
+
     /// <summary>Organic sampling progress on the surface (Phase 18).</summary>
     public bool Sampling { get; init; } = true;
 

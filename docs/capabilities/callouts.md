@@ -720,6 +720,24 @@ Each of the three is said at most once every thirty minutes. Nothing is said whi
 on older journals. Data from the discovery scanner and the FSS alone, with no surface map, is not
 counted. Switching this off silences this warning and nothing else.
 
+#### Unpaid fines and bounties {#outstanding-crimes}
+
+When you arrive in a system where a faction you owe fines or bounties is present
+([#639](https://github.com/dseelinger/d47/issues/639)). d47 reads every journal you have, so a debt
+left unpaid for weeks still counts. A debt from flying is held against the ship you committed it in,
+and is said only while you fly that ship. A debt from on foot follows you into any ship.
+
+```text
+You owe Sirius Inc 150 credits in fines on this ship.
+You owe Turner Research Group 1,000 credits in bounties on foot.
+```
+
+One line per arrival, naming the largest debt, and at most once an hour for each system. A payment
+at an Interstellar Factors contact or a security office clears that faction's debt in full. Paying a
+faction's bounties also clears its on-foot fines. Losing a ship clears its debts, and selling a ship
+clears them too; dying on foot does not clear on-foot debts. Nothing is said while d47 is catching up
+on older journals. Switching this off silences this warning and nothing else.
+
 #### Sampling progress {#sampling}
 
 Each organic specimen as it lands, with the distance you covered to get it:
