@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits the queue into lanes that run in parallel — each issue its own session, in its own worktree. Reports only; files, labels and starts nothing. Use when the user invokes /triage or /triage lanes, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes".
+description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, in its own worktree. Reports only; files, labels and starts nothing. Use when the user invokes /triage or /triage lanes, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes".
 ---
 
 # Triage
@@ -55,9 +55,11 @@ DrillView that has not drawn its panes yet" is a diagnosis, not a summary. Title
 enough to rank most issues.
 
 Fetch bodies only for the issues going into the first release group. Reading 36 issue bodies to
-produce a ranking that only acts on five is waste the maintainer pays for. In lanes mode, also
-fetch the body of every issue that goes into a lane: the lane split depends on the files each one
-names.
+produce a ranking that only acts on five is waste the maintainer pays for. In lanes mode every
+eligible issue goes into a lane, so fetch every eligible body: the lane split depends on the files
+each one names. Fetch them in one call, save them to the scratchpad, and extract the file paths,
+type names and needs lines with a script rather than reading each body in full. Read a body in full
+only where the extract leaves its files or its needs unclear.
 
 ## Order
 
@@ -166,24 +168,41 @@ Only when invoked as `/triage lanes`, or `/triage lanes <N>` to set the number o
 A lane is a list of issues worked in order, one session per issue on that issue's own model and
 effort, each in its own worktree and merged into `main` when it lands (`/issue-worker` defines
 how). The next issue in a lane starts once the one before it has merged. Lanes run at the same time
-as each other. So the split is about one thing: two lanes must not edit the same code.
+as each other.
+
+**Every eligible issue goes into a lane.** The only issues left out are those the lanes cannot
+hold: one waiting on an issue that is not eligible, and a tracking issue with nothing to build.
+The split is about keeping merge conflicts unlikely, not about keeping the queue short.
 
 ### What must share a lane
 
-Build clusters from the **Next up** queue. Two issues go in the same cluster when:
+Two issues go in the same cluster when:
 
-- one needs the other, directly or through the needs chain;
-- both are likely to edit the same file — the same class, panel page, capability, docs page or
-  test file. `src/D47.App/AppHost.cs` counts like any other file: two issues that each wire
-  something into the app share a lane;
+- one needs the other, directly or through the needs chain. A waiting issue goes later in the
+  lane of the issue it needs, never in a lane of its own;
+- both edit the same code — the same method, panel page, capability, docs page section or test
+  file;
+- both add to the same append point, where every new feature adds a line beside the last one and
+  two lanes would edit the same lines. In this repository: callout registration in `AppHost.cs`,
+  `HandledEvents`' sets, `CalloutSettings` and the callout toggles in `CalloutCapability`,
+  `TurnLoop`, `KeywordRouter`'s dynamic commands, `HistoryBackfill`'s per-Commander maps, and
+  `PersonaCatalog`;
 - both change the same generated table or its `tools/gen-*.py` generator.
+
+A file several features touch in different places does not by itself put two issues in one lane:
+`AppHost.cs`, `PanelView.axaml.cs`, `MainWindow`, `D47Settings` and `EgressDisclosure` take edits
+in separate methods, tabs, sections or entries, and git merges those. Two lanes may also touch the
+same code when one issue sits early in its lane and the other late in its own, so the first has
+merged before the second starts. Say in the report which shared files are edited from more than one
+lane.
 
 `CHANGELOG.md` does not count. Every fix commit adds an entry at the top, and the issue worker
 resolves that conflict by keeping both entries.
 
-To find the files, read each issue's body and take the files and types it names. Where it names a
-type and not a file, one `Grep` for the type's declaration. Read no further than that. An issue
-whose files you still cannot name goes in the cluster of the subsystem its title points at.
+To find the files, take the files and types each body names. Where it names a type and not a file,
+one `Grep` for the type's declaration, or for where it is constructed when the issue changes what
+is passed in. Read no further than that. An issue whose files you still cannot name goes in the
+cluster of the subsystem its title points at.
 
 ### From clusters to lanes
 
@@ -192,23 +211,31 @@ building the solution at a time, so more lanes than that contend for the machine
 
 - Never split a cluster across lanes.
 - **The lanes should finish at the same time.** Weigh each issue as one and an `opus` / `high`
-  issue as two, and size the lanes to within one of each other. A lane that empties early leaves
-  its machine share idle while the others still run.
-- The lanes set the queue's length, not the other way round. When a lane is short, take the next
-  eligible issues in rank order whose files conflict with no laned cluster, and add them to the
-  short lane, with their release groups, until it matches. Read their bodies first, as for any
-  laned issue.
-- When one cluster is longer than the others can match, cut it from the end. Its later issues go
-  to **Not now** as waiting for the next run. They are not moved to another lane.
-- More clusters than lanes: put whole clusters together until the count fits, keeping the lanes
-  close in weight.
-- Fewer clusters than lanes: fill from the rest of the queue first. Report fewer lanes only when
-  no eligible issue is left that is unblocked and conflicts with no lane.
-- Within a lane, issues keep their order from the queue.
+  issue as two, and size the lanes to within one of each other across the whole eligible set. A
+  lane that empties early leaves its machine share idle while the others still run.
+- Assign whole clusters to lanes until every cluster is placed, keeping the lanes close in weight.
+  Nothing is cut to make the lanes match: move clusters between lanes instead. Where one cluster
+  alone outweighs a lane's share, report the lanes as they are and say which cluster sets the
+  length.
+- Within a lane, issues keep their order from the queue, and a release group's issues stay
+  consecutive where the needs allow.
 - Letter the lanes `A`, `B`, `C`… by the queue position of each lane's first issue.
 
 Release groups are unchanged and independent of lanes. A group can span lanes; it is ready to cut
 once every issue in it has merged, whichever lane ran it.
+
+### When a lane pauses
+
+When an issue's rebase onto `main` conflicts in a file other than `CHANGELOG.md`, the issue worker
+aborts the rebase and stops, leaving the worktree and branch in place. That lane is paused: its
+next issue does not start, because the issue before it has no `Fixes #N` commit. The other lanes
+keep running. The maintainer resumes the paused issue with `/issue-worker <N>`, usually once the
+other lanes have finished, so the conflict is resolved once against everything they merged. The
+Issue key given that lane's letter also starts the paused issue, since it is the lane's first issue
+with no `Fixes #N` commit.
+
+A later triage run keeps a paused issue first in its lane. Find paused issues with
+`git worktree list`: a worktree under `.claude/worktrees/<N>` whose issue is still open.
 
 ### The main checkout
 
@@ -257,8 +284,9 @@ Markdown, and short. Three parts:
    The lane's letter goes in its first row. A group can span lanes, so the Release cell is filled
    on every row of an issue in a group.
 3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
-   why, including each waiting issue left out and the numbers it waits on. Omit the section when
-   there is nothing.
+   why, including each waiting issue left out and the numbers it waits on. In lanes mode this is
+   only what the lanes cannot hold: an issue waiting on an ineligible one, and a tracking issue.
+   Omit the section when there is nothing.
 
 No launch lines. The Stream Deck's Issue key starts a session from the grid below, with
 `/issue-worker` as its opening command, so the finish line that skill defines is in its first
