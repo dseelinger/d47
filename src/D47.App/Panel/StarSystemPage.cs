@@ -121,6 +121,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         Overview,
         Stations,
         Bodies,
+        Powerplay,
     }
 
     private sealed record Shown(long Address, string Name);
@@ -236,6 +237,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         {
             _section = Section.Overview;
             _stationFilter = new StationFilter { Query = _stationFilter.Query };
+            ResetNearby();
         }
 
         _following = following;
@@ -404,6 +406,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         _redrawn = true;
         _body.Children.Clear();
         _stationTable = null;
+        _neighbourList = null;
 
         if (_view == View.Off)
         {
@@ -461,6 +464,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
                 {
                     Section.Stations => Stations(profile),
                     Section.Bodies => Bodies(profile),
+                    Section.Powerplay => Powerplay(profile),
                     _ => Overview(profile),
                 });
                 break;

@@ -134,6 +134,11 @@ public sealed partial class StarSystemPage
     {
         _section = section;
 
+        if (section == Section.Powerplay && _profile is { } profile)
+        {
+            AskNearby(profile);
+        }
+
         if (kind is not null)
         {
             _stationFilter.Kind = kind;
@@ -152,6 +157,7 @@ public sealed partial class StarSystemPage
                 "Overview",
                 $"Stations {profile.Stations.Count.ToString(CultureInfo.InvariantCulture)}",
                 $"Bodies {profile.Bodies.Count.ToString(CultureInfo.InvariantCulture)}",
+                "Powerplay",
             ],
             SelectedIndex = (int)_section,
         };
@@ -159,7 +165,7 @@ public sealed partial class StarSystemPage
         sections.SelectionChanged += (_, _) => ShowSection((Section)sections.SelectedIndex);
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*") };
-        Grid.SetColumnSpan(sections, 3);
+        Grid.SetColumnSpan(sections, 4);
         grid.Children.Add(sections);
 
         return grid;
