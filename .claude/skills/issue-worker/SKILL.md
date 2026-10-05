@@ -1,6 +1,6 @@
 ---
 name: issue-worker
-description: Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+description: Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. With "lane <letter>", works a lane from /triage lanes in order, each issue in its own worktree, fast-forwarding main as each lands. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker or /issue-worker lane <letter>, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue", "work lane B".
 ---
 
 # Issue worker
@@ -12,6 +12,9 @@ that needed settling. Your job is the change itself.
 start on #62 in that same turn — do not acknowledge it and wait for a second instruction saying the
 same thing.
 
+`/issue-worker lane B` names a lane from the last `/triage lanes`. Start on its first issue in that
+same turn, and follow **Lanes** below.
+
 Only a bare `/issue-worker`, carrying no issue, waits: acknowledge in one line, stop, and start when
 the maintainer names one.
 
@@ -19,15 +22,23 @@ the maintainer names one.
 
 Once the issue is named, the first step of the working turn is `/claude-voice Issue worker <number>`,
 the number spoken as words — `/claude-voice Issue worker sixty six` for #66. Several of these
-sessions run at once and are told apart by ear, and the number is what tells them apart.
+sessions run at once and are told apart by ear, and the number is what tells them apart. A lane
+session uses the lane instead, because it spans several issues: `/claude-voice Lane B`.
 
 It is a default, not a fixture: `/claude-voice off` stops it and the work carries on unchanged.
 
 ## One issue, one checkout
 
-There is one checkout and work runs sequentially — no worktrees, no branches, no parallel issues.
-`main` is fixed forward: nothing runs on push, there are no PRs, and a mistake is a follow-up
-commit rather than a revert.
+By default there is one checkout and work runs sequentially — no worktrees, no branches, no
+parallel issues. `main` is fixed forward: nothing runs on push, there are no PRs, and a mistake is
+a follow-up commit rather than a revert.
+
+Two cases put the work in a worktree instead, both covered by **Lanes** below:
+
+- the session was started as `/issue-worker lane <letter>`;
+- `git worktree list` shows a worktree under `.claude/worktrees/`. Lanes are running and merging
+  into `main`, so an issue started on its own goes through a worktree too, or its uncommitted
+  edits sit in the tree the lanes fast-forward.
 
 Read the issue in full before touching anything. The titles in this repository state the cause as
 well as the defect, and the body usually names the file. Confirm that claim against the code — an
@@ -166,7 +177,8 @@ as no information rather than a verdict.
 The Stream Deck's Issue key has already applied `model` and `effort` at launch. **A session cannot
 change its own model or effort** — the desktop app refuses both for the session itself. So where
 the entry names a model other than the one you are running as, say so in one line and carry on;
-switching is the maintainer's, from the model picker.
+switching is the maintainer's, from the model picker. A lane session compares against the lane's
+model and effort in `lanes`, once at the start, not against each issue's.
 
 `review` is the other reason to read it: it is how triage's recommendation reaches you.
 
@@ -195,6 +207,90 @@ name from this list:
 This list is shared with `/new-issue`, which splits issues on the same items. Name what the issue
 actually is: two issues, a design question for the Architect, or the same issue at a higher effort.
 An issue that grew one of these is not the issue that was ranked.
+
+## Lanes
+
+`/issue-worker lane B` works the issues in `lanes.B.issues` of `.claude/triage-state.json`, in that
+order, one at a time. If the file has no lane `B`, stop and say `/triage lanes` has to run first.
+Other lanes run in other sessions at the same time; triage put issues that edit the same code in
+the same lane, so lanes do not wait on each other.
+
+The main checkout is the first entry of `git worktree list`. Before the first issue, check it has
+no uncommitted changes to tracked files (`git -C <main checkout> status --porcelain
+--untracked-files=no`). If it has, stop and list them: every merge fast-forwards that working tree.
+
+### Each issue
+
+1. Skip it if `main` already has a commit with the line `Fixes #N`, and say so.
+2. Run **Check what it needs first**. A needed issue earlier in this lane has merged by now; one
+   that is not done stops the lane.
+3. Create the worktree from local `main`, then move the session into it:
+
+   ```bash
+   git -C <main checkout> worktree add .claude/worktrees/<N> -b issue/<N> main
+   ```
+
+   Then call `EnterWorktree` with that path. Do not create it with `EnterWorktree`'s `name`: that
+   branches from `origin/main` and misses every commit not yet pushed, including the ones this
+   lane just merged.
+4. Do the work as the rest of this skill says — build, filtered tests, gate tests, changelog,
+   commit, and a review where **Reviews** calls for one — all inside the worktree. The first build
+   in a fresh worktree restores and builds everything, so it takes longer than usual.
+5. Merge it, as below.
+6. Call `ExitWorktree` with `keep` (it does not remove a worktree entered by path), then remove the
+   worktree and its branch:
+
+   ```bash
+   git -C <main checkout> worktree remove .claude/worktrees/<N>
+   git -C <main checkout> branch -d issue/<N>
+   ```
+
+   If the removal fails on a locked file, leave it and name it in the report.
+7. If it needs manual testing, write its steps down for the end of the lane. Then take the next
+   issue.
+
+When an issue does not land — it is bigger than it looked, the build or tests cannot be made
+green, or a conflict cannot be resolved as described below — stop the lane and ask, as for a single
+issue. Leave its worktree and branch in place and say where they are. The rest of the lane stays
+unstarted.
+
+### Merging into main
+
+`main` takes fast-forwards only, so its history stays one line with no merge commits. In the
+worktree:
+
+```bash
+git rebase main
+```
+
+Then run the checks again on the rebased tree — the build, the area filter, the `Gate` filter, and
+`D47.App.Tests` when the diff touches `src/D47.App/` — because other lanes' work is now under the
+change. Then:
+
+```bash
+git -C <main checkout> merge --ff-only issue/<N>
+```
+
+If another lane merged in between, `--ff-only` refuses; if one is merging at that moment, git
+reports an `index.lock`. Either way, rebase again, run the checks again, and retry.
+
+Rebase conflicts:
+
+- `CHANGELOG.md` conflicts are expected, since every lane adds entries at the top. Keep both,
+  this one under the unreleased heading `main` has, and leave `main`'s entries as they are.
+- A conflict in any other file means triage judged two issues independent and they are not.
+  Resolve it when both sides' changes can be kept as written, run the checks, and name the file in
+  the report. Otherwise `git rebase --abort` and stop the lane.
+
+Never create a merge commit, never force anything, and never push. The rebase changes the commit's
+hash, which matters to nothing: it is still local.
+
+### Testing a lane
+
+Captures are taken in the worktree before the merge, as **Capture it yourself** says. Manual testing
+waits for the end of the lane: run `/test-drive` once, from the main checkout, after the last issue
+merges. That build holds everything merged so far, from every lane, so say so in the line above
+the steps. Then give the steps grouped under each issue's number.
 
 ## Saying how to test it
 
@@ -282,6 +378,11 @@ The turn where the work lands ends in this order:
 
 The voice rules were loaded at the start of the session, many tool calls earlier, and writing the
 report ends the turn. A sentence left until after the report is not spoken.
+
+A lane ends the same way, once, after its last issue: steps 1 and 2 have already happened per issue
+inside **Each issue**, then `/test-drive` when any issue needs manual testing, the spoken sentence,
+and a report with one line per issue — merged with its commit subject, skipped, or not landed and
+why — followed by the steps.
 
 This applies equally when the work lands on a turn started by a background agent's completion
 notice rather than by the maintainer.

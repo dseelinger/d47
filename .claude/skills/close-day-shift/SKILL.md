@@ -24,8 +24,9 @@ Run all of them, then report. Don't stop at the first blocked check.
 3. **Nothing in progress by hand.** No unfinished merge, rebase or cherry-pick
    (`.git/MERGE_HEAD`, `.git/rebase-merge`, `.git/rebase-apply`, `.git/CHERRY_PICK_HEAD`).
 4. **No other session in the checkout.** `mcp__ccd_session_mgmt__list_sessions`: list every session
-   other than this one whose working directory is `C:\dev\d47`, with its state. A running session
-   is blocked. An idle one is ready, with a note: if it starts working again after 1 AM, the run
+   other than this one whose working directory is `C:\dev\d47` or under
+   `C:\dev\d47\.claude\worktrees\`, with its state. A lane session works in a worktree but merges
+   into the main checkout, so it counts. A running session is blocked. An idle one is ready, with a note: if it starts working again after 1 AM, the run
    skips.
 5. **An issue to work.** `gh issue list --repo dseelinger/d47 --label "Night Shift" --state open
    --json number,title,labels`, dropping any issue labelled `under-speced` or `design`. Also read

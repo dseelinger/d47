@@ -33,5 +33,8 @@ ratings-worker/.wrangler/
 # The last triage's grid, read by the issue launcher. A snapshot of a queue that moves.
 .claude/triage-state.json
 
+# Lane worktrees, one per issue in progress; removed when the issue merges
+.claude/worktrees/
+
 # Avatar clips are published to the avatars-1 release, not committed
 design/avatars/

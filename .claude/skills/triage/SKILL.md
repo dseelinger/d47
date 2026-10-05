@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. Reports only; files, labels and starts nothing. Use when the user invokes /triage, or says "what should I work on", "triage the issues", "what's next", "plan the next release".
+description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits the queue into lanes that run in parallel, each issue in its own worktree. Reports only; files, labels and starts nothing. Use when the user invokes /triage or /triage lanes, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes".
 ---
 
 # Triage
@@ -55,12 +55,15 @@ DrillView that has not drawn its panes yet" is a diagnosis, not a summary. Title
 enough to rank most issues.
 
 Fetch bodies only for the issues going into the first release group. Reading 36 issue bodies to
-produce a ranking that only acts on five is waste the maintainer pays for.
+produce a ranking that only acts on five is waste the maintainer pays for. In lanes mode, also
+fetch the body of every issue that goes into a lane: the lane split depends on the files each one
+names.
 
 ## Order
 
-Development here is sequential — one checkout, one session at a time — so the order is a queue, not
-lanes. Rank by, in this order:
+By default development is sequential — one checkout, one session at a time — so the order is a
+queue. `/triage lanes` splits that queue into lanes afterwards (see **Lanes**); the ranking itself
+is the same in both modes. Rank by, in this order:
 
 1. **Blocking.** A waiting issue ranks after every issue it needs, never before and never first.
    Where one of those is not in the queue — ineligible, or left out — the waiting issue is left out
@@ -155,6 +158,66 @@ anything else. Most releases should have none.
 list is flagged, the bar was set too low — raise it and report again. A triage that flags everything
 is a triage the maintainer learns to skip, and then the one that mattered goes unread too.
 
+## Lanes
+
+Only when invoked as `/triage lanes`, or `/triage lanes <N>` to set the number of lanes. A plain
+`/triage` produces no lanes and writes none.
+
+A lane is a list of issues that one session works in order, each issue in its own worktree and
+merged into `main` when it lands (`/issue-worker lane <letter>` defines how). Lanes run at the same
+time as each other. So the split is about one thing: two lanes must not edit the same code.
+
+### What must share a lane
+
+Build clusters from the **Next up** queue. Two issues go in the same cluster when:
+
+- one needs the other, directly or through the needs chain;
+- both are likely to edit the same file — the same class, panel page, capability, docs page or
+  test file. `src/D47.App/AppHost.cs` counts like any other file: two issues that each wire
+  something into the app share a lane;
+- both change the same generated table or its `tools/gen-*.py` generator.
+
+`CHANGELOG.md` does not count. Every fix commit adds an entry at the top, and the issue worker
+resolves that conflict by keeping both entries.
+
+To find the files, read each issue's body and take the files and types it names. Where it names a
+type and not a file, one `Grep` for the type's declaration. Read no further than that. An issue
+whose files you still cannot name goes in the cluster of the subsystem its title points at.
+
+### From clusters to lanes
+
+The default is 3 lanes; `/triage lanes <N>` sets another number. Each lane is a session building
+the solution, so more lanes than that contend for the machine.
+
+- Never split a cluster.
+- More clusters than lanes: put whole clusters together until the count fits, keeping the lanes
+  close in length. Count an `opus` / `high` issue as two.
+- Fewer clusters than lanes: report fewer lanes. Do not split a cluster to fill one.
+- Within a lane, issues keep their order from the queue.
+- Letter the lanes `A`, `B`, `C`… by the queue position of each lane's first issue.
+
+Release groups are unchanged and independent of lanes. A group can span lanes; it is ready to cut
+once every issue in it has merged, whichever lane ran it.
+
+### The lane's model and effort
+
+One session works the whole lane and cannot change its own model, so the lane runs on the strongest
+model among its issues (`opus` over `sonnet` over `haiku`), at the highest effort among the issues
+on that model. Where a single issue lifts a lane of `sonnet` / `medium` work to `opus`, say so in
+one sentence under the table, so the maintainer can decide to run that issue on its own instead.
+
+### The main checkout
+
+Every lane merges into the main checkout's working tree, so it must have no uncommitted changes to
+tracked files:
+
+```bash
+git status --porcelain --untracked-files=no
+```
+
+If that lists anything, say in one line above the table that the lanes cannot merge until those
+files are committed, and how many there are.
+
 ## Output
 
 Markdown, and short. Three parts:
@@ -177,13 +240,27 @@ Markdown, and short. Three parts:
    number is a number to go and look up.
 
    Shorten titles to the claim. The full title is one click away.
+
+   In lanes mode the table gains a **Lane** column first, and rows are ordered by lane, then by
+   their order within it:
+
+   | Lane | Release | # | Issue | Model | Effort | Review |
+   | --- | --- | --- | --- | --- | --- | --- |
+   | A — `opus` `medium` | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | `sonnet` | `medium` | |
+   | | 1.25.0 — Missions rank the same everywhere | [841](https://github.com/dseelinger/d47/issues/841) | Rank the Situation missions like the board | `opus` | `medium` | |
+   | B — `sonnet` `medium` | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | `sonnet` | `medium` | |
+
+   The lane's letter, model and effort go in its first row. A group can span lanes, so the Release
+   cell is filled on every row of an issue in a group. Model and Effort stay per issue: they are
+   what the issue is worth, and what the Issue key uses when the issue is started on its own.
 3. **Not now** — one line naming anything eligible you deliberately left out of every group, and
    why, including each waiting issue left out and the numbers it waits on. Omit the section when
    there is nothing.
 
 No launch lines. The Stream Deck's Issue key starts a session from the grid below, with
 `/issue-worker` as its opening command, so the finish line that skill defines is in its first
-message. A pasted line would bypass the skill.
+message. A pasted line would bypass the skill. The same key starts a lane: given a lane letter
+instead of an issue number, it opens `/issue-worker lane <letter>` on the lane's model and effort.
 
 No preamble, no summary of what triage is, no restating the rules above. The maintainer ran this to
 find out what to do next.
@@ -213,6 +290,16 @@ effort chosen here, so a row missing from this file is a session that starts on 
   `opus`/`sonnet`/`haiku` and `low`/`medium`/`high`/`xhigh`/`max`, and falls back to
   `sonnet`/`medium` for anything else.
 - `release` and `review` are optional; leave them out where the table's cell is blank.
+- In lanes mode, each laned issue also carries `"lane": "A"`, and the file gains a top-level
+  `lanes` object: each lane's model, effort, and its issue numbers in work order. A plain
+  `/triage` writes neither.
+
+  ```json
+  "lanes": {
+    "A": {"model": "opus", "effort": "medium", "issues": ["794", "841"]},
+    "B": {"model": "sonnet", "effort": "medium", "issues": ["834", "835", "837"]}
+  }
+  ```
 - Write the whole file each run. It is this triage's grid, not a record that accumulates.
 
 Say it was written in one line at the end of the report, with the issue count. Nothing else.
