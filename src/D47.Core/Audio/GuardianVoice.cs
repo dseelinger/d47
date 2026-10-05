@@ -26,8 +26,8 @@ public sealed record GuardianEffect
     /// <summary>The parameter's value at a level from 1 to 20.</summary>
     public required Func<int, double> Value { get; init; }
 
-    /// <summary>The signal, the parameter's value, the core's base pitch and the sample rate, to the treated signal.</summary>
-    public required Func<double[], double, double, int, double[]> Run { get; init; }
+    /// <summary>Starts the effect on a new clip from the parameter's value, the core's base pitch and the sample rate.</summary>
+    internal Func<double, double, int, IGuardianStage> Start { get; init; } = null!;
 
     /// <summary>The id of an effect that, when ticked, skips this one.</summary>
     public string? SkippedBy { get; init; }
@@ -37,7 +37,7 @@ public sealed record GuardianEffect
 /// Speech made to sound like a Guardian core. The ticked effects run in the order the Commander set, each at its
 /// level, and the result is brought back to the dry clip's loudness.
 /// </summary>
-public static class GuardianVoice
+public static partial class GuardianVoice
 {
     public const int LowestLevel = 1;
 
@@ -55,7 +55,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 7,
             Value = level => level / 20.0,
-            Run = (signal, chance, _, rate) => Stutter(signal, chance, rate),
+            Start = (chance, _, rate) => WholeClip(signal => Stutter(signal, chance, rate)),
         },
         new GuardianEffect
         {
@@ -66,7 +66,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Run = (signal, amount, basePitchHz, rate) => Monotone(signal, amount, basePitchHz, rate),
+            Start = (amount, basePitchHz, rate) => WholeClip(signal => Monotone(signal, amount, basePitchHz, rate)),
         },
         new GuardianEffect
         {
@@ -77,7 +77,7 @@ public static class GuardianVoice
             Unit = "ms",
             DefaultLevel = 12,
             Value = level => level * 10.0,
-            Run = (signal, holdMs, _, rate) => SteppedPitch(signal, holdMs, rate),
+            Start = (holdMs, _, rate) => WholeClip(signal => SteppedPitch(signal, holdMs, rate)),
             SkippedBy = "monotone",
         },
         new GuardianEffect
@@ -89,8 +89,8 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Run = (signal, depth, basePitchHz, rate) =>
-                Mix(signal, 1 - depth, Cylon(signal, basePitchHz * CarrierShare, rate), depth),
+            Start = (depth, basePitchHz, rate) =>
+                WholeClip(signal => Mix(signal, 1 - depth, Cylon(signal, basePitchHz * CarrierShare, rate), depth)),
         },
         new GuardianEffect
         {
@@ -101,7 +101,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => Mix(signal, 1 - wet, Whisper(signal, rate), wet),
+            Start = (wet, _, rate) => WholeClip(signal => Mix(signal, 1 - wet, Whisper(signal, rate), wet)),
         },
         new GuardianEffect
         {
@@ -112,7 +112,7 @@ public static class GuardianVoice
             Unit = "st",
             DefaultLevel = 8,
             Value = level => -level / 2.0,
-            Run = (signal, semitones, _, rate) => Shift(signal, Math.Pow(2, semitones / 12), rate),
+            Start = (semitones, _, rate) => WholeClip(signal => Shift(signal, Math.Pow(2, semitones / 12), rate)),
         },
         new GuardianEffect
         {
@@ -123,7 +123,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 12,
             Value = level => level / 20.0,
-            Run = (signal, mix, _, rate) => Mix(signal, 1, Shift(signal, 0.5, rate), mix),
+            Start = (mix, _, rate) => WholeClip(signal => Mix(signal, 1, Shift(signal, 0.5, rate), mix)),
         },
         new GuardianEffect
         {
@@ -134,7 +134,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 16,
             Value = level => level / 20.0,
-            Run = (signal, depth, _, rate) => Chorus(signal, depth, rate),
+            Start = (depth, _, rate) => new ChorusStage(depth, rate),
         },
         new GuardianEffect
         {
@@ -145,7 +145,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 12,
             Value = level => level / 20.0,
-            Run = (signal, gain, _, rate) => Hive(signal, gain, rate),
+            Start = (gain, _, rate) => WholeClip(signal => Hive(signal, gain, rate)),
         },
         new GuardianEffect
         {
@@ -156,7 +156,7 @@ public static class GuardianVoice
             Unit = "Hz",
             DefaultLevel = 5,
             Value = level => level / 20.0,
-            Run = (signal, hertz, _, rate) => Flanger(signal, hertz, rate),
+            Start = (hertz, _, rate) => new FlangerStage(hertz, rate),
         },
         new GuardianEffect
         {
@@ -167,7 +167,7 @@ public static class GuardianVoice
             Unit = "Hz",
             DefaultLevel = 8,
             Value = level => level / 20.0,
-            Run = (signal, hertz, _, rate) => Phaser(signal, hertz, rate),
+            Start = (hertz, _, rate) => new PhaserStage(hertz, rate),
         },
         new GuardianEffect
         {
@@ -178,7 +178,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 14,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => Wah(signal, wet, rate),
+            Start = (wet, _, rate) => new WahStage(wet, rate),
         },
         new GuardianEffect
         {
@@ -189,7 +189,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 12,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => Comb(signal, wet, rate),
+            Start = (wet, _, rate) => new CombStage(wet, rate),
         },
         new GuardianEffect
         {
@@ -200,7 +200,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 7,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => RingMod(signal, wet, RingHz, rate),
+            Start = (wet, _, rate) => new RingModStage(wet, RingHz, rate),
         },
         new GuardianEffect
         {
@@ -211,7 +211,7 @@ public static class GuardianVoice
             Unit = "Hz",
             DefaultLevel = 6,
             Value = level => 5.0 * level,
-            Run = (signal, hertz, _, rate) => RingMod(signal, 1, hertz, rate),
+            Start = (hertz, _, rate) => new RingModStage(1, hertz, rate),
         },
         new GuardianEffect
         {
@@ -222,7 +222,7 @@ public static class GuardianVoice
             Unit = "Hz",
             DefaultLevel = 12,
             Value = level => level / 2.0,
-            Run = (signal, hertz, _, rate) => Tremolo(signal, hertz, rate),
+            Start = (hertz, _, rate) => new TremoloStage(hertz, rate),
         },
         new GuardianEffect
         {
@@ -233,7 +233,7 @@ public static class GuardianVoice
             Unit = "×",
             DefaultLevel = 8,
             Value = level => level / 2.0,
-            Run = (signal, drive, _, rate) => Overdrive(signal, drive, rate),
+            Start = (drive, _, _) => new OverdriveStage(drive),
         },
         new GuardianEffect
         {
@@ -244,7 +244,7 @@ public static class GuardianVoice
             Unit = "bit",
             DefaultLevel = 16,
             Value = level => Math.Round(16 + ((2.0 - 16.0) * (level - 1) / 19.0)),
-            Run = (signal, bits, _, rate) => Bitcrusher(signal, bits, rate),
+            Start = (bits, _, rate) => WholeClip(signal => Bitcrusher(signal, bits, rate)),
         },
         new GuardianEffect
         {
@@ -255,7 +255,7 @@ public static class GuardianVoice
             Unit = "×",
             DefaultLevel = 10,
             Value = level => level / 10.0,
-            Run = (signal, often, _, rate) => Glitch(signal, often, rate),
+            Start = (often, _, rate) => new GlitchStage(often, rate),
         },
         new GuardianEffect
         {
@@ -266,7 +266,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Run = (signal, mix, _, rate) => Helmet(signal, mix, rate),
+            Start = (mix, _, rate) => WholeClip(signal => Helmet(signal, mix, rate)),
         },
         new GuardianEffect
         {
@@ -277,7 +277,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 6,
             Value = level => level / 20.0,
-            Run = (signal, strength, _, rate) => Radio(signal, strength, rate),
+            Start = (strength, _, rate) => WholeClip(signal => Radio(signal, strength, rate)),
         },
         new GuardianEffect
         {
@@ -288,7 +288,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 9,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => ReverseReverb(signal, wet, rate),
+            Start = (wet, _, rate) => WholeClip(signal => ReverseReverb(signal, wet, rate)),
         },
         new GuardianEffect
         {
@@ -299,7 +299,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 10,
             Value = level => level / 20.0,
-            Run = (signal, layer, _, rate) => Shimmer(signal, layer, rate),
+            Start = (layer, _, rate) => WholeClip(signal => Shimmer(signal, layer, rate)),
         },
         new GuardianEffect
         {
@@ -310,7 +310,7 @@ public static class GuardianVoice
             Unit = "%",
             DefaultLevel = 9,
             Value = level => level / 20.0,
-            Run = (signal, wet, _, rate) => Reverb(signal, wet, rate),
+            Start = (wet, _, rate) => new ReverbStage(wet, rate),
         },
         new GuardianEffect
         {
@@ -321,7 +321,7 @@ public static class GuardianVoice
             Unit = "ms",
             DefaultLevel = 10,
             Value = level => level * 50.0,
-            Run = (signal, breathMs, _, rate) => Respirator(signal, breathMs, rate),
+            Start = (breathMs, _, rate) => new RespiratorStage(breathMs, rate),
         },
     ];
 
@@ -492,7 +492,12 @@ public static class GuardianVoice
 
         for (var channel = 0; channel < channels; channel++)
         {
-            treated[channel] = Chain(dry[channel], chain, basePitchHz, rate);
+            var stage = new ChainStage([.. chain.Select(link => link.Effect.Start(link.Value, basePitchHz, rate))]);
+            var output = new List<double>(frames);
+
+            stage.Push(dry[channel], output);
+            stage.Finish(output);
+            treated[channel] = [.. output];
         }
 
         return clip with
@@ -612,17 +617,6 @@ public static class GuardianVoice
         }
 
         return chain;
-    }
-
-    private static double[] Chain(
-        double[] signal, List<(GuardianEffect Effect, double Value)> chain, double basePitchHz, int rate)
-    {
-        foreach (var (effect, value) in chain)
-        {
-            signal = effect.Run(signal, value, basePitchHz, rate);
-        }
-
-        return signal;
     }
 
     /// <summary>The speech's smoothed spectral envelope imposed on a flattened sawtooth-plus-noise carrier.</summary>
@@ -868,49 +862,6 @@ public static class GuardianVoice
         }
     }
 
-    private static double[] Chorus(double[] signal, double depth, int rate)
-    {
-        var output = new double[signal.Length];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            var seconds = (double)index / rate;
-            var copies = 0.0;
-
-            foreach (var (baseMs, depthMs, hertz, offset) in ChorusCopies)
-            {
-                var delayMs = baseMs + (depthMs * Math.Sin((2 * Math.PI * hertz * seconds) + offset));
-                copies += Read(signal, index - (delayMs / 1000 * rate));
-            }
-
-            output[index] = signal[index] + (depth * copies);
-        }
-
-        return output;
-    }
-
-    private static double[] Comb(double[] signal, double wet, int rate)
-    {
-        var delay = Samples(CombDelayMs, rate);
-        var fed = FeedbackComb(signal, delay, CombFeedback, signal.Length);
-
-        return Mix(signal, 1 - wet, fed, wet);
-    }
-
-    private static double[] RingMod(double[] signal, double wet, double hertz, int rate)
-    {
-        var output = new double[signal.Length];
-        var dry = 1 - wet;
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            var carrier = Math.Sin(2 * Math.PI * hertz * index / rate);
-            output[index] = (dry * signal[index]) + (wet * signal[index] * carrier);
-        }
-
-        return output;
-    }
-
     /// <summary>The line run through <see cref="RadioVoice"/> at <paramref name="strength"/>, mono, at this rate.</summary>
     private static double[] Radio(double[] signal, double strength, int rate)
     {
@@ -970,18 +921,6 @@ public static class GuardianVoice
         return output;
     }
 
-    /// <summary>The line with a synthesised breath, <paramref name="breathMs"/> long, added after it.</summary>
-    private static double[] Respirator(double[] signal, double breathMs, int rate)
-    {
-        var breath = Breath(breathMs, rate);
-        var output = new double[signal.Length + breath.Length];
-
-        Array.Copy(signal, output, signal.Length);
-        Array.Copy(breath, 0, output, signal.Length, breath.Length);
-
-        return output;
-    }
-
     /// <summary>Band-passed noise under a rise-and-fall envelope, so it reads as an inhale and exhale.</summary>
     private static double[] Breath(double milliseconds, int rate)
     {
@@ -997,117 +936,6 @@ public static class GuardianVoice
             var t = length > 1 ? (double)index / (length - 1) : 0;
             var envelope = Math.Sin(Math.PI * t);
             output[index] = filtered * envelope * RespiratorAmplitude;
-        }
-
-        return output;
-    }
-
-    /// <summary>One delayed copy read from a feedback line whose delay is swept sinusoidally.</summary>
-    private static double[] Flanger(double[] signal, double rateHz, int rate)
-    {
-        var output = new double[signal.Length];
-        var buffer = new double[signal.Length];
-        var center = (FlangerMinMs + FlangerMaxMs) / 2;
-        var depth = (FlangerMaxMs - FlangerMinMs) / 2;
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            var seconds = (double)index / rate;
-            var delayMs = center + (depth * Math.Sin(2 * Math.PI * rateHz * seconds));
-            var delayed = Read(buffer, index - (delayMs / 1000 * rate));
-
-            buffer[index] = signal[index] + (FlangerFeedback * delayed);
-            output[index] = (FlangerDry * signal[index]) + (FlangerWet * delayed);
-        }
-
-        return output;
-    }
-
-    /// <summary><see cref="PhaserStages"/> first-order allpass stages in series, their corner swept together.</summary>
-    private static double[] Phaser(double[] signal, double rateHz, int rate)
-    {
-        var output = new double[signal.Length];
-        var x1 = new double[PhaserStages];
-        var y1 = new double[PhaserStages];
-        var feedback = 0.0;
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            var seconds = (double)index / rate;
-            var sweep = (Math.Sin(2 * Math.PI * rateHz * seconds) + 1) / 2;
-            var corner = PhaserMinHz + ((PhaserMaxHz - PhaserMinHz) * sweep);
-            var tan = Math.Tan(Math.PI * corner / rate);
-            var a = (tan - 1) / (tan + 1);
-
-            var stage = signal[index] + (PhaserFeedback * feedback);
-
-            for (var s = 0; s < PhaserStages; s++)
-            {
-                var y = (a * stage) + x1[s] - (a * y1[s]);
-                x1[s] = stage;
-                y1[s] = y;
-                stage = y;
-            }
-
-            feedback = stage;
-            output[index] = (PhaserDry * signal[index]) + (PhaserWet * stage);
-        }
-
-        return output;
-    }
-
-    /// <summary>A band-pass biquad whose centre tracks an envelope follower on the input's loudness.</summary>
-    private static double[] Wah(double[] signal, double wet, int rate)
-    {
-        var dry = 1 - wet;
-        var output = new double[signal.Length];
-        var envelope = 0.0;
-        var attack = Math.Exp(-1.0 / (WahAttackSeconds * rate));
-        var release = Math.Exp(-1.0 / (WahReleaseSeconds * rate));
-        var filter = new Biquad();
-        var controlSamples = Math.Max(1, (int)Math.Round(WahControlSeconds * rate));
-        filter.SetBandPass(WahMinHz, WahQ, rate);
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            var x = signal[index];
-            var level = Math.Abs(x);
-            envelope = level > envelope
-                ? (attack * envelope) + ((1 - attack) * level)
-                : (release * envelope) + ((1 - release) * level);
-
-            if (index % controlSamples == 0)
-            {
-                var frequency = WahMinHz + ((WahMaxHz - WahMinHz) * Math.Clamp(envelope, 0, 1));
-                filter.SetBandPass(frequency, WahQ, rate);
-            }
-
-            output[index] = (dry * x) + (wet * filter.Next(x));
-        }
-
-        return output;
-    }
-
-    private static double[] Tremolo(double[] signal, double hertz, int rate)
-    {
-        var output = new double[signal.Length];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            var gain = 1 - (TremoloDepth * 0.5 * (1 - Math.Cos(2 * Math.PI * hertz * index / rate)));
-            output[index] = signal[index] * gain;
-        }
-
-        return output;
-    }
-
-    private static double[] Overdrive(double[] signal, double drive, int rate)
-    {
-        var output = new double[signal.Length];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            output[index] = (OverdriveDry * signal[index]) + (OverdriveWet * Math.Tanh(drive * signal[index]));
         }
 
         return output;
@@ -1140,64 +968,6 @@ public static class GuardianVoice
             }
 
             output[index] = Math.Clamp(Math.Round(held * half) / half, -1, 1);
-        }
-
-        return output;
-    }
-
-    /// <summary>
-    /// Damages one short stretch at a time, rotating through sample-and-hold, bit reduction and stutter. The
-    /// schedule comes from a fixed seed, so the same clip is damaged the same way every time. The gaps between
-    /// stretches are divided by <paramref name="often"/>.
-    /// </summary>
-    private static double[] Glitch(double[] signal, double often, int rate)
-    {
-        var output = (double[])signal.Clone();
-        var random = new Noise(0xBB67AE85u);
-        var spacing = 1 / often;
-        var at = random.Next(0.4, 0.9) * rate * spacing;
-        var kind = 0;
-
-        while (at < signal.Length)
-        {
-            var start = (int)at;
-            var end = Math.Min(signal.Length, start + (int)(random.Next(0.06, 0.18) * rate));
-
-            switch (kind % 3)
-            {
-                case 0:
-                    var hold = Math.Max(1, (int)Math.Round(random.Next(0.25, 0.55) / 1000 * rate));
-
-                    for (var index = start; index < end; index++)
-                    {
-                        output[index] = signal[start + ((index - start) / hold * hold)];
-                    }
-
-                    break;
-
-                case 1:
-                    var step = 2.0 / Math.Round(random.Next(8, 32));
-
-                    for (var index = start; index < end; index++)
-                    {
-                        output[index] = Math.Round(signal[index] / step) * step;
-                    }
-
-                    break;
-
-                default:
-                    var grain = Math.Max(1, (int)(random.Next(0.025, 0.05) * rate));
-
-                    for (var index = start; index < end; index++)
-                    {
-                        output[index] = signal[start + ((index - start) % grain)];
-                    }
-
-                    break;
-            }
-
-            kind++;
-            at += random.Next(0.7, 1.6) * rate * spacing;
         }
 
         return output;
@@ -1641,29 +1411,6 @@ public static class GuardianVoice
     private static double Sample(double[] signal, int index) =>
         index >= 0 && index < signal.Length ? signal[index] : 0;
 
-    /// <summary>Four parallel combs averaged, two allpasses in series, a low-pass on the wet, and a faded tail.</summary>
-    private static double[] Reverb(double[] signal, double mix, int rate)
-    {
-        var tail = (int)Math.Round(ReverbTailSeconds * rate);
-        var total = signal.Length + tail;
-        var low = ReverbWet(signal, total, rate);
-        var output = new double[total];
-
-        for (var index = 0; index < total; index++)
-        {
-            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0)) + (mix * low[index]);
-
-            if (index >= signal.Length)
-            {
-                sample *= (double)(total - 1 - index) / tail;
-            }
-
-            output[index] = sample;
-        }
-
-        return output;
-    }
-
     /// <summary>
     /// Reverb on the clip reversed, reversed back, so the tail comes before each sound and swells into it. The
     /// clip gains <see cref="ReverseTailSeconds"/> at the front, faded in from zero.
@@ -1792,30 +1539,12 @@ public static class GuardianVoice
     /// </summary>
     private static double[] ReverbWet(double[] signal, int total, int rate)
     {
+        var tank = new ReverbTank(rate);
         var wet = new double[total];
-
-        foreach (var (delayMs, feedback) in ReverbCombs)
-        {
-            var comb = FeedbackComb(signal, Samples(delayMs, rate), feedback, total);
-
-            for (var index = 0; index < total; index++)
-            {
-                wet[index] += comb[index] / ReverbCombs.Length;
-            }
-        }
-
-        foreach (var delayMs in ReverbAllpassMs)
-        {
-            wet = Allpass(wet, Samples(delayMs, rate), ReverbAllpassGain);
-        }
-
-        var smoothing = Math.Exp(-2 * Math.PI * ReverbLowPassHz / rate);
-        var low = 0.0;
 
         for (var index = 0; index < total; index++)
         {
-            low = ((1 - smoothing) * wet[index]) + (smoothing * low);
-            wet[index] = low;
+            wet[index] = tank.Next(index < signal.Length ? signal[index] : 0);
         }
 
         return wet;
@@ -1824,12 +1553,12 @@ public static class GuardianVoice
     /// <summary><c>y[n] = x[n] + g·y[n−D]</c>, run for <paramref name="length"/> samples.</summary>
     internal static double[] FeedbackComb(double[] signal, int delay, double feedback, int length)
     {
+        var line = new FeedbackCombLine(delay, feedback);
         var output = new double[length];
 
         for (var index = 0; index < length; index++)
         {
-            var input = index < signal.Length ? signal[index] : 0;
-            output[index] = input + (index >= delay ? feedback * output[index - delay] : 0);
+            output[index] = line.Next(index < signal.Length ? signal[index] : 0);
         }
 
         return output;
@@ -1838,12 +1567,12 @@ public static class GuardianVoice
     /// <summary><c>y[n] = −g·x[n] + x[n−D] + g·y[n−D]</c>.</summary>
     internal static double[] Allpass(double[] signal, int delay, double gain)
     {
+        var line = new AllpassLine(delay, gain);
         var output = new double[signal.Length];
 
         for (var index = 0; index < signal.Length; index++)
         {
-            var delayed = index >= delay ? signal[index - delay] + (gain * output[index - delay]) : 0;
-            output[index] = (-gain * signal[index]) + delayed;
+            output[index] = line.Next(signal[index]);
         }
 
         return output;
