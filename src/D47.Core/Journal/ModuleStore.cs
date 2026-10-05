@@ -1,8 +1,13 @@
+using System.Text.RegularExpressions;
+
 namespace D47.Core.Journal;
 
 /// <summary>One module in storage, and where it is.</summary>
 public sealed record StoredModule(string Name, string StarSystem)
 {
+    /// <summary>Size and rating, such as <c>5A</c>, parsed from the symbol; null where the symbol carries none.</summary>
+    public string? Class { get; init; }
+
     /// <summary>The station holding it, where the snapshot can say.</summary>
     public string? StationName { get; init; }
 
@@ -113,6 +118,7 @@ public sealed record ModuleStore
                               && string.Equals(where, system, StringComparison.OrdinalIgnoreCase)
                     ? station
                     : null,
+                Class = ModuleNames.Class(element.String("Name")),
                 TransferCost = element.Long("TransferCost"),
                 TransferTime = element.Int("TransferTime"),
                 InTransit = element.Bool("InTransit"),
@@ -133,8 +139,27 @@ public sealed record ModuleStore
 }
 
 /// <summary>Turning the journal's module symbols into something worth saying out loud.</summary>
-internal static class ModuleNames
+internal static partial class ModuleNames
 {
+    /// <summary>
+    /// The size and rating in a symbol such as <c>int_cargorack_size5_class1</c>, class 1 being E and 5 being A;
+    /// null where it carries no size and class.
+    /// </summary>
+    public static string? Class(string? symbol)
+    {
+        if (symbol is null || SizeAndClass().Match(symbol) is not { Success: true } match)
+        {
+            return null;
+        }
+
+        var rating = match.Groups[2].Value[0] - '0';
+
+        return rating is >= 1 and <= 5 ? $"{match.Groups[1].Value}{"EDCBA"[rating - 1]}" : null;
+    }
+
+    [GeneratedRegex(@"_size(\d+)_class(\d)(?![0-9])", RegexOptions.IgnoreCase)]
+    private static partial Regex SizeAndClass();
+
     public static string Readable(string? symbol) => ReadableOrNull(symbol) ?? "an unnamed module";
 
     public static string? ReadableOrNull(string? symbol)

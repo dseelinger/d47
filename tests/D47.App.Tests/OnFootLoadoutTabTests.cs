@@ -138,12 +138,12 @@ public class OnFootLoadoutTabTests
     /// does its vocabulary, but nothing about the layout is redrawn.
     /// </summary>
     [AvaloniaFact]
-    public void TheTabHasItsFiveRootsInOrder()
+    public void TheTabHasItsSixRootsInOrder()
     {
         var surface = OpenWithEngineers();
 
         Assert.Equal(
-            ["Ships", "Suits", "Carrier", "Materials", "Engineers"],
+            ["Ships", "Stored modules", "Suits", "Carrier", "Materials", "Engineers"],
             surface.Panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
 
         surface.Window.Close();
@@ -775,7 +775,7 @@ public class OnFootLoadoutTabTests
         // has not seen a carrier" is a thing the page can say and "you have none" is not something it can
  // know.
         Assert.Equal(
-            ["Ships", "Carrier"],
+            ["Ships", "Stored modules", "Carrier"],
             panel.Nav.Roots(PanelTab.Assets).Select(item => item.Word));
     }
 }

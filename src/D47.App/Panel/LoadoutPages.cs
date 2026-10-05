@@ -74,11 +74,19 @@ public static class LoadoutPages
         JournalClock? materialsClock = null,
 
         // Draws Fleet › Ships › Compare, and puts its tile on the Ships index (#562).
-        Func<Control>? compare = null)
+        Func<Control>? compare = null,
+
+        // Draws Fleet › Stored modules (#563).
+        Func<Control>? stored = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
             return compare();
+        }
+
+        if (crumb.Key == StoredModulesPage.RootKey && stored is not null)
+        {
+            return stored();
         }
 
         if (crumb.Key == CarrierRoot && carrier is not null)

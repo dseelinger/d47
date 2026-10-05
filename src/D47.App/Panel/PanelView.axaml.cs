@@ -831,6 +831,10 @@ public partial class PanelView : UserControl
             {
                 Help = D47.Core.Capabilities.Builtin.ShipsCapability.Id,
             },
+            new(StoredModulesPage.RootKey, "Stored modules")
+            {
+                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
+            },
         };
 
         if (onFoot is not null)
@@ -864,7 +868,8 @@ public partial class PanelView : UserControl
         // _engineers is read lazily, on whichever draw first opens Materials (#477).
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
-            () => _comparePage = new ComparePage(state));
+            () => _comparePage = new ComparePage(state),
+            () => _storedModulesPage = new StoredModulesPage(state));
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
     }
@@ -1031,6 +1036,11 @@ public partial class PanelView : UserControl
             changed |= compare.Tick();
         }
 
+        if (_storedModulesPage is { } stored && Nav.RootKeyOf(PanelTab.Assets) == StoredModulesPage.RootKey)
+        {
+            changed |= stored.Tick();
+        }
+
         // The Materials page measures plans against the inventory, which moves without either store saying so.
         if (_gap is { } gap && Nav.RootKeyOf(PanelTab.Assets) == LoadoutPages.GapRoot)
         {
@@ -1057,6 +1067,7 @@ public partial class PanelView : UserControl
 
     private ShipsMode? _loadoutMode;
     private ComparePage? _comparePage;
+    private StoredModulesPage? _storedModulesPage;
     private OnFootMode? _onFootMode;
     private GapSource? _gap;
     private D47.App.Controls.JournalClock? _materialsClock;
