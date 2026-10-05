@@ -25,7 +25,7 @@ public static class CrewCapability
             "who is on duty",
             "who's on duty",
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Crew", Order = 26, ShowOnPanel = false },
+        Display = new CapabilityDisplay { PanelTitle = "Crew", Order = 26 },
         Tools =
         [
             new ToolDefinition

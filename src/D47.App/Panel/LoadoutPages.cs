@@ -79,6 +79,9 @@ public static class LoadoutPages
         // Draws Fleet › Stored modules (#563).
         Func<Control>? stored = null,
 
+        // Draws Fleet › Crew (#564).
+        Func<Control>? crew = null,
+
         // Opens Plan's Carrier Route card from Fleet › Carrier, with From set (#637).
         Func<string?, bool>? planCarrierRoute = null)
     {
@@ -90,6 +93,11 @@ public static class LoadoutPages
         if (crumb.Key == StoredModulesPage.RootKey && stored is not null)
         {
             return stored();
+        }
+
+        if (crumb.Key == CrewPage.RootKey && crew is not null)
+        {
+            return crew();
         }
 
         if (crumb.Key == CarrierRoot && carrier is not null)

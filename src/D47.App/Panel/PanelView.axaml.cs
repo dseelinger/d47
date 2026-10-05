@@ -841,6 +841,10 @@ public partial class PanelView : UserControl
             {
                 Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
             },
+            new(CrewPage.RootKey, "Crew")
+            {
+                Help = D47.Core.Capabilities.Builtin.CrewCapability.Id,
+            },
         };
 
         if (onFoot is not null)
@@ -876,6 +880,7 @@ public partial class PanelView : UserControl
             crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state),
             () => _storedModulesPage = new StoredModulesPage(state),
+            () => _crewPage = new CrewPage(state),
             PlanCarrierRoute);
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
@@ -1048,6 +1053,11 @@ public partial class PanelView : UserControl
             changed |= stored.Tick();
         }
 
+        if (_crewPage is { } crewPage && Nav.RootKeyOf(PanelTab.Assets) == CrewPage.RootKey)
+        {
+            changed |= crewPage.Tick();
+        }
+
         // The Materials page measures plans against the inventory, which moves without either store saying so.
         if (_gap is { } gap && Nav.RootKeyOf(PanelTab.Assets) == LoadoutPages.GapRoot)
         {
@@ -1075,6 +1085,7 @@ public partial class PanelView : UserControl
     private ShipsMode? _loadoutMode;
     private ComparePage? _comparePage;
     private StoredModulesPage? _storedModulesPage;
+    private CrewPage? _crewPage;
     private OnFootMode? _onFootMode;
     private GapSource? _gap;
     private D47.App.Controls.JournalClock? _materialsClock;
