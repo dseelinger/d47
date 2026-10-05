@@ -138,6 +138,10 @@ public static class HelpTaxonomy
                     "Plot a circuit through known biology, and read back what your own surface scan found on the body you are at.",
                     "exobiology"),
                 HelpNode.Leaf(
+                    "Mining",
+                    "Set the material you are mining for, so prospector results say whether a rock is worth it.",
+                    "mining"),
+                HelpNode.Leaf(
                     "Adventures",
                     "Follow stories you fly, written by you or by the ship's AI, and moved forward by your own journal.",
                     "adventures"))),

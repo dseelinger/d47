@@ -215,7 +215,10 @@ public static class BuiltinCapabilities
         AdventureCapability.BeatRefusal? beatRefusal = null,
 
         // The Commander's journal reminders (#643).
-        Reminders.JournalReminderStore? journalReminders = null) =>
+        Reminders.JournalReminderStore? journalReminders = null,
+
+        // The Commander's mining target, which the prospector callout reads (#607).
+        Mining.MiningTargetStore? miningTargets = null) =>
     [
         HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
@@ -351,6 +354,7 @@ public static class BuiltinCapabilities
             journalReminders,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
             now ?? (() => DateTimeOffset.MinValue)),
+        MiningCapability.Create(miningTargets, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

@@ -244,7 +244,8 @@ public static class CalloutCapability
             Toggle(
                 ProspectorKey,
                 "Prospector results",
-                "What a prospector limpet found in a rock, and whether it is the richest of the session.",
+                "What a prospector limpet found in a rock, and whether it is the richest of the session. With a "
+                + "mining target set, only the target material, and whether the rock is above or below it.",
                 "prospector",
                 "prospector results",
                 s => s.Callouts.Prospector,

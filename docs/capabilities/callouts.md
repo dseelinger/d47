@@ -637,6 +637,17 @@ only one.
 A prospect arrives every 48 seconds at the median, which is about seventy-five lines in an hour of
 mining. That is why this has its own switch, separate from the one below.
 
+**With a [mining target](mining.md) set, only the target material is read out**, judged against the
+target's percentage where it has one:
+
+```text
+Platinum, 58.3%. Above your target.
+Platinum, 18%. Below your target.
+No platinum.
+```
+
+A rock someone has already mined from ends its line with "Already mined", target or no target.
+
 #### Core asteroids {#core-asteroid}
 
 ```text

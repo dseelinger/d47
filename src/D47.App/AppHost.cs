@@ -832,6 +832,12 @@ public sealed class AppHost : IDisposable
 
         journalReminders.Poll();
 
+        var miningTargets = new D47.Core.Mining.MiningTargetStore(
+            Path.Combine(paths.Data, "mining.json"),
+            loggerFactory.CreateLogger<D47.Core.Mining.MiningTargetStore>());
+
+        miningTargets.Load();
+
         // The Commander's ship builds (Phase 26), before the history walk that looks for the ships they name.
         var shipBuilds = new ShipBuildStore(
             Path.Combine(paths.Data, "ships.json"),
@@ -1178,6 +1184,7 @@ public sealed class AppHost : IDisposable
             planBook,
             storyClue,
             journalReminders,
+            miningTargets,
             commander => storyOpeningRef?.Invoke(commander) == true);
 
         // Acting on the game without being asked (Phase 10, item 2).
@@ -2074,7 +2081,8 @@ public sealed class AppHost : IDisposable
                 storySwitch: storySwitch,
                 endingAnswer: endingAnswer,
                 beatRefusal: beatRefusal,
-                journalReminders: journalReminders));
+                journalReminders: journalReminders,
+                miningTargets: miningTargets));
 
         buildingRegistry.Dispose();
 
@@ -2928,6 +2936,7 @@ public sealed class AppHost : IDisposable
         D47.Core.Knowledge.RoutePlanBook planBook,
         D47.Core.Stories.StoryClueCallout storyClue,
         D47.Core.Reminders.JournalReminderStore journalReminders,
+        D47.Core.Mining.MiningTargetStore miningTargets,
         Func<string?, bool> storyOpening)
     {
         var sceneCallout = new SceneCallout(scenes);
@@ -2979,7 +2988,7 @@ public sealed class AppHost : IDisposable
             .Add(surveyedBiology)
             .Add(biology)
             .Add(tradingMode)
-            .Add(new ProspectorCallout())
+            .Add(new ProspectorCallout { Target = () => miningTargets.For(gameState.Active?.Identity.FrontierId) })
             .Add(new CoreAsteroidCallout())
             .Add(new ChecklistCallout(checklists))
             .Add(new D47.Core.Reminders.JournalReminderCallout(journalReminders) { Capacity = MaterialGrades.CapacityOf })
