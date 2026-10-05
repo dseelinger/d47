@@ -157,6 +157,11 @@ answered with your docking bay.
 
 ### What it can tell you
 
+**What an event changed.** Selecting an event on the Journal page shows a band titled WHAT THIS
+CHANGED, between What this means and Every field, saying what d47 took from it. "Nothing in d47's
+picture changed." is a normal answer: most events carry nothing d47 keeps. An event that never
+reached the Commander's state has no band.
+
 **Where you are** — system, body, docking state, and what you are doing:
 
 ```text

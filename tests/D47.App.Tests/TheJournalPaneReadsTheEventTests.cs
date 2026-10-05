@@ -33,22 +33,24 @@ public sealed class TheJournalPaneReadsTheEventTests
     private const string EngineerCraft =
         """{"timestamp":"2026-09-20T00:38:02Z","event":"EngineerCraft","Slot":"MainEngines","Module":"int_engine_size4_class5","ApplyExperimentalEffect":"special_engine_overloaded","Ingredients":[{"Name":"iron","Count":5},{"Name":"hybridcapacitors","Name_Localised":"Hybrid Capacitors","Count":3}],"Engineer":"Liz Ryder","EngineerID":300080,"BlueprintID":128673659,"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0,"ExperimentalEffect":"special_engine_overloaded","ExperimentalEffect_Localised":"Drag Drives"}""";
 
-    private static JournalEntry Entry(string json)
+    private static JournalEntry Entry(string json, FoldReceipt? receipt = null)
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var log = new JournalLog();
 
-        log.Add([new JournalEvent(
-            DateTimeOffset.Parse(root.GetProperty("timestamp").GetString()!, System.Globalization.CultureInfo.InvariantCulture),
-            root.GetProperty("event").GetString()!,
-            root.Clone())]);
+        log.Add(
+            [new JournalEvent(
+                DateTimeOffset.Parse(root.GetProperty("timestamp").GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+                root.GetProperty("event").GetString()!,
+                root.Clone())],
+            receipt is null ? [] : [receipt]);
 
         return Assert.Single(log.Read(noise: true));
     }
 
     private static (JournalReadingPane Pane, Window Window) Shown(
-        string json, double width = 650, string? here = null, Func<ReadingLink, Action?>? open = null)
+        string json, double width = 650, string? here = null, Func<ReadingLink, Action?>? open = null, FoldReceipt? receipt = null)
     {
         var pane = new JournalReadingPane(open ?? (_ => null), () => here);
         var window = new Window
@@ -60,7 +62,7 @@ public sealed class TheJournalPaneReadsTheEventTests
         };
 
         window.Show();
-        pane.Show(Entry(json));
+        pane.Show(Entry(json, receipt));
         Dispatcher.UIThread.RunJobs();
 
         return (pane, window);
@@ -98,6 +100,73 @@ public sealed class TheJournalPaneReadsTheEventTests
         Assert.False(pane.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ReadingFields").IsVisible);
 
         Capture(window, "journal-reading-docked.png");
+
+        window.Close();
+    }
+
+    private static readonly FoldReceipt DockedReceipt = new([new FoldChange("Docked", "docked at BNH-T2F")]);
+
+    private static IEnumerable<string> Order(JournalReadingPane pane) =>
+        pane.GetVisualDescendants().OfType<Button>().Select(button => button.Name ?? string.Empty)
+            .Where(name => name is "ReadingMeaning" or "ReadingChanged" or "ReadingEveryField");
+
+    [AvaloniaFact]
+    public void TheReceiptBandSitsBetweenWhatThisMeansAndEveryFieldOpen()
+    {
+        using var look = AppLook.Put();
+        var (pane, window) = Shown(Docked, receipt: DockedReceipt);
+
+        Assert.Equal(["ReadingMeaning", "ReadingChanged", "ReadingEveryField"], Order(pane));
+
+        var body = pane.GetVisualDescendants().OfType<SelectableTextBlock>().Single(block => block.Name == "ReadingReceipt");
+        Assert.True(body.IsEffectivelyVisible);
+        Assert.Equal(DockedReceipt.Said, body.Text);
+        Assert.Contains("WHAT THIS CHANGED", pane.GetVisualDescendants().OfType<TextBlock>().Select(Said));
+
+        Capture(window, "journal-reading-docked-receipt.png");
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void FoldingTheReceiptBandHidesItsTextAndANewSelectionOpensItAgain()
+    {
+        using var look = AppLook.Put();
+        var (pane, window) = Shown(Docked, receipt: DockedReceipt);
+
+        Press(pane.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "ReadingChanged"));
+        Assert.False(pane.GetVisualDescendants().OfType<SelectableTextBlock>().Single(block => block.Name == "ReadingReceipt").IsVisible);
+
+        pane.Show(Entry(EngineerCraft, DockedReceipt));
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(pane.GetVisualDescendants().OfType<SelectableTextBlock>().Single(block => block.Name == "ReadingReceipt").IsEffectivelyVisible);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AMusicEntryReadsThatNothingInThePictureChanged()
+    {
+        using var look = AppLook.Put();
+        var (pane, window) = Shown(
+            """{"timestamp":"2026-09-29T21:01:23Z","event":"Music","MusicTrack":"Exploration"}""",
+            receipt: FoldReceipt.Nothing);
+
+        Assert.Equal(
+            "Nothing in d47's picture changed.",
+            pane.GetVisualDescendants().OfType<SelectableTextBlock>().Single(block => block.Name == "ReadingReceipt").Text);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AnEntryWithNoReceiptDrawsNoBand()
+    {
+        using var look = AppLook.Put();
+        var (pane, window) = Shown(Docked);
+
+        Assert.DoesNotContain(pane.GetVisualDescendants().OfType<Button>(), button => button.Name == "ReadingChanged");
+        Assert.DoesNotContain(pane.GetVisualDescendants().OfType<TextBlock>(), block => Said(block) == "WHAT THIS CHANGED");
 
         window.Close();
     }

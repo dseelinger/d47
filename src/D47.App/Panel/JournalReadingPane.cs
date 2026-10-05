@@ -15,7 +15,7 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// The Journal page's right pane: the selected event as a headline, its time, labelled rows, the
-/// paragraph for its kind and every field it carries (#817).
+/// paragraph for its kind, what d47's state took from it, and every field it carries (#817).
 /// </summary>
 internal sealed class JournalReadingPane : Border
 {
@@ -116,6 +116,11 @@ internal sealed class JournalReadingPane : Border
         if (JournalExplainers.For(entry.Kind) is { } paragraph)
         {
             _content.Children.Add(Meaning(paragraph, meaningOpen));
+        }
+
+        if (entry.Receipt is { } receipt)
+        {
+            _content.Children.Add(Changed(receipt));
         }
 
         _content.Children.Add(EveryField(reading.Plumbing));
@@ -550,6 +555,32 @@ internal sealed class JournalReadingPane : Border
         preview.VerticalAlignment = VerticalAlignment.Center;
 
         return Fold("WHAT THIS MEANS", body, open, preview, aside: null, "ReadingMeaning");
+    }
+
+    private StackPanel Changed(string receipt)
+    {
+        var body = new SelectableTextBlock
+        {
+            Text = receipt,
+            FontFamily = Prose,
+            FontSize = TypeScale.Secondary,
+            LineHeight = TypeScale.Secondary * 1.55,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 580,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 12, 0, 0),
+            Name = "ReadingReceipt",
+        };
+        LoadoutPages.Themed(body, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        _watch?.Invoke(body);
+
+        var preview = Text(receipt, Prose, TypeScale.Small, FontWeight.Normal, ThemeManager.GreyKey);
+        preview.TextTrimming = TextTrimming.CharacterEllipsis;
+        preview.TextWrapping = TextWrapping.NoWrap;
+        preview.Margin = new Thickness(12, 0, 0, 0);
+        preview.VerticalAlignment = VerticalAlignment.Center;
+
+        return Fold("WHAT THIS CHANGED", body, open: true, preview, aside: null, "ReadingChanged");
     }
 
     private StackPanel EveryField(IReadOnlyList<PlumbingField> fields)

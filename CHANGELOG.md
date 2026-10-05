@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Journal page's reading now has a WHAT THIS CHANGED band between What this means and Every field, open by default, saying what d47 took from the selected event, such as "This event updated: docked at BNH-T2F". An event that changed nothing reads "Nothing in d47's picture changed.", which is a normal answer for most events, and an event that never reached your state has no band. Folded, the band shows the receipt as a one-line preview, and selecting another event opens it again.
+
 Pledged to a Power, Directive 47 now warns when you start a hyperspace jump with salvage you scooped in your own Power's system and have not handed in, because it earns reinforcement merits only when handed in at a Power contact in that same system. It names up to three kinds and counts the rest, and says nothing about escape pods, which earn no merits. The new Powerplay salvage row under Callouts turns the warning off.
 
 Pledged to a Power, Directive 47 now says which way the merit modifier leans the first time you enter normal space in one of its systems in a session: reduced merits for reinforcing your own Power's quiet system, better pay once rivals have undermined it, fifteen percent more for undermining a rival's. It says nothing in an unoccupied system. Asking "what's the merit multiplier here" is answered with the figures, with the galaxy map's marked-system bonuses given as "if" because the journal does not say which systems are marked. The new Powerplay merits row under Callouts turns the spoken line off.
