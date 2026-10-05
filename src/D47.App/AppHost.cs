@@ -2992,6 +2992,7 @@ public sealed class AppHost : IDisposable
             // Phase 11.
             .Add(new CarrierCallout())
             .Add(new CarrierFuelCallout())
+            .Add(new CarrierUpkeepCallout())
 
             .Add(new MissionCallout { Offer = handInOffer, Markets = marketBook, Log = loggers.CreateLogger<MissionCallout>() })
 
@@ -3136,6 +3137,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
         engine.SetEnabled("domain", callouts.Domain, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
+        engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);
         engine.SetEnabled("missions", callouts.Missions, now);
 
         foreach (var callout in engine.Callouts)

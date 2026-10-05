@@ -802,6 +802,21 @@ jumped since the reading, the line adds how old the reading is and that the tank
 A squadron carrier, or one you do not own, is not announced. Nothing is said while d47 is catching up
 on a journal it did not watch being written.
 
+#### Carrier upkeep {#carrier-upkeep}
+
+When your own carrier's balance covers less than four weeks of upkeep, the carrier captain says so,
+on docking at it and on plotting its jump ([#835](https://github.com/dseelinger/d47/issues/835)).
+The balance is the recorded one less the weekly upkeep for each weekly tick since.
+
+```text
+Sacred Fire's account covers three more weeks of upkeep at 9,700,000 a week.
+```
+
+Where upkeep has been taken off the recorded figure, the line adds that it is the recorded balance
+less the upkeep since. It is said once for each recorded balance, and again after the game is loaded.
+Nothing is said before d47 has a weekly figure, for a squadron carrier or one you do not own, or
+while d47 is catching up on a journal it did not watch being written.
+
 #### Mission hand-ins and expiry {#missions}
 
 D47 speaks about the missions on your [mission board](missions.html) at four moments

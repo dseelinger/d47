@@ -588,6 +588,9 @@ public sealed record CalloutSettings
     /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
     public bool CarrierFuel { get; init; } = true;
 
+    /// <summary>A warning when the own carrier's balance covers under four weeks of upkeep (#835).</summary>
+    public bool CarrierUpkeep { get; init; } = true;
+
     /// <summary>Missions handed in at the station docked at or left, and their expiry warnings (#662).</summary>
     public bool Missions { get; init; } = true;
 

@@ -46,6 +46,7 @@ public static class CalloutCapability
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
     public const string CarrierFuelKey = "callouts.carrierFuel";
+    public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
     public const string MissionsKey = "callouts.missions";
     public const string DomainKey = "callouts.domain";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
@@ -413,6 +414,16 @@ public static class CalloutCapability
                 "carrier fuel",
                 s => s.Callouts.CarrierFuel,
                 (s, v) => s with { Callouts = s.Callouts with { CarrierFuel = v } }),
+
+            Toggle(
+                CarrierUpkeepKey,
+                "Carrier upkeep",
+                "On docking at your own carrier or plotting its jump, when its balance covers less than "
+                + "four weeks of upkeep. Said once for each recorded balance.",
+                "carrier-upkeep",
+                "carrier upkeep",
+                s => s.Callouts.CarrierUpkeep,
+                (s, v) => s with { Callouts = s.Callouts with { CarrierUpkeep = v } }),
 
             Toggle(
                 MissionsKey,
