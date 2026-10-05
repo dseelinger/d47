@@ -4,11 +4,16 @@ triage chose for it.
 A lane letter resolves to the first issue in that lane that is neither closed on GitHub nor named
 by a "Fixes #N" commit on main.
 
-Prints "<model> <effort> <number>" on stdout for the launcher to capture, and a line saying where
-that came from on stderr, which the launcher shows but does not read. Anything unreadable, unknown
-or outside the accepted tokens falls back to the defaults and says so — the values go on a command
-line, so nothing else is allowed through. A lane with no issue left to start prints nothing on
-stdout and exits 1.
+Prints "<model> <effort> <number> <directory>" on stdout for the launcher to capture, and a line
+saying where that came from on stderr, which the launcher shows but does not read. Anything
+unreadable, unknown or outside the accepted tokens falls back to the defaults and says so — the
+values go on a command line, so nothing else is allowed through. A lane with no issue left to start
+prints nothing on stdout and exits 1.
+
+The directory is the main checkout, or the issue's worktree when the issue has a lane or a lane
+worktree already exists. The worktree is created here, from local main on branch issue/<N>, so a
+lane session starts inside it and never in the main checkout. When it cannot be created, nothing
+is printed on stdout and the exit code is 1.
 
     python tools/deck/issue_settings.py 105
     python tools/deck/issue_settings.py b
@@ -18,6 +23,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -85,6 +91,38 @@ def next_in_lane(state, letter):
     return None, 'Lane {0} is finished: every issue in it has merged or closed.'.format(letter)
 
 
+def git(*args):
+    return subprocess.run(['git', '-C', REPO] + list(args),
+                          capture_output=True, text=True, encoding='utf-8', check=False)
+
+
+def lanes_running():
+    """True when git lists a worktree under .claude/worktrees."""
+    listed = git('worktree', 'list', '--porcelain').stdout
+    marker = os.path.normcase(os.path.join(REPO, '.claude', 'worktrees'))
+    return any(os.path.normcase(os.path.normpath(line[len('worktree '):])).startswith(marker)
+               for line in listed.splitlines() if line.startswith('worktree '))
+
+
+def worktree(number):
+    """(path, None) for the issue's worktree, created if missing, or (None, why it could not be)."""
+    path = os.path.join(REPO, '.claude', 'worktrees', str(number))
+    branch = 'issue/{0}'.format(number)
+    if os.path.isdir(path):
+        return path, None
+    if git('rev-parse', '--verify', '--quiet', 'refs/heads/' + branch).returncode == 0:
+        made = git('worktree', 'add', path, branch)
+    else:
+        made = git('worktree', 'add', path, '-b', branch, 'main')
+    if made.returncode != 0:
+        return None, 'Could not create the worktree for #{0}: {1}'.format(
+            number, (made.stderr or made.stdout).strip())
+    local = os.path.join(REPO, '.claude', 'settings.local.json')
+    if os.path.isfile(local):
+        shutil.copyfile(local, os.path.join(path, '.claude', 'settings.local.json'))
+    return path, None
+
+
 def resolve(state, number):
     """(model, effort, note). The note is for the maintainer to read, not to parse."""
     when = age(state.get('generated')) or 'age unknown'
@@ -126,7 +164,18 @@ def main():
         model, effort, note = DEFAULT_MODEL, DEFAULT_EFFORT, missing
     else:
         model, effort, note = resolve(state, number)
-    print(model, effort, number)
+
+    entry = ((state or {}).get('issues') or {}).get(str(number))
+    laned = isinstance(entry, dict) and bool(entry.get('lane'))
+    directory = REPO
+    if laned or lanes_running():
+        directory, why = worktree(number)
+        if directory is None:
+            sys.stderr.write(why + '\n')
+            sys.exit(1)
+        note += ' In worktree {0}.'.format(directory)
+
+    print(model, effort, number, directory)
     sys.stderr.write('{0} Starting #{1} on {2} / {3}.\n'.format(note, number, model, effort))
 
 

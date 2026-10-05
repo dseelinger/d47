@@ -31,10 +31,26 @@ a follow-up commit rather than a revert.
 
 Two cases put the work in a worktree instead, both covered by **Lanes** below:
 
-- the issue's entry in `.claude/triage-state.json` has a `lane`;
+- the issue's entry in the main checkout's `.claude/triage-state.json` has a `lane`;
 - `git worktree list` shows a worktree under `.claude/worktrees/`. Lanes are running and merging
   into `main`, so an issue outside them goes through a worktree too, or its uncommitted edits sit
   in the tree the lanes fast-forward.
+
+**Settle this before reading the issue, and do not skip it for a small change.** A one-line
+rename edited in the main checkout blocks every lane's merge just as a large change does. Run:
+
+```bash
+git rev-parse --show-toplevel; git worktree list
+grep -o '"<N>": {[^}]*}' "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json"
+```
+
+- The top level is already `.claude/worktrees/<N>`: the Issue key created the worktree and started
+  this session in it. Work there.
+- Either case above holds and the top level is the main checkout: create the worktree as
+  **The worktree** says and enter it before the next tool call.
+- Neither holds: work in the main checkout.
+
+If the worktree cannot be created, stop and say why. Never fall back to editing the main checkout.
 
 Read the issue in full before touching anything. The titles in this repository state the cause as
 well as the defect, and the body usually names the file. Confirm that claim against the code — an
@@ -166,7 +182,8 @@ its findings can be amended into it. The maintainer pushes, and the push is what
 
 ## What triage chose
 
-`.claude/triage-state.json` holds the last triage's grid, keyed by issue number. Read the entry for
+`.claude/triage-state.json` in the main checkout holds the last triage's grid, keyed by issue
+number. It is not tracked, so a worktree has no copy; read it by the main checkout's path. Read the entry for
 this issue when the file is there; it is a snapshot of a queue that moves, so treat a missing entry
 as no information rather than a verdict.
 
@@ -221,7 +238,9 @@ The main checkout is the first entry of `git worktree list`. Before touching any
 
 ### The worktree
 
-Create it from local `main`, then move the session into it:
+The Issue key creates it before the session starts, and starts the session inside it. When this
+session started in the main checkout instead, create it from local `main`, then move the session
+into it:
 
 ```bash
 git -C <main checkout> worktree add .claude/worktrees/<N> -b issue/<N> main
@@ -244,7 +263,9 @@ git -C <main checkout> worktree remove .claude/worktrees/<N>
 git -C <main checkout> branch -d issue/<N>
 ```
 
-If the removal fails on a locked file, leave it and name it in the report.
+If the removal fails on a locked file, leave it and name it in the report. A session the Issue key
+started inside the worktree has no `EnterWorktree` to exit, and holds the folder as its working
+directory, so the removal may leave the folder behind. That is expected: `/pre-release` clears it.
 
 When the issue does not land — it is bigger than it looked, the build or tests cannot be made
 green, or a conflict cannot be resolved as described below — stop and ask, as for any issue. Leave
