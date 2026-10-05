@@ -217,7 +217,7 @@ your journals it has been read, so the next start picks up exactly where it left
 long that is. Come back after a year away and the first start takes a few seconds longer while it
 reads the gap, and says so in the log.
 
-**Not look right? Rescan.** Asset Mgmt › Ships' own "Settings for this page" strip says how many ships
+**Not look right? Rescan.** Asset Mgmt › Ships' own "Page settings" strip says how many ships
 are remembered and how stale the oldest of them is, and offers **Rescan my journals**: it reads
 every journal on disk again and rebuilds the lot from scratch. A ship nothing in your journals
 supports stops existing, and one that has been sitting there wrong is put back the way the game

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The button that opens a tab's own settings now reads "Page settings" instead of "Settings for this page", on Asset Mgmt › Ships, Asset Mgmt › Carrier, Stories and the other tabs that have one. The arrow and the count are unchanged.
+
 Your carrier captain now warns when your own carrier's balance covers less than four weeks of upkeep. It speaks when you dock at the carrier and when you plot a jump, giving the weeks covered and the weekly figure: "Sacred Fire's account covers three more weeks of upkeep at 9,700,000 a week." Where upkeep has been taken off the recorded balance since it was read, it says so. It speaks once for each recorded balance, and again after the game is loaded. It is silent until d47 has a weekly upkeep figure, and for squadron carriers and carriers you do not own. Settings > Callouts has a new switch, Carrier upkeep, on by default; "stop warning me about carrier upkeep" turns it off.
 
 Your carrier captain now warns when your own carrier's tritium is less than two full jumps at its current load. It speaks when you dock at the carrier and when you plot a jump, naming the tonnes aboard and what a full jump burns: "Sacred Fire has 150 tonnes of tritium; a full jump at this load burns 88." Where the carrier has jumped since the last reading, it adds how old the reading is and that the tank can only be lower. It speaks once for each tritium reading, and again after the game is loaded. Squadron carriers and carriers you do not own are not announced. Settings > Callouts has a new switch, Carrier fuel, on by default; "stop warning me about carrier fuel" turns it off.

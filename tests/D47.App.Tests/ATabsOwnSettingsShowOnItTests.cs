@@ -157,7 +157,7 @@ public class ATabsOwnSettingsShowOnItTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(content.IsVisible);
-        Assert.StartsWith("▾ Settings for this page (", header.Content as string, StringComparison.Ordinal);
+        Assert.StartsWith("▾ Page settings (", header.Content as string, StringComparison.Ordinal);
 
         window.Close();
     }

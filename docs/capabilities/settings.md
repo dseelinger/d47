@@ -142,7 +142,7 @@ A section is about one job rather than one part of Directive 47, so it can hold 
 *Its name* has both the ship's name and the wake words. A section's reset puts back only that
 section's rows, and its **?** opens the page for the part of Directive 47 it is mostly about.
 
-A few rows are on the tab they concern instead, under **Settings for this page**: Rescan my
+A few rows are on the tab they concern instead, under **Page settings**: Rescan my
 journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices on Asset Mgmt ›
 Carrier, and Notable places for adventures on Stories.
 

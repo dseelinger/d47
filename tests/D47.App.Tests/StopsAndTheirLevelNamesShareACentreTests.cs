@@ -21,7 +21,7 @@ public class StopsAndTheirLevelNamesShareACentreTests
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
-        // The strip's own "Settings for this page" disclosure is closed by default; opened here so
+        // The strip's own "Page settings" disclosure is closed by default; opened here so
         // the track underneath it is actually laid out (#218).
         viewState.Save(viewState.Load().With("log-levels", expanded: true));
 

@@ -423,7 +423,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>
-    /// Draws one <see cref="SettingsLayout"/> tab place's rows behind a "Settings for this page"
+    /// Draws one <see cref="SettingsLayout"/> tab place's rows behind a "Page settings"
     /// disclosure — no nav, no page-top strip, no card header, no width floor, and no fold (#218).
     /// </summary>
     private void BuildTabPlace(SettingsService settings, string placeId)
@@ -473,7 +473,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var count = rows.Count.ToString(CultureInfo.InvariantCulture);
 
-        string Said(bool open) => $"{(open ? "▾" : "▸")} Settings for this page ({count})";
+        string Said(bool open) => $"{(open ? "▾" : "▸")} Page settings ({count})";
 
         var header = new Button
         {
@@ -481,7 +481,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        AutomationProperties.SetName(header, "Settings for this page");
+        AutomationProperties.SetName(header, "Page settings");
         _tabStripHeader = open => header.Content = Said(open);
 
         header.Click += (_, _) =>
