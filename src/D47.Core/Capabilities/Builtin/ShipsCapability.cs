@@ -190,7 +190,7 @@ public static class ShipsCapability
             Help =
                 "Every ship comes with a small drawing on its card, inside the download. The large "
                 + "picture on a ship's own page, the turntable a card plays when you open it and "
-                + "the hull's 3D mesh are far bigger — up to half a gigabyte for the whole fleet — so "
+                + "the hull's 3D mesh are far bigger — about 850 MB for the whole fleet — so "
                 + "they are not carried. D47 fetches the three files for a hull the first time you open one of "
                 + "those ships, from the same GitHub release the app updates itself from, and "
                 + "keeps them in data\\ships.\n\n"

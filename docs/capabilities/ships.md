@@ -277,7 +277,7 @@ installation has a fleet with pictures on it before anything is downloaded.
 **The large ones did not, and there are three of them per hull.** A ship's own page shows the same
 drawing at 3840 by 2160 — rendered again at that size rather than blown up, so the lines are the
 weight they always were — and opening a ship plays its turntable once through on the card you came
-from. The third is the hull's 3D mesh, for the hull viewer. Together those are up to half a gigabyte for the fleet, which is not something to hand a
+from. The third is the hull's 3D mesh, for the hull viewer. Together those are about 850 MB for the fleet, which is not something to hand a
 Commander who flies a Sidewinder. So the first time you open a ship, Directive 47 fetches the three
 files for that hull, from the same GitHub release it updates itself from, and keeps them in
 `data/ships`. Each hull is asked for once.
