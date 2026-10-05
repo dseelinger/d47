@@ -106,6 +106,9 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     /// </summary>
     public event Action<CalloutSilenced>? Silenced;
 
+    /// <summary>The crew seats on the ship flown, or null for none. Called on the tick: must not touch the disk.</summary>
+    public Func<Seats.ShipSeats?>? SeatsFlown { get; set; }
+
     public IReadOnlyList<ICallout> Callouts => _callouts;
 
     public CalloutEngine Add(ICallout callout)
@@ -178,7 +181,7 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
                 // (#257).
                 foreach (var announcement in callout.Examine(context with { LastChatter = _lastChatter }))
                 {
-                    if (Offer(announcement, context))
+                    if (Offer(Seats.CrewDomains.Recast(callout.Id, announcement, SeatsFlown?.Invoke()), context))
                     {
                         _lastSpokeBy[callout.Id] = context.Now;
                     }

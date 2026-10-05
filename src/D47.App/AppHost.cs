@@ -2224,12 +2224,15 @@ public sealed class AppHost : IDisposable
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null)));
 
-        IReadOnlyList<D47.Core.Seats.CrewSeat> SeatsAboard() =>
-            gameState.Active is { } active
-            && active.FlownShip.ShipId is { } shipId
-            && self?.CrewSeats.For(active.Identity.FrontierId, shipId) is { } here
-                ? here.Seats
-                : [];
+        D47.Core.Seats.ShipSeats? SeatsFlown() =>
+            gameState.Active is { } active && active.FlownShip.ShipId is { } shipId
+                ? self?.CrewSeats.For(active.Identity.FrontierId, shipId)
+                : null;
+
+        IReadOnlyList<D47.Core.Seats.CrewSeat> SeatsAboard() => SeatsFlown()?.Seats ?? [];
+
+        // A filled seat speaks its domain's callouts.
+        callouts.SeatsFlown = SeatsFlown;
 
         // A hired pilot, reached by name (#188).
         turns.Lines.Add(new CrewLine(
@@ -2422,6 +2425,9 @@ public sealed class AppHost : IDisposable
         // The avatar's own imagery, if the Commander has dropped any in.
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
         host.Panel.CoreId = personas.Current.Id;
+
+        // Read now, so the first callout a seat speaks does not read the file on the tick.
+        _ = host.CrewSeats;
 
         AvatarClipStore.Enable(
             paths.AvatarClips,

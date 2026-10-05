@@ -73,6 +73,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public string? Speaker { get; init; }
 
+    /// <summary>The <see cref="Seats.CrewSeat.Id"/> of the crew seat speaking, or null for a line no seat speaks.</summary>
+    public string? Seat { get; init; }
+
     /// <summary>
     /// The provider and voice a story's cast member speaks in, whatever the slot settings say, or null for a line
     /// spoken by its role. A pinned line gets the member's own treatment and nothing else.

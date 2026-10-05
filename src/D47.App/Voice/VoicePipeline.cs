@@ -409,7 +409,7 @@ public sealed class VoicePipeline(
                 slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel),
 
                 // And who to name on the caption when this is not d47 talking (#201).
-                captionSpeaker: VoiceRoles.Called(announcement.Voice))
+                captionSpeaker: announcement.Seat is not null ? announcement.Speaker : VoiceRoles.Called(announcement.Voice))
             .ConfigureAwait(false);
     }
 

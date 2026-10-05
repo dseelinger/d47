@@ -21,7 +21,7 @@ public static class SpeakerAccent
         ArgumentNullException.ThrowIfNull(announcement);
 
         return announcement.Speaker is { Length: > 0 } speaker
-            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice, announcement.SpeakerAllegiance)
+            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice, announcement.SpeakerAllegiance, announcement.Seat)
             : cast.For(announcement.Voice);
     }
 
