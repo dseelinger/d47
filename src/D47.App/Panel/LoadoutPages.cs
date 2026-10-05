@@ -77,7 +77,10 @@ public static class LoadoutPages
         Func<Control>? compare = null,
 
         // Draws Fleet › Stored modules (#563).
-        Func<Control>? stored = null)
+        Func<Control>? stored = null,
+
+        // Opens Plan's Carrier Route card from Fleet › Carrier, with From set (#637).
+        Func<string?, bool>? planCarrierRoute = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
@@ -91,7 +94,11 @@ public static class LoadoutPages
 
         if (crumb.Key == CarrierRoot && carrier is not null)
         {
-            return new CarrierPage(carrier, copy: copy, settingsStrip: carrierSettingsStrip?.Invoke());
+            return new CarrierPage(
+                carrier,
+                copy: copy,
+                settingsStrip: carrierSettingsStrip?.Invoke(),
+                planRoute: planCarrierRoute);
         }
 
         if (crumb.Key.StartsWith(PowerPrefix, StringComparison.Ordinal)

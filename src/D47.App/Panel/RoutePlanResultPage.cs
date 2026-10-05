@@ -94,6 +94,9 @@ public sealed class RoutePlanResultPage : UserControl
         { Exobiology: { } exobiology } =>
             $"{Count(exobiology.Stops.Count, "stop")}, {Count(exobiology.TotalJumps, "jump")}, "
             + $"{exobiology.TotalValue:N0} credits of biology.",
+        { Carrier: { } carrier } =>
+            $"Carrier route, {plan.Headline}: {Count(carrier.Waypoints.Count(waypoint => waypoint.Distance > 0), "jump")}, "
+            + $"{carrier.TotalTritium:N0} t of tritium.",
         _ => plan.Headline,
     };
 
@@ -109,6 +112,13 @@ public sealed class RoutePlanResultPage : UserControl
         if (plan.Exobiology is not null)
         {
             return $"{when} Every stop has already been surveyed by somebody, so none of it is a first footfall.";
+        }
+
+        if (plan.Carrier is not null)
+        {
+            return plan.CarrierStatsSeenAt is { } read
+                ? $"{when} Tank and hold read from carrier management {read.ToLocalTime():d MMM, HH:mm}."
+                : when;
         }
 
         if (plan.Trade is not { } trade)
@@ -139,6 +149,8 @@ public sealed class RoutePlanResultPage : UserControl
         { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
         { Exobiology: { } exobiology } =>
             exobiology.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+        { Carrier: { } carrier } =>
+            carrier.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached), here)),
         _ => [],
     };
 
@@ -173,6 +185,32 @@ public sealed class RoutePlanResultPage : UserControl
         return RoutingKit.Row(
             [Line(waypoint.System, waypoint.System, state, here, tags), RoutingKit.Values(Joined(values), state.Reached)],
             waypoint.System,
+            _copy);
+    }
+
+    private Control Waypoint(CarrierWaypoint waypoint, RowState state, string? here)
+    {
+        var values = waypoint.Distance > 0
+            ? new List<string> { $"{waypoint.Distance:N1} ly", $"{waypoint.FuelUsed:N0} t tritium" }
+            : ["start"];
+
+        values.Add($"{waypoint.FuelInTank:N0} t in the tank");
+
+        var tags = new List<Control>();
+
+        if (waypoint.MustRestock)
+        {
+            tags.Add(RoutingKit.Tag($"restock {waypoint.RestockAmount:N0} t", ThemeManager.AKey));
+        }
+
+        if (waypoint is { HasIcyRing: true, IsSystemPristine: true })
+        {
+            tags.Add(RoutingKit.Tag("pristine icy ring", ThemeManager.BlueKey));
+        }
+
+        return RoutingKit.Row(
+            [Line(waypoint.Name, waypoint.Name, state, here, [.. tags]), RoutingKit.Values(Joined(values), state.Reached)],
+            waypoint.Name,
             _copy);
     }
 

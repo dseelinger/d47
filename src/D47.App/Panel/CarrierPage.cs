@@ -42,6 +42,7 @@ public sealed class CarrierPage : UserControl
     private readonly CarrierSource _carrier;
     private readonly Func<DateTimeOffset> _now;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly Func<string?, bool>? _planRoute;
     private readonly StackPanel _body = new() { Spacing = 4 };
     private IDisposable? _sized;
     private bool _mini;
@@ -52,9 +53,13 @@ public sealed class CarrierPage : UserControl
         Func<string, Task<bool>>? copy = null,
 
         // The captain and tower's own settings, on the tab they only affect (#218, #305).
-        Control? settingsStrip = null)
+        Control? settingsStrip = null,
+
+        // Opens Navigation › Plan's Carrier Route card with From set to the system given.
+        Func<string?, bool>? planRoute = null)
     {
         _carrier = carrier;
+        _planRoute = planRoute;
         _now = now ?? (() => DateTimeOffset.UtcNow);
         _copy = copy;
 
@@ -183,6 +188,14 @@ public sealed class CarrierPage : UserControl
         Services(carrier, tiles);
 
         _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
+
+        if (_planRoute is { } planRoute && !carrier.IsSquadron)
+        {
+            var plan = LoadoutPages.Press("Plan a carrier route", () => planRoute(carrier.StarSystem));
+            plan.Margin = new Thickness(0, 8, 0, 0);
+
+            _body.Children.Add(plan);
+        }
 
         Tritium(carrier);
 

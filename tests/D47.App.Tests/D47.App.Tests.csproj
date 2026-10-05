@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <None Include="Fixtures\ships\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\D47.Knowledge.Tests\Fixtures\spansh-fleetcarrier-route-sol-colonia-sol.json" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

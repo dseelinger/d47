@@ -130,6 +130,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
         Assert.Equal(Now, kept.PlottedAt);
         Assert.Equal("Sol to Colonia and back", kept.Headline);
         Assert.Equal(92, kept.Carrier?.Waypoints.Count);
+        Assert.Equal(new DateTimeOffset(2026, 9, 5, 12, 0, 0, TimeSpan.Zero), kept.CarrierStatsSeenAt);
     }
 
     [Fact]

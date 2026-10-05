@@ -51,6 +51,9 @@ public sealed record StoredRoutePlan
     /// <summary>The carrier a <see cref="RoutePlanKind.Carrier"/> plan was plotted for.</summary>
     public long? CarrierId { get; init; }
 
+    /// <summary>When the carrier management reading a <see cref="RoutePlanKind.Carrier"/> plan used was taken.</summary>
+    public DateTimeOffset? CarrierStatsSeenAt { get; init; }
+
     /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
     public int? Reached { get; init; }
 
@@ -124,7 +127,12 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
             Exobiology = route,
         });
 
-    public void Record(CarrierRoute route, long? carrierId, string headline, DateTimeOffset at) =>
+    public void Record(
+        CarrierRoute route,
+        long? carrierId,
+        string headline,
+        DateTimeOffset at,
+        DateTimeOffset? statsSeenAt = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Carrier,
@@ -132,6 +140,7 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
             Headline = headline,
             Carrier = route,
             CarrierId = carrierId,
+            CarrierStatsSeenAt = statsSeenAt,
         });
 
     /// <summary>

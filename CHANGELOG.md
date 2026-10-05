@@ -8,6 +8,10 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Navigation tab's Plan page has a Carrier Route card for your own fleet carrier. Fill in To; From defaults to the carrier's system, and "Come back to the start" is on by default. There are no fields for the tank, hold tritium or used capacity: they are read from the carrier, as with "plot my carrier to Colonia". The plotted route is headed "Carrier route", with the total tritium and when carrier management was last read, and lists each jump with its distance, the tritium it uses and what is left in the tank, marking restock stops with the tonnes needed and systems with a pristine icy ring. A carrier whose management panel has never been opened gets "Open carrier management once so I can read the hold." on the card. Fleet › Carrier has a "Plan a carrier route" button that opens the card with From set to the carrier's system.
+
+A planner on the Plan page that answers without plotting, such as a refusal or "No route from…", now keeps that answer on its card. It was cleared as soon as it appeared.
+
 A stored carrier plan now follows your carrier. It moves forward when the carrier's own location or jump event reaches the next system, matched on the carrier's id. Your own ship jumping through a waypoint system, and a squadron carrier arriving there, do not move it. The plan can say how many jumps remain and whether the next stop needs a tritium restock.
 
 Saying "plot my carrier to Colonia" plots your own fleet carrier's jumps there and back, using the tank, the tritium in its hold and the used capacity from the last time carrier management was opened. The answer gives the number of jumps, the tritium for the whole journey, up to three restock stops by name and a count of the rest, how many waypoints have a pristine icy ring to mine from, and how old the management reading is. Say "one way" to leave out the trip back. A squadron carrier, or a carrier whose management panel has never been opened, is refused. The Galaxy search entry under Privacy and egress now says a carrier plot sends the start, the destination, those three figures and the carrier's capacity to spansh.co.uk.

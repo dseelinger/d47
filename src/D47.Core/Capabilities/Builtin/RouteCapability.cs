@@ -646,7 +646,8 @@ public static class RouteCapability
                 route,
                 query.CarrierId,
                 $"{query.Source} to {destination}{(returnTrip ? " and back" : "")}",
-                at);
+                at,
+                query.StatsSeenAt);
 
             return ToolResult.Ok(Describe(route, query, destination, returnTrip, at));
         }

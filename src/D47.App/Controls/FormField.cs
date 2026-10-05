@@ -155,7 +155,8 @@ public sealed class FormField
 
     /// <summary>The key to the marks, for the foot of a form.</summary>
     /// <param name="supplied">Whether this form has a ship-supplied field on it.</param>
-    public static Control Legend(bool required = true, bool supplied = false)
+    /// <param name="suppliedFrom">What a supplied field is read from.</param>
+    public static Control Legend(bool required = true, bool supplied = false, string suppliedFrom = "your ship")
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14 };
 
@@ -166,7 +167,7 @@ public sealed class FormField
 
         if (supplied)
         {
-            row.Children.Add(Key(SuppliedMark, "filled from your ship", ThemeManager.BlueKey));
+            row.Children.Add(Key(SuppliedMark, $"filled from {suppliedFrom}", ThemeManager.BlueKey));
         }
 
         return row;

@@ -874,7 +874,8 @@ public partial class PanelView : UserControl
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state),
-            () => _storedModulesPage = new StoredModulesPage(state));
+            () => _storedModulesPage = new StoredModulesPage(state),
+            PlanCarrierRoute);
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
     }
@@ -1121,6 +1122,8 @@ public partial class PanelView : UserControl
         bool unsold = true)
     {
         var roots = new List<NavCrumb>();
+
+        surface = surface with { CarrierRoute = _carrierRoute };
 
         if (plan)
         {
@@ -1578,6 +1581,22 @@ public partial class PanelView : UserControl
     /// 55).
     /// </summary>
     private CarrierSource? _carrier;
+
+    /// <summary>What Fleet › Carrier hands the Carrier Route card on this surface's Plan page.</summary>
+    private readonly CarrierRouteRequest _carrierRoute = new();
+
+    /// <summary>Opens Plan with the Carrier Route card's From set, or false where this surface has no Plan.</summary>
+    private bool PlanCarrierRoute(string? from)
+    {
+        if (!Nav.Destinations.Any(destination => destination.Root.Key == RoutingPages.PlanRoot))
+        {
+            return false;
+        }
+
+        _carrierRoute.Ask(from);
+
+        return Nav.Show(RoutingPages.PlanRoot);
+    }
 
     private PaneWidthMemory? _paneWidths;
 

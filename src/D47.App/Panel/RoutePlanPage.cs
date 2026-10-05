@@ -26,6 +26,13 @@ public sealed class RoutePlanPage : UserControl
     private readonly Action? _openSettings;
     private readonly Func<string?>? _here;
     private readonly Func<double?>? _jumpRange;
+    private readonly Func<string?>? _carrierHere;
+    private readonly CarrierRouteRequest? _carrierRoute;
+
+    /// <summary>The Carrier Route card and its fields, as last built.</summary>
+    private FormField? _carrierFrom;
+    private FormField? _carrierTo;
+    private Control? _carrierCard;
 
     /// <summary>
     /// The fields whose placeholder quotes a live figure (#253), kept so <see cref="Refresh"/> can
@@ -53,7 +60,9 @@ public sealed class RoutePlanPage : UserControl
         Func<bool> lookupsEnabled,
         Action? openSettings = null,
         Func<string?>? here = null,
-        Func<double?>? jumpRange = null)
+        Func<double?>? jumpRange = null,
+        Func<string?>? carrierHere = null,
+        CarrierRouteRequest? carrierRoute = null)
     {
         _registry = registry;
         _plans = plans;
@@ -62,6 +71,8 @@ public sealed class RoutePlanPage : UserControl
         _openSettings = openSettings;
         _here = here;
         _jumpRange = jumpRange;
+        _carrierHere = carrierHere;
+        _carrierRoute = carrierRoute;
 
         _progress.Click += (_, _) => _nav.Drill(RoutingPages.ProgressCrumb);
         ShowProgressOpen();
@@ -82,12 +93,38 @@ public sealed class RoutePlanPage : UserControl
         base.OnAttachedToVisualTree(e);
         _nav.Changed += OnNavigated;
         ShowProgressOpen();
+
+        if (_carrierRoute is not null)
+        {
+            _carrierRoute.Asked += OnCarrierRouteAsked;
+            TakeCarrierRoute();
+        }
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
         _nav.Changed -= OnNavigated;
+
+        if (_carrierRoute is not null)
+        {
+            _carrierRoute.Asked -= OnCarrierRouteAsked;
+        }
+    }
+
+    private void OnCarrierRouteAsked() => Dispatcher.UIThread.Post(TakeCarrierRoute);
+
+    /// <summary>Fills the Carrier Route card's From with the system Fleet › Carrier asked for, and shows the card.</summary>
+    private void TakeCarrierRoute()
+    {
+        if (_carrierFrom is null || _carrierRoute?.TryTake(out var from) != true)
+        {
+            return;
+        }
+
+        _carrierFrom.Box.Text = from;
+        _carrierCard?.BringIntoView();
+        _carrierTo?.Box.Focus();
     }
 
     private void OnNavigated(object? sender, EventArgs e) => ShowProgressOpen();
@@ -129,7 +166,10 @@ public sealed class RoutePlanPage : UserControl
         // forever after they stopped being on screen.
         _supplied.Clear();
 
-        _cards.Children.Add(Reflow.Grid([JumpCard(), RichesCard(), ExobiologyCard()], PlannerWidth, 28, 12, 2));
+        _cards.Children.Add(
+            Reflow.Grid([JumpCard(), RichesCard(), ExobiologyCard(), CarrierCard()], PlannerWidth, 28, 12, 2));
+
+        TakeCarrierRoute();
     }
 
     /// <summary>Redraws — after a plot, or after the setting behind the whole page moved.</summary>
@@ -264,6 +304,49 @@ public sealed class RoutePlanPage : UserControl
             ExobiologyHelp);
     }
 
+    /// <summary>The Commander's own fleet carrier, plotted with the tank and hold it last reported.</summary>
+    private Control CarrierCard()
+    {
+        var to = Field("To", "a system", FieldNeed.Required);
+        var from = Field("From", "the carrier's system", FieldNeed.Supplied, () => _carrierHere?.Invoke(), width: 300);
+        var back = RoutingKit.Switch("Come back to the start");
+        back.IsChecked = true;
+
+        AutomationProperties.SetName(from.Box, "From, optional, filled from your carrier");
+
+        _carrierTo = to;
+        _carrierFrom = from;
+
+        var form = new StackPanel
+        {
+            Spacing = 8,
+            Children =
+            {
+                Row(to, from),
+                back,
+                RoutingKit.Prose(
+                    "Tank, hold tritium and used capacity are read from the carrier, as of the last time "
+                    + "carrier management was opened in the game."),
+            },
+        };
+
+        return _carrierCard = Plottable(
+            "Carrier Route",
+            form,
+            RoutePlanKind.Carrier,
+            "plot_carrier_route",
+            () => Arguments(
+                ("to", to.Text),
+                ("from", from.Text),
+                ("return_trip", back.IsChecked == true ? "true" : "false")),
+            () => RoutingKit.Filled(to.Box, "Name a destination first."),
+            CarrierRouteHelp,
+            FormField.Legend(required: true, supplied: true, suppliedFrom: "your carrier"));
+    }
+
+    /// <inheritdoc cref="NeutronPlotterHelp"/>
+    public const string CarrierRouteHelp = D47.Core.Capabilities.Builtin.RouteCapability.Id;
+
     /// <summary>
     /// One planner: its form, its button, whatever it last answered, and the pending state that a
     /// submitted job needs and a spoken answer never did.
@@ -326,16 +409,15 @@ public sealed class RoutePlanPage : UserControl
 
                 RoutingKit.Say(status, result.Content, result.IsError);
 
-                // The book is what the result level draws, and the capability has just written it — so
-                // redrawing the page is what puts "Show most recent" on the card.
-                Refresh();
-
                 // A recorded plan is a new record in the book rather than the old one mutated (#200), so
                 // reference identity says whether this call actually plotted something — ToolResult.IsError
                 // does not: "No route from…", nothing worth mapping and an unseen market all come back as Ok
-                // with nothing recorded (#212). A plot that recorded nothing leaves the surface on the form.
+                // with nothing recorded (#212). A plot that recorded nothing leaves the surface on the form,
+                // not redrawn, so the answer stays on the card.
                 if (_plans.Last(kind) is { } after && !ReferenceEquals(before, after))
                 {
+                    // The redraw puts "Show most recent" on the card.
+                    Refresh();
                     _nav.Drill(RoutingPages.ResultCrumb(kind, after.Headline));
                 }
             }

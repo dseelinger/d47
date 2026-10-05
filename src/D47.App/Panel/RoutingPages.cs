@@ -53,7 +53,51 @@ public sealed record RoutingSurface(
 
     // Unsold data (#556): the two ledgers, read once history has been set up.
     Func<ExobiologyLedger?>? Exobiology = null,
-    Func<CartographyLedger?>? Cartography = null);
+    Func<CartographyLedger?>? Cartography = null,
+
+    // Fleet › Carrier's "Plan a carrier route", handed to the Carrier Route card (#637).
+    CarrierRouteRequest? CarrierRoute = null);
+
+/// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>
+public sealed class CarrierRouteRequest
+{
+    private readonly Lock _gate = new();
+    private string? _from;
+    private bool _pending;
+
+    /// <summary>Raised when a start system is asked for.</summary>
+    public event Action? Asked;
+
+    public void Ask(string? from)
+    {
+        lock (_gate)
+        {
+            _from = from;
+            _pending = true;
+        }
+
+        Asked?.Invoke();
+    }
+
+    /// <summary>The start system asked for, once; false when nothing is waiting.</summary>
+    public bool TryTake(out string? from)
+    {
+        lock (_gate)
+        {
+            from = _from;
+
+            if (!_pending)
+            {
+                return false;
+            }
+
+            _pending = false;
+            _from = null;
+
+            return true;
+        }
+    }
+}
 
 /// <summary>The Navigation tab (Phase 37).</summary>
 public static class RoutingPages
@@ -122,7 +166,9 @@ public static class RoutingPages
                 surface.LookupsEnabled ?? (() => false),
                 surface.OpenSettings,
                 surface.Here,
-                surface.JumpRange)
+                surface.JumpRange,
+                () => surface.Commander?.Invoke()?.Carrier.StarSystem,
+                surface.CarrierRoute)
             : Missing("Plotting is not available on this surface.");
 
     private static Control Market(RoutingSurface surface) =>
