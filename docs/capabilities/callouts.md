@@ -929,6 +929,19 @@ when d47 starts is said on the first tick after it has caught up. Nothing is sai
 catching up on a journal it did not watch being written. Switching this off silences this warning and
 nothing else.
 
+#### Fighter pilot {#fighter}
+
+Your active hired pilot says so when the fighter launches, docks, is lost or is rebuilt
+([#848](https://github.com/dseelinger/d47/issues/848)). It is on by default.
+
+```text
+Fighter away. I'll stay on your wing.
+```
+
+The line is in the pilot's own voice and says only what the journal states. When you launch the fighter
+and fly it yourself, the pilot says they have the ship instead. Nothing is said while no pilot is
+assigned to the fighter bay, and nothing is said on a timer while the fighter is out.
+
 #### Session length {#session-length}
 
 A reminder, said once, when a session has run for the length you choose: 2, 3, 4 or 6 hours, 4 by

@@ -53,6 +53,7 @@ public static class CalloutCapability
 
     public const string CarrierFuelKey = "callouts.carrierFuel";
     public const string CommunityGoalExpiryKey = "callouts.communityGoalExpiry";
+    public const string FighterKey = "callouts.fighter";
     public const string SessionLengthKey = "callouts.sessionLength";
     public const string SessionLengthHoursKey = "callouts.sessionLengthHours";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
@@ -480,6 +481,15 @@ public static class CalloutCapability
                 "community goal expiry",
                 s => s.Callouts.CommunityGoalExpiry,
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalExpiry = v } }),
+
+            Toggle(
+                FighterKey,
+                "Fighter pilot",
+                "Your active hired pilot says so when the fighter launches, docks, is lost or is rebuilt. Silent with no pilot assigned.",
+                "fighter",
+                "the fighter pilot",
+                s => s.Callouts.Fighter,
+                (s, v) => s with { Callouts = s.Callouts with { Fighter = v } }),
 
             Toggle(
                 SessionLengthKey,

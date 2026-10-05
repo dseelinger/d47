@@ -18,6 +18,8 @@ The System page gains a POWERPLAY section, completing the switch: OVERVIEW, STAT
 
 Going into danger with unsold exploration data worth five million credits or more now gets a warning: "You are carrying 6.2 million credits of unsold data into a fight." on dropping into a war zone or a hazardous resource extraction site, and "Hull is failing with 6.2 million credits of unsold data aboard." when your hull falls below sixty percent. The value is your held surface maps plus analysed biology. Each of the three is said at most once every thirty minutes. Settings > Callouts has a new switch, Unsold data at risk, on by default.
 
+Your active hired pilot now speaks when the fighter launches ("Fighter away. I'll stay on your wing."), docks ("Fighter's back in the bay."), is lost ("We've lost the fighter.") or is rebuilt ("Replacement fighter's ready in the bay."). If you launch the fighter and fly it yourself, the pilot says "I have the ship, Commander." Nothing is said with no pilot assigned. Settings > Callouts has a new switch, Fighter pilot, on by default.
+
 A new, optional reminder says "You have been flying 4 hours, Commander." once when a session has run that long. A session starts when the game loads and ends when it shuts down, and loading again re-arms it. It is off by default. Settings > Callouts has a new switch, Session length, and a row beside it to choose 2, 3, 4 or 6 hours.
 
 A community goal you have joined now gets one warning when it has eight hours or less left: "The Hope of the Void community goal ends in 7 hours." It is said once for each goal until d47 restarts, and not for a goal that is complete, expired or not joined. Settings > Callouts has a new switch, Community Goal expiry, on by default.

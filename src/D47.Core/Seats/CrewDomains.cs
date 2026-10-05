@@ -66,6 +66,7 @@ public static class CrewDomains
         "ring-hotspots",
         "unsold-data-at-risk",
         "reminders",
+        "fighter",
         "community-goal-expiry",
     };
 

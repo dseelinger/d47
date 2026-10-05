@@ -566,6 +566,10 @@ public static class SettingsLayout
                             "How NPCs sound",
                             "How often the words written for an accented voice suit its accent.",
                             [E("speech.accentPercent")]),
+                        G(
+                            "Fighter pilot",
+                            "Your hired pilot speaking when the fighter launches, docks, is lost or is rebuilt.",
+                            [E("callouts.fighter")]),
                     ]),
             ]),
         new SettingsArea(

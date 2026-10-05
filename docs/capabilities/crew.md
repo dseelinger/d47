@@ -252,6 +252,12 @@ only way.
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
+### The pilot speaks when the fighter moves
+
+The pilot in the fighter bay speaks, unprompted, when the fighter launches, docks, is destroyed or is
+rebuilt. The lines are fixed phrases, not model output, and state only what the journal event says.
+With no pilot assigned nothing is said. See [Fighter pilot](callouts.html#fighter).
+
 #### `describe_crew`
 
 Reports the hired pilots, their combat ranks, who is in the fighter bay and which hull each was

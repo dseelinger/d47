@@ -606,6 +606,9 @@ public sealed record CalloutSettings
     /// <summary>The session length, in hours, that triggers <see cref="SessionLength"/>: 2, 3, 4 or 6.</summary>
     public int SessionLengthHours { get; init; } = 4;
 
+    /// <summary>The hired pilot speaking when the fighter launches, docks, is lost or is rebuilt (#848).</summary>
+    public bool Fighter { get; init; } = true;
+
     /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
     public bool CarrierFuel { get; init; } = true;
 
