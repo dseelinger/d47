@@ -252,9 +252,14 @@ public sealed record ChecklistDocument
     }
 
     /// <summary>Removes every Done line, whatever its kind, source or scope (#259).</summary>
-    public ChecklistChange DeleteCompleted()
+    public ChecklistChange DeleteCompleted() => DeleteCompleted(_ => true);
+
+    /// <summary>Removes the completed lines that satisfy <paramref name="within"/>.</summary>
+    public ChecklistChange DeleteCompleted(Func<ChecklistItem, bool> within)
     {
-        var kept = Items.Where(item => !item.IsComplete).ToList();
+        ArgumentNullException.ThrowIfNull(within);
+
+        var kept = Items.Where(item => !(item.IsComplete && within(item))).ToList();
         var removed = Items.Count - kept.Count;
 
         return removed == 0

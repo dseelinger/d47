@@ -137,6 +137,32 @@ public static class ChecklistWording
         return Anonymous(hull, shipId);
     }
 
+    /// <summary>A ship's own name and its hull as said, each null where nothing names it.</summary>
+    public static (string? Name, string? Type) ShipParts(ChecklistScope scope, string? hull, CommanderGameState? state)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+
+        if (scope.Group != ChecklistGroup.Ship
+            || !int.TryParse(scope.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var shipId))
+        {
+            return (null, null);
+        }
+
+        if (state?.Loadouts.For(shipId)?.Loadout is { } loadout)
+        {
+            return (NonEmpty(loadout.Name), NonEmpty(loadout.TypeSaid) ?? HullName(hull));
+        }
+
+        if (state?.Fleet.Ships.FirstOrDefault(ship => ship.ShipId == shipId) is { } stored)
+        {
+            return (NonEmpty(stored.Name), HullName(stored.Type) ?? HullName(hull));
+        }
+
+        return (null, HullName(hull));
+    }
+
+    private static string? NonEmpty(string? text) => text is { Length: > 0 } ? text : null;
+
     /// <summary>
     /// One item's subject as a Commander says it, for a sentence that names slots rather than draws
     /// lines (#154).

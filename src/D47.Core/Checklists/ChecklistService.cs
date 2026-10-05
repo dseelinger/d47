@@ -1159,9 +1159,19 @@ public sealed class ChecklistService(
     /// Removes every Done line from the whole checklist, ignoring the current filter and search
     /// (#259).
     /// </summary>
-    public ChecklistChange DeleteCompleted()
+    public ChecklistChange DeleteCompleted() => DeleteCompleted(_ => true);
+
+    /// <summary>Removes the Done lines of one list only.</summary>
+    public ChecklistChange DeleteCompleted(ChecklistList target)
     {
-        var change = list.Apply(Fid, Name, document => document.DeleteCompleted());
+        ArgumentNullException.ThrowIfNull(target);
+
+        return DeleteCompleted(item => ChecklistLists.IdOf(item) == target.Id);
+    }
+
+    private ChecklistChange DeleteCompleted(Func<ChecklistItem, bool> within)
+    {
+        var change = list.Apply(Fid, Name, document => document.DeleteCompleted(within));
 
         if (!change.Changed)
         {
@@ -1178,7 +1188,7 @@ public sealed class ChecklistService(
         var affected = proposals.Pending
             .Where(proposal => string.Equals(proposal.CommanderFid, Fid, StringComparison.Ordinal)
                                 && proposal.Kind == ProposalKind.Plan
-                                && proposal.Items.Any(item => item.IsComplete))
+                                && proposal.Items.Any(item => item.IsComplete && within(item)))
             .Select(proposal => proposal.Id)
             .ToHashSet(StringComparer.Ordinal);
 
@@ -1188,7 +1198,7 @@ public sealed class ChecklistService(
             [
                 .. proposals.Pending.Select(proposal =>
                     affected.Contains(proposal.Id)
-                        ? proposal with { Items = [.. proposal.Items.Where(item => !item.IsComplete)] }
+                        ? proposal with { Items = [.. proposal.Items.Where(item => !(item.IsComplete && within(item)))] }
                         : proposal),
             ]);
         }
@@ -1244,6 +1254,25 @@ public sealed class ChecklistService(
     /// <summary>The list in the order the Commander cares about: what can be done now, where they are
     /// standing.</summary>
     public IReadOnlyList<ChecklistItem> Arranged() => ChecklistOrdering.Arrange(Document, State);
+
+    /// <summary>Every list that has lines, grouped and ordered as the Lists page reads them.</summary>
+    public IReadOnlyList<ChecklistList> Lists() => ChecklistLists.Build(Arranged(), State);
+
+    /// <summary>One list's lines in <see cref="Arranged"/> order.</summary>
+    public IReadOnlyList<ChecklistItem> Lines(ChecklistList target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        return [.. Arranged().Where(item => ChecklistLists.IdOf(item) == target.Id)];
+    }
+
+    /// <summary>Whether a line can be added to the list; engineer unlock lines are derived.</summary>
+    public bool CanAdd(ChecklistList target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        return !target.IsEngineerUnlocks;
+    }
 
     /// <summary>Rewords a line the Commander wrote (remediation.md 10, item 13).</summary>
     public ChecklistChange Reword(ChecklistItemId id, string text) =>
