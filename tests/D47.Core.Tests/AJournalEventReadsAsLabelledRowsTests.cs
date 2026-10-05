@@ -119,7 +119,7 @@ public class AJournalEventReadsAsLabelledRowsTests
     public void ANumberCarriesTheUnitTheFieldTableGivesIt()
     {
         var reading = Read(
-            """{"timestamp":"2026-09-29T21:01:23Z","event":"Scan","Cost":1250,"JumpDist":12.5,"Health":0.5,"Count":2500}""");
+            """{"timestamp":"2026-09-29T21:01:23Z","event":"Screenshot","Cost":1250,"JumpDist":12.5,"Health":0.5,"Count":2500}""");
 
         Assert.Equal("1,250 Cr", Assert.Single(Row(reading, "Cost").Values).Text);
         Assert.Equal("12.5 ly", Assert.Single(Row(reading, "Jump distance").Values).Text);
@@ -172,7 +172,7 @@ public class AJournalEventReadsAsLabelledRowsTests
     public void AModuleIsDecodedAndItsSizeAndClassIsANumberRun()
     {
         var reading = Read(
-            """{"timestamp":"2026-09-29T21:01:23Z","event":"Scan","Module":"int_engine_size2_class1"}""");
+            """{"timestamp":"2026-09-29T21:01:23Z","event":"Screenshot","Module":"int_engine_size2_class1"}""");
 
         var value = Assert.Single(Row(reading, "Module").Values);
 
@@ -185,8 +185,8 @@ public class AJournalEventReadsAsLabelledRowsTests
     public void AnArrayOfNamedObjectsIsOneRowOfNamesAndAnUnnamedOneIsACount()
     {
         var named = Read(
-            """{"timestamp":"2026-09-29T21:01:23Z","event":"Scan","Signals":[{"Type":"$a;","Type_Localised":"A"},{"Name":"B"}]}""");
-        var unnamed = Read("""{"timestamp":"2026-09-29T21:01:23Z","event":"Scan","Signals":[{"Count":1},{"Count":2}]}""");
+            """{"timestamp":"2026-09-29T21:01:23Z","event":"Screenshot","Signals":[{"Type":"$a;","Type_Localised":"A"},{"Name":"B"}]}""");
+        var unnamed = Read("""{"timestamp":"2026-09-29T21:01:23Z","event":"Screenshot","Signals":[{"Count":1},{"Count":2}]}""");
 
         Assert.Equal("B", Joined(Row(named, "Signals")));
         Assert.Equal("2 entries", Joined(Row(unnamed, "Signals")));

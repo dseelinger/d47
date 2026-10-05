@@ -12,6 +12,8 @@ public static partial class EventReadings
 {
     private const string Localised = "_Localised";
 
+    private const double StandardGravity = 9.81;
+
     private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
     private sealed record Curated(List<ReadingRow> Rows, HashSet<string> Used);
@@ -39,6 +41,13 @@ public static partial class EventReadings
         ["BackpackChange"] = CurateBackpackChange,
         ["PowerplayMerits"] = raw => Group(raw, "PowerplayMerits", ("Power", ["Power"]), ("Merits gained", ["MeritsGained"]), ("Total merits", ["TotalMerits"])),
         ["CollectItems"] = raw => Group(raw, "CollectItems", ("Item", ["Name"]), ("Kind", ["Type"]), ("Taken", ["Count"])),
+        ["FSDJump"] = CurateFsdJump,
+        ["Scan"] = CurateScan,
+        ["Loadout"] = CurateLoadout,
+        ["Cargo"] = CurateCargo,
+        ["EngineerCraft"] = CurateEngineerCraft,
+        ["CommunityGoal"] = CurateCommunityGoal,
+        ["ColonisationConstructionDepot"] = CurateConstructionDepot,
     };
 
     public static EventReading For(JournalEntry entry)
@@ -328,6 +337,9 @@ public static partial class EventReadings
             FieldUnit.LightSeconds => (Grouped(amount), " ls"),
             FieldUnit.LightYears => (Grouped(amount), " ly"),
             FieldUnit.Tonnes => (Grouped(amount), " t"),
+            FieldUnit.SolarMasses => (Grouped(amount), " solar masses"),
+            FieldUnit.MillionYears => (Grouped(amount), " million years"),
+            FieldUnit.MetresPerSecondSquared => (Grouped(amount / StandardGravity), " g"),
             _ => (value.TryGetInt64(out var whole) ? whole.ToString("N0", Culture) : Grouped(amount), string.Empty),
         };
 
@@ -638,6 +650,11 @@ public static partial class EventReadings
             return null;
         }
 
+        return Counted(name, item);
+    }
+
+    private static ReadingValue Counted(string name, JsonElement item)
+    {
         if (item.Int("Count") is not { } count)
         {
             return new ReadingValue(name);

@@ -1,6 +1,7 @@
 namespace D47.Core.Journal;
 
-public enum FieldUnit { None, Fraction, Percent, Credits, LightSeconds, LightYears, Tonnes }
+/// <summary><c>MetresPerSecondSquared</c> is read as g.</summary>
+public enum FieldUnit { None, Fraction, Percent, Credits, LightSeconds, LightYears, Tonnes, SolarMasses, MillionYears, MetresPerSecondSquared }
 
 public enum FieldDecoder { None, Hull, Module, Engineer, Material }
 
@@ -97,6 +98,32 @@ public static class JournalFields
         new("Bounty", "Bounty", "the bounty on the pilot, in credits", Unit: FieldUnit.Credits),
         new("Subsystem", "Aimed at", "the subsystem targeted"),
         new("SubsystemHealth", "Subsystem health", "how much of the subsystem is left", Unit: FieldUnit.Percent),
+        new("SystemFaction", "Controlled by", "the minor faction that controls the system", Tone: ReadingTone.Name),
+        new("SystemGovernment", "Government", "how the system is governed"),
+        new("SystemSecurity", "Security", "how well the system is policed"),
+        new("SystemEconomy", "Economy", "the system's main economy"),
+        new("Population", "Population", "how many people live in the system"),
+        new("ControllingPower", "Controlling power", "the Power that controls the system", Tone: ReadingTone.Name),
+        new("ShipName", "Name", "the name the Commander gave the ship"),
+        new("ShipIdent", "Ident", "the identification the Commander gave the ship"),
+        new("MaxJumpRange", "Jump range", "the farthest the ship can jump when full of fuel, in light years", Unit: FieldUnit.LightYears),
+        new("CargoCapacity", "Cargo", "how many tonnes of cargo the ship holds", Unit: FieldUnit.Tonnes),
+        new("Rebuy", "Rebuy", "what it costs to replace the ship if it is destroyed, in credits", Unit: FieldUnit.Credits),
+        new("Modules", "Modules", "the modules fitted to the ship"),
+        new("BodyName", "Body", "the star or planet that was scanned"),
+        new("DistanceFromArrivalLS", "Distance from arrival", "how far the body is from where you arrived, in light seconds", Unit: FieldUnit.LightSeconds),
+        new("StellarMass", "Mass", "the star's mass, in solar masses", Unit: FieldUnit.SolarMasses),
+        new("Age_MY", "Age", "the star's age, in millions of years", Unit: FieldUnit.MillionYears),
+        new("SurfaceGravity", "Gravity", "the pull at the surface, in g", Unit: FieldUnit.MetresPerSecondSquared),
+        new("PlanetClass", "Planet class", "what kind of planet it is"),
+        new("Vessel", "Vessel", "whether the cargo is in the ship or the SRV"),
+        new("Inventory", "Items", "what the vessel carries"),
+        new("ConstructionProgress", "Progress", "how much of the construction is done", Unit: FieldUnit.Fraction),
+        new("ResourcesRequired", "Resources short", "how many of the required resources are still short"),
+        new("CurrentGoals", "Goals", "the community goals open to the Commander"),
+        new("BlueprintName", "Blueprint", "the modification that was applied"),
+        new("ExperimentalEffect", "Effect", "the experimental effect that was applied"),
+        new("Ingredients", "Ingredients", "the materials the modification used"),
     ];
 
     /// <summary>The entry for a field on an event kind, or null for a name the table does not hold.</summary>
