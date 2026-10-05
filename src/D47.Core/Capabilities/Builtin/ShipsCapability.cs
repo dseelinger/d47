@@ -189,13 +189,13 @@ public static class ShipsCapability
             Label = "Hull pictures",
             Help =
                 "Every ship comes with a small drawing on its card, inside the download. The large "
-                + "picture on a ship's own page, and the turntable a card plays when you open it, "
-                + "are far bigger — a quarter of a gigabyte for the whole fleet — so they are not "
-                + "carried. D47 fetches the two files for a hull the first time you open one of "
+                + "picture on a ship's own page, the turntable a card plays when you open it and "
+                + "the hull's 3D mesh are far bigger — up to half a gigabyte for the whole fleet — so "
+                + "they are not carried. D47 fetches the three files for a hull the first time you open one of "
                 + "those ships, from the same GitHub release the app updates itself from, and "
                 + "keeps them in data\\ships.\n\n"
-                + "Off, fleet cards show no drawing and a ship's own page shows no picture and no "
-                + "turntable, even for a hull already fetched. Nothing is downloaded, and files "
+                + "Off, fleet cards show no drawing and a ship's own page shows no picture, no "
+                + "turntable and no mesh, even for a hull already fetched. Nothing is downloaded, and files "
                 + "already on disk are kept, only hidden.",
             Kind = SettingKind.Toggle,
             DocsAnchor = "hull-art",

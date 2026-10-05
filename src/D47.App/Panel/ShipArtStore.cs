@@ -10,16 +10,16 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Fetches the large hull art the download does not carry (#289): a hull's 4K picture and its
-/// turntable, once each, into <c>data\ships\</c>.
+/// Fetches the large hull art the download does not carry (#289): a hull's 4K picture, its
+/// turntable and its mesh, once each, into <c>data\ships\</c>.
 /// </summary>
 internal static class ShipArtStore
 {
     /// <summary>Where the art is published, pinned exactly as every URL in <c>UpdateChecker</c> is.</summary>
     internal const string Source = "https://github.com/dseelinger/d47/releases/download/ship-art-1/";
 
-    /// <summary>The two files fetched per hull, as suffixes on the symbol.</summary>
-    private static readonly string[] Wanted = [".4k.png", ".spin.mp4"];
+    /// <summary>The files fetched per hull, as suffixes on the symbol.</summary>
+    private static readonly string[] Wanted = [".4k.png", ".spin.mp4", ".mesh"];
 
     /// <summary>A file is asked for once per session, whether it arrived or not.</summary>
     private static readonly HashSet<string> Asked = new(StringComparer.Ordinal);

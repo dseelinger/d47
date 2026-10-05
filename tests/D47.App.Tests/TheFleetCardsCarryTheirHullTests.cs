@@ -433,6 +433,43 @@ public class TheFleetCardsCarryTheirHullTests
         Assert.Equal(2, ShipArt.Held);
     }
 
+    [Fact]
+    public void AHullMeshOnDiskIsReadAndACorruptOneIsNot()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "d47-mesh-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+
+        try
+        {
+            var mesh = new D47.Core.Hulls.HullMesh(
+                [new(0, 0, 0), new(1, 0, 0), new(0, 1, 0)],
+                [new(0, 0, 1), new(0, 0, 1), new(0, 0, 1)],
+                [0, 1, 2],
+                [new D47.Core.Hulls.HullPart("hull", 0, 1, false)],
+                1f,
+                new System.Numerics.Vector3(0, 0.6f, 0.8f));
+
+            using (var file = File.Create(Path.Combine(folder, "corsair.mesh")))
+            {
+                mesh.Write(file);
+            }
+
+            File.WriteAllBytes(Path.Combine(folder, "adder.mesh"), [1, 2, 3]);
+
+            ShipArt.Shipped = null;
+            ShipArt.Folder = folder;
+
+            Assert.NotNull(ShipArt.Mesh("Corsair"));
+            Assert.Null(ShipArt.Mesh("Adder"));
+            Assert.Null(ShipArt.Mesh("Anaconda"));
+        }
+        finally
+        {
+            ShipArt.Folder = null;
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     [AvaloniaFact]
     public void AHullWithNoTurntableSimplyDoesNotTurn()
     {

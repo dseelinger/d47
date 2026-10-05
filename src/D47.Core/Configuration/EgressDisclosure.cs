@@ -61,7 +61,7 @@ public static class EgressDisclosure
     public const string GitHubReleasesEndpoint =
         "api.github.com, and github.com if you accept an update";
 
-    /// <summary>Fetching a hull's large art — the 4K picture and the turntable (#289).</summary>
+    /// <summary>Fetching a hull's large art — the 4K picture, the turntable and the mesh (#289).</summary>
     public const string HullArt = "hullart";
 
     /// <summary>Fetching the avatar clips of the core aboard.</summary>
@@ -223,7 +223,7 @@ public static class EgressDisclosure
                 NameOf(HullArt),
                 GitHubReleasesEndpoint,
                 "The hull symbol of a ship you open, when D47 has no large picture of it yet - one request "
-                + "for a picture and one for a turntable, kept on disk so each hull is asked for once. "
+                + "each for a picture, a turntable and a mesh, kept on disk so each hull is asked for once. "
                 + "Nothing else goes with it: no key, no Commander name, no position and nothing from your "
                 + "journal. Which hulls you own is not sent, and the small picture on each card came with "
                 + "the build and is never fetched.",

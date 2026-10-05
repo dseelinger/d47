@@ -9,11 +9,12 @@
     takes what it produced and puts it where d47 reads it, so "where does a hull's picture come
     from" has one answer that can be run again rather than a folder somebody once copied by hand.
 
-    **Three files per hull, and they reach a Commander three different ways.**
+    **Four files per hull, and they reach a Commander three different ways.**
 
         <hull>.png        the card still, 1280x720. SHIPPED, inside the installer and the zip.
         <hull>.4k.png     the Ship Details picture, 3840x2160. Fetched on demand.
         <hull>.spin.mp4   the turntable. Fetched on demand.
+        <hull>.mesh       the hull viewer's mesh. Fetched on demand.
 
     See `ShipArt` for the reading side and `ShipArtStore` for the fetching side.
 
@@ -137,7 +138,9 @@ foreach ($symbol in $hulls) {
     $still = Join-Path $work 'still.4k.png'
     $video = Join-Path $work 'spin.mp4'
 
-    foreach ($needed in @($frame, $still, $video)) {
+    $mesh = Join-Path $work 'ship.mesh'
+
+    foreach ($needed in @($frame, $still, $video, $mesh)) {
         if (-not (Test-Path $needed)) { throw "$symbol has no $needed; run the pipeline's turntable.ps1 first" }
     }
 
@@ -147,6 +150,7 @@ foreach ($symbol in $hulls) {
     & python $shrinkFile $frame (Join-Path $assets "$named.png")
     & python $shrinkFile $still (Join-Path $assets "$named.4k.png")
     Copy-Item $video (Join-Path $assets "$named.spin.mp4") -Force
+    Copy-Item $mesh (Join-Path $assets "$named.mesh") -Force
 
     Write-Host "  $symbol -> $named"
     $done++
@@ -161,3 +165,5 @@ $shipped = (Get-ChildItem -Path $assets -Filter '*.png' |
 Write-Host ''
 Write-Host ("$done hull(s) collected into assets\ships.")
 Write-Host ("Shipped in the installer: {0:N1} MB of card stills." -f ($shipped / 1MB))
+$meshes = (Get-ChildItem -Path $assets -Filter '*.mesh' | Measure-Object -Property Length -Sum).Sum
+Write-Host ("Fetched on demand: {0:N1} MB of meshes." -f ($meshes / 1MB))

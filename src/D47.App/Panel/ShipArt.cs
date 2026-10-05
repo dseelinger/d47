@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Avalonia.Media.Imaging;
+using D47.Core.Hulls;
 using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The hull art the fleet carries: a card still, a 4K picture and a turntable, by hull symbol.</summary>
+/// <summary>The hull art the fleet carries: a card still, a 4K picture, a turntable and a mesh, by hull symbol.</summary>
 internal static class ShipArt
 {
     /// <summary>How wide a card still is decoded, whatever the file holds.</summary>
@@ -15,9 +16,13 @@ internal static class ShipArt
 
     private static readonly Dictionary<string, Bitmap?> Known = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, Bitmap?> Close = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, HullMesh?> Meshes = new(StringComparer.Ordinal);
 
     /// <summary>How many 4K decodes are held.</summary>
     internal const int CloseHeld = 2;
+
+    /// <summary>How many meshes are held.</summary>
+    internal const int MeshesHeld = 2;
 
     private static string? _folder;
     private static string? _shipped;
@@ -117,6 +122,36 @@ internal static class ShipArt
         }
     }
 
+    /// <summary>The mesh for a hull, or null when it has not arrived or cannot be read.</summary>
+    internal static HullMesh? Mesh(string? hull)
+    {
+        var symbol = Symbol(hull);
+
+        if (symbol is null)
+        {
+            return null;
+        }
+
+        lock (Meshes)
+        {
+            if (Meshes.TryGetValue(symbol, out var held))
+            {
+                return held;
+            }
+
+            var mesh = ReadMesh(symbol + ".mesh");
+
+            Meshes[symbol] = mesh;
+
+            while (Meshes.Count > MeshesHeld)
+            {
+                Meshes.Remove(Meshes.Keys.First(key => key != symbol));
+            }
+
+            return mesh;
+        }
+    }
+
     /// <summary>Where a hull's turntable is on disk, or null when it has not arrived.</summary>
     internal static string? SpinFile(string? hull)
     {
@@ -152,6 +187,11 @@ internal static class ShipArt
         {
             Close.Remove(symbol);
         }
+
+        lock (Meshes)
+        {
+            Meshes.Remove(symbol);
+        }
     }
 
     /// <summary>Both folders at once, so setting either clears both caches exactly once.</summary>
@@ -166,6 +206,11 @@ internal static class ShipArt
             lock (Close)
             {
                 Close.Clear();
+            }
+
+            lock (Meshes)
+            {
+                Meshes.Clear();
             }
         }
     }
@@ -196,7 +241,8 @@ internal static class ShipArt
     private static string? Find(string file)
     {
         var mine = file.EndsWith(".4k.png", StringComparison.Ordinal)
-                   || file.EndsWith(".spin.mp4", StringComparison.Ordinal);
+                   || file.EndsWith(".spin.mp4", StringComparison.Ordinal)
+                   || file.EndsWith(".mesh", StringComparison.Ordinal);
 
         foreach (var folder in mine ? new[] { _folder, _shipped } : [_shipped, _folder])
         {
@@ -245,6 +291,26 @@ internal static class ShipArt
         catch (Exception)
         {
             // A half-written or corrupt PNG costs a card its picture, not the fleet page.
+            return null;
+        }
+    }
+
+    private static HullMesh? ReadMesh(string file)
+    {
+        if (Find(file) is not { } path)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var stream = File.OpenRead(path);
+
+            return HullMesh.Read(stream);
+        }
+        catch (Exception)
+        {
+            // A half-written or corrupt mesh leaves the page as it was.
             return null;
         }
     }

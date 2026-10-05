@@ -33,10 +33,11 @@ public class TheShipArtIsNamedForItsHullTests
             var name = Path.GetFileName(path);
 
             var suffix = name.EndsWith(".spin.mp4", StringComparison.Ordinal) ? ".spin.mp4"
+                : name.EndsWith(".mesh", StringComparison.Ordinal) ? ".mesh"
                 : name.EndsWith(".4k.png", StringComparison.Ordinal) ? ".4k.png"
                 : name.EndsWith(".png", StringComparison.Ordinal) ? ".png"
                 : throw new Xunit.Sdk.XunitException(
-                    $"{name} is not one of a hull's three files (.png, .4k.png, .spin.mp4).");
+                    $"{name} is not one of a hull's four files (.png, .4k.png, .spin.mp4, .mesh).");
 
             var symbol = name[..^suffix.Length];
 
