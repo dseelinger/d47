@@ -673,7 +673,8 @@ public static class EgressDisclosure
                 + "a hidden story while a stock story runs, "
                 + "and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
-                + "key is involved."
+                + "key is involved. "
+                + JournalEventSent
                 + (narration is null ? string.Empty : $" {narration} to that address each time it narrates.")
                 + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty),
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
@@ -692,6 +693,7 @@ public static class EgressDisclosure
             + "and the name and premise of each chapter before that. A chapter of a stock story also sends the story's "
             + "card. While a stock story runs, every line the model writes in character, and each chapter, also carries "
             + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows."
+            + " " + JournalEventSent
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),
@@ -711,6 +713,10 @@ public static class EgressDisclosure
         !string.IsNullOrWhiteSpace(llm.CharacterSheet) ? commander!
         : commander is null ? JournalName
         : $"{commander} and {JournalName}";
+
+    /// <summary>What asking about the event selected on the Journal page sends.</summary>
+    internal const string JournalEventSent =
+        "Asking about a journal event sends that event as Elite wrote it, with message text typed by players withheld.";
 
     private const string JournalName = "your Commander name from the journal";
 

@@ -13,11 +13,15 @@ public sealed class HandledEventsGateTests
 {
     private const string ListPath = "src/D47.Core/Journal/HandledEvents.cs";
 
-    /// <summary>The Journal File reading: the sentence per event and the log of entries it draws from.</summary>
+    /// <summary>
+    /// The Journal File reading: the sentence per event, the log of entries it draws from, and the
+    /// grounding that sends a selected entry to the model.
+    /// </summary>
     private static readonly string[] Narrator =
     [
         "src/D47.Core/Journal/JournalSentence.cs",
         "src/D47.Core/Journal/JournalLog.cs",
+        "src/D47.Core/Journal/JournalEventGrounding.cs",
     ];
 
     private static readonly Lazy<Survey> Surveyed = new(Survey.Run);

@@ -413,6 +413,9 @@ public sealed class TurnLoop(
     /// <summary>Whether the Commander has allowed the model to search the web.</summary>
     public Func<bool>? WebSearchEnabled { get; set; }
 
+    /// <summary>The event selected on the Journal page, or null when none is.</summary>
+    public Func<Journal.JournalEntry?>? SelectedJournalEvent { get; set; }
+
     /// <summary>
     /// Speakers other than the ship's AI, asked before any other route: an open line first, then each in
     /// order. At most one is open at a time.
@@ -572,6 +575,28 @@ public sealed class TurnLoop(
                 yield break;
         }
 
+        // Ahead of the near misses, which would otherwise offer something else for "explain that".
+        if (Journal.JournalEventGrounding.Asks(input))
+        {
+            if (SelectedJournalEvent?.Invoke() is not { } selected)
+            {
+                foreach (var turnEvent in AnsweredByRouter(Journal.JournalEventGrounding.NothingSelected, input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
+
+            await foreach (var turnEvent in ModelTurnAsync(input, Journal.JournalEventGrounding.For(selected), cancellationToken)
+                               .ConfigureAwait(false))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
         var routed = new Routing();
 
         await foreach (var turnEvent in ModelFreeAsync(input, source, routed, cancellationToken)
@@ -677,6 +702,18 @@ public sealed class TurnLoop(
         }
 
         // 4.
+        await foreach (var turnEvent in ModelTurnAsync(input, grounding: null, cancellationToken).ConfigureAwait(false))
+        {
+            yield return turnEvent;
+        }
+    }
+
+    /// <summary>A turn for the ship's AI, or the reason there is no model to take it.</summary>
+    private async IAsyncEnumerable<TurnEvent> ModelTurnAsync(
+        string input,
+        string? grounding,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         var activeProvider = Provider;
 
         if (activeProvider is null || !availability.CanAttemptModelTurn)
@@ -693,7 +730,7 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, speaker: null, cancellationToken)
+        await foreach (var turnEvent in RunModelTurnAsync(input, activeProvider, speaker: null, cancellationToken, grounding)
                            .ConfigureAwait(false))
         {
             yield return turnEvent;
@@ -1060,7 +1097,8 @@ public sealed class TurnLoop(
         string input,
         ILlmProvider activeProvider,
         Persona.Speaker? speaker,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken,
+        string? grounding = null)
     {
         var chosenModel = speaker?.Model ?? Model ?? activeProvider.DefaultModel;
         // What the Commander asked for, held between what they will pay for (Phase 54).
@@ -1123,7 +1161,7 @@ public sealed class TurnLoop(
 
         // What this turn has said so far, tool rounds included.
         List<ConversationMessage> pending =
-            [new ConversationMessage(ConversationRole.User, speaker is null ? Spoken() + input : input)];
+            [new ConversationMessage(ConversationRole.User, speaker is null ? Spoken() + grounding + input : input)];
 
         yield return new TurnEvent.Routed(TurnRoute.Model, effortReported);
 

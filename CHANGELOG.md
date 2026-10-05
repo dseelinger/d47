@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Saying "explain that" or "explain that event" asks the language model about the event selected on the Journal page. The event goes to the model as Elite wrote it, except that the text of any message another player typed, or that you typed, is replaced with "[withheld: typed by a player]"; who sent it, on which channel and when are still sent. With nothing selected, the answer is "Nothing is selected on the Journal page." and nothing is sent. The Language model entry under Privacy and egress now says this.
+
 The Journal page's reading now has a WHAT THIS CHANGED band between What this means and Every field, open by default, saying what d47 took from the selected event, such as "This event updated: docked at BNH-T2F". An event that changed nothing reads "Nothing in d47's picture changed.", which is a normal answer for most events, and an event that never reached your state has no band. Folded, the band shows the receipt as a one-line preview, and selecting another event opens it again.
 
 Pledged to a Power, Directive 47 now warns when you start a hyperspace jump with salvage you scooped in your own Power's system and have not handed in, because it earns reinforcement merits only when handed in at a Power contact in that same system. It names up to three kinds and counts the rest, and says nothing about escape pods, which earn no merits. The new Powerplay salvage row under Callouts turns the warning off.
