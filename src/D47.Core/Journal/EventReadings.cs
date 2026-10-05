@@ -20,6 +20,25 @@ public static partial class EventReadings
     {
         ["Docked"] = CurateDocked,
         ["ReceiveText"] = CurateReceiveText,
+        ["StartJump"] = raw => Group(raw, "StartJump", ("Jump", ["JumpType"]), ("To", ["StarSystem"]), ("Star class", ["StarClass"])),
+        ["FSDTarget"] = raw => Group(raw, "FSDTarget", ("Next jump", ["Name"]), ("Star class", ["StarClass"]), ("Jumps left", ["RemainingJumpsInRoute"])),
+        ["FuelScoop"] = raw => Group(raw, "FuelScoop", ("Scooped", ["Scooped"]), ("Fuel now", ["Total"])),
+        ["SupercruiseExit"] = raw => Group(raw, "SupercruiseExit", ("Arrived at", ["Body"]), ("Body type", ["BodyType"]), ("System", ["StarSystem"])),
+        ["SupercruiseEntry"] = raw => Group(raw, "SupercruiseEntry", ("System", ["StarSystem"])),
+        ["SupercruiseDestinationDrop"] = raw => Group(raw, "SupercruiseDestinationDrop", ("Dropped at", ["Type"]), ("Threat level", ["Threat"])),
+        ["DockingRequested"] = CurateDockingRequested,
+        ["DockingGranted"] = CurateDockingGranted,
+        ["Undocked"] = raw => Stationed(raw, []),
+        ["RefuelAll"] = raw => Group(raw, "RefuelAll", ("Fuel bought", ["Amount"]), ("Cost", ["Cost"])),
+        ["LaunchDrone"] = raw => Group(raw, "LaunchDrone", ("Drone", ["Type"])),
+        ["FSSDiscoveryScan"] = raw => Group(raw, "FSSDiscoveryScan", ("System", ["SystemName"]), ("Scanned", ["Progress"]), ("Bodies found", ["BodyCount"]), ("Other objects", ["NonBodyCount"])),
+        ["MaterialCollected"] = raw => Group(raw, "MaterialCollected", ("Material", ["Name"]), ("Category", ["Category"]), ("Collected", ["Count"])),
+        ["ShipTargeted"] = CurateShipTargeted,
+        ["MiningRefined"] = raw => Group(raw, "MiningRefined", ("Refined", ["Type"])),
+        ["UnderAttack"] = raw => Group(raw, "UnderAttack", ("Attacked", ["Target"])),
+        ["BackpackChange"] = CurateBackpackChange,
+        ["PowerplayMerits"] = raw => Group(raw, "PowerplayMerits", ("Power", ["Power"]), ("Merits gained", ["MeritsGained"]), ("Total merits", ["TotalMerits"])),
+        ["CollectItems"] = raw => Group(raw, "CollectItems", ("Item", ["Name"]), ("Kind", ["Type"]), ("Taken", ["Count"])),
     };
 
     public static EventReading For(JournalEntry entry)
@@ -394,22 +413,7 @@ public static partial class EventReadings
         used.UnionWith(["StationFaction", "StationGovernment", "StationGovernment_Localised",
             "StationEconomy", "StationEconomy_Localised", "StationEconomies"]);
 
-        var pads = new List<ReadingValue>();
-
-        foreach (var size in new[] { "Small", "Medium", "Large" })
-        {
-            if (raw.Object("LandingPads")?.Int(size) is { } count)
-            {
-                var label = $" {size.ToLowerInvariant()}";
-
-                pads.Add(new ReadingValue($"{count}{label}")
-                {
-                    Runs = [new ReadingRun(count.ToString(Culture), true), new ReadingRun(label, false)],
-                });
-            }
-        }
-
-        AddRow(rows, "Landing pads", pads);
+        AddRow(rows, "Landing pads", Pads(raw));
         used.Add("LandingPads");
 
         var services = raw.Items("StationServices")
@@ -462,5 +466,186 @@ public static partial class EventReadings
         {
             rows.Add(new ReadingRow(label, values) { Field = field });
         }
+    }
+
+    private static List<ReadingValue> Pads(JsonElement raw)
+    {
+        var pads = new List<ReadingValue>();
+
+        foreach (var size in new[] { "Small", "Medium", "Large" })
+        {
+            if (raw.Object("LandingPads")?.Int(size) is { } count)
+            {
+                var label = $" {size.ToLowerInvariant()}";
+
+                pads.Add(new ReadingValue($"{count}{label}")
+                {
+                    Runs = [new ReadingRun(count.ToString(Culture), true), new ReadingRun(label, false)],
+                });
+            }
+        }
+
+        return pads;
+    }
+
+    // ---- Small common kinds ----------------------------------------------------------------
+
+    /// <summary>One row per group, its values read the way the mechanical rows read them.</summary>
+    private static Curated Group(JsonElement raw, string kind, params (string Label, string[] Fields)[] groups) =>
+        Group(raw, field => Mechanical(raw, kind, field), groups);
+
+    private static Curated Group(
+        JsonElement raw, Func<string, IReadOnlyList<ReadingValue>> valuesOf, params (string Label, string[] Fields)[] groups)
+    {
+        var rows = new List<ReadingRow>();
+        var used = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var (label, fields) in groups)
+        {
+            var values = new List<ReadingValue>();
+
+            foreach (var field in fields)
+            {
+                if (raw.TryGetProperty(field, out _))
+                {
+                    values.AddRange(valuesOf(field));
+                }
+
+                used.Add(field);
+            }
+
+            AddRow(rows, label, values, fields[0]);
+        }
+
+        return new Curated(rows, used);
+    }
+
+    private static IReadOnlyList<ReadingValue> Mechanical(JsonElement raw, string kind, string field)
+    {
+        foreach (var property in raw.EnumerateObject())
+        {
+            if (property.Name == field)
+            {
+                return MechanicalRow(raw, property, kind)?.Values ?? [];
+            }
+        }
+
+        return [];
+    }
+
+    private static Curated Stationed(JsonElement raw, List<ReadingRow> rows)
+    {
+        var station = new List<ReadingValue>();
+
+        if (Blank(raw.String("StationName")) is { } name)
+        {
+            station.Add(new ReadingValue(name));
+        }
+
+        if (Blank(raw.String("StationType")) is { } type)
+        {
+            station.Add(new ReadingValue(Spaced(type)) { Symbol = type });
+        }
+
+        AddRow(rows, "Station", station, "StationName");
+
+        return new Curated(rows, ["StationName", "StationType"]);
+    }
+
+    private static Curated CurateDockingRequested(JsonElement raw)
+    {
+        var curated = Stationed(raw, []);
+
+        AddRow(curated.Rows, "Landing pads", Pads(raw), "LandingPads");
+        curated.Used.Add("LandingPads");
+
+        return curated;
+    }
+
+    private static Curated CurateDockingGranted(JsonElement raw)
+    {
+        var rows = new List<ReadingRow>();
+
+        AddRow(rows, "Pad", [.. Mechanical(raw, "DockingGranted", "LandingPad")], "LandingPad");
+
+        var curated = Stationed(raw, rows);
+
+        curated.Used.Add("LandingPad");
+
+        return curated;
+    }
+
+    private static Curated CurateShipTargeted(JsonElement raw) =>
+        Group(
+            raw,
+            field => field switch
+            {
+                "PilotName" => Pilot(raw),
+                "SquadronID" => Blank(raw.String(field)) is { } tag ? [new ReadingValue(tag) { Tone = ReadingTone.Name }] : [],
+                "LegalStatus" =>
+                [
+                    .. Mechanical(raw, "ShipTargeted", field)
+                        .Select(value => value.Text == "Wanted" ? value with { Tone = ReadingTone.Warning } : value),
+                ],
+                _ => Mechanical(raw, "ShipTargeted", field),
+            },
+            ("Ship", ["Ship"]),
+            ("Pilot", ["PilotName"]),
+            ("Rank", ["PilotRank"]),
+            ("Squadron", ["SquadronID"]),
+            ("Faction", ["Faction"]),
+            ("Power", ["Power"]),
+            ("Legal status", ["LegalStatus"]),
+            ("Bounty", ["Bounty"]),
+            ("Shields", ["ShieldHealth"]),
+            ("Hull", ["HullHealth"]),
+            ("Aimed at", ["Subsystem", "SubsystemHealth"]));
+
+    /// <summary>The pilot Elite names, else the player's own typed name.</summary>
+    private static IReadOnlyList<ReadingValue> Pilot(JsonElement raw)
+    {
+        if (Blank(raw.String("PilotName_Localised")) is { } localised)
+        {
+            return [new ReadingValue(localised) { Tone = ReadingTone.Name }];
+        }
+
+        if (Blank(raw.String("PilotName")) is not { } name)
+        {
+            return [];
+        }
+
+        return name.StartsWith('$')
+            ? [new ReadingValue(Clean(name) ?? name) { Symbol = name, Tone = ReadingTone.Name }]
+            : [new ReadingValue(name) { Typed = true }];
+    }
+
+    private static Curated CurateBackpackChange(JsonElement raw)
+    {
+        var rows = new List<ReadingRow>();
+
+        foreach (var (label, field) in new[] { ("Into the backpack", "Added"), ("Out of the backpack", "Removed") })
+        {
+            AddRow(rows, label, [.. raw.Items(field).Select(BackpackItem).OfType<ReadingValue>()], field);
+        }
+
+        return new Curated(rows, ["Added", "Removed"]);
+    }
+
+    private static ReadingValue? BackpackItem(JsonElement item)
+    {
+        if (NameOf(item) is not { } name)
+        {
+            return null;
+        }
+
+        if (item.Int("Count") is not { } count)
+        {
+            return new ReadingValue(name);
+        }
+
+        return new ReadingValue($"{name} ×{count}")
+        {
+            Runs = [new ReadingRun($"{name} ×", false), new ReadingRun(count.ToString(Culture), true)],
+        };
     }
 }

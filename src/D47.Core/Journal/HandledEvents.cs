@@ -13,6 +13,7 @@ public static class HandledEvents
     [
         "ApproachBody",
         "ApproachSettlement",
+        "BackpackChange",
         "Bounty",
         "BuySuit",
         "BuyWeapon",
@@ -59,6 +60,7 @@ public static class HandledEvents
         "EngineerCraft",
         "EngineerProgress",
         "FSDJump",
+        "FSDTarget",
         "FSSBodySignals",
         "FSSDiscoveryScan",
         "FSSSignalDiscovered",
@@ -71,6 +73,7 @@ public static class HandledEvents
         "JoinACrew",
         "JoinedSquadron",
         "KickedFromSquadron",
+        "LaunchDrone",
         "LaunchSRV",
         "LeaveBody",
         "LeftSquadron",
@@ -114,6 +117,7 @@ public static class HandledEvents
         "Rank",
         "ReceiveText",
         "RedeemVoucher",
+        "RefuelAll",
         "Reputation",
         "Resurrect",
         "SAAScanComplete",
@@ -129,6 +133,7 @@ public static class HandledEvents
         "SellWeapon",
         "SetUserShipName",
         "ShieldState",
+        "ShipTargeted",
         "ShipyardBuy",
         "ShipyardNew",
         "ShipyardSell",
@@ -158,8 +163,8 @@ public static class HandledEvents
     ], StringComparer.Ordinal);
 
     /// <summary>
-    /// Events Frontier writes that d47 deliberately answers neither block for: <c>Backpack</c> and
-    /// <c>BackpackChange</c> are the on-foot inventory, read from <c>Backpack.json</c> instead;
+    /// Events Frontier writes that d47 deliberately answers neither block for: <c>Backpack</c> is the
+    /// on-foot inventory, read from <c>Backpack.json</c> instead;
     /// <c>CancelDropship</c> is a cancelled on-foot dropship booking, carrying a refund and nothing
     /// d47 tracks; <c>FCMaterials</c> is the carrier's materials market, tabled to the carrier
     /// reminder work (#24).
@@ -167,7 +172,6 @@ public static class HandledEvents
     public static readonly FrozenSet<string> Intentional = FrozenSet.ToFrozenSet<string>(
     [
         "Backpack",
-        "BackpackChange",
         "CancelDropship",
         "FCMaterials",
     ], StringComparer.Ordinal);
@@ -209,7 +213,6 @@ public static class HandledEvents
         "DropshipDeploy",
         "EjectCargo",
         "EscapeInterdiction",
-        "FSDTarget",
         "FSSAllBodiesFound",
         "FetchRemoteModule",
         "Fileheader",
@@ -217,7 +220,6 @@ public static class HandledEvents
         "GameModeChange",
         "HeatWarning",
         "JetConeBoost",
-        "LaunchDrone",
         "MaterialDiscovered",
         "ModuleBuyAndStore",
         "ModuleInfo",
@@ -233,7 +235,6 @@ public static class HandledEvents
         "PowerplayDeliver",
         "QuitACrew",
         "RebootRepair",
-        "RefuelAll",
         "RenameSuitLoadout",
         "Repair",
         "RepairAll",
@@ -250,7 +251,6 @@ public static class HandledEvents
         "SharedBookmarkToSquadron",
         "ShipLocker",
         "ShipRedeemed",
-        "ShipTargeted",
         "Shipyard",
         "ShipyardBankDeposit",
         "ShipyardRedeem",

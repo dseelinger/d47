@@ -131,10 +131,10 @@ public class AJournalEventReadsAsLabelledRowsTests
     public void TheSameFieldHasADifferentUnitOnDifferentKinds()
     {
         var tritium = Read("""{"timestamp":"2026-09-29T21:01:23Z","event":"CarrierDepositFuel","Amount":75}""");
-        var refuel = Read("""{"timestamp":"2026-09-29T21:01:23Z","event":"RefuelAll","Amount":75}""");
+        var refuel = Read("""{"timestamp":"2026-09-29T21:01:23Z","event":"RepairAll","Amount":75}""");
 
         Assert.Equal("75 t", Assert.Single(Row(tritium, "Amount").Values).Text);
-        Assert.Equal("75 Cr", Assert.Single(Row(refuel, "Amount").Values).Text);
+        Assert.Equal("75", Assert.Single(Row(refuel, "Amount").Values).Text);
     }
 
     [Fact]
