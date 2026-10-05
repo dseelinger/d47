@@ -681,6 +681,28 @@ A Ring: no Void Opal. 6 Monazite, 4 Platinum, 3 Serendibite, and 2 more.
 Planets and belts are not spoken. Hotspots of rings you have not mapped are not known to the journal;
 ask "find me a painite hotspot" for those.
 
+#### Mining run summary {#mining-summary}
+
+When a mining run ends on docking with at least one refined tonne, its tonnes, rate, materials and
+limpets. The rate runs from the run's first mining event to its last refined tonne, so the flight
+back does not lower it. At most three materials are named, most first, the rest as a count; cores
+found are added when there were any:
+
+```text
+Mining run: 108 tonnes in 1 hour 11 minutes, about 91 an hour. 90 Platinum, 12 Samarium, 6 Praseodymium. 33 prospectors and 19 collectors.
+```
+
+A run that ends in a death, or refined nothing, says nothing.
+
+#### Hold full while mining {#hold-full}
+
+Once per mining run, when the hold has no free space. Limpets count toward the hold. With no run
+open, a full hold says nothing:
+
+```text
+Hold full. 108 tonnes refined this run.
+```
+
 #### Sampling progress {#sampling}
 
 Each organic specimen as it lands, with the distance you covered to get it:

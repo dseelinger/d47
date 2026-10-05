@@ -509,6 +509,12 @@ public sealed record CalloutSettings
     /// <summary>A mapped ring's hotspots (#608).</summary>
     public bool RingHotspots { get; init; } = true;
 
+    /// <summary>A mining run's summary on docking (#609).</summary>
+    public bool MiningSummary { get; init; } = true;
+
+    /// <summary>The hold filling during a mining run (#609).</summary>
+    public bool HoldFull { get; init; } = true;
+
     /// <summary>Organic sampling progress on the surface (Phase 18).</summary>
     public bool Sampling { get; init; } = true;
 

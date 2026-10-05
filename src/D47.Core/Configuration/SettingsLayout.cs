@@ -493,6 +493,8 @@ public static class SettingsLayout
                                 E("callouts.prospector"),
                                 E("callouts.coreAsteroid"),
                                 E("callouts.ringHotspots"),
+                                E("callouts.miningSummary"),
+                                E("callouts.holdFull"),
                             ]),
                     ]),
                 new SettingsPlace(

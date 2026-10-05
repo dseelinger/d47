@@ -30,6 +30,8 @@ public static class CalloutCapability
 
     public const string CoreAsteroidKey = "callouts.coreAsteroid";
     public const string RingHotspotsKey = "callouts.ringHotspots";
+    public const string MiningSummaryKey = "callouts.miningSummary";
+    public const string HoldFullKey = "callouts.holdFull";
 
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
@@ -270,6 +272,25 @@ public static class CalloutCapability
                 "ring hotspots",
                 s => s.Callouts.RingHotspots,
                 (s, v) => s with { Callouts = s.Callouts with { RingHotspots = v } }),
+
+            Toggle(
+                MiningSummaryKey,
+                "Mining run summary",
+                "When a mining run ends on docking: tonnes refined, the rate, the materials and the limpets "
+                + "launched. Silent when nothing was refined or the run ended in a death.",
+                "mining-summary",
+                "mining run summary",
+                s => s.Callouts.MiningSummary,
+                (s, v) => s with { Callouts = s.Callouts with { MiningSummary = v } }),
+
+            Toggle(
+                HoldFullKey,
+                "Hold full while mining",
+                "Once per mining run, when the hold has no free space. Silent when no run is open.",
+                "hold-full",
+                "hold full while mining",
+                s => s.Callouts.HoldFull,
+                (s, v) => s with { Callouts = s.Callouts with { HoldFull = v } }),
 
             Toggle(
                 SamplingKey,
