@@ -75,6 +75,9 @@ public sealed class VoiceCast
     /// </summary>
     public Func<string, NameReading?>? ReadingOfName { get; set; }
 
+    /// <summary>The voice a crew seat speaks in, from its seat id, or null to fall through to the pool.</summary>
+    public Func<string, string?>? SeatVoice { get; set; }
+
     /// <summary>Called with a name that has no answer yet, so the question can be queued.</summary>
     public Action<string>? NameUnknown { get; set; }
 
@@ -159,8 +162,14 @@ public sealed class VoiceCast
         string sender,
         bool isPlayer,
         VoiceRole role = VoiceRole.Comms,
-        string? allegiance = null)
+        string? allegiance = null,
+        string? seatId = null)
     {
+        if (seatId is not null && SeatVoice?.Invoke(seatId) is { } seated)
+        {
+            return new VoiceSelection(seated, Rate);
+        }
+
         // A role the Commander has cast has one voice, and a sender does not override it (<a
         // href=".com/dseelinger/d47/issues/109">#109</a>).
         if (_roleVoices.ContainsKey(role))

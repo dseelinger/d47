@@ -806,6 +806,10 @@ public sealed record SpeechSettings
     /// <summary>The Narrator's voice, from the ship's provider, or null for the first that is not the ship's.</summary>
     public string? NarratorVoice { get; init; }
 
+    /// <summary>The voice for each standard crew role, from the ship's provider, keyed by <c>SeatVoices.KeyOf</c>.</summary>
+    public IReadOnlyDictionary<string, string> SeatVoices { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>
     /// The Commander's own name for the carrier captain, spoken in place of "Captain" alone. Empty
     /// leaves the line as it reads today (#305).

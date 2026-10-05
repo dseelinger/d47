@@ -215,7 +215,11 @@ public static class SettingsLayout
                         G(
                             "Narrator Voice",
                             "Who reads the Narrator's lines.",
-                            [E("speech.narratorVoice")]),
+                            [
+                                E("speech.narratorVoice"),
+                                .. Capabilities.Builtin.SpeechCapability.SeatVoiceRoles
+                                    .Select(role => E(Capabilities.Builtin.SpeechCapability.SeatVoiceKey(role))),
+                            ]),
                         G(
                             "Guardian Voice Effects",
                             "Optional treatments for the ship AI's voice, all off by default and global to every core.",

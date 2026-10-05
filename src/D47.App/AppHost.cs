@@ -4797,6 +4797,11 @@ public sealed class AppHost : IDisposable
             cast.Assign(
                 VoiceRole.Narrator,
                 string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase) ? speech.NarratorVoice : null);
+
+            // A crew seat's own voice, else its role's, both from the ship's provider.
+            cast.SeatVoice = string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase)
+                ? seatId => SeatVoiceOf(seatId, providerId, cast)
+                : null;
         }
 
         Voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
@@ -5759,6 +5764,36 @@ public sealed class AppHost : IDisposable
         return CastClient(providerId) is { } client
             ? await client.ListVoicesAsync(cancellationToken).ConfigureAwait(false)
             : VoiceCatalogue.Silent;
+    }
+
+    private D47.Core.Seats.CrewSeatStore? _crewSeats;
+
+    /// <summary>Every ship's crew seats, read on first use.</summary>
+    public D47.Core.Seats.CrewSeatStore CrewSeats
+    {
+        get
+        {
+            if (_crewSeats is null)
+            {
+                _crewSeats = new D47.Core.Seats.CrewSeatStore(Paths.CrewSeatsFile, _loggerFactory.CreateLogger<D47.Core.Seats.CrewSeatStore>());
+                _crewSeats.Poll();
+            }
+
+            return _crewSeats;
+        }
+    }
+
+    private string? SeatVoiceOf(string seatId, string providerId, VoiceCast cast)
+    {
+        var seat = CrewSeats.Ships.SelectMany(ship => ship.Seats).FirstOrDefault(known => known.Id == seatId);
+
+        return seat is null
+            ? null
+            : D47.Core.Seats.SeatVoices.Resolve(
+                seat,
+                providerId,
+                Settings.Current.Speech.SeatVoices,
+                id => cast.Voices.Count == 0 || cast.Voices.ContainsKey(id));
     }
 
     /// <summary>The line a story character's Play sample speaks after its name.</summary>

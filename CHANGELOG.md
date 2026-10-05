@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Speech settings, under Narrator Voice, now has six rows for crew voices: First officer, Helm, Comms, Science officer, Security officer and Navigation. Each is picked from your ship's voice provider and applies to that role on every ship; left empty it reads "Same as other crew". A single seat can also hold a voice of its own, which applies only while that provider speaks for your ship. No page picks a seat's own voice yet.
+
 The Commander tab's sub-tabs now read Checklist, Standing, Statistics, This session, on the window and in the headset, and the tab opens on Checklist. A root you last had open is still restored.
 
 Mapping a ring with the Detailed Surface Scanner now says its hotspots, most first, at most three, with the rest as a count: "A Ring: 6 Monazite, 4 Platinum, 3 Serendibite, and 2 more." With a mining target set, the target leads when the ring has it: "A Ring: 4 Platinum. Also 6 Monazite, 3 Serendibite, and 2 more.", or "A Ring: no Void Opal. 6 Monazite, …" when it does not. A ring is said once per session. Settings > Callouts has a new switch, Ring hotspots, on by default.

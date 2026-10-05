@@ -1367,6 +1367,7 @@ public static class SpeechCapability
             });
 
         rows.InsertRange(rows.FindIndex(row => row.Key == GuardianTestKey), GuardianRows());
+        rows.InsertRange(rows.FindIndex(row => row.Key == NarratorVoiceKey) + 1, SeatVoiceRows(surface));
 
         return rows;
     }
@@ -1623,6 +1624,68 @@ public static class SpeechCapability
     /// The preset row, then a toggle and a level row per Guardian voice effect from its table, then the
     /// chain order (#237).
     /// </summary>
+    /// <summary>The settings key of the voice for a standard crew role.</summary>
+    public static string SeatVoiceKey(Seats.CrewRole role) =>
+        $"speech.seatVoice.{Seats.SeatVoices.KeyOf(role)}";
+
+    /// <summary>The standard crew roles, in the order their rows are shown.</summary>
+    public static IReadOnlyList<Seats.CrewRole> SeatVoiceRoles { get; } =
+        [.. Enum.GetValues<Seats.CrewRole>().Where(role => role != Seats.CrewRole.Custom)];
+
+    private static string SeatRoleLabel(Seats.CrewRole role) => role switch
+    {
+        Seats.CrewRole.FirstOfficer => "First officer",
+        Seats.CrewRole.ScienceOfficer => "Science officer",
+        Seats.CrewRole.SecurityOfficer => "Security officer",
+        _ => role.ToString(),
+    };
+
+    private static IEnumerable<SettingRow> SeatVoiceRows(SpeechSurface surface) =>
+        SeatVoiceRoles.Select(role => new SettingRow
+        {
+            Key = SeatVoiceKey(role),
+            Advanced = true,
+            Label = $"{SeatRoleLabel(role)} voice",
+            Help = $"Who speaks from the {SeatRoleLabel(role).ToLowerInvariant()} seat on every ship. From the voices that "
+                   + "speak for your ship; left empty, the seat speaks as the other crew do.",
+            Kind = SettingKind.Choice,
+            DefaultDisplay = "Same as other crew",
+            AllowsFreeText = true,
+            ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Aboard) ?? [],
+            ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
+            WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
+            Facet = _ => GenderFacet(surface, VoiceGroup.Aboard),
+            Audition = AuditionOf(surface, VoiceRole.Crew),
+            AppliesWhen = s => s.Speech.Provider != NoneId,
+            Group = "Other voices",
+            DocsAnchor = "crew-voices",
+            Binding = new SettingBinding
+            {
+                Read = s => s.Speech.SeatVoices.GetValueOrDefault(Seats.SeatVoices.KeyOf(role)),
+                Write = (s, v) => s with
+                {
+                    Speech = s.Speech with { SeatVoices = WithSeatVoice(s.Speech.SeatVoices, role, v) },
+                },
+            },
+        });
+
+    private static IReadOnlyDictionary<string, string> WithSeatVoice(
+        IReadOnlyDictionary<string, string> held, Seats.CrewRole role, string? voice)
+    {
+        var next = new Dictionary<string, string>(held, StringComparer.Ordinal);
+
+        if (string.IsNullOrWhiteSpace(voice))
+        {
+            next.Remove(Seats.SeatVoices.KeyOf(role));
+        }
+        else
+        {
+            next[Seats.SeatVoices.KeyOf(role)] = voice.Trim();
+        }
+
+        return next;
+    }
+
     private static IEnumerable<SettingRow> GuardianRows()
     {
         yield return new SettingRow

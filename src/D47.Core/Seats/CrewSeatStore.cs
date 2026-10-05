@@ -142,6 +142,7 @@ public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
                     Role = seat.Role.ToString(),
                     Title = seat.Title,
                     Name = seat.Name,
+                    Voice = seat.Voice is { } voice ? new VoiceLine { Provider = voice.Provider, VoiceId = voice.VoiceId } : null,
                 })],
             })],
         };
@@ -290,7 +291,11 @@ public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
                 continue;
             }
 
-            kept.Add(new CrewSeat(seat.Id!, role, role == CrewRole.Custom ? title : null, name));
+            var voice = Blank(seat.Voice?.Provider) is { } provider && Blank(seat.Voice?.VoiceId) is { } voiceId
+                ? new CrewSeatVoice(provider, voiceId)
+                : null;
+
+            kept.Add(new CrewSeat(seat.Id!, role, role == CrewRole.Custom ? title : null, name, voice));
         }
 
         return kept;
@@ -327,5 +332,14 @@ public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
         public string? Title { get; init; }
 
         public string? Name { get; init; }
+
+        public VoiceLine? Voice { get; init; }
+    }
+
+    private sealed record VoiceLine
+    {
+        public string? Provider { get; init; }
+
+        public string? VoiceId { get; init; }
     }
 }

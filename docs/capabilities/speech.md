@@ -950,6 +950,17 @@ provider that speaks for your ship, because the Narrator is heard in the cockpit
 the radio. Left empty, or set to the ship's own voice, the Narrator takes the first voice on that
 list that is not the ship's, so a narration is never mistaken for your ship's AI talking to you.
 
+#### Crew voices {#crew-voices}
+
+Six rows, one for each standard crew role: First officer, Helm, Comms, Science officer, Security
+officer and Navigation. A role's voice is the same on every ship. Each is picked from the voices of
+the provider that speaks for your ship, and left empty it reads *Same as other crew*, so that seat
+speaks as the rest of the crew do. A custom seat has no row.
+
+A single seat can also have a voice of its own, which wins over its role's. It belongs to the
+provider it was chosen on: if the ship's provider changes, the seat's voice is ignored and its role's
+voice for the new provider applies. A voice that the provider does not list is skipped the same way.
+
 #### How often an accent flavours the words {#accent-percent}
 
 When the language model writes an NPC's line, and the voice that will speak it has an accent, the
