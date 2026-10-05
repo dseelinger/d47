@@ -106,11 +106,6 @@ public class TheRadioLinkIsTheSameHoweverItArrivesTests
     {
         Assert.NotNull(CastVoice.Running(new PinnedVoice("kokoro", "bm_george") { Link = 0.5 }));
         Assert.Null(CastVoice.Running(new PinnedVoice("kokoro", "bm_george")));
-        Assert.Null(CastVoice.Running(new PinnedVoice("kokoro", "bm_george")
-        {
-            Link = 0.5,
-            Effects = [new StorySpeakerEffect("cylon", 1)],
-        }));
     }
 
     /// <summary>

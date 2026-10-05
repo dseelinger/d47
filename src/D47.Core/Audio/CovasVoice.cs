@@ -22,7 +22,7 @@ public static class CovasVoice
     private const double TailSeconds = 0.8;
 
     /// <summary>
-    /// The makeup gain applied to every sample: the lowest whole-clip RMS levelling (<see cref="GuardianVoice.Level"/>)
+    /// The makeup gain applied to every sample: the lowest whole-clip RMS levelling
     /// over the speech clips <c>TheCovasGainIsTheLowestLevellingOfSpokenClipsTests</c> names, rounded down.
     /// </summary>
     internal const double Gain = 0.661;

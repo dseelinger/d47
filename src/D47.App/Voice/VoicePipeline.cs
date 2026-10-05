@@ -79,10 +79,7 @@ public sealed class VoicePipeline(
     /// <summary>The ship AI's Guardian treatment for the settings in force, or null with every toggle off (#225).</summary>
     public Func<AudioClip, AudioClip>? GuardianColour { get; set; }
 
-    /// <summary>
-    /// <see cref="GuardianColour"/> as a running filter, so the ship AI plays while it arrives; null where the
-    /// treatment needs the whole clip.
-    /// </summary>
+    /// <summary><see cref="GuardianColour"/> as a running filter, so the ship AI plays while it arrives.</summary>
     public Func<IPcmFilter>? GuardianRunning { get; set; }
 
     /// <summary>

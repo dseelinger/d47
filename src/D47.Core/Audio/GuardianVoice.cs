@@ -486,24 +486,18 @@ public static partial class GuardianVoice
             return clip;
         }
 
-        var rate = clip.Format.SampleRate > 0 ? clip.Format.SampleRate : AudioFormat.Standard.SampleRate;
-        var dry = Decode(clip.Pcm.Span, channels, frames);
-        var treated = new double[channels][];
+        var filter = new GuardianFilter(clip.Format, chain, basePitchHz);
+        var body = filter.Push(clip.Pcm.Span);
+        var tail = filter.Finish();
+        var pcm = new byte[body.Length + tail.Length];
 
-        for (var channel = 0; channel < channels; channel++)
-        {
-            var stage = new ChainStage([.. chain.Select(link => link.Effect.Start(link.Value, basePitchHz, rate))]);
-            var output = new List<double>(frames);
-
-            stage.Push(dry[channel], output);
-            stage.Finish(output);
-            treated[channel] = [.. output];
-        }
+        body.CopyTo(pcm, 0);
+        tail.CopyTo(pcm, body.Length);
 
         return clip with
         {
             Name = $"{clip.Name} (guardian)",
-            Pcm = Encode(treated, Level(dry, treated, frames)),
+            Pcm = pcm,
         };
     }
 
@@ -584,9 +578,25 @@ public static partial class GuardianVoice
             ? speech.CovasReverb ? CovasVoice.Apply : null
             : ColourFor(speech, core.VoiceHint.Gender);
 
-    /// <summary>The treatment as a running filter, for a stock core with the COVAS reverb on; otherwise null.</summary>
-    public static Func<IPcmFilter>? RunningColourFor(SpeechSettings speech, D47.Core.Persona.Persona core) =>
-        core.Stock && speech.CovasReverb ? CovasVoice.Filter : null;
+    /// <summary><see cref="ColourFor(SpeechSettings, D47.Core.Persona.Persona)"/> as a running filter factory, null in the same cases.</summary>
+    public static Func<IPcmFilter>? RunningColourFor(SpeechSettings speech, D47.Core.Persona.Persona core)
+    {
+        if (core.Stock)
+        {
+            return speech.CovasReverb ? CovasVoice.Filter : null;
+        }
+
+        var effects = Effects(speech.GuardianVoice);
+
+        if (Ticked(effects).Count == 0)
+        {
+            return null;
+        }
+
+        var basePitch = BasePitchHz(core.VoiceHint.Gender);
+
+        return () => Filter(effects, basePitch);
+    }
 
     /// <summary>The ship AI's treatment for the settings in force, or null when no effect is ticked (#225).</summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
@@ -1564,35 +1574,6 @@ public static partial class GuardianVoice
         }
 
         return output;
-    }
-
-    /// <summary>
-    /// The gain that brings the treated clip to the dry clip's RMS, measured over the dry clip's length, lowered
-    /// where the treated peak would exceed <see cref="Ceiling"/>.
-    /// </summary>
-    internal static double Level(double[][] dry, double[][] treated, int frames)
-    {
-        var drySquared = 0.0;
-        var treatedSquared = 0.0;
-        var peak = 0.0;
-
-        for (var channel = 0; channel < dry.Length; channel++)
-        {
-            for (var index = 0; index < frames; index++)
-            {
-                drySquared += dry[channel][index] * dry[channel][index];
-                treatedSquared += treated[channel][index] * treated[channel][index];
-            }
-
-            foreach (var sample in treated[channel])
-            {
-                peak = Math.Max(peak, Math.Abs(sample));
-            }
-        }
-
-        var gain = drySquared > 0 && treatedSquared > 0 ? Math.Sqrt(drySquared / treatedSquared) : 1;
-
-        return peak * gain > Ceiling ? Ceiling / peak : gain;
     }
 
     internal static double[][] Decode(ReadOnlySpan<byte> pcm, int channels, int frames)

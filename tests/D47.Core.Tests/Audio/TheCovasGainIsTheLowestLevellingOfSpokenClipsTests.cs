@@ -79,12 +79,18 @@ public class TheCovasGainIsTheLowestLevellingOfSpokenClipsTests
         return Math.Sqrt(sum / count);
     }
 
-    /// <summary>What <see cref="GuardianVoice.Level"/> returns for this clip's reverb before any gain.</summary>
+    /// <summary>
+    /// The gain that brings this clip's reverb to the dry clip's RMS over the dry clip's length, lowered where the
+    /// reverb's peak would pass <see cref="GuardianVoice.Ceiling"/>.
+    /// </summary>
     private static double Levelling(AudioClip clip)
     {
         var dry = Samples(clip);
+        var wet = CovasVoice.Reverberate(dry, Rate);
+        var gain = Rms(dry, dry.Length) / Rms(wet, dry.Length);
+        var peak = wet.Max(Math.Abs);
 
-        return GuardianVoice.Level([dry], [CovasVoice.Reverberate(dry, Rate)], dry.Length);
+        return peak * gain > GuardianVoice.Ceiling ? GuardianVoice.Ceiling / peak : gain;
     }
 
     [Fact]

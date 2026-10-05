@@ -11,8 +11,9 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The stock COVAS reverb and the radio link run as filters, so the ship AI and a voice over the air are queued while
-/// they arrive; the Guardian effects, on the ship AI or on a story cast member, are still queued whole.
+/// The stock COVAS reverb, the radio link and the Guardian effects run as filters, so the ship AI, a voice over the air
+/// and a story cast member are queued while they arrive. A Guardian chain with an effect that needs the whole clip
+/// releases nothing until its source completes.
 /// </summary>
 public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
 {
@@ -21,6 +22,14 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
         GuardianVoice = new GuardianVoiceSettings
         {
             Effects = [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = effect.Id == "cylon" })],
+        },
+    };
+
+    private static readonly SpeechSettings DamagedCore = new()
+    {
+        GuardianVoice = new GuardianVoiceSettings
+        {
+            Effects = [.. GuardianPresets.EffectsFor(GuardianPresets.Find("damaged-core")!)],
         },
     };
 
@@ -106,13 +115,55 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
     }
 
     [Fact]
-    public async Task AGuardianCoreIsQueuedWhole()
+    public async Task ADamagedCoreIsQueuedBeforeItsSourceClipCompletes()
+    {
+        var (voice, played) = Build(PersonaCatalog.Warden, DamagedCore);
+        var held = new HeldOpen(seconds: 1);
+        voice.Tts = held;
+
+        var announced = voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
+
+        for (var waited = 0; (played.Count == 0 || played[0].Arriving!.Length == 0) && waited < 5_000; waited += 10)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        var treated = Assert.Single(played).Arriving;
+
+        Assert.NotNull(treated);
+        Assert.True(treated.Length > 0, "nothing of the treated clip arrived before its source completed");
+        Assert.False(held.Source!.IsComplete);
+
+        held.Source.Complete();
+        await announced;
+    }
+
+    [Fact]
+    public async Task AChainThatNeedsTheWholeClipCompletesOnlyAfterItsSource()
     {
         var (voice, played) = Build(PersonaCatalog.Warden, CylonTicked);
+        var held = new HeldOpen(seconds: 1);
+        voice.Tts = held;
 
-        await voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
+        var announced = voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
 
-        Assert.NotNull(Assert.Single(played).Clip);
+        for (var waited = 0; played.Count == 0 && waited < 5_000; waited += 10)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        var treated = Assert.Single(played).Arriving;
+
+        Assert.NotNull(treated);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.False(treated.IsComplete);
+        Assert.Equal(0, treated.Length);
+
+        held.Source!.Complete();
+        await treated.Whole.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.True(treated.Length > 0);
+        await announced;
     }
 
     [Fact]
@@ -131,7 +182,7 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
     }
 
     [Fact]
-    public async Task AStoryCastMemberWithEffectsIsQueuedWhole()
+    public async Task AStoryCastMemberWithEffectsIsQueuedWhileItArrives()
     {
         var (voice, played) = Build(PersonaCatalog.Covas, new SpeechSettings());
 
@@ -139,10 +190,10 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
         {
             Voice = VoiceRole.ShipAi,
             Speaker = "Harrow",
-            Pinned = new PinnedVoice(StorySpeaker.Kokoro, "bm_george") { Link = 1, Effects = [new StorySpeakerEffect("cylon", 1)] },
+            Pinned = new PinnedVoice(StorySpeaker.Kokoro, "bm_george") { Link = 1, Effects = [new StorySpeakerEffect("comb", 12)] },
         });
 
-        Assert.NotNull(Assert.Single(played).Clip);
+        Assert.NotNull(Assert.Single(played).Arriving);
     }
 
     private static async IAsyncEnumerable<TurnEvent> Reply(string text)
@@ -164,37 +215,38 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
             Task.FromResult(VoiceCatalogue.Of([]));
 
         public Task<AudioClip> SynthesizeAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default) =>
-            Task.FromResult(new AudioClip(text, Tone(), AudioFormat.Standard));
+            Task.FromResult(new AudioClip(text, Tone(0.1), AudioFormat.Standard));
 
         public Task<ArrivingClip> StreamAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default)
         {
             var arriving = new ArrivingClip(text);
-            arriving.Append(Tone());
+            arriving.Append(Tone(0.1));
 
             _ = Task.Delay(100, CancellationToken.None).ContinueWith(_ => arriving.Complete(), TaskScheduler.Default);
 
             return Task.FromResult(arriving);
         }
+    }
 
-        private static byte[] Tone()
+    /// <summary>A 900 Hz tone at 0.4 of full scale.</summary>
+    private static byte[] Tone(double seconds)
+    {
+        var samples = (int)(seconds * 48_000);
+        var pcm = new byte[samples * 2];
+
+        for (var index = 0; index < samples; index++)
         {
-            const int Samples = 4_800;
-            var pcm = new byte[Samples * 2];
+            var value = (short)(Math.Sin(2 * Math.PI * 900 * index / 48_000.0) * 0.4 * short.MaxValue);
 
-            for (var index = 0; index < Samples; index++)
-            {
-                var value = (short)(Math.Sin(2 * Math.PI * 900 * index / 48_000.0) * 0.4 * short.MaxValue);
-
-                pcm[index * 2] = (byte)(value & 0xFF);
-                pcm[(index * 2) + 1] = (byte)((value >> 8) & 0xFF);
-            }
-
-            return pcm;
+            pcm[index * 2] = (byte)(value & 0xFF);
+            pcm[(index * 2) + 1] = (byte)((value >> 8) & 0xFF);
         }
+
+        return pcm;
     }
 
     /// <summary>A streaming provider whose clip stays open until the test completes it.</summary>
-    private sealed class HeldOpen : ITtsProvider
+    private sealed class HeldOpen(double seconds = 0.1) : ITtsProvider
     {
         public ArrivingClip? Source { get; private set; }
 
@@ -211,7 +263,7 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
         public Task<ArrivingClip> StreamAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default)
         {
             Source = new ArrivingClip(text);
-            Source.Append(new byte[9_600]);
+            Source.Append(Tone(seconds));
 
             return Task.FromResult(Source);
         }
