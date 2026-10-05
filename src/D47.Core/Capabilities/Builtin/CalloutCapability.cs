@@ -52,6 +52,7 @@ public static class CalloutCapability
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
     public const string CarrierFuelKey = "callouts.carrierFuel";
+    public const string CommunityGoalExpiryKey = "callouts.communityGoalExpiry";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
     public const string MissionsKey = "callouts.missions";
     public const string RemindersKey = "callouts.reminders";
@@ -468,6 +469,15 @@ public static class CalloutCapability
                 "community goal sales",
                 s => s.Callouts.CommunityGoalSales,
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalSales = v } }),
+
+            Toggle(
+                CommunityGoalExpiryKey,
+                "Community Goal expiry",
+                "When a community goal you have joined has eight hours or less left. Said once for each goal.",
+                "community-goal-expiry",
+                "community goal expiry",
+                s => s.Callouts.CommunityGoalExpiry,
+                (s, v) => s with { Callouts = s.Callouts with { CommunityGoalExpiry = v } }),
 
             Toggle(
                 CarrierFuelKey,

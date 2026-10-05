@@ -597,6 +597,9 @@ public sealed record CalloutSettings
     /// <summary>The running session total after every sale of the Community Goal commodity (#296).</summary>
     public bool CommunityGoalSales { get; init; } = true;
 
+    /// <summary>A warning when a joined community goal has eight hours or less left (#640).</summary>
+    public bool CommunityGoalExpiry { get; init; } = true;
+
     /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
     public bool CarrierFuel { get; init; } = true;
 

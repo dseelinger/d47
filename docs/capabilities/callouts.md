@@ -912,6 +912,23 @@ The commodity is the one the saved Community Goal search names, Palladium, and t
 it did not watch being written. Switching this off stops the sentence and nothing else: the ledger
 keeps counting for the page and for *"how have I done today"*.
 
+#### Community Goal expiry {#community-goal-expiry}
+
+When a community goal you have joined has eight hours or less left
+([#640](https://github.com/dseelinger/d47/issues/640)). A goal counts when you have contributed to it
+or joined it and not been paid, it is not complete and it has not expired. Hours are rounded down,
+and the line says one hour at the last.
+
+```text
+The Hope of the Void community goal ends in 7 hours.
+```
+
+It is said once for each goal until d47 is restarted, and says only that the goal ends soon: the
+journal does not record whether your vouchers are handed in. A goal already inside the eight hours
+when d47 starts is said on the first tick after it has caught up. Nothing is said while d47 is
+catching up on a journal it did not watch being written. Switching this off silences this warning and
+nothing else.
+
 #### Carrier fuel {#carrier-fuel}
 
 When your own carrier's tritium is less than two full-range jumps at its current load, the carrier
