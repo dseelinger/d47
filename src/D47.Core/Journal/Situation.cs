@@ -312,22 +312,22 @@ public static class Situation
 
     private const int MaxMissionsNamed = 3;
 
-    /// <summary>The live missions: how many, the soonest to expire, and what they pay.</summary>
+    /// <summary>The live missions: how many, the first three of the board's ranking, and what they pay.</summary>
     private static void AppendMissions(CommanderGameState state, DateTimeOffset? now, List<string> lines)
     {
-        var missions = state.Missions.BySoonest();
+        var missions = state.Missions.Ranked(now, state.Location);
 
         if (missions.Count == 0)
         {
             return;
         }
 
-        // Past its expiry but not yet failed by the game: counted, never named ahead of a live one.
+        // Past its expiry but not yet failed by the game: counted, and ranked after the live ones.
         var expired = now is { } clock
             ? missions.Where(mission => mission.Expiry <= clock).ToList()
             : [];
 
-        var named = missions.Except(expired).Take(MaxMissionsNamed);
+        var named = missions.Take(MaxMissionsNamed);
 
         var summary = new StringBuilder($"Missions: {missions.Count} active");
 
@@ -367,6 +367,11 @@ public static class Situation
             if (mission.Expiry is { } expiry)
             {
                 line.Append(now is { } asOf ? $", {TimeLeft(expiry - asOf)}" : $", expires {expiry:yyyy-MM-dd HH:mm} UTC");
+            }
+
+            if (mission.Cargo is { Total: > 0 } cargo)
+            {
+                line.Append($", {cargo.Delivered} of {cargo.Total} delivered");
             }
 
             lines.Add(line.ToString());
