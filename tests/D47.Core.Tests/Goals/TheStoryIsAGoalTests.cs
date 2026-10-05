@@ -84,7 +84,7 @@ public sealed class TheStoryIsAGoalTests : IDisposable
     }
 
     [Fact]
-    public void TheGoalCanBeSetAsideButNotFinishedByHand()
+    public void TheGoalCanBeRemovedButNotFinishedByHand()
     {
         var store = new GoalStore(Path.Combine(_folder, "goals.json"), NullLogger<GoalStore>.Instance);
         store.Poll();
@@ -95,7 +95,7 @@ public sealed class TheStoryIsAGoalTests : IDisposable
         Assert.Contains(book.Standings, standing => standing.Arc.Key == key);
         Assert.Contains("worked out from your journal", book.Finish(key, true, Now), StringComparison.Ordinal);
 
-        book.SetAside(key, true);
+        book.Remove(key);
 
         Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key == key);
     }

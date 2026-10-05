@@ -40,20 +40,21 @@ public class GoalBookTests : IDisposable
     /// rather than the page's.
     /// </summary>
     [Fact]
-    public void ASetAsideArcLeavesThePageAndComesBack()
+    public void ARemovedArcLeavesThePageAndRecoverBringsItBack()
     {
         using var install = new TempInstall();
         var book = Book(install);
 
-        book.SetAside("rank.soldier", aside: true);
+        book.Remove("rank.soldier");
 
         Assert.Equal(8, book.Standings.Count);
         Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key == "rank.soldier");
 
         // Still reachable, which is what lets the panel offer bringing it back.
         Assert.Equal(9, book.Everything().Count);
+        Assert.Contains("rank.soldier", book.Removed);
 
-        book.SetAside("rank.soldier", aside: false);
+        book.Recover("rank.soldier");
         Assert.Equal(9, book.Standings.Count);
     }
 
@@ -147,12 +148,12 @@ public class GoalBookTests : IDisposable
     }
 
     [Fact]
-    public void ABuiltInArcIsSetAsideRatherThanDeleted()
+    public void ABuiltInArcIsRemovedRatherThanDeleted()
     {
         using var install = new TempInstall();
         var book = Book(install);
 
-        Assert.Contains("set aside rather than deleted", book.Forget(GoalCatalogue.Ships), StringComparison.Ordinal);
+        Assert.Contains("removed but not deleted", book.Forget(GoalCatalogue.Ships), StringComparison.Ordinal);
         Assert.Equal(9, book.Standings.Count);
     }
 

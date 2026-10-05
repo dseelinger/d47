@@ -22,7 +22,8 @@ public static class GoalsCapability
             [
                 "how are my goals going",
                 "what should I do about the engineers goal",
-                "set aside the mercenary goal",
+                "remove the mercenary goal",
+                "recover the mercenary goal",
             ],
 
             // Phrases, never bare words. "goals" alone would hijack every sentence about a community goal,
@@ -84,27 +85,22 @@ public static class GoalsCapability
 
                 new ToolDefinition
                 {
-                    Name = "set_goal_aside",
-                    Description =
-                        "Stop showing one long-running goal, or bring it back. The Commander's own decision.",
-                    Parameters =
-                    [
-                        new ToolParameter
-                        {
-                            Name = "goal",
-                            Type = ToolParameterType.String,
-                            Description = "Which goal, by name or key.",
-                            Required = true,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "aside",
-                            Type = ToolParameterType.Boolean,
-                            Description = "True to set it aside, false to bring it back. Defaults to true.",
-                        },
-                    ],
+                    Name = "remove_goal",
+                    Description = "Take one long-running goal off the Goals page. The Commander's own decision.",
+                    Parameters = GoalParameter(),
+                    Commands = [.. Phrases("remove")],
                     Protected = true,
-                    Handler = (arguments, _) => Task.FromResult(Aside(book, arguments)),
+                    Handler = (arguments, _) => Task.FromResult(Change(book, arguments, remove: true)),
+                },
+
+                new ToolDefinition
+                {
+                    Name = "recover_goal",
+                    Description = "Put a removed long-running goal back on the Goals page. The Commander's own decision.",
+                    Parameters = GoalParameter(),
+                    Commands = [.. Phrases("recover")],
+                    Protected = true,
+                    Handler = (arguments, _) => Task.FromResult(Change(book, arguments, remove: false)),
                 },
             ],
         };
@@ -127,7 +123,39 @@ public static class GoalsCapability
             : ToolResult.Ok(book.Promote(goal));
     }
 
-    private static ToolResult Aside(GoalBook? book, ToolArguments arguments)
+    /// <summary>What a Commander calls each built-in goal, and the key it reaches.</summary>
+    private static readonly (string Word, string Key)[] Nicknames =
+    [
+        ("combat", "rank.combat"),
+        ("trade", "rank.trade"),
+        ("exploration", "rank.explore"),
+        ("explorer", "rank.explore"),
+        ("mercenary", "rank.soldier"),
+        ("exobiology", "rank.exobiologist"),
+        ("imperial navy", "rank.empire"),
+        ("federal navy", "rank.federation"),
+        ("powerplay", GoalCatalogue.Powerplay),
+        ("engineers", GoalCatalogue.Engineers),
+        ("ship collection", GoalCatalogue.Ships),
+    ];
+
+    private static IEnumerable<ToolCommandPhrase> Phrases(string verb) =>
+        Nicknames.Select(nickname => new ToolCommandPhrase(
+            $"{verb} the {nickname.Word} goal",
+            new Dictionary<string, string> { ["goal"] = nickname.Key }));
+
+    private static IReadOnlyList<ToolParameter> GoalParameter() =>
+    [
+        new ToolParameter
+        {
+            Name = "goal",
+            Type = ToolParameterType.String,
+            Description = "Which goal, by name or key.",
+            Required = true,
+        },
+    ];
+
+    private static ToolResult Change(GoalBook? book, ToolArguments arguments, bool remove)
     {
         if (book is null)
         {
@@ -141,9 +169,7 @@ public static class GoalsCapability
             return ToolResult.Error("Which goal?");
         }
 
-        var aside = !arguments.TryGetBoolean("aside", out var wanted) || wanted;
-
-        return ToolResult.Ok(book.SetAside(goal, aside));
+        return ToolResult.Ok(remove ? book.Remove(goal) : book.Recover(goal));
     }
 
     /// <summary>The store, with the button that fills it.</summary>

@@ -43,8 +43,24 @@ public class GoalsCapabilityTests
             var advertised = Advertised(registry, mode);
 
             Assert.DoesNotContain("get_goal_step", advertised);
-            Assert.DoesNotContain("set_goal_aside", advertised);
+            Assert.DoesNotContain("remove_goal", advertised);
+            Assert.DoesNotContain("recover_goal", advertised);
         });
+    }
+
+    [Fact]
+    public void RemoveAndRecoverAreSaidByVoiceForTheMercenaryGoal()
+    {
+        using var install = new TempInstall();
+
+        var tools = TestSurface.For(install).Registry.Find(GoalsCapability.Id)!.Descriptor.Tools;
+
+        foreach (var (tool, phrase) in new[] { ("remove_goal", "remove the mercenary goal"), ("recover_goal", "recover the mercenary goal") })
+        {
+            var command = Assert.Single(tools.Single(t => t.Name == tool).Commands, c => c.Phrase == phrase);
+
+            Assert.Equal("rank.soldier", command.Arguments["goal"]);
+        }
     }
 
     [Fact]
@@ -54,7 +70,7 @@ public class GoalsCapabilityTests
 
         var tools = TestSurface.For(install).Registry.Find(GoalsCapability.Id)!.Descriptor.Tools;
 
-        Assert.Equal(3, tools.Count);
+        Assert.Equal(4, tools.Count);
         Assert.False(tools.Single(tool => tool.Name == "get_goals").Protected);
         Assert.All(
             tools.Where(tool => tool.Name != "get_goals"),

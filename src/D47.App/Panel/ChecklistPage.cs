@@ -545,8 +545,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (standings.Count == 0)
         {
-            _arcs.Children.Add(Muted("Every goal is set aside."));
-            return;
+            _arcs.Children.Add(Muted("Every goal is removed."));
         }
 
         foreach (var standing in standings)
@@ -572,6 +571,56 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
             _arcs.Children.Add(read);
         }
+
+        AddRemoved();
+    }
+
+    /// <summary>The Removed list: each removed goal with a Recover button. Nothing is drawn when none is removed.</summary>
+    private void AddRemoved()
+    {
+        var removed = _goals!.Removed;
+
+        if (removed.Count == 0)
+        {
+            return;
+        }
+
+        var names = _goals.Everything()
+            .Where(standing => removed.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        if (names.Count == 0)
+        {
+            return;
+        }
+
+        _arcs.Children.Add(Muted("Removed"));
+
+        foreach (var standing in names)
+        {
+            var recover = new Button
+            {
+                Content = "Recover",
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+
+            AutomationProperties.SetName(recover, $"Recover {standing.Arc.Name}");
+
+            recover.Click += (_, _) =>
+            {
+                Say(_goals.Recover(standing.Arc.Key));
+                Rebuild();
+            };
+
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            var name = Named(standing.Arc.Name, null, sentence: false);
+
+            Grid.SetColumn(recover, 1);
+            row.Children.Add(name);
+            row.Children.Add(recover);
+
+            _arcs.Children.Add(ListRow.Dress(new Border { Child = row }, selected: false));
+        }
     }
 
     /// <summary>
@@ -585,7 +634,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         body.Children.Add(Named(standing.Arc.Name, standing.IsDone ? Met : null, sentence: false));
 
         // The figure, then the bars — and no bar at all where the fraction is unknown.
-        body.Children.Add(ListRow.Sub(new TextBlock { Text = Aside(standing), TextWrapping = TextWrapping.Wrap }));
+        body.Children.Add(ListRow.Sub(new TextBlock { Text = Caption(standing), TextWrapping = TextWrapping.Wrap }));
 
         foreach (var bar in Bars(standing))
         {
@@ -658,7 +707,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         ((int)Math.Floor(fraction * 100)).ToString(CultureInfo.InvariantCulture) + "%";
 
     /// <summary>The caption under an arc: where it stands, where the figure came from, and its age.</summary>
-    private string Aside(D47.Core.Goals.GoalStanding standing)
+    private string Caption(D47.Core.Goals.GoalStanding standing)
     {
         var parts = new List<string>();
 
@@ -724,16 +773,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             buttons.Children.Add(promote);
         }
 
-        var aside = new Button { Content = "Set aside" };
+        var remove = new Button { Content = "Remove" };
 
-        aside.Click += (_, _) =>
+        remove.Click += (_, _) =>
         {
-            Say(_goals!.SetAside(standing.Arc.Key, aside: true));
+            Say(_goals!.Remove(standing.Arc.Key));
             _openArc = null;
             Rebuild();
         };
 
-        buttons.Children.Add(aside);
+        buttons.Children.Add(remove);
         panel.Children.Add(buttons);
 
         return panel;

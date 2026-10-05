@@ -44,18 +44,18 @@ public sealed class GoalBook(
     /// <summary>The last walk over this Commander's journals, or null where none has been done.</summary>
     public GoalMine? Mine => store.MineFor(commander());
 
-    /// <summary>Arc keys this Commander has put out of sight.</summary>
-    public IReadOnlyList<string> Aside => store.SetAsideBy(commander());
+    /// <summary>Arc keys this Commander has removed.</summary>
+    public IReadOnlyList<string> Removed => store.SetAsideBy(commander());
 
     /// <summary>
     /// Every arc that should be on the page: the built-ins, plus whatever the Commander invented, less
-    /// anything set aside.
+    /// anything removed.
     /// </summary>
     public IReadOnlyList<GoalStanding> Standings
     {
         get
         {
-            var aside = Aside;
+            var removed = Removed;
             var mine = Mine;
             var live = state();
 
@@ -63,14 +63,14 @@ public sealed class GoalBook(
             [
                 .. GoalCatalogue.All(live)
                     .Concat(store.AuthoredBy(commander()))
-                    .Where(arc => !aside.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
+                    .Where(arc => !removed.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
                     .Select(arc => GoalEvaluator.Evaluate(arc, live, mine))
-                    .Concat(StoryStandings().Where(standing => !aside.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))),
+                    .Concat(StoryStandings().Where(standing => !removed.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))),
             ];
         }
     }
 
-    /// <summary>Including the ones set aside.</summary>
+    /// <summary>Including the removed ones.</summary>
     public IReadOnlyList<GoalStanding> Everything()
     {
         var mine = Mine;
@@ -109,7 +109,7 @@ public sealed class GoalBook(
 
         if (standings.Count == 0)
         {
-            return "Every goal is set aside, so there is nothing to report.";
+            return "Every goal is removed, so there is nothing to report.";
         }
 
         var text = new StringBuilder();
@@ -283,8 +283,13 @@ public sealed class GoalBook(
             : $"{standing.Arc.Name} is open again.";
     }
 
-    /// <summary>Puts an arc out of sight, or brings it back.</summary>
-    public string SetAside(string? key, bool aside)
+    /// <summary>Takes an arc off the page. Recover brings it back.</summary>
+    public string Remove(string? key) => SetRemoved(key, removed: true);
+
+    /// <summary>Puts a removed arc back on the page.</summary>
+    public string Recover(string? key) => SetRemoved(key, removed: false);
+
+    private string SetRemoved(string? key, bool removed)
     {
         if (Find(key) is not { } standing)
         {
@@ -293,16 +298,16 @@ public sealed class GoalBook(
                 : "Which goal?";
         }
 
-        if (!store.SetAside(commander(), standing.Arc.Key, aside))
+        if (!store.SetAside(commander(), standing.Arc.Key, removed))
         {
-            return aside
-                ? $"{standing.Arc.Name} is already set aside."
-                : $"{standing.Arc.Name} is not set aside.";
+            return removed
+                ? $"{standing.Arc.Name} is already removed."
+                : $"{standing.Arc.Name} is not removed.";
         }
 
-        return aside
-            ? $"Set aside: {standing.Arc.Name}. I will not bring it up until you ask for it back."
-            : $"Back on the list: {standing.Arc.Name}.";
+        return removed
+            ? $"Removed: {standing.Arc.Name}. I will not bring it up until you recover it."
+            : $"Recovered: {standing.Arc.Name}.";
     }
 
     /// <summary>Drops an authored arc for good.</summary>
@@ -317,7 +322,7 @@ public sealed class GoalBook(
 
         if (standing.Arc.Kind != GoalKind.Authored)
         {
-            return $"{standing.Arc.Name} is one of mine, so it is set aside rather than deleted.";
+            return $"{standing.Arc.Name} is one of mine, so it can be removed but not deleted.";
         }
 
         return store.Forget(commander(), standing.Arc.Key)

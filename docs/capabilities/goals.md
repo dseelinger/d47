@@ -75,7 +75,7 @@ nav_order: 145
  <rect x="460" y="36" width="400" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">GOALS</text>
  <text x="660" y="110" text-anchor="middle" font-size="17" fill="var(--text)">what you are doing this year</text>
- <text x="660" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">ten of them ship, and you can set any aside</text>
+ <text x="660" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">ten of them ship, and you can remove any</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text-muted)">An arc is a named ambition, a definition of done, and a progress figure nobody typed.</text>
 </svg>
 </section>
@@ -136,7 +136,7 @@ nav_order: 145
 </section>
 <section>
 <h2><span class="num">5</span> Your current story is a goal too.</h2>
-<p class="body">The stock story you are running appears beside the others, with its clues given out of the story’s total and its stage and current objective as the note, for example “Bad Guys Close In, clue 11 of 18. Now: kill bonds for LTT 7786 Labour, 3 of 8”. The note says so when the story is paused or switched off, a finished story shows as done, and an abandoned one is not shown. You can set it aside like any other goal, but it cannot be written, put on the checklist or ticked: it is worked out from the story itself.</p>
+<p class="body">The stock story you are running appears beside the others, with its clues given out of the story’s total and its stage and current objective as the note, for example “Bad Guys Close In, clue 11 of 18. Now: kill bonds for LTT 7786 Labour, 3 of 8”. The note says so when the story is paused or switched off, a finished story shows as done, and an abandoned one is not shown. You can remove it like any other goal, but it cannot be written, put on the checklist or ticked: it is worked out from the story itself.</p>
 </section>
 </div></div>
 </details>
@@ -201,7 +201,7 @@ off a journal read, so a promotion moves the figure the moment the game writes i
 
 **There is no CQC arc**, because almost nobody plays it and an arc permanently at nothing is a line
 of the page spent telling you about a thing you are not doing. If any of the others is not yours
-either, set it aside — it goes off the page and stays off until you ask for it back.
+either, remove it — it goes off the page and into the **Removed** list below the goals, and stays there until you press **Recover**.
 
 ### Ages come from your journals
 
@@ -274,14 +274,22 @@ pending proposals, and writing is yours.
 {"type":"object","properties":{"goal":{"type":"string","description":"Which goal, by name or key, as read back by get_goals."}},"required":["goal"],"additionalProperties":false}
 ```
 
-#### `set_goal_aside`
+#### `remove_goal`
 
-Takes an arc off the page, or brings it back. Protected, for the same reason. A set-aside arc stays
-set aside through a re-read of your journals — it is a decision you made, not a figure d47
+Takes an arc off the page and puts it in the Removed list. Protected, for the same reason. A removed
+arc stays removed through a re-read of your journals — it is a decision you made, not a figure d47
 recomputes.
 
 ```json
-{"type":"object","properties":{"aside":{"type":"boolean","description":"True to set it aside, false to bring it back. Defaults to true."},"goal":{"type":"string","description":"Which goal, by name or key."}},"required":["goal"],"additionalProperties":false}
+{"type":"object","properties":{"goal":{"type":"string","description":"Which goal, by name or key."}},"required":["goal"],"additionalProperties":false}
+```
+
+#### `recover_goal`
+
+Puts a removed arc back on the page where it was. Protected.
+
+```json
+{"type":"object","properties":{"goal":{"type":"string","description":"Which goal, by name or key."}},"required":["goal"],"additionalProperties":false}
 ```
 
 ### Where it is kept
@@ -291,6 +299,6 @@ recomputes.
 so two characters on one machine do not report each other's progress.
 
 Three things live in that file and only one of them is d47's. The mined marks are a recomputation
-and are replaced wholesale by the next read. **The goals you wrote and the arcs you set aside are
+and are replaced wholesale by the next read. **The goals you wrote and the arcs you removed are
 yours**, are stored separately, and a re-read never touches either. The file is plain JSON and meant
 to be readable; a line d47 cannot parse is reported rather than silently dropped.

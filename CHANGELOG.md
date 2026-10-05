@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Set aside button on a goal is now Remove. Below the goals, a Removed list names each removed goal with a Recover button that puts it back where it was, and is hidden when nothing is removed. By voice, "remove the mercenary goal" and "recover the mercenary goal" do the same. Goals you had already set aside appear in the Removed list.
+
 ElevenLabs, OpenAI and Cartesia speech now starts playing while the rest of it is still arriving, so the first words of an answer come sooner. This applies to a voice with no treatment on it. A voice with radio, Guardian or COVAS reverb treatment still plays once the whole sentence group has arrived, as before.
 
 Ticking Goals on the Checklist page now replaces the list with the goals, which fill the page below the bar and scroll only when they do not fit. The filter, Delete completed items, Suggestions and Add are hidden while Goals is ticked, and unticking it brings the list back with the same filter, search and selection. Each rank goal shows two labelled bars: one to the top of its ladder, "To Elite V" (or "To King" and "To Admiral" for the navies), and one to the next rank, so Elite IV at 56% in Trade shows 96% and 56%. Where the rank is known and the percent is not, the second reads "not known yet". Other goals keep one unlabelled bar.
