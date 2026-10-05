@@ -34,6 +34,7 @@ public sealed class AppPaths
         SpendFile = Path.Combine(Data, "spend.jsonl");
         PronunciationsFile = Path.Combine(Data, PronunciationOverrides.FileName);
         NameAccentsFile = Path.Combine(Data, "name-accents.json");
+        CrewSeatsFile = Path.Combine(Data, "crew-seats.json");
         VrActions = Path.Combine(Data, "vr-actions");
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
         Donations = Path.Combine(Data, "donations");
@@ -83,6 +84,9 @@ public sealed class AppPaths
 
     /// <summary>The accents the language model judged sender names to suggest.</summary>
     public string NameAccentsFile { get; }
+
+    /// <summary>The crew seats of every ship.</summary>
+    public string CrewSeatsFile { get; }
 
     /// <summary>
     /// The OpenVR action manifest and its binding files, written here rather than shipped as content
