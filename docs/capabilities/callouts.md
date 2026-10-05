@@ -703,6 +703,23 @@ open, a full hold says nothing:
 Hold full. 108 tonnes refined this run.
 ```
 
+#### Unsold data at risk {#unsold-data-at-risk}
+
+When you go into danger carrying unsold exploration data worth five million credits or more
+([#638](https://github.com/dseelinger/d47/issues/638)). The value is your held DSS maps plus your
+analysed organic samples, the same figure as *"how much unsold data do I have"*. Three things count
+as danger: dropping out of supercruise at a war zone, dropping out at a hazardous resource
+extraction site, and your own hull falling below sixty percent.
+
+```text
+You are carrying 6.2 million credits of unsold data into a fight.
+Hull is failing with 6.2 million credits of unsold data aboard.
+```
+
+Each of the three is said at most once every thirty minutes. Nothing is said while d47 is catching up
+on older journals. Data from the discovery scanner and the FSS alone, with no surface map, is not
+counted. Switching this off silences this warning and nothing else.
+
 #### Sampling progress {#sampling}
 
 Each organic specimen as it lands, with the distance you covered to get it:

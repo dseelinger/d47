@@ -3008,6 +3008,7 @@ public sealed class AppHost : IDisposable
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
             .Add(new MappingCallout { Ledger = cartography })
+            .Add(new UnsoldDataAtRiskCallout(cartography, exobiology))
             .Add(surveyedBiology)
             .Add(biology)
             .Add(tradingMode)
@@ -3148,6 +3149,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("ring-hotspots", callouts.RingHotspots, now);
         engine.SetEnabled("mining-summary", callouts.MiningSummary, now);
         engine.SetEnabled("hold-full", callouts.HoldFull, now);
+        engine.SetEnabled("unsold-data-at-risk", callouts.UnsoldDataAtRisk, now);
         engine.SetEnabled("checklist", callouts.Checklist, now);
         engine.SetEnabled("ambient", callouts.Ambient, now);
         engine.SetEnabled("narrator", callouts.Narrator, now);

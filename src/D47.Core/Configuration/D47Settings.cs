@@ -515,6 +515,9 @@ public sealed record CalloutSettings
     /// <summary>The hold filling during a mining run (#609).</summary>
     public bool HoldFull { get; init; } = true;
 
+    /// <summary>A warning when unsold exploration data enters danger (#638).</summary>
+    public bool UnsoldDataAtRisk { get; init; } = true;
+
     /// <summary>Organic sampling progress on the surface (Phase 18).</summary>
     public bool Sampling { get; init; } = true;
 

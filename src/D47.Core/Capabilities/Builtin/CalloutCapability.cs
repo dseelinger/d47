@@ -32,6 +32,7 @@ public static class CalloutCapability
     public const string RingHotspotsKey = "callouts.ringHotspots";
     public const string MiningSummaryKey = "callouts.miningSummary";
     public const string HoldFullKey = "callouts.holdFull";
+    public const string UnsoldDataAtRiskKey = "callouts.unsoldDataAtRisk";
 
     public const string SamplingKey = "callouts.sampling";
     public const string DiscoveryKey = "callouts.discovery";
@@ -291,6 +292,17 @@ public static class CalloutCapability
                 "hold full while mining",
                 s => s.Callouts.HoldFull,
                 (s, v) => s with { Callouts = s.Callouts with { HoldFull = v } }),
+
+            Toggle(
+                UnsoldDataAtRiskKey,
+                "Unsold data at risk",
+                "On dropping into a war zone or a hazardous resource extraction site, or when your hull falls "
+                + "below sixty percent, while unsold scan and biology data is worth five million credits or more. "
+                + "Said at most once every thirty minutes for each of the three.",
+                "unsold-data-at-risk",
+                "unsold data warning",
+                s => s.Callouts.UnsoldDataAtRisk,
+                (s, v) => s with { Callouts = s.Callouts with { UnsoldDataAtRisk = v } }),
 
             Toggle(
                 SamplingKey,
