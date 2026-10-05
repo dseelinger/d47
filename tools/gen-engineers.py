@@ -189,7 +189,7 @@ STATISTIC_PATTERNS = [
 # "Provide 50 units of Bromellite." and "Mine 10 units of Osmium." — a delivery or a mined
 # quantity, named the same way in every row that has one.
 CONTRIBUTION_UNITS_RE = re.compile(
-    r"(?:Provide|Mine) ([\d,]+) units? of ([A-Za-z][A-Za-z '\-]*?)\.", re.IGNORECASE)
+    r"(?:Provide|Mine) ([\d,]+) (?:(?:units?|doses?) of )?([A-Za-z][A-Za-z '\-]*?)\.", re.IGNORECASE)
 
 # "Provide 100,000 credits worth of bounty vouchers." — one figure, no "or". Where the prose
 # gives two figures joined by "or" (Juri Ishmaak's combat bonds), this does not match and the
@@ -235,15 +235,6 @@ MEETING_TEST_REASONS = {
 UNLOCK_TEST_REASONS = {
     "juriishmaak": "two figures in the prose, no contribution in the corpus",
     "thedweller": "a credit payment, no event seen",
-    "baltanos": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
-    "dominogreen": "the tribute is a ship-locker item; unlocked with no EngineerContribution seen",
-    "eleanorbresa": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
-    "heroferrari": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
-    "judenavarro": "the tribute is a ship-locker item; unlocked with no EngineerContribution seen",
-    "kitfowler": "the tribute is a ship-locker item; unlocked with no EngineerContribution seen",
-    "rosadayette": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
-    "terravelasquez": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
-    "wellingtonbeck": "the tribute is a ship-locker item; the corpus holds no EngineerContribution for it",
     "odengeiger": "no tribute stated",
     "umalaszlo": "no tribute stated",
     "yardenbond": "no tribute stated",
@@ -458,7 +449,7 @@ def meeting_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> s
 
 
 def unlock_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> str | None:
-    """The invitation cost, to `contribution <Type> [<symbol>] <n>`."""
+    """The invitation cost, to `contribution <Type> [<symbol>] <n>` or `locker <symbol> <n>`."""
     if key == relax(BRIS_DEKKER_UNLOCK_OVERRIDE[0]):
         return BRIS_DEKKER_UNLOCK_OVERRIDE[1]
 
@@ -469,6 +460,9 @@ def unlock_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> st
         quantity = number(match.group(1))
         item = relax(match.group(2))
 
+        if item not in symbols and item.removesuffix("data") in symbols:
+            item = item.removesuffix("data")
+
         if item in TRIBUTE_ALIASES:
             symbol, ledger = TRIBUTE_ALIASES[item], "rare-cargo"
         elif item in symbols:
@@ -477,6 +471,9 @@ def unlock_test(key: str, prose: str, symbols: dict[str, tuple[str, str]]) -> st
             symbol, ledger = symbols[item[:-1]]
         else:
             return None
+
+        if ledger == "ship-locker":
+            return f"locker {symbol} {quantity}"
 
         kind = LEDGER_TYPE.get(ledger)
         return f"contribution {kind} {symbol} {quantity}" if kind else None

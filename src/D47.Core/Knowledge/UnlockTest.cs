@@ -52,6 +52,9 @@ public abstract record UnlockTest
     /// </summary>
     public sealed record Contribution(string Type, string? Symbol, long Quantity) : UnlockTest;
 
+    /// <summary>A quantity of one ship-locker item to hand over; the journal records no hand-over.</summary>
+    public sealed record Locker(string Symbol, long Quantity) : UnlockTest;
+
     /// <summary>What a <see cref="Tally"/> counts.</summary>
     public enum TallyKind { Missions, Sales, Visits }
 
@@ -97,6 +100,10 @@ public abstract record UnlockTest
             "contribution" when words.Length == 4
                 && long.TryParse(words[3], CultureInfo.InvariantCulture, out var quantity) =>
                 new Contribution(words[1], words[2], quantity),
+
+            "locker" when words.Length == 3
+                && long.TryParse(words[2], CultureInfo.InvariantCulture, out var carried) =>
+                new Locker(words[1], carried),
 
             "tally" when words.Length is 4 or 5
                 && Enum.TryParse<TallyKind>(words[1], ignoreCase: true, out var kind)

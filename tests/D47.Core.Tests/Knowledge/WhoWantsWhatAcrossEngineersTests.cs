@@ -66,15 +66,15 @@ public class WhoWantsWhatAcrossEngineersTests
         var gameState = new GameStateStore();
         var registry = BuildRegistry(gameState);
 
-        var domino = EngineerDirectory.ByName("Domino Green");
-        Assert.NotNull(domino);
-        Assert.Null(domino.UnlockTest);
-        Assert.NotNull(domino.Unlock);
+        var juri = EngineerDirectory.ByName("Juri Ishmaak");
+        Assert.NotNull(juri);
+        Assert.Null(juri.UnlockTest);
+        Assert.NotNull(juri.Unlock);
 
         var result = await registry.InvokeAsync(
             "get_engineer_unlock_requirements", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
-        Assert.Contains(domino.Unlock!, result.Content, StringComparison.Ordinal);
+        Assert.Contains(juri.Unlock!, result.Content, StringComparison.Ordinal);
     }
 
     [Fact]

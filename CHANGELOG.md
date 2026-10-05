@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The engineer unlock lines for nine on-foot tributes now show how many of the items you are carrying. Baltanos, Domino Green, Eleanor Bresa, Hero Ferrari, Jude Navarro, Kit Fowler, Rosa Dayette, Terra Velasquez and Wellington Beck each ask for items from the ship locker, and the line reads "carrying 3 of 5" from your backpack and locker together. It stays undecided even when you carry enough, because the game writes nothing when you hand the items over; the line is met once the engineer is unlocked.
+
 Asking how to get a ship or module now finds the nearest station that sells it at any distance, where before it looked only within 50 light years. For a module or ship sold at 20 stations or fewer in the whole galaxy it adds the count: "Nearest: Abel Laboratory (Arque), 98 ly. Only 6 stations are reported to sell it." With none it says "No station is reported to sell it." Other station searches keep their 50 light year default.
 
 The Narrator now speaks every thirty to sixty minutes with a stock core aboard, the same as with any other core, instead of every five to ten. It no longer works tips on using D47 or on playing Elite into its narration, and the two "Tips" switches under Narrator in Plan and story callouts are gone. A settings file that still holds them loads as before.

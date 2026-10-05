@@ -184,12 +184,12 @@ public class EngineerPrerequisitesAreDecidedFromFoldedEvidenceTests
         Assert.Null(criterion.Reading);
     }
 
-    /// <summary>Domino Green's tribute carries no unlock test at all, so it is null whatever the state holds.</summary>
+    /// <summary>Juri Ishmaak's tribute carries no unlock test at all, so it is null whatever the state holds.</summary>
     [Fact]
-    public void DominoGreensTributeIsNullWhateverTheStateHolds()
+    public void JuriIshmaaksTributeIsNullWhateverTheStateHolds()
     {
-        var domino = Named("Domino Green");
-        Assert.Null(domino.UnlockTest);
+        var juri = Named("Juri Ishmaak");
+        Assert.Null(juri.UnlockTest);
 
         var withEverything = Evidence(
             ranks: RankState.Empty,
@@ -198,8 +198,8 @@ public class EngineerPrerequisitesAreDecidedFromFoldedEvidenceTests
             contributions: EngineerContributions.Empty,
             sessionStart: DateTimeOffset.UtcNow);
 
-        var criterion = EngineerAccess.CriteriaFor(domino, withEverything)
-            .Single(entry => entry.Text == domino.Unlock);
+        var criterion = EngineerAccess.CriteriaFor(juri, withEverything)
+            .Single(entry => entry.Text == juri.Unlock);
 
         Assert.Null(criterion.Met);
         Assert.Null(criterion.Reading);

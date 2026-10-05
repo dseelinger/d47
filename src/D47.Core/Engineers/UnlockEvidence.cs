@@ -12,7 +12,8 @@ public sealed record UnlockEvidence(
     CareerStatistics? Statistics,
     ReputationState? Reputation,
     EngineerContributions? Contributions,
-    DateTimeOffset? SessionStart)
+    DateTimeOffset? SessionStart,
+    SuitInventory? Suit = null)
 {
     public static UnlockEvidence From(CommanderGameState? state) => new(
         state?.Engineers,
@@ -20,5 +21,6 @@ public sealed record UnlockEvidence(
         state?.Statistics,
         state?.Reputation,
         state?.Contributions,
-        state?.Session.StartedAt);
+        state?.Session.StartedAt,
+        state?.Suit);
 }

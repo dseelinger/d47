@@ -16,9 +16,9 @@ public class StructuredUnlockTestsTests
     }
 
     [Fact]
-    public void TwentyThreeEngineersCarryAnUnlockTest()
+    public void ThirtyTwoEngineersCarryAnUnlockTest()
     {
-        Assert.Equal(23, EngineerDirectory.All.Count(engineer => engineer.UnlockTest is not null));
+        Assert.Equal(32, EngineerDirectory.All.Count(engineer => engineer.UnlockTest is not null));
     }
 
     [Theory]

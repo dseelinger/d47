@@ -415,6 +415,11 @@ public static class EngineerAccess
             return engineer.Unlock is not { Length: > 0 } && engineer.UnlockCost is not { Length: > 0 };
         }
 
+        if (engineer.UnlockTest is UnlockTest.Locker locker)
+        {
+            return (evidence.Suit?.CountOf(locker.Symbol) ?? 0) >= locker.Quantity;
+        }
+
         if (engineer.UnlockTest is not UnlockTest.Contribution { Symbol: { Length: > 0 } symbol } test)
         {
             return false;
@@ -439,6 +444,7 @@ public static class EngineerAccess
         UnlockTest.Reputation reputation => ReputationResult(reputation, evidence),
         UnlockTest.Statistic statistic => StatisticResult(statistic, evidence),
         UnlockTest.Contribution contribution => ContributionResult(contribution, engineer, evidence),
+        UnlockTest.Locker locker => LockerResult(locker, evidence),
         _ => (null, null, null),
     };
 
@@ -490,6 +496,24 @@ public static class EngineerAccess
                 $"Last reported {short_.Value.ToString("N0", CultureInfo.InvariantCulture)}",
                 new UnlockMeasure(short_.Value, test.AtLeast, false)),
         };
+    }
+
+    /// <summary>Never met: carrying the items is not handing them over.</summary>
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) LockerResult(
+        UnlockTest.Locker test, UnlockEvidence evidence)
+    {
+        if (evidence.Suit is null)
+        {
+            return (null, null, null);
+        }
+
+        var carried = Math.Min(evidence.Suit.CountOf(test.Symbol), test.Quantity);
+
+        return (
+            null,
+            $"carrying {carried.ToString(CultureInfo.InvariantCulture)} of "
+            + test.Quantity.ToString(CultureInfo.InvariantCulture),
+            new UnlockMeasure(carried, test.Quantity, false));
     }
 
     private static (bool? Met, string? Reading, UnlockMeasure? Measure) ContributionResult(
