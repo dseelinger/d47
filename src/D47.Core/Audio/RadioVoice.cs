@@ -20,6 +20,13 @@ public static class RadioVoice
     public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength, bool overheard) =>
         IsOverTheAir(role) ? clip => Apply(clip, strength, overheard) : null;
 
+    /// <summary><see cref="Colours(VoiceRole, double, bool)"/> as a running filter factory, null in the same cases.</summary>
+    public static Func<IPcmFilter>? RunningColours(VoiceRole role, double strength, bool overheard) =>
+        IsOverTheAir(role) ? () => Filter(strength, overheard) : null;
+
+    /// <summary>The link as a running filter on <see cref="AudioFormat.Standard"/> PCM.</summary>
+    public static IPcmFilter Filter(double strength, bool overheard) => new Link(AudioFormat.Standard, strength, overheard);
+
     /// <summary>The bottom of the passband.</summary>
     private const double LowEdgeHz = 400;
 
@@ -41,11 +48,26 @@ public static class RadioVoice
     /// <summary>And its top.</summary>
     private const double WeakHighEdgeHz = 2_000;
 
+    /// <summary>The loudness the receiver's automatic gain control brings the voice to, as an RMS of full scale.</summary>
+    internal const double Target = 0.10;
+
     /// <summary>
-    /// The loudness every transmission is brought to, as an RMS of full scale — the receiver's
-    /// automatic gain control, which is the thing a real link has and d47 did not.
+    /// The level the gain control holds its follower at. Above <see cref="Target"/> because the follower tracks the
+    /// louder syllables; set so speech lands on <see cref="Target"/> overall.
     /// </summary>
-    private const double Target = 0.10;
+    private const double Reference = 0.165;
+
+    /// <summary>How fast the gain control follows a voice getting louder.</summary>
+    private static readonly TimeSpan Attack = TimeSpan.FromMilliseconds(10);
+
+    /// <summary>And a voice getting quieter.</summary>
+    private static readonly TimeSpan Release = TimeSpan.FromMilliseconds(300);
+
+    /// <summary>The least gain the gain control applies.</summary>
+    private const double LeastGain = 0.1;
+
+    /// <summary>The most.</summary>
+    private const double MostGain = 4.0;
 
     /// <summary>Butterworth.</summary>
     private const double Q = 0.70710678118654752;
@@ -92,92 +114,182 @@ public static class RadioVoice
     /// <summary>The same speech, heard as traffic further off: a narrower passband and more static.</summary>
     public static AudioClip Apply(AudioClip clip, double strength, bool overheard)
     {
-        var weakness = double.IsNaN(strength) ? 0 : 1 - Math.Clamp(strength, 0, 1);
-        var pcm = clip.Pcm.Span;
-        var samples = pcm.Length / 2;
-
-        if (samples == 0)
+        if (clip.Pcm.Length / 2 == 0)
         {
             return clip;
         }
 
-        var channels = Math.Max(1, clip.Format.Channels);
-        var rate = clip.Format.SampleRate > 0 ? clip.Format.SampleRate : AudioFormat.Standard.SampleRate;
+        var filter = new Link(clip.Format, strength, overheard);
+        var body = filter.Push(clip.Pcm.Span);
+        var tail = filter.Finish();
+        var pcm = new byte[body.Length + tail.Length];
 
-        var nearLow = overheard ? OverheardLowEdgeHz : LowEdgeHz;
-        var nearHigh = overheard ? OverheardHighEdgeHz : HighEdgeHz;
-        var nearHiss = overheard ? OverheardHissUnderVoice : HissUnderVoice;
+        body.CopyTo(pcm, 0);
+        tail.CopyTo(pcm, body.Length);
 
-        var lowEdge = nearLow + (weakness * (Math.Max(nearLow, WeakLowEdgeHz) - nearLow));
-        var highEdge = nearHigh + (weakness * (Math.Min(nearHigh, WeakHighEdgeHz) - nearHigh));
-        var hissUnderVoice = nearHiss + (weakness * (HissOnTheOpenCarrier - nearHiss));
-        var hissOnTheCarrier = HissOnTheOpenCarrier + (weakness * (HissOnAWeakCarrier - HissOnTheOpenCarrier));
+        return clip with { Name = $"{clip.Name} (radio)", Pcm = pcm };
+    }
 
-        // One filter pair per channel, and a second pair for the static.
-        var voiceBand = Band(channels, rate, lowEdge, highEdge);
-        var staticBand = Band(channels, rate, lowEdge, highEdge);
+    /// <summary>Interleaved 16-bit PCM through the link, one sample at a time.</summary>
+    private sealed class Link : IPcmFilter
+    {
+        private readonly int _channels;
+        private readonly int _rate;
+        private readonly double _hissUnderVoice;
+        private readonly double _hissOnTheCarrier;
+        private readonly (Biquad[] High, Biquad[] Low) _voiceBand;
+        private readonly (Biquad[] High, Biquad[] Low) _staticBand;
+        private readonly Dropouts? _dropouts;
+        private readonly double _attack;
+        private readonly double _release;
 
-        var shaped = new double[samples];
+        /// <summary>The shaped voice's mean square over the attack time.</summary>
+        private double _power = Reference * Reference;
 
-        var isSquared = 0.0;
-        var peak = 0.0;
+        /// <summary>The gain control's level: <see cref="_power"/>, followed up at the attack and down at the release.</summary>
+        private double _level = Reference * Reference;
 
-        for (var index = 0; index < samples; index++)
+        private double _voiced = 1;
+        private uint _noise = 0x9E3779B9u;
+        private long _index;
+        private byte[] _held = [];
+        private bool _finished;
+
+        public Link(AudioFormat format, double strength, bool overheard)
         {
-            var channel = index % channels;
-            var sample = (short)(pcm[index * 2] | (pcm[(index * 2) + 1] << 8)) / 32768.0;
+            var weakness = double.IsNaN(strength) ? 0 : 1 - Math.Clamp(strength, 0, 1);
 
-            sample = Math.Tanh(voiceBand.Low[channel].Next(voiceBand.High[channel].Next(sample)) * Drive);
+            _channels = Math.Max(1, format.Channels);
+            _rate = format.SampleRate > 0 ? format.SampleRate : AudioFormat.Standard.SampleRate;
 
-            shaped[index] = sample;
-            isSquared += sample * sample;
-            peak = Math.Max(peak, Math.Abs(sample));
+            var nearLow = overheard ? OverheardLowEdgeHz : LowEdgeHz;
+            var nearHigh = overheard ? OverheardHighEdgeHz : HighEdgeHz;
+            var nearHiss = overheard ? OverheardHissUnderVoice : HissUnderVoice;
+
+            var lowEdge = nearLow + (weakness * (Math.Max(nearLow, WeakLowEdgeHz) - nearLow));
+            var highEdge = nearHigh + (weakness * (Math.Min(nearHigh, WeakHighEdgeHz) - nearHigh));
+
+            _hissUnderVoice = nearHiss + (weakness * (HissOnTheOpenCarrier - nearHiss));
+            _hissOnTheCarrier = HissOnTheOpenCarrier + (weakness * (HissOnAWeakCarrier - HissOnTheOpenCarrier));
+
+            // One filter pair per channel, and a second pair for the static.
+            _voiceBand = Band(_channels, _rate, lowEdge, highEdge);
+            _staticBand = Band(_channels, _rate, lowEdge, highEdge);
+            _dropouts = Dropouts.For(_rate, weakness);
+
+            // The gain control is linked across channels, so it steps once a sample.
+            _attack = 1 - Math.Exp(-1 / (Attack.TotalSeconds * _rate * _channels));
+            _release = 1 - Math.Exp(-1 / (Release.TotalSeconds * _rate * _channels));
         }
 
-        var makeup = Makeup(Math.Sqrt(isSquared / samples), peak);
-        var voiced = Voiced((samples + channels - 1) / channels, rate, weakness);
-
-        // The words, then the carrier still open, then the cut.
-        var tail = (int)(Tail.TotalSeconds * rate) / channels * channels;
-        var total = samples + tail;
-        var fade = Math.Min(total, (int)(Cut.TotalSeconds * rate));
-
-        var treated = new byte[total * 2];
-        var noise = 0x9E3779B9u;
-        var swell = Math.Max(1, (int)(Swell.TotalSeconds * rate));
-
-        for (var index = 0; index < total; index++)
+        public byte[] Push(ReadOnlySpan<byte> pcm)
         {
-            var channel = index % channels;
-
-            noise = (noise * 1664525u) + 1013904223u;
-            var white = ((noise >> 8) / 16777215.0 * 2) - 1;
-
-            // The static goes through a band-pass of its own, so it is the same colour as the voice arriving
-            // beside it.
-            var gain = index < samples ? voiced?[index / channels] ?? 1 : 1;
-
-            var hiss = index < samples
-                ? hissUnderVoice + ((hissOnTheCarrier - hissUnderVoice) * (1 - gain))
-                : hissUnderVoice + ((hissOnTheCarrier - hissUnderVoice)
-                                    * Math.Min(1, (double)(index - samples) / swell));
-
-            var floor = staticBand.Low[channel].Next(staticBand.High[channel].Next(white)) * hiss;
-
-            var sample = (index < samples ? shaped[index] * makeup * gain : 0) + floor;
-
-            if (index >= total - fade)
+            if (_finished)
             {
-                sample *= (double)(total - index) / fade;
+                throw new InvalidOperationException("The link has already been finished.");
             }
 
-            var value = (short)Math.Clamp(Math.Round(sample * 32767.0), short.MinValue, short.MaxValue);
+            var input = pcm;
 
-            treated[index * 2] = (byte)(value & 0xFF);
-            treated[(index * 2) + 1] = (byte)((value >> 8) & 0xFF);
+            if (_held.Length > 0)
+            {
+                var joined = new byte[_held.Length + pcm.Length];
+
+                _held.CopyTo(joined, 0);
+                pcm.CopyTo(joined.AsSpan(_held.Length));
+                input = joined;
+            }
+
+            var whole = input.Length - (input.Length % (2 * _channels));
+            var output = new byte[whole];
+
+            for (var at = 0; at < whole; at += 2)
+            {
+                Write(output, at, Voice((short)(input[at] | (input[at + 1] << 8)) / 32768.0));
+            }
+
+            _held = input[whole..].ToArray();
+            return output;
         }
 
-        return clip with { Name = $"{clip.Name} (radio)", Pcm = treated };
+        public byte[] Finish()
+        {
+            if (_finished)
+            {
+                return [];
+            }
+
+            _finished = true;
+
+            // What is left of a part-frame, then the carrier still open, then the cut.
+            var ragged = _held.Length / 2;
+            var tail = (int)(Tail.TotalSeconds * _rate) / _channels * _channels;
+            var fade = Math.Min(tail, (int)(Cut.TotalSeconds * _rate));
+            var swell = Math.Max(1, (int)(Swell.TotalSeconds * _rate));
+            var output = new byte[(ragged + tail) * 2];
+
+            for (var at = 0; at < ragged * 2; at += 2)
+            {
+                Write(output, at, Voice((short)(_held[at] | (_held[at + 1] << 8)) / 32768.0));
+            }
+
+            for (var index = 0; index < tail; index++)
+            {
+                var hiss = _hissUnderVoice + ((_hissOnTheCarrier - _hissUnderVoice) * Math.Min(1, (double)index / swell));
+                var sample = Static(hiss);
+
+                if (index >= tail - fade)
+                {
+                    sample *= (double)(tail - index) / fade;
+                }
+
+                Write(output, (ragged + index) * 2, sample);
+            }
+
+            return output;
+        }
+
+        /// <summary>One voice sample through the band, the drive, the gain control and any dropout, over the static.</summary>
+        private double Voice(double sample)
+        {
+            var channel = (int)(_index % _channels);
+
+            if (channel == 0 && _dropouts is not null)
+            {
+                _voiced = _dropouts.Next();
+            }
+
+            var shaped = Math.Tanh(_voiceBand.Low[channel].Next(_voiceBand.High[channel].Next(sample)) * Drive);
+            _power += _attack * ((shaped * shaped) - _power);
+            _level += (_power > _level ? _attack : _release) * (_power - _level);
+
+            var gain = _level > 0 ? Math.Clamp(Reference / Math.Sqrt(_level), LeastGain, MostGain) : MostGain;
+            var voice = Math.Clamp(shaped * gain, -1, 1);
+            var hiss = _hissUnderVoice + ((_hissOnTheCarrier - _hissUnderVoice) * (1 - _voiced));
+
+            return (voice * _voiced) + Static(hiss);
+        }
+
+        /// <summary>The next static sample at <paramref name="hiss"/>, through a band-pass of its own so it is the voice's colour.</summary>
+        private double Static(double hiss)
+        {
+            var channel = (int)(_index % _channels);
+
+            _noise = (_noise * 1664525u) + 1013904223u;
+            _index++;
+
+            var white = ((_noise >> 8) / 16777215.0 * 2) - 1;
+
+            return _staticBand.Low[channel].Next(_staticBand.High[channel].Next(white)) * hiss;
+        }
+
+        private static void Write(byte[] pcm, int at, double sample)
+        {
+            var value = (short)Math.Clamp(Math.Round(sample * 32767.0), short.MinValue, short.MaxValue);
+
+            pcm[at] = (byte)(value & 0xFF);
+            pcm[at + 1] = (byte)((value >> 8) & 0xFF);
+        }
     }
 
     /// <summary>A band-pass per channel, between the two edges.</summary>
@@ -196,53 +308,47 @@ public static class RadioVoice
     }
 
     /// <summary>
-    /// The voice's gain per frame, 0 where a weak link has lost it, ramped at each edge; null when nothing is
-    /// lost. Seeded by a constant, so the same clip loses the same stretches.
+    /// The voice's gain frame by frame, 0 where a weak link has lost it, ramped at each edge. Seeded by a constant, so
+    /// the same clip loses the same stretches.
     /// </summary>
-    private static double[]? Voiced(int frames, int rate, double weakness)
+    private sealed class Dropouts
     {
-        var chance = weakness * DropoutChance;
+        private readonly double _chance;
+        private readonly int _stretch;
+        private readonly double _step;
+        private uint _state = 0x2545F491u;
+        private double _gain = 1;
+        private bool _lost;
+        private long _frame;
 
-        if (chance <= 0 || frames == 0)
+        private Dropouts(int rate, double chance)
         {
-            return null;
+            _chance = chance;
+            _stretch = Math.Max(1, (int)(Dropout.TotalSeconds * rate));
+            _step = 1.0 / Math.Max(1, (int)(DropoutEdge.TotalSeconds * rate));
         }
 
-        var stretch = Math.Max(1, (int)(Dropout.TotalSeconds * rate));
-        var step = 1.0 / Math.Max(1, (int)(DropoutEdge.TotalSeconds * rate));
-        var gains = new double[frames];
-        var state = 0x2545F491u;
-        var gain = 1.0;
-        var lost = false;
-
-        for (var frame = 0; frame < frames; frame++)
+        /// <summary>Null when nothing is lost.</summary>
+        public static Dropouts? For(int rate, double weakness)
         {
-            if (frame % stretch == 0)
+            var chance = weakness * DropoutChance;
+
+            return chance > 0 ? new Dropouts(rate, chance) : null;
+        }
+
+        public double Next()
+        {
+            if (_frame++ % _stretch == 0)
             {
-                state ^= state << 13;
-                state ^= state >> 17;
-                state ^= state << 5;
-                lost = state / (double)uint.MaxValue < chance;
+                _state ^= _state << 13;
+                _state ^= _state >> 17;
+                _state ^= _state << 5;
+                _lost = _state / (double)uint.MaxValue < _chance;
             }
 
-            gain = lost ? Math.Max(0, gain - step) : Math.Min(1, gain + step);
-            gains[frame] = gain;
+            _gain = _lost ? Math.Max(0, _gain - _step) : Math.Min(1, _gain + _step);
+            return _gain;
         }
-
-        return gains;
-    }
-
-    /// <summary>The gain that brings the treated line to <see cref="Target"/> — the receiver's AGC.</summary>
-    private static double Makeup(double now, double peak)
-    {
-        if (now <= 0)
-        {
-            return 1;
-        }
-
-        var gain = Math.Clamp(Target / now, 0.1, 4.0);
-
-        return peak * gain > 1 ? 1 / peak : gain;
     }
 
     /// <summary>One second-order section, direct form 1, with the usual cookbook coefficients.</summary>

@@ -110,6 +110,16 @@ public static class CastVoice
         return Treatment(pinned.Link, pinned.Effects);
     }
 
+    /// <summary>The treatment as a running filter factory, for a link with no effects; otherwise null.</summary>
+    public static Func<IPcmFilter>? Running(PinnedVoice pinned)
+    {
+        ArgumentNullException.ThrowIfNull(pinned);
+
+        return pinned.Link is { } strength && pinned.Effects is not { Count: > 0 }
+            ? () => RadioVoice.Filter(strength, overheard: false)
+            : null;
+    }
+
     private static Func<AudioClip, AudioClip>? Treatment(double? link, IReadOnlyList<StorySpeakerEffect>? listed)
     {
         var effects = (listed ?? [])

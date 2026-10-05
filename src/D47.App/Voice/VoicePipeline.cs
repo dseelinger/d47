@@ -154,7 +154,7 @@ public sealed class VoicePipeline(
                                 captionSpeaker: CaptionSpeaker,
                                 address: _address,
                                 guardianTreated: IsGuardianTreated(role, colour),
-                                running: Running(role, colour));
+                                running: Running(role, colour, signal));
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -236,7 +236,10 @@ public sealed class VoicePipeline(
             return null;
         }
 
-        return await SpeakAsync(provider, text, channel, voice, group, colour ?? Colour(role, overheard: overheard), speaker, captioned, captionSpeaker, role, pinned: false)
+        var applied = colour ?? Colour(role, overheard: overheard);
+        var running = colour is null ? Running(role, applied, overheard: overheard) : null;
+
+        return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false)
             .ConfigureAwait(false);
     }
 
@@ -284,6 +287,7 @@ public sealed class VoicePipeline(
         VoiceSelection? voice,
         string group,
         Func<AudioClip, AudioClip>? applied,
+        Func<IPcmFilter>? running,
         string? speaker,
         bool captioned,
         string? captionSpeaker,
@@ -308,7 +312,7 @@ public sealed class VoicePipeline(
             _address,
             IsGuardianTreated(role, applied),
             keep: true,
-            running: pinned ? null : Running(role, applied));
+            running: running);
 
         if (!pinned)
         {
@@ -374,6 +378,7 @@ public sealed class VoicePipeline(
                     new VoiceSelection(pinned.VoiceId),
                     announcement.Group,
                     D47.Core.Stories.CastVoice.Treatment(pinned),
+                    D47.Core.Stories.CastVoice.Running(pinned),
                     announcement.Speaker is { Length: > 0 } member ? member : announcement.Voice.ToString(),
                     announcement.Transcript is null,
                     announcement.Speaker,
@@ -475,9 +480,13 @@ public sealed class VoicePipeline(
     private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1, bool overheard = false) =>
         RadioVoice.Colours(role, signal, overheard) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
 
-    /// <summary><see cref="GuardianRunning"/> where the resolved colour is the ship AI's own treatment; otherwise null.</summary>
-    private Func<IPcmFilter>? Running(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>
-        role == VoiceRole.ShipAi && colour is not null && colour == GuardianColour ? GuardianRunning : null;
+    /// <summary>
+    /// <see cref="Colour"/> as a running filter: the radio link for an over-the-air role, and
+    /// <see cref="GuardianRunning"/> where the resolved colour is the ship AI's own treatment; otherwise null.
+    /// </summary>
+    private Func<IPcmFilter>? Running(VoiceRole role, Func<AudioClip, AudioClip>? colour, double signal = 1, bool overheard = false) =>
+        RadioVoice.RunningColours(role, signal, overheard)
+        ?? (role == VoiceRole.ShipAi && colour is not null && colour == GuardianColour ? GuardianRunning : null);
 
     /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
     private static bool IsGuardianTreated(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>

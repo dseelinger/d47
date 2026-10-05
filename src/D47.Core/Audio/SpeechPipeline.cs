@@ -61,7 +61,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
     /// <summary>
     /// Makes a fresh filter for each clip, which then plays while it arrives in place of <see cref="_colour"/>;
-    /// or null.
+    /// or null. Over a whole clip it must give the same bytes as <see cref="_colour"/>.
     /// </summary>
     private readonly Func<IPcmFilter>? _running;
 
@@ -347,7 +347,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
     /// <summary>
     /// A clip still arriving is queued as it arrives, through a fresh running filter where there is one, or as it is
-    /// when uncoloured. Anything else is awaited whole and treated.
+    /// when uncoloured. Anything else is awaited whole and coloured, which gives the bytes the filter would.
     /// </summary>
     private async Task<Spoken> ArrivedAsync(
         string sentence,
@@ -356,27 +356,16 @@ public sealed class SpeechPipeline : IAsyncDisposable
         ArrivingClip arriving,
         long started)
     {
-        var treated = _running is null ? null : arriving.Through(_running());
-
-        if ((treated is not null || _colour is null) && !arriving.IsComplete)
+        if ((_running is not null || _colour is null) && !arriving.IsComplete)
         {
             _ = NoteWhenWholeAsync(sentence, spoken, arriving, started);
-            return new Spoken(sentence, directed, Clip: null, treated ?? arriving);
+            return new Spoken(sentence, directed, Clip: null, _running is null ? arriving : arriving.Through(_running()));
         }
 
         var clip = await arriving.Whole.ConfigureAwait(false);
         Note(sentence, spoken, arriving, started);
 
-        if (treated is not null)
-        {
-            clip = await treated.Whole.ConfigureAwait(false);
-        }
-        else if (_colour is not null)
-        {
-            clip = _colour(clip);
-        }
-
-        return new Spoken(sentence, directed, clip, Arriving: null);
+        return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip), Arriving: null);
     }
 
     /// <summary>Notes an arriving clip once it is whole; one that fails part-way counts as a failure.</summary>

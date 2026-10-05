@@ -11,10 +11,10 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The stock COVAS reverb runs as a filter, so the ship AI is queued while it arrives; the radio, the Guardian
-/// effects and a story cast member's treatment are still queued whole.
+/// The stock COVAS reverb and the radio link run as filters, so the ship AI and a voice over the air are queued while
+/// they arrive; the Guardian effects, on the ship AI or on a story cast member, are still queued whole.
 /// </summary>
-public sealed class OnlyTheCovasVoicePlaysWhileItArrivesTests
+public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
 {
     private static readonly SpeechSettings CylonTicked = new()
     {
@@ -64,13 +64,45 @@ public sealed class OnlyTheCovasVoicePlaysWhileItArrivesTests
     }
 
     [Fact]
-    public async Task AnOverTheAirRoleIsQueuedWhole()
+    public async Task AnOverTheAirRoleIsQueuedWhileItArrives()
     {
         var (voice, played) = Build(PersonaCatalog.Covas, new SpeechSettings());
 
         await voice.AnnounceAsync(new Announcement("line.comms", "Scanning.") { Voice = VoiceRole.Comms });
 
-        Assert.NotNull(Assert.Single(played).Clip);
+        Assert.NotNull(Assert.Single(played).Arriving);
+    }
+
+    [Fact]
+    public async Task AnOverTheAirRoleIsQueuedBeforeItsSourceClipCompletes()
+    {
+        var (voice, played) = Build(PersonaCatalog.Covas, new SpeechSettings());
+        var held = new HeldOpen();
+        voice.Tts = held;
+
+        var announced = voice.AnnounceAsync(new Announcement("line.comms", "Scanning.") { Voice = VoiceRole.Comms });
+
+        for (var waited = 0; played.Count == 0 && waited < 5_000; waited += 10)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        Assert.NotNull(Assert.Single(played).Arriving);
+        Assert.False(held.Source!.IsComplete);
+
+        held.Source.Complete();
+        await announced;
+    }
+
+    [Fact]
+    public async Task AnOverTheAirReplyIsQueuedWhileItArrives()
+    {
+        var (voice, played) = Build(PersonaCatalog.Covas, new SpeechSettings());
+        voice.SpeakingAs = VoiceRole.Comms;
+
+        await voice.RunAsync(Reply("Docking granted."), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.NotNull(Assert.Single(played).Arriving);
     }
 
     [Fact]
@@ -84,7 +116,7 @@ public sealed class OnlyTheCovasVoicePlaysWhileItArrivesTests
     }
 
     [Fact]
-    public async Task AStoryCastMemberWithATreatmentIsQueuedWhole()
+    public async Task AStoryCastMemberOnALinkIsQueuedWhileItArrives()
     {
         var (voice, played) = Build(PersonaCatalog.Covas, new SpeechSettings());
 
@@ -93,6 +125,21 @@ public sealed class OnlyTheCovasVoicePlaysWhileItArrivesTests
             Voice = VoiceRole.ShipAi,
             Speaker = "Harrow",
             Pinned = new PinnedVoice(StorySpeaker.Kokoro, "bm_george") { Link = 1 },
+        });
+
+        Assert.NotNull(Assert.Single(played).Arriving);
+    }
+
+    [Fact]
+    public async Task AStoryCastMemberWithEffectsIsQueuedWhole()
+    {
+        var (voice, played) = Build(PersonaCatalog.Covas, new SpeechSettings());
+
+        await voice.AnnounceAsync(new Announcement("story.clue.the-test-story.0", "Harrow here.")
+        {
+            Voice = VoiceRole.ShipAi,
+            Speaker = "Harrow",
+            Pinned = new PinnedVoice(StorySpeaker.Kokoro, "bm_george") { Link = 1, Effects = [new StorySpeakerEffect("cylon", 1)] },
         });
 
         Assert.NotNull(Assert.Single(played).Clip);
@@ -143,6 +190,30 @@ public sealed class OnlyTheCovasVoicePlaysWhileItArrivesTests
             }
 
             return pcm;
+        }
+    }
+
+    /// <summary>A streaming provider whose clip stays open until the test completes it.</summary>
+    private sealed class HeldOpen : ITtsProvider
+    {
+        public ArrivingClip? Source { get; private set; }
+
+        public string Id => "held-open";
+
+        public string Name => "Held open";
+
+        public Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(VoiceCatalogue.Of([]));
+
+        public Task<AudioClip> SynthesizeAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<ArrivingClip> StreamAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default)
+        {
+            Source = new ArrivingClip(text);
+            Source.Append(new byte[9_600]);
+
+            return Task.FromResult(Source);
         }
     }
 

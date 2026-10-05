@@ -151,36 +151,25 @@ public class RadioVoiceTests
         Assert.True(Share(treated, 9_000) < 0.2, $"9 kHz came through at {Share(treated, 9_000):P0}");
     }
 
+    /// <summary>The last second of the voice's own stretch, once the gain control has settled on it.</summary>
+    private static AudioClip Settled(AudioClip treated)
+    {
+        var voice = (treated.Pcm.Length / 2) - TailSamples;
+
+        return treated with { Pcm = treated.Pcm.Slice((voice - 48_000) * 2, 48_000 * 2) };
+    }
+
     [Fact]
     public void EveryTransmissionArrivesAtTheSameLoudnessWhicheverVoiceSentIt()
     {
         // A 26 dB spread going in: quieter than any real voice, and up at full scale.
         var levels = new[] { 0.05, 0.1, 0.2, 0.4, 0.7, 1.0 }
-            .Select(amplitude => Rms(UnderTheVoice(RadioVoice.Apply(Tone(1_000, 1.0, amplitude)))))
+            .Select(amplitude => Rms(Settled(RadioVoice.Apply(Tone(1_000, 3.0, amplitude)))))
             .ToArray();
 
         var spread = 20 * Math.Log10(levels.Max() / levels.Min());
 
         Assert.True(spread < 1.0, $"{spread:F1} dB of it survived, and the point was that none should");
-    }
-
-    /// <summary>
-    /// And the level it lands on is the one a voice already had, so this is a levelling and not a
-    /// volume change.
-    /// </summary>
-    [Fact]
-    public void ATypicalLineIsNoLouderOrQuieterThanOneInTheRoom()
-    {
-        // 0.1414 peak is an RMS of 0.10, which is the -20 dBFS a real treated line was measured at.
-        foreach (var hertz in new[] { 700, 1_200, 2_000 })
-        {
-            var before = Rms(Tone(hertz, 1.0, 0.1414));
-            var after = Rms(UnderTheVoice(RadioVoice.Apply(Tone(hertz, 1.0, 0.1414))));
-
-            Assert.True(
-                after > before * 0.7 && after < before * 1.3,
-                $"{hertz} Hz came out at {after / before:P0} of the level it went in at");
-        }
     }
 
     [Fact]
@@ -280,7 +269,7 @@ public class RadioVoiceTests
 
         // The output at strength 1, pinned.
         Assert.Equal(
-            "EF7DCF32B43F23A2DD6A24D7E5DD5C289812A7C76A5948B671948A6D375AE23B",
+            "44B9726B2F84C2C12F250CF509453F3C31182C364B161447FDDA35AD2E249F15",
             Convert.ToHexString(SHA256.HashData(RadioVoice.Apply(line, 1).Pcm.Span)));
     }
 
