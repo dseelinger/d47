@@ -1214,7 +1214,7 @@ public sealed class AppHost : IDisposable
             }
 
             // Kept for the Journal page to read (#51).
-            journalLog.Add(events);
+            journalLog.Add(events, journal.Receipts);
             status.Poll();
             route.Poll();
 

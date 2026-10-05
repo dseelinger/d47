@@ -31,6 +31,9 @@ public sealed class JournalSpine(
     /// <summary>The currently-tailed file, or null if none has been found yet.</summary>
     public string? CurrentFile => _reader?.Path;
 
+    /// <summary>What each event of the last poll changed, one per event and in the same order.</summary>
+    public IReadOnlyList<FoldReceipt> Receipts { get; private set; } = [];
+
     /// <summary><param name="priming"> Whether this poll is the startup replay.</summary>
     /// <param name="priming">Whether this poll is the startup replay.</param>
     public IReadOnlyList<JournalEvent> Poll(bool priming = false)
@@ -39,6 +42,7 @@ public sealed class JournalSpine(
 
         if (latest is null)
         {
+            Receipts = [];
             return [];
         }
 
@@ -52,10 +56,7 @@ public sealed class JournalSpine(
 
         var events = _reader.Poll();
 
-        foreach (var journalEvent in events)
-        {
-            gameState.Apply(journalEvent, FixFor(journalEvent), priming);
-        }
+        Receipts = [.. events.Select(journalEvent => gameState.Apply(journalEvent, FixFor(journalEvent), priming))];
 
         // After the events, so the Commander whose locker this is has been established by them on the very
         // first poll.

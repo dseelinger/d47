@@ -19,6 +19,9 @@ public sealed record JournalEntry(
 
     /// <summary>The event's own <c>StarSystem</c> field, or null when it has none.</summary>
     public string? StarSystem { get; init; }
+
+    /// <summary>What the event changed in d47's state, or null where no state was folded.</summary>
+    public string? Receipt { get; init; }
 }
 
 /// <summary>
@@ -41,11 +44,14 @@ public sealed class JournalLog(int keep = 4000)
     public int Count => _entries.Count;
 
     /// <summary>Takes a poll's worth of events.</summary>
-    public void Add(IReadOnlyList<JournalEvent> events)
+    public void Add(IReadOnlyList<JournalEvent> events) => Add(events, []);
+
+    /// <summary>Takes a poll's worth of events with the receipt of each, matched by position.</summary>
+    public void Add(IReadOnlyList<JournalEvent> events, IReadOnlyList<FoldReceipt> receipts)
     {
-        foreach (var journalEvent in events)
+        for (var i = 0; i < events.Count; i++)
         {
-            _entries.Enqueue(Entry(journalEvent));
+            _entries.Enqueue(Entry(events[i]) with { Receipt = i < receipts.Count ? receipts[i].Said : null });
 
             while (_entries.Count > _keep)
             {

@@ -103,11 +103,94 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What is in the cargo hold (Phase 18).</summary>
     public CargoHold Hold { get; internal set; } = CargoHold.Empty;
 
-    public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
+    public FoldReceipt Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
-    /// <summary><param name="at">Where the Commander was standing, where that is known.</summary>
+    /// <summary>Folds one event in, and says which parts of the state it changed.</summary>
     /// <param name="at">Where the Commander was standing, where that is known.</param>
-    public void Apply(JournalEvent journalEvent, SurfaceFix? at)
+    public FoldReceipt Apply(JournalEvent journalEvent, SurfaceFix? at)
+    {
+        var before = Parts.Select(part => part.Read(this)).ToArray();
+
+        Fold(journalEvent, at);
+
+        var changes = new List<FoldChange>();
+
+        for (var i = 0; i < Parts.Length; i++)
+        {
+            if (Changed(Parts[i], before[i], Parts[i].Read(this)) is { } change)
+            {
+                changes.Add(change);
+            }
+        }
+
+        return changes.Count == 0 ? FoldReceipt.Nothing : new FoldReceipt(changes);
+    }
+
+    /// <summary>The phrase a receipt uses for this part, or null for a name that is not a folded part.</summary>
+    public static string? PhraseFor(string part) =>
+        Parts.FirstOrDefault(each => each.Name == part)?.Phrase;
+
+    /// <summary>A part of the state an event can replace, in the order <see cref="Fold"/> applies them.</summary>
+    private sealed record Part(string Name, string Phrase, Func<CommanderGameState, object> Read);
+
+    private static readonly Part[] Parts =
+    [
+        new(nameof(Identity), "your Commander name", state => state.Identity),
+        new(nameof(Location), "your location", state => state.Location),
+        new(nameof(Ship), "your ship", state => state.Ship),
+        new(nameof(Loadouts), "your remembered ships", state => state.Loadouts),
+        new(nameof(OnFoot), "your on-foot loadout", state => state.OnFoot),
+        new(nameof(Kit), "your suits and weapons", state => state.Kit),
+        new(nameof(Carrier), "your carrier", state => state.Carrier),
+        new(nameof(SquadronCarrier), "your squadron's carrier", state => state.SquadronCarrier),
+        new(nameof(Squadron), "your squadron", state => state.Squadron),
+        new(nameof(Fleet), "your stored ships", state => state.Fleet),
+        new(nameof(Modules), "your stored modules", state => state.Modules),
+        new(nameof(Names), "the place names d47 listens for", state => state.Names),
+        new(nameof(Materials), "your materials", state => state.Materials),
+        new(nameof(Engineers), "your engineer progress", state => state.Engineers),
+        new(nameof(Ranks), "your ranks", state => state.Ranks),
+        new(nameof(Statistics), "your career statistics", state => state.Statistics),
+        new(nameof(Reputation), "your reputation", state => state.Reputation),
+        new(nameof(Standings), "system factions and conflicts", state => state.Standings),
+        new(nameof(Contributions), "your engineer contributions", state => state.Contributions),
+        new(nameof(CommunityGoals), "community goals", state => state.CommunityGoals),
+        new(nameof(Missions), "your missions", state => state.Missions),
+        new(nameof(Pledge), "your Powerplay pledge", state => state.Pledge),
+        new(nameof(Bodies), "body signals", state => state.Bodies),
+        new(nameof(Scans), "body scans", state => state.Scans),
+        new(nameof(Sampling), "your organic samples", state => state.Sampling),
+        new(nameof(Session), "this session's totals", state => state.Session),
+        new(nameof(Colonisation), "construction sites", state => state.Colonisation),
+        new(nameof(Crew), "your crew", state => state.Crew),
+    ];
+
+    /// <summary>How a receipt names this part's change, or null when it did not change.</summary>
+    private static FoldChange? Changed(Part part, object was, object now) => (was, now) switch
+    {
+        _ when Equals(was, now) => null,
+
+        // Every event moves LastEventAt, so only the rest of the session counts.
+        (SessionSummary a, SessionSummary b) when a with { LastEventAt = b.LastEventAt } == b => null,
+
+        (CarrierState { CallSign: null }, CarrierState { CallSign: not null }) when part.Name == nameof(Carrier) =>
+            new FoldChange(part.Name, "your carrier's callsign", "learned here"),
+
+        (_, JournalLocation location) => new FoldChange(part.Name, part.Phrase, Where(location)),
+
+        _ => new FoldChange(part.Name, part.Phrase),
+    };
+
+    /// <summary>The system, then the station or body, or null when none is known.</summary>
+    private static string? Where(JournalLocation location)
+    {
+        string?[] named = [location.StarSystem, location.StationName ?? location.Body];
+        var said = string.Join(" · ", named.Where(name => name is { Length: > 0 }));
+
+        return said.Length > 0 ? said : null;
+    }
+
+    private void Fold(JournalEvent journalEvent, SurfaceFix? at)
     {
         if (journalEvent.Kind == "NewCommander")
         {

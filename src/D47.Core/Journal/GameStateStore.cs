@@ -153,22 +153,22 @@ public sealed class GameStateStore
         }
     }
 
-    public void Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
+    public FoldReceipt Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
-    public void Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);
+    public FoldReceipt Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);
 
-    /// <summary>Folds one event in, and says so when it moved the Commander to another system.</summary>
+    /// <summary>Folds one event in, says so when it moved the Commander to another system, and returns what it changed.</summary>
     /// <param name="at">
     /// Where the Commander was standing when this event landed, from <c>Status.json</c>.
     /// </param>
     /// <param name="priming">
     /// Whether this event is part of the startup replay rather than something that just happened.
     /// </param>
-    public void Apply(JournalEvent journalEvent, SurfaceFix? at, bool priming)
+    public FoldReceipt Apply(JournalEvent journalEvent, SurfaceFix? at, bool priming)
     {
         var was = Active?.Location.StarSystem;
 
-        Fold(journalEvent, at, priming);
+        var receipt = Fold(journalEvent, at, priming);
 
         // Read off the value rather than off a list of event kinds: Location, FSDJump, CarrierJump and a
         // Docked that names a system all fold into StarSystem, and an event that leaves it where it was —
@@ -177,15 +177,16 @@ public sealed class GameStateStore
         {
             SystemChanged?.Invoke();
         }
+
+        return receipt;
     }
 
-    private void Fold(JournalEvent journalEvent, SurfaceFix? at, bool priming)
+    private FoldReceipt Fold(JournalEvent journalEvent, SurfaceFix? at, bool priming)
     {
         // Goes to the Commander the event names, which is not necessarily the active one.
         if (journalEvent.Kind == "NewCommander" && journalEvent.String("FID") is { } created)
         {
-            Admit(new CommanderIdentity(created, journalEvent.String("Name") ?? created)).Apply(journalEvent);
-            return;
+            return Admit(new CommanderIdentity(created, journalEvent.String("Name") ?? created)).Apply(journalEvent);
         }
 
         if (CommanderIdentity.From(journalEvent) is { } identity)
@@ -202,12 +203,11 @@ public sealed class GameStateStore
                 CommanderChanged?.Invoke(new CommanderSwitch(previous, identity, priming));
             }
 
-            state.Apply(journalEvent, at);
-            return;
+            return state.Apply(journalEvent, at);
         }
 
         // Every other event belongs to whoever is currently active.
-        Active?.Apply(journalEvent, at);
+        return Active?.Apply(journalEvent, at) ?? FoldReceipt.Nothing;
     }
 
     /// <summary>The state held for this Commander, created and restored first if they are not yet known.</summary>
