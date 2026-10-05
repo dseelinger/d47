@@ -12,7 +12,7 @@ public sealed class TurnPresenter(PanelViewModel model)
 {
     private readonly int _start = model.RunCount;
 
-    /// <summary>The speaker the reply is drawn under, once Addressed names someone other than D47.</summary>
+    /// <summary>The speaker the reply is drawn under, once Addressed names someone other than the ship's AI.</summary>
     private string? _speaker;
 
     public void On(TurnEvent turnEvent)

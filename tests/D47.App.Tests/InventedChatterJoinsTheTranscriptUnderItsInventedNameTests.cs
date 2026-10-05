@@ -31,7 +31,7 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
         var hail = Line(NpcChatterKind.Hail, 3);
 
         Assert.True(hail.Invented!.Answerable);
-        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(hail));
+        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(hail, "COVAS"));
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
         var controller = Line(NpcChatterKind.Controller, 3);
 
         Assert.False(controller.Invented!.Answerable);
-        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(controller));
+        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(controller, "COVAS"));
     }
 
     [Fact]

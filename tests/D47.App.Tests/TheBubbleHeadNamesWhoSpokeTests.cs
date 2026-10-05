@@ -61,15 +61,15 @@ public class TheBubbleHeadNamesWhoSpokeTests
 
     /// <summary>A line with no callout behind it carries no tag — the head has nothing to name.</summary>
     [AvaloniaFact]
-    public void APlainShipLineNamesD47AndCarriesNoTag()
+    public void APlainShipLineNamesTheShipsAiAndCarriesNoTag()
     {
-        var model = new PanelViewModel();
+        var model = new PanelViewModel { ShipNameSource = () => "COVAS" };
         model.Append("Standing by, Commander.");
 
         var head = Head(Turns(Laid(model))[0]);
 
         Assert.Equal(2, head.Count);
-        Assert.Equal("D47", Said(head[0]));
+        Assert.Equal("COVAS", Said(head[0]));
     }
 
     [AvaloniaFact]

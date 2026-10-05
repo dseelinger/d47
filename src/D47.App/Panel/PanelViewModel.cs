@@ -425,8 +425,14 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         ? "What can you do?"
         : "What can you do? — try \"where am I\" or \"what's your status\"";
 
+    /// <summary>Supplies the name the ship's AI goes by; read when a turn is written, so earlier turns keep theirs.</summary>
+    public Func<string>? ShipNameSource { get; set; }
+
+    /// <summary>The name the ship's AI is shown under.</summary>
+    public string ShipName => ShipNameSource?.Invoke() is { Length: > 0 } name ? name : "D47";
+
     /// <summary>
-    /// Adds to the transcript. <paramref name="speaker"/> falls back to CMDR or D47 by
+    /// Adds to the transcript. <paramref name="speaker"/> falls back to CMDR or the ship's name by
     /// <paramref name="voice"/> — everything that does not name its own speaker is one of those two.
     /// </summary>
     public void Append(
@@ -437,7 +443,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         string? sourceKey = null,
         DateTimeOffset? time = null)
     {
-        var named = speaker ?? (voice == TranscriptVoice.Commander ? "CMDR" : "D47");
+        var named = speaker ?? (voice == TranscriptVoice.Commander ? "CMDR" : ShipName);
         var at = time ?? DateTimeOffset.Now;
         string transcript;
 
@@ -475,7 +481,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         lock (_appendLock)
         {
-            _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, "D47", null, DateTimeOffset.Now, new StringBuilder(text))
+            _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, ShipName, null, DateTimeOffset.Now, new StringBuilder(text))
             {
                 Kind = TranscriptRunKind.Error,
             });
@@ -498,7 +504,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         lock (_appendLock)
         {
-            _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, "D47", "proposal", DateTimeOffset.Now, new StringBuilder(summary))
+            _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, ShipName, "proposal", DateTimeOffset.Now, new StringBuilder(summary))
             {
                 Kind = TranscriptRunKind.Proposal,
                 ProposalId = proposalId,

@@ -41,7 +41,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
             Voice = VoiceRole.TowerControl,
         };
 
-        Assert.Equal("Tower", AppHost.ConversationSpeaker(announcement));
+        Assert.Equal("Tower", AppHost.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
             CommsChannel = "npc",
         };
 
-        Assert.Equal("Ilse Bruhn", AppHost.ConversationSpeaker(announcement));
+        Assert.Equal("Ilse Bruhn", AppHost.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
             CommsChannel = "player",
         };
 
-        Assert.Equal("Vex", AppHost.ConversationSpeaker(announcement));
+        Assert.Equal("Vex", AppHost.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
@@ -76,13 +76,14 @@ public class EverySpokenLineJoinsTheTranscriptTests
     {
         var announcement = new Announcement("story.end.x", "The beacon went dark.") { Voice = VoiceRole.Narrator };
 
-        Assert.Equal("Narrator", AppHost.ConversationSpeaker(announcement));
+        Assert.Equal("Narrator", AppHost.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
-    public void AnOrdinaryCalloutWithNoSpeakerIsNamedD47()
+    public void AnOrdinaryCalloutWithNoSpeakerIsNamedForTheShipsAi()
     {
-        Assert.Equal("D47", AppHost.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised.")));
+        Assert.Equal("COVAS", AppHost.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised."), "COVAS"));
+        Assert.Equal("Vesper", AppHost.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised."), "Vesper"));
     }
 
     [Fact]

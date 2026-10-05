@@ -3472,10 +3472,10 @@ public partial class PanelView : UserControl
         // Commander's turn are that page's way of saying who spoke, and this one says it with a side and a
         // colour instead.
         var messages = bubbled
-            ? Turns(Drawn(_bound.Segments(Page, framed: false), Page))
+            ? Turns(Drawn(_bound.Segments(Page, framed: false), Page, _bound.ShipName))
             : [new DrawnTurn(
-                TranscriptVoice.Ship, Marker: false, Drawn(_bound.Segments(Page), Page),
-                Speaker: "D47", SourceKey: null, Time: default)];
+                TranscriptVoice.Ship, Marker: false, Drawn(_bound.Segments(Page), Page, _bound.ShipName),
+                Speaker: _bound.ShipName, SourceKey: null, Time: default)];
 
         // Matched against the page's text rather than against the controls, so the hits are the same set
         // whether the page has been drawn yet or not — and so the current one can be re-resolved from its
@@ -4021,20 +4021,21 @@ public partial class PanelView : UserControl
     /// </summary>
     private static IReadOnlyList<DrawnSegment> Drawn(
         IReadOnlyList<TranscriptSegment> segments,
-        TranscriptPage page) =>
+        TranscriptPage page,
+        string shipName) =>
         // Raw Journal joins the log here, and it is the more important of the two: a journal carries other
         // players' text verbatim, and JSON is full of asterisks and underscores.
         page is TranscriptPage.Log or TranscriptPage.RawJournal
             ? [.. segments.Select(segment => new DrawnSegment(
                 segment.Text, segment.Marker, segment.Voice, MarkupStyle.None,
-                segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId))]
-            : [.. segments.SelectMany(segment => Spans(segment, page))];
+                segment.Speaker ?? shipName, segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId))]
+            : [.. segments.SelectMany(segment => Spans(segment, page, shipName))];
 
     /// <summary>
     /// One segment's markup spans. On the conversation, delivery direction such as <c>[calm]</c> is taken out
     /// of the drawn text and carried on the span for the turn's head; the text sent to speech is not this text.
     /// </summary>
-    private static IEnumerable<DrawnSegment> Spans(TranscriptSegment segment, TranscriptPage page)
+    private static IEnumerable<DrawnSegment> Spans(TranscriptSegment segment, TranscriptPage page, string shipName)
     {
         var direction = page == TranscriptPage.Conversation && !segment.Marker
             ? D47.Core.Audio.AudioTags.In(segment.Text)
@@ -4051,7 +4052,7 @@ public partial class PanelView : UserControl
 
             yield return new DrawnSegment(
                 text, segment.Marker, segment.Voice, span.Style,
-                segment.Speaker ?? "D47", segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
+                segment.Speaker ?? shipName, segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
                 direction, segment.Provenance);
         }
     }
@@ -4490,7 +4491,7 @@ public partial class PanelView : UserControl
         }
 
         // Drawn rather than written, for the reason above: the same text the Commander is looking at.
-        var text = string.Concat(Drawn(_bound.Segments(Page), Page).Select(segment => segment.Text));
+        var text = string.Concat(Drawn(_bound.Segments(Page), Page, _bound.ShipName).Select(segment => segment.Text));
 
         bool worked;
 

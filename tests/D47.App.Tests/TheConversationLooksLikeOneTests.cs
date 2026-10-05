@@ -23,7 +23,7 @@ public class TheConversationLooksLikeOneTests
     /// <summary>An exchange with both speakers in it, and the panel's own note about the core.</summary>
     private static PanelViewModel Exchange()
     {
-        var model = new PanelViewModel();
+        var model = new PanelViewModel { ShipNameSource = () => "COVAS" };
 
         model.Append("Standing by, Commander.");
         model.Mark("Switched to Sentinel");
@@ -98,7 +98,7 @@ public class TheConversationLooksLikeOneTests
         var panel = Laid(new PanelView { DataContext = Exchange() }, window);
         var messages = Messages(panel);
 
-        Assert.Equal("D47", Name(messages[0]).Text);
+        Assert.Equal("COVAS", Name(messages[0]).Text);
         Assert.Equal(Resource(window, ThemeManager.AKey), Colour(Name(messages[0]).Foreground));
 
         Assert.Equal("CMDR", Name(messages[1]).Text);

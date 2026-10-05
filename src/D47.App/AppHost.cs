@@ -105,6 +105,7 @@ public sealed class AppHost : IDisposable
         Installer = installer;
         Turns = turns;
         Personas = personas;
+        Panel.ShipNameSource = () => personas.ShipName;
         ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
@@ -6181,7 +6182,7 @@ public sealed class AppHost : IDisposable
         var clip = await Voice.AnnounceAsync(announcement, voice).ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Text, ConversationSpeaker(written), written.Key);
+        CalloutSaid?.Invoke(written.Text, ConversationSpeaker(written, Personas.ShipName), written.Key);
         return clip;
     }
 
@@ -7069,10 +7070,10 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>The chip the Conversation page names this speaker with.</summary>
-    internal static string ConversationSpeaker(Announcement announcement) =>
+    internal static string ConversationSpeaker(Announcement announcement, string shipName) =>
         announcement.Speaker is { Length: > 0 } speaker
             ? announcement.Invented is null ? speaker : NpcChatter.Invented(speaker)
-            : VoiceRoles.Called(announcement.Voice) ?? "D47";
+            : VoiceRoles.Called(announcement.Voice) ?? shipName;
 
     private void SpeakPendingCallouts()
     {
