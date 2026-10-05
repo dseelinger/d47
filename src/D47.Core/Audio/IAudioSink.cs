@@ -12,16 +12,25 @@ public interface IRenderReferenceTap
     event Action<RenderReferenceFrame>? Rendered;
 }
 
-/// <summary>One thing for the sink to render: a clip held in memory, or a track streamed from disk.</summary>
+/// <summary>
+/// One thing for the sink to render: a clip held in memory, a track streamed from disk, or a clip still
+/// arriving.
+/// </summary>
 public sealed record PlaybackRequest(long Id, AudioClip? Clip, bool Loop, float Gain)
 {
     /// <summary>Set in place of <see cref="Clip"/> for a streamed track.</summary>
     public MusicTrack? Track { get; init; }
 
-    public string Name => Clip?.Name ?? Track?.Name ?? string.Empty;
+    /// <summary>Set in place of <see cref="Clip"/> for a clip still arriving.</summary>
+    public ArrivingClip? Arriving { get; init; }
+
+    public string Name => Clip?.Name ?? Track?.Name ?? Arriving?.Name ?? string.Empty;
 
     public static PlaybackRequest Stream(long id, MusicTrack track, float gain) =>
         new(id, Clip: null, Loop: false, gain) { Track = track };
+
+    public static PlaybackRequest Streaming(long id, ArrivingClip arriving, float gain) =>
+        new(id, Clip: null, Loop: false, gain) { Arriving = arriving };
 }
 
 /// <summary>The hardware end of the arbiter.</summary>
@@ -45,8 +54,8 @@ public interface IAudioSink
     void SetGain(long playbackId, float gain);
 
     /// <summary>
-    /// Raised when a clip or track reaches its end on its own, including a track that failed to open or
-    /// to read.
+    /// Raised when a clip, track or arriving clip reaches its end on its own, including a track that failed
+    /// to open or to read.
     /// </summary>
     event Action<long>? Finished;
 

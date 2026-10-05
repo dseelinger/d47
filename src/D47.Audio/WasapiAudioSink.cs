@@ -162,10 +162,16 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
                 source = stream;
                 owned = stream;
             }
+            else if (request.Arriving is { } arriving)
+            {
+                var arrivingSource = new ArrivingClipSampleProvider(arriving, _logger);
+                source = arrivingSource;
+                owned = arrivingSource;
+            }
             else
             {
                 source = new ClipSampleProvider(
-                    request.Clip ?? throw new ArgumentException("A request carries a clip or a track.", nameof(request)),
+                    request.Clip ?? throw new ArgumentException("A request carries a clip, a track or an arriving clip.", nameof(request)),
                     request.Loop);
             }
 

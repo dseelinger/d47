@@ -24,12 +24,17 @@ public enum AudioChannel
     Alert = 5,
 }
 
-/// <summary>One thing to make audible.</summary>
+/// <summary>One thing to make audible: carries exactly one of <see cref="Clip"/> and <see cref="Arriving"/>.</summary>
 public sealed record AudioRequest
 {
     public required AudioChannel Channel { get; init; }
 
-    public required AudioClip Clip { get; init; }
+    public AudioClip? Clip { get; init; }
+
+    /// <summary>Set in place of <see cref="Clip"/> for speech still arriving from its provider.</summary>
+    public ArrivingClip? Arriving { get; init; }
+
+    public string Name => Clip?.Name ?? Arriving?.Name ?? string.Empty;
 
     /// <summary>The scope a supersede applies to — the turn id, for speech.</summary>
     public string? Group { get; init; }
@@ -165,13 +170,23 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     public void Enqueue(AudioRequest request)
     {
+        if ((request.Clip is null) == (request.Arriving is null))
+        {
+            throw new ArgumentException("A request carries exactly one of a clip and an arriving clip.", nameof(request));
+        }
+
+        if (request.Arriving is not null && (request.Loop || request.Channel == AudioChannel.Bed))
+        {
+            throw new ArgumentException("An arriving clip plays once and cannot loop.", nameof(request));
+        }
+
         AudioActivity activity;
 
         lock (_gate)
         {
             if (request.Group is { } closed && _closed.Contains(closed))
             {
-                logger.LogDebug("{Group} is closed; {Clip} is not queued", closed, request.Clip.Name);
+                logger.LogDebug("{Group} is closed; {Clip} is not queued", closed, request.Name);
                 return;
             }
 
@@ -484,11 +499,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 _queue.RemoveAt(0);
                 _current = new Playing(next.Id, next.Request);
 
-                sink.Play(new PlaybackRequest(
-                    next.Id,
-                    next.Request.Clip,
-                    next.Request.Loop,
-                    GainFor(next.Request.Channel)));
+                var gain = GainFor(next.Request.Channel);
+
+                sink.Play(next.Request.Arriving is { } arriving
+                    ? PlaybackRequest.Streaming(next.Id, arriving, gain)
+                    : new PlaybackRequest(next.Id, next.Request.Clip, next.Request.Loop, gain));
             }
         }
 
