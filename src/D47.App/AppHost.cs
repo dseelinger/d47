@@ -2224,10 +2224,26 @@ public sealed class AppHost : IDisposable
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null)));
 
+        IReadOnlyList<D47.Core.Seats.CrewSeat> SeatsAboard() =>
+            gameState.Active is { } active
+            && active.FlownShip.ShipId is { } shipId
+            && self?.CrewSeats.For(active.Identity.FrontierId, shipId) is { } here
+                ? here.Seats
+                : [];
+
         // A hired pilot, reached by name (#188).
         turns.Lines.Add(new CrewLine(
             () => gameState.Active?.Crew,
             () => gameState.Active?.Ship.Name,
+            () => personas.ShipName,
+            SeatsAboard));
+
+        // A crew seat on the ship flown, reached by name (#846).
+        turns.Lines.Add(new SeatLine(
+            SeatsAboard,
+            () => gameState.Active?.FlownShip.Name,
+            () => gameState.Active?.FlownShip.TypeSaid,
+            () => gameState.Active?.Crew,
             () => personas.ShipName));
 
         // An invented speaker from the last overheard exchange, reached by name while it is still going.

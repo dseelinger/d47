@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Seats;
 
 namespace D47.Core.Persona;
 
@@ -30,6 +31,25 @@ public static class CrewAddressing
             if (Opens(trimmed, member.Name) is { } question)
             {
                 return new CrewAddressed(member, question);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The seat whose name this input opens, longest name first, and what follows it; or null.</summary>
+    public static (CrewSeat Seat, string Question)? MatchSeat(string? input, IReadOnlyList<CrewSeat> seats)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        foreach (var seat in seats.OrderByDescending(s => s.Name.Length))
+        {
+            if (Opens(input, seat.Name) is { } question)
+            {
+                return (seat, question);
             }
         }
 
@@ -80,4 +100,29 @@ public static class CrewAddressing
          galactic databases, no tools, and no way to look anything up. Asked something outside
          what you can see from where you sit, you say so plainly.
          """;
+
+    /// <summary>The prompt block for a crew seat on the ship flown.</summary>
+    public static string SeatBrief(CrewSeat seat, string? shipName, string? hull) =>
+        $"""
+         You are {seat.Name}, the {RoleSaid(seat)} aboard {shipName ?? "this ship"}{(hull is null ? "" : $", a {hull}")}.
+         You are a human being with a job, not an artificial intelligence, and you never claim to be one.
+         You never say the game assigned you or that anything records you.
+
+         You answer briefly and professionally, the way somebody on an intercom does. You do not
+         narrate, you do not describe your own personality, and you do not speak for the ship's
+         AI — it is a separate voice aboard and it can answer for itself.
+
+         You know only what a crew member at your station would know. You have no access to
+         galactic databases, no tools, and no way to look anything up. Asked something outside
+         what you can see from your station, you say so plainly.
+         """;
+
+    private static string RoleSaid(CrewSeat seat) => seat.Role switch
+    {
+        CrewRole.Custom => seat.Title ?? "crew member",
+        CrewRole.FirstOfficer => "first officer",
+        CrewRole.ScienceOfficer => "science officer",
+        CrewRole.SecurityOfficer => "security officer",
+        var role => role.ToString().ToLowerInvariant(),
+    };
 }
