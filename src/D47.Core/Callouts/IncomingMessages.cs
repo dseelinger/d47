@@ -72,12 +72,6 @@ public sealed partial class IncomingMessages : ICallout
         return (end < 0 ? body : body[..end]).TrimEnd("0123456789".ToCharArray());
     }
 
-    /// <summary>Whether a message is Frontier's own string: a <c>$</c>-key with a localised form, which no player typed.</summary>
-    private static bool IsFrontiersString(JournalEvent journalEvent) =>
-        journalEvent.String("Message") is { Length: > 1 } key
-        && key[0] == '$'
-        && journalEvent.String("Message_Localised") is { Length: > 0 };
-
     /// <summary>
     /// Whether the Commander currently shares a system with their own carrier (#248's second half,
     /// asked in the same chat): the condition under which a System Authority vessel's canned line is
@@ -177,7 +171,7 @@ public sealed partial class IncomingMessages : ICallout
 
         // **A canned line from the Commander's own carrier is Frontier's string, not somebody else's words**
         // (#248).
-        var frontiers = IsFrontiersString(journalEvent);
+        var frontiers = JournalText.IsFrontiersString(journalEvent.Raw);
 
         if (IsMyCarrier(sender) && frontiers)
         {

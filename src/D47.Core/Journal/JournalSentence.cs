@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using D47.Core.Callouts;
+using static D47.Core.Journal.JournalText;
 
 namespace D47.Core.Journal;
 
@@ -488,38 +489,6 @@ public static class JournalSentence
     /// <summary>What a comms event said, or null where there is nothing this line may draw (#260).</summary>
     private static string? Message(JsonElement raw) => Blank(raw.String("Message_Localised"));
 
-    /// <summary>The localised name where Elite supplies one, then the raw.</summary>
-    private static string? Named(JsonElement raw, string property) =>
-        Blank(raw.String(property + "_Localised")) ?? Blank(Symbol(raw.String(property)));
-
-    /// <summary>
-    /// A bare symbol made readable where no localised name came with it — Frontier wraps some in
-    /// <c>$name;</c>, and a dollar sign in a summary line is a leaked implementation detail.
-    /// </summary>
-    private static string? Symbol(string? value)
-    {
-        if (value is not { Length: > 0 })
-        {
-            return null;
-        }
-
-        var trimmed = value.Trim();
-
-        if (trimmed.StartsWith('$'))
-        {
-            trimmed = trimmed.TrimEnd(';')[1..];
-
-            if (trimmed.EndsWith("_name", StringComparison.OrdinalIgnoreCase))
-            {
-                trimmed = trimmed[..^5];
-            }
-        }
-
-        return trimmed.Length == 0 ? null : trimmed;
-    }
-
-    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
-
     /// <summary>A hull, through the one ladder every caller is supposed to use.</summary>
     private static string Hull(JsonElement raw, string property) =>
         Named(raw, property) is { } localised
@@ -595,28 +564,5 @@ public static class JournalSentence
         var banded = SpokenCredits.Band(amount);
 
         return amount < 1_000_000 ? banded + " Cr" : banded;
-    }
-
-    /// <summary><c>FSSDiscoveryScan</c> into <c>FSS Discovery Scan</c>.</summary>
-    private static string Spaced(string kind)
-    {
-        var said = new System.Text.StringBuilder(kind.Length + 8);
-
-        for (var i = 0; i < kind.Length; i++)
-        {
-            // Never a second space where there already is one.
-            if (i > 0
-                && char.IsUpper(kind[i])
-                && !char.IsWhiteSpace(kind[i - 1])
-                && kind[i - 1] != '_'
-                && (!char.IsUpper(kind[i - 1]) || (i + 1 < kind.Length && char.IsLower(kind[i + 1]))))
-            {
-                said.Append(' ');
-            }
-
-            said.Append(kind[i]);
-        }
-
-        return said.ToString();
     }
 }
