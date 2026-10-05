@@ -53,6 +53,17 @@ public sealed record StoredRoutePlan
 
     /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
     public int? Reached { get; init; }
+
+    /// <summary>Jumps left on a carrier plan after the reached stop; null for any other kind.</summary>
+    [JsonIgnore]
+    public int? CarrierJumpsRemaining => Kind == RoutePlanKind.Carrier ? CarrierStopsAhead().Count() : null;
+
+    /// <summary>Whether the carrier's next stop needs tritium restocked; null with no next stop.</summary>
+    [JsonIgnore]
+    public bool? NextCarrierStopRestocks => CarrierStopsAhead().FirstOrDefault()?.MustRestock;
+
+    private IEnumerable<CarrierWaypoint> CarrierStopsAhead() =>
+        (Carrier?.Waypoints ?? []).Where((waypoint, index) => index > (Reached ?? -1) && waypoint.Distance > 0);
 }
 
 /// <summary>
@@ -151,7 +162,7 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
         {
             foreach (var journalEvent in events)
             {
-                if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location"))
+                if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location" or "CarrierLocation"))
                 {
                     continue;
                 }
@@ -166,6 +177,16 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
                     var plan = _plans[kind];
 
                     if (journalEvent.Timestamp < plan.PlottedAt)
+                    {
+                        continue;
+                    }
+
+                    if (plan.Kind == RoutePlanKind.Carrier && !IsPlanCarrier(plan, journalEvent))
+                    {
+                        continue;
+                    }
+
+                    if (plan.Kind != RoutePlanKind.Carrier && journalEvent.Kind == "CarrierLocation")
                     {
                         continue;
                     }
@@ -216,8 +237,18 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
         RoutePlanKind.Riches => plan.Riches?.Stops.Select(stop => stop.System).ToArray(),
         RoutePlanKind.Trade => plan.Trade?.Stops.Select(stop => stop.System).ToArray(),
         RoutePlanKind.Exobiology => plan.Exobiology?.Stops.Select(stop => stop.System).ToArray(),
+        RoutePlanKind.Carrier => plan.Carrier?.Waypoints.Select(waypoint => waypoint.Name).ToArray(),
         _ => null,
     };
+
+    /// <summary>A carrier plan follows only its own carrier: a CarrierLocation by CarrierID, a CarrierJump by MarketID.</summary>
+    private static bool IsPlanCarrier(StoredRoutePlan plan, JournalEvent journalEvent) =>
+        plan.CarrierId is { } id && journalEvent.Kind switch
+        {
+            "CarrierLocation" => journalEvent.Long("CarrierID") == id,
+            "CarrierJump" => journalEvent.Long("MarketID") == id,
+            _ => false,
+        };
 
     private void Keep(StoredRoutePlan plan)
     {

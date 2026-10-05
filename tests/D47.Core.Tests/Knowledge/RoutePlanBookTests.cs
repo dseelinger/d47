@@ -76,6 +76,103 @@ public class RoutePlanBookTests : IDisposable
             ? parsed!
             : throw new InvalidOperationException("bad journal fixture");
 
+    private static CarrierRoute CarrierPlan() => new(
+    [
+        new CarrierWaypoint("Sol", 0, 100, 500, 0, false, 0, 0, false, false, false),
+        new CarrierWaypoint("Wolf 359", 8, 90, 450, 50, true, 100, 0, false, false, false),
+        new CarrierWaypoint("Colonia", 8, 0, 400, 50, false, 0, 0, false, false, true),
+    ]);
+
+    private static JournalEvent Raw(string json) =>
+        JournalEvent.TryParse(json, NullLogger.Instance, out var parsed)
+            ? parsed!
+            : throw new InvalidOperationException("bad journal fixture");
+
+    private static JournalEvent CarrierLocation(long id, string system, DateTimeOffset at) =>
+        Raw($$"""{"timestamp":"{{at:O}}","event":"CarrierLocation","CarrierType":"FleetCarrier","CarrierID":{{id}},"StarSystem":"{{system}}"}""");
+
+    private static JournalEvent CarrierJump(long marketId, string system, DateTimeOffset at) =>
+        Raw($$"""{"timestamp":"{{at:O}}","event":"CarrierJump","MarketID":{{marketId}},"StarSystem":"{{system}}"}""");
+
+    private RoutePlanBook BookWithCarrierPlan()
+    {
+        var book = Book();
+        book.Record(CarrierPlan(), 3712682240, "Sol to Colonia", At);
+        return book;
+    }
+
+    [Fact]
+    public void ACarrierLocationForThePlansCarrierAdvancesIt()
+    {
+        var book = BookWithCarrierPlan();
+
+        book.Apply([CarrierLocation(3712682240, "Wolf 359", At.AddMinutes(10))]);
+
+        Assert.Equal(1, book.Last(RoutePlanKind.Carrier)?.Reached);
+    }
+
+    [Fact]
+    public void TheCommandersOwnJumpDoesNotAdvanceACarrierPlan()
+    {
+        var book = BookWithCarrierPlan();
+
+        book.Apply([Arrival("FSDJump", "Wolf 359", At.AddMinutes(10)), Arrival("Location", "Wolf 359", At.AddMinutes(11))]);
+
+        Assert.Null(book.Last(RoutePlanKind.Carrier)?.Reached);
+    }
+
+    [Fact]
+    public void ASquadronCarriersLocationDoesNotAdvanceACarrierPlan()
+    {
+        var book = BookWithCarrierPlan();
+
+        book.Apply([CarrierLocation(3713474048, "Wolf 359", At.AddMinutes(10))]);
+
+        Assert.Null(book.Last(RoutePlanKind.Carrier)?.Reached);
+    }
+
+    [Fact]
+    public void ACarrierJumpWithThePlansMarketIdAdvancesIt()
+    {
+        var book = BookWithCarrierPlan();
+
+        book.Apply([CarrierJump(3701300480, "Wolf 359", At.AddMinutes(10))]);
+        Assert.Null(book.Last(RoutePlanKind.Carrier)?.Reached);
+
+        book.Apply([CarrierJump(3712682240, "Wolf 359", At.AddMinutes(11))]);
+        Assert.Equal(1, book.Last(RoutePlanKind.Carrier)?.Reached);
+    }
+
+    [Fact]
+    public void ACarrierEventDoesNotMoveTheShipPlans()
+    {
+        var book = Book();
+        book.Record(JumpWithTwoWaypoints(), "Sol to Colonia", At);
+
+        book.Apply([CarrierLocation(3712682240, "Colonia", At.AddMinutes(10))]);
+
+        Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
+    }
+
+    [Fact]
+    public void AFollowedCarrierPlanSaysHowManyJumpsRemainAndWhetherTheNextStopRestocks()
+    {
+        var book = BookWithCarrierPlan();
+        var plan = book.Last(RoutePlanKind.Carrier)!;
+        Assert.Equal(2, plan.CarrierJumpsRemaining);
+        Assert.True(plan.NextCarrierStopRestocks);
+
+        book.Apply([CarrierLocation(3712682240, "Wolf 359", At.AddMinutes(10))]);
+        plan = book.Last(RoutePlanKind.Carrier)!;
+        Assert.Equal(1, plan.CarrierJumpsRemaining);
+        Assert.False(plan.NextCarrierStopRestocks);
+
+        book.Apply([CarrierLocation(3712682240, "Colonia", At.AddMinutes(20))]);
+        plan = book.Last(RoutePlanKind.Carrier)!;
+        Assert.Equal(0, plan.CarrierJumpsRemaining);
+        Assert.Null(plan.NextCarrierStopRestocks);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_folder))
