@@ -465,7 +465,7 @@ boxes reach the drawn one the same way the checklist's edit box does. Asset Mgmt
 on the reasoning that a three-level drill ending in a search field is a bigger surface than a list
 of short rows — until it turned out that every row the drill leads to is a button or a switch a
 ray already presses. The one control that is not, Ctrl-drag of a slot onto another, has no
-headset path and stays a mouse convenience.
+headset path and stays a mouse convenience; so does double-clicking a slot row to plan it.
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 

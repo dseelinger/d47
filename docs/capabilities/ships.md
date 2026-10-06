@@ -196,6 +196,8 @@ These are two different questions and Directive 47 keeps them apart:
 your checklist when you promote it — and even then it arrives as a proposal you accept, the same
 way every other suggestion does.
 
+Double-clicking a slot row on a ship's page opens the same prompt as **Plan this slot** (or **Change the plan**).
+
 That separation is what lets you rearrange a build without your checklist reordering itself under
 you, and reorder your checklist without the build forgetting what you decided.
 

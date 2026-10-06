@@ -1910,6 +1910,7 @@ public sealed class ItemPage : LoadoutPage
                     showing);
 
             Draggable(control, row);
+            PlansOnDoubleClick(control, row, crumb);
 
             _list.Children.Add(control);
         }
@@ -1935,6 +1936,51 @@ public sealed class ItemPage : LoadoutPage
         _talkSlot.Child ??= _talk;
         _talk.Draw();
     }
+
+    /// <summary>
+    /// A double-click on a row opens the slot and asks for its plan. Counted from the presses rather than
+    /// <c>DoubleTapped</c>: the first click rebuilds the rows, so the second press lands on a new control.
+    /// </summary>
+    private void PlansOnDoubleClick(Control control, LoadoutRow row, NavCrumb crumb)
+    {
+        if (_prompts is null)
+        {
+            return;
+        }
+
+        var slot = LoadoutPages.SplitSlot(row.Key).Slot;
+
+        control.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, args) =>
+            {
+                if (!args.GetCurrentPoint(control).Properties.IsLeftButtonPressed)
+                {
+                    return;
+                }
+
+                if (args.ClickCount == 1)
+                {
+                    _pressedSlot = slot;
+                    return;
+                }
+
+                if (args.ClickCount != 2
+                    || args.KeyModifiers.HasFlag(KeyModifiers.Control)
+                    || _pressedSlot != slot)
+                {
+                    return;
+                }
+
+                _pressedSlot = null;
+                _nav.Drill(crumb);
+                Mode.Ask(_item, slot, _prompts, Refresh);
+            },
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+    }
+
+    private string? _pressedSlot;
 
     /// <summary>
     /// Ctrl and the left button held, dragged from one slot row to another, copies the plan

@@ -346,6 +346,8 @@ desk. So the plan is ordered the way the trips have to happen.
 crosses into your checklist unasked; promoting it produces a proposal you accept, with the grade
 first and the modifications after it.
 
+Double-clicking the Grade row or a mod row on a suit's or weapon's page opens the same prompt as **Plan this slot** (or **Change the plan**).
+
 **Something you do not own is not absent, it is intended.** It has no `SuitID`, so buying it is the
 plan's first step rather than a precondition sitting outside it — and buying one adopts the plan
 rather than making you re-point it.
