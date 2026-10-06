@@ -214,6 +214,9 @@ public static class BuiltinCapabilities
         // Replaces the beat a story chapter is waiting on.
         AdventureCapability.BeatRefusal? beatRefusal = null,
 
+        // Acts on the draft adventure by voice.
+        AdventureCapability.AdventureDesk? adventureDesk = null,
+
         // The Commander's journal reminders (#643).
         Reminders.JournalReminderStore? journalReminders = null,
 
@@ -289,7 +292,7 @@ public static class BuiltinCapabilities
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal),
+        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

@@ -992,14 +992,28 @@ public partial class PanelView : UserControl
 
     /// <summary>Gives this surface the Commander's adventures (Phase 47).</summary>
     /// <param name="settingsStrip">Adventures' own settings, on the tab they only affect (#218).</param>
-    public void EnableAdventures(AdventureSurface surface, Func<Control?>? settingsStrip = null)
+    /// <param name="desk">Where the voice commands for the draft on screen reach this page.</param>
+    public void EnableAdventures(
+        AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null)
     {
         AdventuresPage? page = null;
+
+        AdventuresPage Page() => page ??= new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke(), () => _copy);
+
+        if (desk is not null)
+        {
+            static string? OnUi(Func<string?> act) =>
+                Avalonia.Threading.Dispatcher.UIThread.CheckAccess() ? act() : Avalonia.Threading.Dispatcher.UIThread.Invoke(act);
+
+            desk.Change = () => OnUi(() => Page().ChangeDraft());
+            desk.Accept = () => OnUi(() => Page().AcceptDraft());
+            desk.Reject = () => OnUi(() => Page().RejectDraft());
+        }
 
         Furnish(
             PanelTab.Stories,
             crumb => crumb.Key == AdventuresPage.RootKey
-                ? page = new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke(), () => _copy)
+                ? Page()
                 : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
             new NavCrumb(AdventuresPage.RootKey, "Stories")
             {

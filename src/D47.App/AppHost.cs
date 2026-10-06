@@ -412,6 +412,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The stock story the Commander picked, run as a chain of adventures.</summary>
     public D47.Core.Stories.StoryDirector? Stories { get; private set; }
 
+    public AdventureCapability.AdventureDesk? AdventureDesk { get; private set; }
+
     /// <summary>Fetches stock stories from the stories release.</summary>
     public StoryDownloader? StoryDownloads { get; private set; }
 
@@ -1733,6 +1735,7 @@ public sealed class AppHost : IDisposable
         var storySwitch = new AdventureCapability.StorySwitch();
         var endingAnswer = new AdventureCapability.EndingAnswer();
         var beatRefusal = new AdventureCapability.BeatRefusal();
+        var adventureDesk = new AdventureCapability.AdventureDesk();
 
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
@@ -2161,6 +2164,7 @@ public sealed class AppHost : IDisposable
                 storySwitch: storySwitch,
                 endingAnswer: endingAnswer,
                 beatRefusal: beatRefusal,
+                adventureDesk: adventureDesk,
                 journalReminders: journalReminders,
                 miningTargets: miningTargets,
                 crimes: crimes,
@@ -2416,6 +2420,7 @@ public sealed class AppHost : IDisposable
 
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
+        adventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
         storyClue.VoiceOf = due => storyDirector.ClueVoice(gameState.Active?.Identity.FrontierId, due);
@@ -2642,6 +2647,7 @@ public sealed class AppHost : IDisposable
         host.StoryDownloads = storyDownloads;
         host.StoryRatings = storyRatings;
         endingAnswer.Answer = host.AnswerEnding;
+        host.AdventureDesk = adventureDesk;
         host.Messages = messageStore;
 
         // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.

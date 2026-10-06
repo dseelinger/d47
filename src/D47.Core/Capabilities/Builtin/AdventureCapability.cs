@@ -16,11 +16,19 @@ public static class AdventureCapability
 
     public const string RefuseBeatTool = "refuse_story_beat";
 
+    public const string ChangeDraftTool = "change_adventure";
+
+    public const string AcceptDraftTool = "accept_adventure";
+
+    public const string RejectDraftTool = "reject_adventure";
+
     public const string StoryDownloadsKey = "adventures.storyDownloads";
 
     public const string StoryRatingsKey = "adventures.storyRatings";
 
     private const string NoStory = "No story is running.";
+
+    private const string NoDraft = "There is no draft adventure.";
 
     /// <summary>Switches the Commander's story on or off, returning a refusal or null. The app sets it once the story exists.</summary>
     public sealed class StorySwitch
@@ -40,7 +48,20 @@ public static class AdventureCapability
         public Func<CancellationToken, Task<string?>> Refuse { get; set; } = _ => Task.FromResult<string?>(NoStory);
     }
 
-    public static CapabilityDescriptor Create(StorySwitch? storySwitch = null, EndingAnswer? endingAnswer = null, BeatRefusal? beatRefusal = null) => new()
+    /// <summary>Acts on the draft adventure in front of the Commander, each returning a refusal or null. The app sets it once the Adventures page exists.</summary>
+    public sealed class AdventureDesk
+    {
+        public Func<bool> HasDraft { get; set; } = () => false;
+
+        public Func<string?> Change { get; set; } = () => NoDraft;
+
+        public Func<string?> Accept { get; set; } = () => NoDraft;
+
+        public Func<string?> Reject { get; set; } = () => NoDraft;
+    }
+
+    public static CapabilityDescriptor Create(
+        StorySwitch? storySwitch = null, EndingAnswer? endingAnswer = null, BeatRefusal? beatRefusal = null, AdventureDesk? desk = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -60,6 +81,9 @@ public static class AdventureCapability
             "accept the ending",
             "choose ending two",
             "this objective is not for me",
+            "change the adventure",
+            "accept the adventure",
+            "reject the adventure",
         ],
 
         // None.
@@ -118,6 +142,9 @@ public static class AdventureCapability
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
             Refuse(beatRefusal),
+            Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft adventure.", "change the adventure", "What should change?", desk, d => d.Change),
+            Draft(AcceptDraftTool, "Accept the Commander's draft adventure, as the Accept button does.", "accept the adventure", "The adventure is accepted.", desk, d => d.Accept),
+            Draft(RejectDraftTool, "Reject the Commander's draft adventure and remove it, as the Decline button does.", "reject the adventure", "The draft is removed.", desk, d => d.Reject),
         ],
     };
 
@@ -175,6 +202,24 @@ public static class AdventureCapability
                 ? ToolResult.Error(refusal)
                 : ToolResult.Ok("That objective is replaced, and the story will not ask for it again."),
     };
+
+    private static ToolDefinition Draft(
+        string name, string description, string phrase, string done, AdventureDesk? desk, Func<AdventureDesk, Func<string?>> act)
+    {
+        desk ??= new AdventureDesk();
+
+        return new ToolDefinition
+        {
+            Name = name,
+            Description = description + " The Commander's choice alone.",
+            Commands = [new ToolCommandPhrase(phrase, new Dictionary<string, string>(StringComparer.Ordinal)) { When = desk.HasDraft }],
+
+            // The draft is the Commander's to decide; the model is refused.
+            Protected = true,
+            Handler = (_, _) => Task.FromResult(
+                act(desk)() is { } refusal ? ToolResult.Error(refusal) : ToolResult.Ok(done)),
+        };
+    }
 
     private static ToolDefinition Switch(string name, string description, bool on, string[] phrases, StorySwitch? storySwitch) => new()
     {

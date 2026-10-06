@@ -747,6 +747,47 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             });
     }
 
+    /// <summary>The draft the voice commands act on, or the reason there is none: the open draft's page, else the only draft.</summary>
+    private (Adventure? Draft, string? Refusal) VoiceDraft()
+    {
+        var commander = _surface.Commander();
+
+        if (_nav.Tab == D47.Core.Interface.PanelTab.Stories
+            && _nav.Trail[^1].Key is var open
+            && open.StartsWith(ReadPrefix, StringComparison.Ordinal)
+            && _surface.Book.Standing(commander, open[ReadPrefix.Length..]) is { Adventure.IsDraft: true } standing)
+        {
+            return (standing.Adventure, null);
+        }
+
+        var drafts = _surface.Book.Standings(commander).Where(other => other.Adventure.IsDraft).ToList();
+
+        return drafts.Count switch
+        {
+            0 => (null, "There is no draft adventure."),
+            1 => (drafts[0].Adventure, null),
+            _ => (null, "There is more than one draft adventure. Open the one you mean."),
+        };
+    }
+
+    private string? OnVoiceDraft(Action<Adventure> act)
+    {
+        var (draft, refusal) = VoiceDraft();
+
+        if (draft is not null)
+        {
+            act(draft);
+        }
+
+        return refusal;
+    }
+
+    internal string? ChangeDraft() => OnVoiceDraft(Revise);
+
+    internal string? AcceptDraft() => OnVoiceDraft(draft => Begin(draft.Key));
+
+    internal string? RejectDraft() => OnVoiceDraft(draft => Remove(draft, confirm: false));
+
     /// <summary>Reasoning with the AI about a draft (Phase 47, "Revision before acceptance").</summary>
     private void Revise(Adventure draft) => _prompts.Enter(
         new EntryRequest(

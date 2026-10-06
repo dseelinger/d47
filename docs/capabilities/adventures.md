@@ -292,12 +292,52 @@ Both are yours alone, reachable from the panel and nowhere else.
 
 ### Nothing here is callable by the model
 
-Generation, beginning, abandoning and removing are all your acts, on the panel. Pausing and resuming
-a stock story are yours too, by voice or by the **Story on** checkbox. The ship's AI can
+Generation, beginning, abandoning and removing are all your acts, on the panel. Accepting, changing and
+rejecting a draft are yours too, by voice or by its buttons, and so are pausing and resuming
+a stock story, by voice or by the **Story on** checkbox. The ship's AI can
 *read* the story — that is what it is for, so it can play off it — and can change nothing about
 it. A hostile message arriving in your comms panel cannot propose a story, end one, or delete one.
 
 It also costs nothing: none of this is on the advertised tool surface.
+
+### Accepting, changing or rejecting a draft by voice
+
+While a generated adventure waits for your yes, three phrases act on it as its buttons do:
+
+| Say | Does |
+| --- | --- |
+| "accept the adventure" | The same as **Accept**. |
+| "change the adventure" | Opens the voice entry for what should change, as **Change something** does. |
+| "reject the adventure" | Removes the draft, as **Decline** does. |
+
+They act on the draft whose page is open on the Stories tab. With no draft page open and exactly one draft,
+they act on that one. With two or more drafts and none open, d47 says there is more than one draft and to open the one
+you mean, and changes nothing. With no draft the phrases are not heard. The page stays in view and nothing reads the
+draft aloud. The model is refused all three.
+
+#### `change_adventure`
+
+Open the entry for a remark that changes the Commander's draft adventure. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `accept_adventure`
+
+Accept the Commander's draft adventure, as the Accept button does. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `reject_adventure`
+
+Reject the Commander's draft adventure and remove it, as the Decline button does. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
 
 ### Messages
 

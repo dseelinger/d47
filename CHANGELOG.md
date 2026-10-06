@@ -10,6 +10,8 @@
 
 When the published default model changes for the language model provider you use, or for ElevenLabs when it speaks, the panel shows one notice, once. If you never chose a model, it says D47 now answers with the new one and offers to keep the old; if you chose one, it names the new default and offers to switch to it. Dismissing it, or using either button, records the default as told.
 
+Say "accept the adventure", "change the adventure" or "reject the adventure" to act on a draft that is waiting for your yes, as Accept, Change something and Decline do. They act on the draft whose page is open, or on the only draft when none is open. With two or more drafts and none open, D47 says to open the one you mean and changes nothing. With no draft, the phrases are not heard.
+
 The Adventures tab no longer writes or edits an adventure by hand. Ask D47 for one instead. Adventures you wrote before still play.
 
 Each hired pilot's row on Fleet › Crew has a picture, with Change picture and Use the default. It is kept for the pilot's crew id, so two pilots with the same name keep separate pictures, and it shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their picture, and a rehire gets it back.

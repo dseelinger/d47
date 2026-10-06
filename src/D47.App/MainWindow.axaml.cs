@@ -212,7 +212,7 @@ public partial class MainWindow : Window
                     host.StoryRatings);
 
                 Panel.EnableAdventures(
-                    Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey));
+                    Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);
             }
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic between them
