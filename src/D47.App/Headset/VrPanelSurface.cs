@@ -244,7 +244,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                 carrierSettingsStrip: buildSettingsStrip is null
                     ? null
                     : () => buildSettingsStrip(LoadoutPages.CarrierRoot),
-                galaxy: galaxy);
+                galaxy: galaxy,
+                status: routing?.Status);
         }
 
         if (starSystem is not null)

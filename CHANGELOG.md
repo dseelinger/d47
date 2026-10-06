@@ -10,6 +10,8 @@
 
 With a language model and personality on, asking about one engineer, such as "what does Liz Ryder ask for", now lets your core add one short remark about what their invitation asks for, in its own voice. The requirement is still stated as written, for example "Landmines ×200", and the remark may rest only on it. Each engineer gets at most one remark per session, and with personality off there is none. Answers that do not go through the language model are unchanged.
 
+A ship's page now shows its Fuel, Hardness and Crew seats. The ship you are flying shows its live fuel level against its tank, such as "12.5 of 16 t", and follows Status.json as fuel is used. Any other ship with a remembered loadout shows its tank size alone, such as "16 t tank". Hardness and crew seats come from the hull table for every hull. In the module chooser, a frame shift drive's caption now adds its optimal mass and max fuel per jump, and armour and hull reinforcement add their hull boost with kinetic, thermal, explosive and caustic resistance, as the voice answers give them.
+
 A utility mount can now say where it sits on the hull, for example "Utility Mount 3 (top, fore)" and "3 (top, fore)" in the Utility Mounts list. Positions are recorded by hand per hull; a mount with no recorded position is named as before.
 
 Asking what to say for something now gets one plain sentence for each phrase it names, such as "Sets volume to 40." or "Reaches Landing Gear Down.", where an answer used to quote a tool's whole description. It also finds the phrases you taught yourself: asking about "drop the wheels" when you taught it for "gear down" names your wording and says what it does.

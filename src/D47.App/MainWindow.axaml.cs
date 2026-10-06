@@ -232,7 +232,8 @@ public partial class MainWindow : Window
                     () => [.. host.VoiceIds().Select(id => (id, host.VoiceLabelFor(id)))],
                     () => D47.Core.Audio.VoiceGroups.ProviderFor(host.Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
                     () => [host.Personas.ShipName, .. new[] { host.Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]),
-                talk: host.BuildTalk);
+                talk: host.BuildTalk,
+                status: () => host.LiveStatus);
 
             // Where the hull art is read from, in the order it is searched.
             ShipArt.Folder = host.Paths.Ships;

@@ -328,7 +328,7 @@ public static class SpecificationCapability
     }
 
     /// <summary>A signed fraction as a percentage.</summary>
-    private static string Percentage(double? fraction) =>
+    public static string Percentage(double? fraction) =>
         fraction is { } value
             ? $"{(value * 100).ToString("+0.#;-0.#;0", CultureInfo.InvariantCulture)}%"
             : "unrecorded";

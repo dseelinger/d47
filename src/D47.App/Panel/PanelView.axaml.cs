@@ -822,9 +822,12 @@ public partial class PanelView : UserControl
         CrewSeatsHost? crewSeats = null,
 
         // The conversation about each build's plan, on a ship's page (#570).
-        D47.Core.Ships.BuildTalk? talk = null)
+        D47.Core.Ships.BuildTalk? talk = null,
+
+        // The live Status.json, for the fuel level on the flown ship's page.
+        Func<D47.Core.Journal.GameStatus>? status = null)
     {
-        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk);
+        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status);
 
         _shipPlans = ships;
 

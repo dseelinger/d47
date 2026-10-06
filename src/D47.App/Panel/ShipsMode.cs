@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.App.Controls;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
 using D47.Core.Engineers;
 using D47.Core.Interface;
@@ -16,7 +17,8 @@ public sealed class ShipsMode(
     Func<CommanderGameState?> state,
     Func<ModulePower>? measured = null,
     Func<bool>? hullArt = null,
-    BuildTalk? talk = null) : ILoadoutMode
+    BuildTalk? talk = null,
+    Func<GameStatus>? status = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -338,6 +340,22 @@ public sealed class ShipsMode(
             });
         }
 
+        if (hull.Hardness is { } hardness)
+        {
+            lines.Add(new LoadoutLine($"Hardness {hardness.ToString(CultureInfo.InvariantCulture)}.")
+            {
+                Stats = [new("Hardness", hardness.ToString(CultureInfo.InvariantCulture))],
+            });
+        }
+
+        if (hull.Crew is > 0 and var seats)
+        {
+            lines.Add(new LoadoutLine($"{seats} crew seat{(seats == 1 ? "" : "s")}.")
+            {
+                Stats = [new("Crew seats", seats.ToString(CultureInfo.InvariantCulture))],
+            });
+        }
+
         if (hull.Cost is { } cost)
         {
             lines.Add(new LoadoutLine($"Unfitted, it lists at {Credits(cost)}.")
@@ -395,6 +413,25 @@ public sealed class ShipsMode(
             });
         }
 
+        if (loadout.FuelCapacity is { } tank)
+        {
+            var capacity = tank.ToString("0.##", CultureInfo.InvariantCulture);
+            var level = FuelLevel(build);
+
+            lines.Add(new LoadoutLine(
+                level is { } now
+                    ? $"{now.ToString("0.##", CultureInfo.InvariantCulture)} of {capacity} t of fuel."
+                    : $"{capacity} t fuel tank.")
+            {
+                Stats =
+                [
+                    new("Fuel", level is { } held
+                        ? $"{held.ToString("0.##", CultureInfo.InvariantCulture)} of {capacity} t"
+                        : $"{capacity} t tank"),
+                ],
+            });
+        }
+
         if (loadout.UnladenMass is { } mass)
         {
             lines.Add(new LoadoutLine(
@@ -432,6 +469,14 @@ public sealed class ShipsMode(
         // The heading last, and only if anything is under it.
         return lines.Count == 0 ? [] : [new LoadoutLine("As it is fitted", LoadoutTone.Heading), .. lines];
     }
+
+    /// <summary>The tonnes in the main tank, for the ship being flown only.</summary>
+    private double? FuelLevel(ShipBuild build) =>
+        state()?.FlownShip is { IsKnown: true } flown
+        && flown.ShipId == build.ShipId
+        && status?.Invoke() is { IsKnown: true, InShip: true, FuelMain: { } level }
+            ? level
+            : null;
 
     /// <summary>Credits, grouped, because a nine-digit number without separators is unreadable.</summary>
     private static string Credits(long amount) =>
@@ -1658,7 +1703,7 @@ public sealed class ShipsMode(
         module?.NeedsPledge is true ? $"{Coin} {label}" : label;
 
     /// <summary>The code underneath the words, and what it costs the ship to carry.</summary>
-    private static string Figures(ModuleSpecification variant)
+    internal static string Figures(ModuleSpecification variant)
     {
         var parts = new List<string> { variant.Size };
 
@@ -1675,6 +1720,21 @@ public sealed class ShipsMode(
         if (variant.Cost is { } cost)
         {
             parts.Add(Credits(cost));
+        }
+
+        if (variant.IsDrive)
+        {
+            parts.Add($"optimal mass {variant.OptimalMass?.ToString("0.##", CultureInfo.InvariantCulture)} t");
+            parts.Add($"max fuel per jump {variant.MaxFuelPerJump?.ToString("0.##", CultureInfo.InvariantCulture)} t");
+        }
+
+        if (variant.HullBoost is not null)
+        {
+            parts.Add($"hull {SpecificationCapability.Percentage(variant.HullBoost)}");
+            parts.Add($"kinetic {SpecificationCapability.Percentage(variant.KineticResistance)}");
+            parts.Add($"thermal {SpecificationCapability.Percentage(variant.ThermalResistance)}");
+            parts.Add($"explosive {SpecificationCapability.Percentage(variant.ExplosiveResistance)}");
+            parts.Add($"caustic {SpecificationCapability.Percentage(variant.CausticResistance)}");
         }
 
         return string.Join(" · ", parts);
