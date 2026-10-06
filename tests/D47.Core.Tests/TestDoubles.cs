@@ -216,7 +216,9 @@ public sealed class TestSurface
 
         // Wires audioDrops, coverage, recording and ticking — null by default, like About was before #78,
         // so a row that only exists behind one of them stays absent unless a test is about the full set.
-        bool everyOptionalSurface = false)
+        bool everyOptionalSurface = false,
+        D47.Core.Activities.ActivityLedger? activities = null,
+        Func<DateTimeOffset>? now = null)
     {
         var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
         var secrets = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
@@ -284,6 +286,8 @@ public sealed class TestSurface
             timersAndAlarms: timersAndAlarms,
             offers: offers,
             learnedPhrases: learnedPhrases,
+            activities: activities,
+            now: now,
 
             // Same story as About (#78): a null one makes the row it guards absent. Null by default so
             // every other test keeps today's row set; a test about the full row set asks for it.

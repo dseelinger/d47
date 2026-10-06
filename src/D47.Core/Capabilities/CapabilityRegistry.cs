@@ -143,7 +143,8 @@ public sealed partial class CapabilityRegistry
         {
             return ToolResult.Error(
                 $"'{toolName}' is not something I can do on my own — the Commander performs it from the "
-                + "panel or by saying so directly.");
+                + "panel or by saying so directly."
+                + (tool.RefusalExample is { Length: > 0 } example ? $" Say \"{example}\" and it is done." : string.Empty));
         }
 
         // Counted on the attempt rather than on success.

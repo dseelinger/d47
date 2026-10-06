@@ -2135,7 +2135,8 @@ public sealed class AppHost : IDisposable
                 journalReminders: journalReminders,
                 miningTargets: miningTargets,
                 crimes: crimes,
-                liveStatus: () => status.Current));
+                liveStatus: () => status.Current,
+                activities: activities));
 
         buildingRegistry.Dispose();
 

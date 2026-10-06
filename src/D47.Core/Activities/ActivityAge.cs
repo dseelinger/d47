@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Audio;
 
 namespace D47.Core.Activities;
 
@@ -46,6 +47,32 @@ public static class ActivityAge
             ? Ago(years, "year")
             : $"{Count(years, "year")} {Count(rest, "month")} ago";
     }
+
+    /// <summary>The same gap with the numbers in words: "a year and eight months ago", "four weeks ago".</summary>
+    public static string SayInWords(DateTimeOffset at, DateTimeOffset now)
+    {
+        var figures = Say(at, now);
+
+        var parts = figures.Split(' ');
+
+        if (parts.Length == 5)
+        {
+            var years = parts[0] == "1" ? "a year" : $"{Words(parts[0])} years";
+
+            return $"{years} and {Words(parts[2])} {parts[3]} ago";
+        }
+
+        if (parts.Length == 3 && parts[0] == "1" && parts[1] == "year")
+        {
+            return "a year ago";
+        }
+
+        return parts.Length == 3 && parts[2] == "ago"
+            ? $"{Words(parts[0])} {parts[1]} ago"
+            : figures;
+    }
+
+    private static string Words(string digits) => SpokenNumbers.Expand(digits);
 
     private static string Ago(int count, string unit) => $"{Count(count, unit)} ago";
 

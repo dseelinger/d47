@@ -252,7 +252,11 @@ public static class HelpTaxonomy
             HelpNode.Leaf(
                 "Goals",
                 "Track the campaigns that take months, derive their progress from the journal, and say what to do about one today.",
-                "goals")),
+                "goals"),
+            HelpNode.Leaf(
+                "Activities",
+                "Say which activities you have not done in a while, when you last did one, and stop suggesting one.",
+                "activities")),
 
         HelpNode.Category(
             "Settings and safety",

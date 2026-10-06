@@ -90,6 +90,9 @@ public sealed record ToolDefinition
     /// </summary>
     public bool Protected { get; init; }
 
+    /// <summary>A phrase that reaches a protected tool, named in the refusal the model receives.</summary>
+    public string? RefusalExample { get; init; }
+
     /// <summary>Sent in full when the other tools are deferred behind tool search.</summary>
     public bool AlwaysLoaded { get; init; }
 

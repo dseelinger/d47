@@ -222,7 +222,10 @@ public static class BuiltinCapabilities
 
         // The unpaid fines and bounties, and the live Status.json read.
         Journal.OutstandingCrimes? crimes = null,
-        Func<Journal.GameStatus>? liveStatus = null) =>
+        Func<Journal.GameStatus>? liveStatus = null,
+
+        // When each activity was last done (#586).
+        Activities.ActivityLedger? activities = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -370,6 +373,10 @@ public static class BuiltinCapabilities
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
             () => history?.State ?? Journal.HistoryState.Done,
             fid => history?.MiningRuns?.GetValueOrDefault(fid)),
+        ActivitiesCapability.Create(
+            activities,
+            () => gameState.Active?.Identity.FrontierId,
+            now ?? (() => DateTimeOffset.MinValue)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).
