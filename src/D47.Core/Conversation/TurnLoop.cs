@@ -1227,7 +1227,8 @@ public sealed class TurnLoop(
         // 0. Free text the declared phrases below cannot capture.
         if (capabilities.Find(Capabilities.Builtin.RemindersCapability.Id) is not null
             && Reminders.JournalReminderPhrase.Read(input, timersRegistered: capabilities.Find(Capabilities.Builtin.UtilitiesCapability.Id) is not null)
-                is { } reminder)
+                is { } reminder
+            && keywordRouter.MatchToolCommand(input)?.CapabilityId != Capabilities.Builtin.RemindersCapability.Id)
         {
             routing.Handled = true;
             yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);

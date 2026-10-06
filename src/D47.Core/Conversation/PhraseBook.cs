@@ -48,6 +48,9 @@ public sealed record PhraseEntry
     /// <see cref="ToolDefinition.SendsInput"/>, or the row is <see cref="SettingRow.Protected"/>.
     /// </summary>
     public required bool Guarded { get; init; }
+
+    /// <summary>Whether the phrase is live right now; a near miss is never offered for one that is not.</summary>
+    public Func<bool>? When { get; init; }
 }
 
 /// <summary>A phrase a near miss could have meant, guarded when any phrase it stands for is.</summary>
@@ -98,6 +101,7 @@ public sealed class PhraseBook
                     ToolName = tool.Name,
                     Arguments = command.Arguments,
                     Guarded = Guards(tool),
+                    When = command.When,
                 });
         }
 
@@ -165,6 +169,7 @@ public sealed class PhraseBook
         var scored = Entries
             .Select((entry, order) => (Entry: entry, Order: order))
             .Where(item => source == InputSource.Spoken || item.Entry.Source != PhraseSource.SpokenKeyword)
+            .Where(item => item.Entry.When?.Invoke() ?? true)
             .Select(item => (
                 item.Entry,
                 item.Order,

@@ -41,6 +41,9 @@ public sealed record JournalReminder(string Id, string Sentence, JournalTrigger 
 {
     public JournalReminderState State { get; init; } = JournalReminderState.Armed;
 
+    /// <summary>When it fired; null while armed, and for a reminder fired before this was kept.</summary>
+    public DateTimeOffset? FiredAt { get; init; }
+
     /// <summary>When it was set; a <see cref="JournalTrigger.NextSession"/> reminder fires only at a later <c>LoadGame</c>.</summary>
     public DateTimeOffset Set { get; init; }
 

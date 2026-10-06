@@ -149,7 +149,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
     }
 
     /// <summary>Marks one armed reminder fired in memory at once and saves on the pool; false when it was not armed.</summary>
-    public bool MarkFired(string frontierId, string id)
+    public bool MarkFired(string frontierId, string id, DateTimeOffset at)
     {
         lock (_gate)
         {
@@ -161,7 +161,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
             }
 
             Replace(frontierId, [.. held.Select(reminder => reminder.Id == id
-                ? reminder with { State = JournalReminderState.Fired }
+                ? reminder with { State = JournalReminderState.Fired, FiredAt = at }
                 : reminder)]);
         }
 
@@ -193,6 +193,45 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
         Changed?.Invoke();
         return removed;
     }
+
+    /// <summary>
+    /// Arms a fired reminder again from <paramref name="set"/>, on its own trigger or on <paramref name="trigger"/>, and
+    /// writes the file; false when it is not held fired.
+    /// </summary>
+    public bool Rearm(string frontierId, string id, DateTimeOffset set, JournalTrigger? trigger = null)
+    {
+        lock (_gate)
+        {
+            var held = _byCommander.GetValueOrDefault(frontierId, []);
+
+            if (_unreadable || !held.Any(reminder => reminder.Id == id && reminder.State == JournalReminderState.Fired))
+            {
+                return false;
+            }
+
+            Replace(frontierId, [.. held.Select(reminder => reminder.Id == id
+                ? reminder with
+                {
+                    State = JournalReminderState.Armed,
+                    FiredAt = null,
+                    Set = set,
+                    Trigger = trigger ?? reminder.Trigger,
+                    Argument = trigger is null || trigger == reminder.Trigger ? reminder.Argument : null,
+                }
+                : reminder)]);
+        }
+
+        Save();
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>The Commander's most recently fired reminder, or null when none is waiting for an answer.</summary>
+    public JournalReminder? LastFired(string frontierId) =>
+        For(frontierId)
+            .Where(reminder => reminder.State == JournalReminderState.Fired)
+            .OrderBy(reminder => reminder.FiredAt ?? DateTimeOffset.MinValue)
+            .LastOrDefault();
 
     /// <summary>Removes one reminder and writes the file; false when the Commander holds no reminder with that id.</summary>
     public bool Remove(string frontierId, string id)
@@ -253,6 +292,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
                                         Trigger = reminder.Trigger,
                                         Argument = reminder.Argument,
                                         State = reminder.State,
+                                        FiredAt = reminder.FiredAt,
                                         Set = reminder.Set,
                                     }),
                                 ],
@@ -323,6 +363,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
                         string.IsNullOrWhiteSpace(record.Argument) ? null : record.Argument.Trim())
                     {
                         State = record.State,
+                        FiredAt = record.FiredAt,
                         Set = record.Set,
                     });
                 }
@@ -385,6 +426,8 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
         public string? Argument { get; set; }
 
         public JournalReminderState State { get; set; } = JournalReminderState.Armed;
+
+        public DateTimeOffset? FiredAt { get; set; }
 
         public DateTimeOffset Set { get; set; }
     }

@@ -14,6 +14,20 @@ public static class RemindersCapability
 
     public const string CancelTool = "cancel_journal_reminder";
 
+    public const string AcknowledgeTool = "acknowledge_journal_reminder";
+
+    public const string SnoozeTool = "snooze_journal_reminder";
+
+    private const string SameTrigger = "same_trigger";
+
+    private static readonly string[] Acknowledgements = ["noted", "got it", "thanks"];
+
+    private static readonly string[] SameTriggerPhrases = ["remind me next time"];
+
+    private static readonly string[] NextSessionPhrases = ["remind me tomorrow", "remind me next session"];
+
+    private const string NothingFired = "No reminder has just gone off.";
+
     private const string NoCommander = "Nobody is flying yet, so there is nobody to remind.";
 
     private const string NoStore = "Nothing here keeps reminders.";
@@ -137,8 +151,59 @@ public static class RemindersCapability
                 ],
                 Handler = (arguments, _) => Task.FromResult(Cancel(store, frontierId(), arguments)),
             },
+
+            new ToolDefinition
+            {
+                Name = AcknowledgeTool,
+                Description =
+                    "Remove the journal reminder that has just gone off. The Commander's own answer: reached only "
+                    + "by saying \"noted\", not offered to the model, and refused if it asks.",
+                Protected = true,
+                Commands = [.. Answers(store, frontierId, Acknowledgements, Nothing)],
+                Handler = (_, _) => Task.FromResult(Acknowledge(store, frontierId())),
+            },
+
+            new ToolDefinition
+            {
+                Name = SnoozeTool,
+                Description =
+                    "Arm the journal reminder that has just gone off again, on its own trigger or at the next "
+                    + "session. The Commander's own answer: not offered to the model, and refused if it asks.",
+                Protected = true,
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "until",
+                        Type = ToolParameterType.String,
+                        Description = "When it goes off again: the same moment, or the next session.",
+                        AllowedValues = [SameTrigger, "next_session"],
+                    },
+                ],
+                Commands =
+                [
+                    .. Answers(store, frontierId, SameTriggerPhrases, Until(SameTrigger)),
+                    .. Answers(store, frontierId, NextSessionPhrases, Until("next_session")),
+                ],
+                Handler = (arguments, _) => Task.FromResult(Snooze(store, frontierId(), now(), arguments)),
+            },
         ],
     };
+
+    private static readonly IReadOnlyDictionary<string, string> Nothing = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    private static Dictionary<string, string> Until(string until) => new(StringComparer.Ordinal) { ["until"] = until };
+
+    /// <summary>Phrases that are answers only while a fired reminder is waiting.</summary>
+    private static IEnumerable<ToolCommandPhrase> Answers(
+        JournalReminderStore? store,
+        Func<string> frontierId,
+        string[] phrases,
+        IReadOnlyDictionary<string, string> arguments) =>
+        phrases.Select(phrase => new ToolCommandPhrase(phrase, arguments)
+        {
+            When = () => store?.LastFired(frontierId()) is not null,
+        });
 
     /// <summary>When a reminder fires, addressed to the Commander: "when you next dock".</summary>
     public static string When(JournalTrigger trigger, string? argument) => trigger switch
@@ -240,6 +305,48 @@ public static class RemindersCapability
         return ToolResult.Ok(
             $"{count}: {string.Join("; ", described)}.",
             $"{count}: {SpokenList.Names(described)}.");
+    }
+
+    private static ToolResult Acknowledge(JournalReminderStore? store, string frontierId)
+    {
+        if (store is null)
+        {
+            return ToolResult.Error(NoStore);
+        }
+
+        if (store.LastFired(frontierId) is not { } fired)
+        {
+            return ToolResult.Error(NothingFired);
+        }
+
+        return store.Remove(frontierId, fired.Id)
+            ? ToolResult.Ok("Noted.")
+            : ToolResult.Error("I couldn't clear that reminder. The reminder file may need fixing by hand.");
+    }
+
+    private static ToolResult Snooze(JournalReminderStore? store, string frontierId, DateTimeOffset now, ToolArguments arguments)
+    {
+        if (store is null)
+        {
+            return ToolResult.Error(NoStore);
+        }
+
+        if (store.LastFired(frontierId) is not { } fired)
+        {
+            return ToolResult.Error(NothingFired);
+        }
+
+        var nextSession = arguments.TryGetString("until", out var until)
+            && string.Equals(until, "next_session", StringComparison.OrdinalIgnoreCase);
+
+        if (!store.Rearm(frontierId, fired.Id, now, nextSession ? JournalTrigger.NextSession : null))
+        {
+            return ToolResult.Error("I couldn't arm that reminder again. The reminder file may need fixing by hand.");
+        }
+
+        var armed = store.For(frontierId).First(reminder => reminder.Id == fired.Id);
+
+        return ToolResult.Ok($"I'll remind you {Describe(armed)}.");
     }
 
     private static ToolResult Cancel(JournalReminderStore? store, string frontierId, ToolArguments arguments)

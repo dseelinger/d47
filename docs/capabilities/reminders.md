@@ -85,9 +85,24 @@ instead.
 
 What it says when one fires is set out on the [Callouts](callouts.html) page.
 
+### Answering one that went off
+
+For as long as a reminder has gone off and not been answered, three more phrases are heard. They
+answer the most recent one.
+
+| Say | Does |
+| --- | --- |
+| "noted", "got it", "thanks" | Removes it. |
+| "remind me next time" | Arms it again on the same moment. |
+| "remind me tomorrow", "remind me next session" | Arms it again for the start of your next session. |
+
+"Tomorrow" means your next session, not a time of day, because these reminders follow the game.
+With nothing gone off, none of these is heard. A reminder you do not answer is removed at the
+start of your next session, as before.
+
 ### Only you set them
 
-Setting and cancelling are protected: the AI is not offered either and is refused if it asks. A
+Setting, cancelling and answering are protected: the AI is not offered any of them and is refused if it asks. A
 message from another player in your comms panel cannot plant a reminder.
 
 <details markdown="1">
@@ -116,6 +131,22 @@ Cancel an armed journal reminder by words from its sentence.
 
 ```json
 {"type":"object","properties":{"words":{"type":"string","description":"Words from the sentence of the reminder to cancel."}},"required":["words"],"additionalProperties":false}
+```
+
+#### `acknowledge_journal_reminder`
+
+Remove the journal reminder that has just gone off. Reached only by saying "noted", "got it" or "thanks".
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `snooze_journal_reminder`
+
+Arm the journal reminder that has just gone off again, on its own trigger or at the next session.
+
+```json
+{"type":"object","properties":{"until":{"type":"string","description":"When it goes off again: the same moment, or the next session.","enum":["same_trigger","next_session"]}},"required":[],"additionalProperties":false}
 ```
 
 </details>

@@ -138,7 +138,7 @@ public sealed class JournalReminderCallout(JournalReminderStore store) : ICallou
 
         foreach (var (reminder, leadIn) in due)
         {
-            if (store.MarkFired(commander, reminder.Id))
+            if (store.MarkFired(commander, reminder.Id, context.Now))
             {
                 yield return new Announcement(KeyPrefix + reminder.Id, leadIn) { Verbatim = reminder.Sentence };
             }
