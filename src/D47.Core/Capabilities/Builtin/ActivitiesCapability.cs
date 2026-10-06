@@ -48,7 +48,6 @@ public static class ActivitiesCapability
             new ToolDefinition
             {
                 Name = StaleTool,
-                AlwaysLoaded = true,
                 Description =
                     "Name the three activities the Commander has gone longest without doing, oldest first, "
                     + "each with how long ago. Activities the Commander switched off are left out.",
