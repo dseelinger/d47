@@ -165,7 +165,7 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session.
+            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session, Commanders.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill, host.Activities);
             Panel.EnableMissions(
                 () => host.GameState.Active,
@@ -175,6 +175,13 @@ public partial class MainWindow : Window
             Panel.EnableStanding(() => host.GameState.Active);
             Panel.EnableStatistics(() => host.GameState.Active);
             Panel.EnableSession(() => host.GameState.Active);
+            Panel.EnableCommanders(host.Commanders);
+
+            // The title bar's Commander switcher, desktop only: the headset has no title bar.
+            _switcher = new CommanderSwitcher(
+                host.Commanders,
+                () => Panel.Nav.Show(CommandersPage.RootKey),
+                CaptionStrip.StripHeight);
 
             // The stories the Commander flies (Phase 47). **Both surfaces from 2026-08-22**, on the
             // Commander's instruction: the tab was desktop-only on the reasoning that the editor and the ask
@@ -381,7 +388,11 @@ public partial class MainWindow : Window
 
             // And Commander › Standing, by the same route again (#552).
             host.Tick.Add("commander", _ =>
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickCommander()));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    Panel.TickCommander();
+                    _switcher?.Tick();
+                }));
 
             // And the route being flown, by the same route again (Phase 37).
             host.Tick.Add("routing", _ =>
@@ -426,7 +437,10 @@ public partial class MainWindow : Window
         // Last, so it wraps whatever ZoomHost left behind rather than being zoomed along with the panel
         // (#286). HELP and the pre-release badge sit in this window's title bar; the headset's panel keeps its own.
         var (badge, help) = Panel.MoveChromeToTitleBar();
-        CaptionStrip.Apply(this, afterVersion: badge, beforeButtons: help);
+        Control beforeButtons = _switcher is null
+            ? help
+            : new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { help, _switcher } };
+        CaptionStrip.Apply(this, afterVersion: badge, beforeButtons: beforeButtons);
     }
 
     /// <summary>What the panel is showing.</summary>
@@ -729,6 +743,8 @@ public partial class MainWindow : Window
 
     /// <summary>The rectangle this window remembers.</summary>
     private WindowPlacementMemory? _placement;
+
+    private CommanderSwitcher? _switcher;
 
     /// <summary>The settings surface, built the first time the tab is selected.</summary>
     internal AdventureSurface? Adventures { get; }

@@ -161,7 +161,8 @@ public sealed class VrHost : IDisposable
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
         Panel.StarSystemSurface? starSystem = null,
         D47.Core.Activities.ActivityLedger? activities = null,
-        Panel.ConstructionSurface? construction = null)
+        Panel.ConstructionSurface? construction = null,
+        Panel.CommanderRoster? commanders = null)
     {
         VrHost? self = null;
 
@@ -175,6 +176,7 @@ public sealed class VrHost : IDisposable
             starSystem: starSystem,
             activities: activities,
             construction: construction,
+            commanders: commanders,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the

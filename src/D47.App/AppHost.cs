@@ -443,6 +443,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The walk back through older journals, which runs once the window is up (#148).</summary>
     public HistoryBackfill History { get; private set; } = null!;
 
+    /// <summary>Every Commander in the journals, and the pick that changes which one d47 shows.</summary>
+    public CommanderRoster Commanders { get; private set; } = null!;
+
     /// <summary>When the "is starting" line was written, for the line the window logs (#148).</summary>
     private long _startedLogging;
 
@@ -1392,6 +1395,18 @@ public sealed class AppHost : IDisposable
 
             adopted = true;
             gameState.RestoreLate();
+        });
+
+        // A Commander picked on the title bar or the Commanders page, taken here because game state is written
+        // on the tick thread.
+        var picks = new System.Collections.Concurrent.ConcurrentQueue<CommanderIdentity>();
+
+        tick.Add("commander pick", _ =>
+        {
+            while (picks.TryDequeue(out var picked))
+            {
+                gameState.Pick(picked);
+            }
         });
 
         // A story under way is caught up before the priming tick replays the current session (Phase 47): the
@@ -2695,6 +2710,11 @@ public sealed class AppHost : IDisposable
         host.StarSystems = starSystems;
         host.JournalDirectory = journalDirectory;
         host.History = history;
+        host.Commanders = new CommanderRoster(
+            () => history.Commanders,
+            () => history.CommanderFilesExamined,
+            () => gameState.Active?.Identity.FrontierId,
+            picks.Enqueue);
         host._startedLogging = startedLogging;
 
         // Through the dispatcher: the walk raises this on the thread pool thread WarmUp put it on (#148).

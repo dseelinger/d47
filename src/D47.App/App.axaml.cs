@@ -120,7 +120,8 @@ public partial class App(AppHost? host) : Application
                 // And the Search tab's System page, on the window's record.
                 starSystem: window?.StarSystem,
                 activities: host.Activities,
-                construction: window?.Construction);
+                construction: window?.Construction,
+                commanders: host.Commanders);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

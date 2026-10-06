@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+When the journals hold more than one Commander, the title bar shows the current one as CMDR NAME ▼ beside HELP. It opens a menu of every Commander, with the time each was last detected and a tick on the current one; choosing another switches D47 to them. MANAGE COMMANDERS › opens the new Commander › Commanders page, which lists each Commander's ship, last location and last detected time, with SWITCH on each row and ✓ CURRENT on the one D47 is showing. The page is on the headset panel too; the title-bar menu is on the window only.
+
 Say "spell a system", "spell the system" or "spell a destination" to open a keyboard titled "System to plot" and spell the name letter by letter, then Done. The name is plotted exactly as spelled. When a plot ends with no route, D47 now ends its answer with "Spell it?" and asks yes or no; yes opens the keyboard with the name it heard already in it. The keyboard opens on the headset panel while the overlay is showing, otherwise on the window.
 
 Ask "tell me about LTT 7786", or "tell me about this system", and D47 gives the system's government, allegiance, economy, population, controlling faction and its state, Powerplay power and state, how many stations of each kind, and the date of Spansh's last report, then opens Search › System on that system. A name with no exact match is answered with up to three close names. Needs galaxy lookups on.

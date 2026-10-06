@@ -729,6 +729,23 @@ public partial class PanelView : UserControl
             });
     }
 
+    /// <summary>
+    /// Gives this surface Commander › Commanders. Called after <see cref="EnableSession"/>, so the root lands
+    /// last.
+    /// </summary>
+    public void EnableCommanders(CommanderRoster roster)
+    {
+        _commandersBuild = _ => _commanders = new CommandersPage(roster);
+
+        Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(CommandersPage.RootKey, "Commanders")
+            {
+                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
+            });
+    }
+
     /// <summary>Redraws the Commander page showing and its footer when the journal has moved them on.</summary>
     public bool TickCommander()
     {
@@ -759,15 +776,21 @@ public partial class PanelView : UserControl
             changed |= session.Tick();
         }
 
+        if (_commanders is { } commanders && Nav.RootKeyOf(PanelTab.Commander) == CommandersPage.RootKey)
+        {
+            changed |= commanders.Tick();
+        }
+
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, Commanders, or whatever the checklist roots draw.</summary>
     private Control BuildCommander(NavCrumb crumb) =>
         crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
+        : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };
 
@@ -780,6 +803,8 @@ public partial class PanelView : UserControl
     private StatisticsPage? _statistics;
     private Func<NavCrumb, Control>? _sessionBuild;
     private SessionPage? _session;
+    private Func<NavCrumb, Control>? _commandersBuild;
+    private CommandersPage? _commanders;
     private D47.App.Controls.JournalClock? _commanderClock;
 
     /// <summary>

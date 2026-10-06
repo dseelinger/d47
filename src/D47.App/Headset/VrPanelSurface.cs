@@ -128,6 +128,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Panel.StarSystemSurface? starSystem = null,
         D47.Core.Activities.ActivityLedger? activities = null,
         Panel.ConstructionSurface? construction = null,
+        Panel.CommanderRoster? commanders = null,
         Panel.SpeakerPortraits? portraits = null)
     {
         _dumpTo = dumpTo;
@@ -188,7 +189,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (gameState is not null)
         {
-            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session.
+            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session, then
+            // Commanders below.
             _view.EnableMissions(
                 gameState,
                 () => DateTimeOffset.Now,
@@ -197,6 +199,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableStanding(gameState);
             _view.EnableStatistics(gameState);
             _view.EnableSession(gameState);
+        }
+
+        if (commanders is not null)
+        {
+            _view.EnableCommanders(commanders);
         }
 
         // The journal's raw reading, in the headset (#231).
