@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Asking D47 to find systems can now filter by the Powerplay power controlling them, their Powerplay state (Exploited, Fortified, Stronghold or Unoccupied), their population, and whether they are colonised. A population of 0 finds unpopulated systems. An answer to a power search names each system's power and its state. A power or state D47 does not know is refused with the list of ones it does.
+
 When the published default model changes for the language model provider you use, or for ElevenLabs when it speaks, the panel shows one notice, once. If you never chose a model, it says D47 now answers with the new one and offers to keep the old; if you chose one, it names the new default and offers to switch to it. Dismissing it, or using either button, records the default as told.
 
 Say "accept the adventure", "change the adventure" or "reject the adventure" to act on a draft that is waiting for your yes, as Accept, Change something and Decline do. They act on the draft whose page is open, or on the only draft when none is open. With two or more drafts and none open, D47 says to open the one you mean and changes nothing. With no draft, the phrases are not heard.

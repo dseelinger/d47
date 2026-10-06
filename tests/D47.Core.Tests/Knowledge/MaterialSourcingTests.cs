@@ -205,7 +205,7 @@ public class MaterialSourcingTests
         Assert.NotNull(state);
 
         // The word d47 uses is short; the key that matches anything is not.
-        Assert.Equal("controlling_minor_faction_state", state!.Filter.Field);
+        Assert.Equal("controlling_minor_faction_state", state!.Filter.FieldOn(GalaxySearchKind.Systems));
     }
 
     [Fact]

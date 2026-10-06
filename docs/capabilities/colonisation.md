@@ -408,12 +408,11 @@ attached, never a table shipped in d47's own voice.
 Neither of these produces an error. Both were measured on 2026-08-16 and both are the reason this
 tool decides things locally rather than asking the index to decide them.
 
-**The population filter does nothing.** Within 15 light years of Sol, where 48 of the 51 systems are
-populated, asking for population 1 and upwards returned 51 — identical to asking for population
-exactly 0, and identical to a filter key the service has never heard of. It is a real field with a
-published range, and only the range shape is dropped. So the filter is gone from
-[galaxy search](galaxy.md) altogether, and this tool sorts by population instead and applies the
-rule to what comes back.
+**The population filter is dropped in the range shape.** Within 15 light years of Sol, where 48 of
+the 51 systems are populated, asking for population 1 and upwards as `{"min","max"}` returned 51 —
+identical to asking for population exactly 0, and identical to a filter key the service has never
+heard of. [Galaxy search](galaxy.md) sends it in the comparison shape, which the service honours.
+This tool sorts by population instead and applies the rule to what comes back.
 
 **`is_colonised: false` returns the colonised ones.** The value is discarded; the filter means
 "true" whenever it is present. Asking for `"false"` returned the same sixteen systems as `"true"`,

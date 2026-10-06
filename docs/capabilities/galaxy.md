@@ -205,32 +205,48 @@ a request. If you ask for something that is not on the list, you get told what i
 confident wrong answer. This is the first guardrail — never invent game data — applied to a
 service that will let you invent it without complaint.
 
-The filters are `distance`, `allegiance`, `government`, `primary_economy`, `security` and `state`.
-Ranges take one number for an upper bound (`30` means within 30) or two separated by a dash
-(`10-50`).
+The filters are `distance`, `allegiance`, `government`, `primary_economy`, `security`, `state`,
+`faction`, `controlling_faction`, `power`, `power_state`, `population` and `colonised`. Ranges take
+one number for an upper bound (`30` means within 30) or two separated by a dash (`10-50`), so a
+`population` of `0` means unpopulated.
 
-#### The list was one filter longer until 2026-08-16, and that one was doing nothing
+#### Each search kind has its own keys
 
-There was a `population` filter here, from Phase 14 until the colonisation work went looking for
-exactly that field and measured it. Within 15 light years of Sol, where 48 of the 51 systems are
-populated:
+The systems, stations and bodies searches do not share keys. One list of filters in
+`GalaxyQuery.cs` carries each filter's key per search kind, and no key for a kind whose index does
+not honour it. A tool offers exactly its kind's filters, and a filter asked of a kind that does not
+honour it is refused by name. Probed on 2026-10-03 around Sol, each against a no-filter control and
+an unknown key:
+
+| Concept | Systems (30 ly, control 287) | Stations (20 ly, control 3,601) | Bodies (20 ly, control 1,315) |
+| --- | --- | --- | --- |
+| Controlling power, Jerome Archer | `controlling_power` 191 | `system_controlling_power` 2,528 | `system_controlling_power` 916 |
+| Powerplay state, Fortified | `power_state` 70 | `system_power_state` 1,284 | `system_power_state` 387 |
+| Population | `population` comparison 0–0: 11; 1–1,000,000: 113 | `system_population` comparison 0–0: 0; 1e9–1e12: 548 | ignored |
+| Colonised | `is_colonised` true: 5 of 26 at 12 ly | `system_is_colonised` true: 522 | ignored |
+| Allegiance, government, security | honoured | `system_*` ignored; `security` ignored | ignored |
+
+Only the systems search carries these filters so far.
+
+#### A boolean filter cannot express false
+
+`is_colonised` returned the same 5 systems for `"true"`, `"false"`, `"False"`, JSON `true` and JSON
+`false`. So `colonised` means "only colonised systems": true sends `"true"`, and false sends nothing.
+
+#### Population takes the comparison shape
+
+The service drops `population` in the `{"min","max"}` shape that `distance` uses. Within 15 light
+years of Sol, where 48 of the 51 systems are populated:
 
 | Request | Systems returned |
 |---|---|
 | no filter at all | 51 |
-| a key the service has never heard of | 51 |
-| `population: {"min":"1","max":"1000000000000"}` | **51** |
-| `population: {"min":"0","max":"0"}` | **51** |
-| the same bounds as numbers rather than strings | **51** |
-| `population: {"value":["0"]}` | 0 |
-| `population: {"value":["19160"]}`, a population a system in range has | 0 |
+| `population: {"min":"0","max":"0"}` | 51 |
+| `population: {"value":["0","0"],"comparison":"<=>"}` | **4** |
+| `population: {"value":["1","1000000000000"],"comparison":"<=>"}` | **47** |
 
-The field is real — the service publishes a minimum and a maximum for it — and only the range shape
-is dropped. So every "find me a system with a million people" this ever answered was the whole
-neighbourhood with a population filter written on the front of it: the precise failure the section
-above describes, shipped inside the class built to prevent it. A filter the service ignores must not
-be offered, so it is gone. The number itself is on every result, which is how
-[colonisation](colonisation.md) tells an unpopulated system from a populated one.
+So `population` is sent as a comparison: `{"value":["min","max"],"comparison":"<=>"}`. `distance`
+is the one numeric filter the service honours in the min/max shape.
 
 #### A worse trap than the misspelling: a real filter that matches nothing
 
@@ -338,7 +354,7 @@ failed turn.
 Find star systems matching some criteria, nearest first.
 
 ```json
-{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"controlling_faction":{"type":"string","description":"The minor faction controlling the system, by its exact name."},"distance":{"type":"string","description":"How far to look, in light years."},"faction":{"type":"string","description":"A minor faction present in the system, by its exact name."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to theirs."},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"colonised":{"type":"boolean","description":"Only colonised systems."},"controlling_faction":{"type":"string","description":"The minor faction controlling the system, by its exact name."},"distance":{"type":"string","description":"How far to look, in light years."},"faction":{"type":"string","description":"A minor faction present in the system, by its exact name."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to theirs."},"population":{"type":"string","description":"How many people live there. \u00220\u0022 means unpopulated."},"power":{"type":"string","description":"The Powerplay power controlling the system.","enum":["A. Lavigny-Duval","Aisling Duval","Archon Delaine","Denton Patreus","Edmund Mahon","Felicia Winters","Jerome Archer","Li Yong-Rui","Nakato Kaine","Pranav Antal","Yuri Grom","Zemina Torval"]},"power_state":{"type":"string","description":"The system\u0027s Powerplay state.","enum":["Exploited","Fortified","Stronghold","Unoccupied"]},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
 ```
 
 A search with no filters is refused rather than run — it would match the whole galaxy.
@@ -351,7 +367,11 @@ misspelled rather than that the faction is absent.
 On a faction search, each system in the answer also names its controlling faction, the named
 faction's influence there, and the date the system was last reported. The service sends influence
 as a fraction of 1, and the answer gives it as a percentage. Searches without a faction filter
-leave these out.
+leave these out. A search with a `power` or `power_state` filter names each system's controlling
+power and its Powerplay state.
+
+Every answer is kept as the last systems search, with the arguments as given, the system it was
+measured from, the result and what was said. A search that fails keeps nothing.
 
 #### `distance_between`
 

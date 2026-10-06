@@ -96,7 +96,10 @@ public static class GalaxyCapability
         Func<IReadOnlyCollection<string>>? factions = null,
 
         // The Powerplay pledge, which how_to_get reads to name the rank that unlocks a module.
-        Func<Journal.CommanderGameState?>? gameState = null) => new()
+        Func<Journal.CommanderGameState?>? gameState = null,
+
+        // Where every galaxy search answer is posted on its way out, for the search pages.
+        GalaxySearchBoard? searches = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -119,7 +122,7 @@ public static class GalaxyCapability
                 Name = "search_systems",
                 Description =
                     "Find star systems matching some criteria, nearest first. Filters: "
-                    + $"{GalaxyFilters.Names()}, and no others. Ranges take one number for an upper "
+                    + $"{GalaxyFilters.Names(GalaxySearchKind.Systems)}, and no others. Ranges take one number for an upper "
                     + "bound (\"20\") or two separated by a dash (\"10-50\").",
                 Parameters =
                 [
@@ -129,63 +132,7 @@ public static class GalaxyCapability
                         Type = ToolParameterType.String,
                         Description = "Measure from this system. Defaults to theirs.",
                     },
-                    new ToolParameter
-                    {
-                        Name = "distance",
-                        Type = ToolParameterType.String,
-
-                        // The range syntax is spelled out in this tool's own description, one line up.
-                        Description = "How far to look, in light years.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "allegiance",
-                        Type = ToolParameterType.String,
-                        Description = "Superpower allegiance.",
-                        AllowedValues = Choices("allegiance"),
-                    },
-                    new ToolParameter
-                    {
-                        Name = "government",
-                        Type = ToolParameterType.String,
-                        Description = "Form of government.",
-                        AllowedValues = Choices("government"),
-                    },
-                    new ToolParameter
-                    {
-                        Name = "primary_economy",
-                        Type = ToolParameterType.String,
-                        Description = "The system's main economy.",
-                        AllowedValues = Choices("primary_economy"),
-                    },
-                    new ToolParameter
-                    {
-                        Name = "security",
-                        Type = ToolParameterType.String,
-                        Description = "Security level.",
-                        AllowedValues = Choices("security"),
-                    },
-                    new ToolParameter
-                    {
-                        Name = "state",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "What the controlling faction is going through. Crowd-reported, so this "
-                            + "finds systems reported in that state.",
-                        AllowedValues = Choices("state"),
-                    },
-                    new ToolParameter
-                    {
-                        Name = "faction",
-                        Type = ToolParameterType.String,
-                        Description = "A minor faction present in the system, by its exact name.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "controlling_faction",
-                        Type = ToolParameterType.String,
-                        Description = "The minor faction controlling the system, by its exact name.",
-                    },
+                    .. GalaxyFilters.For(GalaxySearchKind.Systems).Select(Parameter),
                     new ToolParameter
                     {
                         Name = "limit",
@@ -194,7 +141,7 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    SearchAsync(galaxy, currentSystem, settings, factions, arguments, cancellationToken),
+                    SearchAsync(galaxy, currentSystem, settings, factions, searches, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -528,14 +475,22 @@ public static class GalaxyCapability
     /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
 
-    private static IReadOnlyList<string> Choices(string filter) =>
-        GalaxyFilters.Find(filter)?.Choices ?? [];
+    /// <summary>A filter as a tool parameter.</summary>
+    private static ToolParameter Parameter(GalaxyFilter filter) => new()
+    {
+        Name = filter.Name,
+        Type = filter.Kind == GalaxyFilterKind.Flag ? ToolParameterType.Boolean : ToolParameterType.String,
+        Description = filter.Description,
+        AllowedValues = filter.Kind == GalaxyFilterKind.Choice ? filter.Choices : [],
+    };
 
     private static async Task<ToolResult> SearchAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
         Func<IReadOnlyCollection<string>>? factions,
+        GalaxySearchBoard? searches,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -549,7 +504,7 @@ public static class GalaxyCapability
         var corrected = new List<string>();
         var unknown = new List<string>();
 
-        foreach (var filter in GalaxyFilters.All)
+        foreach (var filter in GalaxyFilters.For(GalaxySearchKind.Systems))
         {
             if (!arguments.TryGetString(filter.Name, out var value) || string.IsNullOrWhiteSpace(value))
             {
@@ -603,8 +558,18 @@ public static class GalaxyCapability
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return ToolResult.Ok(FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known)
-                + Describe(result, query));
+            var said = FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known)
+                       + Describe(result, query);
+
+            searches?.Post(new GalaxySearchPosting(
+                GalaxySearchKind.Systems,
+                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                result.Reference,
+                result,
+                said,
+                now?.Invoke() ?? DateTimeOffset.UtcNow));
+
+            return ToolResult.Ok(said);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1915,11 +1880,13 @@ public static class GalaxyCapability
     /// <summary>The result as prose.</summary>
     private static string Describe(GalaxySearchResult result, GalaxyQuery query)
     {
-        // Only a faction search names factions, so other answers stay short.
+        // Only a faction search names factions, and only a power search names powers, so other answers stay short.
         var asked = query.Criteria
             .Where(criterion => criterion.Filter.Kind == GalaxyFilterKind.Name)
             .SelectMany(criterion => criterion.Choices)
             .FirstOrDefault();
+
+        var askedPower = query.Criteria.Any(criterion => criterion.Filter.Name is "power" or "power_state");
 
         if (result.Systems.Count == 0)
         {
@@ -1984,6 +1951,19 @@ public static class GalaxyCapability
             if (system.NeedsPermit)
             {
                 facts.Add("permit required");
+            }
+
+            if (askedPower)
+            {
+                if (system.ControllingPower is not null)
+                {
+                    facts.Add(system.ControllingPower);
+                }
+
+                if (system.PowerState is not null)
+                {
+                    facts.Add(system.PowerState);
+                }
             }
 
             if (facts.Count > 0)

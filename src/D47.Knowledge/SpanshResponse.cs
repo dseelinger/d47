@@ -567,6 +567,8 @@ internal static class SpanshResponse
             : null,
 
         ControllingFaction = String(element, "controlling_minor_faction"),
+        ControllingPower = String(element, "controlling_power"),
+        PowerState = String(element, "power_state"),
         Factions = element.TryGetProperty("minor_faction_presences", out var presences)
                    && presences.ValueKind == JsonValueKind.Array
             ? [.. presences.EnumerateArray()

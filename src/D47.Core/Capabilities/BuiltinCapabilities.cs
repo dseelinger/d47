@@ -234,7 +234,10 @@ public static class BuiltinCapabilities
         Knowledge.BestCargoBoard? cargo = null,
 
         // The unannounced mail ledger (#618).
-        Journal.MailLedger? mail = null) =>
+        Journal.MailLedger? mail = null,
+
+        // Where every galaxy search answer is posted.
+        Knowledge.GalaxySearchBoard? searches = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -262,7 +265,8 @@ public static class BuiltinCapabilities
             navigation.Clipboard,
             lastFoundSystem,
             () => gameState.Active?.Reputation.Factions.Keys.ToArray() ?? [],
-            () => gameState.Active),
+            () => gameState.Active,
+            searches),
         RouteCapability.Create(
             routes,
             trade,

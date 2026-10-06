@@ -28,6 +28,11 @@ public sealed record SystemSummary
 
     public string? ControllingFaction { get; init; }
 
+    /// <summary>The Powerplay power controlling the system, as last reported.</summary>
+    public string? ControllingPower { get; init; }
+
+    public string? PowerState { get; init; }
+
     /// <summary>The minor factions present, as last reported.</summary>
     public IReadOnlyList<FactionPresence> Factions { get; init; } = [];
 

@@ -317,8 +317,36 @@ public class SpanshRequestTests
         var filters = Colonisation().GetProperty("filters");
 
         Assert.False(filters.TryGetProperty("population", out _));
+    }
 
-        Assert.Null(GalaxyFilters.Find("population"));
+    [Fact]
+    public void PowerPopulationAndColonisedAreWrittenInTheShapesTheServiceHonours()
+    {
+        var filters = Build(
+                ("power", "Jerome Archer"),
+                ("power_state", "Fortified"),
+                ("population", "0"),
+                ("colonised", "true"))
+            .GetProperty("filters");
+
+        Assert.Equal("{\"value\":[\"Jerome Archer\"]}", filters.GetProperty("controlling_power").GetRawText());
+        Assert.Equal("{\"value\":[\"Fortified\"]}", filters.GetProperty("power_state").GetRawText());
+
+        // Compared as values: the writer escapes "<=>" as <=>, which is the same JSON string.
+        var population = filters.GetProperty("population");
+        Assert.Equal(["0", "0"], population.GetProperty("value").EnumerateArray().Select(v => v.GetString()));
+        Assert.Equal("<=>", population.GetProperty("comparison").GetString());
+        Assert.False(population.TryGetProperty("max", out _));
+
+        Assert.Equal("{\"value\":[\"true\"]}", filters.GetProperty("is_colonised").GetRawText());
+    }
+
+    [Fact]
+    public void ColonisedFalseWritesNoKeyBecauseTheServiceCannotExpressIt()
+    {
+        var filters = Build(("distance", "20"), ("colonised", "false")).GetProperty("filters");
+
+        Assert.False(filters.TryGetProperty("is_colonised", out _));
     }
 
     [Fact]

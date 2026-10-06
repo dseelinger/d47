@@ -568,6 +568,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The last best cargo search (#849), on the same terms as <see cref="Commodities"/>.</summary>
     public D47.Core.Knowledge.BestCargoBoard Cargo { get; private set; } = new();
 
+    /// <summary>The last answer of each galaxy search kind.</summary>
+    public D47.Core.Knowledge.GalaxySearchBoard GalaxySearches { get; private set; } = new();
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -999,6 +1002,7 @@ public sealed class AppHost : IDisposable
         var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
         var sourcingBoard = new D47.Core.Knowledge.SourcingBoard();
         var cargoBoard = new D47.Core.Knowledge.BestCargoBoard();
+        var galaxySearchBoard = new D47.Core.Knowledge.GalaxySearchBoard();
 
         // The Community Goal supply search, saved once (#296), and the ledger of what its commodity has made
         // or lost.
@@ -2180,7 +2184,8 @@ public sealed class AppHost : IDisposable
                 liveStatus: () => status.Current,
                 activities: activities,
                 cargo: cargoBoard,
-                mail: mail));
+                mail: mail,
+                searches: galaxySearchBoard));
 
         buildingRegistry.Dispose();
 
@@ -2764,6 +2769,7 @@ public sealed class AppHost : IDisposable
         host.CommodityLedger = commodityLedger;
         host.Sourcing = sourcingBoard;
         host.Cargo = cargoBoard;
+        host.GalaxySearches = galaxySearchBoard;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, OtherDynamicCommands());
 
