@@ -233,18 +233,18 @@ public static class EgressDisclosure
                 HullArt,
                 NameOf(HullArt),
                 GitHubReleasesEndpoint,
-                "The hull symbol of a ship you open, when D47 has no large picture of it yet - one request "
+                "The hull symbol of a ship or carrier you open, when D47 has no large picture of it yet - one request "
                 + "each for a picture, a turntable and a mesh, kept on disk so each hull is asked for once. "
                 + "Nothing else goes with it: no key, no Commander name, no position and nothing from your "
                 + "journal. Which hulls you own is not sent, and the small picture on each card came with "
                 + "the build and is never fetched.",
                 Active: true,
-                Summary: "The hull symbol of a ship you open, when no large picture exists yet on disk.")
+                Summary: "The hull symbol of a ship or carrier you open, when no large picture exists yet on disk.")
             : EgressEntry.Silent(
                 HullArt,
                 NameOf(HullArt),
                 "Hull pictures are off, so nothing is fetched, fleet cards show no drawing, and a ship's "
-                + "own page shows no picture and no turntable, even for a hull already on disk.",
+                + "own page and the carrier page show no picture and no turntable, even for a hull already on disk.",
                 summary: "Hull pictures are off, so nothing is fetched and no ship shows a picture."),
 
         AvatarClips => settings.Ui.AvatarClips

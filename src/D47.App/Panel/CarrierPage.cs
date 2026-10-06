@@ -45,6 +45,9 @@ public sealed class CarrierPage : UserControl
     private readonly Func<string?, bool>? _planRoute;
     private readonly StackPanel _body = new() { Spacing = 4 };
     private IDisposable? _sized;
+    private const string CarrierHull = "fleetcarrier";
+
+    private readonly bool _hullPictures;
     private bool _mini;
 
     public CarrierPage(
@@ -56,8 +59,12 @@ public sealed class CarrierPage : UserControl
         Control? settingsStrip = null,
 
         // Opens Navigation › Plan's Carrier Route card with From set to the system given.
-        Func<string?, bool>? planRoute = null)
+        Func<string?, bool>? planRoute = null,
+
+        // Whether Hull pictures is on.
+        bool hullPictures = false)
     {
+        _hullPictures = hullPictures;
         _carrier = carrier;
         _planRoute = planRoute;
         _now = now ?? (() => DateTimeOffset.UtcNow);
@@ -187,7 +194,9 @@ public sealed class CarrierPage : UserControl
 
         Services(carrier, tiles);
 
-        _body.Children.Add(StatTile.Grid(tiles, maxColumns: 3));
+        var grid = StatTile.Grid(tiles, maxColumns: 3);
+
+        _body.Children.Add(!_mini && _hullPictures ? HullPicture.For(CarrierHull, grid) : grid);
 
         if (_planRoute is { } planRoute && !carrier.IsSquadron)
         {

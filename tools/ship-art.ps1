@@ -91,7 +91,9 @@ $symbols = @{
     'diamondback-explorer' = 'diamondbackxl'
     'diamondback-scout'    = 'diamondback'
     'dolphin'              = 'dolphin'
+    'drake-carrier'        = 'fleetcarrier'
     'eagle'                = 'eagle'
+    'fortune-carrier'      = 'fleetcarrier_fortune'
     'federal-assault-ship' = 'federation_dropship_mkii'
     'federal-corvette'     = 'federation_corvette'
     'federal-dropship'     = 'federation_dropship'
@@ -109,6 +111,7 @@ $symbols = @{
     'lynx-highliner'       = 'mediumtransport01'
     'mamba'                = 'mamba'
     'mandalay'             = 'mandalay'
+    'nautilus-carrier'     = 'fleetcarrier_nautilus'
     'orca'                 = 'orca'
     'panther-clipper-mk2'  = 'panthermkii'
     'python'               = 'python'
@@ -122,6 +125,7 @@ $symbols = @{
     'type-9-heavy'         = 'type9'
     'viper-mk3'            = 'viper'
     'viper-mk4'            = 'viper_mkiv'
+    'victory-carrier'      = 'fleetcarrier_victory'
     'vulture'              = 'vulture'
 }
 
@@ -147,7 +151,10 @@ foreach ($symbol in $hulls) {
     $named = $symbols[$symbol]
     if (-not $named) { throw "No hull symbol for '$symbol'. Add it to the table in this file." }
 
-    & python $shrinkFile $frame (Join-Path $assets "$named.png")
+    # A carrier has no fleet card, so no card picture ships in d47.zip.
+    if ($named -notlike 'fleetcarrier*') {
+        & python $shrinkFile $frame (Join-Path $assets "$named.png")
+    }
     & python $shrinkFile $still (Join-Path $assets "$named.4k.png")
     Copy-Item $video (Join-Path $assets "$named.spin.mp4") -Force
     Copy-Item $mesh (Join-Path $assets "$named.mesh") -Force

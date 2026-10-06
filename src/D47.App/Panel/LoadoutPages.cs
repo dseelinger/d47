@@ -106,7 +106,8 @@ public static class LoadoutPages
                 carrier,
                 copy: copy,
                 settingsStrip: carrierSettingsStrip?.Invoke(),
-                planRoute: planCarrierRoute);
+                planRoute: planCarrierRoute,
+                hullPictures: modes.FirstOrDefault(mode => mode.ItemPrefix == ShipPrefix)?.Pictures ?? false);
         }
 
         if (crumb.Key.StartsWith(PowerPrefix, StringComparison.Ordinal)

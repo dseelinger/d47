@@ -214,6 +214,10 @@ or is cancelled.
 If no `CarrierStats` has ever been seen, the report says so rather than saying you have no
 carrier — those are different answers, and only one of them is true.
 
+The page shows the carrier's hull beside its tiles, from the same fetch and the same Hull pictures
+setting as a ship's picture; see [the pictures](ships.md#hull-art). The mini panel and the squadron's
+carrier show none.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
