@@ -612,6 +612,9 @@ public sealed record CalloutSettings
     /// <summary>The hired pilot speaking when the fighter launches, docks, is lost or is rebuilt (#848).</summary>
     public bool Fighter { get; init; } = true;
 
+    /// <summary>Where the granted pad is in a ring station, said after a docking grant (#574).</summary>
+    public bool DockingPad { get; init; } = true;
+
     /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
     public bool CarrierFuel { get; init; } = true;
 

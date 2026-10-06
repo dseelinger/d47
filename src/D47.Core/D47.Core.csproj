@@ -26,6 +26,7 @@
     <EmbeddedResource Include="Knowledge\Regions.tsv" LogicalName="D47.Core.Regions" />
     <EmbeddedResource Include="Knowledge\PermitSystems.tsv" LogicalName="D47.Core.PermitSystems" />
     <EmbeddedResource Include="Knowledge\PowerplayRanks.tsv" LogicalName="D47.Core.PowerplayRanks" />
+    <EmbeddedResource Include="Knowledge\LandingPads.tsv" LogicalName="D47.Core.LandingPads" />
   </ItemGroup>
 
   <ItemGroup>

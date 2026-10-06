@@ -18,6 +18,7 @@ public static class CrewDomains
 
         ["fuel"] = CrewRole.Helm,
         ["limpets"] = CrewRole.Helm,
+        ["docking"] = CrewRole.Helm,
 
         ["messages"] = CrewRole.Comms,
 

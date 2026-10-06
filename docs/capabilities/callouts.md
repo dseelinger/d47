@@ -333,6 +333,23 @@ the rebuy and then falls short once more, or you change ship. Nothing is said wh
 on another Commander's ship or riding in a taxi. The line is never reworded, so the figures are
 always the ones Elite wrote.
 
+#### Landing pad {#docking}
+
+When docking is granted at a Coriolis, Orbis, Ocellus or asteroid base, your core says where the pad
+is, as a clock hour and how far in ([#574](https://github.com/dseelinger/d47/issues/574)). It is on
+by default.
+
+```text
+Pad ten, eight o'clock, halfway in.
+```
+
+The clock is seen as you fly in with the green lights on your right: six o'clock is straight below
+you, and the hours run round from there. "Near the entrance", "halfway in" and "at the back" say
+how deep into the station the pad is. The line comes four seconds after the grant, so it follows the
+station's own "Docking request granted". It is dropped if you dock, cancel, are denied or time out
+before then, and a second grant replaces the first. Nothing is said at a fleet carrier, an outpost,
+a surface port or a settlement.
+
 #### Route progress {#route}
 
 Jumps remaining, what is next, and what is coming:

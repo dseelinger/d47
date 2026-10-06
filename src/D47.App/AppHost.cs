@@ -3073,6 +3073,7 @@ public sealed class AppHost : IDisposable
             .Add(new CommunityGoalExpiryCallout())
             .Add(new SessionLengthCallout())
             .Add(new FighterCallout())
+            .Add(new DockingCallout())
 
             // A remark on the subject the core aboard pays attention to (#611).
             .Add(new DomainCallout())
@@ -3190,6 +3191,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("community-goal-expiry", callouts.CommunityGoalExpiry, now);
         engine.SetEnabled("session-length", callouts.SessionLength, now);
         engine.SetEnabled("fighter", callouts.Fighter, now);
+        engine.SetEnabled("docking", callouts.DockingPad, now);
         engine.SetEnabled("domain", callouts.Domain, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);

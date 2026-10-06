@@ -55,6 +55,7 @@ public static class CalloutCapability
     public const string CarrierFuelKey = "callouts.carrierFuel";
     public const string CommunityGoalExpiryKey = "callouts.communityGoalExpiry";
     public const string FighterKey = "callouts.fighter";
+    public const string DockingPadKey = "callouts.dockingPad";
     public const string SessionLengthKey = "callouts.sessionLength";
     public const string SessionLengthHoursKey = "callouts.sessionLengthHours";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
@@ -501,6 +502,15 @@ public static class CalloutCapability
                 "the fighter pilot",
                 s => s.Callouts.Fighter,
                 (s, v) => s with { Callouts = s.Callouts with { Fighter = v } }),
+
+            Toggle(
+                DockingPadKey,
+                "Landing pad",
+                "Where the granted pad is in a Coriolis, Orbis, Ocellus or asteroid base, as a clock hour and a depth.",
+                "docking",
+                "the landing pad",
+                s => s.Callouts.DockingPad,
+                (s, v) => s with { Callouts = s.Callouts with { DockingPad = v } }),
 
             Toggle(
                 SessionLengthKey,

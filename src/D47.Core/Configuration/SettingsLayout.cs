@@ -455,7 +455,7 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "exploring",
                     "Exploring",
-                    "Arrivals, lore, undiscovered systems, biology and unsold data at risk.",
+                    "Arrivals, landing pads, lore, undiscovered systems, biology and unsold data at risk.",
                     "callouts",
                     [],
                     false,
@@ -466,6 +466,7 @@ public static class SettingsLayout
                             [
                                 E("callouts.arrival"),
                                 E("callouts.homeSystem", under: true),
+                                E("callouts.dockingPad"),
                                 E("callouts.lore"),
                                 E("callouts.loreCooldownDays", under: true),
                                 E("callouts.discovery"),
