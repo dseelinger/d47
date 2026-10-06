@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+While you are pledged to a Power, twelve hours before the Powerplay cycle ends d47 now says how many merits you have earned for it this cycle: "The Powerplay cycle ends in twelve hours. You have earned 1,029 merits for Li Yong-Rui this cycle." It is said once per cycle, even across restarts, and the count includes merits earned in earlier sessions of the same cycle. The cycle ends on the week boundary set under community goals, Thursday 07:00 UTC by default. The game state the model reads now carries the same count and the time left, so "how many merits have I earned this week" has an answer. Settings > Callouts has a new switch, Powerplay cycle, on by default.
+
 A ship's page now ends its details with a PLAN section when that ship has live engineering plans or an outstanding construction delivery. It lists each material the plans still need with what you hold, what is short (or "✓ MET") and a gauge, adds a notice for any need that takes more than one trip, names engineer ranks you have not reached, and groups missing materials that come from the same kind of place. It redraws as you collect materials.
 
 Asking about one engineer or one of your ships now opens its page on the panel and in the headset, whatever they were showing. "Where is Felicity Farseer" opens her page under Asset Mgmt › Engineers, as does "what's left for Felicity Farseer"; "what am I flying" or asking about a ship by name opens that ship's page under Asset Mgmt › Ships. A question about several engineers, or a name d47 does not know, leaves the panel where it was, and a surface with a chooser open does not move. Callouts and other lines you did not ask for never move the panel.

@@ -49,6 +49,7 @@ public static class CalloutCapability
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string PowerplayMeritsKey = "callouts.powerplayMerits";
     public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
+    public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -434,6 +435,15 @@ public static class CalloutCapability
                 "powerplay salvage",
                 s => s.Callouts.PowerplaySalvage,
                 (s, v) => s with { Callouts = s.Callouts with { PowerplaySalvage = v } }),
+
+            Toggle(
+                PowerplayCycleKey,
+                "Powerplay cycle",
+                "Twelve hours before the Powerplay cycle ends, how many merits you have earned for your Power in it.",
+                "powerplay-cycle",
+                "powerplay cycle",
+                s => s.Callouts.PowerplayCycle,
+                (s, v) => s with { Callouts = s.Callouts with { PowerplayCycle = v } }),
 
             Toggle(
                 ChecklistKey,

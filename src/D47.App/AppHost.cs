@@ -927,6 +927,9 @@ public sealed class AppHost : IDisposable
             // And faction reputation and engineer contributions, which Elite writes only where the faction is
             // present or the engineer is visited.
             RestoreEvidence = fid => history.Evidence?.GetValueOrDefault(fid),
+
+            // And the merits earned for the Commander's Power earlier this cycle.
+            RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
         };
 
         // The settings follow whoever the journal says is flying (Phase 44).
@@ -2202,7 +2205,12 @@ public sealed class AppHost : IDisposable
                 // everything else here, not captured once, so the balance the model sees is the balance the
                 // game is showing.
                 Situation.Describe(
-                    gameState.Active, status.Current, SystemWallClock.Instance.UtcNow, route.Current),
+                    gameState.Active,
+                    status.Current,
+                    SystemWallClock.Instance.UtcNow,
+                    route.Current,
+                    settings.Current.Callouts.WeekBoundaryDay,
+                    settings.Current.Callouts.WeekBoundaryHourUtc),
                 Join(
                     ActionCapabilities.Describe(actionSurface),
                     Join(
@@ -3057,6 +3065,12 @@ public sealed class AppHost : IDisposable
 
             .Add(new PowerplayMeritsCallout())
             .Add(new PowerplaySalvageCallout())
+            .Add(new PowerplayCycleCallout
+            {
+                Boundary = () => (settings.Current.Callouts.WeekBoundaryDay, settings.Current.Callouts.WeekBoundaryHourUtc),
+                LastSaidCycle = () => viewState.Load().PowerplayCycleSaidFor,
+                RememberSaidCycle = cycle => viewState.Save(viewState.Load() with { PowerplayCycleSaidFor = cycle }),
+            })
 
             // Phase 23.
             .Add(new LoreCallout(lore, loreVisits))
@@ -3170,6 +3184,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);
         engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
+        engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);

@@ -80,6 +80,12 @@ public sealed class GameStateStore
     public Func<string, UnlockEvidence?>? RestoreEvidence { get; init; }
 
     /// <summary>
+    /// The merits this Commander earned for their Power over the last week, on the same terms as <see
+    /// cref="RestoreFleet"/>.
+    /// </summary>
+    public Func<string, PowerplayCycleMerits?>? RestoreCycleMerits { get; init; }
+
+    /// <summary>
     /// Raised when the Commander whose journal is being tailed changes (Phase 44, "One switch signal").
     /// </summary>
     public event Action<CommanderSwitch>? CommanderChanged;
@@ -149,6 +155,11 @@ public sealed class GameStateStore
             {
                 state.Reputation = evidence.Reputation.With(state.Reputation);
                 state.Contributions = evidence.Contributions.With(state.Contributions);
+            }
+
+            if (RestoreCycleMerits?.Invoke(fid) is { IsKnown: true } merits)
+            {
+                state.CycleMerits = merits.With(state.CycleMerits);
             }
         }
     }
@@ -257,6 +268,11 @@ public sealed class GameStateStore
         if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
         {
             state.Names = names;
+        }
+
+        if (RestoreCycleMerits?.Invoke(identity.FrontierId) is { IsKnown: true } merits)
+        {
+            state.CycleMerits = merits;
         }
 
         if (RestoreEvidence?.Invoke(identity.FrontierId) is { IsKnown: true } evidence)

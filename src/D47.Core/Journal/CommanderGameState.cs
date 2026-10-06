@@ -70,6 +70,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Which Power they fly for, if any (Phase 15).</summary>
     public PowerplayPledge Pledge { get; private set; } = PowerplayPledge.None;
 
+    /// <summary>The merits earned for that Power over the last week.</summary>
+    public PowerplayCycleMerits CycleMerits { get; internal set; } = PowerplayCycleMerits.None;
+
     /// <summary>Salvage scooped in the current system while it was their Power's own.</summary>
     public ScoopedSalvage Salvage { get; private set; } = ScoopedSalvage.None;
 
@@ -160,6 +163,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(CommunityGoals), "community goals", state => state.CommunityGoals),
         new(nameof(Missions), "your missions", state => state.Missions),
         new(nameof(Pledge), "your Powerplay pledge", state => state.Pledge),
+        new(nameof(CycleMerits), "your merits this cycle", state => state.CycleMerits),
         new(nameof(Salvage), "your scooped salvage", state => state.Salvage),
         new(nameof(Mining), "your mining runs", state => state.Mining),
         new(nameof(Bodies), "body signals", state => state.Bodies),
@@ -243,6 +247,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Missions = Missions.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);
+        CycleMerits = CycleMerits.Apply(journalEvent, Pledge);
         Salvage = Salvage.Apply(journalEvent, Location, Pledge);
         Mining = Mining.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);

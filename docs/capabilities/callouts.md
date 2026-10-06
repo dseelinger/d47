@@ -520,6 +520,27 @@ unoccupied or rival system is not counted, and a supercruise jump says nothing. 
 is not covered: no source names where it is handed in. The rule is in the table above, last checked
 against game version 4.4.1.1 on 2026-09-28. Turn this one off with the `powerplay-salvage` row.
 
+#### Powerplay cycle {#powerplay-cycle}
+
+While you are pledged, twelve hours before the Powerplay cycle ends, how many merits you have earned
+for your Power since it began
+([#603](https://github.com/dseelinger/d47/issues/603)).
+
+```text
+The Powerplay cycle ends in twelve hours. You have earned 1,029 merits for Li Yong-Rui this cycle.
+```
+
+With none earned it says *"The Powerplay cycle ends in twelve hours, and you have earned no merits
+this cycle."* The cycle turns over on [the week boundary](community-goals.html#week-boundary),
+Thursday 07:00 UTC by default, so changing that setting moves this reminder too. The total is the
+sum of the merits each `PowerplayMerits` event says you gained for your Power since the boundary,
+including those in earlier sessions of the same cycle; joining, defecting or leaving starts it at
+zero. It is said at most once per cycle, even across restarts. If d47 starts inside the last twelve
+hours, it is said once it has caught up on the journal, with the hours that are left. A cycle that
+ended while d47 was not running is not mentioned. The same total and the time to the boundary are in
+the game state the model reads, so *"how many merits have I earned this week"* has an answer. Turn
+this one off with the `powerplay-cycle` row.
+
 #### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.

@@ -71,6 +71,7 @@ public static class CrewDomains
         "mining-summary",
         "powerplay-merits",
         "powerplay-salvage",
+        "powerplay-cycle",
         "ring-hotspots",
         "unsold-data-at-risk",
         "reminders",

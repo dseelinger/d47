@@ -494,6 +494,9 @@ public sealed record CalloutSettings
     /// <summary>Salvage scooped in your Power's system, on jumping away without handing it in.</summary>
     public bool PowerplaySalvage { get; init; } = true;
 
+    /// <summary>Twelve hours before the Powerplay cycle ends, the merits earned in it.</summary>
+    public bool PowerplayCycle { get; init; } = true;
+
     /// <summary>
     /// A checklist item the journal has just changed its mind about, and the last unit a plan needed
     /// (Phase 17).

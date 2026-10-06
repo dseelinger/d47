@@ -102,6 +102,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's finished mining runs that refined something, oldest first (#610).</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<MiningRun>>? MiningRuns { get; private set; }
 
+    /// <summary>Each Commander's merits for their Power over the last week.</summary>
+    public IReadOnlyDictionary<string, PowerplayCycleMerits>? CycleMerits { get; private set; }
+
     /// <summary>
     /// Walks the five, in order, on the calling thread. A second call does nothing: the answer is wanted
     /// once. Cancelling stops it at the next journal file and leaves it <see cref="HistoryState.Stopped"/>,
@@ -175,6 +178,13 @@ public sealed class HistoryBackfill
                 () => MiningBackfill.FromHistory(
                     Files(),
                     Loggers.CreateLogger(nameof(MiningBackfill)),
+                    cancellation));
+
+            CycleMerits = Timed(
+                "powerplay cycle backfill",
+                () => PowerplayCycleBackfill.FromHistory(
+                    Files(),
+                    Loggers.CreateLogger(nameof(PowerplayCycleBackfill)),
                     cancellation));
 
             if (Exobiology is { } exobiology)

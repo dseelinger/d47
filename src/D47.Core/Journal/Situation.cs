@@ -19,11 +19,15 @@ public static class Situation
     /// <param name="route">
     /// The plotted route as Elite last wrote it, which is where a jump count comes from (#152).
     /// </param>
+    /// <param name="weekBoundaryDay">The day, UTC, the Powerplay cycle turns over on.</param>
+    /// <param name="weekBoundaryHourUtc">The hour, UTC, it turns over at.</param>
     public static string? Describe(
         CommanderGameState? state,
         GameStatus? status = null,
         DateTimeOffset? now = null,
-        NavRoute? route = null)
+        NavRoute? route = null,
+        DayOfWeek weekBoundaryDay = DayOfWeek.Thursday,
+        int weekBoundaryHourUtc = 7)
     {
         if (state is null)
         {
@@ -39,7 +43,7 @@ public static class Situation
         AppendCredits(status, now, lines);
         AppendCarrier(state, lines);
         AppendMissions(state, now, lines);
-        AppendPowerplay(state, lines);
+        AppendPowerplay(state, now, weekBoundaryDay, weekBoundaryHourUtc, lines);
         AppendSession(state, lines);
 
         if (lines.Count == 0)
@@ -392,7 +396,8 @@ public static class Situation
     }
 
     /// <summary>Which Power the Commander is pledged to, once a Powerplay event has said.</summary>
-    private static void AppendPowerplay(CommanderGameState state, List<string> lines)
+    private static void AppendPowerplay(
+        CommanderGameState state, DateTimeOffset? now, DayOfWeek boundaryDay, int boundaryHourUtc, List<string> lines)
     {
         var pledge = state.Pledge;
 
@@ -415,7 +420,17 @@ public static class Situation
             ? $", {total:N0} merits"
             : "";
 
-        lines.Add($"Powerplay: pledged to {pledge.Power}, {rank}{merits}.");
+        var cycle = "";
+
+        if (now is { } at)
+        {
+            var week = CommodityLedger.Week(at, boundaryDay, boundaryHourUtc);
+            var earned = state.CycleMerits.Since(week.From);
+
+            cycle = $"; {earned:N0} this cycle, which ends in {CycleLeft(week.To - at)}";
+        }
+
+        lines.Add($"Powerplay: pledged to {pledge.Power}, {rank}{merits}{cycle}.");
 
         if (pledge.Rank > 0 && PerksLine(state) is { } perks)
         {
@@ -426,6 +441,26 @@ public static class Situation
         {
             lines.Add(modifier);
         }
+    }
+
+    /// <summary>"2 days 5 hours", "5 hours", "40 minutes".</summary>
+    private static string CycleLeft(TimeSpan left)
+    {
+        static string Unit(int count, string unit) => count == 1 ? $"1 {unit}" : $"{count} {unit}s";
+
+        if (left.TotalHours < 1)
+        {
+            return Unit(Math.Max(1, (int)left.TotalMinutes), "minute");
+        }
+
+        var hours = Unit(left.Hours, "hour");
+
+        return left.Days switch
+        {
+            0 => hours,
+            _ when left.Hours == 0 => Unit(left.Days, "day"),
+            _ => $"{Unit(left.Days, "day")} {hours}",
+        };
     }
 
     /// <summary>The perks held at the pledged rank and whether this system is the Power's territory; null when the Power is not in the table or the rank holds none.</summary>
