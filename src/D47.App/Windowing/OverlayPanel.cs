@@ -178,7 +178,7 @@ public sealed class OverlayPanel : Window
         if (tabs.Checklists is { } checklists)
         {
             // What the Commander is working on — the tab this instruction named.
-            _view.EnableChecklist(checklists, tabs.Goals, tabs.BackfillGoals);
+            _view.EnableChecklist(checklists, tabs.Goals, tabs.BackfillGoals, tabs.Activities);
         }
 
         if (tabs.Unlocks is { } unlocks && tabs.Ships is { } ships && tabs.GameState is { } state)

@@ -393,6 +393,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's log (Phase 33).</summary>
     public D47.Core.Logbook.LogbookBook? Logbook { get; private set; }
 
+    /// <summary>When each activity was last done, and which may be suggested (#585).</summary>
+    public D47.Core.Activities.ActivityLedger? Activities { get; private set; }
+
     /// <summary>The Commander's long arcs (Phase 34).</summary>
     public (D47.Core.Goals.GoalBook Book, Action? Backfill)? Goals { get; private set; }
 
@@ -2601,6 +2604,7 @@ public sealed class AppHost : IDisposable
         callouts.Silenced += host.NoteSilenced;
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
+        host.Activities = activities;
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
         host.StoryDownloads = storyDownloads;

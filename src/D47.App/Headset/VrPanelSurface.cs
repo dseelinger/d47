@@ -125,7 +125,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
 
         // The Search tab's System page, on the window's record.
-        Panel.StarSystemSurface? starSystem = null)
+        Panel.StarSystemSurface? starSystem = null,
+        D47.Core.Activities.ActivityLedger? activities = null)
     {
         _dumpTo = dumpTo;
 
@@ -175,7 +176,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (checklists is not null)
         {
             // What the Commander is working on, back in the headset (Phase 39).
-            _view.EnableChecklist(checklists, goals, backfillGoals);
+            _view.EnableChecklist(checklists, goals, backfillGoals, activities);
         }
 
         if (gameState is not null)

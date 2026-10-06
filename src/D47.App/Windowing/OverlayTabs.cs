@@ -17,6 +17,8 @@ public sealed record OverlayTabs
 
     public Action? BackfillGoals { get; init; }
 
+    public D47.Core.Activities.ActivityLedger? Activities { get; init; }
+
     /// <summary>Who to go and unlock next (Phase 28).</summary>
     public D47.Core.Engineers.EngineerPlanService? Unlocks { get; init; }
 

@@ -597,10 +597,12 @@ public partial class PanelView : UserControl
     /// <summary>Gives this surface the checklist (Phase 25, "The checklist leaves its window").</summary>
     /// <param name="goals">The Commander's long arcs (Phase 34).</param>
     /// <param name="backfill">What "read my journals" does.</param>
+    /// <param name="activities">When each activity was last done, for the Activities page (#587).</param>
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null)
+        Action? backfill = null,
+        D47.Core.Activities.ActivityLedger? activities = null)
     {
         // Held for the thread's own proposal cards: whether one is still pending is looked up here rather
         // than trusted from what drew it last (#277).
@@ -612,6 +614,9 @@ public partial class PanelView : UserControl
         {
             ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
                                             ?? new TextBlock { Text = "Nothing waiting." },
+            ChecklistPage.ActivitiesKey => activities is null
+                ? new TextBlock { Text = "No activity dates yet." }
+                : new ActivitiesPage(activities, () => checklists.Document.CommanderFid),
             _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill, crumb: crumb),
         };
 

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Checklist page has an Activities button beside Suggestions. It opens Checklist › Activities, which lists every activity d47 dates, oldest first, with the date you last did it in the galactic year and how long ago, or "Not in your journals since" the start of your journals for one that has none. Each row has a Suggest checkbox, and clicking anywhere on the row toggles it. An activity you untick is no longer suggested, and its row and date stay on the page.
+
 The Checklist no longer holds a line for each delivery or collect mission, and no longer lists them when you ask for it. Missions are on Commander › Missions. A mission line already in your checklist is removed the next time the app loads it.
 
 The on-foot engineers whose invitation asks for a number of missions, sales or settlement visits — Jude Navarro, Terra Velasquez, Eleanor Bresa, Rosa Dayette, Kit Fowler, Yarden Bond, Wellington Beck and Oden Geiger — now have that requirement counted. Counting starts at the first login whose engineer list names them, and includes your older journals. Once the count reaches the target the requirement is ticked with a full bar. Below it, the requirement stays unticked rather than marked unmet, with a bar and a line such as "2 counted since 4 Nov 2025", because missing journals and sales made before that login are not counted. Sales count at any bartender, your own carrier's included; Rosa Dayette's count only in Colonia, and Eleanor Bresa's visits count once per Colonia settlement.

@@ -156,7 +156,8 @@ public sealed class VrHost : IDisposable
         // above (#218).
         Func<string, Control?>? buildSettingsStrip = null,
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
-        Panel.StarSystemSurface? starSystem = null)
+        Panel.StarSystemSurface? starSystem = null,
+        D47.Core.Activities.ActivityLedger? activities = null)
     {
         VrHost? self = null;
 
@@ -168,6 +169,7 @@ public sealed class VrHost : IDisposable
             buildSettingsStrip: buildSettingsStrip,
             galaxy: galaxy,
             starSystem: starSystem,
+            activities: activities,
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
             // handles carry.

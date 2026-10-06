@@ -25,6 +25,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>The crumb the suggestions page is pushed as.</summary>
     public const string SuggestionsKey = "checklist.suggestions";
 
+    /// <summary>The crumb the Activities page is pushed as.</summary>
+    public const string ActivitiesKey = "checklist.activities";
+
     /// <summary>The crumb the All lists page is pushed as.</summary>
     public const string AllKey = "checklist.all";
 
@@ -141,6 +144,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         IsVisible = false,
     };
 
+    private readonly Button _activities = new()
+    {
+        Content = "Activities",
+        VerticalAlignment = VerticalAlignment.Top,
+    };
+
     /// <summary>Bulk-removes every Done line on the whole checklist (#259).</summary>
     private readonly Button _deleteCompleted = new()
     {
@@ -216,6 +225,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
 
+        _activities.Click += (_, _) =>
+            _nav.Drill(new NavCrumb(ActivitiesKey, "Activities"));
+
         // The checkbox owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
         // never assigns IsChecked back and there is no loop to break.
         _arcsToggle.IsCheckedChanged += (_, _) =>
@@ -241,6 +253,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             case Level.Lists:
                 _controls.Children.Add(_arcsToggle);
                 _right.Children.Add(_suggestions);
+                _right.Children.Add(_activities);
                 break;
 
             case Level.One:
