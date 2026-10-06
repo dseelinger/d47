@@ -910,6 +910,25 @@ The first sentence is written by Directive 47. Where a persona is on, the core f
 — *"Ready to reconcile the ledger"*, *"Ready to go, for the last time, again"* — in a few words of
 its own and changes nothing else; with personality off it is *"Ready to go."*
 
+#### Last session recap {#recap}
+
+One line after the opening line, about the last complete session: where it ended, the ship, and the
+most notable rank, engineer, death, rebuy or interdiction in it.
+
+```text
+Last session you finished docked at Garay Terminal, Deciat in the Python "Directive", and earlier you were promoted: Combat rank 5.
+```
+
+Directive 47 writes that line from the journals of the session before the one in progress — from its
+`LoadGame` to its last event — and never from the session you are starting. With a language model
+and personality on, the core aboard always says it again in its own voice, keeping every name and
+figure; that is one priced call per launch, counted in spend. With no model, or personality off, the
+line is said as written. Your Backstory and the active adventure are not sent with it.
+
+It is not said when there is no earlier session in the last eight journals, when that session holds
+nothing beyond where it started and ended, or with a stock core aboard. Turn it off with the `recap`
+row; the **Last session recap** entry under **Privacy and egress** goes silent with it.
+
 #### Adventure objectives {#adventure}
 
 An objective of the story you are following, said when you reach the place it waits for

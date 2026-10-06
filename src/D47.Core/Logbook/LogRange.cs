@@ -190,6 +190,51 @@ public static class LogRanges
     }
 
     /// <summary>
+    /// The session before the one that started at <paramref name="before"/>: from the last <c>LoadGame</c>
+    /// before that instant to the last event before it, or null where no earlier <c>LoadGame</c> is in reach.
+    /// </summary>
+    public static LogRange? PreviousSession(DateTimeOffset before, IReadOnlyList<string> files, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+
+        const int LookBack = 8;
+
+        var candidates = files.Where(file => StartedAt(file) is not { } at || at < before).ToList();
+
+        DateTimeOffset? from = null;
+        DateTimeOffset? to = null;
+
+        foreach (var file in candidates.Skip(Math.Max(0, candidates.Count - LookBack)))
+        {
+            try
+            {
+                foreach (var line in File.ReadLines(file))
+                {
+                    if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null || parsed.Timestamp >= before)
+                    {
+                        continue;
+                    }
+
+                    if (parsed.Kind == "LoadGame")
+                    {
+                        from = parsed.Timestamp;
+                    }
+
+                    to = parsed.Timestamp;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogDebug(ex, "Could not read {File} looking for the previous session", file);
+            }
+        }
+
+        return from is { } start && to is { } end
+            ? new LogRange { Span = LogSpan.Between, From = start, To = end, Label = "the last session" }
+            : null;
+    }
+
+    /// <summary>
     /// The journals that could hold events inside a window, by the timestamp in their own names.
     /// </summary>
     public static IReadOnlyList<string> FilesFor(IReadOnlyList<string> files, LogRange range)

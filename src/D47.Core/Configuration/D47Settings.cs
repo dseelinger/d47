@@ -673,6 +673,9 @@ public sealed record CalloutSettings
     /// </summary>
     public bool Continuity { get; init; } = true;
 
+    /// <summary>One line after the opening line, recapping the last complete session.</summary>
+    public bool Recap { get; init; } = true;
+
     /// <summary>A beat of the Commander's adventure, said when it is reached (Phase 47).</summary>
     public bool Adventure { get; init; } = true;
 

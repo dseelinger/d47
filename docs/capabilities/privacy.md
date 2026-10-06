@@ -329,7 +329,7 @@ that cannot be undone.
 ## The disclosure rows {#egress-llm}
 
 The settings panel carries one row per destination, saying the same things this page does
-{#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
+{#egress-recap} {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
 {#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice}
 {#egress-donation} — but computed live from your settings

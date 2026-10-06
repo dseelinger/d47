@@ -47,6 +47,9 @@ public static class EgressDisclosure
     /// <summary>Listing community goals running where the Commander has not been.</summary>
     public const string CommunityGoals = "communitygoals";
 
+    /// <summary>Rewording the recap of the last session at launch.</summary>
+    public const string Recap = "recap";
+
     /// <summary>Searching the web, which the language-model provider does on d47's behalf.</summary>
     public const string WebSearch = "websearch";
 
@@ -83,6 +86,7 @@ public static class EgressDisclosure
     public static IReadOnlyList<string> Ids { get; } =
     [
         LanguageModel,
+        Recap,
         WebSearch,
         TextToSpeech,
         SpeechRecognition,
@@ -113,6 +117,7 @@ public static class EgressDisclosure
         NotablePlaces => "Notable places",
         CommunityGoals => "Community goals",
         WebSearch => "Web search",
+        Recap => "Last session recap",
         SpeechModels => "Speech model download",
         HullArt => "Hull pictures",
         AvatarClips => "Avatar animations",
@@ -142,6 +147,7 @@ public static class EgressDisclosure
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
+        Recap => RecapEntry(settings, llmKeyPresent),
         TextToSpeech => TextToSpeechEntry(settings),
         SpeechRecognition => SpeechRecognitionFor(Listening.SttProviderCatalog.Selected(settings.Listening.Provider)),
 
@@ -706,6 +712,52 @@ public static class EgressDisclosure
             Summary: $"{provider.Name} receives your question, the game state from your journal, "
                 + (commander is null ? string.Empty : $"{commander}, ")
                 + "and sends back its reply.");
+    }
+
+    private static EgressEntry RecapEntry(D47Settings settings, bool keyPresent)
+    {
+        var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
+
+        if (settings.Callouts is not { Enabled: true, Recap: true })
+        {
+            return EgressEntry.Silent(
+                Recap,
+                NameOf(Recap),
+                "The last session recap is off, so nothing about your last session is sent.");
+        }
+
+        if (provider.Id == LlmProviderCatalog.NoneId
+            || (provider.NeedsKey && !keyPresent)
+            || !settings.Llm.PersonalityEnabled)
+        {
+            return EgressEntry.Silent(
+                Recap,
+                NameOf(Recap),
+                "The recap is said as D47 wrote it, with no language model, so nothing is sent.");
+        }
+
+        var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
+
+        if (LocalEndpoint.IsLoopback(destination))
+        {
+            return EgressEntry.Silent(
+                Recap,
+                NameOf(Recap),
+                $"Once per launch, the recap of your last session goes to {destination}, which is this machine, "
+                + "to be said in your core's voice. Nothing leaves this machine.",
+                summary: $"Pointed at {destination}, this machine — nothing leaves it.");
+        }
+
+        return new EgressEntry(
+            Recap,
+            NameOf(Recap),
+            destination,
+            "Once per launch, one line recapping your last session, to be said in your core's voice: the "
+            + "system and station it ended at, the ship, and at most one rank, engineer, death, rebuy or "
+            + "interdiction from it, with any names and counts that carries. Your Backstory and the active "
+            + "adventure are not sent with it. Switching off the last session recap stops it.",
+            Active: true,
+            Summary: "Once per launch, system, station and ship names and counts from your last session.");
     }
 
     /// <summary>Whether the Narrator can speak, and so send the Commander's texts.</summary>

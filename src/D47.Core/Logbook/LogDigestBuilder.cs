@@ -169,6 +169,7 @@ public sealed class LogDigestBuilder(ILogger logger)
             Range = range,
             Commander = fold.Commander,
             FrontierId = fold.FrontierId,
+            Ship = fold.Flying,
             Facts = numbered,
             JournalsRead = journals,
             EventsRead = events,
@@ -300,6 +301,8 @@ public sealed class LogDigestBuilder(ILogger logger)
         public string? Commander { get; private set; }
 
         public string? FrontierId { get; private set; }
+
+        public string? Flying => _ship;
 
         public IReadOnlyList<LogFact> Moments => _moments;
 
@@ -504,8 +507,8 @@ public sealed class LogDigestBuilder(ILogger logger)
                     break;
 
                 case "ShipyardSwap":
-                    _ship = JournalJson.Spoken(journalEvent.Named("ShipType"));
-                    Moment(journalEvent, LogFactKind.Fleet, $"Swapped into the {_ship}.");
+                    _ship = $"the {JournalJson.Spoken(journalEvent.Named("ShipType"))}";
+                    Moment(journalEvent, LogFactKind.Fleet, $"Swapped into {_ship}.");
                     break;
 
                 case "ModuleBuy":

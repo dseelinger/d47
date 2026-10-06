@@ -69,6 +69,9 @@ public static class CalloutCapability
     /// <summary>One line at the start of a session, picking up where the Commander left off (Phase 31).</summary>
     public const string ContinuityKey = "callouts.continuity";
 
+    /// <summary>One line after the opening line, recapping the last complete session.</summary>
+    public const string RecapKey = "callouts.recap";
+
     /// <summary>
     /// Something d47 noticed the Commander keeps doing, said when the circumstance comes round again
     /// (Phase 32).
@@ -463,6 +466,16 @@ public static class CalloutCapability
                 "where I left off",
                 s => s.Callouts.Continuity,
                 (s, v) => s with { Callouts = s.Callouts with { Continuity = v } }),
+
+            Toggle(
+                RecapKey,
+                "Last session recap",
+                "One line after the opening line: where your last session ended, the ship, and the most "
+                + "notable thing that happened in it. Silent when there was no earlier session.",
+                "recap",
+                "the last session recap",
+                s => s.Callouts.Recap,
+                (s, v) => s with { Callouts = s.Callouts with { Recap = v } }),
 
             Toggle(
                 AdventureKey,

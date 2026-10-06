@@ -17,6 +17,9 @@ public sealed record LogDigest
     /// <summary>The Frontier id, which is what a log is filed under.</summary>
     public string? FrontierId { get; init; }
 
+    /// <summary>The ship flown when the window closed, as a phrase such as "the Python", or null.</summary>
+    public string? Ship { get; init; }
+
     public IReadOnlyList<LogFact> Facts { get; init; } = [];
 
     public required int JournalsRead { get; init; }

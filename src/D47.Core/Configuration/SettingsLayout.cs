@@ -517,6 +517,7 @@ public static class SettingsLayout
                             [
                                 E("callouts.checklist"),
                                 E("callouts.continuity"),
+                                E("callouts.recap"),
                                 E("callouts.adventure"),
                                 E("callouts.backstoryNudge", under: true),
                                 E("callouts.communityGoalSales"),

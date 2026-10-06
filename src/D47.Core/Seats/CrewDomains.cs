@@ -55,6 +55,7 @@ public static class CrewDomains
     {
         "ambient",
         "continuity",
+        "recap",
         "domain",
         "lore",
         "scenes",

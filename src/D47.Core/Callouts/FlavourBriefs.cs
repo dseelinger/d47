@@ -354,6 +354,23 @@ public static class FlavourBriefs
             };
         }
 
+        // The recap of the last session, which carries no Backstory and no adventure.
+        if (announcement.Key.StartsWith(RecapCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "The Commander has just sat down. Recap their last session once, in your own voice, from "
+                    + $"this: \"{announcement.Text}\" Keep every name, place, ship and figure exactly as given. "
+                    + "Add no facts and no plans. One or two short sentences. Do not greet them and do not ask "
+                    + "a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+                NeedsAboutMe = false,
+                NeedsScenario = false,
+            };
+        }
+
         // A System Authority vessel's canned line, spoken while the Commander shares a system with their own
         // carrier (#248's second half).
         if (string.Equals(announcement.Key, IncomingMessages.AuthorityCannedKey, StringComparison.Ordinal))

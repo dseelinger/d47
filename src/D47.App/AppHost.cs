@@ -2406,6 +2406,14 @@ public sealed class AppHost : IDisposable
                     continuity.StockCoreAboard = stockCoreAboard;
                     break;
 
+                case RecapCallout recap:
+                    recap.StockCoreAboard = stockCoreAboard;
+
+                    // Reads journal files, so off the tick.
+                    recap.Prepare = before => _ = Task.Run(() =>
+                        recap.Supply(ComposeRecap(before, JournalsOnDisk(journalDirectory, logger), loggerFactory)));
+                    break;
+
                 case SessionCallout session:
                     session.StockCoreAboard = stockCoreAboard;
                     break;
@@ -3103,6 +3111,9 @@ public sealed class AppHost : IDisposable
             // of a session, and it is about what was true before the Commander sat down.
             .Add(new ContinuityCallout())
 
+            // The last complete session, after the line above.
+            .Add(new RecapCallout())
+
             // Getting into a game and leaving one (change-requests.md 29), which is a different event from
             // the line above: that one greets when d47 starts, and this one when the game does.
             .Add(new SessionCallout())
@@ -3226,6 +3237,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("ambient", callouts.Ambient, now);
         engine.SetEnabled("narrator", callouts.Narrator, now);
         engine.SetEnabled("continuity", callouts.Continuity, now);
+        engine.SetEnabled("recap", callouts.Recap, now);
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
         engine.SetEnabled("community-goal-expiry", callouts.CommunityGoalExpiry, now);
@@ -7999,6 +8011,25 @@ public sealed class AppHost : IDisposable
             status.Current.GuiFocus);
 
         return sawTheFile ? false : null;
+    }
+
+    /// <summary>The plain recap of the session before <paramref name="before"/>, or null for none.</summary>
+    private static string? ComposeRecap(DateTimeOffset before, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
+    {
+        var logger = loggerFactory.CreateLogger<RecapCallout>();
+
+        try
+        {
+            return D47.Core.Logbook.LogRanges.PreviousSession(before, files, logger) is { } range
+                ? RecapCallout.Compose(new D47.Core.Logbook.LogDigestBuilder(
+                    loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()).Build(files, range))
+                : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not read the journals for the last session recap");
+            return null;
+        }
     }
 
     /// <summary>Every phrase d47 already answers to.</summary>
