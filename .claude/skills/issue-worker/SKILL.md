@@ -41,11 +41,14 @@ rename edited in the main checkout blocks every lane's merge just as a large cha
 
 ```bash
 git rev-parse --show-toplevel; git worktree list
-grep -o '"<N>": {[^}]*}' "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json"
+python -c "import json,sys; e=json.load(open(sys.argv[1]))['issues'].get(sys.argv[2]); print('lane', e['lane'] if e and e.get('lane') else 'none')" "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json" <N>
 ```
 
+The file is pretty-printed, so a line-based `grep` for the entry finds nothing; read it as JSON.
+
 - The top level is already `.claude/worktrees/<N>`: the Issue key created the worktree and started
-  this session in it. Work there.
+  this session in it. Work there, and land it through **Merging into main** whether or not the
+  issue has a lane.
 - Either case above holds and the top level is the main checkout: create the worktree as
   **The worktree** says and enter it before the next tool call.
 - Neither holds: work in the main checkout.
