@@ -113,6 +113,12 @@ public sealed record Mission(long Id, string Name)
 
 public enum MissionOutcome { Completed, Failed, Abandoned }
 
+/// <summary>The groups <see cref="MissionBoard.Ranked"/> orders by, in order.</summary>
+public enum MissionBand { ExpiringSoon, HandInHere, Rest }
+
+/// <summary>The known rewards summed; <paramref name="Partial"/> where some mission has none.</summary>
+public readonly record struct MissionRewards(long Total, bool Partial);
+
 /// <summary>A mission that ended since the latest <c>Missions</c> snapshot.</summary>
 /// <param name="Paid">The reward a <c>MissionCompleted</c> paid; null for a failed or abandoned mission.</param>
 public sealed record FinishedMission(Mission Mission, MissionOutcome Outcome, DateTimeOffset At, long? Paid);
@@ -155,26 +161,40 @@ public sealed record MissionBoard
     /// <summary>Expiring within the hour, then handed in where the Commander is docked, then the rest; soonest expiry first in each.</summary>
     public IReadOnlyList<Mission> Ranked(DateTimeOffset? now, JournalLocation location)
     {
-        bool Soon(Mission mission) =>
-            now is { } clock && mission.Expiry is { } expiry && expiry > clock && expiry - clock <= SoonWindow;
-
-        bool Here(Mission mission) =>
-            location.Docked
-            && location.StationName is { Length: > 0 } station
-            && string.Equals(mission.DestinationStation, station, StringComparison.OrdinalIgnoreCase);
-
         bool Expired(Mission mission) => now is { } clock && mission.Expiry <= clock;
 
-        int Band(Mission mission) => Soon(mission) ? 0 : Here(mission) ? 1 : 2;
+        MissionBand Band(Mission mission) => BandOf(mission, now, location);
 
         return
         [
             .. Missions
                 .OrderBy(Band)
-                .ThenBy(mission => Band(mission) == 2 && Expired(mission))
+                .ThenBy(mission => Band(mission) == MissionBand.Rest && Expired(mission))
                 .ThenBy(mission => mission.Expiry ?? DateTimeOffset.MaxValue)
                 .ThenBy(mission => mission.Id),
         ];
+    }
+
+    /// <summary>The band <see cref="Ranked"/> sorts the mission into.</summary>
+    public static MissionBand BandOf(Mission mission, DateTimeOffset? now, JournalLocation location) =>
+        now is { } clock && mission.Expiry is { } expiry && expiry > clock && expiry - clock <= SoonWindow
+            ? MissionBand.ExpiringSoon
+            : HandsInHere(mission, location) ? MissionBand.HandInHere : MissionBand.Rest;
+
+    /// <summary>Whether the Commander is docked at the mission's destination station, whichever band it is in.</summary>
+    public static bool HandsInHere(Mission mission, JournalLocation location) =>
+        location.Docked
+        && location.StationName is { Length: > 0 } station
+        && string.Equals(mission.DestinationStation, station, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The sum of the known rewards, and whether any mission has none; null when no mission has a reward.</summary>
+    public MissionRewards? Rewards()
+    {
+        var rewarded = Missions.Where(mission => mission.Reward is not null).ToList();
+
+        return rewarded.Count == 0
+            ? null
+            : new MissionRewards(rewarded.Sum(mission => mission.Reward.GetValueOrDefault()), rewarded.Count < Missions.Count);
     }
 
     /// <summary>The live missions whose destination is the settlement, or whose target is its faction.</summary>

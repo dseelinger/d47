@@ -115,12 +115,10 @@ public static class MissionsCapability
             said.Append($"And {Number(ranked.Count - MaxNamed)} more. ");
         }
 
-        var rewards = missions.Where(mission => mission.Reward is not null).ToList();
-
-        if (rewards.Count > 0)
+        if (state.Missions.Rewards() is { } rewards)
         {
-            var total = rewards.Sum(mission => mission.Reward.GetValueOrDefault()).ToString("N0", CultureInfo.InvariantCulture);
-            said.Append(rewards.Count < missions.Count
+            var total = rewards.Total.ToString("N0", CultureInfo.InvariantCulture);
+            said.Append(rewards.Partial
                 ? $"At least {total} credits in rewards."
                 : $"{total} credits in rewards.");
         }
