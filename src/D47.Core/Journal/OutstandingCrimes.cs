@@ -137,7 +137,14 @@ public sealed class OutstandingCrimes(ILogger logger)
     /// Every unpaid debt <paramref name="commander"/> holds on <paramref name="shipId"/> and on foot, or the
     /// Commander last seen where null.
     /// </summary>
-    public IReadOnlyList<CrimeDebt> Owed(string? commander, int? shipId)
+    public IReadOnlyList<CrimeDebt> Owed(string? commander, int? shipId) =>
+        [.. Unpaid(commander).Where(debt => debt.ShipId is null || debt.ShipId == shipId).OrderByDescending(debt => debt.Total)];
+
+    /// <summary>How many ships other than <paramref name="shipId"/> carry an unpaid debt.</summary>
+    public int OtherShipsOwing(string? commander, int? shipId) =>
+        Unpaid(commander).Where(debt => debt.ShipId is not null && debt.ShipId != shipId).Select(debt => debt.ShipId).Distinct().Count();
+
+    private List<CrimeDebt> Unpaid(string? commander)
     {
         lock (_gate)
         {
@@ -185,12 +192,7 @@ public sealed class OutstandingCrimes(ILogger logger)
                 }
             }
 
-            return
-            [
-                .. debts.Values
-                    .Where(debt => debt.Total > 0 && (debt.ShipId is null || debt.ShipId == shipId))
-                    .OrderByDescending(debt => debt.Total),
-            ];
+            return [.. debts.Values.Where(debt => debt.Total > 0)];
         }
     }
 

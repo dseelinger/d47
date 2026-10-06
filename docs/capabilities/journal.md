@@ -528,6 +528,24 @@ every stored module.
 {"type":"object","properties":{"section":{"type":"string","description":"One section of the career statistics to report. Omit to report every section.","enum":["Bank_Account","Combat","Crime","Smuggling","Trading","Mining","Exploration","Passengers","Search_And_Rescue","Squadron","Crafting","Crew","Multicrew","Material_Trader_Stats","FLEETCARRIER","Exobiology"]}},"required":[],"additionalProperties":false}
 ```
 
+`get_crime_status` answers *"am I wanted"*, *"my bounties"*, *"my fines"*, *"what do I owe"* and
+*"crime status"*. It takes no arguments. It reads three things and says where each comes from:
+
+- The legal state now, as Elite writes it in `Status.json`, and whether the Commander is on foot.
+- The unpaid fines and bounties the journal records, for each faction on foot and on the ship being
+  flown, largest first, each with the date of its newest crime. Other ships carrying debts are
+  counted, not named. A spoken answer names at most three factions and counts the rest.
+- Notoriety from the last `Statistics` event, with the time it was read, since Elite writes it only
+  at login. With no `Statistics` event yet, notoriety is left out.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Amounts are what the journal records. A fine paid with no `CommitCrime` behind it is not in the
+ledger, so the answer says so. Paying a faction's fines or bounties clears its entry, as it does for
+the arrival reminder.
+
 `get_standing` takes an optional superpower or minor faction, whole or part of its name:
 
 ```json

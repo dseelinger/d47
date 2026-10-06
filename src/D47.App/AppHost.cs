@@ -2106,7 +2106,9 @@ public sealed class AppHost : IDisposable
                 endingAnswer: endingAnswer,
                 beatRefusal: beatRefusal,
                 journalReminders: journalReminders,
-                miningTargets: miningTargets));
+                miningTargets: miningTargets,
+                crimes: crimes,
+                liveStatus: () => status.Current));
 
         buildingRegistry.Dispose();
 

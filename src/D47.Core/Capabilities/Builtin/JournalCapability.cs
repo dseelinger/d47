@@ -22,12 +22,16 @@ public static class JournalCapability
     /// </param>
     /// <param name="route">The plotted route, which is where a jump count comes from (#152).</param>
     /// <param name="cartography">The mapped bodies not yet sold, or null where nothing keeps them.</param>
+    /// <param name="crimes">The unpaid fines and bounties, or null where nothing keeps them.</param>
+    /// <param name="liveStatus">The latest Status.json read.</param>
     public static CapabilityDescriptor Create(
         GameStateStore gameState,
         Func<HistoryState>? history = null,
         Func<NavRoute>? route = null,
         CartographyLedger? cartography = null,
-        Func<DateTimeOffset>? now = null)
+        Func<DateTimeOffset>? now = null,
+        OutstandingCrimes? crimes = null,
+        Func<GameStatus>? liveStatus = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -104,6 +108,11 @@ public static class JournalCapability
                 new("my navy ranks", "get_standing"),
                 new("exploration data am i carrying", "get_unsold_exploration"),
                 new("unsold exploration", "get_unsold_exploration"),
+                new("crime status", "get_crime_status"),
+                new("am i wanted", "get_crime_status"),
+                new("my bounties", "get_crime_status"),
+                new("my fines", "get_crime_status"),
+                new("what do i owe", "get_crime_status"),
                 new("reset unsold exploration", ResetExplorationTool),
                 new("reset the exploration total", ResetExplorationTool),
             ],
@@ -259,6 +268,19 @@ public static class JournalCapability
                     ],
                     Commands = Asking(MercCoins, BankAccount),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStatistics(gameState, arguments))),
+                },
+                new ToolDefinition
+                {
+                    Name = "get_crime_status",
+                    Description =
+                        "Report whether the Commander is wanted and what they owe: their legal state now from "
+                        + "the game, whether they are on foot, the unpaid fines and bounties the journal records "
+                        + "for each faction on foot and on the ship they are flying, largest first, with the "
+                        + "date of the newest crime, how many other ships carry debts, and their notoriety as "
+                        + "last written at login. A fine the game never journaled is not in the ledger.",
+                    Parameters = [],
+                    Commands = Asking(CrimeStatus),
+                    Handler = (_, _) => Task.FromResult(DescribeCrimeStatus(gameState, crimes, liveStatus)),
                 },
                 new ToolDefinition
                 {
@@ -442,6 +464,12 @@ public static class JournalCapability
     [
         "how many merc coins do i have", "how many merc coins have i got", "my merc coins",
         "my merc coin balance", "what's my merc coin balance", "what is my merc coin balance",
+    ];
+
+    private static readonly string[] CrimeStatus =
+    [
+        "crime status", "am i wanted", "my bounties", "my fines", "what do i owe",
+        "do i owe anything", "what bounties do i have", "what fines do i have",
     ];
 
     private static readonly IReadOnlyDictionary<string, string> BankAccount =
@@ -1547,6 +1575,95 @@ public static class JournalCapability
     private static string Band(double reputation) =>
         $"{ReputationBands.Of(reputation)}, "
         + $"{Math.Round(reputation, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture)} of 100";
+
+    private static ToolResult DescribeCrimeStatus(GameStateStore gameState, OutstandingCrimes? crimes, Func<GameStatus>? liveStatus)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return ToolResult.Ok(reason);
+        }
+
+        if (crimes is null)
+        {
+            return ToolResult.Ok("I am not keeping a ledger of fines and bounties in this build.");
+        }
+
+        var status = liveStatus?.Invoke() ?? GameStatus.Unknown;
+        var legal = status.LegalState is { Length: > 0 } named
+            ? $"Legal state now: {named}{(status.OnFoot ? ", on foot" : string.Empty)}."
+            : "The game has not reported your legal state.";
+
+        var ship = crimes.FlownShip ?? active.Ship.ShipId;
+        var fid = active.Identity.FrontierId;
+        var debts = crimes.Owed(fid, ship);
+        var others = crimes.OtherShipsOwing(fid, ship);
+
+        var report = new StringBuilder();
+        report.AppendLine(legal);
+
+        if (!crimes.HistoryFolded)
+        {
+            report.AppendLine("I am still reading your older journals, so the debts below may leave some out.");
+        }
+
+        var spoken = new StringBuilder(legal);
+
+        if (debts.Count == 0)
+        {
+            report.AppendLine("The journal records nothing owed on foot or on this ship.");
+            spoken.Append(" The journal records nothing owed.");
+        }
+        else
+        {
+            report.AppendLine("Unpaid, as the journal records it:");
+
+            foreach (var debt in debts)
+            {
+                report.AppendLine($"  {DescribeDebt(debt, withDate: true)}");
+            }
+
+            spoken.Append(" The journal records ")
+                .Append(SpokenList.Names([.. debts.Select(debt => DescribeDebt(debt, withDate: false))]))
+                .Append('.');
+        }
+
+        if (others > 0)
+        {
+            var more = $"{others} other ship{(others == 1 ? " carries" : "s carry")} unpaid debts.";
+            report.AppendLine(more);
+            spoken.Append(' ').Append(more);
+        }
+
+        if (active.Statistics is { IsKnown: true } statistics && statistics.Read("Crime.Notoriety") is { } notoriety)
+        {
+            report.AppendLine(
+                $"Notoriety {notoriety.ToString("0.##", CultureInfo.InvariantCulture)}, written at login{AsOf(statistics.TakenAt!.Value)}.");
+        }
+
+        report.AppendLine("A fine the game never journaled is not in this ledger.");
+
+        return ToolResult.Ok(report.ToString().TrimEnd(), spoken.ToString());
+    }
+
+    private static string DescribeDebt(CrimeDebt debt, bool withDate)
+    {
+        var amounts = new List<string>();
+
+        if (debt.Fines > 0)
+        {
+            amounts.Add($"{SpokenCredits.Band(debt.Fines)} credits in fines");
+        }
+
+        if (debt.Bounties > 0)
+        {
+            amounts.Add($"{SpokenCredits.Band(debt.Bounties)} credits in bounties");
+        }
+
+        var where = debt.ShipId is null ? "on foot" : "on this ship";
+
+        return $"{debt.Faction}: {string.Join(" and ", amounts)} {where}"
+               + (withDate ? $", newest crime {debt.LastCrime:yyyy-MM-dd}" : string.Empty);
+    }
 
     private static string DescribeStatistics(GameStateStore gameState, ToolArguments arguments)
     {
