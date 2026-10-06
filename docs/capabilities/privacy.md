@@ -147,6 +147,11 @@ unpacked if it does not match. That catches a truncated transfer or a mirror ser
 It is **not** a signature: the hash and the bytes come from the same server, so it cannot detect a
 compromised GitHub. The same caveat applies to the speech models.
 
+**Model updates** — `raw.githubusercontent.com`, once at startup and every 24
+hours, for the published list of models, their defaults and their prices. Nothing about you goes with
+it: no key, no journal content and no identifier beyond the request itself. **Fetch model updates**
+in the [Language model](conversation.md#fetch-model-updates) settings turns it off.
+
 **Stock stories** — `github.com`, which redirects to GitHub's asset storage, from the `stories-1`
 release. D47 asks for the list of stock stories and the cast pictures it shows the first time the
 Stories page opens in a session, and for a story's hidden layer and every cast picture when you pick
@@ -329,7 +334,7 @@ that cannot be undone.
 ## The disclosure rows {#egress-llm}
 
 The settings panel carries one row per destination, saying the same things this page does
-{#egress-recap} {#egress-websearch} {#egress-updates} {#egress-diagnostics} {#egress-journal}
+{#egress-recap} {#egress-websearch} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
 {#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice}
 {#egress-donation} — but computed live from your settings

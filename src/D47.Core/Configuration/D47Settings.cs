@@ -44,6 +44,8 @@ public sealed record D47Settings
 
     public UpdateSettings Updates { get; init; } = new();
 
+    public ModelSettings Models { get; init; } = new();
+
     /// <summary>Where a donated excerpt or journal history is sent, when one is (#175).</summary>
     public DonationSettings Donation { get; init; } = new();
 
@@ -1098,6 +1100,16 @@ public sealed record UpdateSettings
 
     /// <summary>The startup check contacts GitHub, so it is egress and is disclosed as such.</summary>
     public bool CheckOnStartup { get; init; } = true;
+}
+
+public sealed record ModelSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>Whether the published model catalog is fetched from GitHub, which is disclosed as egress.</summary>
+    public bool RefreshCatalog { get; init; } = true;
 }
 
 /// <summary>Where donations go (#175).</summary>

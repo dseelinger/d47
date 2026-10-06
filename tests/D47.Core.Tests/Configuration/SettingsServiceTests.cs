@@ -544,6 +544,7 @@ public class EgressDisclosureTests
         {
             Llm = new LlmSettings { Provider = LlmProviderCatalog.NoneId },
             Updates = new UpdateSettings { CheckOnStartup = false },
+            Models = new ModelSettings { RefreshCatalog = false },
 
             // The voice provider counts.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },

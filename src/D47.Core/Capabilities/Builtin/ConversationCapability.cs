@@ -27,6 +27,9 @@ public static class ConversationCapability
     /// <summary>Whether the model may search the web.</summary>
     public const string WebSearchKey = "llm.webSearch";
 
+    /// <summary>Whether the published model catalog is fetched.</summary>
+    public const string RefreshCatalogKey = "models.refreshCatalog";
+
     private const string ScenarioAboard = "aboard";
 
     private const string ScenarioCarrier = "carrier";
@@ -462,6 +465,35 @@ public static class ConversationCapability
                 },
             },
         };
+
+        rows.Add(new SettingRow
+        {
+            Key = RefreshCatalogKey,
+            Label = "Fetch model updates",
+            Help =
+                "Fetches the published list of models, their defaults and their prices from GitHub at "
+                + "startup and every 24 hours, so a new model can be offered without a new release. "
+                + "Off uses the list D47 already has.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "on",
+            DocsAnchor = "fetch-model-updates",
+            EgressId = EgressDisclosure.ModelUpdates,
+
+            // Protected: it decides whether a request leaves.
+            Protected = true,
+            Commands =
+            [
+                new SettingCommandPhrase("stop fetching model updates", "false"),
+                new SettingCommandPhrase("turn off model updates", "false"),
+                new SettingCommandPhrase("start fetching model updates", "true"),
+                new SettingCommandPhrase("turn on model updates", "true"),
+            ],
+            Binding = new SettingBinding
+            {
+                Read = s => s.Models.RefreshCatalog ? "true" : "false",
+                Write = (s, v) => s with { Models = s.Models with { RefreshCatalog = v is not "false" } },
+            },
+        });
 
         // One key row per provider that has one, rather than a single row whose secret name shifts underneath
         // it.

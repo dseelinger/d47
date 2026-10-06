@@ -295,6 +295,7 @@ public static class SettingsLayout
                                 E("llm.backgroundModel"),
                                 E("llm.effortFloor"),
                                 E("llm.effortCeiling"),
+                                E("models.refreshCatalog"),
                             ]),
                     ]),
                 new SettingsPlace(

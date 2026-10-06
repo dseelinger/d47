@@ -14,6 +14,7 @@ using D47.Core;
 using D47.Core.Actions;
 using D47.Core.Capabilities;
 using D47.Core.Callouts;
+using D47.Core.Catalog;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
 using D47.Core.Ships;
@@ -304,6 +305,8 @@ public sealed class AppHost : IDisposable
     private volatile CueLibrary _cues;
 
     private AudioFolderWatch? _audioWatch;
+
+    private ModelCatalogRefresher? _modelCatalog;
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -777,6 +780,15 @@ public sealed class AppHost : IDisposable
 
         // From here a level change is live wherever it came from — panel, tool or settings file.
         verbosity.FollowSettings(settings);
+
+        // Before anything reads a model default.
+        var modelCatalog = new ModelCatalogCache(
+            ModelCatalogSource.Shared,
+            ModelCatalog.Embedded,
+            Path.Combine(paths.Data, ModelCatalogCache.FileName),
+            loggerFactory.CreateLogger<ModelCatalogCache>());
+
+        modelCatalog.Load();
 
         var viewState = new ViewStateStore(paths, loggerFactory.CreateLogger<ViewStateStore>());
 
@@ -3022,8 +3034,13 @@ public sealed class AppHost : IDisposable
         // Last, so every subscriber registered during composition is in place before the first timer-driven
         // tick — and so a failure above happens against a loop that never started rather than one already
         // running against half-built state.
+        host._modelCatalog = new ModelCatalogRefresher(
+            modelCatalog, settings, loggerFactory.CreateLogger<ModelCatalogRefresher>());
+
         if (startTicking)
         {
+            host._modelCatalog.Start();
+
             host._ticking = StartupTimer.Time(
                 "tick driver", () => new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start());
         }
@@ -8256,6 +8273,7 @@ public sealed class AppHost : IDisposable
         // closed file handle on the way out.
         _ticking?.Dispose();
         _audioWatch?.Dispose();
+        _modelCatalog?.Dispose();
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

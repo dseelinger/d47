@@ -25,6 +25,11 @@ public static class EgressDisclosure
 
     public const string UpdateCheck = "updates";
 
+    /// <summary>Fetching the published model catalog.</summary>
+    public const string ModelUpdates = "modelcatalog";
+
+    public const string ModelCatalogHost = "raw.githubusercontent.com";
+
     public const string Diagnostics = "diagnostics";
 
     public const string JournalFiles = "journal";
@@ -94,6 +99,7 @@ public static class EgressDisclosure
         NotablePlaces,
         CommunityGoals,
         UpdateCheck,
+        ModelUpdates,
         HullArt,
         AvatarClips,
         StockStories,
@@ -111,6 +117,7 @@ public static class EgressDisclosure
     {
         LanguageModel => "Language model",
         UpdateCheck => "Update check",
+        ModelUpdates => "Model updates",
         TextToSpeech => "Spoken replies",
         SpeechRecognition => "Speech recognition",
         GalaxySearch => "Galaxy search",
@@ -316,6 +323,24 @@ public static class EgressDisclosure
                 NameOf(UpdateCheck),
                 "Nothing at startup. Pressing Check for updates in Settings > About still makes the same "
                 + "request, on demand."),
+
+        ModelUpdates => settings.Models.RefreshCatalog
+            ? new EgressEntry(
+                ModelUpdates,
+                NameOf(ModelUpdates),
+                ModelCatalogHost,
+                "One request for the published list of language and speech models — their ids, defaults and "
+                + "prices — at startup and every 24 hours while D47 runs. Nothing about you goes with it: no "
+                + "key, no journal content and no identifier beyond the request itself.",
+                Active: true,
+                Summary: "One request for the published model list at startup and every 24 hours. Nothing "
+                    + "about you goes with it.")
+            : EgressEntry.Silent(
+                ModelUpdates,
+                NameOf(ModelUpdates),
+                "Fetch model updates is off, so nothing is requested and D47 uses the model list it already "
+                + "has: the one it last fetched, or the one built into this release, whichever is newer.",
+                summary: "Fetch model updates is off, so nothing is requested."),
 
         // On demand.
         SpeechModels => SpeechModelsEntry(settings),

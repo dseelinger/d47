@@ -474,6 +474,31 @@ public const string TruncatedLine = "I ran out of room before I could finish tha
 - The turn ran at Max: "Ask for one part of it at a time."
 - Otherwise: "Ask again and say \"think carefully\", and I'll have more room."
 
+#### Fetch model updates {#fetch-model-updates}
+
+On by default. Directive 47 fetches the published list of models, the provider defaults and their
+prices at startup and every 24 hours while it runs, so a new model or a new default reaches you
+without a new release:
+
+```csharp
+public const string Address = "https://raw.githubusercontent.com/dseelinger/d47/models/model-catalog.json";
+```
+
+A fetched list is used only if it reads as a whole: one that is malformed, written for a later
+version of Directive 47, or names a default it does not offer is ignored, and the list in use stays.
+A fetched list that reads is kept in `data\model-catalog.json`. Of the fetched list, the kept one and the
+one built into this release, the one published most recently is in use, so updating Directive 47
+replaces a kept list that is older than the release.
+
+Off means no request, and the newer of the kept list and the built-in one. What the request sends is
+on the [Privacy](privacy.md#the-destinations) page: nothing about you.
+
+> "stop fetching model updates" / "turn off model updates"
+> "start fetching model updates" / "turn on model updates"
+
+**The model cannot reach this row.** It decides whether a request leaves, so only you can change it,
+from the panel or by saying one of those phrases.
+
 #### API key {#api-key}
 
 Encrypted for your Windows account and kept in `data/secrets.json` beside the executable.
