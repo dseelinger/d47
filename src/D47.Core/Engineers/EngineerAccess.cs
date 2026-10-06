@@ -445,8 +445,32 @@ public static class EngineerAccess
         UnlockTest.Statistic statistic => StatisticResult(statistic, evidence),
         UnlockTest.Contribution contribution => ContributionResult(contribution, engineer, evidence),
         UnlockTest.Locker locker => LockerResult(locker, evidence),
+        UnlockTest.Tally tally => TallyResult(tally, engineer, evidence),
         _ => (null, null, null),
     };
+
+    /// <summary>
+    /// Never unmet: journals go missing and counting only starts at the login that lists the engineer, so a
+    /// short count proves nothing.
+    /// </summary>
+    private static (bool? Met, string? Reading, UnlockMeasure? Measure) TallyResult(
+        UnlockTest.Tally test, Engineer engineer, UnlockEvidence evidence)
+    {
+        if (evidence.Tallies?.For(engineer.Id) is not { } tally)
+        {
+            return (null, null, null);
+        }
+
+        var measure = new UnlockMeasure(tally.Total, test.AtLeast, false);
+
+        return tally.Total >= test.AtLeast
+            ? (true, null, measure)
+            : (
+                null,
+                $"{tally.Total.ToString(CultureInfo.InvariantCulture)} counted since "
+                + tally.Start.ToString("d MMM yyyy", CultureInfo.InvariantCulture),
+                measure);
+    }
 
     private static (bool? Met, string? Reading, UnlockMeasure? Measure) RankResult(
         UnlockTest.Rank test, UnlockEvidence evidence)

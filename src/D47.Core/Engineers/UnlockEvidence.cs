@@ -4,7 +4,7 @@ namespace D47.Core.Engineers;
 
 /// <summary>
 /// The readings one engineer's prerequisites are decided from — a Commander's rank, statistics,
-/// reputation and contributions, and when their session started (#183).
+/// reputation, contributions and tallies, and when their session started (#183).
 /// </summary>
 public sealed record UnlockEvidence(
     EngineerProgressState? Progress,
@@ -13,7 +13,8 @@ public sealed record UnlockEvidence(
     ReputationState? Reputation,
     EngineerContributions? Contributions,
     DateTimeOffset? SessionStart,
-    SuitInventory? Suit = null)
+    SuitInventory? Suit = null,
+    EngineerTallies? Tallies = null)
 {
     public static UnlockEvidence From(CommanderGameState? state) => new(
         state?.Engineers,
@@ -22,5 +23,6 @@ public sealed record UnlockEvidence(
         state?.Reputation,
         state?.Contributions,
         state?.Session.StartedAt,
-        state?.Suit);
+        state?.Suit,
+        state?.Tallies);
 }

@@ -61,6 +61,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What they have contributed to each engineer.</summary>
     public EngineerContributions Contributions { get; internal set; } = EngineerContributions.Empty;
 
+    /// <summary>The missions, sales and visits counted towards engineers that ask for a number of them.</summary>
+    public EngineerTallies Tallies { get; internal set; } = EngineerTallies.Empty;
+
     /// <summary>Every community goal their journal has reported, and where they stand on it.</summary>
     public CommunityGoalBoard CommunityGoals { get; private set; } = CommunityGoalBoard.Empty;
 
@@ -160,6 +163,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Reputation), "your reputation", state => state.Reputation),
         new(nameof(Standings), "system factions and conflicts", state => state.Standings),
         new(nameof(Contributions), "your engineer contributions", state => state.Contributions),
+        new(nameof(Tallies), "your engineer tallies", state => state.Tallies),
         new(nameof(CommunityGoals), "community goals", state => state.CommunityGoals),
         new(nameof(Missions), "your missions", state => state.Missions),
         new(nameof(Pledge), "your Powerplay pledge", state => state.Pledge),
@@ -206,6 +210,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Reputation = Reputation.WithoutFactions();
             Standings = SystemStandings.Empty;
             Contributions = EngineerContributions.Empty;
+            Tallies = EngineerTallies.Empty;
             Loadouts = ShipLoadouts.NoShips;
             Kit = OwnedKit.Empty;
             Missions = MissionBoard.Empty;
@@ -244,6 +249,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Reputation = Reputation.Apply(journalEvent);
         Standings = Standings.Apply(journalEvent);
         Contributions = Contributions.Apply(journalEvent);
+        Tallies = Tallies.Apply(journalEvent);
         CommunityGoals = CommunityGoals.Apply(journalEvent);
         Missions = Missions.Apply(journalEvent);
         Pledge = Pledge.Apply(journalEvent);

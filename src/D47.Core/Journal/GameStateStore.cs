@@ -155,6 +155,7 @@ public sealed class GameStateStore
             {
                 state.Reputation = evidence.Reputation.With(state.Reputation);
                 state.Contributions = evidence.Contributions.With(state.Contributions);
+                state.Tallies = evidence.Tallies.With(state.Tallies);
             }
 
             if (RestoreCycleMerits?.Invoke(fid) is { IsKnown: true } merits)
@@ -279,6 +280,7 @@ public sealed class GameStateStore
         {
             state.Reputation = evidence.Reputation;
             state.Contributions = evidence.Contributions;
+            state.Tallies = evidence.Tallies;
         }
 
         _byFrontierId[identity.FrontierId] = state;

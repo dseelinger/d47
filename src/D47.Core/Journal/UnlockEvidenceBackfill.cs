@@ -2,12 +2,16 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
 
-/// <summary>The readings an engineer unlock is decided from: reputation and engineer contributions.</summary>
-public sealed record UnlockEvidence(ReputationState Reputation, EngineerContributions Contributions)
+/// <summary>The readings an engineer unlock is decided from: reputation, engineer contributions and tallies.</summary>
+public sealed record UnlockEvidence(
+    ReputationState Reputation,
+    EngineerContributions Contributions,
+    EngineerTallies Tallies)
 {
-    public static readonly UnlockEvidence Empty = new(ReputationState.Empty, EngineerContributions.Empty);
+    public static readonly UnlockEvidence Empty =
+        new(ReputationState.Empty, EngineerContributions.Empty, EngineerTallies.Empty);
 
-    public bool IsKnown => Reputation.IsKnown || Contributions.IsKnown;
+    public bool IsKnown => Reputation.IsKnown || Contributions.IsKnown || Tallies.IsKnown;
 
     /// <summary>Folds one event as <see cref="CommanderGameState"/> does, <c>NewCommander</c> included.</summary>
     public UnlockEvidence Apply(JournalEvent journalEvent)
@@ -15,12 +19,15 @@ public sealed record UnlockEvidence(ReputationState Reputation, EngineerContribu
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         return journalEvent.Kind == "NewCommander"
-            ? new UnlockEvidence(Reputation.WithoutFactions(), EngineerContributions.Empty)
-            : new UnlockEvidence(Reputation.Apply(journalEvent), Contributions.Apply(journalEvent));
+            ? new UnlockEvidence(Reputation.WithoutFactions(), EngineerContributions.Empty, EngineerTallies.Empty)
+            : new UnlockEvidence(
+                Reputation.Apply(journalEvent),
+                Contributions.Apply(journalEvent),
+                Tallies.Apply(journalEvent));
     }
 }
 
-/// <summary>Reputation and engineer contributions recovered from journals d47 was not running for (#182).</summary>
+/// <summary>Reputation, engineer contributions and tallies recovered from journals d47 was not running for (#182).</summary>
 public static class UnlockEvidenceBackfill
 {
     /// <summary>Every Commander's readings and contributions as their journals last wrote them, keyed by Frontier id.</summary>
@@ -116,6 +123,13 @@ public static class UnlockEvidenceBackfill
     private static bool Relevant(string line) =>
         line.Contains("\"MyReputation\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"EngineerContribution\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"EngineerProgress\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"ApproachSettlement\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"MissionCompleted\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"SellMicroResources\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Disembark\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Reputation\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
