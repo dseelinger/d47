@@ -7,6 +7,7 @@ using Avalonia.Media;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Knowledge;
 using D47.Core.Lore;
 
 namespace D47.App.Controls;
@@ -78,19 +79,20 @@ public sealed class LoreDialog : ModalDialog
 
         Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var body = new StackPanel
+        var body = new StackPanel { Spacing = Modal.BlockGap };
+
+        if (place is not null && LoreDirectory.ByAddress(place.SystemAddress) is { } shipped)
         {
-            Spacing = Modal.BlockGap,
-            Children =
-            {
-                Modal.Section("Add a note"),
-                _note,
-                _add,
-                _status,
-                Modal.Section("What you have already said"),
-                _entries,
-            },
-        };
+            body.Children.Add(Modal.Section("What D47 knows here"));
+            body.Children.Add(Card(shipped));
+        }
+
+        body.Children.Add(Modal.Section("Add a note"));
+        body.Children.Add(_note);
+        body.Children.Add(_add);
+        body.Children.Add(_status);
+        body.Children.Add(Modal.Section("What you have already said"));
+        body.Children.Add(_entries);
 
         var close = new Button { Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
@@ -183,7 +185,12 @@ public sealed class LoreDialog : ModalDialog
 
         var note = ListRow.NameInk(new SelectableTextBlock { Text = entry.Note, TextWrapping = TextWrapping.Wrap });
 
-        var stack = new StackPanel { Spacing = 6, Children = { system, label, note, forget } };
+        var stack = new StackPanel { Spacing = 6, Children = { system, label, note } };
+
+        if (entry.Tier != LoreTier.Shipped)
+        {
+            stack.Children.Add(forget);
+        }
 
         return ListRow.Dress(new Border { Padding = new Thickness(12, 10), Child = stack });
     }
@@ -193,6 +200,7 @@ public sealed class LoreDialog : ModalDialog
     /// </summary>
     private static string Label(LoreEntry entry) => (entry.Tier, entry.Arrival) switch
     {
+        (LoreTier.Shipped, _) => "from d47's table",
         (LoreTier.Corroborated, _) => "a search agreed at the time",
         (_, LoreArrival.Model) => "written by D47 itself, unverified",
         _ => "your word",
