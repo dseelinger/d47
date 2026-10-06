@@ -32,7 +32,7 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
             }
 
             return Task.FromResult<BestCargoAnswer?>(answer ?? new BestCargoAnswer(
-                [new CargoPick("Gold", "Newholm Station", 8_204, 280)], search.Hold));
+                [new CargoPick("Gold", "Newholm Station", 8_204, 280, CargoLimit.Demand)], search.Hold));
         }
 
         public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>

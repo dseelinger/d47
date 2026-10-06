@@ -360,7 +360,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             destination.Add(seen is not null && seen.UpdatedAt > market.UpdatedAt ? seen : market);
         }
 
-        return new BestCargoAnswer(BestCargo.Rank(here, destination, search.Hold), search.Hold);
+        return new BestCargoAnswer(BestCargo.Rank(here, destination, search.Hold, int.MaxValue), search.Hold);
     }
 
     /// <summary>

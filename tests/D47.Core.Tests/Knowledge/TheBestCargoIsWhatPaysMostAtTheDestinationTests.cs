@@ -112,4 +112,62 @@ public class TheBestCargoIsWhatPaysMostAtTheDestinationTests
         Assert.Equal(20_000, Assert.Single(BestCargo.Rank(here, [there], hold: 20)).Total);
         Assert.Equal(700_000, Assert.Single(BestCargo.Rank(here, [there], hold: 700)).Total);
     }
+
+    [Fact]
+    public void ALargerCountKeepsThatManyBestTotalFirst()
+    {
+        var here = Market(
+            "Home",
+            Sells("Gold", 1_000, 10_000),
+            Sells("Silver", 500, 10_000),
+            Sells("Bauxite", 100, 10_000),
+            Sells("Tea", 100, 10_000));
+
+        var there = Market(
+            "Away",
+            Buys("Gold", 3_000, 10_000),
+            Buys("Silver", 2_000, 10_000),
+            Buys("Bauxite", 150, 10_000),
+            Buys("Tea", 400, 10_000));
+
+        Assert.Equal(2, BestCargo.Rank(here, [there], hold: 100).Count);
+
+        Assert.Equal(
+            ["Gold", "Silver", "Tea"],
+            BestCargo.Rank(here, [there], hold: 100, count: 3).Select(pick => pick.Commodity));
+
+        Assert.Equal(
+            ["Gold", "Silver", "Tea", "Bauxite"],
+            BestCargo.Rank(here, [there], hold: 100, count: int.MaxValue).Select(pick => pick.Commodity));
+    }
+
+    [Fact]
+    public void EachPickNamesWhatLimitedItsTonnes()
+    {
+        var here = Market("Home", Sells("Gold", 1_000, 10_000), Sells("Painite", 1_000, 3), Sells("Silver", 100, 10_000));
+        var there = Market("Away", Buys("Gold", 2_000, 10_000), Buys("Painite", 9_000, 10_000), Buys("Silver", 200, 40));
+
+        var picks = BestCargo.Rank(here, [there], hold: 100, count: int.MaxValue).ToDictionary(pick => pick.Commodity);
+
+        Assert.Equal(CargoLimit.Hold, picks["Gold"].Limit);
+        Assert.Equal(CargoLimit.Supply, picks["Painite"].Limit);
+        Assert.Equal(CargoLimit.Demand, picks["Silver"].Limit);
+        Assert.Equal(40, picks["Silver"].Tonnes);
+    }
+
+    [Fact]
+    public void TheSentenceNamesTwoHoweverManyAreKept()
+    {
+        var answer = new BestCargoAnswer(
+        [
+            new CargoPick("Gold", "Ray Gateway", 2_000, 100, CargoLimit.Hold),
+            new CargoPick("Silver", "Ray Gateway", 1_000, 100, CargoLimit.Hold),
+            new CargoPick("Tea", "Ray Gateway", 500, 100, CargoLimit.Hold),
+        ], 100);
+
+        Assert.Equal(
+            "Best cargo for Away: Gold to Ray Gateway, 2,000 Cr a tonne, 200,000 Cr for 100 tonnes; "
+            + "then Silver to Ray Gateway, 1,000 Cr a tonne, 100,000 Cr for 100 tonnes.",
+            BestCargo.Describe("Away", answer));
+    }
 }

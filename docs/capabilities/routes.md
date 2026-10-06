@@ -491,6 +491,14 @@ distance. Where nothing at the destination pays more than you bought for, it say
 Nothing here sells at a profit in Sothis.
 ```
 
+The answer names the best two. The **Best cargo** page on the Navigation tab, after Market, draws
+every commodity that sells at a profit, best total first, from the same search. Type a system into
+**Sell in** and press **Find cargo** or Enter; **Route end** fills in the last system of the route
+you have plotted. Each row gives the station that pays most, the profit a tonne, the tonnes and the
+total, and under the tonnes what limited them: `HOLD`, `SUPPLY` (what the station you are docked at
+sells) or `DEMAND` (what the buyer takes). A question asked by voice shows on the page too. The page
+searches only when asked.
+
 #### `plot_carrier_route`
 
 "Plot my carrier to Colonia" plots your own fleet carrier's jumps through spansh's carrier plotter.

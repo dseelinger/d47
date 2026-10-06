@@ -560,6 +560,9 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public D47.Core.Knowledge.SourcingBoard Sourcing { get; private set; } = new();
 
+    /// <summary>The last best cargo search (#849), on the same terms as <see cref="Commodities"/>.</summary>
+    public D47.Core.Knowledge.BestCargoBoard Cargo { get; private set; } = new();
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -975,6 +978,7 @@ public sealed class AppHost : IDisposable
         // it is true (Phase 49).
         var commodityBoard = new D47.Core.Knowledge.CommodityBoard();
         var sourcingBoard = new D47.Core.Knowledge.SourcingBoard();
+        var cargoBoard = new D47.Core.Knowledge.BestCargoBoard();
 
         // The Community Goal supply search, saved once (#296), and the ledger of what its commodity has made
         // or lost.
@@ -2138,7 +2142,8 @@ public sealed class AppHost : IDisposable
                 miningTargets: miningTargets,
                 crimes: crimes,
                 liveStatus: () => status.Current,
-                activities: activities));
+                activities: activities,
+                cargo: cargoBoard));
 
         buildingRegistry.Dispose();
 
@@ -2719,6 +2724,7 @@ public sealed class AppHost : IDisposable
         host.CommunityGoalSearch = communityGoalSearch;
         host.CommodityLedger = commodityLedger;
         host.Sourcing = sourcingBoard;
+        host.Cargo = cargoBoard;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, OtherDynamicCommands());
 

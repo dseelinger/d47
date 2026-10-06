@@ -298,7 +298,10 @@ public partial class MainWindow : Window
 
                 // Unsold data (#556).
                 Exobiology: () => host.History.Exobiology,
-                Cartography: () => host.History.Cartography);
+                Cartography: () => host.History.Cartography,
+
+                // Best cargo (#849).
+                Cargo: host.Cargo);
 
             Panel.EnableRouting(Routing);
 

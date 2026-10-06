@@ -1237,6 +1237,7 @@ public partial class PanelView : UserControl
         bool plan = true,
         bool progress = true,
         bool market = true,
+        bool bestCargo = true,
         bool trade = true,
         bool bookmarks = true,
         bool body = true,
@@ -1270,6 +1271,15 @@ public partial class PanelView : UserControl
             roots.Add(new NavCrumb(RoutingPages.MarketRoot, "Market")
             {
                 Help = D47.Core.Capabilities.Builtin.GalaxyCapability.Id,
+            });
+        }
+
+        // After Market, because it reads the market the Commander is docked at (#849).
+        if (bestCargo && surface is { Cargo: not null, Registry: not null })
+        {
+            roots.Add(new NavCrumb(RoutingPages.BestCargoRoot, "Best cargo")
+            {
+                Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
             });
         }
 
@@ -1341,6 +1351,7 @@ public partial class PanelView : UserControl
                 _routePlan = page as RoutePlanPage ?? _routePlan;
                 _routeTrade = page as RouteTradePage ?? _routeTrade;
                 _routeResult = page as RoutePlanResultPage ?? _routeResult;
+                _bestCargo = page as RouteBestCargoPage ?? _bestCargo;
 
                 return page;
             },
@@ -1384,6 +1395,7 @@ public partial class PanelView : UserControl
         // On this body follows the game's position, so it ticks ahead of the route's guard.
         var body = _bodyPage is { } bodyPage && Nav.RootKeyOf(PanelTab.Navigation) == BodyPage.RootKey && bodyPage.Tick();
         body |= _unsoldPage is { } unsoldPage && Nav.RootKeyOf(PanelTab.Navigation) == UnsoldPage.RootKey && unsoldPage.Tick();
+        body |= _bestCargo is { } cargo && Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.BestCargoRoot && cargo.Tick();
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();
@@ -1446,6 +1458,7 @@ public partial class PanelView : UserControl
     private RoutePlanPage? _routePlan;
     private RouteTradePage? _routeTrade;
     private RoutePlanResultPage? _routeResult;
+    private RouteBestCargoPage? _bestCargo;
     private AdventureMini? _adventureMini;
     private RouteMini? _routeMini;
     private Func<D47.Core.Journal.NavRoute>? _routeState;

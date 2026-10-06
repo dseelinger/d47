@@ -225,7 +225,10 @@ public static class BuiltinCapabilities
         Func<Journal.GameStatus>? liveStatus = null,
 
         // When each activity was last done (#586).
-        Activities.ActivityLedger? activities = null) =>
+        Activities.ActivityLedger? activities = null,
+
+        // Where the last best cargo search is posted (#849).
+        Knowledge.BestCargoBoard? cargo = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -262,7 +265,8 @@ public static class BuiltinCapabilities
             plans,
             now,
             navigation,
-            checklists),
+            checklists,
+            cargo),
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active, unlocks),
         EngineeringCapability.Create(() => gameState.Active, galaxy, clipboard),

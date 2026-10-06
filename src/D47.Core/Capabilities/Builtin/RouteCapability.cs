@@ -38,7 +38,8 @@ public static class RouteCapability
         RoutePlanBook? plans = null,
         Func<DateTimeOffset>? now = null,
         NavigationSurface? navigation = null,
-        Checklists.ChecklistService? checklists = null) => new()
+        Checklists.ChecklistService? checklists = null,
+        BestCargoBoard? cargo = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -265,7 +266,7 @@ public static class RouteCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    BestCommoditiesForAsync(trade, commander, settings, arguments, cancellationToken),
+                    BestCommoditiesForAsync(trade, commander, settings, cargo, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -902,6 +903,8 @@ public static class RouteCapability
         ITradePlanService? trade,
         Func<CommanderGameState?> commander,
         Configuration.SettingsService settings,
+        BestCargoBoard? cargo,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -931,9 +934,8 @@ public static class RouteCapability
             Station = station,
             Destination = destination!.Trim(),
 
-            // Limpets never sell, so they come off the hold with no switch, as a trade route's own default
-            // does (#310).
-            Hold = Math.Max(0, (active.Ship.CargoCapacity ?? 0) - active.Hold.Of(LimpetCallout.Limpet)),
+            // Limpets come off the hold with no switch, as a trade route's own default does (#310).
+            Hold = BestCargo.FreeHold(active),
             MaxPriceAge = saved.MaxPriceAgeHours,
             LargePadOnly = saved.LargePadOnly,
             Planetary = saved.Planetary,
@@ -943,6 +945,8 @@ public static class RouteCapability
         try
         {
             var answer = await trade.BestCargoAsync(search, cancellationToken).ConfigureAwait(false);
+
+            cargo?.Post(new BestCargoPosting(search, answer, now?.Invoke() ?? DateTimeOffset.Now));
 
             return answer is null
                 ? ToolResult.Ok(

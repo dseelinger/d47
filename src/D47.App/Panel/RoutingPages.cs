@@ -56,7 +56,10 @@ public sealed record RoutingSurface(
     Func<CartographyLedger?>? Cartography = null,
 
     // Fleet › Carrier's "Plan a carrier route", handed to the Carrier Route card (#637).
-    CarrierRouteRequest? CarrierRoute = null);
+    CarrierRouteRequest? CarrierRoute = null,
+
+    // Best cargo (#849): the last search, by voice or from the page.
+    BestCargoBoard? Cargo = null);
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>
 public sealed class CarrierRouteRequest
@@ -111,6 +114,9 @@ public static class RoutingPages
     /// <summary>Where to buy a commodity, or where to dump one (Phase 49).</summary>
     public const string MarketRoot = "routing.market";
 
+    /// <summary>What to buy at the docked station to sell in another system (#849).</summary>
+    public const string BestCargoRoot = "routing.bestCargo";
+
     /// <summary>The Trade route page: the plotter's saved hops, jumps and switches (#311).</summary>
     public const string TradeRoot = "routing.trade";
 
@@ -151,6 +157,7 @@ public static class RoutingPages
             PlanRoot => Plan(surface, nav),
             ProgressKey => new RouteProgressPage(surface.Route, surface.Here, Copy(surface)),
             MarketRoot => Market(surface),
+            BestCargoRoot => BestCargo(surface, nav),
             TradeRoot => Trade(surface, nav),
             BookmarksRoot => Bookmarks(surface, prompts),
             _ => Missing("There is no such page on this tab."),
@@ -180,6 +187,21 @@ public static class RoutingPages
                 surface.OpenSettings,
                 Copy(surface))
             : Missing("Market lookups are not available on this surface.");
+
+    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav) =>
+        surface is { Registry: { } registry, Cargo: { } board }
+            ? new RouteBestCargoPage(
+                registry,
+                board,
+                surface.Commander ?? (() => null),
+                surface.Route,
+                surface.LookupsEnabled ?? (() => false),
+                surface.Settings,
+                surface.OpenSettings,
+                nav.Roots(PanelTab.Navigation).Any(root => root.Key == TradeRoot)
+                    ? () => nav.SelectRoot(PanelTab.Navigation, TradeRoot)
+                    : null)
+            : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>
         surface is { Registry: { } registry, Plans: { } plans, Settings: { } settings }

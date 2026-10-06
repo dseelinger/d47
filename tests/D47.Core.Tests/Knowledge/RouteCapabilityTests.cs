@@ -148,7 +148,8 @@ public class RouteCapabilityTests
         NavigationSurface? navigation = null,
 
         // The Trade route page's own saved values (#311), seeded before the registry reads them.
-        Action<SettingsService>? configureSettings = null)
+        Action<SettingsService>? configureSettings = null,
+        BestCargoBoard? cargo = null)
     {
         var gameState = new GameStateStore();
         Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
@@ -179,7 +180,8 @@ public class RouteCapabilityTests
                     settings,
                     plans,
                     () => PlottedAt,
-                    navigation),
+                    navigation,
+                    cargo: cargo),
             ]),
             routes,
             trade,
@@ -547,7 +549,7 @@ public class RouteCapabilityTests
         using var install = new TempInstall();
         var (registry, _, trade, _) = Build(install);
 
-        trade.BestCargo = new BestCargoAnswer([new CargoPick("Gold", "Newholm Station", 8_204, 280)], 384);
+        trade.BestCargo = new BestCargoAnswer([new CargoPick("Gold", "Newholm Station", 8_204, 280, CargoLimit.Demand)], 384);
 
         var result = await registry.InvokeAsync(
             "best_commodities_for",
@@ -579,6 +581,58 @@ public class RouteCapabilityTests
         Assert.True(result.IsError);
         Assert.Contains("docked", result.Content, StringComparison.Ordinal);
         Assert.Null(trade.LastBestCargo);
+    }
+
+    /// <summary>The page draws what the tool found, so the tool posts every search it finishes (#849).</summary>
+    [Fact]
+    public async Task BestCommoditiesForPostsTheSearchAndItsAnswerToTheBoard()
+    {
+        using var install = new TempInstall();
+        var board = new BestCargoBoard();
+        var (registry, _, trade, _) = Build(install, cargo: board);
+        var posted = 0;
+        board.Posted += () => posted++;
+
+        trade.BestCargo = new BestCargoAnswer(
+        [
+            new CargoPick("Gold", "Newholm Station", 8_204, 280, CargoLimit.Demand),
+            new CargoPick("Silver", "Newholm Station", 4_000, 384, CargoLimit.Hold),
+            new CargoPick("Tea", "Newholm Station", 900, 120, CargoLimit.Supply),
+        ], 384);
+
+        var result = await registry.InvokeAsync(
+            "best_commodities_for",
+            Args(("system", "Sothis")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, posted);
+        Assert.Equal("Sothis", board.Last?.Search.Destination);
+        Assert.Equal("Abraham Lincoln", board.Last?.Search.Station);
+        Assert.Equal(PlottedAt, board.Last?.AskedAt);
+        Assert.Equal(3, board.Last?.Answer?.Picks.Count);
+
+        // The sentence still names two.
+        Assert.DoesNotContain("Tea", result.Content, StringComparison.Ordinal);
+
+        trade.BestCargo = null;
+
+        await registry.InvokeAsync("best_commodities_for", Args(("system", "Sothis")), TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, posted);
+        Assert.NotNull(board.Last);
+        Assert.Null(board.Last.Answer);
+    }
+
+    [Fact]
+    public async Task ARefusedBestCargoSearchPostsNothing()
+    {
+        using var install = new TempInstall();
+        var board = new BestCargoBoard();
+        var (registry, _, _, _) = Build(install, docked: false, cargo: board);
+
+        await registry.InvokeAsync("best_commodities_for", Args(("system", "Sothis")), TestContext.Current.CancellationToken);
+
+        Assert.Null(board.Last);
     }
 
     [Fact]
