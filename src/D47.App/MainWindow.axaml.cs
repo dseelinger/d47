@@ -141,8 +141,8 @@ public partial class MainWindow : Window
                 BuildSettingsPage,
                 RevealSetting,
                 host.LearnedPhrases is { } learnedPhrases
-                    ? () => new LearnedPhrasesPage(
-                        host.Capabilities, learnedPhrases, () => host.GameState.Active)
+                    ? () => new PhrasesPage(
+                        host.Capabilities, learnedPhrases, () => host.GameState.Active, () => host.Router.Book)
                     : null);
 
             // Every system name the panel draws goes through this one seam (#157).
@@ -365,6 +365,10 @@ public partial class MainWindow : Window
             // And the route being flown, by the same route again (Phase 37).
             host.Tick.Add("routing", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickRouting()));
+
+            // And the Phrases footer.
+            host.Tick.Add("settings", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickSettings()));
 
             // And the System page, which follows the Commander from system to system.
             host.Tick.Add("search", _ =>

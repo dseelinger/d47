@@ -165,11 +165,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (settingsPage is not null)
         {
-            Func<Panel.LearnedPhrasesPage>? phrases = capabilities is not null && learnedPhrases is not null
-                ? () => new Panel.LearnedPhrasesPage(capabilities, learnedPhrases, gameState ?? (() => null))
+            Func<Panel.PhrasesPage>? phrases = capabilities is not null && learnedPhrases is not null
+                ? () => new Panel.PhrasesPage(capabilities, learnedPhrases, gameState ?? (() => null))
                 : null;
 
-            _view.EnableSettings(settingsPage, learnedPhrases: phrases);
+            _view.EnableSettings(settingsPage, phrases: phrases);
         }
 
         if (checklists is not null)

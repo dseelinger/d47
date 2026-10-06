@@ -530,18 +530,13 @@ public partial class PanelView : UserControl
     /// </summary>
     /// <param name="build">The settings page itself.</param>
     /// <param name="reveal">Jumps the settings page to one capability's card.</param>
-    /// <param name="learnedPhrases">
-    /// What the flying Commander has taught D47 stands for a declared phrase (#171), as a second root on
-    /// this tab — or null for a surface that does not get one.
-    /// </param>
+    /// <param name="phrases">Settings › Phrases as a second root on this tab, or null for a surface that does not get one.</param>
     public void EnableSettings(
         Func<Control> build,
         Action<string>? reveal = null,
-        Func<LearnedPhrasesPage>? learnedPhrases = null)
+        Func<PhrasesPage>? phrases = null)
     {
         _revealSetting = reveal;
-
-        LearnedPhrasesPage? phrases = null;
 
         var roots = new List<NavCrumb>
         {
@@ -551,9 +546,9 @@ public partial class PanelView : UserControl
             },
         };
 
-        if (learnedPhrases is not null)
+        if (phrases is not null)
         {
-            roots.Add(new NavCrumb(LearnedPhrasesPage.RootKey, "Learned phrases")
+            roots.Add(new NavCrumb(PhrasesPage.RootKey, PhrasesPage.Word)
             {
                 Help = D47.Core.Capabilities.Builtin.LearnedPhrasesCapability.Id,
             });
@@ -563,11 +558,20 @@ public partial class PanelView : UserControl
             PanelTab.Settings,
             crumb => crumb.Key switch
             {
-                LearnedPhrasesPage.RootKey when learnedPhrases is not null => phrases ??= learnedPhrases(),
+                PhrasesPage.RootKey when phrases is not null => _phrases ??= phrases(),
                 _ => build(),
             },
             [.. roots]);
     }
+
+    private PhrasesPage? _phrases;
+
+    /// <summary>Moves the Phrases footer on when the journal has.</summary>
+    public bool TickSettings() =>
+        Tab == PanelTab.Settings
+        && _phrases is { } phrases
+        && Nav.RootKeyOf(PanelTab.Settings) == PhrasesPage.RootKey
+        && phrases.Tick();
 
     /// <summary>How this surface shows one settings section, or null where it has no settings.</summary>
     private Action<string>? _revealSetting;

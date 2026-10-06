@@ -11,8 +11,11 @@ namespace D47.App.Controls;
 /// <summary>One line of an <see cref="InlinePicker"/>'s list.</summary>
 public abstract record InlinePickerEntry;
 
-/// <summary>A choice, its label drawn in <paramref name="InkKey"/> unless it is the current one.</summary>
-public sealed record InlinePickerOption(string Id, string Label, string InkKey) : InlinePickerEntry;
+/// <summary>
+/// A choice, its label drawn in <paramref name="InkKey"/> unless it is the current one, with an optional
+/// <paramref name="Detail"/> in Grey chrome at the right.
+/// </summary>
+public sealed record InlinePickerOption(string Id, string Label, string InkKey, string? Detail = null) : InlinePickerEntry;
 
 /// <summary>A small uppercase heading over the options that follow it.</summary>
 public sealed record InlinePickerHeading(string Text) : InlinePickerEntry;
@@ -54,6 +57,7 @@ public sealed class InlinePicker : ContentControl
     };
 
     private readonly Border _list;
+    private readonly ScrollViewer _scroll;
     private readonly StackPanel _options = new() { Spacing = 2 };
     private readonly List<IDisposable> _inks = [];
     private IDisposable? _openInk;
@@ -95,7 +99,12 @@ public sealed class InlinePicker : ContentControl
             Padding = new Thickness(2),
             Margin = new Thickness(0, 2, 0, 0),
             IsVisible = false,
-            Child = _options,
+            Child = _scroll = new ScrollViewer
+            {
+                Content = _options,
+                VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            },
         };
         Ink(_list, Border.BackgroundProperty, ThemeManager.BarKey);
         Ink(_list, Border.BorderBrushProperty, ThemeManager.AKey);
@@ -122,6 +131,13 @@ public sealed class InlinePicker : ContentControl
                 _button.ClearValue(Button.BackgroundProperty);
             }
         }
+    }
+
+    /// <summary>The tallest the open list grows before it scrolls.</summary>
+    public double ListMaxHeight
+    {
+        get => _scroll.MaxHeight;
+        set => _scroll.MaxHeight = value;
     }
 
     /// <summary>The name the button is announced by.</summary>
@@ -185,9 +201,37 @@ public sealed class InlinePicker : ContentControl
             _inks.Add(Ink(text, TextBlock.ForegroundProperty, option.InkKey));
         }
 
+        Control content = text;
+
+        if (option.Detail is { Length: > 0 } detail)
+        {
+            var aside = new TextBlock
+            {
+                Text = detail.ToUpperInvariant(),
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Caption,
+                FontWeight = FontWeight.SemiBold,
+                LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12, 0, 0, 0),
+            };
+
+            if (!isCurrent)
+            {
+                _inks.Add(Ink(aside, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+            }
+
+            var row = new DockPanel();
+            DockPanel.SetDock(aside, Dock.Right);
+            row.Children.Add(aside);
+            row.Children.Add(text);
+            content = row;
+        }
+
         var button = new Button
         {
-            Content = text,
+            Content = content,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
             MinHeight = 36,
             Padding = new Thickness(12, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,

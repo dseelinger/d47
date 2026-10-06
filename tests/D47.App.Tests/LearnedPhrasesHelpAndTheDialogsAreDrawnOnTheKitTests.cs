@@ -103,13 +103,13 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
 
         panel.EnableSettings(
             () => new TextBlock { Text = "Settings" },
-            learnedPhrases: () => new LearnedPhrasesPage(registry, store, () => gameState.Active));
+            phrases: () => new PhrasesPage(registry, store, () => gameState.Active));
 
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
         panel.Tab = PanelTab.Settings;
-        Assert.True(panel.Nav.SelectRoot(LearnedPhrasesPage.RootKey));
+        Assert.True(panel.Nav.SelectRoot(PhrasesPage.RootKey));
         Dispatcher.UIThread.RunJobs();
 
         var path = Save(window, $"learned-phrases-{themeId}-{width}x{height}.png");
@@ -361,7 +361,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     }
 
     [Theory]
-    [InlineData("Panel/LearnedPhrasesPage.cs")]
+    [InlineData("Panel/PhrasesPage.cs")]
     [InlineData("Panel/HelpPageView.cs")]
     [InlineData("Controls/AudioRecorderPage.cs")]
     [InlineData("Controls/ChangelogPage.cs")]

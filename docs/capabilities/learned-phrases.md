@@ -17,9 +17,19 @@ live, and where they stop.
 
 ### Seeing what has been learned
 
-Settings → **Learned phrases** lists every entry the flying Commander has taught D47, newest
-first: the wording said, and the phrase it now runs. Nothing here is shared between Commanders —
-each has their own.
+Settings → **Phrases** lists, under YOUR PHRASES, every entry the flying Commander has taught D47,
+newest first: the wording or pattern, and the phrase it now runs. Below that is every built-in
+phrase, grouped by capability, with one sentence saying what it does. The search box filters both.
+Nothing here is shared between Commanders — each has their own.
+
+### Adding a phrase on the page
+
+Under ADD A PHRASE, type a wording or a pattern in the SAY field, pick the phrase it stands for
+from the list, and press **Add** or Enter. The new entry goes to the top of YOUR PHRASES. The page
+adds through the same tool as the voice, so it refuses the same things: a clash names the wording
+that clashed and what it already stands for, with `BUILT-IN PHRASE · <capability>` or
+`YOUR PHRASE · <pattern>` under it. An empty field says NOTHING TO ADD, and no phrase picked says
+PICK A PHRASE. Editing the field clears the notice.
 
 ### Teaching a phrase by voice
 
@@ -58,7 +68,7 @@ written.
 
 ### Forgetting one
 
-Press **Forget** beside the entry, or say it:
+Press the **✕** beside the entry, or say it:
 
 > "forget 'set focus on elite'"
 
@@ -94,7 +104,7 @@ Forget one pattern the Commander taught D47, as written, with every wording it p
 callable by the model — only the panel, a hotkey or the Commander's own "forget" phrase reach it.
 
 ```json
-{"type":"object","properties":{"said":{"type":"string","description":"The pattern to forget, exactly as it reads on the learned-phrases page."}},"required":["said"],"additionalProperties":false}
+{"type":"object","properties":{"said":{"type":"string","description":"The pattern to forget, exactly as it reads on the Phrases page."}},"required":["said"],"additionalProperties":false}
 ```
 
 </details>

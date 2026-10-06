@@ -3,8 +3,8 @@ using D47.Core.Conversation;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What the flying Commander has taught D47 stands for a declared phrase, listed and forgotten on its own
-/// panel page rather than a settings row (#171).
+/// What the flying Commander has taught D47 stands for a declared phrase: taught, listed and forgotten on
+/// Settings › Phrases, or by voice.
 /// </summary>
 public static class LearnedPhrasesCapability
 {
@@ -17,6 +17,9 @@ public static class LearnedPhrasesCapability
     /// <summary>Starts the spoken exchange that teaches a phrase; the turn loop runs it in place of the handler.</summary>
     public const string TeachTool = "teach_phrase";
 
+    /// <summary>The phrase that starts teaching by voice.</summary>
+    public const string TeachPhrase = "teach a phrase";
+
     public static CapabilityDescriptor Create(
         LearnedPhrasesStore? store, Func<string> frontierId, Func<PhraseBook>? phraseBook = null) => new()
     {
@@ -25,7 +28,7 @@ public static class LearnedPhrasesCapability
         Name = "Learned phrases",
         Summary = "What the Commander has taught D47 another way of saying a command, and forgetting one.",
         Examples = ["teach a phrase", "forget 'set focus on elite'"],
-        Display = new CapabilityDisplay { PanelTitle = "Learned phrases", Order = 4 },
+        Display = new CapabilityDisplay { PanelTitle = "Phrases", Order = 4 },
         Tools =
         [
             new ToolDefinition
@@ -37,7 +40,7 @@ public static class LearnedPhrasesCapability
                 Protected = true,
                 Commands =
                 [
-                    new ToolCommandPhrase("teach a phrase", new Dictionary<string, string>(StringComparer.Ordinal)),
+                    new ToolCommandPhrase(TeachPhrase, new Dictionary<string, string>(StringComparer.Ordinal)),
                     new ToolCommandPhrase("new phrase", new Dictionary<string, string>(StringComparer.Ordinal)),
                 ],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(
@@ -85,7 +88,7 @@ public static class LearnedPhrasesCapability
                     {
                         Name = "said",
                         Type = ToolParameterType.String,
-                        Description = "The pattern to forget, exactly as it reads on the learned-phrases page.",
+                        Description = "The pattern to forget, exactly as it reads on the Phrases page.",
                         Required = true,
                     },
                 ],
