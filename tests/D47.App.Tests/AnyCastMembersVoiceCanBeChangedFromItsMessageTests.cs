@@ -145,13 +145,13 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
     {
         var paths = new AppPaths(TempFolders.Create("d47-cast-voices"));
         paths.EnsureCreated();
-        var holder = new StackPanel();
         var changeVoice = new Button { Content = "Change voice" };
 
-        CastPicturePanel.Show(holder, holder, new SpeakerPictures(paths), "the-test-story.juno", changeVoice);
-        CastPicturePanel.Show(holder, holder, new SpeakerPictures(paths), "the-test-story.juno", changeVoice);
+        var chooser = new PictureChooser(new SpeakerPictures(paths), "the-test-story.juno", 240, null, changeVoice);
+        var second = new PictureChooser(new SpeakerPictures(paths), "the-test-story.juno", 240, null, changeVoice);
 
-        Assert.Same(holder.Children.OfType<StackPanel>().Single(), changeVoice.Parent);
+        Assert.Same(second.Children.OfType<StackPanel>().Single(), changeVoice.Parent);
+        Assert.DoesNotContain(changeVoice, chooser.Children.OfType<StackPanel>().Single().Children);
     }
 
     private sealed class DisposableWindow(Window window) : IDisposable

@@ -213,6 +213,10 @@ panel shows no pictures.
 | A hired pilot | `crew.<crew id>` |
 | A story's cast member | `<story id>.<cast id>` |
 
+You choose your own picture on the Commander record, under your name: **Change picture** keeps it for the
+Commander flying, and **Use the default** removes it, which leaves no picture. Until D47 has seen which
+Commander is flying, both buttons are disabled.
+
 A voice whose listing gives no gender, as OpenAI's do, shows no captain or tower picture.
 Invented comms show none.
 

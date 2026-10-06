@@ -345,7 +345,7 @@ public static class EgressDisclosure
         ChosenPictures => EgressEntry.Silent(
             ChosenPictures,
             NameOf(ChosenPictures),
-            "A picture you choose for a story's character is kept in data\\pictures on this PC and never sent anywhere."),
+            "A picture you choose for yourself, a hired pilot or a story's character is kept in data\\pictures on this PC and never sent anywhere."),
 
         Donation => DonationEntry(),
 

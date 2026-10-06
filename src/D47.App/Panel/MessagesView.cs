@@ -92,9 +92,7 @@ public sealed class MessagesView : UserControl
 
         if (_surface?.Pictures is { } pictures && message.Picture is { } picture && pictures.Find(picture) is not null)
         {
-            var holder = new StackPanel { Spacing = 6 };
-            CastPicturePanel.Show(this, holder, pictures, picture, changeVoice is null ? [] : [changeVoice]);
-            page.Children.Add(holder);
+            page.Children.Add(new PictureChooser(pictures, picture, 240, null, changeVoice is null ? [] : [changeVoice]));
         }
         else if (changeVoice is not null)
         {

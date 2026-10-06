@@ -8,17 +8,39 @@ using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
-/// <summary>A cast member's picture, the Commander's own where they chose one, with the buttons that replace it.</summary>
-public static class CastPicturePanel
+/// <summary>
+/// A picture kept in <c>data\pictures</c>, drawn at most <c>size</c> pixels wide, with Change picture and Use the
+/// default buttons and a status line. With no picture name the buttons are disabled and the status says
+/// <c>unsetStatus</c>.
+/// </summary>
+public sealed class PictureChooser : StackPanel
 {
-    /// <summary>
-    /// Fills <paramref name="holder"/> with the picture and its Change picture and Use the default buttons, then
-    /// <paramref name="beside"/> in the same row.
-    /// </summary>
-    public static void Show(Control owner, StackPanel holder, SpeakerPictures pictures, string picture, params Control[] beside)
+    private readonly SpeakerPictures _pictures;
+    private readonly string? _picture;
+    private readonly double _size;
+    private readonly Control[] _beside;
+    private readonly string? _unsetStatus;
+
+    /// <summary><paramref name="beside"/> controls are placed in the buttons' row.</summary>
+    public PictureChooser(SpeakerPictures pictures, string? picture, double size, string? unsetStatus = null, params Control[] beside)
     {
-        ArgumentNullException.ThrowIfNull(holder);
         ArgumentNullException.ThrowIfNull(pictures);
+
+        _pictures = pictures;
+        _picture = picture;
+        _size = size;
+        _unsetStatus = unsetStatus;
+        _beside = beside;
+        Spacing = 6;
+        Build();
+    }
+
+    private void Build()
+    {
+        var pictures = _pictures;
+        var picture = _picture;
+        var holder = this;
+        var beside = _beside;
 
         holder.Children.Clear();
 
@@ -30,7 +52,7 @@ public static class CastPicturePanel
                 holder.Children.Add(new Image
                 {
                     Source = new Bitmap(bytes),
-                    MaxWidth = 240,
+                    MaxWidth = _size,
                     Stretch = Stretch.Uniform,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
                 });
@@ -41,13 +63,13 @@ public static class CastPicturePanel
             }
         }
 
-        var status = AdventuresPage.Text(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
-        var change = new Button { Content = "Change picture" };
-        var restore = new Button { Content = "Use the default", IsEnabled = pictures.IsChosen(picture) };
+        var status = AdventuresPage.Text(picture is null ? _unsetStatus ?? string.Empty : string.Empty, TypeScale.Small, ThemeManager.GreyKey);
+        var change = new Button { Content = "Change picture", IsEnabled = picture is not null };
+        var restore = new Button { Content = "Use the default", IsEnabled = picture is not null && pictures.IsChosen(picture) };
 
         change.Click += async (_, _) =>
         {
-            if (TopLevel.GetTopLevel(owner)?.StorageProvider is not { CanOpen: true } storage)
+            if (TopLevel.GetTopLevel(this)?.StorageProvider is not { CanOpen: true } storage)
             {
                 status.Text = "No file picker here.";
                 return;
@@ -57,7 +79,7 @@ public static class CastPicturePanel
             {
                 Title = "Choose a picture",
                 AllowMultiple = false,
-                FileTypeFilter = [new FilePickerFileType("Pictures") { Patterns = CastPictureImport.Patterns }],
+                FileTypeFilter = [new FilePickerFileType("Pictures") { Patterns = PictureImport.Patterns }],
             });
 
             if (picked.Count == 0)
@@ -72,7 +94,7 @@ public static class CastPicturePanel
             {
                 await using var stream = await picked[0].OpenReadAsync();
                 var name = picked[0].Name;
-                refusal = await Task.Run(() => CastPictureImport.Save(stream, name, pictures.Chosen(picture)));
+                refusal = await Task.Run(() => PictureImport.Save(stream, name, pictures.Chosen(picture!)));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -86,14 +108,14 @@ public static class CastPicturePanel
                 return;
             }
 
-            Show(owner, holder, pictures, picture, beside);
+            Build();
         };
 
         restore.Click += (_, _) =>
         {
             try
             {
-                pictures.UseDefault(picture);
+                pictures.UseDefault(picture!);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -101,7 +123,7 @@ public static class CastPicturePanel
                 return;
             }
 
-            Show(owner, holder, pictures, picture, beside);
+            Build();
         };
 
         var buttons = new StackPanel

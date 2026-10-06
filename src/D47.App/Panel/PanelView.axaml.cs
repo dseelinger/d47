@@ -678,7 +678,7 @@ public partial class PanelView : UserControl
     {
         _commanderClock = new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
 
-        _standingBuild = _ => _standing = new StandingPage(state, () => _commanderName?.Invoke(), _commanderClock);
+        _standingBuild = _ => _standing = new StandingPage(state, () => _commanderName?.Invoke(), _commanderClock, _portraits?.Pictures, () => Model?.CommanderPictureSource?.Invoke());
 
         Furnish(
             PanelTab.Commander,

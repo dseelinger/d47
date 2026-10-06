@@ -3,8 +3,8 @@ using Avalonia.Media.Imaging;
 
 namespace D47.App.Panel;
 
-/// <summary>Turns a picture the Commander picked into the cast picture kept in <c>data\pictures</c>.</summary>
-internal static class CastPictureImport
+/// <summary>Turns a picture the Commander picked into the picture kept in <c>data\pictures</c>.</summary>
+internal static class PictureImport
 {
     /// <summary>The largest file accepted.</summary>
     public const long MostBytes = 10 * 1024 * 1024;

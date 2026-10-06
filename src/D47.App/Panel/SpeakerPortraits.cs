@@ -15,6 +15,9 @@ public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger =
 
     private readonly Dictionary<(string Path, DateTime Written), Bitmap?> _decoded = [];
 
+    /// <summary>The pictures these bitmaps are read from.</summary>
+    public SpeakerPictures Pictures => pictures;
+
     /// <summary>How many files have been decoded.</summary>
     public int Decodes { get; private set; }
 

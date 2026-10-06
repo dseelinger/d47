@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -17,6 +18,9 @@ public sealed class StandingPage : UserControl
 
     /// <summary>The footer's phrase; it carries a <c>get_standing</c> keyword.</summary>
     public const string Phrase = "how's my standing with the Empire";
+
+    /// <summary>The widest the Commander's picture is drawn.</summary>
+    public const int PictureSize = 104;
 
     /// <summary>The top of a navy ladder, as <see cref="NavalRanks"/> numbers it.</summary>
     public const int NavyTop = 14;
@@ -35,11 +39,21 @@ public sealed class StandingPage : UserControl
     private ReputationState? _reputationSeen;
     private RankState? _ranksSeen;
     private string? _nameSeen;
+    private string? _pictureSeen;
+    private readonly SpeakerPictures? _pictures;
+    private readonly Func<string?>? _picture;
 
-    public StandingPage(Func<CommanderGameState?> state, Func<string?> name, JournalClock clock)
+    public StandingPage(
+        Func<CommanderGameState?> state,
+        Func<string?> name,
+        JournalClock clock,
+        SpeakerPictures? pictures = null,
+        Func<string?>? picture = null)
     {
         _state = state;
         _name = name;
+        _pictures = pictures;
+        _picture = picture;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
@@ -63,7 +77,8 @@ public sealed class StandingPage : UserControl
 
         if (ReferenceEquals(state?.Reputation, _reputationSeen)
             && ReferenceEquals(state?.Ranks, _ranksSeen)
-            && string.Equals(_name(), _nameSeen, StringComparison.Ordinal))
+            && string.Equals(_name(), _nameSeen, StringComparison.Ordinal)
+            && string.Equals(_picture?.Invoke(), _pictureSeen, StringComparison.Ordinal))
         {
             return false;
         }
@@ -97,12 +112,23 @@ public sealed class StandingPage : UserControl
         _reputationSeen = state?.Reputation;
         _ranksSeen = state?.Ranks;
         _nameSeen = _name();
+        _pictureSeen = _picture?.Invoke();
 
         _body.Children.Clear();
 
         var title = TitleText.Build(
             _nameSeen is { Length: > 0 } name ? $"CMDR {name}" : "Commander", TypeScale.Title, TitleRank.Screen);
-        _body.Children.Add(TitleText.Block(title, TitleText.Context("Commander record")));
+        var heading = TitleText.Block(title, TitleText.Context("Commander record"));
+
+        if (_pictures is null)
+        {
+            _body.Children.Add(heading);
+        }
+        else
+        {
+            var chooser = new PictureChooser(_pictures, _pictureSeen, PictureSize, "Fly once with D47 running to set your picture.");
+            _body.Children.Add(new StackPanel { Spacing = 10, Children = { heading, chooser } });
+        }
 
         _body.Children.Add(Group("Reputation", "Where you stand with each power, from −100 to 100."));
 

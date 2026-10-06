@@ -677,9 +677,7 @@ public sealed class StoriesView : UserControl
 
             if (_surface.Pictures is { } pictures)
             {
-                var pictured = new StackPanel { Spacing = 6 };
-                CastPicturePanel.Show(this, pictured, pictures, member.Shown.Picture, [.. buttons]);
-                row.Children.Add(pictured);
+                row.Children.Add(new PictureChooser(pictures, member.Shown.Picture, 240, null, [.. buttons]));
             }
             else
             {

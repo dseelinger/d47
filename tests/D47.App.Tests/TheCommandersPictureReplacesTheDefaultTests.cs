@@ -29,7 +29,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
 {
     private const string Picture = "ride-along.stowaway";
 
-    private static byte[] Jpeg(int width, int height, Color colour)
+    internal static byte[] Jpeg(int width, int height, Color colour)
     {
         using var bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
 
@@ -68,7 +68,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
         var target = Path.Combine(TempFolders.Create("d47-cast-picture"), "pictures", Picture + ".png");
         using var source = new MemoryStream(Jpeg(4000, 3000, Colors.SteelBlue));
 
-        Assert.Null(CastPictureImport.Save(source, "big.jpg", target));
+        Assert.Null(PictureImport.Save(source, "big.jpg", target));
 
         Assert.Equal(new PixelSize(1024, 768), SizeOf(target));
         Assert.Equal([0x89, (byte)'P', (byte)'N', (byte)'G'], File.ReadAllBytes(target).Take(4));
@@ -80,7 +80,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
         var folder = Path.Combine(TempFolders.Create("d47-cast-picture"), "pictures");
         using var source = new MemoryStream("not a picture"u8.ToArray());
 
-        Assert.NotNull(CastPictureImport.Save(source, "notes.png", Path.Combine(folder, Picture + ".png")));
+        Assert.NotNull(PictureImport.Save(source, "notes.png", Path.Combine(folder, Picture + ".png")));
 
         Assert.False(Directory.Exists(folder) && Directory.EnumerateFileSystemEntries(folder).Any());
     }
@@ -89,9 +89,9 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
     public void AFileOver10MbIsRefused()
     {
         var target = Path.Combine(TempFolders.Create("d47-cast-picture"), Picture + ".png");
-        using var source = new MemoryStream(new byte[CastPictureImport.MostBytes + 1]);
+        using var source = new MemoryStream(new byte[PictureImport.MostBytes + 1]);
 
-        Assert.Contains("10 MB", CastPictureImport.Save(source, "huge.png", target), StringComparison.Ordinal);
+        Assert.Contains("10 MB", PictureImport.Save(source, "huge.png", target), StringComparison.Ordinal);
         Assert.False(File.Exists(target));
     }
 
@@ -111,7 +111,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
 
         using (var chosen = new MemoryStream(Jpeg(2000, 1000, Colors.SteelBlue)))
         {
-            Assert.Null(CastPictureImport.Save(chosen, "mine.jpg", pictures.Chosen(Picture)));
+            Assert.Null(PictureImport.Save(chosen, "mine.jpg", pictures.Chosen(Picture)));
         }
 
         var view = new MessagesView(messages, new PanelNavigator(), AdventureFixture.Surface(paths) with { Pictures = pictures });
