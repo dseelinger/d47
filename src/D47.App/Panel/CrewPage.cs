@@ -36,11 +36,14 @@ public sealed class CrewPage : UserControl
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly CrewSeatsSection? _seats;
+    private readonly SpeakerPictures? _pictures;
     private object? _seen;
 
-    public CrewPage(Func<CommanderGameState?> state, CrewSeatsHost? seats = null)
+    /// <summary>Each hired pilot's row carries a picture chooser when <paramref name="pictures"/> is given.</summary>
+    public CrewPage(Func<CommanderGameState?> state, CrewSeatsHost? seats = null, SpeakerPictures? pictures = null)
     {
         _state = state;
+        _pictures = pictures;
         _seats = seats is null ? null : new CrewSeatsSection(seats, state, () => Draw());
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
 
@@ -122,7 +125,7 @@ public sealed class CrewPage : UserControl
 
         foreach (var member in crew.Members)
         {
-            rows.Children.Add(Row(member));
+            rows.Children.Add(Row(member, _pictures));
         }
 
         _body.Children.Add(new StackPanel { Margin = new Thickness(0, _seats is null ? 28 : 12, 0, 0), Children = { ColumnHeads(), rows } });
@@ -143,7 +146,7 @@ public sealed class CrewPage : UserControl
         return new Border { Padding = new Thickness(14, 0), Child = grid };
     }
 
-    private static Border Row(CrewMember member)
+    private static Border Row(CrewMember member, SpeakerPictures? pictures)
     {
         var name = new TextBlock
         {
@@ -159,16 +162,21 @@ public sealed class CrewPage : UserControl
         var duty = Cell(Duty(member), 2, member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey);
         var posted = Cell(Posting(member), 3, member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
-        var row = new Border
+        var line = new Grid
         {
+            ColumnDefinitions = new ColumnDefinitions(Columns),
             Height = TypeScale.MinimumTarget,
-            Padding = new Thickness(14, 0),
-            Child = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions(Columns),
-                Children = { name, rank, duty, posted },
-            },
+            Children = { name, rank, duty, posted },
         };
+
+        var content = new StackPanel { Children = { line } };
+
+        if (pictures is not null)
+        {
+            content.Children.Add(new PictureChooser(pictures, SpeakerPictures.Crew(member.CrewId), 120) { Margin = new Thickness(0, 0, 0, 8) });
+        }
+
+        var row = new Border { Padding = new Thickness(14, 0), Child = content };
         LoadoutPages.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;

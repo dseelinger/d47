@@ -929,7 +929,7 @@ public partial class PanelView : UserControl
             crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state),
             () => _storedModulesPage = new StoredModulesPage(state),
-            () => _crewPage = new CrewPage(state, crewSeats),
+            () => _crewPage = new CrewPage(state, crewSeats, _portraits?.Pictures),
             PlanCarrierRoute);
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);

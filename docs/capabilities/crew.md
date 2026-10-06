@@ -205,6 +205,13 @@ no posting at all until you next reassign them.
 If a roster has never been seen, it says that rather than saying you have no crew — those are
 different answers, and only one of them is true.
 
+### A picture for each pilot
+
+Each hired pilot's row on Fleet › Crew has **Change picture** and **Use the default**. The picture is kept
+under the pilot's game crew id, not their name, so two pilots with the same name keep separate pictures. It
+shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their file, and a rehire
+with the same crew id gets it back.
+
 ### Crew seats aboard your ship
 
 Fleet › Crew has a second section, **Seats aboard** followed by the name of the ship you are flying. It is

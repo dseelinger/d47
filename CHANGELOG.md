@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Each hired pilot's row on Fleet › Crew has a picture, with Change picture and Use the default. It is kept for the pilot's crew id, so two pilots with the same name keep separate pictures, and it shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their picture, and a rehire gets it back.
+
 The Commander record has a picture of you under your name, with Change picture and Use the default. The picture is kept for the Commander flying and shows beside your turns on the Conversation page; a second Commander has none until they choose one. Until D47 has seen which Commander is flying, the buttons are disabled and the page says "Fly once with D47 running to set your picture." A file over 10 MB, or one that is not a picture, is refused and nothing is saved.
 
 Asking "read my mail", "any mail" or "check my messages" says what the journal shows has arrived as inbox mail since you last asked: missions completed or failed, promotions, squadron promotions and community goal rewards. d47 cannot see the inbox itself, so the answer says the comms panel has the true count. Asking again says nothing new until more arrives. Promotions d47 already announced are left out.
