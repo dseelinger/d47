@@ -62,6 +62,9 @@ public sealed class HistoryBackfill
     /// <summary>The unpaid fines and bounties, folded the same way (#639).</summary>
     public OutstandingCrimes? Crimes { get; init; }
 
+    /// <summary>When each activity was last done, folded the same way (#585).</summary>
+    public D47.Core.Activities.ActivityLedger? Activities { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -197,6 +200,15 @@ public sealed class HistoryBackfill
                 Timed("crime backfill", () =>
                 {
                     crimes.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Activities is { } activities)
+            {
+                Timed("activity backfill", () =>
+                {
+                    activities.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

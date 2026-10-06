@@ -13,6 +13,7 @@ public static class HandledEvents
     [
         "ApproachBody",
         "ApproachSettlement",
+        "AsteroidCracked",
         "BackpackChange",
         "Bounty",
         "BuySuit",
@@ -136,6 +137,7 @@ public static class HandledEvents
         "ScientificResearch",
         "SearchAndRescue",
         "SellExplorationData",
+        "SellMicroResources",
         "SellOrganicData",
         "SellSuit",
         "SellWeapon",
@@ -192,7 +194,6 @@ public static class HandledEvents
     [
         "AfmuRepairs",
         "AppliedToSquadron",
-        "AsteroidCracked",
         "BookDropship",
         "BookTaxi",
         "BuyAmmo",
@@ -250,7 +251,6 @@ public static class HandledEvents
         "Scanned",
         "Screenshot",
         "SellDrones",
-        "SellMicroResources",
         "SendText",
         "SharedBookmarkToSquadron",
         "ShipLocker",

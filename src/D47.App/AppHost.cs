@@ -869,6 +869,12 @@ public sealed class AppHost : IDisposable
         var crimes = new D47.Core.Journal.OutstandingCrimes(
             loggerFactory.CreateLogger<D47.Core.Journal.OutstandingCrimes>());
 
+        var activities = new D47.Core.Activities.ActivityLedger(
+            Path.Combine(paths.Data, "activities.json"),
+            loggerFactory.CreateLogger<D47.Core.Activities.ActivityLedger>());
+
+        activities.Load();
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -885,6 +891,7 @@ public sealed class AppHost : IDisposable
             Exobiology = exobiology,
             Cartography = cartography,
             Crimes = crimes,
+            Activities = activities,
             Step = StartupTimer.Step,
         };
 
@@ -1262,6 +1269,7 @@ public sealed class AppHost : IDisposable
             exobiology.Apply(events, gameState.Active?.Identity.FrontierId);
             cartography.Apply(events, gameState.Active?.Identity.FrontierId);
             crimes.Apply(events, gameState.Active?.Identity.FrontierId);
+            activities.Apply(events, gameState.Active?.Identity.FrontierId);
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
             planBook.Apply(events);
