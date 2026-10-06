@@ -51,6 +51,8 @@ public sealed record NavigationSurface
         AutoPlotEnabled = () => false,
         WatchRoute = () => new FixedPlotWatch(null),
         AwaitGalaxyMap = (_, _) => Task.FromResult<bool?>(null),
+        SpellSystem = _ => { },
+        OfferSpelling = _ => { },
     };
 }
 
@@ -214,8 +216,8 @@ public static class NavigationCapability
             {
                 Name = "spell_system",
                 Description =
-                    "Open a keyboard on the panel for the Commander to spell a system name, which is then "
-                    + "plotted as plot_course plots it.",
+                    "Open a keyboard on the panel for the Commander to spell a system name, then plot a course "
+                    + "to it.",
                 Protected = true,
                 RefusalExample = "spell a system",
                 Commands =

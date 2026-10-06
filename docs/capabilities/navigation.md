@@ -335,8 +335,8 @@ write times and where the route ends — so a report of "nothing happened" start
 
 #### `spell_system`
 
-Open a keyboard on the panel for the Commander to spell a system name, which is then plotted as
-plot_course plots it. Never callable by the model; the three phrases above reach it.
+Open a keyboard on the panel for the Commander to spell a system name, then plot a course to it.
+Never callable by the model; the three phrases above reach it.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
