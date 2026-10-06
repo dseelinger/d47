@@ -47,4 +47,20 @@ public class GameStatusReaderTests
 
         Assert.Equal(GuiFocus.None, status.GuiFocus);
     }
+
+    [Fact]
+    public void TheLegalStateIsKeptAsEliteWritesIt()
+    {
+        var status = Read("""{ "timestamp":"2026-10-05T10:00:00Z", "event":"Status", "Flags":16777224, "Flags2":0, "LegalState":"Hostile" }""");
+
+        Assert.Equal("Hostile", status.LegalState);
+    }
+
+    [Fact]
+    public void NoLegalStateReadsAsNull()
+    {
+        var status = Read("""{ "timestamp":"2026-10-05T10:00:00Z", "event":"Status", "Flags":16777224, "Flags2":0 }""");
+
+        Assert.Null(status.LegalState);
+    }
 }

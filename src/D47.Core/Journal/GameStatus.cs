@@ -132,6 +132,9 @@ public sealed record GameStatus
 
     public long? Balance { get; init; }
 
+    /// <summary>The Commander's legal state as Elite writes it ("Clean", "Wanted", …), or null where absent.</summary>
+    public string? LegalState { get; init; }
+
     /// <summary>Where the Commander is standing, in degrees (Phase 18, "Exobiology sampling").</summary>
     public double? Latitude { get; init; }
 
@@ -252,6 +255,7 @@ public sealed class GameStatusReader(string directory, ILogger logger)
                 BodyName = root.String("BodyName"),
                 Destination = Destination(root),
                 Balance = root.Long("Balance"),
+                LegalState = root.String("LegalState"),
 
                 // Absent everywhere except near a surface, and absent is not zero — see the remarks on these
                 // properties.
