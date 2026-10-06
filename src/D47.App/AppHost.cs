@@ -2203,7 +2203,8 @@ public sealed class AppHost : IDisposable
                 cargo: cargoBoard,
                 mail: mail,
                 searches: galaxySearchBoard,
-                starSystems: starSystems));
+                starSystems: starSystems,
+                pickCommander: picks.Enqueue));
 
         buildingRegistry.Dispose();
 
@@ -2272,7 +2273,11 @@ public sealed class AppHost : IDisposable
                 // And "delete bookmark Current CG" / "forget bookmark Current CG" (#489), one pair per
                 // bookmark the flying Commander has made.
                 .Concat(BookmarksCapability.Phrases(
-                    bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty));
+                    bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
+
+                // And "switch to commander Kestrel Vane" (#895), one pair per Commander but the one flying.
+                .Concat(CommandersCapability.Phrases(
+                    () => history.Commanders, () => gameState.Active?.Identity.FrontierId));
 
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));

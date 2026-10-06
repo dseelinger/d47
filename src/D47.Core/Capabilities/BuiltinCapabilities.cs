@@ -240,7 +240,10 @@ public static class BuiltinCapabilities
         Knowledge.GalaxySearchBoard? searches = null,
 
         // One star system's record.
-        Knowledge.IStarSystemService? starSystems = null) =>
+        Knowledge.IStarSystemService? starSystems = null,
+
+        // Hands a Commander pick to the tick thread, which writes game state.
+        Action<Journal.CommanderIdentity>? pickCommander = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -400,6 +403,11 @@ public static class BuiltinCapabilities
             activities,
             () => gameState.Active?.Identity.FrontierId,
             now ?? (() => DateTimeOffset.MinValue)),
+
+        CommandersCapability.Create(
+            () => history?.Commanders,
+            () => gameState.Active?.Identity.FrontierId,
+            pickCommander ?? (_ => { })),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

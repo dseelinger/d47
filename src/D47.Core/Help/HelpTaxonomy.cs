@@ -69,6 +69,10 @@ public static class HelpTaxonomy
                     "Name the destination you have targeted, and set a course back to it by that name later.",
                     "bookmarks"),
                 HelpNode.Leaf(
+                    "Switch Commander",
+                    "Change which Commander d47 shows, by saying their name.",
+                    "commanders"),
+                HelpNode.Leaf(
                     "Focus the game",
                     "Bring Elite Dangerous to the front, so flight commands can be sent again.",
                     "focus"),

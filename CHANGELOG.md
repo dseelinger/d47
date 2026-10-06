@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Say "switch to commander Kestrel Vane" or "switch to Kestrel Vane" to switch D47 to that Commander. Every Commander in the journals except the one D47 is showing has both phrases, and D47 answers "Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch again." Only your own words, the title bar and the Commanders page switch Commanders; the model cannot.
+
 When the journals hold more than one Commander, the title bar shows the current one as CMDR NAME ▼ beside HELP. It opens a menu of every Commander, with the time each was last detected and a tick on the current one; choosing another switches D47 to them. MANAGE COMMANDERS › opens the new Commander › Commanders page, which lists each Commander's ship, last location and last detected time, with SWITCH on each row and ✓ CURRENT on the one D47 is showing. The page is on the headset panel too; the title-bar menu is on the window only.
 
 Say "spell a system", "spell the system" or "spell a destination" to open a keyboard titled "System to plot" and spell the name letter by letter, then Done. The name is plotted exactly as spelled. When a plot ends with no route, D47 now ends its answer with "Spell it?" and asks yes or no; yes opens the keyboard with the name it heard already in it. The keyboard opens on the headset panel while the overlay is showing, otherwise on the window.
