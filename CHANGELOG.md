@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+With Quartermaster aboard and Settings > Callouts > Your core's own subject on, d47 now names a community goal you have not joined, once per goal per session: its title, where it is, the time left and the top tier's reward where the journal gives one, for example "The Rescue Goal community goal at Galileo, Sol has 30 hours left. The top tier pays: Bonus credits. You have not joined it." Only goals with at least 24 hours left are named, and a goal whose time and reward are both unknown is not. It reads the goals the journal has reported; nothing new is sent anywhere.
+
 With a language model and personality on, asking about one engineer, such as "what does Liz Ryder ask for", now lets your core add one short remark about what their invitation asks for, in its own voice. The requirement is still stated as written, for example "Landmines ×200", and the remark may rest only on it. Each engineer gets at most one remark per session, and with personality off there is none. Answers that do not go through the language model are unchanged.
 
 A ship's page now shows its Fuel, Hardness and Crew seats. The ship you are flying shows its live fuel level against its tank, such as "12.5 of 16 t", and follows Status.json as fuel is used. Any other ship with a remembered loadout shows its tank size alone, such as "16 t tank". Hardness and crew seats come from the hull table for every hull. In the module chooser, a frame shift drive's caption now adds its optimal mass and max fuel per jump, and armour and hull reinforcement add their hull boost with kinetic, thermal, explosive and caustic resistance, as the voice answers give them.

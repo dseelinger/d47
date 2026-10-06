@@ -4,8 +4,8 @@ using D47.Core.Persona;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A remark on the subject the core aboard pays attention to, carrying a figure from this session (#611). A
-/// core with no domain says nothing.
+/// A remark on the subject the core aboard pays attention to, carrying a figure from this session (#611), or
+/// naming a community goal not yet joined (#612). A core with no domain says nothing.
 /// </summary>
 public sealed class DomainCallout : ICallout
 {
@@ -13,6 +13,8 @@ public sealed class DomainCallout : ICallout
     public const string KeyPrefix = "domain.";
 
     public const string EarningsKey = KeyPrefix + "earnings";
+
+    public const string CommunityGoalKey = KeyPrefix + "community-goal";
 
     /// <summary>The journal events that pay the Commander, and so can prompt an earnings remark.</summary>
     private static readonly HashSet<string> EarningEvents = new(StringComparer.Ordinal)
@@ -39,7 +41,12 @@ public sealed class DomainCallout : ICallout
     /// <summary>The shortest gap between two remarks.</summary>
     public TimeSpan Interval { get; set; } = TimeSpan.FromHours(1);
 
+    /// <summary>The least time a goal must have left before it is worth naming.</summary>
+    public TimeSpan LeastGoalTime { get; set; } = TimeSpan.FromHours(24);
+
     private DateTimeOffset? _lastAt;
+
+    private readonly HashSet<int> _namedGoals = [];
 
     /// <summary>The rate said last this session, in credits an hour.</summary>
     private long? _lastRate;
@@ -54,6 +61,7 @@ public sealed class DomainCallout : ICallout
             {
                 _lastAt = null;
                 _lastRate = null;
+                _namedGoals.Clear();
                 earned = false;
             }
             else if (EarningEvents.Contains(journalEvent.Kind))
@@ -62,25 +70,78 @@ public sealed class DomainCallout : ICallout
             }
         }
 
-        if (!earned
-            || context.IsPriming
-            || !Enabled()
-            || Domain() != PersonaDomain.Earnings
-            || context.State?.Session is not { } session
-            || (_lastAt is { } last && context.Now - last < Interval))
+        if (context.IsPriming || !Enabled() || Domain() != PersonaDomain.Earnings)
         {
             yield break;
         }
 
-        if (Earnings(session, _lastRate, LeastSession) is not { } remark)
+        if (earned
+            && context.State?.Session is { } session
+            && !(_lastAt is { } last && context.Now - last < Interval)
+            && Earnings(session, _lastRate, LeastSession) is { } remark)
         {
-            yield break;
+            _lastAt = context.Now;
+            _lastRate = remark.Rate;
+
+            yield return new Announcement(EarningsKey, remark.Text);
         }
 
-        _lastAt = context.Now;
-        _lastRate = remark.Rate;
+        if (context.State is { } state)
+        {
+            foreach (var goal in state.CommunityGoals.Goals)
+            {
+                if (UnjoinedGoal(goal, context.Now, LeastGoalTime) is { } text && _namedGoals.Add(goal.Id))
+                {
+                    yield return new Announcement(CommunityGoalKey, text);
+                    yield break;
+                }
+            }
+        }
+    }
 
-        yield return new Announcement(EarningsKey, remark.Text);
+    /// <summary>
+    /// The line naming a live goal the Commander has not joined, or null when it is joined, complete, closed or
+    /// has less than <paramref name="leastTime"/> left, or when neither its expiry nor its top-tier bonus is known.
+    /// </summary>
+    public static string? UnjoinedGoal(CommunityGoal goal, DateTimeOffset now, TimeSpan leastTime)
+    {
+        ArgumentNullException.ThrowIfNull(goal);
+
+        var bonus = string.IsNullOrWhiteSpace(goal.TopTierBonus) ? null : goal.TopTierBonus.Trim();
+
+        if (goal.IsParticipating
+            || goal.IsComplete
+            || !goal.IsLive(now)
+            || (goal.Expiry is not { } expiry && bonus is null)
+            || (goal.Expiry is { } soonest && soonest - now < leastTime))
+        {
+            return null;
+        }
+
+        var text = $"The {goal.Title} community goal";
+
+        if (goal.Where is { } where)
+        {
+            text += $" at {where}";
+        }
+
+        if (goal.Expiry is { } ends)
+        {
+            var hours = (int)(ends - now).TotalHours;
+            text += hours >= 48 ? $" has {hours / 24} days left." : $" has {hours} hours left.";
+        }
+        else
+        {
+            text += " is open.";
+        }
+
+        if (bonus is not null)
+        {
+            text += $" The top tier pays: {bonus}";
+            text += bonus.EndsWith('.') ? "" : ".";
+        }
+
+        return text + " You have not joined it.";
     }
 
     /// <summary>

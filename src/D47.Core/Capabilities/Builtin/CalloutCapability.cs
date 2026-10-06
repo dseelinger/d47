@@ -592,7 +592,7 @@ public static class CalloutCapability
                 "Your core's own subject",
                 "An occasional remark from the core aboard about the subject it pays attention to, with a "
                 + "figure from this session. Quartermaster says the credits an hour after a sale, a mission "
-                + "or a cashed voucher, at most once an hour. Warden and the cores you write have no subject "
+                + "or a cashed voucher, at most once an hour, and names a community goal you have not joined, once per goal. Warden and the cores you write have no subject "
                 + "and say nothing. Silent with personality off.",
                 "domain",
                 "core remarks",
