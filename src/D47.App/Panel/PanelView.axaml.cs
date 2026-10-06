@@ -1023,6 +1023,18 @@ public partial class PanelView : UserControl
             changed = true;
         }
 
+        var held = _loadoutState?.Invoke();
+        var stock = (held?.Materials, held?.Suit, held?.Colonisation);
+
+        if (!ReferenceEquals(stock.Materials, _planStock.Materials)
+            || !ReferenceEquals(stock.Suit, _planStock.Suit)
+            || !ReferenceEquals(stock.Colonisation, _planStock.Colonisation))
+        {
+            _planStock = stock;
+            mode.Invalidate();
+            changed = true;
+        }
+
         var current = _loadoutState?.Invoke()?.Ship;
 
         if (!ReferenceEquals(current, _loadoutSeen))
@@ -1086,6 +1098,8 @@ public partial class PanelView : UserControl
     public void InvalidateLoadout() => _loadoutMode?.Invalidate();
 
     private ShipsMode? _loadoutMode;
+
+    private (object? Materials, object? Suit, object? Colonisation) _planStock;
     private ComparePage? _comparePage;
     private StoredModulesPage? _storedModulesPage;
     private CrewPage? _crewPage;

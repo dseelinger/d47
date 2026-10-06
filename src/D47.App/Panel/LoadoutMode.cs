@@ -318,6 +318,9 @@ public interface ILoadoutMode
     /// </summary>
     IReadOnlyList<LoadoutGauge> Gauges(string item) => [];
 
+    /// <summary>What the item's live plans still need, or null when it has no plan and no delivery.</summary>
+    D47.Core.Checklists.PlanShortfall? Plan(string item) => null;
+
     /// <summary>The item's power budget, or null for an item with none to show (#469).</summary>
     LoadoutPower? Power(string item) => null;
 

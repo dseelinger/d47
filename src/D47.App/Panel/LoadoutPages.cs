@@ -1847,6 +1847,11 @@ public sealed class ItemPage : LoadoutPage
             ? HullPicture.For(hull, facts)
             : facts);
 
+        if (roomy && Mode.Plan(_item) is { } plan)
+        {
+            _list.Children.Add(PlanSection.Build(plan));
+        }
+
         // **Mini shows only the rows that disagree** (the Commander's ruling, 2026-08-25).
         var slots = Mini && rows.Any(row => row.Parts is not null)
             ? [.. rows.Where(row => row.Parts is null || row.Marked)]

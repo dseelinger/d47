@@ -50,6 +50,7 @@ public sealed class ShipsMode(
             // And a third, added by Phase 38: the tab now carries a question waiting on the Commander, so a
             // question arriving or being answered moves these pages.
             checklists.Proposals.Changed += value;
+            checklists.List.Changed += value;
             _invalidated += value;
         }
 
@@ -57,6 +58,7 @@ public sealed class ShipsMode(
         {
             ships.Store.Changed -= value;
             checklists.Proposals.Changed -= value;
+            checklists.List.Changed -= value;
             _invalidated -= value;
         }
     }
@@ -238,6 +240,18 @@ public sealed class ShipsMode(
         lines.AddRange(Flying(build));
 
         return lines;
+    }
+
+    public D47.Core.Checklists.PlanShortfall? Plan(string item)
+    {
+        if (Resolve(item)?.Scope is not { } scope)
+        {
+            return null;
+        }
+
+        var shortfall = checklists.Shortfall(scope);
+
+        return shortfall.PlanCount == 0 && shortfall.DeliveryCount == 0 ? null : shortfall;
     }
 
     /// <summary>Where the ship is, in a sentence rather than in the row's one phrase.</summary>
