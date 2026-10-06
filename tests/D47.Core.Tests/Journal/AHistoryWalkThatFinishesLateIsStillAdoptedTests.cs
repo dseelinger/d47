@@ -63,6 +63,22 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         Assert.Equal("Meene", store.Active!.Carrier.StarSystem);
     }
 
+    [Fact]
+    public void ACommanderPickedBeforeTheWalkFinishesStillGetsIt()
+    {
+        using var install = new TempInstall();
+        Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
+
+        var backfill = Backfill(install);
+        var store = StoreOver(backfill);
+
+        store.Pick(new CommanderIdentity(Fid, "Fixture"));
+        backfill.Run(TestContext.Current.CancellationToken);
+        store.RestoreLate();
+
+        Assert.Equal("Meene", store.Active!.Carrier.StarSystem);
+    }
+
     /// <summary>The live journal is the newer word, and adoption must not undo it.</summary>
     [Fact]
     public void ACarrierFoldedFromTheLiveJournalIsNotReplaced()

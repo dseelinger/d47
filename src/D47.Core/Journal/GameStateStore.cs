@@ -1,6 +1,16 @@
 ﻿namespace D47.Core.Journal;
 
-/// <summary>The Commander being tailed changed (Phase 44).</summary>
+/// <summary>What moved the shown Commander to another.</summary>
+public enum CommanderSwitchCause
+{
+    /// <summary>A <c>Commander</c> or <c>LoadGame</c> in the journal, before any pick.</summary>
+    Journal,
+
+    /// <summary><see cref="GameStateStore.Pick"/>.</summary>
+    Picked,
+}
+
+/// <summary>The Commander d47 shows changed (Phase 44).</summary>
 /// <param name="Previous">
 /// Who it was, or null when nobody had been identified yet — which makes this an adoption.
 /// </param>
@@ -8,7 +18,11 @@
 /// <param name="Priming">
 /// Whether this came out of the startup replay rather than a login that just happened.
 /// </param>
-public sealed record CommanderSwitch(CommanderIdentity? Previous, CommanderIdentity Current, bool Priming)
+public sealed record CommanderSwitch(
+    CommanderIdentity? Previous,
+    CommanderIdentity Current,
+    bool Priming,
+    CommanderSwitchCause Cause = CommanderSwitchCause.Journal)
 {
     /// <summary>Nobody to somebody.</summary>
     public bool IsAdoption => Previous is null;
@@ -24,11 +38,28 @@ public sealed class GameStateStore
 
     private string? _activeFrontierId;
 
+    private string? _inGameFrontierId;
+
+    private bool _picked;
+
     /// <summary>
-    /// The Commander whose journal is currently being tailed, or null before any identity has been
-    /// seen.
+    /// The Commander d47 shows, or null before any identity has been seen. Follows the journal until
+    /// the first <see cref="Pick"/>, and only a later pick changes it after that.
     /// </summary>
     public CommanderGameState? Active => _activeFrontierId is { } fid ? _byFrontierId[fid] : null;
+
+    /// <summary>
+    /// The Commander the journal is writing for, or null before any identity has been seen. Every
+    /// event that is not an identity folds into this one.
+    /// </summary>
+    public CommanderGameState? InGame => _inGameFrontierId is { } fid ? _byFrontierId[fid] : null;
+
+    /// <summary>
+    /// The shown Commander is not the one in the game, including a pick made before the journal has
+    /// named anybody.
+    /// </summary>
+    public bool IsOffDuty =>
+        _activeFrontierId is not null && !string.Equals(_activeFrontierId, _inGameFrontierId, StringComparison.Ordinal);
 
     public IReadOnlyCollection<CommanderGameState> All => _byFrontierId.Values;
 
@@ -92,7 +123,7 @@ public sealed class GameStateStore
     public Func<string, PowerplayCycleMerits?>? RestoreCycleMerits { get; init; }
 
     /// <summary>
-    /// Raised when the Commander whose journal is being tailed changes (Phase 44, "One switch signal").
+    /// Raised when <see cref="Active"/> changes (Phase 44, "One switch signal").
     /// </summary>
     public event Action<CommanderSwitch>? CommanderChanged;
 
@@ -177,6 +208,34 @@ public sealed class GameStateStore
         }
     }
 
+    /// <summary>
+    /// Shows this Commander from now on, whoever the journal logs in as, until the next pick. Admits
+    /// them first if they are not yet known.
+    /// </summary>
+    public void Pick(CommanderIdentity identity)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+
+        var previous = Active;
+
+        Admit(identity);
+        _picked = true;
+
+        if (string.Equals(previous?.Identity.FrontierId, identity.FrontierId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _activeFrontierId = identity.FrontierId;
+
+        CommanderChanged?.Invoke(new CommanderSwitch(previous?.Identity, identity, Priming: false, CommanderSwitchCause.Picked));
+
+        if (!string.Equals(previous?.Location.StarSystem, Active!.Location.StarSystem, StringComparison.OrdinalIgnoreCase))
+        {
+            SystemChanged?.Invoke();
+        }
+    }
+
     public FoldReceipt Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
 
     public FoldReceipt Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);
@@ -215,23 +274,27 @@ public sealed class GameStateStore
 
         if (CommanderIdentity.From(journalEvent) is { } identity)
         {
-            var previous = Active?.Identity;
             var state = Admit(identity);
 
-            var switched = !string.Equals(previous?.FrontierId, identity.FrontierId, StringComparison.Ordinal);
+            _inGameFrontierId = identity.FrontierId;
 
-            _activeFrontierId = identity.FrontierId;
-
-            if (switched)
+            if (!_picked)
             {
-                CommanderChanged?.Invoke(new CommanderSwitch(previous, identity, priming));
+                var previous = Active?.Identity;
+
+                _activeFrontierId = identity.FrontierId;
+
+                if (!string.Equals(previous?.FrontierId, identity.FrontierId, StringComparison.Ordinal))
+                {
+                    CommanderChanged?.Invoke(new CommanderSwitch(previous, identity, priming));
+                }
             }
 
             return state.Apply(journalEvent, at);
         }
 
-        // Every other event belongs to whoever is currently active.
-        return Active?.Apply(journalEvent, at) ?? FoldReceipt.Nothing;
+        // Every other event belongs to whoever is in the game, never to a picked Commander.
+        return InGame?.Apply(journalEvent, at) ?? FoldReceipt.Nothing;
     }
 
     /// <summary>The state held for this Commander, created and restored first if they are not yet known.</summary>
