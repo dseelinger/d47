@@ -920,6 +920,9 @@ public sealed class AppHost : IDisposable
             // And where the carrier was parked, so "where is my carrier" survives a restart.
             RestoreCarrier = fid => history.Carriers?.GetValueOrDefault(fid),
 
+            // And the construction sites, which are otherwise unknown until the Commander docks at one again.
+            RestoreColonisation = fid => history.Colonisation?.GetValueOrDefault(fid),
+
             // And the live missions' detail, which is on each accept however many sessions ago it was.
             RestoreMissions = fid => history.Missions?.GetValueOrDefault(fid),
 

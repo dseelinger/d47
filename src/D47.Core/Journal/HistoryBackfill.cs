@@ -95,6 +95,9 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, MissionBoard>? Missions { get; private set; }
 
+    /// <summary>Each Commander's construction sites, without contributions (#798).</summary>
+    public IReadOnlyDictionary<string, ColonisationSites>? Colonisation { get; private set; }
+
     public IReadOnlyDictionary<string, SpokenNames>? Names { get; private set; }
 
     public IReadOnlyDictionary<string, UnlockEvidence>? Evidence { get; private set; }
@@ -162,6 +165,13 @@ public sealed class HistoryBackfill
                 () => MissionBackfill.FromHistory(
                     Directory,
                     Loggers.CreateLogger(nameof(MissionBackfill)),
+                    cancellation));
+
+            Colonisation = Timed(
+                "colonisation backfill",
+                () => ColonisationBackfill.FromHistory(
+                    Files(),
+                    Loggers.CreateLogger(nameof(ColonisationBackfill)),
                     cancellation));
 
             Names = Timed("spoken names", () => MineNames(cancellation));

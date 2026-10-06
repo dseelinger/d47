@@ -109,6 +109,15 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     private static StarPosition? Placed(JournalEvent journalEvent, StarPosition? current) =>
         journalEvent.String("StarSystem") is null ? current : StarPosition.Read(journalEvent.Raw);
 
+    private const string ColonisationShipPrefix = "$EXT_PANEL_ColonisationShip;";
+
+    /// <summary>The station's name, with the colonisation ship's untranslated token removed.</summary>
+    private static string? Station(JournalEvent journalEvent) =>
+        journalEvent.String("StationName") is { } name
+        && name.StartsWith(ColonisationShipPrefix, StringComparison.Ordinal)
+            ? name[ColonisationShipPrefix.Length..].TrimStart(' ')
+            : journalEvent.String("StationName");
+
     /// <summary>Folds one event into the current location.</summary>
     public JournalLocation Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
@@ -122,7 +131,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Body = journalEvent.String("Body") ?? Body,
             BodyType = journalEvent.String("BodyType") ?? BodyType,
             Docked = journalEvent.Bool("Docked"),
-            StationName = journalEvent.String("StationName") ?? StationName,
+            StationName = Station(journalEvent) ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
             StationAllegiance = journalEvent.String("StationAllegiance") ?? StationAllegiance,
             MarketId = journalEvent.Bool("Docked") ? journalEvent.Long("MarketID") : null,
@@ -178,7 +187,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
         "Docked" => this with
         {
             Docked = true,
-            StationName = journalEvent.String("StationName") ?? StationName,
+            StationName = Station(journalEvent) ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
             StationAllegiance = journalEvent.String("StationAllegiance"),
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,

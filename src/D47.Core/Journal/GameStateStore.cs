@@ -69,6 +69,12 @@ public sealed class GameStateStore
     public Func<string, MissionBoard?>? RestoreMissions { get; init; }
 
     /// <summary>
+    /// The construction sites this Commander's older journals reported, on the same terms as <see
+    /// cref="RestoreFleet"/>. Merged per site, the later one kept (#798).
+    /// </summary>
+    public Func<string, ColonisationSites?>? RestoreColonisation { get; init; }
+
+    /// <summary>
     /// Every place this Commander has met, on the same terms as <see cref="RestoreLoadouts"/> (#134).
     /// </summary>
     public Func<string, Listening.SpokenNames?>? RestoreNames { get; init; }
@@ -132,6 +138,11 @@ public sealed class GameStateStore
             if (RestoreMissions?.Invoke(fid) is { IsKnown: true } missions)
             {
                 state.Missions = missions.With(state.Missions);
+            }
+
+            if (RestoreColonisation?.Invoke(fid) is { IsKnown: true } sites)
+            {
+                state.Colonisation = sites.With(state.Colonisation);
             }
 
             // Merged rather than taken or refused: a ship boarded this session is in the live set and every
@@ -264,6 +275,11 @@ public sealed class GameStateStore
         if (RestoreMissions?.Invoke(identity.FrontierId) is { IsKnown: true } missions)
         {
             state.Missions = missions;
+        }
+
+        if (RestoreColonisation?.Invoke(identity.FrontierId) is { IsKnown: true } sites)
+        {
+            state.Colonisation = sites;
         }
 
         if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)

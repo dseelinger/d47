@@ -162,6 +162,27 @@ public sealed record ColonisationSites
         return this with { Sites = updated };
     }
 
+    /// <summary>
+    /// These sites under <paramref name="live"/>: each site is the one seen later, and a tie goes to the live
+    /// one. Contributions are the live state's only.
+    /// </summary>
+    public ColonisationSites With(ColonisationSites live)
+    {
+        ArgumentNullException.ThrowIfNull(live);
+
+        var merged = new Dictionary<long, ConstructionSite>(live.Sites);
+
+        foreach (var (marketId, site) in Sites)
+        {
+            if (!merged.TryGetValue(marketId, out var held) || held.SeenAt < site.SeenAt)
+            {
+                merged[marketId] = site;
+            }
+        }
+
+        return live with { Sites = merged };
+    }
+
     /// <summary>One delivery, added to what this Commander has already handed over at that site.</summary>
     private ColonisationSites Contribute(JournalEvent journalEvent)
     {

@@ -83,7 +83,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public MiningRuns Mining { get; private set; } = MiningRuns.None;
 
     /// <summary>Construction sites they have visited (Phase 17).</summary>
-    public ColonisationSites Colonisation { get; private set; } = ColonisationSites.Empty;
+    public ColonisationSites Colonisation { get; internal set; } = ColonisationSites.Empty;
 
     /// <summary>What their surface scans found on each body (Phase 18).</summary>
     public BodySignals Bodies { get; private set; } = BodySignals.Empty;
