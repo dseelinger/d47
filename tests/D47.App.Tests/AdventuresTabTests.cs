@@ -37,7 +37,7 @@ public class AdventuresTabTests
         return store.Active!;
     }
 
-    private static Adventure Story(DateTimeOffset? acceptedAt, AdventureSource source = AdventureSource.Commander) => new()
+    internal static Adventure Story(DateTimeOffset? acceptedAt, AdventureSource source = AdventureSource.Commander) => new()
     {
         Key = "the-lantern-route",
         Name = "The Lantern Route",
@@ -65,7 +65,7 @@ public class AdventuresTabTests
         AcceptedAt = acceptedAt,
     };
 
-    private static (PanelView Panel, AdventureBook Book, List<string> Said) Open(params Adventure[] adventures) =>
+    internal static (PanelView Panel, AdventureBook Book, List<string> Said) Open(params Adventure[] adventures) =>
         Open(900, null, null, adventures);
 
     /// <param name="width">The window's, which decides how many panes the strip shows: 900 is two, 1400 is three.</param>
@@ -251,24 +251,6 @@ public class AdventuresTabTests
         panel.Nav.ToRoot();
         Dispatcher.UIThread.RunJobs();
         Assert.Contains(Drawn(panel), text => text == "Follows The Lantern Route.");
-    }
-
-    [AvaloniaFact]
-    public void TheEditorBuildsForANewStoryAndPrintsWhyBeginIsShut()
-    {
-        var (panel, _, _) = Open();
-
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.EditPrefix + AdventuresPage.NewKey, "Write"));
-        Dispatcher.UIThread.RunJobs();
-
-        var drawn = Drawn(panel);
-
-        Assert.Contains(drawn, text => text.Contains("Write an adventure"));
-        Assert.Contains(drawn, text => text.StartsWith("An adventure needs", StringComparison.Ordinal) && text.Contains("a name"));
-        Assert.Contains(drawn, text => text.Contains("at least one beat"));
-
-        var begin = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Save and begin"));
-        Assert.False(begin.IsEnabled);
     }
 
     [AvaloniaFact]

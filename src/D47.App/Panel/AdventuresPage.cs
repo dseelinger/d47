@@ -29,18 +29,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary
 
     public const string ReadPrefix = "adventure.read.";
 
-    /// <summary>The page behind the editor's question mark (asked for 2026-08-23).</summary>
-    public const string EditHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "writing-an-adventure";
-
-    public const string EditPrefix = "adventure.edit.";
-
     public const string AskKey = "adventure.ask";
 
     /// <summary>The ask form for the next chapter of the finished adventure keyed after it.</summary>
     public const string NextPrefix = "adventure.next.";
-
-    /// <summary>The editor's key for a story that does not exist yet.</summary>
-    public const string NewKey = "new";
 
     private readonly AdventureSurface _surface;
     private readonly PanelNavigator _nav;
@@ -73,9 +65,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         _nav = nav;
         _prompts = prompts;
 
-        var write = new Button { Content = "Write an adventure" };
-        write.Click += (_, _) => _nav.Drill(new NavCrumb(EditPrefix + NewKey, "Write") { Help = EditHelp });
-
         _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, "Messages"));
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
         _messages.IsVisible = surface.Messages is not null;
@@ -86,7 +75,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         {
             Spacing = 8,
             Margin = new Thickness(0, 0, 0, 10),
-            Children = { Buttons(_ask, write, _stories, _messages) },
+            Children = { Buttons(_ask, _stories, _messages) },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -178,16 +167,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             return BuildReading(crumb.Key[ReadPrefix.Length..]);
         }
 
-        if (crumb.Key.StartsWith(EditPrefix, StringComparison.Ordinal))
-        {
-            var key = crumb.Key[EditPrefix.Length..];
-            var existing = key == NewKey ? null : _surface.Book.Store.Find(_surface.Commander(), key);
-
-            return existing is not null && !ShowsSpine(existing)
-                ? BuildReading(key)
-                : new AdventureEditor(_surface, _nav, _prompts, existing);
-        }
-
         return null;
     }
 
@@ -215,8 +194,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         if (standings.Count == 0)
         {
             _list.Children.Add(Muted(
-                "No adventures yet. Write one, or ask the ship's AI for one — it will propose a story and "
-                + "wait for your yes."));
+                "No adventures yet. Ask D47 for one — it will propose a story and wait for your yes."));
 
             if (!_ask.IsEnabled)
             {
@@ -484,9 +462,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary
                 "Change something" => Action(label, () => Revise(adventure)),
                 "Decline" => Action(label, () => Remove(adventure, confirm: false), destructive: true),
                 "Abandon" => Action(label, () => Abandon(adventure)),
-                "Edit" when adventure.IsActive => Action(label, () => _surface.Say(
-                    $"{adventure.Name} is under way. Abandon it first, change it, and begin again.")),
-                "Edit" => Action(label, () => _nav.Drill(new NavCrumb(EditPrefix + adventure.Key, "Edit") { Help = EditHelp })),
                 "Write the next chapter" => Action(label, () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))),
                 _ => Action(label, () => Remove(adventure, confirm: true), destructive: true),
             });

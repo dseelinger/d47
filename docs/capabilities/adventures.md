@@ -147,12 +147,7 @@ the ship's AI, anchored to the galaxy by objectives, accepted by you, and advanc
 The drive behind it is to add story to a sandbox, which sandboxes deeply lack. It is deliberately
 **not** a checklist of things to complete.
 
-### Two ways to have one
-
-**Write an adventure** — the editor is a level of the Stories tab. A name, an opening, then the
-five spine questions in order, each skippable. Then the objectives: what happens, where, and the line.
-Every field is a chooser except the prose, so the form cannot compose something the file would
-refuse.
+### How to have one
 
 **Ask for one** — a short form and D47 writes it, in the voice of whichever core is aboard. Three
 choosers, each with a default, so pressing *Go* on an untouched form is a complete ask:
@@ -290,8 +285,6 @@ knows, and an objective waiting out its settle window is discarded. The record s
 foot of the list with what it reached. **Begin again** on an abandoned one starts from the opening
 with a fresh stamp — nothing that happened in the gap counts, because a start is a start.
 
-Abandoning is also how a begun adventure gets edited: abandon it, change it, begin again.
-
 **Remove** deletes the record. For a begun one it asks first, because an adventure three objectives in
 is work you did.
 
@@ -392,8 +385,8 @@ running story writes no chapter and gives no clue, and the time does not count t
 next `LoadGame` with Odyssey brings the story back where it was, and a story you switched off stays off.
 Before D47 has seen a `LoadGame`, stories run.
 
-A story chapter's page never shows its premise, turn or ending, and has no **Edit** button, because
-the chapter was written from the hidden layer.
+A story chapter's page never shows its premise, turn or ending, because the chapter was written
+from the hidden layer.
 
 ### Download stock stories {#download-stock-stories}
 
@@ -779,5 +772,3 @@ count toward the 40 adventures of your own that the file holds.
   ignored rather than banked.
 - **Importing** somebody else's adventure. The store file is already the format, so this is a copy
   and a validate when it comes.
-- ***Somewhere I've been*** in the editor — D47 keeps no visited-places list, so the two ways in
-  are *Here*, which reads your live position, and typing a name.

@@ -175,20 +175,13 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     /// engineering a module rather than about choosing one.
     /// </summary>
     [Fact]
-    public void TheModulePickerAndTheAdventureEditorHavePagesOfTheirOwn()
+    public void TheModulePickerHasAPageOfItsOwn()
     {
-        foreach (var (id, title) in new[]
-                 {
-                     (ShipsMode.ModuleChoiceHelp, "Choosing a module"),
-                     (AdventuresPage.EditHelp, "Writing an adventure"),
-                 })
-        {
-            var article = HelpLibrary.For(id);
+        var article = HelpLibrary.For(ShipsMode.ModuleChoiceHelp);
 
-            Assert.True(article is not null, $"{id} has no band");
-            Assert.Equal(title, article!.Title);
-            Assert.NotEmpty(article.Sections);
-        }
+        Assert.True(article is not null, $"{ShipsMode.ModuleChoiceHelp} has no band");
+        Assert.Equal("Choosing a module", article!.Title);
+        Assert.NotEmpty(article.Sections);
 
         // Not the slot's page.
         Assert.NotEqual(D47.Core.Capabilities.Builtin.EngineeringCapability.Id, ShipsMode.ModuleChoiceHelp);

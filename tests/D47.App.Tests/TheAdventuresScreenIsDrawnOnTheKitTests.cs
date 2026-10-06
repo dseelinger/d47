@@ -176,8 +176,6 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
                      {
                          (AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route", "reading"),
                          (AdventuresPage.ReadPrefix + "the-draft", "The Unrecoverable Column", "reading-draft"),
-                         (AdventuresPage.EditPrefix + "the-lantern-route", "Edit", "editor"),
-                         (AdventuresPage.EditPrefix + AdventuresPage.NewKey, "Write", "editor-new"),
                          (AdventuresPage.AskKey, "Ask", "ask"),
                      })
             {
@@ -255,7 +253,6 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
 
     [Theory]
     [InlineData("AdventuresPage.cs")]
-    [InlineData("AdventureEditor.cs")]
     [InlineData("AdventureMini.cs")]
     [InlineData("AdventureSurface.cs")]
     [InlineData("AdventureThinking.cs")]

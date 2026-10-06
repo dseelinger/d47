@@ -143,25 +143,17 @@ public class AStoryChapterShowsNoPremiseTests
     }
 
     [AvaloniaFact]
-    public void AnAbandonedChapterOffersNoEditAndItsEditPageShowsNoSpine()
+    public void AnAbandonedChapterOffersNoEditAndShowsNoSpine()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var surface = Open();
         surface.Book.Abandon("F1", "the-first-light", Now);
-        surface.Book.Abandon("F1", "the-last-dock", Now);
 
         Read(surface.Panel, "the-first-light", "The First Light");
         Assert.Contains("Begin again", Buttons(surface.Panel));
         Assert.DoesNotContain("Edit", Buttons(surface.Panel));
         NoSpineOfTheChapter(surface.Panel);
-
-        surface.Panel.Nav.GoTo(new NavCrumb(AdventuresPage.EditPrefix + "the-first-light", "Edit"));
-        Dispatcher.UIThread.RunJobs();
-        NoSpineOfTheChapter(surface.Panel);
-
-        Read(surface.Panel, "the-last-dock", "The Last Dock");
-        Assert.Contains("Edit", Buttons(surface.Panel));
 
         surface.Window.Close();
     }

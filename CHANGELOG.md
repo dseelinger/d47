@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Adventures tab no longer writes or edits an adventure by hand. Ask D47 for one instead. Adventures you wrote before still play.
+
 Each hired pilot's row on Fleet › Crew has a picture, with Change picture and Use the default. It is kept for the pilot's crew id, so two pilots with the same name keep separate pictures, and it shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their picture, and a rehire gets it back.
 
 The Commander record has a picture of you under your name, with Change picture and Use the default. The picture is kept for the Commander flying and shows beside your turns on the Conversation page; a second Commander has none until they choose one. Until D47 has seen which Commander is flying, the buttons are disabled and the page says "Fly once with D47 running to set your picture." A file over 10 MB, or one that is not a picture, is refused and nothing is saved.

@@ -33,12 +33,12 @@ public class AStoryChapterCannotBeRemovedTests
     }
 
     [Fact]
-    public void AnAdventureTheCommanderWroteUnderWayShowsAbandonEditAndRemove() =>
-        Assert.Equal(["Abandon", "Edit", "Remove"], Standing(Chapter(story: false, begun: true)).ReadingButtons());
+    public void AnAdventureTheCommanderWroteUnderWayShowsAbandonAndRemove() =>
+        Assert.Equal(["Abandon", "Remove"], Standing(Chapter(story: false, begun: true)).ReadingButtons());
 
     [Fact]
-    public void AnAdventureThatHasNotBegunCanBeBegunEditedAndRemoved() =>
-        Assert.Equal(["Begin", "Edit", "Remove"], Standing(Chapter(story: false, begun: false)).ReadingButtons());
+    public void AnAdventureThatHasNotBegunCanBeBegunAndRemoved() =>
+        Assert.Equal(["Begin", "Remove"], Standing(Chapter(story: false, begun: false)).ReadingButtons());
 
     [Fact]
     public void AFinishedAdventureTheCommanderWroteOffersTheNextChapterAndRemove()

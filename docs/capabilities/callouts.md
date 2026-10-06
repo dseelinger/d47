@@ -935,7 +935,7 @@ An objective of the story you are following, said when you reach the place it wa
 (list.md Phase 47). An adventure is a story the ship's AI tells you across a flight — a spine,
 a handful of objectives, each anchored to a real place by the one thing the journal can prove: you
 arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
-Stories tab is where you write one or ask for one; this is the voice it reaches you by.
+Stories tab is where you ask for one; this is the voice it reaches you by.
 
 **A short acknowledgement lands the moment the objective fires** — *"That's it."*, *"There it is."*,
 one of ten — so you know at once that you did the thing, rather than sitting through the wait

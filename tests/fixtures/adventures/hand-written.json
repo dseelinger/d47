@@ -1,0 +1,36 @@
+{
+  "commanders": [
+    {
+      "frontierId": "F1",
+      "adventures": [
+        {
+          "key": "the-lantern-route",
+          "name": "The Lantern Route",
+          "source": "commander",
+          "opening": "Beacons cost money.",
+          "beats": [
+            {
+              "title": "The Lantern",
+              "function": "setup",
+              "line": "Scoop here.",
+              "trigger": { "kind": "arrive", "systemAddress": 1, "system": "Ossen's Lantern" }
+            }
+          ]
+        },
+        {
+          "key": "the-quiet-dock",
+          "name": "The Quiet Dock",
+          "opening": "Nobody docks here twice.",
+          "beats": [
+            {
+              "title": "The Anchorage",
+              "function": "setup",
+              "line": "Dock here.",
+              "trigger": { "kind": "dock", "marketId": 2, "system": "Dyson's Hollow", "station": "Maren Anchorage" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
