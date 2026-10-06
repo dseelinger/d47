@@ -143,7 +143,7 @@ public static class FleetBackfill
     }
 
     /// <summary>How far back the search for a snapshot goes, in files.</summary>
-    private const int MaxLookback = 25;
+    internal const int MaxLookback = 25;
 
     /// <summary>
     /// Whose file this is, and whether it holds a <c>StoredShips</c> at all — both in one pass, as a

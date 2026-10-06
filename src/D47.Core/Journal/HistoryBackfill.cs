@@ -105,6 +105,12 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, UnlockEvidence>? Evidence { get; private set; }
 
+    /// <summary>Each Commander found in the journals, by Frontier id.</summary>
+    public IReadOnlyDictionary<string, CommanderSighting>? Commanders { get; private set; }
+
+    /// <summary>How many journal files the Commander walk examined; zero until it is done.</summary>
+    public int CommanderFilesExamined { get; private set; }
+
     /// <summary>Each Commander's finished mining runs that refined something, oldest first (#610).</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<MiningRun>>? MiningRuns { get; private set; }
 
@@ -185,6 +191,19 @@ public sealed class HistoryBackfill
                     Directory,
                     Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
                     cancellation));
+
+            Commanders = Timed(
+                "commander backfill",
+                () =>
+                {
+                    var (sightings, examined) = CommanderBackfill.FromHistory(
+                        Files(),
+                        Loggers.CreateLogger(nameof(CommanderBackfill)),
+                        cancellation);
+
+                    CommanderFilesExamined = examined;
+                    return sightings;
+                });
 
             MiningRuns = Timed(
                 "mining backfill",
