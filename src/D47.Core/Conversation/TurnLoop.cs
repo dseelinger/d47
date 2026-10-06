@@ -1717,7 +1717,7 @@ public sealed class TurnLoop(
                     && speaker is null
                     && persona is not null
                     && result.Page is { Kind: PageKind.Engineer } engineerPage
-                    && Knowledge.EngineerDirectory.ById(engineerPage.Id) is { } quipped
+                    && Knowledge.EngineerDirectory.ById((int)engineerPage.Id) is { } quipped
                     && Engineers.EngineerQuips.NoteFor(quipped) is { } note
                     && _quippedEngineers.Add(quipped.Id))
                 {

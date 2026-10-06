@@ -194,6 +194,23 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         Draw();
     }
 
+    /// <summary>
+    /// Opens one system and stops following the Commander, as typing its name does; false while lookups are
+    /// off. Call on the UI thread.
+    /// </summary>
+    public bool OpenSystem(long address)
+    {
+        if (!_surface.LookupsEnabled())
+        {
+            return false;
+        }
+
+        _name.Text = string.Empty;
+        Open(address, address.ToString(CultureInfo.InvariantCulture), following: false);
+
+        return true;
+    }
+
     private void BackToMySystem()
     {
         _name.Text = string.Empty;

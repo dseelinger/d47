@@ -12,29 +12,33 @@ public static class PageTrail
     public static (string Root, NavCrumb Crumb)? For(PageRef page, Func<IReadOnlyList<FleetEntry>> fleet) =>
         page.Kind switch
         {
-            PageKind.Engineer when EngineerDirectory.ById(page.Id) is { } engineer
+            PageKind.Engineer when EngineerDirectory.ById((int)page.Id) is { } engineer
                 => (EngineersPages.DirectoryRoot, EngineersPages.Crumb(engineer)),
             PageKind.Ship when fleet().FirstOrDefault(entry =>
                     entry.IsOwned && (entry.Stored?.ShipId == page.Id || entry.Build?.ShipId == page.Id)) is { } ship
                 => (LoadoutPages.FleetRoot, LoadoutPages.Ship(ship)),
+            PageKind.System => (StarSystemPage.RootKey, new NavCrumb(StarSystemPage.RootKey, "System")),
             _ => null,
         };
 
-    /// <summary>Puts a surface on the root, then on the page. A surface holding a modal page stays where it is.</summary>
-    public static void Open(PanelNavigator nav, string root, NavCrumb crumb)
+    /// <summary>
+    /// Puts a surface on the root, then on the page; true when it arrived. A surface holding a modal page stays
+    /// where it is.
+    /// </summary>
+    public static bool Open(PanelNavigator nav, string root, NavCrumb crumb)
     {
         nav.Show(root);
 
-        if (nav.Root.Key == root)
-        {
-            nav.GoTo(crumb);
-        }
+        return nav.Root.Key == root && nav.GoTo(crumb);
     }
 
-    /// <summary>Opens the page on every surface, each through its own thread.</summary>
+    /// <summary>
+    /// Opens the page on every surface, each through its own thread. A system page is opened on the system
+    /// through the surface's <c>OpenSystem</c>, which a surface with no System page leaves null.
+    /// </summary>
     public static void OpenEverywhere(
         PageRef page,
-        IEnumerable<(PanelNavigator Nav, Action<Action> Post)> surfaces,
+        IEnumerable<(PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)> surfaces,
         Func<IReadOnlyList<FleetEntry>> fleet)
     {
         if (For(page, fleet) is not { } target)
@@ -42,9 +46,15 @@ public static class PageTrail
             return;
         }
 
-        foreach (var (nav, post) in surfaces)
+        foreach (var (nav, post, openSystem) in surfaces)
         {
-            post(() => Open(nav, target.Root, target.Crumb));
+            post(() =>
+            {
+                if (Open(nav, target.Root, target.Crumb) && page.Kind == PageKind.System)
+                {
+                    openSystem?.Invoke(page.Id);
+                }
+            });
         }
     }
 }

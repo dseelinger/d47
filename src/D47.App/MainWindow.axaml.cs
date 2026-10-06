@@ -358,7 +358,8 @@ public partial class MainWindow : Window
             var ui = Avalonia.Threading.Dispatcher.UIThread;
             // The window leads: its tab carries to any surface that furnished the same one
             // (change-requests.md 34).
-            host.RouteNavigation(Panel.Nav, move => ui.Post(move), leads: true);
+            host.RouteNavigation(
+                Panel.Nav, move => ui.Post(move), leads: true, openSystem: address => Panel.OpenSystem(address));
 
             // And a spoken "page down" moves whatever page this surface is showing (#34).
             host.RouteScrolling(Panel.Scroll);

@@ -25,12 +25,19 @@ public class AQuestionOpensThePageItIsAboutTests
         nav.Register(PanelTab.Transcript, new NavCrumb("transcript", "Transcript"));
         nav.Register(PanelTab.Assets, new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
         nav.Register(PanelTab.Assets, new NavCrumb(EngineersPages.DirectoryRoot, "Engineers"));
+        nav.Register(PanelTab.Search, new NavCrumb(StarSystemPage.RootKey, "System"));
 
         return nav;
     }
 
     private static void Open(PageRef page, params PanelNavigator[] navs) =>
-        PageTrail.OpenEverywhere(page, navs.Select(nav => (nav, (Action<Action>)(action => action()))), () => [Runner]);
+        Open(page, _ => { }, navs);
+
+    private static void Open(PageRef page, Action<long> openSystem, params PanelNavigator[] navs) =>
+        PageTrail.OpenEverywhere(
+            page,
+            navs.Select(nav => (nav, (Action<Action>)(action => action()), (Action<long>?)openSystem)),
+            () => [Runner]);
 
     [Fact]
     public void AnEngineerOpensOnEverySurface()
@@ -96,5 +103,49 @@ public class AQuestionOpensThePageItIsAboutTests
 
         Assert.Equal(PanelTab.Transcript, nav.Tab);
         Assert.True(nav.AtRoot);
+    }
+
+    [Fact]
+    public void ASystemOpensTheSystemRootOnEverySurface()
+    {
+        var first = Surface();
+        var second = Surface();
+        second.Show(EngineersPages.DirectoryRoot);
+        var opened = new List<long>();
+
+        Open(PageRef.System(633608311522), opened.Add, first, second);
+
+        Assert.All([first, second], nav =>
+        {
+            Assert.Equal(PanelTab.Search, nav.Tab);
+            Assert.Equal([StarSystemPage.RootKey], nav.Trail.Select(crumb => crumb.Key));
+        });
+        Assert.Equal([633608311522L, 633608311522L], opened);
+    }
+
+    [Fact]
+    public void ASurfaceHoldingAModalPageOpensNoSystem()
+    {
+        var held = Surface();
+        held.Take(new NavCrumb("chooser", "Chooser"));
+        var opened = new List<long>();
+
+        Open(PageRef.System(633608311522), opened.Add, held);
+
+        Assert.Equal(PanelTab.Transcript, held.Tab);
+        Assert.Empty(opened);
+    }
+
+    [Fact]
+    public void ASurfaceWithNoSystemPageOpensNoSystem()
+    {
+        var nav = new PanelNavigator();
+        nav.Register(PanelTab.Transcript, new NavCrumb("transcript", "Transcript"));
+        var opened = new List<long>();
+
+        Open(PageRef.System(633608311522), opened.Add, nav);
+
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+        Assert.Empty(opened);
     }
 }

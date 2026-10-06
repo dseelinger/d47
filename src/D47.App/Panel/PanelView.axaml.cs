@@ -1465,6 +1465,9 @@ public partial class PanelView : UserControl
     /// </summary>
     public bool TickSearch() => Tab == PanelTab.Search && _starSystem is { } page && page.Tick();
 
+    /// <summary>Opens the System page on one system, where this surface has one; true when it did.</summary>
+    public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
+
     private StarSystemPage? _starSystem;
     private RouteProgressPage? _routeProgress;
     private BodyPage? _bodyPage;

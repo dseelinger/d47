@@ -372,6 +372,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Where this surface currently is, for a spoken phrase to move.</summary>
     public D47.Core.Interface.PanelNavigator Nav => _view.Nav;
 
+    /// <summary>Opens this surface's System page on one system.</summary>
+    public void OpenSystem(long systemAddress) => _dirty |= _view.OpenSystem(systemAddress);
+
     /// <summary>Moves the page this surface is showing, for a spoken scroll (#34).</summary>
     public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step)
     {

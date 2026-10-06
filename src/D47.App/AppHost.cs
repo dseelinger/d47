@@ -2185,7 +2185,8 @@ public sealed class AppHost : IDisposable
                 activities: activities,
                 cargo: cargoBoard,
                 mail: mail,
-                searches: galaxySearchBoard));
+                searches: galaxySearchBoard,
+                starSystems: starSystems));
 
         buildingRegistry.Dispose();
 
@@ -5348,7 +5349,8 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// How to reach each navigator from a thread that does not own it, in the order they were routed.
     /// </summary>
-    private readonly List<(Core.Interface.PanelNavigator Nav, Action<Action> Post)> _surfaces = [];
+    private readonly List<(Core.Interface.PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)> _surfaces =
+        [];
 
     /// <summary>
     /// The panel as the switch path sees it: every page any surface registered, and the one showing.
@@ -5366,10 +5368,10 @@ public sealed class AppHost : IDisposable
     /// rather than read one at call time.
     /// </paramref>
     public void RouteNavigation(
-        Core.Interface.PanelNavigator nav, Action<Action> post, bool leads = false)
+        Core.Interface.PanelNavigator nav, Action<Action> post, bool leads = false, Action<long>? openSystem = null)
     {
         _navigators.Add(nav);
-        _surfaces.Add((nav, post));
+        _surfaces.Add((nav, post, openSystem));
 
         // Into the mirror before the snapshot is hooked, so a surface that arrives behind the other is
         // brought level and the first snapshot already reads two surfaces agreeing.
@@ -5409,7 +5411,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private void Show(string rootKey)
     {
-        foreach (var (nav, post) in _surfaces)
+        foreach (var (nav, post, _) in _surfaces)
         {
             post(() => nav.Show(rootKey));
         }

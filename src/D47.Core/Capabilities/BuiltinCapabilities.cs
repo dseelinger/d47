@@ -237,7 +237,10 @@ public static class BuiltinCapabilities
         Journal.MailLedger? mail = null,
 
         // Where every galaxy search answer is posted.
-        Knowledge.GalaxySearchBoard? searches = null) =>
+        Knowledge.GalaxySearchBoard? searches = null,
+
+        // One star system's record.
+        Knowledge.IStarSystemService? starSystems = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -266,7 +269,9 @@ public static class BuiltinCapabilities
             lastFoundSystem,
             () => gameState.Active?.Reputation.Factions.Keys.ToArray() ?? [],
             () => gameState.Active,
-            searches),
+            searches,
+            starSystems,
+            () => gameState.Active?.Location.SystemAddress),
         RouteCapability.Create(
             routes,
             trade,

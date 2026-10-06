@@ -64,6 +64,9 @@ public static class GalaxyCapability
     /// <summary>The other end of the same bound.</summary>
     private const int MinLimit = 1;
 
+    /// <summary>How many close names a system name with no exact match is answered with.</summary>
+    private const int CloseSystemNames = 3;
+
     /// <summary>
     /// <param name="galaxy"> The service, or null where none is composed — under the designer and in a
     /// test that is not about it.
@@ -99,7 +102,11 @@ public static class GalaxyCapability
         Func<Journal.CommanderGameState?>? gameState = null,
 
         // Where every galaxy search answer is posted on its way out, for the search pages.
-        GalaxySearchBoard? searches = null) => new()
+        GalaxySearchBoard? searches = null,
+
+        // One system's record, and the address of the system the Commander is in.
+        IStarSystemService? systems = null,
+        Func<long?>? currentAddress = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -271,6 +278,26 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     DistanceAsync(galaxy, currentSystem, settings, heard, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = "describe_system",
+                Description =
+                    "One star system's government, allegiance, economy, population, controlling faction, "
+                    + "Powerplay and stations, as Spansh last had them, and opens its page on the panel. "
+                    + "Leave 'system' out for the one the Commander is in.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "system",
+                        Type = ToolParameterType.String,
+                        Description = "The system to describe. Defaults to theirs.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    DescribeSystemAsync(
+                        systems, currentSystem, currentAddress, settings, heard, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -933,6 +960,150 @@ public static class GalaxyCapability
         {
             return ToolResult.Error(ex.Message);
         }
+    }
+
+    private static async Task<ToolResult> DescribeSystemAsync(
+        IStarSystemService? systems,
+        Func<string?> currentSystem,
+        Func<long?>? currentAddress,
+        Configuration.SettingsService settings,
+        SpokenNamesSurface? heard,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (systems is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        var named = arguments.TryGetString("system", out var given) && !string.IsNullOrWhiteSpace(given)
+            ? given.Trim()
+            : null;
+
+        try
+        {
+            long address;
+            string name;
+
+            if (named is null && currentAddress?.Invoke() is { } here)
+            {
+                address = here;
+                name = currentSystem() ?? here.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                name = named ?? currentSystem() ?? string.Empty;
+
+                if (name.Length == 0)
+                {
+                    return ToolResult.Error(
+                        "I don't know where the Commander is right now, so I need a system to describe.");
+                }
+
+                var matches = await systems.MatchNamesAsync(name, cancellationToken).ConfigureAwait(false);
+                var exact = matches.FirstOrDefault(
+                    match => string.Equals(match.Name, name, StringComparison.OrdinalIgnoreCase));
+
+                if (exact is null)
+                {
+                    return ToolResult.Error(
+                        matches.Count == 0
+                            ? $"Spansh has no system named {name}."
+                            : $"Spansh has no system named exactly {name}. Close names: "
+                              + $"{string.Join(", ", matches.Take(CloseSystemNames).Select(match => match.Name))}.");
+                }
+
+                address = exact.SystemAddress;
+                name = exact.Name;
+            }
+
+            var profile = await systems.ProfileAsync(address, cancellationToken).ConfigureAwait(false);
+
+            if (profile is null)
+            {
+                return ToolResult.Error($"Spansh has no record of {name}.");
+            }
+
+            if (named is not null)
+            {
+                heard?.Confirm(profile.Name);
+            }
+
+            return ToolResult.Ok(DescribeProfile(profile)) with { Page = PageRef.System(address) };
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    /// <summary>The spoken summary of one system; the page holds the rest.</summary>
+    internal static string DescribeProfile(StarSystemProfile profile)
+    {
+        var said = new StringBuilder(profile.Name).Append(':');
+
+        string?[] politics =
+        [
+            profile.Government,
+            profile.Allegiance,
+            profile.PrimaryEconomy is { Length: > 0 } economy ? $"{economy} economy" : null,
+            profile.Population is { } population
+                ? $"population {population.ToString("N0", CultureInfo.InvariantCulture)}"
+                : null,
+        ];
+        var known = politics.Where(part => !string.IsNullOrWhiteSpace(part)).ToArray();
+
+        said.Append(' ').Append(known.Length > 0 ? string.Join(", ", known) : "no government on record").Append('.');
+
+        if (profile.ControllingFaction is { Length: > 0 } controller)
+        {
+            var states = profile.Factions
+                .FirstOrDefault(faction => string.Equals(faction.Name, controller, StringComparison.OrdinalIgnoreCase))
+                ?.ActiveStates.Where(state => !string.Equals(state, "None", StringComparison.OrdinalIgnoreCase))
+                .ToArray() ?? [];
+
+            said.Append(" Controlled by ").Append(controller)
+                .Append(states.Length > 0 ? $", in {string.Join(" and ", states)}." : ", in no state.");
+        }
+
+        if (profile.Powerplay is { } powerplay
+            && (powerplay.ControllingPower is { Length: > 0 } || powerplay.State is { Length: > 0 }))
+        {
+            string?[] parts = [powerplay.ControllingPower, powerplay.State];
+            said.Append(" Powerplay: ")
+                .Append(string.Join(", ", parts.Where(part => !string.IsNullOrWhiteSpace(part))))
+                .Append('.');
+        }
+
+        var stations = profile.Stations
+            .GroupBy(station => station.Kind)
+            .OrderBy(group => group.Key)
+            .Select(group => Count(group.Count(), StationWord(group.Key)))
+            .ToArray();
+
+        said.Append(stations.Length > 0 ? $" Stations: {string.Join(", ", stations)}." : " No stations on record.");
+
+        if (profile.ReportedAt is { } reported)
+        {
+            said.Append(" Spansh last had a report on ")
+                .Append(reported.ToString("d MMMM yyyy", CultureInfo.InvariantCulture))
+                .Append('.');
+        }
+
+        return said.ToString();
+
+        static string Count(int count, string word) => count == 1 ? $"1 {word}" : $"{count} {word}s";
+
+        static string StationWord(StationKind kind) => kind switch
+        {
+            StationKind.Starport => "starport",
+            StationKind.Outpost => "outpost",
+            StationKind.SurfacePort => "surface port",
+            StationKind.Settlement => "settlement",
+            StationKind.Megaship => "megaship",
+            StationKind.FleetCarrier => "fleet carrier",
+            _ => "other station",
+        };
     }
 
     private static async Task<ToolResult> FindStationAsync(

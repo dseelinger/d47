@@ -461,6 +461,25 @@ The straight-line distance in light years between two star systems.
 The arithmetic is d47's own. The service returns positions and d47 computes the distance from
 the coordinates, so "how far" has the same answer wherever it is asked from.
 
+#### `describe_system`
+
+One star system as Spansh last had it, said in a few sentences, with its page opened on the panel.
+
+```json
+{"type":"object","properties":{"system":{"type":"string","description":"The system to describe. Defaults to theirs."}},"required":[],"additionalProperties":false}
+```
+
+The answer gives the government, allegiance, primary economy, population, the controlling faction
+and its state, the controlling power and its Powerplay state, how many stations of each kind, and
+the date of Spansh's last report. With no `system`, it describes the system the Commander is in.
+
+The panel opens **Search › System** on that system and stops following the Commander, as typing
+the name there does. Only a question the Commander asked moves the panel, and a surface holding a
+chooser stays where it is.
+
+A name with no exact match answers with up to three close names and opens nothing; a misheard name
+is usually one of them. A system Spansh has no record of is said to be unknown and opens nothing.
+
 #### `find_nearest_station`
 
 Where to buy a named module or ship, nearest first. A rare good is answered from a table instead,

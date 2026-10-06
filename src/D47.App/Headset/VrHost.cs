@@ -124,6 +124,9 @@ public sealed class VrHost : IDisposable
     public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step) =>
         _panel.Scroll(step);
 
+    /// <summary>Opens the headset's System page on one system. Call on the UI thread.</summary>
+    public void OpenSystem(long systemAddress) => _panel.OpenSystem(systemAddress);
+
     /// <summary>Builds the headset path and subscribes it to the tick loop.</summary>
     public static VrHost Start(
         PanelViewModel model,
