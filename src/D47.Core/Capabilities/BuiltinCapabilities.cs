@@ -228,7 +228,10 @@ public static class BuiltinCapabilities
         Activities.ActivityLedger? activities = null,
 
         // Where the last best cargo search is posted (#849).
-        Knowledge.BestCargoBoard? cargo = null) =>
+        Knowledge.BestCargoBoard? cargo = null,
+
+        // The unannounced mail ledger (#618).
+        Journal.MailLedger? mail = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -334,7 +337,11 @@ public static class BuiltinCapabilities
             () => gameState.Active,
             phraseBook ?? (() => PhraseBook.From(registry(), [])),
             now ?? (() => DateTimeOffset.MinValue)),
-        CommsCapability.Create(actions, () => settings.Current.Actions.Chat),
+        CommsCapability.Create(
+            actions,
+            () => settings.Current.Actions.Chat,
+            mail,
+            () => gameState.Active?.Identity.FrontierId),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         ClockCapability.Create(now, zone),

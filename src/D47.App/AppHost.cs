@@ -886,6 +886,11 @@ public sealed class AppHost : IDisposable
 
         activities.Load();
 
+        // Mail Elite also sends and d47 has not said, with its read watermark (#618).
+        var mail = new D47.Core.Journal.MailLedger(
+            Path.Combine(paths.Data, D47.Core.Journal.MailLedger.FileName),
+            loggerFactory.CreateLogger<D47.Core.Journal.MailLedger>());
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -903,6 +908,7 @@ public sealed class AppHost : IDisposable
             Cartography = cartography,
             Crimes = crimes,
             Activities = activities,
+            Mail = mail,
             Step = StartupTimer.Step,
         };
 
@@ -1288,6 +1294,11 @@ public sealed class AppHost : IDisposable
             cartography.Apply(events, gameState.Active?.Identity.FrontierId);
             crimes.Apply(events, gameState.Active?.Identity.FrontierId);
             activities.Apply(events, gameState.Active?.Identity.FrontierId);
+
+            if (!context.IsFirst)
+            {
+                mail.Fold(events, live: true, gameState.Active?.Identity.FrontierId);
+            }
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
             planBook.Apply(events);
@@ -2143,7 +2154,8 @@ public sealed class AppHost : IDisposable
                 crimes: crimes,
                 liveStatus: () => status.Current,
                 activities: activities,
-                cargo: cargoBoard));
+                cargo: cargoBoard,
+                mail: mail));
 
         buildingRegistry.Dispose();
 

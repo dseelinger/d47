@@ -170,6 +170,17 @@ Line breaks are flattened to spaces before anything is typed. A newline in the m
 would send the first half early and type the second half into the cockpit, where every character
 is one of your keybinds.
 
+### Ask for your mail
+
+> "read my mail"
+> "any mail"
+> "check my messages"
+
+D47 says what the journal shows has arrived as inbox mail since you last asked: missions completed
+or failed, promotions, squadron promotions and community goal rewards. It paraphrases from the
+journal and cannot see the inbox itself, so the comms panel has the true count. Asking again says
+nothing new until more arrives.
+
 ### It needs the keyboard too
 
 Sending a message means opening the chat box, which means pressing a key. So this needs **Let
@@ -192,5 +203,13 @@ The message body goes out as `KEYEVENTF_UNICODE` rather than as scancodes — th
 exception. A scancode is a physical key position, so sending a message by
 scancode types something else entirely on a layout other than the one d47 assumed. The key that
 opens the chat box is still a scancode, because that one is a binding.
+
+#### `read_mail`
+
+Say what the journal shows has arrived as inbox mail since the Commander last asked: missions completed or failed, promotions, squadron promotions and community goal rewards. It cannot see the inbox itself.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
 
 </details>

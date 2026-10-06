@@ -1,5 +1,6 @@
 ﻿using D47.Core.Configuration;
 using D47.Core.Input;
+using D47.Core.Journal;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -24,13 +25,17 @@ public static class CommsCapability
     /// <summary>Long enough for the comms box to open and take focus.</summary>
     private static readonly TimeSpan BoxOpens = TimeSpan.FromMilliseconds(500);
 
-    public static CapabilityDescriptor Create(ActionSurface actions, Func<bool> enabled) => new()
+    public static CapabilityDescriptor Create(
+        ActionSurface actions,
+        Func<bool> enabled,
+        MailLedger? mail = null,
+        Func<string?>? commander = null) => new()
     {
         Id = Id,
         Group = "Acting on the game",
         Name = "Comms",
-        Summary = "Send a message in Elite's chat, to local, system, wing or squadron.",
-        Examples = ["tell my wing I am on the way", "say o7 in local"],
+        Summary = "Send a message in Elite's chat, to local, system, wing or squadron, and say what mail has arrived.",
+        Examples = ["tell my wing I am on the way", "say o7 in local", "any mail"],
         Display = new CapabilityDisplay { PanelTitle = "Comms", Order = 61 },
         Settings = [ChatRow()],
         Tools =
@@ -63,8 +68,42 @@ public static class CommsCapability
                 SendsInput = true,
                 Handler = (arguments, cancellationToken) => Send(arguments, actions, enabled, cancellationToken),
             },
+            new ToolDefinition
+            {
+                Name = "read_mail",
+                Description =
+                    "Say what the journal shows has arrived as inbox mail since the Commander last asked: "
+                    + "missions completed or failed, promotions, squadron promotions and community goal rewards. "
+                    + "It cannot see the inbox itself.",
+                Commands =
+                [
+                    new ToolCommandPhrase("read my mail", NoArguments),
+                    new ToolCommandPhrase("any mail", NoArguments),
+                    new ToolCommandPhrase("check my messages", NoArguments),
+                ],
+                Handler = (_, _) => Task.FromResult(ReadMail(mail, commander?.Invoke())),
+            },
         ],
     };
+
+    private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
+
+    private static ToolResult ReadMail(MailLedger? mail, string? commander)
+    {
+        if (mail is null)
+        {
+            return ToolResult.Ok("I am not keeping track of mail in this configuration.");
+        }
+
+        if (commander is null)
+        {
+            return ToolResult.Ok("I don't know which Commander is playing yet.");
+        }
+
+        return mail.HistoryFolded
+            ? ToolResult.Ok(mail.Read(commander))
+            : ToolResult.Ok("I'm still reading your journals. Ask again in a minute.");
+    }
 
     private static async Task<ToolResult> Send(
         ToolArguments arguments,

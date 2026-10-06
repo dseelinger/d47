@@ -237,6 +237,27 @@ public sealed class MailLedger
         return $"I can't read the inbox itself, but since you last asked: {Joined(phrases)}. The comms panel has the true count.";
     }
 
+    /// <summary>
+    /// <see cref="Compose"/>, then marks <paramref name="commander"/>'s mail read through the newest entry the
+    /// answer reported.
+    /// </summary>
+    public string Read(string commander)
+    {
+        ArgumentNullException.ThrowIfNull(commander);
+
+        lock (_gate)
+        {
+            var answer = Compose(commander);
+
+            if (_entries.TryGetValue(commander, out var book) && book.Count > 0)
+            {
+                MarkRead(commander, book.Values.Max(entry => entry.At));
+            }
+
+            return answer;
+        }
+    }
+
     /// <summary>Moves <paramref name="commander"/>'s watermark to <paramref name="through"/> and saves it.</summary>
     public void MarkRead(string commander, DateTimeOffset through)
     {
