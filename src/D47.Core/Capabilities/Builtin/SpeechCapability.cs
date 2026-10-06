@@ -1344,7 +1344,11 @@ public static class SpeechCapability
                     + "not send it any. Flash is also the only one with a speaking rate.",
                 Kind = SettingKind.Choice,
                 Choices = [.. ElevenLabsModels.All.Select(model => model.Id)],
-                ChoiceLabel = id => ElevenLabsModels.All.FirstOrDefault(model => model.Id == id)?.Label ?? id,
+                ChoiceSource = _ => [.. ElevenLabsModels.All.Concat(ElevenLabsModels.New).Select(model => model.Id)],
+                ChoiceLabel = id => ElevenLabsModels.All.FirstOrDefault(model => model.Id == id)?.Label
+                    ?? (ElevenLabsModels.New.FirstOrDefault(model => model.Id == id) is { } listed
+                        ? $"{listed.Label} — new — priced as unknown"
+                        : id),
                 DocsAnchor = "elevenlabs-model",
 
                 // On screen while any slot speaks through ElevenLabs, the same rule as its key — the carrier

@@ -91,6 +91,9 @@ public sealed class ModelCatalog
     public ModelTraits TraitsFor(string providerId, string model) =>
         Model(providerId, model)?.Traits ?? ModelTraits.Unknown;
 
+    /// <summary>Whether the catalog names the model, offered or not.</summary>
+    public bool Knows(string providerId, string model) => Model(providerId, model) is not null;
+
     /// <summary>Never null for ElevenLabs, OpenAI or Cartesia, which every readable catalog covers.</summary>
     public string? SpeechDefaultFor(string providerId) => _speech.GetValueOrDefault(providerId)?.Default;
 

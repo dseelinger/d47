@@ -86,7 +86,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         };
     }
 
-    private ModelTraits Traits(string model) => _catalog.Current.TraitsFor(Id, model);
+    private ModelTraits Traits(string model) => _catalog.TraitsFor(Id, model);
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
         LlmRequest request,
@@ -759,14 +759,32 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                     (int)(incoming.ServerToolUse?.WebSearchRequests ?? 0)),
             };
 
-    /// <summary>Asks the endpoint for its model list. Free: it runs no completion.</summary>
+    /// <summary>Asks the endpoint for its Claude models, every page. Free: it runs no completion.</summary>
     public async Task<EndpointModels> ListModelsAsync(CancellationToken cancellationToken)
     {
         try
         {
             var page = await _client.Models.List(new ModelListParams(), cancellationToken).ConfigureAwait(false);
+            var listed = new List<ListedModel>();
 
-            return new EndpointModels(EndpointReach.Answered, [.. page.Items.Select(model => model.ID).Order(StringComparer.Ordinal)], null);
+            await foreach (var model in page.Paginate(cancellationToken).ConfigureAwait(false))
+            {
+                if (model.ID.StartsWith("claude-", StringComparison.Ordinal))
+                {
+                    listed.Add(new ListedModel(model.ID, model.DisplayName, model.CreatedAt)
+                    {
+                        AdaptiveThinking = model.Capabilities?.Thinking?.Types?.Adaptive?.Supported,
+                    });
+                }
+            }
+
+            return new EndpointModels(
+                EndpointReach.Answered,
+                [.. listed.Select(model => model.Id).Order(StringComparer.Ordinal)],
+                null)
+            {
+                Listed = listed,
+            };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

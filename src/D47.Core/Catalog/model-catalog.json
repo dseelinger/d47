@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "published": "2026-09-28",
+  "published": "2026-10-06",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
@@ -79,7 +79,14 @@
       "models": [
         { "id": "eleven_v4_turbo", "label": "v4 Turbo", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": false, "readsTags": true, "groupsSentencesUpTo": 300 },
         { "id": "eleven_v3_conversational", "label": "v3", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": false, "readsTags": true, "groupsSentencesUpTo": 300 },
-        { "id": "eleven_flash_v2_5", "label": "Flash 2.5", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": true, "readsTags": false, "groupsSentencesUpTo": 0 }
+        { "id": "eleven_flash_v2_5", "label": "Flash 2.5", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": true, "readsTags": false, "groupsSentencesUpTo": 0 },
+        { "id": "eleven_multilingual_v2", "label": "Multilingual v2", "offered": false },
+        { "id": "eleven_turbo_v2_5", "label": "Turbo 2.5", "offered": false },
+        { "id": "eleven_turbo_v2", "label": "Turbo 2", "offered": false },
+        { "id": "eleven_flash_v2", "label": "Flash 2", "offered": false },
+        { "id": "eleven_multilingual_v1", "label": "Multilingual v1", "offered": false },
+        { "id": "eleven_monolingual_v1", "label": "English v1", "offered": false },
+        { "id": "eleven_v3", "label": "v3 (alpha)", "offered": false }
       ]
     },
     "openai": {

@@ -3402,7 +3402,8 @@ public sealed class AppHost : IDisposable
     /// Rebuilds everything downstream of the language model settings: the provider itself, the pinned
     /// model, the standing About Me text, and whether the model capability is on at all.
     /// </summary>
-    private void ApplyLlmSettings()
+    /// <param name="changedKey">The settings key whose change caused this, or null at startup.</param>
+    private void ApplyLlmSettings(string? changedKey = null)
     {
         var current = Settings.Current;
         var selected = LlmProviderCatalog.Selected(current.Llm.Provider);
@@ -3435,7 +3436,11 @@ public sealed class AppHost : IDisposable
             }
         }
 
-        RefreshEndpointModels(provider, current.Llm.Endpoint);
+        RefreshEndpointModels(
+            selected,
+            provider,
+            current.Llm.Endpoint,
+            keyChanged: string.Equals(changedKey, ConversationCapability.KeyRowFor(selected), StringComparison.OrdinalIgnoreCase));
 
         Turns.Provider = provider;
         Turns.Model = current.Llm.Model;
@@ -3526,13 +3531,14 @@ public sealed class AppHost : IDisposable
     internal IReadOnlyList<string> EndpointModelIds => _endpointModels;
 
     /// <summary>
-    /// Asks the endpoint what it serves, if it is the kind of thing that can be asked and has not been
-    /// asked already (Phase 29).
+    /// Asks the endpoint what it serves, on the pool, if it is the kind of thing that can be asked and has
+    /// not been asked already with this key (Phase 29).
     /// </summary>
-    private void RefreshEndpointModels(ILlmProvider? provider, string? endpoint)
+    private void RefreshEndpointModels(LlmProviderInfo selected, ILlmProvider? provider, string? endpoint, bool keyChanged)
     {
         var asking = provider switch
         {
+            AnthropicLlmProvider anthropic => anthropic.ListModelsAsync,
             ChatCompletionsLlmProvider chat => chat.ListModelsAsync,
             ResponsesLlmProvider responses => responses.ListModelsAsync,
             _ => (Func<CancellationToken, Task<EndpointModels>>?)null,
@@ -3544,16 +3550,19 @@ public sealed class AppHost : IDisposable
         {
             _endpointModels = [];
             _endpointModelsFor = null;
+            Interlocked.Increment(ref _endpointModelsAsked);
+            ModelCatalogSource.Shared.List(selected.Id, []);
             return;
         }
 
-        if (string.Equals(_endpointModelsFor, address, StringComparison.Ordinal))
+        if (!keyChanged && string.Equals(_endpointModelsFor, address, StringComparison.Ordinal))
         {
             return;
         }
 
         _endpointModels = [];
         _endpointModelsFor = address;
+        var ask = Interlocked.Increment(ref _endpointModelsAsked);
 
         _ = Task.Run(async () =>
         {
@@ -3561,10 +3570,11 @@ public sealed class AppHost : IDisposable
             {
                 var models = await asking(CancellationToken.None).ConfigureAwait(false);
 
-                // Only if the address has not moved again while this was in recording.
-                if (string.Equals(_endpointModelsFor, address, StringComparison.Ordinal))
+                // Only if nothing has been asked since.
+                if (Volatile.Read(ref _endpointModelsAsked) == ask)
                 {
                     _endpointModels = models.Ids;
+                    ModelCatalogSource.Shared.List(selected.Id, models.Listed);
                 }
 
                 _logger.LogInformation(
@@ -4428,6 +4438,19 @@ public sealed class AppHost : IDisposable
         _ => null,
     };
 
+    /// <summary>Records the speech models the provider lists for its key, or none where it lists none.</summary>
+    private async Task ListSpeechModelsAsync(ElevenLabsTtsProvider provider)
+    {
+        try
+        {
+            ModelCatalogSource.Shared.ListSpeech(provider.Id, await provider.ListModelsAsync().ConfigureAwait(false));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not record {Provider}'s speech models", provider.Id);
+        }
+    }
+
     private async Task LoadVoicesAsync(ITtsProvider provider)
     {
         try
@@ -4885,6 +4908,7 @@ public sealed class AppHost : IDisposable
 
             _voicesByProvider.Remove(released);
             Casting.Forget(released);
+            ModelCatalogSource.Shared.ListSpeech(released, []);
         }
 
         foreach (var wanted in plan.Build)
@@ -4911,6 +4935,11 @@ public sealed class AppHost : IDisposable
             if (_clients.GetValueOrDefault(asking) is { } client)
             {
                 _ = LoadVoicesAsync(client);
+
+                if (client is ElevenLabsTtsProvider elevenLabs)
+                {
+                    _ = Task.Run(() => ListSpeechModelsAsync(elevenLabs));
+                }
             }
         }
 
@@ -6047,6 +6076,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Which provider and address that list came from, so it is asked once each.</summary>
     private volatile string? _endpointModelsFor;
+
+    /// <summary>How many times an endpoint has been asked, so only the latest answer is kept.</summary>
+    private int _endpointModelsAsked;
 
     /// <summary>What the voices have cost this session (Phase 19).</summary>
     public SpeechSpend SpeechSpend { get; } = new();
@@ -7762,7 +7794,7 @@ public sealed class AppHost : IDisposable
         switch (fanout.Subsystem)
         {
             case SettingsSubsystem.LanguageModel:
-                ApplyLlmSettings();
+                ApplyLlmSettings(change.Key);
                 break;
 
             case SettingsSubsystem.Speech:

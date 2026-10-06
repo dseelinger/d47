@@ -33,9 +33,9 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
         var host = OnElevenLabs(out _);
         host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        var segment = Row(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Segment>().First();
+        var stepper = Row(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Stepper>().First();
 
-        Assert.Equal(ElevenLabsModels.All.Count, segment.ItemsSource.Count);
+        Assert.Equal(ElevenLabsModels.All.Count, stepper.ItemsSource.Count);
     }
 
     /// <summary>The row with every model on it, for a human to look at.</summary>

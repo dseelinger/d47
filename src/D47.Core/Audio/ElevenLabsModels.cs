@@ -20,7 +20,18 @@ public static class ElevenLabsModels
     public static IReadOnlyList<SpeechModel> All => Catalog.OfferedSpeechFor(TtsProviderCatalog.ElevenLabsId);
 
     /// <summary>
-    /// A stored name, or <see cref="Default"/> where it is missing or is one d47 no longer offers.
+    /// The models ElevenLabs listed for the stored key that the catalog does not name: no tags, no rate,
+    /// one sentence at a time.
+    /// </summary>
+    public static IReadOnlyList<SpeechModel> New =>
+    [
+        .. ModelCatalogSource.Shared.NewSpeechFor(TtsProviderCatalog.ElevenLabsId)
+            .Select(listed => new SpeechModel(listed.Id, listed.Name ?? listed.Id, Offered: false)),
+    ];
+
+    /// <summary>
+    /// A stored name, or <see cref="Default"/> where it is missing or is neither offered nor
+    /// <see cref="New"/>.
     /// </summary>
     public static string Named(string? model) => Resolved(model).Id;
 
@@ -35,13 +46,14 @@ public static class ElevenLabsModels
     /// </summary>
     public static int GroupsSentencesUpTo(string? model) => Resolved(model).GroupsSentencesUpTo;
 
-    /// <summary>The catalog's entry for <see cref="Named"/>.</summary>
+    /// <summary>The catalog's entry for <see cref="Named"/>, or the listed one where it is new.</summary>
     public static SpeechModel Resolved(string? model)
     {
         var catalog = Catalog;
         var offered = catalog.OfferedSpeechFor(TtsProviderCatalog.ElevenLabsId);
 
         return offered.FirstOrDefault(candidate => candidate.Id == model)
+               ?? New.FirstOrDefault(candidate => candidate.Id == model)
                ?? offered.First(candidate => candidate.Id == catalog.SpeechDefaultFor(TtsProviderCatalog.ElevenLabsId));
     }
 }

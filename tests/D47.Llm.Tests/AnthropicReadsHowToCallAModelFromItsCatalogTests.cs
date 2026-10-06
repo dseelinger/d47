@@ -24,6 +24,11 @@ public class AnthropicReadsHowToCallAModelFromItsCatalogTests
                 }
               ]
             }
+          },
+          "speech": {
+            "elevenlabs": { "default": "eleven-a", "models": [ { "id": "eleven-a", "offered": true } ] },
+            "openai": { "default": "tts-a", "models": [ { "id": "tts-a", "offered": true } ] },
+            "cartesia": { "default": "sonic-a", "models": [ { "id": "sonic-a", "offered": true } ] }
           }
         }
         """));

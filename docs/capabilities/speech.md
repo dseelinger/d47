@@ -530,6 +530,13 @@ one.
 
 All three cost the same, $0.04 per thousand characters.
 
+**The row also offers models ElevenLabs released since the catalog was published.** Each time
+Directive 47 fetches the voice list, it also asks ElevenLabs which models your key can speak with,
+and adds each text-to-speech model the catalog does not name to the end of the row, labelled
+"new — priced as unknown". A new model is sent no delivery direction and no speaking rate, and is
+handed one sentence at a time. Once the catalog names it, the catalog's facts apply instead. If
+ElevenLabs cannot be asked, the row offers the catalog's three alone.
+
 Two things follow from picking v4 Turbo or v3, and both are visible:
 
 - **The speaking rate row disappears**, because only Flash is known to act on one. v3 accepts the

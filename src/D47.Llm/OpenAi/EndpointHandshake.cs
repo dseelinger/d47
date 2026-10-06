@@ -21,6 +21,9 @@ public enum EndpointReach
 /// <summary>What the handshake found.</summary>
 public sealed record EndpointModels(EndpointReach Reach, IReadOnlyList<string> Ids, string? Detail)
 {
+    /// <summary>What the provider said about each model, where its list says more than the id.</summary>
+    public IReadOnlyList<D47.Core.Catalog.ListedModel> Listed { get; init; } = [];
+
     public static EndpointModels Unreachable(string? detail) => new(EndpointReach.Unreachable, [], detail);
 
     public static EndpointModels Refused(string? detail) => new(EndpointReach.Refused, [], detail);

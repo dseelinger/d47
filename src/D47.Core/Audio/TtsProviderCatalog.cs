@@ -133,7 +133,9 @@ public static class TtsProviderCatalog
                  + "along with your API key. That includes re-voiced in-game messages when you have "
                  + "turned those on, which are written by other players. No journal content, game "
                  + "state or other keys are sent. Playing a voice's free sample in the voice list "
-                 + "fetches it from ElevenLabs or storage.googleapis.com, with no key and no text.",
+                 + "fetches it from ElevenLabs or storage.googleapis.com, with no key and no text. "
+                 + "Each time D47 fetches the voice list, it also asks ElevenLabs for its list of "
+                 + "models, with the same key and nothing else.",
         OffersFreePreviews = true,
 
         // ElevenLabs rejects a speed outside this outright rather than clamping, so the range is declared

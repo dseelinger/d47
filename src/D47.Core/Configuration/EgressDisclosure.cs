@@ -721,7 +721,8 @@ public static class EgressDisclosure
             NameOf(LanguageModel),
             destination,
             $"{provider.Name} is selected. {provider.Egress} The Test button and the key's VERIFY button ask "
-            + "the provider for its list of models, sending the key and nothing else. The names of characters in in-game messages are "
+            + "the provider for its list of models, sending the key and nothing else; D47 also asks for that list at "
+            + "startup and whenever the provider, its endpoint or its key changes. The names of characters in in-game messages are "
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
             + " Asking for an adventure sends where you are, the ships you own and your ranks; asking for the next "

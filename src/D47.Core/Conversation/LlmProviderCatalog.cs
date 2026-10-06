@@ -40,11 +40,16 @@ public sealed record LlmProviderInfo
 
     public bool NeedsKey => KeySecretName is not null && !KeyOptional;
 
-    /// <summary>The model list for an endpoint.</summary>
+    /// <summary>The models this provider listed for the stored key that the catalog does not name.</summary>
+    public IReadOnlyList<string> NewModels => [.. ModelCatalogSource.Shared.NewFor(Id).Select(model => model.Id)];
+
+    /// <summary>The model list for an endpoint: the catalog's, then the new ones listed.</summary>
     public IReadOnlyList<string> ModelsFor(string? endpoint) =>
         endpoint is null || string.Equals(endpoint, DefaultEndpoint, StringComparison.OrdinalIgnoreCase)
-            ? Models
+            ? [.. Models, .. NewModels]
             : [];
+
+    public bool IsNew(string model) => NewModels.Contains(model, StringComparer.Ordinal);
 }
 
 /// <summary>

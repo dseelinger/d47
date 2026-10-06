@@ -352,6 +352,16 @@ running cost accurate. Type one by hand and it is accepted, but counted as unkno
 free. Models the *endpoint* offered are in that second category — Directive 47 has no published
 rate for a model it has never heard of, and inventing one would be worse than saying so.
 
+**On Anthropic, the list also offers models released since the catalog was published.** Directive
+47 asks Anthropic which models your key reaches, at startup and whenever the provider or the key
+changes, and adds each one the catalog does not name to the end of the list, labelled
+"new — priced as unknown". Only models released after the newest one the catalog names are added:
+an older model missing from the catalog was left out of it on purpose. A new model is counted as
+unknown, gets no tool search and carries game state in the message rather than as a system message;
+it thinks with an effort level when Anthropic's list says it supports adaptive thinking, and without
+one when it does not. Once the catalog names the model, the catalog's facts apply instead. If
+Anthropic cannot be asked, the list is the catalog's alone and nothing is said about it.
+
 **Every row in the picker says what it costs**, and two of them say a little more:
 
 ```
@@ -390,7 +400,9 @@ service could not be reached. A working answer marks the model available; a refu
 it unavailable, so the text and `get_model_status` agree with it.
 
 The check is free. It lists models and never runs a completion, so nothing is added to this session's
-spend. It runs only when you press Test or a key's VERIFY button, never on a timer.
+spend. It runs only when you press Test or a key's VERIFY button, never on a timer. The same list is
+also asked for at startup and whenever the provider, its endpoint or its key changes, to fill the
+Model row; that request is free as well and reports nothing.
 
 #### Model for the quiet calls {#background-model}
 

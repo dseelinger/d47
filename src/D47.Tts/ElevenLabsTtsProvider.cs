@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Audio;
+using D47.Core.Catalog;
 using Microsoft.Extensions.Logging;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -39,7 +40,9 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         "with your API key. That includes re-voiced in-game messages when you have turned those " +
         "on, which are written by other players. No journal content, game state or other keys " +
         "are sent. Playing a voice's free sample in the voice list fetches it from ElevenLabs or " +
-        "storage.googleapis.com with no key and no text. Selecting a different voice provider " +
+        "storage.googleapis.com with no key and no text. Each time D47 fetches the voice list, it " +
+        "also asks ElevenLabs for its list of models, with the same key and nothing else. Selecting " +
+        "a different voice provider " +
         "stops all of it.";
 
     /// <summary>
@@ -171,6 +174,55 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         {
             _logger.LogWarning(ex, "Could not list ElevenLabs voices");
             return VoiceCatalogue.Unreachable(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// The models the stored key can speak with, or none where there is no key or the list could not be
+    /// had.
+    /// </summary>
+    public async Task<IReadOnlyList<ListedModel>> ListModelsAsync(CancellationToken cancellationToken = default)
+    {
+        if (_key() is not { Length: > 0 } key)
+        {
+            return [];
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/models");
+            request.Headers.Add("xi-api-key", key);
+
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var said = await MessageFromBodyAsync(response, cancellationToken).ConfigureAwait(false);
+
+                _logger.LogWarning(
+                    "ElevenLabs would not list its models: {Status} {Said}", (int)response.StatusCode, said);
+
+                return [];
+            }
+
+            var listed = await response.Content
+                .ReadFromJsonAsync<List<ElevenModel>>(Json, cancellationToken)
+                .ConfigureAwait(false);
+
+            IReadOnlyList<ListedModel> models =
+            [
+                .. (listed ?? [])
+                    .Where(model => model.ModelId is { Length: > 0 } && model.CanDoTextToSpeech)
+                    .Select(model => new ListedModel(model.ModelId!, model.Name)),
+            ];
+
+            _logger.LogInformation("ElevenLabs lists {Count} speech models", models.Count);
+            return models;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Could not list ElevenLabs models");
+            return [];
         }
     }
 
@@ -558,6 +610,15 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     }
 
     private static string Excerpt(string text) => text.Length <= 40 ? text : text[..40] + "…";
+
+    private sealed record ElevenModel
+    {
+        public string? ModelId { get; init; }
+
+        public string? Name { get; init; }
+
+        public bool CanDoTextToSpeech { get; init; }
+    }
 
     private sealed record VoiceListResponse
     {

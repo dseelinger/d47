@@ -23,7 +23,7 @@ public static class ModelChoice
         return model => Label(provider, model, prices, local, cheapest);
     }
 
-    /// <summary>One row: the id, then whichever of the two derived words apply, then what it costs.</summary>
+    /// <summary>One row: the id, then whichever of the derived words apply, then what it costs.</summary>
     private static string Label(
         LlmProviderInfo provider,
         string model,
@@ -41,6 +41,11 @@ public static class ModelChoice
         if (string.Equals(model, cheapest, StringComparison.OrdinalIgnoreCase))
         {
             parts.Add("cheapest here");
+        }
+
+        if (provider.IsNew(model))
+        {
+            parts.Add("new");
         }
 
         parts.Add(local ? "free on this machine" : Rate(prices.For(provider.Id, model)));
