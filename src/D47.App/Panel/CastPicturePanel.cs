@@ -15,7 +15,7 @@ public static class CastPicturePanel
     /// Fills <paramref name="holder"/> with the picture and its Change picture and Use the default buttons, then
     /// <paramref name="beside"/> in the same row.
     /// </summary>
-    public static void Show(Control owner, StackPanel holder, CastPictures pictures, string picture, params Control[] beside)
+    public static void Show(Control owner, StackPanel holder, SpeakerPictures pictures, string picture, params Control[] beside)
     {
         ArgumentNullException.ThrowIfNull(holder);
         ArgumentNullException.ThrowIfNull(pictures);

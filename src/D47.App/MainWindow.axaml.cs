@@ -158,6 +158,7 @@ public partial class MainWindow : Window
             }
 
             Panel.EnableCommanderName(() => host.GameState.Active?.Identity.Name);
+            Panel.EnableSpeakerPictures(new SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<SpeakerPortraits>()));
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
@@ -197,7 +198,7 @@ public partial class MainWindow : Window
                     option => host.AnswerEnding(option).Refusal,
                     host.StoryDownloads,
                     new StoryFilterMemory(host.ViewState),
-                    host.CastPictures,
+                    host.SpeakerPictures,
                     host.PlayMessage,
                     new CastVoiceSurface(
                         key => host.Stories?.CastMember(key),
@@ -489,8 +490,8 @@ public partial class MainWindow : Window
             () => _model.Append($"\n{text}\n"));
 
         // Every spoken line joins the conversation, attributed to whoever said it.
-        _host.CalloutSaid += (text, speaker, sourceKey) => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey));
+        _host.CalloutSaid += (text, speaker, sourceKey, picture) => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey, picture: picture));
 
         // And what happened to the conversation rather than in it - the core changing under it.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));
@@ -959,7 +960,7 @@ public partial class MainWindow : Window
         _model.AskText = string.Empty;
         _model.Append(input, voice: TranscriptVoice.Commander);
 
-        var presenter = new TurnPresenter(_model);
+        var presenter = new TurnPresenter(_model, _host.ShipPicture, _host.AddressedPicture);
 
         // Claimed before the turn starts and released in the finally.
         var cancelling = _host.Cancellation.Begin();

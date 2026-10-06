@@ -6,6 +6,7 @@ using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
+using D47.Core.Interface;
 
 namespace D47.Core.Tests.Stories;
 
@@ -17,13 +18,13 @@ public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-cast-pictures-" + Guid.NewGuid().ToString("N"));
 
-    private readonly CastPictures _pictures;
+    private readonly SpeakerPictures _pictures;
 
     public AMessageCarriesItsSpeakersPictureTests()
     {
         var paths = new AppPaths(_root);
         Directory.CreateDirectory(paths.Stories);
-        _pictures = new CastPictures(paths);
+        _pictures = new SpeakerPictures(paths);
     }
 
     public void Dispose()
@@ -104,7 +105,7 @@ public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
     [InlineData("")]
     public void APathIsNotAPictureName(string picture)
     {
-        Assert.False(CastPictures.IsName(picture));
+        Assert.False(SpeakerPictures.IsName(picture));
         Assert.Null(_pictures.Find(picture));
     }
 

@@ -102,7 +102,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
 
         var paths = new AppPaths(TempFolders.Create("d47-cast-picture"));
         Directory.CreateDirectory(paths.Stories);
-        var pictures = new CastPictures(paths);
+        var pictures = new SpeakerPictures(paths);
         File.WriteAllBytes(pictures.Default(Picture), Jpeg(300, 300, Colors.DarkOrange));
 
         var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), NullLogger<MessageStore>.Instance);

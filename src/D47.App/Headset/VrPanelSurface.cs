@@ -127,7 +127,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The Search tab's System page, on the window's record.
         Panel.StarSystemSurface? starSystem = null,
         D47.Core.Activities.ActivityLedger? activities = null,
-        Panel.ConstructionSurface? construction = null)
+        Panel.ConstructionSurface? construction = null,
+        Panel.SpeakerPortraits? portraits = null)
     {
         _dumpTo = dumpTo;
 
@@ -163,6 +164,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (gameState is not null)
         {
             _view.EnableCommanderName(() => gameState()?.Identity.Name);
+        }
+
+        if (portraits is not null)
+        {
+            _view.EnableSpeakerPictures(portraits);
         }
 
         if (settingsPage is not null)

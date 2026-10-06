@@ -19,7 +19,7 @@ public sealed record D47Message
 
     public bool Read { get; init; }
 
-    /// <summary>The speaker's picture name, <c>&lt;story-id&gt;.&lt;cast-id&gt;</c> with a version suffix where the member has two; read through <see cref="Stories.CastPictures"/>.</summary>
+    /// <summary>The speaker's picture name, <c>&lt;story-id&gt;.&lt;cast-id&gt;</c> with a version suffix where the member has two; read through <see cref="Interface.SpeakerPictures"/>.</summary>
     public string? Picture { get; init; }
 
     /// <summary>The story cast member who sent it, by its <see cref="Configuration.D47Settings.StoryVoices"/> key; null for anyone else.</summary>

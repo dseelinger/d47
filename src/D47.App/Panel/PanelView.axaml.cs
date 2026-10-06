@@ -148,7 +148,7 @@ public partial class PanelView : UserControl
     private readonly List<(SelectableTextBlock Block, int Start, WrapPanel? Strip)> _bubbles = [];
 
     /// <summary>What those bubbles were drawn from, as comparable things each.</summary>
-    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text, string Direction, string? Provenance)> _shape = [];
+    private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text, string Direction, string? Provenance, string? Picture)> _shape = [];
 
     /// <summary>The block a selection was last made in.</summary>
     private SelectableTextBlock? _selection;
@@ -807,6 +807,11 @@ public partial class PanelView : UserControl
 
     /// <summary>Gives this surface the Commander's name, which heads their turns.</summary>
     public void EnableCommanderName(Func<string?> name) => _commanderName = name;
+
+    /// <summary>Draws each Conversation turn with its speaker's picture, where it has one on disk.</summary>
+    public void EnableSpeakerPictures(SpeakerPortraits portraits) => _portraits = portraits;
+
+    private SpeakerPortraits? _portraits;
 
     private Func<string?>? _commanderName;
 
@@ -3719,7 +3724,8 @@ public partial class PanelView : UserControl
                 turn.Marker,
                 Text: string.Concat(turn.Segments.Select(segment => segment.Text)),
                 Direction: string.Join(' ', turn.Direction),
-                Provenance: turn.Provenance?.Text))
+                Provenance: turn.Provenance?.Text,
+                turn.Picture))
             .ToArray();
 
         // One snapshot of what d47 already knows, shared by every chip this call draws, so a name that
@@ -3932,7 +3938,62 @@ public partial class PanelView : UserControl
 
         row.PointerExited += (_, _) => Rest();
 
-        return row;
+        return Pictured(row, turn);
+    }
+
+    /// <summary>The gap between a turn's picture and its bar.</summary>
+    internal const double PictureGap = 8;
+
+    /// <summary>
+    /// <paramref name="row"/> with its speaker's picture beside it, outside the bar: left of a ship-side turn, right
+    /// of a Commander turn, top-aligned. The row alone in mini mode and for a turn whose picture has no file.
+    /// </summary>
+    private Control Pictured(TurnBorder row, DrawnTurn turn)
+    {
+        if (Mode == PanelMode.Mini || _portraits?.For(turn.Picture) is not { } bitmap)
+        {
+            return row;
+        }
+
+        var commander = turn.Voice == TranscriptVoice.Commander;
+
+        var picture = new Image
+        {
+            Name = "SpeakerPicture",
+            Source = bitmap,
+            Width = SpeakerPortraits.Size,
+            Height = SpeakerPortraits.Size,
+            Stretch = Stretch.UniformToFill,
+            VerticalAlignment = VerticalAlignment.Top,
+            ClipToBounds = true,
+
+            // Level with the head, which sits inside the bar's top padding.
+            Margin = new Thickness(0, row.Padding.Top, 0, 0),
+        };
+
+        row.MaxWidth = PicturedWidth();
+
+        return new PicturedTurn
+        {
+            Row = row,
+            Orientation = Orientation.Horizontal,
+            Spacing = PictureGap,
+            HorizontalAlignment = commander
+                ? Avalonia.Layout.HorizontalAlignment.Right
+                : Avalonia.Layout.HorizontalAlignment.Left,
+            Children = { commander ? row : picture, commander ? picture : row },
+        };
+    }
+
+    /// <summary>A turn's widest beside its picture, so the pair is no wider than a turn without one.</summary>
+    private double PicturedWidth() => Math.Max(0, TurnWidth() - SpeakerPortraits.Size - PictureGap);
+
+    /// <summary>A turn drawn with its speaker's picture.</summary>
+    private sealed class PicturedTurn : StackPanel
+    {
+        protected override Type StyleKeyOverride => typeof(StackPanel);
+
+        public required TurnBorder Row { get; init; }
     }
 
     /// <summary>
@@ -3982,6 +4043,11 @@ public partial class PanelView : UserControl
             foreach (var row in Bubbles.Children.OfType<TurnBorder>())
             {
                 row.MaxWidth = width;
+            }
+
+            foreach (var pictured in Bubbles.Children.OfType<PicturedTurn>())
+            {
+                pictured.Row.MaxWidth = PicturedWidth();
             }
         }
     }
@@ -4253,7 +4319,7 @@ public partial class PanelView : UserControl
             yield return new DrawnSegment(
                 text, segment.Marker, segment.Voice, span.Style,
                 segment.Speaker ?? shipName, segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
-                direction, segment.Provenance);
+                direction, segment.Provenance, segment.Picture);
         }
     }
 
@@ -4266,7 +4332,7 @@ public partial class PanelView : UserControl
     {
         var gathered = new List<(
             TranscriptVoice Voice, bool Marker, string Speaker, string? SourceKey, DateTimeOffset Time,
-            TranscriptRunKind Kind, string? ProposalId, List<DrawnSegment> Segments)>();
+            TranscriptRunKind Kind, string? ProposalId, string? Picture, List<DrawnSegment> Segments)>();
 
         foreach (var segment in segments)
         {
@@ -4276,7 +4342,8 @@ public partial class PanelView : UserControl
                 && last.Speaker == segment.Speaker
                 && last.SourceKey == segment.SourceKey
                 && last.Kind == segment.Kind
-                && last.ProposalId == segment.ProposalId)
+                && last.ProposalId == segment.ProposalId
+                && last.Picture == segment.Picture)
             {
                 last.Segments.Add(segment);
                 continue;
@@ -4284,7 +4351,7 @@ public partial class PanelView : UserControl
 
             gathered.Add((
                 segment.Voice, segment.Marker, segment.Speaker, segment.SourceKey, segment.Time,
-                segment.Kind, segment.ProposalId, [segment]));
+                segment.Kind, segment.ProposalId, segment.Picture, [segment]));
         }
 
         return
@@ -4301,6 +4368,7 @@ public partial class PanelView : UserControl
                             .Distinct(StringComparer.OrdinalIgnoreCase),
                     ],
                     Provenance = turn.Segments.Select(segment => segment.Provenance).LastOrDefault(line => line is not null),
+                    Picture = turn.Picture,
                 })
                 .Where(turn => turn.Segments.Count > 0)
         ];
@@ -4970,7 +5038,8 @@ internal readonly record struct DrawnSegment(
     TranscriptRunKind Kind = TranscriptRunKind.Text,
     string? ProposalId = null,
     IReadOnlyList<string>? Direction = null,
-    TurnProvenance? Provenance = null);
+    TurnProvenance? Provenance = null,
+    string? Picture = null);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
@@ -4988,4 +5057,7 @@ internal sealed record DrawnTurn(
 
     /// <summary>The line drawn inside the turn, after its body and chips.</summary>
     public TurnProvenance? Provenance { get; init; }
+
+    /// <summary>The speaker's picture name, or null.</summary>
+    public string? Picture { get; init; }
 }

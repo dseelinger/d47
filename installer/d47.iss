@@ -75,6 +75,8 @@ Source: "..\src\D47.App\bin\Release\publish\runtimes\*"; DestDir: "{app}\runtime
 ; on it before anything is fetched. The build's folder, not the Commander's: the large art lands
 ; in data\ships\, which an install and an update both leave alone.
 Source: "..\src\D47.App\bin\Release\publish\ships\*"; DestDir: "{app}\ships"; Flags: ignoreversion
+; The speaker portraits the Conversation page shows.
+Source: "..\src\D47.App\bin\Release\publish\portraits\*"; DestDir: "{app}\portraits"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 ; Named to match StartMenuShortcut.EntryName so the two paths cannot disagree.
@@ -90,6 +92,7 @@ Filename: "{app}\{#ExeName}"; Description: "Start {#Name}"; Flags: nowait postin
 Type: files; Name: "{app}\{#ExeName}.old"
 Type: filesandordirs; Name: "{app}\runtimes"
 Type: filesandordirs; Name: "{app}\ships"
+Type: filesandordirs; Name: "{app}\portraits"
 
 [Code]
 { Uninstall keeps data\ unless the Commander says otherwise. It holds their API keys, their

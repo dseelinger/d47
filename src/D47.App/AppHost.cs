@@ -106,6 +106,8 @@ public sealed class AppHost : IDisposable
         Turns = turns;
         Personas = personas;
         Panel.ShipNameSource = () => personas.ShipName;
+        Panel.ShipPictureSource = () => ShipPicture;
+        Panel.CommanderPictureSource = () => CommanderPicture;
         ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
@@ -413,10 +415,10 @@ public sealed class AppHost : IDisposable
     /// <summary>Fetches stock stories' average ratings and sends the Commander's votes.</summary>
     public StoryRatingClient? StoryRatings { get; private set; }
 
-    private D47.Core.Stories.CastPictures? _castPictures;
+    private D47.Core.Interface.SpeakerPictures? _speakerPictures;
 
     /// <summary>Where a story cast member's picture is read, and the Commander's replacement kept.</summary>
-    public D47.Core.Stories.CastPictures CastPictures => _castPictures ??= new(Paths);
+    public D47.Core.Interface.SpeakerPictures SpeakerPictures => _speakerPictures ??= new(Paths);
 
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
@@ -574,7 +576,7 @@ public sealed class AppHost : IDisposable
     /// said it, and the callout key, once <see cref="VaryAsync"/> and the contradiction check have
     /// settled what was actually said.
     /// </summary>
-    public event Action<string, string, string>? CalloutSaid;
+    public event Action<string, string, string, string?>? CalloutSaid;
 
     /// <summary>
     /// Raised with something that happened to the conversation rather than something said in it — the
@@ -6338,7 +6340,7 @@ public sealed class AppHost : IDisposable
             .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key);
+        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key, ConversationPicture(written));
         return clip;
     }
 
@@ -6601,11 +6603,12 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>A story line as its speaker says it: the role, and for a cast member the name and the pinned voice.</summary>
-    private static Announcement Voiced(Announcement line, D47.Core.Stories.StoryLineVoice voice) => line with
+    private Announcement Voiced(Announcement line, D47.Core.Stories.StoryLineVoice voice) => line with
     {
         Voice = voice.Role,
         Speaker = voice.Cast?.Name,
         Pinned = voice.Pinned,
+        Picture = SpeakerPictures.For(voice.Cast),
     };
 
     /// <summary>
@@ -6779,7 +6782,7 @@ public sealed class AppHost : IDisposable
             text,
             DateTimeOffset.Now,
             D47.Core.Stories.StoryLines.Key(storyId),
-            picture: CastPictures.For(voice.Cast),
+            picture: SpeakerPictures.For(voice.Cast),
             cast: voice.Cast?.Picture);
 
         if (voice.Role == VoiceRole.ShipAi)
@@ -6931,7 +6934,7 @@ public sealed class AppHost : IDisposable
             announcement.Text,
             DateTimeOffset.Now,
             announcement.Key,
-            picture: CastPictures.For(voice?.Cast),
+            picture: SpeakerPictures.For(voice?.Cast),
             spoken: spoken,
             cast: voice?.Cast?.Picture);
     }
@@ -7231,6 +7234,66 @@ public sealed class AppHost : IDisposable
             ? announcement.Invented is null ? speaker : NpcChatter.Invented(speaker)
             : VoiceRoles.Called(announcement.Voice) ?? shipName;
 
+    /// <summary>The picture name the Conversation page shows a spoken line with, or null.</summary>
+    private string? ConversationPicture(Announcement announcement) =>
+        ConversationPicture(announcement, Personas.Current.Id, RoleGender, GameState.Active?.Crew);
+
+    /// <summary>
+    /// The picture name for a spoken line: a cast line's own, the core aboard for the ship, the Narrator's, the
+    /// captain's or tower's by the gender of its voice, and a hired pilot's by name; null for anyone else.
+    /// </summary>
+    internal static string? ConversationPicture(
+        Announcement announcement,
+        string coreAboard,
+        Func<VoiceRole, D47.Core.Audio.VoiceGender> genderOf,
+        D47.Core.Journal.ShipCrew? crew)
+    {
+        if (D47.Core.Interface.SpeakerPictures.IsName(announcement.Picture))
+        {
+            return announcement.Picture;
+        }
+
+        return announcement.Voice switch
+        {
+            VoiceRole.ShipAi when announcement.Speaker is null => D47.Core.Interface.SpeakerPictures.Core(coreAboard),
+            VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
+            VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
+                D47.Core.Interface.SpeakerPictures.ByVoice(announcement.Voice, genderOf(announcement.Voice)),
+            VoiceRole.Crew => CrewPicture(announcement.Speaker, crew),
+            _ => null,
+        };
+    }
+
+    /// <summary>The picture name of the hired pilot called <paramref name="name"/>, or null when none on the roster is.</summary>
+    internal static string? CrewPicture(string? name, D47.Core.Journal.ShipCrew? crew) =>
+        name is { Length: > 0 } && crew?.Members.FirstOrDefault(member =>
+            string.Equals(member.Name, name, StringComparison.OrdinalIgnoreCase)) is { } pilot
+            ? D47.Core.Interface.SpeakerPictures.Crew(pilot.CrewId)
+            : null;
+
+    /// <summary>The gender of the voice <paramref name="role"/> is speaking in, by its provider's listing.</summary>
+    private D47.Core.Audio.VoiceGender RoleGender(VoiceRole role)
+    {
+        var cast = CastFor(new Announcement(string.Empty, string.Empty) { Voice = role });
+        return cast.GenderOf(cast.For(role).VoiceId);
+    }
+
+    /// <summary>The picture name the Conversation page shows an addressed turn's reply with, or null.</summary>
+    public string? AddressedPicture(TurnEvent.Addressed addressed) => addressed.Role switch
+    {
+        VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
+            D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role)),
+        VoiceRole.Crew => CrewPicture(addressed.Name, GameState.Active?.Crew),
+        VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
+        _ => null,
+    };
+
+    /// <summary>The picture name of the core aboard.</summary>
+    public string ShipPicture => D47.Core.Interface.SpeakerPictures.Core(Personas.Current.Id);
+
+    /// <summary>The picture name of the Commander flying, or null before their Frontier id is known.</summary>
+    public string? CommanderPicture => Flying is { Length: > 0 } fid ? D47.Core.Interface.SpeakerPictures.Commander(fid) : null;
+
     private void SpeakPendingCallouts()
     {
         var pending = Callouts.Drain();
@@ -7409,7 +7472,7 @@ public sealed class AppHost : IDisposable
         if (Messages is { } messages)
         {
             D47.Core.Adventures.AdventureMessages.Post(
-                messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, CastPictures.For(voice?.Cast), voice?.Cast?.Picture);
+                messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, SpeakerPictures.For(voice?.Cast), voice?.Cast?.Picture);
         }
 
         adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold

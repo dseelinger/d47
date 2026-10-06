@@ -172,6 +172,7 @@ public sealed class VrHost : IDisposable
             starSystem: starSystem,
             activities: activities,
             construction: construction,
+            portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
             // handles carry.

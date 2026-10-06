@@ -21,7 +21,7 @@ public sealed record AdventureSurface(
     Func<int?, string?>? AnswerEnding = null,
     StoryDownloader? Downloads = null,
     StoryFilterMemory? StoryFilters = null,
-    D47.Core.Stories.CastPictures? Pictures = null,
+    D47.Core.Interface.SpeakerPictures? Pictures = null,
     Func<D47Message, string?>? PlayMessage = null,
     CastVoiceSurface? CastVoices = null,
     StoryRatingClient? Ratings = null);

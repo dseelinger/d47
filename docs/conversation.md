@@ -196,6 +196,31 @@ $env:ANTHROPIC_API_KEY = "sk-ant-..."
 The secret store takes precedence once it has a key. Only the *source* of the key is ever
 written to the log — never the key itself.
 
+### Who is shown beside each turn
+
+On the Conversation page, a turn whose speaker has a picture shows it as a square beside the
+turn: left of the ship's and every other speaker's, right of yours. A turn keeps the picture it
+was written with, so switching cores does not change the faces on earlier replies. The mini
+panel shows no pictures.
+
+| Speaker | Picture name |
+| --- | --- |
+| The ship | `core.<core id>`, the core aboard when the turn started |
+| You | `commander.<Frontier id>`, the Commander flying; none before that is known |
+| The carrier captain | `captain.man` or `captain.woman`, by the gender of the captain's voice |
+| The tower | `tower.man` or `tower.woman`, the same way |
+| The Narrator | `narrator` |
+| A hired pilot | `crew.<crew id>` |
+| A story's cast member | `<story id>.<cast id>` |
+
+A voice whose listing gives no gender, as OpenAI's do, shows no captain or tower picture.
+Invented comms show none.
+
+Each name is looked for in three places, first found wins: your own `<name>.png` in
+`data\pictures\`, then the build's `<name>.jpg` in `portraits\` beside `d47.exe`, then a story's
+downloaded `<name>.jpg` in `data\stories\`. A name with no file draws no picture, and the turn is
+laid out as it is without one.
+
 ### What each turn reports
 
 Under the transcript, D47 prints one line of provenance per turn:

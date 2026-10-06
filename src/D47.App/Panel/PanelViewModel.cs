@@ -67,6 +67,7 @@ public enum TranscriptRunKind
 /// <param name="Kind">Whether this is a proposal card rather than plain text (#277).</param>
 /// <param name="ProposalId">Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</param>
 /// <param name="Provenance">The line drawn inside the turn this run finished, or null.</param>
+/// <param name="Picture">The speaker's picture name, or null for a run drawn without one.</param>
 public sealed record TranscriptSegment(
     string Text,
     bool Marker,
@@ -76,7 +77,8 @@ public sealed record TranscriptSegment(
     DateTimeOffset Time = default,
     TranscriptRunKind Kind = TranscriptRunKind.Text,
     string? ProposalId = null,
-    TurnProvenance? Provenance = null);
+    TurnProvenance? Provenance = null,
+    string? Picture = null);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
@@ -101,6 +103,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         /// <summary>The line drawn inside the turn this run finished.</summary>
         public TurnProvenance? Provenance { get; set; }
+
+        /// <summary>The speaker's picture name, fixed when the run is written.</summary>
+        public string? Picture { get; init; }
     }
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
@@ -437,9 +442,19 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>The name the ship's AI is shown under.</summary>
     public string ShipName => ShipNameSource?.Invoke() is { Length: > 0 } name ? name : "D47";
 
+    /// <summary>Supplies the picture name of the core aboard; read when a turn is written, so earlier turns keep theirs.</summary>
+    public Func<string?>? ShipPictureSource { get; set; }
+
+    /// <summary>Supplies the picture name of the Commander flying; read when a turn is written.</summary>
+    public Func<string?>? CommanderPictureSource { get; set; }
+
+    /// <summary>The picture name of the core aboard, or null.</summary>
+    public string? ShipPicture => ShipPictureSource?.Invoke();
+
     /// <summary>
     /// Adds to the transcript. <paramref name="speaker"/> falls back to CMDR or the ship's name by
-    /// <paramref name="voice"/> — everything that does not name its own speaker is one of those two.
+    /// <paramref name="voice"/> — everything that does not name its own speaker is one of those two — and with no
+    /// speaker named, a null <paramref name="picture"/> falls back to the Commander's or the core's.
     /// </summary>
     public void Append(
         string text,
@@ -447,16 +462,21 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         TranscriptVoice voice = TranscriptVoice.Ship,
         string? speaker = null,
         string? sourceKey = null,
-        DateTimeOffset? time = null)
+        DateTimeOffset? time = null,
+        string? picture = null)
     {
         var named = speaker ?? (voice == TranscriptVoice.Commander ? "CMDR" : ShipName);
+        var pictured = marker ? null
+            : picture ?? (speaker is not null ? null
+                : voice == TranscriptVoice.Commander ? CommanderPictureSource?.Invoke()
+                : ShipPicture);
         var at = time ?? DateTimeOffset.Now;
         string transcript;
 
         // Locked, because there is more than one writer.
         lock (_appendLock)
         {
-            // A run merges only into one from the same speaker and the same source: two callouts spoken
+            // A run merges only into one from the same speaker, picture and source: two callouts spoken
             // back to back stay two bubbles even when both are the ship's own voice. A proposal card never
             // merges with plain text either way (#277).
             if (_runs.Count == 0
@@ -464,9 +484,10 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 || _runs[^1].Voice != voice
                 || _runs[^1].Speaker != named
                 || _runs[^1].SourceKey != sourceKey
+                || _runs[^1].Picture != pictured
                 || _runs[^1].Kind != TranscriptRunKind.Text)
             {
-                _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()));
+                _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()) { Picture = pictured });
             }
 
             _runs[^1].Text.Append(text);
@@ -634,7 +655,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 .. _runs.Select(run =>
                     new TranscriptSegment(
                         Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
-                        run.Kind, run.ProposalId, run.Provenance))
+                        run.Kind, run.ProposalId, run.Provenance, run.Picture))
             ],
         };
     }

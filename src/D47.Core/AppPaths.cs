@@ -43,6 +43,7 @@ public sealed class AppPaths
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
+        ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
     }
 
     /// <summary>Where this build writes.</summary>
@@ -123,6 +124,9 @@ public sealed class AppPaths
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }
+
+    /// <summary>The speaker portraits that came with the build, read-only, beside the executable.</summary>
+    public string ShippedPortraits { get; }
 
     public void EnsureCreated()
     {

@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using D47.Core.Stories;
+using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
@@ -16,7 +17,7 @@ internal static class CastStrip
     private static readonly ConcurrentDictionary<(string Path, DateTime Written), Bitmap> Cache = new();
 
     /// <summary>The strip for <paramref name="pictures"/> as <paramref name="gender"/> meets them, or null when none is on disk.</summary>
-    public static Control? For(StoryCard card, string? gender, CastPictures? pictures)
+    public static Control? For(StoryCard card, string? gender, SpeakerPictures? pictures)
     {
         if (pictures is null)
         {

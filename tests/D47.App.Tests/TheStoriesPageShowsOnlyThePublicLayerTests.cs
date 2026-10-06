@@ -30,7 +30,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         bool running,
         StoryCatalog? catalog = null,
         Func<string?>? gender = null,
-        CastPictures? pictures = null,
+        SpeakerPictures? pictures = null,
         Func<StoryCatalog>? catalogs = null,
         StoryDownloader? downloads = null)
     {
@@ -197,7 +197,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var paths = new AppPaths(TempFolders.Create("d47-cast-strip"));
-        var pictures = new CastPictures(paths);
+        var pictures = new SpeakerPictures(paths);
         var id = StoryFixture.Story.Id;
 
         WriteSquare(pictures.Default($"{id}.ren"));

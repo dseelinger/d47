@@ -148,8 +148,8 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
         var holder = new StackPanel();
         var changeVoice = new Button { Content = "Change voice" };
 
-        CastPicturePanel.Show(holder, holder, new CastPictures(paths), "the-test-story.juno", changeVoice);
-        CastPicturePanel.Show(holder, holder, new CastPictures(paths), "the-test-story.juno", changeVoice);
+        CastPicturePanel.Show(holder, holder, new SpeakerPictures(paths), "the-test-story.juno", changeVoice);
+        CastPicturePanel.Show(holder, holder, new SpeakerPictures(paths), "the-test-story.juno", changeVoice);
 
         Assert.Same(holder.Children.OfType<StackPanel>().Single(), changeVoice.Parent);
     }
