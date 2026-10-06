@@ -108,6 +108,9 @@ public sealed class TurnLoop(
     /// <summary>Utterances declined for learning this session, reduced (#169).</summary>
     private readonly HashSet<string> _declinedLearn = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Engineers whose invitation requirement has been offered for a remark this session (#26).</summary>
+    private readonly HashSet<int> _quippedEngineers = [];
+
     /// <summary>How hard to try before saying so out loud.</summary>
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
@@ -1490,7 +1493,21 @@ public sealed class TurnLoop(
 
                 yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);
 
-                results.Add(new ConversationContent.ToolResult(call.Id, result.Content, result.IsError));
+                var content = result.Content;
+
+                // Once per engineer per session, and only in the ship AI's own voice with personality on.
+                if (!result.IsError
+                    && speaker is null
+                    && persona is not null
+                    && result.Page is { Kind: PageKind.Engineer } engineerPage
+                    && Knowledge.EngineerDirectory.ById(engineerPage.Id) is { } quipped
+                    && Engineers.EngineerQuips.NoteFor(quipped) is { } note
+                    && _quippedEngineers.Add(quipped.Id))
+                {
+                    content += "\n\n" + note;
+                }
+
+                results.Add(new ConversationContent.ToolResult(call.Id, content, result.IsError));
 
                 if (!result.IsError && result.Page is { } named)
                 {
