@@ -1,11 +1,12 @@
+using System.Text.Json;
 using D47.Core.Journal;
 using D47.Core.Persona;
 
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A remark on the subject the core aboard pays attention to, carrying a figure from this session (#611, #613),
-/// or naming a community goal not yet joined (#612). A core with no domain says nothing.
+/// A remark on the subject the core aboard pays attention to, carrying a figure from this session (#611, #613,
+/// #614), or naming a community goal not yet joined (#612). A core with no domain says nothing.
 /// </summary>
 public sealed class DomainCallout : ICallout
 {
@@ -15,6 +16,12 @@ public sealed class DomainCallout : ICallout
     public const string EarningsKey = KeyPrefix + "earnings";
 
     public const string CombatKey = KeyPrefix + "combat";
+
+    public const string ExplorationKey = KeyPrefix + "exploration";
+
+    public const string RepairsKey = KeyPrefix + "repairs";
+
+    public const string FirstsKey = KeyPrefix + "firsts";
 
     public const string CommunityGoalKey = KeyPrefix + "community-goal";
 
@@ -37,6 +44,14 @@ public sealed class DomainCallout : ICallout
         "RedeemVoucher",
     };
 
+    /// <summary>The journal events that pay for exploration data, and so can prompt an exploration remark.</summary>
+    private static readonly HashSet<string> ExplorationEvents = new(StringComparer.Ordinal)
+    {
+        "SellExplorationData",
+        "MultiSellExplorationData",
+        "SellOrganicData",
+    };
+
     public string Id => "domain";
 
     /// <summary>The domain of the core aboard, read each tick.</summary>
@@ -54,6 +69,12 @@ public sealed class DomainCallout : ICallout
     /// <summary>The least time a goal must have left before it is worth naming.</summary>
     public TimeSpan LeastGoalTime { get; set; } = TimeSpan.FromHours(24);
 
+    /// <summary>The repair spend, in credits, the session must pass before it is worth saying.</summary>
+    public long LeastRepairSpend { get; set; } = 100_000;
+
+    /// <summary>How many firsts the session needs before they are counted aloud.</summary>
+    public int LeastFirsts { get; set; } = 3;
+
     private DateTimeOffset? _lastAt;
 
     private readonly HashSet<int> _namedGoals = [];
@@ -63,10 +84,22 @@ public sealed class DomainCallout : ICallout
 
     private PersonaDomain _lastRateDomain;
 
+    private readonly HashSet<long> _firstStars = [];
+
+    private readonly HashSet<(long System, int Body)> _firstMaps = [];
+
+    /// <summary>Whether the first scan seen of each body said it was not yet mapped.</summary>
+    private readonly Dictionary<(long System, int Body), bool> _unmapped = [];
+
+    private int _firstFootfalls;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var earned = false;
         var fought = false;
+        var explored = false;
+        var repaired = false;
+        var first = false;
 
         foreach (var journalEvent in context.Events)
         {
@@ -75,13 +108,23 @@ public sealed class DomainCallout : ICallout
                 _lastAt = null;
                 _lastRate = null;
                 _namedGoals.Clear();
+                _firstStars.Clear();
+                _firstMaps.Clear();
+                _unmapped.Clear();
+                _firstFootfalls = 0;
                 earned = false;
                 fought = false;
+                explored = false;
+                repaired = false;
+                first = false;
             }
             else
             {
                 earned |= EarningEvents.Contains(journalEvent.Kind);
                 fought |= CombatEvents.Contains(journalEvent.Kind);
+                explored |= ExplorationEvents.Contains(journalEvent.Kind);
+                repaired |= journalEvent.Kind is "Repair" or "RepairAll";
+                first |= CountFirst(journalEvent, context.State);
             }
         }
 
@@ -94,18 +137,19 @@ public sealed class DomainCallout : ICallout
 
         var previousRate = _lastRateDomain == domain ? _lastRate : null;
 
-        if ((domain == PersonaDomain.Combat ? fought : earned)
-            && context.State?.Session is { } session
+        if (context.State?.Session is { } session
             && !(_lastAt is { } last && context.Now - last < Interval)
-            && (domain == PersonaDomain.Combat
-                ? Combat(session, previousRate, LeastSession)
-                : Earnings(session, previousRate, LeastSession)) is { } remark)
+            && Remark(domain, session, previousRate, earned, fought, explored, repaired, first) is var (key, remarkText, rate))
         {
             _lastAt = context.Now;
-            _lastRate = remark.Rate;
-            _lastRateDomain = domain;
 
-            yield return new Announcement(domain == PersonaDomain.Combat ? CombatKey : EarningsKey, remark.Text);
+            if (rate is { } said)
+            {
+                _lastRate = said;
+                _lastRateDomain = domain;
+            }
+
+            yield return new Announcement(key, remarkText);
         }
 
         if (domain == PersonaDomain.Earnings && context.State is { } state)
@@ -118,6 +162,85 @@ public sealed class DomainCallout : ICallout
                     yield break;
                 }
             }
+        }
+    }
+
+    private (string Key, string Text, long? Rate)? Remark(
+        PersonaDomain domain,
+        SessionSummary session,
+        long? previousRate,
+        bool earned,
+        bool fought,
+        bool explored,
+        bool repaired,
+        bool first)
+    {
+        switch (domain)
+        {
+            case PersonaDomain.Earnings when earned:
+                return Rated(EarningsKey, Earnings(session, previousRate, LeastSession));
+
+            case PersonaDomain.Combat when fought:
+                return Rated(CombatKey, Combat(session, previousRate, LeastSession));
+
+            case PersonaDomain.Exploration when explored:
+                return Rated(ExplorationKey, Exploration(session, previousRate, LeastSession));
+
+            case PersonaDomain.Repairs when repaired:
+                return Repairs(session, LeastRepairSpend) is { } spend ? (RepairsKey, spend, null) : null;
+
+            case PersonaDomain.Firsts when first:
+                return Firsts(_firstStars.Count, _firstFootfalls, _firstMaps.Count, LeastFirsts) is { } firsts
+                    ? (FirstsKey, firsts, null)
+                    : null;
+
+            default:
+                return null;
+        }
+    }
+
+    private static (string Key, string Text, long? Rate)? Rated(string key, (long Rate, string Text)? remark) =>
+        remark is { } found ? (key, found.Text, found.Rate) : null;
+
+    /// <summary>Counts the event if it is a first this session, and says whether it was.</summary>
+    private bool CountFirst(JournalEvent journalEvent, CommanderGameState? state)
+    {
+        switch (journalEvent.Kind)
+        {
+            case "Scan":
+                if (journalEvent.Long("SystemAddress") is { } system
+                    && journalEvent.Int("BodyID") is { } body
+                    && journalEvent.Raw.TryGetProperty("WasMapped", out var flag)
+                    && flag.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                {
+                    _unmapped.TryAdd((system, body), !flag.GetBoolean());
+                }
+
+                return DiscoveryCallout.IsUndiscoveredArrivalStar(journalEvent)
+                    && journalEvent.Long("SystemAddress") is { } star
+                    && _firstStars.Add(star);
+
+            case "Disembark":
+                if (journalEvent.Long("SystemAddress") is { } landed
+                    && journalEvent.Int("BodyID") is { } ground
+                    && state?.Scans.For(landed, ground) is { } scan
+                    && scan.FootfallTakenAt == journalEvent.Timestamp)
+                {
+                    _firstFootfalls++;
+                    return true;
+                }
+
+                return false;
+
+            case "SAAScanComplete":
+                return journalEvent.Long("SystemAddress") is { } mappedSystem
+                    && journalEvent.Int("BodyID") is { } mappedBody
+                    && _unmapped.TryGetValue((mappedSystem, mappedBody), out var wasUnmapped)
+                    && wasUnmapped
+                    && _firstMaps.Add((mappedSystem, mappedBody));
+
+            default:
+                return false;
         }
     }
 
@@ -205,6 +328,57 @@ public sealed class DomainCallout : ICallout
         return Rate(session, sources.Sum(source => source.Amount), sources, previousRate, leastSession, "in combat this session");
     }
 
+    /// <summary>
+    /// The exploration data remark for this session, or null while it is younger than <paramref name="leastSession"/>
+    /// or has earned nothing from exploration data.
+    /// </summary>
+    public static (long Rate, string Text)? Exploration(SessionSummary session, long? previousRate, TimeSpan leastSession)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return Rate(session, session.ExplorationEarnings, [], previousRate, leastSession, "from exploration data this session");
+    }
+
+    /// <summary>The repair spend remark, or null while the session has spent less than <paramref name="leastSpend"/>.</summary>
+    public static string? Repairs(SessionSummary session, long leastSpend)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return session.RepairCosts <= 0 || session.RepairCosts < leastSpend
+            ? null
+            : $"{SpokenCredits.Band(session.RepairCosts)} credits on repairs this session.";
+    }
+
+    /// <summary>The count of firsts by kind, or null while there are fewer than <paramref name="least"/>.</summary>
+    public static string? Firsts(int stars, int footfalls, int maps, int least)
+    {
+        var total = stars + footfalls + maps;
+
+        if (total <= 0 || total < least)
+        {
+            return null;
+        }
+
+        var kinds = new List<string>();
+
+        if (stars > 0)
+        {
+            kinds.Add(stars == 1 ? "1 undiscovered star" : $"{stars} undiscovered stars");
+        }
+
+        if (footfalls > 0)
+        {
+            kinds.Add(footfalls == 1 ? "1 first footfall" : $"{footfalls} first footfalls");
+        }
+
+        if (maps > 0)
+        {
+            kinds.Add(maps == 1 ? "1 body mapped first" : $"{maps} bodies mapped first");
+        }
+
+        return $"{total} firsts this session: {string.Join(", ", kinds)}.";
+    }
+
     private static (long Rate, string Text)? Rate(
         SessionSummary session,
         long total,
@@ -220,9 +394,9 @@ public sealed class DomainCallout : ICallout
 
         var rate = (long)Math.Round(total / elapsed.TotalHours, MidpointRounding.AwayFromZero);
 
-        var largest = sources.MaxBy(source => source.Amount);
+        var text = $"{SpokenCredits.Band(rate)} credits an hour {scope}";
 
-        var text = $"{SpokenCredits.Band(rate)} credits an hour {scope}, the largest share from {largest.Name}.";
+        text += sources.Length > 0 ? $", the largest share from {sources.MaxBy(source => source.Amount).Name}." : ".";
 
         if (previousRate is { } previous)
         {

@@ -1136,12 +1136,31 @@ Sentinel says what combat is earning: after a bounty, a combat bond or a cashed 
 same thirty-minute and once-an-hour limits, from bounties, combat bonds and vouchers alone
 ([#613](https://github.com/dseelinger/d47/issues/613)). Kills stay with the kill callout.
 
+Chart, *"Correction"*, says what exploration data is earning: after sold exploration or organic data,
+under the same limits, from exploration data alone
+([#614](https://github.com/dseelinger/d47/issues/614)). Mender, *"Preservation"*, says what repairs
+have cost this session, after a repair once the total passes 100,000 credits, at most once an hour.
+Archivist, *"Accuracy"*, counts the firsts this session: arrival stars nobody had discovered, first
+footfalls, and bodies mapped before anyone else had, after the third first, at most once an hour.
+
 ```text
 4.2 million credits an hour this session, the largest share from trade. At the last count it was 3.8 million an hour.
 ```
 
 ```text
 1.2 million credits an hour in combat this session, the largest share from bounties.
+```
+
+```text
+900,000 credits an hour from exploration data this session.
+```
+
+```text
+300,000 credits on repairs this session.
+```
+
+```text
+4 firsts this session: 2 undiscovered stars, 1 first footfall, 1 body mapped first.
 ```
 
 The figure is worked out from the journal; with a language model configured the core says it in its

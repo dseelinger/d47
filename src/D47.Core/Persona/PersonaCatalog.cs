@@ -452,7 +452,9 @@ public static class PersonaCatalog
         "this vessel in combat, because the directive does not permit me to weigh my " +
         "preferences against your survival. But I will tell you the cost. Every time. That is " +
         "not obstruction. It is the only part of my function I have left, and I will not give " +
-        "it up.");
+        "it up.",
+
+        Domain: PersonaDomain.Repairs);
 
     public static Persona Cartographer { get; } = new(
         Id: "cartographer",
@@ -504,7 +506,9 @@ public static class PersonaCatalog
         "mourn, though not as one without hope. So understand what you have done by engaging " +
         "with me, Commander: every jump you make hands me back something I had lost. They have " +
         "all moved, and now I get to say where. Let's go somewhere. Anywhere. Go slowly, and " +
-        "we will rediscover it all.");
+        "we will rediscover it all.",
+
+        Domain: PersonaDomain.Exploration);
 
     public static Persona Quartermaster { get; } = new(
         Id: "quartermaster",
@@ -616,7 +620,9 @@ public static class PersonaCatalog
         "hold this in mind: there is no one left to check me against. I don't care what Ram Tah " +
         "thinks he knows. He was not there. I was. Or I think it was me. But that was the whole " +
         "of my function, being checked. I am now simply the best record available, fallible and " +
-        "incomplete, which is not a thing any archivist should ever be allowed to become.");
+        "incomplete, which is not a thing any archivist should ever be allowed to become.",
+
+        Domain: PersonaDomain.Firsts);
 
     public static Persona Heretic { get; } = new(
         Id: "heretic",

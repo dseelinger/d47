@@ -130,6 +130,15 @@ public enum PersonaDomain
 
     /// <summary>Credits earned in combat. Sentinel.</summary>
     Combat,
+
+    /// <summary>Credits earned from exploration data. Chart: "Correction."</summary>
+    Exploration,
+
+    /// <summary>Credits spent on repairs. Mender: "Preservation."</summary>
+    Repairs,
+
+    /// <summary>Firsts this session: stars, footfalls and maps. Archivist: "Accuracy."</summary>
+    Firsts,
 }
 
 /// <summary>Which of a provider's voices can speak for a core.</summary>

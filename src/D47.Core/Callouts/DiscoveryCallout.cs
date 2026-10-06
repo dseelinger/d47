@@ -16,12 +16,7 @@ public sealed class DiscoveryCallout : ICallout
 
         foreach (var journalEvent in context.Events)
         {
-            if (journalEvent.Kind != "Scan"
-                || journalEvent.String("ScanType") != "AutoScan"
-                || journalEvent.String("StarType") is not { Length: > 0 }
-                || journalEvent.Double("DistanceFromArrivalLS") != 0
-                || journalEvent.Bool("WasDiscovered")
-                || journalEvent.Long("SystemAddress") is not { } systemAddress)
+            if (!IsUndiscoveredArrivalStar(journalEvent) || journalEvent.Long("SystemAddress") is not { } systemAddress)
             {
                 continue;
             }
@@ -31,4 +26,12 @@ public sealed class DiscoveryCallout : ICallout
                 "Undiscovered system. Nobody has sold data on this star yet.");
         }
     }
+
+    /// <summary>An arrival star's autoscan that says nobody has discovered it.</summary>
+    public static bool IsUndiscoveredArrivalStar(JournalEvent journalEvent) =>
+        journalEvent.Kind == "Scan"
+        && journalEvent.String("ScanType") == "AutoScan"
+        && journalEvent.String("StarType") is { Length: > 0 }
+        && journalEvent.Double("DistanceFromArrivalLS") == 0
+        && !journalEvent.Bool("WasDiscovered");
 }

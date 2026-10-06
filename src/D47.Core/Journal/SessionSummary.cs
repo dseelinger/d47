@@ -29,6 +29,9 @@ public sealed record SessionSummary
     /// <summary>Vouchers cashed in.</summary>
     public long VoucherEarnings { get; init; }
 
+    /// <summary>Credits spent on repairs, from <c>Repair</c> and <c>RepairAll</c>.</summary>
+    public long RepairCosts { get; init; }
+
     public int Jumps { get; init; }
 
     /// <summary>Light years covered in hyperspace, summed from each jump's reported distance.</summary>
@@ -130,6 +133,11 @@ public sealed record SessionSummary
             "RedeemVoucher" => updated with
             {
                 VoucherEarnings = VoucherEarnings + (journalEvent.Long("Amount") ?? 0),
+            },
+
+            "Repair" or "RepairAll" => updated with
+            {
+                RepairCosts = RepairCosts + (journalEvent.Long("Cost") ?? 0),
             },
 
             "FSDJump" => updated with
