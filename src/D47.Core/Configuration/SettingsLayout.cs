@@ -455,7 +455,7 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "exploring",
                     "Exploring",
-                    "Arrivals, lore, undiscovered systems and biology.",
+                    "Arrivals, lore, undiscovered systems, biology and unsold data at risk.",
                     "callouts",
                     [],
                     false,
@@ -475,6 +475,7 @@ public static class SettingsLayout
                                 E("callouts.surveyedBiology"),
                                 E("callouts.biologyThreshold", under: true),
                                 E("callouts.sampling"),
+                                E("callouts.unsoldDataAtRisk"),
                             ]),
                     ]),
                 new SettingsPlace(
@@ -504,7 +505,7 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "plans-and-stories",
                     "Plans and stories",
-                    "Checklist changes, reminders, continuity, adventures, community goal sales, your core's subject, what to buy and the Narrator.",
+                    "Checklist changes, reminders, session length, continuity, adventures, community goals, your core's subject, what to buy and the Narrator.",
                     "callouts",
                     [],
                     false,
@@ -520,9 +521,12 @@ public static class SettingsLayout
                                 E("callouts.communityGoalSales"),
                                 E("callouts.weekBoundaryDay", under: true),
                                 E("callouts.weekBoundaryHourUtc", under: true),
+                                E("callouts.communityGoalExpiry"),
                                 E("callouts.missions"),
                                 E("callouts.outstandingCrimes"),
                                 E("callouts.reminders"),
+                                E("callouts.sessionLength"),
+                                E("callouts.sessionLengthHours", under: true),
                                 E("callouts.domain"),
                                 E("callouts.tradingMode"),
                                 E("callouts.tradingModeMinHold", under: true),
