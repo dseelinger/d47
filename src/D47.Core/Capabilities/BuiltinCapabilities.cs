@@ -224,7 +224,11 @@ public static class BuiltinCapabilities
         Journal.OutstandingCrimes? crimes = null,
         Func<Journal.GameStatus>? liveStatus = null) =>
     [
-        HelpCapability.Create(registry, offers ?? new OfferWindow(), phraseBook ?? (() => PhraseBook.From(registry(), []))),
+        HelpCapability.Create(
+            registry,
+            offers ?? new OfferWindow(),
+            phraseBook ?? (() => PhraseBook.From(registry(), [])),
+            () => gameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? learnedPhrases?.For(fid) ?? [] : []),
         DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
         JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now, crimes, liveStatus),
         CrewCapability.Create(() => gameState.Active),

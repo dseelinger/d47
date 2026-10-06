@@ -26,7 +26,10 @@ public static class HelpCapability
     /// (#229).
     /// </summary>
     public static CapabilityDescriptor Create(
-        Func<CapabilityRegistry> registry, OfferWindow offers, Func<PhraseBook> phraseBook) => new()
+        Func<CapabilityRegistry> registry,
+        OfferWindow offers,
+        Func<PhraseBook> phraseBook,
+        Func<IReadOnlyList<LearnedPhrase>>? ownPhrases = null) => new()
     {
         Id = Id,
         Group = "Foundation",
@@ -100,7 +103,7 @@ public static class HelpCapability
                 Handler = (arguments, _) =>
                 {
                     arguments.TryGetString("goal", out var goal);
-                    return Task.FromResult(ToolResult.Ok(FindPhrase(phraseBook(), registry(), goal ?? string.Empty)));
+                    return Task.FromResult(ToolResult.Ok(FindPhrase(phraseBook(), registry(), goal ?? string.Empty, ownPhrases?.Invoke())));
                 },
             },
             new ToolDefinition
@@ -197,7 +200,11 @@ public static class HelpCapability
     /// the same thing are said together — matched per phrase rather than per capability, on the same
     /// content-word rule <see cref="HowDoI"/> matches a "how do I" goal with (#229).
     /// </summary>
-    internal static string FindPhrase(PhraseBook book, CapabilityRegistry registry, string goal)
+    internal static string FindPhrase(
+        PhraseBook book,
+        CapabilityRegistry registry,
+        string goal,
+        IReadOnlyList<LearnedPhrase>? ownPhrases = null)
     {
         var goalWords = HowDoI.ContentWords(goal);
 
@@ -208,50 +215,62 @@ public static class HelpCapability
 
         var threshold = Math.Min(goalWords.Count, HowDoI.MinSharedWords);
 
+        int Shared(string phrase) =>
+            HowDoI.ContentWords(phrase).Intersect(goalWords, StringComparer.OrdinalIgnoreCase).Count();
+
         var matches = book.Entries
-            .Select(entry => (
-                entry,
-                shared: HowDoI.ContentWords(entry.Phrase).Intersect(goalWords, StringComparer.OrdinalIgnoreCase).Count()))
+            .Select(entry => (entry, shared: Shared(entry.Phrase)))
             .Where(scored => scored.shared >= threshold)
             .GroupBy(scored => PhraseBook.Target(scored.entry), StringComparer.Ordinal)
             .Select(group => (
-                Description: WhatItDoes(group.First().entry, registry),
-                Phrases: group.Select(scored => scored.entry.Phrase)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(PhrasesPerMatch)
-                    .ToArray(),
+                Sentence: $"{PhraseBook.Describe(group.First().entry, registry)} Say {Listed(
+                    [.. group.Select(scored => $"'{scored.entry.Phrase}'")
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Take(PhrasesPerMatch)],
+                    conjunction: "or")}.",
                 Shared: group.Max(scored => scored.shared)))
+            .Concat(OwnMatches(book, registry, ownPhrases ?? [], Shared, threshold))
             .OrderByDescending(match => match.Shared)
             .ToArray();
 
         return matches.Length == 0
             ? $"No phrase matched \"{goal}\"."
-            : string.Join(
-                " ",
-                matches.Select(match =>
-                    $"{match.Description} Say {Listed(match.Phrases.Select(phrase => $"'{phrase}'").ToArray(), conjunction: "or")}."));
+            : string.Join(" ", matches.Select(match => match.Sentence));
     }
 
-    /// <summary>What a matched entry reaches, in plain words — never a tool name or an action id.</summary>
-    private static string WhatItDoes(PhraseEntry entry, CapabilityRegistry registry)
+    /// <summary>The Commander's own phrases whose wordings reach the goal, each with what its phrase does.</summary>
+    private static IEnumerable<(string Sentence, int Shared)> OwnMatches(
+        PhraseBook book,
+        CapabilityRegistry registry,
+        IReadOnlyList<LearnedPhrase> ownPhrases,
+        Func<string, int> shared,
+        int threshold)
     {
-        if (entry.Row is { } row)
+        foreach (var own in ownPhrases)
         {
-            return entry.Value is { Length: > 0 } value ? $"Sets {row.Label} to {value}." : $"Reports {row.Label}.";
+            var wordings = PhrasePattern.TryExpand(own.Said, out var expanded, out _)
+                ? expanded
+                : [KeywordRouter.Utterance(PhrasePattern.Literal(own.Said))];
+
+            var best = wordings
+                .Select(wording => (wording, shared: shared(wording)))
+                .Where(scored => scored.shared >= threshold)
+                .OrderByDescending(scored => scored.shared)
+                .Cast<(string wording, int shared)?>()
+                .FirstOrDefault();
+
+            if (best is not { } match)
+            {
+                continue;
+            }
+
+            var target = book.Entries.FirstOrDefault(entry =>
+                string.Equals(entry.Phrase, own.Phrase, StringComparison.OrdinalIgnoreCase));
+
+            var says = $"Say '{match.wording}', your own phrase for '{own.Phrase}'.";
+
+            yield return (target is null ? says : $"{PhraseBook.Describe(target, registry)} {says}", match.shared);
         }
-
-        if (entry.Arguments.TryGetValue("action", out var actionId)
-            && GameActions.All.FirstOrDefault(action => action.Id == actionId) is { } gameAction)
-        {
-            return $"Reaches {gameAction.Label}.";
-        }
-
-        var tool = entry.ToolName is { } toolName
-            ? registry.Find(entry.CapabilityId)?.Descriptor.Tools
-                .FirstOrDefault(t => string.Equals(t.Name, toolName, StringComparison.Ordinal))
-            : null;
-
-        return tool?.Description ?? registry.Find(entry.CapabilityId)?.Descriptor.Summary ?? "Something D47 can do.";
     }
 
     /// <summary>The overview, or one area in detail.</summary>

@@ -1,5 +1,6 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Input;
 
 namespace D47.Core.Conversation;
 
@@ -190,6 +191,44 @@ public sealed class PhraseBook
                     group.First().Best.Match!.Value,
                     group.Any(choice => choice.Guarded))),
         ];
+    }
+
+    /// <summary>One sentence saying what an entry reaches, built from the setting, game action or tool it names.</summary>
+    public static string Describe(PhraseEntry entry, CapabilityRegistry registry)
+    {
+        if (entry.Row is { } row)
+        {
+            return entry.Value is { Length: > 0 } value ? $"Sets {row.Label} to {value}." : $"Reports {row.Label}.";
+        }
+
+        if (entry.Arguments.TryGetValue("action", out var actionId)
+            && GameActions.All.FirstOrDefault(action => action.Id == actionId) is { } gameAction)
+        {
+            return $"Reaches {gameAction.Label}.";
+        }
+
+        var descriptor = registry.Find(entry.CapabilityId)?.Descriptor;
+
+        var tool = entry.ToolName is { } toolName
+            ? descriptor?.Tools.FirstOrDefault(t => string.Equals(t.Name, toolName, StringComparison.Ordinal))
+            : null;
+
+        return tool is not null ? FirstSentence(tool.Description) : descriptor?.Summary ?? "Something D47 can do.";
+    }
+
+    private static string FirstSentence(string text)
+    {
+        var trimmed = text.Trim();
+
+        for (var i = 0; i < trimmed.Length; i++)
+        {
+            if (trimmed[i] is '.' or '!' or '?' && (i == trimmed.Length - 1 || char.IsWhiteSpace(trimmed[i + 1])))
+            {
+                return trimmed[..(i + 1)];
+            }
+        }
+
+        return trimmed;
     }
 
     /// <summary>What an entry reaches, so two phrases for the same thing are one candidate.</summary>
