@@ -33,6 +33,9 @@ public static class ShipsCapability
         /// <summary>The rescan, or null where nothing composed one.</summary>
         public Func<LongPress?>? Rescan { get; init; }
 
+        /// <summary>The conversation about each build's plan, or null where nothing composed one.</summary>
+        public Func<BuildTalk?>? Talk { get; init; }
+
         /// <summary>Every member supplied and none of them doing anything, for a test registry to bind.</summary>
         public static ShipsSurface Inert => new()
         {
@@ -124,6 +127,27 @@ public static class ShipsCapability
                     new ToolCommandPhrase("add this build to my checklist", Nothing),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Promote(ships, arguments)),
+            },
+
+            new ToolDefinition
+            {
+                Name = "talk_about_build",
+                Description =
+                    "Pass the Commander's remark about a ship's build to the build adviser: a question about "
+                    + "a slot, a request for a critique, or a goal such as making it jump further. It answers "
+                    + "for the ship open on the Ships page, else the one being flown, and proposes changes on "
+                    + "that ship's page without applying any.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "remark",
+                        Type = ToolParameterType.String,
+                        Description = "The Commander's words.",
+                        Required = true,
+                    },
+                ],
+                Handler = (arguments, cancellationToken) => TalkAsync(surface?.Talk?.Invoke(), arguments, cancellationToken),
             },
 
             // Protected.
@@ -318,6 +342,36 @@ public static class ShipsCapability
         }
 
         return ToolResult.Ok(ships.Delete(build.Id));
+    }
+
+    private static async Task<ToolResult> TalkAsync(
+        BuildTalk? talk,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (talk is null)
+        {
+            return ToolResult.Error("Talking through a build is not available here.");
+        }
+
+        if (!arguments.TryGetString("remark", out var remark) || string.IsNullOrWhiteSpace(remark))
+        {
+            return ToolResult.Error("What about the build?");
+        }
+
+        if (talk.Target() is not { } build)
+        {
+            return ToolResult.Error("Open a ship on the Ships page, or board one, and ask again.");
+        }
+
+        if (await talk.AskAsync(build.Id, remark, talk.TurnSource(), cancellationToken).ConfigureAwait(false) is not { } advice)
+        {
+            return ToolResult.Error("I am still answering the last remark about that ship.");
+        }
+
+        return advice.Succeeded
+            ? ToolResult.Relay(BuildTalk.Spoken(advice))
+            : ToolResult.Error(advice.Refusal!);
     }
 
     /// <summary>The ship a tool call names, through the service's own matcher.</summary>

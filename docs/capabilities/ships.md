@@ -319,16 +319,59 @@ does — so it looks like the same rule, because it is one.
 Delete a plan and whatever it already put on your checklist **stays there**. You ordered your list
 around those lines, and silently removing them makes the history wrong.
 
+### Talking through a build
+
+A ship's own page opens with **Talk through this build**. Type a remark into the field, or say it:
+
+- a question about one slot, such as "why that thruster";
+- a critique, such as "is this build any good";
+- a goal, such as "make it jump further".
+
+A question or a critique gets an answer. A goal gets a **proposal**: one row per slot that would
+change, each with the slot's plan now, the plan proposed and a one-line reason, and **Accept** and
+**Reject** beside it. Above the rows is what the proposal costs with every change accepted: the
+engineer ranks it is locked behind and each material, held against needed.
+
+**Nothing reaches the plan until you accept it.** Accepting a row writes that slot's plan, exactly
+as editing the slot yourself would, and the checklist and the gap follow. Rejecting writes nothing.
+Neither can be undone from the row; to change your mind, edit the slot or ask again. **Accept all**
+and **Reject all** decide every row still open.
+
+If you edit a slot after the proposal was made, its row says **Plan changed since** and can only be
+rejected: the proposal was made against a plan that is no longer there, so ask again.
+
+**By voice**, the remark is about the ship open on the Ships page, or the ship you are flying when
+no ship's page is open. The reply names at most three modules; the full proposal is on the page.
+
+The exchange is kept for each ship until you press **Clear**, and is forgotten when Directive 47
+closes. Advice comes from your language model, so it needs one configured, and each remark costs
+one request, two where a proposed change is refused by the outfitting tables and sent back once.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-**This capability advertises nothing, and the reason is cost as much as safety.** Every tool a
+**This capability advertises one tool, and the reason is cost as much as safety.** Every tool a
 mode advertises is sent, and billed, on every turn in that mode, whether or not the model uses it.
 
-So the one route that genuinely needs a model to understand free English is
-[`plan_ship_build`](checklists.md), which already existed and now writes to the build rather than
-proposing straight to the checklist. Everything below is `Protected`: reachable from the panel and
+So the routes that genuinely need a model to understand free English are
+[`plan_ship_build`](checklists.md), which writes to the build, and `talk_about_build`, which
+proposes and writes nothing. Everything else below is `Protected`: reachable from the panel and
 from a phrase, and never from the model.
+
+#### `talk_about_build`
+
+Pass the Commander's remark about a ship's build to the build adviser: a question about a slot, a
+request for a critique, or a goal such as making it jump further. It answers for the ship open on
+the Ships page, else the one being flown, and proposes changes on that ship's page without applying
+any.
+
+```json
+{"type":"object","properties":{"remark":{"type":"string","description":"The Commander\u0027s words."}},"required":["remark"],"additionalProperties":false}
+```
+
+The reply is relayed as written, so the three-module limit holds. The proposal is held in
+`BuildTalk`, and only `BuildTalk.Accept` writes it, one slot at a time through
+`ShipPlanService.Plan`.
 
 #### `get_ship_plans`
 

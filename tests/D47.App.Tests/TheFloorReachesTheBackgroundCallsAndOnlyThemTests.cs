@@ -5,7 +5,7 @@ namespace D47.App.Tests;
 /// <summary>Which calls take the cheap model and which keep the Commander's.</summary>
 public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
 {
-    /// <summary>The four readers of the conversation model, exactly.</summary>
+    /// <summary>The five readers of the conversation model, exactly.</summary>
     private static readonly string[] KeepTheConversationModel =
     [
         // The Commander's log, quoted at a price before anything is written.
@@ -13,6 +13,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
 
         // Adventure generation.
         "() => turns.Model,",
+
+        // Advice on a ship's build, which the Commander waits on (#570).
+        "() => self?.Turns.Model,",
 
         // Flagged, not fixed: correct today because web search is endpoint-gated in all three providers, and
         // the contract says it is model-gated in principle.
@@ -23,7 +26,7 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
     ];
 
     [Fact]
-    public void TheConversationModelIsReadByExactlyTheFourCallsThatShouldReadIt()
+    public void TheConversationModelIsReadByExactlyTheFiveCallsThatShouldReadIt()
     {
         var readers = CodeLinesContaining("Turns.Model", "turns.Model")
             .Where(line => !line.StartsWith("Turns.Model =", StringComparison.Ordinal))

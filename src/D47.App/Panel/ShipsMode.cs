@@ -15,7 +15,8 @@ public sealed class ShipsMode(
     ChecklistService checklists,
     Func<CommanderGameState?> state,
     Func<ModulePower>? measured = null,
-    Func<bool>? hullArt = null) : ILoadoutMode
+    Func<bool>? hullArt = null,
+    BuildTalk? talk = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -253,6 +254,11 @@ public sealed class ShipsMode(
 
         return shortfall.PlanCount == 0 && shortfall.DeliveryCount == 0 ? null : shortfall;
     }
+
+    public BuildTalkView? Talk(string item) =>
+        talk is not null && Resolve(item) is { } build
+            ? new BuildTalkView(talk, build.Id, () => state()?.Identity.Name)
+            : null;
 
     /// <summary>Where the ship is, in a sentence rather than in the row's one phrase.</summary>
     private static string Whereabouts(StoredShip stored, bool active)

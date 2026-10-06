@@ -31,7 +31,7 @@ public sealed record SlotChange(string Slot, SlotPlan? Before, SlotPlan After, s
 
 /// <summary>
 /// The answer to one remark about a plan. A proposal is never applied here; <see cref="Cost"/> is the plan
-/// with every change applied, computed by <see cref="EngineeringPlan"/>.
+/// with every change applied, computed by <see cref="EngineeringPlan"/>. <see cref="Code"/> names a refusal's cause.
 /// </summary>
 public sealed record BuildAdvice(
     BuildRemarkKind Kind,
@@ -39,7 +39,8 @@ public sealed record BuildAdvice(
     IReadOnlyList<SlotChange> Changes,
     PlanCosting? Cost,
     IReadOnlyList<string> Dropped,
-    string? Refusal = null)
+    string? Refusal = null,
+    string? Code = null)
 {
     public bool Succeeded => Refusal is null;
 }
@@ -72,7 +73,7 @@ public sealed class ShipPlanAdvisor(
 
         if (provider() is null)
         {
-            return new BuildAdvice(BuildRemarkKind.Question, null, [], null, [], "No language model is configured, and advice on a build has to come from one.");
+            return new BuildAdvice(BuildRemarkKind.Question, null, [], null, [], "No language model is configured, and advice on a build has to come from one.", "no-model");
         }
 
         var game = state();
@@ -81,7 +82,7 @@ public sealed class ShipPlanAdvisor(
 
         if (first is null || Read(first) is not { } answer)
         {
-            return new BuildAdvice(BuildRemarkKind.Question, null, [], null, [], "The model's answer was not one I could read. Try again.");
+            return new BuildAdvice(BuildRemarkKind.Question, null, [], null, [], "The model's answer was not one I could read. Try again.", "unreadable");
         }
 
         var checkedChanges = Check(build, game, answer);

@@ -1651,6 +1651,11 @@ public sealed class ItemPage : LoadoutPage
     private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = IndexPage.ListGap };
 
+    /// <summary>Holds the talk section outside <see cref="_list"/>, so a redraw keeps its field and its focus.</summary>
+    private readonly Border _talkSlot = new();
+
+    private BuildTalkSection? _talk;
+
     /// <summary>What the page is about: the screen title.</summary>
     private readonly TextBlock _title = TitleText.Style(
         new TextBlock { TextWrapping = TextWrapping.Wrap },
@@ -1719,7 +1724,7 @@ public sealed class ItemPage : LoadoutPage
         root.Children.Add(_summary);
         root.Children.Add(actions);
         root.Children.Add(say);
-        root.Children.Add(LoadoutPages.Scrolling(_list));
+        root.Children.Add(LoadoutPages.Scrolling(new StackPanel { Children = { _talkSlot, _list } }));
 
         // The page, with a layer above it for the thing being carried.
         _overlay = new Canvas { IsHitTestVisible = false };
@@ -1788,6 +1793,7 @@ public sealed class ItemPage : LoadoutPage
         // nothing in the summary for an owned ship.
         if (title is null && summary is null)
         {
+            _talkSlot.Child = null;
             _heading.IsVisible = false;
             _summary.IsVisible = false;
             _list.Children.Add(LoadoutPages.Muted("That build is not there any more."));
@@ -1798,6 +1804,8 @@ public sealed class ItemPage : LoadoutPage
         _heading.IsVisible = title is { Length: > 0 };
 
         Said(summary);
+
+        Talk();
 
         // The same question the index carries, here too (Phase 38): a Commander who has drilled into the ship
         // it is about is the likeliest one to answer it, and they would otherwise have to go back a level to
@@ -1905,6 +1913,27 @@ public sealed class ItemPage : LoadoutPage
 
             _list.Children.Add(control);
         }
+    }
+
+    /// <summary>Shows the talk section on a full surface, keeping the one already drawn.</summary>
+    private void Talk()
+    {
+        if (Mini || Mode.Talk(_item) is not { } view)
+        {
+            _talkSlot.Child = null;
+            return;
+        }
+
+        if (_talk is null)
+        {
+            _talk = new BuildTalkSection(view);
+            _talkSlot.Child = _talk;
+            return;
+        }
+
+        // The plan under a proposal may have moved.
+        _talkSlot.Child ??= _talk;
+        _talk.Draw();
     }
 
     /// <summary>

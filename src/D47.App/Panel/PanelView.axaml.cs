@@ -819,9 +819,12 @@ public partial class PanelView : UserControl
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
 
         // The seats on the ship flown, on Fleet › Crew (#847).
-        CrewSeatsHost? crewSeats = null)
+        CrewSeatsHost? crewSeats = null,
+
+        // The conversation about each build's plan, on a ship's page (#570).
+        D47.Core.Ships.BuildTalk? talk = null)
     {
-        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt);
+        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk);
 
         _shipPlans = ships;
 

@@ -330,6 +330,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's ship builds, joined to the fleet (Phase 26).</summary>
     public ShipPlanService Ships { get; private set; } = null!;
 
+    /// <summary>The conversation about each build's plan (#570).</summary>
+    public BuildTalk BuildTalk { get; private set; } = null!;
+
     /// <summary>Where the builds are kept, for the panel to follow and for a hand edit to reach.</summary>
     public ShipBuildStore ShipBuilds { get; private set; } = null!;
 
@@ -1417,6 +1420,22 @@ public sealed class AppHost : IDisposable
 
         AppHost? self = null;
 
+        // The conversation about each build's plan (#570). Late-bound to the turn loop through `self`.
+        var buildAdvisor = new ShipPlanAdvisor(
+            () => self?.Turns.Provider,
+            () => self?.Turns.Model,
+            () => self?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
+            () => CommanderStory.Compose(settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: false),
+            () => gameState.Active,
+            spend,
+            PriceTable.Default,
+            loggerFactory.CreateLogger<ShipPlanAdvisor>());
+
+        var buildTalk = new BuildTalk(shipPlans, buildAdvisor.AdviseAsync, () => SystemWallClock.Instance.UtcNow)
+        {
+            TurnSource = () => self?.Turns.Source ?? InputSource.Spoken,
+        };
+
         // A session, written up (Phase 33).
         var logbook = new D47.Core.Logbook.LogbookBook(
             new D47.Core.Logbook.LogFolder(
@@ -1774,6 +1793,8 @@ public sealed class AppHost : IDisposable
                     // SpeechCapability.DownloadLocalVoice records: rows are built before `self` exists, so a
                     // press asked for here would be null and stay null.
                     Rescan = () => self is null ? null : self.RescanLoadoutsAsync,
+
+                    Talk = () => buildTalk,
                 },
 
                 // How a misheard proper noun is recovered (#134).
@@ -2526,6 +2547,7 @@ public sealed class AppHost : IDisposable
         checklists.Proposals.Added += proposal => host.Panel.AppendProposal(proposal.Id, proposal.Summary);
         checklists.ProposalSettled += (id, accepted, outcome) => host.Panel.SettleProposal(id, accepted, outcome);
         host.Ships = shipPlans;
+        host.BuildTalk = buildTalk;
         host.ShipBuilds = shipBuilds;
         host.OnFootPlans = onFootPlans;
         host.Unlocks = unlocks;

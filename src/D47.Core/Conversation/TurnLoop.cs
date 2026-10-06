@@ -325,6 +325,9 @@ public sealed class TurnLoop(
     /// <summary>The provider answering turns, or null for none.</summary>
     public ILlmProvider? Provider { get; set; } = provider;
 
+    /// <summary>How the turn running now, or the last one, reached d47.</summary>
+    public InputSource Source { get; private set; }
+
     /// <summary>The pinned model, or null for the provider's own default.</summary>
     public string? Model { get; set; } = model;
 
@@ -435,6 +438,7 @@ public sealed class TurnLoop(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         availability.BeginTurn();
+        Source = source;
 
         // 0.
         if (source == InputSource.Spoken && Heard is { } heard)
