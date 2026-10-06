@@ -715,18 +715,28 @@ public static class EliteSpecifications
         JumpBoost = Real(cells, 26),
     };
 
-    private static ShipSlot ReadSlot(string[] cells) => new(
-        Text(cells, 0) ?? "unknown",
-        Text(cells, 1) ?? "unknown",
-        Text(cells, 2) switch
+    private static ShipSlot ReadSlot(string[] cells)
+    {
+        var hull = Text(cells, 0) ?? "unknown";
+        var name = Text(cells, 1) ?? "unknown";
+        var kind = Text(cells, 2) switch
         {
             "hardpoint" => ShipSlotKind.Hardpoint,
             "utility" => ShipSlotKind.Utility,
             "core" => ShipSlotKind.Core,
             _ => ShipSlotKind.Optional,
-        },
-        Integer(cells, 3) ?? 0,
-        Words(cells, 4));
+        };
+        var position = kind == ShipSlotKind.Utility ? UtilityMountPositions.Of(hull, name) : null;
+
+        return new ShipSlot(
+            hull,
+            name,
+            kind,
+            Integer(cells, 3) ?? 0,
+            Words(cells, 4),
+            position?.Height,
+            position?.Length);
+    }
 
     /// <summary>Mounts, in the spelling a Commander hears.</summary>
     private static readonly Dictionary<string, string> Mounts = new(StringComparer.OrdinalIgnoreCase)

@@ -30,7 +30,9 @@ public sealed record ShipSlot(
     string Name,
     ShipSlotKind Kind,
     int Size,
-    IReadOnlyList<string> Restrict)
+    IReadOnlyList<string> Restrict,
+    MountHeight? Height = null,
+    MountLength? Length = null)
 {
     /// <summary>The heading this slot sits under, in the outfitting screen's own words.</summary>
     public static string Heading(ShipSlotKind kind) => kind switch
@@ -54,7 +56,7 @@ public sealed record ShipSlot(
         ShipSlotKind.Core => CoreRenames.TryGetValue(Name, out var renamed) ? renamed : Spaced(Name),
         ShipSlotKind.Hardpoint => Spaced(Name),
         ShipSlotKind.Utility => Ordinal(Name) is { } utility
-            ? $"Utility Mount {utility}"
+            ? $"Utility Mount {utility}{Placed()}"
             : Spaced(Name),
 
         // The size is in the compartment's own name — `Slot01_Size6` — so it is read off the part before the
@@ -78,7 +80,7 @@ public sealed record ShipSlot(
         ShipSlotKind.Hardpoint => Spaced(Name).Replace("Hardpoint ", string.Empty, StringComparison.Ordinal),
 
         ShipSlotKind.Utility => Ordinal(Name) is { } utility
-            ? utility.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            ? utility.ToString(System.Globalization.CultureInfo.InvariantCulture) + Placed()
             : Spaced(Name),
 
         _ when Ordinal(Trim(Name)) is { } compartment => Restrict.Count > 0
@@ -87,6 +89,24 @@ public sealed record ShipSlot(
 
         _ => Spaced(Name),
     };
+
+    /// <summary>" (top, fore)" for the words that are set, or nothing.</summary>
+    private string Placed()
+    {
+        var words = new List<string>(2);
+
+        if (Height is { } height)
+        {
+            words.Add(height.ToString().ToLowerInvariant());
+        }
+
+        if (Length is { } length)
+        {
+            words.Add(length.ToString().ToLowerInvariant());
+        }
+
+        return words.Count == 0 ? string.Empty : $" ({string.Join(", ", words)})";
+    }
 
     /// <summary>The trailing number, where the name carries one.</summary>
     private static int? Ordinal(string name)
