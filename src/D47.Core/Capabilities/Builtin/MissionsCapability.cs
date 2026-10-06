@@ -213,7 +213,7 @@ public static class MissionsCapability
         return said.ToString();
     }
 
-    private static string TimeLeft(TimeSpan left)
+    internal static string TimeLeft(TimeSpan left)
     {
         if (left <= TimeSpan.Zero)
         {

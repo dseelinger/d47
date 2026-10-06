@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Text;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -25,6 +27,8 @@ public sealed class MissionCallout : ICallout
     public const string AcceptedKey = "missions.accepted";
 
     public const string TripKey = "missions.trip";
+
+    public const string SlateKey = "missions.slate";
 
     /// <summary>Time allowed per jump, including scooping and the run to the station, when judging a trip against its expiry.</summary>
     public static readonly TimeSpan TimePerJump = TimeSpan.FromMinutes(5);
@@ -60,6 +64,8 @@ public sealed class MissionCallout : ICallout
 
     private readonly ConcurrentQueue<Trip> _trips = new();
 
+    private bool _acceptedSinceDock;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var board = context.State?.Missions ?? MissionBoard.Empty;
@@ -74,6 +80,7 @@ public sealed class MissionCallout : ICallout
 
         if (context.IsPriming)
         {
+            _acceptedSinceDock = false;
             Prime(board, context.Now);
             yield break;
         }
@@ -89,7 +96,12 @@ public sealed class MissionCallout : ICallout
 
             if (journalEvent.Kind == "MissionAccepted")
             {
+                _acceptedSinceDock = true;
                 StartTripCheck(journalEvent, context);
+            }
+            else if (journalEvent.Kind == "Docked")
+            {
+                _acceptedSinceDock = false;
             }
 
             switch (journalEvent.Kind)
@@ -109,6 +121,16 @@ public sealed class MissionCallout : ICallout
                 case "Undocked" when HandIns(board, station).Count > 0:
                     yield return new Announcement(UnclaimedKey, $"You're leaving with a hand-in unclaimed at {station}.");
                     break;
+            }
+
+            if (journalEvent.Kind == "Undocked" && _acceptedSinceDock)
+            {
+                _acceptedSinceDock = false;
+
+                if (Slate(board, context.Now) is { } slate)
+                {
+                    yield return new Announcement(SlateKey, slate);
+                }
             }
         }
 
@@ -234,6 +256,42 @@ public sealed class MissionCallout : ICallout
         var moved = station is { Length: > 0 } ? $"{station} in {system}" : system;
         return new Announcement(
             $"{RedirectedKey}.{id}", $"That's {title} done. Hand-in moved to {moved}. Say plot it to set the course.");
+    }
+
+    /// <summary>The count on the board and the unexpired mission due soonest, or null with an empty board.</summary>
+    private static string? Slate(MissionBoard board, DateTimeOffset now)
+    {
+        var count = board.Missions.Count;
+
+        if (count == 0)
+        {
+            return null;
+        }
+
+        var tightest = board.BySoonest().FirstOrDefault(mission => mission.Expiry is null || mission.Expiry > now);
+        var heading = count == 1 ? "One mission on the board" : $"{Words(count)} missions on the board";
+
+        if (tightest is null)
+        {
+            return $"{heading}.";
+        }
+
+        var said = new StringBuilder(tightest.Title);
+
+        if (tightest.HasDetail)
+        {
+            if ((tightest.DestinationStation ?? tightest.DestinationSystem) is { } destination)
+            {
+                said.Append($", to {destination}");
+            }
+
+            if (tightest.Expiry is { } expiry)
+            {
+                said.Append($", {MissionsCapability.TimeLeft(expiry - now)}");
+            }
+        }
+
+        return count == 1 ? $"{heading}: {said}." : $"{heading}. The tightest is {said}.";
     }
 
     /// <summary>Marks every warning already behind a mission as said, so a restart does not repeat it.</summary>
