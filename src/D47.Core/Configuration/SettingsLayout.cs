@@ -525,6 +525,7 @@ public static class SettingsLayout
                                 E("callouts.weekBoundaryDay", under: true),
                                 E("callouts.weekBoundaryHourUtc", under: true),
                                 E("callouts.communityGoalExpiry"),
+                                E("callouts.colonisation"),
                                 E("callouts.powerplayCycle"),
                                 E("callouts.missions"),
                                 E("callouts.outstandingCrimes"),
