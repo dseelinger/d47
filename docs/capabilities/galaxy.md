@@ -348,6 +348,30 @@ unreachable, rate limiting you, taking too long, or having no record of the syst
 A system the service does not know produces "I couldn't find one of those systems", not a
 failed turn.
 
+### Quick searches {#quick-searches}
+
+Eleven fixed searches run by phrase with no model involved, measured from the Commander's own
+system. Each has four phrases: "{name} search", "run the {name} search", "nearest {name}" and
+"find the nearest {name}". They run only while "Look things up in the galaxy" is on.
+
+| Name | Tool | Arguments |
+| --- | --- | --- |
+| raw material trader | `search_stations` | `material_trader` Raw |
+| manufactured material trader | `search_stations` | `material_trader` Manufactured |
+| encoded material trader | `search_stations` | `material_trader` Encoded |
+| guardian technology broker | `search_stations` | `technology_broker` Guardian |
+| human technology broker | `search_stations` | `technology_broker` Human |
+| interstellar factors | `search_stations` | `services` Interstellar Factors |
+| universal cartographics | `search_stations` | `services` Universal Cartographics |
+| vista genomics | `search_stations` | `services` Vista Genomics |
+| black market | `search_stations` | `services` Black Market |
+| pioneer supplies | `search_stations` | `services` Pioneer Supplies |
+| anarchy outbreak | `search_systems` | `government` Anarchy, `state` Outbreak |
+
+```csharp
+yield return new DynamicCommand(phrase, GalaxyCapability.Id, search.Tool, search.Arguments);
+```
+
 ### Tools
 
 #### `search_systems`

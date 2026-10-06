@@ -2229,6 +2229,9 @@ public sealed class AppHost : IDisposable
                 // find_nearest_station, plus "refresh" while the page that draws it is up.
                 .Concat(communityGoalSearch.Phrases())
 
+                // And the fixed quick searches, such as "interstellar factors search" (#812).
+                .Concat(D47.Core.Knowledge.QuickSearches.Phrases())
+
                 // And "set a course" (#325): plot_course pointed at whatever a nearest-first commodity search
                 // last found. "Set a course and take us out" is not here — it is a fixed phrase on
                 // ship_command's own compound tool, since it runs two tools in order rather than baking one
