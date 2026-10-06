@@ -94,7 +94,7 @@ public enum ChecklistSource
     /// <summary>An engineer's unlock prerequisites, added from their own page or the Route (#257).</summary>
     EngineerPrerequisite,
 
-    /// <summary>A delivery or collect mission on the board (<see cref="MissionLines"/>).</summary>
+    /// <summary>A mission line from an earlier version; read from a file and removed on load.</summary>
     Mission,
 
     /// <summary>The kit offered when a carrier route leaves the bubble (<see cref="ExpeditionKit"/>).</summary>

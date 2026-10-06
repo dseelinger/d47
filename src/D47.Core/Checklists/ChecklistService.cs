@@ -356,7 +356,7 @@ public sealed class ChecklistService(
         }
 
         Adopt(state);
-        FollowMissions(state);
+        DropMissionLines(state);
 
         var document = list.For(state.Identity.FrontierId, state.Identity.Name);
         var news = new List<ChecklistNews>();
@@ -466,28 +466,12 @@ public sealed class ChecklistService(
         return news;
     }
 
-    /// <summary>
-    /// Brings the mission lines into line with the board: a line for each delivery accepted, the wording
-    /// refreshed on a redirect, and a line removed when its mission leaves the board.
-    /// </summary>
-    private void FollowMissions(CommanderGameState state)
+    /// <summary>Removes any mission lines the store holds; missions are no longer checklist lines.</summary>
+    private void DropMissionLines(CommanderGameState state)
     {
-        if (!state.Missions.IsKnown)
-        {
-            return;
-        }
-
         var document = list.For(state.Identity.FrontierId, state.Identity.Name);
 
-        var held = document.Items
-            .Where(item => item.Source == ChecklistSource.Mission && item.Scope.Same(ChecklistScope.Universal))
-            .ToDictionary(item => item.Key, StringComparer.OrdinalIgnoreCase);
-
-        var wanted = MissionLines.Wanted(state.Missions, held.ContainsKey);
-
-        // Checked before writing, because this runs on every tick.
-        if (wanted.Count == held.Count
-            && wanted.All(item => held.TryGetValue(item.Key, out var line) && line.Text == item.Text))
+        if (!document.Items.Any(item => item.Source == ChecklistSource.Mission))
         {
             return;
         }
@@ -495,7 +479,10 @@ public sealed class ChecklistService(
         var change = list.Apply(
             state.Identity.FrontierId,
             state.Identity.Name,
-            current => current.Revise(ChecklistScope.Universal, ChecklistSource.Mission, wanted) with { Changed = true });
+            current => new ChecklistChange(
+                current with { Items = [.. current.Items.Where(item => item.Source != ChecklistSource.Mission)] },
+                Changed: true,
+                "Mission lines removed."));
 
         if (Selected is { } selected && change.Document.Find(selected) is null)
         {

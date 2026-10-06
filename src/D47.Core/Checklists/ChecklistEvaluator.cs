@@ -46,7 +46,6 @@ public static class ChecklistEvaluator
             ChecklistIntentKind.EngineerAccess => Access(intent, state),
             ChecklistIntentKind.EngineerPrerequisite => Prerequisite(intent, state),
             ChecklistIntentKind.Facility => Facility(item, intent, state),
-            ChecklistIntentKind.Commodity when item.Source == ChecklistSource.Mission => MissionLines.Verdict(intent, state),
             ChecklistIntentKind.Commodity => Commodity(item, intent, state),
             ChecklistIntentKind.Grade => OnFootGrade(item, intent, state),
             ChecklistIntentKind.Modification => OnFootModification(item, intent, state),

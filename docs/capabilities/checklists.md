@@ -201,13 +201,10 @@ would still assert that ticking is the mechanism, and it is not.
 Universal, this ship, this system. Derived items belong to whatever produced them; your own lines
 file anywhere, which is what lets *"ask Jim about the Krait build"* sit beside the Krait's plan.
 
-### Delivery missions
+### Missions
 
-Accepting a delivery or collect mission adds a universal line — *Deliver 99 Polymers to Crown
-Barracks, Wadjuk* — with no question asked. It counts what Elite reports delivered, or before the
-first delivery what is in your hold, and is done when every item is handed over. It leaves the list
-when the mission leaves the board. Courier and passenger missions get no line, because Elite reports
-no progress for them until you hand them in.
+Missions are not on the checklist. They are on the Missions page under Commander. A mission line left
+in an older checklist file is removed when it loads.
 
 ### Finishing is not removing
 
