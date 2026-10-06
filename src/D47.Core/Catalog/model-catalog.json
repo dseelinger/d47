@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "published": "2026-09-28",
+  "providers": {
+    "anthropic": {
+      "default": "claude-sonnet-5-5",
+      "backgroundDefault": null,
+      "models": [
+        {
+          "id": "claude-sonnet-5-5",
+          "offered": true,
+          "price": { "input": 2, "output": 10, "cacheRead": 0.1, "cacheWrite": 1.25 },
+          "traits": { "operatorSystemMessages": true, "toolSearch": false, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
+          "id": "claude-sonnet-5",
+          "offered": true,
+          "price": { "input": 2, "output": 10, "cacheRead": 0.1, "cacheWrite": 1.25 },
+          "traits": { "operatorSystemMessages": false, "toolSearch": false, "minimumCacheablePrefix": 1024, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
+          "id": "claude-opus-5",
+          "offered": true,
+          "price": { "input": 5, "output": 25, "cacheRead": 0.1, "cacheWrite": 1.25 },
+          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
+          "id": "claude-opus-5-5",
+          "offered": true,
+          "price": { "input": 4, "output": 20, "cacheRead": 0.05, "cacheWrite": 1.25 },
+          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
+          "id": "claude-haiku-4-5",
+          "offered": true,
+          "price": { "input": 1, "output": 5, "cacheRead": 0.1, "cacheWrite": 1.25 },
+          "traits": { "operatorSystemMessages": false, "toolSearch": true, "minimumCacheablePrefix": 4096, "basicWebSearchOnly": true, "legacyThinking": true }
+        },
+        {
+          "id": "claude-fable-5",
+          "offered": true,
+          "price": { "input": 10, "output": 50, "cacheRead": 0.1, "cacheWrite": 1.25 },
+          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
+          "id": "claude-mythos-5",
+          "offered": false,
+          "price": null,
+          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
+          "id": "claude-opus-4-7",
+          "offered": false,
+          "price": null,
+          "traits": { "operatorSystemMessages": false, "toolSearch": true, "minimumCacheablePrefix": 2048, "basicWebSearchOnly": false, "legacyThinking": false }
+        }
+      ]
+    },
+    "openai": {
+      "default": "gpt-5.6-terra",
+      "backgroundDefault": null,
+      "models": [
+        { "id": "gpt-5.6-terra", "offered": true, "price": { "input": 2, "output": 12, "cacheRead": 0.1, "cacheWrite": 1.25 } },
+        { "id": "gpt-5.6-sol", "offered": true, "price": { "input": 4, "output": 20, "cacheRead": 0.1, "cacheWrite": 1.25 } },
+        { "id": "gpt-5.6-luna", "offered": true, "price": { "input": 0.20, "output": 1.20, "cacheRead": 0.1, "cacheWrite": 1.25 } },
+        { "id": "gpt-5.5", "offered": true, "price": { "input": 5, "output": 30, "cacheRead": 0.1, "cacheWrite": 0 } },
+        { "id": "gpt-5.4-mini", "offered": true, "price": { "input": 0.75, "output": 4.50, "cacheRead": 0.1, "cacheWrite": 0 } },
+        { "id": "gpt-5.4-nano", "offered": true, "price": { "input": 0.20, "output": 1.25, "cacheRead": 0.1, "cacheWrite": 0 } },
+        { "id": "gpt-5.4", "offered": false, "price": { "input": 2.50, "output": 15, "cacheRead": 0.1, "cacheWrite": 0 } },
+        { "id": "gpt-5", "offered": false, "price": { "input": 1.25, "output": 10, "cacheRead": 0.1, "cacheWrite": 0 } },
+        { "id": "gpt-5-mini", "offered": false, "price": { "input": 0.25, "output": 2, "cacheRead": 0.1, "cacheWrite": 0 } },
+        { "id": "gpt-5-nano", "offered": false, "price": { "input": 0.05, "output": 0.40, "cacheRead": 0.1, "cacheWrite": 0 } }
+      ]
+    }
+  }
+}

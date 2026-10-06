@@ -1,3 +1,5 @@
+using D47.Core.Catalog;
+
 namespace D47.Core.Conversation;
 
 /// <summary>Per-million-token rates for one model.</summary>
@@ -27,43 +29,15 @@ public sealed record ModelPrice(decimal InputPerMillion, decimal OutputPerMillio
 /// <summary>
 /// Prices per provider and per model, so a running total survives an endpoint switch.
 /// </summary>
-public sealed class PriceTable
+public sealed class PriceTable(ModelCatalogSource source)
 {
-    private readonly Dictionary<(string Provider, string Model), ModelPrice> _prices;
-
-    private PriceTable(Dictionary<(string, string), ModelPrice> prices) => _prices = prices;
-
-    public static PriceTable Default { get; } = new(new Dictionary<(string, string), ModelPrice>
-    {
-        // Anthropic list prices, read from platform.claude.com/docs/en/about-claude/pricing on 2026-09-28.
-        [("anthropic", "claude-opus-5")] = new(5m, 25m),
-        [("anthropic", "claude-opus-5-5")] = new(4m, 20m) { CacheReadFactor = 0.05m },
-        [("anthropic", "claude-sonnet-5-5")] = new(2m, 10m),
-        [("anthropic", "claude-sonnet-5")] = new(2m, 10m),
-        [("anthropic", "claude-haiku-4-5")] = new(1m, 5m),
-        [("anthropic", "claude-fable-5")] = new(10m, 50m),
-
-        // OpenAI list prices, read from developers.openai.com/api/docs/pricing on 2026-09-23.
-        [("openai", "gpt-5.6-sol")] = new(4m, 20m) { CacheReadFactor = 0.1m },
-        [("openai", "gpt-5.6-terra")] = new(2m, 12m) { CacheReadFactor = 0.1m },
-        [("openai", "gpt-5.6-luna")] = new(0.20m, 1.20m) { CacheReadFactor = 0.1m },
-
-        // Before GPT-5.6, a cache write is free — and is also not counted, so this factor never multiplies
-        // anything.
-        [("openai", "gpt-5.5")] = new(5m, 30m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-        [("openai", "gpt-5.4")] = new(2.50m, 15m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-        [("openai", "gpt-5.4-mini")] = new(0.75m, 4.50m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-        [("openai", "gpt-5.4-nano")] = new(0.20m, 1.25m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-        [("openai", "gpt-5")] = new(1.25m, 10m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-        [("openai", "gpt-5-mini")] = new(0.25m, 2m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-        [("openai", "gpt-5-nano")] = new(0.05m, 0.40m) { CacheReadFactor = 0.1m, CacheWriteFactor = 0m },
-    });
+    public static PriceTable Default { get; } = new(ModelCatalogSource.Shared);
 
     /// <summary>Every turn free, which is what a model running on the Commander's own machine costs.</summary>
     public static ModelPrice Free { get; } = new(0m, 0m) { CacheReadFactor = 0m, CacheWriteFactor = 0m };
 
-    public ModelPrice? For(string providerId, string model) =>
-        _prices.GetValueOrDefault((providerId, model));
+    /// <summary>Null when the model is priced as unknown.</summary>
+    public ModelPrice? For(string providerId, string model) => source.Current.PriceFor(providerId, model);
 }
 
 /// <summary>What one turn cost.</summary>

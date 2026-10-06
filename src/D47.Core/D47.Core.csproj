@@ -35,6 +35,8 @@
     <EmbeddedResource Include="..\..\docs\*.md" LogicalName="D47.Core.Help.general-%(Filename)" />
 
     <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="D47.Core.Changelog" />
+
+    <EmbeddedResource Include="Catalog\model-catalog.json" LogicalName="D47.Core.ModelCatalog" />
   </ItemGroup>
 
 </Project>

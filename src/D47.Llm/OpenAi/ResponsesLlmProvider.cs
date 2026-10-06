@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Text.Json;
+using D47.Core.Catalog;
 using D47.Core.Conversation;
 
 namespace D47.Llm.OpenAi;
@@ -38,7 +39,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
     public string DisplayName => "OpenAI";
 
-    public string DefaultModel => "gpt-5.6-terra";
+    public string DefaultModel => ModelCatalogSource.Shared.Current.DefaultFor(Id) ?? string.Empty;
 
     public bool RunsOnThisMachine => _endpoint.IsLoopback;
 

@@ -1,4 +1,6 @@
-﻿namespace D47.Core.Conversation;
+﻿using D47.Core.Catalog;
+
+namespace D47.Core.Conversation;
 
 /// <summary>What one provider offers and what talking to it costs in privacy.</summary>
 public sealed record LlmProviderInfo
@@ -15,10 +17,10 @@ public sealed record LlmProviderInfo
     /// <summary>Null when the provider has no endpoint to point somewhere else.</summary>
     public string? DefaultEndpoint { get; init; }
 
-    public string? DefaultModel { get; init; }
+    public string? DefaultModel => ModelCatalogSource.Shared.Current.DefaultFor(Id);
 
     /// <summary>The models d47 knows about at <see cref="DefaultEndpoint"/>.</summary>
-    public IReadOnlyList<string> Models { get; init; } = [];
+    public IReadOnlyList<string> Models => ModelCatalogSource.Shared.Current.OfferedFor(Id);
 
     /// <summary>Exactly what leaves the machine when this provider answers a turn.</summary>
     public required string Egress { get; init; }
@@ -84,9 +86,6 @@ public static class LlmProviderCatalog
             Summary = "Claude models, over the Anthropic Messages API.",
             KeySecretName = "anthropic.apiKey",
             DefaultEndpoint = "https://api.anthropic.com",
-            // The highest Sonnet, not the highest model.
-            DefaultModel = "claude-sonnet-5-5",
-            Models = ["claude-sonnet-5-5", "claude-sonnet-5", "claude-opus-5", "claude-opus-5-5", "claude-haiku-4-5", "claude-fable-5"],
             Egress =
                 "Your question, D47's reply so far, the guardrails, the persona, your backstory text, any standing " +
                 "directions you have adopted, and the few " +
@@ -101,14 +100,6 @@ public static class LlmProviderCatalog
             Summary = "GPT models, over the OpenAI Responses API.",
             KeySecretName = "openai.apiKey",
             DefaultEndpoint = "https://api.openai.com/v1",
-
-            // The middle tier, for the reason the Anthropic row gives: a companion answers short questions
-            // about a game while the Commander is flying, and the top tier is priced for work that is harder
-            // than that.
-            DefaultModel = "gpt-5.6-terra",
-
-            // Every id here is one the price table can quote, which is what the field's contract requires.
-            Models = ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4-mini", "gpt-5.4-nano"],
 
             // Responses is spoken at its own address by xAI and OpenRouter as well, so reaching Grok is a
             // base URL and a model name rather than a third implementation.
@@ -133,7 +124,7 @@ public static class LlmProviderCatalog
             KeyOptional = true,
             DefaultEndpoint = CompatibleDefaultEndpoint,
 
-            // No default model and no list: this endpoint serves whatever was loaded into it, and a guess
+            // Absent from the model catalog: this endpoint serves whatever was loaded into it, and a guess
             // would fail at the first turn.
             AcceptsCustomEndpoint = true,
             Egress =

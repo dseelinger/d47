@@ -2,6 +2,7 @@
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 using Anthropic.Models.Models;
+using D47.Core.Catalog;
 using D47.Core.Conversation;
 using D47.Llm.OpenAi;
 using CoreConversation = D47.Core.Conversation;
@@ -11,55 +12,9 @@ namespace D47.Llm;
 /// <summary>The Anthropic implementation of <see cref="ILlmProvider"/>.</summary>
 public sealed class AnthropicLlmProvider : ILlmProvider
 {
-    /// <summary>
-    /// Models where a <c>{"role":"system"}</c> message can carry live game state with operator
-    /// authority.
-    /// </summary>
-    private static readonly HashSet<string> OperatorSystemMessageModels =
-        new(StringComparer.Ordinal)
-        {
-            "claude-opus-5", "claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5", "claude-mythos-5",
-        };
-
-    /// <summary>Models that take the tool search tool and <c>defer_loading</c>.</summary>
-    private static readonly HashSet<string> ToolSearchModels =
-        new(StringComparer.Ordinal)
-        {
-            "claude-opus-5", "claude-opus-5-5", "claude-opus-4-7", "claude-fable-5", "claude-mythos-5",
-            "claude-haiku-4-5",
-        };
-
     /// <summary>The failure when the endpoint refuses tool search.</summary>
     internal const string ToolSearchRefused =
         "Anthropic refused tool search for this model, so it will be sent the mode's tool list.";
-
-    /// <summary>Minimum cacheable prefix per model.</summary>
-    private static readonly Dictionary<string, int> MinimumCacheablePrefix =
-        new(StringComparer.Ordinal)
-        {
-            ["claude-opus-5"] = 512,
-            ["claude-opus-5-5"] = 512,
-            ["claude-fable-5"] = 512,
-            ["claude-mythos-5"] = 512,
-            ["claude-sonnet-5-5"] = 512,
-            ["claude-sonnet-5"] = 1024,
-            ["claude-opus-4-7"] = 2048,
-            ["claude-haiku-4-5"] = 4096,
-        };
-
-    /// <summary>
-    /// Models that cannot run the search from inside code execution, and so must be given the basic
-    /// tool instead.
-    /// </summary>
-    private static readonly HashSet<string> BasicWebSearchOnly =
-        new(StringComparer.Ordinal) { "claude-haiku-4-5" };
-
-    /// <summary>
-    /// Models that predate the 4.6 generation and so reject <c>thinking</c> and
-    /// <c>output_config.effort</c> outright (Phase 54).
-    /// </summary>
-    private static readonly HashSet<string> LegacyThinkingModels =
-        new(StringComparer.Ordinal) { "claude-haiku-4-5" };
 
     // ---- No temperature goes to Anthropic, and that is the finding rather than an omission ---- #98 opened
     // by saying "Anthropic's path takes temperature too, but interacts with effort/thinking, so the omission
@@ -76,15 +31,21 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
     private readonly AnthropicClient _client;
 
+    private readonly ModelCatalogSource _catalog;
+
     /// <summary>Whether this is Anthropic's own endpoint rather than a gateway.</summary>
     private readonly bool _ownEndpoint;
 
     /// <summary>The address demotions are recorded against.</summary>
     private readonly string _endpoint;
 
-    /// <summary><paramref name="baseUrl"/> is null for Anthropic's own endpoint.</summary>
-    public AnthropicLlmProvider(string apiKey, string? baseUrl = null)
+    /// <summary>
+    /// <paramref name="baseUrl"/> is null for Anthropic's own endpoint; <paramref name="catalog"/> is null for
+    /// <see cref="ModelCatalogSource.Shared"/>.
+    /// </summary>
+    public AnthropicLlmProvider(string apiKey, string? baseUrl = null, ModelCatalogSource? catalog = null)
     {
+        _catalog = catalog ?? ModelCatalogSource.Shared;
         _ownEndpoint = string.IsNullOrWhiteSpace(baseUrl);
         _endpoint = string.IsNullOrWhiteSpace(baseUrl) ? "https://api.anthropic.com" : baseUrl;
 
@@ -99,26 +60,33 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
     public string DisplayName => "Anthropic";
 
-    public string DefaultModel => "claude-sonnet-5-5";
+    public string DefaultModel => _catalog.Current.DefaultFor(Id) ?? string.Empty;
 
-    public LlmProviderCapabilities CapabilitiesFor(string model) => new()
+    public LlmProviderCapabilities CapabilitiesFor(string model)
     {
-        SupportsPromptCaching = true,
+        var traits = Traits(model);
 
-        // Both halves, and in this order: what is known, then what has been learned.
-        SupportsThinkingEffort =
-            !LegacyThinkingModels.Contains(model)
-            && EndpointDemotions.Allows(_endpoint, Demotable.AdaptiveThinking, model),
+        return new()
+        {
+            SupportsPromptCaching = true,
 
-        SupportsOperatorSystemMessages = OperatorSystemMessageModels.Contains(model),
-        MinimumCacheablePrefixTokens = MinimumCacheablePrefix.GetValueOrDefault(model, 1024),
-        SupportsToolCalls = true,
-        SupportsWebSearch = _ownEndpoint,
-        SupportsToolSearch =
-            _ownEndpoint
-            && ToolSearchModels.Contains(model)
-            && EndpointDemotions.Allows(_endpoint, Demotable.ToolSearch, model),
-    };
+            // Both halves, and in this order: what is known, then what has been learned.
+            SupportsThinkingEffort =
+                !traits.LegacyThinking
+                && EndpointDemotions.Allows(_endpoint, Demotable.AdaptiveThinking, model),
+
+            SupportsOperatorSystemMessages = traits.OperatorSystemMessages,
+            MinimumCacheablePrefixTokens = traits.MinimumCacheablePrefix,
+            SupportsToolCalls = true,
+            SupportsWebSearch = _ownEndpoint,
+            SupportsToolSearch =
+                _ownEndpoint
+                && traits.ToolSearch
+                && EndpointDemotions.Allows(_endpoint, Demotable.ToolSearch, model),
+        };
+    }
+
+    private ModelTraits Traits(string model) => _catalog.Current.TraitsFor(Id, model);
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
         LlmRequest request,
@@ -541,14 +509,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
     }
 
     /// <summary>The web search declaration, or nothing.</summary>
-    private static IEnumerable<ToolUnion> WebSearchTool(LlmRequest request)
+    private IEnumerable<ToolUnion> WebSearchTool(LlmRequest request)
     {
         if (!request.WebSearch)
         {
             yield break;
         }
 
-        yield return BasicWebSearchOnly.Contains(request.Model)
+        yield return Traits(request.Model).BasicWebSearchOnly
             ? new ToolUnion(new WebSearchTool20250305 { MaxUses = MaxWebSearchesPerTurn })
             : new ToolUnion(new WebSearchTool20260318 { MaxUses = MaxWebSearchesPerTurn });
     }
