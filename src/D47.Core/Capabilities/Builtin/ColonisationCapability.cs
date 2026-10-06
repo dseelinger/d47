@@ -80,7 +80,7 @@ public static class ColonisationCapability
                             + "finished site cannot be hauled to.",
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Sites(commander(), arguments))),
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Sites(commander(), arguments, Now(now)))),
             },
             new ToolDefinition
             {
@@ -180,7 +180,9 @@ public static class ColonisationCapability
 
     // ------------------------------------------------------------------ sites
 
-    private static string Sites(CommanderGameState? state, ToolArguments arguments)
+    private static DateTimeOffset Now(Func<DateTimeOffset>? now) => now?.Invoke() ?? DateTimeOffset.UtcNow;
+
+    private static string Sites(CommanderGameState? state, ToolArguments arguments, DateTimeOffset now)
     {
         if (state is null)
         {
@@ -189,17 +191,19 @@ public static class ColonisationCapability
 
         var finished = arguments.TryGetBoolean("include_finished", out var all) && all;
 
-        var sites = finished ? state.Colonisation.All : state.Colonisation.Active;
+        var sites = finished ? state.Colonisation.All : state.Colonisation.Current(now);
+        var stale = finished ? [] : state.Colonisation.NotSeenSince(now);
 
-        if (sites.Count == 0)
+        if (sites.Count == 0 && stale.Count == 0)
         {
             return Nothing(state, finished);
         }
 
         var report = new StringBuilder();
 
-        report.AppendLine(
-            $"{sites.Count} construction site{(sites.Count == 1 ? "" : "s")}, as of your last visit to each:");
+        report.AppendLine(sites.Count == 0
+            ? "No construction site is current."
+            : $"{sites.Count} construction site{(sites.Count == 1 ? "" : "s")}, as of your last visit to each:");
 
         foreach (var site in sites)
         {
@@ -229,6 +233,14 @@ public static class ColonisationCapability
             report.AppendLine($"  Seen {Stamp(site.SeenAt)}.");
         }
 
+        if (stale.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine(
+                $"{stale.Count} more not seen in over {ColonisationSites.CurrentFor.Days} days, the newest "
+                + $"not since {Stamp(stale[0].SeenAt)}.");
+        }
+
         report.AppendLine();
         report.AppendLine(Freshness);
 
@@ -256,9 +268,11 @@ public static class ColonisationCapability
             ? name.Trim()
             : null;
 
-        if (Choose(state, wanted) is not { } site)
+        var at = Now(now);
+
+        if (Choose(state, wanted, at) is not { } site)
         {
-            return ToolResult.Ok(Ambiguous(state, wanted));
+            return ToolResult.Ok(Ambiguous(state, wanted, at));
         }
 
         var report = new StringBuilder();
@@ -284,35 +298,62 @@ public static class ColonisationCapability
             return ToolResult.Ok(report.ToString().TrimEnd());
         }
 
-        var hold = state.Hold;
-        var left = outstanding.Sum(resource => resource.Remaining);
-        var aboard = outstanding.Sum(resource => Math.Min(resource.Remaining, hold.Of(resource.Symbol)));
+        var needs = ConstructionNeeds.For(site, state.Hold, state.Carrier);
+        var left = needs.Sum(need => need.Remaining);
+        var aboard = needs.Sum(need => Math.Min(need.Remaining, need.InHold));
+        var toBuy = needs.Sum(need => need.ToBuy);
 
         report.AppendLine();
         report.AppendLine(
             $"{outstanding.Count} commodit{(outstanding.Count == 1 ? "y" : "ies")} outstanding, "
             + $"{Tonnes(left)} in all:");
 
-        foreach (var resource in outstanding)
+        var others = state.Colonisation.Current(at).Where(other => other.MarketId != site.MarketId).ToList();
+
+        foreach (var need in needs)
         {
-            var detail = new List<string> { $"{Tonnes(resource.Remaining)} left" };
+            var resource = need.Resource;
+            var detail = new List<string> { $"{Tonnes(need.Remaining)} left" };
 
             // Capped at what is still wanted.
-            if (hold.Of(resource.Symbol) is var carried && carried > 0)
+            if (need.InHold > 0)
             {
-                detail.Add(carried >= resource.Remaining
+                detail.Add(need.InHold >= need.Remaining
                     ? "all of it in the hold"
-                    : $"{Tonnes(carried)} in the hold");
+                    : $"{Tonnes(need.InHold)} in the hold");
+            }
+
+            if (need.OnCarrier is > 0 and var onCarrier)
+            {
+                detail.Add($"{Tonnes(onCarrier)} on the carrier");
             }
 
             detail.Add($"{Number(resource.Provided)} of {Number(resource.Required)} delivered");
 
-            report.AppendLine($"  {resource.Name} — {string.Join(", ", detail)}.");
+            var line = $"  {resource.Name} — {string.Join(", ", detail)}.";
+
+            if (need.OrderOpen)
+            {
+                line += " An order is open on the carrier, so its figure may be off by what other "
+                    + "Commanders have traded.";
+            }
+
+            var sharing = others
+                .Where(other => other.Outstanding.Any(row => row.Symbol is not null && row.Symbol == resource.Symbol))
+                .Select(other => other.Where)
+                .ToList();
+
+            if (sharing.Count > 0 && (need.InHold > 0 || need.OnCarrier is > 0))
+            {
+                line += $" That stock is shared with {string.Join(" and ", sharing)}.";
+            }
+
+            report.AppendLine(line);
         }
 
         report.AppendLine();
 
-        foreach (var line in Logistics(state, site, left, aboard))
+        foreach (var line in Logistics(state, site, left, aboard, toBuy))
         {
             report.AppendLine(line);
         }
@@ -321,7 +362,7 @@ public static class ColonisationCapability
         {
             report.AppendLine();
             report.AppendLine(await SourceAsync(
-                    state, settings, trade, board, now, site, cancellationToken)
+                    state, settings, trade, board, now, site, needs, cancellationToken)
                 .ConfigureAwait(false));
         }
 
@@ -339,6 +380,7 @@ public static class ColonisationCapability
         SourcingBoard? board,
         Func<DateTimeOffset>? now,
         ConstructionSite site,
+        IReadOnlyList<ConstructionNeeds> needs,
         CancellationToken cancellationToken)
     {
         if (trade is null || settings is null || !settings.Current.Knowledge.GalaxySearch)
@@ -351,13 +393,20 @@ public static class ColonisationCapability
             return "I don't know where the Commander is right now, so I have nowhere to search out from.";
         }
 
+        var toSource = needs.Where(need => need.ToBuy > 0).Select(need => need.ToSource()).ToList();
+
+        if (toSource.Count == 0)
+        {
+            return "Your hold and carrier cover everything outstanding, so there is nothing to buy.";
+        }
+
         SourcingAnswer answer;
 
         try
         {
             answer = await trade
                 .SourceConstructionAsync(
-                    new SourcingSearch(near, state.Location.StationName, site.Outstanding), cancellationToken)
+                    new SourcingSearch(near, state.Location.StationName, toSource), cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (GalaxyUnavailableException error)
@@ -445,7 +494,8 @@ public static class ColonisationCapability
         CommanderGameState state,
         ConstructionSite site,
         int left,
-        int aboard)
+        int aboard,
+        int toBuy)
     {
         var hold = state.Hold;
 
@@ -460,29 +510,43 @@ public static class ColonisationCapability
             // Named as the ship's or the SRV's.
             var vessel = hold.IsShip ? "your hold" : "the SRV's hold";
 
-            yield return $"{Tonnes(aboard)} of that is already in {vessel}, leaving {Tonnes(left - aboard)} to find.";
+            yield return $"{Tonnes(aboard)} of that is already in {vessel}, leaving {Tonnes(toBuy)} to find.";
         }
         else
         {
-            yield return $"Nothing in your hold counts towards this one. {Tonnes(left)} to find.";
+            yield return $"Nothing in your hold counts towards this one. {Tonnes(toBuy)} to find.";
         }
 
         if (state.Ship.CargoCapacity is { } capacity and > 0)
         {
-            var runs = (left - aboard + capacity - 1) / capacity;
+            var runs = (toBuy + capacity - 1) / capacity;
 
             yield return runs <= 0
                 ? $"Your {Number(capacity)}-tonne hold covers what is left in one run."
                 : $"At {Number(capacity)} tonnes a run, that is {runs} more full load{(runs == 1 ? "" : "s")}.";
         }
 
-        // A tonnage and no manifest, which is the whole of what Elite writes.
-        if (state.Carrier is { Owned: true, CargoTonnes: { } tonnes })
+        if (state.Carrier is { Owned: true, Hold.Reconciled: true } counted)
         {
+            var netted = left - aboard - toBuy;
+            var checkedAt = Stamp(counted.Hold.CheckedAt);
+
+            yield return netted > 0
+                ? $"Your carrier's count matched Elite's cargo total when checked {checkedAt}; "
+                    + $"{Tonnes(netted)} of it counts towards this one."
+                : $"Your carrier's count matched Elite's cargo total when checked {checkedAt}; "
+                    + "none of it counts towards this one.";
+        }
+        else if (state.Carrier is { Owned: true, CargoTonnes: { } tonnes })
+        {
+            var since = state.Carrier.Hold.CheckedAt is { } lastChecked
+                ? $" The count by commodity has not matched since {Stamp(lastChecked)}, so none of it is netted off."
+                : string.Empty;
+
             yield return tonnes > 0
                 ? $"Your carrier was holding {Tonnes(tonnes)} of cargo as of {Stamp(state.Carrier.StatsSeenAt)}. "
                     + "Elite does not write what those tonnes are, so I cannot tell you how much of it "
-                    + "belongs on this manifest."
+                    + "belongs on this manifest." + since
                 : $"Your carrier was empty as of {Stamp(state.Carrier.StatsSeenAt)}.";
         }
 
@@ -502,21 +566,21 @@ public static class ColonisationCapability
     // ------------------------------------------------------------- choosing
 
     /// <summary>The site being asked about.</summary>
-    private static ConstructionSite? Choose(CommanderGameState state, string? wanted)
+    private static ConstructionSite? Choose(CommanderGameState state, string? wanted, DateTimeOffset now)
     {
         if (wanted is not null)
         {
             return state.Colonisation.Named(wanted);
         }
 
-        var active = state.Colonisation.Active;
+        var current = state.Colonisation.Current(now);
 
-        return active.Count == 1 ? active[0] : null;
+        return current.Count == 1 ? current[0] : null;
     }
 
-    private static string Ambiguous(CommanderGameState state, string? wanted)
+    private static string Ambiguous(CommanderGameState state, string? wanted, DateTimeOffset now)
     {
-        var active = state.Colonisation.Active;
+        var current = state.Colonisation.Current(now);
 
         if (wanted is not null)
         {
@@ -528,12 +592,15 @@ public static class ColonisationCapability
                     + $"{string.Join("; ", known.Select(site => site.Where))}.";
         }
 
-        if (active.Count == 0)
+        if (current.Count == 0)
         {
-            return Nothing(state, finished: false);
+            return state.Colonisation.NotSeenSince(now) is [var newest, ..]
+                ? $"No construction site is current. The most recent is {newest.Where}, not seen since "
+                    + $"{Stamp(newest.SeenAt)}. Ask for it by name to see what it last needed."
+                : Nothing(state, finished: false);
         }
 
-        return $"{active.Count} sites are under construction — {string.Join("; ", active.Select(site => site.Where))}. "
+        return $"{current.Count} sites are under construction — {string.Join("; ", current.Select(site => site.Where))}. "
             + "Which one?";
     }
 

@@ -256,7 +256,13 @@ public class WhereToBuyTheWholeBuildTests
         var trade = new FakeTrade();
 
         var registry = CapabilityRegistry.Build(
-            [ColonisationCapability.Create(() => gameState.Active, null, Settings(install), trade)]);
+            [ColonisationCapability.Create(
+                () => gameState.Active,
+                null,
+                Settings(install),
+                trade,
+                null,
+                () => new DateTimeOffset(2026, 8, 25, 12, 0, 0, TimeSpan.Zero))]);
 
         var result = await registry.InvokeAsync(
             "get_construction_needs", ToolArguments.FromJson("{}"), TestContext.Current.CancellationToken);

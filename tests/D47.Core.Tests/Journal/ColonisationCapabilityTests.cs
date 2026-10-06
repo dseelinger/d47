@@ -58,7 +58,9 @@ public class ColonisationCapabilityTests
 
     private static Task<ToolResult> Ask(GameStateStore gameState, string tool, string json = "{}") =>
         CapabilityRegistry
-            .Build([ColonisationCapability.Create(() => gameState.Active)])
+            .Build([ColonisationCapability.Create(
+                () => gameState.Active,
+                now: () => new DateTimeOffset(2026, 8, 17, 12, 0, 0, TimeSpan.Zero))])
             .InvokeAsync(tool, ToolArguments.FromJson(json), TestContext.Current.CancellationToken);
 
     private const string Docked =

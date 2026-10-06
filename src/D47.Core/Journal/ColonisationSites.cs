@@ -52,6 +52,58 @@ public sealed record ConstructionSite(long MarketId)
     };
 }
 
+/// <summary>One outstanding commodity at a site, netted against the hold and the carrier.</summary>
+/// <param name="Resource">The manifest row.</param>
+/// <param name="Remaining">What the site still needs.</param>
+/// <param name="InHold">Tonnes in the hold.</param>
+/// <param name="OnCarrier">Tonnes on the carrier, or null unless the Commander owns one whose ledger is reconciled.</param>
+/// <param name="OrderOpen">Whether an order is open on the carrier for this commodity.</param>
+/// <param name="ToBuy"><paramref name="Remaining"/> less the hold and the carrier, held at zero.</param>
+public sealed record ConstructionNeeds(
+    ConstructionResource Resource,
+    int Remaining,
+    int InHold,
+    int? OnCarrier,
+    bool OrderOpen,
+    int ToBuy)
+{
+    /// <summary>Every outstanding commodity of one site.</summary>
+    public static IReadOnlyList<ConstructionNeeds> For(
+        ConstructionSite site,
+        CargoHold hold,
+        CarrierState carrier)
+    {
+        ArgumentNullException.ThrowIfNull(site);
+        ArgumentNullException.ThrowIfNull(hold);
+        ArgumentNullException.ThrowIfNull(carrier);
+
+        var counted = carrier.Owned && carrier.Hold.Reconciled == true;
+
+        return
+        [
+            .. site.Outstanding.Select(resource =>
+            {
+                var inHold = hold.Of(resource.Symbol);
+                int? onCarrier = counted && resource.Symbol is { } symbol
+                    ? carrier.Hold.Holding(symbol) ?? 0
+                    : null;
+
+                return new ConstructionNeeds(
+                    resource,
+                    resource.Remaining,
+                    inHold,
+                    onCarrier,
+                    carrier.Owned && resource.Symbol is { } named && carrier.Hold.OrderOpen(named),
+                    Math.Max(0, resource.Remaining - inHold - (onCarrier ?? 0)));
+            }),
+        ];
+    }
+
+    /// <summary>The row a sourcing search asks for: <see cref="ToBuy"/> still required, none provided.</summary>
+    public ConstructionResource ToSource() =>
+        Resource with { Required = ToBuy, Provided = 0 };
+}
+
 /// <summary>
 /// Every construction site the Commander's journal has reported (Phase 17, "A colonisation plan writes
 /// the checklist").
@@ -73,6 +125,17 @@ public sealed record ColonisationSites
     /// <summary>Sites still being built.</summary>
     public IReadOnlyList<ConstructionSite> Active =>
         [.. All.Where(site => !site.Complete && !site.Failed)];
+
+    /// <summary>How recently an active site must have been seen to count as current.</summary>
+    public static readonly TimeSpan CurrentFor = TimeSpan.FromDays(14);
+
+    /// <summary>Active sites seen within <see cref="CurrentFor"/> of <paramref name="now"/>.</summary>
+    public IReadOnlyList<ConstructionSite> Current(DateTimeOffset now) =>
+        [.. Active.Where(site => now - site.SeenAt <= CurrentFor)];
+
+    /// <summary>Active sites last seen longer ago than <see cref="CurrentFor"/>, newest first.</summary>
+    public IReadOnlyList<ConstructionSite> NotSeenSince(DateTimeOffset now) =>
+        [.. Active.Where(site => now - site.SeenAt > CurrentFor)];
 
     public bool IsKnown => Sites.Count > 0;
 

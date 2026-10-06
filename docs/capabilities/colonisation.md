@@ -206,9 +206,15 @@ at all — not even the one d47 already ships for other things.
 ### Several sites at once
 
 Three were open simultaneously in the corpus, so this is a list rather than a "current site". With
-one under construction, asking what is needed just answers; with several, d47 names them and asks
-which. You can also name one directly — by its station or its system, whichever you would say out
-loud.
+one current site, asking what is needed just answers; with several, d47 names them and asks which.
+You can also name one directly — by its station or its system, whichever you would say out loud.
+
+**A site is current for 14 days after you last saw it.** Elite writes nothing when a Commander walks
+away from a site, so an unfinished site is current only if it was seen within
+`ColonisationSites.CurrentFor` (14 days) of now; the longest gap between two sightings of a site that
+did complete was 9 days. An older unfinished site is "not seen since" its date. It is not hidden: the
+site list gives it one line, how many there are and when the newest was seen, and naming one still
+answers about it. With no site named and none current, d47 names the most recent one and its date.
 
 A finished site keeps reporting for a while — 2 to 60 more events after it completes — so
 **completion is the `ConstructionComplete` flag and never "the events stopped"**. Complete and failed
@@ -251,6 +257,19 @@ Cargo reaches a carrier by routes the journal never itemises: its own commodity 
 Commander's delivery, anything loaded before the file d47 is reading. So an itemised carrier
 manifest would be wrong twice as often as right, and it would look authoritative every time. The
 tonnage is the half d47 can state accurately.
+
+### What is left to buy
+
+For each outstanding commodity d47 takes the hold and the carrier off what the site still needs:
+`ToBuy` is the remaining figure less both, held at zero. The carrier counts only when you own one and
+its per-commodity count matched Elite's cargo total at the last `CarrierStats`; otherwise it counts
+for nothing and the answer says the count has not matched since that date. A commodity with an open
+carrier order says its carrier figure may be off by what other Commanders have traded.
+
+Each site is netted on its own. How you split a carrier's steel between two builds is yours to decide
+and the journal does not say, so where another current site needs the same commodity the answer says
+the stock is shared with it. With `where_to_buy`, the search is for `ToBuy`, and a commodity with
+nothing to buy is left out.
 
 ### Your deliveries, apart from everybody else's
 
