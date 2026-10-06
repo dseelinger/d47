@@ -526,6 +526,11 @@ public static class ColonisationCapability
                 : $"At {Number(capacity)} tonnes a run, that is {runs} more full load{(runs == 1 ? "" : "s")}.";
         }
 
+        if (ColonisationRules.HaulSentence(site, state.Ship.CargoCapacity) is { } haul)
+        {
+            yield return $"{haul}.";
+        }
+
         if (state.Carrier is { Owned: true, Hold.Reconciled: true } counted)
         {
             var netted = left - aboard - toBuy;

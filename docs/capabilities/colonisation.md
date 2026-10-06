@@ -271,6 +271,34 @@ and the journal does not say, so where another current site needs the same commo
 the stock is shared with it. With `where_to_buy`, the search is for `ToBuy`, and a commodity with
 nothing to buy is left out.
 
+### The colonisation deadlines
+
+Claiming a system at the colonisation contact starts three clocks, which d47 states from
+`ColonisationRules` (checked 2026-09-27):
+
+- **24 hours** from the claim to deploy the beacon.
+- **Four weeks** from the claim to finish the system's primary port.
+- A squadron, even of one, extends the exclusive claim window from **thirty minutes to a day**.
+
+```csharp
+public static readonly TimeSpan BeaconWindow = TimeSpan.FromHours(24);
+public static readonly TimeSpan PrimaryPortWindow = TimeSpan.FromDays(28);
+public static readonly TimeSpan ExclusiveClaimWindow = TimeSpan.FromMinutes(30);
+public static readonly TimeSpan SquadronExclusiveClaimWindow = TimeSpan.FromDays(1);
+```
+
+At the claim d47 says the first two, and the squadron rule when you are in no squadron. Two hours
+before the beacon deadline it says so, unless a `ColonisationBeaconDeployed` has arrived. It says the
+primary port has seven days left and again 48 hours left, unless the system's first construction
+site reports complete. Each reminder is said once until d47 restarts, and a moment that passed while
+d47 was off is said at the next start as the latest one reached. A claim from an earlier session is
+recovered from the journal history. Nothing is said for a deadline already past.
+
+When you dock at a construction site and its depot reports, d47 also says how many tonnes are left
+and about how many trips that is in the ship you are flying, once for each site each session. The
+same sentence ends the `get_construction_needs` answer. All of it is the **Colonisation deadlines**
+row under Callouts.
+
 ### Your deliveries, apart from everybody else's
 
 `ProvidedAmount` on the manifest is what *everybody* has handed in. On a build several Commanders are

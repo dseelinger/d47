@@ -48,6 +48,8 @@ public static class ColonisationBackfill
                 // ColonisationContribution is left out: a running sum folded here and again by the live reader
                 // would count the current journal twice.
                 if (!line.Contains("\"event\":\"ColonisationConstructionDepot\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"ColonisationSystemClaim\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"ColonisationBeaconDeployed\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)

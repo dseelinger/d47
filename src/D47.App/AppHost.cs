@@ -3131,6 +3131,7 @@ public sealed class AppHost : IDisposable
             // Where a sale of the Community Goal commodity leaves the session, net of cost (#296).
             .Add(new CommunityGoalSaleCallout(ledger, communityGoal))
             .Add(new CommunityGoalExpiryCallout())
+            .Add(new ColonisationCallout())
             .Add(new SessionLengthCallout())
             .Add(new FighterCallout())
             .Add(new DockingCallout())
@@ -3251,6 +3252,7 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("adventure", callouts.Adventure, now);
         engine.SetEnabled("community-goal-sales", callouts.CommunityGoalSales, now);
         engine.SetEnabled("community-goal-expiry", callouts.CommunityGoalExpiry, now);
+        engine.SetEnabled("colonisation", callouts.Colonisation, now);
         engine.SetEnabled("session-length", callouts.SessionLength, now);
         engine.SetEnabled("fighter", callouts.Fighter, now);
         engine.SetEnabled("docking", callouts.DockingPad, now);

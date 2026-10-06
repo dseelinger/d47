@@ -606,6 +606,9 @@ public sealed record CalloutSettings
     /// <summary>A warning when a joined community goal has eight hours or less left (#640).</summary>
     public bool CommunityGoalExpiry { get; init; } = true;
 
+    /// <summary>The colonisation deadlines, squadron rule and haul size (#580).</summary>
+    public bool Colonisation { get; init; } = true;
+
     /// <summary>A reminder once per session when it has run for <see cref="SessionLengthHours"/> (#641).</summary>
     public bool SessionLength { get; init; }
 

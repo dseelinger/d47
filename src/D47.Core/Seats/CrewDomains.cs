@@ -78,6 +78,7 @@ public static class CrewDomains
         "reminders",
         "fighter",
         "community-goal-expiry",
+        "colonisation",
         "outstanding-crimes",
     };
 

@@ -104,6 +104,18 @@ public sealed record ConstructionNeeds(
         Resource with { Required = ToBuy, Provided = 0 };
 }
 
+/// <summary>A system the Commander claimed at the colonisation contact.</summary>
+public sealed record ColonisationClaim(string StarSystem, DateTimeOffset ClaimedAt)
+{
+    public long? SystemAddress { get; init; }
+
+    /// <summary>When the beacon was deployed in the system, or null while it has not been.</summary>
+    public DateTimeOffset? BeaconDeployedAt { get; init; }
+
+    /// <summary>The first construction site seen in the system, which is its primary port.</summary>
+    public long? FirstSiteMarketId { get; init; }
+}
+
 /// <summary>
 /// Every construction site the Commander's journal has reported (Phase 17, "A colonisation plan writes
 /// the checklist").
@@ -118,6 +130,9 @@ public sealed record ColonisationSites
     /// <summary>What this Commander has handed over, per site, per commodity symbol.</summary>
     private IReadOnlyDictionary<long, IReadOnlyDictionary<string, int>> Contributions { get; init; } =
         new Dictionary<long, IReadOnlyDictionary<string, int>>();
+
+    /// <summary>Systems claimed, oldest first.</summary>
+    public IReadOnlyList<ColonisationClaim> Claims { get; private init; } = [];
 
     public IReadOnlyList<ConstructionSite> All =>
         [.. Sites.Values.OrderByDescending(site => site.SeenAt)];
@@ -137,7 +152,7 @@ public sealed record ColonisationSites
     public IReadOnlyList<ConstructionSite> NotSeenSince(DateTimeOffset now) =>
         [.. Active.Where(site => now - site.SeenAt > CurrentFor)];
 
-    public bool IsKnown => Sites.Count > 0;
+    public bool IsKnown => Sites.Count > 0 || Claims.Count > 0;
 
     public ConstructionSite? ById(long marketId) => Sites.GetValueOrDefault(marketId);
 
@@ -185,6 +200,16 @@ public sealed record ColonisationSites
             return Contribute(journalEvent);
         }
 
+        if (journalEvent.Kind == "ColonisationSystemClaim")
+        {
+            return Claim(journalEvent);
+        }
+
+        if (journalEvent.Kind == "ColonisationBeaconDeployed")
+        {
+            return Beacon(journalEvent, starSystem);
+        }
+
         if (journalEvent.Kind != "ColonisationConstructionDepot"
             || journalEvent.Long("MarketID") is not { } marketId)
         {
@@ -222,8 +247,64 @@ public sealed record ColonisationSites
 
         var updated = new Dictionary<long, ConstructionSite>(Sites) { [marketId] = site };
 
-        return this with { Sites = updated };
+        return this with { Sites = updated, Claims = WithFirstSite(starSystem, marketId) };
     }
+
+    /// <summary>The newest claim in <paramref name="starSystem"/> without a primary port yet gets this site.</summary>
+    private IReadOnlyList<ColonisationClaim> WithFirstSite(string? starSystem, long marketId)
+    {
+        if (starSystem is null
+            || Claims.Any(claim => claim.FirstSiteMarketId == marketId)
+            || Claims.LastOrDefault(claim => Same(claim.StarSystem, starSystem)) is not { FirstSiteMarketId: null } open)
+        {
+            return Claims;
+        }
+
+        return [.. Claims.Select(claim => claim == open ? claim with { FirstSiteMarketId = marketId } : claim)];
+    }
+
+    private ColonisationSites Claim(JournalEvent journalEvent)
+    {
+        if (journalEvent.String("StarSystem") is not { Length: > 0 } system)
+        {
+            return this;
+        }
+
+        var claimed = new ColonisationClaim(system, journalEvent.Timestamp)
+        {
+            SystemAddress = journalEvent.Long("SystemAddress"),
+        };
+
+        return this with
+        {
+            Claims =
+            [
+                .. Claims.Where(claim => claim.ClaimedAt != claimed.ClaimedAt || !Same(claim.StarSystem, system)),
+                claimed,
+            ],
+        };
+    }
+
+    /// <summary>The newest undeployed claim on the system the beacon went up in, or the newest when the system is unknown.</summary>
+    private ColonisationSites Beacon(JournalEvent journalEvent, string? starSystem)
+    {
+        var pending = Claims.LastOrDefault(claim =>
+            claim.BeaconDeployedAt is null && (starSystem is null || Same(claim.StarSystem, starSystem)));
+
+        return pending is null
+            ? this
+            : this with
+            {
+                Claims =
+                [
+                    .. Claims.Select(claim =>
+                        claim == pending ? claim with { BeaconDeployedAt = journalEvent.Timestamp } : claim),
+                ],
+            };
+    }
+
+    private static bool Same(string? left, string? right) =>
+        string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// These sites under <paramref name="live"/>: each site is the one seen later, and a tie goes to the live
@@ -243,7 +324,30 @@ public sealed record ColonisationSites
             }
         }
 
-        return live with { Sites = merged };
+        var claims = new List<ColonisationClaim>(live.Claims);
+
+        foreach (var claim in Claims)
+        {
+            var index = claims.FindIndex(
+                held => held.ClaimedAt == claim.ClaimedAt && Same(held.StarSystem, claim.StarSystem));
+
+            if (index < 0)
+            {
+                claims.Add(claim);
+                continue;
+            }
+
+            var kept = claims[index];
+
+            claims[index] = kept with
+            {
+                SystemAddress = kept.SystemAddress ?? claim.SystemAddress,
+                BeaconDeployedAt = kept.BeaconDeployedAt ?? claim.BeaconDeployedAt,
+                FirstSiteMarketId = kept.FirstSiteMarketId ?? claim.FirstSiteMarketId,
+            };
+        }
+
+        return live with { Sites = merged, Claims = [.. claims.OrderBy(claim => claim.ClaimedAt)] };
     }
 
     /// <summary>One delivery, added to what this Commander has already handed over at that site.</summary>

@@ -1004,6 +1004,21 @@ when d47 starts is said on the first tick after it has caught up. Nothing is sai
 catching up on a journal it did not watch being written. Switching this off silences this warning and
 nothing else.
 
+#### Colonisation deadlines {#colonisation}
+
+At a colonisation claim, the beacon and primary port deadlines and, when you are in no squadron, the
+squadron rule ([#580](https://github.com/dseelinger/d47/issues/580)). Reminders follow two hours
+before the beacon deadline and at seven days and 48 hours before the primary port deadline. When a
+construction site's depot reports, it says how many trips the remaining tonnes need in this ship. It
+is on by default.
+
+```text
+You have 24 hours to deploy the beacon in Wolf 359, and four weeks to finish its primary port.
+```
+
+The rules and the date they were checked are on the [colonisation page](colonisation.html).
+Switching this off silences all of it and nothing else.
+
 #### Fighter pilot {#fighter}
 
 Your active hired pilot says so when the fighter launches, docks, is lost or is rebuilt

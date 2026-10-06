@@ -55,6 +55,8 @@ public static class CalloutCapability
 
     public const string CarrierFuelKey = "callouts.carrierFuel";
     public const string CommunityGoalExpiryKey = "callouts.communityGoalExpiry";
+
+    public const string ColonisationKey = "callouts.colonisation";
     public const string FighterKey = "callouts.fighter";
     public const string DockingPadKey = "callouts.dockingPad";
     public const string SessionLengthKey = "callouts.sessionLength";
@@ -516,6 +518,16 @@ public static class CalloutCapability
                 "community goal expiry",
                 s => s.Callouts.CommunityGoalExpiry,
                 (s, v) => s with { Callouts = s.Callouts with { CommunityGoalExpiry = v } }),
+
+            Toggle(
+                ColonisationKey,
+                "Colonisation deadlines",
+                "At a system claim, the beacon and primary port deadlines and the squadron rule; reminders as they near; "
+                + "and how many trips a construction site's remaining tonnes need in this ship.",
+                "colonisation",
+                "colonisation deadlines",
+                s => s.Callouts.Colonisation,
+                (s, v) => s with { Callouts = s.Callouts with { Colonisation = v } }),
 
             Toggle(
                 FighterKey,
