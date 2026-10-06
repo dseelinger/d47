@@ -14,6 +14,9 @@ public static class LearnedPhrasesCapability
 
     public const string AddTool = "add_phrase";
 
+    /// <summary>Starts the spoken exchange that teaches a phrase; the turn loop runs it in place of the handler.</summary>
+    public const string TeachTool = "teach_phrase";
+
     public static CapabilityDescriptor Create(
         LearnedPhrasesStore? store, Func<string> frontierId, Func<PhraseBook>? phraseBook = null) => new()
     {
@@ -21,10 +24,25 @@ public static class LearnedPhrasesCapability
         Group = "Voice",
         Name = "Learned phrases",
         Summary = "What the Commander has taught D47 another way of saying a command, and forgetting one.",
-        Examples = ["forget 'set focus on elite'"],
+        Examples = ["teach a phrase", "forget 'set focus on elite'"],
         Display = new CapabilityDisplay { PanelTitle = "Learned phrases", Order = 4 },
         Tools =
         [
+            new ToolDefinition
+            {
+                Name = TeachTool,
+                Description =
+                    "Start teaching D47 a new wording by voice: it asks for the words, then the phrase they "
+                    + "run, then confirms. Never callable by the model.",
+                Protected = true,
+                Commands =
+                [
+                    new ToolCommandPhrase("teach a phrase", new Dictionary<string, string>(StringComparer.Ordinal)),
+                    new ToolCommandPhrase("new phrase", new Dictionary<string, string>(StringComparer.Ordinal)),
+                ],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(
+                    "Say \"teach a phrase\" and D47 asks for the words, then the phrase they run.")),
+            },
             new ToolDefinition
             {
                 Name = AddTool,

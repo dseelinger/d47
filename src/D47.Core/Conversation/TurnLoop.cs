@@ -111,6 +111,19 @@ public sealed class TurnLoop(
     /// <summary>Engineers whose invitation requirement has been offered for a remark this session (#26).</summary>
     private readonly HashSet<int> _quippedEngineers = [];
 
+    /// <summary>A phrase being taught by voice, waiting on the Commander's next reply; null when none is.</summary>
+    private Teaching? _teaching;
+
+    /// <summary>The "did you mean" choices put while a phrase is being taught.</summary>
+    private readonly OfferWindow _teachingChoices = new();
+
+    /// <summary>The wording captured so far, and the phrase it will run once that is known.</summary>
+    private sealed record Teaching(string? Wording = null, string? Phrase = null);
+
+    /// <summary>Replies that end a teaching exchange at any step.</summary>
+    private static readonly HashSet<string> CancelsTeaching =
+        new(["cancel", "cancel that", "never mind", "nevermind", "forget it"], StringComparer.OrdinalIgnoreCase);
+
     /// <summary>How hard to try before saying so out loud.</summary>
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
 
@@ -457,6 +470,17 @@ public sealed class TurnLoop(
             }
         }
 
+        // 0.25. A reply in a teaching exchange, read before addressed lines, learned phrases or any route.
+        if (_teaching is { } teaching)
+        {
+            await foreach (var turnEvent in TeachingAsync(teaching, input, source, cancellationToken).ConfigureAwait(false))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
         // 0.5. Addressed to someone other than the ship's AI.
         switch (await AddressedAsync(input, cancellationToken).ConfigureAwait(false))
         {
@@ -539,7 +563,7 @@ public sealed class TurnLoop(
                     yield break;
                 }
 
-                if (route.Said is { } said && ShouldOfferToLearn(said, route.Phrase))
+                if (route.Said is { } said && _teaching is null && ShouldOfferToLearn(said, route.Phrase))
                 {
                     _pendingLearn = (said, route.Phrase);
 
@@ -986,12 +1010,173 @@ public sealed class TurnLoop(
     }
 
     /// <summary>Whether a phrase (as opposed to an arbitrary utterance) is one the router still declares.</summary>
-    private bool InBook(string phrase)
-    {
-        var reduced = KeywordRouter.Utterance(phrase);
+    private bool InBook(string phrase) => BookPhrase(phrase) is not null;
 
-        return keywordRouter.Book.Entries.Any(entry =>
-            string.Equals(KeywordRouter.Utterance(entry.Phrase), reduced, StringComparison.OrdinalIgnoreCase));
+    /// <summary>The declared phrase an utterance says exactly, as the book writes it, or null.</summary>
+    private string? BookPhrase(string utterance)
+    {
+        var reduced = KeywordRouter.Utterance(utterance);
+
+        return keywordRouter.Book.Entries.FirstOrDefault(entry =>
+            string.Equals(KeywordRouter.Utterance(entry.Phrase), reduced, StringComparison.OrdinalIgnoreCase))?.Phrase;
+    }
+
+    /// <summary>
+    /// One reply in the exchange that teaches a phrase by voice: the wording, word for word and never routed;
+    /// then the phrase it runs, said or picked from a "did you mean"; then yes to store it through
+    /// <c>add_phrase</c>. A cancel at any step ends it with nothing learned.
+    /// </summary>
+    private async IAsyncEnumerable<TurnEvent> TeachingAsync(
+        Teaching teaching,
+        string input,
+        InputSource source,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (CancelsTeaching.Contains(KeywordRouter.Utterance(input)))
+        {
+            _teaching = null;
+            _teachingChoices.Close();
+
+            foreach (var turnEvent in Offered("Dropped.", input))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
+        if (teaching.Wording is null)
+        {
+            var wording = KeywordRouter.Utterance(PhrasePattern.Literal(input));
+
+            // A learned wording is read ahead of every offer, so one that answers an offer would take over the answer.
+            var answers = wording.Length > 0 && AnswersAnOffer(wording);
+
+            if (wording.Length > 0 && !answers)
+            {
+                _teaching = teaching with { Wording = wording };
+            }
+
+            var asked = answers ? $"'{wording}' answers questions, so it cannot be taught. What do you want to say?"
+                : wording.Length > 0 ? "What should it do?"
+                : "What do you want to say?";
+
+            foreach (var turnEvent in Offered(asked, input))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
+        if (teaching.Phrase is null)
+        {
+            string? phrase = null;
+
+            if (_teachingChoices.IsStanding)
+            {
+                switch (_teachingChoices.Read(input))
+                {
+                    case OfferReading.Picked picked:
+                        phrase = picked.Choice.Name;
+                        break;
+
+                    case OfferReading.Unclear:
+                        foreach (var turnEvent in Offered("Which one?", input))
+                        {
+                            yield return turnEvent;
+                        }
+
+                        yield break;
+
+                    case OfferReading.Declined:
+                        _teaching = null;
+
+                        foreach (var turnEvent in Offered("Dropped.", input))
+                        {
+                            yield return turnEvent;
+                        }
+
+                        yield break;
+                }
+            }
+
+            phrase ??= BookPhrase(input)
+                       ?? (LearnedPhraseFor?.Invoke(input) is { } taught ? BookPhrase(taught) : null);
+
+            if (phrase is null)
+            {
+                List<PhraseCandidate> offered = [.. keywordRouter.Book.Candidates(input, source).Take(OfferedAtMost)];
+
+                if (offered.Count == 0)
+                {
+                    _teaching = null;
+
+                    foreach (var turnEvent in Offered("No phrase matches that.", input, TurnOutcome.Unsure))
+                    {
+                        yield return turnEvent;
+                    }
+
+                    yield break;
+                }
+
+                _teachingChoices.Open(new Offer(
+                [
+                    .. offered.Select(candidate => new OfferChoice(
+                        candidate.Phrase, new OfferTarget.RoutePhrase(candidate.Phrase, candidate.Guarded))),
+                ]));
+
+                foreach (var turnEvent in Offered(DidYouMean(offered), input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
+
+            _teaching = teaching with { Phrase = phrase };
+
+            foreach (var turnEvent in Offered($"'{teaching.Wording}' will do '{phrase}'. Keep it?", input))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
+        _teaching = null;
+
+        if (!IsAffirmative(input))
+        {
+            foreach (var turnEvent in Offered("Dropped.", input))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["pattern"] = teaching.Wording,
+            ["phrase"] = teaching.Phrase,
+        };
+
+        var taughtResult = await capabilities
+            .InvokeAsync(Capabilities.Builtin.LearnedPhrasesCapability.AddTool, new ToolArguments(arguments), cancellationToken)
+            .ConfigureAwait(false);
+
+        logger.LogInformation(
+            "Taught \"{Wording}\" for \"{Phrase}\" by voice: {Outcome}",
+            teaching.Wording,
+            teaching.Phrase,
+            taughtResult.IsError ? "refused" : "stored");
+
+        foreach (var turnEvent in Offered(
+                     taughtResult.Spoken, input, taughtResult.IsError ? TurnOutcome.Failed : TurnOutcome.Answered))
+        {
+            yield return turnEvent;
+        }
     }
 
     /// <summary>Reads a yes/no answer the same way the offer window would, for the one standing choice.</summary>
@@ -1001,6 +1186,19 @@ public sealed class TurnLoop(
         probe.Open(new Offer([new OfferChoice("that", new OfferTarget.Answer(() => new OfferAnswer(string.Empty)))]));
 
         return probe.Read(input) is OfferReading.Picked;
+    }
+
+    /// <summary>Whether an utterance is read as a yes, a no or a pick by any standing offer.</summary>
+    private static bool AnswersAnOffer(string input)
+    {
+        var probe = new OfferWindow();
+        probe.Open(new Offer(
+        [
+            new OfferChoice("that", new OfferTarget.Answer(() => new OfferAnswer(string.Empty))),
+            new OfferChoice("other", new OfferTarget.Answer(() => new OfferAnswer(string.Empty))),
+        ]));
+
+        return probe.Read(input) is not OfferReading.Unrelated;
     }
 
     private IEnumerable<TurnEvent> Offered(string text, string input, TurnOutcome outcome = TurnOutcome.Answered)
@@ -1101,6 +1299,25 @@ public sealed class TurnLoop(
         {
             routing.Handled = true;
             yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            if (toolCommand.ToolName == Capabilities.Builtin.LearnedPhrasesCapability.TeachTool)
+            {
+                var flying = CommanderId?.Invoke() is { Length: > 0 };
+                var asked = flying ? "What do you want to say?" : "Nobody is flying, so there is nobody to teach a phrase to.";
+
+                if (flying)
+                {
+                    _teaching = new Teaching();
+                    _teachingChoices.Close();
+                }
+
+                Said(asked, input);
+
+                yield return new TurnEvent.TextDelta(asked);
+                yield return new TurnEvent.Completed(new TurnResult(
+                    flying ? TurnOutcome.Answered : TurnOutcome.Failed, TurnRoute.ActionCommand, asked, Effort: null, Cost: null));
+                yield break;
+            }
 
             var actioned = await capabilities
                 .InvokeAsync(toolCommand.ToolName, toolCommand.Arguments, cancellationToken)
