@@ -226,7 +226,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         window.Show();
         Jobs();
 
-        Box2(panel).Text = "hull";
+        Box2(panel).Text = "hull pictures";
         Jobs();
 
         var button = OtherTabsButtons2(view).Single(b => (b.Content as string) == "Open Asset Mgmt › Ships");

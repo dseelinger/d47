@@ -311,6 +311,21 @@ and nothing you could only do to a mesh.
 everywhere uses for *the row you have selected* — so the fleet opened looking as though Directive
 47 had already picked a ship for you. **CURRENT SHIP** on the drawing says the one thing it means.
 
+### The hull viewer on the graphics card {#hull-gpu}
+
+A hull with a mesh is drawn by the processor unless **Hull viewer on the graphics card** is on, in
+Asset Mgmt › Ships' own settings strip. On, the viewer and its whole-window size are drawn through
+OpenGL, multisampled, so a large window turns smoothly. It is off unless you turn it on.
+
+**Best with Elite not running, since the two share the graphics card.** The window already draws
+through the graphics card, so this adds work to it rather than starting it. The viewer draws only
+while it is being moved; a still viewer costs nothing. The case where the sharing matters is a
+whole-window viewer left open while you play.
+
+**With no graphics card path, the processor draws.** Where the window has no GPU interop — software
+rendering, or a driver that cannot set the viewer up or loses it — the viewer is drawn by the processor
+at the same pose, and the log says why, once a session.
+
 ### Owned is derived. Intended is authored.
 
 The same rule your checklist already draws between a line the journal settles and a line a person

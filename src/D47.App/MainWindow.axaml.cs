@@ -239,6 +239,9 @@ public partial class MainWindow : Window
             ShipArt.Folder = host.Paths.Ships;
             ShipArt.Shipped = host.Paths.ShippedShips;
 
+            // Whether the hull viewer draws through OpenGL, and where it says why it does not.
+            HullViewer.Enable(() => host.Settings.Current.Ui.HullGpu, host.Loggers.CreateLogger("D47.App.Panel.HullViewer"));
+
             // And where the two large files per hull come from when they are wanted.
             ShipArtStore.Enable(
                 host.Paths.Ships,
@@ -515,6 +518,11 @@ public partial class MainWindow : Window
             if (change.Key == ShipsCapability.HullArtKey)
             {
                 Panel.InvalidateLoadout();
+            }
+
+            if (change.Key == ShipsCapability.HullGpuKey)
+            {
+                HullViewer.Switched();
             }
         });
 

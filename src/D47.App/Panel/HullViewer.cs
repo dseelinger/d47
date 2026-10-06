@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Avalonia;
@@ -11,11 +12,14 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Reactive;
+using Avalonia.Rendering.Composition;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Hulls;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.App.Panel;
 
@@ -48,8 +52,10 @@ internal sealed class HullPose(HullMesh mesh)
 }
 
 /// <summary>
-/// A hull mesh drawn on the CPU into a bitmap sized to the control in device pixels, turned with the mouse and
-/// the keyboard. Draws only on input, resize or theme change, at most once per frame.
+/// A hull mesh turned with the mouse and the keyboard, drawn through <see cref="HullGlView"/> when the Hull
+/// viewer on the graphics card setting is on and the window has GPU interop, otherwise on the CPU into a
+/// bitmap sized to the control in device pixels. Draws only on input, resize or theme change, at most once
+/// per frame.
 /// </summary>
 internal sealed class HullViewer : Control
 {
@@ -62,9 +68,19 @@ internal sealed class HullViewer : Control
     /// <summary>One Ctrl+arrow press, as a share of the viewer's height.</summary>
     private const double KeyPan = 0.05;
 
+    /// <summary>Each fallback reason already logged this session.</summary>
+    private static readonly HashSet<string> Told = [];
+
+    private static Func<bool> gpu = () => false;
+    private static ILogger log = NullLogger.Instance;
+
     private readonly HullPose _pose;
 
     private IDisposable[] _inks = [];
+
+    private HullGlView? _gl;
+    private int _choice;
+    private bool _choosing;
 
     private WriteableBitmap? _bitmap;
     private uint[] _pixels = [];
@@ -87,6 +103,9 @@ internal sealed class HullViewer : Control
         };
     }
 
+    /// <summary>Raised when the Hull viewer on the graphics card setting changes.</summary>
+    private static event Action? GpuSwitched;
+
     /// <summary>Takes whatever height it is given, rather than the still's shape.</summary>
     internal bool Fills { get; init; }
 
@@ -94,6 +113,19 @@ internal sealed class HullViewer : Control
 
     /// <summary>The last frame drawn, or null before the first.</summary>
     internal WriteableBitmap? Frame => _bitmap;
+
+    /// <summary>Whether this viewer is drawing through OpenGL.</summary>
+    internal bool OnGpu => _gl is not null;
+
+    /// <summary>Where the setting is read from and where a fallback's reason is logged.</summary>
+    internal static void Enable(Func<bool> onGpu, ILogger logger)
+    {
+        gpu = onGpu;
+        log = logger;
+    }
+
+    /// <summary>Chooses every attached viewer's drawing path again, after the setting changes.</summary>
+    internal static void Switched() => GpuSwitched?.Invoke();
 
     protected override Size MeasureOverride(Size availableSize)
     {
@@ -104,11 +136,19 @@ internal sealed class HullViewer : Control
             : new Size(width, width * Aspect);
     }
 
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        _gl?.Arrange(new Rect(finalSize));
+
+        return finalSize;
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
 
         _pose.Changed += Request;
+        GpuSwitched += Choose;
 
         // A theme change replaces these brushes, which is the redraw's cue.
         _inks =
@@ -117,7 +157,7 @@ internal sealed class HullViewer : Control
             Application.Current!.Resources.GetResourceObservable(ThemeManager.WhiteKey).Subscribe(new AnonymousObserver<object?>(_ => Request())),
         ];
 
-        Request();
+        Choose();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -125,6 +165,10 @@ internal sealed class HullViewer : Control
         base.OnDetachedFromVisualTree(e);
 
         _pose.Changed -= Request;
+        GpuSwitched -= Choose;
+        _choice++;
+        _choosing = false;
+        Drop();
 
         foreach (var ink in _inks)
         {
@@ -149,7 +193,12 @@ internal sealed class HullViewer : Control
 
     public override void Render(DrawingContext context)
     {
-        if (_bitmap is { } bitmap)
+        if (_gl is not null)
+        {
+            // The GL view takes no input, so this is what the pointer hits.
+            context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
+        }
+        else if (_bitmap is { } bitmap)
         {
             // At 96 DPI the bitmap's size and its pixel size agree, so the whole frame is drawn at any display scaling.
             context.DrawImage(bitmap, new Rect(0, 0, bitmap.PixelSize.Width, bitmap.PixelSize.Height), new Rect(Bounds.Size));
@@ -159,6 +208,17 @@ internal sealed class HullViewer : Control
     /// <summary>Asks for one draw on the next frame; further asks before it runs are folded into it.</summary>
     private void Request()
     {
+        if (_choosing)
+        {
+            return;
+        }
+
+        if (_gl is { } gl)
+        {
+            gl.RequestNextFrameRendering();
+            return;
+        }
+
         if (_queued || TopLevel.GetTopLevel(this) is not { } top)
         {
             return;
@@ -172,9 +232,116 @@ internal sealed class HullViewer : Control
         });
     }
 
+    /// <summary>The CPU when the setting is off; otherwise OpenGL once the window's GPU interop is confirmed.</summary>
+    private void Choose()
+    {
+        var choice = ++_choice;
+
+        if (!gpu())
+        {
+            _choosing = false;
+            UseCpu();
+            return;
+        }
+
+        if (_gl is not null)
+        {
+            return;
+        }
+
+        _choosing = true;
+        _ = ChooseGpuAsync(choice);
+    }
+
+    private async Task ChooseGpuAsync(int choice)
+    {
+        ICompositionGpuInterop? interop = null;
+        string? reason = null;
+
+        try
+        {
+            interop = (ElementComposition.GetElementVisual(this) ?? ElementComposition.GetElementVisual(TopLevel.GetTopLevel(this)!))?.Compositor is { } compositor
+                ? await compositor.TryGetCompositionGpuInterop()
+                : null;
+        }
+        catch (InvalidOperationException ex)
+        {
+            reason = $"the window's GPU interop could not be read: {ex.Message}";
+        }
+
+        if (choice != _choice)
+        {
+            return;
+        }
+
+        _choosing = false;
+
+        if (interop is null)
+        {
+            Fall(reason ?? "the window has no GPU interop, so it is drawn in software");
+            UseCpu();
+            return;
+        }
+
+        UseGl();
+    }
+
+    private void UseGl()
+    {
+        _bitmap?.Dispose();
+        _bitmap = null;
+        _pixels = [];
+
+        var gl = new HullGlView(_pose, Shade) { IsHitTestVisible = false };
+
+        gl.Failed += reason => Dispatcher.UIThread.Post(() =>
+        {
+            if (ReferenceEquals(_gl, gl))
+            {
+                Fall(reason);
+                UseCpu();
+            }
+        });
+
+        _gl = gl;
+        VisualChildren.Add(gl);
+        LogicalChildren.Add(gl);
+        InvalidateArrange();
+        InvalidateVisual();
+        Request();
+    }
+
+    private void UseCpu()
+    {
+        Drop();
+        InvalidateVisual();
+        Request();
+    }
+
+    private void Drop()
+    {
+        if (_gl is not { } gl)
+        {
+            return;
+        }
+
+        _gl = null;
+        VisualChildren.Remove(gl);
+        LogicalChildren.Remove(gl);
+    }
+
+    /// <summary>Logs why the CPU draws instead, once per reason per session.</summary>
+    private static void Fall(string reason)
+    {
+        if (Told.Add(reason))
+        {
+            log.LogWarning("The hull viewer draws on the CPU: {Reason}.", reason);
+        }
+    }
+
     private void Draw()
     {
-        if (TopLevel.GetTopLevel(this) is not { } top)
+        if (_gl is not null || TopLevel.GetTopLevel(this) is not { } top)
         {
             return;
         }

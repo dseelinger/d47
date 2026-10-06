@@ -777,7 +777,7 @@ public static class SettingsLayout
     public static readonly IReadOnlyList<SettingsTabPlace> Tabs =
     [
         new SettingsTabPlace(
-            "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art")]),
+            "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art"), E("ships.hullgpu")]),
         new SettingsTabPlace(
             "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads"), E("adventures.storyRatings")]),
         new SettingsTabPlace(

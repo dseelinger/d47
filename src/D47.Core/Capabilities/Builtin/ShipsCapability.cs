@@ -18,6 +18,9 @@ public static class ShipsCapability
     /// <summary>The key of the row that decides whether the large hull art is fetched (#289).</summary>
     public const string HullArtKey = "ships.art";
 
+    /// <summary>The key of the row that draws the hull viewer through OpenGL.</summary>
+    public const string HullGpuKey = "ships.hullgpu";
+
     /// <summary>
     /// What only the App can do for this capability (#128): read every journal on disk again and
     /// rebuild what each ship was last seen holding.
@@ -230,6 +233,28 @@ public static class ShipsCapability
                 Write = (s, v) => s with
                 {
                     Ui = s.Ui with { HullArt = bool.TryParse(v, out var on) && on },
+                },
+            },
+        },
+
+        new SettingRow
+        {
+            Key = HullGpuKey,
+            Label = "Hull viewer on the graphics card",
+            Help =
+                "Draws hulls on the graphics card. Best with Elite not running, since the two share it. "
+                + "Off, the hull viewer is drawn on the processor, as it always has been. The window "
+                + "already draws through the graphics card, so this adds work to it rather than starting "
+                + "it, and the viewer only draws while it is being moved. Where the graphics card cannot "
+                + "be used, the processor draws and the log says why.",
+            Kind = SettingKind.Toggle,
+            DocsAnchor = "hull-gpu",
+            Binding = new SettingBinding
+            {
+                Read = s => s.Ui.HullGpu ? "true" : "false",
+                Write = (s, v) => s with
+                {
+                    Ui = s.Ui with { HullGpu = bool.TryParse(v, out var on) && on },
                 },
             },
         },

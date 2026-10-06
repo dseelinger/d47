@@ -247,7 +247,7 @@ public class SettingsLayoutTests
 
         var keys = surface.Settings.RowsForPlace("fleet-ships").Select(r => r.Key).ToArray();
 
-        Assert.Equal(["ships.remembered", "ships.art"], keys);
+        Assert.Equal(["ships.remembered", "ships.art", "ships.hullgpu"], keys);
     }
 
     [Fact]

@@ -15,7 +15,8 @@ public static class HullRasteriser
 
     private const int VertexChunk = 4096;
 
-    private static readonly Vector3 LightDirection = Vector3.Normalize(new Vector3(-1f, 1f, 1f));
+    /// <summary>Towards the light, in view space.</summary>
+    public static readonly Vector3 LightDirection = Vector3.Normalize(new Vector3(-1f, 1f, 1f));
 
     [ThreadStatic]
     private static Buffers? buffers;
