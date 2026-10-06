@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 
+using D47.Core.Audio;
 using D47.Core.Conversation;
 
 namespace D47.Core.Catalog;
@@ -29,7 +30,23 @@ public sealed record ModelTraits
 /// <summary>One model in the catalog.</summary>
 public sealed record CatalogModel(string Id, bool Offered, ModelPrice? Price, ModelTraits? Traits);
 
-/// <summary>Every language model fact d47 needs that a provider's API does not return.</summary>
+/// <summary>One speech model in the catalog, with what it does that its provider's API does not say.</summary>
+public sealed record SpeechModel(string Id, string Label, bool Offered)
+{
+    /// <summary>Null where the provider's list price applies.</summary>
+    public decimal? DollarsPerThousandCharacters { get; init; }
+
+    /// <summary>Whether the model honours a speaking rate.</summary>
+    public bool ReadsRate { get; init; }
+
+    /// <summary>Whether the model performs bracketed delivery direction rather than reading it aloud.</summary>
+    public bool ReadsTags { get; init; }
+
+    /// <summary>How much text the model would rather be handed at once, or zero for one sentence at a time.</summary>
+    public int GroupsSentencesUpTo { get; init; }
+}
+
+/// <summary>Every model fact d47 needs that a provider's API does not return.</summary>
 public sealed class ModelCatalog
 {
     public const int Schema = 1;
@@ -38,12 +55,22 @@ public sealed class ModelCatalog
 
     private static readonly Lazy<ModelCatalog> EmbeddedCatalog = new(ReadEmbedded);
 
+    /// <summary>The speech providers whose requests name a model, each of which the catalog must cover.</summary>
+    private static readonly string[] SpeechProvidersWithAModel =
+        [TtsProviderCatalog.ElevenLabsId, TtsProviderCatalog.OpenAiId, TtsProviderCatalog.CartesiaId];
+
     private readonly Dictionary<string, Provider> _providers;
 
-    private ModelCatalog(DateOnly published, Dictionary<string, Provider> providers)
+    private readonly Dictionary<string, SpeechProvider> _speech;
+
+    private ModelCatalog(
+        DateOnly published,
+        Dictionary<string, Provider> providers,
+        Dictionary<string, SpeechProvider> speech)
     {
         Published = published;
         _providers = providers;
+        _speech = speech;
     }
 
     /// <summary>The catalog built into this release.</summary>
@@ -63,6 +90,16 @@ public sealed class ModelCatalog
 
     public ModelTraits TraitsFor(string providerId, string model) =>
         Model(providerId, model)?.Traits ?? ModelTraits.Unknown;
+
+    /// <summary>Never null for ElevenLabs, OpenAI or Cartesia, which every readable catalog covers.</summary>
+    public string? SpeechDefaultFor(string providerId) => _speech.GetValueOrDefault(providerId)?.Default;
+
+    /// <summary>The speech models that appear in the picker, in catalog order.</summary>
+    public IReadOnlyList<SpeechModel> OfferedSpeechFor(string providerId) =>
+        _speech.GetValueOrDefault(providerId)?.Offered ?? [];
+
+    public SpeechModel? SpeechModelFor(string providerId, string model) =>
+        _speech.GetValueOrDefault(providerId)?.Models.GetValueOrDefault(model);
 
     /// <summary>Reads a catalog, throwing <see cref="FormatException"/> for one d47 cannot use.</summary>
     public static ModelCatalog Parse(string json)
@@ -105,7 +142,74 @@ public sealed class ModelCatalog
             providers[entry.Name] = ReadProvider(entry.Name, entry.Value);
         }
 
-        return new ModelCatalog(published, providers);
+        var speech = new Dictionary<string, SpeechProvider>(StringComparer.Ordinal);
+
+        foreach (var entry in root.GetProperty("speech").EnumerateObject())
+        {
+            speech[entry.Name] = ReadSpeechProvider(entry.Name, entry.Value);
+        }
+
+        foreach (var providerId in SpeechProvidersWithAModel)
+        {
+            if (!speech.ContainsKey(providerId))
+            {
+                throw new FormatException($"The model catalog has no {providerId} speech model.");
+            }
+        }
+
+        return new ModelCatalog(published, providers, speech);
+    }
+
+    private static SpeechProvider ReadSpeechProvider(string providerId, JsonElement element)
+    {
+        var models = new Dictionary<string, SpeechModel>(StringComparer.Ordinal);
+        var offered = new List<SpeechModel>();
+
+        foreach (var item in element.GetProperty("models").EnumerateArray())
+        {
+            var model = ReadSpeechModel(providerId, item);
+
+            if (!models.TryAdd(model.Id, model))
+            {
+                throw new FormatException($"The model catalog lists {providerId}/{model.Id} twice.");
+            }
+
+            if (model.Offered)
+            {
+                offered.Add(model);
+            }
+        }
+
+        var defaultModel = OptionalString(element, "default");
+
+        if (defaultModel is null || !offered.Exists(model => model.Id == defaultModel))
+        {
+            throw new FormatException(
+                $"The model catalog's {providerId} speech default, {defaultModel ?? "missing"}, is not an offered model.");
+        }
+
+        return new SpeechProvider(defaultModel, offered, models);
+    }
+
+    private static SpeechModel ReadSpeechModel(string providerId, JsonElement item)
+    {
+        var id = item.GetProperty("id").GetString();
+
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            throw new FormatException($"The model catalog has a {providerId} speech model with no id.");
+        }
+
+        return new SpeechModel(id, OptionalString(item, "label") ?? id, item.GetProperty("offered").GetBoolean())
+        {
+            DollarsPerThousandCharacters =
+                item.TryGetProperty("dollarsPerThousandCharacters", out var price) && price.ValueKind is not JsonValueKind.Null
+                    ? price.GetDecimal()
+                    : null,
+            ReadsRate = OptionalBool(item, "readsRate"),
+            ReadsTags = OptionalBool(item, "readsTags"),
+            GroupsSentencesUpTo = item.TryGetProperty("groupsSentencesUpTo", out var budget) ? budget.GetInt32() : 0,
+        };
     }
 
     private static Provider ReadProvider(string providerId, JsonElement element)
@@ -211,4 +315,9 @@ public sealed class ModelCatalog
         string? BackgroundDefault,
         IReadOnlyList<string> Offered,
         Dictionary<string, CatalogModel> Models);
+
+    private sealed record SpeechProvider(
+        string Default,
+        IReadOnlyList<SpeechModel> Offered,
+        Dictionary<string, SpeechModel> Models);
 }

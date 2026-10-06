@@ -143,8 +143,8 @@ public static class TtsProviderCatalog
 
         Billed = true,
 
-        // The API list price per 1,000 characters for every model ElevenLabsModels offers, read from
-        // elevenlabs.io/pricing/api on 2026-09-28.
+        // The API list price per 1,000 characters, read from elevenlabs.io/pricing/api on 2026-09-28,
+        // for a model the catalog gives no price.
         ListDollarsPerThousandCharacters = 0.04m,
     };
 

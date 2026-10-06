@@ -30,9 +30,6 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
     private readonly SemaphoreSlim _inFlight = new(MaxConcurrent, MaxConcurrent);
 
-    /// <summary>What speaks when nobody has chosen.</summary>
-    public const string DefaultModel = ElevenLabsModels.Default;
-
     /// <summary>The language every line is synthesised as.</summary>
     public const string Language = "en";
 

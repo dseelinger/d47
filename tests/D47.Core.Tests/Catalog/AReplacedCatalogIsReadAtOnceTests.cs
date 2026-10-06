@@ -19,7 +19,7 @@ public class AReplacedCatalogIsReadAtOnceTests
 
         try
         {
-            ModelCatalogSource.Shared.Replace(ModelCatalog.Parse("""
+            ModelCatalogSource.Shared.Replace(ModelCatalog.Parse($$"""
                 {
                   "schema": 1,
                   "published": "2026-10-06",
@@ -31,7 +31,8 @@ public class AReplacedCatalogIsReadAtOnceTests
                         { "id": "claude-later-6", "offered": true, "price": { "input": 3, "output": 15 } }
                       ]
                     }
-                  }
+                  },
+                  {{SpeechSection.Json()}}
                 }
                 """));
 

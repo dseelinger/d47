@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Audio;
+using D47.Core.Catalog;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -20,8 +21,8 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
     /// <summary>The API version, which Cartesia pins by date in a header rather than by a path segment.</summary>
     public const string ApiVersion = "2024-11-13";
 
-    /// <summary>The model.</summary>
-    public const string DefaultModel = "sonic-2";
+    /// <summary>The catalog's model.</summary>
+    public static string DefaultModel => ModelCatalogSource.Shared.Current.SpeechDefaultFor(ProviderId)!;
 
     /// <summary>The language every line is synthesised as.</summary>
     public const string Language = "en";

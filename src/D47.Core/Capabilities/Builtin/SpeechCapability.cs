@@ -633,8 +633,7 @@ public static class SpeechCapability
                 AppliesWhen = s => TtsProviderCatalog.Selected(s.Speech.Provider) is
                     { Billed: true, BilledByMinute: false },
                 DefaultDisplaySource = s =>
-                    TtsProviderCatalog.Selected(s.Speech.Provider).ListDollarsPerThousandCharacters
-                        is { } list
+                    SpeechSpend.ListRateFor(s, s.Speech.Provider) is { } list
                         ? list.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
                         : "(not published — no price will be quoted)",
                 Group = "What it costs",
@@ -1345,7 +1344,7 @@ public static class SpeechCapability
                     + "not send it any. Flash is also the only one with a speaking rate.",
                 Kind = SettingKind.Choice,
                 Choices = [.. ElevenLabsModels.All.Select(model => model.Id)],
-                ChoiceLabel = id => ElevenLabsModels.All.FirstOrDefault(model => model.Id == id).Label ?? id,
+                ChoiceLabel = id => ElevenLabsModels.All.FirstOrDefault(model => model.Id == id)?.Label ?? id,
                 DocsAnchor = "elevenlabs-model",
 
                 // On screen while any slot speaks through ElevenLabs, the same rule as its key — the carrier

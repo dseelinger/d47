@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using D47.Core.Catalog;
 using D47.Core.Configuration;
 
 namespace D47.Core.Audio;
@@ -328,7 +329,22 @@ public sealed class SpeechSpend
 
         return settings.Speech.CharacterPrices.TryGetValue(provider.Id, out var own)
             ? (decimal)own
-            : provider.ListDollarsPerThousandCharacters;
+            : ListRateFor(settings, provider.Id);
+    }
+
+    /// <summary>
+    /// The published dollars-per-thousand-characters for the model the provider speaks with, then the
+    /// provider's own list price.
+    /// </summary>
+    public static decimal? ListRateFor(D47Settings settings, string providerId)
+    {
+        var provider = TtsProviderCatalog.Selected(providerId);
+        var catalog = ModelCatalogSource.Shared.Current;
+        var model = provider.Id == TtsProviderCatalog.ElevenLabsId
+            ? ElevenLabsModels.Resolved(settings.Speech.ElevenLabsModel)
+            : catalog.SpeechDefaultFor(provider.Id) is { } id ? catalog.SpeechModelFor(provider.Id, id) : null;
+
+        return model?.DollarsPerThousandCharacters ?? provider.ListDollarsPerThousandCharacters;
     }
 
     /// <summary>

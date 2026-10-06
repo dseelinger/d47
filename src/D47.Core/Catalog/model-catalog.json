@@ -72,5 +72,27 @@
         { "id": "gpt-5-nano", "offered": false, "price": { "input": 0.05, "output": 0.40, "cacheRead": 0.1, "cacheWrite": 0 } }
       ]
     }
+  },
+  "speech": {
+    "elevenlabs": {
+      "default": "eleven_v4_turbo",
+      "models": [
+        { "id": "eleven_v4_turbo", "label": "v4 Turbo", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": false, "readsTags": true, "groupsSentencesUpTo": 300 },
+        { "id": "eleven_v3_conversational", "label": "v3", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": false, "readsTags": true, "groupsSentencesUpTo": 300 },
+        { "id": "eleven_flash_v2_5", "label": "Flash 2.5", "offered": true, "dollarsPerThousandCharacters": 0.04, "readsRate": true, "readsTags": false, "groupsSentencesUpTo": 0 }
+      ]
+    },
+    "openai": {
+      "default": "gpt-4o-mini-tts-2025-12-15",
+      "models": [
+        { "id": "gpt-4o-mini-tts-2025-12-15", "offered": true }
+      ]
+    },
+    "cartesia": {
+      "default": "sonic-2",
+      "models": [
+        { "id": "sonic-2", "offered": true }
+      ]
+    }
   }
 }

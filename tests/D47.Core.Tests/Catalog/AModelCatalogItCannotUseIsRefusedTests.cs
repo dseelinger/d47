@@ -15,6 +15,9 @@ public class AModelCatalogItCannotUseIsRefusedTests
         Assert.Equal("gpt-5.6-terra", catalog.DefaultFor("openai"));
         Assert.NotEmpty(catalog.OfferedFor("anthropic"));
         Assert.NotEmpty(catalog.OfferedFor("openai"));
+        Assert.Equal("eleven_v4_turbo", catalog.SpeechDefaultFor("elevenlabs"));
+        Assert.Equal("gpt-4o-mini-tts-2025-12-15", catalog.SpeechDefaultFor("openai"));
+        Assert.Equal("sonic-2", catalog.SpeechDefaultFor("cartesia"));
     }
 
     [Fact]
@@ -30,6 +33,13 @@ public class AModelCatalogItCannotUseIsRefusedTests
         Assert.Null(catalog.PriceFor("anthropic", "model-c"));
         Assert.True(catalog.TraitsFor("anthropic", "model-c").ToolSearch);
         Assert.Equal(512, catalog.TraitsFor("anthropic", "model-c").MinimumCacheablePrefix);
+        Assert.Equal(["eleven_v4_turbo", "eleven_v3_conversational"], catalog.OfferedSpeechFor("elevenlabs").Select(m => m.Id));
+        Assert.Equal("v3", catalog.SpeechModelFor("elevenlabs", "eleven_v3_conversational")!.Label);
+        Assert.Equal(0.04m, catalog.SpeechModelFor("elevenlabs", "eleven_v4_turbo")!.DollarsPerThousandCharacters);
+        Assert.True(catalog.SpeechModelFor("elevenlabs", "eleven_flash_v2_5")!.ReadsRate);
+        Assert.Equal("tts-a", catalog.SpeechModelFor("openai", "tts-a")!.Label);
+        Assert.Null(catalog.SpeechModelFor("openai", "tts-a")!.DollarsPerThousandCharacters);
+        Assert.Null(catalog.SpeechDefaultFor("kokoro"));
     }
 
     [Fact]
@@ -56,6 +66,20 @@ public class AModelCatalogItCannotUseIsRefusedTests
     }
 
     [Fact]
+    public void ASpeechDefaultThatIsNotOfferedIsRefused()
+    {
+        Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(speech: SpeechSection.Json(elevenLabsDefault: "eleven_flash_v2_5"))));
+        Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(speech: SpeechSection.Json(elevenLabsDefault: "eleven_v9"))));
+    }
+
+    [Fact]
+    public void ACatalogWithNoSpeechModelsIsRefused()
+    {
+        Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(speech: """ "speech": {} """)));
+        Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(speech: null)));
+    }
+
+    [Fact]
     public void AnOfferedModelWithNoPriceIsRefused()
     {
         Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(unpricedOffered: true)));
@@ -78,8 +102,11 @@ public class AModelCatalogItCannotUseIsRefusedTests
         int schema = 1,
         string defaultModel = "model-a",
         bool unpricedOffered = false,
-        bool duplicate = false)
+        bool duplicate = false,
+        string? speech = "")
     {
+        speech = speech == string.Empty ? SpeechSection.Json() : speech;
+
         var extra = duplicate
             ? """, { "id": "model-a", "offered": true, "price": { "input": 1, "output": 5 } }"""
             : string.Empty;
@@ -98,7 +125,7 @@ public class AModelCatalogItCannotUseIsRefusedTests
                     { "id": "model-c", "offered": false, "price": null, "traits": { "toolSearch": true, "minimumCacheablePrefix": 512 } }{{extra}}
                   ]
                 }
-              }
+              }{{(speech is null ? string.Empty : "," + speech)}}
             }
             """;
     }

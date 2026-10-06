@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Audio;
+using D47.Core.Catalog;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -19,10 +20,10 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
     public const string KeySecretName = "openai.apiKey";
 
     /// <summary>
-    /// The dated snapshot, pinned for the reason <see cref="ElevenLabsTtsProvider.DefaultModel"/>
-    /// gives: a floating alias is a voice that can change under a Commander who chose it.
+    /// The catalog's model, a dated snapshot: a floating alias is a voice that can change under a
+    /// Commander who chose it.
     /// </summary>
-    public const string DefaultModel = "gpt-4o-mini-tts-2025-12-15";
+    public static string DefaultModel => ModelCatalogSource.Shared.Current.SpeechDefaultFor(ProviderId)!;
 
     /// <summary>
     /// The documented bounds of <c>speed</c>, and they are real: measured 2026-08-26 across the whole
