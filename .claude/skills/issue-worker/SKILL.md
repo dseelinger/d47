@@ -268,47 +268,61 @@ started inside the worktree has no `EnterWorktree` to exit, and holds the folder
 directory, so the removal may leave the folder behind. That is expected: `/pre-release` clears it.
 
 When the issue does not land — it is bigger than it looked, the build or tests cannot be made
-green, or the rebase conflicts in a file other than `CHANGELOG.md` (see below) — stop and ask, as
-for any issue. Leave the worktree and branch in place and say where they are. The rest of its lane
+green, or any step of **Merging into main** stops — stop and ask, as for any issue. Leave the worktree and branch in place and say where they are. The rest of its lane
 waits on it.
 
 ### Merging into main
 
-`main` takes fast-forwards only, so its history stays one line with no merge commits. In the
-worktree:
+`main` takes fast-forwards only, so its history stays one line with no merge commits. The rebase,
+the checks and the merge are each attempted **once**. Other lanes keep landing while this one
+works, so retrying chases a moving `main`; a lane that cannot land on the first attempt stops, and
+the maintainer merges the stopped lanes one at a time once the others have finished.
 
-```bash
-git rebase main
-```
+Run each step below as its own command. Never chain them with `&&` or `;`: a failed check must
+never be followed by a merge in the same command.
 
-Then run the checks again on the rebased tree — the build, the area filter, the `Gate` filter, and
-`D47.App.Tests` when the diff touches `src/D47.App/` — because other lanes' work is now under the
-change. Then:
+1. In the worktree:
 
-```bash
-git -C <main checkout> merge --ff-only issue/<N>
-```
+   ```bash
+   git rebase main
+   ```
 
-If another lane merged in between, `--ff-only` refuses; if one is merging at that moment, git
-reports an `index.lock`. Either way, rebase again, run the checks again, and retry.
+   - A `CHANGELOG.md` conflict is expected, since every issue adds entries at the top. Keep both,
+     this one under the unreleased heading `main` has, and leave `main`'s entries as they are.
+   - A conflict in any other file means triage judged two issues independent and they are not. Do
+     not resolve it. `git rebase --abort`, so the branch holds the commit as it was before the
+     rebase, and stop.
 
-Rebase conflicts:
+2. Run the checks again on the rebased tree — the build, the area filter, the `Gate` filter, and
+   `D47.App.Tests` when the diff touches `src/D47.App/` — because other lanes' work is now under
+   the change. If any fails, stop. Do not fix it in this session: the failure comes from the
+   combination with another lane's work, which is the maintainer's to judge.
 
-- `CHANGELOG.md` conflicts are expected, since every issue adds entries at the top. Keep both,
-  this one under the unreleased heading `main` has, and leave `main`'s entries as they are.
-- A conflict in any other file means triage judged two issues independent and they are not. Do not
-  resolve it. `git rebase --abort`, so the branch holds the commit as it was before the rebase, and
-  stop. Leave the worktree and branch in place. The report names each conflicting file and the
-  commits on `main` that changed it since the branch point
-  (`git log --format='%h %s' issue/<N>..main -- <file>`), and says the lane is paused at this
-  issue.
+3. Merge:
+
+   ```bash
+   git -C <main checkout> merge --ff-only issue/<N>
+   ```
+
+   If another lane merged during the checks, `--ff-only` refuses; if one is merging at that moment,
+   git reports an `index.lock`. Either way, stop. Do not rebase again.
+
+When any step stops, leave the worktree and branch in place and do not call `ExitWorktree`. The
+report says the lane is paused at this issue, which step stopped it, and:
+
+- for a conflict, each conflicting file and the commits on `main` that changed it since the branch
+  point (`git log --format='%h %s' issue/<N>..main -- <file>`);
+- for a failed check, the failing build error or test names and their output;
+- for a refused merge, the commits that landed on `main` since the rebase
+  (`git log --format='%h %s' issue/<N>..main`).
 
 A paused lane starts nothing new: the issue before the next one has no `Fixes #N` commit, so the
 check at the top of **Lanes** stops it. The other lanes keep running. The maintainer resumes the
-paused issue, usually once the other lanes have finished, by starting `/issue-worker <N>` again.
-That session finds the worktree and branch already there, enters the worktree, rebases onto `main`,
-resolves the conflict against everything merged in the meantime, runs the checks, and merges as
-above.
+paused issue once the other lanes have finished, by starting `/issue-worker <N>` again. That session
+finds the worktree and branch already there, enters the worktree, and runs the three steps above,
+once. On resume, a conflict in a file other than `CHANGELOG.md` is resolved against everything
+merged in the meantime rather than aborted, and a failed check is fixed in the worktree and amended
+into the issue's commit; a refused merge still stops.
 
 Never create a merge commit, never force anything, and never push. The rebase changes the commit's
 hash, which matters to nothing: it is still local.
@@ -404,8 +418,8 @@ An issue worked in a worktree adds two steps after the review: merge it into `ma
 worktree, as **Lanes** says. `/test-drive` then runs from the main checkout, so the build under test
 holds everything merged so far from every lane; say so in the line above the steps. The report
 ends with the next issue in this lane, if there is one: the Issue key given the lane letter starts
-it. When the merge stopped on a conflict, there is no test drive and no next issue: the report
-names the conflict and says the lane is paused.
+it. When the merge stopped, there is no test drive and no next issue: the report says which step
+stopped it, as **Merging into main** lists, and that the lane is paused.
 
 This applies equally when the work lands on a turn started by a background agent's completion
 notice rather than by the maintainer.
