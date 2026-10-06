@@ -1,0 +1,3089 @@
+{
+ "count": 727,
+ "from": 0,
+ "reference": {
+  "id64": 10477373803,
+  "name": "Sol",
+  "x": 0.0,
+  "y": 0.0,
+  "z": 0.0
+ },
+ "search": {
+  "filters": {
+   "distance": {
+    "max": "50",
+    "min": "0"
+   },
+   "materials": {
+    "name": {
+     "value": [
+      "Polonium"
+     ]
+    }
+   }
+  },
+  "page": 0,
+  "reference_system": "Sol",
+  "reference_system_details": {
+   "id64": 10477373803,
+   "name": "Sol",
+   "x": 0,
+   "y": 0,
+   "z": 0
+  },
+  "size": 50,
+  "sort": [
+   {
+    "distance": {
+     "direction": "asc"
+    }
+   }
+  ]
+ },
+ "search_reference": "832685B8-C1AE-11F1-835D-F6BF2015A939",
+ "size": 50,
+ "results": [
+  {
+   "name": "Alpha Centauri B 1",
+   "system_name": "Alpha Centauri",
+   "body_id": 5,
+   "system_id64": 1178708478315,
+   "distance": 4.37712002205788,
+   "distance_to_arrival": 4460.307355,
+   "subtype": "Metal-rich body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Chromium",
+     "share": 15.833184
+    },
+    {
+     "name": "Iron",
+     "share": 35.205727
+    },
+    {
+     "name": "Manganese",
+     "share": 14.539605
+    },
+    {
+     "name": "Nickel",
+     "share": 26.628136
+    },
+    {
+     "name": "Polonium",
+     "share": 1.018313
+    },
+    {
+     "name": "Selenium",
+     "share": 2.487571
+    },
+    {
+     "name": "Tin",
+     "share": 2.354314
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.933148
+    }
+   ],
+   "volcanism_type": "Rocky Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 1.47252513510758,
+   "surface_temperature": 1080.859863,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Barnard's Star 5 b",
+   "system_name": "Barnard's Star",
+   "body_id": 17,
+   "system_id64": 18263140541865,
+   "distance": 5.95466269510709,
+   "distance_to_arrival": 3271.662062,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.430485
+    },
+    {
+     "name": "Chromium",
+     "share": 5.371531
+    },
+    {
+     "name": "Germanium",
+     "share": 3.418464
+    },
+    {
+     "name": "Iron",
+     "share": 11.943815
+    },
+    {
+     "name": "Manganese",
+     "share": 4.932674
+    },
+    {
+     "name": "Nickel",
+     "share": 9.033801
+    },
+    {
+     "name": "Niobium",
+     "share": 0.816296
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.360383
+    },
+    {
+     "name": "Polonium",
+     "share": 0.30739
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.674492
+    },
+    {
+     "name": "Tin",
+     "share": 0.710679
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0676333231365351,
+   "surface_temperature": 24.285238,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Luhman 16 A 1",
+   "system_name": "Luhman 16",
+   "body_id": 3,
+   "system_id64": 22960358574928,
+   "distance": 6.56919301550807,
+   "distance_to_arrival": 10.066016,
+   "subtype": "High metal content world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 13.374126
+    },
+    {
+     "name": "Chromium",
+     "share": 10.167066
+    },
+    {
+     "name": "Iron",
+     "share": 22.60688
+    },
+    {
+     "name": "Nickel",
+     "share": 17.098898
+    },
+    {
+     "name": "Niobium",
+     "share": 1.54506
+    },
+    {
+     "name": "Phosphorus",
+     "share": 8.562345
+    },
+    {
+     "name": "Polonium",
+     "share": 0.636515
+    },
+    {
+     "name": "Selenium",
+     "share": 2.489205
+    },
+    {
+     "name": "Sulphur",
+     "share": 15.904606
+    },
+    {
+     "name": "Tin",
+     "share": 1.471606
+    },
+    {
+     "name": "Zinc",
+     "share": 6.143703
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.158699500356888,
+   "surface_temperature": 240.994492,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Duamta 1",
+   "system_name": "Duamta",
+   "body_id": 7,
+   "system_id64": 4339804408171,
+   "distance": 9.88310585038934,
+   "distance_to_arrival": 232.754345,
+   "subtype": "High metal content world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 1.715417
+    },
+    {
+     "name": "Carbon",
+     "share": 13.122676
+    },
+    {
+     "name": "Chromium",
+     "share": 9.93477
+    },
+    {
+     "name": "Germanium",
+     "share": 4.589115
+    },
+    {
+     "name": "Iron",
+     "share": 22.090363
+    },
+    {
+     "name": "Nickel",
+     "share": 16.708223
+    },
+    {
+     "name": "Phosphorus",
+     "share": 8.401364
+    },
+    {
+     "name": "Polonium",
+     "share": 0.616175
+    },
+    {
+     "name": "Sulphur",
+     "share": 15.605581
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.212983
+    },
+    {
+     "name": "Zinc",
+     "share": 6.003333
+    }
+   ],
+   "atmosphere": "Thin Sulphur dioxide",
+   "gravity": 0.723511777301927,
+   "surface_temperature": 414.714386,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Ross 248 B 7 a",
+   "system_name": "Ross 248",
+   "body_id": 22,
+   "system_id64": 5366025046864,
+   "distance": 10.3688799720606,
+   "distance_to_arrival": 98483.869474,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 23.885876
+    },
+    {
+     "name": "Iron",
+     "share": 12.395215
+    },
+    {
+     "name": "Mercury",
+     "share": 0.541279
+    },
+    {
+     "name": "Nickel",
+     "share": 9.375221
+    },
+    {
+     "name": "Niobium",
+     "share": 0.847147
+    },
+    {
+     "name": "Phosphorus",
+     "share": 15.292149
+    },
+    {
+     "name": "Polonium",
+     "share": 0.329036
+    },
+    {
+     "name": "Selenium",
+     "share": 4.445662
+    },
+    {
+     "name": "Sulphur",
+     "share": 28.405252
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.043833
+    },
+    {
+     "name": "Zirconium",
+     "share": 1.43934
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.214644947486489,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Ross 248 B 4",
+   "system_name": "Ross 248",
+   "body_id": 18,
+   "system_id64": 5366025046864,
+   "distance": 10.3688799720606,
+   "distance_to_arrival": 93514.342243,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 19.325922
+    },
+    {
+     "name": "Iron",
+     "share": 15.918255
+    },
+    {
+     "name": "Manganese",
+     "share": 6.574077
+    },
+    {
+     "name": "Nickel",
+     "share": 12.039902
+    },
+    {
+     "name": "Niobium",
+     "share": 1.087928
+    },
+    {
+     "name": "Phosphorus",
+     "share": 12.372787
+    },
+    {
+     "name": "Polonium",
+     "share": 0.441925
+    },
+    {
+     "name": "Sulphur",
+     "share": 22.982525
+    },
+    {
+     "name": "Tin",
+     "share": 1.02172
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.908969
+    },
+    {
+     "name": "Zinc",
+     "share": 4.325986
+    }
+   ],
+   "atmosphere": "Thin Neon",
+   "gravity": 0.46790863668808,
+   "surface_temperature": 20.044403,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "WISE 1506+7027 2 b",
+   "system_name": "WISE 1506+7027",
+   "body_id": 28,
+   "system_id64": 5366025177936,
+   "distance": 10.5191881964579,
+   "distance_to_arrival": 680.002773,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 23.090145
+    },
+    {
+     "name": "Germanium",
+     "share": 3.543772
+    },
+    {
+     "name": "Iron",
+     "share": 12.292645
+    },
+    {
+     "name": "Nickel",
+     "share": 9.297642
+    },
+    {
+     "name": "Niobium",
+     "share": 0.840137
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.782707
+    },
+    {
+     "name": "Polonium",
+     "share": 0.318767
+    },
+    {
+     "name": "Selenium",
+     "share": 4.297561
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.458965
+    },
+    {
+     "name": "Tin",
+     "share": 0.73698
+    },
+    {
+     "name": "Zinc",
+     "share": 3.340681
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0449255633731008,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "WISE 1506+7027 3 a",
+   "system_name": "WISE 1506+7027",
+   "body_id": 37,
+   "system_id64": 5366025177936,
+   "distance": 10.5191881964579,
+   "distance_to_arrival": 884.211719,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.946134
+    },
+    {
+     "name": "Carbon",
+     "share": 22.693331
+    },
+    {
+     "name": "Chromium",
+     "share": 5.479497
+    },
+    {
+     "name": "Germanium",
+     "share": 3.50597
+    },
+    {
+     "name": "Iron",
+     "share": 12.183884
+    },
+    {
+     "name": "Nickel",
+     "share": 9.215379
+    },
+    {
+     "name": "Niobium",
+     "share": 0.832704
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.528658
+    },
+    {
+     "name": "Polonium",
+     "share": 0.316257
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.987066
+    },
+    {
+     "name": "Zinc",
+     "share": 3.311123
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0514536555521566,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "WISE 1506+7027 2 a",
+   "system_name": "WISE 1506+7027",
+   "body_id": 27,
+   "system_id64": 5366025177936,
+   "distance": 10.5191881964579,
+   "distance_to_arrival": 679.946494,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.648474
+    },
+    {
+     "name": "Chromium",
+     "share": 5.422663
+    },
+    {
+     "name": "Germanium",
+     "share": 3.475986
+    },
+    {
+     "name": "Iron",
+     "share": 12.05751
+    },
+    {
+     "name": "Mercury",
+     "share": 0.526532
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.787348
+    },
+    {
+     "name": "Nickel",
+     "share": 9.119795
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.499943
+    },
+    {
+     "name": "Polonium",
+     "share": 0.312669
+    },
+    {
+     "name": "Selenium",
+     "share": 4.215356
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.933727
+    }
+   ],
+   "volcanism_type": "Water Geysers",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0364256143570919,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Lacaille 9352 6 d",
+   "system_name": "Lacaille 9352",
+   "body_id": 52,
+   "system_id64": 11666070709673,
+   "distance": 10.6886877994916,
+   "distance_to_arrival": 1568.061342,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.41465
+    },
+    {
+     "name": "Chromium",
+     "share": 5.526667
+    },
+    {
+     "name": "Iron",
+     "share": 12.288766
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.802449
+    },
+    {
+     "name": "Nickel",
+     "share": 9.294709
+    },
+    {
+     "name": "Niobium",
+     "share": 0.839872
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.350245
+    },
+    {
+     "name": "Polonium",
+     "share": 0.315516
+    },
+    {
+     "name": "Selenium",
+     "share": 4.171836
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.655663
+    },
+    {
+     "name": "Zinc",
+     "share": 3.339627
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0859819516671765,
+   "surface_temperature": 41.480724,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Lacaille 9352 5 b",
+   "system_name": "Lacaille 9352",
+   "body_id": 27,
+   "system_id64": 11666070709673,
+   "distance": 10.6886877994916,
+   "distance_to_arrival": 1061.121531,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.975838
+    },
+    {
+     "name": "Carbon",
+     "share": 23.264395
+    },
+    {
+     "name": "Germanium",
+     "share": 3.615144
+    },
+    {
+     "name": "Iron",
+     "share": 12.5664
+    },
+    {
+     "name": "Nickel",
+     "share": 9.504698
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.894263
+    },
+    {
+     "name": "Polonium",
+     "share": 0.322102
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.666182
+    },
+    {
+     "name": "Tungsten",
+     "share": 0.690022
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.085871
+    },
+    {
+     "name": "Zinc",
+     "share": 3.415077
+    }
+   ],
+   "volcanism_type": "Minor Water Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.175864382583869,
+   "surface_temperature": 90.287659,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Lacaille 9352 5 c",
+   "system_name": "Lacaille 9352",
+   "body_id": 28,
+   "system_id64": 11666070709673,
+   "distance": 10.6886877994916,
+   "distance_to_arrival": 1051.918631,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.953981
+    },
+    {
+     "name": "Carbon",
+     "share": 22.743319
+    },
+    {
+     "name": "Chromium",
+     "share": 5.524945
+    },
+    {
+     "name": "Germanium",
+     "share": 3.534172
+    },
+    {
+     "name": "Iron",
+     "share": 12.284939
+    },
+    {
+     "name": "Nickel",
+     "share": 9.291814
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.560662
+    },
+    {
+     "name": "Polonium",
+     "share": 0.314888
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.046513
+    },
+    {
+     "name": "Tin",
+     "share": 0.728013
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.016753
+    }
+   ],
+   "atmosphere": "Thin Argon",
+   "gravity": 0.213932701131845,
+   "surface_temperature": 71.80304,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Camp Lawrence",
+   "system_name": "Lacaille 9352",
+   "body_id": 6,
+   "system_id64": 11666070709673,
+   "distance": 10.6886877994916,
+   "distance_to_arrival": 74.351766,
+   "subtype": "Rocky body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 14.614497
+    },
+    {
+     "name": "Chromium",
+     "share": 9.581349
+    },
+    {
+     "name": "Iron",
+     "share": 21.304522
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.391173
+    },
+    {
+     "name": "Nickel",
+     "share": 16.113846
+    },
+    {
+     "name": "Phosphorus",
+     "share": 9.356451
+    },
+    {
+     "name": "Polonium",
+     "share": 0.578842
+    },
+    {
+     "name": "Selenium",
+     "share": 2.720064
+    },
+    {
+     "name": "Sulphur",
+     "share": 17.379662
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.169832
+    },
+    {
+     "name": "Zinc",
+     "share": 5.789771
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.482912205567452,
+   "surface_temperature": 204.758606,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Jennings's Rock",
+   "system_name": "Lacaille 9352",
+   "body_id": 5,
+   "system_id64": 11666070709673,
+   "distance": 10.6886877994916,
+   "distance_to_arrival": 48.403499,
+   "subtype": "Rocky body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 1.67828
+    },
+    {
+     "name": "Carbon",
+     "share": 14.825513
+    },
+    {
+     "name": "Germanium",
+     "share": 5.2364
+    },
+    {
+     "name": "Iron",
+     "share": 21.612129
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.41126
+    },
+    {
+     "name": "Nickel",
+     "share": 16.346512
+    },
+    {
+     "name": "Phosphorus",
+     "share": 9.491548
+    },
+    {
+     "name": "Polonium",
+     "share": 0.5872
+    },
+    {
+     "name": "Sulphur",
+     "share": 17.630602
+    },
+    {
+     "name": "Vanadium",
+     "share": 5.307188
+    },
+    {
+     "name": "Zinc",
+     "share": 5.873369
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.109773223207913,
+   "surface_temperature": 253.775345,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Groombridge 34 A 3",
+   "system_name": "Groombridge 34",
+   "body_id": 7,
+   "system_id64": 7267755828641,
+   "distance": 11.7336155712977,
+   "distance_to_arrival": 1093.303255,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.527336
+    },
+    {
+     "name": "Cadmium",
+     "share": 1.25534
+    },
+    {
+     "name": "Carbon",
+     "share": 20.088104
+    },
+    {
+     "name": "Iron",
+     "share": 16.165705
+    },
+    {
+     "name": "Manganese",
+     "share": 6.676271
+    },
+    {
+     "name": "Nickel",
+     "share": 12.227061
+    },
+    {
+     "name": "Phosphorus",
+     "share": 12.860749
+    },
+    {
+     "name": "Polonium",
+     "share": 0.453115
+    },
+    {
+     "name": "Sulphur",
+     "share": 23.888918
+    },
+    {
+     "name": "Tungsten",
+     "share": 0.88766
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.969734
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.289587437544611,
+   "surface_temperature": 43.899857,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "WISE 0350-5658 1",
+   "system_name": "WISE 0350-5658",
+   "body_id": 1,
+   "system_id64": 5368172399440,
+   "distance": 12.0939518717002,
+   "distance_to_arrival": 108.02117,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 19.897438
+    },
+    {
+     "name": "Germanium",
+     "share": 3.469079
+    },
+    {
+     "name": "Iron",
+     "share": 16.541239
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.080133
+    },
+    {
+     "name": "Nickel",
+     "share": 12.5111
+    },
+    {
+     "name": "Phosphorus",
+     "share": 12.738683
+    },
+    {
+     "name": "Polonium",
+     "share": 0.465862
+    },
+    {
+     "name": "Sulphur",
+     "share": 23.662176
+    },
+    {
+     "name": "Tin",
+     "share": 1.077061
+    },
+    {
+     "name": "Vanadium",
+     "share": 4.061953
+    },
+    {
+     "name": "Zinc",
+     "share": 4.495289
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.336374324462119,
+   "surface_temperature": 20.001623,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Lacaille 8760 4 a",
+   "system_name": "Lacaille 8760",
+   "body_id": 11,
+   "system_id64": 7268024198569,
+   "distance": 12.8788677442934,
+   "distance_to_arrival": 542.425442,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.986289
+    },
+    {
+     "name": "Carbon",
+     "share": 23.843678
+    },
+    {
+     "name": "Iron",
+     "share": 12.700989
+    },
+    {
+     "name": "Nickel",
+     "share": 9.606495
+    },
+    {
+     "name": "Niobium",
+     "share": 0.868045
+    },
+    {
+     "name": "Phosphorus",
+     "share": 15.265133
+    },
+    {
+     "name": "Polonium",
+     "share": 0.328871
+    },
+    {
+     "name": "Sulphur",
+     "share": 28.355074
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.118921
+    },
+    {
+     "name": "Zinc",
+     "share": 3.451653
+    },
+    {
+     "name": "Zirconium",
+     "share": 1.474846
+    }
+   ],
+   "volcanism_type": "Major Water Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.037971550933007,
+   "surface_temperature": 85.574509,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Lacaille 8760 5 d",
+   "system_name": "Lacaille 8760",
+   "body_id": 18,
+   "system_id64": 7268024198569,
+   "distance": 12.8788677442934,
+   "distance_to_arrival": 772.720604,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.925078
+    },
+    {
+     "name": "Carbon",
+     "share": 22.363884
+    },
+    {
+     "name": "Chromium",
+     "share": 5.357552
+    },
+    {
+     "name": "Germanium",
+     "share": 3.474962
+    },
+    {
+     "name": "Iron",
+     "share": 11.912734
+    },
+    {
+     "name": "Manganese",
+     "share": 4.919837
+    },
+    {
+     "name": "Nickel",
+     "share": 9.010292
+    },
+    {
+     "name": "Niobium",
+     "share": 0.814172
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.317742
+    },
+    {
+     "name": "Polonium",
+     "share": 0.308461
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.595289
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0562681757928011,
+   "surface_temperature": 75.866417,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "UGPS 0722-05 1",
+   "system_name": "UGPS 0722-05",
+   "body_id": 2,
+   "system_id64": 5368172530504,
+   "distance": 13.393751458236,
+   "distance_to_arrival": 372.726999,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.578091
+    },
+    {
+     "name": "Carbon",
+     "share": 20.337965
+    },
+    {
+     "name": "Iron",
+     "share": 16.956116
+    },
+    {
+     "name": "Mercury",
+     "share": 0.740446
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.107224
+    },
+    {
+     "name": "Nickel",
+     "share": 12.824895
+    },
+    {
+     "name": "Phosphorus",
+     "share": 13.020714
+    },
+    {
+     "name": "Polonium",
+     "share": 0.476623
+    },
+    {
+     "name": "Sulphur",
+     "share": 24.186054
+    },
+    {
+     "name": "Vanadium",
+     "share": 4.163832
+    },
+    {
+     "name": "Zinc",
+     "share": 4.608037
+    }
+   ],
+   "atmosphere": "Thin Neon",
+   "gravity": 0.382358315488936,
+   "surface_temperature": 20.018021,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "LHS 380 B 4 b",
+   "system_name": "LHS 380",
+   "body_id": 25,
+   "system_id64": 13865094030761,
+   "distance": 13.8462892705049,
+   "distance_to_arrival": 82085.168796,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.923461
+    },
+    {
+     "name": "Carbon",
+     "share": 22.252048
+    },
+    {
+     "name": "Chromium",
+     "share": 5.348186
+    },
+    {
+     "name": "Iron",
+     "share": 11.891909
+    },
+    {
+     "name": "Manganese",
+     "share": 4.911237
+    },
+    {
+     "name": "Mercury",
+     "share": 0.5193
+    },
+    {
+     "name": "Nickel",
+     "share": 8.99454
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.246143
+    },
+    {
+     "name": "Polonium",
+     "share": 0.309295
+    },
+    {
+     "name": "Selenium",
+     "share": 4.141573
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.462296
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0489300499643112,
+   "surface_temperature": 29.73489,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "LHS 380 B 7 e",
+   "system_name": "LHS 380",
+   "body_id": 52,
+   "system_id64": 13865094030761,
+   "distance": 13.8462892705049,
+   "distance_to_arrival": 80213.776311,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.51605
+    },
+    {
+     "name": "Chromium",
+     "share": 5.411636
+    },
+    {
+     "name": "Iron",
+     "share": 12.032993
+    },
+    {
+     "name": "Manganese",
+     "share": 4.969503
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.785747
+    },
+    {
+     "name": "Nickel",
+     "share": 9.101252
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.41516
+    },
+    {
+     "name": "Polonium",
+     "share": 0.312964
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.776245
+    },
+    {
+     "name": "Tin",
+     "share": 0.723566
+    },
+    {
+     "name": "Vanadium",
+     "share": 2.954884
+    }
+   ],
+   "volcanism_type": "Major Water Geysers",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.029998164576323,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Toolfa B 4 a",
+   "system_name": "Toolfa",
+   "body_id": 72,
+   "system_id64": 35855326520745,
+   "distance": 14.0077057476412,
+   "distance_to_arrival": 50625.664569,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.453657
+    },
+    {
+     "name": "Carbon",
+     "share": 23.611753
+    },
+    {
+     "name": "Chromium",
+     "share": 5.523849
+    },
+    {
+     "name": "Iron",
+     "share": 12.282503
+    },
+    {
+     "name": "Mercury",
+     "share": 0.536357
+    },
+    {
+     "name": "Nickel",
+     "share": 9.28997
+    },
+    {
+     "name": "Phosphorus",
+     "share": 15.11665
+    },
+    {
+     "name": "Polonium",
+     "share": 0.32906
+    },
+    {
+     "name": "Sulphur",
+     "share": 28.079266
+    },
+    {
+     "name": "Tin",
+     "share": 0.760778
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.016155
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.23951687570103,
+   "surface_temperature": 41.459007,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Toolfa A 14 d",
+   "system_name": "Toolfa",
+   "body_id": 64,
+   "system_id64": 35855326520745,
+   "distance": 14.0077057476412,
+   "distance_to_arrival": 2640.053047,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.929015
+    },
+    {
+     "name": "Carbon",
+     "share": 22.332829
+    },
+    {
+     "name": "Chromium",
+     "share": 5.380355
+    },
+    {
+     "name": "Germanium",
+     "share": 3.458642
+    },
+    {
+     "name": "Iron",
+     "share": 11.963436
+    },
+    {
+     "name": "Manganese",
+     "share": 4.940777
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.781205
+    },
+    {
+     "name": "Nickel",
+     "share": 9.048641
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.297861
+    },
+    {
+     "name": "Polonium",
+     "share": 0.308883
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.558357
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0325259508514326,
+   "surface_temperature": 42.029682,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Toolfa A 12 d",
+   "system_name": "Toolfa",
+   "body_id": 46,
+   "system_id64": 35855326520745,
+   "distance": 14.0077057476412,
+   "distance_to_arrival": 1489.997924,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 23.224831
+    },
+    {
+     "name": "Iron",
+     "share": 12.441276
+    },
+    {
+     "name": "Mercury",
+     "share": 0.54329
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.812408
+    },
+    {
+     "name": "Nickel",
+     "share": 9.410059
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.868935
+    },
+    {
+     "name": "Polonium",
+     "share": 0.32122
+    },
+    {
+     "name": "Selenium",
+     "share": 4.322628
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.619133
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.055145
+    },
+    {
+     "name": "Zinc",
+     "share": 3.381073
+    }
+   ],
+   "volcanism_type": "Major Water Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0374983175282961,
+   "surface_temperature": 55.928806,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Toolfa A 3",
+   "system_name": "Toolfa",
+   "body_id": 9,
+   "system_id64": 35855326520745,
+   "distance": 14.0077057476412,
+   "distance_to_arrival": 33.690926,
+   "subtype": "High metal content world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 13.209655
+    },
+    {
+     "name": "Chromium",
+     "share": 9.978154
+    },
+    {
+     "name": "Germanium",
+     "share": 4.654694
+    },
+    {
+     "name": "Iron",
+     "share": 22.186829
+    },
+    {
+     "name": "Nickel",
+     "share": 16.781187
+    },
+    {
+     "name": "Niobium",
+     "share": 1.516351
+    },
+    {
+     "name": "Phosphorus",
+     "share": 8.457047
+    },
+    {
+     "name": "Polonium",
+     "share": 0.621612
+    },
+    {
+     "name": "Sulphur",
+     "share": 15.709014
+    },
+    {
+     "name": "Tin",
+     "share": 1.437152
+    },
+    {
+     "name": "Vanadium",
+     "share": 5.448313
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.162230447639441,
+   "surface_temperature": 380.610413,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Toolfa A 13 d",
+   "system_name": "Toolfa",
+   "body_id": 54,
+   "system_id64": 35855326520745,
+   "distance": 14.0077057476412,
+   "distance_to_arrival": 1947.010133,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.924953
+    },
+    {
+     "name": "Carbon",
+     "share": 22.235172
+    },
+    {
+     "name": "Chromium",
+     "share": 5.35683
+    },
+    {
+     "name": "Iron",
+     "share": 11.911129
+    },
+    {
+     "name": "Manganese",
+     "share": 4.919175
+    },
+    {
+     "name": "Mercury",
+     "share": 0.520139
+    },
+    {
+     "name": "Nickel",
+     "share": 9.009078
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.23534
+    },
+    {
+     "name": "Polonium",
+     "share": 0.307532
+    },
+    {
+     "name": "Selenium",
+     "share": 4.138432
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.442225
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0398116651371469,
+   "surface_temperature": 48.313522,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Wolf 424 AB 1 a",
+   "system_name": "Wolf 424",
+   "body_id": 13,
+   "system_id64": 27059233564073,
+   "distance": 14.0091348546225,
+   "distance_to_arrival": 3583.403634,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 23.107729
+    },
+    {
+     "name": "Germanium",
+     "share": 3.145424
+    },
+    {
+     "name": "Iron",
+     "share": 11.802938
+    },
+    {
+     "name": "Manganese",
+     "share": 4.874493
+    },
+    {
+     "name": "Mercury",
+     "share": 0.515415
+    },
+    {
+     "name": "Nickel",
+     "share": 8.927248
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.793963
+    },
+    {
+     "name": "Polonium",
+     "share": 0.317663
+    },
+    {
+     "name": "Selenium",
+     "share": 4.300833
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.479872
+    },
+    {
+     "name": "Tin",
+     "share": 0.734428
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.342386254716019,
+   "surface_temperature": 25.981318,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "TZ Arietis 5 b a",
+   "system_name": "TZ Arietis",
+   "body_id": 36,
+   "system_id64": 13864825529761,
+   "distance": 14.6071271666437,
+   "distance_to_arrival": 1178.385104,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 25.705381
+    },
+    {
+     "name": "Chromium",
+     "share": 4.24137
+    },
+    {
+     "name": "Iron",
+     "share": 9.430857
+    },
+    {
+     "name": "Manganese",
+     "share": 3.894848
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.61583
+    },
+    {
+     "name": "Nickel",
+     "share": 7.133105
+    },
+    {
+     "name": "Niobium",
+     "share": 0.644549
+    },
+    {
+     "name": "Phosphorus",
+     "share": 16.457027
+    },
+    {
+     "name": "Polonium",
+     "share": 0.212908
+    },
+    {
+     "name": "Sulphur",
+     "share": 30.569023
+    },
+    {
+     "name": "Zirconium",
+     "share": 1.095117
+    }
+   ],
+   "volcanism_type": "Major Water Geysers",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0552054654838381,
+   "surface_temperature": 94.345802,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "TZ Arietis 2",
+   "system_name": "TZ Arietis",
+   "body_id": 10,
+   "system_id64": 13864825529761,
+   "distance": 14.6071271666437,
+   "distance_to_arrival": 12.299622,
+   "subtype": "High metal content world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 1.759835
+    },
+    {
+     "name": "Carbon",
+     "share": 13.49029
+    },
+    {
+     "name": "Chromium",
+     "share": 10.192019
+    },
+    {
+     "name": "Iron",
+     "share": 22.662367
+    },
+    {
+     "name": "Nickel",
+     "share": 17.140867
+    },
+    {
+     "name": "Phosphorus",
+     "share": 8.636715
+    },
+    {
+     "name": "Polonium",
+     "share": 0.634106
+    },
+    {
+     "name": "Sulphur",
+     "share": 16.042747
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.244392
+    },
+    {
+     "name": "Vanadium",
+     "share": 5.565089
+    },
+    {
+     "name": "Zirconium",
+     "share": 2.631568
+    }
+   ],
+   "volcanism_type": "Minor Silicate Vapour Geysers",
+   "atmosphere": "No atmosphere",
+   "gravity": 1.02880106046701,
+   "surface_temperature": 738.797058,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "TZ Arietis 4",
+   "system_name": "TZ Arietis",
+   "body_id": 30,
+   "system_id64": 13864825529761,
+   "distance": 14.6071271666437,
+   "distance_to_arrival": 808.853865,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 1.228768
+    },
+    {
+     "name": "Carbon",
+     "share": 19.211321
+    },
+    {
+     "name": "Chromium",
+     "share": 7.116362
+    },
+    {
+     "name": "Iron",
+     "share": 15.823519
+    },
+    {
+     "name": "Manganese",
+     "share": 6.534952
+    },
+    {
+     "name": "Mercury",
+     "share": 0.690987
+    },
+    {
+     "name": "Nickel",
+     "share": 11.968246
+    },
+    {
+     "name": "Phosphorus",
+     "share": 12.299417
+    },
+    {
+     "name": "Polonium",
+     "share": 0.442751
+    },
+    {
+     "name": "Sulphur",
+     "share": 22.846239
+    },
+    {
+     "name": "Zirconium",
+     "share": 1.837437
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.991869175079025,
+   "surface_temperature": 91.057297,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Ross 780 5 b",
+   "system_name": "Ross 780",
+   "body_id": 9,
+   "system_id64": 11665802274217,
+   "distance": 15.3206929612371,
+   "distance_to_arrival": 1755.766489,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.944502
+    },
+    {
+     "name": "Carbon",
+     "share": 22.657894
+    },
+    {
+     "name": "Iron",
+     "share": 12.162865
+    },
+    {
+     "name": "Manganese",
+     "share": 5.023139
+    },
+    {
+     "name": "Nickel",
+     "share": 9.199481
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.505974
+    },
+    {
+     "name": "Polonium",
+     "share": 0.313619
+    },
+    {
+     "name": "Selenium",
+     "share": 4.217109
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.944929
+    },
+    {
+     "name": "Tin",
+     "share": 0.725078
+    },
+    {
+     "name": "Zinc",
+     "share": 3.305411
+    }
+   ],
+   "volcanism_type": "No volcanism",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0375216681961864,
+   "surface_temperature": 43.833862,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Ross 780 7 e",
+   "system_name": "Ross 780",
+   "body_id": 21,
+   "system_id64": 11665802274217,
+   "distance": 15.3206929612371,
+   "distance_to_arrival": 2654.573985,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 23.323158
+    },
+    {
+     "name": "Germanium",
+     "share": 3.623497
+    },
+    {
+     "name": "Iron",
+     "share": 12.557556
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.820001
+    },
+    {
+     "name": "Nickel",
+     "share": 9.498009
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.931886
+    },
+    {
+     "name": "Polonium",
+     "share": 0.323909
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.736065
+    },
+    {
+     "name": "Tungsten",
+     "share": 0.689536
+    },
+    {
+     "name": "Vanadium",
+     "share": 3.083699
+    },
+    {
+     "name": "Zinc",
+     "share": 3.412674
+    }
+   ],
+   "volcanism_type": "No volcanism",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.120828081982258,
+   "surface_temperature": 32.792404,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "IL Aquarii 5 b",
+   "system_name": "IL Aquarii",
+   "body_id": 17,
+   "system_id64": 38054081340841,
+   "distance": 15.4536542502898,
+   "distance_to_arrival": 1844.841483,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.600346
+    },
+    {
+     "name": "Cadmium",
+     "share": 0.950377
+    },
+    {
+     "name": "Carbon",
+     "share": 23.239536
+    },
+    {
+     "name": "Chromium",
+     "share": 5.504073
+    },
+    {
+     "name": "Germanium",
+     "share": 3.578483
+    },
+    {
+     "name": "Iron",
+     "share": 12.238528
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.799169
+    },
+    {
+     "name": "Nickel",
+     "share": 9.256709
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.87835
+    },
+    {
+     "name": "Polonium",
+     "share": 0.317809
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.63662
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0427474253084531,
+   "surface_temperature": 47.21019,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Lung 6 c",
+   "system_name": "Lung",
+   "body_id": 25,
+   "system_id64": 4511603100011,
+   "distance": 15.4784060770966,
+   "distance_to_arrival": 2268.53085,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.933022
+    },
+    {
+     "name": "Carbon",
+     "share": 22.461781
+    },
+    {
+     "name": "Chromium",
+     "share": 5.403563
+    },
+    {
+     "name": "Iron",
+     "share": 12.015041
+    },
+    {
+     "name": "Manganese",
+     "share": 4.962089
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.784575
+    },
+    {
+     "name": "Nickel",
+     "share": 9.087673
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.380416
+    },
+    {
+     "name": "Polonium",
+     "share": 0.309654
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.711708
+    },
+    {
+     "name": "Vanadium",
+     "share": 2.950476
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0319865402263689,
+   "surface_temperature": 87.698006,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Kokary 1",
+   "system_name": "Kokary",
+   "body_id": 12,
+   "system_id64": 4477243361643,
+   "distance": 15.7928484606166,
+   "distance_to_arrival": 29.764695,
+   "subtype": "High metal content world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 2.13213
+    },
+    {
+     "name": "Carbon",
+     "share": 13.614673
+    },
+    {
+     "name": "Iron",
+     "share": 23.033211
+    },
+    {
+     "name": "Manganese",
+     "share": 9.512482
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.504055
+    },
+    {
+     "name": "Nickel",
+     "share": 17.421358
+    },
+    {
+     "name": "Niobium",
+     "share": 1.574197
+    },
+    {
+     "name": "Phosphorus",
+     "share": 8.716347
+    },
+    {
+     "name": "Polonium",
+     "share": 0.644716
+    },
+    {
+     "name": "Sulphur",
+     "share": 16.190666
+    },
+    {
+     "name": "Vanadium",
+     "share": 5.656156
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.648080350769858,
+   "surface_temperature": 946.030945,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Kokary 6 b",
+   "system_name": "Kokary",
+   "body_id": 40,
+   "system_id64": 4477243361643,
+   "distance": 15.7928484606166,
+   "distance_to_arrival": 2382.193987,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.730694
+    },
+    {
+     "name": "Chromium",
+     "share": 5.50154
+    },
+    {
+     "name": "Germanium",
+     "share": 3.49196
+    },
+    {
+     "name": "Iron",
+     "share": 12.232897
+    },
+    {
+     "name": "Nickel",
+     "share": 9.25245
+    },
+    {
+     "name": "Niobium",
+     "share": 0.836053
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.55258
+    },
+    {
+     "name": "Polonium",
+     "share": 0.315789
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.031506
+    },
+    {
+     "name": "Tin",
+     "share": 0.730096
+    },
+    {
+     "name": "Zinc",
+     "share": 3.324443
+    }
+   ],
+   "volcanism_type": "Major Water Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0491420413990007,
+   "surface_temperature": 93.97834,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "WISE J0521+1025 5 a",
+   "system_name": "WISE J0521+1025",
+   "body_id": 8,
+   "system_id64": 5367098788672,
+   "distance": 16.3284464681273,
+   "distance_to_arrival": 3638.17805,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.919927
+    },
+    {
+     "name": "Carbon",
+     "share": 22.565918
+    },
+    {
+     "name": "Chromium",
+     "share": 5.327724
+    },
+    {
+     "name": "Germanium",
+     "share": 3.116547
+    },
+    {
+     "name": "Iron",
+     "share": 11.846408
+    },
+    {
+     "name": "Manganese",
+     "share": 4.892446
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.773564
+    },
+    {
+     "name": "Nickel",
+     "share": 8.960128
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.447088
+    },
+    {
+     "name": "Polonium",
+     "share": 0.314701
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.835548
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.174024676251657,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Darkes Hollow",
+   "system_name": "Altair",
+   "body_id": 3,
+   "system_id64": 306253399220,
+   "distance": 16.7379854298539,
+   "distance_to_arrival": 666.670845,
+   "subtype": "Rocky body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 1.665631
+    },
+    {
+     "name": "Carbon",
+     "share": 14.847525
+    },
+    {
+     "name": "Iron",
+     "share": 21.44924
+    },
+    {
+     "name": "Manganese",
+     "share": 8.858317
+    },
+    {
+     "name": "Nickel",
+     "share": 16.223307
+    },
+    {
+     "name": "Phosphorus",
+     "share": 9.50564
+    },
+    {
+     "name": "Polonium",
+     "share": 0.585152
+    },
+    {
+     "name": "Selenium",
+     "share": 2.763436
+    },
+    {
+     "name": "Sulphur",
+     "share": 17.65678
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.177779
+    },
+    {
+     "name": "Vanadium",
+     "share": 5.267187
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.470041602936678,
+   "surface_temperature": 388.197296,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Flousop A 3",
+   "system_name": "Flousop",
+   "body_id": 13,
+   "system_id64": 7268024329641,
+   "distance": 17.3580177799771,
+   "distance_to_arrival": 24.062645,
+   "subtype": "Rocky Ice world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 16.708094
+    },
+    {
+     "name": "Chromium",
+     "share": 8.445721
+    },
+    {
+     "name": "Germanium",
+     "share": 3.901231
+    },
+    {
+     "name": "Iron",
+     "share": 18.779404
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.226284
+    },
+    {
+     "name": "Nickel",
+     "share": 14.203954
+    },
+    {
+     "name": "Phosphorus",
+     "share": 10.696807
+    },
+    {
+     "name": "Polonium",
+     "share": 0.526378
+    },
+    {
+     "name": "Sulphur",
+     "share": 19.869383
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.031178
+    },
+    {
+     "name": "Vanadium",
+     "share": 4.611568
+    }
+   ],
+   "volcanism_type": "Minor Metallic Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.15006005914143,
+   "surface_temperature": 131.77887,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Flousop A 4",
+   "system_name": "Flousop",
+   "body_id": 14,
+   "system_id64": 7268024329641,
+   "distance": 17.3580177799771,
+   "distance_to_arrival": 24.088865,
+   "subtype": "Rocky Ice world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 16.622936
+    },
+    {
+     "name": "Iron",
+     "share": 18.683689
+    },
+    {
+     "name": "Manganese",
+     "share": 7.716172
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.220034
+    },
+    {
+     "name": "Nickel",
+     "share": 14.131559
+    },
+    {
+     "name": "Phosphorus",
+     "share": 10.642288
+    },
+    {
+     "name": "Polonium",
+     "share": 0.523695
+    },
+    {
+     "name": "Sulphur",
+     "share": 19.768112
+    },
+    {
+     "name": "Tungsten",
+     "share": 1.025922
+    },
+    {
+     "name": "Vanadium",
+     "share": 4.588064
+    },
+    {
+     "name": "Zinc",
+     "share": 5.077528
+    }
+   ],
+   "volcanism_type": "Minor Metallic Magma",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.135455592943816,
+   "surface_temperature": 131.77887,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Flousop B 2",
+   "system_name": "Flousop",
+   "body_id": 20,
+   "system_id64": 7268024329641,
+   "distance": 17.3580177799771,
+   "distance_to_arrival": 600.251091,
+   "subtype": "High metal content world",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 1.765134
+    },
+    {
+     "name": "Carbon",
+     "share": 13.475776
+    },
+    {
+     "name": "Iron",
+     "share": 22.730598
+    },
+    {
+     "name": "Manganese",
+     "share": 9.387506
+    },
+    {
+     "name": "Nickel",
+     "share": 17.192472
+    },
+    {
+     "name": "Phosphorus",
+     "share": 8.627423
+    },
+    {
+     "name": "Polonium",
+     "share": 0.637129
+    },
+    {
+     "name": "Selenium",
+     "share": 2.508125
+    },
+    {
+     "name": "Sulphur",
+     "share": 16.025488
+    },
+    {
+     "name": "Tin",
+     "share": 1.473025
+    },
+    {
+     "name": "Zinc",
+     "share": 6.177326
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.235195880493525,
+   "surface_temperature": 222.821625,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "G 99-49 1 a",
+   "system_name": "G 99-49",
+   "body_id": 6,
+   "system_id64": 18263140541857,
+   "distance": 17.5180152807046,
+   "distance_to_arrival": 706.782332,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.630495
+    },
+    {
+     "name": "Carbon",
+     "share": 23.092638
+    },
+    {
+     "name": "Chromium",
+     "share": 5.708506
+    },
+    {
+     "name": "Iron",
+     "share": 12.693093
+    },
+    {
+     "name": "Mercury",
+     "share": 0.554286
+    },
+    {
+     "name": "Nickel",
+     "share": 9.600524
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.784304
+    },
+    {
+     "name": "Polonium",
+     "share": 0.327735
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.461927
+    },
+    {
+     "name": "Tungsten",
+     "share": 0.696978
+    },
+    {
+     "name": "Zinc",
+     "share": 3.449508
+    }
+   ],
+   "volcanism_type": "Minor Carbon Dioxide Geysers",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0673646375038238,
+   "surface_temperature": 80.010971,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Stein 2051 B 7 e",
+   "system_name": "Stein 2051",
+   "body_id": 29,
+   "system_id64": 16063848850849,
+   "distance": 18.2205723788387,
+   "distance_to_arrival": 1806.919132,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.818645
+    },
+    {
+     "name": "Germanium",
+     "share": 3.539063
+    },
+    {
+     "name": "Iron",
+     "share": 12.329179
+    },
+    {
+     "name": "Manganese",
+     "share": 5.091825
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.805088
+    },
+    {
+     "name": "Nickel",
+     "share": 9.325274
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.608889
+    },
+    {
+     "name": "Polonium",
+     "share": 0.31834
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.136093
+    },
+    {
+     "name": "Tungsten",
+     "share": 0.676996
+    },
+    {
+     "name": "Zinc",
+     "share": 3.350609
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0402159681859896,
+   "surface_temperature": 51.768848,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "Wolf 1453 AB 1 b",
+   "system_name": "Wolf 1453",
+   "body_id": 12,
+   "system_id64": 670954431905,
+   "distance": 18.4586213766088,
+   "distance_to_arrival": 6478.696949,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.57797
+    },
+    {
+     "name": "Carbon",
+     "share": 22.86647
+    },
+    {
+     "name": "Chromium",
+     "share": 5.478362
+    },
+    {
+     "name": "Iron",
+     "share": 12.181359
+    },
+    {
+     "name": "Manganese",
+     "share": 5.030777
+    },
+    {
+     "name": "Nickel",
+     "share": 9.21347
+    },
+    {
+     "name": "Niobium",
+     "share": 0.832531
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.639509
+    },
+    {
+     "name": "Polonium",
+     "share": 0.317701
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.19297
+    },
+    {
+     "name": "Tungsten",
+     "share": 0.668879
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0522411542775569,
+   "surface_temperature": 31.338924,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Luyten 347-14 8 a",
+   "system_name": "Luyten 347-14",
+   "body_id": 48,
+   "system_id64": 9467047454129,
+   "distance": 18.5553963680381,
+   "distance_to_arrival": 2481.743794,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 23.176054
+    },
+    {
+     "name": "Chromium",
+     "share": 5.650397
+    },
+    {
+     "name": "Germanium",
+     "share": 3.614989
+    },
+    {
+     "name": "Iron",
+     "share": 12.563886
+    },
+    {
+     "name": "Mercury",
+     "share": 0.548644
+    },
+    {
+     "name": "Nickel",
+     "share": 9.502797
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.837708
+    },
+    {
+     "name": "Polonium",
+     "share": 0.327739
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.561131
+    },
+    {
+     "name": "Tin",
+     "share": 0.757724
+    },
+    {
+     "name": "Zirconium",
+     "share": 1.458926
+    }
+   ],
+   "volcanism_type": "Major Water Geysers",
+   "atmosphere": "No atmosphere",
+   "gravity": 0.056558886509636,
+   "surface_temperature": 47.642086,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "LP 816-60 6 a",
+   "system_name": "LP 816-60",
+   "body_id": 58,
+   "system_id64": 2869709252009,
+   "distance": 18.6461184801288,
+   "distance_to_arrival": 1778.984576,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.914575
+    },
+    {
+     "name": "Carbon",
+     "share": 22.272676
+    },
+    {
+     "name": "Chromium",
+     "share": 5.296727
+    },
+    {
+     "name": "Iron",
+     "share": 11.777487
+    },
+    {
+     "name": "Manganese",
+     "share": 4.863982
+    },
+    {
+     "name": "Molybdenum",
+     "share": 0.769063
+    },
+    {
+     "name": "Nickel",
+     "share": 8.907997
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.25935
+    },
+    {
+     "name": "Polonium",
+     "share": 0.30591
+    },
+    {
+     "name": "Selenium",
+     "share": 4.145412
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.486826
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0777434485571531,
+   "surface_temperature": 20.669001,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Ross 47 A 8 a",
+   "system_name": "Ross 47",
+   "body_id": 18,
+   "system_id64": 670954497441,
+   "distance": 19.0226273569794,
+   "distance_to_arrival": 1714.54772,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Carbon",
+     "share": 22.23052
+    },
+    {
+     "name": "Chromium",
+     "share": 5.3455
+    },
+    {
+     "name": "Iron",
+     "share": 11.885934
+    },
+    {
+     "name": "Manganese",
+     "share": 4.90877
+    },
+    {
+     "name": "Nickel",
+     "share": 8.990024
+    },
+    {
+     "name": "Niobium",
+     "share": 0.81234
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.232358
+    },
+    {
+     "name": "Polonium",
+     "share": 0.308062
+    },
+    {
+     "name": "Selenium",
+     "share": 4.137566
+    },
+    {
+     "name": "Sulphur",
+     "share": 26.436689
+    },
+    {
+     "name": "Tin",
+     "share": 0.712232
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0361565208524523,
+   "surface_temperature": 22.183714,
+   "is_rotational_period_tidally_locked": true
+  },
+  {
+   "name": "Luyten 674-15 4",
+   "system_name": "Luyten 674-15",
+   "body_id": 4,
+   "system_id64": 11666339210657,
+   "distance": 19.1829697420655,
+   "distance_to_arrival": 929.413634,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Arsenic",
+     "share": 1.511325
+    },
+    {
+     "name": "Carbon",
+     "share": 19.701534
+    },
+    {
+     "name": "Chromium",
+     "share": 7.28284
+    },
+    {
+     "name": "Iron",
+     "share": 16.193691
+    },
+    {
+     "name": "Molybdenum",
+     "share": 1.057439
+    },
+    {
+     "name": "Nickel",
+     "share": 12.248228
+    },
+    {
+     "name": "Niobium",
+     "share": 1.106752
+    },
+    {
+     "name": "Phosphorus",
+     "share": 12.61326
+    },
+    {
+     "name": "Polonium",
+     "share": 0.454882
+    },
+    {
+     "name": "Sulphur",
+     "share": 23.429207
+    },
+    {
+     "name": "Zinc",
+     "share": 4.400839
+    }
+   ],
+   "volcanism_type": "Minor Methane Magma",
+   "atmosphere": "Thin Neon",
+   "gravity": 0.502249209748139,
+   "surface_temperature": 43.193836,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "WISE 0359-5401 6 a",
+   "system_name": "WISE 0359-5401",
+   "body_id": 9,
+   "system_id64": 22960358443856,
+   "distance": 19.1918002103112,
+   "distance_to_arrival": 3690.038042,
+   "subtype": "Icy body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Cadmium",
+     "share": 0.920026
+    },
+    {
+     "name": "Carbon",
+     "share": 22.747629
+    },
+    {
+     "name": "Chromium",
+     "share": 5.328293
+    },
+    {
+     "name": "Iron",
+     "share": 11.847675
+    },
+    {
+     "name": "Nickel",
+     "share": 8.961085
+    },
+    {
+     "name": "Niobium",
+     "share": 0.809725
+    },
+    {
+     "name": "Phosphorus",
+     "share": 14.563423
+    },
+    {
+     "name": "Polonium",
+     "share": 0.316937
+    },
+    {
+     "name": "Selenium",
+     "share": 4.233811
+    },
+    {
+     "name": "Sulphur",
+     "share": 27.051643
+    },
+    {
+     "name": "Zinc",
+     "share": 3.219755
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.0858876312837769,
+   "surface_temperature": 20.0,
+   "is_rotational_period_tidally_locked": false
+  },
+  {
+   "name": "36 Ophiuchi B 1",
+   "system_name": "36 Ophiuchi",
+   "body_id": 13,
+   "system_id64": 1865903245675,
+   "distance": 19.3374131381372,
+   "distance_to_arrival": 98.931686,
+   "subtype": "Metal-rich body",
+   "is_landable": true,
+   "terraforming_state": "Not terraformable",
+   "materials": [
+    {
+     "name": "Iron",
+     "share": 37.412609
+    },
+    {
+     "name": "Manganese",
+     "share": 15.451026
+    },
+    {
+     "name": "Molybdenum",
+     "share": 2.443022
+    },
+    {
+     "name": "Nickel",
+     "share": 28.297329
+    },
+    {
+     "name": "Niobium",
+     "share": 2.556952
+    },
+    {
+     "name": "Polonium",
+     "share": 1.067168
+    },
+    {
+     "name": "Selenium",
+     "share": 2.604551
+    },
+    {
+     "name": "Zinc",
+     "share": 10.167347
+    }
+   ],
+   "atmosphere": "No atmosphere",
+   "gravity": 0.846409197511981,
+   "surface_temperature": 1111.392456,
+   "is_rotational_period_tidally_locked": false
+  }
+ ]
+}

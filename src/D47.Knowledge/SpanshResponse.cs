@@ -449,6 +449,11 @@ internal static class SpanshResponse
         Signals = ReadSignals(element),
         Rings = ReadRings(element),
         Materials = ReadMaterials(element),
+        Volcanism = String(element, "volcanism_type"),
+        Atmosphere = String(element, "atmosphere"),
+        Gravity = Number(element, "gravity"),
+        SurfaceTemperature = Number(element, "surface_temperature"),
+        IsTidallyLocked = Boolean(element, "is_rotational_period_tidally_locked"),
     };
 
     /// <summary>Surface materials and their share.</summary>

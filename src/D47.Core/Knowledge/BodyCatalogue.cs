@@ -61,7 +61,45 @@ public static class BodyCatalogue
         "Zinc", "Zirconium",
     ];
 
+    /// <summary>Volcanism, as <c>/api/bodies/field_values/volcanism_type</c> returned it on 2026-10-06.</summary>
+    public static IReadOnlyList<string> Volcanism { get; } =
+    [
+        "Carbon Dioxide Geysers", "Major Carbon Dioxide Geysers", "Major Metallic Magma", "Major Rocky Magma",
+        "Major Silicate Vapour Geysers", "Major Water Geysers", "Major Water Magma", "Metallic Magma",
+        "Minor Ammonia Magma", "Minor Carbon Dioxide Geysers", "Minor Metallic Magma", "Minor Methane Magma",
+        "Minor Nitrogen Magma", "Minor Rocky Magma", "Minor Silicate Vapour Geysers", "Minor Water Geysers",
+        "Minor Water Magma", "No volcanism", "Rocky Magma", "Silicate Vapour Geysers", "Water Geysers",
+        "Water Magma",
+    ];
+
+    /// <summary>Atmospheres, as <c>/api/bodies/field_values/atmosphere</c> returned them on 2026-10-06.</summary>
+    public static IReadOnlyList<string> Atmospheres { get; } =
+    [
+        "Ammonia", "Ammonia and Oxygen", "Ammonia-rich", "Argon", "Argon-rich", "Carbon dioxide",
+        "Carbon dioxide-rich", "Helium", "Hot Argon", "Hot Argon-rich", "Hot Carbon dioxide",
+        "Hot Carbon dioxide-rich", "Hot Metallic vapour", "Hot Silicate vapour", "Hot Sulphur dioxide",
+        "Hot Water", "Hot Water-rich", "Hot thick Ammonia", "Hot thick Ammonia-rich", "Hot thick Argon",
+        "Hot thick Argon-rich", "Hot thick Carbon dioxide", "Hot thick Carbon dioxide-rich",
+        "Hot thick Metallic vapour", "Hot thick Methane", "Hot thick Methane-rich", "Hot thick Nitrogen",
+        "Hot thick Silicate vapour", "Hot thick Sulphur dioxide", "Hot thick Water", "Hot thick Water-rich",
+        "Hot thin Carbon dioxide", "Hot thin Metallic vapour", "Hot thin Silicate vapour",
+        "Hot thin Sulphur dioxide", "Methane", "Methane-rich", "Neon-rich", "Nitrogen", "No atmosphere",
+        "Oxygen", "Suitable for water-based life", "Sulphur dioxide", "Thick Ammonia",
+        "Thick Ammonia and Oxygen", "Thick Ammonia-rich", "Thick Argon", "Thick Argon-rich",
+        "Thick Carbon dioxide", "Thick Carbon dioxide-rich", "Thick Helium", "Thick Methane",
+        "Thick Methane-rich", "Thick Nitrogen", "Thick No atmosphere", "Thick Suitable for water-based life",
+        "Thick Sulphur dioxide", "Thick Water", "Thick Water-rich", "Thin Ammonia", "Thin Ammonia and Oxygen",
+        "Thin Ammonia-rich", "Thin Argon", "Thin Argon-rich", "Thin Carbon dioxide",
+        "Thin Carbon dioxide-rich", "Thin Helium", "Thin Methane", "Thin Methane-rich", "Thin Neon",
+        "Thin Neon-rich", "Thin Nitrogen", "Thin Oxygen", "Thin Sulphur dioxide", "Thin Water",
+        "Thin Water-rich", "Water", "Water-rich",
+    ];
+
     public static string? MatchSurfaceMaterial(string spoken) => Catalogue.Match(SurfaceMaterials, spoken);
+
+    public static string? MatchVolcanism(string spoken) => Catalogue.Match(Volcanism, spoken);
+
+    public static string? MatchAtmosphere(string spoken) => Catalogue.Match(Atmospheres, spoken);
 
     public static string? MatchSubtype(string spoken) => Catalogue.Match(Subtypes, spoken);
 

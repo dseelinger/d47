@@ -226,7 +226,8 @@ an unknown key:
 | Colonised | `is_colonised` true: 5 of 26 at 12 ly | `system_is_colonised` true: 522 | ignored |
 | Allegiance, government, security | honoured | `system_*` ignored; `security` ignored | ignored |
 
-Only the systems search carries these filters so far.
+The systems search carries all of them. The body search carries `power` and `power_state`, and
+refuses the rest by name. The station search carries none yet.
 
 #### A boolean filter cannot express false
 
@@ -544,7 +545,7 @@ resolved it to.
 The nearest planets, moons and stars matching some criteria.
 
 ```json
-{"type":"object","properties":{"body_type":{"type":"string","description":"The kind of body, by name \u2014 \u0022Earth-like world\u0022, \u0022Class I gas giant\u0022."},"hotspot":{"type":"string","description":"A mining hotspot material in the body\u0027s rings \u2014 \u0022Painite\u0022, \u0022Void Opal\u0022."},"hotspot_count":{"type":"integer","description":"Exactly how many overlapping hotspots \u2014 not a minimum. A triple is 3."},"landable":{"type":"boolean","description":"Only bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"reserve_level":{"type":"string","description":"How rich the rings are.","enum":["Common","Depleted","Low","Major","Pristine"]},"ring_type":{"type":"string","description":"Ring composition.","enum":["Icy","Metal Rich","Metallic","Rocky"]},"signal":{"type":"string","description":"A signal on the body\u0027s surface: \u0022Biological\u0022, \u0022Geological\u0022, \u0022Human\u0022, \u0022Guardian\u0022 or \u0022Thargoid\u0022."},"signal_count":{"type":"integer","description":"Exactly how many of that signal \u2014 not a minimum. Omit unless they asked for a number."},"terraformable":{"type":"boolean","description":"Only terraforming candidates, which are worth far more to map."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"atmosphere":{"type":"string","description":"Atmosphere by name \u2014 \u0022Thin Ammonia\u0022, \u0022No atmosphere\u0022."},"body_type":{"type":"string","description":"The kind of body, by name \u2014 \u0022Earth-like world\u0022, \u0022Class I gas giant\u0022."},"gravity":{"type":"string","description":"Surface gravity in g: \u00220.5\u0022 is up to, \u00220.1-0.5\u0022 between."},"hotspot":{"type":"string","description":"A mining hotspot material in the body\u0027s rings \u2014 \u0022Painite\u0022, \u0022Void Opal\u0022."},"hotspot_count":{"type":"integer","description":"Exactly how many overlapping hotspots \u2014 not a minimum. A triple is 3."},"landable":{"type":"boolean","description":"Only bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"material":{"type":"string","description":"A raw surface material the body carries \u2014 \u0022Polonium\u0022."},"max_arrival_distance":{"type":"number","description":"Light seconds from the arrival star, at most."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order_by":{"type":"string","description":"\u0022material\u0022 keeps the richest in that material among the 50 nearest carrying it.","enum":["distance","material"]},"power":{"type":"string","description":"The Powerplay power controlling the system.","enum":["A. Lavigny-Duval","Aisling Duval","Archon Delaine","Denton Patreus","Edmund Mahon","Felicia Winters","Jerome Archer","Li Yong-Rui","Nakato Kaine","Pranav Antal","Yuri Grom","Zemina Torval"]},"power_state":{"type":"string","description":"The system\u0027s Powerplay state.","enum":["Exploited","Fortified","Stronghold","Unoccupied"]},"reserve_level":{"type":"string","description":"How rich the rings are.","enum":["Common","Depleted","Low","Major","Pristine"]},"ring_type":{"type":"string","description":"Ring composition.","enum":["Icy","Metal Rich","Metallic","Rocky"]},"signal":{"type":"string","description":"A signal on the body\u0027s surface: \u0022Biological\u0022, \u0022Geological\u0022, \u0022Human\u0022, \u0022Guardian\u0022 or \u0022Thargoid\u0022."},"signal_count":{"type":"integer","description":"Exactly how many of that signal \u2014 not a minimum. Omit unless they asked for a number."},"temperature":{"type":"string","description":"Surface temperature in kelvin, as a range like gravity."},"terraformable":{"type":"boolean","description":"Only terraforming candidates, which are worth far more to map."},"tidally_locked":{"type":"boolean","description":"Only tidally locked bodies."},"volcanism":{"type":"string","description":"Volcanism by name \u2014 \u0022Water Geysers\u0022, \u0022Minor Rocky Magma\u0022."}},"required":[],"additionalProperties":false}
 ```
 
 One index answers three questions that sound unrelated:
@@ -573,11 +574,35 @@ returned none and 4 returned 2 — not a decreasing series, and every result car
 number asked for. So the schema says "exactly how many" rather than "at least", because a "three
 or more" that silently meant "exactly three" would be a wrong answer that reads like a right one.
 
-`distance_to_arrival` is **not** offered as a filter: the service ignores it. Setting it to 0-10
-light seconds returned the same 1,315 bodies as no filter at all. It is read off each result and
-reported, because how far in-system a body sits is half of how far away it is — but it cannot
-narrow a search, and offering it as though it could would be the silent-ignore failure with d47's
-name on it.
+**Gravity, temperature and arrival distance take the comparison shape.** Like `population`,
+each is ignored in the `{"min","max"}` shape and honoured as
+`{"value":["min","max"],"comparison":"<=>"}`. Within 20 light years of Sol, against a control of
+1,315 bodies, probed on 2026-10-03:
+
+| Filter | Comparison shape | Min/max shape |
+| --- | --- | --- |
+| `gravity` 0–0.1 g | 362 | 1,147, not a filter |
+| `surface_temperature` 0–100 K | 797 | 1,315, ignored |
+| `distance_to_arrival` 0–10 Ls | 116 | 1,315, ignored |
+
+`max_arrival_distance` is sent as `distance_to_arrival` from 0. `gravity` and `temperature` take
+the same range syntax as the system filters: `0.5` is up to, `0.1-0.5` between.
+
+`volcanism` and `atmosphere` are matched against the 22 and 78 values the service's
+`field_values` endpoints list, and sent in its spelling: "water geysers" is sent as
+`Water Geysers`. A value that matches none is refused with the nearest names. `tidally_locked`
+sends `"true"` or nothing, as `landable` does.
+
+**A material can be asked for, and ordered by share, but only among the nearest.** `material`
+is the same `materials` group `find_material` sends. The service carries each body's share of
+each material, but it ignores a share bound — Polonium with a bound of 90–100 returned the same 56
+bodies as Polonium alone — and sorting by `materials` is an HTTP 400. So `order_by: material`
+asks for the 50 nearest bodies carrying the material and keeps the `limit` with the highest share.
+The richest is the richest among those 50, and the answer says so.
+
+The answer names each body's value for whatever was asked — the volcanism, the atmosphere, the
+gravity, the temperature, tidally locked, and the material's share. Every answer is kept as the
+last bodies search, as for `search_systems`; a search that fails keeps nothing.
 
 Hotspots carry the date they were reported, for the same reason outfitting stock does. They are
 crowd-sourced, and only the rings holding what you asked for are listed — a metal-rich ring with

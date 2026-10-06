@@ -94,7 +94,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             GalaxyFilters.For(GalaxySearchKind.Systems).Select(filter => filter.Name));
 
         Assert.Empty(GalaxyFilters.For(GalaxySearchKind.Stations));
-        Assert.Empty(GalaxyFilters.For(GalaxySearchKind.Bodies));
+        Assert.Equal(["power", "power_state"], GalaxyFilters.For(GalaxySearchKind.Bodies).Select(filter => filter.Name));
     }
 
     [Fact]

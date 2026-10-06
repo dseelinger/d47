@@ -107,51 +107,13 @@ public class SpanshRequestTests
             SpanshRequest.Search(query));
     }
 
-    private static JsonElement Bodies(Action<BodyBuilder> configure)
+    private static JsonElement Bodies(BodyRequest request)
     {
-        var builder = new BodyBuilder();
-        configure(builder);
-
         Assert.True(
-            BodyQuery.TryParse(
-                "Sol",
-                builder.Subtype,
-                builder.Signal,
-                builder.SignalCount,
-                builder.RingSignal,
-                builder.RingSignalCount,
-                builder.RingType,
-                builder.ReserveLevel,
-                builder.Landable,
-                builder.Terraformable,
-                maxDistance: 20,
-                size: 5,
-                out var query,
-                out var failure),
+            BodyQuery.TryParse(request with { ReferenceSystem = "Sol", MaxDistance = 20 }, out var query, out var failure),
             failure);
 
         return JsonDocument.Parse(SpanshRequest.Bodies(query)).RootElement;
-    }
-
-    private sealed class BodyBuilder
-    {
-        public string? Subtype { get; set; }
-
-        public string? Signal { get; set; }
-
-        public int? SignalCount { get; set; }
-
-        public string? RingSignal { get; set; }
-
-        public int? RingSignalCount { get; set; }
-
-        public string? RingType { get; set; }
-
-        public string? ReserveLevel { get; set; }
-
-        public bool? Landable { get; set; }
-
-        public bool? Terraformable { get; set; }
     }
 
     [Fact]
@@ -159,7 +121,7 @@ public class SpanshRequestTests
     {
         // The obvious spelling — {"signals":{"Biological":{"min":"1","max":"40"}}} — is accepted and ignored,
         // returning the unfiltered 1,315 bodies within 20 ly of Sol on 2026-08-14.
-        var body = Bodies(builder => builder.Signal = "Biological");
+        var body = Bodies(new() { Signal = "Biological" });
 
         var signals = body.GetProperty("filters").GetProperty("signals");
 
@@ -171,10 +133,10 @@ public class SpanshRequestTests
     public void ASignalCountIsABareNumberBecauseARangeAnswersNothing()
     {
         // Written as {"min":"1","max":"40"} the count member returned zero results every time.
-        var body = Bodies(builder =>
+        var body = Bodies(new()
         {
-            builder.RingSignal = "Painite";
-            builder.RingSignalCount = 3;
+            RingSignal = "Painite",
+            RingSignalCount = 3,
         });
 
         var count = body.GetProperty("filters").GetProperty("ring_signals").GetProperty("count");
@@ -187,7 +149,7 @@ public class SpanshRequestTests
     public void ARingTypeIsAPlainChoiceRatherThanAGroup()
     {
         // The group spelling that works for modules and signals is a 500 here.
-        var body = Bodies(builder => builder.RingType = "Icy");
+        var body = Bodies(new() { RingType = "Icy" });
 
         Assert.Equal("Icy", body.GetProperty("filters").GetProperty("rings").GetProperty("value")[0].GetString());
     }
@@ -197,7 +159,7 @@ public class SpanshRequestTests
     {
         // The service models this as one of four states, so "not terraformable" is a value rather than the
         // absence of the filter.
-        var body = Bodies(builder => builder.Terraformable = true);
+        var body = Bodies(new() { Terraformable = true });
 
         Assert.Equal(
             "Terraformable",
@@ -209,7 +171,7 @@ public class SpanshRequestTests
     {
         // A filter written with a default value is a filter, and the service has no way to tell "the
         // Commander did not say" from "the Commander said no".
-        var filters = Bodies(builder => builder.Subtype = "Earth-like world").GetProperty("filters");
+        var filters = Bodies(new() { Subtype = "Earth-like world" }).GetProperty("filters");
 
         Assert.False(filters.TryGetProperty("is_landable", out _));
         Assert.False(filters.TryGetProperty("terraforming_state", out _));
@@ -220,10 +182,10 @@ public class SpanshRequestTests
     [Fact]
     public void LandableFalseSendsNoLandableFilterBecauseTheServiceReadsEveryValueAsTrue()
     {
-        var filters = Bodies(builder =>
+        var filters = Bodies(new()
         {
-            builder.Subtype = "Earth-like world";
-            builder.Landable = false;
+            Subtype = "Earth-like world",
+            Landable = false,
         }).GetProperty("filters");
 
         Assert.False(filters.TryGetProperty("is_landable", out _));
@@ -232,7 +194,7 @@ public class SpanshRequestTests
     [Fact]
     public void LandableTrueSendsTheLandableFilter()
     {
-        var filters = Bodies(builder => builder.Landable = true).GetProperty("filters");
+        var filters = Bodies(new() { Landable = true }).GetProperty("filters");
 
         Assert.Equal("true", filters.GetProperty("is_landable").GetProperty("value")[0].GetString());
     }
@@ -399,7 +361,7 @@ public class SpanshRequestTests
     [Fact]
     public void AnOrdinaryBodySearchSendsNoSystemNameFilter()
     {
-        Assert.False(Bodies(builder => builder.Subtype = "Water world")
+        Assert.False(Bodies(new() { Subtype = "Water world" })
             .GetProperty("filters")
             .TryGetProperty("system_name", out _));
     }

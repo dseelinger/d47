@@ -307,7 +307,7 @@ public static class GalaxyCapability
                 Name = "find_body",
                 Description =
                     "Find the nearest planets, moons or stars matching some criteria — a body type, a "
-                    + "surface signal, or a ring to mine.",
+                    + "surface signal, a ring to mine, a surface material, volcanism, atmosphere or gravity.",
                 Parameters =
                 [
                     new ToolParameter
@@ -376,6 +376,57 @@ public static class GalaxyCapability
                     },
                     new ToolParameter
                     {
+                        Name = "volcanism",
+                        Type = ToolParameterType.String,
+                        Description = "Volcanism by name — \"Water Geysers\", \"Minor Rocky Magma\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "atmosphere",
+                        Type = ToolParameterType.String,
+                        Description = "Atmosphere by name — \"Thin Ammonia\", \"No atmosphere\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "tidally_locked",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Only tidally locked bodies.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "gravity",
+                        Type = ToolParameterType.String,
+                        Description = "Surface gravity in g: \"0.5\" is up to, \"0.1-0.5\" between.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "temperature",
+                        Type = ToolParameterType.String,
+                        Description = "Surface temperature in kelvin, as a range like gravity.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_arrival_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "Light seconds from the arrival star, at most.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "material",
+                        Type = ToolParameterType.String,
+                        Description = "A raw surface material the body carries — \"Polonium\".",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "order_by",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "\"material\" keeps the richest in that material among the 50 nearest carrying it.",
+                        AllowedValues = ["distance", "material"],
+                    },
+                    .. GalaxyFilters.For(GalaxySearchKind.Bodies).Select(Parameter),
+                    new ToolParameter
+                    {
                         Name = "near",
                         Type = ToolParameterType.String,
                         Description = "Search out from this system. Defaults to theirs.",
@@ -394,7 +445,7 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    FindBodyAsync(galaxy, currentSystem, settings, arguments, cancellationToken),
+                    FindBodyAsync(galaxy, currentSystem, settings, searches, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -1303,6 +1354,8 @@ public static class GalaxyCapability
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
+        GalaxySearchBoard? searches,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1321,36 +1374,61 @@ public static class GalaxyCapability
                 "I don't know where the Commander is right now, so I need a system to search out from.");
         }
 
-        arguments.TryGetString("body_type", out var bodyType);
-        arguments.TryGetString("signal", out var signal);
-        arguments.TryGetString("hotspot", out var hotspot);
-        arguments.TryGetString("ring_type", out var ringType);
-        arguments.TryGetString("reserve_level", out var reserveLevel);
+        var filters = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        if (!BodyQuery.TryParse(
-                near,
-                bodyType,
-                signal,
-                Count(arguments, "signal_count"),
-                hotspot,
-                Count(arguments, "hotspot_count"),
-                ringType,
-                reserveLevel,
-                Flag(arguments, "landable"),
-                Flag(arguments, "terraformable"),
-                Distance(arguments, "max_distance"),
-                arguments.TryGetInt32("limit", out var limit) ? limit : 5,
-                out var query,
-                out var failure))
+        foreach (var filter in GalaxyFilters.For(GalaxySearchKind.Bodies))
+        {
+            if (arguments.TryGetString(filter.Name, out var value) && !string.IsNullOrWhiteSpace(value))
+            {
+                filters[filter.Name] = value;
+            }
+        }
+
+        var request = new BodyRequest
+        {
+            ReferenceSystem = near,
+            Subtype = Text(arguments, "body_type"),
+            Signal = Text(arguments, "signal"),
+            SignalCount = Count(arguments, "signal_count"),
+            RingSignal = Text(arguments, "hotspot"),
+            RingSignalCount = Count(arguments, "hotspot_count"),
+            RingType = Text(arguments, "ring_type"),
+            ReserveLevel = Text(arguments, "reserve_level"),
+            Landable = Flag(arguments, "landable"),
+            Terraformable = Flag(arguments, "terraformable"),
+            Volcanism = Text(arguments, "volcanism"),
+            Atmosphere = Text(arguments, "atmosphere"),
+            TidallyLocked = Flag(arguments, "tidally_locked"),
+            Gravity = Text(arguments, "gravity"),
+            Temperature = Text(arguments, "temperature"),
+            MaxArrivalDistance = Distance(arguments, "max_arrival_distance"),
+            Material = Text(arguments, "material"),
+            OrderBy = Text(arguments, "order_by"),
+            Filters = filters,
+            MaxDistance = Distance(arguments, "max_distance"),
+            Size = arguments.TryGetInt32("limit", out var limit) ? limit : 5,
+        };
+
+        if (!BodyQuery.TryParse(request, out var query, out var failure))
         {
             return ToolResult.Error(failure);
         }
 
         try
         {
-            var result = await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false);
+            var result = query.Keep(await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false));
 
-            return ToolResult.Ok(Describe(result, query));
+            var said = Describe(result, query);
+
+            searches?.Post(new GalaxySearchPosting(
+                GalaxySearchKind.Bodies,
+                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                result.Reference,
+                result,
+                said,
+                now?.Invoke() ?? DateTimeOffset.UtcNow));
+
+            return ToolResult.Ok(said);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1586,8 +1664,15 @@ public static class GalaxyCapability
         if (acquisition.Methods.Contains(AcquisitionMethod.RingMining))
         {
             if (!BodyQuery.TryParse(
-                    near, null, null, null, acquisition.Name, null, null, null, null, null, DefaultDistance, 1,
-                    out var query, out _))
+                    new BodyRequest
+                    {
+                        ReferenceSystem = near,
+                        RingSignal = acquisition.Name,
+                        MaxDistance = DefaultDistance,
+                        Size = 1,
+                    },
+                    out var query,
+                    out _))
             {
                 return null;
             }
@@ -1688,6 +1773,9 @@ public static class GalaxyCapability
     private static bool? Flag(ToolArguments arguments, string name) =>
         arguments.Values.ContainsKey(name) && arguments.TryGetBoolean(name, out var value) ? value : null;
 
+    private static string? Text(ToolArguments arguments, string name) =>
+        arguments.TryGetString(name, out var value) ? value : null;
+
     private static int? Count(ToolArguments arguments, string name) =>
         arguments.TryGetInt32(name, out var value) ? value : null;
 
@@ -1707,9 +1795,20 @@ public static class GalaxyCapability
 
         var report = new StringBuilder();
 
-        report.Append(result.Total == result.Bodies.Count
-            ? $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched"
-            : $"{result.Total} bodies matched; here are the nearest {result.Bodies.Count}");
+        if (query.OrderByMaterial)
+        {
+            var among = Math.Min(result.Total, BodyQuery.RichestOf);
+
+            report.Append(
+                $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched; here are the richest "
+                + $"{result.Bodies.Count} in {query.Material} among the nearest {among}");
+        }
+        else
+        {
+            report.Append(result.Total == result.Bodies.Count
+                ? $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched"
+                : $"{result.Total} bodies matched; here are the nearest {result.Bodies.Count}");
+        }
 
         if (result.Reference is not null)
         {
@@ -1756,6 +1855,8 @@ public static class GalaxyCapability
                 facts.Add($"{body.ReserveLevel.ToLowerInvariant()} reserves");
             }
 
+            facts.AddRange(Asked(body, query));
+
             if (facts.Count > 0)
             {
                 report.Append($"; {string.Join(", ", facts)}");
@@ -1774,6 +1875,40 @@ public static class GalaxyCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    /// <summary>The body's value for each new filter the query asked about.</summary>
+    private static IEnumerable<string> Asked(BodySummary body, BodyQuery query)
+    {
+        if (query.Material is { } material && body.Share(material) is { } share)
+        {
+            yield return $"{share.ToString("0.##", CultureInfo.InvariantCulture)}% {material}";
+        }
+
+        if (query.Volcanism is not null && body.Volcanism is not null)
+        {
+            yield return body.Volcanism.ToLowerInvariant();
+        }
+
+        if (query.Atmosphere is not null && body.Atmosphere is not null)
+        {
+            yield return $"{body.Atmosphere.ToLowerInvariant()} atmosphere";
+        }
+
+        if ((query.GravityMin ?? query.GravityMax) is not null && body.Gravity is { } gravity)
+        {
+            yield return $"{gravity.ToString("0.##", CultureInfo.InvariantCulture)} g";
+        }
+
+        if ((query.TemperatureMin ?? query.TemperatureMax) is not null && body.SurfaceTemperature is { } kelvin)
+        {
+            yield return $"{kelvin.ToString("N0", CultureInfo.InvariantCulture)} K";
+        }
+
+        if (query.TidallyLocked is true && body.IsTidallyLocked)
+        {
+            yield return "tidally locked";
+        }
     }
 
     private static void DescribeRings(StringBuilder report, BodySummary body, string? wanted)

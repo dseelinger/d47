@@ -125,12 +125,26 @@ public static class GalaxyFilters
                 "A. Lavigny-Duval", "Aisling Duval", "Archon Delaine", "Denton Patreus", "Edmund Mahon",
                 "Felicia Winters", "Jerome Archer", "Li Yong-Rui", "Nakato Kaine", "Pranav Antal", "Yuri Grom",
                 "Zemina Torval",
-            ]),
+            ]) with
+        {
+            Fields = new Dictionary<GalaxySearchKind, string>
+            {
+                [GalaxySearchKind.Systems] = "controlling_power",
+                [GalaxySearchKind.Bodies] = "system_controlling_power",
+            },
+        },
         GalaxyFilter.ChoiceOf(
             "power_state",
             "power_state",
             "The system's Powerplay state.",
-            ["Exploited", "Fortified", "Stronghold", "Unoccupied"]),
+            ["Exploited", "Fortified", "Stronghold", "Unoccupied"]) with
+        {
+            Fields = new Dictionary<GalaxySearchKind, string>
+            {
+                [GalaxySearchKind.Systems] = "power_state",
+                [GalaxySearchKind.Bodies] = "system_power_state",
+            },
+        },
 
         // A comparison, not a range: the service drops the min/max shape for population.
         GalaxyFilter.ComparisonOf(
@@ -294,7 +308,7 @@ public static class GalaxyCriteria
     };
 
     /// <summary>Reads "20", "0-20", "-20" (up to) or "20-" (from).</summary>
-    private static bool TryParseRange(string value, out double? min, out double? max)
+    public static bool TryParseRange(string value, out double? min, out double? max)
     {
         min = null;
         max = null;

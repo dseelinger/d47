@@ -244,6 +244,17 @@ internal static class SpanshRequest
                 writer.WriteEndObject();
             }
 
+            WriteChoice(writer, "volcanism_type", query.Volcanism);
+            WriteChoice(writer, "atmosphere", query.Atmosphere);
+            WriteChoice(writer, "is_rotational_period_tidally_locked", query.TidallyLocked is true ? "true" : null);
+
+            // The comparison shape: in the min/max shape none of these filtered correctly.
+            WriteComparison(writer, "gravity", query.GravityMin, query.GravityMax);
+            WriteComparison(writer, "surface_temperature", query.TemperatureMin, query.TemperatureMax);
+            WriteComparison(writer, "distance_to_arrival", 0, query.MaxArrivalDistance);
+
+            WriteCriteria(writer, GalaxySearchKind.Bodies, query.Criteria);
+
             writer.WriteEndObject();
 
             writer.WriteStartArray("sort");
@@ -365,6 +376,23 @@ internal static class SpanshRequest
         writer.WriteStartArray("value");
         writer.WriteStringValue(value);
         writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    /// <summary>A comparison filter from 0 or <paramref name="min"/>, unbounded above unless <paramref name="max"/> is set; nothing when neither narrows.</summary>
+    private static void WriteComparison(Utf8JsonWriter writer, string name, double? min, double? max)
+    {
+        if (max is null && (min is null || min == 0))
+        {
+            return;
+        }
+
+        writer.WriteStartObject(name);
+        writer.WriteStartArray("value");
+        writer.WriteStringValue(Number(min ?? 0));
+        writer.WriteStringValue(Number(max ?? UnboundedMax));
+        writer.WriteEndArray();
+        writer.WriteString("comparison", "<=>");
         writer.WriteEndObject();
     }
 
