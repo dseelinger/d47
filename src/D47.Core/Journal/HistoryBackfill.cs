@@ -65,6 +65,9 @@ public sealed class HistoryBackfill
     /// <summary>When each activity was last done, folded the same way (#585).</summary>
     public D47.Core.Activities.ActivityLedger? Activities { get; init; }
 
+    /// <summary>The mission results and promotions Elite also sends as mail, folded the same way (#618).</summary>
+    public MailLedger? Mail { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -229,6 +232,15 @@ public sealed class HistoryBackfill
                 Timed("activity backfill", () =>
                 {
                     activities.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Mail is { } mail)
+            {
+                Timed("mail backfill", () =>
+                {
+                    mail.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }
