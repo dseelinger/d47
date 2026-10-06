@@ -63,6 +63,9 @@ public sealed class GameStateStore
 
     public IReadOnlyCollection<CommanderGameState> All => _byFrontierId.Values;
 
+    /// <summary>A tick's events as reactions to the shown Commander take them: none while off duty.</summary>
+    public IReadOnlyList<JournalEvent> Shown(IReadOnlyList<JournalEvent> events) => IsOffDuty ? [] : events;
+
     /// <summary>
     /// Feeds one event to the active Commander's bucket — creating that bucket first if this is the
     /// event establishing identity for a Commander not seen before.

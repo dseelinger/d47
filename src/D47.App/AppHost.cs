@@ -966,7 +966,7 @@ public sealed class AppHost : IDisposable
             RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
         };
 
-        // The settings follow whoever the journal says is flying (Phase 44).
+        // The settings follow the shown Commander, picked or logged in.
         gameState.CommanderChanged += change =>
             settings.UseCommander(change.Current.FrontierId, change.Current.Name);
 
@@ -1274,7 +1274,13 @@ public sealed class AppHost : IDisposable
             // a Commander change met during the replay is history, not a login.
             var events = journal.Poll(priming: context.IsFirst);
 
-            arrived = events;
+            // While Elite runs a Commander other than the one shown, their events fold into their own state and
+            // ledgers and nothing reacts to them.
+            var offDuty = gameState.IsOffDuty;
+            var inGame = gameState.InGame?.Identity.FrontierId;
+            var shown = gameState.Shown(events);
+
+            arrived = shown;
 
             eliteMusic.Observe(events);
 
@@ -1293,41 +1299,41 @@ public sealed class AppHost : IDisposable
             modulePower.Poll();
 
             // The commodity board the Commander is standing in front of, if they have opened one (Phase 36).
-            markets.Poll(gameState.Active?.Location.StarPos);
+            markets.Poll(gameState.InGame?.Location.StarPos);
 
             // Before the callouts and inside this subscriber, so a verdict recomputed from this tick's events
             // is announced on this tick rather than the next.
-            checklists.Poll(announce: !context.IsFirst, events);
+            checklists.Poll(announce: !context.IsFirst && !offDuty, shown);
 
             // Before the callouts, so the sale callout reads a total that includes the sale it is announcing
             // (#296).
             commodityLedger.Apply(events);
 
             // Before the callouts too, so an analysis is in the unsold total the sampling callout speaks.
-            exobiology.Apply(events, gameState.Active?.Identity.FrontierId);
-            cartography.Apply(events, gameState.Active?.Identity.FrontierId);
-            crimes.Apply(events, gameState.Active?.Identity.FrontierId);
-            activities.Apply(events, gameState.Active?.Identity.FrontierId);
+            exobiology.Apply(events, inGame);
+            cartography.Apply(events, inGame);
+            crimes.Apply(events, inGame);
+            activities.Apply(events, inGame);
 
             if (!context.IsFirst)
             {
-                mail.Fold(events, live: true, gameState.Active?.Identity.FrontierId);
+                mail.Fold(events, live: true, inGame, announced: !offDuty);
             }
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
-            planBook.Apply(events);
+            planBook.Apply(shown);
 
             // Outside the callouts, so the fight is followed while they or chatter are switched off.
-            foreach (var journalEvent in events)
+            foreach (var journalEvent in shown)
             {
                 fight.Fold(journalEvent, context.Now, context.IsFirst);
                 scenes.Fold(journalEvent);
             }
 
-            var calloutContext = new CalloutContext(
+            var calloutContext = CalloutContext.For(
                 context.Now,
-                IsPriming: context.IsFirst,
-                gameState.Active,
+                context.IsFirst,
+                gameState,
                 status.Current,
                 route.Current,
                 events);
@@ -1606,8 +1612,11 @@ public sealed class AppHost : IDisposable
 
         // With the status alongside the window (#242): running and in front are not the same as in the game,
         // and the injector is the one place the difference is enforced.
-        var gameInput = new ScancodeInjector(
+        var injector = new ScancodeInjector(
             eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>(), () => status.Current, inputTrace);
+
+        // Nothing is pressed in a game running a Commander other than the one shown.
+        var gameInput = new OffDutyGameInput(injector, gameState);
 
         // Declared here and assigned inside the registry build below, so the capabilities and the prompt's
         // game-state block are looking at one surface rather than two that could disagree about what is
@@ -2509,7 +2518,7 @@ public sealed class AppHost : IDisposable
             pushToTalkButton,
             sources,
             binds,
-            gameInput,
+            injector,
             models,
             transcriber,
             version,
@@ -2920,8 +2929,11 @@ public sealed class AppHost : IDisposable
                 return;
             }
 
-            memoryObserver.Observe(gameState.Active, context.Now);
-            memoryObserver.Touch(gameState.Active, context.Now);
+            if (!gameState.IsOffDuty)
+            {
+                memoryObserver.Observe(gameState.Active, context.Now);
+                memoryObserver.Touch(gameState.Active, context.Now);
+            }
 
             // Once at startup and then rarely.
             if (context.Now - expiredAt >= ExpiryEvery)
@@ -2954,10 +2966,11 @@ public sealed class AppHost : IDisposable
             }
 
             var commander = gameState.Active?.Identity.FrontierId;
+            var inGame = gameState.InGame?.Identity.FrontierId;
 
             foreach (var journalEvent in arrived)
             {
-                if (storyDirector.Observe(journalEvent, commander) is { } waking && !context.IsFirst)
+                if (storyDirector.Observe(journalEvent, inGame) is { } waking && !context.IsFirst)
                 {
                     // The callouts ran earlier on this tick, so a beat the same scan reached is already owed its line.
                     var chapter = storyStore.Current(commander)?.CurrentChapter;
@@ -2968,7 +2981,7 @@ public sealed class AppHost : IDisposable
                 // A dock beat whose station has its docks offline is written again on the pool.
                 if (!context.IsFirst)
                 {
-                    _ = storyDirector.DockOffline(journalEvent, commander);
+                    _ = storyDirector.DockOffline(journalEvent, inGame);
                 }
             }
 
@@ -4570,6 +4583,20 @@ public sealed class AppHost : IDisposable
             return;
         }
 
+        // A pick keeps the conversation and the session: only what belongs to the shown Commander follows.
+        if (change.Cause == CommanderSwitchCause.Picked)
+        {
+            _logger.LogInformation(
+                "Commander {Current} picked in place of {Previous}: core re-resolved, conversation kept",
+                change.Current.Name,
+                change.Previous!.Name);
+
+            ShipCores.Reset();
+            Drift?.Reset();
+            BeginDirections();
+            return;
+        }
+
         _logger.LogInformation(
             "Commander {Previous} logged out and {Current} logged in: new transcript, core re-resolved, greeting due",
             change.Previous!.Name,
@@ -5761,7 +5788,8 @@ public sealed class AppHost : IDisposable
 
         pending = [.. pending.Where(reconcile => reconcile.Destination is null)];
 
-        if (pending.Count == 0)
+        // Dropped rather than held off duty, so nothing decided then is carried out on return.
+        if (pending.Count == 0 || GameState.IsOffDuty)
         {
             return;
         }
@@ -6307,7 +6335,8 @@ public sealed class AppHost : IDisposable
     {
         var pending = runner.Drain();
 
-        if (pending.Count == 0)
+        // Dropped rather than held, so nothing decided off duty is carried out on return.
+        if (pending.Count == 0 || GameState.IsOffDuty)
         {
             return;
         }
@@ -7373,7 +7402,8 @@ public sealed class AppHost : IDisposable
     {
         var pending = Callouts.Drain();
 
-        if (pending.Count == 0)
+        // A line queued before a pick is about the Commander no longer shown.
+        if (pending.Count == 0 || GameState.IsOffDuty)
         {
             return;
         }

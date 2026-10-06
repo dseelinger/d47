@@ -70,6 +70,16 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
     }
 
     [Fact]
+    public void APromotionNoCalloutSpokeIsMail()
+    {
+        var ledger = Ledger();
+        Walk(ledger, []);
+        ledger.Fold([Parse(Promotion("10:05:00"))], live: true, Doug, announced: false);
+
+        Assert.Contains("a promotion to Elite in trade", ledger.Compose(Doug), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MissionResultsCountWhetherLiveOrFromHistory()
     {
         var ledger = Ledger();

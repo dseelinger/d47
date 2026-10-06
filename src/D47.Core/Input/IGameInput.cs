@@ -20,6 +20,9 @@ public enum InjectionOutcome
     /// <summary>The sequence was empty — an unpressable binding reached the injector.</summary>
     NothingToSend,
 
+    /// <summary>d47 is showing a Commander other than the one Elite is running.</summary>
+    OffDuty,
+
     Failed,
 }
 

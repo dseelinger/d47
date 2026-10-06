@@ -78,10 +78,10 @@ public sealed class MailLedger
 
     /// <summary>
     /// Folds events in order, attributed to <paramref name="commander"/> until one names another. With
-    /// <paramref name="live"/> true, promotions are skipped because the callout speaks them. Callers do not
-    /// pass the priming tick.
+    /// <paramref name="live"/> true, promotions are skipped because the callout speaks them, unless
+    /// <paramref name="announced"/> is false because the callouts are silent. Callers do not pass the priming tick.
     /// </summary>
-    public void Fold(IEnumerable<JournalEvent> events, bool live, string? commander = null)
+    public void Fold(IEnumerable<JournalEvent> events, bool live, string? commander = null, bool announced = true)
     {
         ArgumentNullException.ThrowIfNull(events);
 
@@ -108,7 +108,7 @@ public sealed class MailLedger
                     continue;
                 }
 
-                if (live && journalEvent.Kind is "Promotion" or "PowerplayRank")
+                if (live && announced && journalEvent.Kind is "Promotion" or "PowerplayRank")
                 {
                     var spoken = Key(journalEvent);
                     _said.Add(spoken);

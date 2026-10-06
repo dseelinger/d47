@@ -21,7 +21,22 @@ public readonly record struct CalloutContext(
     GameStatus Status,
     NavRoute Route,
     IReadOnlyList<JournalEvent> Events,
-    ChatterSaid? LastChatter = null);
+    ChatterSaid? LastChatter = null)
+{
+    /// <summary>The journal tick's context for the shown Commander, silent as priming is while off duty.</summary>
+    public static CalloutContext For(
+        DateTimeOffset now,
+        bool isFirst,
+        GameStateStore commanders,
+        GameStatus status,
+        NavRoute route,
+        IReadOnlyList<JournalEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(commanders);
+
+        return new(now, IsPriming: isFirst || commanders.IsOffDuty, commanders.Active, status, route, events);
+    }
+}
 
 /// <summary>
 /// Something d47 said because nothing had happened — when, and the rate the row it came from asks for
