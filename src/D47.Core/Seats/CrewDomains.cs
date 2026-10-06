@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Capabilities.Builtin;
 
 namespace D47.Core.Seats;
 
@@ -41,6 +42,12 @@ public static class CrewDomains
         ["route"] = CrewRole.Navigation,
         ["hyperspace-tunnel-delay"] = CrewRole.Navigation,
         ["arrival"] = CrewRole.Navigation,
+    };
+
+    /// <summary>The role that reads each tool's answer when the keyword router gives it without the model.</summary>
+    public static IReadOnlyDictionary<string, CrewRole> Answers { get; } = new Dictionary<string, CrewRole>(StringComparer.Ordinal)
+    {
+        [MissionsCapability.Tool] = CrewRole.FirstOfficer,
     };
 
     /// <summary>Callout ids the core always speaks, whatever seats are filled.</summary>

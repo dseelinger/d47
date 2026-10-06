@@ -33,6 +33,7 @@ public static class MissionsCapability
             "what missions do i have",
             "read my missions",
             "what am i hauling",
+            "what's on the slate",
         ],
         Tools =
         [

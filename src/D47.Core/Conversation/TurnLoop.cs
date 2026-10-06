@@ -60,7 +60,7 @@ public abstract record TurnEvent
     {
     }
 
-    /// <summary>The turn is answered by someone other than the ship's AI. Emitted before <see cref="Routed"/>.</summary>
+    /// <summary>The turn is answered by someone other than the ship's AI. Emitted before any text.</summary>
     public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal) : TurnEvent;
 
     /// <summary>Emitted as soon as routing is decided, before any work.</summary>
@@ -122,6 +122,9 @@ public sealed class TurnLoop(
     /// decay it (#154).
     /// </summary>
     public Action? StandingSaid { get; set; }
+
+    /// <summary>The seats on the ship flown, or null when it has none.</summary>
+    public Func<Seats.ShipSeats?>? SeatsFlown { get; set; }
 
     /// <summary>How many times in one turn the model may ask for tools and be answered.</summary>
     public int MaxToolRounds { get; set; } = 8;
@@ -1003,6 +1006,12 @@ public sealed class TurnLoop(
         yield return new TurnEvent.Completed(new TurnResult(outcome, TurnRoute.Offer, text, Effort: null, Cost: null));
     }
 
+    /// <summary>The seat on the ship flown that reads a model-free answer from this tool, or null for the core.</summary>
+    private Seats.CrewSeat? SeatAnswering(string tool, ToolResult result) =>
+        !result.IsError && Seats.CrewDomains.Answers.TryGetValue(tool, out var role)
+            ? SeatsFlown?.Invoke()?.Seats.FirstOrDefault(seat => seat.Role == role)
+            : null;
+
     /// <summary>Steps 0-3, which never reach the model.</summary>
     private async IAsyncEnumerable<TurnEvent> ModelFreeAsync(
         string input,
@@ -1096,7 +1105,15 @@ public sealed class TurnLoop(
                 toolCommand.Phrase);
 
             // With what was asked for, as above (#415).
-            Said(actioned.Spoken, input);
+            if (SeatAnswering(toolCommand.ToolName, actioned) is { } commandSeat)
+            {
+                yield return new TurnEvent.Addressed(Audio.VoiceRole.Crew, commandSeat.Name, 1);
+                Record(actioned.Spoken, input, commandSeat.Name);
+            }
+            else
+            {
+                Said(actioned.Spoken, input);
+            }
 
             yield return new TurnEvent.TextDelta(actioned.Spoken);
             yield return new TurnEvent.Completed(new TurnResult(
@@ -1123,7 +1140,15 @@ public sealed class TurnLoop(
                 "Keyword router answered with {Capability}/{Tool}", match.CapabilityId, match.ToolName);
 
             // With what was asked for, as above (#415).
-            Said(result.Spoken, input);
+            if (SeatAnswering(match.ToolName, result) is { } matchSeat)
+            {
+                yield return new TurnEvent.Addressed(Audio.VoiceRole.Crew, matchSeat.Name, 1);
+                Record(result.Spoken, input, matchSeat.Name);
+            }
+            else
+            {
+                Said(result.Spoken, input);
+            }
 
             yield return new TurnEvent.TextDelta(result.Spoken);
             yield return new TurnEvent.Completed(new TurnResult(

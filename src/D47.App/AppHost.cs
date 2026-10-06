@@ -2246,8 +2246,9 @@ public sealed class AppHost : IDisposable
 
         IReadOnlyList<D47.Core.Seats.CrewSeat> SeatsAboard() => SeatsFlown()?.Seats ?? [];
 
-        // A filled seat speaks its domain's callouts.
+        // A filled seat speaks its domain's callouts, and reads its domain's model-free answers.
         callouts.SeatsFlown = SeatsFlown;
+        turns.SeatsFlown = SeatsFlown;
 
         // A hired pilot, reached by name (#188).
         turns.Lines.Add(new CrewLine(

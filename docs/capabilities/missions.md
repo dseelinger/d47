@@ -27,7 +27,7 @@ nav_order: 146
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">mission board</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what missions do I have" — "read my missions" — "what am I hauling"</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what missions do I have" — "read my missions" — "what am I hauling" — "what's on the slate"</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">No model is asked. It works with no key and no network.</text>
 </svg>
 </section>
@@ -101,6 +101,7 @@ The missions you have accepted, read aloud. Part of every run.
 > "what missions do I have"
 > "read my missions"
 > "what am I hauling"
+> "what's on the slate"
 
 ```text
 You have five missions. First, Courier Job Available, to Merchiston Dock, Kweleutahe, 32 minutes left. Second, Delivery, to Jameson Memorial, Shinrarta Dezhra, 5 hours 10 minutes left. Third, Massacre, to Kweleutahe, 9 hours left. And two more. 412,000 credits in rewards.
@@ -109,6 +110,11 @@ You have five missions. First, Courier Job Available, to Merchiston Dock, Kweleu
 Missions expiring within the hour come first, then those handed in at the station you are docked at,
 then the rest, soonest expiry first in each group. A mission whose accept the journal has not shown is
 named by its internal name alone. With no missions the answer says so.
+
+With a First officer seat filled on the ship you are flying (Fleet › Crew), that seat reads the board
+instead of the ship AI, in its own voice and under its name, with the same words. It does so only when
+the board is asked for directly, as above. When the model reads the board as part of a longer answer,
+the ship AI gives it.
 
 > "what missions should I take"
 
