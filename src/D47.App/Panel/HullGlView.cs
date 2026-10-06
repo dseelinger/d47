@@ -130,6 +130,9 @@ internal sealed class HullGlView : OpenGlControlBase
     /// <summary>Why this view cannot draw; the viewer swaps to the CPU on it.</summary>
     internal event Action<string>? Failed;
 
+    /// <summary>Raised after each frame is blitted to the control's framebuffer, which is still bound; the arguments are the GL interface, the width and the height in pixels.</summary>
+    internal event Action<GlInterface, int, int>? Drawn;
+
     protected override void OnOpenGlInit(GlInterface gl)
     {
         base.OnOpenGlInit(gl);
@@ -233,6 +236,7 @@ internal sealed class HullGlView : OpenGlControlBase
         gl.BindFramebuffer(DrawFramebuffer, fb);
         gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, ColorBufferBit, Nearest);
         gl.BindFramebuffer(Framebuffer, fb);
+        Drawn?.Invoke(gl, width, height);
     }
 
     private void Init(GlInterface gl)

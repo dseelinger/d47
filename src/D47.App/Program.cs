@@ -18,6 +18,14 @@ internal static class Program
             return;
         }
 
+#if DEBUG
+        if (args.Contains(Panel.HullGpuCapture.Flag, StringComparer.Ordinal))
+        {
+            Environment.ExitCode = Panel.HullGpuCapture.Run(args);
+            return;
+        }
+#endif
+
         // Read here because the host reads it while wiring the audio, and that is one call below this line
         // (#180).
         Recording.AudioRecorder.ReadCommandLine(args);
