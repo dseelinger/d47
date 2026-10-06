@@ -180,7 +180,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         if (gameState is not null)
         {
-            // Commander roots land in call order: Checklist, Standing, Statistics, This session.
+            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session.
+            _view.EnableMissions(
+                gameState,
+                () => DateTimeOffset.Now,
+                capabilities,
+                clipboard is null ? null : text => clipboard.SetTextAsync(text));
             _view.EnableStanding(gameState);
             _view.EnableStatistics(gameState);
             _view.EnableSession(gameState);

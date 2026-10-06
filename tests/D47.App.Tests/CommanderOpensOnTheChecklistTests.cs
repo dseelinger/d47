@@ -4,18 +4,18 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Commander's roots land in call order, so the window and the headset both call
-/// <c>EnableChecklist</c> before <c>EnableStanding</c>, <c>EnableStatistics</c> and <c>EnableSession</c>.
+/// <c>EnableChecklist</c>, then <c>EnableMissions</c>, before <c>EnableStanding</c>, <c>EnableStatistics</c> and <c>EnableSession</c>.
 /// </summary>
 public class CommanderOpensOnTheChecklistTests
 {
     [Theory]
     [InlineData("MainWindow.axaml.cs")]
     [InlineData("Headset/VrPanelSurface.cs")]
-    public void TheChecklistRootIsFurnishedBeforeStandingStatisticsAndSession(string file)
+    public void TheChecklistRootIsFurnishedBeforeMissionsStandingStatisticsAndSession(string file)
     {
         var text = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", file));
 
-        var order = new[] { "EnableChecklist(", "EnableStanding(", "EnableStatistics(", "EnableSession(" }
+        var order = new[] { "EnableChecklist(", "EnableMissions(", "EnableStanding(", "EnableStatistics(", "EnableSession(" }
             .Select(call => text.IndexOf("." + call, StringComparison.Ordinal))
             .ToArray();
 

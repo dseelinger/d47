@@ -639,6 +639,29 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>
+    /// Gives this surface Commander › Missions. Called right after <see cref="EnableChecklist"/>, so the root
+    /// lands second.
+    /// </summary>
+    public void EnableMissions(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        Func<DateTimeOffset> now,
+        D47.Core.Capabilities.CapabilityRegistry? registry = null,
+        Func<string, Task<bool>>? copy = null)
+    {
+        var headset = Classes.Contains("headset");
+
+        _missionsBuild = _ => _missions = new MissionsPage(state, now, registry, copy, headset);
+
+        Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(MissionsPage.RootKey, "Missions")
+            {
+                Help = D47.Core.Capabilities.Builtin.MissionsCapability.Id,
+            });
+    }
+
+    /// <summary>
     /// Gives this surface Commander › Standing (#552). Called after <see cref="EnableChecklist"/>, so the
     /// root lands second.
     /// </summary>
@@ -707,6 +730,11 @@ public partial class PanelView : UserControl
 
         var changed = _commanderClock?.Tick() ?? false;
 
+        if (_missions is { } missions && Nav.RootKeyOf(PanelTab.Commander) == MissionsPage.RootKey)
+        {
+            changed |= missions.Tick();
+        }
+
         if (_standing is { } standing && Nav.RootKeyOf(PanelTab.Commander) == StandingPage.RootKey)
         {
             changed |= standing.Tick();
@@ -725,14 +753,17 @@ public partial class PanelView : UserControl
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Standing, Statistics, This session, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, or whatever the checklist roots draw.</summary>
     private Control BuildCommander(NavCrumb crumb) =>
-        crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
+        crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
+        : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };
 
+    private Func<NavCrumb, Control>? _missionsBuild;
+    private MissionsPage? _missions;
     private Func<NavCrumb, Control>? _standingBuild;
     private Func<NavCrumb, Control>? _checklistBuild;
     private StandingPage? _standing;

@@ -20,7 +20,7 @@ nav_order: 146
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">One question, answered from the missions you have accepted.</p>
+<p class="intro">One question, answered from the missions you have accepted. The same board, in the same order, is drawn under Commander › Missions.</p>
 <section>
 <h2><span class="num">1</span> Ask for the mission board.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">

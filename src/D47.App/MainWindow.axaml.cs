@@ -161,8 +161,13 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Standing, Statistics, This session.
+            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill);
+            Panel.EnableMissions(
+                () => host.GameState.Active,
+                () => DateTimeOffset.Now,
+                host.Capabilities,
+                host.Clipboard is { } missionClipboard ? text => missionClipboard.SetTextAsync(text) : null);
             Panel.EnableStanding(() => host.GameState.Active);
             Panel.EnableStatistics(() => host.GameState.Active);
             Panel.EnableSession(() => host.GameState.Active);
