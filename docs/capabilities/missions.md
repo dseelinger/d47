@@ -23,6 +23,8 @@ nav_order: 146
 <p class="intro">One question, answered from the missions you have accepted. The same board, in the same order, is drawn under Commander › Missions.</p>
 <section>
 <h2><span class="num">1</span> Ask for the mission board.</h2>
+<p class="say">Say "what missions do I have" or "what am I hauling".</p>
+<p class="expect">D47 reads the board from the missions you have accepted, with no model, key or network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">mission board</text>
@@ -33,6 +35,8 @@ nav_order: 146
 </section>
 <section>
 <h2><span class="num">2</span> Hear the three that matter most.</h2>
+<p class="say">Listen to the first three missions.</p>
+<p class="expect">They are ordered as expiring within the hour, handed in at this station, then soonest expiry, with destination and time left; the rest are a count with the total reward.</p>
 <svg viewBox="0 0 880 190" role="img" aria-label="Three missions named in order, then a count of the rest">
  <rect x="20" y="20" width="840" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="56" font-size="16" font-weight="700" fill="var(--text)">1. Expiring within the hour</text>
@@ -43,6 +47,8 @@ nav_order: 146
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Accept a mission in the game before you ask about it.</p>
+<p class="expect">It appears on the board; D47 cannot list what a station offers because the journal does not.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Only accepted missions are on the board">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">"I only see missions after you accept them."</text>

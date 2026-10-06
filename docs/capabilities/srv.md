@@ -22,6 +22,8 @@ nav_order: 133
 <p class="intro">Three steps to driving the buggy by voice.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection, and get in an SRV.</h2>
+<p class="say">Turn on key injection, and get in an SRV.</p>
+<p class="expect">The SRV commands apply; they are your own Elite bindings and only work in the buggy.</p>
 <svg viewBox="0 0 880 196" role="img" aria-label="SRV">
  <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">SRV</text>
@@ -33,6 +35,8 @@ nav_order: 133
 </section>
 <section>
 <h2><span class="num">2</span> Say what you want.</h2>
+<p class="say">Say "turret view", "handbrake on", "drive assist off" or "lights".</p>
+<p class="expect">D47 presses the SRV binding once.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">turret view</text>
@@ -43,6 +47,8 @@ nav_order: 133
 </section>
 <section>
 <h2><span class="num">3</span> And when you want the ship back.</h2>
+<p class="say">Say "recall my ship".</p>
+<p class="expect">D47 presses the recall binding once; where the ship lands is the game's decision.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">recall my ship</text>
@@ -53,6 +59,8 @@ nav_order: 133
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Say SRV commands while you are in the SRV.</p>
+<p class="expect">The binding is pressed; in the cockpit there is nothing for it to press.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="These do nothing while you are in the ship.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">These do nothing while you are in the ship.</text>

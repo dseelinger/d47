@@ -4,6 +4,58 @@ group: Knowledge
 nav_order: 151
 ---
 
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="intro">Four steps to a prospector that reads out only what you are after.</p>
+<section>
+<h2><span class="num">1</span> Set a target material.</h2>
+<p class="say">Say "mining target painite".</p>
+<p class="expect">Prospector results read out only painite, and say whether the rock holds enough of it.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a mining target typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">mining target painite</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The material on its own needs no AI.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Add a percentage if you want one.</h2>
+<p class="say">Say "mining target platinum above twenty five percent".</p>
+<p class="expect">Prospector results say "Above your target" or "Below your target" against that percentage.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a percentage target typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">mining target platinum above twenty five percent</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">A percentage goes through the language model.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Ask how many limpets a load needs.</h2>
+<p class="say">Say "how many limpets for ten tonnes of osmium".</p>
+<p class="expect">D47 gives the collectors and prospectors to launch, rounded up to whole limpets.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a limpet question typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">how many limpets for ten tonnes of osmium</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The count comes from your own finished mining runs.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">This one needs the language model.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Clear it when you are done.</h2>
+<p class="say">Say "clear the mining target".</p>
+<p class="expect">Prospector results go back to naming every material in the rock, richest first.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a clear command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">clear the mining target</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The target stays set across restarts until you clear it.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
 ## The details
 
 A mining target is one material and, optionally, a percentage. While one is set, the

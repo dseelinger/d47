@@ -22,6 +22,8 @@ nav_order: 109
 <p class="intro">Three steps to knowing what a blueprint really costs you.</p>
 <section>
 <h2><span class="num">1</span> Ask about a blueprint by name.</h2>
+<p class="say">Say "what does a grade 5 dirty drive cost".</p>
+<p class="expect">D47 gives the materials per roll, not only per grade, with no network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does a grade 5 dirty drive cost</text>
@@ -32,6 +34,8 @@ nav_order: 109
 </section>
 <section>
 <h2><span class="num">2</span> Ask what it costs from where you actually are.</h2>
+<p class="say">Say "can I afford it".</p>
+<p class="expect">D47 compares the cost with your own materials and names the shortfall, which also appears on the Gap page.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">can I afford it</text>
@@ -42,6 +46,8 @@ nav_order: 109
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Remember that a grade takes several rolls, and read the cost per roll.</p>
+<p class="expect">The figure quoted is for one roll; the answer says how many rolls a grade takes.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Rolls are not grades.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Rolls are not grades.</text>

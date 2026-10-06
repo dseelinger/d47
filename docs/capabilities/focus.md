@@ -22,6 +22,8 @@ nav_order: 129
 <p class="intro">Two steps to getting the game back in front.</p>
 <section>
 <h2><span class="num">1</span> Say it, from anywhere.</h2>
+<p class="say">Say "focus the game" or "bring Elite back".</p>
+<p class="expect">Elite comes to the front even while D47 has the keyboard.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">focus the game</text>
@@ -32,6 +34,8 @@ nav_order: 129
 </section>
 <section>
 <h2><span class="num">2</span> Or press the hotkey.</h2>
+<p class="say">Press the hotkey for the overlay, Ctrl+Alt+O to show or hide it or Ctrl+Alt+M to move it.</p>
+<p class="expect">It works system-wide, so it works with Elite in front.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Hotkeys">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>
@@ -46,6 +50,8 @@ nav_order: 129
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Start Elite yourself before you ask.</p>
+<p class="expect">Focus brings a running game forward; with Elite closed there is nothing to bring.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It cannot start Elite for you.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It cannot start Elite for you.</text>

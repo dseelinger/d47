@@ -22,6 +22,8 @@ nav_order: 123
 <p class="intro">Three steps to a mix you can hear over the ship.</p>
 <section>
 <h2><span class="num">1</span> Open the Audio mixer and move the five sliders.</h2>
+<p class="say">Open the Audio mixer and move the five sliders for speech, cues, music, ambience and alerts.</p>
+<p class="expect">Each slider shows its percentage, and the change is audible while something is playing.</p>
 <svg viewBox="0 0 880 268" role="img" aria-label="The five volume sliders: speech, cues, music, ambience and alerts">
  <rect x="20" y="16" width="840" height="236" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Audio mixer</text>
@@ -45,6 +47,8 @@ nav_order: 123
 </section>
 <section>
 <h2><span class="num">2</span> Set how far everything else drops while D47 talks.</h2>
+<p class="say">Set how far everything else drops while D47 talks.</p>
+<p class="expect">The duck slider shows a value in decibels, and other audio dips while D47 speaks.</p>
 <svg viewBox="0 0 880 156" role="img" aria-label="The ducking row, which lowers every other category while Directive 47 speaks">
  <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">Duck everything else while D47 speaks</text>
@@ -55,6 +59,8 @@ nav_order: 123
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Move the slider yourself, or use the Windows mixer, to change the volume.</p>
+<p class="expect">The level changes; asking the AI to turn itself down changes nothing.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The mixer is unreachable by the model, so asking it to turn something down does nothing">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot touch the mixer.</text>

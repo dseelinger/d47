@@ -22,6 +22,8 @@ nav_order: 144
 <p class="intro">Two steps to a readable account of what you did.</p>
 <section>
 <h2><span class="num">1</span> Fly. Then ask for the log.</h2>
+<p class="say">Fly, then say "write up my session" or "what did I do this week".</p>
+<p class="expect">D47 writes a log in which every sentence traces to a journal event.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">write up my session</text>
@@ -32,6 +34,8 @@ nav_order: 144
 </section>
 <section>
 <h2><span class="num">2</span> Read it, and keep it if you want it.</h2>
+<p class="say">Read the Commander's log and keep it if you want it.</p>
+<p class="expect">The log is saved on your machine as plain text you can read without D47.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Commander's log tab">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -45,6 +49,8 @@ nav_order: 144
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Fly a longer session before you ask for a log.</p>
+<p class="expect">A quiet session gives a short log, which is the log being accurate.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It writes up what the journal saw, not what you meant.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It writes up what the journal saw, not what you meant.</text>

@@ -22,6 +22,8 @@ nav_order: 142
 <p class="intro">Three steps to D47 remembering the right things.</p>
 <section>
 <h2><span class="num">1</span> Tell it something worth keeping.</h2>
+<p class="say">Say "remember that I fly in open" or "call me Commander, not Doug".</p>
+<p class="expect">D47 saves the line; it only writes something down when you tell it to or confirm a debrief.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">remember that I fly in open</text>
@@ -32,6 +34,8 @@ nav_order: 142
 </section>
 <section>
 <h2><span class="num">2</span> Read what it has, and take anything out.</h2>
+<p class="say">Open the Memory page, and say "forget" and name a line to remove it.</p>
+<p class="expect">Each line shows where it came from, and the forgotten line disappears.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Memory tab">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -47,6 +51,8 @@ nav_order: 142
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Say "remember" for anything you want kept.</p>
+<p class="expect">It appears on the Memory page; the last thing you said is not kept unless it did.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Memory is not the conversation.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Memory is not the conversation.</text>

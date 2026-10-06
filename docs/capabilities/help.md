@@ -22,6 +22,8 @@ nav_order: 100
 <p class="intro">Two steps to finding out what something does.</p>
 <section>
 <h2><span class="num">1</span> Ask, in the words you already have.</h2>
+<p class="say">Say "what can you do about engineering" or "how does the checklist work".</p>
+<p class="expect">D47 answers from the help pages, which are the same as the site.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what can you do about engineering</text>
@@ -32,6 +34,8 @@ nav_order: 100
 </section>
 <section>
 <h2><span class="num">2</span> Or press HELP on any card.</h2>
+<p class="say">Press HELP on a settings card.</p>
+<p class="expect">The help page opens at that exact row, not at the top of the page.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Any settings card">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Any settings card</text>
@@ -46,6 +50,8 @@ nav_order: 100
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Ask the language model about Elite itself, such as what a Guardian beacon does.</p>
+<p class="expect">You get an answer about the game; Help covers only D47.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Help is about the page, not the subject.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Help is about the page, not the subject.</text>

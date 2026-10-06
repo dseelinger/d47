@@ -22,6 +22,8 @@ nav_order: 113
 <p class="intro">Two steps to one list of everything you are short of.</p>
 <section>
 <h2><span class="num">1</span> Plan something first. The Gap is the arithmetic on top.</h2>
+<p class="say">Plan something first, then say "what am I missing".</p>
+<p class="expect">D47 adds up your engineering plans, builds and goals together.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what am I missing</text>
@@ -32,6 +34,8 @@ nav_order: 113
 </section>
 <section>
 <h2><span class="num">2</span> Read it ledger by ledger.</h2>
+<p class="say">Read the Gap page one ledger at a time.</p>
+<p class="expect">Raw materials, commodities and credits each show their shortfall and the plan it came from.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="The gap">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">The gap</text>
@@ -49,6 +53,8 @@ nav_order: 113
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Add an engineering plan, a build or a goal if the Gap page is empty.</p>
+<p class="expect">The Gap page fills in; with nothing planned it is correctly blank.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="An empty gap means nothing is planned.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">An empty gap means nothing is planned.</text>

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The how-to steps on every capability page now each carry two lines written to be heard: what to do and what should happen. The documentation site does not show them. Activities, Mining, Bookmarks and Learned phrases gain a how-to band, and Clock, Switch Commander and Reminders gain steps.
+
 The carrier captain's fuel and upkeep warnings answer to the same phrases as a journal reminder, whichever went off last. "Noted", "got it" or "thanks" keeps the warning quiet until its condition clears and comes back. "Remind me next time" lets it speak at the next dock or jump request on the same reading. "Remind me tomorrow" or "remind me next session" keeps it quiet until your next session. These are remembered only until D47 restarts.
 
 When a journal reminder has gone off, say "noted", "got it" or "thanks" to remove it, "remind me next time" to arm it again on the same moment, or "remind me tomorrow" or "remind me next session" to arm it for the start of your next session. They answer the most recent reminder that went off, and are heard only while one has. Tomorrow means your next session, not a time of day. Only your own words do this; the model cannot.

@@ -22,6 +22,8 @@ nav_order: 112
 <p class="intro">Three steps to a build you are working towards.</p>
 <section>
 <h2><span class="num">1</span> Open the Ships tab. Your fleet is already there.</h2>
+<p class="say">Open the Ships tab.</p>
+<p class="expect">Your fleet is listed from the journal, the ship you are flying outlined and a ship you only mean to buy faded.</p>
 <svg viewBox="0 0 880 300" role="img" aria-label="The Ships tab">
  <rect x="20" y="16" width="840" height="264" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -48,6 +50,8 @@ nav_order: 112
 </section>
 <section>
 <h2><span class="num">2</span> Open one and change a module.</h2>
+<p class="say">Open a ship and change a module.</p>
+<p class="expect">The gauges, such as jump range, move as you change it, before you commit.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Ptarmigan">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Ptarmigan</text>
@@ -65,6 +69,8 @@ nav_order: 112
 </section>
 <section>
 <h2><span class="num">3</span> Accept the plan, and it lands on your checklist.</h2>
+<p class="say">Accept the plan, or say "what do I still need for the Ptarmigan".</p>
+<p class="expect">The shortfall lands on your checklist and the Gap page, with one build per ship.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what do I still need for the Ptarmigan</text>
@@ -75,6 +81,8 @@ nav_order: 112
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Read the modifications as D47's own working out.</p>
+<p class="expect">They come from the modules themselves, because Elite does not write a loadout after engineering.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite never writes a loadout after engineering.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite never writes a loadout after engineering.</text>

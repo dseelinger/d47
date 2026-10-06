@@ -5,6 +5,46 @@ nav_order: 152
 ---
 
 <details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="intro">Three steps to what you have not done lately.</p>
+<section>
+<h2><span class="num">1</span> Ask what you have not done in a while.</h2>
+<p class="say">Say "what's something I haven't done in a while".</p>
+<p class="expect">D47 names the three activities you did longest ago, oldest first, and how long ago each was.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with the question typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what's something I haven't done in a while</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Fourteen activities are read from your journals, with no AI.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Ask when you last did one.</h2>
+<p class="say">Say "when did I last go mining".</p>
+<p class="expect">D47 gives the date and how long ago, such as "Mining, last on 2 September 3312."</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a last-done question typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">when did I last go mining</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The date is in the galactic year.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> Give it time to read your journals.</h2>
+<p class="say">If D47 says it is still reading your journals, ask again in a minute.</p>
+<p class="expect">D47 answers once it has read your older journals.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The journals are still being read">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what did I last do</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Older journals are read in the background.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<details class="d47-band" open>
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Ask what you have not done in a while and D47 answers from your journals, with no language model.</p>

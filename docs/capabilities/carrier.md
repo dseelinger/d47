@@ -22,6 +22,8 @@ nav_order: 104
 <p class="intro">One question, answered from what Elite last wrote about the carrier.</p>
 <section>
 <h2><span class="num">1</span> Own a fleet carrier and let it write a status once.</h2>
+<p class="say">Open the carrier management screen in Elite once.</p>
+<p class="expect">Elite writes a carrier status, and D47 then has your fuel, cargo, balance, jump range and services.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">carrier report</text>
@@ -32,6 +34,8 @@ nav_order: 104
 </section>
 <section>
 <h2><span class="num">2</span> Ask any of the ways in.</h2>
+<p class="say">Say "how is my carrier", "carrier fuel" or "carrier services".</p>
+<p class="expect">D47 reads the figures with no language model involved.</p>
 <svg viewBox="0 0 880 190" role="img" aria-label="Several phrasings that all reach the same report">
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">how is my carrier</text>
@@ -41,6 +45,8 @@ nav_order: 104
 </section>
 <section>
 <h2><span class="num">3</span> Say "Captain" to talk to the carrier's captain.</h2>
+<p class="say">Say "Captain, how much fuel have we got".</p>
+<p class="expect">The captain answers, and answers the next question too until you say "that's all".</p>
 <svg viewBox="0 0 880 212" role="img" aria-label="A question opened with Captain, answered by the carrier's captain until the line is ended">
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">Captain, how much fuel have we got</text>
@@ -52,6 +58,8 @@ nav_order: 104
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Note the date the figures were reported before you rely on them.</p>
+<p class="expect">Fuel, cargo and balance each carry the date they were reported.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Figures are only as fresh as the last carrier management screen read.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Figures are only as fresh as the last time you opened the screen.</text>

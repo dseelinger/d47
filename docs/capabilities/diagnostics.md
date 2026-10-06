@@ -22,6 +22,8 @@ nav_order: 101
 <p class="intro">Two steps to the page that still answers when nothing else does.</p>
 <section>
 <h2><span class="num">1</span> On the Transcript page, step the readings to Log File.</h2>
+<p class="say">On the Transcript page, step the readings to Log File.</p>
+<p class="expect">You see the journal folder, the capability count and the audio device, with the newest log line last.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings stepper showing Log File, and the log below it">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="46" fill="var(--surface)"/>
@@ -36,6 +38,8 @@ nav_order: 101
 </section>
 <section>
 <h2><span class="num">2</span> Ask where the log file is, and open it.</h2>
+<p class="say">Say "where are your logs", then open the folder from the same page.</p>
+<p class="expect">D47 names the folder, which is data\logs beside the executable.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">where are your logs</text>
@@ -46,6 +50,8 @@ nav_order: 101
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Look at Log File first when something stops answering.</p>
+<p class="expect">It still shows the session's lines when the model is unavailable, with no key or network needed.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="This page works when the model does not.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This page works when the model does not.</text>

@@ -23,6 +23,8 @@ nav_order: 139
 <p class="intro">Four steps, from nothing to a switch that flies the ship.</p>
 <section>
 <h2><span class="num">1</span> Turn on two rows in Settings, then press Assign switches.</h2>
+<p class="say">Turn on Let D47 press keys in Elite and Let a HOTAS switch operate the ship, then press Assign switches.</p>
+<p class="expect">The second row appears once the first is on, and the HOTAS switches page opens.</p>
 <svg viewBox="0 0 880 264" role="img" aria-label="Two settings toggles, the second appearing only once the first is on, and an Assign switches button">
  <rect x="30" y="24" width="820" height="66" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="56" y="63" font-size="17" fill="var(--text)">Let D47 press keys in Elite</text>
@@ -39,6 +41,8 @@ nav_order: 139
 </section>
 <section>
 <h2><span class="num">2</span> Press Assign a switch, and walk yours through its positions.</h2>
+<p class="say">Press Assign a switch, move your switch to each position, and pause about a second and a half at each one.</p>
+<p class="expect">Each position is recorded; press Finish when you have been through them all.</p>
 <svg viewBox="0 0 880 250" role="img" aria-label="The HOTAS switches page during a walk, showing the instruction to move the switch to each position and pause">
  <rect x="20" y="20" width="840" height="210" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="20" width="840" height="42" fill="var(--surface-alt)"/>
@@ -53,6 +57,8 @@ nav_order: 139
 </section>
 <section>
 <h2><span class="num">3</span> Give each position an action and a state.</h2>
+<p class="say">Give each position an action and a state.</p>
+<p class="expect">The state is available once an action is chosen; leave the middle of a three-position switch as nothing.</p>
 <svg viewBox="0 0 880 344" role="img" aria-label="A switch card with three position rows, each showing a button number and four controls: an action, an on or off state, and a page of Directive 47's own panel">
  <rect x="20" y="16" width="840" height="312" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Gear</text>
@@ -94,6 +100,8 @@ nav_order: 139
 </section>
 <section>
 <h2><span class="num">4</span> Press Save.</h2>
+<p class="say">Press Save, then flip the switch with Elite in front.</p>
+<p class="expect">The ship follows the switch; nothing is watched until you save.</p>
 <svg viewBox="0 0 880 120" role="img" aria-label="The Save and Close buttons at the foot of the window, above the path the mappings are written to">
  <rect x="562" y="24" width="130" height="40" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="627" y="50" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Save</text>
@@ -105,6 +113,8 @@ nav_order: 139
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Bind the action to a key in Elite first.</p>
+<p class="expect">D47 presses that key; an action bound only to a joystick button does nothing.</p>
 <svg viewBox="0 0 880 190" role="img" aria-label="Elite must already have the action bound to a key, because Directive 47 presses the Commander's own binding">
  <rect x="20" y="20" width="840" height="150" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="var(--danger)">Elite must already have the action bound to a key.</text>

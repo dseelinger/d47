@@ -22,6 +22,8 @@ nav_order: 143
 <p class="intro">Three steps from telling D47 off to a rule it keeps.</p>
 <section>
 <h2><span class="num">1</span> Say what annoyed you, in your own words.</h2>
+<p class="say">Say what annoyed you in your own words, such as "stop telling me the system name every jump".</p>
+<p class="expect">D47 treats it as feedback and drafts a rule.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me the system name every jump</text>
@@ -32,6 +34,8 @@ nav_order: 143
 </section>
 <section>
 <h2><span class="num">2</span> Read the rule it drafted, and say yes or no.</h2>
+<p class="say">Read the rule it drafted, then press Keep or Discard.</p>
+<p class="expect">Keep saves the rule; Discard drops it.</p>
 <svg viewBox="0 0 880 220" role="img" aria-label="A drafted rule shown back to the Commander with keep and discard buttons">
  <rect x="20" y="16" width="840" height="188" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="54" font-size="15" font-weight="700" fill="var(--text-muted)">D47 WOULD REMEMBER</text>
@@ -45,6 +49,8 @@ nav_order: 143
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Open the Memory page to see which rules D47 is actually keeping.</p>
+<p class="expect">Only the rules you pressed Keep on are listed.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Nothing is saved without your yes.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Nothing is saved without your yes.</text>

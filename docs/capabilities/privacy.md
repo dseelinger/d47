@@ -22,6 +22,8 @@ nav_order: 148
 <p class="intro">Three steps to knowing exactly what leaves your machine.</p>
 <section>
 <h2><span class="num">1</span> Read the destinations. There is one row per place.</h2>
+<p class="say">Open the Privacy page and read each destination.</p>
+<p class="expect">Each row names what is sent, to whom, and whether it is on right now.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Privacy">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Privacy</text>
@@ -39,6 +41,8 @@ nav_order: 148
 </section>
 <section>
 <h2><span class="num">2</span> Turn off anything you do not want.</h2>
+<p class="say">Turn off Let D47 search the web and Check for updates at startup, and set the model to none.</p>
+<p class="expect">Nothing leaves the machine.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Privacy">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Privacy</text>
@@ -53,6 +57,8 @@ nav_order: 148
 </section>
 <section>
 <h2><span class="num">3</span> Check what it actually did.</h2>
+<p class="say">Say "what have you sent anywhere".</p>
+<p class="expect">The Log File reading lists each request with its destination.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what have you sent anywhere</text>
@@ -63,6 +69,8 @@ nav_order: 148
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Speak as normal; there is nothing to set for the microphone.</p>
+<p class="expect">Whisper transcribes your speech on this machine, and the audio never leaves it.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Your microphone is not a destination.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Your microphone is not a destination.</text>

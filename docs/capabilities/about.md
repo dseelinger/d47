@@ -22,6 +22,8 @@ nav_order: 154
 <p class="intro">Two steps to what this build is and where it keeps things.</p>
 <section>
 <h2><span class="num">1</span> Scroll to the bottom of Settings.</h2>
+<p class="say">Scroll to the bottom of Settings and open About.</p>
+<p class="expect">You see the version, the build stamp and where the data folder is.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="About">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">About</text>
@@ -39,6 +41,8 @@ nav_order: 154
 </section>
 <section>
 <h2><span class="num">2</span> Press what you need.</h2>
+<p class="say">Press Open data folder, What changed or Check for updates, whichever you need.</p>
+<p class="expect">The folder opens, the changelog for this build shows, or D47 asks GitHub for a newer release.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="About">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">About</text>
@@ -56,6 +60,8 @@ nav_order: 154
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Read the build stamp on this page, not the version in the title bar.</p>
+<p class="expect">A local build shows its full stamp here and only the release number in the title bar.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The version in the title bar is not always the whole story.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The version in the title bar is not always the whole story.</text>

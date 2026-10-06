@@ -22,6 +22,8 @@ nav_order: 120
 <p class="intro">Three steps to choosing who answers you.</p>
 <section>
 <h2><span class="num">1</span> Pick a provider and a model.</h2>
+<p class="say">Pick a provider and a model, or choose none.</p>
+<p class="expect">The provider and model rows show your choice; with none, everything D47 does itself keeps working.</p>
 <svg viewBox="0 0 880 200" role="img" aria-label="The provider and model rows, with a key row under them">
  <rect x="20" y="16" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="53" font-size="17" fill="var(--text)">Provider</text>
@@ -38,6 +40,8 @@ nav_order: 120
 </section>
 <section>
 <h2><span class="num">2</span> Put your key in, and ask something.</h2>
+<p class="say">Put your key in, then ask a question such as "what is my current cargo worth".</p>
+<p class="expect">The key is saved and hidden, and the status line under the answer names the model, the effort and the cost.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what is my current cargo worth</text>
@@ -48,6 +52,8 @@ nav_order: 120
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Store a key for any paid provider before your first question.</p>
+<p class="expect">The question is answered; with no key stored D47 says so at the first question.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="No key means no answers, and it says so.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No key means no answers, and it says so.</text>

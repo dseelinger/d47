@@ -22,6 +22,8 @@ nav_order: 110
 <p class="intro">Two steps to knowing what a suit upgrade really costs.</p>
 <section>
 <h2><span class="num">1</span> Ask about what you are wearing.</h2>
+<p class="say">Say "what does grade 3 on my Maverick cost".</p>
+<p class="expect">D47 answers in materials as well as credits, with no network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does grade 3 on my Maverick cost</text>
@@ -32,6 +34,8 @@ nav_order: 110
 </section>
 <section>
 <h2><span class="num">2</span> Find out where the materials come from.</h2>
+<p class="say">Listen for where each material comes from.</p>
+<p class="expect">You hear each material with its quantity and source, and what you are short of goes to the Gap page.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Grade 3 Maverick">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Grade 3 Maverick</text>
@@ -49,6 +53,8 @@ nav_order: 110
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Collect on-foot materials, not ship materials.</p>
+<p class="expect">Your on-foot inventory counts towards the answer; ship materials do not.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="On-foot materials are not ship materials.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">On-foot materials are not ship materials.</text>

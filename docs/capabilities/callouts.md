@@ -22,6 +22,8 @@ nav_order: 126
 <p class="intro">Three steps to being told what you want and nothing else.</p>
 <section>
 <h2><span class="num">1</span> Turn callouts on, then pick the ones you want.</h2>
+<p class="say">Turn callouts on, then switch on the rows you want, such as Arrival or Limpets.</p>
+<p class="expect">The individual rows appear once the master switch is on.</p>
 <svg viewBox="0 0 880 254" role="img" aria-label="The master callouts toggle above a list of individual callout toggles">
  <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Callouts</text>
@@ -40,6 +42,8 @@ nav_order: 126
 </section>
 <section>
 <h2><span class="num">2</span> Or just say it.</h2>
+<p class="say">Say "stop telling me about limpets", or "tell me about limpets again".</p>
+<p class="expect">D47 names the row it switched off or on.</p>
 <svg viewBox="0 0 880 168" role="img" aria-label="Spoken phrases that turn callouts on and off">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me about limpets</text>
@@ -49,6 +53,8 @@ nav_order: 126
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Check the row for the callout you are missing, not just the master switch.</p>
+<p class="expect">The row is on, and the callout is spoken the next time it applies.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A callout that never fires is usually a callout whose own row is off">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Silence usually means its own row is off.</text>

@@ -22,6 +22,8 @@ nav_order: 132
 <p class="intro">Two steps to opening a cockpit panel without letting go.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection.</h2>
+<p class="say">Turn on key injection in the Panels settings.</p>
+<p class="expect">The row shows on; every panel command is one of your own Elite bindings.</p>
 <svg viewBox="0 0 880 196" role="img" aria-label="Panels">
  <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Panels</text>
@@ -33,6 +35,8 @@ nav_order: 132
 </section>
 <section>
 <h2><span class="num">2</span> Say which panel and where to go in it.</h2>
+<p class="say">Say "open the right panel and go to modules", "next tab" or "close the panel".</p>
+<p class="expect">D47 presses the panel keys and walks the tabs in order.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">open the right panel and go to modules</text>
@@ -43,6 +47,8 @@ nav_order: 132
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Leave the panel keys to D47 while it moves through the tabs.</p>
+<p class="expect">D47 ends on the tab you asked for; keys you press yourself make it lose its place.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="D47 cannot see the panel it just opened.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">D47 cannot see the panel it just opened.</text>

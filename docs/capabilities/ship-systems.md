@@ -22,6 +22,8 @@ nav_order: 131
 <p class="intro">Three steps to moving power without taking a hand off.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection.</h2>
+<p class="say">Turn on key injection in the Ship systems settings.</p>
+<p class="expect">The row shows on; pips and panic buttons are your own Elite bindings.</p>
 <svg viewBox="0 0 880 196" role="img" aria-label="Ship systems">
  <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Ship systems</text>
@@ -33,6 +35,8 @@ nav_order: 131
 </section>
 <section>
 <h2><span class="num">2</span> Say where the power goes.</h2>
+<p class="say">Say "four pips to engines", "balance the pips" or "two to systems, two to weapons".</p>
+<p class="expect">D47 presses the pip keys the right number of times.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">four pips to engines</text>
@@ -43,6 +47,8 @@ nav_order: 131
 </section>
 <section>
 <h2><span class="num">3</span> And the two you want in a hurry.</h2>
+<p class="say">Say "heat sink" or "silent running", and "silent running off" to stop it.</p>
+<p class="expect">D47 presses the binding once, with Elite in front.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">silent running</text>
@@ -53,6 +59,8 @@ nav_order: 131
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Say "balance the pips" if D47 and the ship disagree.</p>
+<p class="expect">The pips are reset to even, and D47 counts from there.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Pips are counted, not read.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Pips are counted, not read.</text>

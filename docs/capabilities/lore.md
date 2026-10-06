@@ -22,6 +22,8 @@ nav_order: 117
 <p class="intro">Two steps to a system that means something.</p>
 <section>
 <h2><span class="num">1</span> Arrive somewhere, or ask by name.</h2>
+<p class="say">Arrive somewhere, or say "what happened at Hyades Sector DB-X d1-112".</p>
+<p class="expect">D47 tells you what it knows from its twenty shipped systems, with no network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what happened at Hyades Sector DB-X d1-112</text>
@@ -32,6 +34,8 @@ nav_order: 117
 </section>
 <section>
 <h2><span class="num">2</span> Add your own, and it keeps them.</h2>
+<p class="say">Say "remember that this is where I lost the Anaconda".</p>
+<p class="expect">The note is saved beside the shipped ones and is never overwritten or uploaded.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">remember that this is where I lost the Anaconda</text>
@@ -42,6 +46,8 @@ nav_order: 117
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Ask about a system among the twenty it knows.</p>
+<p class="expect">For any other system D47 says it has nothing rather than making something up.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Twenty systems is twenty, not four hundred billion.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Twenty systems is twenty, not four hundred billion.</text>

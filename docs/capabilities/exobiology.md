@@ -22,6 +22,8 @@ nav_order: 118
 <p class="intro">Two steps to knowing what a plant is worth before you land.</p>
 <section>
 <h2><span class="num">1</span> Scan a body, then ask what is on it.</h2>
+<p class="say">Scan a body, then say "what biology is on this body".</p>
+<p class="expect">Before mapping you hear the possible genera and a best case; after mapping, a low to high range.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what biology is on this body</text>
@@ -32,6 +34,8 @@ nav_order: 118
 </section>
 <section>
 <h2><span class="num">2</span> Read which half the answer came from.</h2>
+<p class="say">Listen for which half of the answer came from where.</p>
+<p class="expect">Where a plant grows comes from the shipped tables; whether anyone has sold one here needs the network, and the answer says so.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Bacterium Aurasus">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Bacterium Aurasus</text>
@@ -49,6 +53,8 @@ nav_order: 118
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Treat the figure as the base sale, and remember a first footfall multiplies it.</p>
+<p class="expect">D47 states that the first-footfall bonus is not included in the number.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="First-footfall bonuses are not in the shipped figure.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">First-footfall bonuses are not in the shipped figure.</text>

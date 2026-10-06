@@ -22,6 +22,8 @@ nav_order: 107
 <p class="intro">Two steps to the figures before anybody buys anything.</p>
 <section>
 <h2><span class="num">1</span> Ask about a hull or a module by name.</h2>
+<p class="say">Say "what is the Python II like", "how much does a 6A power plant draw" or "compare the Krait and the Python".</p>
+<p class="expect">D47 gives the figures from its shipped tables, with no network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what is the Python II like</text>
@@ -32,6 +34,8 @@ nav_order: 107
 </section>
 <section>
 <h2><span class="num">2</span> Read the figure and where it came from.</h2>
+<p class="say">Listen for where the figures came from.</p>
+<p class="expect">The answer names its source table, so a wrong figure can be traced.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Python II">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Python II</text>
@@ -49,6 +53,8 @@ nav_order: 107
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Open the Ships page for figures that include your own modules and engineering.</p>
+<p class="expect">The Ships page shows your ship's real figures; this answer gives stock ones.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="These are stock figures.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">These are stock figures.</text>

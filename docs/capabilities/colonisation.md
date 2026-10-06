@@ -22,6 +22,8 @@ nav_order: 114
 <p class="intro">Three steps to knowing how many runs are left.</p>
 <section>
 <h2><span class="num">1</span> Start a build in the game, then ask.</h2>
+<p class="say">Start a build in the game, then ask what it still needs.</p>
+<p class="expect">D47 reads your construction depot from the journal and gives the figures; ask again after each delivery and they change.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does my build still need</text>
@@ -32,6 +34,8 @@ nav_order: 114
 </section>
 <section>
 <h2><span class="num">2</span> Read the two numbers that matter.</h2>
+<p class="say">Listen for what is still needed and how many runs that is.</p>
+<p class="expect">You hear the tonnes still needed per commodity and the runs left for the ship you are flying.</p>
 <svg viewBox="0 0 880 210" role="img" aria-label="A commodity line showing what is still needed, what is in the hold, and how many runs remain">
  <rect x="20" y="16" width="840" height="178" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="56" font-size="17" font-weight="700" fill="var(--text)">Steel</text>
@@ -45,6 +49,8 @@ nav_order: 114
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Dock at the construction site once so the journal has seen it.</p>
+<p class="expect">D47 then reports the depot; with no site visited this session it has nothing to report.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It needs a depot the journal has seen.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs a depot the journal has seen.</text>

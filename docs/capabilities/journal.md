@@ -22,6 +22,8 @@ nav_order: 102
 <p class="intro">Two steps to seeing what D47 knows about your game.</p>
 <section>
 <h2><span class="num">1</span> Nothing. It is already reading.</h2>
+<p class="say">Do nothing; D47 is already reading the journal.</p>
+<p class="expect">It reads the files Elite writes in Saved Games, with no setting, permission or network.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Journal">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Journal</text>
@@ -36,6 +38,8 @@ nav_order: 102
 </section>
 <section>
 <h2><span class="num">2</span> Open the Journal page to watch events arrive.</h2>
+<p class="say">Open the Journal page.</p>
+<p class="expect">Events such as FSDJump, Docked and MaterialCollected appear as the game writes them, newest last.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Journal tab">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -51,6 +55,8 @@ nav_order: 102
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Check the Journal page when a figure looks out of date.</p>
+<p class="expect">If the event is not listed, Elite never wrote it, which is why the figure is stale.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It only knows what the game has written down.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It only knows what the game has written down.</text>

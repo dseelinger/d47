@@ -22,6 +22,8 @@ nav_order: 122
 <p class="intro">Three steps to a voice you want to listen to.</p>
 <section>
 <h2><span class="num">1</span> Pick a provider and a voice.</h2>
+<p class="say">Pick a provider and a voice on the Speech page.</p>
+<p class="expect">Edge Neural and Kokoro are free; a paid provider asks for a key and shows what it costs.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Speech">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Speech</text>
@@ -39,6 +41,8 @@ nav_order: 122
 </section>
 <section>
 <h2><span class="num">2</span> Audition it before you keep it.</h2>
+<p class="say">Press a voice to audition it.</p>
+<p class="expect">It speaks a line so you can hear it before you choose.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Voice">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Voice</text>
@@ -56,6 +60,8 @@ nav_order: 122
 </section>
 <section>
 <h2><span class="num">3</span> Learn the one command that outranks the rest.</h2>
+<p class="say">Say "shut up" or "be quiet", or press Cancel.</p>
+<p class="expect">The queue is dropped and the current word is cut off at once.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop</text>
@@ -66,6 +72,8 @@ nav_order: 122
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Set the Windows default output device to your headset or speakers.</p>
+<p class="expect">You hear the voice; the mixer sends to whatever Windows calls the default.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A voice you cannot hear is usually the wrong output device.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A voice you cannot hear is usually the wrong output device.</text>

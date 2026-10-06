@@ -22,6 +22,8 @@ nav_order: 135
 <p class="intro">Three steps to a system name where you can use it.</p>
 <section>
 <h2><span class="num">1</span> Say where you want to go.</h2>
+<p class="say">Say "plot a route to Shinrarta Dezhra".</p>
+<p class="expect">The system name is put on the clipboard, spelled correctly, ready to paste.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">plot a route to Shinrarta Dezhra</text>
@@ -32,6 +34,8 @@ nav_order: 135
 </section>
 <section>
 <h2><span class="num">2</span> Let it drive the map, if you want that.</h2>
+<p class="say">Turn on key injection and Drive the galaxy map.</p>
+<p class="expect">D47 opens the map, types the name and plots; with either off you paste the name yourself.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Navigation">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Navigation</text>
@@ -46,6 +50,8 @@ nav_order: 135
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Turn off Drive the galaxy map if your map layout is not the default.</p>
+<p class="expect">The name goes to the clipboard and you paste it.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The map macro is a fixed key sequence.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The map macro is a fixed key sequence.</text>

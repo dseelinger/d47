@@ -478,6 +478,7 @@ hr {
    rule the ELI5 band has — Sass rewrites the descendant selectors too — so the two are styled
    from one description and cannot drift. */
 .d47-howto { @extend .d47-eli5; }
+.d47-howto .say, .d47-howto .expect { display: none; }
 
 /* Collapsible without a line of JavaScript, and it degrades to an open block in anything that
    does not know <details>. */

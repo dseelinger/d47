@@ -22,6 +22,8 @@ nav_order: 149
 <p class="intro">Three steps to changing something without opening a menu.</p>
 <section>
 <h2><span class="num">1</span> Just ask.</h2>
+<p class="say">Say "turn your personality off" or "set the speech volume to sixty".</p>
+<p class="expect">D47 says what it changed, and from what to what.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">turn your personality off</text>
@@ -32,6 +34,8 @@ nav_order: 149
 </section>
 <section>
 <h2><span class="num">2</span> Or find it on the Settings tab.</h2>
+<p class="say">Open the Settings tab and type a word or a key into Search.</p>
+<p class="expect">The rows whose label or key match are shown; Show every setting reveals the advanced ones.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Settings">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Settings</text>
@@ -46,6 +50,8 @@ nav_order: 149
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Change push-to-talk, Cancel and key injection yourself on the Settings tab.</p>
+<p class="expect">The row changes; the AI refuses those rows and says so.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Some rows refuse the AI, and say so.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Some rows refuse the AI, and say so.</text>

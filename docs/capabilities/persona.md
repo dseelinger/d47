@@ -22,6 +22,8 @@ nav_order: 121
 <p class="intro">Three steps to a ship AI that sounds like yours.</p>
 <section>
 <h2><span class="num">1</span> Pick a core.</h2>
+<p class="say">Pick a core, and set a ship name and the personality switch.</p>
+<p class="expect">The Persona page shows your core, and the voice changes to match it.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Persona">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
@@ -39,6 +41,8 @@ nav_order: 121
 </section>
 <section>
 <h2><span class="num">2</span> Bind one to a ship, if you want it to follow the hull.</h2>
+<p class="say">Bind a core to a ship on the Settings tab.</p>
+<p class="expect">The core follows that hull, and the name carries over if Keep the name across a core change is on.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Persona">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
@@ -53,6 +57,8 @@ nav_order: 121
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Change the core yourself on the Settings tab.</p>
+<p class="expect">The core changes; asking the AI to change it only tells you which core is running.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The AI cannot change its own core.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot change its own core.</text>

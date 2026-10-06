@@ -351,6 +351,27 @@ public partial class DocumentationGateTests
 
     [GeneratedRegex(@"(?m)^\#{1,6}[ \t]+(.+?)[ \t]*$")]
     private static partial Regex Heading();
+    [Theory]
+    [MemberData(nameof(CapabilityIds))]
+    public void EveryHowToStepHasALineToSayAndALineToExpect(string id)
+    {
+        var page = File.ReadAllText(Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{id}.md"));
+        var band = D47.Core.Help.HelpLibrary.ParseHowTo(page, id);
+
+        Assert.True(band is not null, $"The page for '{id}' has no how-to band.");
+        Assert.InRange(band.Sections.Count, 2, 5);
+
+        foreach (var step in band.Sections)
+        {
+            Assert.False(
+                string.IsNullOrWhiteSpace(step.Say),
+                $"The page for '{id}' step '{step.Heading}' has no <p class=\"say\">.");
+            Assert.False(
+                string.IsNullOrWhiteSpace(step.Expect),
+                $"The page for '{id}' step '{step.Heading}' has no <p class=\"expect\">.");
+        }
+    }
+
     private static CapabilityRegistry Registry() => Surface().Registry;
 
     /// <summary>

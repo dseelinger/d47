@@ -22,6 +22,8 @@ nav_order: 141
 <p class="intro">Off unless D47 is started with --utilities. Then one step to timers that say their own name.</p>
 <section>
 <h2><span class="num">1</span> Set a timer, and give it a name.</h2>
+<p class="say">Start D47 with --utilities, then say "set a timer for twenty minutes called fuel scoop".</p>
+<p class="expect">D47 confirms the timer, and when it goes off it says its name instead of beeping.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">set a timer for twenty minutes called fuel scoop</text>
@@ -32,6 +34,8 @@ nav_order: 141
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Keep D47 running until the timer ends.</p>
+<p class="expect">The timer fires; closing D47 cancels any timer still running.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Timers live with D47, not with Elite.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Timers live with D47, not with Elite.</text>

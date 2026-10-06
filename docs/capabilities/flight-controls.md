@@ -22,6 +22,8 @@ nav_order: 130
 <p class="intro">Three steps to flying the ship by voice.</p>
 <section>
 <h2><span class="num">1</span> Turn on the master switch.</h2>
+<p class="say">Turn on Let D47 press keys in Elite on the Flight and navigation page.</p>
+<p class="expect">The row shows on; it is off until you switch it, and the AI cannot switch it for you.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Flight and navigation">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Flight and navigation</text>
@@ -36,6 +38,8 @@ nav_order: 130
 </section>
 <section>
 <h2><span class="num">2</span> Say what you want the ship to do.</h2>
+<p class="say">Say "gear up", "lights on", "hardpoints out", "scoop away" or "silent running".</p>
+<p class="expect">D47 presses your own Elite binding once and says what it did.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">gear up</text>
@@ -46,6 +50,8 @@ nav_order: 130
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Keep Elite as the window in front.</p>
+<p class="expect">The key is pressed; with Elite behind another window nothing is sent.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite must be the window in front.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite must be the window in front.</text>

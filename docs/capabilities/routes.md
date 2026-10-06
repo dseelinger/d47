@@ -22,6 +22,8 @@ nav_order: 106
 <p class="intro">Three steps to a route worth flying.</p>
 <section>
 <h2><span class="num">1</span> Turn web access on. Routes are worked out elsewhere.</h2>
+<p class="say">Turn on web access in the Route planning settings.</p>
+<p class="expect">The row shows on; with web access off route planning does nothing.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Route planning">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Route planning</text>
@@ -36,6 +38,8 @@ nav_order: 106
 </section>
 <section>
 <h2><span class="num">2</span> Ask for the kind of route you want.</h2>
+<p class="say">Say "plot a neutron route to Colonia", or ask for a Road to Riches loop or a trade run.</p>
+<p class="expect">D47 plans the route for the ship you are in and reads you the stops.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">plot a neutron route to Colonia</text>
@@ -46,6 +50,8 @@ nav_order: 106
 </section>
 <section>
 <h2><span class="num">3</span> Accept it, and it becomes a checklist.</h2>
+<p class="say">Accept the route.</p>
+<p class="expect">It becomes a checklist with one line per stop, ticked as you fly them.</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Checklist page">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -58,6 +64,8 @@ nav_order: 106
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Ask again after you change ships.</p>
+<p class="expect">The route is replanned for the new jump range.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A route is planned for the ship you are in now.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A route is planned for the ship you are in now.</text>

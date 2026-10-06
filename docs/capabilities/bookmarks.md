@@ -4,6 +4,70 @@ group: Acting on the game
 nav_order: 136
 ---
 
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="intro">Five steps to a name that plots a course.</p>
+<section>
+<h2><span class="num">1</span> Target a system, then bookmark it.</h2>
+<p class="say">Target a system or station in the map, then say "bookmark this".</p>
+<p class="expect">D47 says, for example, "Bookmarked Jameson Memorial, in Shinrarta Dezhra."</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a bookmark command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">bookmark this</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It saves at once, under a name taken from the destination.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Add "as Current CG" to choose the name.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Set a course for it by name.</h2>
+<p class="say">Say "set course for Jameson Memorial".</p>
+<p class="expect">D47 plots to the system the bookmark points at.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a course command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">set course for Jameson Memorial</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It works like naming any other system.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> List what you have.</h2>
+<p class="say">Say "what are my bookmarks".</p>
+<p class="expect">D47 names each bookmark and the system it points at.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a list command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what are my bookmarks</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Each bookmark names the system it points at.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Rename or delete one.</h2>
+<p class="say">Say "rename bookmark Current CG to Colonia Bridge", or "delete bookmark Current CG".</p>
+<p class="expect">The name changes and the system stays the same, or the bookmark is removed.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a rename command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">rename bookmark Current CG to Colonia Bridge</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The system it points at does not change.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">"delete bookmark Current CG" removes it.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> Target the system, not a body in another system.</h2>
+<p class="say">Target the system itself when the destination is in another system.</p>
+<p class="expect">D47 refuses otherwise, saying "That is in another system, and Elite does not name the system."</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="A destination in another system is refused">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">bookmark this</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Elite does not name the system of a body elsewhere.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
 ## The details
 
 A bookmark is d47's own, not Elite's — it is not one of the game's own galaxy-map bookmarks, and

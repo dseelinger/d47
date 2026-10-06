@@ -10,6 +10,8 @@ nav_order: 147
 <p class="intro">Ask what a Powerplay rank gives, for your own Power or any other.</p>
 <section>
 <h2><span class="num">1</span> Ask about your next rank.</h2>
+<p class="say">Say "what does my next Powerplay rank give me".</p>
+<p class="expect">D47 answers from your pledge in the journal and the table of ranks.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question about the next Powerplay rank typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does my next Powerplay rank give me</text>
@@ -20,6 +22,8 @@ nav_order: 147
 </section>
 <section>
 <h2><span class="num">2</span> Ask about another Power.</h2>
+<p class="say">Say "what would Edmund Mahon give me".</p>
+<p class="expect">You hear everything that Power gives at rank one hundred, and the first module it unlocks with its rank.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="A question naming another Power">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what would Edmund Mahon give me</text>

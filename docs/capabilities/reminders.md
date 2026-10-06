@@ -12,15 +12,40 @@ nav_order: 150
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Say "remind me to" and a moment in the game. No AI needed.</p>
+<p class="intro">Three steps to a reminder that waits for the game. No AI needed.</p>
 <section>
 <h2><span class="num">1</span> Say what, then when.</h2>
+<p class="say">Say "remind me to buy limpets when I next dock".</p>
+<p class="expect">D47 reads it back: "I'll remind you to buy limpets when you next dock."</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a reminder typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">remind me to buy limpets when I next dock</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reads the reminder back: "I'll remind you to buy limpets when you next dock."</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">"what reminders do I have" — "cancel the reminder to buy limpets"</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Answer it when it goes off.</h2>
+<p class="say">Say "noted", or "remind me next time".</p>
+<p class="expect">Noted removes the reminder; remind me next time arms it again for the same moment.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with an answer to a reminder typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">noted</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"remind me next time" arms it again on the same moment.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">"remind me tomorrow" arms it for your next session.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> A moment in the game, never a time.</h2>
+<p class="say">Say a moment such as "when I next dock" or "next session", not "in twenty minutes".</p>
+<p class="expect">A time is declined, and the reply names the moments D47 does take.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="A time of day is declined">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">remind me to sell data in twenty minutes</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Reminders follow the game, not the clock.</text>
 </svg>
 </section>
 </div></div>

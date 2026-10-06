@@ -22,6 +22,8 @@ nav_order: 108
 <p class="intro">Three steps from locked to a route you can fly.</p>
 <section>
 <h2><span class="num">1</span> Open Engineers on the Asset Mgmt tab and read the directory.</h2>
+<p class="say">Open Engineers on the Asset Mgmt tab and read the directory.</p>
+<p class="expect">Engineers are sorted as Ready for unlock, Unlocked and Needs a referral, with the doable ones first.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Engineers page">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -37,6 +39,8 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">2</span> Press a name to see what unlocking them takes.</h2>
+<p class="say">Press an engineer's name, or say "how do I unlock Felicity Farseer".</p>
+<p class="expect">You see the requirement, the system and how far away it is.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">how do I unlock Felicity Farseer</text>
@@ -47,6 +51,8 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">3</span> Press Route, accept it, and it becomes a checklist.</h2>
+<p class="say">Press Route and accept it.</p>
+<p class="expect">The route becomes a checklist with one line per stop.</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Route page">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -60,6 +66,8 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Ask for the route again after you change ships.</p>
+<p class="expect">The order of stops is recalculated for the jump range of the ship you are in.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The Route solves for a ship, not for you.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The Route solves for a ship, not for you.</text>

@@ -22,6 +22,8 @@ nav_order: 119
 <p class="intro">Two steps to knowing where you stand in a goal.</p>
 <section>
 <h2><span class="num">1</span> Ask what is running.</h2>
+<p class="say">Turn on web access, then ask what community goals are on.</p>
+<p class="expect">D47 lists the running goals; with web access off it says it cannot look.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what community goals are on</text>
@@ -32,6 +34,8 @@ nav_order: 119
 </section>
 <section>
 <h2><span class="num">2</span> Read the tier and your own share.</h2>
+<p class="say">Listen for the tier and your own contribution.</p>
+<p class="expect">You hear the goal's current tier and the tonnes you have handed in, taken from your journal.</p>
 <svg viewBox="0 0 880 200" role="img" aria-label="A community goal showing its tier, the contribution so far and where the Commander sits">
  <rect x="20" y="16" width="840" height="168" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="54" font-size="17" font-weight="700" fill="var(--text)">Alliance Rescue Effort</text>
@@ -44,6 +48,8 @@ nav_order: 119
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Turn on web access before you ask.</p>
+<p class="expect">The answer names the goal and your share; the Privacy page lists what leaves your machine.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It needs the internet, and that is off by default.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs the internet, and that is off by default.</text>

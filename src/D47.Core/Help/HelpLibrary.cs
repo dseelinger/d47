@@ -268,6 +268,8 @@ public static class HelpLibrary
         var number = heading?.Element("span");
         var figure = section.Element("svg");
         var body = section.Elements("p").FirstOrDefault(p => (string?)p.Attribute("class") == "body");
+        var say = section.Elements("p").FirstOrDefault(p => (string?)p.Attribute("class") == "say");
+        var expect = section.Elements("p").FirstOrDefault(p => (string?)p.Attribute("class") == "expect");
 
         return new HelpSection
         {
@@ -277,6 +279,8 @@ public static class HelpLibrary
             Heading = string.Concat(heading?.Nodes().OfType<XText>().Select(t => t.Value) ?? []).Trim(),
             Figure = figure is null ? null : Figure(figure),
             Body = body?.Value.Trim(),
+            Say = say?.Value.Trim(),
+            Expect = expect?.Value.Trim(),
         };
     }
 

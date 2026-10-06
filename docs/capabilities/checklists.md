@@ -22,6 +22,8 @@ nav_order: 111
 <p class="intro">Three steps to one list that follows you around.</p>
 <section>
 <h2><span class="num">1</span> Put something on it, out loud or on the tab.</h2>
+<p class="say">Say "put buy a fuel scoop on my list", or press + on the Checklist tab and type it.</p>
+<p class="expect">The item appears on the list; routes, engineering plans and goals add their own lines too.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with something being added to the checklist">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">put "buy a fuel scoop" on my list</text>
@@ -32,6 +34,8 @@ nav_order: 111
 </section>
 <section>
 <h2><span class="num">2</span> Tick things off by saying so.</h2>
+<p class="say">Say "tick off the fuel scoop", or press its switch.</p>
+<p class="expect">The item shows as done and the next stop becomes the current one.</p>
 <svg viewBox="0 0 880 232" role="img" aria-label="The checklist page, with items in three groups and one of them ticked">
  <rect x="20" y="16" width="840" height="200" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="15" font-weight="700" fill="var(--text-muted)">HERE</text>
@@ -46,6 +50,8 @@ nav_order: 111
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Say "remove it" to take a finished item off the list.</p>
+<p class="expect">The item disappears; until then a ticked item stays so you can see what you did.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Finishing an item is not removing it, so a finished item stays on the list">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Ticking is not deleting.</text>

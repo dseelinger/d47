@@ -22,6 +22,8 @@ nav_order: 115
 <p class="intro">Three steps to a story that runs while you fly.</p>
 <section>
 <h2><span class="num">1</span> Ask for one, in the Stories tab or out loud.</h2>
+<p class="say">Say "tell me a story about this system", or pick one in the Stories tab.</p>
+<p class="expect">You hear a first objective, and the story waits until you act on it.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for an adventure typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell me a story about this system</text>
@@ -32,6 +34,8 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">2</span> Fly. The next objective arrives when your journal earns it.</h2>
+<p class="say">Fly as you normally would, and listen for the next objective.</p>
+<p class="expect">When your journal shows a jump, dock or scan that earns it, your ship AI speaks the next objective.</p>
 <svg viewBox="0 0 880 168" role="img" aria-label="A jump or a docking in the journal moves the story to its next objective">
  <rect x="20" y="24" width="250" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">YOU JUMP</text>
@@ -46,6 +50,8 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Say "next" if the story has not moved and you want it moved on.</p>
+<p class="expect">The story advances; with the game in a menu it does nothing until the game moves.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A story only moves when Elite writes something to the journal">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A story moves when the game does.</text>

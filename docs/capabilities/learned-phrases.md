@@ -4,6 +4,58 @@ group: Voice
 nav_order: 125
 ---
 
+<details class="d47-band" open>
+<summary>How to use it</summary>
+<div class="d47-howto"><div class="d47-frame">
+<p class="intro">Four steps to your own wording for a phrase D47 knows.</p>
+<section>
+<h2><span class="num">1</span> Say you want to teach one.</h2>
+<p class="say">Say "teach a phrase", then your wording, such as "wheels out".</p>
+<p class="expect">D47 asks "What do you want to say?" and takes your wording word for word without acting on it.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a teach command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">teach a phrase</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"new phrase" does the same.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Say what it should do.</h2>
+<p class="say">Say the phrase it should do, such as "drop the wheels".</p>
+<p class="expect">D47 repeats the pair and asks whether to keep it.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with the phrase it stands for typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">drop the wheels</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It must be a phrase D47 already knows.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Keep it or drop it.</h2>
+<p class="say">Say "yes" to keep it, or "cancel" to drop it.</p>
+<p class="expect">A yes stores the wording for this Commander; anything else leaves nothing behind.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with the answer typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">yes</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"cancel" at any step learns nothing.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Check it on the Phrases page.</h2>
+<p class="say">Open Settings, then Phrases, and look under YOUR PHRASES.</p>
+<p class="expect">The wording is at the top, newest first, with the phrase it runs.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The Phrases page lists what you taught">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">wheels out</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It runs "drop the wheels".</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Settings, then Phrases, under YOUR PHRASES.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
 ## The details
 
 When D47 offers "did you mean…" and you pick one, it asks once whether to remember the wording

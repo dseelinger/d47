@@ -7,15 +7,40 @@ nav_order: 153
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">One step. It works once the journals list two or more Commanders.</p>
+<p class="intro">Three steps to a different Commander. It works once the journals list two or more Commanders.</p>
 <section>
 <h2><span class="num">1</span> Say who to switch to.</h2>
+<p class="say">Say "switch to Kestrel Vane".</p>
+<p class="expect">D47 says "Switched to CMDR Kestrel Vane" and stays with that Commander until you switch again.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a switch command typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">switch to commander Kestrel Vane</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"switch to Kestrel Vane" works too.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">The Commander you are showing is not offered.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Or switch from the title bar or the Commanders page.</h2>
+<p class="say">Pick another Commander from the title bar menu or the Commanders page.</p>
+<p class="expect">D47 shows the Commander you picked; the one already showing is not offered.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The title bar and the Commanders page switch too">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">Commanders</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The same Commanders the journals list appear in both places.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> Only you can switch.</h2>
+<p class="say">Say the phrase or use the title bar yourself.</p>
+<p class="expect">A switch asked of the model is refused, so nothing changes.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The model is refused this tool">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">switch to Kestrel Vane</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">A switch the model asks for is refused.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">The phrase, the title bar and the page all work.</text>
 </svg>
 </section>
 </div></div>

@@ -22,6 +22,8 @@ nav_order: 127
 <p class="intro">Two steps to making the window your own.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
+<p class="say">Press the tabs along the top: Transcript, Checklist, Ships and Settings.</p>
+<p class="expect">Each tab opens its page; the headset shows the same strip without the tabs it has no room for.</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Checklist  Ships  Settings tab">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -35,6 +37,8 @@ nav_order: 127
 </section>
 <section>
 <h2><span class="num">2</span> The two hotkeys worth knowing.</h2>
+<p class="say">Press Ctrl+comma to open Settings, or Ctrl+L to jump to the ask box.</p>
+<p class="expect">Settings opens, or the ask box takes the cursor; on the Transcript tab Ctrl+L scrolls the reading instead.</p>
 <svg viewBox="0 0 880 250" role="img" aria-label="Hotkeys">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>

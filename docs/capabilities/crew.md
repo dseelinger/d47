@@ -22,6 +22,8 @@ nav_order: 103
 <p class="intro">Two steps to talking to somebody other than the ship.</p>
 <section>
 <h2><span class="num">1</span> Hire a pilot in the game. D47 reads your roster.</h2>
+<p class="say">Hire a pilot in the game, then say "who is in my fighter bay".</p>
+<p class="expect">D47 names the crew from your journal roster, each with their own voice.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">who is in my fighter bay</text>
@@ -32,6 +34,8 @@ nav_order: 103
 </section>
 <section>
 <h2><span class="num">2</span> Address them by name. They stay on the line until you're done.</h2>
+<p class="say">Say a crew member's name and a question, such as "Vasquez, how is the fighter holding up".</p>
+<p class="expect">The crew member answers, and answers your next question too until you say "that's all" or name somebody else.</p>
 <svg viewBox="0 0 880 212" role="img" aria-label="A question addressed to a named crew member, answered in that crew member's own voice, and the follow-up needs no name">
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">Vasquez, how is the fighter holding up?</text>
@@ -43,6 +47,8 @@ nav_order: 103
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Use the name of a crew member you have hired.</p>
+<p class="expect">That crew member answers; any other name reaches the ship AI, which says they are not aboard.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Only the crew you have actually hired can answer.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Only the crew you have actually hired can answer.</text>

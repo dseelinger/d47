@@ -22,6 +22,8 @@ nav_order: 145
 <p class="intro">Three steps to something that tracks its own progress.</p>
 <section>
 <h2><span class="num">1</span> Say what you are working towards.</h2>
+<p class="say">Say "my goal is to buy a Python", or "I want to unlock all the engineers".</p>
+<p class="expect">D47 adds the goal to the Goals tab.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">my goal is to buy a Python</text>
@@ -32,6 +34,8 @@ nav_order: 145
 </section>
 <section>
 <h2><span class="num">2</span> Open the Goals tab and watch it fill in.</h2>
+<p class="say">Open the Goals tab.</p>
+<p class="expect">Each goal shows its progress, worked out from your journal.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Goals tab">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -47,6 +51,8 @@ nav_order: 145
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Put a goal D47 cannot measure on the checklist instead.</p>
+<p class="expect">The item appears on the Checklist tab, where you tick it by hand.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A goal you have to update by hand is a goal in the wrong place.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A goal you have to update by hand is a goal in the wrong place.</text>

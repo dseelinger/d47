@@ -22,6 +22,8 @@ nav_order: 138
 <p class="intro">Three steps to a name that runs a sequence.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection, then write the macro.</h2>
+<p class="say">Turn on key injection, then write a macro with a name and its steps.</p>
+<p class="expect">The macro is saved, for example docking prep as gear down, lights on and hardpoints away.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Macros">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Macros</text>
@@ -36,6 +38,8 @@ nav_order: 138
 </section>
 <section>
 <h2><span class="num">2</span> Say the name.</h2>
+<p class="say">Say the macro's name, such as "docking prep".</p>
+<p class="expect">The steps run in order with a pause between each.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">docking prep</text>
@@ -46,6 +50,8 @@ nav_order: 138
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Bind every action the macro uses in Elite.</p>
+<p class="expect">Each step presses your key; a step whose action is unbound does nothing.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A macro is only as good as your Elite bindings.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A macro is only as good as your Elite bindings.</text>

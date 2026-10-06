@@ -22,6 +22,8 @@ nav_order: 137
 <p class="intro">Three steps to sending a message other people can read.</p>
 <section>
 <h2><span class="num">1</span> Turn on key injection, then say what to send.</h2>
+<p class="say">Turn on key injection, then say what to send, such as "tell the wing I am on my way".</p>
+<p class="expect">D47 names the channel and the message before it types anything.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell the wing I am on my way</text>
@@ -32,6 +34,8 @@ nav_order: 137
 </section>
 <section>
 <h2><span class="num">2</span> Check the channel before it goes.</h2>
+<p class="say">Check the channel and the message it read back.</p>
+<p class="expect">The channel is local, wing, squadron or a direct message, and the words are the ones you said.</p>
 <svg viewBox="0 0 880 190" role="img" aria-label="The confirmation showing the channel and the exact text before it is sent">
  <rect x="20" y="16" width="840" height="158" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="56" font-size="15" font-weight="700" fill="var(--text-muted)">CHANNEL</text>
@@ -43,6 +47,8 @@ nav_order: 137
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Read the message once more before you let it go.</p>
+<p class="expect">The message appears in Elite's chat for other people to read; nothing else D47 does is visible to them.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="This is the one thing other people see.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This is the one thing other people see.</text>

@@ -22,6 +22,8 @@ nav_order: 116
 <p class="intro">Two steps to reading a system name.</p>
 <section>
 <h2><span class="num">1</span> Ask about any name, including one nobody has visited.</h2>
+<p class="say">Say "what does Praea Euq XV-B c1-42 tell you".</p>
+<p class="expect">D47 reads the name itself, with no network, even for a system nobody has visited.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does Praea Euq XV-B c1-42 tell you</text>
@@ -32,6 +34,8 @@ nav_order: 116
 </section>
 <section>
 <h2><span class="num">2</span> Read what the shape of it says.</h2>
+<p class="say">Listen for what the name encodes.</p>
+<p class="expect">You hear the region, the mass code and the kind of system to expect, marked as inference.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Praea Euq XV-B c1-42">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Praea Euq XV-B c1-42</text>
@@ -49,6 +53,8 @@ nav_order: 116
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Honk in the system for what it actually contains.</p>
+<p class="expect">The scan shows the real bodies; the name only suggests what to expect.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A name is not a scan.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A name is not a scan.</text>

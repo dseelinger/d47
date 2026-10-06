@@ -500,6 +500,19 @@ public class HelpLibraryTests
     }
 
     [Fact]
+    public void AHowToStepCarriesWhatToSayAndWhatToExpect()
+    {
+        var band = HelpLibrary.ParseHowTo(HelpLibrary.PageFor("clock"), "clock");
+
+        Assert.NotNull(band);
+
+        var first = band.Sections[0];
+
+        Assert.Equal("Say \"what time is it\".", first.Say);
+        Assert.StartsWith("D47 gives the time", first.Expect, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void EveryHowToBandParsesToo()
     {
         var broken = new List<string>();

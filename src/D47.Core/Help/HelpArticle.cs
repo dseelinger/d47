@@ -117,6 +117,12 @@ public sealed record HelpSection
 
     /// <summary>The paragraph under the picture, or null.</summary>
     public string? Body { get; init; }
+
+    /// <summary>The step as it would be spoken, or null when the step has no spoken line.</summary>
+    public string? Say { get; init; }
+
+    /// <summary>What the Commander should see or hear after the step, or null.</summary>
+    public string? Expect { get; init; }
 }
 
 /// <summary>A picture, in its own coordinate space.</summary>

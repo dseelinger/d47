@@ -19,15 +19,40 @@ nav_order: 140
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">One step. No AI, no key and no network needed.</p>
+<p class="intro">Three steps to the time in both worlds. No AI, no key and no network needed.</p>
 <section>
 <h2><span class="num">1</span> Ask what time it is, in either world.</h2>
+<p class="say">Say "what time is it".</p>
+<p class="expect">D47 gives the time in the galactic calendar and in your own, with no AI configured.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what time is it</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what's the date" — "what day is it"</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">It answers with both dates, so you never have to convert.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Ask for the date or the day.</h2>
+<p class="say">Say "what's the date" or "what day is it".</p>
+<p class="expect">D47 answers with the galactic date and your own date together.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a date question typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what's the date</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Both dates are one instant, so they never drift apart.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> The galactic date reads the same for everyone.</h2>
+<p class="say">Read the galactic date as D47 says it, whatever your computer shows.</p>
+<p class="expect">It reads as, for example, 17 August 3312, however your computer writes dates.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The galactic date is written one way">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what day is it</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The galactic date is not a regional format.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Your own date follows your computer.</text>
 </svg>
 </section>
 </div></div>

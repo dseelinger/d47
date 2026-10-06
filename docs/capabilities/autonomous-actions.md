@@ -22,6 +22,8 @@ nav_order: 134
 <p class="intro">One switch, one action, and nothing else happens without you.</p>
 <section>
 <h2><span class="num">1</span> Turn on the arrival honk, if you want it.</h2>
+<p class="say">Turn on Honk on arrival, and key injection on the Flight page.</p>
+<p class="expect">The Honk on arrival row shows on; it is off until you switch it.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="The setting that lets Directive 47 fire the discovery scanner on arrival, off out of the box">
  <rect x="20" y="24" width="840" height="66" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="63" font-size="17" fill="var(--text)">Honk on arrival</text>
@@ -34,6 +36,8 @@ nav_order: 134
 </section>
 <section>
 <h2><span class="num">2</span> Jump somewhere. It fires once, after the drop.</h2>
+<p class="say">Jump to a system and wait for the drop.</p>
+<p class="expect">D47 presses your discovery scanner binding once after arrival, never in supercruise.</p>
 <svg viewBox="0 0 880 132" role="img" aria-label="After a jump completes, one press of the discovery scanner, and nothing further">
  <rect x="20" y="20" width="270" height="66" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">JUMP COMPLETES</text>
@@ -46,6 +50,8 @@ nav_order: 134
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Bring Elite to the front and put the discovery scanner on a key.</p>
+<p class="expect">The honk fires; with Elite behind another window nothing is pressed.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite must be the window in front, and the discovery scanner must be bound to a key">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite must be in front, with the scanner on a key.</text>

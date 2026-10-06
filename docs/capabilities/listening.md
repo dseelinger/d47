@@ -22,6 +22,8 @@ nav_order: 124
 <p class="intro">Three steps to being heard.</p>
 <section>
 <h2><span class="num">1</span> Pick a microphone and a speech model.</h2>
+<p class="say">Pick a microphone and a speech model on the Listening page.</p>
+<p class="expect">The model downloads once, and nothing is transcribed until it is on disk.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Listening">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Listening</text>
@@ -36,6 +38,8 @@ nav_order: 124
 </section>
 <section>
 <h2><span class="num">2</span> Hold push-to-talk and speak.</h2>
+<p class="say">Hold the push-to-talk key and speak.</p>
+<p class="expect">D47 transcribes what you said when you let go; Cancel stops the turn.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Push-to-talk">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Push-to-talk</text>
@@ -50,6 +54,8 @@ nav_order: 124
 </section>
 <section>
 <h2><span class="num">3</span> Check it heard you.</h2>
+<p class="say">Say "can you hear me".</p>
+<p class="expect">D47 reports the device, the level and what it last transcribed, and names a silent device.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">can you hear me</text>
@@ -60,6 +66,8 @@ nav_order: 124
 </section>
 <section>
 <h2><span class="num">4</span> Spell a value onto a keyboard.</h2>
+<p class="say">Open a keyboard prompt and spell a value, such as "alpha bravo seven done".</p>
+<p class="expect">Each key you say is pressed, and anything else lands whole.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Saying alpha bravo seven done onto a drawn keyboard">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">System name</text>
@@ -80,6 +88,8 @@ nav_order: 124
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Choose your real microphone instead of the Windows default.</p>
+<p class="expect">The level meter moves when you speak; a virtual device from VR or streaming software sends silence.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Windows picks the default microphone, and it is often wrong.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Windows picks the default microphone, and it is often wrong.</text>

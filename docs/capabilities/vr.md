@@ -22,6 +22,8 @@ nav_order: 128
 <p class="intro">Three steps to D47 in the headset.</p>
 <section>
 <h2><span class="num">1</span> Start SteamVR first, then D47.</h2>
+<p class="say">Start SteamVR first, then D47, and turn on Draw in the headset.</p>
+<p class="expect">The panel appears in the headset as an overlay beside the game.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Headset">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Headset</text>
@@ -36,6 +38,8 @@ nav_order: 128
 </section>
 <section>
 <h2><span class="num">2</span> Put the panel where you want it.</h2>
+<p class="say">Say "put the panel down", "lock it to my head", "move it left" or "bring it nearer".</p>
+<p class="expect">The panel moves; world-locked stays where you put it and head-locked follows you.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">put the panel down</text>
@@ -46,6 +50,8 @@ nav_order: 128
 </section>
 <section>
 <h2><span class="num">3</span> Set the size and the distance.</h2>
+<p class="say">Set the distance, size and opacity in the Headset settings.</p>
+<p class="expect">The panel changes to match, and tilts to face you when it is below eye level.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Headset">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Headset</text>
@@ -63,6 +69,8 @@ nav_order: 128
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
+<p class="say">Minimise the desktop window if you want it out of the way.</p>
+<p class="expect">The overlay stays in the headset; only closing D47 removes it.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The desktop window can be minimised and the overlay stays.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The desktop window can be minimised and the overlay stays.</text>
