@@ -119,7 +119,8 @@ public partial class App(AppHost? host) : Application
 
                 // And the Search tab's System page, on the window's record.
                 starSystem: window?.StarSystem,
-                activities: host.Activities);
+                activities: host.Activities,
+                construction: window?.Construction);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).
@@ -173,6 +174,7 @@ public partial class App(AppHost? host) : Application
                     GameState = () => host.GameState.Active,
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
+                    Construction = window?.Construction,
                 });
 
             // Through the same route as the other two (Phase 45).

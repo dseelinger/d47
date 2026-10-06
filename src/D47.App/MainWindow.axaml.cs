@@ -217,6 +217,13 @@ public partial class MainWindow : Window
             // than one list of short rows, and every row it drills to turned out to be a button or a switch a
             // ray already presses. Ctrl-drag of a slot onto another remains desktop-only — the one gesture
             // the headset has no path for.
+            Construction = new ConstructionSurface(
+                () => host.GameState.Active,
+                () => DateTimeOffset.Now,
+                host.Capabilities,
+                host.Sourcing,
+                () => host.Settings.Current.Knowledge.GalaxySearch);
+
             Panel.EnableLoadout(
                 host.Ships,
                 host.Checklists,
@@ -233,7 +240,8 @@ public partial class MainWindow : Window
                     () => D47.Core.Audio.VoiceGroups.ProviderFor(host.Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
                     () => [host.Personas.ShipName, .. new[] { host.Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]),
                 talk: host.BuildTalk,
-                status: () => host.LiveStatus);
+                status: () => host.LiveStatus,
+                construction: Construction);
 
             // Where the hull art is read from, in the order it is searched.
             ShipArt.Folder = host.Paths.Ships;
@@ -709,6 +717,9 @@ public partial class MainWindow : Window
 
     /// <summary>The Search tab's System page, built here and handed to the headset copy.</summary>
     internal StarSystemSurface? StarSystem { get; }
+
+    /// <summary>Asset Mgmt › Construction, built here and handed to the headset and the overlay (#828).</summary>
+    internal ConstructionSurface? Construction { get; }
 
     /// <summary>
     /// Attaches a <see cref="SettingsView"/> to the host's services — the settings page, or one tab's

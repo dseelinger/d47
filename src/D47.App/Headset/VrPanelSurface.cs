@@ -126,7 +126,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // The Search tab's System page, on the window's record.
         Panel.StarSystemSurface? starSystem = null,
-        D47.Core.Activities.ActivityLedger? activities = null)
+        D47.Core.Activities.ActivityLedger? activities = null,
+        Panel.ConstructionSurface? construction = null)
     {
         _dumpTo = dumpTo;
 
@@ -246,7 +247,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
                     ? null
                     : () => buildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: galaxy,
-                status: routing?.Status);
+                status: routing?.Status,
+                construction: construction);
         }
 
         if (starSystem is not null)

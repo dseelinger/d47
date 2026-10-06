@@ -181,6 +181,11 @@ public sealed class OverlayPanel : Window
             _view.EnableChecklist(checklists, tabs.Goals, tabs.BackfillGoals, tabs.Activities);
         }
 
+        if (tabs.Construction is { } construction)
+        {
+            _view.EnableConstruction(construction);
+        }
+
         if (tabs.Unlocks is { } unlocks && tabs.Ships is { } ships && tabs.GameState is { } state)
         {
             _view.EnableEngineers(unlocks, ships, state, tabs.OnFoot, tabs.EngineersMemory, tabs.Checklists);
@@ -188,11 +193,13 @@ public sealed class OverlayPanel : Window
     }
 
     /// <summary>
-    /// Redraws the engineer ranking when the Commander has moved or re-fitted (Phase 28).
+    /// Redraws the engineer ranking when the Commander has moved or re-fitted (Phase 28), and the Construction
+    /// page when the journal has moved its sites.
     /// </summary>
     private void TickPages()
     {
         _view.TickEngineers();
+        _view.TickConstruction();
     }
 
     /// <summary>

@@ -834,7 +834,10 @@ public partial class PanelView : UserControl
         D47.Core.Ships.BuildTalk? talk = null,
 
         // The live Status.json, for the fuel level on the flown ship's page.
-        Func<D47.Core.Journal.GameStatus>? status = null)
+        Func<D47.Core.Journal.GameStatus>? status = null,
+
+        // Asset Mgmt › Construction, between Carrier and Materials (#828).
+        ConstructionSurface? construction = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status);
 
@@ -916,14 +919,6 @@ public partial class PanelView : UserControl
         // simply shows no mark.
         roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier"));
 
-        if (onFoot is not null)
-        {
-            roots.Add(new NavCrumb(LoadoutPages.GapRoot, "Materials")
-            {
-                Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
-            });
-        }
-
         // _engineers is read lazily, on whichever draw first opens Materials (#477).
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, Nav, Prompts, _copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
@@ -933,11 +928,57 @@ public partial class PanelView : UserControl
             PlanCarrierRoute);
 
         Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
+
+        if (construction is not null)
+        {
+            EnableConstruction(construction);
+        }
+
+        if (onFoot is not null)
+        {
+            Furnish(
+                PanelTab.Assets,
+                BuildAssets,
+                new NavCrumb(LoadoutPages.GapRoot, "Materials")
+                {
+                    Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
+                });
+        }
     }
 
-    /// <summary>Draws an Asset Mgmt level: the engineer pages, or whatever the loadout roots draw.</summary>
+    /// <summary>
+    /// Gives this surface Asset Mgmt › Construction (#828). <see cref="EnableLoadout"/> calls it after Carrier;
+    /// a surface without the fleet calls it before <see cref="EnableEngineers"/>.
+    /// </summary>
+    public void EnableConstruction(ConstructionSurface construction)
+    {
+        var headset = Classes.Contains("headset");
+
+        _constructionBuild = _ => _construction = new ConstructionPage(construction, _copy, headset);
+
+        Furnish(
+            PanelTab.Assets,
+            BuildAssets,
+            new NavCrumb(ConstructionPage.RootKey, "Construction")
+            {
+                Help = D47.Core.Capabilities.Builtin.ColonisationCapability.Id,
+            });
+    }
+
+    /// <summary>Redraws the Construction page when the journal has moved the sites, the hold or the carrier.</summary>
+    public bool TickConstruction() =>
+        _construction is { } page
+        && Tab == PanelTab.Assets
+        && Nav.RootKeyOf(PanelTab.Assets) == ConstructionPage.RootKey
+        && page.Tick();
+
+    private Func<NavCrumb, Control>? _constructionBuild;
+    private ConstructionPage? _construction;
+
+    /// <summary>Draws an Asset Mgmt level: the Construction page, the engineer pages, or whatever the loadout roots draw.</summary>
     private Control BuildAssets(NavCrumb crumb) =>
-        EngineersPages.Owns(crumb) && _engineerBuild is { } engineers ? engineers(crumb)
+        crumb.Key == ConstructionPage.RootKey && _constructionBuild is { } construction ? construction(crumb)
+        : EngineersPages.Owns(crumb) && _engineerBuild is { } engineers ? engineers(crumb)
         : _loadoutBuild is { } loadout ? loadout(crumb)
         : new TextBlock { Text = "Nothing here." };
 
@@ -1044,12 +1085,12 @@ public partial class PanelView : UserControl
     /// </summary>
     public bool TickLoadout()
     {
+        var changed = TickConstruction();
+
         if (_loadoutMode is not { } mode || Tab != PanelTab.Assets)
         {
-            return false;
+            return changed;
         }
-
-        var changed = false;
 
         // The carrier moves on its own events rather than with the ship, so it is compared separately (#230):
         // a jump booked while the Commander is nowhere near it changes this page and changes nothing about

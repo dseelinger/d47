@@ -100,6 +100,12 @@
         <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.White}" />
         <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.A}" />
       </Style>
+      <Style Selector="^.d47-row.dim">
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Grey}" />
+      </Style>
       <Style Selector="^.d47-row:pointerover">
         <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.White}" />

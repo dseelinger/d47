@@ -30,4 +30,7 @@ public sealed record OverlayTabs
 
     /// <summary>The Engineers tab's remembered checkbox filters, one memory shared with the other two surfaces (#132).</summary>
     public D47.App.Panel.EngineerDirectoryMemory? EngineersMemory { get; init; }
+
+    /// <summary>Asset Mgmt › Construction (#828).</summary>
+    public D47.App.Panel.ConstructionSurface? Construction { get; init; }
 }

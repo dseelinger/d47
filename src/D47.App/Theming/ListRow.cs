@@ -19,6 +19,9 @@ public static class ListRow
     /// <summary>Marks the row as the chosen one; set and cleared by the screen that owns it.</summary>
     public const string SelectedClass = "selected";
 
+    /// <summary>A pressable row drawn in the disabled inks; it stays pressable. Not set together with <see cref="SelectedClass"/>.</summary>
+    public const string DimClass = "dim";
+
     /// <summary>Marks a list item's description line, inked Grey at rest and Brown when selected.</summary>
     public const string DetailClass = "d47-row-detail";
 
