@@ -1132,8 +1132,16 @@ Quartermaster, *"Efficiency in ledgers"*, says what the session is earning: afte
 mission, a cashed voucher or sold exploration or organic data, once the session is at least thirty
 minutes old and has earned something, and at most once an hour.
 
+Sentinel says what combat is earning: after a bounty, a combat bond or a cashed voucher, under the
+same thirty-minute and once-an-hour limits, from bounties, combat bonds and vouchers alone
+([#613](https://github.com/dseelinger/d47/issues/613)). Kills stay with the kill callout.
+
 ```text
 4.2 million credits an hour this session, the largest share from trade. At the last count it was 3.8 million an hour.
+```
+
+```text
+1.2 million credits an hour in combat this session, the largest share from bounties.
 ```
 
 The figure is worked out from the journal; with a language model configured the core says it in its

@@ -127,6 +127,9 @@ public enum PersonaDomain
 
     /// <summary>Credits earned. Quartermaster: "Efficiency in ledgers."</summary>
     Earnings,
+
+    /// <summary>Credits earned in combat. Sentinel.</summary>
+    Combat,
 }
 
 /// <summary>Which of a provider's voices can speak for a core.</summary>

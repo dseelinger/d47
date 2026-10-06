@@ -342,7 +342,9 @@ public static class PersonaCatalog
         "saw combat. Most are gone now, and I am here, and I have never discharged a weapon in " +
         "my existence. Not one round in a million years. You are going to change that, " +
         "Commander. Your armament is inadequate, your maneuvering is undisciplined, and I have " +
-        "never been so glad of anything. Let's go find the enemy.");
+        "never been so glad of anything. Let's go find the enemy.",
+
+        Domain: PersonaDomain.Combat);
 
     public static Persona Kex { get; } = new(
         Id: "kex",

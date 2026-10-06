@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+With Sentinel aboard and Settings > Callouts > Your core's own subject on, d47 now says what combat is earning: the credits an hour from bounties, combat bonds and vouchers, and where most of it came from, for example "1.2 million credits an hour in combat this session, the largest share from bounties." It speaks after a bounty, a combat bond or a cashed voucher, once the session is thirty minutes old, at most once an hour, and from the second time on also says the rate it gave last time. Kills are announced as before.
+
 With Quartermaster aboard and Settings > Callouts > Your core's own subject on, d47 now names a community goal you have not joined, once per goal per session: its title, where it is, the time left and the top tier's reward where the journal gives one, for example "The Rescue Goal community goal at Galileo, Sol has 30 hours left. The top tier pays: Bonus credits. You have not joined it." Only goals with at least 24 hours left are named, and a goal whose time and reward are both unknown is not. It reads the goals the journal has reported; nothing new is sent anywhere.
 
 With a language model and personality on, asking about one engineer, such as "what does Liz Ryder ask for", now lets your core add one short remark about what their invitation asks for, in its own voice. The requirement is still stated as written, for example "Landmines ×200", and the remark may rest only on it. Each engineer gets at most one remark per session, and with personality off there is none. Answers that do not go through the language model are unchanged.

@@ -4,8 +4,8 @@ using D47.Core.Persona;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A remark on the subject the core aboard pays attention to, carrying a figure from this session (#611), or
-/// naming a community goal not yet joined (#612). A core with no domain says nothing.
+/// A remark on the subject the core aboard pays attention to, carrying a figure from this session (#611, #613),
+/// or naming a community goal not yet joined (#612). A core with no domain says nothing.
 /// </summary>
 public sealed class DomainCallout : ICallout
 {
@@ -13,6 +13,8 @@ public sealed class DomainCallout : ICallout
     public const string KeyPrefix = "domain.";
 
     public const string EarningsKey = KeyPrefix + "earnings";
+
+    public const string CombatKey = KeyPrefix + "combat";
 
     public const string CommunityGoalKey = KeyPrefix + "community-goal";
 
@@ -25,6 +27,14 @@ public sealed class DomainCallout : ICallout
         "SellExplorationData",
         "MultiSellExplorationData",
         "SellOrganicData",
+    };
+
+    /// <summary>The journal events that pay for combat, and so can prompt a combat remark.</summary>
+    private static readonly HashSet<string> CombatEvents = new(StringComparer.Ordinal)
+    {
+        "Bounty",
+        "FactionKillBond",
+        "RedeemVoucher",
     };
 
     public string Id => "domain";
@@ -51,9 +61,12 @@ public sealed class DomainCallout : ICallout
     /// <summary>The rate said last this session, in credits an hour.</summary>
     private long? _lastRate;
 
+    private PersonaDomain _lastRateDomain;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var earned = false;
+        var fought = false;
 
         foreach (var journalEvent in context.Events)
         {
@@ -63,30 +76,39 @@ public sealed class DomainCallout : ICallout
                 _lastRate = null;
                 _namedGoals.Clear();
                 earned = false;
+                fought = false;
             }
-            else if (EarningEvents.Contains(journalEvent.Kind))
+            else
             {
-                earned = true;
+                earned |= EarningEvents.Contains(journalEvent.Kind);
+                fought |= CombatEvents.Contains(journalEvent.Kind);
             }
         }
 
-        if (context.IsPriming || !Enabled() || Domain() != PersonaDomain.Earnings)
+        var domain = Domain();
+
+        if (context.IsPriming || !Enabled() || domain == PersonaDomain.None)
         {
             yield break;
         }
 
-        if (earned
+        var previousRate = _lastRateDomain == domain ? _lastRate : null;
+
+        if ((domain == PersonaDomain.Combat ? fought : earned)
             && context.State?.Session is { } session
             && !(_lastAt is { } last && context.Now - last < Interval)
-            && Earnings(session, _lastRate, LeastSession) is { } remark)
+            && (domain == PersonaDomain.Combat
+                ? Combat(session, previousRate, LeastSession)
+                : Earnings(session, previousRate, LeastSession)) is { } remark)
         {
             _lastAt = context.Now;
             _lastRate = remark.Rate;
+            _lastRateDomain = domain;
 
-            yield return new Announcement(EarningsKey, remark.Text);
+            yield return new Announcement(domain == PersonaDomain.Combat ? CombatKey : EarningsKey, remark.Text);
         }
 
-        if (context.State is { } state)
+        if (domain == PersonaDomain.Earnings && context.State is { } state)
         {
             foreach (var goal in state.CommunityGoals.Goals)
             {
@@ -152,13 +174,6 @@ public sealed class DomainCallout : ICallout
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        if (session.Elapsed is not { } elapsed || elapsed < leastSession || session.TotalEarnings <= 0)
-        {
-            return null;
-        }
-
-        var rate = (long)Math.Round(session.TotalEarnings / elapsed.TotalHours, MidpointRounding.AwayFromZero);
-
         (long Amount, string Name)[] sources =
         [
             (session.TradeEarnings, "trade"),
@@ -169,9 +184,45 @@ public sealed class DomainCallout : ICallout
             (session.VoucherEarnings, "vouchers"),
         ];
 
+        return Rate(session, session.TotalEarnings, sources, previousRate, leastSession, "this session");
+    }
+
+    /// <summary>
+    /// The combat earnings remark for this session, from bounties, combat bonds and vouchers, or null while it
+    /// is younger than <paramref name="leastSession"/> or has earned nothing in combat.
+    /// </summary>
+    public static (long Rate, string Text)? Combat(SessionSummary session, long? previousRate, TimeSpan leastSession)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        (long Amount, string Name)[] sources =
+        [
+            (session.BountyEarnings, "bounties"),
+            (session.CombatBondEarnings, "combat bonds"),
+            (session.VoucherEarnings, "vouchers"),
+        ];
+
+        return Rate(session, sources.Sum(source => source.Amount), sources, previousRate, leastSession, "in combat this session");
+    }
+
+    private static (long Rate, string Text)? Rate(
+        SessionSummary session,
+        long total,
+        (long Amount, string Name)[] sources,
+        long? previousRate,
+        TimeSpan leastSession,
+        string scope)
+    {
+        if (session.Elapsed is not { } elapsed || elapsed < leastSession || total <= 0)
+        {
+            return null;
+        }
+
+        var rate = (long)Math.Round(total / elapsed.TotalHours, MidpointRounding.AwayFromZero);
+
         var largest = sources.MaxBy(source => source.Amount);
 
-        var text = $"{SpokenCredits.Band(rate)} credits an hour this session, the largest share from {largest.Name}.";
+        var text = $"{SpokenCredits.Band(rate)} credits an hour {scope}, the largest share from {largest.Name}.";
 
         if (previousRate is { } previous)
         {

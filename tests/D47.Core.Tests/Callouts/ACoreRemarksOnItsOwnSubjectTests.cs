@@ -30,6 +30,9 @@ public class ACoreRemarksOnItsOwnSubjectTests
     private static JournalEvent Mission(DateTimeOffset at, long reward) =>
         Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"MissionCompleted", "MissionID":7, "Name":"Mission_Courier", "Reward":{{reward}} }""");
 
+    private static JournalEvent Bounty(DateTimeOffset at, long reward) =>
+        Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"Bounty", "Target":"cobramkiii", "TotalReward":{{reward}}, "VictimFaction":"Pirates" }""");
+
     private static JournalEvent Jump(DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"FSDJump", "StarSystem":"Sol", "JumpDist":8.5 }""");
 
@@ -76,6 +79,34 @@ public class ACoreRemarksOnItsOwnSubjectTests
 
         Assert.Equal(DomainCallout.EarningsKey, said.Key);
         Assert.Equal("4 million credits an hour this session, the largest share from trade.", said.Text);
+    }
+
+    [Fact]
+    public void SentinelSaysTheCombatRateAndItsLargestSource()
+    {
+        Assert.Equal(PersonaDomain.Combat, PersonaCatalog.Sentinel.Domain);
+
+        var session = Started(PersonaCatalog.Sentinel.Domain);
+        var at = Noon.AddMinutes(30);
+
+        session.Tick(at.AddMinutes(-10), Sell(at.AddMinutes(-10), 5_000_000));
+        var said = Assert.Single(session.Tick(at, Bounty(at, 800_000)));
+
+        Assert.Equal(DomainCallout.CombatKey, said.Key);
+        Assert.Equal("1.6 million credits an hour in combat this session, the largest share from bounties.", said.Text);
+    }
+
+    [Fact]
+    public void ASaleDoesNotPromptSentinelAndABountyDoesNotPromptQuartermaster()
+    {
+        var sentinel = Started(PersonaDomain.Combat);
+        var quartermaster = Started(PersonaDomain.Earnings);
+        var at = Noon.AddHours(1);
+
+        sentinel.Tick(at.AddMinutes(-5), Bounty(at.AddMinutes(-5), 800_000));
+
+        Assert.Empty(sentinel.Tick(at, Sell(at, 2_000_000)));
+        Assert.Empty(quartermaster.Tick(at, Bounty(at, 800_000)));
     }
 
     [Fact]
