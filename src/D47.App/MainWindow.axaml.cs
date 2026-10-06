@@ -361,6 +361,8 @@ public partial class MainWindow : Window
             host.RouteNavigation(
                 Panel.Nav, move => ui.Post(move), leads: true, openSystem: address => Panel.OpenSystem(address));
 
+            host.RoutePromptSurface(Panel.Prompts, move => ui.Post(move));
+
             // And a spoken "page down" moves whatever page this surface is showing (#34).
             host.RouteScrolling(Panel.Scroll);
 

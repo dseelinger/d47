@@ -1928,6 +1928,8 @@ public sealed class AppHost : IDisposable
                     Clipboard = clipboard,
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
+                    SpellSystem = initial => self?.SpellSystem(initial),
+                    OfferSpelling = system => self?.OfferSpelling(system),
                     WatchRoute = () => new Input.RoutePlotWatch(
                         route,
                         loggerFactory.CreateLogger<Input.RoutePlotWatch>(),
@@ -5336,6 +5338,75 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Adds a surface to the list of places a spoken value may be destined for.</summary>
     public void RoutePrompts(Func<Core.Interface.Heard, bool> surface) => _prompts.Add(surface);
+
+    private readonly List<(PanelPrompts Prompts, Action<Action> Post, bool Headset)> _promptSurfaces = [];
+
+    /// <summary>
+    /// Adds a panel that can be opened on a keyboard entry. <paramref name="post"/> runs an action on the
+    /// surface's own thread.
+    /// </summary>
+    public void RoutePromptSurface(PanelPrompts prompts, Action<Action> post, bool headset = false) =>
+        _promptSurfaces.Add((prompts, post, headset));
+
+    /// <summary>Opens the keyboard on "System to plot", holding <paramref name="initial"/>.</summary>
+    private void SpellSystem(string initial) => OnPromptSurface(prompts =>
+        prompts.Enter(
+            SpellSystemEntry.Request(initial),
+            value => _ = PlotSpelledAsync(value.Trim())));
+
+    /// <summary>Asks whether to spell the system a plot found no route to.</summary>
+    private void OfferSpelling(string system) => OnPromptSurface(prompts =>
+        prompts.Choose(
+            new Core.Interface.ChoiceRequest(
+                "spell-offer",
+                "Spell",
+                "Spell it?",
+                $"No route appeared for {system}.",
+                [new Core.Interface.ChoiceOption("yes", "Yes"), new Core.Interface.ChoiceOption("no", "No")],
+                null,
+                Core.Interface.ChoiceSurface.Page),
+            option =>
+            {
+                if (option.Key == "yes")
+                {
+                    SpellSystem(system);
+                }
+            }));
+
+    /// <summary>Runs <paramref name="open"/> on the headset panel while the overlay shows, else on the window's.</summary>
+    private void OnPromptSurface(Action<PanelPrompts> open)
+    {
+        var showing = Vr?.State == Core.Vr.VrState.Active;
+
+        foreach (var (prompts, post, headset) in _promptSurfaces)
+        {
+            if (headset != showing)
+            {
+                continue;
+            }
+
+            post(() =>
+            {
+                // One entry at a time, on whichever surface holds it.
+                if (!_promptSurfaces.Any(s => s.Prompts.IsOpen))
+                {
+                    open(prompts);
+                }
+            });
+
+            return;
+        }
+    }
+
+    private async Task PlotSpelledAsync(string system)
+    {
+        var result = await Capabilities.InvokeAsync(
+            "plot_course",
+            new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = system }),
+            CancellationToken.None).ConfigureAwait(false);
+
+        await SayAsync(new Announcement("action.spelled-system", result.Spoken)).ConfigureAwait(false);
+    }
 
     /// <summary>The navigators a spoken "show me the checklist" moves (Phase 25).</summary>
     private readonly List<Core.Interface.PanelNavigator> _navigators = [];

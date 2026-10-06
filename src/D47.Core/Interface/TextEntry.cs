@@ -76,6 +76,9 @@ public sealed record EntryRequest(
     /// nothing. Read only with <see cref="Suggestions"/>.
     /// </summary>
     public string? CurrentWord { get; init; }
+
+    /// <summary>Opens with the keys drawn, so what is heard is spelled onto them.</summary>
+    public bool Spelled { get; init; }
 }
 
 /// <summary>One value offered as a button: what it says, and what pressing it commits.</summary>

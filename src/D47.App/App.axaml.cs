@@ -145,6 +145,7 @@ public partial class App(AppHost? host) : Application
             // And a spoken phrase moves the headset panel too.
             var ui = Avalonia.Threading.Dispatcher.UIThread;
             host.RouteNavigation(host.Vr.Nav, move => ui.Post(move), openSystem: host.Vr.OpenSystem);
+            host.RoutePromptSurface(prompts, move => ui.Post(move), headset: true);
 
             // And a spoken "page down" moves the headset panel (#34) — the surface the request was made from,
             // where a ray on a twelve-pixel bar is the only alternative.

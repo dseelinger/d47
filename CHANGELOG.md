@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Say "spell a system", "spell the system" or "spell a destination" to open a keyboard titled "System to plot" and spell the name letter by letter, then Done. The name is plotted exactly as spelled. When a plot ends with no route, D47 now ends its answer with "Spell it?" and asks yes or no; yes opens the keyboard with the name it heard already in it. The keyboard opens on the headset panel while the overlay is showing, otherwise on the window.
+
 Ask "tell me about LTT 7786", or "tell me about this system", and D47 gives the system's government, allegiance, economy, population, controlling faction and its state, Powerplay power and state, how many stations of each kind, and the date of Spansh's last report, then opens Search › System on that system. A name with no exact match is answered with up to three close names. Needs galaxy lookups on.
 
 Say "interstellar factors search", "nearest black market" or "run the anarchy outbreak search" to run a ready-made galaxy search from your own system. There are eleven: raw, manufactured and encoded material traders, Guardian and human technology brokers, Interstellar Factors, Universal Cartographics, Vista Genomics, Black Market, Pioneer Supplies, and anarchy systems in outbreak. Each takes the phrases "{name} search", "run the {name} search", "nearest {name}" and "find the nearest {name}", and runs only while galaxy lookups are on.

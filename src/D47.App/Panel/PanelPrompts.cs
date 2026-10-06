@@ -133,6 +133,9 @@ public sealed class PanelPrompts : IHearsText
         }
     }
 
+    /// <summary>Whether any prompt is open on this surface.</summary>
+    public bool IsOpen => _layer.Children.Count > 0 || (_nav.Trail.Count > 0 && _nav.Trail[^1].Modal);
+
     /// <summary>Whether a prompt is waiting on speech, so the host knows to route it here.</summary>
     public bool IsListening => _listening is not null;
 
@@ -659,7 +662,7 @@ public sealed class PanelPrompts : IHearsText
 
             Content = Frame(request.Title, request.Context, body, _dismiss);
 
-            Show(request.Surface == EntrySurface.Keyboard);
+            Show(request.Surface == EntrySurface.Keyboard || request.Spelled);
 
             // Focused once it is actually in a tree, so a Commander at a desk can simply type or paste
             // (remediation.md 10, item 11).

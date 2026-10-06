@@ -179,6 +179,16 @@ map.
 > "copy that system name"
 > "put the route on my clipboard"
 
+### Spell a system
+
+When a name keeps being heard wrong, say "spell a system", "spell the system" or "spell a destination". A keyboard opens titled "System to plot", empty, on the headset panel while the overlay is showing and on the window otherwise. Say the letters ("sierra oscar lima"), then "done". The name is plotted exactly as spelled, the same way "plot a course" plots it. Cancelling plots nothing and puts nothing on the clipboard.
+
+When a plot ends with no route, the answer ends "Spell it?" and a yes/no question opens. "Yes" opens the same keyboard with the name D47 heard already in it, so "delete" and letters correct it. "No", or anything else, closes the question.
+
+```text
+I tried to plot Colonai and no route appeared, so assume it did not work. ... Spell it?
+```
+
 ### What you hear
 
 Asking for a course is an action, and the standing rule for actions is *act first, talk least*.
@@ -322,6 +332,15 @@ different places. The same split holds for the map itself: the app waits up to t
 `Status.json`'s `GuiFocus` for the map to open before the interface keys go, and again for it to
 close afterwards. Both checks log what they saw — the focus value, the file's before-and-after
 write times and where the route ends — so a report of "nothing happened" starts from evidence.
+
+#### `spell_system`
+
+Open a keyboard on the panel for the Commander to spell a system name, which is then plotted as
+plot_course plots it. Never callable by the model; the three phrases above reach it.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
 
 Return and Ctrl+V are sent as plain virtual keys rather than resolved from the bindings file,
 because Elite binds neither. Every wait in the sequence is the Commander's own figure

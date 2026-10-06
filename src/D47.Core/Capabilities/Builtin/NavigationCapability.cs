@@ -34,6 +34,12 @@ public sealed record NavigationSurface
     /// </summary>
     public required Func<bool, CancellationToken, Task<bool?>> AwaitGalaxyMap { get; init; }
 
+    /// <summary>Opens a keyboard entry for a system to plot, holding the given text; null where nothing can.</summary>
+    public Action<string>? SpellSystem { get; init; }
+
+    /// <summary>Offers to spell the named system after a plot found no route; null where nothing can.</summary>
+    public Action<string>? OfferSpelling { get; init; }
+
     /// <summary>Where the plotting attempt says how far it got, on every exit (#365).</summary>
     public ILogger Log { get; init; } = NullLogger.Instance;
 
@@ -203,8 +209,36 @@ public static class NavigationCapability
                 SendsInput = true,
                 Handler = (arguments, cancellationToken) => Plot(arguments, surface, cancellationToken),
             },
+
+            new ToolDefinition
+            {
+                Name = "spell_system",
+                Description =
+                    "Open a keyboard on the panel for the Commander to spell a system name, which is then "
+                    + "plotted as plot_course plots it.",
+                Protected = true,
+                RefusalExample = "spell a system",
+                Commands =
+                [
+                    new ToolCommandPhrase("spell a system", new Dictionary<string, string>()),
+                    new ToolCommandPhrase("spell the system", new Dictionary<string, string>()),
+                    new ToolCommandPhrase("spell a destination", new Dictionary<string, string>()),
+                ],
+                Handler = (_, _) => Task.FromResult(SpellASystem(surface)),
+            },
         ],
     };
+
+    private static ToolResult SpellASystem(NavigationSurface surface)
+    {
+        if (surface.SpellSystem is not { } spell)
+        {
+            return ToolResult.Error("There is no panel to spell a system on.");
+        }
+
+        spell(string.Empty);
+        return ToolResult.Ok("The keyboard is open. Spell the system, then press Done.");
+    }
 
     private static async Task<ToolResult> Copy(
         ToolArguments arguments,
@@ -409,12 +443,18 @@ public static class NavigationCapability
 
             // The three answers are genuinely different and the middle one is the reason this is verified at
             // all: believing a course is set when it is not is the failure that strands somebody.
+            if (confirmation?.Confirmed == false && surface.OfferSpelling is { } offer)
+            {
+                offer(system);
+            }
+
             return confirmation?.Confirmed switch
             {
                 true => ToolResult.Relay($"Course plotted to {system}.{Figures(confirmation)}{stillOpen}"),
                 false => ToolResult.Relay(
                     $"I tried to plot {system} and no route appeared, so assume it did not work. {copied} "
-                    + $"I cannot tell why.{stillOpen}"),
+                    + $"I cannot tell why.{stillOpen}"
+                    + (surface.OfferSpelling is null ? string.Empty : " Spell it?")),
                 null => ToolResult.Relay(
                     $"I tried to plot {system} but cannot tell whether it worked. {copied} Check the map.{stillOpen}"),
             };
