@@ -161,7 +161,9 @@ public class CarrierBackfillTests
         var carrier = Carriers(install)[Fid];
 
         Assert.Equal(158, carrier.TritiumInHold);
-        Assert.False(carrier.TritiumInHoldUncertain);
+
+        // Stats reported 10 t the count never saw, so the count is not reconciled (#799).
+        Assert.True(carrier.TritiumInHoldUncertain);
     }
 
     /// <summary>A jump scheduled before the restart is not one still in flight after it (#304).</summary>

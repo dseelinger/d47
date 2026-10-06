@@ -340,8 +340,8 @@ public sealed class CarrierPage : UserControl
 
         if (carrier.TritiumInHold is { } hold)
         {
-            var note = carrier.TritiumInHoldUncertain
-                ? "counted, may be off: a tritium order was open"
+            var note = carrier.Hold.OrderOpen("tritium") ? "counted, may be off: a tritium order was open"
+                : carrier.TritiumInHoldUncertain ? "counted, may be off: the count did not match the hold"
                 : "counted";
 
             tiles.Add(StatTile.Build("Carrier's hold", $"{hold:N0} t ({note})", StatInk.Number));

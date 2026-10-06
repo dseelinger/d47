@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+d47 now counts every commodity in your carrier's hold, not only tritium, from your own transfers, buys and sells at the carrier. Each time Elite reports the carrier's stats, d47 checks the count against the cargo total Elite gives, and an empty hold starts the count again. The tritium figure on the Carrier page now says "counted, may be off: the count did not match the hold" when the last check disagreed, as well as when a tritium order is open. Cancelling a tritium order leaves the figure marked as possibly off until the next check, since the order may have been partly filled. The count from your older journals is now kept when d47 starts, rather than only the count from this session.
+
 The Checklist page has an Activities button beside Suggestions. It opens Checklist › Activities, which lists every activity d47 dates, oldest first, with the date you last did it in the galactic year and how long ago, or "Not in your journals since" the start of your journals for one that has none. Each row has a Suggest checkbox, and clicking anywhere on the row toggles it. An activity you untick is no longer suggested, and its row and date stay on the page.
 
 The Checklist no longer holds a line for each delivery or collect mission, and no longer lists them when you ask for it. Missions are on Commander › Missions. A mission line already in your checklist is removed the next time the app loads it.

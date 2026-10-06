@@ -130,7 +130,8 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         backfill.Run(TestContext.Current.CancellationToken);
         store.RestoreLate();
 
-        Assert.Same(live, store.Active!.Carrier);
+        // All but the hold, which the walk counted further back than the live reader (#799).
+        Assert.Equal(live with { Hold = store.Active!.Carrier.Hold }, store.Active!.Carrier);
         Assert.Equal(777, store.Active!.Carrier.Balance);
     }
 

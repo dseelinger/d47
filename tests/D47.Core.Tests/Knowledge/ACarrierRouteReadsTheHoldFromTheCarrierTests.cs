@@ -45,7 +45,7 @@ public class ACarrierRouteReadsTheHoldFromTheCarrierTests
     [Fact]
     public void TritiumInTheHoldNeverExceedsTheSpaceUsed()
     {
-        var carrier = Carrier() with { TritiumInHold = 9_000, TritiumInHoldUncertain = false };
+        var carrier = Carrier() with { Hold = CarrierHold.Empty.Moved("tritium", 9_000) };
 
         Assert.True(CarrierRouteQuery.TryFrom(carrier, null, "Colonia", false, out var query, out _));
 
@@ -60,7 +60,7 @@ public class ACarrierRouteReadsTheHoldFromTheCarrierTests
         Assert.Equal(0, unread.TritiumStored);
         Assert.True(unread.TritiumUncertain);
 
-        var moved = Carrier() with { TritiumInHold = 100, TritiumInHoldUncertain = true };
+        var moved = Carrier() with { Hold = CarrierHold.Empty.Moved("tritium", 100).Ordered("tritium", CarrierOrder.Sale) };
 
         Assert.True(CarrierRouteQuery.TryFrom(moved, null, "Colonia", false, out var uncertain, out _));
         Assert.Equal(100, uncertain.TritiumStored);

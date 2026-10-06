@@ -129,8 +129,9 @@ public sealed class GameStateStore
                 state.Fleet = fleet;
             }
 
-            // A CarrierLocation after LoadGame gives the live state a system but never a callsign.
-            if (!state.Carrier.Owned && RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
+            // A CarrierLocation after LoadGame gives the live state a system but never a callsign. An owned
+            // live state is kept, but for its hold.
+            if (RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
             {
                 state.Carrier = carrier.With(state.Carrier);
             }

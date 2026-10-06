@@ -55,14 +55,17 @@ public sealed record CarrierState
     /// <summary>Tritium in the carrier's own tank, from CarrierStats.</summary>
     public int? FuelLevel { get; init; }
 
-    /// <summary>Tonnes of tritium in the hold, counted from cargo movements — null until one is seen.</summary>
-    public int? TritiumInHold { get; init; }
+    /// <summary>The hold per commodity, counted from cargo movements (#799).</summary>
+    public CarrierHold Hold { get; init; } = CarrierHold.Empty;
+
+    /// <summary>Tonnes of tritium in the hold, or null when the count cannot say.</summary>
+    public int? TritiumInHold => Hold.Holding("tritium");
 
     /// <summary>
-    /// Whether <see cref="TritiumInHold"/> might be wrong: an open trade order lets other Commanders
-    /// move tritium the journal never reports.
+    /// Whether <see cref="TritiumInHold"/> might be wrong: a tritium order is open, or the count did not
+    /// match the hold's total.
     /// </summary>
-    public bool TritiumInHoldUncertain { get; init; }
+    public bool TritiumInHoldUncertain => Hold.Uncertain("tritium");
 
     /// <summary>
     /// Whether the Commander is docked at their own carrier — CargoTransfer carries no carrier id of
@@ -130,7 +133,7 @@ public sealed record CarrierState
 
     /// <summary>
     /// This recovered state with what <paramref name="newer"/> has set laid over it. A newer state that
-    /// holds a callsign is taken whole.
+    /// holds a callsign is taken whole but for its hold, which <see cref="CarrierHold.Adopted"/> chooses.
     /// </summary>
     public CarrierState With(CarrierState newer)
     {
@@ -138,7 +141,7 @@ public sealed record CarrierState
 
         if (newer.Owned)
         {
-            return newer;
+            return newer with { Hold = CarrierHold.Adopted(Hold, newer.Hold) };
         }
 
         return this with
@@ -152,8 +155,7 @@ public sealed record CarrierState
             DepartureTime = newer.DepartureTime ?? DepartureTime,
             DestinationBody = newer.DestinationBody ?? DestinationBody,
             FuelLevel = newer.FuelLevel ?? FuelLevel,
-            TritiumInHold = newer.TritiumInHold ?? TritiumInHold,
-            TritiumInHoldUncertain = newer.TritiumInHoldUncertain || TritiumInHoldUncertain,
+            Hold = CarrierHold.Adopted(Hold, newer.Hold),
         };
     }
 
@@ -301,6 +303,9 @@ public sealed record CarrierState
             FuelLevel = journalEvent.Int("FuelLevel") ?? FuelLevel,
             DockingAccess = journalEvent.String("DockingAccess") ?? DockingAccess,
             CargoTonnes = journalEvent.Object("SpaceUsage")?.Int("Cargo") ?? CargoTonnes,
+            Hold = journalEvent.Object("SpaceUsage")?.Int("Cargo") is { } cargo
+                ? Hold.Checked(cargo, journalEvent.Timestamp)
+                : Hold,
             StatsSeenAt = journalEvent.Timestamp,
 
             // The figures the carrier page draws (#230).
@@ -357,24 +362,24 @@ public sealed record CarrierState
         "CarrierDepositFuel" => this with { FuelLevel = journalEvent.Int("Total") ?? FuelLevel },
 
         // CargoTransfer carries no carrier id of its own, so it counts only while docked here.
-        "CargoTransfer" when DockedAtOwnCarrier
-            && journalEvent.Items("Transfers").Any(transfer => NamesTritium(transfer.String("Type")))
-            => Moved(TritiumTransferDelta(journalEvent)),
+        "CargoTransfer" when DockedAtOwnCarrier => this with { Hold = Transferred(journalEvent) },
 
-        "MarketSell" when journalEvent.Long("MarketID") == CarrierId
-            && NamesTritium(journalEvent.String("Type")) => Moved(journalEvent.Int("Count") ?? 0),
+        "MarketSell" when journalEvent.Long("MarketID") == CarrierId => this with
+        {
+            Hold = Hold.Moved(journalEvent.String("Type"), journalEvent.Int("Count") ?? 0),
+        },
 
-        "MarketBuy" when journalEvent.Long("MarketID") == CarrierId
-            && NamesTritium(journalEvent.String("Type")) => Moved(-(journalEvent.Int("Count") ?? 0)),
+        "MarketBuy" when journalEvent.Long("MarketID") == CarrierId => this with
+        {
+            Hold = Hold.Moved(journalEvent.String("Type"), -(journalEvent.Int("Count") ?? 0)),
+        },
 
         // Another Commander can fill the order and the journal never says by how much.
-        "CarrierTradeOrder" when journalEvent.Long("CarrierID") == CarrierId
-            && NamesTritium(journalEvent.String("Commodity"))
-            && !journalEvent.Bool("CancelTrade") => this with
-            {
-                TritiumInHoldUncertain = true,
-                SpentSinceBalance = true,
-            },
+        "CarrierTradeOrder" when journalEvent.Long("CarrierID") == CarrierId => this with
+        {
+            Hold = Hold.Ordered(journalEvent.String("Commodity"), OrderOf(journalEvent)),
+            SpentSinceBalance = true,
+        },
 
         // The measured drop is the balance before the transfer, so a deposit is not read as upkeep.
         "CarrierBankTransfer" when CarrierId is null || journalEvent.Long("CarrierID") == CarrierId =>
@@ -385,7 +390,7 @@ public sealed record CarrierState
                     ? after - (journalEvent.Long("Deposit") ?? 0) + (journalEvent.Long("Withdraw") ?? 0)
                     : null),
 
-        "CarrierTradeOrder" or "CarrierCrewServices" or "CarrierModulePack" or "CarrierShipPack"
+        "CarrierCrewServices" or "CarrierModulePack" or "CarrierShipPack"
             when journalEvent.Long("CarrierID") == CarrierId => this with { SpentSinceBalance = true },
 
         _ => this,
@@ -425,33 +430,22 @@ public sealed record CarrierState
         };
     }
 
-    /// <summary>Whether a commodity symbol, cased however Elite wrote it, names tritium.</summary>
-    private static bool NamesTritium(string? symbol) =>
-        string.Equals(symbol, "tritium", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>The net tritium a CargoTransfer moved into (positive) or out of (negative) the hold.</summary>
-    private static int TritiumTransferDelta(JournalEvent journalEvent) =>
-        journalEvent.Items("Transfers")
-            .Where(transfer => NamesTritium(transfer.String("Type")))
-            .Sum(transfer => transfer.String("Direction") switch
+    /// <summary>The hold with every commodity a CargoTransfer moved into or out of it.</summary>
+    private CarrierHold Transferred(JournalEvent journalEvent) =>
+        journalEvent.Items("Transfers").Aggregate(Hold, (hold, transfer) => hold.Moved(
+            transfer.String("Type"),
+            transfer.String("Direction") switch
             {
                 "tocarrier" => transfer.Int("Count") ?? 0,
                 "toship" => -(transfer.Int("Count") ?? 0),
                 _ => 0,
-            });
+            }));
 
-    /// <summary>
-    /// <see cref="TritiumInHold"/> moved by <paramref name="delta"/>, held at zero and marked
-    /// uncertain rather than going negative.
-    /// </summary>
-    private CarrierState Moved(int delta)
-    {
-        var next = (TritiumInHold ?? 0) + delta;
-
-        return next < 0
-            ? this with { TritiumInHold = 0, TritiumInHoldUncertain = true }
-            : this with { TritiumInHold = next };
-    }
+    private static CarrierOrder OrderOf(JournalEvent journalEvent) =>
+        journalEvent.Bool("CancelTrade") ? CarrierOrder.None
+        : journalEvent.Int("PurchaseOrder") is > 0 ? CarrierOrder.Purchase
+        : journalEvent.Int("SaleOrder") is > 0 ? CarrierOrder.Sale
+        : CarrierOrder.None;
 
     /// <summary>The event's own instant, but only where the event actually named a system (#406).</summary>
     private DateTimeOffset? Stamped(JournalEvent journalEvent, string? system) =>

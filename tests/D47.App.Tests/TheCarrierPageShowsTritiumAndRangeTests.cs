@@ -40,7 +40,7 @@ public class TheCarrierPageShowsTritiumAndRangeTests
         if (tradeOrderOpen)
         {
             lines.Add(
-                $$"""{"timestamp":"2026-09-13T16:00:05Z","event":"CarrierTradeOrder","CarrierID":{{CarrierId}},"Commodity":"tritium","CancelTrade":false}""");
+                $$"""{"timestamp":"2026-09-13T16:00:05Z","event":"CarrierTradeOrder","CarrierID":{{CarrierId}},"Commodity":"tritium","SaleOrder":100,"Price":5000,"CancelTrade":false}""");
         }
 
         return [.. lines];
