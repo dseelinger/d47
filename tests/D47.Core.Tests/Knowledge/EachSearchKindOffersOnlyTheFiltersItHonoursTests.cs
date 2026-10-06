@@ -93,7 +93,12 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             ],
             GalaxyFilters.For(GalaxySearchKind.Systems).Select(filter => filter.Name));
 
-        Assert.Empty(GalaxyFilters.For(GalaxySearchKind.Stations));
+        Assert.Equal(
+            [
+                "allegiance", "government", "primary_economy", "state", "controlling_faction", "power",
+                "power_state", "population", "colonised",
+            ],
+            GalaxyFilters.For(GalaxySearchKind.Stations).Select(filter => filter.Name));
         Assert.Equal(["power", "power_state"], GalaxyFilters.For(GalaxySearchKind.Bodies).Select(filter => filter.Name));
     }
 

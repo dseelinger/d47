@@ -62,7 +62,58 @@ public sealed record StationSummary
 
     /// <summary>When the service last saw this station's stock.</summary>
     public DateTimeOffset? StockLastSeen { get; init; }
+
+    /// <summary>The services the station offers, in the service's spelling.</summary>
+    public IReadOnlyList<string> Services { get; init; } = [];
+
+    /// <summary>The station's controlling minor faction.</summary>
+    public string? ControllingFaction { get; init; }
+
+    /// <summary>When the service last had a report of this station.</summary>
+    public DateTimeOffset? UpdatedAt { get; init; }
 }
+
+/// <summary>A station search as asked, before <see cref="StationQuery"/> validates it.</summary>
+public sealed record StationSearch
+{
+    public string? ReferenceSystem { get; init; }
+
+    public double? MaxDistance { get; init; }
+
+    public int Size { get; init; }
+
+    /// <summary>Comma-separated names from <see cref="StationQuery.StationTypes"/>.</summary>
+    public string? StationTypes { get; init; }
+
+    public string? MinPad { get; init; }
+
+    /// <summary>Light seconds from the system's entry point.</summary>
+    public double? MaxStationDistance { get; init; }
+
+    /// <summary>Comma-separated names from <see cref="StationQuery.ServiceNames"/>.</summary>
+    public string? Services { get; init; }
+
+    public string? MaterialTrader { get; init; }
+
+    public string? TechnologyBroker { get; init; }
+
+    public string? Module { get; init; }
+
+    public string? ModuleClass { get; init; }
+
+    public string? ModuleRating { get; init; }
+
+    public string? Ship { get; init; }
+
+    /// <summary>Vocabulary filters by name, validated against <see cref="GalaxySearchKind.Stations"/>.</summary>
+    public IReadOnlyDictionary<string, string> Filters { get; init; } = new Dictionary<string, string>();
+}
+
+/// <summary>A station type a Commander names, and the kind it maps to.</summary>
+public sealed record StationTypeName(string Name, StationKind Kind);
+
+/// <summary>A station service a Commander names, and the service's spelling of it.</summary>
+public sealed record StationServiceName(string Name, string Field);
 
 public sealed record StationSearchResult(
     string? Reference,
@@ -102,6 +153,65 @@ public sealed record StationQuery
 
     public int Size { get; init; } = 5;
 
+    /// <summary>The kinds of station to include; null sends no type filter.</summary>
+    public IReadOnlyList<StationKind>? Kinds { get; init; }
+
+    /// <summary>The smallest pad the station must have: Medium or Large.</summary>
+    public PadSize? MinPad { get; init; }
+
+    /// <summary>Furthest from the system's entry point, in light seconds.</summary>
+    public double? MaxStationDistance { get; init; }
+
+    /// <summary>Services the station must have every one of, in the service's spelling.</summary>
+    public IReadOnlyList<string> Services { get; init; } = [];
+
+    /// <summary>Guardian or Human, where the station must have that technology broker.</summary>
+    public string? TechnologyBroker { get; init; }
+
+    /// <summary>Vocabulary filters, each honoured by the station index.</summary>
+    public IReadOnlyList<GalaxyCriterion> Criteria { get; init; } = [];
+
+    /// <summary>The station types <c>station_type</c> offers.</summary>
+    public static IReadOnlyList<StationTypeName> StationTypes { get; } =
+    [
+        new("Starport", StationKind.Starport),
+        new("Outpost", StationKind.Outpost),
+        new("Surface port", StationKind.SurfacePort),
+        new("Settlement", StationKind.Settlement),
+        new("Fleet carrier", StationKind.FleetCarrier),
+        new("Megaship", StationKind.Megaship),
+    ];
+
+    /// <summary>The services <c>services</c> offers; the field is the name in <c>field_values/services</c>.</summary>
+    public static IReadOnlyList<StationServiceName> ServiceNames { get; } =
+    [
+        new("Market", "Market"),
+        new("Black Market", "Black Market"),
+        new("Shipyard", "Shipyard"),
+        new("Outfitting", "Outfitting"),
+        new("Refuel", "Refuel"),
+        new("Repair", "Repair"),
+        new("Rearm", "Restock"),
+        new("Interstellar Factors", "Interstellar Factors Contact"),
+        new("Material Trader", "Material Trader"),
+        new("Technology Broker", "Technology Broker"),
+        new("Universal Cartographics", "Universal Cartographics"),
+        new("Vista Genomics", "Vista Genomics"),
+        new("Pioneer Supplies", "Pioneer Supplies"),
+        new("Bartender", "Bartender"),
+        new("Apex Interstellar", "Apex Interstellar"),
+        new("Frontline Solutions", "Frontline Solutions"),
+        new("Search and Rescue", "Search and Rescue"),
+        new("Redemption Office", "Redemption Office"),
+        new("Crew Lounge", "Crew Lounge"),
+    ];
+
+    /// <summary>The two kinds of technology broker, in the index's own spelling.</summary>
+    public static IReadOnlyList<string> BrokerTypes { get; } = ["Guardian", "Human"];
+
+    /// <summary>The pad sizes <c>min_pad</c> offers.</summary>
+    public static IReadOnlyList<string> MinPads { get; } = ["Medium", "Large"];
+
     /// <summary>Builds a station search, or says what was wrong in words the model can act on.</summary>
     public static bool TryParse(
         string? referenceSystem,
@@ -116,6 +226,169 @@ public sealed record StationQuery
         out string failure)
     {
         query = new StationQuery();
+
+        if (!TryMatchStock(module, moduleClass, moduleRating, ship, out var stock, out failure))
+        {
+            return false;
+        }
+
+        if (stock.Module is null && stock.Ship is null)
+        {
+            failure = "Say what to look for — a module or a ship.";
+            return false;
+        }
+
+        query = stock with
+        {
+            ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
+            LargePadOnly = largePadOnly,
+
+            // Bounded on both ends.
+            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
+            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+        };
+
+        return true;
+    }
+
+    /// <summary>Builds a search by station type, pad, services and filters, or says what was wrong.</summary>
+    public static bool TryParse(StationSearch search, out StationQuery query, out string failure)
+    {
+        query = new StationQuery();
+
+        if (!TryMatchStock(search.Module, search.ModuleClass, search.ModuleRating, search.Ship, out var stock, out failure))
+        {
+            return false;
+        }
+
+        List<StationKind>? kinds = null;
+
+        if (!string.IsNullOrWhiteSpace(search.StationTypes))
+        {
+            kinds = [];
+
+            foreach (var name in Split(search.StationTypes))
+            {
+                if (StationTypes.FirstOrDefault(type => Same(type.Name, name)) is not { } type)
+                {
+                    failure = $"'{name}' is not a station type I know. It has to be one of: "
+                              + $"{string.Join(", ", StationTypes.Select(known => known.Name))}.";
+                    return false;
+                }
+
+                kinds.Add(type.Kind);
+            }
+        }
+
+        PadSize? pad = null;
+
+        if (!string.IsNullOrWhiteSpace(search.MinPad))
+        {
+            if (MinPads.FirstOrDefault(size => Same(size, search.MinPad.Trim())) is not { } size)
+            {
+                failure = $"'{search.MinPad}' is not a pad size to insist on. It is Medium or Large.";
+                return false;
+            }
+
+            pad = Enum.Parse<PadSize>(size);
+        }
+
+        var services = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(search.Services))
+        {
+            foreach (var name in Split(search.Services))
+            {
+                if (ServiceNames.FirstOrDefault(service => Same(service.Name, name)) is not { } service)
+                {
+                    failure = $"'{name}' is not a station service I know. It has to be one of: "
+                              + $"{string.Join(", ", ServiceNames.Select(known => known.Name))}.";
+                    return false;
+                }
+
+                if (!services.Contains(service.Field))
+                {
+                    services.Add(service.Field);
+                }
+            }
+        }
+
+        string? trader = null;
+
+        if (!string.IsNullOrWhiteSpace(search.MaterialTrader))
+        {
+            trader = TraderTypes.FirstOrDefault(type => Same(type, search.MaterialTrader.Trim()));
+
+            if (trader is null)
+            {
+                failure = $"'{search.MaterialTrader}' is not a kind of material trader. It is Raw, Manufactured "
+                          + "or Encoded.";
+                return false;
+            }
+        }
+
+        string? broker = null;
+
+        if (!string.IsNullOrWhiteSpace(search.TechnologyBroker))
+        {
+            broker = BrokerTypes.FirstOrDefault(type => Same(type, search.TechnologyBroker.Trim()));
+
+            if (broker is null)
+            {
+                failure = $"'{search.TechnologyBroker}' is not a kind of technology broker. It is Guardian or Human.";
+                return false;
+            }
+        }
+
+        if (!GalaxyCriteria.TryParse(GalaxySearchKind.Stations, search.Filters, out var criteria, out failure))
+        {
+            return false;
+        }
+
+        var furthest = search.MaxStationDistance is > 0 ? search.MaxStationDistance : null;
+
+        if (kinds is null && pad is null && furthest is null && services.Count == 0 && trader is null
+            && broker is null && stock.Module is null && stock.Ship is null && criteria.Count == 0)
+        {
+            failure =
+                "That search has nothing but a distance, so it would match every station in range. Narrow it "
+                + "with a station type, a pad size, a distance from arrival, a service, a material trader or "
+                + "technology broker, a module or ship, or one of: "
+                + $"{GalaxyFilters.Describe(GalaxySearchKind.Stations)}.";
+            return false;
+        }
+
+        query = stock with
+        {
+            ReferenceSystem = string.IsNullOrWhiteSpace(search.ReferenceSystem) ? null : search.ReferenceSystem.Trim(),
+
+            // Carriers are left out unless asked for, as the market search leaves them out.
+            Kinds = kinds is null
+                ? [.. Enum.GetValues<StationKind>().Where(kind => kind != StationKind.FleetCarrier)]
+                : [.. kinds.Distinct()],
+            MinPad = pad,
+            MaxStationDistance = furthest,
+            Services = services,
+            TraderType = trader,
+            TechnologyBroker = broker,
+            Criteria = criteria,
+            MaxDistance = Math.Clamp(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1, 500),
+            Size = Math.Clamp(search.Size <= 0 ? 5 : search.Size, 1, 20),
+        };
+
+        return true;
+    }
+
+    /// <summary>Matches a module or ship against the outfitting catalogue; neither is required.</summary>
+    private static bool TryMatchStock(
+        string? module,
+        string? moduleClass,
+        string? moduleRating,
+        string? ship,
+        out StationQuery stock,
+        out string failure)
+    {
+        stock = new StationQuery();
         failure = string.Empty;
 
         string? matchedModule = null;
@@ -143,12 +416,6 @@ public sealed record StationQuery
             }
         }
 
-        if (matchedModule is null && matchedShip is null)
-        {
-            failure = "Say what to look for — a module or a ship.";
-            return false;
-        }
-
         if (!string.IsNullOrWhiteSpace(moduleClass)
             && !OutfittingCatalogue.Classes.Contains(moduleClass.Trim()))
         {
@@ -163,22 +430,22 @@ public sealed record StationQuery
             return false;
         }
 
-        query = new StationQuery
+        stock = new StationQuery
         {
-            ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
             Module = matchedModule,
             ModuleClass = string.IsNullOrWhiteSpace(moduleClass) ? null : moduleClass.Trim(),
             ModuleRating = string.IsNullOrWhiteSpace(moduleRating) ? null : moduleRating.Trim().ToUpperInvariant(),
             Ship = matchedShip,
-            LargePadOnly = largePadOnly,
-
-            // Bounded on both ends.
-            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
-            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
         };
 
         return true;
     }
+
+    private static string[] Split(string value) =>
+        value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static bool Same(string left, string right) =>
+        string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Every station in one named system, for resolving a station a story names to its market id (Phase

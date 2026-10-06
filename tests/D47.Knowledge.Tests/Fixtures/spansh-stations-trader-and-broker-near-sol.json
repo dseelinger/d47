@@ -1,0 +1,446 @@
+{
+  "count": 41,
+  "from": 0,
+  "reference": {
+    "id64": 10477373803,
+    "name": "Sol",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "results": [
+    {
+      "allegiance": "Federation",
+      "controlling_minor_faction": "Future of EZ Aquarii",
+      "controlling_minor_faction_influence": 0.583751,
+      "controlling_minor_faction_state": "Boom",
+      "distance": 11.0983265208093,
+      "distance_to_arrival": 438.069025,
+      "economies": [
+        {
+          "name": "High Tech",
+          "share": 80.0
+        },
+        {
+          "name": "Refinery",
+          "share": 20.0
+        }
+      ],
+      "export_commodities": [
+        {
+          "name": "Resonating Separators"
+        },
+        {
+          "name": "Animal Monitors"
+        },
+        {
+          "name": "Hydrogen Fuel"
+        }
+      ],
+      "government": "Democracy",
+      "has_large_pad": true,
+      "has_market": true,
+      "has_outfitting": true,
+      "has_shipyard": true,
+      "id": "3228841728",
+      "import_commodities": [
+        {
+          "name": "Pyrophyllite"
+        },
+        {
+          "name": "Cobalt"
+        },
+        {
+          "name": "Gallite"
+        }
+      ],
+      "is_planetary": false,
+      "large_pads": 5,
+      "market_id": 3228841728,
+      "market_updated_at": "2026-10-06T10:30:42Z",
+      "material_trader": "Encoded",
+      "medium_pads": 11,
+      "name": "Magnus Gateway",
+      "outfitting_updated_at": "2026-10-06T10:29:04Z",
+      "primary_economy": "High Tech",
+      "secondary_economy": "Refinery",
+      "services": [
+        {
+          "name": "Dock"
+        },
+        {
+          "name": "Autodock"
+        },
+        {
+          "name": "Market"
+        },
+        {
+          "name": "Contacts"
+        },
+        {
+          "name": "Universal Cartographics"
+        },
+        {
+          "name": "Missions"
+        },
+        {
+          "name": "Outfitting"
+        },
+        {
+          "name": "Crew Lounge"
+        },
+        {
+          "name": "Restock"
+        },
+        {
+          "name": "Refuel"
+        },
+        {
+          "name": "Repair"
+        },
+        {
+          "name": "Shipyard"
+        },
+        {
+          "name": "Tuning"
+        },
+        {
+          "name": "Workshop"
+        },
+        {
+          "name": "Missions Generated"
+        },
+        {
+          "name": "Flight Controller"
+        },
+        {
+          "name": "Station Operations"
+        },
+        {
+          "name": "Powerplay"
+        },
+        {
+          "name": "Search and Rescue"
+        },
+        {
+          "name": "Material Trader"
+        },
+        {
+          "name": "Technology Broker"
+        },
+        {
+          "name": "Station Menu"
+        },
+        {
+          "name": "Shop"
+        },
+        {
+          "name": "Livery"
+        },
+        {
+          "name": "Social Space"
+        },
+        {
+          "name": "Bartender"
+        },
+        {
+          "name": "Vista Genomics"
+        },
+        {
+          "name": "Pioneer Supplies"
+        },
+        {
+          "name": "Apex Interstellar"
+        },
+        {
+          "name": "Frontline Solutions"
+        },
+        {
+          "name": "System Colonisation"
+        }
+      ],
+      "shipyard_updated_at": "2026-10-06T10:28:11Z",
+      "small_pads": 9,
+      "state": "DamagedHuman",
+      "system_controlling_power": "Yuri Grom",
+      "system_id64": 22661186987433,
+      "system_is_being_colonised": false,
+      "system_is_colonised": false,
+      "system_name": "EZ Aquarii",
+      "system_population": 9930324,
+      "system_power": [
+        "Aisling Duval",
+        "Edmund Mahon",
+        "Li Yong-Rui",
+        "Yuri Grom",
+        "Zemina Torval",
+        "Jerome Archer"
+      ],
+      "system_power_state": "Fortified",
+      "system_primary_economy": "High Tech",
+      "system_secondary_economy": "Refinery",
+      "system_x": -4.4375,
+      "system_y": -9.3125,
+      "system_z": 4.09375,
+      "technology_broker": "Guardian",
+      "type": "Coriolis Starport",
+      "updated_at": "2026-10-06T14:35:05Z"
+    },
+    {
+      "allegiance": "Federation",
+      "controlling_minor_faction": "Green Party of Bhritzameno",
+      "controlling_minor_faction_influence": 0.626008,
+      "controlling_minor_faction_state": "Boom",
+      "distance": 19.0910135109428,
+      "distance_to_arrival": 1383.889417,
+      "economies": [
+        {
+          "name": "High Tech",
+          "share": 80.0
+        },
+        {
+          "name": "Refinery",
+          "share": 20.0
+        }
+      ],
+      "export_commodities": [
+        {
+          "name": "Hydrogen Fuel"
+        },
+        {
+          "name": "Advanced Catalysers"
+        },
+        {
+          "name": "Pesticides"
+        }
+      ],
+      "government": "Democracy",
+      "has_large_pad": true,
+      "has_market": true,
+      "has_outfitting": true,
+      "has_shipyard": true,
+      "id": "3228798208",
+      "import_commodities": [
+        {
+          "name": "Computer Components"
+        },
+        {
+          "name": "H.E. Suits"
+        },
+        {
+          "name": "Superconductors"
+        }
+      ],
+      "is_planetary": false,
+      "large_pads": 7,
+      "market_id": 3228798208,
+      "market_updated_at": "2026-10-05T21:50:55Z",
+      "material_trader": "Encoded",
+      "medium_pads": 13,
+      "name": "Feynman Terminal",
+      "outfitting_updated_at": "2026-10-05T22:11:10Z",
+      "primary_economy": "High Tech",
+      "prohibited_commodities": [
+        {
+          "name": "Narcotics"
+        },
+        {
+          "name": "Battle Weapons"
+        },
+        {
+          "name": "Bootleg Liquor"
+        },
+        {
+          "name": "Combat Stabilisers"
+        },
+        {
+          "name": "Imperial Slaves"
+        },
+        {
+          "name": "Landmines"
+        },
+        {
+          "name": "Nerve Agents"
+        },
+        {
+          "name": "Onionhead Gamma Strain"
+        },
+        {
+          "name": "Personal Weapons"
+        },
+        {
+          "name": "Slaves"
+        },
+        {
+          "name": "Tobacco"
+        }
+      ],
+      "secondary_economy": "Refinery",
+      "services": [
+        {
+          "name": "Dock"
+        },
+        {
+          "name": "Autodock"
+        },
+        {
+          "name": "Market"
+        },
+        {
+          "name": "Contacts"
+        },
+        {
+          "name": "Universal Cartographics"
+        },
+        {
+          "name": "Missions"
+        },
+        {
+          "name": "Outfitting"
+        },
+        {
+          "name": "Crew Lounge"
+        },
+        {
+          "name": "Restock"
+        },
+        {
+          "name": "Refuel"
+        },
+        {
+          "name": "Repair"
+        },
+        {
+          "name": "Shipyard"
+        },
+        {
+          "name": "Tuning"
+        },
+        {
+          "name": "Workshop"
+        },
+        {
+          "name": "Missions Generated"
+        },
+        {
+          "name": "Flight Controller"
+        },
+        {
+          "name": "Station Operations"
+        },
+        {
+          "name": "Powerplay"
+        },
+        {
+          "name": "Search and Rescue"
+        },
+        {
+          "name": "Material Trader"
+        },
+        {
+          "name": "Technology Broker"
+        },
+        {
+          "name": "Station Menu"
+        },
+        {
+          "name": "Shop"
+        },
+        {
+          "name": "Livery"
+        },
+        {
+          "name": "Social Space"
+        },
+        {
+          "name": "Bartender"
+        },
+        {
+          "name": "Vista Genomics"
+        },
+        {
+          "name": "Pioneer Supplies"
+        },
+        {
+          "name": "Apex Interstellar"
+        },
+        {
+          "name": "Frontline Solutions"
+        },
+        {
+          "name": "System Colonisation"
+        }
+      ],
+      "shipyard_updated_at": "2026-10-05T21:50:55Z",
+      "small_pads": 8,
+      "state": "DamagedHuman",
+      "system_controlling_power": "Jerome Archer",
+      "system_id64": 5198797867371,
+      "system_is_being_colonised": false,
+      "system_is_colonised": false,
+      "system_name": "Bhritzameno",
+      "system_population": 18267363,
+      "system_power": [
+        "Aisling Duval",
+        "Edmund Mahon",
+        "Li Yong-Rui",
+        "Yuri Grom",
+        "Zemina Torval",
+        "Nakato Kaine",
+        "Jerome Archer"
+      ],
+      "system_power_state": "Stronghold",
+      "system_primary_economy": "High Tech",
+      "system_secondary_economy": "Refinery",
+      "system_x": -11.3125,
+      "system_y": -1.03125,
+      "system_z": 15.34375,
+      "technology_broker": "Guardian",
+      "type": "Coriolis Starport",
+      "updated_at": "2026-10-05T22:11:10Z"
+    }
+  ],
+  "search": {
+    "filters": {
+      "distance": {
+        "max": "60",
+        "min": "0"
+      },
+      "services": [
+        {
+          "name": {
+            "value": [
+              "Material Trader"
+            ]
+          }
+        },
+        {
+          "name": {
+            "value": [
+              "Technology Broker"
+            ]
+          }
+        }
+      ]
+    },
+    "page": 0,
+    "reference_system": "Sol",
+    "reference_system_details": {
+      "id64": 10477373803,
+      "name": "Sol",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "size": 2,
+    "sort": [
+      {
+        "distance": {
+          "direction": "asc"
+        }
+      }
+    ]
+  },
+  "search_reference": "801742BA-C1AC-11F1-AA06-FD2E8E49500A",
+  "size": 2
+}

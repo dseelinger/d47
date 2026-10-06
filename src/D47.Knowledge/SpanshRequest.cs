@@ -146,14 +146,28 @@ internal static class SpanshRequest
                 writer.WriteStartObject("services");
                 WriteGroupMember(writer, "name", "Material Trader");
                 writer.WriteEndObject();
-
-                if (query.TraderType is { } traderType)
-                {
-                    WriteChoice(writer, "material_trader", traderType);
-                }
             }
 
-            if (query.LargePadOnly)
+            if (query.Services.Count > 0)
+            {
+                // One object per service, which matches stations with all of them; several names in one
+                // object's value array matches stations with any.
+                writer.WriteStartArray("services");
+
+                foreach (var service in query.Services)
+                {
+                    writer.WriteStartObject();
+                    WriteGroupMember(writer, "name", service);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+            }
+
+            WriteChoice(writer, "material_trader", query.TraderType);
+            WriteChoice(writer, "technology_broker", query.TechnologyBroker);
+
+            if (query.LargePadOnly || query.MinPad == PadSize.Large)
             {
                 writer.WriteStartObject("has_large_pad");
                 writer.WriteStartArray("value");
@@ -161,6 +175,22 @@ internal static class SpanshRequest
                 writer.WriteEndArray();
                 writer.WriteEndObject();
             }
+            else if (query.MinPad == PadSize.Medium)
+            {
+                WriteComparison(writer, "medium_pads", 1, UnboundedMax);
+            }
+
+            if (query.MaxStationDistance is { } furthest)
+            {
+                WriteComparison(writer, "distance_to_arrival", 0, furthest);
+            }
+
+            if (query.Kinds is { } kinds)
+            {
+                WriteTypes(writer, AllStationTypes.Where(type => kinds.Contains(SpanshStarSystemService.KindOf(type))));
+            }
+
+            WriteCriteria(writer, GalaxySearchKind.Stations, query.Criteria);
 
             writer.WriteEndObject();
 
@@ -450,13 +480,7 @@ internal static class SpanshRequest
 
             if (maxStationDistance is { } furthest)
             {
-                writer.WriteStartObject("distance_to_arrival");
-                writer.WriteStartArray("value");
-                writer.WriteStringValue("0");
-                writer.WriteStringValue(Number(furthest));
-                writer.WriteEndArray();
-                writer.WriteString("comparison", "<=>");
-                writer.WriteEndObject();
+                WriteComparison(writer, "distance_to_arrival", 0, furthest);
             }
 
             WriteChoice(writer, "has_large_pad", largePad ? "true" : null);
@@ -506,19 +530,34 @@ internal static class SpanshRequest
     /// </summary>
     private static void WriteStationTypeFilter(Utf8JsonWriter writer, bool includeCarriers, bool surfaceStations)
     {
-        var allowed = AllStationTypes.Where(type =>
+        WriteTypes(writer, AllStationTypes.Where(type =>
             (includeCarriers || !MarketSnapshot.IsCarrierType(type))
-            && (surfaceStations || !MarketSnapshot.IsSurfaceType(type)));
+            && (surfaceStations || !MarketSnapshot.IsSurfaceType(type))));
+    }
 
+    private static void WriteTypes(Utf8JsonWriter writer, IEnumerable<string> types)
+    {
         writer.WriteStartObject("type");
         writer.WriteStartArray("value");
 
-        foreach (var type in allowed)
+        foreach (var type in types)
         {
             writer.WriteStringValue(type);
         }
 
         writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    /// <summary>A numeric span in the <c>{"value":[min,max],"comparison":"&lt;=&gt;"}</c> shape.</summary>
+    private static void WriteComparison(Utf8JsonWriter writer, string name, double min, double max)
+    {
+        writer.WriteStartObject(name);
+        writer.WriteStartArray("value");
+        writer.WriteStringValue(Number(min));
+        writer.WriteStringValue(Number(max));
+        writer.WriteEndArray();
+        writer.WriteString("comparison", "<=>");
         writer.WriteEndObject();
     }
 

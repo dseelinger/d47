@@ -540,6 +540,15 @@ internal static class SpanshResponse
         // Which timestamp depends on what was asked for, and both are worth having: a shipyard seen last year
         // and an outfitting bay seen last week are different kinds of answer.
         StockLastSeen = Timestamp(element, "outfitting_updated_at") ?? Timestamp(element, "shipyard_updated_at"),
+
+        Services = element.TryGetProperty("services", out var services) && services.ValueKind == JsonValueKind.Array
+            ? [.. services.EnumerateArray()
+                .Where(service => service.ValueKind == JsonValueKind.Object)
+                .Select(service => String(service, "name"))
+                .OfType<string>()]
+            : [],
+        ControllingFaction = String(element, "controlling_minor_faction"),
+        UpdatedAt = Timestamp(element, "updated_at"),
     };
 
     private static DateTimeOffset? Timestamp(JsonElement element, string name) =>

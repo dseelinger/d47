@@ -226,8 +226,8 @@ an unknown key:
 | Colonised | `is_colonised` true: 5 of 26 at 12 ly | `system_is_colonised` true: 522 | ignored |
 | Allegiance, government, security | honoured | `system_*` ignored; `security` ignored | ignored |
 
-The systems search carries all of them. The body search carries `power` and `power_state`, and
-refuses the rest by name. The station search carries none yet.
+The systems and stations searches carry all of them. The body search carries `power` and `power_state`, and
+refuses the rest by name.
 
 #### A boolean filter cannot express false
 
@@ -355,7 +355,7 @@ failed turn.
 Find star systems matching some criteria, nearest first.
 
 ```json
-{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"colonised":{"type":"boolean","description":"Only colonised systems."},"controlling_faction":{"type":"string","description":"The minor faction controlling the system, by its exact name."},"distance":{"type":"string","description":"How far to look, in light years."},"faction":{"type":"string","description":"A minor faction present in the system, by its exact name."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to theirs."},"population":{"type":"string","description":"How many people live there. \u00220\u0022 means unpopulated."},"power":{"type":"string","description":"The Powerplay power controlling the system.","enum":["A. Lavigny-Duval","Aisling Duval","Archon Delaine","Denton Patreus","Edmund Mahon","Felicia Winters","Jerome Archer","Li Yong-Rui","Nakato Kaine","Pranav Antal","Yuri Grom","Zemina Torval"]},"power_state":{"type":"string","description":"The system\u0027s Powerplay state.","enum":["Exploited","Fortified","Stronghold","Unoccupied"]},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"colonised":{"type":"boolean","description":"Only colonised systems."},"controlling_faction":{"type":"string","description":"The controlling minor faction, by its exact name."},"distance":{"type":"string","description":"How far to look, in light years."},"faction":{"type":"string","description":"A minor faction present in the system, by its exact name."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"near":{"type":"string","description":"Measure from this system. Defaults to theirs."},"population":{"type":"string","description":"How many people live there. \u00220\u0022 means unpopulated."},"power":{"type":"string","description":"The Powerplay power controlling the system.","enum":["A. Lavigny-Duval","Aisling Duval","Archon Delaine","Denton Patreus","Edmund Mahon","Felicia Winters","Jerome Archer","Li Yong-Rui","Nakato Kaine","Pranav Antal","Yuri Grom","Zemina Torval"]},"power_state":{"type":"string","description":"The system\u0027s Powerplay state.","enum":["Exploited","Fortified","Stronghold","Unoccupied"]},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"security":{"type":"string","description":"Security level.","enum":["Anarchy","High","Low","Medium"]},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]}},"required":[],"additionalProperties":false}
 ```
 
 A search with no filters is refused rather than run — it would match the whole galaxy.
@@ -373,6 +373,58 @@ power and its Powerplay state.
 
 Every answer is kept as the last systems search, with the arguments as given, the system it was
 measured from, the result and what was said. A search that fails keeps nothing.
+
+#### `search_stations`
+
+Find stations by type, landing pad, distance from arrival, services, material trader, technology
+broker, a module or ship sold there, or their system's filters, nearest first.
+
+```json
+{"type":"object","properties":{"allegiance":{"type":"string","description":"Superpower allegiance.","enum":["Alliance","Empire","Federation","Guardian","Independent","Pilots Federation","Thargoid"]},"colonised":{"type":"boolean","description":"Only colonised systems."},"controlling_faction":{"type":"string","description":"The controlling minor faction, by its exact name."},"government":{"type":"string","description":"Form of government.","enum":["Anarchy","Communism","Confederacy","Cooperative","Corporate","Democracy","Dictatorship","Feudal","None","Patronage","Prison","Prison Colony","Theocracy"]},"limit":{"type":"integer","description":"How many to return, 1 to 20. Default 5."},"material_trader":{"type":"string","description":"A material trader of this kind.","enum":["Raw","Manufactured","Encoded"]},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50, at most 500."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"module":{"type":"string","description":"A module sold there, by name."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"population":{"type":"string","description":"How many people live there. \u00220\u0022 means unpopulated."},"power":{"type":"string","description":"The Powerplay power controlling the system.","enum":["A. Lavigny-Duval","Aisling Duval","Archon Delaine","Denton Patreus","Edmund Mahon","Felicia Winters","Jerome Archer","Li Yong-Rui","Nakato Kaine","Pranav Antal","Yuri Grom","Zemina Torval"]},"power_state":{"type":"string","description":"The system\u0027s Powerplay state.","enum":["Exploited","Fortified","Stronghold","Unoccupied"]},"primary_economy":{"type":"string","description":"The system\u0027s main economy.","enum":["Agriculture","Colony","Extraction","High Tech","Industrial","Military","None","Refinery","Service","Terraforming","Tourism"]},"services":{"type":"string","description":"Services the station must all have, comma-separated: Market, Black Market, Shipyard, Outfitting, Refuel, Repair, Rearm, Interstellar Factors, Material Trader, Technology Broker, Universal Cartographics, Vista Genomics, Pioneer Supplies, Bartender, Apex Interstellar, Frontline Solutions, Search and Rescue, Redemption Office, Crew Lounge."},"ship":{"type":"string","description":"A ship sold there, by name."},"state":{"type":"string","description":"What the controlling faction is going through. Crowd-reported, so this finds systems reported in that state.","enum":["Blight","Boom","Bust","Civil Liberty","Civil Unrest","Civil War","Drought","Election","Expansion","Famine","Infrastructure Failure","Investment","Lockdown","Natural Disaster","None","Outbreak","Pirate Attack","Public Holiday","Retreat","Terrorist Attack","War"]},"station_type":{"type":"string","description":"One or more, comma-separated: Starport, Outpost, Surface port, Settlement, Fleet carrier, Megaship."},"technology_broker":{"type":"string","description":"A technology broker of this kind.","enum":["Guardian","Human"]}},"required":[],"additionalProperties":false}
+```
+
+`station_type` takes one or more of Starport, Outpost, Surface port, Settlement, Fleet carrier and
+Megaship, each sent as every one of the service's types of that kind: Surface port is
+`Planetary Outpost` and `Planetary Port`. Left out, every type but `Drake-Class Carrier` is sent,
+so fleet carriers appear only when named. Construction depots and surface settlements have no
+`station_type` of their own, and are found only when it is left out.
+
+`min_pad` Large sends `has_large_pad`. Medium sends `medium_pads` as a comparison from 1, so it
+finds stations with at least one medium pad, and a station with only large pads is left out.
+`max_station_distance` is `distance_to_arrival` as a comparison from 0.
+
+`services` are sent as one object per service, so a station must have every one asked for. Rearm
+is sent as `Restock` and Interstellar Factors as `Interstellar Factors Contact`, the service's own
+names. `material_trader` and `technology_broker` are choices of their own.
+
+The station search honours fewer of the system filters than the systems search does. Probed on
+2026-10-03, stations within 20 light years of Sol (control 3,601, an unknown key 3,601):
+
+| Filter | Shape | Result |
+| --- | --- | --- |
+| `type` Outpost | choice | 104 |
+| `has_large_pad` | choice `"true"` | 2,918 (and 2,918 for `"false"`) |
+| `medium_pads` 1–100 | comparison | 2,441 |
+| `distance_to_arrival` 0–100 Ls | comparison | 1,403 (min/max: 3,596, ignored) |
+| `material_trader` Raw | choice | 3 |
+| `technology_broker` Guardian | choice | 2 |
+| `allegiance` Federation (the station's) | choice | 1,003 |
+| `government` Democracy (the station's) | choice | 434 |
+| `controlling_minor_faction` Mother Gaia | choice | 22 |
+| `controlling_minor_faction_state` Boom | choice | 384 |
+| `system_primary_economy` Industrial | choice | 699 |
+| `system_allegiance`, `system_government`, `security`, `system_security` | choice | 3,601, ignored |
+
+Services, within 60 light years of Sol: Material Trader alone 149, Technology Broker alone 90, both
+names in one `value` array 198 (either), and one object per service 41 (both).
+
+So `allegiance`, `government`, `state` and `controlling_faction` are the station's own, and
+`security` and `faction` are refused by name. A `controlling_faction` is corrected against the
+journals' faction names as on `search_systems`. A search with nothing but a distance is refused.
+
+The answer gives each station, its system, distance, type, largest pad, distance from arrival, and
+which of the asked-for services it has. Every answer is kept as the last stations search; a search
+that fails keeps nothing.
 
 #### `distance_between`
 

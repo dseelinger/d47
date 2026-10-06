@@ -145,6 +145,109 @@ public static class GalaxyCapability
             },
             new ToolDefinition
             {
+                Name = "search_stations",
+                Description =
+                    "Find stations by type, landing pad, distance from arrival, services, material trader, "
+                    + "technology broker, a module or ship sold there, or their system's filters, nearest first. "
+                    + "Leaves out fleet carriers unless station_type names them. For where to buy a commodity, "
+                    + "use find_nearest_station.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to theirs.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "How far to look, in light years. Default 50, at most 500.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "station_type",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "One or more, comma-separated: "
+                            + $"{string.Join(", ", StationQuery.StationTypes.Select(type => type.Name))}.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "min_pad",
+                        Type = ToolParameterType.String,
+                        Description = "Large, or Medium for at least one medium pad.",
+                        AllowedValues = StationQuery.MinPads,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_station_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "Furthest from the star, in light seconds.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "services",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "Services the station must all have, comma-separated: "
+                            + $"{string.Join(", ", StationQuery.ServiceNames.Select(service => service.Name))}.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "material_trader",
+                        Type = ToolParameterType.String,
+                        Description = "A material trader of this kind.",
+                        AllowedValues = StationQuery.TraderTypes,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "technology_broker",
+                        Type = ToolParameterType.String,
+                        Description = "A technology broker of this kind.",
+                        AllowedValues = StationQuery.BrokerTypes,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "module",
+                        Type = ToolParameterType.String,
+                        Description = "A module sold there, by name.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "module_class",
+                        Type = ToolParameterType.String,
+                        Description = "Module size, 0 to 8.",
+                        AllowedValues = OutfittingCatalogue.Classes,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "module_rating",
+                        Type = ToolParameterType.String,
+                        Description = "Module rating, A to I.",
+                        AllowedValues = OutfittingCatalogue.Ratings,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "ship",
+                        Type = ToolParameterType.String,
+                        Description = "A ship sold there, by name.",
+                    },
+                    .. GalaxyFilters.For(GalaxySearchKind.Stations).Select(Parameter),
+                    new ToolParameter
+                    {
+                        Name = "limit",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many to return, 1 to 20. Default 5.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    SearchStationsAsync(
+                        galaxy, currentSystem, settings, factions, searches, now, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = "distance_between",
                 AlwaysLoaded = true,
                 Description =
@@ -550,39 +653,9 @@ public static class GalaxyCapability
             return ToolResult.Error(Unavailable);
         }
 
-        var requested = new Dictionary<string, string>(StringComparer.Ordinal);
         IReadOnlyList<string> known = factions?.Invoke() is { } met ? [.. met] : [];
-        var corrected = new List<string>();
-        var unknown = new List<string>();
-
-        foreach (var filter in GalaxyFilters.For(GalaxySearchKind.Systems))
-        {
-            if (!arguments.TryGetString(filter.Name, out var value) || string.IsNullOrWhiteSpace(value))
-            {
-                continue;
-            }
-
-            if (filter.Kind == GalaxyFilterKind.Name)
-            {
-                var given = value.Trim();
-
-                if (Catalogue.Match(known, given) is { } spelled)
-                {
-                    if (!string.Equals(spelled, given, StringComparison.Ordinal))
-                    {
-                        corrected.Add(spelled);
-                    }
-
-                    value = spelled;
-                }
-                else
-                {
-                    unknown.Add(given);
-                }
-            }
-
-            requested[filter.Name] = value;
-        }
+        var (requested, corrected, unknown) =
+            ReadFilters(GalaxyFilters.For(GalaxySearchKind.Systems), arguments, known);
 
         var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
             ? explicitNear
@@ -626,6 +699,133 @@ public static class GalaxyCapability
         {
             return ToolResult.Error(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// The vocabulary filters among <paramref name="arguments"/>, with each faction name corrected against
+    /// <paramref name="known"/> where it matches one.
+    /// </summary>
+    private static (Dictionary<string, string> Requested, List<string> Corrected, List<string> Unknown) ReadFilters(
+        IEnumerable<GalaxyFilter> filters,
+        ToolArguments arguments,
+        IReadOnlyList<string> known)
+    {
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal);
+        var corrected = new List<string>();
+        var unknown = new List<string>();
+
+        foreach (var filter in filters)
+        {
+            if (!arguments.TryGetString(filter.Name, out var value) || string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            if (filter.Kind == GalaxyFilterKind.Name)
+            {
+                var given = value.Trim();
+
+                if (Catalogue.Match(known, given) is { } spelled)
+                {
+                    if (!string.Equals(spelled, given, StringComparison.Ordinal))
+                    {
+                        corrected.Add(spelled);
+                    }
+
+                    value = spelled;
+                }
+                else
+                {
+                    unknown.Add(given);
+                }
+            }
+
+            requested[filter.Name] = value;
+        }
+
+        return (requested, corrected, unknown);
+    }
+
+    private static async Task<ToolResult> SearchStationsAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        Func<IReadOnlyCollection<string>>? factions,
+        GalaxySearchBoard? searches,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        IReadOnlyList<string> known = factions?.Invoke() is { } met ? [.. met] : [];
+        var (requested, corrected, unknown) =
+            ReadFilters(GalaxyFilters.For(GalaxySearchKind.Stations), arguments, known);
+
+        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
+            ? explicitNear
+            : currentSystem();
+
+        if (string.IsNullOrWhiteSpace(near))
+        {
+            return ToolResult.Error(
+                "I don't know where the Commander is right now, so I need a system to search out from.");
+        }
+
+        var limit = Limit(arguments, out var askedLimit);
+
+        var search = new StationSearch
+        {
+            ReferenceSystem = near,
+            MaxDistance = arguments.TryGetDouble("max_distance", out var maxDistance) ? maxDistance : null,
+            Size = limit,
+            StationTypes = Text(arguments, "station_type"),
+            MinPad = Text(arguments, "min_pad"),
+            MaxStationDistance =
+                arguments.TryGetDouble("max_station_distance", out var furthest) ? furthest : null,
+            Services = Text(arguments, "services"),
+            MaterialTrader = Text(arguments, "material_trader"),
+            TechnologyBroker = Text(arguments, "technology_broker"),
+            Module = Text(arguments, "module"),
+            ModuleClass = Text(arguments, "module_class"),
+            ModuleRating = Text(arguments, "module_rating"),
+            Ship = Text(arguments, "ship"),
+            Filters = requested,
+        };
+
+        if (!StationQuery.TryParse(search, out var query, out var failure))
+        {
+            return ToolResult.Error(failure);
+        }
+
+        try
+        {
+            var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            var said = FactionNotes(corrected, result.Stations.Count == 0 ? unknown : [], known)
+                       + DescribeStations(result, query)
+                       + LimitRefused(askedLimit);
+
+            searches?.Post(new GalaxySearchPosting(
+                GalaxySearchKind.Stations,
+                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                result.Reference,
+                result,
+                said,
+                now?.Invoke() ?? DateTimeOffset.UtcNow));
+
+            return ToolResult.Ok(said);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+
+        static string? Text(ToolArguments arguments, string name) =>
+            arguments.TryGetString(name, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
     }
 
     /// <summary>
@@ -1994,6 +2194,77 @@ public static class GalaxyCapability
             if (station.StockLastSeen is not null)
             {
                 report.Append($"; stock last reported {station.StockLastSeen.Value:yyyy-MM-dd}");
+            }
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>A station search's answer: each station's place, type, largest pad and the asked-for services it has.</summary>
+    private static string DescribeStations(StationSearchResult result, StationQuery query)
+    {
+        if (result.Stations.Count == 0)
+        {
+            return $"No station within {query.MaxDistance:N0} light years matched that search.";
+        }
+
+        var askedFaction = query.Criteria.Any(criterion => criterion.Filter.Kind == GalaxyFilterKind.Name);
+        var report = new StringBuilder();
+
+        report.Append(result.Total == result.Stations.Count
+            ? $"{result.Total} station{(result.Total == 1 ? "" : "s")} matched"
+            : $"{result.Total} stations matched; here are the nearest {result.Stations.Count}");
+
+        if (result.Reference is not null)
+        {
+            report.Append($", measured from {result.Reference}");
+        }
+
+        report.AppendLine(".");
+
+        foreach (var station in result.Stations)
+        {
+            report.AppendLine();
+            report.Append($"{station.Name} in {station.SystemName}");
+
+            if (station.Distance is not null)
+            {
+                report.Append($" — {station.Distance.Value.ToString("N2", CultureInfo.InvariantCulture)} ly");
+            }
+
+            if (station.Type is not null)
+            {
+                report.Append($"; {station.Type}");
+            }
+
+            var largest = station.KnownPads.Count > 0
+                ? station.KnownPads[^1]
+                : station.HasLargePad ? PadSize.Large : (PadSize?)null;
+
+            if (largest is not null)
+            {
+                report.Append($"; {largest.Value.ToString().ToLowerInvariant()} pad");
+            }
+
+            if (station.DistanceToArrival is not null)
+            {
+                report.Append(
+                    $"; {station.DistanceToArrival.Value.ToString("N0", CultureInfo.InvariantCulture)} ls from arrival");
+            }
+
+            var has = query.Services
+                .Where(service => station.Services.Contains(service, StringComparer.OrdinalIgnoreCase))
+                .Select(service => StationQuery.ServiceNames.First(name => name.Field == service).Name)
+                .ToList();
+
+            if (has.Count > 0)
+            {
+                report.Append($"; has {string.Join(", ", has)}");
+            }
+
+            if (askedFaction && station.ControllingFaction is not null)
+            {
+                report.Append($"; controlled by {station.ControllingFaction}");
             }
         }
 

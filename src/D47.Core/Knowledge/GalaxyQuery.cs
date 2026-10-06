@@ -67,6 +67,10 @@ public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyL
     public static GalaxyFilter FlagOf(string name, string field, string description) =>
         new(name, GalaxyFilterKind.Flag, []) { Fields = Systems(field), Description = description };
 
+    /// <summary>This filter, also honoured by <paramref name="kind"/> under <paramref name="field"/>.</summary>
+    public GalaxyFilter On(GalaxySearchKind kind, string field) =>
+        this with { Fields = new Dictionary<GalaxySearchKind, string>(Fields) { [kind] = field } };
+
     private static Dictionary<GalaxySearchKind, string> Systems(string field) =>
         new() { [GalaxySearchKind.Systems] = field };
 }
@@ -81,17 +85,20 @@ public static class GalaxyFilters
         GalaxyFilter.Choice(
             "allegiance",
             "Superpower allegiance.",
-            "Alliance", "Empire", "Federation", "Guardian", "Independent", "Pilots Federation", "Thargoid"),
+            "Alliance", "Empire", "Federation", "Guardian", "Independent", "Pilots Federation", "Thargoid")
+            .On(GalaxySearchKind.Stations, "allegiance"),
         GalaxyFilter.Choice(
             "government",
             "Form of government.",
             "Anarchy", "Communism", "Confederacy", "Cooperative", "Corporate", "Democracy", "Dictatorship",
-            "Feudal", "None", "Patronage", "Prison", "Prison Colony", "Theocracy"),
+            "Feudal", "None", "Patronage", "Prison", "Prison Colony", "Theocracy")
+            .On(GalaxySearchKind.Stations, "government"),
         GalaxyFilter.Choice(
             "primary_economy",
             "The system's main economy.",
             "Agriculture", "Colony", "Extraction", "High Tech", "Industrial", "Military", "None", "Refinery",
-            "Service", "Terraforming", "Tourism"),
+            "Service", "Terraforming", "Tourism")
+            .On(GalaxySearchKind.Stations, "system_primary_economy"),
         GalaxyFilter.Choice("security", "Security level.", "Anarchy", "High", "Low", "Medium"),
 
         // What the controlling faction is going through, which is what a Commander means by "a system in
@@ -106,7 +113,7 @@ public static class GalaxyFilters
                 "Blight", "Boom", "Bust", "Civil Liberty", "Civil Unrest", "Civil War", "Drought", "Election",
                 "Expansion", "Famine", "Infrastructure Failure", "Investment", "Lockdown", "Natural Disaster",
                 "None", "Outbreak", "Pirate Attack", "Public Holiday", "Retreat", "Terrorist Attack", "War",
-            ]),
+            ]).On(GalaxySearchKind.Stations, "controlling_minor_faction_state"),
 
         // Measured as silently ignored: minor_faction_presences: {"name":{"value":[…]}}, and a top-level minor_faction.
         GalaxyFilter.NameOf(
@@ -114,7 +121,8 @@ public static class GalaxyFilters
         GalaxyFilter.NameOf(
             "controlling_faction",
             "controlling_minor_faction",
-            "The minor faction controlling the system, by its exact name."),
+            "The controlling minor faction, by its exact name.")
+            .On(GalaxySearchKind.Stations, "controlling_minor_faction"),
 
         // The twelve names /api/systems/field_values/power returns.
         GalaxyFilter.ChoiceOf(
@@ -131,6 +139,7 @@ public static class GalaxyFilters
             {
                 [GalaxySearchKind.Systems] = "controlling_power",
                 [GalaxySearchKind.Bodies] = "system_controlling_power",
+                [GalaxySearchKind.Stations] = "system_controlling_power",
             },
         },
         GalaxyFilter.ChoiceOf(
@@ -143,13 +152,16 @@ public static class GalaxyFilters
             {
                 [GalaxySearchKind.Systems] = "power_state",
                 [GalaxySearchKind.Bodies] = "system_power_state",
+                [GalaxySearchKind.Stations] = "system_power_state",
             },
         },
 
         // A comparison, not a range: the service drops the min/max shape for population.
         GalaxyFilter.ComparisonOf(
-            "population", "population", "How many people live there. \"0\" means unpopulated."),
-        GalaxyFilter.FlagOf("colonised", "is_colonised", "Only colonised systems."),
+            "population", "population", "How many people live there. \"0\" means unpopulated.")
+            .On(GalaxySearchKind.Stations, "system_population"),
+        GalaxyFilter.FlagOf("colonised", "is_colonised", "Only colonised systems.")
+            .On(GalaxySearchKind.Stations, "system_is_colonised"),
     ];
 
     /// <summary>The filters <paramref name="kind"/> honours.</summary>
