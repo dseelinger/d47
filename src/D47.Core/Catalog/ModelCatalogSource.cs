@@ -27,11 +27,15 @@ public sealed class ModelCatalogSource(ModelCatalog initial)
 
     public ModelCatalog Current => _current;
 
+    /// <summary>Raised after <see cref="Replace"/>, on the thread that called it.</summary>
+    public event Action<ModelCatalog>? Replaced;
+
     public void Replace(ModelCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
 
         _current = catalog;
+        Replaced?.Invoke(catalog);
     }
 
     /// <summary>Records what a language model provider listed; an empty list forgets it.</summary>

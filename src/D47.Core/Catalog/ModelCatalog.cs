@@ -28,7 +28,11 @@ public sealed record ModelTraits
 }
 
 /// <summary>One model in the catalog.</summary>
-public sealed record CatalogModel(string Id, bool Offered, ModelPrice? Price, ModelTraits? Traits);
+public sealed record CatalogModel(string Id, bool Offered, ModelPrice? Price, ModelTraits? Traits)
+{
+    /// <summary>The name shown to the Commander, or null to show the id.</summary>
+    public string? Label { get; init; }
+}
 
 /// <summary>One speech model in the catalog, with what it does that its provider's API does not say.</summary>
 public sealed record SpeechModel(string Id, string Label, bool Offered)
@@ -90,6 +94,9 @@ public sealed class ModelCatalog
 
     public ModelTraits TraitsFor(string providerId, string model) =>
         Model(providerId, model)?.Traits ?? ModelTraits.Unknown;
+
+    /// <summary>The model's display name, or its id where the catalog gives none.</summary>
+    public string LabelFor(string providerId, string model) => Model(providerId, model)?.Label ?? model;
 
     /// <summary>Whether the catalog names the model, offered or not.</summary>
     public bool Knows(string providerId, string model) => Model(providerId, model) is not null;
@@ -269,7 +276,7 @@ public sealed class ModelCatalog
             ? ReadTraits(t)
             : null;
 
-        return new CatalogModel(id, offered, price, traits);
+        return new CatalogModel(id, offered, price, traits) { Label = OptionalString(item, "label") };
     }
 
     private static ModelPrice ReadPrice(JsonElement element)

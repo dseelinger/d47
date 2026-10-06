@@ -11,6 +11,7 @@ using D47.App.Windowing;
 using D47.App.Controls;
 using D47.App.Input;
 using D47.Core.Capabilities;
+using D47.Core.Catalog;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
@@ -114,6 +115,8 @@ public partial class MainWindow : Window
             new ProcessStartInfo(url) { UseShellExecute = true }));
         _model.UpdateAccepted += OnUpdateAccepted;
         _model.UpdateDismissed += () => _model.UpdateText = null;
+        _model.DefaultChangeAccepted += () => ResolveDefaultChange(apply: true);
+        _model.DefaultChangeDismissed += () => ResolveDefaultChange(apply: false);
 
         if (host is not null)
         {
@@ -401,6 +404,17 @@ public partial class MainWindow : Window
             // vanishing is worse than either state, and it is the Commander who has already asked — the one
             // who does not need it — who would see it happen.
             _model.HasAsked = host.ViewState.Load().HasAsked;
+
+            ModelCatalogSource.Shared.Replaced += _ => Avalonia.Threading.Dispatcher.UIThread.Post(TellDefaultChange);
+            host.Settings.Changed += change =>
+            {
+                if (change.Key.StartsWith("llm.", StringComparison.Ordinal)
+                    || change.Key.StartsWith("speech.", StringComparison.Ordinal))
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(TellDefaultChange);
+                }
+            };
+            TellDefaultChange();
 
             // One zoom host, on the one window.
             ZoomHost.Attach(this, host.Settings);
@@ -1272,6 +1286,52 @@ public partial class MainWindow : Window
                     ? $"{forgotten.Outcome.Said} A record of it is in {receipt}."
                     : forgotten.Outcome.Said;
             }));
+    }
+
+    private DefaultChange? _defaultChange;
+
+    /// <summary>Shows the default change not yet told, if any, and records the defaults with nothing to tell.</summary>
+    private void TellDefaultChange()
+    {
+        if (_host is not { } host)
+        {
+            return;
+        }
+
+        var state = host.ViewState.Load();
+        var told = state.ToldDefaults;
+
+        _defaultChange = DefaultChanges.Find(host.Settings.Current, ModelCatalogSource.Shared.Current, ref told);
+
+        if (told.Count != state.ToldDefaults.Count || told.Any(pair => state.ToldDefaults.GetValueOrDefault(pair.Key) != pair.Value))
+        {
+            host.ViewState.Save(state with { ToldDefaults = told });
+        }
+
+        _model.DefaultChangeText = _defaultChange?.Text;
+        _model.DefaultChangeAction = _defaultChange?.ActionLabel;
+    }
+
+    private void ResolveDefaultChange(bool apply)
+    {
+        if (_defaultChange is not { } change || _host is not { } host)
+        {
+            return;
+        }
+
+        var state = host.ViewState.Load();
+
+        host.ViewState.Save(state with
+        {
+            ToldDefaults = new Dictionary<string, string>(state.ToldDefaults) { [change.Key] = change.Default },
+        });
+
+        if (apply)
+        {
+            host.Settings.Apply(change.SettingKey, change.Value, SettingsCaller.Panel);
+        }
+
+        TellDefaultChange();
     }
 
     private async Task CheckForUpdateAsync(AppHost host)

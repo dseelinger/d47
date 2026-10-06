@@ -151,6 +151,26 @@
       </controls:Notice.Actions>
     </controls:Notice>
 
+    <!-- Hidden until the published model default changes and the Commander has not been told. -->
+    <controls:Notice x:Name="DefaultChangeBanner"
+              Level="Warning"
+              Label="Model default"
+              IsVisible="{Binding HasDefaultChange}"
+              Margin="0,14,0,0"
+              Text="{Binding DefaultChangeText}">
+      <controls:Notice.Actions>
+        <Button x:Name="DefaultChangeActionButton"
+                Content="{Binding DefaultChangeAction}"
+                Click="OnDefaultChangeActionClick" />
+        <Button x:Name="DismissDefaultChangeButton"
+                Theme="{StaticResource D47.GlyphButton}"
+                Content="&#x2715;"
+                ToolTip.Tip="Dismiss"
+                AutomationProperties.Name="Dismiss"
+                Click="OnDismissDefaultChangeClick" />
+      </controls:Notice.Actions>
+    </controls:Notice>
+
     <!-- Hidden until a background check finds a newer release; never blocks startup. -->
     <Border x:Name="UpdateBanner"
             IsVisible="{Binding HasUpdate}"

@@ -5033,6 +5033,10 @@ public partial class PanelView : UserControl
     private void OnUpdateLaterClick(object? sender, RoutedEventArgs e) => Model?.DismissUpdate();
 
     private void OnDismissErrorClick(object? sender, RoutedEventArgs e) => Model?.DismissError();
+
+    private void OnDefaultChangeActionClick(object? sender, RoutedEventArgs e) => Model?.AcceptDefaultChange();
+
+    private void OnDismissDefaultChangeClick(object? sender, RoutedEventArgs e) => Model?.DismissDefaultChange();
 }
 
 /// <summary>

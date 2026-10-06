@@ -136,6 +136,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string? _startupText;
     private string _microphoneDetail = string.Empty;
     private bool _modelLoading;
+    private string? _defaultChangeText;
+    private string? _defaultChangeAction;
 
     // True in every mode, and replaced by the host's own wording within a tick.
     private string _listeningPrompt = PanelPrompts.WaitingFallback;
@@ -151,6 +153,10 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public event Action? UpdateAccepted;
 
     public event Action? UpdateDismissed;
+
+    public event Action? DefaultChangeAccepted;
+
+    public event Action? DefaultChangeDismissed;
 
     /// <summary>Everything said, in order.</summary>
     public string TranscriptText
@@ -374,6 +380,32 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     public bool HasError => !string.IsNullOrEmpty(_errorText);
+
+    /// <summary>The published model default changed; null when there is nothing to tell.</summary>
+    public string? DefaultChangeText
+    {
+        get => _defaultChangeText;
+        set
+        {
+            if (Set(ref _defaultChangeText, value))
+            {
+                Raise(nameof(HasDefaultChange));
+            }
+        }
+    }
+
+    public bool HasDefaultChange => !string.IsNullOrEmpty(_defaultChangeText);
+
+    /// <summary>What the default-change notice's action says.</summary>
+    public string? DefaultChangeAction
+    {
+        get => _defaultChangeAction;
+        set => Set(ref _defaultChangeAction, value);
+    }
+
+    public void AcceptDefaultChange() => DefaultChangeAccepted?.Invoke();
+
+    public void DismissDefaultChange() => DefaultChangeDismissed?.Invoke();
 
     public string? UpdateText
     {

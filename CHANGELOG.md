@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+When the published default model changes for the language model provider you use, or for ElevenLabs when it speaks, the panel shows one notice, once. If you never chose a model, it says D47 now answers with the new one and offers to keep the old; if you chose one, it names the new default and offers to switch to it. Dismissing it, or using either button, records the default as told.
+
 The Adventures tab no longer writes or edits an adventure by hand. Ask D47 for one instead. Adventures you wrote before still play.
 
 Each hired pilot's row on Fleet › Crew has a picture, with Change picture and Use the default. It is kept for the pilot's crew id, so two pilots with the same name keep separate pictures, and it shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their picture, and a rehire gets it back.

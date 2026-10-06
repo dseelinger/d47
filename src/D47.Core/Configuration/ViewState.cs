@@ -123,6 +123,9 @@ public sealed record ViewState
     /// </summary>
     public IReadOnlyList<string> IntroducedCores { get; init; } = [];
 
+    /// <summary>The model default the Commander was last told about, by <see cref="D47.Core.Catalog.DefaultChanges"/> key.</summary>
+    public IReadOnlyDictionary<string, string> ToldDefaults { get; init; } = new Dictionary<string, string>();
+
     /// <summary>
     /// When each core was last aboard, so a gap reaction can be about a gap that spans launches (Phase
     /// 35).
