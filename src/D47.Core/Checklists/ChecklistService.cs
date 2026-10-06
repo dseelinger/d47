@@ -648,116 +648,170 @@ public sealed class ChecklistService(
     {
         Ingredients = [.. ship.Ingredients.Concat(foot.Ingredients)
             .OrderBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)],
-        Gates = [.. ship.Gates.Concat(foot.Gates)],
+        Blocks = [.. ship.Blocks.Concat(foot.Blocks)],
         Uncovered = [.. ship.Uncovered.Concat(foot.Uncovered)],
         Assumed = [.. ship.Assumed.Concat(foot.Assumed)],
     };
 
-    public string Shortfall()
+    /// <summary>
+    /// What the live plans still need. Null scope nets every live item, on foot included; a ship scope
+    /// takes only that ship's items and counts cargo trips against its hold. Every outstanding construction
+    /// delivery is in both.
+    /// </summary>
+    public PlanShortfall Shortfall(ChecklistScope? scope = null)
     {
         var state = State;
-        var document = Document;
-        // Both plans, netted together.
-        var costing = Merge(
-            EngineeringPlan.Cost(document.Items, state),
-            OnFootPlan.Cost(document.Items, state));
+        var live = Document.Items.Where(item => !item.IsComplete).ToList();
+        var ship = scope is { Group: ChecklistGroup.Ship };
 
-        var report = new StringBuilder();
-
-        // Caps first.
-        foreach (var over in costing.OverCapacity)
+        if (scope is not null)
         {
-            report.AppendLine(
-                $"{over.Material.Name}: your plans need {over.Needed} and you can only hold {over.Capacity}. "
-                + "That is at least two trips whatever happens.");
+            live = [.. live.Where(item => item.Scope.Same(scope))];
         }
 
-        foreach (var gate in costing.Gates)
+        var costing = ship
+            ? EngineeringPlan.Cost(live, state)
+            : Merge(EngineeringPlan.Cost(live, state), OnFootPlan.Cost(live, state));
+
+        var rows = costing.Shortfall
+            .Select(ingredient => new ShortfallRow(
+                ingredient.Material.Name,
+                ingredient.Material.Ledger,
+                ingredient.Material.Grade,
+                ingredient.Held,
+                ingredient.Needed))
+            .ToList();
+
+        var trips = costing.OverCapacity
+            .Select(over => ShortfallTrip.Storage(over.Material.Name, over.Needed, over.Capacity!.Value))
+            .ToList();
+
+        var owed = state is null ? [] : ColonisationPlan.Outstanding(state.Colonisation, null);
+
+        rows.AddRange(owed.Select(pair => new ShortfallRow(
+            pair.Resource.Name,
+            Knowledge.MaterialLedger.Cargo,
+            null,
+            pair.Resource.Provided,
+            pair.Resource.Required,
+            pair.Site.Where)));
+
+        if (ship && Hold(scope!, state) is { } hold and > 0)
         {
-            report.AppendLine(gate);
+            trips.AddRange(owed
+                .Where(pair => pair.Resource.Remaining > hold)
+                .Select(pair => ShortfallTrip.Cargo(pair.Resource.Name, pair.Site.Where, pair.Resource.Remaining, hold)));
         }
 
-        foreach (var guess in costing.Assumed)
-        {
-            report.AppendLine(guess);
-        }
-
-        foreach (var ledger in costing.Shortfall.GroupBy(ingredient => ingredient.Material.Ledger))
-        {
-            report.AppendLine();
-            report.AppendLine($"{Ledger(ledger.Key)}:");
-
-            foreach (var ingredient in ledger)
-            {
-                report.AppendLine(
-                    $"  {ingredient.Material.Name}: {ingredient.Short} short ({ingredient.Held} of {ingredient.Needed}).");
-            }
-        }
-
-        // Where to go, grouped by the sourcing string the materials table already carries.
-        var origins = costing.Shortfall
+        // Grouped by the sourcing string the materials table already carries.
+        var oneTrip = costing.Shortfall
             .SelectMany(ingredient => ingredient.Material.Origins.Select(origin => (origin, ingredient)))
             .GroupBy(pair => pair.origin, StringComparer.OrdinalIgnoreCase)
             .Where(group => group.Count() > 1)
             .OrderByDescending(group => group.Count())
             .Take(3)
+            .Select(group => new OneTripSite(
+                group.Key,
+                OneTripSite.KindOf(group.Key),
+                [.. group.Select(pair => pair.ingredient.Material.Name)]))
             .ToList();
 
-        if (origins.Count > 0)
-        {
-            report.AppendLine();
-            report.AppendLine("Worth batching — one trip covers several:");
-
-            foreach (var group in origins)
-            {
-                report.AppendLine(
-                    $"  {group.Key}: {string.Join(", ", group.Select(pair => pair.ingredient.Material.Name))}");
-            }
-        }
-
-        // The on-foot half of batching, which is sharper than anything the ship materials can offer:
-        // "Planetary Settlement" is the best origin string an Odyssey ingredient has, and the building code
-        // is what turns it into a place to walk to.
-        var buildings = costing.Shortfall
+        // On foot the building code is what turns "Planetary Settlement" into a place to walk to.
+        oneTrip.AddRange(costing.Shortfall
             .Where(ingredient => ingredient.Material.Ledger == Knowledge.MaterialLedger.ShipLocker)
             .SelectMany(ingredient => ingredient.Material.Buildings.Select(building => (building, ingredient)))
             .GroupBy(pair => pair.building, StringComparer.OrdinalIgnoreCase)
             .Where(group => group.Count() > 1)
             .OrderByDescending(group => group.Count())
             .Take(3)
-            .ToList();
+            .Select(group => new OneTripSite(
+                group.Key,
+                OneTripSite.KindOf(group.Key),
+                [.. group.Select(pair => pair.ingredient.Material.Name)],
+                OnFoot: true)));
 
-        if (buildings.Count > 0)
+        return new PlanShortfall
+        {
+            Rows = rows,
+            Trips = trips,
+            Blocks = costing.Blocks,
+            OneTrip = oneTrip,
+            PlanCount = live.Count(item => item.Intent?.Kind is ChecklistIntentKind.Blueprint
+                or ChecklistIntentKind.Experimental
+                || (!ship && item.Intent?.Kind is ChecklistIntentKind.Grade or ChecklistIntentKind.Modification)),
+            DeliveryCount = owed.Count,
+            Uncovered = costing.Uncovered,
+            Assumed = costing.Assumed,
+        };
+    }
+
+    private static int? Hold(ChecklistScope scope, CommanderGameState? state)
+    {
+        if (state is null)
+        {
+            return null;
+        }
+
+        if (ChecklistEvaluator.IsActive(scope, state.Ship))
+        {
+            return state.Ship.CargoCapacity;
+        }
+
+        return int.TryParse(scope.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out var shipId)
+            ? state.Loadouts.For(shipId)?.Loadout.CargoCapacity
+            : null;
+    }
+
+    /// <summary>Every live plan's shortfall, as <c>get_plan_shortfall</c> says it.</summary>
+    public string ShortfallReport()
+    {
+        var shortfall = Shortfall();
+        var report = new StringBuilder();
+
+        foreach (var trip in shortfall.Trips)
+        {
+            report.AppendLine(trip.Sentence);
+        }
+
+        foreach (var block in shortfall.Blocks)
+        {
+            report.AppendLine(block.Sentence);
+        }
+
+        foreach (var guess in shortfall.Assumed)
+        {
+            report.AppendLine(guess);
+        }
+
+        foreach (var ledger in shortfall.Rows.Where(row => row.Site is null).GroupBy(row => row.Ledger))
         {
             report.AppendLine();
-            report.AppendLine("On foot, by building:");
+            report.AppendLine($"{Ledger(ledger.Key)}:");
 
-            foreach (var group in buildings)
+            foreach (var row in ledger)
             {
-                report.AppendLine(
-                    $"  {group.Key}: {string.Join(", ", group.Select(pair => pair.ingredient.Material.Name))}");
+                report.AppendLine($"  {row.Name}: {row.Short} short ({row.Held} of {row.Needed}).");
             }
         }
 
-        if (state is not null)
+        Sites("Worth batching — one trip covers several:", shortfall.OneTrip.Where(site => !site.OnFoot));
+        Sites("On foot, by building:", shortfall.OneTrip.Where(site => site.OnFoot));
+
+        var deliveries = shortfall.Rows.Where(row => row.Site is not null).ToList();
+
+        if (deliveries.Count > 0)
         {
-            var owed = ColonisationPlan.Outstanding(state.Colonisation, null);
+            report.AppendLine();
+            report.AppendLine("Still to haul, as of your last visit to each site:");
 
-            if (owed.Count > 0)
+            foreach (var row in deliveries.Take(12))
             {
-                report.AppendLine();
-                report.AppendLine("Still to haul, as of your last visit to each site:");
-
-                foreach (var (site, resource) in owed.Take(12))
-                {
-                    report.AppendLine(
-                        $"  {resource.Name}: {resource.Remaining} of {resource.Required} to {site.Where}.");
-                }
+                report.AppendLine($"  {row.Name}: {row.Short} of {row.Needed} to {row.Site}.");
             }
         }
 
         // Kept and marked, never refused.
-        foreach (var unknown in costing.Uncovered)
+        foreach (var unknown in shortfall.Uncovered)
         {
             report.AppendLine();
             report.AppendLine(unknown);
@@ -766,6 +820,24 @@ public sealed class ChecklistService(
         return report.Length == 0
             ? "Nothing on your plans is outstanding that I can price."
             : report.ToString().TrimEnd();
+
+        void Sites(string heading, IEnumerable<OneTripSite> sites)
+        {
+            var listed = sites.ToList();
+
+            if (listed.Count == 0)
+            {
+                return;
+            }
+
+            report.AppendLine();
+            report.AppendLine(heading);
+
+            foreach (var site in listed)
+            {
+                report.AppendLine($"  {site.Origin}: {string.Join(", ", site.Materials)}");
+            }
+        }
     }
 
     private static string Ledger(Knowledge.MaterialLedger ledger) => ledger switch

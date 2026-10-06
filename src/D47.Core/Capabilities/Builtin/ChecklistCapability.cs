@@ -116,7 +116,7 @@ public static class ChecklistCapability
                     + "totals against what the Commander holds, storage caps that force more than one "
                     + "trip, engineer ranks that block a grade outright, where several of the shortfall "
                     + "can be gathered in one trip, and what a construction site still wants delivered.",
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(checklists.Shortfall())),
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(checklists.ShortfallReport())),
             },
 
             new ToolDefinition

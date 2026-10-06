@@ -43,8 +43,10 @@ public sealed record PlanCosting
 {
     public IReadOnlyList<PlanIngredient> Ingredients { get; init; } = [];
 
-    /// <summary>Requests the Commander's rank cannot reach at all, with what clearing them costs.</summary>
-    public IReadOnlyList<string> Gates { get; init; } = [];
+    /// <summary>Requests the Commander's rank cannot reach at all.</summary>
+    public IReadOnlyList<PlanBlock> Blocks { get; init; } = [];
+
+    public IReadOnlyList<string> Gates => [.. Blocks.Select(block => block.Sentence)];
 
     /// <summary>Requests no shipped table covers.</summary>
     public IReadOnlyList<string> Uncovered { get; init; } = [];
@@ -160,7 +162,7 @@ public static class EngineeringPlan
     public static PlanCosting Cost(IEnumerable<ChecklistItem> items, CommanderGameState? state)
     {
         var needed = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var gates = new List<string>();
+        var blocks = new List<PlanBlock>();
         var uncovered = new List<string>();
         var assumed = new List<string>();
 
@@ -243,7 +245,7 @@ public static class EngineeringPlan
                 continue;
             }
 
-            var rank = RankFor(intent, state);
+            var (engineer, rank) = BestRoller(intent, state);
 
             if (rank is { } known && recipe.TotalFor(known) is { } total)
             {
@@ -254,7 +256,7 @@ public static class EngineeringPlan
             // Nobody unlocked can reach it yet: counted at the worst case rather than left uncosted, and the
             // gate line says why.
             Add(needed, recipe.TotalFor(grade!.Value));
-            gates.Add(Gate(item.Text, grade.Value));
+            blocks.Add(new PlanBlock(item.Text, grade.Value, engineer, rank));
         }
 
         var ingredients = needed
@@ -267,30 +269,22 @@ public static class EngineeringPlan
             .OrderBy(ingredient => ingredient.Material.Name, StringComparer.Ordinal)
             .ToList();
 
-        return new PlanCosting { Ingredients = ingredients, Gates = gates, Uncovered = uncovered, Assumed = assumed };
+        return new PlanCosting { Ingredients = ingredients, Blocks = blocks, Uncovered = uncovered, Assumed = assumed };
     }
 
-    private static string Gate(string what, int grade) =>
-        $"{what} — no engineer you have unlocked offers grade "
-        + $"{grade.ToString(CultureInfo.InvariantCulture)} yet; counted at the most rolls it can take.";
-
     /// <summary>
-    /// The highest rank among the engineers who could craft this, unlocked ones only — every roller
-    /// <see cref="PlannedNeeds.Rollers"/> finds, the same reach <see cref="PlannedWork.CanBeRolled"/> uses,
-    /// or just the one the item names where it names one.
+    /// The unlocked engineer with the highest rank among those who could craft this — every roller
+    /// <see cref="PlannedNeeds.Rollers"/> finds, or just the one the item names where it names one. With
+    /// none unlocked, the first candidate and no rank.
     /// </summary>
-    private static int? RankFor(ChecklistIntent intent, CommanderGameState? state)
+    private static (string? Engineer, int? Rank) BestRoller(ChecklistIntent intent, CommanderGameState? state)
     {
-        if (state is null)
-        {
-            return null;
-        }
-
         IReadOnlyList<string> candidates = Blank(intent.Engineer) is { } named
             ? [named]
             : PlannedNeeds.Rollers(intent.Detail!, Blank(intent.Module), intent.Grade);
 
-        int? best = null;
+        string? first = null;
+        (string? Engineer, int? Rank) best = (null, null);
 
         foreach (var candidate in candidates)
         {
@@ -299,18 +293,20 @@ public static class EngineeringPlan
                 continue;
             }
 
-            if (state.Engineers.For(engineer.Id) is not { IsUnlocked: true, Rank: { } rank })
+            first ??= engineer.Name;
+
+            if (state?.Engineers.For(engineer.Id) is not { IsUnlocked: true, Rank: { } rank })
             {
                 continue;
             }
 
-            if (best is null || rank > best)
+            if (best.Rank is null || rank > best.Rank)
             {
-                best = rank;
+                best = (engineer.Name, rank);
             }
         }
 
-        return best;
+        return best.Rank is null ? (first, null) : best;
     }
 
     private static void Add(Dictionary<string, int> into, IEnumerable<BlueprintIngredient>? ingredients)
