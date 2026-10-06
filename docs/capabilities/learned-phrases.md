@@ -20,27 +20,51 @@ Settings → **Learned phrases** lists every entry the flying Commander has taug
 first: the wording said, and the phrase it now runs. Nothing here is shared between Commanders —
 each has their own.
 
+### Teaching a pattern
+
+A phrase you teach is a pattern: plain words, plus `[a|b|c]` groups of alternatives. An empty
+alternative makes a group optional.
+
+```text
+[please|] drop the wheels
+[boost|get clear] and [jump|engage]
+```
+
+The first stands for two wordings and the second for four. Groups do not nest, and one pattern
+makes at most 100 wordings. A pattern is refused if any wording is already a phrase D47 knows, or
+is one of your own phrases standing for something else. The entry on this page is the pattern as
+written.
+
 ### Forgetting one
 
 Press **Forget** beside the entry, or say it:
 
 > "forget 'set focus on elite'"
 
-Either removes the entry from the page and from `data/phrases.json`, and the wording it forgets no
-longer matches — it goes back to being offered as a near miss, if it still scores as one, rather
+Either removes the entry from the page and from `data/phrases.json`, and every wording it produced
+no longer matches — it goes back to being offered as a near miss, if it still scores as one, rather
 than running silently.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-#### `forget_learned_phrase`
+#### `add_phrase`
 
-Forget one utterance the Commander taught D47 to treat as a command, by the wording they said.
-Never callable by the model — only the panel, a hotkey or the Commander's own "forget" phrase
-reach it.
+Teach D47 a pattern of words that runs an existing phrase. A pattern is plain words and `[a|b|c]`
+groups of alternatives; an empty alternative makes a group optional, as in "[please|] drop the
+wheels". Groups do not nest and a pattern makes at most 100 wordings. Never callable by the model.
 
 ```json
-{"type":"object","properties":{"said":{"type":"string","description":"The utterance to forget, exactly as it reads on the learned-phrases page."}},"required":["said"],"additionalProperties":false}
+{"type":"object","properties":{"pattern":{"type":"string","description":"The words to teach, with optional [a|b] groups of alternatives."},"phrase":{"type":"string","description":"The phrase in the phrase book the pattern should run."}},"required":["pattern","phrase"],"additionalProperties":false}
+```
+
+#### `forget_learned_phrase`
+
+Forget one pattern the Commander taught D47, as written, with every wording it produced. Never
+callable by the model — only the panel, a hotkey or the Commander's own "forget" phrase reach it.
+
+```json
+{"type":"object","properties":{"said":{"type":"string","description":"The pattern to forget, exactly as it reads on the learned-phrases page."}},"required":["said"],"additionalProperties":false}
 ```
 
 </details>

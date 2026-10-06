@@ -305,7 +305,10 @@ public static class BuiltinCapabilities
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic),
         ListeningCapability.Create(settings, listening),
-        LearnedPhrasesCapability.Create(learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
+        LearnedPhrasesCapability.Create(
+            learnedPhrases,
+            () => gameState.Active?.Identity.FrontierId ?? string.Empty,
+            phraseBook ?? (() => PhraseBook.From(registry(), []))),
         CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),

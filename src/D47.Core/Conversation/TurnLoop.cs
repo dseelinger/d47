@@ -484,7 +484,7 @@ public sealed class TurnLoop(
 
             if (IsAffirmative(input))
             {
-                LearnPhrase?.Invoke(pending.Said, pending.Phrase);
+                LearnPhrase?.Invoke(PhrasePattern.Literal(pending.Said), pending.Phrase);
 
                 foreach (var turnEvent in Offered("Learned.", input))
                 {

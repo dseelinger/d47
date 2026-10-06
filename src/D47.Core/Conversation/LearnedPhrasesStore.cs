@@ -5,8 +5,25 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Conversation;
 
-/// <summary>One utterance a Commander confirmed stands for a declared phrase.</summary>
+/// <summary>A pattern, as written, a Commander taught that stands for a declared phrase.</summary>
 public sealed record LearnedPhrase(string Said, string Phrase, DateTimeOffset LearnedAt);
+
+public enum PhraseClashKind
+{
+    /// <summary>The wording is a phrase in the phrase book.</summary>
+    BookPhrase,
+
+    /// <summary>The wording is one of this Commander's own phrases, standing for a different phrase.</summary>
+    OwnPhrase,
+}
+
+/// <summary>
+/// A wording a new pattern cannot take. <paramref name="StandsFor"/> is the book phrase itself or the phrase
+/// the Commander's own pattern stands for; <paramref name="CapabilityId"/> is set for a book phrase and
+/// <paramref name="Pattern"/> for a Commander's own phrase.
+/// </summary>
+public sealed record PhraseClash(
+    string Wording, PhraseClashKind Kind, string StandsFor, string? CapabilityId, string? Pattern);
 
 /// <summary>
 /// Per Commander Frontier id, the wording they have confirmed stands for a declared phrase (#169). Kept
@@ -64,8 +81,12 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
                 {
                     if (phrase is { Said.Length: > 0, Phrase.Length: > 0 })
                     {
-                        forCommander[KeywordRouter.Utterance(phrase.Said)] =
-                            new LearnedPhrase(phrase.Said, phrase.Phrase, phrase.LearnedAt);
+                        var entry = new LearnedPhrase(phrase.Said, phrase.Phrase, phrase.LearnedAt);
+
+                        foreach (var wording in WordingsOf(phrase.Said))
+                        {
+                            forCommander[wording] = entry;
+                        }
                     }
                 }
 
@@ -100,44 +121,107 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
         }
     }
 
-    /// <summary>Every phrase this Commander has taught d47, for the settings row and its "forget" button.</summary>
+    /// <summary>Every phrase this Commander has taught d47, one per pattern as written.</summary>
     public IReadOnlyList<LearnedPhrase> For(string frontierId)
     {
         lock (_gate)
         {
-            return _byCommander.TryGetValue(frontierId, out var learned) ? [.. learned.Values] : [];
+            return _byCommander.TryGetValue(frontierId, out var learned) ? Distinct(learned) : [];
         }
     }
 
-    /// <summary>Records that an utterance stands for a phrase, replacing any earlier mapping for it.</summary>
-    public void Learn(string frontierId, string said, string phrase, DateTimeOffset at)
+    /// <summary>The entry that already teaches <paramref name="pattern"/> as written for <paramref name="phrase"/>.</summary>
+    public LearnedPhrase? Taught(string frontierId, string pattern, string phrase) =>
+        For(frontierId).FirstOrDefault(entry =>
+            string.Equals(Same(entry.Said), Same(pattern), StringComparison.OrdinalIgnoreCase)
+            && string.Equals(entry.Phrase, phrase, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// The first of <paramref name="wordings"/> that cannot stand for <paramref name="phrase"/>: a phrase in
+    /// the book, or one of this Commander's phrases standing for a different phrase.
+    /// </summary>
+    public PhraseClash? FindClash(string frontierId, IEnumerable<string> wordings, string phrase, PhraseBook book)
     {
+        var inBook = new Dictionary<string, PhraseEntry>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in book.Entries)
+        {
+            inBook.TryAdd(KeywordRouter.Utterance(entry.Phrase), entry);
+        }
+
+        foreach (var wording in wordings)
+        {
+            if (inBook.TryGetValue(wording, out var declared))
+            {
+                return new PhraseClash(wording, PhraseClashKind.BookPhrase, declared.Phrase, declared.CapabilityId, null);
+            }
+
+            lock (_gate)
+            {
+                if (_byCommander.TryGetValue(frontierId, out var learned)
+                    && learned.TryGetValue(wording, out var own)
+                    && !string.Equals(own.Phrase, phrase, StringComparison.OrdinalIgnoreCase))
+                {
+                    return new PhraseClash(wording, PhraseClashKind.OwnPhrase, own.Phrase, null, own.Said);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Records that a pattern stands for a phrase, replacing any earlier mapping for each of its wordings.
+    /// False when the pattern is refused.
+    /// </summary>
+    public bool Learn(string frontierId, string said, string phrase, DateTimeOffset at)
+    {
+        if (!PhrasePattern.TryExpand(said, out var wordings, out var error))
+        {
+            logger.LogWarning("Not learning \"{Said}\": {Error}", said, error);
+            return false;
+        }
+
         lock (_writeGate)
         {
             var merged = CloneReplacing(frontierId, out var forCommander);
+            var entry = new LearnedPhrase(said, phrase, at);
 
-            forCommander[KeywordRouter.Utterance(said)] = new LearnedPhrase(said, phrase, at);
+            foreach (var wording in wordings)
+            {
+                forCommander[wording] = entry;
+            }
 
             Write(merged);
         }
 
         logger.LogInformation("Learned that \"{Said}\" means \"{Phrase}\"", said, phrase);
+
+        return true;
     }
 
-    /// <summary>Forgets one learned utterance, so a mishearing accepted once does not stay in the router.</summary>
+    /// <summary>Forgets one pattern as written, with every wording it produced and no others.</summary>
     public bool Forget(string frontierId, string said)
     {
         lock (_writeGate)
         {
-            if (!_byCommander.TryGetValue(frontierId, out var learned)
-                || !learned.ContainsKey(KeywordRouter.Utterance(said)))
+            var target = _byCommander.TryGetValue(frontierId, out var learned)
+                ? learned.Values.FirstOrDefault(entry =>
+                    string.Equals(Same(entry.Said), Same(said), StringComparison.OrdinalIgnoreCase))
+                : null;
+
+            if (target is null)
             {
                 return false;
             }
 
             var merged = CloneReplacing(frontierId, out var forCommander);
 
-            forCommander.Remove(KeywordRouter.Utterance(said));
+            foreach (var key in forCommander.Where(pair => ReferenceEquals(pair.Value, target)).Select(pair => pair.Key).ToList())
+            {
+                forCommander.Remove(key);
+            }
+
             Write(merged);
         }
 
@@ -166,6 +250,17 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
         return merged;
     }
 
+    private static string Same(string text) => KeywordRouter.Utterance(text);
+
+    private static List<LearnedPhrase> Distinct(Dictionary<string, LearnedPhrase> byWording) =>
+        [.. byWording.Values.Distinct(ReferenceEqualityComparer.Instance).Cast<LearnedPhrase>()];
+
+    /// <summary>The wordings of a stored pattern; one that no longer parses is kept as a literal wording.</summary>
+    private static IReadOnlyList<string> WordingsOf(string said) =>
+        PhrasePattern.TryExpand(said, out var wordings, out _)
+            ? wordings
+            : [KeywordRouter.Utterance(PhrasePattern.Literal(said))];
+
     private void Write(Dictionary<string, Dictionary<string, LearnedPhrase>> merged)
     {
         var document = new Document
@@ -177,7 +272,7 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
                     FrontierId = entry.Key,
                     Phrases =
                     [
-                        .. entry.Value.Values.Select(phrase => new PhraseRecord
+                        .. Distinct(entry.Value).Select(phrase => new PhraseRecord
                         {
                             Said = phrase.Said,
                             Phrase = phrase.Phrase,
