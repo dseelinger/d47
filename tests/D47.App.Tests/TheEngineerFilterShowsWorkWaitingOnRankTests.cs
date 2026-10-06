@@ -78,6 +78,7 @@ public class TheEngineerFilterShowsWorkWaitingOnRankTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         return [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];

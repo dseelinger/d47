@@ -96,6 +96,7 @@ public class TheChecklistFollowsTheShipTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         return panel;

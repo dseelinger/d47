@@ -95,15 +95,16 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
     {
         var (panel, _) = Open();
 
-        Assert.True(Shown(panel, "Buy limpets"));
+        // The list of lists, whose row for the Commander's notes is drawn.
+        Assert.True(Shown(panel, "YOUR NOTES"));
 
         Toggle(panel);
 
         Assert.True(Goals(panel).IsEffectivelyVisible);
         Assert.True(Named(panel, "GoalsView").IsEffectivelyVisible);
         Assert.False(Named(panel, "ChecklistView").IsEffectivelyVisible);
-        Assert.False(Shown(panel, "Buy limpets"));
-        Assert.False(Shown(panel, "Delete completed items"));
+        Assert.False(Shown(panel, "YOUR NOTES"));
+        Assert.False(Shown(panel, "Delete completed"));
         Assert.DoesNotContain(
             panel.GetVisualDescendants().OfType<Control>(),
             control => control.IsEffectivelyVisible

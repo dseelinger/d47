@@ -612,7 +612,7 @@ public partial class PanelView : UserControl
         {
             ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
                                             ?? new TextBlock { Text = "Nothing waiting." },
-            _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill),
+            _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill, crumb: crumb),
         };
 
         Furnish(

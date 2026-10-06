@@ -64,6 +64,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, checklists);
@@ -99,6 +100,15 @@ public class TheChecklistIsDrawnOnTheKitTests
 
         var list = Save(surface.Window, $"checklist-{themeId}-{width}x{height}.png");
 
+        panel.Nav.ToRoot();
+        var lists = Save(surface.Window, $"checklist-lists-{themeId}-{width}x{height}.png");
+
+        panel.Nav.Drill(ChecklistPage.ListCrumb(surface.Checklists.Lists()[0]));
+        var one = Save(surface.Window, $"checklist-one-{themeId}-{width}x{height}.png");
+
+        panel.Nav.ToRoot();
+        Dispatcher.UIThread.RunJobs();
+
         var band = panel.GetVisualDescendants().OfType<CheckBox>()
             .First(box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal));
 
@@ -114,6 +124,8 @@ public class TheChecklistIsDrawnOnTheKitTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(File.Exists(list));
+        Assert.True(File.Exists(lists));
+        Assert.True(File.Exists(one));
         Assert.True(File.Exists(goals));
         Assert.True(File.Exists(suggestions));
     }
@@ -173,14 +185,21 @@ public class TheChecklistIsDrawnOnTheKitTests
         var surface = Open(1280, 860);
 
         var delete = surface.Panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Content as string == "Delete completed items");
+            .Single(button => button.Content as string == "Delete completed");
+
+        var height = delete.Bounds.Height;
+
+        Assert.Contains("destructive", delete.Classes);
+
+        // Suggestions is on the list of lists, one level up.
+        surface.Panel.Nav.ToRoot();
+        Dispatcher.UIThread.RunJobs();
 
         var suggestions = surface.Panel.GetVisualDescendants().OfType<Button>()
             .Single(button => (button.Content as string)?.StartsWith("Suggestions", StringComparison.Ordinal) == true);
 
-        Assert.Contains("destructive", delete.Classes);
-        Assert.Equal(suggestions.Bounds.Height, delete.Bounds.Height);
-        Assert.InRange(delete.Bounds.Height, 44, 48);
+        Assert.Equal(suggestions.Bounds.Height, height);
+        Assert.InRange(height, 44, 48);
 
         surface.Window.Close();
     }

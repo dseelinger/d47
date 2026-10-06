@@ -46,6 +46,7 @@ public class ChecklistTabTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -250,6 +251,10 @@ public class ChecklistTabTests
 
         var (window, panel) = Open(checklists);
 
+        // Suggestions is on the list of lists.
+        panel.Nav.ToRoot();
+        Dispatcher.UIThread.RunJobs();
+
         var open = panel.GetVisualDescendants().OfType<Button>()
             .Single(button => (button.Content as string)?.StartsWith("Suggestions", StringComparison.Ordinal) == true);
 
@@ -288,6 +293,10 @@ public class ChecklistTabTests
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
 
         var (window, panel) = Open(checklists);
+
+        // Suggestions is on the list of lists.
+        panel.Nav.ToRoot();
+        Dispatcher.UIThread.RunJobs();
 
         panel.Nav.Drill(new NavCrumb(ChecklistPage.SuggestionsKey, "Suggestions"));
         Dispatcher.UIThread.RunJobs();
@@ -367,6 +376,7 @@ public class ChecklistTabTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         window.CaptureRenderedFrame()!.Save(
@@ -421,6 +431,7 @@ public class ChecklistTabTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         window.CaptureRenderedFrame()!.Save(

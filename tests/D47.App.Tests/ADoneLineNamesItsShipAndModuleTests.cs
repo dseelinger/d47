@@ -69,6 +69,7 @@ public class ADoneLineNamesItsShipAndModuleTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -102,7 +103,7 @@ public class ADoneLineNamesItsShipAndModuleTests
         Assert.Contains(
             drawn, text => text.Contains("Grade 5 Reinforced Shields on 7A Shield Generator", StringComparison.Ordinal));
 
-        Assert.Contains(drawn, text => text.StartsWith("Flamebrand (Anaconda)", StringComparison.Ordinal));
+        Assert.Contains(drawn, text => text == "FLAMEBRAND");
 
         // The two spellings that were reported, and neither of them is drawn any more.
         Assert.DoesNotContain(drawn, text => text.Contains("Slot01_Size7", StringComparison.Ordinal));
@@ -144,6 +145,7 @@ public class ADoneLineNamesItsShipAndModuleTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableChecklist(checklists);
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
 
         AppLook.Capture(panel, "checklist-named-line.png");
     }

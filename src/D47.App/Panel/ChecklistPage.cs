@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -23,6 +24,53 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
     /// <summary>The crumb the suggestions page is pushed as.</summary>
     public const string SuggestionsKey = "checklist.suggestions";
+
+    /// <summary>The crumb the All lists page is pushed as.</summary>
+    public const string AllKey = "checklist.all";
+
+    /// <summary>The start of a one-list crumb's key; the list's id follows it.</summary>
+    public const string ListKeyPrefix = "checklist.list:";
+
+    /// <summary>How many lists the mini panel shows before counting the rest.</summary>
+    public const int MiniRows = 4;
+
+    /// <summary>The All lists level: every line, the filter stepper, no Add.</summary>
+    public static NavCrumb AllLists => new(AllKey, "All lists") { Whole = true };
+
+    /// <summary>The level that shows one list.</summary>
+    public static NavCrumb ListCrumb(ChecklistList list)
+    {
+        ArgumentNullException.ThrowIfNull(list);
+
+        return new NavCrumb(ListKeyPrefix + list.Id, list.Name) { Whole = true };
+    }
+
+    /// <summary>Which of the three checklist levels a page draws.</summary>
+    private enum Level
+    {
+        Lists,
+        One,
+        All,
+    }
+
+    private readonly Level _level;
+
+    /// <summary>The list a <see cref="Level.One"/> page draws, by <see cref="ChecklistList.Id"/>.</summary>
+    private readonly string? _listId;
+
+    /// <summary>The list's name as the crumb was pushed, for when the list has gone.</summary>
+    private readonly string _listWord = string.Empty;
+
+    /// <summary>The title, kind line and counts over a list page.</summary>
+    private readonly StackPanel _heading = new();
+
+    /// <summary>The bar of controls; page chrome, so its visibility is never assigned here.</summary>
+    private readonly WrapPanel _bar;
+
+    /// <summary>On a ship list: only lines an engineer in this system can do.</summary>
+    private readonly CheckBox _hereOnly;
+
+    private readonly Button _add;
 
     private readonly ChecklistService _checklists;
     private readonly PanelNavigator _nav;
@@ -96,7 +144,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>Bulk-removes every Done line on the whole checklist (#259).</summary>
     private readonly Button _deleteCompleted = new()
     {
-        Content = "Delete completed items",
+        Content = "Delete completed",
         VerticalAlignment = VerticalAlignment.Top,
         Classes = { "destructive" },
     };
@@ -121,13 +169,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>Which arc is open, by key.</summary>
     private string? _openArc;
 
+    /// <param name="crumb">The level this page draws: the Checklist root, <see cref="AllLists"/>, or a
+    /// <see cref="ListCrumb"/>.</param>
     public ChecklistPage(
         ChecklistService checklists,
         PanelNavigator nav,
         PanelPrompts prompts,
         D47.Core.Goals.GoalBook? goals = null,
         Action? backfill = null,
-        Func<DateTimeOffset>? now = null)
+        Func<DateTimeOffset>? now = null,
+        NavCrumb? crumb = null)
     {
         _checklists = checklists;
         _nav = nav;
@@ -136,16 +187,31 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _backfill = backfill;
         _now = now ?? (() => DateTimeOffset.Now);
 
+        if (crumb?.Key == AllKey)
+        {
+            _level = Level.All;
+        }
+        else if (crumb?.Key is { } key && key.StartsWith(ListKeyPrefix, StringComparison.Ordinal))
+        {
+            _level = Level.One;
+            _listId = key[ListKeyPrefix.Length..];
+            _listWord = crumb.Word;
+        }
+
         _arcsToggle = LabeledCheckBox.Caps(string.Empty);
         _arcsToggle.IsVisible = false;
 
         _partial = LabeledCheckBox.Caps("Include Partial Grades");
+        _hereOnly = LabeledCheckBox.Caps("Only what engineers here do");
+        _hereOnly.MinHeight = TypeScale.MinimumTarget;
 
         AutomationProperties.SetName(_scopeCombo, "Checklist scope");
         _scopeCombo.SelectionChanged += (_, _) => OnScopeChanged();
 
         // Through the service, like the filter beside it: shared across surfaces and remembered.
         _partial.IsCheckedChanged += (_, _) => _checklists.IncludePartial(_partial.IsChecked == true);
+
+        _hereOnly.IsCheckedChanged += (_, _) => Rebuild();
 
         _suggestions.Click += (_, _) =>
             _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
@@ -158,36 +224,47 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             Rebuild();
         };
 
-        var add = D47.App.Controls.Glyphs.Quiet(new Button(), "ADD", "Add a line");
-        add.VerticalAlignment = VerticalAlignment.Top;
+        _add = D47.App.Controls.Glyphs.Quiet(new Button(), "ADD A LINE", "Add a line");
+        _add.VerticalAlignment = VerticalAlignment.Top;
 
-        add.Click += (_, _) => AddLine();
+        _add.Click += (_, _) => AddLine();
 
         _deleteCompleted.Click += (_, _) => DeleteCompletedItems();
 
-        // A WrapPanel, because this bar overlapped itself below about 700 pixels. It was a DockPanel
-        // with one group docked right and one filling, and a filling StackPanel does not shrink — so the two
-        // groups drew over each other, which the strip's 512 made obvious and a narrow desktop window has
-        // been doing unnoticed all along.
+        // A WrapPanel, because a DockPanel with a filling StackPanel does not shrink and the two groups drew
+        // over each other below about 700 pixels.
         var bar = new WrapPanel { Margin = new Thickness(0, 0, 0, 10), ItemSpacing = 8, LineSpacing = 8 }
             .AsChrome();
 
-        _right.Children.Add(_suggestions);
-        _right.Children.Add(add);
+        switch (_level)
+        {
+            case Level.Lists:
+                _controls.Children.Add(_arcsToggle);
+                _right.Children.Add(_suggestions);
+                break;
 
-        // The arcs live beside the scope filter rather than above the whole page: they are another way of
-        // reading the same list, which is what the bar is for.
-        _controls.Children.Add(_scopeCombo);
-        _controls.Children.Add(_arcsToggle);
-        _controls.Children.Add(_deleteCompleted);
+            case Level.One:
+                _controls.Children.Add(_hereOnly);
+                _right.Children.Add(_add);
+                _right.Children.Add(_deleteCompleted);
+                break;
 
-        // The filter group first, so a bar that wraps drops "Add a line" to the second row rather than the
+            default:
+                _controls.Children.Add(_scopeCombo);
+                _right.Children.Add(_deleteCompleted);
+                break;
+        }
+
+        // The filter group first, so a bar that wraps drops the buttons to the second row rather than the
         // thing the page is filtered by.
         bar.Children.Add(_controls);
         bar.Children.Add(_right);
 
+        _bar = bar;
+
         var root = new DockPanel { Margin = new Thickness(14) };
 
+        DockPanel.SetDock(_heading, Dock.Top);
         DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
 
@@ -196,6 +273,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _band.Content = _arcs;
         _listView.Content = _list;
 
+        root.Children.Add(_heading);
         root.Children.Add(bar);
         root.Children.Add(_problems);
 
@@ -246,8 +324,13 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         Rebuild();
     }
 
-    /// <summary>The surface's one search box, narrowing this page (Phase 12).</summary>
-    public bool Filters => true;
+    /// <summary>The surface's one search box: every list from the root, every line on All lists; a list
+    /// page has none.</summary>
+    public bool Filters => _level != Level.One;
+
+    public string FilterPlaceholder => _level == Level.Lists ? "Search every list" : "Search this page";
+
+    public double? FilterWidth => _level == Level.Lists ? 360 : null;
 
     public void Filter(string? query)
     {
@@ -372,6 +455,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     private void Rebuild()
     {
         _list.Children.Clear();
+        _heading.Children.Clear();
 
         var document = _checklists.Document;
         var pending = _checklists.Proposals.PendingFor(document.CommanderFid);
@@ -382,6 +466,91 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _suggestions.IsVisible = pending.Count > 0;
         _suggestions.Content = $"Suggestions ({waiting.ToString(CultureInfo.InvariantCulture)})";
 
+        if (_level == Level.All)
+        {
+            SettleScope();
+        }
+
+        var goalsMode = _level == Level.Lists && _showArcs && _goals is not null;
+
+        _listView.IsVisible = !goalsMode;
+        // The bar itself is chrome and is never assigned, so an output-only surface's style can hide it.
+        _controls.IsVisible = !(_mini && _level == Level.Lists);
+        _right.IsVisible = _controls.IsVisible;
+        _bar.Margin = new Thickness(0, 0, 0, _controls.IsVisible ? 10 : 0);
+
+        var list = _level == Level.One ? _checklists.Lists().FirstOrDefault(found => found.Id == _listId) : null;
+
+        _hereNow = HereActive(list);
+
+        // The partial-grades box goes with whichever engineers-here filter this level has.
+        var offerPartial = _hereNow
+                           && (_checklists.IncludePartialGrades || _checklists.HasPartialWorkHere());
+
+        _partial.IsChecked = _checklists.IncludePartialGrades;
+
+        if (offerPartial && !_controls.Children.Contains(_partial))
+        {
+            _controls.Children.Insert(1, _partial);
+        }
+        else if (!offerPartial)
+        {
+            _controls.Children.Remove(_partial);
+        }
+
+        if (_level == Level.Lists)
+        {
+            RebuildArcs();
+        }
+
+        // The list keeps its filter, query and selection in the service, so unticking redraws it as it was.
+        if (goalsMode)
+        {
+            Summarise(string.Empty);
+            _problems.IsVisible = false;
+            return;
+        }
+
+        switch (_level)
+        {
+            case Level.Lists when Query.Length > 0:
+                DrawLines(_checklists.Arranged().Where(Matches).ToList());
+                break;
+
+            case Level.Lists:
+                Summarise(string.Empty);
+                DrawLists();
+                break;
+
+            case Level.One:
+                Summarise(string.Empty);
+                DrawOne(list);
+                break;
+
+            default:
+                DrawAllHeading();
+                _deleteCompleted.IsEnabled = _checklists.HasCompleted;
+                DrawLines(_checklists.Arranged().Where(Matches).ToList());
+                break;
+        }
+
+        ShowProblems();
+    }
+
+    /// <summary>Whether the lines drawn are filtered to what an engineer here can do.</summary>
+    private bool _hereNow;
+
+    /// <summary>Whether this level is filtered to what an engineer here can do.</summary>
+    private bool HereActive(ChecklistList? list) => _level switch
+    {
+        Level.All => Chosen == ChecklistService.HereKey,
+        Level.One => list?.Scope.Group == ChecklistGroup.Ship && _hereOnly.IsChecked == true,
+        _ => false,
+    };
+
+    /// <summary>Points the filter stepper at the service's filter.</summary>
+    private void SettleScope()
+    {
         // Flat: FilterAxes' headings group the choices by the question they answer, but the stepper
         // draws no heading between its own items.
         var keys = new List<string> { Everything };
@@ -420,47 +589,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         {
             _settlingScope = false;
         }
+    }
 
-        // Beside the engineer filter and nowhere else, and only where there is such work to include — a
-        // control that can only ever change nothing is a control that reads as broken.
-        var goalsMode = _showArcs && _goals is not null;
-
-        _scopeCombo.IsVisible = !goalsMode;
-        _deleteCompleted.IsVisible = !goalsMode;
-        _right.IsVisible = !goalsMode;
-        _listView.IsVisible = !goalsMode;
-
-        var offerPartial = !goalsMode
-                           && Chosen == ChecklistService.HereKey
-                           && (_checklists.IncludePartialGrades || _checklists.HasPartialWorkHere());
-
-        _partial.IsChecked = _checklists.IncludePartialGrades;
-
-        if (offerPartial && !_controls.Children.Contains(_partial))
-        {
-            _controls.Children.Insert(1, _partial);
-        }
-        else if (!offerPartial)
-        {
-            _controls.Children.Remove(_partial);
-        }
-
-        _deleteCompleted.IsEnabled = _checklists.HasCompleted;
-
-        RebuildArcs();
-
-        // The list keeps its filter, query and selection in the service, so unticking redraws it as it was.
-        if (goalsMode)
-        {
-            Summarise(string.Empty);
-            _problems.IsVisible = false;
-            return;
-        }
-
-        // In the order the Commander cares about: what can be done now, where they are standing —
-        // with their own hand-moves as the tiebreak.
-        var live = _checklists.Arranged().Where(Matches).ToList();
-
+    /// <summary>Lines in the order given, open first and a Done head over the rest, each led by its list's name.</summary>
+    private void DrawLines(IReadOnlyList<ChecklistItem> live)
+    {
         var open = live.Where(item => !item.IsComplete).ToList();
         var done = live.Where(item => item.IsComplete).ToList();
 
@@ -476,8 +609,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             }
         }
 
-        // How big the answer is, whenever the page is showing less than all of it (reported 2026-08-23, twice
-        // in one evening).
         var summary = string.Empty;
 
         if (open.Count > 0 && (Chosen != Everything || Query.Length > 0))
@@ -497,10 +628,16 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         Summarise(summary);
 
-        // One list, in the Commander's order, and no headings between scopes.
+        var names = _checklists.Lists().ToDictionary(list => list.Id, list => list.Name, StringComparer.Ordinal);
+
+        string? Lead(ChecklistItem item) =>
+            ChecklistLists.IdOf(item) is { } id && names.TryGetValue(id, out var name)
+                ? name
+                : null;
+
         foreach (var item in open)
         {
-            _list.Children.Add(Line(item));
+            _list.Children.Add(Line(item, Lead(item)));
         }
 
         if (done.Count > 0)
@@ -510,11 +647,375 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
             foreach (var item in done)
             {
-                _list.Children.Add(Line(item));
+                _list.Children.Add(Line(item, Lead(item)));
             }
         }
+    }
 
-        ShowProblems();
+    /// <summary>The list of lists: a row per list under its group's head, and All lists at the end.</summary>
+    private void DrawLists()
+    {
+        var lists = _checklists.Lists();
+
+        if (lists.Count == 0)
+        {
+            _list.Children.Add(Muted(EmptyMessage()));
+            return;
+        }
+
+        if (_mini)
+        {
+            foreach (var list in lists.Take(MiniRows))
+            {
+                _list.Children.Add(CompactRow(list));
+            }
+
+            if (lists.Count > MiniRows)
+            {
+                var rest = lists.Count - MiniRows;
+
+                var more = Muted(rest == 1 ? "1 more list" : $"{rest.ToString(CultureInfo.InvariantCulture)} more lists");
+                more.Name = "ChecklistMoreLists";
+                more.FontSize = TypeScale.Caption;
+                more.Margin = new Thickness(0, 4, 0, 0);
+
+                _list.Children.Add(more);
+            }
+
+            return;
+        }
+
+        ChecklistListGroup? group = null;
+
+        foreach (var list in lists)
+        {
+            if (list.Group != group)
+            {
+                group = list.Group;
+                _list.Children.Add(ListRow.Head(GroupWord(list.Group)));
+            }
+
+            _list.Children.Add(ListRowButton(list));
+        }
+
+        var all = _checklists.Arranged();
+        var allOpen = all.Count(item => !item.IsComplete);
+
+        var hint = Muted("Every line in one list, in your order");
+        hint.FontSize = TypeScale.Tip;
+        hint.TextWrapping = TextWrapping.NoWrap;
+        hint.TextTrimming = TextTrimming.CharacterEllipsis;
+
+        var total = Pressable(
+            $"All lists, {allOpen.ToString(CultureInfo.InvariantCulture)} open, "
+            + $"{(all.Count - allOpen).ToString(CultureInfo.InvariantCulture)} done",
+            Columns(
+                Named("All lists", null, sentence: false),
+                hint,
+                Counts(allOpen, all.Count - allOpen)),
+            () => _nav.Drill(AllLists));
+
+        total.Name = "ChecklistAllLists";
+        total.Margin = new Thickness(0, 10, 0, 0);
+
+        _list.Children.Add(total);
+    }
+
+    /// <summary>One row of the list of lists: name and kind, the next open line, the counts.</summary>
+    private Button ListRowButton(ChecklistList list)
+    {
+        var quiet = list.Group == ChecklistListGroup.NothingOpen;
+
+        var name = ListRow.Name(new TextBlock { Text = list.Name, TextTrimming = TextTrimming.CharacterEllipsis });
+
+        if (quiet)
+        {
+            Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        }
+        else if (list.IsHere)
+        {
+            Themed(name, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        }
+
+        var who = new StackPanel { Spacing = 1, Children = { name } };
+
+        if (list.Kind.Length > 0)
+        {
+            who.Children.Add(ListRow.Sub(new TextBlock { Text = list.Kind, TextTrimming = TextTrimming.CharacterEllipsis }));
+        }
+
+        var next = new TextBlock
+        {
+            Text = list.Next ?? "Every line done",
+            FontSize = TypeScale.Tip,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        Themed(next, TextBlock.ForegroundProperty, quiet ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+
+        var row = Pressable(
+            Spoken(list),
+            Columns(who, next, quiet ? DoneMark(list.Done) : Counts(list.Open, list.Done)),
+            () => _nav.Drill(ListCrumb(list)));
+
+        if (quiet)
+        {
+            Themed(row, TemplatedControl.BackgroundProperty, ThemeManager.SlabKey);
+        }
+
+        return row;
+    }
+
+    /// <summary>
+    /// The mini panel's row: name, next line, open count. A pressed border rather than a button, because an
+    /// output-only mini surface hides every button.
+    /// </summary>
+    private Border CompactRow(ChecklistList list)
+    {
+        var name = ListRow.Name(new TextBlock
+        {
+            Text = list.Name,
+            FontSize = TypeScale.Small,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+
+        if (list.IsHere)
+        {
+            Themed(name, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        }
+
+        var next = new TextBlock
+        {
+            Text = list.Next ?? "Every line done",
+            FontSize = TypeScale.Caption,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Themed(next, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var count = new TextBlock
+        {
+            Text = list.Open.ToString(CultureInfo.InvariantCulture),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Caption,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Themed(count, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("130,*,54"), ColumnSpacing = 10 };
+
+        Grid.SetColumn(next, 1);
+        Grid.SetColumn(count, 2);
+        grid.Children.Add(name);
+        grid.Children.Add(next);
+        grid.Children.Add(count);
+
+        var row = ListRow.Dress(new Border { Child = grid, MinHeight = TypeScale.MinimumTarget });
+
+        AutomationProperties.SetName(row, Spoken(list));
+        row.PointerPressed += (_, _) => _nav.Drill(ListCrumb(list));
+
+        return row;
+    }
+
+    /// <summary>A row's accessible name: the list and its counts.</summary>
+    private static string Spoken(ChecklistList list) =>
+        $"{list.Name}, {list.Open.ToString(CultureInfo.InvariantCulture)} open, "
+        + $"{list.Done.ToString(CultureInfo.InvariantCulture)} done";
+
+    private static string GroupWord(ChecklistListGroup group) => group switch
+    {
+        ChecklistListGroup.Yours => "Yours",
+        ChecklistListGroup.Ships => "Ships",
+        ChecklistListGroup.Systems => "Systems",
+        ChecklistListGroup.SuitsAndWeapons => "Suits and weapons",
+        _ => "Nothing open",
+    };
+
+    /// <summary>A pressable list row, 44px or taller, named for a screen reader.</summary>
+    private static Button Pressable(string name, Control content, Action pressed)
+    {
+        var button = ListRow.Dress(new Button
+        {
+            Content = content,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            MinHeight = TypeScale.MinimumTarget,
+        });
+
+        AutomationProperties.SetName(button, name);
+        button.Click += (_, _) => pressed();
+
+        return button;
+    }
+
+    /// <summary>The three columns of a list row: who, next, counts.</summary>
+    private static Grid Columns(Control who, Control next, Control counts)
+    {
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("260,*,170"), ColumnSpacing = 16 };
+
+        who.VerticalAlignment = VerticalAlignment.Center;
+        next.VerticalAlignment = VerticalAlignment.Center;
+        counts.VerticalAlignment = VerticalAlignment.Center;
+
+        Grid.SetColumn(next, 1);
+        Grid.SetColumn(counts, 2);
+        grid.Children.Add(who);
+        grid.Children.Add(next);
+        grid.Children.Add(counts);
+
+        return grid;
+    }
+
+    /// <summary>The open count in the accent and the done count in grey, mono, right-aligned.</summary>
+    private static TextBlock Counts(int open, int done)
+    {
+        var block = new TextBlock
+        {
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            TextWrapping = TextWrapping.NoWrap,
+        };
+
+        var opened = new Run($"{open.ToString(CultureInfo.InvariantCulture)} open");
+        Themed(opened, TextElement.ForegroundProperty, ThemeManager.AKey);
+        block.Inlines!.Add(opened);
+
+        if (done > 0)
+        {
+            var closed = new Run($" · {done.ToString(CultureInfo.InvariantCulture)} done");
+            Themed(closed, TextElement.ForegroundProperty, ThemeManager.GreyKey);
+            block.Inlines.Add(closed);
+        }
+
+        return block;
+    }
+
+    /// <summary>A Nothing open row's count: "✓ {n} done" in Blue.</summary>
+    private static TextBlock DoneMark(int done)
+    {
+        var block = new TextBlock
+        {
+            Text = $"✓ {done.ToString(CultureInfo.InvariantCulture)} done",
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
+        return block;
+    }
+
+    /// <summary>A list page's title: the name, a line under it, and the counts at the right.</summary>
+    private void Heading(string name, string? kind, string? kindKey, int open, int done)
+    {
+        var title = TitleText.Build(name, TypeScale.Title, TitleRank.Screen);
+        title.Name = "ChecklistListTitle";
+
+        var text = new StackPanel { Spacing = 2, Children = { title } };
+
+        if (kind is { Length: > 0 })
+        {
+            var line = new TextBlock
+            {
+                Name = "ChecklistListKind",
+                Text = kind.ToUpperInvariant(),
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Tip,
+                FontWeight = FontWeight.Medium,
+                TextWrapping = TextWrapping.Wrap,
+            };
+
+            Themed(line, TextBlock.ForegroundProperty, kindKey ?? ThemeManager.GreyKey);
+            text.Children.Add(line);
+        }
+
+        var counts = Counts(open, done);
+        counts.VerticalAlignment = VerticalAlignment.Bottom;
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            ColumnSpacing = 16,
+            Margin = new Thickness(0, 0, 0, 10),
+        };
+
+        Grid.SetColumn(counts, 1);
+        row.Children.Add(text);
+        row.Children.Add(counts);
+
+        _heading.Children.Add(row);
+    }
+
+    private void DrawAllHeading()
+    {
+        var all = _checklists.Arranged();
+        var open = all.Count(item => !item.IsComplete);
+
+        Heading("All lists", null, null, open, all.Count - open);
+    }
+
+    /// <summary>One list: its title, its controls and its lines.</summary>
+    private void DrawOne(ChecklistList? list)
+    {
+        if (list is null)
+        {
+            Heading(_listWord, null, null, 0, 0);
+
+            _hereOnly.IsVisible = false;
+            _add.IsVisible = false;
+            _deleteCompleted.IsVisible = false;
+
+            _list.Children.Add(Muted("Nothing is on this list now."));
+            return;
+        }
+
+        var ship = list.Scope.Group == ChecklistGroup.Ship;
+
+        var kind = list.IsHere
+            ? string.Join(" · ", new[] { list.Kind, ship ? "Flying now" : "You are here" }.Where(part => part.Length > 0))
+            : list.Kind;
+
+        Heading(list.Name, kind, list.IsHere ? ThemeManager.CyanKey : null, list.Open, list.Done);
+
+        _hereOnly.IsVisible = ship;
+        _add.IsVisible = _checklists.CanAdd(list);
+        _deleteCompleted.IsVisible = true;
+        _deleteCompleted.IsEnabled = list.Done > 0;
+
+        var lines = _checklists.Lines(list);
+
+        if (_hereNow)
+        {
+            lines = [.. lines.Where(_checklists.OfferedHere)];
+        }
+
+        if (lines.Count == 0)
+        {
+            _list.Children.Add(Muted("No engineer in this system does any line on this list."));
+        }
+
+        var done = lines.Where(item => item.IsComplete).ToList();
+
+        foreach (var item in lines.Where(item => !item.IsComplete))
+        {
+            _list.Children.Add(Line(item, null, placed: true));
+        }
+
+        if (done.Count > 0)
+        {
+            _list.Children.Add(ListRow.Head($"Done ({done.Count})"));
+
+            foreach (var item in done)
+            {
+                _list.Children.Add(Line(item, null, placed: true));
+            }
+        }
     }
 
     /// <summary>The goals mode (Phase 34, "The checklist points at the arc").</summary>
@@ -836,7 +1337,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// One line: what it is, which scope it belongs to, and — when it is the selected one — the pair of
     /// movers.
     /// </summary>
-    private Control Line(ChecklistItem item)
+    /// <param name="lead">The list's name, leading the caption, on a page that mixes lists.</param>
+    /// <param name="placed">Whether the page already names the line's list, so the caption does not.</param>
+    private Control Line(ChecklistItem item, string? lead = null, bool placed = false)
     {
         var selected = Selected is { } chosen && chosen.Same(item.Id);
 
@@ -881,7 +1384,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         // Scope on the line rather than as a heading over a group of them, and named rather than numbered:
         // "ship 51" is d47's key for the ship and nobody's name for one, so a page of finished rolls said
         // which id they were on and not which ship (reported 2026-08-21).
-        var aside = new List<string> { _checklists.Where(item) };
+        var aside = new List<string>();
+
+        if (!placed && lead is null)
+        {
+            aside.Add(_checklists.Where(item));
+        }
 
         // And the arc it came from, where one proposed it (Phase 34).
         if (item.Goal is { Length: > 0 } goal)
@@ -893,7 +1401,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         // How far an engineer here can take it, where that is why the line is on the page at all
         // (change-requests.md 35).
-        if (Chosen == ChecklistService.HereKey
+        if (_hereNow
             && _checklists.IncludePartialGrades
             && _checklists.PartlyHere(item) is { } reach)
         {
@@ -901,7 +1409,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         }
 
         // And why a line this engineer does cannot be rolled today (#205).
-        if (Chosen == ChecklistService.HereKey && _checklists.RankHere(item) is { } standing)
+        if (_hereNow && _checklists.RankHere(item) is { } standing)
         {
             aside.Add(standing);
         }
@@ -921,9 +1429,21 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         var says = string.Join(" · ", aside);
 
         // A notice only where something is wrong.
-        body.Children.Add(ChecklistNextAction.IsWrong(item.State)
-            ? new Notice(inline: true) { Text = says }
-            : Secondary(says));
+        if (ChecklistNextAction.IsWrong(item.State))
+        {
+            body.Children.Add(new Notice(inline: true)
+            {
+                Text = lead is null ? says : string.Join(" · ", new[] { lead, says }.Where(part => part.Length > 0)),
+            });
+        }
+        else if (lead is not null)
+        {
+            body.Children.Add(Led(lead, says));
+        }
+        else if (says.Length > 0)
+        {
+            body.Children.Add(Secondary(says));
+        }
 
         // The same measure CriteriaFor reads for the Engineers pages, so the two cannot disagree (#17).
         if (verdict?.Measure is { } measure)
@@ -1074,17 +1594,28 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     }
 
     /// <summary>
-    /// Removes every Done line from the whole checklist in one press, ignoring the current filter and
-    /// search (#259).
+    /// Removes every Done line in one press: this list's on a list page, the whole checklist's on All lists,
+    /// ignoring the current filter and search (#259).
     /// </summary>
     private void DeleteCompletedItems()
     {
-        var count = _checklists.Document.Items.Count(item => item.IsComplete);
+        var list = _level == Level.One ? _checklists.Lists().FirstOrDefault(found => found.Id == _listId) : null;
+
+        if (_level == Level.One && list is null)
+        {
+            return;
+        }
+
+        var count = list?.Done ?? _checklists.Document.Items.Count(item => item.IsComplete);
 
         if (count == 0)
         {
             return;
         }
+
+        var where = list is null
+            ? " would come off your whole checklist, including anything hidden by the current filter or search."
+            : $" would come off {list.Name}. Other lists keep theirs.";
 
         _prompts.Choose(
             new ChoiceRequest(
@@ -1092,8 +1623,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                 "Delete completed",
                 "Delete completed items",
                 (count == 1 ? "1 completed line" : $"{count} completed lines")
-                + " would come off your whole checklist, including anything hidden by the current filter "
-                + "or search. There is no way back from this one.",
+                + where
+                + " There is no way back from this one.",
                 [new ChoiceOption("keep", "Keep them"), new ChoiceOption("delete", "Delete them")],
                 null,
                 ChoiceSurface.Layer),
@@ -1104,7 +1635,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                     return;
                 }
 
-                var change = _checklists.DeleteCompleted();
+                var change = list is null ? _checklists.DeleteCompleted() : _checklists.DeleteCompleted(list);
 
                 if (!change.Changed)
                 {
@@ -1210,7 +1741,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                     : EntryVerdict.Ok),
             value =>
             {
-                var change = _checklists.AddNote(_checklists.ScopeFor(null, null), value);
+                var scope = _level == Level.One
+                            && _checklists.Lists().FirstOrDefault(found => found.Id == _listId) is { } list
+                    ? list.Scope
+                    : _checklists.ScopeFor(null, null);
+
+                var change = _checklists.AddNote(scope, value);
 
                 if (!change.Changed)
                 {
@@ -1351,6 +1887,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         DockPanel.SetDock(sign, Dock.Left);
 
         return new DockPanel { Children = { sign, name } };
+    }
+
+    /// <summary>A caption led by the line's list name, upper case in the accent.</summary>
+    private static Control Led(string lead, string says)
+    {
+        var name = new TextBlock
+        {
+            Text = lead.ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontWeight = FontWeight.SemiBold,
+            FontSize = TypeScale.Caption,
+            LetterSpacing = TypeScale.Caption * 0.04,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Themed(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        DockPanel.SetDock(name, Dock.Left);
+
+        var row = new DockPanel { Children = { name } };
+
+        if (says.Length > 0)
+        {
+            row.Children.Add(Secondary(" · " + says));
+        }
+
+        return row;
     }
 
     /// <summary>A line's caption: a sentence, so it keeps its case and prose type in the secondary ink.</summary>

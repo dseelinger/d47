@@ -39,6 +39,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
+        panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

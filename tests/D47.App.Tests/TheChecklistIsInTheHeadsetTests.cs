@@ -104,6 +104,7 @@ public class TheChecklistIsInTheHeadsetTests
         // Spoken rather than assigned, because that is the route a Commander with a headset on actually has:
         // there is no tab to click until the surface has drawn one.
         PanelPhrases.Apply("show me the checklist", panel.Nav);
+        panel.Nav.Drill(ChecklistPage.AllLists);
 
         Serve(panel);
 
@@ -210,6 +211,7 @@ public class TheChecklistIsInTheHeadsetTests
         var targets = Page(view).GetVisualDescendants()
             .OfType<Control>()
             .Where(control => control is Button or CheckBox)
+            .Where(control => !control.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any())
             .Where(control => control.IsVisible && control.Bounds.Height > 0)
             .ToList();
 

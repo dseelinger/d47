@@ -22,7 +22,10 @@ namespace D47.App.Tests;
 /// </summary>
 public class MiniCarriesNoPageChromeTests
 {
-    private static (VrPanelSurface Panel, PanelView View, ChecklistService Checklists) Headset(string mode)
+    /// <param name="all">Whether to drill to All lists, whose bar carries the filter and Delete completed.</param>
+    private static (VrPanelSurface Panel, PanelView View, ChecklistService Checklists) Headset(
+        string mode,
+        bool all = true)
     {
         var (settings, _, paths) = TestSurface.Create();
         settings.Apply(VrCapability.ModeKey, mode, SettingsCaller.Panel);
@@ -55,6 +58,11 @@ public class MiniCarriesNoPageChromeTests
             .GetValue(panel)!;
 
         view.Tab = PanelTab.Commander;
+
+        if (all)
+        {
+            view.Nav.Drill(ChecklistPage.AllLists);
+        }
 
         Serve(panel);
 
@@ -141,9 +149,23 @@ public class MiniCarriesNoPageChromeTests
             .TakeWhile(above => !ReferenceEquals(above, view))
             .All(above => above.IsVisible);
 
-    /// <summary>The words on the Checklist bar, which is the page's own chrome.</summary>
-    private static readonly string[] Bar =
-        ["Everything", "Goals (9 running)", "Delete completed items"];
+    /// <summary>The words on the All lists bar, which is the page's own chrome.</summary>
+    private static readonly string[] Bar = ["Everything", "Delete completed"];
+
+    /// <summary>The list of lists' bar is chrome too.</summary>
+    [AvaloniaFact]
+    public void MiniCarriesNoneOfTheListOfListsChrome()
+    {
+        var (mini, miniView, _) = Headset("mini", all: false);
+        using var _mini = mini;
+
+        Assert.DoesNotContain("Goals (9 running)", DrawnWords(miniView));
+
+        var (full, fullView, _) = Headset("full", all: false);
+        using var _full = full;
+
+        Assert.Contains("Goals (9 running)", DrawnWords(fullView));
+    }
 
     [AvaloniaFact]
     public void MiniCarriesNoneOfThePagesOwnChrome()
