@@ -153,6 +153,7 @@ public class ModelChoiceTests
         {
             Llm = new LlmSettings { Provider = Core.Conversation.LlmProviderCatalog.NoneId },
             Updates = new UpdateSettings { CheckOnStartup = false },
+            Models = new ModelSettings { RefreshCatalog = false },
             Listening = new ListeningSettings { Model = WhisperModels.NoneId },
 
             // Every provider off means the voice one too: Edge Neural is free, not local.

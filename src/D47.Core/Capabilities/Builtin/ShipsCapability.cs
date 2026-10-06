@@ -44,6 +44,7 @@ public static class ShipsCapability
         {
             Remembered = () => "Nothing is remembered in a test.",
             Rescan = () => (_, _) => Task.FromResult<string?>(null),
+            Talk = () => null,
         };
     }
 
