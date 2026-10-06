@@ -84,6 +84,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
     private readonly Action? _backfill;
 
+    /// <summary>Sends a question to D47 as a typed turn.</summary>
+    private readonly Action<string>? _ask;
+
     private readonly Func<DateTimeOffset> _now;
 
     /// <summary>The goals, rebuilt with the page because a goal's figure moves with the journal.</summary>
@@ -187,13 +190,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         D47.Core.Goals.GoalBook? goals = null,
         Action? backfill = null,
         Func<DateTimeOffset>? now = null,
-        NavCrumb? crumb = null)
+        NavCrumb? crumb = null,
+        Action<string>? ask = null)
     {
         _checklists = checklists;
         _nav = nav;
         _prompts = prompts;
         _goals = goals;
         _backfill = backfill;
+        _ask = ask;
         _now = now ?? (() => DateTimeOffset.Now);
 
         if (crumb?.Key == AllKey)
@@ -1285,6 +1290,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             };
 
             buttons.Children.Add(promote);
+        }
+
+        if (!standing.IsDone && standing.Arc.Ask is { } question && _ask is not null)
+        {
+            var ask = new Button { Content = "Ask D47" };
+
+            ask.Click += (_, _) => _ask(question);
+
+            buttons.Children.Add(ask);
         }
 
         var remove = new Button { Content = "Remove" };

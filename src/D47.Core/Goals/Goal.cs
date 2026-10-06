@@ -39,6 +39,9 @@ public sealed record GoalArc
     /// <summary>The tool d47 already has for this career, where there is one.</summary>
     public string? Helper { get; init; }
 
+    /// <summary>The question the goal row's Ask D47 button sends, on an arc with nothing to put on a list.</summary>
+    public string? Ask { get; init; }
+
     /// <summary>When the Commander wrote it.</summary>
     public DateTimeOffset? Written { get; init; }
 

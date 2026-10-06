@@ -617,7 +617,7 @@ public partial class PanelView : UserControl
             ChecklistPage.ActivitiesKey => activities is null
                 ? new TextBlock { Text = "No activity dates yet." }
                 : new ActivitiesPage(activities, () => checklists.Document.CommanderFid),
-            _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill, crumb: crumb),
+            _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill, crumb: crumb, ask: question => Model?.AskNow(question)),
         };
 
         Furnish(

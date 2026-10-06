@@ -21,13 +21,13 @@ public static class GoalCatalogue
     public const int PowerplayTop = 100;
 
     /// <summary>One career arc per ladder that ends in Elite, in the order the journal writes them.</summary>
-    private static readonly (string Career, string Name, string? Helper)[] Careers =
+    private static readonly (string Career, string Name, string Ladder, string? Helper)[] Careers =
     [
-        ("Combat", "Elite V in Combat", null),
-        ("Trade", "Elite V in Trade", "plot_trade_route"),
-        ("Explore", "Elite V in Exploration", "plot_exploration_route"),
-        ("Soldier", "Elite V as a Mercenary", null),
-        ("Exobiologist", "Elite V in Exobiology", "plot_exobiology_route"),
+        ("Combat", "Elite V in Combat", "Combat", null),
+        ("Trade", "Elite V in Trade", "Trade", "plot_trade_route"),
+        ("Explore", "Elite V in Exploration", "Exploration", "plot_exploration_route"),
+        ("Soldier", "Elite V as a Mercenary", "Mercenary", null),
+        ("Exobiologist", "Elite V in Exobiology", "Exobiology", "plot_exobiology_route"),
     ];
 
     /// <summary>The journal's key for each navy ladder an arc is offered for.</summary>
@@ -40,6 +40,9 @@ public static class GoalCatalogue
         ("Federation", "Federal Navy", "Admiral"),
     ];
 
+    private static string AskHow(string progress) =>
+        $"What's the fastest way to {progress} from where I stand? Search the web if you can.";
+
     /// <summary>Every built-in arc, whether or not the Commander's state offers it.</summary>
     public static IReadOnlyList<GoalArc> Every =>
     [
@@ -50,6 +53,7 @@ public static class GoalCatalogue
             Done = $"{career.Career} rank {RankStanding.EliteTop} — Elite V.",
             Top = "Elite V",
             Helper = career.Helper,
+            Ask = AskHow($"gain {career.Ladder} rank"),
         }),
 
         .. Navy.Select(navy => new GoalArc
@@ -58,6 +62,7 @@ public static class GoalCatalogue
             Name = navy.Name,
             Done = $"{navy.Career} rank {NavyTop} — {navy.Top}.",
             Top = navy.Top,
+            Ask = AskHow($"gain {navy.Name} rank"),
         }),
 
         new GoalArc
@@ -65,6 +70,7 @@ public static class GoalCatalogue
             Key = Powerplay,
             Name = "Powerplay rank",
             Done = $"Powerplay rank {PowerplayTop}.",
+            Ask = AskHow("earn Powerplay merits"),
         },
 
         new GoalArc

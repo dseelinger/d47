@@ -680,6 +680,18 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         AskRequested?.Invoke();
     }
 
+    /// <summary>Send <paramref name="question"/> as a typed turn, or nothing while a turn is in flight.</summary>
+    public void AskNow(string question)
+    {
+        if (!CanAsk)
+        {
+            return;
+        }
+
+        AskText = question;
+        AskRequested?.Invoke();
+    }
+
     /// <summary>The previous sent line, on Up.</summary>
     public bool WalkBack()
     {

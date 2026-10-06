@@ -203,6 +203,14 @@ off a journal read, so a promotion moves the figure the moment the game writes i
 of the page spent telling you about a thing you are not doing. If any of the others is not yours
 either, remove it — it goes off the page and into the **Removed** list below the goals, and stays there until you press **Recover**.
 
+**Ask D47 on a rank or Powerplay goal.** Rank comes from playing the career, so there is no line
+to put on your list. Open one of the five career goals, a navy goal or the Powerplay goal and press
+**Ask D47** beside **Remove**. d47 sends the question for that ladder at once, as if you had typed
+it — *"What's the fastest way to gain Mercenary rank from where I stand? Search the web if you
+can."* — and the answer appears below it in the transcript. The model reads your rank from your
+goals, and searches the web only when web search is on. A finished goal has no button, and the
+button does nothing while d47 is still answering.
+
 ### Ages come from your journals
 
 Nothing happens until you ask. Tick **Goals** on the Checklist bar — it says how many arcs are
