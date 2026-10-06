@@ -243,7 +243,10 @@ public static class BuiltinCapabilities
         Knowledge.IStarSystemService? starSystems = null,
 
         // Hands a Commander pick to the tick thread, which writes game state.
-        Action<Journal.CommanderIdentity>? pickCommander = null) =>
+        Action<Journal.CommanderIdentity>? pickCommander = null,
+
+        // Carrier warnings that answer "noted" and the snoozes (#837).
+        Callouts.StandingWarnings? standingWarnings = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -393,7 +396,8 @@ public static class BuiltinCapabilities
         RemindersCapability.Create(
             journalReminders,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
-            now ?? (() => DateTimeOffset.MinValue)),
+            now ?? (() => DateTimeOffset.MinValue),
+            standingWarnings),
         MiningCapability.Create(
             miningTargets,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,

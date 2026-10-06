@@ -100,6 +100,12 @@ answer the most recent one.
 With nothing gone off, none of these is heard. A reminder you do not answer is removed at the
 start of your next session, as before.
 
+The carrier captain's fuel and upkeep warnings answer to the same phrases while one has just been
+spoken, whichever fired last. "Noted" keeps it quiet until its condition clears and returns.
+"Remind me next time" lets it speak at the next dock or jump request on the same reading, and the
+tomorrow and next-session phrases keep it quiet until you next load the game. A restart forgets all
+of this, and a warning's switch still turns it off for good.
+
 ### Only you set them
 
 Setting, cancelling and answering are protected: the AI is not offered any of them and is refused if it asks. A

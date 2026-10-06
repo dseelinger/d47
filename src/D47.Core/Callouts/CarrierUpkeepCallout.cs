@@ -12,6 +12,9 @@ public sealed class CarrierUpkeepCallout : ICallout
 
     private const long WeeksWarned = 4;
 
+    /// <summary>Where the Commander's answers to this warning are kept.</summary>
+    public StandingWarnings Warnings { get; set; } = new();
+
     /// <summary>The recorded <c>Balance</c> last spoken for; cleared by a <c>LoadGame</c>.</summary>
     private long? _spokenFor;
 
@@ -26,6 +29,7 @@ public sealed class CarrierUpkeepCallout : ICallout
             {
                 case "LoadGame":
                     _spokenFor = null;
+                    Warnings.NewSession();
                     break;
 
                 case "Docked":
@@ -38,11 +42,21 @@ public sealed class CarrierUpkeepCallout : ICallout
             }
         }
 
+        var commander = context.State?.Identity.FrontierId ?? string.Empty;
+
+        if (context.State is { Carrier: { Owned: true, IsSquadron: false, Balance: not null } read }
+            && CarrierUpkeep.Now(read, context.Now) is { WeeksCovered: { } covered } && covered >= WeeksWarned)
+        {
+            _spokenFor = null;
+            Warnings.Cleared(commander, Key);
+        }
+
         if (context.IsPriming
             || context.State is not { Carrier: { Owned: true, IsSquadron: false } carrier }
             || !(requested || (docked && carrier.DockedAtOwnCarrier))
             || carrier.Balance is not { } recorded
-            || recorded == _spokenFor
+            || (recorded == _spokenFor && !Warnings.Repeats(commander, Key))
+            || Warnings.Silenced(commander, Key)
             || CarrierUpkeep.Now(carrier, context.Now) is not { WeeksCovered: { } weeks, Weekly: { } weekly } balance
             || weeks >= WeeksWarned)
         {
@@ -50,6 +64,7 @@ public sealed class CarrierUpkeepCallout : ICallout
         }
 
         _spokenFor = recorded;
+        Warnings.Fired(commander, Key, "the carrier's upkeep warning", context.Now);
 
         var name = carrier.Name is { Length: > 0 } called ? called : carrier.CallSign ?? "The carrier";
         var cover = weeks switch

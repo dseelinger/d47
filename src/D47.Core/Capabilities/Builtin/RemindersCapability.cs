@@ -1,3 +1,4 @@
+using D47.Core.Callouts;
 using D47.Core.Knowledge;
 using D47.Core.Reminders;
 
@@ -68,7 +69,8 @@ public static class RemindersCapability
     public static CapabilityDescriptor Create(
         JournalReminderStore? store,
         Func<string> frontierId,
-        Func<DateTimeOffset> now) => new()
+        Func<DateTimeOffset> now,
+        StandingWarnings? warnings = null) => new()
     {
         Id = Id,
         Group = "Interface",
@@ -159,8 +161,8 @@ public static class RemindersCapability
                     "Remove the journal reminder that has just gone off. The Commander's own answer: reached only "
                     + "by saying \"noted\", not offered to the model, and refused if it asks.",
                 Protected = true,
-                Commands = [.. Answers(store, frontierId, Acknowledgements, Nothing)],
-                Handler = (_, _) => Task.FromResult(Acknowledge(store, frontierId())),
+                Commands = [.. Answers(store, warnings, frontierId, Acknowledgements, Nothing)],
+                Handler = (_, _) => Task.FromResult(Acknowledge(store, warnings, frontierId())),
             },
 
             new ToolDefinition
@@ -182,10 +184,10 @@ public static class RemindersCapability
                 ],
                 Commands =
                 [
-                    .. Answers(store, frontierId, SameTriggerPhrases, Until(SameTrigger)),
-                    .. Answers(store, frontierId, NextSessionPhrases, Until("next_session")),
+                    .. Answers(store, warnings, frontierId, SameTriggerPhrases, Until(SameTrigger)),
+                    .. Answers(store, warnings, frontierId, NextSessionPhrases, Until("next_session")),
                 ],
-                Handler = (arguments, _) => Task.FromResult(Snooze(store, frontierId(), now(), arguments)),
+                Handler = (arguments, _) => Task.FromResult(Snooze(store, warnings, frontierId(), now(), arguments)),
             },
         ],
     };
@@ -194,15 +196,16 @@ public static class RemindersCapability
 
     private static Dictionary<string, string> Until(string until) => new(StringComparer.Ordinal) { ["until"] = until };
 
-    /// <summary>Phrases that are answers only while a fired reminder is waiting.</summary>
+    /// <summary>Phrases that are answers only while a fired reminder or carrier warning is waiting.</summary>
     private static IEnumerable<ToolCommandPhrase> Answers(
         JournalReminderStore? store,
+        StandingWarnings? warnings,
         Func<string> frontierId,
         string[] phrases,
         IReadOnlyDictionary<string, string> arguments) =>
         phrases.Select(phrase => new ToolCommandPhrase(phrase, arguments)
         {
-            When = () => store?.LastFired(frontierId()) is not null,
+            When = () => store?.LastFired(frontierId()) is not null || warnings?.LastUnanswered(frontierId()) is not null,
         });
 
     /// <summary>When a reminder fires, addressed to the Commander: "when you next dock".</summary>
@@ -307,8 +310,19 @@ public static class RemindersCapability
             $"{count}: {SpokenList.Names(described)}.");
     }
 
-    private static ToolResult Acknowledge(JournalReminderStore? store, string frontierId)
+    /// <summary>Whether a carrier warning fired after the reminder the store would answer, so it takes the answer.</summary>
+    private static bool WarningIsNewer(JournalReminderStore? store, StandingWarnings? warnings, string frontierId) =>
+        warnings?.LastUnanswered(frontierId) is { } warning
+        && (store?.LastFired(frontierId)?.FiredAt is not { } fired || warning.At >= fired);
+
+    private static ToolResult Acknowledge(JournalReminderStore? store, StandingWarnings? warnings, string frontierId)
     {
+        if (WarningIsNewer(store, warnings, frontierId))
+        {
+            warnings!.Acknowledge(frontierId);
+            return ToolResult.Ok("Noted.");
+        }
+
         if (store is null)
         {
             return ToolResult.Error(NoStore);
@@ -324,8 +338,25 @@ public static class RemindersCapability
             : ToolResult.Error("I couldn't clear that reminder. The reminder file may need fixing by hand.");
     }
 
-    private static ToolResult Snooze(JournalReminderStore? store, string frontierId, DateTimeOffset now, ToolArguments arguments)
+    private static ToolResult Snooze(
+        JournalReminderStore? store,
+        StandingWarnings? warnings,
+        string frontierId,
+        DateTimeOffset now,
+        ToolArguments arguments)
     {
+        var nextSession = arguments.TryGetString("until", out var until)
+            && string.Equals(until, "next_session", StringComparison.OrdinalIgnoreCase);
+
+        if (WarningIsNewer(store, warnings, frontierId))
+        {
+            var label = warnings!.Snooze(frontierId, nextSession);
+
+            return ToolResult.Ok(nextSession
+                ? $"I'll stay quiet about {label} until your next session."
+                : $"I'll bring up {label} again the next time.");
+        }
+
         if (store is null)
         {
             return ToolResult.Error(NoStore);
@@ -335,9 +366,6 @@ public static class RemindersCapability
         {
             return ToolResult.Error(NothingFired);
         }
-
-        var nextSession = arguments.TryGetString("until", out var until)
-            && string.Equals(until, "next_session", StringComparison.OrdinalIgnoreCase);
 
         if (!store.Rearm(frontierId, fired.Id, now, nextSession ? JournalTrigger.NextSession : null))
         {

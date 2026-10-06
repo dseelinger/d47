@@ -866,6 +866,8 @@ public sealed class AppHost : IDisposable
 
         journalReminders.Poll();
 
+        var standingWarnings = new D47.Core.Callouts.StandingWarnings();
+
         var miningTargets = new D47.Core.Mining.MiningTargetStore(
             Path.Combine(paths.Data, "mining.json"),
             loggerFactory.CreateLogger<D47.Core.Mining.MiningTargetStore>());
@@ -1245,6 +1247,7 @@ public sealed class AppHost : IDisposable
             planBook,
             storyClue,
             journalReminders,
+            standingWarnings,
             miningTargets,
             commander => storyOpeningRef?.Invoke(commander) == true);
 
@@ -2204,7 +2207,8 @@ public sealed class AppHost : IDisposable
                 mail: mail,
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
-                pickCommander: picks.Enqueue));
+                pickCommander: picks.Enqueue,
+                standingWarnings: standingWarnings));
 
         buildingRegistry.Dispose();
 
@@ -3127,6 +3131,7 @@ public sealed class AppHost : IDisposable
         D47.Core.Knowledge.RoutePlanBook planBook,
         D47.Core.Stories.StoryClueCallout storyClue,
         D47.Core.Reminders.JournalReminderStore journalReminders,
+        D47.Core.Callouts.StandingWarnings standingWarnings,
         D47.Core.Mining.MiningTargetStore miningTargets,
         Func<string?, bool> storyOpening)
     {
@@ -3166,8 +3171,8 @@ public sealed class AppHost : IDisposable
 
             // Phase 11.
             .Add(new CarrierCallout())
-            .Add(new CarrierFuelCallout { Plan = () => planBook.Last(D47.Core.Knowledge.RoutePlanKind.Carrier) })
-            .Add(new CarrierUpkeepCallout())
+            .Add(new CarrierFuelCallout { Plan = () => planBook.Last(D47.Core.Knowledge.RoutePlanKind.Carrier), Warnings = standingWarnings })
+            .Add(new CarrierUpkeepCallout { Warnings = standingWarnings })
 
             .Add(new MissionCallout { Offer = handInOffer, Markets = marketBook, Log = loggers.CreateLogger<MissionCallout>() })
 

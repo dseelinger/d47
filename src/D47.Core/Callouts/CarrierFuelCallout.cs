@@ -14,6 +14,9 @@ public sealed class CarrierFuelCallout : ICallout
     /// <summary>The stored carrier plan, read from memory.</summary>
     public Func<StoredRoutePlan?> Plan { get; set; } = () => null;
 
+    /// <summary>Where the Commander's answers to this warning are kept.</summary>
+    public StandingWarnings Warnings { get; set; } = new();
+
     /// <summary>The <c>FuelLevel</c> last spoken for; cleared by a <c>LoadGame</c>.</summary>
     private int? _spokenFor;
 
@@ -29,6 +32,7 @@ public sealed class CarrierFuelCallout : ICallout
             {
                 case "LoadGame":
                     _spokenFor = null;
+                    Warnings.NewSession();
                     break;
 
                 case "Docked":
@@ -43,11 +47,20 @@ public sealed class CarrierFuelCallout : ICallout
             }
         }
 
+        var commander = context.State?.Identity.FrontierId ?? string.Empty;
+
+        if (context.State is { Carrier: { Owned: true, IsSquadron: false, FuelLevel: not null } read } && !CarrierFuel.IsLow(read))
+        {
+            _spokenFor = null;
+            Warnings.Cleared(commander, Key);
+        }
+
         if (context.IsPriming
             || context.State is not { Carrier: { Owned: true, IsSquadron: false } carrier }
             || !(requested || (docked && carrier.DockedAtOwnCarrier))
             || carrier.FuelLevel is not { } fuel
-            || fuel == _spokenFor
+            || (fuel == _spokenFor && !Warnings.Repeats(commander, Key))
+            || Warnings.Silenced(commander, Key)
             || !CarrierFuel.IsLow(carrier)
             || CarrierFuel.FullJumpCost(carrier) is not { } cost)
         {
@@ -55,13 +68,14 @@ public sealed class CarrierFuelCallout : ICallout
         }
 
         _spokenFor = fuel;
+        Warnings.Fired(commander, Key, "the carrier's fuel warning", context.Now);
 
         var name = carrier.Name is { Length: > 0 } called ? called : carrier.CallSign ?? "The carrier";
         var text = $"{name} has {fuel} tonnes of tritium; a full jump at this load burns {Math.Round(cost)}.";
 
-        if (carrier.StatsSeenAt is { } read && carrier.SeenAt is { } moved && moved > read)
+        if (carrier.StatsSeenAt is { } statsAt && carrier.SeenAt is { } moved && moved > statsAt)
         {
-            text += $" That is the reading from {Age(at - read)} ago. The tank can only be lower.";
+            text += $" That is the reading from {Age(at - statsAt)} ago. The tank can only be lower.";
         }
 
         text += IcyFallback(carrier, context.State.Loadouts);
