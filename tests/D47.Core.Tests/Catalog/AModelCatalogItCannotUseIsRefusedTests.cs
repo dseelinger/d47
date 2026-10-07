@@ -17,7 +17,7 @@ public class AModelCatalogItCannotUseIsRefusedTests
         Assert.NotEmpty(catalog.OfferedFor("openai"));
         Assert.Equal("eleven_v4_turbo", catalog.SpeechDefaultFor("elevenlabs"));
         Assert.Equal("gpt-4o-mini-tts-2025-12-15", catalog.SpeechDefaultFor("openai"));
-        Assert.Equal("sonic-2", catalog.SpeechDefaultFor("cartesia"));
+        Assert.Equal("sonic-3.6", catalog.SpeechDefaultFor("cartesia"));
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "published": "2026-10-06",
+  "published": "2026-10-07",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
@@ -102,9 +102,9 @@
       ]
     },
     "cartesia": {
-      "default": "sonic-2",
+      "default": "sonic-3.6",
       "models": [
-        { "id": "sonic-2", "offered": true }
+        { "id": "sonic-3.6", "offered": true }
       ]
     }
   }

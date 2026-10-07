@@ -10,6 +10,8 @@
 
 Push-to-talk and callouts no longer wait while D47 writes to its log files.
 
+Cartesia voices now use Sonic 3.6, because Cartesia retires Sonic 2 on October 20.
+
 "How do I" no longer offers Journal reminders for a question about your journal or session, and help no longer suggests "noted" or "remind me next session" as a way to reach a feature. Those answers work only while a reminder or carrier warning has just gone off.
 
 If D47 cannot reach Windows' audio devices at startup, the log now says so and why. Before, the speaker and microphone lists were empty and the log said nothing.

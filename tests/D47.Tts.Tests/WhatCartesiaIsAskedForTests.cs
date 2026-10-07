@@ -31,7 +31,7 @@ public class WhatCartesiaIsAskedForTests
     [Fact]
     public async Task TheModelIsNamedRatherThanLeftToTheService()
     {
-        Assert.Equal("sonic-2", (await SentAsync()).GetProperty("model_id").GetString());
+        Assert.Equal("sonic-3.6", (await SentAsync()).GetProperty("model_id").GetString());
     }
 
     /// <summary>The field that makes this provider eligible where OpenAI is barred.</summary>
