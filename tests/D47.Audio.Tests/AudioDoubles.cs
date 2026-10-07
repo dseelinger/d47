@@ -134,3 +134,59 @@ internal sealed class ArraySampleProvider(WaveFormat format, params float[] samp
         return take;
     }
 }
+
+/// <summary>
+/// An output device whose render thread is whichever thread calls <see cref="Render"/>. Disposing it waits up to two
+/// seconds for a render in progress to return, as <see cref="WasapiOut"/> joins its render thread.
+/// </summary>
+internal sealed class RenderedByHand : IWavePlayer
+{
+    private readonly ManualResetEventSlim _idle = new(initialState: true);
+    private IWaveProvider? _source;
+
+    /// <summary>Set when <see cref="Dispose"/> starts.</summary>
+    public ManualResetEventSlim Disposing { get; } = new();
+
+    /// <summary>Whether the render in progress returned before <see cref="Dispose"/> stopped waiting; null until disposed.</summary>
+    public bool? RenderReturned { get; private set; }
+
+    public float Volume { get; set; } = 1f;
+
+    public PlaybackState PlaybackState { get; private set; }
+
+    public WaveFormat OutputWaveFormat => _source!.WaveFormat;
+
+    public event EventHandler<StoppedEventArgs>? PlaybackStopped;
+
+    public void Init(IWaveProvider waveProvider) => _source = waveProvider;
+
+    public void Play() => PlaybackState = PlaybackState.Playing;
+
+    public void Stop()
+    {
+        PlaybackState = PlaybackState.Stopped;
+        PlaybackStopped?.Invoke(this, new StoppedEventArgs());
+    }
+
+    public void Pause() => PlaybackState = PlaybackState.Paused;
+
+    public void Render(int bytes)
+    {
+        _idle.Reset();
+
+        try
+        {
+            _source!.Read(new byte[bytes], 0, bytes);
+        }
+        finally
+        {
+            _idle.Set();
+        }
+    }
+
+    public void Dispose()
+    {
+        Disposing.Set();
+        RenderReturned = _idle.Wait(TimeSpan.FromSeconds(2));
+    }
+}

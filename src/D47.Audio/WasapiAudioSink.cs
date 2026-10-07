@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
@@ -30,8 +31,10 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     private readonly Dictionary<long, Input> _inputs = [];
     private readonly MixingSampleProvider _mixer;
     private readonly RenderTap _tap;
+    private readonly Func<MMDevice?, IWavePlayer> _openOutput;
+    private readonly ConcurrentQueue<ISampleProvider> _ended = new();
 
-    private WasapiOut? _output;
+    private IWavePlayer? _output;
     private string? _openEndpointId;
     private bool _disposed;
 
@@ -43,10 +46,14 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     {
     }
 
-    internal WasapiAudioSink(ILogger<WasapiAudioSink> logger, IAudioEndpointEnumerator enumerator)
+    internal WasapiAudioSink(
+        ILogger<WasapiAudioSink> logger,
+        IAudioEndpointEnumerator enumerator,
+        Func<MMDevice?, IWavePlayer>? openOutput = null)
     {
         _logger = logger;
         _enumerator = enumerator;
+        _openOutput = openOutput ?? OpenWasapi;
         _follower = new DefaultDeviceFollower(enumerator, DataFlow.Render, DefaultRole);
 
         _mixer = new MixingSampleProvider(MixFormat)
@@ -57,7 +64,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
         };
 
         _mixer.MixerInputEnded += OnMixerInputEnded;
-        _tap = new RenderTap(_mixer);
+        _tap = new RenderTap(new AfterEachRead(_mixer, SettleEnded));
     }
 
     public IRenderReferenceTap ReferenceTap => _tap;
@@ -96,13 +103,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
 
             var device = Resolve(deviceId);
 
-            // Shared mode, so d47 never takes exclusive hold of the Commander's output — the game is the
-            // thing that matters on that device. 60 ms of latency is inaudible for speech and forgiving of a
-            // busy machine.
-            _output = device is null
-                ? new WasapiOut(AudioClientShareMode.Shared, useEventSync: true, latency: 60)
-                : new WasapiOut(device, AudioClientShareMode.Shared, useEventSync: true, latency: 60);
-
+            _output = _openOutput(device);
             _output.Init(_tap);
             _output.Play();
 
@@ -116,15 +117,20 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     /// <summary>Moves to another output device.</summary>
     public void Reopen(string? deviceId)
     {
+        IWavePlayer? closing;
+
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
 
             _mixer.RemoveAllMixerInputs();
             ReleaseAll();
-            _output?.Dispose();
+            closing = _output;
             _output = null;
         }
+
+        // Outside the lock: disposing joins the render thread, which takes the lock to settle an ended input.
+        closing?.Dispose();
 
         Open(deviceId);
     }
@@ -236,24 +242,40 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
         }
     }
 
-    private void OnMixerInputEnded(object? sender, SampleProviderEventArgs e)
-    {
-        long? ended = null;
+    /// <summary>
+    /// Raised on the render thread inside the mixer's lock, which <see cref="Play"/> and <see cref="Stop"/> take
+    /// while holding <see cref="_gate"/>, so it takes no lock and leaves the input to <see cref="SettleEnded"/>.
+    /// </summary>
+    private void OnMixerInputEnded(object? sender, SampleProviderEventArgs e) => _ended.Enqueue(e.SampleProvider);
 
-        lock (_gate)
+    /// <summary>Releases the inputs the last mixer read ended and raises <see cref="Finished"/> for each.</summary>
+    private void SettleEnded()
+    {
+        while (_ended.TryDequeue(out var source))
         {
-            if (e.SampleProvider is TrackedSampleProvider tracked && _inputs.Remove(tracked.Id, out var input))
+            long? ended = null;
+
+            lock (_gate)
             {
-                input.Owned?.Dispose();
-                ended = tracked.Id;
+                if (source is TrackedSampleProvider tracked && _inputs.Remove(tracked.Id, out var input))
+                {
+                    input.Owned?.Dispose();
+                    ended = tracked.Id;
+                }
+            }
+
+            if (ended is { } id)
+            {
+                Finished?.Invoke(id);
             }
         }
-
-        if (ended is { } id)
-        {
-            Finished?.Invoke(id);
-        }
     }
+
+    // Shared mode, so d47 never takes exclusive hold of the Commander's output — the game is the thing that
+    // matters on that device. 60 ms of latency is inaudible for speech and forgiving of a busy machine.
+    private static WasapiOut OpenWasapi(MMDevice? device) => device is null
+        ? new WasapiOut(AudioClientShareMode.Shared, useEventSync: true, latency: 60)
+        : new WasapiOut(device, AudioClientShareMode.Shared, useEventSync: true, latency: 60);
 
     private void ReleaseAll()
     {
@@ -289,6 +311,8 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
 
     public void Dispose()
     {
+        IWavePlayer? closing;
+
         lock (_gate)
         {
             if (_disposed)
@@ -298,10 +322,13 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
 
             _disposed = true;
             _mixer.MixerInputEnded -= OnMixerInputEnded;
-            _output?.Dispose();
-            _output = null;
+            _mixer.RemoveAllMixerInputs();
             ReleaseAll();
+            closing = _output;
+            _output = null;
         }
+
+        closing?.Dispose();
 
         _follower.Dispose();
         (_enumerator as IDisposable)?.Dispose();

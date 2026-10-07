@@ -74,6 +74,19 @@ internal sealed class TrackedSampleProvider(long id, ISampleProvider source) : I
     }
 }
 
+/// <summary>Calls <paramref name="after"/> each time a read of <paramref name="source"/> has returned.</summary>
+internal sealed class AfterEachRead(ISampleProvider source, Action after) : ISampleProvider
+{
+    public WaveFormat WaveFormat => source.WaveFormat;
+
+    public int Read(float[] buffer, int offset, int count)
+    {
+        var read = source.Read(buffer, offset, count);
+        after();
+        return read;
+    }
+}
+
 /// <summary>
 /// The render reference tap: every buffer that goes to the device, copied out with
 /// the running sample position that locates it in the stream.
