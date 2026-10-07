@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -146,10 +147,25 @@ internal sealed class SlotBench
         Dispatcher.UIThread.RunJobs();
     }
 
+    /// <summary>Two real presses with the window's input clock stopped, so the first click's rebuild time cannot end the double-click window.</summary>
     public void DoubleClick(Point at)
     {
-        Click(at);
-        Click(at);
+        var impl = Window.PlatformImpl ?? throw new InvalidOperationException("The window has no platform implementation.");
+        var clock = impl.GetType().GetField("_st", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    ?? throw new InvalidOperationException("The headless window no longer keeps its input clock in _st.");
+        var running = clock.GetValue(impl);
+
+        clock.SetValue(impl, new Stopwatch());
+
+        try
+        {
+            Click(at);
+            Click(at);
+        }
+        finally
+        {
+            clock.SetValue(impl, running);
+        }
     }
 
     /// <summary>Whether the module chooser is up: it sits in the panel's modal pane, not on the trail.</summary>
