@@ -4,13 +4,16 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>Pull-based tail of one journal file.</summary>
-public sealed class JournalReader(string path, ILogger logger)
+public sealed class JournalReader(string path, ILogger logger, long? until = null)
 {
     private long _position;
 
     public string Path { get; } = path;
 
-    /// <summary>Returns events completed since the last call.</summary>
+    /// <summary>Byte offset of the next unread line.</summary>
+    public long Position => _position;
+
+    /// <summary>Returns events completed since the last call, none ending after <c>until</c> when one was given.</summary>
     public IReadOnlyList<JournalEvent> Poll()
     {
         byte[] bytes;
@@ -25,10 +28,11 @@ public sealed class JournalReader(string path, ILogger logger)
                 _position = 0;
             }
 
+            var end = until is { } limit ? Math.Min(stream.Length, limit) : stream.Length;
+            var count = (int)Math.Max(0, end - _position);
+            bytes = new byte[count];
             stream.Seek(_position, SeekOrigin.Begin);
-            using var buffer = new MemoryStream();
-            stream.CopyTo(buffer);
-            bytes = buffer.ToArray();
+            stream.ReadExactly(bytes);
         }
 
         if (bytes.Length == 0)

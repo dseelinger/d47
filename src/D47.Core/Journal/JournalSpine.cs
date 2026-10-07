@@ -31,6 +31,9 @@ public sealed class JournalSpine(
     /// <summary>The currently-tailed file, or null if none has been found yet.</summary>
     public string? CurrentFile => _reader?.Path;
 
+    /// <summary>The tailed file and the reader's position, or null when no file is tailed.</summary>
+    public JournalMark? Mark => _reader is { } reader ? new JournalMark(reader.Path, reader.Position) : null;
+
     /// <summary>What each event of the last poll changed, one per event and in the same order.</summary>
     public IReadOnlyList<FoldReceipt> Receipts { get; private set; } = [];
 
