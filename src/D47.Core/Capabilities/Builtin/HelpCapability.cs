@@ -178,10 +178,12 @@ public static class HelpCapability
 
     /// <summary>
     /// What the Commander could say for this capability: its tool command phrases first, then its
-    /// keywords, then its examples — the order a phrase is most likely to actually work.
+    /// keywords, then its examples — the order a phrase is most likely to actually work. A command
+    /// phrase with a <see cref="ToolCommandPhrase.When"/> guard is left out, since it reaches the
+    /// capability only while the guard holds.
     /// </summary>
     internal static IEnumerable<string> Phrases(CapabilityDescriptor descriptor) =>
-        descriptor.Tools.SelectMany(tool => tool.Commands.Select(command => command.Phrase))
+        descriptor.Tools.SelectMany(tool => tool.Commands.Where(command => command.When is null).Select(command => command.Phrase))
             .Concat(descriptor.Keywords.Select(keyword => keyword.Phrase))
             .Concat(descriptor.Examples)
             .Distinct(StringComparer.OrdinalIgnoreCase);
