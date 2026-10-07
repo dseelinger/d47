@@ -115,6 +115,12 @@ public sealed class EliteWindowCapture(
             .GetAwaiter()
             .GetResult();
 
+        Save(bitmap, path, width);
+    }
+
+    /// <summary>A bitmap to a PNG no wider than <paramref name="width"/>.</summary>
+    internal static void Save(SoftwareBitmap bitmap, string path, int width)
+    {
         using var stream = new InMemoryRandomAccessStream();
 
         var encoder = BitmapEncoder

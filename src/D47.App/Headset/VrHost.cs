@@ -105,6 +105,9 @@ public sealed class VrHost : IDisposable
 
     public string? Reason => _lifecycle.Reason;
 
+    /// <summary>The SteamVR session while d47 is attached to it, otherwise null (#601).</summary>
+    public SteamVrRuntime? Session => _lifecycle.State == VrState.Active ? _runtime : null;
+
     /// <summary>
     /// The headset panel's own prompts, so a spoken value can reach a chooser the Commander opened in
     /// the headset rather than only one they opened in the window (Phase 25).

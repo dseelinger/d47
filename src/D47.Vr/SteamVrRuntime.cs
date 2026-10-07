@@ -365,6 +365,65 @@ public sealed class SteamVrRuntime(
 
     private TrackedDevicePose_t[]? _poses;
 
+    /// <summary>The index of the DXGI adapter the headset is on, or null while there is no session.</summary>
+    public int? HeadsetAdapter()
+    {
+        lock (_session)
+        {
+            if (_system is null)
+            {
+                return null;
+            }
+
+            var adapter = 0;
+            _system.GetDXGIOutputInfo(ref adapter);
+            return adapter;
+        }
+    }
+
+    /// <summary>
+    /// Hands the compositor's left-eye image, as a shader resource view on <paramref name="device"/>, to
+    /// <paramref name="copy"/>, and releases the view when it returns. The session is held throughout, so
+    /// <paramref name="copy"/> should queue its copy and read the pixels afterwards. Null on success,
+    /// otherwise why not (#601).
+    /// </summary>
+    public string? MirrorLeftEye(IntPtr device, Action<IntPtr> copy)
+    {
+        ArgumentNullException.ThrowIfNull(copy);
+
+        lock (_session)
+        {
+            if (_system is null)
+            {
+                return "the SteamVR session has ended";
+            }
+
+            if (openVr.Compositor is not { } compositor)
+            {
+                return "SteamVR gave d47 no compositor interface";
+            }
+
+            var view = IntPtr.Zero;
+            var error = compositor.GetMirrorTextureD3D11(EVREye.Eye_Left, device, ref view);
+
+            if (error != EVRCompositorError.None || view == IntPtr.Zero)
+            {
+                return $"SteamVR refused the eye image: {error}";
+            }
+
+            try
+            {
+                copy(view);
+            }
+            finally
+            {
+                compositor.ReleaseMirrorTextureD3D11(view);
+            }
+
+            return null;
+        }
+    }
+
     /// <summary>The correction from the grip pose OpenVR reports to the tip the Commander aims with.</summary>
     private Matrix4x4 GripToTip(uint device)
     {

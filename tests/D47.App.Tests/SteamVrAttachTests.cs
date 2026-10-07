@@ -126,6 +126,49 @@ public class SteamVrLiveTests
     }
 
     /// <summary>
+    /// The input trace's headset still (#601), at full size: an overlay application is given the eye
+    /// image, and it is wider than the 640-pixel desktop mirror a VR player often runs.
+    /// </summary>
+    [Fact]
+    public void TheEyeImageIsReadAtRenderResolution()
+    {
+        Ready();
+
+        var runtime = new SteamVrRuntime([], NullLogger<SteamVrRuntime>.Instance, OpenVrBinding.Instance);
+
+        Assert.Equal(VrStartOutcome.Started, runtime.Start().Outcome);
+
+        try
+        {
+            using var capture = new D47.App.Diagnostics.HeadsetEyeCapture(
+                () => runtime,
+                new RefusingWindow(),
+                int.MaxValue,
+                NullLogger<D47.App.Diagnostics.HeadsetEyeCapture>.Instance);
+
+            var path = Path.Combine(TestSurface.CaptureDirectory, "headset-left-eye.png");
+
+            Assert.Null(capture.Capture(path));
+
+            var header = File.ReadAllBytes(path).AsSpan(16, 8);
+
+            Assert.True(
+                System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(header) > 640,
+                $"The eye image is {System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(header)} pixels wide.");
+        }
+        finally
+        {
+            runtime.Stop();
+        }
+    }
+
+    /// <summary>A window that fails the test if the headset capture falls back to it.</summary>
+    private sealed class RefusingWindow : D47.App.Diagnostics.IWindowCapture
+    {
+        public string? Capture(string path) => "the headset capture fell back to the window";
+    }
+
+    /// <summary>
     /// Its own key rather than the panel's, so the round-trips run whether or not d47 is up. What the
     /// production keys prove — that a second copy is turned away — is covered above the binding, in
     /// D47.Vr.Tests.

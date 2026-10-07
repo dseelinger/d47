@@ -18,7 +18,8 @@ public sealed class FakeOpenVr :
     IOpenVrOverlay,
     IOpenVrInput,
     IOpenVrApplications,
-    IOpenVrRenderModels
+    IOpenVrRenderModels,
+    IOpenVrCompositor
 {
     private ulong _nextHandle = 1;
     private bool _started;
@@ -155,6 +156,8 @@ public sealed class FakeOpenVr :
 
     public IOpenVrRenderModels? RenderModels => _started ? this : null;
 
+    public IOpenVrCompositor? Compositor => _started ? this : null;
+
     public void GetDeviceToAbsoluteTrackingPose(
         ETrackingUniverseOrigin origin,
         float secondsAhead,
@@ -214,6 +217,37 @@ public sealed class FakeOpenVr :
     }
 
     public void AcknowledgeQuit_Exiting() => Record(nameof(AcknowledgeQuit_Exiting));
+
+    /// <summary>The DXGI adapter the headset is on.</summary>
+    public int Adapter { get; set; }
+
+    public void GetDXGIOutputInfo(ref int adapter)
+    {
+        Record(nameof(GetDXGIOutputInfo));
+        adapter = Adapter;
+    }
+
+    /// <summary>What <c>GetMirrorTextureD3D11</c> answers with. None hands back <see cref="MirrorView"/>.</summary>
+    public EVRCompositorError MirrorRefused { get; set; }
+
+    /// <summary>The view the compositor hands back.</summary>
+    public IntPtr MirrorView { get; set; } = 0x47;
+
+    public EVRCompositorError GetMirrorTextureD3D11(EVREye eye, IntPtr device, ref IntPtr view)
+    {
+        Record(nameof(GetMirrorTextureD3D11), (ulong)eye);
+
+        if (MirrorRefused != EVRCompositorError.None)
+        {
+            return MirrorRefused;
+        }
+
+        view = MirrorView;
+        return EVRCompositorError.None;
+    }
+
+    public void ReleaseMirrorTextureD3D11(IntPtr view) =>
+        Record(nameof(ReleaseMirrorTextureD3D11), (ulong)view);
 
     public EVROverlayError CreateOverlay(string key, string name, ref ulong handle)
     {

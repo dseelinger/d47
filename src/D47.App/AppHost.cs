@@ -1638,10 +1638,14 @@ public sealed class AppHost : IDisposable
             () => DateTimeOffset.Now,
             () => status.Current,
             () => eliteMusic.Track,
-            () => new Diagnostics.EliteWindowCapture(
-                () => eliteWindow.Handle,
+            () => new Diagnostics.HeadsetEyeCapture(
+                () => self?.Vr?.Session,
+                new Diagnostics.EliteWindowCapture(
+                    () => eliteWindow.Handle,
+                    Diagnostics.InputTraceWriter.StillWidth,
+                    loggerFactory.CreateLogger<Diagnostics.EliteWindowCapture>()),
                 Diagnostics.InputTraceWriter.StillWidth,
-                loggerFactory.CreateLogger<Diagnostics.EliteWindowCapture>()),
+                loggerFactory.CreateLogger<Diagnostics.HeadsetEyeCapture>()),
             loggerFactory.CreateLogger<Diagnostics.InputTraceWriter>());
 
         // With the status alongside the window (#242): running and in front are not the same as in the game,

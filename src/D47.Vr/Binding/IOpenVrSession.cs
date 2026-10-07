@@ -33,6 +33,8 @@ public interface IOpenVrSession
     IOpenVrApplications? Applications { get; }
 
     IOpenVrRenderModels? RenderModels { get; }
+
+    IOpenVrCompositor? Compositor { get; }
 }
 
 /// <summary><c>IVRSystem</c>: poses, device properties and the session's own event queue.</summary>
@@ -58,6 +60,9 @@ public interface IOpenVrSystem
     bool PollNextEvent(ref VREvent_t next, uint size);
 
     void AcknowledgeQuit_Exiting();
+
+    /// <summary>The index of the DXGI adapter the headset is on.</summary>
+    void GetDXGIOutputInfo(ref int adapter);
 }
 
 /// <summary><c>IVROverlay</c>: one quad's handle, texture, transform and look.</summary>
@@ -153,4 +158,13 @@ public interface IOpenVrRenderModels
         ref VRControllerState_t buttons,
         ref RenderModel_ControllerMode_State_t mode,
         ref RenderModel_ComponentState_t state);
+}
+
+/// <summary><c>IVRCompositor</c>: enough of it to read the image the headset shows.</summary>
+public interface IOpenVrCompositor
+{
+    /// <summary>A shader resource view of one eye's image, on <paramref name="device"/>.</summary>
+    EVRCompositorError GetMirrorTextureD3D11(EVREye eye, IntPtr device, ref IntPtr view);
+
+    void ReleaseMirrorTextureD3D11(IntPtr view);
 }

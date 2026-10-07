@@ -14,6 +14,7 @@ public sealed class OpenVrBinding : IOpenVrSession
     private readonly InputApi _input = new();
     private readonly ApplicationsApi _applications = new();
     private readonly RenderModelsApi _renderModels = new();
+    private readonly CompositorApi _compositor = new();
 
     public bool Load() => OpenVrLoader.Register();
 
@@ -35,6 +36,8 @@ public sealed class OpenVrBinding : IOpenVrSession
     public IOpenVrApplications? Applications => OpenVR.Applications is null ? null : _applications;
 
     public IOpenVrRenderModels? RenderModels => OpenVR.RenderModels is null ? null : _renderModels;
+
+    public IOpenVrCompositor? Compositor => OpenVR.Compositor is null ? null : _compositor;
 
     private sealed class SystemApi : IOpenVrSystem
     {
@@ -62,6 +65,8 @@ public sealed class OpenVrBinding : IOpenVrSession
             OpenVR.System.PollNextEvent(ref next, size);
 
         public void AcknowledgeQuit_Exiting() => OpenVR.System.AcknowledgeQuit_Exiting();
+
+        public void GetDXGIOutputInfo(ref int adapter) => OpenVR.System.GetDXGIOutputInfo(ref adapter);
     }
 
     private sealed class OverlayApi : IOpenVrOverlay
@@ -183,5 +188,13 @@ public sealed class OpenVrBinding : IOpenVrSession
             ref RenderModel_ControllerMode_State_t mode,
             ref RenderModel_ComponentState_t state) =>
             OpenVR.RenderModels.GetComponentState(model, component, ref buttons, ref mode, ref state);
+    }
+
+    private sealed class CompositorApi : IOpenVrCompositor
+    {
+        public EVRCompositorError GetMirrorTextureD3D11(EVREye eye, IntPtr device, ref IntPtr view) =>
+            OpenVR.Compositor.GetMirrorTextureD3D11(eye, device, ref view);
+
+        public void ReleaseMirrorTextureD3D11(IntPtr view) => OpenVR.Compositor.ReleaseMirrorTextureD3D11(view);
     }
 }
