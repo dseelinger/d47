@@ -86,7 +86,16 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
 
     private readonly Lock _gate = new();
 
+    /// <summary>Held for the file write; never taken while holding <see cref="_gate"/>.</summary>
+    private readonly Lock _writeGate = new();
+
     private readonly Dictionary<RoutePlanKind, StoredRoutePlan> _plans = [];
+
+    /// <summary>Bumped under <see cref="_gate"/> for each change that needs saving.</summary>
+    private long _version;
+
+    /// <summary>The newest version on disk, under <see cref="_writeGate"/>.</summary>
+    private long _written;
 
     /// <summary>Raised when a plan is recorded, whoever recorded it — the model's path or a panel.</summary>
     public event Action? Changed;
@@ -166,6 +175,8 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
     public void Apply(IReadOnlyList<JournalEvent> events)
     {
         var moved = false;
+        StoredRoutePlan[] snapshot = [];
+        long version = 0;
 
         lock (_gate)
         {
@@ -229,12 +240,14 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
 
             if (moved)
             {
-                Save();
+                snapshot = [.. _plans.Values];
+                version = ++_version;
             }
         }
 
         if (moved)
         {
+            Save(snapshot, version);
             Changed?.Invoke();
         }
     }
@@ -261,12 +274,17 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
 
     private void Keep(StoredRoutePlan plan)
     {
+        StoredRoutePlan[] snapshot;
+        long version;
+
         lock (_gate)
         {
             _plans[plan.Kind] = plan;
-            Save();
+            snapshot = [.. _plans.Values];
+            version = ++_version;
         }
 
+        Save(snapshot, version);
         Changed?.Invoke();
     }
 
@@ -299,18 +317,28 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
         }
     }
 
-    /// <summary>Called under the lock.</summary>
-    private void Save()
+    /// <summary>Writes <paramref name="snapshot"/> unless a newer version is already on disk. Called outside <see cref="_gate"/>.</summary>
+    private void Save(StoredRoutePlan[] snapshot, long version)
     {
-        try
+        lock (_writeGate)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-            File.WriteAllText(path, JsonSerializer.Serialize(_plans.Values.ToArray(), Json));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // A plan that cannot be written is still a plan that was answered.
-            logger.LogWarning(ex, "Could not write {Path}.", path);
+            if (version <= _written)
+            {
+                return;
+            }
+
+            _written = version;
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+                File.WriteAllText(path, JsonSerializer.Serialize(snapshot, Json));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // A plan that cannot be written is still a plan that was answered.
+                logger.LogWarning(ex, "Could not write {Path}.", path);
+            }
         }
     }
 }

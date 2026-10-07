@@ -28,6 +28,8 @@ public sealed class MailLedger
 
     private sealed record Found(int File, string Commander, string Key, Entry Entry);
 
+    private readonly record struct Watermarks(Dictionary<string, DateTimeOffset> Snapshot, long Version);
+
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     private static readonly IReadOnlyList<string> Ladders = [.. RankState.Careers, "Empire", "Federation"];
@@ -35,6 +37,15 @@ public sealed class MailLedger
     private readonly string _path;
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
+
+    /// <summary>Held for the file write; never taken while holding <see cref="_gate"/>.</summary>
+    private readonly Lock _writeGate = new();
+
+    /// <summary>Bumped under <see cref="_gate"/> for each watermark change.</summary>
+    private long _version;
+
+    /// <summary>The newest version on disk, under <see cref="_writeGate"/>.</summary>
+    private long _written;
 
     private readonly Dictionary<string, Dictionary<string, Entry>> _entries = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _readThrough;
@@ -245,17 +256,25 @@ public sealed class MailLedger
     {
         ArgumentNullException.ThrowIfNull(commander);
 
+        string answer;
+        Watermarks? moved = null;
+
         lock (_gate)
         {
-            var answer = Compose(commander);
+            answer = Compose(commander);
 
             if (_entries.TryGetValue(commander, out var book) && book.Count > 0)
             {
-                MarkRead(commander, book.Values.Max(entry => entry.At));
+                moved = Advance(commander, book.Values.Max(entry => entry.At));
             }
-
-            return answer;
         }
+
+        if (moved is { } watermarks)
+        {
+            Save(watermarks);
+        }
+
+        return answer;
     }
 
     /// <summary>Moves <paramref name="commander"/>'s watermark to <paramref name="through"/> and saves it.</summary>
@@ -263,35 +282,60 @@ public sealed class MailLedger
     {
         ArgumentNullException.ThrowIfNull(commander);
 
-        Dictionary<string, DateTimeOffset> snapshot;
+        Watermarks? moved;
 
         lock (_gate)
         {
-            if (_readThrough.TryGetValue(commander, out var held) && held >= through)
+            moved = Advance(commander, through);
+        }
+
+        if (moved is { } watermarks)
+        {
+            Save(watermarks);
+        }
+    }
+
+    /// <summary>Called under <see cref="_gate"/>; null when the watermark is already at or past <paramref name="through"/>.</summary>
+    private Watermarks? Advance(string commander, DateTimeOffset through)
+    {
+        if (_readThrough.TryGetValue(commander, out var held) && held >= through)
+        {
+            return null;
+        }
+
+        _readThrough[commander] = through;
+
+        if (_entries.TryGetValue(commander, out var book))
+        {
+            foreach (var key in book.Where(pair => pair.Value.At <= through).Select(pair => pair.Key).ToList())
+            {
+                book.Remove(key);
+            }
+        }
+
+        return new Watermarks(new Dictionary<string, DateTimeOffset>(_readThrough, StringComparer.Ordinal), ++_version);
+    }
+
+    /// <summary>Writes the watermarks unless a newer version is already on disk. Called outside <see cref="_gate"/>.</summary>
+    private void Save(Watermarks watermarks)
+    {
+        lock (_writeGate)
+        {
+            if (watermarks.Version <= _written)
             {
                 return;
             }
 
-            _readThrough[commander] = through;
+            _written = watermarks.Version;
 
-            if (_entries.TryGetValue(commander, out var book))
+            try
             {
-                foreach (var key in book.Where(pair => pair.Value.At <= through).Select(pair => pair.Key).ToList())
-                {
-                    book.Remove(key);
-                }
+                AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(watermarks.Snapshot, Json));
             }
-
-            snapshot = new Dictionary<string, DateTimeOffset>(_readThrough, StringComparer.Ordinal);
-        }
-
-        try
-        {
-            AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(snapshot, Json));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logger.LogWarning(ex, "Could not write {Path}", _path);
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(ex, "Could not write {Path}", _path);
+            }
         }
     }
 

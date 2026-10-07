@@ -12,6 +12,8 @@ Beginning a story again, or editing its start time in adventures.json, no longer
 
 Push-to-talk and callouts no longer wait while D47 saves a story's progress or a story rating to story.json.
 
+Saving a plotted route or hearing your mail no longer holds up push-to-talk and callouts while D47 writes the file.
+
 D47 could stop speaking and stop answering push-to-talk until restarted when one sound ended at the moment another started, or while the output device changed. Neither hangs it now.
 
 When the language model rewrites a story's next objective, push-to-talk and callouts no longer wait while D47 saves the rewritten story to adventures.json.
