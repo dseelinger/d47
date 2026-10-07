@@ -246,7 +246,10 @@ public static class BuiltinCapabilities
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
         // Carrier warnings that answer "noted" and the snoozes (#837).
-        Callouts.StandingWarnings? standingWarnings = null) =>
+        Callouts.StandingWarnings? standingWarnings = null,
+
+        // The Commander's saved binding profiles (#80).
+        Input.BindingProfiles? bindingProfiles = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -412,6 +415,8 @@ public static class BuiltinCapabilities
             () => history?.Commanders,
             () => gameState.Active?.Identity.FrontierId,
             pickCommander ?? (_ => { })),
+
+        BindingProfilesCapability.Create(bindingProfiles),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

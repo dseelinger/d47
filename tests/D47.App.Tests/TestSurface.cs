@@ -167,7 +167,10 @@ public static class TestSurface
 
             // Always a real loop, for the reason the surfaces above are real: a null one makes the paused
             // row absent, and a test could then not tell a missing row from a working one.
-            ticking: ticking ?? new D47.Core.Ticking.TickLoop(NullLogger<D47.Core.Ticking.TickLoop>.Instance)));
+            ticking: ticking ?? new D47.Core.Ticking.TickLoop(NullLogger<D47.Core.Ticking.TickLoop>.Instance),
+
+            // A real store over the folder BindingsFolder names, so the row reads what a test saves there.
+            bindingProfiles: BindingProfilesFor(paths)));
 
         built = registry;
 
@@ -178,6 +181,13 @@ public static class TestSurface
         // either could only assert against a copy of them.
         return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), paths, registry, secrets);
     }
+
+    /// <summary>Where the binding profile store of a surface reads Elite's bindings from.</summary>
+    public static string BindingsFolder(AppPaths paths) => Path.Combine(paths.InstallRoot, "Bindings");
+
+    /// <summary>A binding profile store over a surface's folders, with Elite closed.</summary>
+    public static BindingProfiles BindingProfilesFor(AppPaths paths) =>
+        new(BindingsFolder(paths), paths.BindingProfiles, () => false, NullLogger.Instance);
 
     /// <summary>The three most tests want.</summary>
     public static (SettingsService Settings, ViewStateStore ViewState, AppPaths Paths) Create(

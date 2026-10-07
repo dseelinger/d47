@@ -621,7 +621,10 @@ public static class SettingsLayout
                     "macros",
                     [],
                     false,
-                    [G("Your macros and switches", "Named key sequences you have made, and the HOTAS switches bound to them.", [E("switches.list"), E("macros.list")])]),
+                    [
+                        G("Your macros and switches", "Named key sequences you have made, and the HOTAS switches bound to them.", [E("switches.list"), E("macros.list")]),
+                        G("Binding profiles", "Named copies of Elite's bindings, saved and loaded by voice.", [E("binding-profiles.list")]),
+                    ]),
             ]),
         new SettingsArea(
             "screens",

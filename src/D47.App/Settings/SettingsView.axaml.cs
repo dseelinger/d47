@@ -129,6 +129,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private LoreEditing? _lore;
 
+    /// <summary>The saved binding profiles, for the row that lists them with a delete.</summary>
+    private D47.Core.Input.BindingProfiles? _bindingProfiles;
+
     /// <summary>
     /// What d47 remembers about the Commander, and the clock a hand-typed fact is stamped with (Phase
     /// 31).
@@ -238,7 +241,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         // At the end, by the same rule — so a placement group's reset glyph can clear the anchor
         // VrHost holds rather than writing view-state itself (#162).
-        D47.App.Headset.VrHost? vrHost = null)
+        D47.App.Headset.VrHost? vrHost = null,
+
+        // At the end, by the same rule (#80).
+        D47.Core.Input.BindingProfiles? bindingProfiles = null)
     {
         _setUpKeys = setUpKeys;
         _downloadModel = downloadModel;
@@ -259,6 +265,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _reserved = reservedPhrases ?? [];
         _tabPlaceId = tabPlaceId;
         _vrHost = vrHost;
+        _bindingProfiles = bindingProfiles;
 
         Build();
 
@@ -2416,6 +2423,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             case SettingKind.Info when row.Key == ChecklistCapability.SummaryKey && _checklists is not null:
                 return BuildChecklists(row);
 
+            // The saved binding profiles, each with a delete.
+            case SettingKind.Info when row.Key == BindingProfilesCapability.ListKey && _bindingProfiles is not null:
+                return BuildBindingProfiles(row);
+
             // The HOTAS switches page.
             case SettingKind.Info when row.Key == SwitchCapability.ListKey && _switches is not null:
                 return BuildSwitches(row);
@@ -2771,6 +2782,60 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
 
         return (stack, refresh);
+    }
+
+    /// <summary>The binding profile summary, and one line per saved profile with a Delete button (#80).</summary>
+    private (Control, Action) BuildBindingProfiles(SettingRow row)
+    {
+        var (inset, refreshSummary) = BuildInfo(row);
+        var list = new StackPanel { Name = "BindingProfiles", Spacing = 4, Margin = new Thickness(14, 0, 0, 0) };
+
+        void Refresh()
+        {
+            refreshSummary();
+            list.Children.Clear();
+
+            if (_bindingProfiles is not { } profiles)
+            {
+                return;
+            }
+
+            foreach (var name in profiles.Names)
+            {
+                var label = new TextBlock
+                {
+                    Text = name,
+                    FontSize = TypeScale.Body,
+                    MinWidth = 160,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+
+                var delete = new Button
+                {
+                    Content = "Delete",
+                    FontSize = TypeScale.Body,
+                    Padding = new Thickness(8, 4),
+                    Classes = { DestructiveClass },
+                };
+
+                delete.Click += (_, _) => profiles.Delete(name);
+
+                var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { label, delete } };
+                list.Children.Add(line);
+            }
+        }
+
+        var stack = new StackPanel { Spacing = 8, Children = { inset, list } };
+
+        if (_bindingProfiles is { } store)
+        {
+            void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(Refresh);
+
+            stack.AttachedToVisualTree += (_, _) => store.Changed += OnChanged;
+            stack.DetachedFromVisualTree += (_, _) => store.Changed -= OnChanged;
+        }
+
+        return (stack, Refresh);
     }
 
     /// <summary>What the audio recorder holds, the way into reviewing it, and the wipe (#164).</summary>

@@ -326,6 +326,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's macros.</summary>
     public MacroStore Macros { get; private set; } = null!;
 
+    /// <summary>The Commander's saved binding profiles.</summary>
+    public BindingProfiles BindingProfiles { get; private set; } = null!;
+
     /// <summary>The cores the Commander wrote themselves (remediation.md 11, item 9).</summary>
     public OwnPersonaStore OwnPersonas { get; private set; } = null!;
 
@@ -1658,6 +1661,13 @@ public sealed class AppHost : IDisposable
 
         bindsRef = () => binds.Current;
 
+        // Named copies of the bindings, copied only while Elite is closed.
+        var bindingProfiles = new BindingProfiles(
+            BindsResolver.DefaultBindingsDirectory(),
+            paths.BindingProfiles,
+            () => eliteWindow.IsRunning,
+            loggerFactory.CreateLogger<BindingProfiles>());
+
         // The Commander's own macros, beside the executable like everything else d47 writes.
         var macros = new MacroStore(
             Path.Combine(paths.Data, "macros.json"), loggerFactory.CreateLogger<MacroStore>());
@@ -2211,7 +2221,8 @@ public sealed class AppHost : IDisposable
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
                 pickCommander: picks.Enqueue,
-                standingWarnings: standingWarnings));
+                standingWarnings: standingWarnings,
+                bindingProfiles: bindingProfiles));
 
         buildingRegistry.Dispose();
 
@@ -2640,6 +2651,7 @@ public sealed class AppHost : IDisposable
         host.Elite = eliteWindow;
 
         host.Macros = macros;
+        host.BindingProfiles = bindingProfiles;
         host.OwnPersonas = ownPersonas;
         host.Checklists = checklists;
 

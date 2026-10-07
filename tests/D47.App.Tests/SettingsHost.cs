@@ -54,7 +54,10 @@ internal sealed class SettingsHost
         (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? recording = null,
 
         // At the end, by the same rule.
-        D47.Core.Persona.OwnPersonaStore? ownPersonas = null)
+        D47.Core.Persona.OwnPersonaStore? ownPersonas = null,
+
+        // At the end, by the same rule.
+        D47.Core.Input.BindingProfiles? bindingProfiles = null)
     {
         // The whole page, for every test that is about a row rather than about the
         // fold.com/dseelinger/d47/issues/60).
@@ -81,7 +84,8 @@ internal sealed class SettingsHost
                 switches,
                 downloadModel,
                 ownPersonas: ownPersonas,
-                recording: recording);
+                recording: recording,
+                bindingProfiles: bindingProfiles);
             return view;
         });
 

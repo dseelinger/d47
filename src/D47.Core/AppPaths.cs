@@ -42,6 +42,7 @@ public sealed class AppPaths
         Stories = Path.Combine(Data, "stories");
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
+        BindingProfiles = Path.Combine(Data, "binding-profiles");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
     }
@@ -121,6 +122,9 @@ public sealed class AppPaths
 
     /// <summary>The avatar clips, one <c>.mp4</c> per core and loop state.</summary>
     public string AvatarClips { get; }
+
+    /// <summary>The Commander's saved copies of Elite's bindings, one folder per profile name.</summary>
+    public string BindingProfiles { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }

@@ -92,6 +92,10 @@ public static class HelpTaxonomy
                     "Make a maintained switch on your stick mean a state, gear down means down, whatever the game was already doing.",
                     "switches"),
                 HelpNode.Leaf(
+                    "Binding profiles",
+                    "Save Elite's control bindings under a name and put them back when the hardware changes.",
+                    "binding-profiles"),
+                HelpNode.Leaf(
                     "Comms",
                     "Send a message in Elite's chat, to local, system, wing or squadron.",
                     "comms"))),

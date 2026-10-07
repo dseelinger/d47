@@ -809,7 +809,8 @@ public partial class MainWindow : Window
                 : null,
 
             tabPlaceId,
-            _host.Vr);
+            _host.Vr,
+            _host.BindingProfiles);
     }
 
     public Control BuildSettingsPage()

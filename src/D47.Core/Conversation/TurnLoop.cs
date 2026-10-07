@@ -1265,6 +1265,32 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 0. A binding profile name, which no declared phrase can carry.
+        if (capabilities.Find(Capabilities.Builtin.BindingProfilesCapability.Id) is not null
+            && Input.BindingProfilePhrase.Read(input) is { } profile)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var done = await capabilities
+                .InvokeAsync(
+                    profile.Tool,
+                    Capabilities.Builtin.BindingProfilesCapability.ArgumentsFor(profile.Name),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            Said(done.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(done.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                done.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                done.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 1.
         if (settings is not null && keywordRouter.MatchSetting(input) is { } settingCommand)
         {
