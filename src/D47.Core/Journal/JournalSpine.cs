@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>
-/// The tick-loop-facing piece: rescans the journal folder for the newest file, switches to it when it
-/// changes, and feeds every event through <see cref="GameStateStore"/>.
+/// The tick-loop-facing piece: tails the newest journal file, switches to a newer one when it appears,
+/// and feeds every event through <see cref="GameStateStore"/>.
 /// </summary>
 /// <param name="position">
 /// The live <c>Status.json</c>, for stamping a position onto events that carry none — organic sampling
@@ -26,6 +26,12 @@ public sealed class JournalSpine(
 
     private JournalReader? _reader;
 
+    private DateTime? _listedAt;
+
+    private bool _relistNext;
+
+    private string? _latest;
+
     public string Directory { get; } = directory;
 
     /// <summary>The currently-tailed file, or null if none has been found yet.</summary>
@@ -41,7 +47,7 @@ public sealed class JournalSpine(
     /// <param name="priming">Whether this poll is the startup replay.</param>
     public IReadOnlyList<JournalEvent> Poll(bool priming = false)
     {
-        var latest = JournalFolder.LatestFile(Directory);
+        var latest = LatestFile();
 
         if (latest is null)
         {
@@ -76,6 +82,37 @@ public sealed class JournalSpine(
         }
 
         return events;
+    }
+
+    /// <summary>
+    /// The newest journal file, listing the folder only when its write time has changed since the last
+    /// listing, and once more on the poll after, for a file created within the clock tick of that change.
+    /// </summary>
+    private string? LatestFile()
+    {
+        var writtenAt = FolderWrittenAt(Directory);
+
+        if (writtenAt == _listedAt && !_relistNext)
+        {
+            return _latest;
+        }
+
+        _relistNext = writtenAt != _listedAt;
+        _listedAt = writtenAt;
+        _latest = JournalFolder.LatestFile(Directory);
+        return _latest;
+    }
+
+    /// <summary>The folder's write time, read from the target when the folder is a junction or link.</summary>
+    private static DateTime FolderWrittenAt(string directory)
+    {
+        var folder = new DirectoryInfo(directory);
+
+        return folder.Exists
+            && folder.Attributes.HasFlag(FileAttributes.ReparsePoint)
+            && folder.ResolveLinkTarget(returnFinalTarget: true) is { } target
+                ? target.LastWriteTimeUtc
+                : folder.LastWriteTimeUtc;
     }
 
     /// <summary>
