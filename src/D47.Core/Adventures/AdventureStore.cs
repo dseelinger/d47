@@ -30,6 +30,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
     private Dictionary<string, IReadOnlyList<Adventure>> _byCommander = new(StringComparer.Ordinal);
     private IReadOnlyList<AdventureProblem> _problems = [];
     private string? _seen;
+    private readonly FileStamp _stamp = new();
 
     public string Path => path;
 
@@ -72,6 +73,13 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
 
     public bool Poll()
     {
+        var stamp = FileStamp.Stat(path);
+
+        if (_stamp.Matches(stamp))
+        {
+            return false;
+        }
+
         string text;
 
         try
@@ -88,6 +96,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                     _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(StringComparer.Ordinal);
                     _problems = [];
                     _seen = null;
+                    _stamp.Record(null);
                 }
 
                 Changed?.Invoke();
@@ -99,6 +108,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
 
             using var reader = new StreamReader(stream);
             text = reader.ReadToEnd();
+            _stamp.Record(stamp);
         }
         catch (IOException ex)
         {

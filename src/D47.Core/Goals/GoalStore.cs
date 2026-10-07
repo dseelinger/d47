@@ -34,6 +34,7 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
     private Dictionary<string, IReadOnlyList<string>> _setAside = new(StringComparer.Ordinal);
     private IReadOnlyList<GoalProblem> _problems = [];
     private string? _seen;
+    private readonly FileStamp _stamp = new();
 
     public string Path => path;
 
@@ -79,6 +80,13 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
 
     public bool Poll()
     {
+        var stamp = FileStamp.Stat(path);
+
+        if (_stamp.Matches(stamp))
+        {
+            return false;
+        }
+
         string text;
 
         try
@@ -97,6 +105,7 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
                     _setAside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
                     _problems = [];
                     _seen = null;
+                    _stamp.Record(null);
                 }
 
                 Changed?.Invoke();
@@ -108,6 +117,7 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
 
             using var reader = new StreamReader(stream);
             text = reader.ReadToEnd();
+            _stamp.Record(stamp);
         }
         catch (IOException ex)
         {

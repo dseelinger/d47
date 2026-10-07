@@ -24,6 +24,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
 
     /// <summary>The file's contents as last read, which is what "has it changed" is answered against.</summary>
     private string? _seen;
+    private readonly FileStamp _stamp = new();
 
     public string Path => path;
 
@@ -56,6 +57,13 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
+        var stamp = FileStamp.Stat(path);
+
+        if (_stamp.Matches(stamp))
+        {
+            return false;
+        }
+
         string text;
 
         try
@@ -73,6 +81,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
                     _switches = [];
                     _problems = [];
                     _seen = null;
+                    _stamp.Record(null);
                 }
 
                 return true;
@@ -83,6 +92,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
 
             using var reader = new StreamReader(stream);
             text = reader.ReadToEnd();
+            _stamp.Record(stamp);
         }
         catch (IOException ex)
         {
@@ -173,6 +183,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
         // Forces the next Poll to re-read rather than trusting what was just written, so the in-memory set is
         // always the validated one rather than the one that was submitted.
         _seen = null;
+        _stamp.Record(null);
     }
 
     private sealed class SwitchFile

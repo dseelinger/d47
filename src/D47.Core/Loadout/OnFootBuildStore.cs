@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Loadout;
@@ -37,6 +38,7 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
 
     /// <summary>The file's contents as last read.</summary>
     private string? _seen;
+    private readonly FileStamp _stamp = new();
 
     /// <summary>Raised when the set changed, whoever wrote it — the panel, a phrase, an editor.</summary>
     public event Action? Changed;
@@ -146,6 +148,13 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
+        var stamp = FileStamp.Stat(path);
+
+        if (_stamp.Matches(stamp))
+        {
+            return false;
+        }
+
         string text;
 
         try
@@ -163,6 +172,7 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
                     _builds = [];
                     _problems = [];
                     _seen = null;
+                    _stamp.Record(null);
                 }
 
                 Changed?.Invoke();
@@ -174,6 +184,7 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
 
             using var reader = new StreamReader(stream);
             text = reader.ReadToEnd();
+            _stamp.Record(stamp);
         }
         catch (IOException ex)
         {
