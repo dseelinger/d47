@@ -4801,16 +4801,27 @@ public sealed class AppHost : IDisposable
         var line = GuardianCores.Line(waking, storyCore);
 
         var storyId = Stories?.Stories.Current(GameState.Active?.Identity.FrontierId)?.Id;
-
-        var posted = Messages?.Post(
-            Personas.Current.Id,
-            "Guardian cores",
-            line,
-            DateTimeOffset.Now,
-            storyId is null ? null : D47.Core.Stories.StoryLines.Key(storyId));
+        var from = Personas.Current.Id;
+        var sent = DateTimeOffset.Now;
 
         _ = Task.Run(async () =>
         {
+            D47.Core.Messages.D47Message? posted = null;
+
+            try
+            {
+                posted = Messages?.Post(
+                    from,
+                    "Guardian cores",
+                    line,
+                    sent,
+                    storyId is null ? null : D47.Core.Stories.StoryLines.Key(storyId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "The Guardian cores waking could not be posted");
+            }
+
             await _speaking.WaitAsync().ConfigureAwait(false);
 
             try
@@ -6237,9 +6248,24 @@ public sealed class AppHost : IDisposable
         HasKey = id => TtsProviderCatalog.Selected(id).KeySecretName is not { } secret || Secrets.Names.Contains(secret),
     };
 
-    /// <summary>Posts the ship's message naming what a story's cast needs before it can speak.</summary>
-    private void PostVoicesNotReady(string title, string message) =>
-        Messages?.Post(Personas.Current.Id, title, message, DateTimeOffset.Now);
+    /// <summary>Posts the ship's message naming what a story's cast needs before it can speak, on the pool.</summary>
+    private void PostVoicesNotReady(string title, string message)
+    {
+        var from = Personas.Current.Id;
+        var sent = DateTimeOffset.Now;
+
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                Messages?.Post(from, title, message, sent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "The message naming the voices a story needs could not be posted");
+            }
+        });
+    }
 
     /// <summary>
     /// Whether a line written for this slot may carry delivery direction — asked of the client that
