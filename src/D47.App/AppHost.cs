@@ -3014,18 +3014,24 @@ public sealed class AppHost : IDisposable
         // a restart.
         tick.Add("goals", _ => goals.Poll());
 
-        // The adventures file is hand-editable and polled like the others; and when a stamp has moved -
-        // Begin, Begin again, a hand edit - the walk the book asked for happens here, on the tick, so the
-        // live fold cannot interleave with it.
+        // The adventures file is hand-editable and polled like the others. When a stamp has moved - Begin, Begin
+        // again, a hand edit - the walk the book asked for is started here, reading up to where the journal tail has
+        // read, and run on the pool; the book holds live events until a later tick adopts the walk's result.
         var wakings = new WakingAfterTheBeat();
+        var walked = new System.Collections.Concurrent.ConcurrentQueue<D47.Core.Adventures.AdventureWalkResult>();
 
         tick.Add("adventures", context =>
         {
             adventureStore.Poll();
 
-            if (adventureBook.NeedsCatchUp)
+            while (walked.TryDequeue(out var result))
             {
-                adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(journalDirectory, adventureBook.EarliestAcceptance()));
+                adventureBook.Adopt(result);
+            }
+
+            if (adventureBook.StartWalk(journalDirectory, journal.Mark) is { } walk)
+            {
+                _ = Task.Run(() => walked.Enqueue(walk.Run()));
             }
 
             var commander = gameState.Active?.Identity.FrontierId;

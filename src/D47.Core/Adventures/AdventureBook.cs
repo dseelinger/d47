@@ -53,14 +53,11 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> logger)
 {
     private readonly Lock _gate = new();
-    private readonly Dictionary<string, AdventureStanding> _standings = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, DateTimeOffset> _highWater = new(StringComparer.Ordinal);
     private readonly Queue<AdventureMoment> _moments = new();
+    private AdventureFoldState _fold = new();
 
-    /// <summary>The system each Commander is in, which a standing begun from nothing starts in.</summary>
-    private readonly Dictionary<string, long> _here = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, IReadOnlyDictionary<string, string>> _seen = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, AdventureWorld> _world = new(StringComparer.Ordinal);
+    /// <summary>Live events observed while a walk is owed or running, folded when it is adopted.</summary>
+    private readonly List<(JournalEvent Event, string Commander)> _held = [];
 
     /// <summary>
     /// Which stories are owed a spoken line right now — a beat has fired and the Commander has not
@@ -69,6 +66,15 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     private readonly HashSet<string> _stirring = new(StringComparer.Ordinal);
 
     private bool _needsCatchUp = true;
+
+    /// <summary>Whether live events are held rather than folded: from <see cref="StartWalk"/> until a walk is adopted.</summary>
+    private bool _walking;
+
+    /// <summary>Whether a walk is out on the pool.</summary>
+    private bool _running;
+
+    /// <summary>Moved whenever a walk in progress would produce standings that are already out of date.</summary>
+    private int _generation;
 
     public AdventureStore Store => store;
 
@@ -188,7 +194,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            return [.. store.For(commander).Select(adventure => StandingOf(commander, adventure))];
+            return [.. store.For(commander).Select(adventure => StandingOf(_fold, commander, adventure))];
         }
     }
 
@@ -203,7 +209,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            return StandingOf(commander, adventure);
+            return StandingOf(_fold, commander, adventure);
         }
     }
 
@@ -222,28 +228,113 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         [.. Standings(frontierId).Where(standing => standing.Adventure.IsActive && !standing.IsDone)];
 
     /// <summary>
-    /// Walks journal files, oldest first, folding every event after each active adventure's acceptance
-    /// into its standing.
+    /// Walks journal files on the calling thread and adopts the result, keeping each Commander's last walked
+    /// time so the priming replay does not fold the same events again. For startup, before the first tick.
     /// </summary>
     public void CatchUp(IReadOnlyList<string> files)
     {
         ArgumentNullException.ThrowIfNull(files);
 
-        var commander = AdventureStore.NoCommander;
-        var events = 0L;
+        var folded = Walk(files, until: null);
 
         lock (_gate)
         {
-            _standings.Clear();
-            _highWater.Clear();
-            _here.Clear();
-            _seen.Clear();
-            _world.Clear();
+            _fold = folded;
+            _needsCatchUp = false;
         }
+    }
+
+    /// <summary>
+    /// Starts the walk the book is owed, reading no further than <paramref name="until"/>; null when none is owed or
+    /// one is already running. From here until <see cref="Adopt"/> installs a walk, live events are held rather than
+    /// folded.
+    /// </summary>
+    public AdventureWalk? StartWalk(string directory, JournalMark? until)
+    {
+        ArgumentNullException.ThrowIfNull(directory);
+
+        lock (_gate)
+        {
+            if (!_needsCatchUp || _running)
+            {
+                return null;
+            }
+
+            _needsCatchUp = false;
+            _held.Clear();
+            _walking = true;
+            _running = true;
+            return new AdventureWalk(this, _generation, directory, until);
+        }
+    }
+
+    /// <summary>
+    /// Installs a finished walk's standings and folds the events held while it ran. A walk overtaken by a moved stamp
+    /// is discarded and the events stay held for the next one; a failed walk folds them onto the standings already
+    /// held.
+    /// </summary>
+    public void Adopt(AdventureWalkResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        bool stirred;
+
+        lock (_gate)
+        {
+            _running = false;
+
+            if (result.Generation != _generation)
+            {
+                return;
+            }
+
+            if (result.Folded is { } folded)
+            {
+                // The held events start where the walk stopped, so none of them is behind a mark.
+                folded.HighWater.Clear();
+                _fold = folded;
+            }
+
+            var before = _stirring.Count;
+
+            foreach (var (journalEvent, commander) in _held)
+            {
+                FoldLive(commander, journalEvent);
+            }
+
+            _held.Clear();
+            _walking = false;
+            stirred = _stirring.Count != before;
+        }
+
+        if (result.Error is { } error)
+        {
+            logger.LogWarning(error, "The adventure walk failed; the standings stay as they were");
+        }
+
+        if (stirred)
+        {
+            StirringChanged?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Folds journal files, oldest first, into a fresh fold state, reading the file named by <paramref name="until"/>
+    /// only to its position. Touches nothing else on the book.
+    /// </summary>
+    internal AdventureFoldState Walk(IReadOnlyList<string> files, JournalMark? until)
+    {
+        var state = new AdventureFoldState();
+        var commander = AdventureStore.NoCommander;
+        var events = 0L;
 
         foreach (var file in files)
         {
-            var reader = new JournalReader(file, logger);
+            var limit = until is { } mark && string.Equals(System.IO.Path.GetFileName(file), System.IO.Path.GetFileName(mark.Path), StringComparison.Ordinal)
+                ? mark.Position
+                : (long?)null;
+
+            var reader = new JournalReader(file, logger, limit);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {
@@ -257,24 +348,17 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                         commander = fid;
                     }
 
-                    lock (_gate)
-                    {
-                        Fold(commander, journalEvent, announce: false);
-                        _highWater[commander] = journalEvent.Timestamp;
-                    }
+                    Fold(state, commander, journalEvent, announce: false);
+                    state.HighWater[commander] = journalEvent.Timestamp;
                 }
             }
         }
 
-        lock (_gate)
-        {
-            _needsCatchUp = false;
-        }
-
         logger.LogInformation("Caught adventures up over {Events} events in {Files} journals", events, files.Count);
+        return state;
     }
 
-    /// <summary>One live event.</summary>
+    /// <summary>One live event; held rather than folded while a walk is owed or running.</summary>
     public void Observe(JournalEvent journalEvent, string? frontierId)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
@@ -284,13 +368,14 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            if (_highWater.TryGetValue(commander, out var mark) && journalEvent.Timestamp <= mark)
+            if (_walking)
             {
+                _held.Add((journalEvent, commander));
                 return;
             }
 
             var before = _stirring.Count;
-            Fold(commander, journalEvent, announce: true);
+            FoldLive(commander, journalEvent);
             stirred = _stirring.Count != before;
         }
 
@@ -352,7 +437,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            _standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(commander), Seen(commander));
+            _fold.Standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(_fold, commander), Seen(_fold, commander));
             _moments.Enqueue(new AdventureMoment(commander, begun, -1, now));
             Stir(commander, begun.Key);
         }
@@ -374,7 +459,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         lock (_gate)
         {
             if (store.Find(commander, key) is not { IsActive: true } adventure
-                || StandingOf(commander, adventure) is not { IsDone: false } standing
+                || StandingOf(_fold, commander, adventure) is not { IsDone: false } standing
                 || standing.Current != from)
             {
                 return "The story has moved on from that objective.";
@@ -397,7 +482,14 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 return refusal;
             }
 
-            _standings[StandingKey(commander, key)] = StandingOf(commander, rewritten) with { Adventure = rewritten, Counted = 0 };
+            _fold.Standings[StandingKey(commander, key)] = StandingOf(_fold, commander, rewritten) with { Adventure = rewritten, Counted = 0 };
+
+            // A walk under way would bring back the count this just reset.
+            if (_walking)
+            {
+                _generation++;
+                _needsCatchUp = true;
+            }
 
             // A line waiting out its settle window hands off to the beat that was refused.
             var queued = _moments.Select(moment => SameStory(moment, commander, key) ? moment with { Adventure = rewritten } : moment).ToList();
@@ -436,9 +528,9 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            if (_standings.TryGetValue(StandingKey(commander, key), out var standing))
+            if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
             {
-                _standings[StandingKey(commander, key)] = standing with { Adventure = abandoned };
+                _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = abandoned };
             }
 
             // A beat waiting out its settle window belongs to a story that has just been stopped.
@@ -466,7 +558,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         lock (_gate)
         {
-            _standings.Remove(StandingKey(commander, key));
+            _fold.Standings.Remove(StandingKey(commander, key));
             _stirring.Remove(StandingKey(commander, key));
         }
 
@@ -488,41 +580,57 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                     var key = StandingKey(commander, adventure.Key);
                     present.Add(key);
 
-                    if (_standings.TryGetValue(key, out var standing))
+                    if (_fold.Standings.TryGetValue(key, out var standing))
                     {
                         if (standing.Adventure.AcceptedAt == adventure.AcceptedAt)
                         {
-                            _standings[key] = standing with { Adventure = adventure };
+                            _fold.Standings[key] = standing with { Adventure = adventure };
                             continue;
                         }
 
-                        _standings.Remove(key);
+                        _fold.Standings.Remove(key);
                     }
 
                     if (adventure.IsActive)
                     {
+                        _generation++;
                         _needsCatchUp = true;
                     }
                 }
             }
 
-            foreach (var stale in _standings.Keys.Where(key => !present.Contains(key)).ToList())
+            foreach (var stale in _fold.Standings.Keys.Where(key => !present.Contains(key)).ToList())
             {
-                _standings.Remove(stale);
+                _fold.Standings.Remove(stale);
             }
         }
     }
 
-    private void Fold(string commander, JournalEvent journalEvent, bool announce)
+    /// <summary>One live event onto the book's fold state, unless the startup walk already folded it. Under the gate.</summary>
+    private void FoldLive(string commander, JournalEvent journalEvent)
+    {
+        if (_fold.HighWater.TryGetValue(commander, out var mark) && journalEvent.Timestamp <= mark)
+        {
+            return;
+        }
+
+        Fold(_fold, commander, journalEvent, announce: true);
+    }
+
+    /// <summary>
+    /// Folds one event into <paramref name="state"/>. Announcing also queues and stirs, under the gate; without it, it
+    /// touches only <paramref name="state"/>, the store and <see cref="Silenced"/>, so a walk can run it off the tick.
+    /// </summary>
+    private void Fold(AdventureFoldState state, string commander, JournalEvent journalEvent, bool announce)
     {
         if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
             && journalEvent.Raw.Long("SystemAddress") is { } arrived)
         {
-            _here[commander] = arrived;
+            state.Here[commander] = arrived;
         }
 
-        var world = _world.GetValueOrDefault(commander, AdventureWorld.Empty).Apply(journalEvent);
-        _world[commander] = world;
+        var world = state.World.GetValueOrDefault(commander, AdventureWorld.Empty).Apply(journalEvent);
+        state.World[commander] = world;
 
         foreach (var adventure in store.For(commander))
         {
@@ -538,7 +646,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
 
             var key = StandingKey(commander, adventure.Key);
-            var before = StandingOf(commander, adventure);
+            var before = StandingOf(state, commander, adventure);
             var after = AdventureFold.Apply(before, journalEvent, world);
 
             if (ReferenceEquals(before, after))
@@ -546,7 +654,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 continue;
             }
 
-            _standings[key] = after;
+            state.Standings[key] = after;
 
             if (after.Fired.Count == before.Fired.Count)
             {
@@ -569,27 +677,28 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 journalEvent.Timestamp);
         }
 
-        _seen[commander] = AdventureWatch.Observe(Seen(commander), journalEvent).Seen;
+        state.Seen[commander] = AdventureWatch.Observe(Seen(state, commander), journalEvent).Seen;
     }
 
-    private AdventureStanding StandingOf(string commander, Adventure adventure)
+    private static AdventureStanding StandingOf(AdventureFoldState state, string commander, Adventure adventure)
     {
         var key = StandingKey(commander, adventure.Key);
 
-        if (_standings.TryGetValue(key, out var standing) && standing.Adventure.AcceptedAt == adventure.AcceptedAt)
+        if (state.Standings.TryGetValue(key, out var standing) && standing.Adventure.AcceptedAt == adventure.AcceptedAt)
         {
             return ReferenceEquals(standing.Adventure, adventure) ? standing : standing with { Adventure = adventure };
         }
 
-        var fresh = AdventureFold.Start(adventure, Here(commander), Seen(commander));
-        _standings[key] = fresh;
+        var fresh = AdventureFold.Start(adventure, Here(state, commander), Seen(state, commander));
+        state.Standings[key] = fresh;
         return fresh;
     }
 
-    private IReadOnlyDictionary<string, string> Seen(string commander) =>
-        _seen.TryGetValue(commander, out var seen) ? seen : AdventureWatch.Nothing;
+    private static IReadOnlyDictionary<string, string> Seen(AdventureFoldState state, string commander) =>
+        state.Seen.TryGetValue(commander, out var seen) ? seen : AdventureWatch.Nothing;
 
-    private long? Here(string commander) => _here.TryGetValue(commander, out var address) ? address : null;
+    private static long? Here(AdventureFoldState state, string commander) =>
+        state.Here.TryGetValue(commander, out var address) ? address : null;
 
     private static string StandingKey(string commander, string key) => commander + "\n" + key.ToLowerInvariant();
 
@@ -600,16 +709,19 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// <summary>
     /// Which journal files a catch-up has to read: every file whose session started at or after the
     /// earliest acceptance on record, and the one before it — the session that was running when Begin
-    /// was pressed.
+    /// was pressed. No file sorting after <paramref name="until"/>'s is considered.
     /// </summary>
-    public static IReadOnlyList<string> FilesToWalk(string directory, DateTimeOffset? earliestAcceptance)
+    public static IReadOnlyList<string> FilesToWalk(string directory, DateTimeOffset? earliestAcceptance, JournalMark? until = null)
     {
         if (!Directory.Exists(directory))
         {
             return [];
         }
 
+        var last = until is { } mark ? System.IO.Path.GetFileName(mark.Path) : null;
+
         var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+            .Where(file => last is null || string.CompareOrdinal(System.IO.Path.GetFileName(file), last) <= 0)
             .OrderBy(System.IO.Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
