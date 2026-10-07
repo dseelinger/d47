@@ -1691,6 +1691,10 @@ public sealed class AppHost : IDisposable
             "controllers", () => new HotasControllers(loggerFactory.CreateLogger<HotasControllers>()));
         var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>());
 
+        // What the tick reads the controllers through, so no tick calls into Windows.Gaming.Input.
+        var sampledControllers = new ControllerSampler(
+            controllers, loggerFactory.CreateLogger<ControllerSampler>());
+
         var cancellation = new TurnCancellation(loggerFactory.CreateLogger<TurnCancellation>());
 
         // The cores the Commander wrote, beside the executable and polled like the macros above
@@ -2858,7 +2862,7 @@ public sealed class AppHost : IDisposable
             pushToTalk.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            PollTheStick(controllers, pushToTalkButton, host._cancelButton, host._logger);
+            PollTheStick(sampledControllers, pushToTalkButton, host._cancelButton, host._logger);
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.
@@ -2914,7 +2918,7 @@ public sealed class AppHost : IDisposable
                 new SwitchTick
                 {
                     Now = context.Now,
-                    Readings = controllers.Poll(),
+                    Readings = sampledControllers.Poll(),
                     Status = status.Current,
                     Binds = bindsRef!(),
 
@@ -3134,6 +3138,7 @@ public sealed class AppHost : IDisposable
         if (startTicking)
         {
             host._modelCatalog.Start();
+            host._controllerSampler = sampledControllers.Start();
 
             host._ticking = StartupTimer.Time(
                 "tick driver", () => new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start());
@@ -6099,6 +6104,8 @@ public sealed class AppHost : IDisposable
 
     private TickDriver? _ticking;
 
+    private ControllerSampler? _controllerSampler;
+
     /// <summary>Guards the callout speaker.</summary>
     private readonly SemaphoreSlim _speaking = new(1, 1);
 
@@ -8593,6 +8600,7 @@ public sealed class AppHost : IDisposable
         // The loop stops before anything it polls is torn down, so a tick cannot land on a disposed sink or a
         // closed file handle on the way out.
         _ticking?.Dispose();
+        _controllerSampler?.Dispose();
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
 

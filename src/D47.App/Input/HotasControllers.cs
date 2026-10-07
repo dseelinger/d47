@@ -61,19 +61,20 @@ public sealed class HotasControllers : IHotasReader, IDisposable
     public int Interfaces => Count();
 
     /// <inheritdoc />
+    /// <remarks>Windows is asked outside <c>_gate</c>, which its controller callbacks also take.</remarks>
     public bool IsSettled
     {
         get
         {
+            if (Fault is not null)
+            {
+                return true;
+            }
+
+            var count = Count();
+
             lock (_gate)
             {
-                if (Fault is not null)
-                {
-                    return true;
-                }
-
-                var count = Count();
-
                 if (count != _count)
                 {
                     _count = count;
@@ -97,17 +98,14 @@ public sealed class HotasControllers : IHotasReader, IDisposable
     {
         get
         {
-            lock (_gate)
+            if (Fault is not null)
             {
-                if (Fault is not null)
-                {
-                    return Fault;
-                }
-
-                return IsSettled && Count() == 0
-                    ? "D47 cannot see any game controllers. Nothing is plugged in, or Windows is not reporting it."
-                    : null;
+                return Fault;
             }
+
+            return IsSettled && Count() == 0
+                ? "D47 cannot see any game controllers. Nothing is plugged in, or Windows is not reporting it."
+                : null;
         }
     }
 
@@ -208,10 +206,12 @@ public sealed class HotasControllers : IHotasReader, IDisposable
 
     private void Changed(string what, RawGameController controller)
     {
+        var count = Count();
+
         lock (_gate)
         {
             _changed = _clock.Elapsed;
-            _count = Count();
+            _count = count;
         }
 
         try
@@ -221,7 +221,7 @@ public sealed class HotasControllers : IHotasReader, IDisposable
                 what,
                 controller.HardwareVendorId,
                 controller.HardwareProductId,
-                _count);
+                count);
         }
         catch (Exception ex)
         {

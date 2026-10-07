@@ -15,6 +15,7 @@ internal sealed class MediaSession : IDisposable
     private readonly SystemMediaTransportControls _controls;
     private readonly AmbientMusic _music;
     private readonly ILogger _logger;
+    private bool _disposed;
 
     private MediaSession(SystemMediaTransportControls controls, AmbientMusic music, ILogger logger)
     {
@@ -28,7 +29,7 @@ internal sealed class MediaSession : IDisposable
         _controls.IsNextEnabled = true;
         _controls.IsPreviousEnabled = false;
         _controls.ButtonPressed += OnButtonPressed;
-        _music.Changed += Show;
+        _music.Changed += OnChanged;
 
         Show(_music.State);
     }
@@ -65,8 +66,16 @@ internal sealed class MediaSession : IDisposable
         }
     }
 
+    /// <summary>Raised on the tick; the flyout is updated on the UI thread instead.</summary>
+    private void OnChanged(MusicState state) => Avalonia.Threading.Dispatcher.UIThread.Post(() => Show(state));
+
     private void Show(MusicState state)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         try
         {
             Display(state);
@@ -104,7 +113,8 @@ internal sealed class MediaSession : IDisposable
 
     public void Dispose()
     {
-        _music.Changed -= Show;
+        _disposed = true;
+        _music.Changed -= OnChanged;
         _controls.ButtonPressed -= OnButtonPressed;
         _controls.IsEnabled = false;
     }

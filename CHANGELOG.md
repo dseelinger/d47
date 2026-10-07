@@ -18,6 +18,8 @@ When the Windows default speaker or microphone changes, push-to-talk and callout
 
 Push-to-talk and callouts no longer wait while D47 searches the Elite install folders for your bindings after you change them in the game or switch preset. The search runs in the background, and D47 keeps using the bindings it had until it finishes.
 
+Push-to-talk and callouts no longer wait on Windows' game-controller service, or while D47 updates the track shown in the Windows media flyout. D47 now reads your controllers on a separate thread every 50 milliseconds.
+
 D47 could stop speaking and stop answering push-to-talk until restarted when one sound ended at the moment another started, or while the output device changed. Neither hangs it now.
 
 When the language model rewrites a story's next objective, push-to-talk and callouts no longer wait while D47 saves the rewritten story to adventures.json.
