@@ -48,6 +48,8 @@ public sealed class AppHost : IDisposable
     private readonly ILogger<AppHost> _logger;
     private readonly WasapiAudioSink _audioSink;
 
+    private readonly DefaultDeviceFollowPolicy _outputFollow;
+
     private AppHost(
         AppPaths paths,
         KeywordRouter router,
@@ -126,6 +128,7 @@ public sealed class AppHost : IDisposable
         };
         SpendLedger = spendLedger;
         _audioSink = audioSink;
+        _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
         Music = new AmbientMusic(audio, () => Cues);
         _cues = cues;
@@ -134,6 +137,7 @@ public sealed class AppHost : IDisposable
         Echo = echo;
         _binds = binds;
         _microphone = microphone;
+        _inputFollow = new DefaultDeviceFollowPolicy(microphone);
         _pushToTalk = pushToTalk;
         _pushToTalkButton = pushToTalkButton;
         _pushToTalkSources = pushToTalkSources;
@@ -662,6 +666,8 @@ public sealed class AppHost : IDisposable
     private readonly BindsWatch _binds;
 
     private readonly WasapiMicrophone _microphone;
+
+    private readonly DefaultDeviceFollowPolicy _inputFollow;
 
     private readonly OwnVoiceRecording _ownVoiceRecording;
 
@@ -5141,22 +5147,25 @@ public sealed class AppHost : IDisposable
     /// <summary>
     /// Follows the Windows Default Device as it moves, on whichever direction is left on "system default" —
     /// a chosen device is unaffected. Waits for the arbiter, or the gate, to go idle unless the device that
-    /// was open has itself disappeared (#67).
+    /// was open has itself disappeared (#67). The reopen runs on the pool; its outcome is reported on a later tick.
     /// </summary>
     private void FollowDefaultDevices(DateTimeOffset now)
     {
         var speech = Settings.Current.Speech;
         var listening = Settings.Current.Listening;
 
-        var outputMove = DefaultDeviceFollowPolicy.Poll(
-            _audioSink,
+        var outputMove = _outputFollow.Poll(
             now,
             followingDefault: string.IsNullOrEmpty(speech.OutputDevice),
             configuredDeviceId: speech.OutputDevice,
             isBusy: () => Audio.IsSpeaking,
             interrupt: Audio.Silence);
 
-        if (outputMove is { } output)
+        if (outputMove is { Error: { } outputError })
+        {
+            _logger.LogError(outputError, "Could not follow the Default Device for audio output");
+        }
+        else if (outputMove is { } output)
         {
             _logger.LogInformation(
                 "The Default Device moved output from {Old} to {New}",
@@ -5164,8 +5173,7 @@ public sealed class AppHost : IDisposable
                 output.NewDeviceName ?? "(none)");
         }
 
-        var inputMove = DefaultDeviceFollowPolicy.Poll(
-            _microphone,
+        var inputMove = _inputFollow.Poll(
             now,
             followingDefault: string.IsNullOrEmpty(listening.InputDevice),
             configuredDeviceId: listening.InputDevice,
@@ -5174,6 +5182,12 @@ public sealed class AppHost : IDisposable
 
         if (inputMove is not { } input)
         {
+            return;
+        }
+
+        if (input.Error is { } inputError)
+        {
+            _logger.LogError(inputError, "Could not follow the Default Device for the microphone");
             return;
         }
 

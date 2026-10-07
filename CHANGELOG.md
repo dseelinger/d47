@@ -14,6 +14,8 @@ Push-to-talk and callouts no longer wait while D47 saves a story's progress or a
 
 Saving a plotted route or hearing your mail no longer holds up push-to-talk and callouts while D47 writes the file.
 
+When the Windows default speaker or microphone changes, push-to-talk and callouts no longer wait while D47 closes the old device and opens the new one.
+
 Push-to-talk and callouts no longer wait while D47 searches the Elite install folders for your bindings after you change them in the game or switch preset. The search runs in the background, and D47 keeps using the bindings it had until it finishes.
 
 D47 could stop speaking and stop answering push-to-talk until restarted when one sound ended at the moment another started, or while the output device changed. Neither hangs it now.

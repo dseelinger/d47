@@ -15,14 +15,17 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
 
     private static AudioClip Clip() => new("line", new byte[4800], AudioFormat.Standard);
 
+    private static DefaultDeviceFollowPolicy Inline(FakeDeviceReopener device) => new(device, work => work());
+
     [Fact]
     public void NothingHappensWhenNoMoveIsDue()
     {
         var device = new FakeDeviceReopener();
+        var follow = Inline(device);
         var interrupted = false;
 
-        var move = DefaultDeviceFollowPolicy.Poll(
-            device, Now, followingDefault: true, configuredDeviceId: null, isBusy: () => false, interrupt: () => interrupted = true);
+        var move = follow.Poll(
+            Now, followingDefault: true, configuredDeviceId: null, isBusy: () => false, interrupt: () => interrupted = true);
 
         Assert.Null(move);
         Assert.Equal(0, device.ReopenCount);
@@ -33,11 +36,12 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
     public void AChosenDeviceAbsorbsTheMoveWithoutReopening()
     {
         var device = new FakeDeviceReopener();
+        var follow = Inline(device);
         device.MakeDue();
         var interrupted = false;
 
-        var move = DefaultDeviceFollowPolicy.Poll(
-            device, Now, followingDefault: false, configuredDeviceId: "chosen-id", isBusy: () => true, interrupt: () => interrupted = true);
+        var move = follow.Poll(
+            Now, followingDefault: false, configuredDeviceId: "chosen-id", isBusy: () => true, interrupt: () => interrupted = true);
 
         Assert.Null(move);
         Assert.Equal(0, device.ReopenCount);
@@ -51,10 +55,11 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
     public void AnIdleDeviceReopensStraightAway()
     {
         var device = new FakeDeviceReopener();
+        var follow = Inline(device);
         device.MakeDue();
 
-        var move = DefaultDeviceFollowPolicy.Poll(
-            device, Now, followingDefault: true, configuredDeviceId: null, isBusy: () => false, interrupt: () => throw new Exception("should not interrupt"));
+        var move = follow.Poll(
+            Now, followingDefault: true, configuredDeviceId: null, isBusy: () => false, interrupt: () => throw new Exception("should not interrupt"));
 
         Assert.NotNull(move);
         Assert.False(move.Value.Interrupted);
@@ -73,10 +78,11 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
         Assert.True(arbiter.IsSpeaking);
 
         var device = new FakeDeviceReopener();
+        var follow = Inline(device);
         device.MakeDue();
 
-        var move = DefaultDeviceFollowPolicy.Poll(
-            device, Now, followingDefault: true, configuredDeviceId: null, isBusy: () => arbiter.IsSpeaking, interrupt: arbiter.Silence);
+        var move = follow.Poll(
+            Now, followingDefault: true, configuredDeviceId: null, isBusy: () => arbiter.IsSpeaking, interrupt: arbiter.Silence);
 
         Assert.Null(move);
         Assert.Equal(0, device.ReopenCount);
@@ -87,8 +93,8 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
         sink.Complete(sink.Played[0].Id);
         Assert.False(arbiter.IsSpeaking);
 
-        move = DefaultDeviceFollowPolicy.Poll(
-            device, Now, followingDefault: true, configuredDeviceId: null, isBusy: () => arbiter.IsSpeaking, interrupt: arbiter.Silence);
+        move = follow.Poll(
+            Now, followingDefault: true, configuredDeviceId: null, isBusy: () => arbiter.IsSpeaking, interrupt: arbiter.Silence);
 
         Assert.NotNull(move);
         Assert.False(move.Value.Interrupted);
@@ -105,11 +111,12 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
         Assert.True(arbiter.IsSpeaking);
 
         var device = new FakeDeviceReopener();
+        var follow = Inline(device);
         device.MakeDue();
         device.MakeGone();
 
-        var move = DefaultDeviceFollowPolicy.Poll(
-            device, Now, followingDefault: true, configuredDeviceId: null, isBusy: () => arbiter.IsSpeaking, interrupt: arbiter.Silence);
+        var move = follow.Poll(
+            Now, followingDefault: true, configuredDeviceId: null, isBusy: () => arbiter.IsSpeaking, interrupt: arbiter.Silence);
 
         Assert.NotNull(move);
         Assert.True(move.Value.Interrupted);
