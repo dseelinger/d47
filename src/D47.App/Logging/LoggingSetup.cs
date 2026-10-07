@@ -44,25 +44,31 @@ public static class LoggingSetup
         // meant fourteen *files* — a fortnight of daily play, and less than that whenever the sink rolled
         // more often than the calendar.
         return configuration
-            .WriteTo.File(
-                Path.Combine(paths.Logs, "d47-.log"),
-                outputTemplate: HumanTemplate,
-                fileSizeLimitBytes: MostBytesPerDay,
-                rollOnFileSizeLimit: false,
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: null,
-                retainedFileTimeLimit: ReadableLogLife,
-                shared: true)
-            .WriteTo.File(
-                new CompactJsonFormatter(),
-                Path.Combine(paths.Logs, "d47-.jsonl"),
-                fileSizeLimitBytes: MostBytesPerDay,
-                rollOnFileSizeLimit: false,
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: null,
-                retainedFileTimeLimit: MachineLogLife,
-                shared: true)
-            .WriteTo.Console(outputTemplate: HumanTemplate)
+            // Every sink writes on the wrapper's own thread, never the caller's: a shared-file write waits up
+            // to ten seconds on a named mutex any process can hold, and the tick logs (#915). A full buffer
+            // drops events rather than block. Disposing the logger drains the buffer.
+            .WriteTo.Async(sinks =>
+            {
+                sinks.File(
+                    Path.Combine(paths.Logs, "d47-.log"),
+                    outputTemplate: HumanTemplate,
+                    fileSizeLimitBytes: MostBytesPerDay,
+                    rollOnFileSizeLimit: false,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: null,
+                    retainedFileTimeLimit: ReadableLogLife,
+                    shared: true);
+                sinks.File(
+                    new CompactJsonFormatter(),
+                    Path.Combine(paths.Logs, "d47-.jsonl"),
+                    fileSizeLimitBytes: MostBytesPerDay,
+                    rollOnFileSizeLimit: false,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: null,
+                    retainedFileTimeLimit: MachineLogLife,
+                    shared: true);
+                sinks.Console(outputTemplate: HumanTemplate);
+            })
             .CreateLogger();
     }
 }
