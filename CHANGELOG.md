@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Local voice and Chatterbox voice rows in Settings no longer show a Download it button once the model is installed. The button returns if any file is missing or the wrong size, and goes when a download finishes.
+
 Chatterbox lists its twelve voices in an installed or updated D47, and the speaker portraits arrive with an update. Before, the installer's folder for voices and the updater's zip left them out.
 
 Push-to-talk and callouts no longer wait while D47 writes to its log files.

@@ -1811,6 +1811,8 @@ public sealed class AppHost : IDisposable
                     // The local voice, and what fetching it would cost (Phase 59).
                     LocalVoiceState = () => self?.LocalVoiceState() ?? "Not available.",
                     DownloadLocalVoice = () => self is null ? null : self.DownloadLocalVoice,
+                    LocalVoiceInstalled = () =>
+                        self is not null && D47.Core.Speech.KokoroAssets.IsInstalled(self.KokoroFolder()),
 
                     // Which of the eight builds is actually on disk, and the swap onto another (#139).
                     InstalledLocalVoiceBuild = () =>
@@ -1838,6 +1840,8 @@ public sealed class AppHost : IDisposable
                         return () => host._ownVoiceRecording.Changed -= refresh;
                     },
                     DownloadChatterbox = () => self is null ? null : self.DownloadChatterbox,
+                    ChatterboxInstalled = () =>
+                        self is not null && D47.Core.Speech.ChatterboxAssets.IsInstalled(self.ChatterboxFolder()),
                     StoryCastUses = providerId => self?.Stories?.CastUses(providerId) == true,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()

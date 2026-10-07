@@ -291,6 +291,9 @@ public sealed record SettingRow
     /// </summary>
     public Func<string>? PressLabelFor { get; init; }
 
+    /// <summary>Whether the press button is shown, read each time the row is drawn; null always shows it.</summary>
+    public Func<bool>? PressVisible { get; init; }
+
     /// <summary>Whether the press button is enabled; null leaves it enabled.</summary>
     public Func<D47Settings, bool>? PressEnabled { get; init; }
 

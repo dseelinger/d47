@@ -234,6 +234,9 @@ public static class SpeechCapability
         /// <summary>Fetches the local voice.</summary>
         public Func<LongPress?>? DownloadLocalVoice { get; init; }
 
+        /// <summary>Whether every file of the local voice is on this machine.</summary>
+        public Func<bool>? LocalVoiceInstalled { get; init; }
+
         /// <summary>Which of Kokoro's eight builds is on this machine, or null where none is (#139).</summary>
         public Func<string?>? InstalledLocalVoiceBuild { get; init; }
 
@@ -245,6 +248,9 @@ public static class SpeechCapability
 
         /// <summary>Fetches Chatterbox's model.</summary>
         public Func<LongPress?>? DownloadChatterbox { get; init; }
+
+        /// <summary>Whether every file of Chatterbox's model is on this machine.</summary>
+        public Func<bool>? ChatterboxInstalled { get; init; }
 
         /// <summary>Whether a downloaded story's cast speaks through this local provider, so its download row is offered.</summary>
         public Func<string, bool>? StoryCastUses { get; init; }
@@ -502,6 +508,7 @@ public static class SpeechCapability
                 // the delegate returns a function. Rows are built once, before AppHost has finished
                 // constructing itself — its `self` is still null while the capability list is assembled.
                 PressLabel = surface.DownloadLocalVoice is null ? null : "Download it",
+                PressVisible = () => surface.LocalVoiceInstalled?.Invoke() != true,
                 PressAsync = surface.DownloadLocalVoice is null
                     ? null
                     : (progress, cancellationToken) =>
@@ -529,6 +536,7 @@ public static class SpeechCapability
                 Kind = SettingKind.Info,
                 DocsAnchor = "provider",
                 PressLabel = surface.DownloadChatterbox is null ? null : "Download it",
+                PressVisible = () => surface.ChatterboxInstalled?.Invoke() != true,
                 PressAsync = surface.DownloadChatterbox is null
                     ? null
                     : (progress, cancellationToken) =>

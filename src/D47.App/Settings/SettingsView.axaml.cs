@@ -2917,6 +2917,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             {
                 press.IsEnabled = enabled(_settings.Current);
             }
+
+            if (row.PressVisible is { } visible)
+            {
+                press.IsVisible = visible();
+            }
         }
 
         refresh();
