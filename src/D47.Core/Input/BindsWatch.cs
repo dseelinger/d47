@@ -23,6 +23,12 @@ public sealed class BindsWatch
     private string _stamp;
     private int _retries;
 
+    /// <summary>A resolve has been dispatched and its result not yet adopted. Touched only by <see cref="Poll"/>.</summary>
+    private bool _resolving;
+
+    /// <summary>The finished resolve, written by the dispatched work and taken by <see cref="Poll"/>.</summary>
+    private Resolved? _resolved;
+
     /// <summary>Resolves once, immediately, so the first caller sees the same thing it always did.</summary>
     public BindsWatch(string bindingsDirectory, IEnumerable<string> gameDirectories, ILogger logger)
     {
@@ -32,6 +38,9 @@ public sealed class BindsWatch
         _current = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, logger);
         _stamp = Stamp(_current);
     }
+
+    /// <summary>Runs a resolve off the calling thread; the tick polls and must not walk the game folders.</summary>
+    public Action<Action> Dispatch { get; init; } = work => _ = Task.Run(work);
 
     /// <summary>What is bound right now.</summary>
     public EliteBinds Current
@@ -45,26 +54,66 @@ public sealed class BindsWatch
         }
     }
 
-    /// <summary>Re-reads if either file moved.</summary>
+    /// <summary>
+    /// Starts a re-read through <see cref="Dispatch"/> if either file moved, and adopts a finished one; true when
+    /// the bindings were replaced. One re-read runs at a time, and <see cref="Current"/> holds the previous bindings
+    /// until a later poll adopts the new ones.
+    /// </summary>
     public bool Poll()
     {
-        var now = Stamp(_current);
+        if (!_resolving)
+        {
+            var now = Stamp(_current);
 
-        if (string.Equals(now, _stamp, StringComparison.Ordinal))
+            // An unreadable stamp says nothing about whether the files moved; the next poll looks again.
+            if (string.Equals(now, Unreadable, StringComparison.Ordinal)
+                || string.Equals(now, _stamp, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            _resolving = true;
+            Dispatch(() => Volatile.Write(ref _resolved, Resolve(now)));
+        }
+
+        if (Interlocked.Exchange(ref _resolved, null) is not { } resolved)
         {
             return false;
         }
 
-        var reloaded = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, _logger, out var unreadable);
+        _resolving = false;
 
+        return Adopt(resolved);
+    }
+
+    /// <summary>Runs off the tick. Never throws: a failure is an unreadable result.</summary>
+    private Resolved Resolve(string startedAt)
+    {
+        try
+        {
+            var binds = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, _logger, out var unreadable);
+
+            // Taken from the file resolved, which a preset switch changes.
+            return new Resolved(binds, unreadable, startedAt, Stamp(binds));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "The bindings could not be resolved");
+
+            return new Resolved(EliteBinds.None, Unreadable: true, startedAt, startedAt);
+        }
+    }
+
+    private bool Adopt(Resolved resolved)
+    {
         // **A read that failed never replaces one that worked** (#24).
-        if (unreadable)
+        if (resolved.Unreadable)
         {
             if (_retries < RetryPolls)
             {
                 _retries++;
 
-                // The stamp is deliberately *not* advanced, which is what makes the next tick try again.
+                // The stamp is not advanced, so the next poll starts another re-read.
                 _logger.LogWarning(
                     "The bindings could not be re-read this time; keeping the {Count} already "
                     + "loaded and trying again ({Attempt} of {Limit})",
@@ -76,7 +125,7 @@ public sealed class BindsWatch
             }
 
             // Out of attempts.
-            _stamp = now;
+            _stamp = resolved.StartedAt;
             _retries = 0;
 
             _logger.LogWarning(
@@ -89,25 +138,19 @@ public sealed class BindsWatch
         }
 
         _retries = 0;
-
-        // Advanced after the read rather than before it.
-        _stamp = now;
+        _stamp = resolved.Stamp;
 
         lock (_gate)
         {
-            _current = reloaded;
+            _current = resolved.Binds;
         }
 
         // The preset is named because the two changes read very differently in a log: a rebind keeps the name
         // and moves one key, and a preset switch can move all of them.
         _logger.LogInformation(
             "The bindings file changed; re-read {Count} bindings from preset {Preset}",
-            reloaded.Bindings.Count,
-            reloaded.PresetName ?? "none");
-
-        // The stamp is taken again because resolving may have landed on a different file — a preset switch
-        // does exactly that — and the one just recorded describes the old one.
-        _stamp = Stamp(reloaded);
+            resolved.Binds.Bindings.Count,
+            resolved.Binds.PresetName ?? "none");
 
         return true;
     }
@@ -158,4 +201,8 @@ public sealed class BindsWatch
                 : $"{path}@gone";
         }
     }
+
+    /// <param name="StartedAt">The stamp that prompted the re-read.</param>
+    /// <param name="Stamp">The stamp taken just after it, of the file it landed on.</param>
+    private sealed record Resolved(EliteBinds Binds, bool Unreadable, string StartedAt, string Stamp);
 }

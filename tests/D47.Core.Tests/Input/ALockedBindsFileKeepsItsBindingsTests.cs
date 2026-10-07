@@ -33,7 +33,7 @@ public class ALockedBindsFileKeepsItsBindingsTests : IDisposable
         File.WriteAllText(Path.Combine(Bindings, "Custom.4.2.binds"), body);
     }
 
-    private BindsWatch Watch() => new(Bindings, [Game], NullLogger.Instance);
+    private BindsWatch Watch() => new(Bindings, [Game], NullLogger.Instance) { Dispatch = work => work() };
 
     /// <summary>Holds the preset file exactly as Elite does while it writes one.</summary>
     private FileStream Lock() =>

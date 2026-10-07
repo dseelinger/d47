@@ -33,7 +33,7 @@ public class BindsAreReReadWhenEliteRewritesThemTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private BindsWatch Watch() => new(Bindings, [Game], NullLogger.Instance);
+    private BindsWatch Watch() => new(Bindings, [Game], NullLogger.Instance) { Dispatch = work => work() };
 
     private void StartPreset(string fileName, string preset) =>
         Write(Path.Combine(Bindings, fileName), preset + "\n" + preset + "\n");
