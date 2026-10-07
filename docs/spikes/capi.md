@@ -1,7 +1,8 @@
 # Spike: what Frontier's Companion API offers
 
 The desk half of #615. Nobody has called the API for this page. It decides whether the live probe
-(#616) is worth doing and lists what that probe has to check.
+(#616) is worth doing and lists what that probe has to check: for every endpoint, the new d47
+capabilities it could support, as well as the open issues it could serve.
 
 ## Sources
 
@@ -26,15 +27,94 @@ carries `Authorization: Bearer <access token>` ([EP:7-14][EP7]).
 
 All event names below appear in `HandledEvents` (`src/D47.Core/Journal/HandledEvents.cs`).
 
-| Endpoint | What it returns | What d47 already reads | What it adds | Serves |
+| Endpoint | What it returns | What d47 already reads | What it adds | Open issue served |
 | --- | --- | --- | --- | --- |
-| `/profile` | `commander` (name, id, docked, alive, credits, debt, current ship id, ranks), `lastStarport`, `lastSystem`, `ship` (value, health, modules, engineering, launch bays) and `ships`, "all ships the Commander owns" in the same format as `ship` ([EP:124-236][EP124]). | `LoadGame`, `Rank`, `Progress`, `Reputation`, `Statistics`, `Location` and `Docked` are in `ActedOn`. `Loadout` gives the current ship's modules and engineering. `StoredShips` gives each stored ship's type, name, value and location, but no modules (read on disk). `LoadoutStore` keeps the last `Loadout` of every ship flown since d47 was installed. | The modules of stored ships that have not been flown since d47 was installed, if `ships` fills them in. The documentation implies it does but gives no example; this is probe question 5. | The Fleet loadouts that `LoadoutStore` keeps. No open issue. |
+| `/profile` | `commander` (name, id, docked, alive, credits, debt, current ship id, ranks), `lastStarport`, `lastSystem`, `ship` (value, health, modules, engineering, launch bays) and `ships`, "all ships the Commander owns" in the same format as `ship` ([EP:124-236][EP124]). | `LoadGame`, `Rank`, `Progress`, `Reputation`, `Statistics`, `Location` and `Docked` are in `ActedOn`. `Loadout` gives the current ship's modules and engineering. `StoredShips` gives each stored ship's type, name, value and location, but no modules (read on disk). `LoadoutStore` keeps the last `Loadout` of every ship flown since d47 was installed. | The modules of stored ships that have not been flown since d47 was installed, if `ships` fills them in. The documentation implies it does but gives no example; this is probe question 4. | The Fleet loadouts that `LoadoutStore` keeps. No open issue. |
 | `/market` | The last docked station's `id`, `name`, `outpostType`, `imported`, `exported`, `services`, `economies` and `prohibited`, plus `commodities[]` with prices, stock, demand, brackets, `legality` and `statusFlags` ([EP:547-596][EP547]). | `Market` (`MarketBook` reads `Market.json`). On disk, `Market.json` has prices, stock, demand, brackets and the `Consumer`, `Producer` and `Rare` flags. `Docked` has `StationEconomies` and `StationServices`. | The station's `prohibited` list and each commodity's `legality`. Market.json and `Docked` carry neither. | None. |
 | `/shipyard` | The last visited shipyard's station header, `modules` (id, category, name, cost, sku, stock) and `ships.shipyard_list` (id, name, basevalue, sku, stock) ([EP:240-289][EP240]). Either list can be missing or empty at a fleet carrier or a damaged station ([companion.py:100-129][EDMC100]). | Nothing. `Shipyard` and `Outfitting` are in `NarratedOnly`, and no class reads `Shipyard.json` or `Outfitting.json`. On disk, `Shipyard.json` has `ShipType` and `ShipPrice` per ship, and `Outfitting.json` has `Name` and `BuyPrice` per module. | Stock counts and `sku`. Everything else is in companion files that d47 already has on disk and does not read. | None. |
 | `/fleetcarrier` | `name` (callsign, vanity name), `currentStarSystem`, `balance`, `fuel`, `state`, `theme`, `dockingAccess`, `notoriousAccess`, `capacity`, `itinerary`, `marketFinances`, `blackmarketFinances`, `finance`, `servicesCrew`, `cargo[]`, `orders`, `carrierLocker`, `reputation`, `market`, `ships` and `modules` ([EP:306-543][EP306]). Returns 204 when the Commander owns no carrier ([EP:299-304][EP299]). | `CarrierStats` (name, callsign, docking access, fuel, jump range, `SpaceUsage`, `Finance`, `Crew` services, `ShipPacks`, `ModulePacks`), `CarrierJumpRequest`, `CarrierJump`, `CarrierLocation` and `CarrierTradeOrder`, all folded into `CarrierState`. `CarrierState` counts the carrier's hold from cargo movements (#799). | `theme`, the carrier's Livery theme (see below). `cargo[]` as Frontier lists it, where d47 counts it. `itinerary.completed`, the carrier's past jumps. `servicesCrew` salaries and factions, `carrierLocker`, `marketFinances` and `reputation`. | #308 (`theme`). The counted hold in `CarrierState` (#799, which `cargo[]` could check or replace). |
-| `/communitygoals` | "Details on all currently active Community Goals and any contributions from this Commander" ([EP:97-101][EP97]). No source documents its fields. | `CommunityGoal`, `CommunityGoalJoin`, `CommunityGoalReward` and `CommunityGoalDiscard` (`CommunityGoalBoard`) cover goals the Commander has seen. When an Inara key is stored, `InaraCommunityGoalService` implements `ICommunityGoalService` for goals the Commander has not seen. | Possibly every active goal without an Inara key, which would make `/communitygoals` a second implementation of `ICommunityGoalService`. Whether it carries what `CommunityGoalListing` holds is probe question 6. | `CommunityGoalCapability`. No open issue. |
+| `/communitygoals` | "Details on all currently active Community Goals and any contributions from this Commander" ([EP:97-101][EP97]). No source documents its fields. | `CommunityGoal`, `CommunityGoalJoin`, `CommunityGoalReward` and `CommunityGoalDiscard` (`CommunityGoalBoard`) cover goals the Commander has seen. When an Inara key is stored, `InaraCommunityGoalService` implements `ICommunityGoalService` for goals the Commander has not seen. | Possibly every active goal without an Inara key, which would make `/communitygoals` a second implementation of `ICommunityGoalService`. Whether it carries what `CommunityGoalListing` holds is probe question 12. | `CommunityGoalCapability`. No open issue. |
 | `/journal` | The journal for today or a given date, with all of that day's sessions in one file. Returns 204 when the Commander did not play that day, and 206 for a partial journal: keep asking until it returns 200 ([EP:600-634][EP600]). It is not real time: query it once a session is over ([EP:43-45][EP43]). | The journal files themselves, which `JournalReader` reads on the game PC. | A journal written on another machine. | None: d47 runs on the PC that writes the journal. |
-| `/visitedstars` | "A zip archive containing the player's VisitedStarsCache.dat"; status 102 means the file is still being generated ([EP:115-118][EP115]). No section documents it further. | Arrival events in the journal. | Every system the Commander has visited, including visits from before the oldest journal. | None. |
+| `/visitedstars` | "A zip archive containing the player's VisitedStarsCache.dat"; status 102 means the file is still being generated ([EP:115-118][EP115]). No section documents it further. | Arrival events in the journal, back to the oldest file on disk (2025-07-02). The game also writes a `VisitedStarsCache.dat` per account under `%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\<account>\` (four copies on disk), which d47 does not read. No source documents its format. | Every system the Commander has visited, including visits from before the oldest journal. | None. |
+
+## New capabilities each endpoint could support
+
+The table above measures CAPI against what d47 already does. This section lists what each endpoint
+could let d47 do that it cannot do today, whether or not an issue asks for it. Each item names the
+fields it needs. A live response decides whether those fields are filled; documentation alone does
+not. None of these is a proposal to build. They are what the probe checks.
+
+### `/profile`
+
+- **The whole fleet's fittings from the first launch.** If `ships` carries `modules` and `engineer`
+  for every owned ship ([EP:169-236][EP124]), questions such as "what is fitted on my Anaconda" or
+  "which of my ships has a fuel scoop" have an answer for every ship. Today they have one only for
+  ships flown since d47 was installed.
+- **What each ship's value is made of.** `value` splits hull, modules and cargo ([EP:169-181][EP124]).
+  `StoredShips` gives one total per ship.
+- **Wear across the fleet.** `health` carries `hull`, `integrity` and `paintwork` per ship
+  ([EP:169-224][EP124]). The journal reports these only for the ship being flown.
+- **SRV bays.** `launchBays` lists the SRVs in stock and their loadouts
+  ([EP:225-231][EP124]).
+
+### `/market`
+
+- **Legality before a sale.** `prohibited` and each commodity's `legality` ([EP:555-596][EP547]) let
+  d47 say, on docking, that something in the hold is illegal here. Neither `Market.json` nor `Docked`
+  carries that.
+- **Imports and exports by name.** `imported` and `exported` list commodities by id. The probe checks
+  whether they say more than the `Consumer` and `Producer` flags in `Market.json`.
+
+### `/shipyard`
+
+- **What this station sells, with stock.** `modules` and `ships.shipyard_list` carry `stock`, with
+  `-1` for unlimited ([EP:276-289][EP240]). Without stock, the same lists are already on disk in
+  `Shipyard.json` and `Outfitting.json`, which d47 does not read. That half of the capability needs
+  no CAPI at all, and the probe establishes whether stock counts add anything worth the token.
+
+### `/fleetcarrier`
+
+- **How long the carrier can pay its way.** `finance` carries `coreCost`, `servicesCost`,
+  `maintenance`, `jumpsCost`, `bankBalance`, `bankReservedBalance` and `debtThreshold`
+  ([EP:375-402][EP306]). From those, d47 could say how many weeks of upkeep the balance covers, and
+  warn before the balance nears the decommission threshold. `CarrierStats.Finance` has the balances
+  but not the costs.
+- **Buy orders still to fill.** `orders.commodities.purchases` carries `total` and `outstanding`
+  per order ([EP:441-465][EP306]). `CarrierTradeOrder` records the order being set, not how much of
+  it has been delivered.
+- **The hold as Frontier counts it.** `cargo[]` ([EP:433-439][EP306]), against the count that
+  `CarrierState` keeps (#799).
+- **Where the carrier has been.** `itinerary.completed` lists past jumps with arrival, departure and
+  time spent, and `totalDistanceJumpedLY` the total ([EP:351-359][EP306]).
+- **What the carrier's market has earned.** `marketFinances.allTimeProfit` and
+  `blackmarketFinances.allTimeProfit` ([EP:361-373][EP306]).
+- **On-foot materials stored on the carrier.** `carrierLocker` lists assets, goods and data with
+  quantities ([EP:467-482][EP306]). `ShipLocker.json` covers only the Commander's own locker, so
+  "do I have enough of X for this suit upgrade" could count the carrier too.
+- **The Livery theme** for #308, below.
+
+### `/communitygoals`
+
+- **Every active goal, without an Inara key.** The endpoint lists all currently active goals and
+  this Commander's contributions ([EP:97-101][EP97]). If its fields match `CommunityGoalListing`,
+  the community goal answers work for a Commander with no Inara account.
+- **The Commander's standing in a goal at any time.** The journal's `CommunityGoal` event reports
+  `PlayerContribution` and `PlayerPercentileBand` only when the game writes the event. If the
+  endpoint carries the same, d47 can report progress between those events.
+
+### `/journal`
+
+- **History from days this PC has no file for.** A Commander who moved PC, reinstalled Windows or
+  cleared the journal folder has gaps that the logbook, goals and history walk cannot fill.
+  `/journal/YYYY/MM/DD` returns a past day's journal ([EP:606-621][EP600]). How far back it goes is
+  not documented.
+
+### `/visitedstars`
+
+- **"Have I been here" for visits older than the journals.** The archive holds the Commander's
+  `VisitedStarsCache.dat` ([EP:115-118][EP115]). If its format can be read, d47 can answer for every
+  system visited, not only those in the journals on disk. The game already writes this file locally,
+  so if the CAPI copy is the same file, the capability needs no CAPI.
 
 ## Does `/fleetcarrier` describe the carrier's Livery (#308)?
 
@@ -45,7 +125,7 @@ All event names below appear in `HandledEvents` (`src/D47.Core/Journal/HandledEv
 ([EP:322][EP322]). Its known values are `SearchAndRescue`, `Mining`, `Trader`, `Explorer`,
 `AntiXeno` and `BountyHunter` ([EP:323-328][EP322]). No documented field names individual Livery
 parts, paint or decals. The sources do not say whether the in-game Livery screen sets anything
-beyond the theme, or whether CAPI reports it if it does. That goes to the probe as question 1.
+beyond the theme, or whether CAPI reports it if it does. That goes to the probe as question 7.
 
 The journals carry nothing that `theme` could be checked against. All 3,351 occurrences of
 "livery" on disk are a station service named in `Docked`, `Location`, `ApproachSettlement`,
@@ -130,7 +210,7 @@ Since Update 14, the Live host returns only Live-galaxy data ([EP:47-66][EP47]).
 5.6.0 for the split ([ChangeLog.md:1343-1345][EDMCCL1343]) and stopped sending Legacy data to
 Inara from 2022-11-29 ([ChangeLog.md:1407-1408][EDMCCL1407]). EDMC still sends non-Live play to the
 Legacy host ([companion.py:1129-1134][EDMC1129]). Whether that host still answers is not settled;
-it is probe question 9. A d47 client would have to pick the host from the galaxy the journal says
+it is probe question 17. A d47 client would have to pick the host from the galaxy the journal says
 the Commander is playing in.
 
 ### Rate limits and outages
@@ -166,7 +246,7 @@ The proposed seam is **a new Core seam per need, not one for the whole API**, fo
 
 - `IFleetCarrierSource` in `D47.Core.Knowledge`: asks for the carrier snapshot (`theme`, `cargo`,
   `itinerary`) and returns a Core record. `CarrierState` takes from it what the journal lacks.
-- `/communitygoals`, if probe question 6 says it carries enough, would be a second implementation of
+- `/communitygoals`, if probe question 12 says it carries enough, would be a second implementation of
   the existing `ICommunityGoalService`, with no new seam.
 - Signing in needs a browser and a redirect listener, so it is the App's job. `D47.App` would open
   the browser and hand the returned code to the Knowledge client through a delegate, the way
@@ -178,27 +258,61 @@ This page proposes the seam. It does not build one.
 
 ## Questions only a live call can answer
 
-These are for #616, using the Commander's own carrier (callsign BNH-T2F).
+These are for #616, using the Commander's own account and carrier (callsign BNH-T2F). Raw
+responses carry the Commander's name, credits and carrier finances. They stay out of the repository;
+the probe commits only key lists and findings.
 
-1. **Livery.** Call `/fleetcarrier` and record every top-level and nested key. Does any key other
-   than `theme` describe Livery parts, paint or decals? Compare `theme` with the theme shown on the
-   in-game Livery screen.
-2. **Livery changes.** Change the theme in game, open the carrier management screen, wait out the
+### Every endpoint
+
+1. **Shape.** Call each of the seven endpoints once. For each, record the status, the response time
+   and every top-level and nested key. Mark each documented field as present and filled, present and
+   empty, or absent, and list every field the documentation does not mention.
+2. **Capabilities.** For each item under **New capabilities each endpoint could support**, say
+   whether the fields it needs are present and filled. Give each one of: supported, supported in
+   part (naming the missing field), or not supported.
+3. **Freshness.** For `/profile`, `/market` and `/fleetcarrier`, change something in game (credits,
+   the docked station, a carrier order), then call again a minute later. Does the response show the
+   change, and how long did it take?
+
+### Per endpoint
+
+4. **`/profile` ships.** Does `ships` carry `modules`, `engineer`, `value` and `health` for ships that
+   are stored rather than flown? Do they match `LoadoutStore` for a ship that is in both?
+5. **`/market`.** Dock at a station that prohibits a commodity. Are `prohibited` and `legality`
+   filled? Do `imported` and `exported` say anything the `Consumer` and `Producer` flags in
+   `Market.json` do not?
+6. **`/shipyard`.** Compare `modules` and `ships.shipyard_list` with `Outfitting.json` and
+   `Shipyard.json` written at the same dock. Is anything but `stock` and `sku` different?
+7. **Livery.** Does any `/fleetcarrier` key other than `theme` describe Livery parts, paint or
+   decals? Compare `theme` with the theme shown on the in-game Livery screen.
+8. **Livery changes.** Change the theme in game, open the carrier management screen, wait out the
    cooldown and call `/fleetcarrier` again. Did `theme` change, and how long after the change?
-3. **Hold.** Compare `/fleetcarrier` `cargo[]` with the hold that `CarrierState` has counted (#799)
-   at the same moment. Do they match per commodity?
-4. **Orders.** Compare `/fleetcarrier` `orders.commodities` with the last `CarrierTradeOrder` events.
-5. **Stored ships.** Call `/profile`. Does `ships` carry `modules` for ships that are stored rather
-   than flown, and do they match `LoadoutStore` for a ship that is in both?
-6. **Community goals.** Call `/communitygoals` and record its fields. Does it carry each field of
-   `CommunityGoalListing` (system, station, expiry, tiers, contributors, objective, reward)?
-7. **Audience.** Which `audience` value does the Commander's account need: `frontier`, `steam`, or
-   EDMC's `frontier,steam,epic`?
-8. **Redirect.** Does a `http://localhost:<port>` redirect work without being registered against
-   the client ID?
-9. **Legacy host.** Does `legacy-companion.orerve.net` still answer?
-10. **Expired token.** Let an access token expire and call once. Is the status 401 or 422?
-11. **Token contents.** Decode the access token with `/decode` ([OA:258-283][OA258]). Which personal
+9. **Carrier finances.** Are `coreCost`, `servicesCost`, `maintenance`, `jumpsCost` and
+   `debtThreshold` filled? Does `bankBalance` match the latest `CarrierStats.Finance.CarrierBalance`?
+10. **Carrier hold and orders.** Compare `cargo[]` with the hold `CarrierState` has counted (#799),
+    per commodity. Compare `orders` with the last `CarrierTradeOrder` events, and record whether
+    `outstanding` falls as a buy order is filled.
+11. **Carrier locker and itinerary.** Is `carrierLocker` filled? Does `itinerary.completed` match the
+    `CarrierJump` events in the journal, and how many past jumps does it list?
+12. **Community goals.** Record the fields of `/communitygoals`. Does it carry each field of
+    `CommunityGoalListing` (system, station, expiry, tiers, contributors, objective, reward), and the
+    Commander's contribution and percentile for a goal they have joined?
+13. **Past journals.** Ask `/journal` for a day that has a local journal file and compare the two.
+    Then ask for days further back, a month at a time, until it returns nothing. How far back does it
+    go?
+14. **Visited stars.** Download `/visitedstars`. Is it a zip or a gzip archive, how long does the 102
+    status last, and is the file inside identical to the local `VisitedStarsCache.dat` for the same
+    account?
+
+### Authentication
+
+15. **Audience.** Which `audience` value does the Commander's account need: `frontier`, `steam`, or
+    EDMC's `frontier,steam,epic`?
+16. **Redirect.** Does a `http://localhost:<port>` redirect work without being registered against
+    the client ID?
+17. **Legacy host.** Does `legacy-companion.orerve.net` still answer?
+18. **Expired token.** Let an access token expire and call once. Is the status 401 or 422?
+19. **Token contents.** Decode the access token with `/decode` ([OA:258-283][OA258]). Which personal
     fields does it carry, so the egress entry can name them exactly?
 
 Before any call, the client ID application has to settle the open-source question under **A client
@@ -206,12 +320,10 @@ ID** above. The probe records what the form asked for and what terms were accept
 
 ## Verdict
 
-**Worth probing for `/fleetcarrier` only.** It is the one endpoint that may hold state no local
-source has, and that an open issue needs: the carrier's Livery theme for #308, and a listed hold to
-check #799's counted one. `/market`, `/shipyard` and `/journal` add little beyond the companion files
-d47 already has on disk. `/profile` and `/communitygoals` can be checked with the same token during
-the probe (questions 5 and 6), but neither justifies the client ID, the monthly browser sign-in or the
-new disclosure on its own.
+**Worth probing, across all seven endpoints.** Each endpoint documents at least one field that no
+local source gives d47, and only a live response shows which of those fields are filled. Answering
+that takes one client ID and a session of calls. Building anything waits on the findings and on the
+open-source question under **A client ID**.
 
 [EP]: https://github.com/Athanasius/fd-api/blob/main/docs/FrontierDevelopments-CAPI-endpoints.md
 [EP7]: https://github.com/Athanasius/fd-api/blob/main/docs/FrontierDevelopments-CAPI-endpoints.md#L7-L14
