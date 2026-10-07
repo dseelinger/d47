@@ -15,12 +15,13 @@ public sealed class PowerplayCycleCallout : ICallout
     /// <summary>The day and hour, UTC, the cycle turns over at.</summary>
     public Func<(DayOfWeek Day, int HourUtc)> Boundary { get; set; } = () => (DayOfWeek.Thursday, 7);
 
-    /// <summary>The start of the cycle this was last said in, and how to remember a new one.</summary>
+    /// <summary>The start of the cycle this was last said in, read once, and how to remember a new one.</summary>
     public Func<string?>? LastSaidCycle { get; set; }
 
     public Action<string>? RememberSaidCycle { get; set; }
 
-    private string? _sessionSaidCycle;
+    private string? _saidCycle;
+    private bool _saidCycleLoaded;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -40,19 +41,19 @@ public sealed class PowerplayCycleCallout : ICallout
 
         var cycle = week.From.ToString("yyyy-MM-ddTHH", CultureInfo.InvariantCulture);
 
-        if (string.Equals(LastSaidCycle is { } last ? last() : _sessionSaidCycle, cycle, StringComparison.Ordinal))
+        if (!_saidCycleLoaded)
+        {
+            _saidCycle = LastSaidCycle?.Invoke();
+            _saidCycleLoaded = true;
+        }
+
+        if (string.Equals(_saidCycle, cycle, StringComparison.Ordinal))
         {
             yield break;
         }
 
-        if (RememberSaidCycle is { } remember)
-        {
-            remember(cycle);
-        }
-        else
-        {
-            _sessionSaidCycle = cycle;
-        }
+        _saidCycle = cycle;
+        RememberSaidCycle?.Invoke(cycle);
 
         var ends = $"The Powerplay cycle ends in {Hours(left)}";
         var earned = state.CycleMerits.Since(week.From);

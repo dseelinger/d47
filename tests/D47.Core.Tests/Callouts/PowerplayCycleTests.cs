@@ -267,6 +267,33 @@ public class PowerplayCycleTests
     }
 
     [Fact]
+    public void TheSaidCycleIsLoadedOnceNotOnEveryTick()
+    {
+        var state = StateFrom(Pledge);
+        var loads = 0;
+        string? remembered = null;
+
+        var callout = new PowerplayCycleCallout
+        {
+            LastSaidCycle = () =>
+            {
+                loads++;
+                return remembered;
+            },
+            RememberSaidCycle = cycle => remembered = cycle,
+        };
+
+        Assert.Single(callout.Examine(Context(state, CycleEnd - TimeSpan.FromHours(10))));
+
+        for (var hour = 9; hour >= 1; hour--)
+        {
+            Assert.Empty(callout.Examine(Context(state, CycleEnd - TimeSpan.FromHours(hour))));
+        }
+
+        Assert.Equal(1, loads);
+    }
+
+    [Fact]
     public void ACycleThatEndedWhileOffIsNotMentioned()
     {
         var state = StateFrom(Pledge);
