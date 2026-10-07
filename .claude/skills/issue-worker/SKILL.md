@@ -190,10 +190,15 @@ number. It is not tracked, so a worktree has no copy; read it by the main checko
 this issue when the file is there; it is a snapshot of a queue that moves, so treat a missing entry
 as no information rather than a verdict.
 
-The Stream Deck's Issue key has already applied `model` and `effort` at launch. **A session cannot
-change its own model or effort** — the desktop app refuses both for the session itself. So where
-the entry names a model other than the one you are running as, say so in one line and carry on;
-switching is the maintainer's, from the model picker.
+The Stream Deck's Issue key has already applied `model`, `effort` and `advisor` at launch. **A
+session cannot change its own model or effort** — the desktop app refuses both for the session
+itself. So where the entry names a model other than the one you are running as, say so in one line
+and carry on; switching is the maintainer's, from the model picker. Never run `/advisor` either: it
+saves the choice to the user settings, so every later session and subagent inherits it.
+
+When the session has an advisor, consult it twice: once the cause is confirmed against the code and
+before choosing the fix, and again before committing. Consult it outside those two points only when
+the same build or test failure comes back after a fix.
 
 `review` is the other reason to read it: it is how triage's recommendation reaches you.
 

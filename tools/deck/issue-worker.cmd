@@ -1,6 +1,7 @@
 @echo off
 rem Stream Deck launcher. Asks which issue, or which lane to take the next issue from, takes the
-rem model and effort from the last triage, then opens the session. Press "Desktop" to hand it over.
+rem model, effort and advisor from the last triage, then opens the session. Press "Desktop" to hand
+rem it over.
 cd /d C:\dev\d47
 
 set NUM=
@@ -12,19 +13,21 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem The script prints "<model> <effort> <number> <directory>" and says on stderr where that came
-rem from. The directory is the issue's lane worktree, which the script creates, or the main
-rem checkout. For a lane with nothing left to start, or a worktree it could not create, it prints
-rem nothing, and KEY stays empty.
+rem The script prints "<model> <effort> <advisor> <number> <directory>" and says on stderr where
+rem that came from. The advisor is "opus" or "none". The directory is the issue's lane worktree,
+rem which the script creates, or the main checkout. For a lane with nothing left to start, or a
+rem worktree it could not create, it prints nothing, and KEY stays empty.
 set MODEL=sonnet
 set EFFORT=medium
+set ADVISOR=none
 set KEY=
 set DIR=
-for /f "usebackq tokens=1,2,3,4" %%a in (`python tools\deck\issue_settings.py %NUM%`) do (
+for /f "usebackq tokens=1,2,3,4,5" %%a in (`python tools\deck\issue_settings.py %NUM%`) do (
     set MODEL=%%a
     set EFFORT=%%b
-    set KEY=%%c
-    set DIR=%%d
+    set ADVISOR=%%c
+    set KEY=%%d
+    set DIR=%%e
 )
 if "%KEY%"=="" (
     pause
@@ -35,5 +38,8 @@ if "%DIR%"=="" (
     exit /b 1
 )
 
+set ADVISOR_ARG=
+if "%ADVISOR%"=="opus" set ADVISOR_ARG=--advisor opus
+
 cd /d "%DIR%"
-claude -n "#%KEY%" --model %MODEL% --effort %EFFORT% "/issue-worker %KEY%"
+claude -n "#%KEY%" --model %MODEL% --effort %EFFORT% %ADVISOR_ARG% "/issue-worker %KEY%"

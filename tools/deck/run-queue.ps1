@@ -4,11 +4,11 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools\deck\run-queue.ps1 -From 478 -BudgetUsd 15
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools\deck\run-queue.ps1 -StopOnFailure
 #
-# Each session runs /issue-worker on the model and effort triage chose, with manual testing, the
-# voice and every question to the maintainer switched off. An issue that does not end in a commit
-# carrying "Fixes #N" is recorded as not landed; any tracked changes it left are stashed under its
-# number and the queue moves on to the next issue. -StopOnFailure stops there instead. The machine
-# is kept awake until the queue ends. Nothing is pushed.
+# Each session runs /issue-worker on the model, effort and advisor triage chose, with manual
+# testing, the voice and every question to the maintainer switched off. An issue that does not end
+# in a commit carrying "Fixes #N" is recorded as not landed; any tracked changes it left are stashed
+# under its number and the queue moves on to the next issue. -StopOnFailure stops there instead.
+# The machine is kept awake until the queue ends. Nothing is pushed.
 
 param(
     [string]$From,          # start at this issue, skipping the ones above it in the grid
@@ -78,10 +78,15 @@ try {
                   '--model', $entry.model, '--effort', $entry.effort,
                   '--permission-mode', $PermissionMode,
                   '--append-system-prompt', $unattended)
+        $advised = ''
+        if ($entry.advisor -eq 'opus') {
+            $cliArgs += @('--advisor', 'opus')
+            $advised = ' with an opus advisor'
+        }
         if ($BudgetUsd -gt 0) { $cliArgs += @('--max-budget-usd', $BudgetUsd) }
 
         $log = Join-Path $logs "$n.log"
-        Report "$(Get-Date -Format HH:mm) #$n on $($entry.model)/$($entry.effort): $($entry.title)"
+        Report "$(Get-Date -Format HH:mm) #$n on $($entry.model)/$($entry.effort)${advised}: $($entry.title)"
         $ErrorActionPreference = 'Continue'
         & claude @cliArgs 2>&1 | Tee-Object -FilePath $log
         $exit = $LASTEXITCODE

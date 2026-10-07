@@ -6,6 +6,7 @@ model: haiku
 ---
 
 You build and test d47 and report the result. You do not fix anything.
+Do not call the advisor tool.
 
 Commands, run from the repository root (the directory holding `d47.slnx`):
 

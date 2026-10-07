@@ -1,13 +1,13 @@
-"""Resolves an issue number, or a lane letter, to the issue to start and the model and effort
-triage chose for it.
+"""Resolves an issue number, or a lane letter, to the issue to start and the model, effort and
+advisor triage chose for it.
 
 A lane letter resolves to the first issue in that lane that is neither closed on GitHub nor named
 by a "Fixes #N" commit on main.
 
-Prints "<model> <effort> <number> <directory>" on stdout for the launcher to capture, and a line
+Prints "<model> <effort> <advisor> <number> <directory>" on stdout for the launcher to capture, and a line
 saying where that came from on stderr, which the launcher shows but does not read. Anything
 unreadable, unknown or outside the accepted tokens falls back to the defaults and says so — the
-values go on a command line, so nothing else is allowed through. A lane with no issue left to start
+values go on a command line, so nothing else is allowed through. The advisor is "opus" or "none". A lane with no issue left to start
 prints nothing on stdout and exits 1.
 
 The directory is the main checkout, or the issue's worktree when the issue has a lane or a lane
@@ -32,8 +32,10 @@ STATE = os.path.join(REPO, '.claude', 'triage-state.json')
 
 DEFAULT_MODEL = 'sonnet'
 DEFAULT_EFFORT = 'medium'
+NO_ADVISOR = 'none'
 MODELS = ('opus', 'sonnet', 'haiku')
 EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max')
+ADVISORS = ('opus',)
 
 
 def age(stamp):
@@ -124,25 +126,31 @@ def worktree(number):
 
 
 def resolve(state, number):
-    """(model, effort, note). The note is for the maintainer to read, not to parse."""
+    """(model, effort, advisor, note). The note is for the maintainer to read, not to parse."""
     when = age(state.get('generated')) or 'age unknown'
     entry = (state.get('issues') or {}).get(str(number))
     if not isinstance(entry, dict):
-        return DEFAULT_MODEL, DEFAULT_EFFORT, 'Triage ({0}) does not name #{1}.'.format(
+        return DEFAULT_MODEL, DEFAULT_EFFORT, NO_ADVISOR, 'Triage ({0}) does not name #{1}.'.format(
             when, number)
 
     model = entry.get('model')
     effort = entry.get('effort')
     if model not in MODELS or effort not in EFFORTS:
-        return DEFAULT_MODEL, DEFAULT_EFFORT, 'Triage ({0}) named no usable model for #{1}.'.format(
-            when, number)
+        return (DEFAULT_MODEL, DEFAULT_EFFORT, NO_ADVISOR,
+                'Triage ({0}) named no usable model for #{1}.'.format(when, number))
 
     note = 'Triage ({0}).'.format(when)
+    advisor = entry.get('advisor')
+    if advisor is None:
+        advisor = NO_ADVISOR
+    elif advisor not in ADVISORS:
+        note += ' Advisor {0!r} is not accepted; starting without one.'.format(advisor)
+        advisor = NO_ADVISOR
     if entry.get('lane'):
         note += ' Lane {0}.'.format(entry['lane'])
     if entry.get('review'):
         note += ' Flagged for {0}.'.format(entry['review'])
-    return model, effort, note
+    return model, effort, advisor, note
 
 
 def main():
@@ -161,9 +169,9 @@ def main():
         number = key
 
     if state is None:
-        model, effort, note = DEFAULT_MODEL, DEFAULT_EFFORT, missing
+        model, effort, advisor, note = DEFAULT_MODEL, DEFAULT_EFFORT, NO_ADVISOR, missing
     else:
-        model, effort, note = resolve(state, number)
+        model, effort, advisor, note = resolve(state, number)
 
     entry = ((state or {}).get('issues') or {}).get(str(number))
     laned = isinstance(entry, dict) and bool(entry.get('lane'))
@@ -175,8 +183,10 @@ def main():
             sys.exit(1)
         note += ' In worktree {0}.'.format(directory)
 
-    print(model, effort, number, directory)
-    sys.stderr.write('{0} Starting #{1} on {2} / {3}.\n'.format(note, number, model, effort))
+    print(model, effort, advisor, number, directory)
+    advised = '' if advisor == NO_ADVISOR else ' with an {0} advisor'.format(advisor)
+    sys.stderr.write('{0} Starting #{1} on {2} / {3}{4}.\n'.format(
+        note, number, model, effort, advised))
 
 
 if __name__ == '__main__':

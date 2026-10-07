@@ -115,18 +115,22 @@ belong elsewhere.
 
 ## Model and effort
 
-Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`, and
-`low` / `medium` / `high` / `xhigh` / `max`.
+Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`,
+`low` / `medium` / `high` / `xhigh` / `max`, and `opus` or nothing for the advisor.
 
-| Model | Effort | When |
-| --- | --- | --- |
-| `haiku` | `medium` | A generated table or a string. Almost never — the generators are the edit point, not the table. |
-| `sonnet` | `medium` | The default. The issue names the cause and the fix follows from it. |
-| `opus` | `medium` | The cause is named but the fix is a judgement: placement, layout, which of several sites changes. |
-| `opus` | `high` | The fix crosses a project boundary, moves a Core seam, touches `TickLoop` or its subscribers, or the issue names a symptom without a cause. |
+| Model | Effort | Advisor | When |
+| --- | --- | --- | --- |
+| `haiku` | `medium` | | A generated table or a string. Almost never — the generators are the edit point, not the table. |
+| `sonnet` | `medium` | | The default. The issue names the cause and the fix follows from it. |
+| `sonnet` | `medium` | `opus` | The cause is named but the fix is a judgement: placement, layout, which of several sites changes. |
+| `opus` | `high` | | The fix crosses a project boundary, moves a Core seam, touches `TickLoop` or its subscribers, or the issue names a symptom without a cause. |
 
-Opus runs at `medium` unless the last row applies. Do not pair `sonnet` with `high`: work that needs
-more than `sonnet medium` goes to `opus medium`.
+The advisor is a stronger model the session consults at decision points — before choosing the fix
+and before committing — while the main model does the edits, builds and tests. It does not raise
+the main model's effort, and it only helps a session that knows when to ask, so it goes on the one
+row where a single judgement sits among routine work. Do not give `haiku` an advisor, and do not
+pair `sonnet` with `high`: work that needs more than `sonnet medium` with an `opus` advisor goes to
+`opus high`.
 
 `low` only for a change whose diff you could write from the title. `xhigh` or `max` where the issue
 is a design question wearing a bug's clothes — flag those as candidates for the `under-speced` label
@@ -256,10 +260,10 @@ Markdown, and short. Three parts:
 1. One line: how many eligible, and what the filter removed.
 2. **Next up** — the queue and its release groups, as one table:
 
-   | Release | # | Issue | Model | Effort | Review |
-   | --- | --- | --- | --- | --- | --- |
-   | 0.110.10 — Tables answer for themselves | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | `sonnet` | `medium` | |
-   | | [104](https://github.com/dseelinger/d47/issues/104) | No way to ask which engineer works in a system | `sonnet` | `medium` | |
+   | Release | # | Issue | Model | Effort | Advisor | Review |
+   | --- | --- | --- | --- | --- | --- | --- |
+   | 0.110.10 — Tables answer for themselves | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | `sonnet` | `medium` | `opus` | |
+   | | [104](https://github.com/dseelinger/d47/issues/104) | No way to ask which engineer works in a system | `sonnet` | `medium` | | |
 
    A group's issues are consecutive rows. The version and title go in the first of them; the
    Release cell is blank on the rest, and blank throughout for an issue in no group. There is no
@@ -275,11 +279,11 @@ Markdown, and short. Three parts:
    In lanes mode the table gains a **Lane** column first, and rows are ordered by lane, then by
    their order within it:
 
-   | Lane | Release | # | Issue | Model | Effort | Review |
-   | --- | --- | --- | --- | --- | --- | --- |
-   | A | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | `sonnet` | `medium` | |
-   | | 1.25.0 — Missions rank the same everywhere | [841](https://github.com/dseelinger/d47/issues/841) | Rank the Situation missions like the board | `opus` | `medium` | |
-   | B | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | `sonnet` | `medium` | |
+   | Lane | Release | # | Issue | Model | Effort | Advisor | Review |
+   | --- | --- | --- | --- | --- | --- | --- | --- |
+   | A | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | `sonnet` | `medium` | | |
+   | | 1.25.0 — Missions rank the same everywhere | [841](https://github.com/dseelinger/d47/issues/841) | Rank the Situation missions like the board | `sonnet` | `medium` | `opus` | |
+   | B | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | `sonnet` | `medium` | | |
 
    The lane's letter goes in its first row. A group can span lanes, so the Release cell is filled
    on every row of an issue in a group.
@@ -292,7 +296,7 @@ No launch lines. The Stream Deck's Issue key starts a session from the grid belo
 `/issue-worker` as its opening command, so the finish line that skill defines is in its first
 message. A pasted line would bypass the skill. Given a lane letter instead of an issue number, the
 same key starts that lane's next issue — the first one with no `Fixes #N` commit on `main` — on
-that issue's model and effort.
+that issue's model, effort and advisor.
 
 No preamble, no summary of what triage is, no restating the rules above. The maintainer ran this to
 find out what to do next.
@@ -300,8 +304,9 @@ find out what to do next.
 ## Save the grid
 
 After the report, write the same rows to `.claude/triage-state.json` with the Write tool. The
-Stream Deck's Issue key reads it: it asks for a number and launches the session on the model and
-effort chosen here, so a row missing from this file is a session that starts on the defaults.
+Stream Deck's Issue key reads it: it asks for a number and launches the session on the model,
+effort and advisor chosen here, so a row missing from this file is a session that starts on the
+defaults.
 
 ```json
 {
@@ -309,7 +314,7 @@ effort chosen here, so a row missing from this file is a session that starts on 
   "eligible": 36,
   "issues": {
     "105": {"title": "Join the experimental effect on its symbol",
-            "model": "opus", "effort": "high",
+            "model": "sonnet", "effort": "medium", "advisor": "opus",
             "release": "0.110.10 - Tables answer for themselves",
             "review": "/code-review"}
   }
@@ -320,8 +325,10 @@ effort chosen here, so a row missing from this file is a session that starts on 
 - Every issue in the **Next up** table gets a row, whether or not it landed in a release group.
 - `model` and `effort` carry the exact tokens from the table. The launcher accepts
   `opus`/`sonnet`/`haiku` and `low`/`medium`/`high`/`xhigh`/`max`, and falls back to
-  `sonnet`/`medium` for anything else.
-- `release` and `review` are optional; leave them out where the table's cell is blank.
+  `sonnet`/`medium` with no advisor for anything else.
+- `advisor` is `opus` or left out. The launcher passes `--advisor opus` for `opus` and nothing for
+  any other value.
+- `advisor`, `release` and `review` are optional; leave them out where the table's cell is blank.
 - In lanes mode, each laned issue also carries `"lane": "A"`, and the file gains a top-level
   `lanes` object: each lane's issue numbers in work order. A plain `/triage` writes neither.
 
