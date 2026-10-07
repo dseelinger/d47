@@ -23,25 +23,39 @@ public sealed class StoryStore
     private readonly string? _path;
     private readonly ILogger? _logger;
     private readonly Lock _gate = new();
+
+    /// <summary>Held across each change and its file write, so writes reach the file in the order they were made.</summary>
+    private readonly Lock _writeGate = new();
+    private readonly Action<string, string> _writeFile;
     private Dictionary<string, IReadOnlyList<Story>> _byCommander;
     private Dictionary<string, string> _voters;
 
-    private StoryStore(string? path, ILogger? logger, Dictionary<string, IReadOnlyList<Story>> byCommander, Dictionary<string, string> voters)
+    private StoryStore(
+        string? path,
+        ILogger? logger,
+        Dictionary<string, IReadOnlyList<Story>> byCommander,
+        Dictionary<string, string> voters,
+        Action<string, string> writeFile)
     {
         _path = path;
         _logger = logger;
+        _writeFile = writeFile;
         _byCommander = byCommander;
         _voters = voters;
     }
 
     /// <summary>Held in memory only.</summary>
-    public static StoryStore InMemory() => new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal));
+    public static StoryStore InMemory() =>
+        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), AtomicFile.WriteAllText);
 
-    public static StoryStore Open(string path, ILogger<StoryStore> logger)
+    public static StoryStore Open(string path, ILogger<StoryStore> logger) => Open(path, logger, AtomicFile.WriteAllText);
+
+    /// <summary>Opens the store with <paramref name="writeFile"/> standing in for the atomic write of the file.</summary>
+    internal static StoryStore Open(string path, ILogger<StoryStore> logger, Action<string, string> writeFile)
     {
         var (byCommander, voters) = Read(path, logger);
 
-        return new(path, logger, byCommander, voters);
+        return new(path, logger, byCommander, voters, writeFile);
     }
 
     public event Action? Changed;
@@ -93,16 +107,21 @@ public sealed class StoryStore
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
 
-        lock (_gate)
+        lock (_writeGate)
         {
-            if (_voters.TryGetValue(commander, out var existing))
+            string minted;
+
+            lock (_gate)
             {
-                return existing;
+                if (_voters.TryGetValue(commander, out var existing))
+                {
+                    return existing;
+                }
+
+                minted = DonorToken.NewToken();
+
+                _voters = new Dictionary<string, string>(_voters, StringComparer.Ordinal) { [commander] = minted };
             }
-
-            var minted = DonorToken.NewToken();
-
-            _voters = new Dictionary<string, string>(_voters, StringComparer.Ordinal) { [commander] = minted };
 
             Write();
 
@@ -117,17 +136,20 @@ public sealed class StoryStore
 
         var commander = frontierId ?? AdventureStore.NoCommander;
 
-        lock (_gate)
+        lock (_writeGate)
         {
-            var existing = _byCommander.GetValueOrDefault(commander, []);
-            var replacing = existing.Any(other => string.Equals(other.Id, story.Id, StringComparison.OrdinalIgnoreCase));
-
-            _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+            lock (_gate)
             {
-                [commander] = replacing
-                    ? [.. existing.Select(other => string.Equals(other.Id, story.Id, StringComparison.OrdinalIgnoreCase) ? story : other)]
-                    : [.. existing, story],
-            };
+                var existing = _byCommander.GetValueOrDefault(commander, []);
+                var replacing = existing.Any(other => string.Equals(other.Id, story.Id, StringComparison.OrdinalIgnoreCase));
+
+                _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+                {
+                    [commander] = replacing
+                        ? [.. existing.Select(other => string.Equals(other.Id, story.Id, StringComparison.OrdinalIgnoreCase) ? story : other)]
+                        : [.. existing, story],
+                };
+            }
 
             Write();
         }
@@ -135,16 +157,16 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
-    /// <summary>Replaces the story with <paramref name="id"/> by what <paramref name="change"/> makes of it, under the store's lock.</summary>
+    /// <summary>Replaces the story with <paramref name="id"/> by what <paramref name="change"/> makes of it. No other write runs between the two.</summary>
     public void Update(string? frontierId, string id, Func<Story, Story> change)
     {
         ArgumentNullException.ThrowIfNull(change);
 
         var commander = frontierId ?? AdventureStore.NoCommander;
 
-        lock (_gate)
+        lock (_writeGate)
         {
-            var existing = _byCommander.GetValueOrDefault(commander, []);
+            var existing = For(commander);
 
             if (existing.FirstOrDefault(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase)) is not { } before)
             {
@@ -158,10 +180,13 @@ public sealed class StoryStore
                 return;
             }
 
-            _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+            lock (_gate)
             {
-                [commander] = [.. existing.Select(story => ReferenceEquals(story, before) ? after : story)],
-            };
+                _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+                {
+                    [commander] = [.. existing.Select(story => ReferenceEquals(story, before) ? after : story)],
+                };
+            }
 
             Write();
         }
@@ -169,6 +194,7 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
+    /// <summary>Called holding <see cref="_writeGate"/> and not <see cref="_gate"/>; only a holder of <see cref="_writeGate"/> replaces the fields it reads.</summary>
     private void Write()
     {
         if (_path is null)
@@ -196,7 +222,7 @@ public sealed class StoryStore
 
         try
         {
-            AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(document, Json));
+            _writeFile(_path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
