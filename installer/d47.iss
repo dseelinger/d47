@@ -77,6 +77,8 @@ Source: "..\src\D47.App\bin\Release\publish\runtimes\*"; DestDir: "{app}\runtime
 Source: "..\src\D47.App\bin\Release\publish\ships\*"; DestDir: "{app}\ships"; Flags: ignoreversion
 ; The speaker portraits the Conversation page shows.
 Source: "..\src\D47.App\bin\Release\publish\portraits\*"; DestDir: "{app}\portraits"; Flags: ignoreversion skipifsourcedoesntexist
+; The Chatterbox reference clips and voices.tsv.
+Source: "..\src\D47.App\bin\Release\publish\voices\chatterbox\*"; DestDir: "{app}\voices\chatterbox"; Flags: ignoreversion
 
 [Icons]
 ; Named to match StartMenuShortcut.EntryName so the two paths cannot disagree.
@@ -93,6 +95,7 @@ Type: files; Name: "{app}\{#ExeName}.old"
 Type: filesandordirs; Name: "{app}\runtimes"
 Type: filesandordirs; Name: "{app}\ships"
 Type: filesandordirs; Name: "{app}\portraits"
+Type: filesandordirs; Name: "{app}\voices"
 
 [Code]
 { Uninstall keeps data\ unless the Commander says otherwise. It holds their API keys, their

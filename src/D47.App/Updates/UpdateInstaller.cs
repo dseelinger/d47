@@ -211,12 +211,12 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
         return retired;
     }
 
-    /// <summary>Files under <c>runtimes\</c>, <c>ships\</c> or <c>portraits\</c> that the new build does not ship.</summary>
+    /// <summary>Files under <c>runtimes\</c>, <c>ships\</c>, <c>portraits\</c> or <c>voices\</c> that the new build does not ship.</summary>
     private static IEnumerable<string> StaleRuntimeFiles(string installRoot, List<string> shipped)
     {
         var keep = shipped.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var owned in new[] { "runtimes", "ships", "portraits" })
+        foreach (var owned in new[] { "runtimes", "ships", "portraits", "voices" })
         {
             var folder = Path.Combine(installRoot, owned);
 

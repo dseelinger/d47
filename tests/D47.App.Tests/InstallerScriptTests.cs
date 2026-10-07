@@ -60,6 +60,38 @@ public class InstallerScriptTests
         Assert.DoesNotContain(@"DefaultDirName={localappdata}\Programs\d47-{#Version}", Script, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A folder the build copies beside the executable has to be installed by the script and packed
+    /// into d47.zip, or an installed copy lacks it. The licence texts under <c>fonts\</c> do not ship.
+    /// </summary>
+    [Fact]
+    public void EveryFolderTheBuildCopiesBesideTheExeReachesTheCommander()
+    {
+        var root = RepositoryRoot();
+        var project = System.Xml.Linq.XDocument.Load(Path.Combine(root, "src", "D47.App", "D47.App.csproj"));
+        var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release.yml"));
+        var packed = System.Text.RegularExpressions.Regex.Match(workflow, @"Compress-Archive[^\r\n]*`\s*([^\r\n]+)").Groups[1].Value;
+
+        var folders = project.Descendants()
+            .Where(e => e.Attribute("CopyToOutputDirectory") is not null && e.Attribute("Link") is not null)
+            .Select(e => e.Attribute("Link")!.Value.Split('\\')[0])
+            .Where(f => !f.Contains('%') && f.Length > 0 && !f.Equals("fonts", StringComparison.OrdinalIgnoreCase))
+            .Distinct()
+            .ToList();
+
+        Assert.NotEmpty(folders);
+
+        foreach (var folder in folders)
+        {
+            Assert.True(
+                Script.Contains($@"publish\{folder}\", StringComparison.Ordinal),
+                $"installer/d47.iss does not install {folder}\\");
+            Assert.True(
+                packed.Contains($"$publish/{folder}", StringComparison.Ordinal),
+                $"release.yml does not pack {folder} into d47.zip");
+        }
+    }
+
     private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Chatterbox lists its twelve voices in an installed or updated D47, and the speaker portraits arrive with an update. Before, the installer's folder for voices and the updater's zip left them out.
+
 Push-to-talk and callouts no longer wait while D47 writes to its log files.
 
 Cartesia voices now use Sonic 3.6, because Cartesia retires Sonic 2 on October 20.

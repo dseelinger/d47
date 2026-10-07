@@ -98,21 +98,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with $LASTEXITCODE" }
 
       # d47.zip is what the in-app updater applies, and UpdateInstaller.StaleRuntimeFiles retires
-      # anything under runtimes\ or ships\ that the archive does not carry. An incomplete archive
-      # deletes files from Commanders' machines, so the payload is exactly the installer's three
+      # anything under runtimes\, ships\, portraits\ or voices\ that the archive does not carry. An incomplete archive
+      # deletes files from Commanders' machines, so the payload is exactly the installer's five
       # entries and it is flat at the zip root — UpdateInstaller requires d47.exe there.
       - name: Pack d47.zip
         shell: pwsh
         run: |
           $publish = 'src/D47.App/bin/Release/publish'
-          foreach ($entry in 'd47.exe', 'runtimes', 'ships') {
+          foreach ($entry in 'd47.exe', 'runtimes', 'ships', 'portraits', 'voices') {
             if (-not (Test-Path "$publish/$entry")) { throw "Publish is missing $entry" }
           }
           if (-not (Test-Path "$publish/runtimes/vulkan/win-x64/ggml-vulkan-whisper.dll")) {
             throw "Publish is missing the Vulkan whisper runtime; --selftest would exit 8"
           }
           Compress-Archive -Force -DestinationPath d47.zip -Path `
-            "$publish/d47.exe", "$publish/runtimes", "$publish/ships"
+            "$publish/d47.exe", "$publish/runtimes", "$publish/ships", "$publish/portraits", "$publish/voices"
 
       # sha256sum format: the hash, two spaces, the name. UpdateInstaller.ParseChecksum takes the
       # first space-delimited field of the first line and wants 64 hex characters — a tab
