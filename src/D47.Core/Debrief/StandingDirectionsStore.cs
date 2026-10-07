@@ -158,6 +158,42 @@ public sealed class StandingDirectionsStore
         return entry;
     }
 
+    /// <summary>
+    /// Replaces one entry with what <paramref name="change"/> makes of it, as it stands in the file at the
+    /// moment of writing. Null from <paramref name="change"/>, or no entry under the key, writes nothing.
+    /// </summary>
+    public StandingDirection? Update(string? frontierId, string key, Func<StandingDirection, StandingDirection?> change)
+    {
+        ArgumentNullException.ThrowIfNull(change);
+
+        Poll();
+
+        var commander = frontierId ?? NoCommander;
+        StandingDirection? changed;
+
+        lock (_gate)
+        {
+            var existing = _byCommander.GetValueOrDefault(commander, []);
+
+            if (existing.FirstOrDefault(entry => string.Equals(entry.Key, key, StringComparison.Ordinal)) is not { } found
+                || change(found) is not { } replacement)
+            {
+                return null;
+            }
+
+            changed = replacement with { Key = key };
+
+            _byCommander = new Dictionary<string, IReadOnlyList<StandingDirection>>(_byCommander, StringComparer.Ordinal)
+            {
+                [commander] = [.. existing.Select(entry => string.Equals(entry.Key, key, StringComparison.Ordinal) ? changed : entry)],
+            };
+        }
+
+        Save();
+        Changed?.Invoke();
+        return changed;
+    }
+
     /// <summary>Removes one entry outright, by key.</summary>
     public bool Remove(string? frontierId, string key)
     {
@@ -242,6 +278,7 @@ public sealed class StandingDirectionsStore
                                     Persona = entry.Persona,
                                     SaidUnder = entry.SaidUnder,
                                     Clip = entry.Clip,
+                                    Reworded = entry.Reworded ? true : null,
                                     ProposedAt = entry.ProposedAt,
                                     AdoptedAt = entry.AdoptedAt,
                                 }),
@@ -307,6 +344,7 @@ public sealed class StandingDirectionsStore
                         Persona = Blank(record.Persona),
                         SaidUnder = Blank(record.SaidUnder),
                         Clip = Blank(record.Clip),
+                        Reworded = record.Reworded == true,
                         ProposedAt = record.ProposedAt,
                         AdoptedAt = record.AdoptedAt,
                     });
@@ -387,6 +425,8 @@ public sealed class StandingDirectionsStore
         public string? SaidUnder { get; set; }
 
         public string? Clip { get; set; }
+
+        public bool? Reworded { get; set; }
 
         public DateTimeOffset? ProposedAt { get; set; }
 

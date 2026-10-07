@@ -167,9 +167,14 @@ Corrections, recognised by how people actually give them:
 The last row is a real limit and worth knowing: a rephrase looks like an ordinary question, and
 this pass does not guess. It catches what you said outright.
 
-The draft is your sentence with the address taken off the front and a full stop added. It is not a
-paraphrase, so you can tell at a glance whether D47 understood you — and you can edit it before
-taking it.
+The draft starts as your sentence with the address taken off the front and a full stop added. When
+a language model is set up, the next launch sends each of those sentences to it once, on its own,
+and the model rewrites it as one instruction — "okay Warden no more speeches about the thargoids
+please" becomes something like "Do not talk about the Thargoids unless asked." If the model says the
+sentence is not an instruction, or the request fails, the draft keeps your wording; a failed request
+is tried again at the following launch. Questions and anything D47 or the game said are never sent.
+Your original sentence stays beside each draft, so you can check the wording against what you said
+and edit it before taking it.
 
 ## Questions, not adaptations
 

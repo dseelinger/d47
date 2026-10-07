@@ -49,4 +49,7 @@ public sealed record LlmSampling
 
     /// <summary>Voice casting.</summary>
     public static readonly LlmSampling VoiceCasting = new(Cold);
+
+    /// <summary>Rewording a debrief proposal.</summary>
+    public static readonly LlmSampling Debrief = new(Cold);
 }

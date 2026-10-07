@@ -711,6 +711,7 @@ public static class EgressDisclosure
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
                 + "key is involved. "
                 + JournalEventSent
+                + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
                 + (narration is null ? string.Empty : $" {narration} to that address each time it narrates.")
                 + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty),
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
@@ -731,6 +732,7 @@ public static class EgressDisclosure
             + "card. While a stock story runs, every line the model writes in character, and each chapter, also carries "
             + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows."
             + " " + JournalEventSent
+            + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),
@@ -800,6 +802,11 @@ public static class EgressDisclosure
     /// <summary>What asking about the event selected on the Journal page sends.</summary>
     internal const string JournalEventSent =
         "Asking about a journal event sends that event as Elite wrote it, with message text typed by players withheld.";
+
+    /// <summary>What the debrief sends after a session, when it is on.</summary>
+    internal const string DebriefRewordingSent =
+        "With the debrief on, each correction of yours that it drafts a proposal from is sent once more at the next "
+        + "launch, on its own, to be reworded as one instruction.";
 
     private const string JournalName = "your Commander name from the journal";
 

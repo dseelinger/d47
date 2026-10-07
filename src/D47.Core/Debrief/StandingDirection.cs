@@ -65,6 +65,9 @@ public sealed record StandingDirection(string Key, string Text)
     /// </summary>
     public string? Clip { get; init; }
 
+    /// <summary>Whether the model has had its one chance to reword it, whatever it answered.</summary>
+    public bool Reworded { get; init; }
+
     /// <summary>When the pass drafted it.</summary>
     public DateTimeOffset? ProposedAt { get; init; }
 

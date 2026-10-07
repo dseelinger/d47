@@ -454,6 +454,9 @@ public sealed class AppHost : IDisposable
 
     private Task? _warmingUp;
 
+    /// <summary>Stops the launch's rewording of debrief proposals, at shutdown (#677).</summary>
+    private readonly CancellationTokenSource _rewordingProposals = new();
+
     /// <summary>
     /// Reads the journal history off the startup path. Idempotent: a second call is handed the first
     /// call's task (#148).
@@ -2683,6 +2686,10 @@ public sealed class AppHost : IDisposable
 
         // The session opens here, over what the file says right now.
         host.BeginDirections();
+
+        // After the session's directions are latched, so a rewording lands in the pane and never in this
+        // session's prompt.
+        host.RewordProposals();
 
         // A callout switched off within seconds of it speaking (#162).
         callouts.Silenced += host.NoteSilenced;
@@ -7898,6 +7905,45 @@ public sealed class AppHost : IDisposable
             Turns.Directions?.Length ?? 0);
     }
 
+    /// <summary>
+    /// Has the model reword the proposals earlier sessions drafted, once each, on the pool (#677).
+    /// </summary>
+    public void RewordProposals()
+    {
+        if (Debrief is not { } debrief
+            || !Settings.Current.Debrief.Enabled
+            || !LlmAvailability.CanAttemptModelTurn
+            || Turns.Provider is not { } provider
+            || DebriefRewording.Pending(debrief.Book.Store).Count == 0)
+        {
+            return;
+        }
+
+        var ask = DebriefRewording.Asker(
+            provider,
+            Turns.BackgroundModel,
+            Spend,
+            PriceTable.Default,
+            _logger);
+        var token = _rewordingProposals.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await DebriefRewording.RunAsync(debrief.Book.Store, ask, _logger, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Shutdown; what was not asked is asked at the next launch.
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(ex, "Could not write a reworded debrief proposal");
+            }
+        });
+    }
+
     /// <summary>Position 3, with this core's overlay behind it (#162).</summary>
     private void ApplyPersonaBlock()
     {
@@ -8464,6 +8510,9 @@ public sealed class AppHost : IDisposable
         _warming.Cancel();
         StopWarmingUp();
 
+        // Before the debrief below files this session's proposals, which are reworded at the next launch.
+        _rewordingProposals.Cancel();
+
         CoverageRecorder?.Save();
 
         // The debrief, over what this session sounded like (#162).
@@ -8526,6 +8575,7 @@ public sealed class AppHost : IDisposable
         _slots.Clear();
         ReleaseCastClients(all: true);
         _warming.Dispose();
+        _rewordingProposals.Dispose();
 
         // Before the factory that owns the sink it writes to.
         _logger.LogInformation("d47 stopped cleanly");
