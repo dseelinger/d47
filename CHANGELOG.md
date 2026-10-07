@@ -38,6 +38,8 @@ When the published default model changes for the language model provider you use
 
 Say "accept the adventure", "change the adventure" or "reject the adventure" to act on a draft that is waiting for your yes, as Accept, Change something and Decline do. They act on the draft whose page is open, or on the only draft when none is open. With two or more drafts and none open, D47 says to open the one you mean and changes nothing. With no draft, the phrases are not heard.
 
+Say "ask for an adventure" to open the Stories tab at the Ask form, with the entry for the brief open. Say what the story should be about, or press Done with it empty, and D47 asks with the reach, length and ship choice the form shows, as Go does. When no language model is set up or galaxy search is off, the form opens and D47 says which instead.
+
 The Adventures tab no longer writes or edits an adventure by hand. Ask D47 for one instead. Adventures you wrote before still play.
 
 Each hired pilot's row on Fleet › Crew has a picture, with Change picture and Use the default. It is kept for the pilot's crew id, so two pilots with the same name keep separate pictures, and it shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their picture, and a rehire gets it back.

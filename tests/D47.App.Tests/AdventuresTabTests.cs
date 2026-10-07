@@ -20,7 +20,7 @@ public class AdventuresTabTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);
 
-    private static CommanderGameState State()
+    internal static CommanderGameState State()
     {
         var store = new GameStateStore();
 
@@ -329,12 +329,12 @@ public class AdventuresTabTests
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Accept"));
     }
 
-    private const string Spine = """
+    internal const string Spine = """
         {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the freight.",
          "stake": "Whether a debt can be owed to nobody.", "turn": "It was never loaded.", "ending": "The column balances."}
         """;
 
-    private const string Beats = """
+    internal const string Beats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
@@ -379,7 +379,7 @@ public class AdventuresTabTests
     }
 
     /// <summary>Three systems, one station, every distance twelve light years.</summary>
-    private sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : IGalaxyService
     {
         private static readonly Dictionary<string, long> Systems = new(StringComparer.OrdinalIgnoreCase)
         {

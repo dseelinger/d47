@@ -22,14 +22,14 @@ nav_order: 115
 <p class="intro">Three steps to a story that runs while you fly.</p>
 <section>
 <h2><span class="num">1</span> Ask for one, in the Stories tab or out loud.</h2>
-<p class="say">Say "tell me a story about this system", or pick one in the Stories tab.</p>
-<p class="expect">You hear a first objective, and the story waits until you act on it.</p>
+<p class="say">Say "ask for an adventure" and say what it should be about, or pick one in the Stories tab.</p>
+<p class="expect">D47 writes a draft and waits for your yes. Accept it and you hear the first objective.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for an adventure typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">tell me a story about this system</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">ask for an adventure</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press Stories in the tab strip and pick one there.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Either way you get a first objective, and the story waits for you.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Either way D47 writes a draft and waits for your yes.</text>
 </svg>
 </section>
 <section>
@@ -168,6 +168,10 @@ choosers, each with a default, so pressing *Go* on an untouched form is a comple
 
 And one optional thing said: a brief — a theme, a mood, a place it must include. Empty is fine.
 
+Say "ask for an adventure" and D47 opens this form and the entry for the brief. Say the brief, or
+press **Done** with it empty, and it asks with the form as it stands, as *Go* does. When a language model or galaxy
+search is missing, the form opens and D47 says which instead.
+
 **Things it reads rather than asks**, because asking would be asking you to describe your own
 ships: your fleet and what each hull can do, whether you have a carrier and where it is, where you
 are, who is aboard, and your ranks.
@@ -177,6 +181,14 @@ follows it. The AI reads the finished one in full — its spine, its objectives 
 flew it — and each chapter before that by name and premise only. The new story's want follows from
 how the last one turned and ended, and its stake is the belief the last one left open. The draft
 card says which adventure it follows, and it is accepted, flown and checked like any other.
+
+#### `ask_for_adventure`
+
+Open the Ask page and the entry for a brief; committing the brief asks for the adventure, as Go does. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
 
 ### What an objective can be
 
@@ -298,8 +310,8 @@ Both are yours alone, reachable from the panel and nowhere else.
 
 ### Nothing here is callable by the model
 
-Generation, beginning, abandoning and removing are all your acts, on the panel. Accepting, changing and
-rejecting a draft are yours too, by voice or by its buttons, and so are pausing and resuming
+Generation, beginning, abandoning and removing are all your acts, on the panel. Asking for an adventure,
+and accepting, changing and rejecting a draft, are yours too, by voice or by their buttons, and so are pausing and resuming
 a stock story, by voice or by the **Story on** checkbox. The ship's AI can
 *read* the story — that is what it is for, so it can play off it — and can change nothing about
 it. A hostile message arriving in your comms panel cannot propose a story, end one, or delete one.

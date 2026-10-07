@@ -1033,6 +1033,7 @@ public partial class PanelView : UserControl
             desk.Change = () => OnUi(() => Page().ChangeDraft());
             desk.Accept = () => OnUi(() => Page().AcceptDraft());
             desk.Reject = () => OnUi(() => Page().RejectDraft());
+            desk.Ask = () => OnUi(() => Page().AskByVoice());
         }
 
         Furnish(

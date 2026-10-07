@@ -56,6 +56,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary
 
     private bool _showAside;
 
+    /// <summary>The Ask form's brief entry that presses Go on commit, and the form it belongs to.</summary>
+    private (Action BriefThenGo, Control View)? _askForm;
+
     public AdventuresPage(
         AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null,
         Func<Func<string, Task<bool>>?>? copy = null)
@@ -557,7 +560,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         thisShip.IsChecked = thisShipOnly;
         thisShip.IsCheckedChanged += (_, _) => thisShipOnly = thisShip.IsChecked == true;
 
-        briefButton.Click += (_, _) => _prompts.Enter(
+        void Brief(Action then) => _prompts.Enter(
             new EntryRequest(
                 "adventure.brief",
                 "Brief",
@@ -569,10 +572,20 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             {
                 brief = value.Trim();
                 Label();
+                then();
             });
 
-        go.Click += (_, _) =>
+        briefButton.Click += (_, _) => Brief(() => { });
+
+        var writing = false;
+
+        void Go()
         {
+            if (writing)
+            {
+                return;
+            }
+
             if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
             {
                 status.Say(AskShutBecause());
@@ -588,6 +601,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
                 return;
             }
 
+            writing = true;
             go.IsEnabled = false;
             status.Say("Writing…");
 
@@ -599,11 +613,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary
 
                 Dispatcher.UIThread.Post(() =>
                 {
+                    writing = false;
                     go.IsEnabled = true;
                     Offer(outcome, ask, status);
                 });
             });
-        };
+        }
+
+        go.Click += (_, _) => Go();
 
         Label();
 
@@ -630,8 +647,48 @@ public sealed class AdventuresPage : UserControl, IPageSummary
             page.Children.Add(settings);
         }
 
-        return new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var view = new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+
+        if (follows is null)
+        {
+            _askForm = (() => Brief(Go), view);
+        }
+
+        return view;
     }
+
+    /// <summary>Shows the Ask page and opens its brief entry, whose commit presses Go; or says why asking is shut.</summary>
+    internal string? AskByVoice()
+    {
+        _prompts.Abandon();
+        _nav.Show(RootKey);
+        _nav.GoTo(new NavCrumb(AskKey, "Ask"));
+
+        if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
+        {
+            return AskShutBecause();
+        }
+
+        if (!OnAsk())
+        {
+            return "The Ask page could not be opened.";
+        }
+
+        // At background priority, so the panel has laid out the navigation and the form is on screen.
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (OnAsk() && !_nav.Modal && _askForm is { } form && TopLevel.GetTopLevel(form.View) is not null)
+                {
+                    form.BriefThenGo();
+                }
+            },
+            DispatcherPriority.Background);
+
+        return null;
+    }
+
+    private bool OnAsk() => _nav.Tab == PanelTab.Stories && _nav.Trail is [.., { Key: AskKey }];
 
     /// <summary>A draft arrives: stored as a draft, the core's reply spoken, the reading level opened.</summary>
     private void Offer(AdventureOutcome outcome, AdventureAsk ask, StatusLine status)
@@ -752,7 +809,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
     {
         var commander = _surface.Commander();
 
-        if (_nav.Tab == D47.Core.Interface.PanelTab.Stories
+        if (_nav.Tab == PanelTab.Stories
             && _nav.Trail[^1].Key is var open
             && open.StartsWith(ReadPrefix, StringComparison.Ordinal)
             && _surface.Book.Standing(commander, open[ReadPrefix.Length..]) is { Adventure.IsDraft: true } standing)
