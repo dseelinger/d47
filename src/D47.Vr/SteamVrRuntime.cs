@@ -224,6 +224,8 @@ public sealed class SteamVrRuntime(
 
         if (_system is not null)
         {
+            ReleaseMirror();
+
             // Before the session goes, so a claim standing at the moment the overlay was switched off is
             // given back rather than left for SteamVR to notice.
             Actions.Release();
@@ -381,15 +383,26 @@ public sealed class SteamVrRuntime(
         }
     }
 
+    /// <summary>How long a newly shared eye image takes to be drawn into: it is empty until then.</summary>
+    public static readonly TimeSpan MirrorSettle = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>The compositor's left-eye view, kept for the session, and the device it was shared to.</summary>
+    private IntPtr _mirror;
+
+    private IntPtr _mirrorDevice;
+
     /// <summary>
     /// Hands the compositor's left-eye image, as a shader resource view on <paramref name="device"/>, to
-    /// <paramref name="copy"/>, and releases the view when it returns. The session is held throughout, so
-    /// <paramref name="copy"/> should queue its copy and read the pixels afterwards. Null on success,
-    /// otherwise why not (#601).
+    /// <paramref name="copy"/>. The view is kept until the session ends or another device asks, and the
+    /// first call after it is shared blocks the caller for <see cref="MirrorSettle"/>. The session is held
+    /// while <paramref name="copy"/> runs, so it should queue its copy and read the pixels afterwards. Null
+    /// on success, otherwise why not (#601).
     /// </summary>
     public string? MirrorLeftEye(IntPtr device, Action<IntPtr> copy)
     {
         ArgumentNullException.ThrowIfNull(copy);
+
+        var shared = false;
 
         lock (_session)
         {
@@ -403,24 +416,59 @@ public sealed class SteamVrRuntime(
                 return "SteamVR gave d47 no compositor interface";
             }
 
-            var view = IntPtr.Zero;
-            var error = compositor.GetMirrorTextureD3D11(EVREye.Eye_Left, device, ref view);
-
-            if (error != EVRCompositorError.None || view == IntPtr.Zero)
+            if (_mirror == IntPtr.Zero || _mirrorDevice != device)
             {
-                return $"SteamVR refused the eye image: {error}";
+                ReleaseMirror();
+
+                var view = IntPtr.Zero;
+                var error = compositor.GetMirrorTextureD3D11(EVREye.Eye_Left, device, ref view);
+
+                if (error != EVRCompositorError.None || view == IntPtr.Zero)
+                {
+                    return $"SteamVR refused the eye image: {error}";
+                }
+
+                _mirror = view;
+                _mirrorDevice = device;
+                shared = true;
+            }
+        }
+
+        // Outside the session, so the aim thread is not held while the compositor draws a frame.
+        if (shared)
+        {
+            Thread.Sleep(MirrorSettle);
+        }
+
+        lock (_session)
+        {
+            if (_system is null || _mirror == IntPtr.Zero)
+            {
+                return "the SteamVR session has ended";
             }
 
             try
             {
-                copy(view);
+                copy(_mirror);
             }
-            finally
+            catch
             {
-                compositor.ReleaseMirrorTextureD3D11(view);
+                ReleaseMirror();
+                throw;
             }
 
             return null;
+        }
+    }
+
+    /// <summary>Gives the eye image back. Call holding the session.</summary>
+    private void ReleaseMirror()
+    {
+        if (_mirror != IntPtr.Zero)
+        {
+            openVr.Compositor?.ReleaseMirrorTextureD3D11(_mirror);
+            _mirror = IntPtr.Zero;
+            _mirrorDevice = IntPtr.Zero;
         }
     }
 

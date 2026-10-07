@@ -127,10 +127,10 @@ public class SteamVrLiveTests
 
     /// <summary>
     /// The input trace's headset still (#601), at full size: an overlay application is given the eye
-    /// image, and it is wider than the 640-pixel desktop mirror a VR player often runs.
+    /// image, it is wider than the 640-pixel desktop mirror a VR player often runs, and it is not blank.
     /// </summary>
     [Fact]
-    public void TheEyeImageIsReadAtRenderResolution()
+    public async Task TheEyeImageIsReadAtRenderResolution()
     {
         Ready();
 
@@ -150,11 +150,25 @@ public class SteamVrLiveTests
 
             Assert.Null(capture.Capture(path));
 
-            var header = File.ReadAllBytes(path).AsSpan(16, 8);
+            using var file = File.OpenRead(path);
+            var decoder = await Windows.Graphics.Imaging.BitmapDecoder
+                .CreateAsync(System.IO.WindowsRuntimeStreamExtensions.AsRandomAccessStream(file));
 
-            Assert.True(
-                System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(header) > 640,
-                $"The eye image is {System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(header)} pixels wide.");
+            Assert.True(decoder.PixelWidth > 640, $"The eye image is {decoder.PixelWidth} pixels wide.");
+
+            var pixels = (await decoder.GetPixelDataAsync()).DetachPixelData();
+            var lit = 0;
+
+            for (var at = 0; at < pixels.Length; at += 4)
+            {
+                if (pixels[at] > 16 || pixels[at + 1] > 16 || pixels[at + 2] > 16)
+                {
+                    lit++;
+                }
+            }
+
+            // A view read before the compositor has drawn into it is black throughout.
+            Assert.True(lit > pixels.Length / 4 / 100, $"Only {lit} pixels of the eye image are not black.");
         }
         finally
         {

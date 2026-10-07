@@ -6,24 +6,44 @@ using Xunit;
 namespace D47.Vr.Tests;
 
 /// <summary>
-/// The input trace's headset still (#601): the compositor's view goes back to SteamVR whatever the copy
-/// did, and a still that could not be taken says why rather than coming from somewhere else.
+/// The input trace's headset still (#601): the compositor's view is kept for the session and goes back
+/// to SteamVR before the session ends, and a still that could not be taken says why.
 /// </summary>
 public class TheEyeImageIsGivenBackAndItsRefusalNamedTests
 {
     [Fact]
-    public void TheViewIsReleasedAfterTheCopy()
+    public void TheViewIsKeptForTheSessionAndGivenBackAtStop()
+    {
+        var (openVr, runtime) = Attached();
+        var copied = new List<IntPtr>();
+
+        Assert.Null(runtime.MirrorLeftEye(0x10, copied.Add));
+        Assert.Null(runtime.MirrorLeftEye(0x10, copied.Add));
+
+        Assert.Equal([openVr.MirrorView, openVr.MirrorView], copied);
+        Assert.Equal(1, openVr.Count(nameof(FakeOpenVr.GetMirrorTextureD3D11), (ulong)EVREye.Eye_Left));
+        Assert.Equal(0, openVr.Count(nameof(FakeOpenVr.ReleaseMirrorTextureD3D11)));
+
+        runtime.Stop();
+
+        var released = openVr.Calls.FindIndex(call => call.Function == nameof(FakeOpenVr.ReleaseMirrorTextureD3D11));
+        var shutdown = openVr.Calls.FindIndex(call => call.Function == nameof(FakeOpenVr.Shutdown));
+
+        Assert.InRange(released, 0, shutdown - 1);
+    }
+
+    [Fact]
+    public void AnotherDeviceGetsAViewOfItsOwn()
     {
         var (openVr, runtime) = Attached();
 
         try
         {
-            var copied = IntPtr.Zero;
+            Assert.Null(runtime.MirrorLeftEye(0x10, _ => { }));
+            Assert.Null(runtime.MirrorLeftEye(0x20, _ => { }));
 
-            Assert.Null(runtime.MirrorLeftEye(0x10, view => copied = view));
-            Assert.Equal(openVr.MirrorView, copied);
-            Assert.Equal(1, openVr.Count(nameof(FakeOpenVr.GetMirrorTextureD3D11), (ulong)EVREye.Eye_Left));
-            Assert.Equal(1, openVr.Count(nameof(FakeOpenVr.ReleaseMirrorTextureD3D11), (ulong)openVr.MirrorView));
+            Assert.Equal(2, openVr.Count(nameof(FakeOpenVr.GetMirrorTextureD3D11)));
+            Assert.Equal(1, openVr.Count(nameof(FakeOpenVr.ReleaseMirrorTextureD3D11)));
         }
         finally
         {
