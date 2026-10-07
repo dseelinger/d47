@@ -3023,6 +3023,8 @@ public partial class PanelView : UserControl
         RawToggleBox.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly
             && Nav.Tab == PanelTab.Transcript;
 
+        DrawExplainButton();
+
         if (!RawToggleBox.IsVisible)
         {
             return;
@@ -3039,6 +3041,14 @@ public partial class PanelView : UserControl
             _settingMode = false;
         }
     }
+
+    /// <summary>The Explain button: shown on the journal reading while the detail pane is.</summary>
+    private void DrawExplainButton() =>
+        ExplainButton.IsVisible = Model is { JournalDetail: true }
+            && Page == TranscriptPage.Journal && Nav.AtRoot && !OutputOnly
+            && Nav.Tab == PanelTab.Transcript;
+
+    private void OnExplainClick(object? sender, RoutedEventArgs e) => Model?.Explain();
 
     /// <summary>The Commander asked for the file's own JSON, or asked to go back to sentences.</summary>
     private void OnRawToggled(object? sender, RoutedEventArgs e)
@@ -3545,6 +3555,7 @@ public partial class PanelView : UserControl
         // usable in one narrow column.
         JournalDetailScroller.IsVisible = model.JournalDetail;
         JournalSplitter.IsVisible = model.JournalDetail;
+        DrawExplainButton();
 
         // Filtered, which is this reading's answer to the search box (#232).
         var shown = (_query.Length == 0

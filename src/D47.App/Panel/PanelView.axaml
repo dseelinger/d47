@@ -619,6 +619,14 @@
                       VerticalAlignment="Center"
                       IsCheckedChanged="OnRawToggled" />
           </StackPanel>
+
+          <Button x:Name="ExplainButton"
+                  Margin="13,0,0,0"
+                  VerticalAlignment="Center"
+                  Content="Explain"
+                  IsVisible="False"
+                  IsEnabled="{Binding CanExplain}"
+                  Click="OnExplainClick" />
         </DockPanel>
       </DockPanel>
 

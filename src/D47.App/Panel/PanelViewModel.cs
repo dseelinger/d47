@@ -209,6 +209,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
             _journalSelected = value;
             Raise(nameof(JournalSelected));
+            Raise(nameof(CanExplain));
         }
     }
 
@@ -447,7 +448,25 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public bool CanAsk
     {
         get => _canAsk;
-        set => Set(ref _canAsk, value);
+        set
+        {
+            if (Set(ref _canAsk, value))
+            {
+                Raise(nameof(CanExplain));
+            }
+        }
+    }
+
+    /// <summary>True while a journal event is selected and no turn is in flight.</summary>
+    public bool CanExplain => CanAsk && JournalSelected is not null;
+
+    /// <summary>Asks about the selected journal event, as the typed words "Explain that".</summary>
+    public void Explain()
+    {
+        if (CanExplain)
+        {
+            AskNow("Explain that");
+        }
     }
 
     /// <summary>Whether this Commander has ever asked d47 anything.</summary>

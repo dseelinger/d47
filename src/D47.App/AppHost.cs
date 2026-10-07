@@ -2572,6 +2572,9 @@ public sealed class AppHost : IDisposable
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
         host.Panel.CoreId = personas.Current.Id;
 
+        // The entry reference is set on the UI thread and read here whole, so the turn thread sees either the old or the new one.
+        turns.SelectedJournalEvent = () => host.Panel.JournalSelected;
+
         // Read now, so the first callout a seat speaks does not read the file on the tick.
         _ = host.CrewSeats;
 

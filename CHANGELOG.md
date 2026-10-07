@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+On the Journal page, an Explain button sits beside Raw while the detail pane is shown. Select an event and press it: "Explain that" goes into the transcript and D47 answers about that event. It is disabled while nothing is selected or a reply is in progress. Saying "explain that" does the same with the pane folded.
+
 Say "walk me through engineers", "show me how the checklist works" or "how do I use bookmarks" and D47 reads that help page's how-to steps aloud, one at a time. It says the page title and the number of steps, then the first step. "Next" or "skip" moves on, "again" repeats the step, "back" goes to the one before, "what should I see" says what the step should do, and "stop" or "cancel" ends it and cuts off the step being spoken. The cancel button and the shut-up hotkey also stop the voice mid-step and leave the walkthrough where it is. Anything else you say is answered as usual and the walkthrough waits where it is; ten minutes without one of these phrases ends it. Nothing is recorded.
 
 The how-to steps on every capability page now each carry two lines written to be heard: what to do and what should happen. The documentation site does not show them. Activities, Mining, Bookmarks and Learned phrases gain a how-to band, and Clock, Switch Commander and Reminders gain steps.
