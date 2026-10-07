@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+If D47 cannot reach Windows' audio devices at startup, the log now says so and why. Before, the speaker and microphone lists were empty and the log said nothing.
+
 Beginning a story again, or editing its start time in adventures.json, no longer holds up push-to-talk and callouts while D47 re-reads your journals to work out where the story stands. Beginning a story, or moving its start time to after the newest event D47 has read, no longer re-reads your journals at all. Any other start-time change re-reads them in the background. Until it finishes, the Adventures tab shows the standing from before, and a beat you reach in the meantime is said once the re-read is done.
 
 In the twelve hours before the Powerplay cycle ends, D47 no longer reads its view-state file ten times a second while you are pledged. It reads it once. The cycle line is still said once per cycle, including after a restart.

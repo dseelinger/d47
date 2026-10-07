@@ -37,7 +37,7 @@ public sealed class WasapiMicrophone : IDefaultDeviceReopener, IDisposable
     private readonly Lock _lifecycle = new();
 
     public WasapiMicrophone(ICaptureSink sink, ILogger<WasapiMicrophone> logger)
-        : this(sink, logger, new WasapiEndpointEnumerator())
+        : this(sink, logger, new WasapiEndpointEnumerator(logger))
     {
     }
 

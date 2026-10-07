@@ -42,7 +42,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     private sealed record Input(VolumeSampleProvider Volume, TrackedSampleProvider Root, IDisposable? Owned);
 
     public WasapiAudioSink(ILogger<WasapiAudioSink> logger)
-        : this(logger, new WasapiEndpointEnumerator())
+        : this(logger, new WasapiEndpointEnumerator(logger))
     {
     }
 

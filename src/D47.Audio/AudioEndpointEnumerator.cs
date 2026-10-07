@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.CoreAudioApi.Interfaces;
 
@@ -29,18 +30,22 @@ public interface IAudioEndpointEnumerator
 public sealed class WasapiEndpointEnumerator : IAudioEndpointEnumerator, IMMNotificationClient, IDisposable
 {
     private readonly MMDeviceEnumerator? _enumerator;
+    private readonly ILogger _logger;
     private bool _disposed;
 
-    public WasapiEndpointEnumerator()
+    public WasapiEndpointEnumerator(ILogger logger)
     {
+        _logger = logger;
+
         try
         {
             _enumerator = new MMDeviceEnumerator();
             _enumerator.RegisterEndpointNotificationCallback(this);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // A machine with no audio subsystem at all.
+            _logger.LogWarning(ex, "The audio endpoints could not be enumerated");
             _enumerator = null;
         }
     }
@@ -64,8 +69,9 @@ public sealed class WasapiEndpointEnumerator : IAudioEndpointEnumerator, IMMNoti
                     .Select(device => new AudioEndpoint(device.ID, device.FriendlyName)),
             ];
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "The active {Flow} endpoints could not be read", flow);
             return [];
         }
     }
@@ -82,8 +88,9 @@ public sealed class WasapiEndpointEnumerator : IAudioEndpointEnumerator, IMMNoti
             var device = _enumerator.GetDefaultAudioEndpoint(flow, role);
             return new AudioEndpoint(device.ID, device.FriendlyName);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogDebug(ex, "The default {Flow} endpoint for {Role} could not be read", flow, role);
             return null;
         }
     }
