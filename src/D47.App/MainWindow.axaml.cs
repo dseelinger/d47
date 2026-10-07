@@ -952,6 +952,14 @@ public partial class MainWindow : Window
         // meet — and the hint retires on "has asked at all", not on "has used this control".
         MarkAsked();
 
+        // Ahead of navigation, so "back" during a walkthrough means the previous step (#577).
+        if (_host.Walk(input) is { } step)
+        {
+            _model.AskText = string.Empty;
+            _model.Append($"\n\n> {input}\n{step}\n");
+            return;
+        }
+
         // Asked before the in-flight gate, never after.
         if (_host.Navigate(input) is { } moved)
         {

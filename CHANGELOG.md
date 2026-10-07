@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Say "walk me through engineers", "show me how the checklist works" or "how do I use bookmarks" and D47 reads that help page's how-to steps aloud, one at a time. It says the page title and the number of steps, then the first step. "Next" or "skip" moves on, "again" repeats the step, "back" goes to the one before, "what should I see" says what the step should do, and "stop" or "cancel" ends it and cuts off the step being spoken. The cancel button and the shut-up hotkey also stop the voice mid-step and leave the walkthrough where it is. Anything else you say is answered as usual and the walkthrough waits where it is; ten minutes without one of these phrases ends it. Nothing is recorded.
+
 The how-to steps on every capability page now each carry two lines written to be heard: what to do and what should happen. The documentation site does not show them. Activities, Mining, Bookmarks and Learned phrases gain a how-to band, and Clock, Switch Commander and Reminders gain steps.
 
 The carrier captain's fuel and upkeep warnings answer to the same phrases as a journal reminder, whichever went off last. "Noted", "got it" or "thanks" keeps the warning quiet until its condition clears and comes back. "Remind me next time" lets it speak at the next dock or jump request on the same reading. "Remind me tomorrow" or "remind me next session" keeps it quiet until your next session. These are remembered only until D47 restarts.

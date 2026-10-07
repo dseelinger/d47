@@ -5566,6 +5566,30 @@ public sealed class AppHost : IDisposable
         return said;
     }
 
+    private readonly Core.Help.Walkthrough _walkthrough = new();
+
+    /// <summary>
+    /// The next line of a feature walkthrough, queued to speak, or for "stop" with the voice silenced — or
+    /// null when the phrase was not a walkthrough phrase, which falls through to the turn (#577).
+    /// </summary>
+    public string? Walk(string spoken)
+    {
+        if (_walkthrough.Take(spoken, DateTimeOffset.Now) is not { } line)
+        {
+            return null;
+        }
+
+        // "Stop" cuts off the step being spoken rather than queuing a reply behind it.
+        if (line == Core.Help.Walkthrough.Stopped)
+        {
+            Audio.Silence();
+            return line;
+        }
+
+        _ = Voice.AnnounceAsync(line);
+        return line;
+    }
+
     /// <summary>Offers what was heard to each surface in turn, and says whether one took it.</summary>
     private bool Prompted(Core.Interface.Heard heard) =>
         _prompts.Any(surface => surface(heard));

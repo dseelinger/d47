@@ -19,7 +19,7 @@ nav_order: 100
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Two steps to finding out what something does.</p>
+<p class="intro">Three steps to finding out what something does.</p>
 <section>
 <h2><span class="num">1</span> Ask, in the words you already have.</h2>
 <p class="say">Say "what can you do about engineering" or "how does the checklist work".</p>
@@ -46,6 +46,18 @@ nav_order: 100
  <text x="68" y="154" font-size="16" fill="var(--text)">HELP</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">opens this page at that row</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">HELP takes you to the section for that exact row, not to the top of a page.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Ask to be walked through a feature.</h2>
+<p class="say">Say "walk me through engineers", then "next" after each step.</p>
+<p class="expect">D47 says the page title, the number of steps and step one, then each step as you ask for it.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="A walkthrough, one step at a time">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">walk me through engineers</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"next" — "again" — "back" — "skip" — "what should I see" — "stop"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Anything else goes to D47 as usual, and the walkthrough waits where it is.</text>
 </svg>
 </section>
 <section>
@@ -193,6 +205,31 @@ Two ways: Journal, or Commander's log. Which one?
 
 Where nothing fits, a configured model answers instead; without one, this falls back to the top
 level of the spoken map rather than saying it has no way to work it out.
+
+### "Walk me through ..."
+
+> "walk me through engineers"
+> "show me how the checklist works"
+> "how do I use bookmarks"
+
+The name is a help page's title. D47 says the title, the number of steps and the first step, then
+waits. These move it, and are taken before anything else hears them:
+
+- "next" or "skip" — the next step; after the last one the walkthrough ends.
+- "again" — the same step.
+- "back" — the step before. The panel stays where it is.
+- "what should I see" — what that step should do.
+- "stop" or "cancel" — ends it and stops speaking mid-step. The panel's cancel button and the
+  shut-up hotkey stop the voice too, and leave the walkthrough where it is.
+
+```text
+Engineers. 4 steps. Step 1. Open Engineers on the Asset Mgmt tab and read the directory.
+```
+
+Anything else you say goes to D47 as usual, and "next" afterwards carries on from the same step. A
+name that matches no page goes to D47 as an ordinary question. Starting another walkthrough
+replaces the one running, and ten minutes without one of these phrases ends it. Nothing is
+recorded: no step is marked done and nothing is saved.
 
 ### Asked by the model
 
