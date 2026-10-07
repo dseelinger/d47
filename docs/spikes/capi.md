@@ -259,8 +259,9 @@ This page proposes the seam. It does not build one.
 ## Questions only a live call can answer
 
 These are for #616, using the Commander's own account and carrier (callsign BNH-T2F). Raw
-responses carry the Commander's name, credits and carrier finances, so they stay out of the
-repository. The page records one response per endpoint with those values replaced by placeholders.
+responses are kept in the session scratchpad and never committed. The worker lists each field that
+may identify the Commander, and the maintainer decides which ones do. The page then records one
+response per endpoint with those values replaced by plausible stand-ins of the same type and format.
 
 ### Every endpoint
 
