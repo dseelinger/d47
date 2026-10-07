@@ -50,12 +50,12 @@ public class TheWordIsCraftExceptWhereItIsNotTests
         Assert.Contains("DocsAnchor = \"pre-roll\"", source, StringComparison.Ordinal);
     }
 
-    /// <summary>The repository root, found by walking up for the file that only it has.</summary>
+    /// <summary>The repository root, found by walking up for d47.slnx.</summary>
     private static string Repository()
     {
         var here = new DirectoryInfo(AppContext.BaseDirectory);
 
-        while (here is not null && !File.Exists(Path.Combine(here.FullName, "CLAUDE.md")))
+        while (here is not null && !File.Exists(Path.Combine(here.FullName, "d47.slnx")))
         {
             here = here.Parent;
         }

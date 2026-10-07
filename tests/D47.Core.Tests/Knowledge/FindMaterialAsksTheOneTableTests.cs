@@ -86,7 +86,7 @@ public class FindMaterialAsksTheOneTableTests
     {
         var at = new DirectoryInfo(AppContext.BaseDirectory);
 
-        while (at is not null && !File.Exists(Path.Combine(at.FullName, "CLAUDE.md")))
+        while (at is not null && !File.Exists(Path.Combine(at.FullName, "d47.slnx")))
         {
             at = at.Parent;
         }
