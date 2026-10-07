@@ -305,7 +305,7 @@ def main() -> int:
         "# COLONY_DISTANCES in tools/curated_exobiology.py: ArtemisScannerTracker's organicinfo.py,",
         "# HerzbubeWiki's EDExobiology page and EDCoPilot's spoken callouts.",
         "species\tgenus\tvalue\tbodies_sampled\tplanet_types\tatmospheres\tvolcanism\tgravity_low\t"
-        "gravity_high\ttemperature_low\ttemperature_high\tpressure_low\tpressure_high\tregions",
+        "gravity_high\ttemperature_low\ttemperature_high\tpressure_low\tpressure_high\tregions\tcolony_distance",
     ]
 
     OUTPUT.write_text(

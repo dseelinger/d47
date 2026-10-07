@@ -23,7 +23,7 @@ CURATED_VALUES = {
 # table, so these are community figures: ArtemisScannerTracker's organicinfo.py
 # (https://github.com/Balvald/ArtemisScannerTracker), HerzbubeWiki's EDExobiology page
 # (https://wiki.herzbube.ch/wiki/EDExobiology) and EDCoPilot's spoken callouts. Only the numbers
-# are taken. A genus not listed has no value.
+# are taken, on 2026-10-04. A genus not listed has no value.
 COLONY_DISTANCES = {
     "Aleoida": 150,
     "Bacterium": 500,

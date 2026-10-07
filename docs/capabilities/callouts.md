@@ -796,6 +796,29 @@ judge four hundred metres across a ridge, and getting it wrong wastes the sample
 says how far you moved and not whether it was far enough; asking for your sampling progress adds the
 colony distance. See [Exobiology](exobiology.md).
 
+#### Far enough to sample {#sampling-range}
+
+While a set holds one or two specimens, once you are the genus' colony distance from every specimen in
+it, measured along the surface:
+
+```text
+Far enough for the next Stratum Paleas sample.
+```
+
+Said once per specimen and armed again by the next one. It is silent while Elite reports no surface
+position, and for a set where any specimen was taken without one.
+
+#### Abandoned samples {#sampling-abandoned}
+
+The genetic sampler holds one species. When you log a specimen of a different species while a set
+holds one or two, that set is lost, and Directive 47 says so as the new scan lands:
+
+```text
+That abandoned your 2 Stratum Paleas samples.
+```
+
+Directive 47 cannot see the new scan coming, so this comes after the loss, not before it.
+
 #### First footfall {#footfall}
 
 The first time you step onto a body whose scan has not yet recorded a footfall there:
@@ -807,6 +830,17 @@ First footfall on Smojue EB-O d6-37 AB 1 b.
 Elite writes no event for a first footfall; Directive 47 infers it from `WasFootfalled` on the
 body's `Scan` and the `Disembark` that follows it. A second `Disembark` on the same body says
 nothing, since the body's scan is marked the moment the first one lands.
+
+#### First footfall on approach {#footfall-approach}
+
+On approaching a body that has biological signals and whose scan shows nobody has walked it yet:
+
+```text
+Nobody has set foot on Smojue EB-O d6-37 AB 1 b. First footfall bonus is there.
+```
+
+Once per body per session. A body you have not scanned, or one without biological signals, says
+nothing.
 
 #### Mapped body value {#mapping}
 

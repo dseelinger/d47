@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+While you sample organics on foot, D47 now says "Far enough for the next Stratum Paleas sample." once you are the genus' colony distance from every specimen of the set, measured along the surface. It is said once per specimen, and not at all without a surface position. Logging a different species while a set holds one or two specimens loses that set, and D47 says "That abandoned your 2 Stratum Paleas samples." as the scan lands. Approaching a body with biological signals whose scan shows nobody has walked it, D47 says "Nobody has set foot on Smojue EB-O d6-37 AB 1 b. First footfall bonus is there.", once per body. Settings > Callouts has three new switches, Far enough to sample, Abandoned samples and First footfall on approach, all on by default. The First footfall switch now also silences the line it names.
+
 With a language model set up, the debrief's drafted directions are reworded by the model at the next launch, so "okay Warden no more speeches about the thargoids please" can read "Do not talk about the Thargoids unless asked." Each correction is sent once; your own words stay beside the draft, and the draft keeps them when the model says the line is not an instruction or the request fails. Settings › Privacy and egress says so under the language model.
 
 On the Journal page, an Explain button sits beside Raw while the detail pane is shown. Select an event and press it: "Explain that" goes into the transcript and D47 answers about that event. It is disabled while nothing is selected or a reply is in progress. Saying "explain that" does the same with the pane folded.

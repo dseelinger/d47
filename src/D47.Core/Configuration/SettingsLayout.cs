@@ -90,9 +90,10 @@ public static class SettingsLayout
     /// family entry of which at most one row applies at a time, and every speech-recognition row
     /// Advanced); <c>chatter</c> holds the scene chatter row beside NPC chatter as well as the seven
     /// messages rows and the accent row (15 entries, the chatter rows Advanced); <c>plans-and-stories</c>
-    /// holds the callout toggles beside the two week-boundary rows (20 entries, the week rows Advanced).
+    /// holds the callout toggles beside the two week-boundary rows (20 entries, the week rows Advanced);
+    /// <c>exploring</c> holds the exploration and exobiology callout toggles (16 entries).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input", "chatter", "plans-and-stories"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input", "chatter", "plans-and-stories", "exploring"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -472,11 +473,14 @@ public static class SettingsLayout
                                 E("callouts.loreCooldownDays", under: true),
                                 E("callouts.discovery"),
                                 E("callouts.footfall"),
+                                E("callouts.footfallApproach"),
                                 E("callouts.mapping"),
                                 E("callouts.biologyValue"),
                                 E("callouts.surveyedBiology"),
                                 E("callouts.biologyThreshold", under: true),
                                 E("callouts.sampling"),
+                                E("callouts.samplingRange"),
+                                E("callouts.samplingAbandoned"),
                                 E("callouts.unsoldDataAtRisk"),
                             ]),
                     ]),

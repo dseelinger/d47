@@ -116,15 +116,21 @@ public sealed class SamplingStore(string path, ILogger<SamplingStore> logger)
 
                         // The position is restored too, so a Commander who logs back in beside their last
                         // specimen is told how far they have moved rather than being told nothing.
-                        LastAt = genus is { Latitude: { } lat, Longitude: { } lon, Radius: { } radius }
-                            ? new SurfaceFix(lat, lon, radius)
-                            : null,
+                        LastAt = Fix(genus.Latitude, genus.Longitude, genus.Radius),
+
+                        // A save older than the per-specimen positions holds only the last one.
+                        Specimens = genus.Specimens is { } specimens
+                            ? [.. specimens.Select(point => Fix(point.Latitude, point.Longitude, point.Radius)).OfType<SurfaceFix>()]
+                            : Fix(genus.Latitude, genus.Longitude, genus.Radius) is { } last ? [last] : [],
                     });
             }
         }
 
         return sampling;
     }
+
+    private static SurfaceFix? Fix(double? latitude, double? longitude, double? radius) =>
+        latitude is { } lat && longitude is { } lon && radius is { } r ? new SurfaceFix(lat, lon, r) : null;
 
     private static CommanderRecord Dehydrate(string frontierId, OrganicSampling sampling) => new()
     {
@@ -147,6 +153,15 @@ public sealed class SamplingStore(string path, ILogger<SamplingStore> logger)
                         Latitude = genus.LastAt?.Latitude,
                         Longitude = genus.LastAt?.Longitude,
                         Radius = genus.LastAt?.RadiusMetres,
+                        Specimens =
+                        [
+                            .. genus.Specimens.Select(point => new PointRecord
+                            {
+                                Latitude = point.Latitude,
+                                Longitude = point.Longitude,
+                                Radius = point.RadiusMetres,
+                            }),
+                        ],
                     }),
                 ],
             }),
@@ -186,6 +201,17 @@ public sealed class SamplingStore(string path, ILogger<SamplingStore> logger)
 
         public DateTimeOffset SeenAt { get; set; }
 
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
+
+        public double? Radius { get; set; }
+
+        public IReadOnlyList<PointRecord>? Specimens { get; set; }
+    }
+
+    private sealed class PointRecord
+    {
         public double? Latitude { get; set; }
 
         public double? Longitude { get; set; }

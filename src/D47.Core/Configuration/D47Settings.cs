@@ -529,11 +529,20 @@ public sealed record CalloutSettings
     /// <summary>Organic sampling progress on the surface (Phase 18).</summary>
     public bool Sampling { get; init; } = true;
 
+    /// <summary>Far enough from every specimen of an open set for the next sample (#581).</summary>
+    public bool SamplingRange { get; init; } = true;
+
+    /// <summary>A set of samples lost to a specimen of a different species (#581).</summary>
+    public bool SamplingAbandoned { get; init; } = true;
+
     /// <summary>Whether the arrival star's autoscan shows up as undiscovered (#201).</summary>
     public bool Discovery { get; init; } = true;
 
     /// <summary>The first footfall on a body (#203).</summary>
     public bool Footfall { get; init; } = true;
+
+    /// <summary>On approach, a body with biology that nobody has walked (#581).</summary>
+    public bool FootfallApproach { get; init; } = true;
 
     /// <summary>A body just mapped with the DSS: its estimated value and the unsold total (#527).</summary>
     public bool Mapping { get; init; } = true;

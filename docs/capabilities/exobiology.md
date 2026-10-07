@@ -236,6 +236,17 @@ Codex entry in the game is the authority. `Exobiology.tsv` holds one value per g
 `colony_distance` column, taken from ArtemisScannerTracker, HerzbubeWiki's EDExobiology page and
 EDCoPilot's callouts. A genus with no value is answered as before.
 
+**It says when you are far enough, and when a set is lost.** With a colony distance and a surface
+position, Directive 47 keeps the position of every specimen in the set and says once, as you cross
+the distance from all of them, "Far enough for the next Stratum Paleas sample." Logging a different
+species while a set holds one or two specimens loses that set, and it says so as the scan lands:
+"That abandoned your 2 Stratum Paleas samples." Approaching a body with biological signals that
+nobody has walked, it says "Nobody has set foot on Smojue EB-O d6-37 AB 1 b. First footfall bonus is
+there." Each has its own switch:
+[Far enough to sample](callouts.md#sampling-range),
+[Abandoned samples](callouts.md#sampling-abandoned) and
+[First footfall on approach](callouts.md#footfall-approach).
+
 **Where there is no value, it learns.** A specimen the game accepted is proof that the distance you
 travelled was sufficient, so the smallest accepted gap is an upper bound on the requirement —
 measured from your own play, carried with its sample size, and never presented as the figure itself.

@@ -36,8 +36,11 @@ public static class CalloutCapability
     public const string OutstandingCrimesKey = "callouts.outstandingCrimes";
 
     public const string SamplingKey = "callouts.sampling";
+    public const string SamplingRangeKey = "callouts.samplingRange";
+    public const string SamplingAbandonedKey = "callouts.samplingAbandoned";
     public const string DiscoveryKey = "callouts.discovery";
     public const string FootfallKey = "callouts.footfall";
+    public const string FootfallApproachKey = "callouts.footfallApproach";
     public const string MappingKey = "callouts.mapping";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
@@ -336,6 +339,25 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { Sampling = v } }),
 
             Toggle(
+                SamplingRangeKey,
+                "Far enough to sample",
+                "Once per specimen, when you are the genus' sampling distance from every specimen of the set "
+                + "you are taking. Silent without a surface position.",
+                "sampling-range",
+                "far enough to sample",
+                s => s.Callouts.SamplingRange,
+                (s, v) => s with { Callouts = s.Callouts with { SamplingRange = v } }),
+
+            Toggle(
+                SamplingAbandonedKey,
+                "Abandoned samples",
+                "When a specimen of a different species drops a set of one or two samples you had taken.",
+                "sampling-abandoned",
+                "abandoned samples",
+                s => s.Callouts.SamplingAbandoned,
+                (s, v) => s with { Callouts = s.Callouts with { SamplingAbandoned = v } }),
+
+            Toggle(
                 DiscoveryKey,
                 "Undiscovered systems",
                 "The arrival star's autoscan, when nobody has sold data on it yet.",
@@ -352,6 +374,16 @@ public static class CalloutCapability
                 "first footfall",
                 s => s.Callouts.Footfall,
                 (s, v) => s with { Callouts = s.Callouts with { Footfall = v } }),
+
+            Toggle(
+                FootfallApproachKey,
+                "First footfall on approach",
+                "On approaching a body with biological signals whose scan shows nobody has walked it yet. "
+                + "Once per body.",
+                "footfall-approach",
+                "first footfall on approach",
+                s => s.Callouts.FootfallApproach,
+                (s, v) => s with { Callouts = s.Callouts with { FootfallApproach = v } }),
 
             Toggle(
                 MappingKey,

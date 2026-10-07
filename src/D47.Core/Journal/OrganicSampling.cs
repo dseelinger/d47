@@ -49,6 +49,9 @@ public sealed record GenusProgress(string Genus)
     /// <summary>Where the last specimen was taken, if d47 had a position at that moment.</summary>
     public SurfaceFix? LastAt { get; init; }
 
+    /// <summary>Where each specimen of the set was taken, for the ones d47 had a position for.</summary>
+    public IReadOnlyList<SurfaceFix> Specimens { get; init; } = [];
+
     /// <summary>How far the Commander travelled between the previous specimen and this one, in metres.</summary>
     public double? LastGapMetres { get; init; }
 
@@ -73,6 +76,9 @@ public sealed record BodySampling(long SystemAddress, int BodyId)
         [.. Genera.Values.Where(genus => genus.Complete).OrderByDescending(genus => genus.SeenAt)];
 }
 
+/// <summary>Sets lost when a specimen of a different species was taken, and when.</summary>
+public sealed record AbandonedSets(DateTimeOffset At, IReadOnlyList<GenusProgress> Sets);
+
 /// <summary>Organic sampling, per body and per genus (Phase 18, "Exobiology sampling").</summary>
 public sealed record OrganicSampling
 {
@@ -89,6 +95,9 @@ public sealed record OrganicSampling
         new Dictionary<string, (double, int)>(StringComparer.OrdinalIgnoreCase);
 
     public bool IsKnown => Bodies.Count > 0;
+
+    /// <summary>The sets the latest specimen of a different species abandoned, or null.</summary>
+    public AbandonedSets? Abandoned { get; init; }
 
     public IReadOnlyList<BodySampling> All => [.. Bodies.Values];
 
@@ -139,12 +148,17 @@ public sealed record OrganicSampling
         }
 
         var scanType = journalEvent.String("ScanType");
+        var species = journalEvent.Named("Species");
         var key = (systemAddress, bodyId);
-        var body = Bodies.GetValueOrDefault(key) ?? new BodySampling(systemAddress, bodyId);
-        var known = body.Genera.GetValueOrDefault(genusName);
 
         // Analyse banks the run rather than adding a fourth specimen.
         var isSpecimen = scanType is "Log" or "Sample";
+
+        // The sampler holds one species: a specimen of another drops every open set, on any body.
+        var sampling = isSpecimen && species is not null ? Abandon(species, journalEvent.Timestamp) : this;
+
+        var body = sampling.Bodies.GetValueOrDefault(key) ?? new BodySampling(systemAddress, bodyId);
+        var known = body.Genera.GetValueOrDefault(genusName);
 
         // A fresh Log after a completed run is a second run of the same genus on the same body, which the
         // corpus does contain — so the count restarts rather than climbing past three.
@@ -181,6 +195,10 @@ public sealed record OrganicSampling
             Taken = taken,
             Complete = scanType == "Analyse" || taken >= GenusProgress.Required,
             LastAt = isSpecimen ? at ?? known?.LastAt : known?.LastAt,
+            Specimens = !isSpecimen ? known?.Specimens ?? []
+                : at is not { } fix ? (restarting ? [] : known?.Specimens ?? [])
+                : restarting ? [fix]
+                : [.. known?.Specimens ?? [], fix],
             LastGapMetres = isSpecimen ? gap : known?.LastGapMetres,
             SeenAt = journalEvent.Timestamp,
         };
@@ -190,12 +208,55 @@ public sealed record OrganicSampling
             [genusName] = progress,
         };
 
-        var bodies = new Dictionary<(long, int), BodySampling>(Bodies)
+        var bodies = new Dictionary<(long, int), BodySampling>(sampling.Bodies)
         {
             [key] = body with { Genera = genera },
         };
 
-        return this with { Bodies = bodies, Observed = observed };
+        return sampling with { Bodies = bodies, Observed = observed };
+    }
+
+    /// <summary>Drops every set of one or two specimens of a species other than <paramref name="species"/>.</summary>
+    private OrganicSampling Abandon(string species, DateTimeOffset at)
+    {
+        var lost = new List<GenusProgress>();
+        var bodies = new Dictionary<(long, int), BodySampling>(Bodies);
+
+        foreach (var (key, body) in Bodies)
+        {
+            var open = body.Genera.Values
+                .Where(genus => genus is { Complete: false, Taken: > 0 }
+                    && genus.Species is { } held
+                    && !string.Equals(held, species, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (open.Count == 0)
+            {
+                continue;
+            }
+
+            lost.AddRange(open);
+
+            var genera = new Dictionary<string, GenusProgress>(body.Genera, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var genus in open)
+            {
+                genera.Remove(genus.Genus);
+            }
+
+            if (genera.Count == 0)
+            {
+                bodies.Remove(key);
+            }
+            else
+            {
+                bodies[key] = body with { Genera = genera };
+            }
+        }
+
+        return lost.Count == 0
+            ? this with { Abandoned = null }
+            : this with { Bodies = bodies, Abandoned = new AbandonedSets(at, lost) };
     }
 
     /// <summary>How far the Commander is now from their last specimen of a genus, in metres.</summary>

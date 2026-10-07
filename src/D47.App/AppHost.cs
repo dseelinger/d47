@@ -3188,8 +3188,11 @@ public sealed class AppHost : IDisposable
 
             // Phase 17.
             .Add(new SamplingCallout { Ledger = exobiology })
+            .Add(new SamplingRangeCallout())
+            .Add(new AbandonedSamplesCallout())
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
+            .Add(new FootfallApproachCallout())
             .Add(new MappingCallout { Ledger = cartography })
             .Add(new UnsoldDataAtRiskCallout(cartography, exobiology))
             .Add(new OutstandingCrimesCallout(crimes))
@@ -3338,6 +3341,10 @@ public sealed class AppHost : IDisposable
         engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
+        engine.SetEnabled("sampling-range", callouts.SamplingRange, now);
+        engine.SetEnabled("sampling-abandoned", callouts.SamplingAbandoned, now);
+        engine.SetEnabled("footfall", callouts.Footfall, now);
+        engine.SetEnabled("footfall-approach", callouts.FootfallApproach, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);
         engine.SetEnabled("biology", callouts.Biology, now);

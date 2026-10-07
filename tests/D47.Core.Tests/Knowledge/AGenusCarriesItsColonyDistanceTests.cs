@@ -18,6 +18,18 @@ public class AGenusCarriesItsColonyDistanceTests
         Assert.Null(ExobiologyCatalogue.ColonyDistance("Nonexistentia"));
 
     [Fact]
-    public void EveryGenusInTheTableHasADistance() =>
-        Assert.All(ExobiologyCatalogue.All, entry => Assert.NotNull(entry.ColonyDistance));
+    public void EveryGenusInTheTableHasADistance()
+    {
+        var missing = ExobiologyCatalogue.All
+            .Where(entry => entry.ColonyDistance is null)
+            .Select(entry => entry.Genus)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Assert.True(missing.Count == 0, "No colony distance for: " + string.Join(", ", missing));
+    }
+
+    [Fact]
+    public void TheTableHoldsTwentyTwoGenera() =>
+        Assert.Equal(22, ExobiologyCatalogue.All.Select(entry => entry.Genus).Distinct(StringComparer.OrdinalIgnoreCase).Count());
 }

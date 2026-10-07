@@ -180,15 +180,21 @@ public class OrganicSamplingTests
     [Fact]
     public void TwoGeneraOnOneBodyAreTrackedSeparatelyUnderOneBody()
     {
-        var sampling = OrganicSampling.Empty
-            .Apply(Parse(Scan("Log", "Stratum")), At(0, 0))
-            .Apply(Parse(Scan("Log", "Bacterium")), At(0, 0.02));
+        var sampling = OrganicSampling.Empty;
+
+        foreach (var scan in new[] { "Log", "Sample", "Sample", "Analyse" })
+        {
+            sampling = sampling.Apply(Parse(Scan(scan, "Stratum")), At(0, 0));
+        }
+
+        sampling = sampling.Apply(Parse(Scan("Log", "Bacterium")), At(0, 0.02));
 
         var body = sampling.On(2175107336563, 37);
 
         Assert.NotNull(body);
         Assert.Equal(2, body!.Genera.Count);
-        Assert.Equal(2, body.InProgress.Count);
+        Assert.Single(body.InProgress);
+        Assert.Single(body.Completed);
     }
 
     // -------------------------------------------------------------- the callout
