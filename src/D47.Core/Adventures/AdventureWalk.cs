@@ -10,6 +10,9 @@ internal sealed class AdventureFoldState
     /// <summary>The last walked event's time per Commander; a live event at or before it is not folded again.</summary>
     public Dictionary<string, DateTimeOffset> HighWater { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>The time of the newest event folded, by a walk or live; null until one is.</summary>
+    public DateTimeOffset? Newest { get; set; }
+
     /// <summary>The system each Commander is in, which a standing begun from nothing starts in.</summary>
     public Dictionary<string, long> Here { get; } = new(StringComparer.Ordinal);
 

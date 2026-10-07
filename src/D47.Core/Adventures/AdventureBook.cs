@@ -591,7 +591,13 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                         _fold.Standings.Remove(key);
                     }
 
-                    if (adventure.IsActive)
+                    // A stamp after the newest folded event has nothing folded behind it, so a fresh standing is exact.
+                    var aheadOfTheFold = !_walking
+                        && _fold.Newest is { } newest
+                        && adventure.AcceptedAt is { } stamp
+                        && stamp > newest;
+
+                    if (adventure.IsActive && !aheadOfTheFold)
                     {
                         _generation++;
                         _needsCatchUp = true;
@@ -623,6 +629,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// </summary>
     private void Fold(AdventureFoldState state, string commander, JournalEvent journalEvent, bool announce)
     {
+        if (state.Newest is not { } newest || journalEvent.Timestamp > newest)
+        {
+            state.Newest = journalEvent.Timestamp;
+        }
+
         if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
             && journalEvent.Raw.Long("SystemAddress") is { } arrived)
         {

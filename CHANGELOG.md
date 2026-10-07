@@ -8,7 +8,7 @@
 
 ## 1.27.0 — Stock stories begin
 
-Beginning a story again, or editing its start time in adventures.json, no longer holds up push-to-talk and callouts while D47 re-reads your journals to work out where the story stands. The re-read runs in the background. Until it finishes, the Adventures tab shows the standing from before, and a beat you reach in the meantime is said once the re-read is done.
+Beginning a story again, or editing its start time in adventures.json, no longer holds up push-to-talk and callouts while D47 re-reads your journals to work out where the story stands. Beginning a story, or moving its start time to after the newest event D47 has read, no longer re-reads your journals at all. Any other start-time change re-reads them in the background. Until it finishes, the Adventures tab shows the standing from before, and a beat you reach in the meantime is said once the re-read is done.
 
 With Elite closed, say "save these bindings as sim pit" to keep a copy of Elite's control bindings under that name, and "load the sim pit bindings" to put them back; Elite uses them the next time it starts. A load first saves the bindings it replaces as "before last load". While Elite is running both are refused: "Elite is running. It reads its bindings only when it starts, so close Elite first and ask again." "List my binding profiles" names them, and Settings › Macros and switches lists each saved profile with a Delete button. None of this needs a language model.
 
