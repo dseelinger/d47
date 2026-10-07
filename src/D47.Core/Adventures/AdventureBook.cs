@@ -53,6 +53,9 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> logger)
 {
     private readonly Lock _gate = new();
+
+    /// <summary>Held across a rewrite's read, save and fold update; never taken under <see cref="_gate"/>.</summary>
+    private readonly Lock _rewriteGate = new();
     private readonly Queue<AdventureMoment> _moments = new();
     private AdventureFoldState _fold = new();
 
@@ -456,48 +459,58 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         var commander = frontierId ?? AdventureStore.NoCommander;
 
-        lock (_gate)
+        // Rewrites run one at a time, so each builds on the adventure the last one saved.
+        lock (_rewriteGate)
         {
-            if (store.Find(commander, key) is not { IsActive: true } adventure
-                || StandingOf(_fold, commander, adventure) is not { IsDone: false } standing
-                || standing.Current != from)
-            {
-                return "The story has moved on from that objective.";
-            }
+            Adventure rewritten;
 
-            var rewritten = adventure with
+            lock (_gate)
             {
-                Beats = [.. adventure.Beats.Take(from), .. beats],
-                RewrittenAt = at,
-                RewrittenFrom = from,
-            };
+                if (store.Find(commander, key) is not { IsActive: true } adventure
+                    || StandingOf(_fold, commander, adventure) is not { IsDone: false } standing
+                    || standing.Current != from)
+                {
+                    return "The story has moved on from that objective.";
+                }
+
+                rewritten = adventure with
+                {
+                    Beats = [.. adventure.Beats.Take(from), .. beats],
+                    RewrittenAt = at,
+                    RewrittenFrom = from,
+                };
+            }
 
             if (AdventureValidation.Problems(rewritten) is { Count: > 0 } problems)
             {
                 return string.Join(" ", problems);
             }
 
+            // Outside the gate: the save writes the file and runs the store's change handlers.
             if (store.Save(commander, rewritten) is { } refusal)
             {
                 return refusal;
             }
 
-            _fold.Standings[StandingKey(commander, key)] = StandingOf(_fold, commander, rewritten) with { Adventure = rewritten, Counted = 0 };
-
-            // A walk under way would bring back the count this just reset.
-            if (_walking)
+            lock (_gate)
             {
-                _generation++;
-                _needsCatchUp = true;
-            }
+                _fold.Standings[StandingKey(commander, key)] = StandingOf(_fold, commander, rewritten) with { Adventure = rewritten, Counted = 0 };
 
-            // A line waiting out its settle window hands off to the beat that was refused.
-            var queued = _moments.Select(moment => SameStory(moment, commander, key) ? moment with { Adventure = rewritten } : moment).ToList();
-            _moments.Clear();
+                // A walk under way would bring back the count this just reset.
+                if (_walking)
+                {
+                    _generation++;
+                    _needsCatchUp = true;
+                }
 
-            foreach (var moment in queued)
-            {
-                _moments.Enqueue(moment);
+                // A line waiting out its settle window hands off to the beat that was refused.
+                var queued = _moments.Select(moment => SameStory(moment, commander, key) ? moment with { Adventure = rewritten } : moment).ToList();
+                _moments.Clear();
+
+                foreach (var moment in queued)
+                {
+                    _moments.Enqueue(moment);
+                }
             }
 
             return null;
