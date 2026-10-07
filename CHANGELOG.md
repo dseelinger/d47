@@ -20,6 +20,8 @@ Saving a plotted route or hearing your mail no longer holds up push-to-talk and 
 
 When the Windows default speaker or microphone changes, push-to-talk and callouts no longer wait while D47 closes the old device and opens the new one.
 
+Switching Commander, or cores waking, with the Log file page open no longer refreshes the per-subsystem level track from the tick thread.
+
 Push-to-talk and callouts no longer wait while D47 searches the Elite install folders for your bindings after you change them in the game or switch preset. The search runs in the background, and D47 keeps using the bindings it had until it finishes.
 
 Push-to-talk and callouts no longer wait on Windows' game-controller service, or while D47 updates the track shown in the Windows media flyout. D47 now reads your controllers on a separate thread every 50 milliseconds.

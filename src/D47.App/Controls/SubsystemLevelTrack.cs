@@ -54,7 +54,7 @@ public sealed class SubsystemLevelTrack : ContentControl
         Content = Build();
         Refresh();
 
-        Action<SettingsChanged> onChanged = _ => Refresh();
+        Action<SettingsChanged> onChanged = _ => Avalonia.Threading.Dispatcher.UIThread.Post(Refresh);
         settings.Changed += onChanged;
         Unloaded += (_, _) => settings.Changed -= onChanged;
     }
