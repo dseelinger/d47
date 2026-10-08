@@ -10,6 +10,8 @@
 
 Game commands now run when you add a courtesy such as "please", "now" or "for me": "gear down please", "lights off now" and "engage supercruise for me" act at once instead of asking "Did you mean…?". Phrases you taught D47 work the same way.
 
+The mini panel, in the headset and on the flat overlay, no longer stops following the newest turn when it is first filled. A panel that began following and then had its content re-measured could end up parked above the newest turn with no button to return it.
+
 The Settings row "Model for the quiet calls" is now "Background model", and the model status report and the notice that a default changed use the same name. Your saved choice is unchanged.
 
 In Ship now fills from the top down. The first turn sits at the top of the pane and the empty space is below the last turn, until the conversation is taller than the view. This applies to the window, the headset overlay and the mini overlay.

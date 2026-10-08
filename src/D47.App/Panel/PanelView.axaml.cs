@@ -4760,10 +4760,15 @@ public partial class PanelView : UserControl
             }
         }
 
-        // Only when the offset actually moved, and deliberately not when the viewport or the extent did.
-        if (e.OffsetDelta.Y != 0)
+        // Only a move on its own is the Commander's. An offset change that arrives with a new extent or
+        // viewport is layout settling, measured against an extent that is not final.
+        if (e.OffsetDelta.Y != 0 && e.ExtentDelta.Y == 0 && e.ViewportDelta.Y == 0)
         {
             _following = AtTheNewest();
+        }
+        else if (e.OffsetDelta.Y != 0 && _following)
+        {
+            Dispatcher.UIThread.Post(Follow);
         }
 
         ShowFollowButton();
