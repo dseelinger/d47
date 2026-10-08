@@ -402,6 +402,23 @@ public class TheConversationLooksLikeOneTests
     private static void Themed() =>
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(themeId: null);
 
+    /// <summary>A conversation shorter than the view starts at the top of the scroll area.</summary>
+    [AvaloniaFact]
+    public void AShortConversationFillsFromTheTop()
+    {
+        var panel = Laid(new PanelView { DataContext = Exchange() });
+
+        var scroller = panel.GetControl<ScrollViewer>("TranscriptScroller");
+        var first = Messages(panel)[0];
+        var last = Messages(panel)[^1];
+
+        var top = first.TranslatePoint(default, scroller)!.Value.Y;
+        var bottom = last.TranslatePoint(new Point(0, last.Bounds.Height), scroller)!.Value.Y;
+
+        Assert.True(top <= 8, $"the first turn starts {top} below the top of the scroll area");
+        Assert.True(bottom < scroller.Viewport.Height - 20, $"the turns end {bottom} down a view {scroller.Viewport.Height} tall");
+    }
+
     private static PanelView Laid(PanelView panel, Window? into = null, double width = 900)
     {
         var window = into ?? new Window();

@@ -741,12 +741,7 @@
               Empty and hidden until the page asks for it, so a surface reading the log file
               pays nothing for a conversation it is not showing.
             -->
-            <!--
-              Anchored to the bottom, so a short conversation sits beside the ask box rather than
-              leaving the top of the pane full and the rest empty. TranscriptContent is held at least
-              the viewport's height for this to have room to act in.
-            -->
-            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Bottom" Spacing="4" Margin="0,0,14,0" SizeChanged="OnBubblesResized" />
+            <StackPanel x:Name="Bubbles" IsVisible="False" VerticalAlignment="Top" Spacing="4" Margin="0,0,14,0" SizeChanged="OnBubblesResized" />
 
             <!-- The conversation before anything has been said. -->
             <TextBlock x:Name="EmptyConversation"

@@ -2279,10 +2279,6 @@ public partial class PanelView : UserControl
 
         var scroller = Scroller;
 
-        // The thread's own height rather than the viewport's, since the mark is where the reading ends and
-        // new bubbles have to grow the extent past it. AnchorThread leaves it off while the fold holds.
-        TranscriptContent.MinHeight = 0;
-
         // Laid out first, for the reason Follow gives: the mark is the height of the content as it is now,
         // and a run appended a moment ago is not in the extent until this returns.
         scroller.UpdateLayout();
@@ -2481,22 +2477,6 @@ public partial class PanelView : UserControl
         if (PadOn(pad) > 0)
         {
             pad.Margin = default;
-        }
-
-        AnchorThread();
-    }
-
-    /// <summary>
-    /// Holds the conversation's content at least as tall as the view, so its bubbles, aligned to the
-    /// bottom, sit beside the ask box — except while a fold holds, which measures the thread's own height.
-    /// </summary>
-    private void AnchorThread()
-    {
-        var height = Bubbles.IsVisible && _fold is null ? TranscriptScroller.Viewport.Height : 0;
-
-        if (TranscriptContent.MinHeight != height)
-        {
-            TranscriptContent.MinHeight = height;
         }
     }
 
@@ -3727,8 +3707,6 @@ public partial class PanelView : UserControl
         Transcript.IsVisible = !bubbled;
         Bubbles.IsVisible = bubbled;
         EmptyConversation.IsVisible = false;
-        AnchorThread();
-
         if (_bound is null)
         {
             EmptyConversation.IsVisible = bubbled;
@@ -4774,8 +4752,6 @@ public partial class PanelView : UserControl
 
         if (e.ViewportDelta.Y != 0)
         {
-            AnchorThread();
-
             // A resize keeps the offset, so a reader who was following would lose the newest line off the
             // bottom; posted, because this runs inside a layout pass.
             if (_following)
