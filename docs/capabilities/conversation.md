@@ -683,6 +683,25 @@ a reason to distrust.
 
 Nothing is said at all when search works, so having it on costs you no words about it.
 
+#### Let the model look at the screen {#let-the-model-look-at-the-screen}
+
+Off by default. On, Directive 47 can take a picture of what you are looking at when you ask about
+something on screen, and send it to your language-model provider with the question. The picture is
+Elite's window, or the headset's view when Elite is running in VR. It is held in memory for that
+one turn and never saved, and at most one is taken per question. A picture adds about 1,100 to
+1,600 input tokens to the turn, which the cost under the reply includes. [Look at the
+screen](screen.md) has the details, and the [Privacy](privacy.md#egress-screen) row says what is
+sent while it is on.
+
+The row is protected, so the model cannot turn it on. Spoken shortcuts, recognised without the
+model:
+
+> "turn on screen pictures" / "allow screen pictures"
+> "turn off screen pictures" / "stop looking at my screen"
+
+Not every model reads pictures. When the one in use does not, the row says so while it is on, and
+no picture is ever taken.
+
 #### Character sheet {#character-sheet}
 
 Who your Commander is, in a few lines — name, where they are from, age, how they speak. Kept

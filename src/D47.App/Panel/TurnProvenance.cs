@@ -27,6 +27,13 @@ public sealed record TurnProvenance(string Lead, string? Cost)
             parts.Add($"EFFORT {effort.ToString().ToUpperInvariant()}");
         }
 
+        foreach (var source in result.Pictures ?? [])
+        {
+            parts.Add(source == D47.Core.Interface.ScreenPictures.FromHeadset
+                ? "PICTURE OF HEADSET VIEW"
+                : "PICTURE OF ELITE'S WINDOW");
+        }
+
         string? figure = null;
 
         if (result.Cost is { } cost)

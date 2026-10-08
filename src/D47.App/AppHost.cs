@@ -2248,7 +2248,10 @@ public sealed class AppHost : IDisposable
                 starSystems: starSystems,
                 pickCommander: picks.Enqueue,
                 standingWarnings: standingWarnings,
-                bindingProfiles: bindingProfiles));
+                bindingProfiles: bindingProfiles,
+                screen: screenCapture,
+                imagesAvailable: () => self?.ReadsPictures ?? true,
+                pictureNote: () => self?.PictureNote));
 
         buildingRegistry.Dispose();
 
@@ -7307,6 +7310,17 @@ public sealed class AppHost : IDisposable
     private bool SearchReachesTheWeb =>
         Turns.Provider is not { } provider
         || provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;
+
+    /// <summary>Whether the model in use reads pictures; true while there is no provider to ask.</summary>
+    private bool ReadsPictures =>
+        Turns.Provider is not { } provider
+        || provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsImages;
+
+    /// <summary>Why no picture of the screen is ever taken, when the model in use cannot read one.</summary>
+    internal string? PictureNote =>
+        Turns.Provider is { } provider && !ReadsPictures
+            ? ConversationCapability.PictureNote(Turns.Model ?? provider.DefaultModel)
+            : null;
 
     /// <summary>Why the model in use is offered fewer tools, when its context is known to be small (#423).</summary>
     internal string? ContextNote

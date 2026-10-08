@@ -5,7 +5,7 @@ namespace D47.App.Tests;
 /// <summary>Which calls take the cheap model and which keep the Commander's.</summary>
 public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
 {
-    /// <summary>The five readers of the conversation model, exactly.</summary>
+    /// <summary>The readers of the conversation model, exactly.</summary>
     private static readonly string[] KeepTheConversationModel =
     [
         // The Commander's log, quoted at a price before anything is written.
@@ -23,10 +23,14 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
 
         // The model row's line about a small context, for the model the turns are sent to (#423).
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).ContextTokens is not { } context)",
+
+        // Whether the model the turns are sent to reads a picture of the screen, and the row's line when not.
+        "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsImages;",
+        "? ConversationCapability.PictureNote(Turns.Model ?? provider.DefaultModel)",
     ];
 
     [Fact]
-    public void TheConversationModelIsReadByExactlyTheFiveCallsThatShouldReadIt()
+    public void TheConversationModelIsReadByExactlyTheCallsThatShouldReadIt()
     {
         var readers = CodeLinesContaining("Turns.Model", "turns.Model")
             .Where(line => !line.StartsWith("Turns.Model =", StringComparison.Ordinal))

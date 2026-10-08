@@ -5,4 +5,7 @@ public sealed record ImageAttachment(byte[] Data, string MediaType, int Width, i
 {
     /// <summary>The picture as a <c>data:</c> URL.</summary>
     public string DataUrl => $"data:{MediaType};base64,{Convert.ToBase64String(Data)}";
+
+    /// <summary>Where the picture was taken from, such as <see cref="Interface.ScreenPictures.FromWindow"/>, or null.</summary>
+    public string? Source { get; init; }
 }

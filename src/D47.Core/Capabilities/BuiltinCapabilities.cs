@@ -249,7 +249,12 @@ public static class BuiltinCapabilities
         Callouts.StandingWarnings? standingWarnings = null,
 
         // The Commander's saved binding profiles (#80).
-        Input.BindingProfiles? bindingProfiles = null) =>
+        Input.BindingProfiles? bindingProfiles = null,
+
+        // What the Commander is looking at, whether the model in use reads it, and the row's line when not.
+        Interface.IScreenCapture? screen = null,
+        Func<bool>? imagesAvailable = null,
+        Func<string?>? pictureNote = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -335,7 +340,8 @@ public static class BuiltinCapabilities
             // Late-bound like the voice list, and for the same reason: it is fetched from the endpoint over
             // the network well after this point in composition.
             endpointModels,
-            contextNote),
+            contextNote,
+            pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
         AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic),
@@ -394,7 +400,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,
@@ -417,6 +423,8 @@ public static class BuiltinCapabilities
             pickCommander ?? (_ => { })),
 
         BindingProfilesCapability.Create(bindingProfiles),
+
+        ScreenCapability.Create(settings, screen),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

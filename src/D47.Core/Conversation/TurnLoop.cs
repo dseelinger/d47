@@ -52,7 +52,8 @@ public sealed record TurnResult(
     ThinkingEffort? Effort,
     TurnCost? Cost,
     string? Model = null,
-    PageRef? Page = null);
+    PageRef? Page = null,
+    IReadOnlyList<string>? Pictures = null);
 
 public abstract record TurnEvent
 {
@@ -1507,6 +1508,9 @@ public sealed class TurnLoop(
         // The page of the last result this turn that named one.
         PageRef? page = null;
 
+        // Where each picture sent this turn was taken from.
+        var pictures = new List<string>();
+
         // Whether the round that just finished spoke any text, so the next round's text is not run onto
         // the end of it without a space (#87).
         var previousRoundSpoke = false;
@@ -1764,6 +1768,11 @@ public sealed class TurnLoop(
                     page = named;
                 }
 
+                if (result.Image is { Source: { } source })
+                {
+                    pictures.Add(source);
+                }
+
                 if (result.Relayed)
                 {
                     relayed.Add(result.Spoken);
@@ -1857,7 +1866,7 @@ public sealed class TurnLoop(
             longestGap.TotalSeconds);
 
         yield return new TurnEvent.Completed(new TurnResult(
-            turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel, page));
+            turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel, page, pictures.Count == 0 ? null : pictures));
     }
 
     /// <summary>

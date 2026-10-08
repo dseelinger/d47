@@ -66,6 +66,19 @@ public class TheCostLineIsInsideEachAnswerTests
         Assert.Equal(0.069m.ToString("C4", CultureInfo.CurrentCulture), line.Cost);
     }
 
+    [Theory]
+    [InlineData(ScreenPictures.FromWindow, "PICTURE OF ELITE'S WINDOW")]
+    [InlineData(ScreenPictures.FromHeadset, "PICTURE OF HEADSET VIEW")]
+    public void ATurnThatSentAPictureNamesItBeforeTheCost(string source, string part)
+    {
+        var line = TurnProvenance.For(ModelTurn() with { Pictures = [source] });
+
+        Assert.Equal(
+            $"ANSWERED VIA CLAUDE-SONNET-5 · EFFORT MEDIUM · {part} · {0.069m.ToString("C4", CultureInfo.CurrentCulture)}",
+            line.Text);
+        Assert.Equal(0.069m.ToString("C4", CultureInfo.CurrentCulture), line.Cost);
+    }
+
     [Fact]
     public void AnUnpricedModelSaysSoInPlaceOfTheCost()
     {

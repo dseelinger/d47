@@ -744,6 +744,9 @@ public sealed record LlmSettings
     /// </summary>
     public bool WebSearch { get; init; }
 
+    /// <summary>Whether the model may take a picture of the screen when the Commander asks about it.</summary>
+    public bool LookAtScreen { get; init; }
+
     /// <summary>
     /// Which model answers the calls the Commander is not waiting on — ambient remarks, the opening
     /// brief, the gap reaction, the two lore lookups, and casting a voice (Phase 54).

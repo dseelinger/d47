@@ -40,6 +40,7 @@ runs, so there is data here that belongs to somebody else. Who holds it and on w
 | Everything else in `data\` — settings, secrets, the checklist, your ships, the spend ledger, your commander log, your own cues, and the coverage record if you switched it on | `data\`, one file or folder each | **kept until you delete it** | nothing |
 | Downloaded voice and transcription models | `data\models\` | **kept until you delete it** | nothing — and they are the vendors', not yours |
 | The conversation itself | nowhere | **not kept**; it lives in memory and is gone when d47 closes | there is no file to enforce anything on |
+| A picture of the screen, when the model looks | nowhere | **one turn**, in memory, and never written to disk | `TurnLoop`, which drops it when the turn is committed |
 
 Three of those want a word.
 

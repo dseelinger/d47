@@ -58,6 +58,9 @@ public static class EgressDisclosure
     /// <summary>Searching the web, which the language-model provider does on d47's behalf.</summary>
     public const string WebSearch = "websearch";
 
+    /// <summary>A picture of the screen, sent to the language model with the question that asked for it.</summary>
+    public const string Screen = "screen";
+
     /// <summary>Fetching the catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlaces = "notableplaces";
 
@@ -93,6 +96,7 @@ public static class EgressDisclosure
         LanguageModel,
         Recap,
         WebSearch,
+        Screen,
         TextToSpeech,
         SpeechRecognition,
         GalaxySearch,
@@ -124,6 +128,7 @@ public static class EgressDisclosure
         NotablePlaces => "Notable places",
         CommunityGoals => "Community goals",
         WebSearch => "Web search",
+        Screen => "Screen pictures",
         Recap => "Last session recap",
         SpeechModels => "Speech model download",
         HullArt => "Hull pictures",
@@ -145,15 +150,18 @@ public static class EgressDisclosure
     /// Whether the provider and model in use offer a server-side web search — what
     /// <c>LlmProviderCapabilities.SupportsWebSearch</c> says.
     /// </param>
+    /// <param name="imagesAvailable">Whether the model in use reads pictures.</param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
         bool llmKeyPresent,
         bool inaraKeyPresent = false,
-        bool searchAvailable = true) => id switch
+        bool searchAvailable = true,
+        bool imagesAvailable = true) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
+        Screen => ScreenEntry(settings, llmKeyPresent, imagesAvailable),
         Recap => RecapEntry(settings, llmKeyPresent),
         TextToSpeech => TextToSpeechEntry(settings),
         SpeechRecognition => SpeechRecognitionFor(Listening.SttProviderCatalog.Selected(settings.Listening.Provider)),
@@ -452,6 +460,63 @@ public static class EgressDisclosure
             Summary: $"{provider.Name} runs the search and reads the pages; D47 only ever sees the reply.");
     }
 
+    /// <summary>What a picture of the screen sends, and where.</summary>
+    private static EgressEntry ScreenEntry(D47Settings settings, bool keyPresent, bool imagesAvailable)
+    {
+        var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
+        var usable = provider.Id != LlmProviderCatalog.NoneId && (!provider.NeedsKey || keyPresent);
+
+        if (!settings.Llm.LookAtScreen)
+        {
+            return EgressEntry.Silent(
+                Screen,
+                NameOf(Screen),
+                "Looking at the screen is off, so nothing is captured.");
+        }
+
+        if (!usable)
+        {
+            return EgressEntry.Silent(
+                Screen,
+                NameOf(Screen),
+                "Looking at the screen is on, but no language model is usable, so no turn runs and nothing is "
+                + "captured.");
+        }
+
+        if (!imagesAvailable)
+        {
+            return EgressEntry.Silent(
+                Screen,
+                NameOf(Screen),
+                "Looking at the screen is on, but the model in use does not read pictures, so nothing is "
+                + "captured.");
+        }
+
+        var destination = settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name;
+        const string Picture =
+            "one JPEG of Elite's window, or of the headset's left eye while Elite is running in VR, taken when "
+            + "you ask about something on screen and sent with that question only. D47 never saves it. Anything "
+            + "on screen goes with it, including comms, other Commanders' names and D47's own panel.";
+
+        if (LocalEndpoint.IsLoopback(destination))
+        {
+            return EgressEntry.Silent(
+                Screen,
+                NameOf(Screen),
+                $"{provider.Name} is pointed at {destination}, which is this machine. It receives {Picture} "
+                + "The picture does not leave this machine.",
+                summary: $"Pointed at {destination}, this machine — the picture does not leave it.");
+        }
+
+        return new EgressEntry(
+            Screen,
+            NameOf(Screen),
+            destination,
+            $"{provider.Name} receives {Picture}",
+            Active: true,
+            Summary: $"{provider.Name} receives one picture of your screen with the question that asked for it.");
+    }
+
     /// <summary>The hearing model and the Chatterbox voice model, each fetched once when selected and absent.</summary>
     private static EgressEntry SpeechModelsEntry(D47Settings settings)
     {
@@ -644,17 +709,19 @@ public static class EgressDisclosure
         D47Settings settings,
         bool llmKeyPresent,
         bool inaraKeyPresent = false,
-        bool searchAvailable = true) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable))];
+        bool searchAvailable = true,
+        bool imagesAvailable = true) =>
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
     public static string Describe(
         D47Settings settings,
         bool llmKeyPresent,
         bool inaraKeyPresent = false,
-        bool searchAvailable = true)
+        bool searchAvailable = true,
+        bool imagesAvailable = true)
     {
-        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable);
+        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

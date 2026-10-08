@@ -226,6 +226,10 @@ public static class HelpTaxonomy
                     "Report which language model is answering, whether it can be reached, and what this session has cost.",
                     "conversation"),
                 HelpNode.Leaf(
+                    "Look at the screen",
+                    "Take a picture of the screen for the model to read, when you ask about something on it.",
+                    "screen"),
+                HelpNode.Leaf(
                     "Persona",
                     "Say which Guardian core is aboard, what it is called, and how to change it.",
                     "persona"),

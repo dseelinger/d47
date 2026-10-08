@@ -56,6 +56,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed))
         {
             ToolCalls = true,
+            Images = true,
             ToolSearch = true,
         };
 
@@ -92,6 +93,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed))
         {
             ToolCalls = true,
+            Images = true,
         };
 
         var loop = Build(registry, provider);
@@ -184,6 +186,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed))
         {
             ToolCalls = true,
+            Images = true,
             ToolSearch = searchable,
         };
 
@@ -217,6 +220,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
             SupportsOperatorSystemMessages = true,
             MinimumCacheablePrefixTokens = 512,
             SupportsToolCalls = true,
+            SupportsImages = true,
             SupportsToolSearch = _searches,
         };
 

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+D47 can look at your screen when you ask about something on it, such as "what's on my scanner". Turn on Let the model look at the screen in Settings, under the language model, or say "turn on screen pictures". It takes one picture of Elite's window, or of the headset's view when Elite is running in VR, and sends it to your language-model provider with that question only. The picture is never saved. The line under the reply says PICTURE OF ELITE'S WINDOW or PICTURE OF HEADSET VIEW, and the cost shown includes the picture. The setting is off by default, the model cannot turn it on, and Privacy and egress lists it as Screen pictures. When the model in use does not read pictures, the row says so and no picture is taken.
+
 With Model for the quiet calls unset, In Ship chatter, narrator lines, the opening brief, lore lookups and voice choice use Claude Haiku 5.5 on Anthropic's own endpoint. A custom endpoint, or a Model for the quiet calls you set yourself, is unchanged. D47 tells you once and offers to keep your conversation model for these calls.
 
 Claude Haiku 5.5 is in the model list, priced at $0.10 per million input tokens and $0.50 per million output tokens for prompts up to 100,000 tokens. Longer prompts cost five times that, which the spend estimate does not yet include.

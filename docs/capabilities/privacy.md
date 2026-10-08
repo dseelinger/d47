@@ -143,6 +143,14 @@ which could happen there. Claiming a transfer that cannot occur is the safe dire
 in and is still wrong: a disclosure is only worth reading if it describes this machine, these
 settings, right now.
 
+**Screen pictures** — the language-model endpoint again. When the
+[look at the screen row](conversation.md#let-the-model-look-at-the-screen) is on and you ask about
+something on screen, one JPEG of Elite's window, or of the headset's left eye while Elite is running
+in VR, goes to your provider with that question. Anything on screen goes with it, including comms,
+other Commanders' names and Directive 47's own panel. It is never saved, and a later turn does not
+send it again. Off by default. Inactive when no model is usable or the model in use does not read
+pictures, and the picture does not leave this machine when the endpoint is a loopback address.
+
 **Update check** — `api.github.com` once at startup, for the latest release tag. Pressing
 **Update now** adds one more transfer: the build itself, from GitHub's release downloads, which
 redirect to their asset storage — so the bytes arrive from `objects.githubusercontent.com`. That
@@ -342,7 +350,7 @@ that cannot be undone.
 ## The disclosure rows {#egress-llm}
 
 The settings panel carries one row per destination, saying the same things this page does
-{#egress-recap} {#egress-websearch} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
+{#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
 {#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice}
 {#egress-donation} — but computed live from your settings

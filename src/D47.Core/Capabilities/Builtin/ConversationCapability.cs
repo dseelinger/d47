@@ -28,6 +28,9 @@ public static class ConversationCapability
     /// <summary>Whether the model may search the web.</summary>
     public const string WebSearchKey = "llm.webSearch";
 
+    /// <summary>Whether the model may take a picture of the screen.</summary>
+    public const string LookAtScreenKey = "llm.lookAtScreen";
+
     /// <summary>Whether the published model catalog is fetched.</summary>
     public const string RefreshCatalogKey = "models.refreshCatalog";
 
@@ -66,6 +69,9 @@ public static class ConversationCapability
               + "had been checked. They can turn it on in Settings, under the language model.";
     }
 
+    /// <summary>The look-at-screen row's line for a model that cannot read a picture.</summary>
+    public static string PictureNote(string model) => $"{model} does not read pictures, so D47 never takes one.";
+
     /// <summary>The model row's line for a model whose context is known to be too small for every tool (#423).</summary>
     public static string ContextNote(int contextTokens, int offered, int total) =>
         string.Create(
@@ -89,7 +95,8 @@ public static class ConversationCapability
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
         Func<Audio.SpeechSpend?>? speechSpend = null,
         Func<IReadOnlyList<string>>? endpointModels = null,
-        Func<string?>? contextNote = null)
+        Func<string?>? contextNote = null,
+        Func<string?>? pictureNote = null)
     {
         return new CapabilityDescriptor
         {
@@ -154,7 +161,7 @@ public static class ConversationCapability
                         ToolResult.Ok(DescribeModel(settings.Current, availability, spend, speechSpend))),
                 },
             ],
-            Settings = BuildSettingRows(settings, verifyKey, availability, endpointModels, contextNote),
+            Settings = BuildSettingRows(settings, verifyKey, availability, endpointModels, contextNote, pictureNote),
         };
     }
 
@@ -222,7 +229,8 @@ public static class ConversationCapability
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey,
         LlmAvailabilityState availability,
         Func<IReadOnlyList<string>>? endpointModels = null,
-        Func<string?>? contextNote = null)
+        Func<string?>? contextNote = null,
+        Func<string?>? pictureNote = null)
     {
         var rows = new List<SettingRow>
         {
@@ -569,6 +577,38 @@ public static class ConversationCapability
             {
                 Read = s => s.Llm.WebSearch ? "true" : "false",
                 Write = (s, v) => s with { Llm = s.Llm with { WebSearch = v == "true" } },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = LookAtScreenKey,
+            Label = "Let the model look at the screen",
+            Help =
+                "Lets D47 take a picture of what you are looking at when you ask about something on screen — "
+                + "Elite's window, or the headset's view when Elite is running in VR — and send it to your "
+                + "language-model provider with the question. The picture is not saved, and it is sent only for "
+                + "that question. A picture adds about 1,100 to 1,600 input tokens to the turn, which the turn's "
+                + "cost includes. Off by default; see [Privacy](privacy) for what is sent.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "off",
+            DocsAnchor = "let-the-model-look-at-the-screen",
+            EgressId = EgressDisclosure.Screen,
+
+            // Protected: it decides whether a picture leaves, and text in a picture must not be able to turn it on.
+            Protected = true,
+            Commands =
+            [
+                new SettingCommandPhrase("turn on screen pictures", "true"),
+                new SettingCommandPhrase("allow screen pictures", "true"),
+                new SettingCommandPhrase("turn off screen pictures", "false"),
+                new SettingCommandPhrase("stop looking at my screen", "false"),
+            ],
+            Note = s => s.Llm.LookAtScreen ? pictureNote?.Invoke() : null,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Llm.LookAtScreen ? "true" : "false",
+                Write = (s, v) => s with { Llm = s.Llm with { LookAtScreen = v == "true" } },
             },
         });
 

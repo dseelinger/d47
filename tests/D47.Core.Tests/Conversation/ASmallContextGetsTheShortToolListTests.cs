@@ -189,6 +189,7 @@ public class ASmallContextGetsTheShortToolListTests
             SupportsOperatorSystemMessages = false,
             MinimumCacheablePrefixTokens = 0,
             SupportsToolCalls = true,
+            SupportsImages = true,
             ContextTokens = _context,
         };
 
