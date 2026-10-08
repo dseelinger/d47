@@ -101,22 +101,13 @@ public sealed class OverlayPanel : Window
 
     private int _appliedScale = ZoomLadder.Default;
 
-    /// <summary>
-    /// <param name="tabs"> The pages this strip carries beyond the transcript (asked for 2026-08-24:
-    /// "it should have the same tabs as the VR mini panel, including Checklist").
-    /// </summary>
-    /// <param name="tabs">
-    /// The pages this strip carries beyond the transcript (asked for 2026-08-24: "it should have the
-    /// same tabs as the VR mini panel, including Checklist").
-    /// </param>
     public OverlayPanel(
         PanelViewModel model,
         SettingsService settings,
         ViewStateStore viewState,
         ILogger logger,
         AvatarLibrary? avatars = null,
-        AdventureSurface? adventures = null,
-        OverlayTabs? tabs = null)
+        MiniPanelServices? services = null)
     {
         _settings = settings;
         _viewState = viewState;
@@ -128,14 +119,7 @@ public sealed class OverlayPanel : Window
         // No buttons on a surface nothing can press (asked for 2026-08-24).
         _view.Classes.Add("output-only");
 
-        if (adventures is not null)
-        {
-            // The story, at mini's size (Phase 48). These two roots are all the overlay furnishes —
-            // the transcript, which every surface has by construction, and this.
-            _view.EnableAdventures(adventures);
-        }
-
-        Furnish(tabs);
+        services?.Furnish(_view);
 
         // The same scaling host the window zooms with, for the same reason: a render transform would draw the
         // strip larger and let it clip, where a layout transform re-measures so text rewraps and spacing
@@ -167,38 +151,17 @@ public sealed class OverlayPanel : Window
         PointerReleased += OnPointerReleased;
     }
 
-    /// <summary>The rest of the headset's pages, where the app has them to give (asked for 2026-08-24).</summary>
-    private void Furnish(OverlayTabs? tabs)
-    {
-        if (tabs is null)
-        {
-            return;
-        }
-
-        if (tabs.Checklists is { } checklists)
-        {
-            // What the Commander is working on — the tab this instruction named.
-            _view.EnableChecklist(checklists, tabs.Goals, tabs.BackfillGoals, tabs.Activities);
-        }
-
-        if (tabs.Construction is { } construction)
-        {
-            _view.EnableConstruction(construction);
-        }
-
-        if (tabs.Unlocks is { } unlocks && tabs.Ships is { } ships && tabs.GameState is { } state)
-        {
-            _view.EnableEngineers(unlocks, ships, state, tabs.OnFoot, tabs.EngineersMemory, tabs.Checklists);
-        }
-    }
-
     /// <summary>
-    /// Redraws the engineer ranking when the Commander has moved or re-fitted (Phase 28), and the Construction
-    /// page when the journal has moved its sites.
+    /// Redraws the pages that move with nothing pressed, on the ticks the headset gives them.
     /// </summary>
     private void TickPages()
     {
         _view.TickEngineers();
+        _view.TickAdventures();
+        _view.TickRouting();
+        _view.TickSearch();
+        _view.TickLoadout();
+        _view.TickCommander();
         _view.TickConstruction();
     }
 
@@ -233,10 +196,9 @@ public sealed class OverlayPanel : Window
         IEliteWindow elite,
         ILogger logger,
         AvatarLibrary? avatars = null,
-        AdventureSurface? adventures = null,
-        OverlayTabs? tabs = null)
+        MiniPanelServices? services = null)
     {
-        var overlay = new OverlayPanel(model, settings, viewState, logger, avatars, adventures, tabs)
+        var overlay = new OverlayPanel(model, settings, viewState, logger, avatars, services)
         {
             _eliteInFront = () => elite.IsForeground,
             _elite = elite,

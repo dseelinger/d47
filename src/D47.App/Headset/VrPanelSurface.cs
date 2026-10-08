@@ -148,129 +148,38 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         _view.Avatar.Library = avatars;
         _view.Avatar.Still = true;
 
-        if (clipboard is not null)
+        new MiniPanelServices
         {
-            _view.EnableCopy(clipboard);
-        }
+            SettingsPage = settingsPage,
+            Capabilities = capabilities,
+            LearnedPhrases = learnedPhrases,
+            Checklists = checklists,
+            Goals = goals,
+            BackfillGoals = backfillGoals,
+            Activities = activities,
+            Unlocks = unlocks,
+            Ships = ships,
+            GameState = gameState,
+            OnFoot = onFoot,
+            EngineersMemory = engineersMemory,
+            Construction = construction,
+            Adventures = adventures,
+            Routing = routing,
+            ModulePower = modulePower,
+            HullArt = hullArt,
+            Clipboard = clipboard,
+            Known = known,
+            BuildSettingsStrip = buildSettingsStrip,
+            Galaxy = galaxy,
+            StarSystem = starSystem,
+            Commanders = commanders,
+            Portraits = portraits,
+        }.Furnish(_view);
 
-        if (known is not null)
+        if (routing?.Plans is { } plans)
         {
-            _view.EnableSystemNames(known, gameState is null ? null : () => gameState()?.Location.StarSystem);
-        }
-
-        if (gameState is not null)
-        {
-            _view.EnableCommanderName(() => gameState()?.Identity.Name);
-        }
-
-        if (portraits is not null)
-        {
-            _view.EnableSpeakerPictures(portraits);
-        }
-
-        if (settingsPage is not null)
-        {
-            Func<Panel.PhrasesPage>? phrases = capabilities is not null && learnedPhrases is not null
-                ? () => new Panel.PhrasesPage(capabilities, learnedPhrases, gameState ?? (() => null))
-                : null;
-
-            _view.EnableSettings(settingsPage, phrases: phrases);
-        }
-
-        if (checklists is not null)
-        {
-            // What the Commander is working on, back in the headset (Phase 39).
-            _view.EnableChecklist(checklists, goals, backfillGoals, activities);
-        }
-
-        if (gameState is not null)
-        {
-            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session, then
-            // Commanders below.
-            _view.EnableMissions(
-                gameState,
-                () => DateTimeOffset.Now,
-                capabilities,
-                clipboard is null ? null : text => clipboard.SetTextAsync(text));
-            _view.EnableStanding(gameState);
-            _view.EnableStatistics(gameState);
-            _view.EnableSession(gameState);
-        }
-
-        if (commanders is not null)
-        {
-            _view.EnableCommanders(commanders);
-        }
-
-        // The journal's raw reading, in the headset (#231).
-        _view.EnableRawJournal();
-
-        // The Log file page's own settings — log levels — in the headset (#283).
-        _view.EnableLog(
-            buildSettingsStrip is null ? null : () => buildSettingsStrip(PanelView.LogRoot));
-
-        if (routing is not null)
-        {
-            // Every root, Plan included (#52): a form's boxes are plain text boxes and so reach the offscreen
-            // board, which has taken a spelled or dictated value since #51. Settings opens on this surface
-            // rather than on the window's, the same as Sourcing above.
-            _view.EnableRouting(routing with { OpenSettings = () => _view.Tab = PanelTab.Settings });
-
-            if (routing.Plans is { } plans)
-            {
-                // A plot lands off this surface's own tick — by voice, or from the window's card — so the
-                // frame has to be marked dirty on its own account rather than waiting for TickRouting's next
-                // journal-driven pass, which would leave the headset showing the old plan until a jump (#212).
-                plans.Changed += () => _dirty = true;
-            }
-        }
-
-        if (adventures is not null)
-        {
-            // The stories, in the headset (asked for 2026-08-22).
-            _view.EnableAdventures(
-                adventures,
-                settingsStrip: buildSettingsStrip is null
-                    ? null
-                    : () => buildSettingsStrip(AdventuresPage.RootKey));
-        }
-
-        if (ships is not null && checklists is not null && gameState is not null)
-        {
-            // The fleet and its builds, back in the headset (#53) — withheld until now on the reasoning that a
-            // three-level drill ending in a search field was a bigger surface than one list of short rows. Every
-            // row it drills to is a button or a switch a ray already presses; the one control that is not,
-            // Ctrl-drag of a slot onto another, has no pointer-moved path on this surface to ride on and stays a
-            // mouse convenience.
-            _view.EnableLoadout(
-                ships,
-                checklists,
-                gameState,
-                onFoot,
-                modulePower,
-                hullArt,
-                settingsStrip: buildSettingsStrip is null
-                    ? null
-                    : () => buildSettingsStrip(LoadoutPages.FleetRoot),
-                carrierSettingsStrip: buildSettingsStrip is null
-                    ? null
-                    : () => buildSettingsStrip(LoadoutPages.CarrierRoot),
-                galaxy: galaxy,
-                status: routing?.Status,
-                construction: construction);
-        }
-
-        if (starSystem is not null)
-        {
-            _view.EnableStarSystem(starSystem with { OpenSettings = () => _view.Tab = PanelTab.Settings });
-        }
-
-        // `ships`, `gameState` and `onFoot` are read again below - Engineers needs all three too.
-
-        if (unlocks is not null && ships is not null && gameState is not null)
-        {
-            // And who to go and get next (Phase 28).
-            _view.EnableEngineers(unlocks, ships, gameState, onFoot, engineersMemory, checklists);
+            // A plot lands off this surface's own tick, so the frame is marked dirty on its own account (#212).
+            plans.Changed += () => _dirty = true;
         }
 
         // The same scaling host the desktop window zooms with, for the same reason: a render transform would

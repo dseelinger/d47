@@ -624,7 +624,7 @@ public class TheOverlayWithoutAHeadsetTests
             model, settings, viewState, tick, elite,
             NullLogger<OverlayPanel>.Instance,
             avatars: null,
-            adventures: stories ? AdventureFixture.Surface(paths) : null);
+            services: stories ? new MiniPanelServices { Adventures = AdventureFixture.Surface(paths) } : null);
 
         Dispatcher.UIThread.RunJobs();
 

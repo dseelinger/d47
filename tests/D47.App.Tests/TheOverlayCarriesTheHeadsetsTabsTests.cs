@@ -159,10 +159,10 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
             viewState,
             NullLogger<OverlayPanel>.Instance,
             avatars: null,
-            adventures: adventures,
-            tabs: new OverlayTabs
+            services: new MiniPanelServices
             {
                 Checklists = checklists,
+                Adventures = adventures,
             });
 
         Dispatcher.UIThread.RunJobs();

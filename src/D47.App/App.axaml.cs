@@ -161,12 +161,9 @@ public partial class App(AppHost? host) : Application
                 host.Elite,
                 host.Loggers.CreateLogger<Windowing.OverlayPanel>(),
                 host.Avatars,
-                window?.Adventures,
-
-                // The headset's pages, minus Settings (asked for 2026-08-24: "it should have the same tabs as
-                // the VR mini panel, including Checklist").
-                new Windowing.OverlayTabs
+                new Panel.MiniPanelServices
                 {
+                    Capabilities = host.Capabilities,
                     Checklists = host.Checklists,
                     Goals = host.Goals?.Book,
                     BackfillGoals = host.Goals?.Backfill,
@@ -177,6 +174,16 @@ public partial class App(AppHost? host) : Application
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
                     Construction = window?.Construction,
+                    Adventures = window?.Adventures,
+                    Routing = window?.Routing,
+                    ModulePower = () => host.ModulePower,
+                    HullArt = () => host.Settings.Current.Ui.HullArt,
+                    Clipboard = host.Clipboard,
+                    Known = host.SystemsInPlay,
+                    BuildSettingsStrip = window is null ? null : window.BuildSettingsStrip,
+                    Galaxy = () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
+                    StarSystem = window?.StarSystem,
+                    Commanders = host.Commanders,
                 });
 
             // Through the same route as the other two (Phase 45).

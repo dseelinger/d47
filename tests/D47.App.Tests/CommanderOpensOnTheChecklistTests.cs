@@ -10,7 +10,7 @@ public class CommanderOpensOnTheChecklistTests
 {
     [Theory]
     [InlineData("MainWindow.axaml.cs")]
-    [InlineData("Headset/VrPanelSurface.cs")]
+    [InlineData("Panel/MiniPanelServices.cs")]
     public void TheChecklistRootIsFurnishedBeforeMissionsStandingStatisticsAndSession(string file)
     {
         var text = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", file));
