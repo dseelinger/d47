@@ -85,7 +85,7 @@ public class AModelRowSaysWhatItCostsTests
     public void TheCheapestListedModelIsMarked()
     {
         Assert.Equal(["gpt-5.6-luna"], Cheapest(OpenAi));
-        Assert.Equal(["claude-haiku-4-5"], Cheapest(Anthropic));
+        Assert.Equal(["claude-haiku-5-5"], Cheapest(Anthropic));
 
         static IReadOnlyList<string> Cheapest(LlmProviderInfo provider)
         {
@@ -200,7 +200,7 @@ public class AModelRowSaysWhatItCostsTests
         var model = Assert.Single(SettingsCapabilityRows(), row => row.Key == ConversationCapability.ModelKey);
 
         var onAnthropic = model.LabelForChoice(
-            "claude-haiku-4-5",
+            "claude-haiku-5-5",
             new D47Settings { Llm = new LlmSettings { Provider = LlmProviderCatalog.AnthropicId } });
 
         Assert.Contains("cheapest here", onAnthropic, StringComparison.Ordinal);
