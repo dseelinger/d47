@@ -38,6 +38,11 @@ public sealed class Notice : Border
     private NoticeLevel _level;
     private string? _labelText;
 
+    /// <summary>Whether the text part is the notice's own, which it links; a caller's block is the caller's to fill.</summary>
+    private readonly bool _ownsText;
+
+    private PlaceLinker? _linker;
+
     public Notice()
         : this(NoticeLevel.Error)
     {
@@ -54,6 +59,8 @@ public sealed class Notice : Border
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
             TextWrapping = TextWrapping.Wrap,
         };
+
+        _ownsText = text is null;
 
         _text = text ?? new TextBlock
         {
@@ -165,10 +172,80 @@ public sealed class Notice : Border
         {
             var text = change.GetNewValue<string?>();
 
-            _text.Text = text;
+            DrawText();
             _text.IsVisible = !string.IsNullOrEmpty(text);
             AutomationProperties.SetName(this, text);
         }
+        else if (change.Property == PlaceLinks.LinkerProperty)
+        {
+            DrawText();
+        }
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _linker = PlaceLinks.GetLinker(this);
+
+        if (_linker is not null)
+        {
+            _linker.Changed += OnPlacesChanged;
+        }
+
+        DrawText();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        if (_linker is not null)
+        {
+            _linker.Changed -= OnPlacesChanged;
+            _linker = null;
+        }
+    }
+
+    private void OnPlacesChanged(object? sender, EventArgs e) => DrawText();
+
+    /// <summary>The text, with the places it names in the panel drawn as links (#951).</summary>
+    private void DrawText()
+    {
+        if (!_ownsText)
+        {
+            return;
+        }
+
+        var text = Text;
+        var linker = PlaceLinks.GetLinker(this);
+        var places = linker is null || string.IsNullOrEmpty(text) ? [] : linker.Find(text);
+
+        PlaceLinks.Begin(_text, places, place => linker?.Go(place));
+
+        if (places.Count == 0)
+        {
+            _text.Inlines = null;
+            _text.Text = text;
+            return;
+        }
+
+        var inlines = new Avalonia.Controls.Documents.InlineCollection();
+
+        foreach (var (piece, place) in PlaceLinks.Cut(text!, 0, places))
+        {
+            var run = new Avalonia.Controls.Documents.Run(piece);
+
+            if (place is not null)
+            {
+                PlaceLinks.Add(_text, run, place);
+            }
+
+            inlines.Add(run);
+        }
+
+        _text.Text = null;
+        _text.Inlines = inlines;
     }
 
     private void ShowLabel() =>

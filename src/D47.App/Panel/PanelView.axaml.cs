@@ -278,6 +278,12 @@ public partial class PanelView : UserControl
         _tabs[PanelTab.Navigation] = NavigationTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
+        // The words the tab bar draws are the words a message names a tab by (#951).
+        var tabWords = _tabs.ToDictionary(pair => pair.Key, pair => pair.Value.Content as string ?? pair.Key.ToString());
+
+        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, tabWords), OpenPlace);
+        Controls.PlaceLinks.SetLinker(this, _places);
+
         foreach (var (tab, button) in _tabs)
         {
             if (TabGlyph.PathFor(tab) is { } path)
@@ -1535,6 +1541,52 @@ public partial class PanelView : UserControl
         }
 
         ApplyNavigation();
+        RelinkPlaces();
+    }
+
+    /// <summary>Finds and opens the places messages on this surface name (#951).</summary>
+    private readonly Controls.PlaceLinker _places;
+
+    private bool _relinking;
+
+    /// <summary>Links text drawn before this surface had the places it names.</summary>
+    private void RelinkPlaces()
+    {
+        _places.Refresh();
+
+        if (_relinking || _bubbles.Count == 0)
+        {
+            return;
+        }
+
+        // Once, after a host has furnished every tab it is going to.
+        _relinking = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _relinking = false;
+
+            if (_bubbles.Count > 0)
+            {
+                DrawTranscript();
+            }
+        });
+    }
+
+    /// <summary>Takes this surface to a place a message names, closing any dialog page first, as <see cref="SettingsJump"/> does.</summary>
+    private void OpenPlace(PanelPlace place)
+    {
+        while (Nav.Modal && GoBack())
+        {
+        }
+
+        if (place.RootKey is { } root)
+        {
+            Nav.Show(root);
+        }
+        else
+        {
+            Tab = place.Tab;
+        }
     }
 
     /// <summary>
@@ -4244,65 +4296,85 @@ public partial class PanelView : UserControl
         // throughout and marks a code span with a ground instead.
         var prose = !turn.Marker && Page == TranscriptPage.Conversation;
 
+        // Found in the text each time it is drawn, so a turn from before a restart links the same way.
+        var places = prose
+            ? _places.Find(string.Concat(turn.Segments.Select(segment => segment.Text)))
+            : [];
+
+        Controls.PlaceLinks.Begin(block, places, OpenPlace);
+
+        var local = 0;
+
         foreach (var segment in turn.Segments)
         {
-            foreach (var (text, match) in Split(segment.Text, at))
+            foreach (var (piece, match) in Split(segment.Text, at))
             {
-                var run = new Run(text);
-
-                if (segment.Style.HasFlag(MarkupStyle.Strong))
+                foreach (var (text, place) in Controls.PlaceLinks.Cut(piece, local, places))
                 {
-                    run.FontWeight = FontWeight.Bold;
-                }
+                    var run = new Run(text);
 
-                if (segment.Style.HasFlag(MarkupStyle.Emphasis))
-                {
-                    run.FontStyle = FontStyle.Italic;
-                }
-
-                if (segment.Style.HasFlag(MarkupStyle.Code))
-                {
-                    if (prose)
+                    if (segment.Style.HasFlag(MarkupStyle.Strong))
                     {
-                        run.FontFamily = MonospaceFamily;
-                        run.FontSize = Theming.TypeScale.Tip;
+                        run.FontWeight = FontWeight.Bold;
                     }
-                    else
+
+                    if (segment.Style.HasFlag(MarkupStyle.Emphasis))
                     {
-                        run.Bind(
-                            Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                            this.GetResourceObservable(Theming.ThemeManager.Line2Key));
+                        run.FontStyle = FontStyle.Italic;
                     }
-                }
 
-                if (segment.Marker)
-                {
-                    run.Bind(
-                        Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                        this.GetResourceObservable(Theming.ThemeManager.AKey));
-                    run.FontWeight = FontWeight.SemiBold;
-                }
+                    if (segment.Style.HasFlag(MarkupStyle.Code))
+                    {
+                        if (prose)
+                        {
+                            run.FontFamily = MonospaceFamily;
+                            run.FontSize = Theming.TypeScale.Tip;
+                        }
+                        else
+                        {
+                            run.Bind(
+                                Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                                this.GetResourceObservable(Theming.ThemeManager.Line2Key));
+                        }
+                    }
 
-                if (match >= 0)
-                {
-                    // Every hit is marked and the current one is accented, which is what makes stepping
-                    // legible: the count says where you are in the set and the colour says which one of them
-                    // you are looking at.
-                    run.Bind(
-                        Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                        this.GetResourceObservable(match == _hit
-                            ? Theming.ThemeManager.AKey
-                            : Theming.ThemeManager.LineKey));
-
-                    if (match == _hit)
+                    if (segment.Marker)
                     {
                         run.Bind(
                             Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                            this.GetResourceObservable(Theming.ThemeManager.BgKey));
+                            this.GetResourceObservable(Theming.ThemeManager.AKey));
+                        run.FontWeight = FontWeight.SemiBold;
                     }
+
+                    // Before the search marks, so the current hit's ink is drawn over the link's.
+                    if (place is not null)
+                    {
+                        Controls.PlaceLinks.Add(block, run, place);
+                    }
+
+                    if (match >= 0)
+                    {
+                        // Every hit is marked and the current one is accented, which is what makes stepping
+                        // legible: the count says where you are in the set and the colour says which one of them
+                        // you are looking at.
+                        run.Bind(
+                            Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                            this.GetResourceObservable(match == _hit
+                                ? Theming.ThemeManager.AKey
+                                : Theming.ThemeManager.LineKey));
+
+                        if (match == _hit)
+                        {
+                            run.Bind(
+                                Avalonia.Controls.Documents.TextElement.ForegroundProperty,
+                                this.GetResourceObservable(Theming.ThemeManager.BgKey));
+                        }
+                    }
+
+                    inlines.Add(run);
                 }
 
-                inlines.Add(run);
+                local += piece.Length;
             }
 
             at += segment.Text.Length;
