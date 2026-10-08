@@ -235,7 +235,7 @@ An action you have left unbound entirely says so too, rather than failing as sil
 
 Landing gear, ship lights, night vision, cargo scoop, hardpoints, the frame shift drive,
 supercruise, the hyperspace jump, flight assist, throttle at zero, twenty-five, fifty or
-seventy-five per cent ("military thrust"), boost, and targeting the next system in a plotted route.
+seventy-five per cent ("military thrust") or a hundred ("full throttle"), the reverse settings in normal space ("full reverse", "half reverse", "throttle to minus twenty-five"), the reverse thrust toggle ("reverse thrust"), boost, and targeting the next system in a plotted route.
 
 Night vision also works in the SRV and on foot. Say **night vision**, **night vision on** or
 **night vision off**. In the ship and the SRV it presses your `NightVisionToggle` binding, and on
@@ -436,7 +436,7 @@ actions listed as reachable in the current game state will work; anything else c
 the reason it did not.
 
 ```json
-{"type":"object","properties":{"action":{"type":"string","description":"Which action to perform.","enum":["landing_gear","lights","night_vision","cargo_scoop","hardpoints","frame_shift_drive","supercruise","hyperspace","flight_assist","throttle_zero","throttle_25","throttle_50","throttle_75","boost","target_next_route_system"]},"state":{"type":"string","description":"What to leave it in. Elite binds a single toggle, so asking for \u0022on\u0022 or \u0022off\u0022 checks the game\u0027s own report first and does nothing if it is already there. Defaults to toggling.","enum":["on","off","toggle"]}},"required":["action"],"additionalProperties":false}
+{"type":"object","properties":{"action":{"type":"string","description":"Which action to perform.","enum":["landing_gear","lights","night_vision","cargo_scoop","hardpoints","frame_shift_drive","supercruise","hyperspace","flight_assist","throttle_zero","throttle_25","throttle_50","throttle_75","throttle_full","throttle_reverse_25","throttle_reverse_50","throttle_reverse_75","throttle_reverse_full","reverse_thrust","boost","target_next_route_system"]},"state":{"type":"string","description":"What to leave it in. Elite binds a single toggle, so asking for \u0022on\u0022 or \u0022off\u0022 checks the game\u0027s own report first and does nothing if it is already there. Defaults to toggling.","enum":["on","off","toggle"]}},"required":["action"],"additionalProperties":false}
 ```
 
 The enum is the whole group and never changes, which is what keeps the schema byte-identical

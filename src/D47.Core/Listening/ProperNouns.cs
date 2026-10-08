@@ -16,7 +16,7 @@ public static class ProperNouns
     public const int ShippedShare = 20;
 
     /// <summary>How much of the list is kept for the names of the game actions d47 can take.</summary>
-    public const int CommandShare = 64;
+    public const int CommandShare = 80;
 
     /// <summary>A cap on how many names are offered.</summary>
     public const int Limit = 60 + CommandShare;
@@ -91,7 +91,7 @@ public static class ProperNouns
     /// <summary>Every name the game actions declare, in catalogue order: "gear", "landing gear".</summary>
     private static IEnumerable<string> Commands() =>
         GameActions.All
-            .Where(action => action.Group is not (GameActions.Steps or GameActions.Weapons))
+            .Where(action => action.Group != GameActions.Weapons)
             .Where(action => !action.Id.StartsWith("ui_", StringComparison.Ordinal))
             .SelectMany(action => action.Names)
             .Distinct(StringComparer.OrdinalIgnoreCase)

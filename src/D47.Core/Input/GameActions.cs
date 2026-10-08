@@ -110,12 +110,6 @@ public static class GameActions
     public const string SrvGroup = "SRV";
     public const string Weapons = "Weapons";
 
-    /// <summary>
-    /// Actions that exist only as steps of something larger — on no tool, with no phrase, and never
-    /// named by the Commander or the model.
-    /// </summary>
-    public const string Steps = "Compound command steps";
-
     /// <summary>Every action, in the order a Commander would meet them.</summary>
     public static readonly IReadOnlyList<GameAction> All =
     [
@@ -301,11 +295,56 @@ public static class GameActions
 
         new()
         {
-            // The other end of the throttle, and the first step of "separate" (Phase 52, item 3).
             Id = "throttle_full",
             Label = "full throttle",
-            Group = Steps,
+            Group = Flight,
             Variants = [new ActionVariant("SetSpeed100", ControlContext.Flying)],
+            Names = ["full throttle", "full speed", "throttle to a hundred"],
+        },
+
+        new()
+        {
+            Id = "throttle_reverse_25",
+            Label = "quarter reverse",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeedMinus25", ControlContext.NormalSpace)],
+            Names = ["throttle to minus twenty-five"],
+        },
+
+        new()
+        {
+            Id = "throttle_reverse_50",
+            Label = "half reverse",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeedMinus50", ControlContext.NormalSpace)],
+            Names = ["throttle to minus fifty", "half reverse"],
+        },
+
+        new()
+        {
+            Id = "throttle_reverse_75",
+            Label = "three-quarter reverse",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeedMinus75", ControlContext.NormalSpace)],
+            Names = ["throttle to minus seventy-five"],
+        },
+
+        new()
+        {
+            Id = "throttle_reverse_full",
+            Label = "full reverse",
+            Group = Flight,
+            Variants = [new ActionVariant("SetSpeedMinus100", ControlContext.NormalSpace)],
+            Names = ["full reverse", "throttle to minus a hundred"],
+        },
+
+        new()
+        {
+            Id = "reverse_thrust",
+            Label = "reverse thrust",
+            Group = Flight,
+            Variants = [new ActionVariant("ToggleReverseThrottleInput", ControlContext.NormalSpace)],
+            Names = ["reverse thrust", "toggle reverse thrust"],
         },
 
         new()

@@ -45,7 +45,7 @@ public class TheCommandWordsSitBetweenTheJournalAndTheEngineersTests
     {
         var nouns = ProperNouns.From(Docked());
         var declared = GameActions.All
-            .Where(action => action.Group is not (GameActions.Steps or GameActions.Weapons))
+            .Where(action => action.Group != GameActions.Weapons)
             .Where(action => !action.Id.StartsWith("ui_", StringComparison.Ordinal))
             .SelectMany(action => action.Names)
             .Distinct(StringComparer.OrdinalIgnoreCase)
