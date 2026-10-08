@@ -1,3 +1,4 @@
+using D47.Core.Input;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Listening;
@@ -40,13 +41,28 @@ public class TheCommandWordsSitBetweenTheJournalAndTheEngineersTests
     }
 
     [Fact]
+    public void EveryDeclaredNameFitsTheShare()
+    {
+        var nouns = ProperNouns.From(Docked());
+        var declared = GameActions.All
+            .Where(action => action.Group is not (GameActions.Steps or GameActions.Weapons))
+            .Where(action => !action.Id.StartsWith("ui_", StringComparison.Ordinal))
+            .SelectMany(action => action.Names)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Assert.InRange(declared.Count, 1, ProperNouns.CommandShare);
+        Assert.All(declared, name => Assert.Contains(name, nouns, StringComparer.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void JournalNamesThenCommandWordsThenEngineers()
     {
         var nouns = ProperNouns.From(Docked()).ToList();
         var engineers = EngineerDirectory.All.Select(engineer => engineer.Name).ToHashSet(StringComparer.Ordinal);
 
         var lastJournal = nouns.LastIndexOf("Jameson Memorial");
-        var firstCommand = nouns.IndexOf("landing gear");
+        var firstCommand = nouns.IndexOf("gear");
         var lastCommand = Named.Max(nouns.IndexOf);
         var firstEngineer = nouns.FindIndex(engineers.Contains);
 
@@ -81,7 +97,7 @@ public class TheCommandWordsSitBetweenTheJournalAndTheEngineersTests
 
         Assert.Equal(
             ProperNouns.Limit - ProperNouns.ShippedShare - ProperNouns.CommandShare,
-            nouns.TakeWhile(name => name != "landing gear").Count());
+            nouns.TakeWhile(name => name != "gear").Count());
         Assert.Contains("heat sink", nouns);
     }
 }
