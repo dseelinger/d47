@@ -652,6 +652,15 @@ public static class FlavourBriefs
         "mine to restate",
         "i appreciate the test",
         "those rules",
+
+        // 2026-10-07: the tower reworded "Docking request granted." as "Commander, docking request granted.
+        // Surname wasn't given to me, so I can't address you by it."
+        "wasn't given",
+        "was not given",
+        "given to me",
+        "told me your",
+        "your surname",
+        "address you by",
     ];
 
     /// <summary>Whether a model's answer to a rewording brief may be spoken (GitHub issue 46).</summary>

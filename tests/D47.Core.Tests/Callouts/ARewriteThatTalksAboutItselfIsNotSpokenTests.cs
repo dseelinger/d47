@@ -37,6 +37,27 @@ public class ARewriteThatTalksAboutItselfIsNotSpokenTests
         Assert.False(FlavourBriefs.MayBeSpoken(line));
     }
 
+    /// <summary>The line heard on 2026-10-07, verbatim, and the shapes near it.</summary>
+    [Theory]
+    [InlineData("Commander, docking request granted. Surname wasn't given to me, so I can't address you by it.")]
+    [InlineData("I wasn't given your name, Commander.")]
+    [InlineData("I don't have your surname.")]
+    [InlineData("Nobody told me your name.")]
+    [InlineData("I can't address you by name.")]
+    public void AModelSayingWhatItWasNotGivenIsNotSaid(string line)
+    {
+        Assert.False(FlavourBriefs.MayBeSpoken(line));
+    }
+
+    /// <summary>Lines that use the same words innocently are still said.</summary>
+    [Theory]
+    [InlineData("Clearance given, Commander.")]
+    [InlineData("You were given pad seven.")]
+    public void AnOrdinaryGivenIsSaid(string line)
+    {
+        Assert.True(FlavourBriefs.MayBeSpoken(line));
+    }
+
     /// <summary>
     /// And the ordinary case is untouched, which is the half that matters more: a guard that rejected
     /// real lines would silently flatten every callout back to its authored wording and nothing would
