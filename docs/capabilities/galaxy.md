@@ -486,6 +486,35 @@ chooser stays where it is.
 A name with no exact match answers with up to three close names and opens nothing; a misheard name
 is usually one of them. A system Spansh has no record of is said to be unknown and opens nothing.
 
+When the system is in Elite's list of visited systems for the Commander playing now, the answer
+ends with one more sentence: how many times they have been, and the day of the last visit. A
+system the list does not include adds nothing.
+
+#### `system_visits`
+
+Whether the Commander has been to a system, how many times, and the day of the last visit.
+
+```json
+{"type":"object","properties":{"system":{"type":"string","description":"The system to check. Defaults to theirs."}},"required":[],"additionalProperties":false}
+```
+
+The answer comes from `VisitedStarsCache.dat`, which Elite writes for each Frontier account under
+`%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\<account>`, where `<account>` is the
+journal's `FID` without the `F`. d47 reads the file for the Commander playing now, reads it again
+when the game rewrites it. Nothing from the file is sent anywhere.
+
+```csharp
+public static string? PathFor(string folder, string? frontierId)
+```
+
+A system the file does not list is answered as no record of a visit, not as never visited. A
+file d47 cannot read, or one whose header does not match the layout it knows, is said to be
+unreadable rather than guessed at.
+
+With no `system`, or the name of the system the Commander is in, it checks that system and works
+with galaxy lookups off. Any other name has to be turned into a system address by Spansh, so with
+lookups off d47 says it can only check the system the Commander is in.
+
 #### `find_nearest_station`
 
 Where to buy a named module or ship, nearest first. A rare good is answered from a table instead,

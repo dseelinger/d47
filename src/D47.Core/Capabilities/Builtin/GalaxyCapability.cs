@@ -106,7 +106,10 @@ public static class GalaxyCapability
 
         // One system's record, and the address of the system the Commander is in.
         IStarSystemService? systems = null,
-        Func<long?>? currentAddress = null) => new()
+        Func<long?>? currentAddress = null,
+
+        // Elite's own list of the systems this Commander has visited.
+        Journal.VisitedStarsBook? visits = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -119,6 +122,7 @@ public static class GalaxyCapability
             "what's the nearest Federation system",
             "where's the nearest Earth-like world",
             "find me a painite hotspot",
+            "have I been to Lave",
         ],
 
         // No keywords.
@@ -297,7 +301,42 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     DescribeSystemAsync(
-                        systems, currentSystem, currentAddress, settings, heard, arguments, cancellationToken),
+                        systems,
+                        currentSystem,
+                        currentAddress,
+                        settings,
+                        heard,
+                        Visits(visits, gameState),
+                        arguments,
+                        cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = "system_visits",
+                AlwaysLoaded = true,
+                Description =
+                    "Whether the Commander has been to a star system, how many times, and the day of the last "
+                    + "visit, from the list of visited systems Elite keeps on this PC. Leave 'system' out for "
+                    + "the one the Commander is in.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "system",
+                        Type = ToolParameterType.String,
+                        Description = "The system to check. Defaults to theirs.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    SystemVisitsAsync(
+                        systems,
+                        currentSystem,
+                        currentAddress,
+                        settings,
+                        heard,
+                        Visits(visits, gameState),
+                        arguments,
+                        cancellationToken),
             },
             new ToolDefinition
             {
@@ -962,12 +1001,99 @@ public static class GalaxyCapability
         }
     }
 
+    private static Func<long, Journal.VisitLookup> Visits(
+        Journal.VisitedStarsBook? visits,
+        Func<Journal.CommanderGameState?>? gameState) =>
+        address => visits?.Find(gameState?.Invoke()?.Identity.FrontierId, address)
+                   ?? new Journal.VisitLookup(Journal.VisitState.Unreadable);
+
+    private static async Task<ToolResult> SystemVisitsAsync(
+        IStarSystemService? systems,
+        Func<string?> currentSystem,
+        Func<long?>? currentAddress,
+        Configuration.SettingsService settings,
+        SpokenNamesSurface? heard,
+        Func<long, Journal.VisitLookup> visits,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        var named = arguments.TryGetString("system", out var given) && !string.IsNullOrWhiteSpace(given)
+            ? given.Trim()
+            : null;
+        var here = currentSystem();
+
+        long address;
+        string name;
+
+        if (named is null || string.Equals(named, here, StringComparison.OrdinalIgnoreCase))
+        {
+            if (currentAddress?.Invoke() is not { } current)
+            {
+                return ToolResult.Error(
+                    "I don't know where the Commander is right now, so I need a system to check.");
+            }
+
+            address = current;
+            name = here ?? current.ToString(CultureInfo.InvariantCulture);
+        }
+        else if (systems is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(
+                "Galaxy lookups are off, so I can only check the system the Commander is in"
+                + (here is null ? "." : $", {here}."));
+        }
+        else
+        {
+            try
+            {
+                var matches = await systems.MatchNamesAsync(named, cancellationToken).ConfigureAwait(false);
+                var exact = matches.FirstOrDefault(
+                    match => string.Equals(match.Name, named, StringComparison.OrdinalIgnoreCase));
+
+                if (exact is null)
+                {
+                    return ToolResult.Error(
+                        matches.Count == 0
+                            ? $"Spansh has no system named {named}."
+                            : $"Spansh has no system named exactly {named}. Close names: "
+                              + $"{string.Join(", ", matches.Take(CloseSystemNames).Select(match => match.Name))}.");
+                }
+
+                address = exact.SystemAddress;
+                name = exact.Name;
+                heard?.Confirm(name);
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                return ToolResult.Error(ex.Message);
+            }
+        }
+
+        var lookup = await Task.Run(() => visits(address), cancellationToken).ConfigureAwait(false);
+
+        return lookup.State switch
+        {
+            Journal.VisitState.Visited => ToolResult.Ok($"Yes. The Commander has been to {name} {VisitSentence(lookup.Visits)}"),
+            Journal.VisitState.NotListed => ToolResult.Ok(
+                $"Elite's list of visited systems on this PC has no record of a visit to {name}. "
+                + "That is not proof the Commander has never been there."),
+            _ => ToolResult.Error("I can't read Elite's list of visited systems for this Commander on this PC."),
+        };
+    }
+
+    /// <summary>"3 times, last on 2 October 2026." — the tail of both visit answers.</summary>
+    private static string VisitSentence(Journal.SystemVisits visits) =>
+        (visits.Count == 1 ? "once, on " : $"{visits.Count.ToString(CultureInfo.InvariantCulture)} times, last on ")
+        + visits.LastVisit.ToString("d MMMM yyyy", CultureInfo.InvariantCulture)
+        + ".";
+
     private static async Task<ToolResult> DescribeSystemAsync(
         IStarSystemService? systems,
         Func<string?> currentSystem,
         Func<long?>? currentAddress,
         Configuration.SettingsService settings,
         SpokenNamesSurface? heard,
+        Func<long, Journal.VisitLookup> visits,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1029,7 +1155,12 @@ public static class GalaxyCapability
                 heard?.Confirm(profile.Name);
             }
 
-            return ToolResult.Ok(DescribeProfile(profile)) with { Page = PageRef.System(address) };
+            var lookup = await Task.Run(() => visits(address), cancellationToken).ConfigureAwait(false);
+            var said = lookup.State == Journal.VisitState.Visited
+                ? $"{DescribeProfile(profile)} The Commander has been here {VisitSentence(lookup.Visits)}"
+                : DescribeProfile(profile);
+
+            return ToolResult.Ok(said) with { Page = PageRef.System(address) };
         }
         catch (GalaxyUnavailableException ex)
         {

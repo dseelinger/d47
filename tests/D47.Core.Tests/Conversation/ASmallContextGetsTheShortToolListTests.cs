@@ -33,6 +33,7 @@ public class ASmallContextGetsTheShortToolListTests
         "list_settings",
         "get_setting",
         "set_setting",
+        "system_visits",
     ];
 
     private static TurnLoop Build(CapabilityRegistry registry, ILlmProvider provider)
@@ -68,7 +69,7 @@ public class ASmallContextGetsTheShortToolListTests
     }
 
     [Fact]
-    public void TheCompactListIsTheSeventeenAlwaysLoadedTools()
+    public void TheCompactListIsTheEighteenAlwaysLoadedTools()
     {
         using var install = new TempInstall();
         var registry = TestSurface.For(install).Registry;

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Ask "have I been to Lave?" and D47 says whether you have, how many times, and the day of your last visit, read from the list of visited systems Elite keeps on your PC for the Commander you are playing. A system missing from that list is answered as no record of a visit, not as never visited. Describing a system you have visited now ends with the same sentence. Your current system can be checked with galaxy lookups off. Any other system needs them on, and its name goes to Spansh to be found, as it does when you ask D47 to describe that system. The list itself is read on your PC and never sent.
+
 D47 can look at your screen when you ask about something on it, such as "what's on my scanner". Turn on Let the model look at the screen in Settings, under the language model, or say "turn on screen pictures". It takes one picture of Elite's window, or of the headset's view when Elite is running in VR, and sends it to your language-model provider with that question only. The picture is never saved. The line under the reply says PICTURE OF ELITE'S WINDOW or PICTURE OF HEADSET VIEW, and the cost shown includes the picture. The setting is off by default, the model cannot turn it on, and Privacy and egress lists it as Screen pictures. When the model in use does not read pictures, the row says so and no picture is taken.
 
 With Model for the quiet calls unset, In Ship chatter, narrator lines, the opening brief, lore lookups and voice choice use Claude Haiku 5.5 on Anthropic's own endpoint. A custom endpoint, or a Model for the quiet calls you set yourself, is unchanged. D47 tells you once and offers to keep your conversation model for these calls.

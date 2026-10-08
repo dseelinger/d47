@@ -2246,6 +2246,7 @@ public sealed class AppHost : IDisposable
                 mail: mail,
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
+                visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder()),
                 pickCommander: picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
