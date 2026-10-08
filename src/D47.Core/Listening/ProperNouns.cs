@@ -16,7 +16,7 @@ public static class ProperNouns
     public const int ShippedShare = 20;
 
     /// <summary>How much of the list is kept for the names of the game actions d47 can take.</summary>
-    public const int CommandShare = 80;
+    public const int CommandShare = 120;
 
     /// <summary>A cap on how many names are offered.</summary>
     public const int Limit = 60 + CommandShare;

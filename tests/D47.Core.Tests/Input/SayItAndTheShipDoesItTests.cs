@@ -1152,7 +1152,8 @@ public class SayItAndTheShipDoesItTests
         var invented = (
             from action in GameActions.All
             from variant in action.Variants
-            where variant.EliteAction.Contains("launch", StringComparison.OrdinalIgnoreCase)
+            where (variant.EliteAction.Contains("launch", StringComparison.OrdinalIgnoreCase)
+                   && !variant.EliteAction.EndsWith("Launcher", StringComparison.Ordinal))
                || variant.EliteAction.Contains("undock", StringComparison.OrdinalIgnoreCase)
             select variant.EliteAction).ToArray();
 

@@ -1,7 +1,7 @@
 ---
 title: Switch Commander
 group: Interface
-nav_order: 153
+nav_order: 154
 ---
 
 <details class="d47-band" open>

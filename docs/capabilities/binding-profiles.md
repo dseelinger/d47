@@ -1,7 +1,7 @@
 ---
 title: Binding profiles
 group: Acting on the game
-nav_order: 154
+nav_order: 155
 ---
 
 <!--

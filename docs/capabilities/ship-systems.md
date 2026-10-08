@@ -202,7 +202,7 @@ the actions listed as reachable in the current game state will work; anything el
 with the reason it did not.
 
 ```json
-{"type":"object","properties":{"action":{"type":"string","description":"Which action to perform.","enum":["power_to_engines","power_to_weapons","power_to_systems","balance_power","silent_running","heat_sink","analysis_mode"]},"state":{"type":"string","description":"What to leave it in. Elite binds a single toggle, so asking for \u0022on\u0022 or \u0022off\u0022 checks the game\u0027s own report first and does nothing if it is already there. Defaults to toggling.","enum":["on","off","toggle"]}},"required":["action"],"additionalProperties":false}
+{"type":"object","properties":{"action":{"type":"string","description":"Which action to perform.","enum":["power_to_engines","power_to_weapons","power_to_systems","balance_power","silent_running","heat_sink","chaff","shield_cell","ecm","analysis_mode"]},"state":{"type":"string","description":"What to leave it in. Elite binds a single toggle, so asking for \u0022on\u0022 or \u0022off\u0022 checks the game\u0027s own report first and does nothing if it is already there. Defaults to toggling.","enum":["on","off","toggle"]}},"required":["action"],"additionalProperties":false}
 ```
 
 `silent_running` resolves to Elite's `ToggleButtonUpInput`, which is the game's own name for it

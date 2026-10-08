@@ -1,7 +1,7 @@
 ---
 title: Journal reminders
 group: Interface
-nav_order: 150
+nav_order: 151
 ---
 
 <!--

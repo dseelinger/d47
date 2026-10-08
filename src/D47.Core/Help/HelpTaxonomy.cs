@@ -47,8 +47,12 @@ public static class HelpTaxonomy
                     "flight-controls"),
                 HelpNode.Leaf(
                     "Ship systems",
-                    "Move power between engines, weapons and systems, and reach silent running and heat sinks.",
+                    "Move power between engines, weapons and systems, and reach silent running, heat sinks, chaff, shield cells and ECM.",
                     "ship-systems"),
+                HelpNode.Leaf(
+                    "Combat",
+                    "Select and cycle targets, target wingmen, and give fighter orders.",
+                    "combat"),
                 HelpNode.Leaf(
                     "Panels and interface",
                     "Open the cockpit panels, move around them, and change fire group.",

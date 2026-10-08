@@ -31,6 +31,9 @@ public sealed record GameAction
 
     public required IReadOnlyList<ActionVariant> Variants { get; init; }
 
+    /// <summary>How long the key is held; null taps it.</summary>
+    public TimeSpan? HoldFor { get; init; }
+
     /// <summary>The status flag that reports this toggle's current state, when Elite reports one.</summary>
     public StatusFlags? Reports { get; init; }
 
@@ -108,6 +111,7 @@ public static class GameActions
     public const string Systems = "Ship systems";
     public const string Interface = "Panels and interface";
     public const string SrvGroup = "SRV";
+    public const string Combat = "Combat";
     public const string Weapons = "Weapons";
 
     /// <summary>Every action, in the order a Commander would meet them.</summary>
@@ -446,6 +450,39 @@ public static class GameActions
 
         new()
         {
+            Id = "chaff",
+            Label = "chaff",
+            Group = Systems,
+            Variants = [new ActionVariant("FireChaffLauncher", ControlContext.NormalSpace)],
+            Names = ["chaff"],
+            Verbs = ["deploy", "fire"],
+        },
+
+        new()
+        {
+            Id = "shield_cell",
+            Label = "a shield cell",
+            Group = Systems,
+            Variants = [new ActionVariant("UseShieldCell", ControlContext.NormalSpace)],
+            Names = ["shield cell"],
+            Verbs = ["use a", "fire a"],
+        },
+
+        new()
+        {
+            Id = "ecm",
+            Label = "the ECM",
+            Group = Systems,
+            Variants = [new ActionVariant("ChargeECM", ControlContext.NormalSpace)],
+
+            // ECM fires on release once charged.
+            HoldFor = TimeSpan.FromSeconds(4),
+            Names = ["ecm"],
+            Verbs = ["fire the", "charge the"],
+        },
+
+        new()
+        {
             Id = "analysis_mode",
             Label = "the HUD mode",
             Group = Systems,
@@ -560,6 +597,201 @@ public static class GameActions
             Group = SrvGroup,
             Variants = [new ActionVariant("RecallDismissShip", ControlContext.Srv | ControlContext.OnFoot)],
             Names = ["recall my ship", "recall the ship", "dismiss my ship", "dismiss the ship"],
+        },
+
+        // ---- Combat: targeting and fighter orders -------------------------------------------
+        new()
+        {
+            Id = "select_target",
+            Label = "the target ahead",
+            Group = Combat,
+            Variants = [new ActionVariant("SelectTarget", ControlContext.Flying), new ActionVariant("SelectTarget_Buggy", ControlContext.Srv)],
+            Names = ["select target", "target ahead"],
+        },
+
+        new()
+        {
+            Id = "next_target",
+            Label = "the next target",
+            Group = Combat,
+            Variants = [new ActionVariant("CycleNextTarget", ControlContext.Flying)],
+            Names = ["next target"],
+        },
+
+        new()
+        {
+            Id = "previous_target",
+            Label = "the previous target",
+            Group = Combat,
+            Variants = [new ActionVariant("CyclePreviousTarget", ControlContext.Flying)],
+            Names = ["previous target"],
+        },
+
+        new()
+        {
+            Id = "next_hostile",
+            Label = "the next hostile",
+            Group = Combat,
+            Variants = [new ActionVariant("CycleNextHostileTarget", ControlContext.Flying)],
+            Names = ["next hostile"],
+        },
+
+        new()
+        {
+            Id = "previous_hostile",
+            Label = "the previous hostile",
+            Group = Combat,
+            Variants = [new ActionVariant("CyclePreviousHostileTarget", ControlContext.Flying)],
+            Names = ["previous hostile"],
+        },
+
+        new()
+        {
+            Id = "highest_threat",
+            Label = "the highest threat",
+            Group = Combat,
+            Variants = [new ActionVariant("SelectHighestThreat", ControlContext.Flying)],
+            Names = ["highest threat"],
+            Verbs = ["target the"],
+        },
+
+        new()
+        {
+            Id = "next_subsystem",
+            Label = "the next subsystem",
+            Group = Combat,
+            Variants = [new ActionVariant("CycleNextSubsystem", ControlContext.NormalSpace)],
+            Names = ["next subsystem"],
+        },
+
+        new()
+        {
+            Id = "previous_subsystem",
+            Label = "the previous subsystem",
+            Group = Combat,
+            Variants = [new ActionVariant("CyclePreviousSubsystem", ControlContext.NormalSpace)],
+            Names = ["previous subsystem"],
+        },
+
+        new()
+        {
+            Id = "target_wingman_1",
+            Label = "wingman one",
+            Group = Combat,
+            Variants = [new ActionVariant("TargetWingman0", ControlContext.Flying)],
+            Names = ["wingman one"],
+            Verbs = ["target"],
+        },
+
+        new()
+        {
+            Id = "target_wingman_2",
+            Label = "wingman two",
+            Group = Combat,
+            Variants = [new ActionVariant("TargetWingman1", ControlContext.Flying)],
+            Names = ["wingman two"],
+            Verbs = ["target"],
+        },
+
+        new()
+        {
+            Id = "target_wingman_3",
+            Label = "wingman three",
+            Group = Combat,
+            Variants = [new ActionVariant("TargetWingman2", ControlContext.Flying)],
+            Names = ["wingman three"],
+            Verbs = ["target"],
+        },
+
+        new()
+        {
+            Id = "wingman_target",
+            Label = "the wingman's target",
+            Group = Combat,
+            Variants = [new ActionVariant("SelectTargetsTarget", ControlContext.Flying)],
+            Names = ["wingman's target"],
+            Verbs = ["target"],
+        },
+
+        new()
+        {
+            Id = "wingman_nav_lock",
+            Label = "the wingman nav lock",
+            Group = Combat,
+            Variants = [new ActionVariant("WingNavLock", ControlContext.Flying)],
+            Names = ["wingman nav lock", "nav lock"],
+        },
+
+        new()
+        {
+            Id = "fighter_orders",
+            Label = "the fighter orders",
+            Group = Combat,
+            Variants = [new ActionVariant("OpenOrders", ControlContext.NormalSpace)],
+            Names = ["fighter orders"],
+        },
+
+        new()
+        {
+            Id = "fighter_dock",
+            Label = "the fighter recall",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderRequestDock", ControlContext.NormalSpace)],
+            Names = ["recall the fighter", "fighter dock"],
+        },
+
+        new()
+        {
+            Id = "fighter_defend",
+            Label = "fighter defend",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderDefensiveBehaviour", ControlContext.NormalSpace)],
+            Names = ["fighter defend", "fighter defensive"],
+        },
+
+        new()
+        {
+            Id = "fighter_engage",
+            Label = "fighter engage",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderAggressiveBehaviour", ControlContext.NormalSpace)],
+            Names = ["fighter engage at will", "fighter attack"],
+        },
+
+        new()
+        {
+            Id = "fighter_focus",
+            Label = "fighter focus",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderFocusTarget", ControlContext.NormalSpace)],
+            Names = ["fighter attack my target", "fighter focus my target"],
+        },
+
+        new()
+        {
+            Id = "fighter_hold_fire",
+            Label = "fighter hold fire",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderHoldFire", ControlContext.NormalSpace)],
+            Names = ["fighter hold fire"],
+        },
+
+        new()
+        {
+            Id = "fighter_hold_position",
+            Label = "fighter hold position",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderHoldPosition", ControlContext.NormalSpace)],
+            Names = ["fighter hold position"],
+        },
+
+        new()
+        {
+            Id = "fighter_follow",
+            Label = "fighter follow",
+            Group = Combat,
+            Variants = [new ActionVariant("OrderFollow", ControlContext.NormalSpace)],
+            Names = ["fighter follow me", "fighter form up"],
         },
 
         // ---- Weapons (the honk's route in, Phase 10 item 3) -------------------------- No phrases and no

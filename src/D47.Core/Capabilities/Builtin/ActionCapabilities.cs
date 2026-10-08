@@ -126,8 +126,8 @@ public static class ActionCapabilities
             "Ship systems",
             GameActions.Systems,
             "control_systems",
-            "Move power between engines, weapons and systems, and reach silent running and heat sinks.",
-            ["pips to engines", "balance the power", "drop a heat sink", "silent running"],
+            "Move power between engines, weapons and systems, and reach silent running, heat sinks, chaff, shield cells and ECM.",
+            ["pips to engines", "balance the power", "drop a heat sink", "fire chaff"],
             surface,
             order: 51),
 
@@ -150,6 +150,16 @@ public static class ActionCapabilities
             ["turret on", "handbrake off", "recall my ship"],
             surface,
             order: 53),
+
+        Create(
+            "combat",
+            "Combat",
+            GameActions.Combat,
+            "control_combat",
+            "Select and cycle targets, target wingmen, and give fighter orders.",
+            ["next hostile", "target the highest threat", "recall the fighter"],
+            surface,
+            order: 54),
     ];
 
     /// <summary>The live half: what is actually reachable this turn, as a line for prompt position 7.</summary>
@@ -325,8 +335,12 @@ public static class ActionCapabilities
             return ToolResult.Ok($"{Capitalise(action.Label)} is already {(wanted == DesiredState.On ? "on" : "off")}.");
         }
 
+        var keys = action.HoldFor is { } hold
+            ? InputSequence.Hold(reach.Binding!, hold)
+            : InputSequence.Tap(reach.Binding!);
+
         var result = await surface.Input
-            .SendAsync(InputSequence.Tap(reach.Binding!), cancellationToken)
+            .SendAsync(keys, cancellationToken)
             .ConfigureAwait(false);
 
         // Two audiences: the key that fired is what makes an "it did not do it" report diagnosable, and it
