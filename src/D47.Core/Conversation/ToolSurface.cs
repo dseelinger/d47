@@ -89,7 +89,8 @@ public static class ToolSurface
                     tool.Name,
                     tool.Description,
                     capability.ToolSchemas[tool.Name],
-                    Deferred: deferring && !tool.AlwaysLoaded));
+                    Deferred: deferring && !tool.AlwaysLoaded,
+                    ReturnsImage: tool.ReturnsImage));
             }
         }
 

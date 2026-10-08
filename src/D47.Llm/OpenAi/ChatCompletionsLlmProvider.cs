@@ -44,6 +44,9 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // tools to Responses and deprecated the Chat Completions parameter that used to carry them.
         SupportsWebSearch = false,
         ContextTokens = EndpointDemotions.ContextOf(_endpoint.BaseUrl, model),
+
+        // Offered until the endpoint refuses a picture, and per model, because a local server swaps weights.
+        SupportsImages = EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Images, model),
     };
 
     /// <summary>The models this endpoint says it serves, or nothing if it will not say.</summary>
@@ -62,9 +65,17 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // not accept.
         for (var attempt = 0; ; attempt++)
         {
-            var sent = await SendAsync("/chat/completions", request.Model, BuildBody(request), cancellationToken).ConfigureAwait(false);
+            var sent = await SendAsync(
+                    "/chat/completions",
+                    request.Model,
+                    BuildBody(request),
+                    SendsPicture(request),
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-            if (sent.Refusal is { } rejected && attempt == 0 && EndpointDemotions.Demote(_endpoint.BaseUrl, rejected))
+            if (sent.Refusal is { } rejected
+                && attempt == 0
+                && EndpointDemotions.Demote(_endpoint.BaseUrl, rejected, rejected == Demotable.Images ? request.Model : ""))
             {
                 continue;
             }
@@ -98,10 +109,17 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         LlmStreamEvent.Failed? Failure,
         Demotable? Refusal);
 
+    /// <summary>Whether the body built for <paramref name="request"/> carries a picture.</summary>
+    private bool SendsPicture(LlmRequest request) =>
+        EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Images, request.Model)
+        && request.Prompt.History.Any(message =>
+            message.Content.Any(part => part is ConversationContent.ToolResult { Image: not null }));
+
     private async Task<Attempt> SendAsync(
         string path,
         string model,
         ReadOnlyMemory<byte> body,
+        bool sendsPicture,
         CancellationToken cancellationToken)
     {
         HttpResponseMessage response;
@@ -136,7 +154,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             return new Attempt(
                 null,
                 new LlmStreamEvent.Failed(message, transient) { ContextExceeded = context is not null },
-                WhatWasRejected(detail));
+                sendsPicture && RefusedPicture(detail) ? Demotable.Images : WhatWasRejected(detail));
         }
     }
 
@@ -299,9 +317,11 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             json.WriteString("content", request.Prompt.RenderCachedSystemBlock());
             json.WriteEndObject();
 
+            var readsImages = EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Images, request.Model);
+
             foreach (var turn in OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: false))
             {
-                WriteTurn(json, turn);
+                WriteTurn(json, turn, readsImages);
             }
 
             json.WriteEndArray();
@@ -371,19 +391,43 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         return buffer.WrittenMemory;
     }
 
-    private static void WriteTurn(Utf8JsonWriter json, WireTurn turn)
+    private static void WriteTurn(Utf8JsonWriter json, WireTurn turn, bool readsImages)
     {
         // Tool results are messages of their own here rather than blocks inside the next user turn, and they
         // have to come first: each answers a call in the assistant message above it, and anything in between
         // is a protocol error.
         foreach (var result in turn.Results)
         {
+            // There is no is_error flag in this protocol.
+            var content = result.IsError ? $"ERROR: {result.Content}" : result.Content;
+
             json.WriteStartObject();
             json.WriteString("role", "tool");
             json.WriteString("tool_call_id", result.ToolUseId);
+            json.WriteString("content", result.Image is null || readsImages ? content : ImageText.WithoutPicture(content));
+            json.WriteEndObject();
+        }
 
-            // There is no is_error flag in this protocol.
-            json.WriteString("content", result.IsError ? $"ERROR: {result.Content}" : result.Content);
+        // A tool message cannot carry a picture, so the round's pictures follow its tool messages as a user message.
+        var pictures = readsImages ? turn.Results.Select(result => result.Image).OfType<ImageAttachment>().ToList() : [];
+
+        if (pictures.Count > 0)
+        {
+            json.WriteStartObject();
+            json.WriteString("role", "user");
+            json.WriteStartArray("content");
+
+            foreach (var picture in pictures)
+            {
+                json.WriteStartObject();
+                json.WriteString("type", "image_url");
+                json.WriteStartObject("image_url");
+                json.WriteString("url", picture.DataUrl);
+                json.WriteEndObject();
+                json.WriteEndObject();
+            }
+
+            json.WriteEndArray();
             json.WriteEndObject();
         }
 
@@ -467,6 +511,21 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         };
     }
 
+    /// <summary>Whether a refusal of a request carrying a picture is about the picture.</summary>
+    internal static bool RefusedPicture(string? detail)
+    {
+        if (string.IsNullOrWhiteSpace(detail))
+        {
+            return false;
+        }
+
+        var said = detail.ToLowerInvariant();
+
+        return said.Contains("image", StringComparison.Ordinal)
+               || said.Contains("multimodal", StringComparison.Ordinal)
+               || said.Contains("vision", StringComparison.Ordinal);
+    }
+
     private void RecordContext(string model, int? context)
     {
         if (context is { } tokens)
@@ -506,7 +565,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             {
                 if (error.ValueKind == JsonValueKind.String)
                 {
-                    return (error.GetString(), null);
+                    return (EndpointError.WithoutPictures(error.GetString()), null);
                 }
 
                 if (error.ValueKind == JsonValueKind.Object)
@@ -518,7 +577,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                         ? $"{message} ({param})"
                         : message ?? param;
 
-                    return (detail, EndpointError.ContextSize(error));
+                    return (EndpointError.WithoutPictures(detail), EndpointError.ContextSize(error));
                 }
             }
         }
@@ -527,7 +586,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // Not JSON.
         }
 
-        return (raw.Length > 400 ? raw[..400] : raw, null);
+        return (EndpointError.WithoutPictures(raw.Length > 400 ? raw[..400] : raw), null);
     }
 
     /// <summary>Usage, if the endpoint sent any.</summary>

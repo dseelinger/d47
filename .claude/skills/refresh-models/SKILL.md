@@ -38,8 +38,10 @@ List what differs from the file, one line each, with the page it was read from a
 - models the provider has retired or no longer lists
 - whether a provider's `default` or `backgroundDefault` should move
 
-For each new Anthropic model, give the five traits d47 sends on: `operatorSystemMessages`,
-`toolSearch`, `minimumCacheablePrefix`, `basicWebSearchOnly`, `legacyThinking`.
+For each new Anthropic model, give the six traits d47 sends on: `operatorSystemMessages`,
+`toolSearch`, `minimumCacheablePrefix`, `basicWebSearchOnly`, `legacyThinking`, `images`. For each
+new OpenAI model, give `images`, from the input modalities on its model page
+(`https://developers.openai.com/api/docs/models/<id>`). `images` is whether the model takes image input.
 
 A trait the documentation does not state is **unverified**. Leave it at the unknown-model value
 (`false`, and `1024` for `minimumCacheablePrefix`) and name it in the report as unverified. Do not

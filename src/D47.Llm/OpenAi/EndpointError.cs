@@ -4,9 +4,17 @@ using System.Text.Json;
 namespace D47.Llm.OpenAi;
 
 /// <summary>An endpoint's <c>error</c> object, as a sentence the Commander can act on.</summary>
-internal static class EndpointError
+internal static partial class EndpointError
 {
     private const int MaxDepth = 4;
+
+    /// <summary><paramref name="detail"/> with any picture an endpoint echoed back cut to its media type.</summary>
+    [return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(detail))]
+    public static string? WithoutPictures(string? detail) =>
+        detail is null ? null : DataUrl().Replace(detail, "data:$1;base64,…");
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"data:([\w.+/-]*);base64,[A-Za-z0-9+/=\\]*")]
+    private static partial System.Text.RegularExpressions.Regex DataUrl();
 
     /// <summary>
     /// The innermost <c>message</c> of <paramref name="error"/>, following JSON embedded after a prefix, or a

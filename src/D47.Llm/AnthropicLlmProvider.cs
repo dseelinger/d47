@@ -83,6 +83,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 _ownEndpoint
                 && traits.ToolSearch
                 && EndpointDemotions.Allows(_endpoint, Demotable.ToolSearch, model),
+            SupportsImages = traits.Images,
         };
     }
 
@@ -387,7 +388,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                         blocks.Add(new ToolResultBlockParam
                         {
                             ToolUseID = result.ToolUseId,
-                            Content = result.Content,
+                            Content = ResultContent(result, capabilities.SupportsImages),
                             IsError = result.IsError,
                             CacheControl = spendHere ? new CacheControlEphemeral() : null,
                         });
@@ -497,6 +498,33 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 ? new OutputConfig { Effort = Translate(request.Effort) }
                 : null,
             Messages = messages,
+        };
+    }
+
+    /// <summary>The result's text, followed by its picture where the model reads one.</summary>
+    private static ToolResultBlockParamContent ResultContent(ConversationContent.ToolResult result, bool readsImages)
+    {
+        if (result.Image is not { } image)
+        {
+            return result.Content;
+        }
+
+        if (!readsImages)
+        {
+            return ImageText.WithoutPicture(result.Content);
+        }
+
+        var source = new Dictionary<string, System.Text.Json.JsonElement>(StringComparer.Ordinal)
+        {
+            ["type"] = System.Text.Json.JsonSerializer.SerializeToElement("base64"),
+            ["media_type"] = System.Text.Json.JsonSerializer.SerializeToElement(image.MediaType),
+            ["data"] = System.Text.Json.JsonSerializer.SerializeToElement(Convert.ToBase64String(image.Data)),
+        };
+
+        return new List<Block>
+        {
+            new TextBlockParam { Text = result.Content },
+            new ImageBlockParam { Source = Base64ImageSource.FromRawUnchecked(source) },
         };
     }
 

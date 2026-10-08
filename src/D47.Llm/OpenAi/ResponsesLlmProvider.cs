@@ -19,9 +19,17 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
     private readonly OpenAiEndpoint _endpoint;
     private readonly bool _ownEndpoint;
+    private readonly ModelCatalogSource _catalog;
 
-    public ResponsesLlmProvider(string? apiKey, string? endpoint, HttpClient? http = null)
+    /// <summary><paramref name="catalog"/> is null for <see cref="ModelCatalogSource.Shared"/>.</summary>
+    public ResponsesLlmProvider(
+        string? apiKey,
+        string? endpoint,
+        HttpClient? http = null,
+        ModelCatalogSource? catalog = null)
     {
+        _catalog = catalog ?? ModelCatalogSource.Shared;
+
         var address = string.IsNullOrWhiteSpace(endpoint) ? DefaultEndpoint : endpoint;
 
         // Whether this is OpenAI's own address rather than a gateway.
@@ -39,7 +47,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
     public string DisplayName => "OpenAI";
 
-    public string DefaultModel => ModelCatalogSource.Shared.Current.DefaultFor(Id) ?? string.Empty;
+    public string DefaultModel => _catalog.Current.DefaultFor(Id) ?? string.Empty;
 
     public bool RunsOnThisMachine => _endpoint.IsLoopback;
 
@@ -51,6 +59,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
         MinimumCacheablePrefixTokens = 1024,
         SupportsToolCalls = EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools),
         SupportsWebSearch = _ownEndpoint,
+        SupportsImages = _catalog.TraitsFor(Id, model).Images,
     };
 
     /// <summary>The models this endpoint says it serves, or nothing if it will not say.</summary>
@@ -69,7 +78,8 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
         // not accept.
         for (var attempt = 0; ; attempt++)
         {
-            var sent = await SendAsync("/responses", BuildBody(request), cancellationToken).ConfigureAwait(false);
+            var sent = await SendAsync("/responses", BuildBody(request), SendsPicture(request), cancellationToken)
+                .ConfigureAwait(false);
 
             if (sent.Refusal is { } rejected && attempt == 0 && EndpointDemotions.Demote(_endpoint.BaseUrl, rejected))
             {
@@ -101,7 +111,17 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
         LlmStreamEvent.Failed? Failure,
         Demotable? Refusal);
 
-    private async Task<Attempt> SendAsync(string path, ReadOnlyMemory<byte> body, CancellationToken cancellationToken)
+    /// <summary>Whether the body built for <paramref name="request"/> carries a picture.</summary>
+    private bool SendsPicture(LlmRequest request) =>
+        CapabilitiesFor(request.Model).SupportsImages
+        && request.Prompt.History.Any(message =>
+            message.Content.Any(part => part is ConversationContent.ToolResult { Image: not null }));
+
+    private async Task<Attempt> SendAsync(
+        string path,
+        ReadOnlyMemory<byte> body,
+        bool sendsPicture,
+        CancellationToken cancellationToken)
     {
         HttpResponseMessage response;
 
@@ -132,7 +152,10 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
             return new Attempt(
                 null,
                 new LlmStreamEvent.Failed(message, transient),
-                ChatCompletionsLlmProvider.WhatWasRejected(detail));
+                // A refused picture demotes nothing, so it is not taken for a refusal of tools.
+                sendsPicture && ChatCompletionsLlmProvider.RefusedPicture(detail)
+                    ? null
+                    : ChatCompletionsLlmProvider.WhatWasRejected(detail));
         }
     }
 
@@ -315,9 +338,11 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
             json.WriteStartArray("input");
 
+            var readsImages = CapabilitiesFor(request.Model).SupportsImages;
+
             foreach (var turn in OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: true))
             {
-                WriteTurn(json, turn);
+                WriteTurn(json, turn, readsImages);
             }
 
             json.WriteEndArray();
@@ -390,15 +415,35 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
         return buffer.WrittenMemory;
     }
 
-    private static void WriteTurn(Utf8JsonWriter json, WireTurn turn)
+    private static void WriteTurn(Utf8JsonWriter json, WireTurn turn, bool readsImages)
     {
         // Results first, for the same reason as everywhere else: each answers a call above it.
         foreach (var result in turn.Results)
         {
+            var output = result.IsError ? $"ERROR: {result.Content}" : result.Content;
+
             json.WriteStartObject();
             json.WriteString("type", "function_call_output");
             json.WriteString("call_id", result.ToolUseId);
-            json.WriteString("output", result.IsError ? $"ERROR: {result.Content}" : result.Content);
+
+            if (result.Image is { } image && readsImages)
+            {
+                json.WriteStartArray("output");
+                json.WriteStartObject();
+                json.WriteString("type", "input_text");
+                json.WriteString("text", output);
+                json.WriteEndObject();
+                json.WriteStartObject();
+                json.WriteString("type", "input_image");
+                json.WriteString("image_url", image.DataUrl);
+                json.WriteEndObject();
+                json.WriteEndArray();
+            }
+            else
+            {
+                json.WriteString("output", result.Image is null ? output : ImageText.WithoutPicture(output));
+            }
+
             json.WriteEndObject();
         }
 
@@ -498,9 +543,9 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
                 var message = Text(error, "message");
                 var param = Text(error, "param");
 
-                return param is { Length: > 0 } && message is { Length: > 0 }
+                return EndpointError.WithoutPictures(param is { Length: > 0 } && message is { Length: > 0 }
                     ? $"{message} ({param})"
-                    : message ?? param;
+                    : message ?? param);
             }
         }
         catch (JsonException)
@@ -508,7 +553,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
         // Not JSON.
         }
 
-        return raw.Length > 400 ? raw[..400] : raw;
+        return EndpointError.WithoutPictures(raw.Length > 400 ? raw[..400] : raw);
     }
 
     private static string? Text(JsonElement element, string name) =>

@@ -1443,20 +1443,26 @@ public sealed class TurnLoop(
         // A model whose context is known to be small is sent the short list on every turn (#423).
         var compact = providerCapabilities.ContextTokens is not null;
 
+        // A tool whose result is a picture is left out where the model cannot read one.
+        IReadOnlyList<ToolAdvertisement> Readable(IReadOnlyList<ToolAdvertisement> tools) =>
+            providerCapabilities.SupportsImages || !tools.Any(tool => tool.ReturnsImage)
+                ? tools
+                : [.. tools.Where(tool => !tool.ReturnsImage)];
+
         IReadOnlyList<ToolAdvertisement> ModeTools()
         {
             var context = speaker is null ? ToolContext?.Invoke() ?? Input.ControlContext.None : Input.ControlContext.None;
             var actionsEnabled = speaker is null && (ActionsEnabled?.Invoke() ?? false);
 
-            return compact
+            return Readable(compact
                 ? ToolSurface.Compact(capabilities, context, actionsEnabled).Tools
-                : ToolSurface.ForMode(capabilities, context, actionsEnabled).Tools;
+                : ToolSurface.ForMode(capabilities, context, actionsEnabled).Tools);
         }
 
         IReadOnlyList<ToolAdvertisement> advertised =
             !providerCapabilities.SupportsToolCalls ? []
             : speaker is { OffersTools: false } ? []
-            : searchable ? ToolSurface.Searchable(capabilities).Tools
+            : searchable ? Readable(ToolSurface.Searchable(capabilities).Tools)
             : ModeTools();
 
         // Set once a round has been refused for size even with the short list: from then on the round carries
@@ -1751,7 +1757,7 @@ public sealed class TurnLoop(
                     content += "\n\n" + note;
                 }
 
-                results.Add(new ConversationContent.ToolResult(call.Id, content, result.IsError));
+                results.Add(new ConversationContent.ToolResult(call.Id, content, result.IsError) { Image = result.Image });
 
                 if (!result.IsError && result.Page is { } named)
                 {
@@ -1880,13 +1886,18 @@ public sealed class TurnLoop(
 
     /// <summary>The message without the parts that belong only to the turn that produced it.</summary>
     private static ConversationMessage Settled(ConversationMessage message) =>
-        message.Content.Any(part => part is ConversationContent.ThinkingBlock or ConversationContent.TrailingState)
+        message.Content.Any(part => part is ConversationContent.ThinkingBlock
+            or ConversationContent.TrailingState
+            or ConversationContent.ToolResult { Image: not null })
             ? message with
             {
                 Content =
                 [
-                    .. message.Content.Where(
-                        part => part is not (ConversationContent.ThinkingBlock or ConversationContent.TrailingState)),
+                    .. message.Content
+                        .Where(part => part is not (ConversationContent.ThinkingBlock or ConversationContent.TrailingState))
+                        .Select(part => part is ConversationContent.ToolResult { Image: not null } result
+                            ? result with { Image = null }
+                            : part),
                 ],
             }
             : message;

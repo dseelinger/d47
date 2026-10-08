@@ -25,6 +25,9 @@ public sealed record ModelTraits
 
     /// <summary>Whether the model rejects <c>thinking</c> and <c>output_config.effort</c>.</summary>
     public bool LegacyThinking { get; init; }
+
+    /// <summary>Whether the model reads image input.</summary>
+    public bool Images { get; init; }
 }
 
 /// <summary>One model in the catalog.</summary>
@@ -301,6 +304,7 @@ public sealed class ModelCatalog
             : ModelTraits.Unknown.MinimumCacheablePrefix,
         BasicWebSearchOnly = OptionalBool(element, "basicWebSearchOnly"),
         LegacyThinking = OptionalBool(element, "legacyThinking"),
+        Images = OptionalBool(element, "images"),
     };
 
     private static bool OptionalBool(JsonElement element, string name) =>

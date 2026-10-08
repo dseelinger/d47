@@ -90,4 +90,7 @@ internal enum Demotable
 
     /// <summary>Anthropic's tool search tool and <c>defer_loading</c>, refused for one model.</summary>
     ToolSearch,
+
+    /// <summary>A picture on a tool result, refused for one model.</summary>
+    Images,
 }

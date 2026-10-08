@@ -36,6 +36,9 @@ public sealed record LlmProviderCapabilities
 
     /// <summary>The model's whole context in tokens, prompt and reply together, or null when unknown.</summary>
     public int? ContextTokens { get; init; }
+
+    /// <summary>Whether the model reads a picture on a tool result.</summary>
+    public bool SupportsImages { get; init; }
 }
 
 public sealed record LlmUsage(

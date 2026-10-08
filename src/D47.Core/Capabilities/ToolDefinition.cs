@@ -44,6 +44,9 @@ public sealed record ToolResult
     /// <summary>The one engineer, ship or system the answer is about, or null.</summary>
     public PageRef? Page { get; init; }
 
+    /// <summary>A picture for the model to read with the content, or null.</summary>
+    public Conversation.ImageAttachment? Image { get; init; }
+
     public static ToolResult Ok(string content) => new() { IsError = false, Content = content };
 
     /// <summary>A result the Commander hears as <paramref name="shortForm"/> and the model reads in full.</summary>
@@ -98,6 +101,9 @@ public sealed record ToolDefinition
 
     /// <summary>The handler presses keys, moves the mouse or pastes into Elite.</summary>
     public bool SendsInput { get; init; }
+
+    /// <summary>The result carries an <see cref="ToolResult.Image"/>; not offered to a model that cannot read one.</summary>
+    public bool ReturnsImage { get; init; }
 
     public required ToolHandler Handler { get; init; }
 }

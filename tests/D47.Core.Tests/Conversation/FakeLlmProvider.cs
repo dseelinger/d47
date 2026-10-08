@@ -32,6 +32,9 @@ public sealed class FakeLlmProvider : ILlmProvider
     /// <summary>Whether this endpoint searches deferred tools.</summary>
     public bool ToolSearch { get; set; }
 
+    /// <summary>Whether the model reads a picture on a tool result.</summary>
+    public bool Images { get; init; }
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
@@ -41,6 +44,7 @@ public sealed class FakeLlmProvider : ILlmProvider
         SupportsToolCalls = ToolCalls,
         SupportsWebSearch = WebSearch,
         SupportsToolSearch = ToolSearch,
+        SupportsImages = Images,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
@@ -87,6 +91,9 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
     /// <summary>Whether this endpoint searches deferred tools.</summary>
     public bool ToolSearch { get; init; }
 
+    /// <summary>Whether the model reads a picture on a tool result.</summary>
+    public bool Images { get; init; } = true;
+
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
@@ -95,6 +102,7 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
         MinimumCacheablePrefixTokens = 512,
         SupportsToolCalls = true,
         SupportsToolSearch = ToolSearch,
+        SupportsImages = Images,
     };
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(

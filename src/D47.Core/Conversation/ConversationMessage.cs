@@ -19,7 +19,11 @@ public abstract record ConversationContent
     public sealed record ToolUse(string Id, string Name, string InputJson) : ConversationContent;
 
     /// <summary>The answer to one <see cref="ToolUse"/>, matched by <paramref name="ToolUseId"/>.</summary>
-    public sealed record ToolResult(string ToolUseId, string Content, bool IsError) : ConversationContent;
+    public sealed record ToolResult(string ToolUseId, string Content, bool IsError) : ConversationContent
+    {
+        /// <summary>A picture sent with the content. Never stored past the turn that produced it.</summary>
+        public ImageAttachment? Image { get; init; }
+    }
 
     /// <summary>
     /// A block Core does not read, sent back verbatim and in place to the provider named by
@@ -58,6 +62,12 @@ public sealed record ConversationMessage(ConversationRole Role, IReadOnlyList<Co
 
 /// <summary>
 /// A tool as described to the model — no handler, no delegate. A <paramref name="Deferred"/> tool is loaded
-/// only when the provider's tool search finds it.
+/// only when the provider's tool search finds it; a <paramref name="ReturnsImage"/> tool is advertised only
+/// where the model reads pictures.
 /// </summary>
-public sealed record ToolAdvertisement(string Name, string Description, string InputSchemaJson, bool Deferred = false);
+public sealed record ToolAdvertisement(
+    string Name,
+    string Description,
+    string InputSchemaJson,
+    bool Deferred = false,
+    bool ReturnsImage = false);
