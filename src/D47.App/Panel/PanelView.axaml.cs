@@ -1567,6 +1567,11 @@ public partial class PanelView : UserControl
             return PanelScrollOutcome.NothingToScroll;
         }
 
+        if (step == PanelScrollStep.Newest)
+        {
+            return ScrollToNewest(scroller);
+        }
+
         var viewport = scroller.Viewport.Height;
 
         if (viewport <= 0 || scroller.Extent.Height <= viewport)
@@ -1605,6 +1610,35 @@ public partial class PanelView : UserControl
             ShowFollowButton();
         }
 
+        return PanelScrollOutcome.Moved;
+    }
+
+    /// <summary>What ↓ Newest does, for a surface with no button: follow again and go to the newest line.</summary>
+    private PanelScrollOutcome ScrollToNewest(ScrollViewer active)
+    {
+        if (!ReferenceEquals(active, TranscriptScroller))
+        {
+            return PanelScrollOutcome.NothingToScroll;
+        }
+
+        var atNewest = AtTheNewest();
+        var scroller = Scroller;
+
+        _following = true;
+
+        if (scroller.Viewport.Height <= 0 || scroller.Extent.Height <= scroller.Viewport.Height)
+        {
+            ShowFollowButton();
+            return PanelScrollOutcome.NothingToScroll;
+        }
+
+        if (atNewest)
+        {
+            ShowFollowButton();
+            return PanelScrollOutcome.AlreadyThere;
+        }
+
+        Follow();
         return PanelScrollOutcome.Moved;
     }
 

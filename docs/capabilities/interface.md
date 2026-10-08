@@ -341,7 +341,7 @@ it could have been showing. It never takes the foreground and it is not somethin
 Everything that changes what it shows is somewhere else — the window, a spoken phrase, or a switch.
 
 **Which is why it is scrolled by voice.** The wheel goes straight through it as well, so
-["page down"](#scrolling) and its three companions are the only way to read past the fold on this
+["page down"](#scrolling) and its companions are the only way to read past the fold on this
 surface.
 
 **And why it draws no buttons.** A control nobody can press is a control spending room the data
@@ -613,7 +613,7 @@ has no bar at all, being the transcript's tail and the microphone row and nothin
 
 #### Scrolling by saying so {#scrolling}
 
-Four phrases, on **all three surfaces at once** — the window, the headset panel and the flat
+Five kinds of phrase, on **all three surfaces at once** — the window, the headset panel and the flat
 overlay:
 
 ```text
@@ -621,7 +621,12 @@ page down       page forward      next page
 page up         page back         previous page
 scroll down     down a bit        scroll down a bit
 scroll up       up a bit          scroll up a bit
+newest          latest            jump to the newest      scroll to the bottom
 ```
+
+The last row goes to the newest line and starts following again, as pressing **↓ Newest** does. The
+headset's mini panel and the flat overlay have no such button, so this is the way back there. On
+the journal readings, where the newest line is at the top, it goes to the top.
 
 A page is a screenful less one line, so the line you were reading when you said it is still there
 when the page settles. A scroll is three lines, which is what one notch of a wheel does nearly
@@ -645,7 +650,7 @@ Dragging the scrollbar is unchanged and is not being replaced. The thumbsticks s
 answered instead of vanishing into a silence that looks like not being heard.
 
 Scrolling up stops the transcript following the newest line, exactly as dragging it up does. Press
-the jump-to-latest control, or scroll back to the bottom, to start following again.
+the jump-to-latest control, say "newest", or scroll back to the bottom, to start following again.
 
 **It is never a tool.** Like moving between tabs, this is matched before any provider is consulted
 — so it works with no model configured, and nothing an in-game message says can move your page.

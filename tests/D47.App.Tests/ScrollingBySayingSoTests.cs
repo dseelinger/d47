@@ -172,6 +172,46 @@ public class ScrollingBySayingSoTests
         window.Close();
     }
 
+    /// <summary>A mini panel has no ↓ Newest button, so the step is its way back to following.</summary>
+    [AvaloniaFact]
+    public void NewestMakesAScrolledUpMiniPanelFollowAgain()
+    {
+        var (window, panel) = Open();
+
+        panel.Classes.Add("output-only");
+
+        var scroller = panel.GetControl<ScrollViewer>("TranscriptScroller");
+        var model = (PanelViewModel)panel.DataContext!;
+
+        panel.Scroll(PanelScrollStep.PageUp);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelScrollOutcome.Moved, panel.Scroll(PanelScrollStep.Newest));
+        Dispatcher.UIThread.RunJobs();
+
+        model.Append("\nA turn that arrives after the Commander asked for the newest.");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(
+            scroller.Offset.Y >= scroller.Extent.Height - scroller.Viewport.Height - 1,
+            "The panel did not follow the appended turn.");
+
+        Assert.Equal(PanelScrollOutcome.AlreadyThere, panel.Scroll(PanelScrollStep.Newest));
+
+        window.Close();
+    }
+
+    /// <summary>A short page is at its newest, but saying so still resumes following.</summary>
+    [AvaloniaFact]
+    public void NewestOnAPageThatFitsHasNothingToScroll()
+    {
+        var (window, panel) = Open(lines: 1);
+
+        Assert.Equal(PanelScrollOutcome.NothingToScroll, panel.Scroll(PanelScrollStep.Newest));
+
+        window.Close();
+    }
+
     /// <summary>The headset, through what it actually draws.</summary>
     [AvaloniaFact]
     public void TheHeadsetPanelScrollsAndRedraws()

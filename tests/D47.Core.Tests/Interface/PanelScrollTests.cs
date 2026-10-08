@@ -14,6 +14,14 @@ public class PanelScrollTests
     public void TheFourThatWereAskedFor(string spoken, PanelScrollStep step) =>
         Assert.Equal(step, PanelScroll.Match(spoken));
 
+    [Theory]
+    [InlineData("newest")]
+    [InlineData("Latest.")]
+    [InlineData("jump to the newest")]
+    [InlineData("scroll to the bottom")]
+    public void SayingNewestGoesToTheNewestLine(string spoken) =>
+        Assert.Equal(PanelScrollStep.Newest, PanelScroll.Match(spoken));
+
     /// <summary>Punctuation and spacing are the transcriber's, not the Commander's.</summary>
     [Theory]
     [InlineData("Page Down")]
@@ -94,6 +102,10 @@ public class PanelScrollTests
     [InlineData(PanelScrollStep.LineDown, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the bottom.")]
     [InlineData(PanelScrollStep.PageUp, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the top.")]
     [InlineData(PanelScrollStep.LineUp, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the top.")]
+
+    [InlineData(PanelScrollStep.Newest, new[] { PanelScrollOutcome.Moved }, "Newest.")]
+    [InlineData(PanelScrollStep.Newest, new[] { PanelScrollOutcome.AlreadyThere }, "Already at the newest.")]
+    [InlineData(PanelScrollStep.Newest, new[] { PanelScrollOutcome.NothingToScroll }, "There is nothing to scroll here.")]
 
     // No page at all, which looks identical to "already there" from outside.
     [InlineData(PanelScrollStep.PageDown, new[] { PanelScrollOutcome.NothingToScroll }, "There is nothing to scroll here.")]

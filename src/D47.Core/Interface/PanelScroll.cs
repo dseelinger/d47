@@ -12,6 +12,9 @@ public enum PanelScrollStep
     LineUp,
 
     LineDown,
+
+    /// <summary>To the newest line, and following it again.</summary>
+    Newest,
 }
 
 /// <summary>What happened when a surface was asked to scroll (#263).</summary>
@@ -49,6 +52,11 @@ public static class PanelScroll
             ["scroll up"] = PanelScrollStep.LineUp,
             ["up a bit"] = PanelScrollStep.LineUp,
             ["scroll up a bit"] = PanelScrollStep.LineUp,
+
+            ["newest"] = PanelScrollStep.Newest,
+            ["latest"] = PanelScrollStep.Newest,
+            ["jump to the newest"] = PanelScrollStep.Newest,
+            ["scroll to the bottom"] = PanelScrollStep.Newest,
         };
 
     /// <summary>How many lines a nudge moves, where a page moves a screenful.</summary>
@@ -77,6 +85,7 @@ public static class PanelScroll
                 PanelScrollStep.PageDown => "Page down.",
                 PanelScrollStep.PageUp => "Page up.",
                 PanelScrollStep.LineDown => "Scrolled down.",
+                PanelScrollStep.Newest => "Newest.",
                 _ => "Scrolled up.",
             };
         }
@@ -84,6 +93,11 @@ public static class PanelScroll
         if (!seen.Contains(PanelScrollOutcome.AlreadyThere))
         {
             return "There is nothing to scroll here.";
+        }
+
+        if (step == PanelScrollStep.Newest)
+        {
+            return "Already at the newest.";
         }
 
         return step is PanelScrollStep.PageDown or PanelScrollStep.LineDown
