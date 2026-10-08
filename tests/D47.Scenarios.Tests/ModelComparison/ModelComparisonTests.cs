@@ -83,7 +83,7 @@ public class ModelComparisonTests
 
         bool Chosen(string id) => only is null || only.Any(prefix => id.StartsWith(prefix, StringComparison.Ordinal));
 
-        Log($"models {string.Join(", ", models)}; {runs} run(s) of each turn, {quietRuns} of each quiet call; cap ${cap}; spent so far ${meter.Spent:0.0000}");
+        Log($"models {string.Join(", ", models)}; {runs} run(s) of each turn, {quietRuns} of each background call; cap ${cap}; spent so far ${meter.Spent:0.0000}");
 
         var turns = ComparisonCases.Turns.Where(turn => Chosen(turn.Id)).ToList();
         var quiet = ComparisonCases.Quiet.Where(call => Chosen(call.Id)).ToList();

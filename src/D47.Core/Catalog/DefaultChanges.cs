@@ -137,7 +137,7 @@ public static class DefaultChanges
         return new DefaultChange(
             key,
             current,
-            $"The quiet calls now use {catalog.LabelFor(provider, current)}.",
+            $"The background model is now {catalog.LabelFor(provider, current)}.",
             $"Keep {catalog.LabelFor(provider, conversation)}",
             ConversationCapability.BackgroundModelKey,
             conversation);

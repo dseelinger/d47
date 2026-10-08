@@ -342,7 +342,7 @@ Which model answers. Leave it empty for the provider's default, shown greyed out
 chosen" stays distinguishable from "I chose that one".
 
 **This is the model your *conversation* takes.** The things Directive 47 says without being asked
-can be sent somewhere cheaper — see [Model for the quiet calls](#background-model), two rows down.
+can be sent somewhere cheaper — see [Background model](#background-model), two rows down.
 
 Anthropic's default is the highest Sonnet — currently **Claude Sonnet 5.5**. A companion answering
 questions about a game in flight is not the work the Opus tiers are priced for, and the Opus
@@ -410,7 +410,7 @@ spend. It runs only when you press Test or a key's VERIFY button, never on a tim
 also asked for at startup and whenever the provider, its endpoint or its key changes, to fill the
 Model row; that request is free as well and reports nothing.
 
-#### Model for the quiet calls {#background-model}
+#### Background model {#background-model}
 
 Which model writes the things you did not ask for: a line of In Ship chatter, the brief when you sit down,
 what Directive 47 says after a long gap, a lore lookup, and choosing a voice for a core. Leave it
@@ -420,7 +420,7 @@ empty and they use the model above, which is what every version before this one 
 turn re-sends everything said so far, and the provider charges the cheap cached rate for a prefix
 it has seen before — but a cache belongs to one model, so *alternating* between two models pays to
 write the cache again each time you come back. One detour costs several times what the cheap turn
-saved, which is why Directive 47 will never switch models question by question. The quiet calls are
+saved, which is why Directive 47 will never switch models question by question. The background calls are
 the opposite case: none of them carry the conversation, every one of them already starts cold, so
 sending them somewhere cheaper costs nothing at all and saves most of what Directive 47 spends
 while you are not talking to it.
@@ -445,7 +445,7 @@ rung is not enough for you.
 The rungs are **Low, Medium, High, Xhigh and Max**. Leave it empty and the gauge decides, which is
 the default.
 
-Only your *conversation* is held to it. The quiet calls above are not, and that is deliberate: a
+Only your *conversation* is held to it. The background calls above are not, and that is deliberate: a
 floor of High would turn every line of In Ship chatter into a reasoning call, which is exactly the spending
 the row two above exists to stop.
 
@@ -805,7 +805,7 @@ spend. Takes no arguments.
 ```
 
 The endpoint is reported only when the Commander has chosen one; a line stating where Anthropic
-lives tells them something they knew. **The model for the quiet calls follows the same rule** and
+lives tells them something they knew. **The background model follows the same rule** and
 appears only where it differs — otherwise it would repeat the model named on the line above.
 
 Backstory and the character sheet sit inside the cached prompt prefix, so editing either costs one

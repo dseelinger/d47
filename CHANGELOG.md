@@ -8,17 +8,19 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Settings row "Model for the quiet calls" is now "Background model", and the model status report and the notice that a default changed use the same name. Your saved choice is unchanged.
+
 Ask "have I been to Lave?" and D47 says whether you have, how many times, and the day of your last visit, read from the list of visited systems Elite keeps on your PC for the Commander you are playing. A system missing from that list is answered as no record of a visit, not as never visited. Describing a system you have visited now ends with the same sentence. Your current system can be checked with galaxy lookups off. Any other system needs them on, and its name goes to Spansh to be found, as it does when you ask D47 to describe that system. The list itself is read on your PC and never sent.
 
 D47 can look at your screen when you ask about something on it, such as "what's on my scanner". Turn on Let the model look at the screen in Settings, under the language model, or say "turn on screen pictures". It takes one picture of Elite's window, or of the headset's view when Elite is running in VR, and sends it to your language-model provider with that question only. The picture is never saved. The line under the reply says PICTURE OF ELITE'S WINDOW or PICTURE OF HEADSET VIEW, and the cost shown includes the picture. The setting is off by default, the model cannot turn it on, and Privacy and egress lists it as Screen pictures. When the model in use does not read pictures, the row says so and no picture is taken.
 
-With Model for the quiet calls unset, In Ship chatter, narrator lines, the opening brief, lore lookups and voice choice use Claude Haiku 5.5 on Anthropic's own endpoint. A custom endpoint, or a Model for the quiet calls you set yourself, is unchanged. D47 tells you once and offers to keep your conversation model for these calls.
+With Background model unset, In Ship chatter, narrator lines, the opening brief, lore lookups and voice choice use Claude Haiku 5.5 on Anthropic's own endpoint. A custom endpoint, or a Background model you set yourself, is unchanged. D47 tells you once and offers to keep your conversation model for these calls.
 
 Claude Haiku 5.5 is in the model list, priced at $0.10 per million input tokens and $0.50 per million output tokens for prompts up to 100,000 tokens. Longer prompts cost five times that, which the spend estimate does not yet include.
 
 Claude Fable 5.1 is in the model list, at $10 per million input tokens and $50 per million output tokens.
 
-OpenAI's default model is now GPT-6.1 Sol, at $2 per million input tokens and $10 per million output tokens. GPT-6 Sol, GPT-6 Astra and GPT-6 Luna are in the model list too. With OpenAI selected and Model for the quiet calls unset, the quiet calls now use GPT-6 Luna, at $0.10 per million input tokens and $0.50 per million output tokens.
+OpenAI's default model is now GPT-6.1 Sol, at $2 per million input tokens and $10 per million output tokens. GPT-6 Sol, GPT-6 Astra and GPT-6 Luna are in the model list too. With OpenAI selected and Background model unset, the background model is now GPT-6 Luna, at $0.10 per million input tokens and $0.50 per million output tokens.
 
 The spend estimate now prices cached input correctly for Claude Haiku 5.5 and Claude Sonnet 5.5. It had shown Haiku 5.5's cache cost at a tenth of the real price and Sonnet 5.5's cache reads at twice the real price.
 

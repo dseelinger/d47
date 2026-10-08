@@ -181,11 +181,11 @@ public static class ConversationCapability
             report.AppendLine($"Model: {settings.Llm.Model ?? provider.DefaultModel ?? "(provider default)"}");
 
             // Only when the Commander has split the two (Phase 54), following the rule the endpoint line
-            // below already uses: a line saying the quiet calls use the model that was named one line above
+            // below already uses: a line saying the background model is the model that was named one line above
             // tells them nothing they did not just read.
             if (settings.Llm.BackgroundModel is { Length: > 0 } background)
             {
-                report.AppendLine($"Model for the quiet calls: {background}");
+                report.AppendLine($"Background model: {background}");
             }
 
             // Only when it is not the provider's own. "Endpoint: .anthropic.com" is a line that tells the
@@ -384,7 +384,7 @@ public static class ConversationCapability
             {
                 Key = BackgroundModelKey,
                 Advanced = true,
-                Label = "Model for the quiet calls",
+                Label = "Background model",
                 Help =
                     "Which model writes the things you did not ask for — In Ship chatter, the opening "
                     + "brief, what D47 says after a long gap, a lore lookup, and choosing a voice. None "

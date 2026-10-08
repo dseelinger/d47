@@ -119,7 +119,7 @@ public class ACommanderIsToldWhenADefaultChangesTests
         var change = DefaultChanges.Find(new D47Settings(), Catalog("claude-a", "claude-b"), ref told);
 
         Assert.NotNull(change);
-        Assert.Equal("The quiet calls now use Claude B.", change.Text);
+        Assert.Equal("The background model is now Claude B.", change.Text);
         Assert.Equal("Keep Claude A", change.ActionLabel);
         Assert.Equal("llm.backgroundModel", change.SettingKey);
         Assert.Equal("claude-a", change.Value);
