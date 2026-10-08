@@ -32,8 +32,11 @@ public sealed class ScenarioWorld : IDisposable
         IsGameForeground = true,
     };
 
-    public ScenarioWorld()
+    /// <param name="services">The live services a model comparison runs against, or null for the inert world.</param>
+    public ScenarioWorld(ScenarioServices? services = null)
     {
+        services?.Seed(_install.Paths.Data);
+
         var store = new SettingsStore(_install.Paths, NullLogger<SettingsStore>.Instance);
         Secrets = new SecretStore(_install.Paths, new PlainProtector(), NullLogger<SecretStore>.Instance);
         Settings = new SettingsService(store, Secrets, store.Load(), NullLogger<SettingsService>.Instance);
@@ -46,6 +49,48 @@ public sealed class ScenarioWorld : IDisposable
             NullLogger<LoreStore>.Instance));
 
         CapabilityRegistry? built = null;
+
+        // NOT ActionSurface.Inert, and that is the point.
+        var actions = new ActionSurface
+        {
+            Binds = () => Bound,
+            Status = () => LiveStatus,
+            Input = _input,
+            Enabled = () => ActionsEnabled,
+        };
+
+        var checklistStore = new D47.Core.Checklists.ChecklistStore(
+            Path.Combine(_install.Paths.Data, "checklist.json"),
+            NullLogger<D47.Core.Checklists.ChecklistStore>.Instance);
+
+        var checklists = new D47.Core.Checklists.ChecklistService(
+            checklistStore,
+            new D47.Core.Checklists.ChecklistProposalStore(
+                Path.Combine(_install.Paths.Data, "checklist-proposals.json"),
+                NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
+            services is null ? () => null : () => GameState.Active);
+
+        D47.Core.Ships.ShipPlanService? shipPlans = null;
+        D47.Core.Engineers.EngineerPlanService? unlocks = null;
+
+        if (services is not null)
+        {
+            checklistStore.Poll();
+
+            var shipBuilds = new D47.Core.Ships.ShipBuildStore(
+                Path.Combine(_install.Paths.Data, "ships.json"),
+                NullLogger<D47.Core.Ships.ShipBuildStore>.Instance);
+            shipBuilds.Poll();
+
+            var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
+                Path.Combine(_install.Paths.Data, "on-foot.json"),
+                NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
+            onFootBuilds.Poll();
+
+            shipPlans = new D47.Core.Ships.ShipPlanService(shipBuilds, checklists, () => GameState.Active);
+            unlocks = new D47.Core.Engineers.EngineerPlanService(
+                shipBuilds, onFootBuilds, checklists, () => GameState.Active);
+        }
 
         var descriptors = BuiltinCapabilities.All(
             _install.Paths,
@@ -80,29 +125,27 @@ public sealed class ScenarioWorld : IDisposable
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a scenario run."),
                 Nudge = (_, _) => D47.Core.Vr.VrNudgeOutcome.NoHeadset,
             },
-            // NOT ActionSurface.Inert, and that is the point.
-            new ActionSurface
-            {
-                Binds = () => Bound,
-                Status = () => LiveStatus,
-                Input = _input,
-                Enabled = () => ActionsEnabled,
-            },
+            actions,
             () => "No autonomous actions in a scenario run.",
-            NavigationSurface.Inert,
+            services is null ? NavigationSurface.Inert : services.Navigation(actions, Clipboard, () => Settings.Current.Actions.AutoPlot),
             new D47.Core.Actions.MacroStore(
                 Path.Combine(_install.Paths.Data, "macros.json"),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             Personas,
-            new D47.Core.Checklists.ChecklistService(
-                new D47.Core.Checklists.ChecklistStore(
-                    Path.Combine(_install.Paths.Data, "checklist.json"),
-                    NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
-                new D47.Core.Checklists.ChecklistProposalStore(
-                    Path.Combine(_install.Paths.Data, "checklist-proposals.json"),
-                    NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
-                () => null),
-            lore: Lore);
+            checklists,
+            galaxy: services?.Galaxy,
+            routes: services?.Routes,
+            now: services?.Now,
+            gameStatus: services is null ? null : () => LiveStatus,
+            lore: Lore,
+            ships: shipPlans,
+            unlocks: unlocks,
+            lastFoundSystem: services is null ? null : new LastFoundSystem(),
+            liveStatus: services is null ? null : () => LiveStatus,
+            starSystems: services?.StarSystems,
+            visitedStars: services?.VisitedStars,
+            screen: services?.Screen,
+            imagesAvailable: services is null ? null : () => true);
 
         Registry = CapabilityRegistry.Build(descriptors.Select(Recording));
         built = Registry;
@@ -130,6 +173,9 @@ public sealed class ScenarioWorld : IDisposable
     public LoreBook Lore { get; }
 
     public D47.Core.Persona.PersonaHost Personas { get; } = new();
+
+    /// <summary>What a working clipboard was given, in a world composed with services.</summary>
+    public RecordingClipboard Clipboard { get; } = new();
 
     /// <summary>Whether key injection is on for this run.</summary>
     public bool ActionsEnabled { get; set; }
