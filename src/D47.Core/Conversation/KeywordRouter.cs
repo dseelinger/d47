@@ -156,13 +156,8 @@ public sealed class KeywordRouter(
 
         var utterance = Utterance(input);
 
-        // As said, before as stripped — and that order is the whole of the safety here. `PersonaCapability`
-        // declares "switch to Directive 47", which *opens with an opener*, so stripping first would have left
-        // "directive 47" matching nothing and silently taken persona switching by voice away.
-        return Matching(utterance)
-            ?? Matching(SpokenOpeners.Strip(utterance))
-            ?? Matching(SpokenTails.Strip(utterance))
-            ?? Matching(SpokenTails.Strip(SpokenOpeners.Strip(utterance)));
+        // As said first: `PersonaCapability` declares "switch to Directive 47", which opens with an opener.
+        return Readings(utterance).Select(Matching).FirstOrDefault(match => match is not null);
 
         SettingCommandMatch? Matching(string said) => (
             from capability in registry.All
@@ -183,39 +178,51 @@ public sealed class KeywordRouter(
 
         var utterance = Utterance(input);
 
-        // The Commander's own phrases first.
-        var dynamic = (
-            from command in dynamicCommands?.Invoke() ?? []
-            where string.Equals(WithoutThe(utterance), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
-            orderby command.Phrase.Length descending
-            select new ToolCommandMatch(
-                command.CapabilityId,
-                command.ToolName,
-                new ToolArguments(command.Arguments),
-                command.Phrase))
-            .FirstOrDefault();
+        // As said first, then stripped; within a reading, the Commander's own phrases first.
+        return Readings(utterance).Select(Matching).FirstOrDefault(match => match is not null);
 
-        if (dynamic is not null)
+        ToolCommandMatch? Matching(string said)
         {
-            return dynamic;
+            var dynamic = (
+                from command in dynamicCommands?.Invoke() ?? []
+                where string.Equals(WithoutThe(said), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                orderby command.Phrase.Length descending
+                select new ToolCommandMatch(
+                    command.CapabilityId,
+                    command.ToolName,
+                    new ToolArguments(command.Arguments),
+                    command.Phrase))
+                .FirstOrDefault();
+
+            return dynamic ?? (
+                from capability in registry.All
+                from tool in capability.Descriptor.Tools
+                from command in tool.Commands
+                where string.Equals(WithoutThe(said), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
+
+                // A phrase that is only an answer while there is a question.
+                where command.When?.Invoke() ?? true
+                orderby command.Phrase.Length descending
+                select new ToolCommandMatch(
+                    capability.Descriptor.Id,
+                    tool.Name,
+                    new ToolArguments(command.Arguments),
+                    command.Phrase))
+                .FirstOrDefault();
         }
-
-        return (
-            from capability in registry.All
-            from tool in capability.Descriptor.Tools
-            from command in tool.Commands
-            where string.Equals(WithoutThe(utterance), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
-
-            // A phrase that is only an answer while there is a question.
-            where command.When?.Invoke() ?? true
-            orderby command.Phrase.Length descending
-            select new ToolCommandMatch(
-                capability.Descriptor.Id,
-                tool.Name,
-                new ToolArguments(command.Arguments),
-                command.Phrase))
-            .FirstOrDefault();
     }
+
+    /// <summary>The ways an utterance is read, in order: as said, opener removed, tail removed, both removed.</summary>
+    internal static IReadOnlyList<string> Readings(string said) =>
+    [
+        .. new[]
+        {
+            said,
+            SpokenOpeners.Strip(said),
+            SpokenTails.Strip(said),
+            SpokenTails.Strip(SpokenOpeners.Strip(said)),
+        }.Distinct(StringComparer.OrdinalIgnoreCase),
+    ];
 
     /// <summary>
     /// One utterance, reduced to what was said: no surrounding punctuation, no doubled spaces, and

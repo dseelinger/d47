@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Game commands now run when you add a courtesy such as "please", "now" or "for me": "gear down please", "lights off now" and "engage supercruise for me" act at once instead of asking "Did you mean…?". Phrases you taught D47 work the same way.
+
 The Settings row "Model for the quiet calls" is now "Background model", and the model status report and the notice that a default changed use the same name. Your saved choice is unchanged.
 
 Ask "have I been to Lave?" and D47 says whether you have, how many times, and the day of your last visit, read from the list of visited systems Elite keeps on your PC for the Commander you are playing. A system missing from that list is answered as no record of a visit, not as never visited. Describing a system you have visited now ends with the same sentence. Your current system can be checked with galaxy lookups off. Any other system needs them on, and its name goes to Spansh to be found, as it does when you ask D47 to describe that system. The list itself is read on your PC and never sent.

@@ -155,16 +155,7 @@ public sealed class PhraseBook
     {
         var said = KeywordRouter.Utterance(utterance);
 
-        string[] readings =
-        [
-            .. new[]
-            {
-                said,
-                SpokenOpeners.Strip(said),
-                SpokenTails.Strip(said),
-                SpokenTails.Strip(SpokenOpeners.Strip(said)),
-            }.Distinct(StringComparer.OrdinalIgnoreCase),
-        ];
+        var readings = KeywordRouter.Readings(said);
 
         var scored = Entries
             .Select((entry, order) => (Entry: entry, Order: order))
