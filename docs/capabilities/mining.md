@@ -1,7 +1,7 @@
 ---
 title: Mining
 group: Knowledge
-nav_order: 152
+nav_order: 153
 ---
 
 <details class="d47-band" open>

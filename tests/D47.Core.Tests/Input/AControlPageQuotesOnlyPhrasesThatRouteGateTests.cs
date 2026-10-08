@@ -15,6 +15,7 @@ public partial class AControlPageQuotesOnlyPhrasesThatRouteGateTests
     [InlineData("ship-systems")]
     [InlineData("panels")]
     [InlineData("srv")]
+    [InlineData("on-foot-controls")]
     public void EveryQuotedPhraseRoutes(string page)
     {
         var phrases = Quoted(File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "capabilities", $"{page}.md")));

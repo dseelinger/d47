@@ -112,6 +112,7 @@ public static class GameActions
     public const string Interface = "Panels and interface";
     public const string SrvGroup = "SRV";
     public const string Combat = "Combat";
+    public const string OnFoot = "On foot";
     public const string Weapons = "Weapons";
 
     /// <summary>Every action, in the order a Commander would meet them.</summary>
@@ -795,6 +796,138 @@ public static class GameActions
             Group = Combat,
             Variants = [new ActionVariant("OrderFollow", ControlContext.NormalSpace)],
             Names = ["fighter follow me", "fighter form up"],
+        },
+
+        // ---- On foot: suit, tools and weapons ----------------------------------------------
+        new()
+        {
+            Id = "suit_shields",
+            Label = "the suit shields",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidToggleShieldsButton", ControlContext.OnFoot)],
+
+            // Status.json has no suit shield state, so "on" and "off" press the toggle.
+            Names = ["shields"],
+            ExtraPhrases = [("toggle shields", DesiredState.Toggle), ("shields on", DesiredState.On), ("shields off", DesiredState.Off)],
+        },
+
+        new()
+        {
+            Id = "medkit",
+            Label = "a medkit",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidHealthPack", ControlContext.OnFoot)],
+            Names = ["medkit", "heal"],
+            Verbs = ["use a"],
+        },
+
+        new()
+        {
+            Id = "energy_cell",
+            Label = "an energy cell",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidBattery", ControlContext.OnFoot)],
+            Names = ["energy cell"],
+            Verbs = ["use an"],
+        },
+
+        new()
+        {
+            Id = "energylink",
+            Label = "the energylink",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSwitchToRechargeTool", ControlContext.OnFoot)],
+            Names = ["energylink", "energy link"],
+        },
+
+        new()
+        {
+            Id = "profile_analyser",
+            Label = "the profile analyser",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSwitchToCompAnalyser", ControlContext.OnFoot)],
+            Names = ["profile analyser", "profile analyzer"],
+        },
+
+        new()
+        {
+            Id = "genetic_sampler",
+            Label = "the suit tool",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSwitchToSuitTool", ControlContext.OnFoot)],
+            Names = ["suit tool", "genetic sampler", "arc cutter"],
+        },
+
+        new()
+        {
+            Id = "primary_weapon",
+            Label = "the primary weapon",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSelectPrimaryWeaponButton", ControlContext.OnFoot)],
+            Names = ["primary weapon"],
+        },
+
+        new()
+        {
+            Id = "secondary_weapon",
+            Label = "the secondary weapon",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSelectSecondaryWeaponButton", ControlContext.OnFoot)],
+            Names = ["secondary weapon"],
+        },
+
+        new()
+        {
+            Id = "utility_weapon",
+            Label = "the utility weapon",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSelectUtilityWeaponButton", ControlContext.OnFoot)],
+            Names = ["sidearm", "utility weapon"],
+        },
+
+        new()
+        {
+            Id = "holster",
+            Label = "the holster",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidHideWeaponButton", ControlContext.OnFoot)],
+            Names = ["holster", "holster weapon"],
+        },
+
+        new()
+        {
+            Id = "frag_grenade",
+            Label = "the frag grenade",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSelectFragGrenade", ControlContext.OnFoot)],
+            Names = ["frag grenade"],
+        },
+
+        new()
+        {
+            Id = "emp_grenade",
+            Label = "the EMP grenade",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSelectEMPGrenade", ControlContext.OnFoot)],
+            Names = ["emp grenade"],
+        },
+
+        new()
+        {
+            Id = "shield_grenade",
+            Label = "the shield projector",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidSelectShieldGrenade", ControlContext.OnFoot)],
+            Names = ["shield projector"],
+        },
+
+        new()
+        {
+            Id = "mission_help",
+            Label = "the mission help panel",
+            Group = OnFoot,
+            Variants = [new ActionVariant("HumanoidToggleMissionHelpPanelButton", ControlContext.OnFoot)],
+            Names = ["mission help"],
         },
 
         // ---- Weapons (the honk's route in, Phase 10 item 3) -------------------------- No phrases and no

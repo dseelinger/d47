@@ -54,6 +54,10 @@ public static class HelpTaxonomy
                     "Select and cycle targets, target wingmen, and give fighter orders.",
                     "combat"),
                 HelpNode.Leaf(
+                    "On foot controls",
+                    "Use the suit's shields, medkit and energy cell, switch tools and weapons, and open the mission help panel.",
+                    "on-foot-controls"),
+                HelpNode.Leaf(
                     "Panels and interface",
                     "Open the cockpit panels, move around them, and change fire group.",
                     "panels"),

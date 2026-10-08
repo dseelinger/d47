@@ -1,7 +1,7 @@
 ---
 title: Powerplay ranks
 group: Knowledge
-nav_order: 148
+nav_order: 149
 ---
 
 <details class="d47-band" open>

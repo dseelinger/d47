@@ -147,6 +147,7 @@ nav_order: 110
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
+<a class="card" href="on-foot-controls.html"><span class="ct">On foot controls →</span><span class="cd">Shields, medkit, tools and weapons by voice.</span></a>
 <a class="card" href="engineers.html"><span class="ct">Engineers →</span><span class="cd">Who applies a modification, and how far away they are.</span></a>
 <a class="card" href="gap.html"><span class="ct">The gap →</span><span class="cd">The ship locker half of what your plans still need.</span></a>
 <a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a promoted kit plan lands, grade first and modifications after.</span></a>

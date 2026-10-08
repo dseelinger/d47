@@ -99,7 +99,7 @@ public static class ToolSurface
 
     private static bool Includes(string capabilityId, ControlContext context, bool actionsEnabled)
     {
-        if (capabilityId is not ("flight-controls" or "ship-systems" or "panels" or "combat" or "srv" or "macros"))
+        if (capabilityId is not ("flight-controls" or "ship-systems" or "panels" or "combat" or "on-foot-controls" or "srv" or "macros"))
         {
             return true;
         }
@@ -121,6 +121,7 @@ public static class ToolSurface
             "ship-systems" => GameActions.Systems,
             "panels" => GameActions.Interface,
             "combat" => GameActions.Combat,
+            "on-foot-controls" => GameActions.OnFoot,
             "srv" => GameActions.SrvGroup,
             _ => null,
         };

@@ -160,6 +160,16 @@ public static class ActionCapabilities
             ["next hostile", "target the highest threat", "recall the fighter"],
             surface,
             order: 54),
+
+        Create(
+            "on-foot-controls",
+            "On foot controls",
+            GameActions.OnFoot,
+            "control_on_foot",
+            "Use the suit's shields, medkit and energy cell, switch tools and weapons, and open the mission help panel.",
+            ["shields on", "use a medkit", "primary weapon", "holster"],
+            surface,
+            order: 55),
     ];
 
     /// <summary>The live half: what is actually reachable this turn, as a line for prompt position 7.</summary>

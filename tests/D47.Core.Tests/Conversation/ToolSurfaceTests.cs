@@ -82,9 +82,9 @@ public class ToolSurfaceTests
 
         Assert.DoesNotContain(profile.Tools, tool => tool.Name == "control_systems");
 
-        // control_flight ships on foot for night vision alone.
+        // control_flight ships on foot for the lights and night vision alone.
         Assert.Equal(
-            ["night_vision"],
+            ["lights", "night_vision"],
             GameActions.All
                 .Where(action => action.Group == GameActions.Flight && action.For(ControlContext.OnFoot) is not null)
                 .Select(action => action.Id));
