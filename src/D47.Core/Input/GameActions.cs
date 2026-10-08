@@ -694,6 +694,22 @@ public static class GameActions
             Names = ["decrease sensor range", "sensor range down"],
         },
 
+        new()
+        {
+            Id = "recentre_headset",
+            Label = "the headset view",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("HMDReset", ControlContext.AnyShip | ControlContext.Srv | ControlContext.OnFoot),
+            ],
+            Names =
+            [
+                "recentre the headset", "recenter the headset", "reset the headset",
+                "recentre the view", "reset vr",
+            ],
+        },
+
         // ---- SRV (item 9) -------------------------------------------------------------------
         new()
         {

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Say "recentre the headset", "recenter the headset", "reset the headset", "recentre the view" or "reset vr" to press Elite's headset reset key and recentre the view in VR, in the ship, the SRV or on foot.
+
 Say "next tab" or "next page", and "previous tab" or "previous page", to change the tab of the open panel; "ui focus" or "focus the panels" to take focus of the panels; "quick comms" or "open quick comms" to open quick comms, including on foot; "orbit lines" to toggle the orbit lines; "increase sensor range" or "sensor range up", and "decrease sensor range" or "sensor range down" to change the sensor range in flight. "Galaxy map home" or "centre on my system" centres the galaxy map on your system, and answers that the galaxy map is not open when it is not.
 
 Say "open the fss", "full spectrum scanner" or "fss" to open the full spectrum scanner in normal space or supercruise. Inside it, say "close the fss", "leave the fss" or "exit the fss" to leave, and "discovery scan" or "honk" to hold the discovery scan key for the charge time. Outside the FSS, "close the fss" and "discovery scan" answer "The FSS is not open."; "open the fss" while it is open answers that it is already open. None of them presses a key in those cases.

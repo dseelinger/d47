@@ -588,6 +588,13 @@ Characters a second. `20` is the standard's adult rate, `17` its children's rate
 there because reading speed is the one thing about a caption that is a property of the reader
 rather than of the caption.
 
+#### Recentre Elite's view
+
+Say "recentre the headset", "recenter the headset", "reset the headset", "recentre the view" or
+"reset vr" to press the game's `HMDReset` key. It is the `recentre_headset` action of
+`control_interface`, and works in the ship, the SRV and on foot. It recentres Elite's view only;
+Directive 47's own panel keeps its place.
+
 #### Headset {#state}
 
 Not a setting but a state, shown next to the switch — because *switched off* and *SteamVR is not

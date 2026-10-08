@@ -17,6 +17,7 @@ public class PanelTabsAndSensorRangeAreSpokenTests
         Bindings =
         [
             new EliteBinding("GalaxyMapHome", "Primary", "Keyboard", "Key_H"),
+            new EliteBinding("HMDReset", "Primary", "Keyboard", "Key_R"),
             new EliteBinding("CycleNextPage", "Primary", "Keyboard", "Key_E"),
         ],
     };
@@ -59,6 +60,11 @@ public class PanelTabsAndSensorRangeAreSpokenTests
     [InlineData("sensor range up", "sensor_range_up")]
     [InlineData("decrease sensor range", "sensor_range_down")]
     [InlineData("sensor range down", "sensor_range_down")]
+    [InlineData("recentre the headset", "recentre_headset")]
+    [InlineData("recenter the headset", "recentre_headset")]
+    [InlineData("reset the headset", "recentre_headset")]
+    [InlineData("recentre the view", "recentre_headset")]
+    [InlineData("reset vr", "recentre_headset")]
     public void EachPhraseRoutesWithoutTheModel(string phrase, string id)
     {
         var match = Build(GuiFocus.None).Router.MatchToolCommand(phrase);
@@ -88,6 +94,19 @@ public class PanelTabsAndSensorRangeAreSpokenTests
     {
         var rig = Build(GuiFocus.GalaxyMap);
         var match = rig.Router.MatchToolCommand("galaxy map home");
+        Assert.NotNull(match);
+
+        var result = await rig.Registry.InvokeAsync(match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.NotEmpty(rig.Input.Steps);
+    }
+
+    [Fact]
+    public async Task RecentringTheHeadsetPressesItsKey()
+    {
+        var rig = Build(GuiFocus.None);
+        var match = rig.Router.MatchToolCommand("recentre the headset");
         Assert.NotNull(match);
 
         var result = await rig.Registry.InvokeAsync(match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
