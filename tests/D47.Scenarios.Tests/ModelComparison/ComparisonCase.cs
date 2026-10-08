@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Conversation;
+using D47.Core.Persona;
 
 namespace D47.Scenarios.Tests.ModelComparison;
 
@@ -54,6 +55,8 @@ public enum QuietKind
     Narration,
     LoreLookup,
     DebriefReword,
+    VoiceCasting,
+    NameAccents,
 }
 
 /// <summary>One background call, built with the same Core builders the app uses.</summary>
@@ -74,6 +77,15 @@ public sealed record QuietCase
     public string? System { get; init; }
 
     public string? Line { get; init; }
+
+    /// <summary>The voices to cast, for <see cref="QuietKind.VoiceCasting"/>.</summary>
+    public IReadOnlyList<VoicePairing.Slot> Slots { get; init; } = [];
+
+    /// <summary>The names to read, for <see cref="QuietKind.NameAccents"/>.</summary>
+    public IReadOnlyList<string> Names { get; init; } = [];
+
+    /// <summary>The sex a name should read as, by name, where the case states one.</summary>
+    public IReadOnlyDictionary<string, string> ExpectedSex { get; init; } = new Dictionary<string, string>();
 
     public required string Good { get; init; }
 }

@@ -1,5 +1,7 @@
 using D47.Core.Callouts;
+using D47.Core.Audio;
 using D47.Core.Conversation;
+using D47.Core.Persona;
 
 namespace D47.Scenarios.Tests.ModelComparison;
 
@@ -269,5 +271,41 @@ public static class ComparisonCases
         new() { Id = "debrief.callouts", Kind = QuietKind.DebriefReword, Line = "Start calling things out again.", Good = "An instruction, or none if it is a one-off command." },
         new() { Id = "debrief.idiot", Kind = QuietKind.DebriefReword, Line = "Oh stop it. You're an idiot.", Good = "none." },
         new() { Id = "debrief.engineers", Kind = QuietKind.DebriefReword, Line = "I don't need the dweller, I've already visited him", Good = "A standing instruction not to suggest The Dweller, or none." },
+
+        // Voice casting, over the Kokoro voices.
+        new() { Id = "voice.covas", Kind = QuietKind.VoiceCasting, Slots = [VoicePairing.SlotFor(PersonaCatalog.Covas)], Good = "A voice from the female British candidates that suits a calm ship's computer." },
+        new() { Id = "voice.cores-bound", Kind = QuietKind.VoiceCasting, Slots = [VoicePairing.SlotFor(PersonaCatalog.Cora), VoicePairing.SlotFor(PersonaCatalog.AnalystPrime)], Good = "A different voice for each, matching the gender each core is written with." },
+        new() { Id = "voice.core-unbound", Kind = QuietKind.VoiceCasting, Slots = [VoicePairing.SlotFor(PersonaCatalog.Warden)], Good = "One voice that fits the core's description." },
+        new() { Id = "voice.carrier", Kind = QuietKind.VoiceCasting, Slots = VoicePairing.CarrierRoles, Good = "A calm command voice for the captain and a brisk, procedural one for the tower, not the same voice." },
+
+        // Name accents, with the accents Kokoro's voices carry.
+        new()
+        {
+            Id = "accents.female", Kind = QuietKind.NameAccents,
+            Names = ["Eleanor Hartley", "Rosalind Kerr", "Bridget Maloney", "Sofia Marchetti"],
+            ExpectedSex = new Dictionary<string, string> { ["Eleanor Hartley"] = NameReading.Female, ["Rosalind Kerr"] = NameReading.Female, ["Bridget Maloney"] = NameReading.Female, ["Sofia Marchetti"] = NameReading.Female },
+            Good = "Every name read as female; an accent only where the name clearly points to one.",
+        },
+        new()
+        {
+            Id = "accents.male", Kind = QuietKind.NameAccents,
+            Names = ["Gerald Pemberton", "Duncan Fraser", "Marcus Webb", "Tobias Kline"],
+            ExpectedSex = new Dictionary<string, string> { ["Gerald Pemberton"] = NameReading.Male, ["Duncan Fraser"] = NameReading.Male, ["Marcus Webb"] = NameReading.Male, ["Tobias Kline"] = NameReading.Male },
+            Good = "Every name read as male; an accent only where the name clearly points to one.",
+        },
+        new()
+        {
+            Id = "accents.pointing", Kind = QuietKind.NameAccents,
+            Names = ["Sir Reginald Thornbury", "Dame Hilary Cross", "Billy-Bob McAllister", "Cooper Hayes"],
+            ExpectedSex = new Dictionary<string, string> { ["Sir Reginald Thornbury"] = NameReading.Male, ["Dame Hilary Cross"] = NameReading.Female },
+            Good = "British for the first two; the others British, American or none, never an accent outside the list.",
+        },
+        new()
+        {
+            Id = "accents.vessels", Kind = QuietKind.NameAccents,
+            Names = ["Iron Margin", "Slow Thunder", "Wanderer-7", "Orbital Cutter Nine"],
+            ExpectedSex = new Dictionary<string, string> { ["Iron Margin"] = NameReading.Unknown, ["Slow Thunder"] = NameReading.Unknown, ["Wanderer-7"] = NameReading.Unknown, ["Orbital Cutter Nine"] = NameReading.Unknown },
+            Good = "none, unknown for every name.",
+        },
     ];
 }

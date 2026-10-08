@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
@@ -8,6 +9,7 @@ using D47.Core.Debrief;
 using D47.Core.Journal;
 using D47.Core.Lore;
 using D47.Core.Persona;
+using D47.Core.Speech;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Scenarios.Tests.ModelComparison;
@@ -359,6 +361,67 @@ public sealed partial class ComparisonRunner(
                 break;
             }
 
+            case QuietKind.VoiceCasting:
+            {
+                input = $"cast: {string.Join(", ", quiet.Slots.Select(slot => slot.Id))}";
+                var voices = KokoroVoices();
+                var capture = new ReplyCapture(meter);
+                var chosen = await VoicePairing.ChooseForAsync(
+                    voices,
+                    quiet.Slots,
+                    [],
+                    capture,
+                    model,
+                    null,
+                    null,
+                    null,
+                    new Random(47),
+                    cancellationToken).ConfigureAwait(false);
+                var said = capture.Replies;
+                reply = string.Join(Environment.NewLine, chosen.Select(pair => $"{pair.Key} = {pair.Value}"));
+                failure = said.Count == 0 ? "no answer" : null;
+
+                foreach (var slot in quiet.Slots)
+                {
+                    var voice = chosen.GetValueOrDefault(slot.Id);
+
+                    checks[$"chosen by the model: {slot.Id}"] = voice is not null
+                                                                && said.Any(text => text.Contains(voice, StringComparison.OrdinalIgnoreCase));
+                    checks[$"gender fits: {slot.Id}"] = voice is not null
+                                                        && slot.Hint.Admits(voices.First(info => info.Id == voice).Gender);
+                }
+
+                break;
+            }
+
+            case QuietKind.NameAccents:
+            {
+                input = $"accents: {string.Join(", ", quiet.Names)}";
+                var readings = await VoicePairing.AskAccentsAsync(
+                    quiet.Names,
+                    VoiceAccents(KokoroVoices()),
+                    meter,
+                    model,
+                    null,
+                    null,
+                    null,
+                    cancellationToken).ConfigureAwait(false);
+                reply = readings is null
+                    ? string.Empty
+                    : string.Join(Environment.NewLine, readings.Select(pair => $"{pair.Key} = {pair.Value.Accent}, {pair.Value.Sex}"));
+                failure = readings is null ? "no answer" : null;
+                checks["parses"] = readings is not null && quiet.Names.All(readings.ContainsKey);
+
+                if (quiet.ExpectedSex.Count > 0)
+                {
+                    checks["sex as expected"] = readings is not null
+                                                && quiet.ExpectedSex.All(pair =>
+                                                    readings.TryGetValue(pair.Key, out var reading) && reading.Sex == pair.Value);
+                }
+
+                break;
+            }
+
             default:
                 throw new InvalidOperationException($"Unknown kind {quiet.Kind}.");
         }
@@ -380,6 +443,19 @@ public sealed partial class ComparisonRunner(
             Milliseconds = clock.ElapsedMilliseconds,
         }.Metered(metered);
     }
+
+    /// <summary>The voices Kokoro offers, listed as the provider lists them.</summary>
+    private static List<VoiceInfo> KokoroVoices() =>
+    [
+        .. KokoroAssets.VoiceIds.Select(id => new VoiceInfo(
+            id,
+            KokoroAssets.Name(id),
+            id[0] == 'b' ? "en-GB" : "en-US",
+            id[1] == 'f' ? "Female" : "Male")),
+    ];
+
+    private static List<string> VoiceAccents(IEnumerable<VoiceInfo> voices) =>
+        [.. voices.Select(VoicePool.AccentOf).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
 
     /// <summary>A Commander's character sheet for the Narrator, invented for this test and naming nobody real.</summary>
     private const string NarrationSheet = "Name: John Deparagon.";
@@ -468,4 +544,60 @@ internal static class RunRecordMetering
         WebSearches = metered.Sum(request => request.Usage.WebSearchRequests),
         Dollars = metered.Sum(request => request.Dollars),
     };
+}
+
+/// <summary>Passes requests through and keeps the text of each reply.</summary>
+internal sealed class ReplyCapture(ILlmProvider inner) : ILlmProvider
+{
+    private readonly List<string> _replies = [];
+
+    private readonly Lock _gate = new();
+
+    public IReadOnlyList<string> Replies
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _replies];
+            }
+        }
+    }
+
+    public string Id => inner.Id;
+
+    public bool RunsOnThisMachine => inner.RunsOnThisMachine;
+
+    public string DisplayName => inner.DisplayName;
+
+    public string DefaultModel => inner.DefaultModel;
+
+    public LlmProviderCapabilities CapabilitiesFor(string model) => inner.CapabilitiesFor(model);
+
+    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        LlmRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var text = new System.Text.StringBuilder();
+
+        try
+        {
+            await foreach (var streamEvent in inner.StreamAsync(request, cancellationToken).ConfigureAwait(false))
+            {
+                if (streamEvent is LlmStreamEvent.TextDelta delta)
+                {
+                    text.Append(delta.Text);
+                }
+
+                yield return streamEvent;
+            }
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                _replies.Add(text.ToString());
+            }
+        }
+    }
 }
