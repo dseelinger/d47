@@ -4,15 +4,12 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>Remembers which reading each tab was left on, across launches (#268).</summary>
-public sealed class PanelRootMemory(ViewStateStore store, bool vr = false)
+public sealed class PanelRootMemory(ViewStateStore store)
 {
     private Dictionary<string, string>? _roots;
 
     private Dictionary<string, string> Roots =>
-        _roots ??= new Dictionary<string, string>(Source(store.Load()), StringComparer.Ordinal);
-
-    private IReadOnlyDictionary<string, string> Source(ViewState state) =>
-        vr ? state.PanelRootsVr : state.PanelRoots;
+        _roots ??= new Dictionary<string, string>(store.Load().PanelRoots, StringComparer.Ordinal);
 
     /// <summary>
     /// Which reading a tab was left on, or null where nothing was remembered for it — which is both a
@@ -36,6 +33,6 @@ public sealed class PanelRootMemory(ViewStateStore store, bool vr = false)
 
         Roots[name] = root;
 
-        store.Save(vr ? store.Load().WithVr(name, root) : store.Load().With(name, root));
+        store.Save(store.Load().With(name, root));
     }
 }

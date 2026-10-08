@@ -248,10 +248,9 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     public void ATabSavedUnderItsOldNameReopensUnderItsNewOne(string saved, PanelTab renamed)
     {
         var store = Store();
-        store.Save(store.Load() with { LastTab = saved, LastTabVr = saved });
+        store.Save(store.Load() with { LastTab = saved });
 
         Assert.Equal(renamed, new PanelTabMemory(store).Remembered());
-        Assert.Equal(renamed, new PanelTabMemory(store, vr: true).Remembered());
     }
 
     [AvaloniaTheory]

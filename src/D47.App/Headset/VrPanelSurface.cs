@@ -84,10 +84,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The stories the Commander flies (Phase 47), in the headset from 2026-08-22.
         Panel.AdventureSurface? adventures = null,
 
-        // Where the headset was left, across launches (#276) — null in every test that has no opinion about
-        // it, which leaves this surface exactly as it always behaved.
-        ViewStateStore? viewState = null,
-
         // The registry the settings page's learned phrases level reads (#171).
         D47.Core.Capabilities.CapabilityRegistry? capabilities = null,
 
@@ -277,13 +273,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             _view.EnableEngineers(unlocks, ships, gameState, onFoot, engineersMemory, checklists);
         }
 
-        if (viewState is not null)
-        {
-            // The headset's own tab and roots, back where they were left (#276).
-            _view.RememberRoots(new PanelRootMemory(viewState, vr: true));
-            _view.RememberTab(new PanelTabMemory(viewState, vr: true));
-        }
-
         // The same scaling host the desktop window zooms with, for the same reason: a render transform would
         // draw the panel larger and let the surface clip it, where a layout transform re-measures so text
         // rewraps and spacing grows with it. "Scale the big panel" and "Zoom the desktop window" are one
@@ -317,6 +306,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // Anything the panel shows changing is a reason to redraw, and nothing else is.
         model.PropertyChanged += OnModelChanged;
+        _view.Nav.Changed += OnNavChanged;
     }
 
     public bool Enabled { get; set; }
@@ -768,6 +758,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public void Dispose()
     {
         _model.PropertyChanged -= OnModelChanged;
+        _view.Nav.Changed -= OnNavChanged;
         _offscreen.Dispose();
     }
 
@@ -775,4 +766,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Mode == PanelMode.Mini ? _settings.Current.Vr.Mini : _settings.Current.Vr.Panel;
 
     private void OnModelChanged(object? sender, PropertyChangedEventArgs e) => _dirty = true;
+
+    private void OnNavChanged(object? sender, EventArgs e) => _dirty = true;
 }

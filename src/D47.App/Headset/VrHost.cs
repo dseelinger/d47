@@ -172,7 +172,7 @@ public sealed class VrHost : IDisposable
         var panel = new VrPanelSurface(
             model, settings, slot => self?.AnchorFor(slot), avatars, dumpTo, settingsPage,
             checklists, ships, gameState, onFoot, unlocks, goals,
-            backfillGoals, adventures, viewState, capabilities, routing,
+            backfillGoals, adventures, capabilities, routing,
             modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
             galaxy: galaxy,

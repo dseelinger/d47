@@ -175,7 +175,7 @@ public partial class PanelView : UserControl
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
         {
             // Before the chrome, because it may move the tab and the chrome is drawn from it.
-            view.SettleMini(remember: true);
+            view.SettleMini();
 
             view.ApplyChrome();
 
@@ -2819,18 +2819,13 @@ public partial class PanelView : UserControl
     private static bool MiniShows(PanelTab tab) => tab is not (PanelTab.Settings or PanelTab.Search);
 
     /// <summary>Keeps mini on a page mini actually has, and puts back what it took (Phase 51).</summary>
-    /// <param name="remember">Whether the tab being left is the one to give back.</param>
-    private void SettleMini(bool remember = false)
+    private void SettleMini()
     {
         if (Mode == PanelMode.Mini)
         {
             if (!MiniShows(Tab))
             {
-                if (remember)
-                {
-                    _beforeMini = Tab;
-                }
-
+                _beforeMini = Tab;
                 Tab = PanelTab.Transcript;
             }
 
@@ -2880,7 +2875,7 @@ public partial class PanelView : UserControl
         // phrase, or a switch (Phase 51).
         if (Mode == PanelMode.Mini && !MiniShows(tab))
         {
-            SettleMini();
+            Tab = MiniShows(_showing) ? _showing : PanelTab.Transcript;
             return;
         }
 
@@ -3276,7 +3271,7 @@ public partial class PanelView : UserControl
         _dialogs[key] = (tab, Nav.RootKeyOf(tab), page);
         page.Leave = () => LeaveDialog(key);
 
-        if (!Nav.Drill(new NavCrumb(key, page.Crumb) { Whole = true }))
+        if (!Nav.Drill(new NavCrumb(key, page.Crumb) { Whole = true, Local = true }))
         {
             _dialogs.Remove(key);
             page.Release();

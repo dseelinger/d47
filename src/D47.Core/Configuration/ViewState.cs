@@ -80,36 +80,8 @@ public sealed record ViewState
         return this with { PanelRoots = next };
     }
 
-    /// <summary>
-    /// Which reading each tab was left on in the headset, kept apart from <see cref="PanelRoots"/> for
-    /// the reason <see cref="LastTabVr"/> is (#276): a root is per-surface by design apart from the
-    /// Transcript's, and a shared key would have a move in one surface overwrite what the other was
-    /// left on.
-    /// </summary>
-    public IReadOnlyDictionary<string, string> PanelRootsVr { get; init; } =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
-    /// <summary>Records which reading a tab was left on in the headset.</summary>
-    public ViewState WithVr(string tab, string root)
-    {
-        var next = new Dictionary<string, string>(PanelRootsVr, StringComparer.Ordinal)
-        {
-            [tab] = root,
-        };
-
-        return this with { PanelRootsVr = next };
-    }
-
     /// <summary>Which tab the desktop window was left on, or null for never left Transcript (#276).</summary>
     public string? LastTab { get; init; }
-
-    /// <summary>
-    /// Which tab the headset was left on, kept apart from <see cref="LastTab"/> because the two
-    /// surfaces move independently — the window can be on Settings while the headset reads the
-    /// conversation — so one key would have whichever surface changed tabs last decide where both
-    /// reopen.
-    /// </summary>
-    public string? LastTabVr { get; init; }
 
     /// <summary>Which settings section the page was left scrolled to, by place id, or null (#268).</summary>
     public string? SettingsSection { get; init; }

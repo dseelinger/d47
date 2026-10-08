@@ -57,6 +57,27 @@ public class TheOverlayFollowsTheWindowTests
         Assert.Equal(PanelTab.Transcript, follower.Tab);
     }
 
+    /// <summary>
+    /// A mini follower refuses Settings, and stays on the tab it was on rather than dropping to the
+    /// transcript (#948).
+    /// </summary>
+    [AvaloniaFact]
+    public void AMiniFollowerKeepsItsTabWhenTheWindowGoesWhereMiniCannot()
+    {
+        var (window, follower) = Pair(stories: true);
+
+        follower.EnableSettings(() => new TextBlock { Text = "settings" });
+
+        window.Tab = PanelTab.Stories;
+        Dispatcher.UIThread.RunJobs();
+
+        window.Tab = PanelTab.Settings;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Settings, window.Tab);
+        Assert.Equal(PanelTab.Stories, follower.Tab);
+    }
+
     /// <summary>And the reading within the transcript is shared unconditionally, in both directions, which is why "it tracks" and "it does not track" are both true depending on what is being changed.</summary>
     [AvaloniaFact]
     public void TheTranscriptsReadingIsSharedEitherWay()

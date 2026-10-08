@@ -4,7 +4,7 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>Remembers which tab a surface was left on, across launches (#276).</summary>
-public sealed class PanelTabMemory(ViewStateStore store, bool vr = false)
+public sealed class PanelTabMemory(ViewStateStore store)
 {
     private string? _tab;
     private bool _loaded;
@@ -14,7 +14,7 @@ public sealed class PanelTabMemory(ViewStateStore store, bool vr = false)
     {
         if (!_loaded)
         {
-            _tab = vr ? store.Load().LastTabVr : store.Load().LastTab;
+            _tab = store.Load().LastTab;
             _loaded = true;
         }
 
@@ -34,6 +34,6 @@ public sealed class PanelTabMemory(ViewStateStore store, bool vr = false)
         _tab = name;
         _loaded = true;
 
-        store.Save(vr ? store.Load() with { LastTabVr = name } : store.Load() with { LastTab = name });
+        store.Save(store.Load() with { LastTab = name });
     }
 }

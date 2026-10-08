@@ -22,6 +22,7 @@ public class TranscriptMirrorTests
         nav.Register(PanelTab.Transcript, new NavCrumb(Technical, "Technical"));
         nav.Register(PanelTab.Transcript, new NavCrumb(Log, "Log file"));
         nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
+        nav.Register(PanelTab.Commander, new NavCrumb("standing", "Standing"));
 
         return nav;
     }
@@ -265,6 +266,172 @@ public class TranscriptMirrorTests
         // The window moving again leads it back, which is the "until".
         window.Select(PanelTab.Transcript);
         window.Select(PanelTab.Commander);
+
+        Assert.Equal(PanelTab.Commander, mini.Tab);
+    }
+
+    /// <summary>A second root of a tab the window is already on, on a tab other than the transcript (#948).</summary>
+    [Fact]
+    public void TheViewOfAnyTabCarries()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(window.Select(PanelTab.Commander));
+        Assert.True(window.SelectRoot(PanelTab.Commander, "standing"));
+
+        Assert.Equal(PanelTab.Commander, mini.Tab);
+        Assert.Equal("standing", mini.RootKeyOf(PanelTab.Commander));
+    }
+
+    [Fact]
+    public void ADrillInTheWindowIsCarriedAndSoIsGoingBack()
+    {
+        var (window, mini, _) = Following();
+
+        window.Select(PanelTab.Commander);
+        Assert.True(window.Drill(new NavCrumb("item", "An item")));
+        Assert.True(window.Drill(new NavCrumb("step", "A step")));
+
+        Assert.Equal(["checklist", "item", "step"], mini.Trail.Select(crumb => crumb.Key));
+
+        Assert.True(window.Back());
+
+        Assert.Equal(["checklist", "item"], mini.Trail.Select(crumb => crumb.Key));
+
+        Assert.True(window.ToRoot());
+
+        Assert.True(mini.AtRoot);
+    }
+
+    [Fact]
+    public void AJumpBackInTheWindowIsCarried()
+    {
+        var (window, mini, _) = Following();
+
+        window.Select(PanelTab.Commander);
+        window.Drill(new NavCrumb("item", "An item"));
+        window.Drill(new NavCrumb("step", "A step"));
+
+        Assert.True(window.JumpTo(1));
+
+        Assert.Equal(["checklist", "item"], mini.Trail.Select(crumb => crumb.Key));
+    }
+
+    /// <summary>A follower without the window's root keeps the tab and the root it is on.</summary>
+    [Fact]
+    public void AFollowerWithoutTheRootGoesAsFarAsTheTab()
+    {
+        var window = Surface();
+        var mini = new PanelNavigator();
+        mini.Register(PanelTab.Transcript, new NavCrumb(Conversation, "Conversation"));
+        mini.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
+
+        var mirror = new TranscriptMirror();
+        mirror.Lead(window);
+        mirror.Add(mini);
+
+        window.Select(PanelTab.Commander);
+        window.SelectRoot(PanelTab.Commander, "standing");
+        window.Drill(new NavCrumb("rank", "A rank"));
+
+        Assert.Equal(PanelTab.Commander, mini.Tab);
+        Assert.Equal(["checklist"], mini.Trail.Select(crumb => crumb.Key));
+    }
+
+    [Fact]
+    public void AFollowerAddedAfterTheWindowMovedArrivesWhereTheWindowIs()
+    {
+        var window = Surface();
+        var mirror = new TranscriptMirror();
+        mirror.Lead(window);
+
+        window.Select(PanelTab.Commander);
+        window.SelectRoot(PanelTab.Commander, "standing");
+        window.Drill(new NavCrumb("rank", "A rank"));
+
+        var mini = Surface();
+        mirror.Add(mini);
+
+        Assert.Equal(PanelTab.Commander, mini.Tab);
+        Assert.Equal(["standing", "rank"], mini.Trail.Select(crumb => crumb.Key));
+    }
+
+    [Fact]
+    public void AWindowNamedLeaderAfterItsFollowersBringsThemLevel()
+    {
+        var window = Surface();
+        var mini = Surface();
+        var mirror = new TranscriptMirror();
+
+        mirror.Add(mini);
+
+        window.Select(PanelTab.Commander);
+        window.SelectRoot(PanelTab.Commander, "standing");
+
+        mirror.Lead(window);
+
+        Assert.Equal(PanelTab.Commander, mini.Tab);
+        Assert.Equal("standing", mini.RootKeyOf(PanelTab.Commander));
+    }
+
+    /// <summary>The window's reading is the one kept, not the follower's that was there first.</summary>
+    [Fact]
+    public void AWindowNamedLeaderAfterItsFollowersKeepsItsOwnTranscript()
+    {
+        var window = Surface();
+        var mini = Surface();
+        var mirror = new TranscriptMirror();
+
+        mirror.Add(mini);
+        window.SelectRoot(PanelTab.Transcript, Log);
+
+        mirror.Lead(window);
+
+        Assert.Equal(Log, window.RootKeyOf(PanelTab.Transcript));
+        Assert.Equal(Log, mini.RootKeyOf(PanelTab.Transcript));
+        Assert.Equal(Log, mirror.Root);
+    }
+
+    /// <summary>A chooser or a dialog opened in the window does not open in the headset.</summary>
+    [Fact]
+    public void AChooserOrADialogStaysOnTheSurfaceThatOpenedIt()
+    {
+        var (window, mini, _) = Following();
+
+        window.Select(PanelTab.Commander);
+        window.Drill(new NavCrumb("item", "An item"));
+
+        var miniChanges = 0;
+        mini.Changed += (_, _) => miniChanges++;
+
+        Assert.True(window.Take(new NavCrumb("pick", "Pick one")));
+
+        Assert.False(mini.Modal);
+        Assert.Equal(0, miniChanges);
+
+        Assert.True(window.Back());
+        Assert.True(window.Drill(new NavCrumb("dialog:1", "Confirm") { Local = true }));
+
+        Assert.Equal(["checklist", "item"], mini.Trail.Select(crumb => crumb.Key));
+        Assert.Equal(0, miniChanges);
+    }
+
+    /// <summary>
+    /// The headset moving the transcript reaches the window, and is not then mistaken for a move the
+    /// window made.
+    /// </summary>
+    [Fact]
+    public void AFollowersTranscriptMoveIsNotCarriedBackAsTheWindows()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(mini.Select(PanelTab.Commander));
+        Assert.True(mini.SelectRoot(PanelTab.Transcript, Log));
+
+        Assert.Equal(Log, window.RootKeyOf(PanelTab.Transcript));
+
+        // A change to a tab the window is not showing is not a move of the window's.
+        Assert.True(window.Drill(PanelTab.Commander, new NavCrumb("item", "An item")));
 
         Assert.Equal(PanelTab.Commander, mini.Tab);
     }

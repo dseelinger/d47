@@ -9,17 +9,13 @@ public sealed class TranscriptMirror
     private readonly Dictionary<PanelNavigator, string> _seen = [];
 
     /// <summary>
-    /// The tab each navigator was last known to be on, which is to the tab half what <see
-    /// cref="_seen"/> is to the transcript half: the way a move made by this surface is told apart from
-    /// one it was given.
-    /// </summary>
-    private readonly Dictionary<PanelNavigator, PanelTab> _tabs = [];
-
-    /// <summary>
-    /// The navigator whose tab the others follow, or null where nobody leads and the tab half is simply
-    /// off.
+    /// The navigator whose position the others follow, or null where nobody leads and the position half is
+    /// simply off.
     /// </summary>
     private PanelNavigator? _leader;
+
+    /// <summary>Where the leader was last known to be, so a move it made is told apart from one it was given.</summary>
+    private Position? _led;
 
     /// <summary>Set while a move of this mirror's own making is raising <c>Changed</c>.</summary>
     private bool _mirroring;
@@ -30,14 +26,10 @@ public sealed class TranscriptMirror
     /// <summary>Brings a navigator into the mirror.</summary>
     public void Add(PanelNavigator nav)
     {
-        if (_navigators.Contains(nav))
+        if (!Join(nav))
         {
             return;
         }
-
-        _navigators.Add(nav);
-        _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
-        _tabs[nav] = nav.Tab;
 
         if (Root is null)
         {
@@ -45,17 +37,55 @@ public sealed class TranscriptMirror
         }
         else
         {
-            Mirroring(() => CatchUp(nav));
-        }
+            Mirroring(() =>
+            {
+                CatchUp(nav);
 
-        nav.Changed += (_, _) => OnChanged(nav);
+                if (_leader is not null)
+                {
+                    Follow(nav, PositionOf(_leader));
+                }
+            });
+        }
     }
 
-    /// <summary>Names the navigator the others follow — the window's (change-requests.md 34).</summary>
+    /// <summary>
+    /// Names the navigator the others follow — the window's (change-requests.md 34) — and brings every
+    /// navigator already added to where it is, its transcript reading included.
+    /// </summary>
     public void Lead(PanelNavigator nav)
     {
-        Add(nav);
+        Join(nav);
+
         _leader = nav;
+        _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
+        Root = _seen[nav];
+
+        var position = PositionOf(nav);
+
+        Mirroring(() =>
+        {
+            foreach (var other in _navigators.Where(other => !ReferenceEquals(other, nav)))
+            {
+                CatchUp(other);
+                Follow(other, position);
+            }
+        });
+    }
+
+    /// <summary>Starts listening to a navigator; false where it was already in the mirror.</summary>
+    private bool Join(PanelNavigator nav)
+    {
+        if (_navigators.Contains(nav))
+        {
+            return false;
+        }
+
+        _navigators.Add(nav);
+        _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
+        nav.Changed += (_, _) => OnChanged(nav);
+
+        return true;
     }
 
     private void OnChanged(PanelNavigator nav)
@@ -97,42 +127,68 @@ public sealed class TranscriptMirror
     }
 
     /// <summary>
-    /// The tab half: where the leader moved, the followers go, and where anybody else moved, nothing
+    /// The position half: where the leader moved, the followers go, and where anybody else moved, nothing
     /// happens.
     /// </summary>
     private void Led(PanelNavigator nav)
     {
-        var tab = nav.Tab;
-
-        if (_tabs.TryGetValue(nav, out var was) && was == tab)
-        {
-            return;
-        }
-
-        _tabs[nav] = tab;
-
         if (!ReferenceEquals(nav, _leader))
         {
             return;
         }
 
-        // The view of the tab as well as the tab, which is what was asked for: switching the window to a tab
-        // it is already on and changing only the root still carries.
-        var root = nav.RootKeyOf(tab);
+        var position = PositionOf(nav);
+
+        if (position == _led)
+        {
+            return;
+        }
 
         Mirroring(() =>
         {
             foreach (var other in _navigators.Where(other => !ReferenceEquals(other, nav)))
             {
-                // Declined outright by a surface that never furnished this tab, which is the Commander's IFF
-                // and costs no special case.
-                other.Select(tab);
-                other.SelectRoot(tab, root);
-
-                _tabs[other] = other.Tab;
+                Follow(other, position);
             }
         });
     }
+
+    /// <summary>
+    /// Puts a follower on the leader's tab, root and trail, as far down as it can go: a follower without
+    /// the tab stays where it is, and one without the root stays on the tab's current root.
+    /// </summary>
+    private void Follow(PanelNavigator nav, Position position)
+    {
+        if (!nav.Has(position.Tab))
+        {
+            return;
+        }
+
+        // The root first and then the tab, as Show does, so the tab does not open on its previous root.
+        if (position.Trail.Count > 0)
+        {
+            nav.SelectRoot(position.Tab, position.Trail[0].Key);
+        }
+
+        nav.Select(position.Tab);
+
+        if (position.Trail.Count > 0
+            && nav.Tab == position.Tab
+            && nav.RootKeyOf(position.Tab) == position.Trail[0].Key
+            && !nav.Trail.Skip(1).SequenceEqual(position.Trail.Skip(1)))
+        {
+            nav.GoTo(position.Trail);
+        }
+
+        _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
+    }
+
+    /// <summary>
+    /// A navigator's tab and the part of its trail that is carried: everything above the first level that
+    /// holds the panel or stays on its own surface.
+    /// </summary>
+    private static Position PositionOf(PanelNavigator nav) =>
+        new(nav.Tab, [.. nav.Trail.TakeWhile(crumb => !crumb.Modal && !crumb.Local)]);
 
     /// <summary>Puts one navigator on the shared root, and records it only if the move was taken.</summary>
     private void CatchUp(PanelNavigator nav)
@@ -154,6 +210,21 @@ public sealed class TranscriptMirror
         finally
         {
             _mirroring = false;
+
+            // A move of the mirror's making can reach the leader too, by the transcript half.
+            if (_leader is not null)
+            {
+                _led = PositionOf(_leader);
+            }
         }
+    }
+
+    /// <summary>A tab and a trail, compared by the crumbs on it.</summary>
+    private sealed record Position(PanelTab Tab, IReadOnlyList<NavCrumb> Trail)
+    {
+        public bool Equals(Position? other) =>
+            other is not null && Tab == other.Tab && Trail.SequenceEqual(other.Trail);
+
+        public override int GetHashCode() => HashCode.Combine(Tab, Trail.Count);
     }
 }

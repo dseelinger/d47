@@ -22,6 +22,8 @@ Game commands now match however the transcription writes them. Digits, "%", "per
 
 The mini panel, in the headset and on the flat overlay, no longer stops following the newest turn when it is first filled. A panel that began following and then had its content re-measured could end up parked above the newest turn with no button to return it.
 
+The headset panel and the flat overlay now show the same page as the window. Changing tab, choosing another view of a tab such as Commander › Standing, opening a page within it and going back all carry over, and the headset redraws at once rather than at the next transcript line. After a restart they open where the window opens, and the headset no longer remembers a tab of its own. A dialog or a chooser opened in the window stays in the window, and a panel that has no such tab or page stays where it is.
+
 The Settings row "Model for the quiet calls" is now "Background model", and the model status report and the notice that a default changed use the same name. Your saved choice is unchanged.
 
 In Ship now fills from the top down. The first turn sits at the top of the pane and the empty space is below the last turn, until the conversation is taller than the view. This applies to the window, the headset overlay and the mini overlay.
