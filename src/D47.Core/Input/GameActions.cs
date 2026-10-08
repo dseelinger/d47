@@ -592,6 +592,108 @@ public static class GameActions
             Names = ["previous fire group"],
         },
 
+        new()
+        {
+            Id = "next_tab",
+            Label = "the next tab",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("CycleNextPage", ControlContext.AnyShip | ControlContext.Srv),
+            ],
+            Names = ["next tab", "next page"],
+        },
+
+        new()
+        {
+            Id = "previous_tab",
+            Label = "the previous tab",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("CyclePreviousPage", ControlContext.AnyShip | ControlContext.Srv),
+            ],
+            Names = ["previous tab", "previous page"],
+        },
+
+        new()
+        {
+            Id = "ui_focus",
+            Label = "the panel focus",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("UIFocus", ControlContext.AnyShip),
+                new ActionVariant("UIFocus_Buggy", ControlContext.Srv),
+            ],
+            Names = ["ui focus", "focus the panels"],
+        },
+
+        new()
+        {
+            Id = "quick_comms",
+            Label = "quick comms",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("QuickCommsPanel", ControlContext.AnyShip),
+                new ActionVariant("QuickCommsPanel_Buggy", ControlContext.Srv),
+                new ActionVariant("QuickCommsPanel_Humanoid", ControlContext.OnFoot),
+            ],
+            Names = ["quick comms"],
+            Verbs = ["open"],
+        },
+
+        new()
+        {
+            Id = "orbit_lines",
+            Label = "the orbit lines",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("OrbitLinesToggle", ControlContext.Flying),
+            ],
+            Names = ["orbit lines", "toggle orbit lines"],
+        },
+
+        new()
+        {
+            Id = "galaxy_map_home",
+            Label = "galaxy map home",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("GalaxyMapHome", ControlContext.AnyShip | ControlContext.Srv | ControlContext.OnFoot),
+            ],
+            RequiresFocus = GuiFocus.GalaxyMap,
+            FocusName = "the galaxy map",
+            Names = ["galaxy map home", "centre on my system"],
+        },
+
+        new()
+        {
+            Id = "sensor_range_up",
+            Label = "the sensor range",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("RadarIncreaseRange", ControlContext.Flying),
+            ],
+            Names = ["increase sensor range", "sensor range up"],
+        },
+
+        new()
+        {
+            Id = "sensor_range_down",
+            Label = "the sensor range",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("RadarDecreaseRange", ControlContext.Flying),
+            ],
+            Names = ["decrease sensor range", "sensor range down"],
+        },
+
         // ---- SRV (item 9) -------------------------------------------------------------------
         new()
         {
