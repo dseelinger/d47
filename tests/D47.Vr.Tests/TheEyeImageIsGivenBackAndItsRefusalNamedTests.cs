@@ -100,6 +100,7 @@ public class TheEyeImageIsGivenBackAndItsRefusalNamedTests
         var shutdown = openVr.Calls.Count;
 
         Assert.Null(runtime.HeadsetAdapter());
+        Assert.Equal(0u, runtime.SceneProcessId());
         Assert.Equal("the SteamVR session has ended", runtime.MirrorLeftEye(0x10, _ => { }));
         Assert.Equal(shutdown, openVr.Calls.Count);
     }
@@ -113,6 +114,22 @@ public class TheEyeImageIsGivenBackAndItsRefusalNamedTests
         try
         {
             Assert.Equal(2, runtime.HeadsetAdapter());
+        }
+        finally
+        {
+            runtime.Stop();
+        }
+    }
+
+    [Fact]
+    public void TheSceneProcessIsTheOneSteamVrNames()
+    {
+        var (openVr, runtime) = Attached();
+        openVr.SceneProcessId = 4242;
+
+        try
+        {
+            Assert.Equal(4242u, runtime.SceneProcessId());
         }
         finally
         {

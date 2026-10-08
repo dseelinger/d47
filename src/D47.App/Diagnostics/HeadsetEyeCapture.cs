@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using D47.Core.Interface;
 using D47.Vr;
 using Microsoft.Extensions.Logging;
 using Windows.Graphics.Imaging;
@@ -7,11 +8,12 @@ using Windows.Graphics.Imaging;
 namespace D47.App.Diagnostics;
 
 /// <summary>
-/// The SteamVR compositor's left-eye image while d47 is attached to SteamVR, and Elite's window
-/// otherwise (#601). A failed eye image is reported as the still's error, never replaced by the window.
+/// The SteamVR compositor's left-eye image while SteamVR is showing Elite, and Elite's window otherwise. A
+/// failed eye image is reported as the still's error, never replaced by the window.
 /// </summary>
 public sealed class HeadsetEyeCapture(
     Func<SteamVrRuntime?> headset,
+    Func<uint> eliteProcess,
     IWindowCapture window,
     int width,
     ILogger<HeadsetEyeCapture> logger) : IWindowCapture, IDisposable
@@ -30,17 +32,97 @@ public sealed class HeadsetEyeCapture(
 
     public string? Capture(string path)
     {
-        if (headset() is not { } runtime || runtime.HeadsetAdapter() is not { } adapter)
+        if (Headset(out _) is not { } eye)
         {
-            Source("Elite's window");
+            Source(ScreenPictures.FromWindow);
             return window.Capture(path);
         }
 
+        return Eye(eye.Runtime, eye.Adapter, crop: false, bitmap => EliteWindowCapture.Save(bitmap, path, width));
+    }
+
+    public ScreenCaptureResult Take()
+    {
+        if (Headset(out var source) is not { } eye)
+        {
+            if (source == ScreenSource.EliteNotRunning)
+            {
+                return new ScreenCaptureResult(null, "Elite is not running");
+            }
+
+            Source(ScreenPictures.FromWindow);
+            return window.Take();
+        }
+
+        ScreenPicture? picture = null;
+        var refused = Eye(
+            eye.Runtime,
+            eye.Adapter,
+            crop: true,
+            bitmap => picture = EliteWindowCapture.Jpeg(bitmap, ScreenPictures.FromHeadset));
+
+        return new ScreenCaptureResult(picture, refused);
+    }
+
+    /// <summary>The headset and its adapter while SteamVR is showing Elite, otherwise null.</summary>
+    private (SteamVrRuntime Runtime, int Adapter)? Headset(out ScreenSource source)
+    {
+        var runtime = headset();
+
+        source = ScreenPictures.Choose(runtime?.SceneProcessId() ?? 0, eliteProcess());
+
+        return source == ScreenSource.HeadsetEye && runtime?.HeadsetAdapter() is { } adapter
+            ? (runtime, adapter)
+            : null;
+    }
+
+    /// <summary>
+    /// Hands the eye image to <paramref name="use"/>, cut to <see cref="ScreenPictures.LensCrop"/> when
+    /// <paramref name="crop"/> is set. Null on success, otherwise why not.
+    /// </summary>
+    internal string? Eye(SteamVrRuntime runtime, int adapter, bool crop, Action<SoftwareBitmap> use)
+    {
         try
         {
             lock (_gate)
             {
-                return Eye(runtime, adapter, path);
+                ObjectDisposedException.ThrowIf(_adapter == int.MinValue, this);
+
+                Device(adapter);
+
+                var source = default(TextureDesc);
+                var refused = runtime.MirrorLeftEye(_device, view => source = Copy(view));
+
+                if (refused is not null)
+                {
+                    return refused;
+                }
+
+                if (!Readable(source.Format, out var swap))
+                {
+                    return $"the eye image is DXGI format {source.Format}, which a still cannot read";
+                }
+
+                Source($"{ScreenPictures.FromHeadset}, {source.Width}x{source.Height}");
+
+                var columns = (int)source.Width;
+                var rows = (int)source.Height;
+                var pixels = Read(source.Width, source.Height, swap);
+
+                if (crop)
+                {
+                    (pixels, columns, rows) = Crop(pixels, columns, rows);
+                }
+
+                using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(
+                    pixels.AsBuffer(),
+                    BitmapPixelFormat.Bgra8,
+                    columns,
+                    rows,
+                    BitmapAlphaMode.Premultiplied);
+
+                use(bitmap);
+                return null;
             }
         }
         catch (Exception ex)
@@ -50,45 +132,25 @@ public sealed class HeadsetEyeCapture(
         }
     }
 
-    private string? Eye(SteamVrRuntime runtime, int adapter, string path)
+    /// <summary>The BGRA rows of <see cref="ScreenPictures.LensCrop"/>.</summary>
+    internal static (byte[] Pixels, int Columns, int Rows) Crop(byte[] pixels, int columns, int rows)
     {
-        ObjectDisposedException.ThrowIf(_adapter == int.MinValue, this);
+        var (x, y, cropColumns, cropRows) = ScreenPictures.LensCrop(columns, rows);
+        var cropped = new byte[cropColumns * cropRows * 4];
 
-        Device(adapter);
-
-        var source = default(TextureDesc);
-        var refused = runtime.MirrorLeftEye(_device, view => source = Copy(view));
-
-        if (refused is not null)
+        for (var row = 0; row < cropRows; row++)
         {
-            return refused;
+            Buffer.BlockCopy(pixels, (((y + row) * columns) + x) * 4, cropped, row * cropColumns * 4, cropColumns * 4);
         }
 
-        if (!Readable(source.Format, out var swap))
-        {
-            return $"the eye image is DXGI format {source.Format}, which a still cannot read";
-        }
-
-        Source($"the headset's left eye, {source.Width}x{source.Height}");
-
-        var pixels = Read(source.Width, source.Height, swap);
-
-        using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(
-            pixels.AsBuffer(),
-            BitmapPixelFormat.Bgra8,
-            (int)source.Width,
-            (int)source.Height,
-            BitmapAlphaMode.Premultiplied);
-
-        EliteWindowCapture.Save(bitmap, path, width);
-        return null;
+        return (cropped, cropColumns, cropRows);
     }
 
     private void Source(string from)
     {
         if (!string.Equals(Interlocked.Exchange(ref _source, from), from, StringComparison.Ordinal))
         {
-            logger.LogInformation("Input trace stills come from {Source}", from);
+            logger.LogInformation("Stills of the screen come from {Source}", from);
         }
     }
 

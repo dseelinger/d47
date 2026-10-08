@@ -248,6 +248,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Writes what the injector sent, step by step, when this process was asked to (#365).</summary>
     public Diagnostics.InputTraceWriter? InputTrace { get; private set; }
 
+    /// <summary>What the Commander is looking at: the headset's eye while SteamVR shows Elite, otherwise Elite's window.</summary>
+    public Diagnostics.HeadsetEyeCapture ScreenCapture { get; private set; } = null!;
+
     /// <summary>Fetches and installs what <see cref="Updates"/> found.</summary>
     public UpdateInstaller Installer { get; }
 
@@ -1632,20 +1635,25 @@ public sealed class AppHost : IDisposable
         var eliteWindow = StartupTimer.Time(
             "Elite window", () => new EliteWindow(loggerFactory.CreateLogger<EliteWindow>()));
 
+        // The input trace's stills and the pictures of the screen, from one capture. Nothing touches Direct3D
+        // until the first still.
+        var screenCapture = new Diagnostics.HeadsetEyeCapture(
+            () => self?.Vr?.Session,
+            () => eliteWindow.ProcessId,
+            new Diagnostics.EliteWindowCapture(
+                () => eliteWindow.Handle,
+                Diagnostics.InputTraceWriter.StillWidth,
+                loggerFactory.CreateLogger<Diagnostics.EliteWindowCapture>()),
+            Diagnostics.InputTraceWriter.StillWidth,
+            loggerFactory.CreateLogger<Diagnostics.HeadsetEyeCapture>());
+
         // Off unless D47_TRACE_INPUT=1 or --trace-input (#365).
         var inputTrace = Diagnostics.InputTraceWriter.Create(
             paths,
             () => DateTimeOffset.Now,
             () => status.Current,
             () => eliteMusic.Track,
-            () => new Diagnostics.HeadsetEyeCapture(
-                () => self?.Vr?.Session,
-                new Diagnostics.EliteWindowCapture(
-                    () => eliteWindow.Handle,
-                    Diagnostics.InputTraceWriter.StillWidth,
-                    loggerFactory.CreateLogger<Diagnostics.EliteWindowCapture>()),
-                Diagnostics.InputTraceWriter.StillWidth,
-                loggerFactory.CreateLogger<Diagnostics.HeadsetEyeCapture>()),
+            screenCapture,
             loggerFactory.CreateLogger<Diagnostics.InputTraceWriter>());
 
         // With the status alongside the window (#242): running and in front are not the same as in the game,
@@ -2853,6 +2861,7 @@ public sealed class AppHost : IDisposable
 
         host.AudioRecorder = recording;
         host.InputTrace = inputTrace;
+        host.ScreenCapture = screenCapture;
 
         // Captured audio becomes words on the thread pool, never on the audio thread that produced it.
         gate.Captured += host.TranscribeAsync;
@@ -8642,6 +8651,7 @@ public sealed class AppHost : IDisposable
         // The same reasoning one line up: the last lines of a trace are the ones an attempt that ended badly
         // left behind, so the queue is drained rather than dropped (#365).
         InputTrace?.Dispose();
+        ScreenCapture?.Dispose();
 
         // Stop making noise before tearing anything down.
         Audio.Silence();

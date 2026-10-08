@@ -59,6 +59,8 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
             File.WriteAllBytes(path, [0x89, 0x50, 0x4E, 0x47]);
             return null;
         }
+
+        public D47.Core.Interface.ScreenCaptureResult Take() => new(null, refusal);
     }
 
     private InputTraceWriter Writer(
@@ -379,7 +381,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
             () => Noon,
             () => GameStatus.Unknown,
             () => null,
-            () => null,
+            null,
             NullLogger.Instance);
 
         Assert.NotNull(writer);

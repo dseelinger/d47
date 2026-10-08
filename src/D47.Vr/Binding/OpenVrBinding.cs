@@ -174,6 +174,8 @@ public sealed class OpenVrBinding : IOpenVrSession
 
         public EVRApplicationError IdentifyApplication(uint processId, string appKey) =>
             OpenVR.Applications.IdentifyApplication(processId, appKey);
+
+        public uint GetCurrentSceneProcessId() => OpenVR.Applications.GetCurrentSceneProcessId();
     }
 
     private sealed class RenderModelsApi : IOpenVrRenderModels

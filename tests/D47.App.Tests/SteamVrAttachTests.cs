@@ -127,7 +127,8 @@ public class SteamVrLiveTests
 
     /// <summary>
     /// The input trace's headset still (#601), at full size: an overlay application is given the eye
-    /// image, it is wider than the 640-pixel desktop mirror a VR player often runs, and it is not blank.
+    /// image, it is wider than the 640-pixel desktop mirror a VR player often runs, and it is not blank. The
+    /// picture of the screen is the same image cut to its lens crop and fitted to the caps.
     /// </summary>
     [Fact]
     public async Task TheEyeImageIsReadAtRenderResolution()
@@ -142,13 +143,17 @@ public class SteamVrLiveTests
         {
             using var capture = new D47.App.Diagnostics.HeadsetEyeCapture(
                 () => runtime,
+                () => 0,
                 new RefusingWindow(),
                 int.MaxValue,
                 NullLogger<D47.App.Diagnostics.HeadsetEyeCapture>.Instance);
 
+            var adapter = runtime.HeadsetAdapter() ?? 0;
             var path = Path.Combine(TestSurface.CaptureDirectory, "headset-left-eye.png");
 
-            Assert.Null(capture.Capture(path));
+            // The eye read itself, without asking whether SteamVR is showing Elite.
+            Assert.Null(capture.Eye(
+                runtime, adapter, crop: false, bitmap => D47.App.Diagnostics.EliteWindowCapture.Save(bitmap, path, int.MaxValue)));
 
             using var file = File.OpenRead(path);
             var decoder = await Windows.Graphics.Imaging.BitmapDecoder
@@ -169,6 +174,20 @@ public class SteamVrLiveTests
 
             // A view read before the compositor has drawn into it is black throughout.
             Assert.True(lit > pixels.Length / 4 / 100, $"Only {lit} pixels of the eye image are not black.");
+
+            ScreenPicture? picture = null;
+
+            Assert.Null(capture.Eye(
+                runtime,
+                adapter,
+                crop: true,
+                bitmap => picture = D47.App.Diagnostics.EliteWindowCapture.Jpeg(bitmap, ScreenPictures.FromHeadset)));
+
+            var (_, _, croppedWidth, croppedHeight) =
+                ScreenPictures.LensCrop((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+
+            Assert.NotNull(picture);
+            Assert.Equal(ScreenPictures.Fit(croppedWidth, croppedHeight), (picture.Width, picture.Height));
         }
         finally
         {
@@ -180,6 +199,8 @@ public class SteamVrLiveTests
     private sealed class RefusingWindow : D47.App.Diagnostics.IWindowCapture
     {
         public string? Capture(string path) => "the headset capture fell back to the window";
+
+        public ScreenCaptureResult Take() => new(null, "the headset capture fell back to the window");
     }
 
     /// <summary>

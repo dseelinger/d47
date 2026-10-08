@@ -383,6 +383,17 @@ public sealed class SteamVrRuntime(
         }
     }
 
+    /// <summary>The process SteamVR is showing in the headset, or 0 while there is none or no session.</summary>
+    public uint SceneProcessId()
+    {
+        lock (_session)
+        {
+            return _system is not null && openVr.Applications is { } applications
+                ? applications.GetCurrentSceneProcessId()
+                : 0;
+        }
+    }
+
     /// <summary>How long a newly shared eye image takes to be drawn into: it is empty until then.</summary>
     public static readonly TimeSpan MirrorSettle = TimeSpan.FromMilliseconds(100);
 

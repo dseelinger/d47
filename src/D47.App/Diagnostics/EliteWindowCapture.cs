@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using D47.Core.Interface;
 using Microsoft.Extensions.Logging;
+using Windows.Foundation;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
 using Windows.Graphics.DirectX.Direct3D11;
@@ -9,8 +11,8 @@ using Windows.Storage.Streams;
 
 namespace D47.App.Diagnostics;
 
-/// <summary>A still of the game window, for the input trace to put beside a step (#365).</summary>
-public interface IWindowCapture
+/// <summary>A still of the game window, as a file for the input trace (#365) or as a picture of the screen.</summary>
+public interface IWindowCapture : IScreenCapture
 {
     /// <summary>Writes a still to <paramref name="path"/>.</summary>
     string? Capture(string path);
@@ -25,11 +27,25 @@ public sealed class EliteWindowCapture(
     /// <summary>How long to wait for the compositor to hand over a frame.</summary>
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(2);
 
+    /// <summary>The JPEG quality a picture of the screen is encoded at.</summary>
+    private const float JpegQuality = 0.85f;
+
     private readonly Lock _gate = new();
 
     private IDirect3DDevice? _device;
 
-    public string? Capture(string path)
+    public string? Capture(string path) => Frame(bitmap => Save(bitmap, path, width));
+
+    public ScreenCaptureResult Take()
+    {
+        ScreenPicture? picture = null;
+        var refused = Frame(bitmap => picture = Jpeg(bitmap, ScreenPictures.FromWindow));
+
+        return new ScreenCaptureResult(picture, refused);
+    }
+
+    /// <summary>Hands one frame of Elite's window to <paramref name="use"/>. Null on success, otherwise why not.</summary>
+    private string? Frame(Action<SoftwareBitmap> use)
     {
         try
         {
@@ -43,6 +59,11 @@ public sealed class EliteWindowCapture(
             if (handle == 0)
             {
                 return "Elite's window could not be found";
+            }
+
+            if (IsIconic(handle))
+            {
+                return "Elite's window is minimised";
             }
 
             var item = ItemFor(handle);
@@ -82,7 +103,13 @@ public sealed class EliteWindowCapture(
 
             using (frame)
             {
-                Save(frame.Surface, path, width);
+                using var bitmap = SoftwareBitmap
+                    .CreateCopyFromSurfaceAsync(frame.Surface, BitmapAlphaMode.Premultiplied)
+                    .AsTask()
+                    .GetAwaiter()
+                    .GetResult();
+
+                use(bitmap);
             }
 
             return null;
@@ -106,36 +133,52 @@ public sealed class EliteWindowCapture(
         }
     }
 
-    /// <summary>The frame to a PNG, downscaled on the way out.</summary>
-    private static void Save(IDirect3DSurface surface, string path, int width)
-    {
-        using var bitmap = SoftwareBitmap
-            .CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied)
-            .AsTask()
-            .GetAwaiter()
-            .GetResult();
-
-        Save(bitmap, path, width);
-    }
-
     /// <summary>A bitmap to a PNG no wider than <paramref name="width"/>.</summary>
     internal static void Save(SoftwareBitmap bitmap, string path, int width)
     {
+        var scaled = bitmap.PixelWidth > width
+            ? (width, (int)Math.Max(1, (long)bitmap.PixelHeight * width / bitmap.PixelWidth))
+            : (bitmap.PixelWidth, bitmap.PixelHeight);
+
+        File.WriteAllBytes(path, Encode(bitmap, BitmapEncoder.PngEncoderId, null, scaled));
+    }
+
+    /// <summary>A bitmap to a JPEG scaled down to <see cref="ScreenPictures.Fit"/>, written nowhere.</summary>
+    internal static ScreenPicture Jpeg(SoftwareBitmap bitmap, string source)
+    {
+        var (fitWidth, fitHeight) = ScreenPictures.Fit(bitmap.PixelWidth, bitmap.PixelHeight);
+
+        var options = new BitmapPropertySet
+        {
+            ["ImageQuality"] = new BitmapTypedValue(JpegQuality, PropertyType.Single),
+        };
+
+        var bytes = Encode(bitmap, BitmapEncoder.JpegEncoderId, options, (fitWidth, fitHeight));
+
+        return new ScreenPicture(bytes, fitWidth, fitHeight, source);
+    }
+
+    private static byte[] Encode(
+        SoftwareBitmap bitmap,
+        Guid encoderId,
+        BitmapPropertySet? options,
+        (int Width, int Height) size)
+    {
         using var stream = new InMemoryRandomAccessStream();
 
-        var encoder = BitmapEncoder
-            .CreateAsync(BitmapEncoder.PngEncoderId, stream)
+        var encoder = (options is null
+                ? BitmapEncoder.CreateAsync(encoderId, stream)
+                : BitmapEncoder.CreateAsync(encoderId, stream, options))
             .AsTask()
             .GetAwaiter()
             .GetResult();
 
         encoder.SetSoftwareBitmap(bitmap);
 
-        if (bitmap.PixelWidth > width)
+        if (size.Width != bitmap.PixelWidth || size.Height != bitmap.PixelHeight)
         {
-            encoder.BitmapTransform.ScaledWidth = (uint)width;
-            encoder.BitmapTransform.ScaledHeight =
-                (uint)Math.Max(1, (long)bitmap.PixelHeight * width / bitmap.PixelWidth);
+            encoder.BitmapTransform.ScaledWidth = (uint)size.Width;
+            encoder.BitmapTransform.ScaledHeight = (uint)size.Height;
             encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
         }
 
@@ -148,7 +191,7 @@ public sealed class EliteWindowCapture(
         reader.LoadAsync((uint)stream.Size).AsTask().GetAwaiter().GetResult();
         reader.ReadBytes(bytes);
 
-        File.WriteAllBytes(path, bytes);
+        return bytes;
     }
 
     /// <summary>
@@ -302,6 +345,10 @@ public sealed class EliteWindowCapture(
         out nint device,
         out uint featureLevel,
         out nint context);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(nint hWnd);
 
     [DllImport("d3d11.dll", ExactSpelling = true)]
     private static extern int CreateDirect3D11DeviceFromDXGIDevice(nint dxgiDevice, out nint graphicsDevice);

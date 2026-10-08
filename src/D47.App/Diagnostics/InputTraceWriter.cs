@@ -91,17 +91,14 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
         Func<DateTimeOffset> now,
         Func<GameStatus> status,
         Func<string?> music,
-        Func<IWindowCapture?> capture,
+        IWindowCapture? capture,
         ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(paths);
-        ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(logger);
 
         if (!Enabled)
         {
-            // The capture is asked for behind the gate rather than passed in, so an ordinary run does not
-            // even construct the thing that talks to Direct3D.
             return null;
         }
 
@@ -111,7 +108,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
             "Input tracing is on; every injected sequence writes a folder under {Folder}",
             folder);
 
-        return new InputTraceWriter(folder, now, status, music, capture(), logger);
+        return new InputTraceWriter(folder, now, status, music, capture, logger);
     }
 
     /// <summary>
@@ -361,6 +358,5 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
         }
 
         _pending.Dispose();
-        (_capture as IDisposable)?.Dispose();
     }
 }

@@ -139,12 +139,15 @@ public interface IOpenVrInput
         ulong restrictToDevice);
 }
 
-/// <summary><c>IVRApplications</c>: enough of it to say who this process is.</summary>
+/// <summary><c>IVRApplications</c>: enough of it to say who this process is, and whose scene is shown.</summary>
 public interface IOpenVrApplications
 {
     EVRApplicationError AddApplicationManifest(string path, bool temporary);
 
     EVRApplicationError IdentifyApplication(uint processId, string appKey);
+
+    /// <summary>The process of the scene application, or 0 when there is none.</summary>
+    uint GetCurrentSceneProcessId();
 }
 
 /// <summary><c>IVRRenderModels</c>: enough of it to find a controller's tip.</summary>

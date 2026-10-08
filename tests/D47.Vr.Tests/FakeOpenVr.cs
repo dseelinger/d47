@@ -497,6 +497,15 @@ public sealed class FakeOpenVr :
         return EVRApplicationError.None;
     }
 
+    /// <summary>The process SteamVR reports as its scene application.</summary>
+    public uint SceneProcessId { get; set; }
+
+    public uint GetCurrentSceneProcessId()
+    {
+        Record(nameof(GetCurrentSceneProcessId));
+        return SceneProcessId;
+    }
+
     public bool RenderModelHasComponent(string model, string component)
     {
         Record(nameof(RenderModelHasComponent));

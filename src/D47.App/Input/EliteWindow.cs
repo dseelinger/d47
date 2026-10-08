@@ -47,6 +47,23 @@ public sealed class EliteWindow(ILogger<EliteWindow> logger) : IEliteWindow
 
     public bool IsRunning => Handle != 0;
 
+    /// <summary>The process that owns Elite's window, or 0 when it is not running.</summary>
+    public uint ProcessId
+    {
+        get
+        {
+            var elite = Handle;
+
+            if (elite == 0)
+            {
+                return 0;
+            }
+
+            GetWindowThreadProcessId(elite, out var process);
+            return process;
+        }
+    }
+
     /// <summary>Whether Elite has the foreground.</summary>
     public bool IsForeground
     {
