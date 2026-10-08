@@ -8025,7 +8025,7 @@ public sealed class AppHost : IDisposable
 
         var ask = DebriefRewording.Asker(
             provider,
-            Turns.BackgroundModel,
+            Turns.Model,
             Spend,
             PriceTable.Default,
             _logger);

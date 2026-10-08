@@ -17,6 +17,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // Advice on a ship's build, which the Commander waits on (#570).
         "() => self?.Turns.Model,",
 
+        // The debrief's proposed wording.
+        "Turns.Model,",
+
         // Flagged, not fixed: correct today because web search is endpoint-gated in all three providers, and
         // the contract says it is model-gated in principle.
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;",
@@ -40,17 +43,17 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
     }
 
     /// <summary>
-    /// Thirteen callers, all of them carrying no conversation history and already declaring a cold prefix —
+    /// Twelve callers, all of them carrying no conversation history and already declaring a cold prefix —
     /// which is what makes pointing them at a cheap model cost no cache at all.
     /// </summary>
     [Fact]
-    public void TheBackgroundModelIsReadByTheThirteenCallsTheCommanderIsNotWaitingOn()
+    public void TheBackgroundModelIsReadByTheTwelveCallsTheCommanderIsNotWaitingOn()
     {
         var readers = CodeLinesContaining("Turns.BackgroundModel")
             .Where(line => !line.StartsWith("Turns.BackgroundModel =", StringComparison.Ordinal))
             .ToList();
 
-        Assert.Equal(13, readers.Count);
+        Assert.Equal(12,readers.Count);
         Assert.All(readers, line => Assert.Equal("Turns.BackgroundModel,", line));
     }
 

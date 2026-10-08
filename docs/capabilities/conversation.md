@@ -425,9 +425,12 @@ the opposite case: none of them carry the conversation, every one of them alread
 sending them somewhere cheaper costs nothing at all and saves most of what Directive 47 spends
 while you are not talking to it.
 
-**Two calls deliberately ignore this row.** Writing an adventure and writing your Commander's log
-both stay on the model above — you pressed a button and are waiting, the output has to name real
-systems exactly, and the log is quoted at a price before it is written.
+**Four calls deliberately ignore this row.** Writing an adventure, writing your Commander's log,
+advising on a ship's build and rewording the directions a debrief proposes all stay on the model
+above. For the first three you pressed a button and are waiting, the output has to name real
+systems exactly, and the log is quoted at a price before it is written. The debrief's wording
+replaces text you are asked to accept or decline, and a smaller model rewrote an insult into an
+instruction.
 
 It clears itself when you change provider or endpoint, exactly as the model row does: a model name
 belongs to the endpoint that serves it, and one carried across would fail on the first ambient
