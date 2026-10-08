@@ -484,8 +484,8 @@ public partial class MainWindow : Window
         }
 
         // A voice companion that cannot speak has to say so.
-        _host.Voice.SynthesisFailed += reason => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _model.ErrorText = reason);
+        _host.Voice.SynthesisFailed += failure => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.ShowError(failure.Text, failure.SettingKey));
 
         BindShutUp();
         BindOverlayKeys();
@@ -1062,7 +1062,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                _model.AppendError(ending.Conversation);
+                _model.AppendError(ending.Conversation, ending.SettingKey);
             }
         }
         finally
@@ -1104,9 +1104,10 @@ public partial class MainWindow : Window
         {
             // Reported rather than swallowed: the symptom of a failed registration is a key that does
             // nothing, which reads as d47 ignoring the Commander.
-            _model.ErrorText =
+            _model.ShowError(
                 $"The cancel hotkey {Gestures.Describe(gesture)} could not be registered system-wide. " +
-                "Another application is probably holding it — pick another in Settings.";
+                "Another application is probably holding it — pick another in Settings.",
+                ListeningCapability.CancelHotkeyKey);
         }
     }
 
@@ -1118,8 +1119,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        BindHotkey(_showOverlay, _host.Settings.Current.Hotkeys.ShowOverlay, "overlay", ToggleOverlay);
+        BindHotkey(_showOverlay, _host.Settings.Current.Hotkeys.ShowOverlay, "overlay",
+            InterfaceCapability.ShowOverlayHotkeyKey, ToggleOverlay);
         BindHotkey(_moveOverlay, _host.Settings.Current.Hotkeys.MoveOverlay, "move-the-overlay",
+            InterfaceCapability.MoveOverlayHotkeyKey,
             () => Avalonia.Threading.Dispatcher.UIThread.Post(() => _host.Overlay?.Place()));
 
         void ToggleOverlay() => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -1129,14 +1132,18 @@ public partial class MainWindow : Window
                 SettingsCaller.Hotkey));
     }
 
-    /// <summary>Registers one system-wide gesture, and reports it if the OS refuses to hand it over.</summary>
-    private void BindHotkey(GlobalHotkey key, string? gesture, string named, Action pressed)
+    /// <summary>
+    /// Registers one system-wide gesture, and reports it if the OS refuses to hand it over, linking to
+    /// <paramref name="row"/>.
+    /// </summary>
+    private void BindHotkey(GlobalHotkey key, string? gesture, string named, string row, Action pressed)
     {
         if (!key.Bind(gesture, pressed) && !string.IsNullOrWhiteSpace(gesture))
         {
-            _model.ErrorText =
+            _model.ShowError(
                 $"The {named} hotkey {Gestures.Describe(gesture)} could not be registered " +
-                "system-wide. Another application is probably holding it — pick another in Settings.";
+                "system-wide. Another application is probably holding it — pick another in Settings.",
+                row);
         }
     }
 
@@ -1148,12 +1155,14 @@ public partial class MainWindow : Window
             return;
         }
 
-        BindHotkey(_zoomHeadsetIn, _host.Settings.Current.Hotkeys.ZoomHeadsetIn, "zoom-headset-in", StepZoom("in"));
-        BindHotkey(_zoomHeadsetOut, _host.Settings.Current.Hotkeys.ZoomHeadsetOut, "zoom-headset-out", StepZoom("out"));
+        BindHotkey(_zoomHeadsetIn, _host.Settings.Current.Hotkeys.ZoomHeadsetIn, "zoom-headset-in",
+            VrCapability.ZoomInHotkeyKey, StepZoom("in"));
+        BindHotkey(_zoomHeadsetOut, _host.Settings.Current.Hotkeys.ZoomHeadsetOut, "zoom-headset-out",
+            VrCapability.ZoomOutHotkeyKey, StepZoom("out"));
         BindHotkey(_resetHeadsetZoom, _host.Settings.Current.Hotkeys.ResetHeadsetZoom, "reset-headset-zoom",
-            StepZoom("reset"));
+            VrCapability.ResetZoomHotkeyKey, StepZoom("reset"));
         BindHotkey(_resizeHeadsetPanel, _host.Settings.Current.Hotkeys.ResizeHeadsetPanel, "resize-headset-panel",
-            ToggleHeadsetResize);
+            VrCapability.ResizeHotkeyKey, ToggleHeadsetResize);
 
         Action StepZoom(string direction) => () => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => VrCapability.StepZoom(_host.Settings, direction, SettingsCaller.Hotkey));

@@ -281,7 +281,7 @@ public partial class PanelView : UserControl
         // The words the tab bar draws are the words a message names a tab by (#951).
         var tabWords = _tabs.ToDictionary(pair => pair.Key, pair => pair.Value.Content as string ?? pair.Key.ToString());
 
-        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, tabWords), OpenPlace);
+        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, tabWords), OpenPlace, SettingsRoot);
         Controls.PlaceLinks.SetLinker(this, _places);
 
         foreach (var (tab, button) in _tabs)
@@ -546,7 +546,7 @@ public partial class PanelView : UserControl
 
         var roots = new List<NavCrumb>
         {
-            new("settings", "Settings")
+            new(SettingsRoot, "Settings")
             {
                 Help = D47.Core.Capabilities.Builtin.SettingsCapability.Id,
             },
@@ -565,12 +565,18 @@ public partial class PanelView : UserControl
             crumb => crumb.Key switch
             {
                 PhrasesPage.RootKey when phrases is not null => _phrases ??= phrases(),
-                _ => build(),
+                _ => _settingsPage = build(),
             },
             [.. roots]);
     }
 
     private PhrasesPage? _phrases;
+
+    /// <summary>The Settings tab's root holding the settings page.</summary>
+    private const string SettingsRoot = "settings";
+
+    /// <summary>The settings page this surface built, which a link naming a setting's row opens.</summary>
+    private Control? _settingsPage;
 
     /// <summary>Moves the Phrases footer on when the journal has.</summary>
     public bool TickSettings() =>
@@ -1579,7 +1585,16 @@ public partial class PanelView : UserControl
         {
         }
 
-        if (place.RootKey is { } root)
+        if (place.SettingKey is { } key)
+        {
+            Nav.Show(SettingsRoot);
+
+            // Posted, because the page is built when the tab first opens and has no rows until it has loaded.
+            Dispatcher.UIThread.Post(
+                () => (_settingsPage as D47.App.Settings.SettingsView)?.RevealRow(key),
+                DispatcherPriority.Loaded);
+        }
+        else if (place.RootKey is { } root)
         {
             Nav.Show(root);
         }
@@ -4298,7 +4313,7 @@ public partial class PanelView : UserControl
 
         // Found in the text each time it is drawn, so a turn from before a restart links the same way.
         var places = prose
-            ? _places.Find(string.Concat(turn.Segments.Select(segment => segment.Text)))
+            ? _places.Find(string.Concat(turn.Segments.Select(segment => segment.Text)), turn.SettingKey)
             : [];
 
         Controls.PlaceLinks.Begin(block, places, OpenPlace);
@@ -4465,7 +4480,7 @@ public partial class PanelView : UserControl
             yield return new DrawnSegment(
                 text, segment.Marker, segment.Voice, span.Style,
                 segment.Speaker ?? shipName, segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
-                direction, segment.Provenance, segment.Picture);
+                direction, segment.Provenance, segment.Picture, segment.SettingKey);
         }
     }
 
@@ -4489,7 +4504,8 @@ public partial class PanelView : UserControl
                 && last.SourceKey == segment.SourceKey
                 && last.Kind == segment.Kind
                 && last.ProposalId == segment.ProposalId
-                && last.Picture == segment.Picture)
+                && last.Picture == segment.Picture
+                && last.Segments[0].SettingKey == segment.SettingKey)
             {
                 last.Segments.Add(segment);
                 continue;
@@ -4515,6 +4531,7 @@ public partial class PanelView : UserControl
                     ],
                     Provenance = turn.Segments.Select(segment => segment.Provenance).LastOrDefault(line => line is not null),
                     Picture = turn.Picture,
+                    SettingKey = turn.Segments.Select(segment => segment.SettingKey).FirstOrDefault(key => key is not null),
                 })
                 .Where(turn => turn.Segments.Count > 0)
         ];
@@ -5192,7 +5209,8 @@ internal readonly record struct DrawnSegment(
     string? ProposalId = null,
     IReadOnlyList<string>? Direction = null,
     TurnProvenance? Provenance = null,
-    string? Picture = null);
+    string? Picture = null,
+    string? SettingKey = null);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
@@ -5213,4 +5231,7 @@ internal sealed record DrawnTurn(
 
     /// <summary>The speaker's picture name, or null.</summary>
     public string? Picture { get; init; }
+
+    /// <summary>The settings row a failed turn's "Settings" link opens, or null.</summary>
+    public string? SettingKey { get; init; }
 }

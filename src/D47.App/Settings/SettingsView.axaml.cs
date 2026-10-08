@@ -1327,13 +1327,34 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Opens the page holding a setting's row, and says whether there is one.</summary>
     internal bool ShowPlaceOf(string key)
     {
-        var index = _rows.FirstOrDefault(
-            view => view.Section >= 0 && string.Equals(view.Row.Key, key, StringComparison.Ordinal))?.Section ?? -1;
+        var index = SectionOf(key);
 
         ShowPlace(index);
 
         return index >= 0;
     }
+
+    /// <summary>
+    /// Opens the page holding a setting's row with that page's folded rows drawn, for a message naming the
+    /// row. A row not on this page changes nothing.
+    /// </summary>
+    public void RevealRow(string key)
+    {
+        var index = SectionOf(key);
+
+        if (index < 0)
+        {
+            return;
+        }
+
+        _revealedSections.Add(index);
+
+        ShowPlace(index);
+    }
+
+    private int SectionOf(string key) =>
+        _rows.FirstOrDefault(
+            view => view.Section >= 0 && string.Equals(view.Row.Key, key, StringComparison.Ordinal))?.Section ?? -1;
 
     /// <summary>The section holding a capability's first row on this page, or −1 where it has none here.</summary>
     private int SectionHolding(string capabilityId)

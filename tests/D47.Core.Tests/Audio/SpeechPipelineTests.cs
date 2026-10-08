@@ -231,7 +231,7 @@ public class SpeechPipelineTests
         var tts = new FakeTtsProvider { FailOn = "second" };
         await using var pipeline = Pipeline(arbiter, tts);
 
-        var reported = new List<string>();
+        var reported = new List<SynthesisFailure>();
         pipeline.SynthesisFailed += reported.Add;
 
         pipeline.Push("The first one. The second one. The third one. ");

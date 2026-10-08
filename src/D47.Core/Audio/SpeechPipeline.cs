@@ -103,6 +103,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>Every clip queued while still arriving; written by the drain, and <see cref="CompleteAsync"/> waits for them.</summary>
     private readonly List<Task<AudioClip>> _arriving = [];
 
+    /// <summary>The row this pipeline's voice was cast in where it is not the provider's own, or null.</summary>
+    private readonly string? _voiceRow;
+
     /// <summary><param name="Text"> The written form: no delivery direction in it, ever.</summary>
     /// <param name="Text">The written form: no delivery direction in it, ever.</param>
     /// <param name="Directed">
@@ -134,7 +137,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         SpokenAddress? address = null,
         bool guardianTreated = false,
         bool keep = false,
-        Func<IPcmFilter>? running = null)
+        Func<IPcmFilter>? running = null,
+        string? voiceRow = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -151,6 +155,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _captionSpeaker = captionSpeaker;
         _address = address;
         _kept = keep ? [] : null;
+        _voiceRow = voiceRow;
 
         // Shut up has to reach synthesis, not just the queue.
         _arbiter.Silenced += Abandon;
@@ -158,8 +163,15 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _drain = DrainAsync();
     }
 
+    /// <summary>What a failure says, naming the cast row rather than the provider's when the voice is what is missing.</summary>
+    private SynthesisFailure FailureOf(Exception ex) => new(
+        ex.Message,
+        ex is TtsException tts
+            ? tts.Fault == TtsFault.NoVoice && _voiceRow is not null ? _voiceRow : tts.SettingKey
+            : null);
+
     /// <summary>Raised when the provider could not synthesise.</summary>
-    public event Action<string>? SynthesisFailed;
+    public event Action<SynthesisFailure>? SynthesisFailed;
 
     /// <summary>Raised with a voice id the provider refused, once per pipeline.</summary>
     public event Action<string>? VoiceRejected;
@@ -340,7 +352,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         {
             Interlocked.Increment(ref _failures);
             _logger.LogWarning(ex, "Could not synthesise a sentence; it will not be spoken");
-            SynthesisFailed?.Invoke(ex.Message);
+            SynthesisFailed?.Invoke(FailureOf(ex));
             return null;
         }
     }
@@ -383,7 +395,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         catch (Exception ex)
         {
             Interlocked.Increment(ref _failures);
-            SynthesisFailed?.Invoke(ex.Message);
+            SynthesisFailed?.Invoke(FailureOf(ex));
         }
     }
 
@@ -492,7 +504,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         {
             Interlocked.Increment(ref _failures);
             _logger.LogWarning(ex, "Could not synthesise a sentence; it will not be spoken");
-            SynthesisFailed?.Invoke(ex.Message);
+            SynthesisFailed?.Invoke(FailureOf(ex));
             return null;
         }
     }

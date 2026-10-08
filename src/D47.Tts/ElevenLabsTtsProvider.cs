@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Catalog;
 using Microsoft.Extensions.Logging;
 using NAudio.Wave;
@@ -367,13 +368,15 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     {
         if (_key() is not { Length: > 0 } key)
         {
-            throw new TtsException("No ElevenLabs API key is stored. Add one in Settings.");
+            throw new TtsException(
+                "No ElevenLabs API key is stored. Add one in Settings.",
+                settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
             // Deliberately not a hardcoded fallback voice id.
-            throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.");
+            throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
         }
 
         var url = SynthesisUrl(voiceId, streamed: false);
@@ -434,12 +437,14 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     {
         if (_key() is not { Length: > 0 } key)
         {
-            throw new TtsException("No ElevenLabs API key is stored. Add one in Settings.");
+            throw new TtsException(
+                "No ElevenLabs API key is stored. Add one in Settings.",
+                settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
-            throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.");
+            throw new TtsException("No ElevenLabs voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
         }
 
         var url = SynthesisUrl(voiceId, streamed: true);

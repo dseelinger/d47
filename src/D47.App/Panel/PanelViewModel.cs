@@ -68,6 +68,7 @@ public enum TranscriptRunKind
 /// <param name="ProposalId">Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</param>
 /// <param name="Provenance">The line drawn inside the turn this run finished, or null.</param>
 /// <param name="Picture">The speaker's picture name, or null for a run drawn without one.</param>
+/// <param name="SettingKey">The settings row a failed turn's "Settings" link opens, or null.</param>
 public sealed record TranscriptSegment(
     string Text,
     bool Marker,
@@ -78,7 +79,8 @@ public sealed record TranscriptSegment(
     TranscriptRunKind Kind = TranscriptRunKind.Text,
     string? ProposalId = null,
     TurnProvenance? Provenance = null,
-    string? Picture = null);
+    string? Picture = null,
+    string? SettingKey = null);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
@@ -106,6 +108,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         /// <summary>The speaker's picture name, fixed when the run is written.</summary>
         public string? Picture { get; init; }
+
+        /// <summary>The settings row a failed turn's "Settings" link opens.</summary>
+        public string? SettingKey { get; init; }
     }
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
@@ -114,6 +119,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string _logText = string.Empty;
     private string _turnStatus = string.Empty;
     private string? _errorText;
+    private string? _errorSetting;
     private string? _updateText;
     private bool _updateBusy;
     private string _askText = string.Empty;
@@ -367,17 +373,33 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _turnStatus, value);
     }
 
-    /// <summary>Null when there is nothing wrong.</summary>
+    /// <summary>Null when there is nothing wrong. Setting it clears <see cref="ErrorSetting"/>.</summary>
     public string? ErrorText
     {
         get => _errorText;
         set
         {
+            ErrorSetting = null;
+
             if (Set(ref _errorText, value))
             {
                 Raise(nameof(HasError));
             }
         }
+    }
+
+    /// <summary>The settings row the banner's "Settings" link opens, or null for the Settings tab.</summary>
+    public string? ErrorSetting
+    {
+        get => _errorSetting;
+        private set => Set(ref _errorSetting, value);
+    }
+
+    /// <summary>Shows <paramref name="text"/> in the banner, its "Settings" link opening <paramref name="settingKey"/>'s row.</summary>
+    public void ShowError(string text, string? settingKey)
+    {
+        ErrorText = text;
+        ErrorSetting = settingKey;
     }
 
     public bool HasError => !string.IsNullOrEmpty(_errorText);
@@ -552,8 +574,11 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         TranscriptAppended?.Invoke();
     }
 
-    /// <summary>Puts a failed turn's words in the conversation, always as a run of its own.</summary>
-    public void AppendError(string text)
+    /// <summary>
+    /// Puts a failed turn's words in the conversation, always as a run of its own; a "Settings" link in them
+    /// opens <paramref name="settingKey"/>'s row where one is given.
+    /// </summary>
+    public void AppendError(string text, string? settingKey = null)
     {
         string transcript;
 
@@ -562,6 +587,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             _runs.Add(new Run(Marker: false, TranscriptVoice.Ship, ShipName, null, DateTimeOffset.Now, new StringBuilder(text))
             {
                 Kind = TranscriptRunKind.Error,
+                SettingKey = settingKey,
             });
 
             transcript = string.Concat(_runs.Select(Flatten));
@@ -706,7 +732,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 .. _runs.Select(run =>
                     new TranscriptSegment(
                         Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
-                        run.Kind, run.ProposalId, run.Provenance, run.Picture))
+                        run.Kind, run.ProposalId, run.Provenance, run.Picture, run.SettingKey))
             ],
         };
     }

@@ -11,7 +11,8 @@ namespace D47.App.Panel;
 /// Whether there is anything worth recording, or null when there is not — a cancel is not a defect to
 /// file.
 /// </param>
-internal readonly record struct TurnEnding(string Conversation, string? Technical)
+/// <param name="SettingKey">The settings row the failure names, or null.</param>
+internal readonly record struct TurnEnding(string Conversation, string? Technical, string? SettingKey = null)
 {
     /// <summary>A turn the Commander called off is not a turn that failed (#222).</summary>
     /// <param name="thrown">What came out of the turn.</param>
@@ -24,5 +25,6 @@ internal readonly record struct TurnEnding(string Conversation, string? Technica
             ? new TurnEnding("\n[cancelled]", null)
             : new TurnEnding(
                 "\nI couldn't answer that. The details are on the Log File reading.",
-                $"\n[response failed: {thrown.Message}]");
+                $"\n[response failed: {thrown.Message}]",
+                (thrown as D47.Core.Audio.TtsException)?.SettingKey);
 }

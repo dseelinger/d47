@@ -114,13 +114,23 @@ public enum TtsFault
 
     /// <summary>It was asked and did not answer: network, outage, a proxy, a rate limit.</summary>
     Unreachable,
+
+    /// <summary>No voice was chosen, or the provider has none by the id it was given.</summary>
+    NoVoice,
 }
 
-public sealed class TtsException(string message, Exception? inner = null, TtsFault fault = TtsFault.Unknown)
+/// <param name="settingKey">The settings row the message tells the Commander to change, or null where it names none.</param>
+public sealed class TtsException(
+    string message, Exception? inner = null, TtsFault fault = TtsFault.Unknown, string? settingKey = null)
     : Exception(message, inner)
 {
     public TtsFault Fault { get; } = fault;
+
+    public string? SettingKey { get; } = settingKey;
 }
+
+/// <summary>A sentence that could not be synthesised, as the Commander reads it, and the settings row it names.</summary>
+public sealed record SynthesisFailure(string Text, string? SettingKey = null);
 
 /// <summary>Text to audio.</summary>
 public interface ITtsProvider

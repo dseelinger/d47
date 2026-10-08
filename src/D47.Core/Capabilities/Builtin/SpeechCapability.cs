@@ -94,6 +94,15 @@ public static class SpeechCapability
     /// <summary>The secret row key for a voice provider's API key.</summary>
     public static string KeyRowFor(TtsProviderInfo provider) => $"speech.{provider.Id}.apiKey";
 
+    /// <summary>The row a cast role's voice is chosen in, or null for a role whose voice the provider's own rows decide.</summary>
+    public static string? VoiceRowFor(VoiceRole role) => role switch
+    {
+        VoiceRole.Narrator => NarratorVoiceKey,
+        VoiceRole.TowerControl => TowerVoiceKey,
+        VoiceRole.CarrierCaptain => CarrierCaptainVoiceKey,
+        _ => null,
+    };
+
     /// <summary>The row key for one slot's provider (Phase 57).</summary>
     public static string SlotProviderKey(VoiceGroupInfo slot) => $"speech.provider.{slot.Id}";
 

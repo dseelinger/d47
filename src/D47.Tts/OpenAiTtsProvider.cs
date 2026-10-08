@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Catalog;
 using Microsoft.Extensions.Logging;
 
@@ -107,12 +108,13 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
         {
             throw new TtsException(
                 "No OpenAI API key is stored. Add one in Settings.",
-                fault: TtsFault.KeyRejected);
+                fault: TtsFault.KeyRejected,
+                settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
-            throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.");
+            throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
         }
 
         // Queued rather than refused.
@@ -174,12 +176,13 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
         {
             throw new TtsException(
                 "No OpenAI API key is stored. Add one in Settings.",
-                fault: TtsFault.KeyRejected);
+                fault: TtsFault.KeyRejected,
+                settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
-            throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.");
+            throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
         }
 
         await _inFlight.WaitAsync(cancellationToken).ConfigureAwait(false);

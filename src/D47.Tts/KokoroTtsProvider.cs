@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
@@ -112,7 +113,9 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         {
             throw new TtsException(voice.VoiceId is { Length: > 0 } unknown
                 ? $"Kokoro has no voice called {unknown}. Pick one in Settings."
-                : "No Kokoro voice has been chosen. Pick one in Settings.");
+                : "No Kokoro voice has been chosen. Pick one in Settings.",
+                fault: TtsFault.NoVoice,
+                settingKey: SpeechCapability.LocalVoiceKey);
         }
 
         var (session, vocabulary, phonemiser) = Load();

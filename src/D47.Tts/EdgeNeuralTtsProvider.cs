@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -92,7 +93,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     {
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
-            throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.");
+            throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
         }
 
         try
@@ -133,7 +134,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     {
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
-            throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.");
+            throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
         }
 
         ClientWebSocket? socket = null;

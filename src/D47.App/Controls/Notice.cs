@@ -30,6 +30,9 @@ public sealed class Notice : Border
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<Notice, string?>(nameof(Text));
 
+    public static readonly StyledProperty<string?> SettingKeyProperty =
+        AvaloniaProperty.Register<Notice, string?>(nameof(SettingKey));
+
     private readonly TextBlock _label;
     private readonly TextBlock _text;
     private readonly TextBlock _detail;
@@ -150,6 +153,13 @@ public sealed class Notice : Border
         set => SetValue(TextProperty, value);
     }
 
+    /// <summary>The settings row a "Settings" link in the text opens, or null for the Settings tab.</summary>
+    public string? SettingKey
+    {
+        get => GetValue(SettingKeyProperty);
+        set => SetValue(SettingKeyProperty, value);
+    }
+
     /// <summary>A code or source, drawn upper-case in mono under the text; null for none.</summary>
     public string? Detail
     {
@@ -176,7 +186,7 @@ public sealed class Notice : Border
             _text.IsVisible = !string.IsNullOrEmpty(text);
             AutomationProperties.SetName(this, text);
         }
-        else if (change.Property == PlaceLinks.LinkerProperty)
+        else if (change.Property == PlaceLinks.LinkerProperty || change.Property == SettingKeyProperty)
         {
             DrawText();
         }
@@ -219,7 +229,7 @@ public sealed class Notice : Border
 
         var text = Text;
         var linker = PlaceLinks.GetLinker(this);
-        var places = linker is null || string.IsNullOrEmpty(text) ? [] : linker.Find(text);
+        var places = linker is null || string.IsNullOrEmpty(text) ? [] : linker.Find(text, SettingKey);
 
         PlaceLinks.Begin(_text, places, place => linker?.Go(place));
 

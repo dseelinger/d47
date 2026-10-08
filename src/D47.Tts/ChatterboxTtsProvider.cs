@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 
@@ -104,7 +105,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         if (!_installed())
         {
-            throw new TtsException("Chatterbox is not downloaded yet. Download it in Settings.");
+            throw new TtsException(
+                "Chatterbox is not downloaded yet. Download it in Settings.",
+                settingKey: SpeechCapability.ChatterboxVoiceKey);
         }
 
         if (string.Equals(voice.VoiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
@@ -115,7 +118,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         var chosen = Voices().FirstOrDefault(v => string.Equals(v.Voice.Id, voice.VoiceId, StringComparison.Ordinal))
             ?? throw new TtsException(voice.VoiceId is { Length: > 0 } unknown
                 ? $"Chatterbox has no voice called {unknown}. Pick one in Settings."
-                : "No Chatterbox voice has been chosen. Pick one in Settings.");
+                : "No Chatterbox voice has been chosen. Pick one in Settings.",
+                fault: TtsFault.NoVoice,
+                settingKey: SpeechCapability.ChatterboxVoiceKey);
 
         // One line at a time: each already takes every performance core.
         var ids = Tokeniser().Encode(text);
@@ -141,7 +146,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         if (_own is null || !_own.Exists)
         {
-            throw new TtsException(none);
+            throw new TtsException(none, settingKey: SpeechCapability.OwnVoiceKey);
         }
 
         var ids = Tokeniser().Encode(text);
@@ -156,7 +161,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 _ownEncoded?.Dispose();
                 _ownEncoded = null;
 
-                var reference = _own.Load() ?? throw new TtsException(none);
+                var reference = _own.Load() ?? throw new TtsException(none, settingKey: SpeechCapability.OwnVoiceKey);
 
                 try
                 {

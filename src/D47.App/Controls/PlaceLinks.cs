@@ -11,12 +11,25 @@ using D47.Core.Interface;
 namespace D47.App.Controls;
 
 /// <summary>Finds the places a surface's text names and takes that surface to one when it is pressed.</summary>
-public sealed class PlaceLinker(Func<string, IReadOnlyList<PanelPlace>> find, Action<PanelPlace> go)
+/// <param name="settingsRoot">The root of the Settings tab that holds the settings page.</param>
+public sealed class PlaceLinker(Func<string, IReadOnlyList<PanelPlace>> find, Action<PanelPlace> go, string? settingsRoot = null)
 {
     /// <summary>Raised when the places this surface has change, so text drawn earlier can be linked again.</summary>
     public event EventHandler? Changed;
 
-    public IReadOnlyList<PanelPlace> Find(string text) => find(text);
+    /// <summary>
+    /// The places <paramref name="text"/> names; where <paramref name="settingKey"/> is given, a place that
+    /// names the settings page opens that row.
+    /// </summary>
+    public IReadOnlyList<PanelPlace> Find(string text, string? settingKey = null) =>
+        settingKey is null
+            ? find(text)
+            : [
+                .. find(text).Select(place =>
+                    place.Tab == PanelTab.Settings && (place.RootKey is null || place.RootKey == settingsRoot)
+                        ? place with { SettingKey = settingKey }
+                        : place),
+            ];
 
     public void Go(PanelPlace place) => go(place);
 
@@ -116,16 +129,11 @@ public static class PlaceLinks
             return null;
         }
 
-        var hit = block.TextLayout.HitTestPoint(point - new Point(block.Padding.Left, block.Padding.Top));
+        var inside = point - new Point(block.Padding.Left, block.Padding.Top);
 
-        if (!hit.IsInside)
-        {
-            return null;
-        }
-
-        var offset = hit.TextPosition;
-
-        return links.Places.FirstOrDefault(place => offset >= place.Start && offset < place.Start + place.Length);
+        // Each place's own rectangles, because a point hit test says nothing is inside on any line after the first.
+        return links.Places.FirstOrDefault(place =>
+            block.TextLayout.HitTestTextRange(place.Start, place.Length).Any(rect => rect.Contains(inside)));
     }
 
     private static Links Watch(TextBlock block)

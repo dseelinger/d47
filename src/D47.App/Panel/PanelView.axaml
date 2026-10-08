@@ -140,7 +140,8 @@
     <controls:Notice x:Name="ErrorBanner"
               IsVisible="{Binding HasError}"
               Margin="0,14,0,0"
-              Text="{Binding ErrorText}">
+              Text="{Binding ErrorText}"
+              SettingKey="{Binding ErrorSetting}">
       <controls:Notice.Actions>
         <Button x:Name="DismissErrorButton"
                 Theme="{StaticResource D47.GlyphButton}"

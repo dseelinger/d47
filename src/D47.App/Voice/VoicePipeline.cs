@@ -1,6 +1,7 @@
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
@@ -92,7 +93,7 @@ public sealed class VoicePipeline(
     public Action<SynthesisNote>? Synthesised { get; set; }
 
     /// <summary>Raised when synthesis failed, so availability can be flipped rather than handled.</summary>
-    public event Action<string>? SynthesisFailed;
+    public event Action<SynthesisFailure>? SynthesisFailed;
 
     /// <summary>Raised with a voice id the provider refused, so it can be written out of settings.</summary>
     public event Action<string>? VoiceRejected;
@@ -151,7 +152,8 @@ public sealed class VoicePipeline(
                                 captionSpeaker: CaptionSpeaker,
                                 address: _address,
                                 guardianTreated: IsGuardianTreated(role, colour),
-                                running: Running(role, colour, signal));
+                                running: Running(role, colour, signal),
+                                voiceRow: SpeechCapability.VoiceRowFor(role));
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -309,7 +311,8 @@ public sealed class VoicePipeline(
             _address,
             IsGuardianTreated(role, applied),
             keep: true,
-            running: running);
+            running: running,
+            voiceRow: SpeechCapability.VoiceRowFor(role));
 
         if (!pinned)
         {
@@ -468,7 +471,7 @@ public sealed class VoicePipeline(
         StateEntered?.Invoke(LoopState.Idle);
     }
 
-    private void OnSynthesisFailed(string reason) => SynthesisFailed?.Invoke(reason);
+    private void OnSynthesisFailed(SynthesisFailure failure) => SynthesisFailed?.Invoke(failure);
 
     /// <summary>
     /// A radio link for an over-the-air role, the ship AI's Guardian treatment where one is switched

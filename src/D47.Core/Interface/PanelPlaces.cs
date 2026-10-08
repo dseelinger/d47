@@ -1,7 +1,10 @@
 namespace D47.Core.Interface;
 
-/// <summary>A place in the panel named in a message: the characters that name it, its tab, and its root where the text names one.</summary>
-public sealed record PanelPlace(int Start, int Length, PanelTab Tab, string? RootKey = null);
+/// <summary>
+/// A place in the panel named in a message: the characters that name it, its tab, its root where the text
+/// names one, and the settings row the message means where it carries one.
+/// </summary>
+public sealed record PanelPlace(int Start, int Length, PanelTab Tab, string? RootKey = null, string? SettingKey = null);
 
 /// <summary>Finds the places in the panel a message names, so they can be drawn as links (#951).</summary>
 public static class PanelPlaces
