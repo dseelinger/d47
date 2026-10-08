@@ -65,6 +65,15 @@ public class PanelTabsAndSensorRangeAreSpokenTests
     [InlineData("reset the headset", "recentre_headset")]
     [InlineData("recentre the view", "recentre_headset")]
     [InlineData("reset vr", "recentre_headset")]
+    [InlineData("play galnet", "galnet_play_pause")]
+    [InlineData("pause galnet", "galnet_play_pause")]
+    [InlineData("galnet play", "galnet_play_pause")]
+    [InlineData("galnet pause", "galnet_play_pause")]
+    [InlineData("next galnet story", "galnet_next")]
+    [InlineData("skip galnet", "galnet_next")]
+    [InlineData("previous galnet story", "galnet_previous")]
+    [InlineData("clear galnet", "galnet_clear")]
+    [InlineData("clear the galnet queue", "galnet_clear")]
     public void EachPhraseRoutesWithoutTheModel(string phrase, string id)
     {
         var match = Build(GuiFocus.None).Router.MatchToolCommand(phrase);

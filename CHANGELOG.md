@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Say "play galnet", "pause galnet", "galnet play" or "galnet pause" to press the Galnet audio play/pause key; "next galnet story" or "skip galnet" to skip forward; "previous galnet story" to skip back; "clear galnet" or "clear the galnet queue" to empty the queue. Play and pause share one key and the game reports no Galnet playback state, so both press the toggle.
+
 Say "recentre the headset", "recenter the headset", "reset the headset", "recentre the view" or "reset vr" to press Elite's headset reset key and recentre the view in VR, in the ship, the SRV or on foot.
 
 Say "next tab" or "next page", and "previous tab" or "previous page", to change the tab of the open panel; "ui focus" or "focus the panels" to take focus of the panels; "quick comms" or "open quick comms" to open quick comms, including on foot; "orbit lines" to toggle the orbit lines; "increase sensor range" or "sensor range up", and "decrease sensor range" or "sensor range down" to change the sensor range in flight. "Galaxy map home" or "centre on my system" centres the galaxy map on your system, and answers that the galaxy map is not open when it is not.

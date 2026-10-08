@@ -710,6 +710,54 @@ public static class GameActions
             ],
         },
 
+        new()
+        {
+            Id = "galnet_play_pause",
+            Label = "Galnet audio",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("GalnetAudio_Play_Pause", ControlContext.AnyShip | ControlContext.Srv | ControlContext.OnFoot),
+            ],
+            Names = ["play galnet", "pause galnet", "galnet play", "galnet pause"],
+        },
+
+        new()
+        {
+            Id = "galnet_next",
+            Label = "the next Galnet story",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("GalnetAudio_SkipForward", ControlContext.AnyShip | ControlContext.Srv | ControlContext.OnFoot),
+            ],
+            Names = ["next galnet story", "skip galnet"],
+        },
+
+        new()
+        {
+            Id = "galnet_previous",
+            Label = "the previous Galnet story",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("GalnetAudio_SkipBackward", ControlContext.AnyShip | ControlContext.Srv | ControlContext.OnFoot),
+            ],
+            Names = ["previous galnet story"],
+        },
+
+        new()
+        {
+            Id = "galnet_clear",
+            Label = "the Galnet queue",
+            Group = Interface,
+            Variants =
+            [
+                new ActionVariant("GalnetAudio_ClearQueue", ControlContext.AnyShip | ControlContext.Srv | ControlContext.OnFoot),
+            ],
+            Names = ["clear galnet", "clear the galnet queue"],
+        },
+
         // ---- SRV (item 9) -------------------------------------------------------------------
         new()
         {
