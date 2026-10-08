@@ -467,8 +467,8 @@
             highlight and step through matches; Settings filters, so the count and the steppers are
             hidden there. Hidden until a host enables it, which only the desktop window does.
 
-            Every child is docked right, declared right to left, so the field keeps the right-hand end
-            and the steppers do not move as the count changes.
+            Every child is docked left, so source order is draw order: the field with its count and
+            clear glyph inside it, the steppers, a divider, then the page's own actions.
           -->
           <DockPanel x:Name="SearchRow"
                      DockPanel.Dock="Right"
@@ -478,66 +478,82 @@
                      Margin="16,0,0,0">
             <TextBox x:Name="SearchInput"
                      Classes="search"
-                     DockPanel.Dock="Right"
+                     DockPanel.Dock="Left"
                      Width="{x:Static panel:PanelView.TranscriptSearchWidth}"
                      VerticalAlignment="Center"
                      PlaceholderText="Search this page"
                      TextChanged="OnSearchChanged"
-                     KeyDown="OnSearchKeyDown" />
-            <Button x:Name="SearchNext"
-                    DockPanel.Dock="Right"
-                    Margin="6,0,0,0"
-                    Content="&#x203A;"
-                    MinWidth="0"
-                    IsVisible="False"
-                    ToolTip.Tip="Next match (Enter)"
-                    Click="OnSearchNextClick" />
+                     KeyDown="OnSearchKeyDown">
+              <TextBox.InnerRightContent>
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                  <TextBlock x:Name="SearchCount"
+                             Margin="0,0,8,0"
+                             VerticalAlignment="Center"
+                             IsVisible="False"
+                             FontFamily="{StaticResource D47.Font.Mono}"
+                             FontSize="{StaticResource D47.Type.Small}"
+                             Foreground="{DynamicResource D47.Grey}" />
+                  <!-- Shown only while there is a query. -->
+                  <Button x:Name="SearchClear"
+                          Theme="{StaticResource D47.GlyphButton}"
+                          MinHeight="0"
+                          Content="&#x2715;"
+                          IsVisible="False"
+                          ToolTip.Tip="Clear the search (Esc)"
+                          AutomationProperties.Name="Clear the search"
+                          Click="OnSearchClearClick" />
+                </StackPanel>
+              </TextBox.InnerRightContent>
+            </TextBox>
             <Button x:Name="SearchPrevious"
-                    DockPanel.Dock="Right"
-                    Margin="6,0,0,0"
+                    DockPanel.Dock="Left"
+                    Margin="2,0,0,0"
+                    Width="44"
                     Content="&#x2039;"
                     MinWidth="0"
                     IsVisible="False"
                     ToolTip.Tip="Previous match (Shift+Enter)"
                     Click="OnSearchPreviousClick" />
-            <TextBlock x:Name="SearchCount"
-                       DockPanel.Dock="Right"
-                       Margin="6,0,0,0"
-                       VerticalAlignment="Center"
-                       IsVisible="False"
-                       FontSize="{StaticResource D47.Type.Secondary}"
-                       Foreground="{DynamicResource D47.Grey2}" />
-            <!-- Shown only while there is a query. -->
-            <Button x:Name="SearchClear"
-                    DockPanel.Dock="Right"
-                    Margin="6,0,0,0"
-                    Content="CLEAR"
+            <Button x:Name="SearchNext"
+                    DockPanel.Dock="Left"
+                    Margin="2,0,0,0"
+                    Width="44"
+                    Content="&#x203A;"
+                    MinWidth="0"
                     IsVisible="False"
-                    ToolTip.Tip="Clear the search (Esc)"
-                    AutomationProperties.Name="Clear the search"
-                    Click="OnSearchClearClick" />
+                    ToolTip.Tip="Next match (Enter)"
+                    Click="OnSearchNextClick" />
+            <!-- Between the search unit and the page actions; shown only with both. -->
+            <Border x:Name="SearchDivider"
+                    DockPanel.Dock="Left"
+                    Width="1"
+                    Height="24"
+                    Margin="16,0,10,0"
+                    VerticalAlignment="Center"
+                    IsVisible="False"
+                    Background="{DynamicResource D47.Line2}" />
+            <!-- The page's own control (IPageChrome.BarTool). Shown on surfaces with no field too. -->
+            <ContentControl x:Name="PageTool"
+                            DockPanel.Dock="Left"
+                            VerticalAlignment="Center"
+                            IsVisible="False" />
+            <!-- Copies the whole page as it is shown, not the selection. -->
+            <Button x:Name="CopyButton"
+                    DockPanel.Dock="Left"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    Click="OnCopyClick" />
             <!--
               Cuts a scrubbed window around an incident and shows what would leave before anything
               does. Only on the pages it can cut from, and only where a host has wired it.
             -->
             <Button x:Name="DonateButton"
-                    DockPanel.Dock="Right"
+                    DockPanel.Dock="Left"
                     Margin="6,0,0,0"
                     IsVisible="False"
                     Content="Help improve D47…"
                     Click="OnDonateClick" />
-            <!-- Copies the whole page as it is shown, not the selection. -->
-            <Button x:Name="CopyButton"
-                    DockPanel.Dock="Right"
-                    Margin="6,0,0,0"
-                    VerticalAlignment="Center"
-                    Click="OnCopyClick" />
-            <!-- The page's own control beside the field (IPageChrome.BarTool). Shown on surfaces with no field too. -->
-            <ContentControl x:Name="PageTool"
-                            DockPanel.Dock="Right"
-                            Margin="0,0,12,0"
-                            VerticalAlignment="Center"
-                            IsVisible="False" />
           </DockPanel>
           <TextBlock x:Name="PageTitle"
                      DockPanel.Dock="Left"

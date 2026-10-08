@@ -5023,6 +5023,9 @@ public partial class PanelView : UserControl
             return;
         }
 
+        SearchDivider.IsVisible = SearchInput.IsVisible
+                                  && (PageTool.IsVisible || CopyButton.IsVisible || DonateButton.IsVisible);
+
         var actions = 0.0;
 
         foreach (var child in SearchRow.Children)

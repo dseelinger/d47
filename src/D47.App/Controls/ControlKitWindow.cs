@@ -645,6 +645,35 @@ public sealed class ControlKitWindow : Window
                 Text = text,
             };
             box.Classes.Add(FieldMessage.SearchClass);
+
+            if (text is not null)
+            {
+                var count = new TextBlock
+                {
+                    Text = "2 of 5",
+                    Margin = new Thickness(0, 0, 8, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontFamily = (FontFamily)Application.Current!.FindResource("D47.Font.Mono")!,
+                    FontSize = TypeScale.Small,
+                };
+                Themed(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+                var clear = new Button
+                {
+                    Theme = (ControlTheme)Application.Current!.FindResource("D47.GlyphButton")!,
+                    MinHeight = 0,
+                    Content = Glyphs.Text("✕", TypeScale.Glyph),
+                };
+                Avalonia.Automation.AutomationProperties.SetName(clear, "Clear the search");
+
+                box.InnerRightContent = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Children = { count, clear },
+                };
+            }
+
             return box;
         }
 

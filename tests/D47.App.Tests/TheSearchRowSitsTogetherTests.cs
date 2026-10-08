@@ -43,30 +43,46 @@ public class TheSearchRowSitsTogetherTests
         return new Rect(at.Value, control.Bounds.Size);
     }
 
-    /// <summary>
-    /// The count and the two steppers are one group at the right end, in that order, with nothing but
-    /// their own margins between them.
-    /// </summary>
+    /// <summary>The field holds the count and the clear glyph; the steppers follow it, previous first, 2px apart.</summary>
     [AvaloniaFact]
-    public void TheCountAndTheSteppersAreOneGroup()
+    public void TheCountAndTheClearGlyphAreInsideTheField()
     {
         var panel = Searching();
 
+        var field = Where(panel, "SearchInput");
         var count = Where(panel, "SearchCount");
+        var clear = Where(panel, "SearchClear");
         var previous = Where(panel, "SearchPrevious");
         var next = Where(panel, "SearchNext");
 
-        Assert.True(count.Right <= previous.Left, "the count is not left of the previous stepper");
-        Assert.True(previous.Right <= next.Left, "the steppers are the wrong way round");
+        Assert.True(field.Contains(count), "the count is outside the field");
+        Assert.True(field.Contains(clear), "the clear glyph is outside the field");
+        Assert.True(count.Right <= clear.Left, "the count is not left of the clear glyph");
+        Assert.InRange(previous.Left - field.Right, 1.5, 2.5);
+        Assert.InRange(next.Left - previous.Right, 1.5, 2.5);
+        Assert.Equal(44, previous.Width, 0.5);
+        Assert.Equal(44, next.Width, 0.5);
+    }
 
-        // Their declared margin and nothing else.
-        Assert.True(
-            previous.Left - count.Right <= 8,
-            $"{previous.Left - count.Right} pixels between the count and the previous stepper");
+    /// <summary>The row reads: field, previous, next, divider, copy, help.</summary>
+    [AvaloniaFact]
+    public void TheRowReadsInUseOrder()
+    {
+        var panel = Searching();
+        panel.EnableDonation(() => { });
+        Dispatcher.UIThread.RunJobs();
 
-        Assert.True(
-            next.Left - previous.Right <= 8,
-            $"{next.Left - previous.Right} pixels between the two steppers");
+        var order = new[] { "SearchInput", "SearchPrevious", "SearchNext", "SearchDivider", "CopyButton" }
+            .Select(name => Where(panel, name))
+            .ToList();
+
+        for (var i = 1; i < order.Count; i++)
+        {
+            Assert.True(order[i - 1].Right <= order[i].Left + 0.5, $"item {i} is not right of item {i - 1}");
+        }
+
+        Assert.True(panel.GetControl<Control>("SearchDivider").IsVisible);
+        Assert.Equal(1, Where(panel, "SearchDivider").Width, 0.5);
     }
 
     /// <summary>
@@ -86,26 +102,21 @@ public class TheSearchRowSitsTogetherTests
             "the readings were squeezed instead");
     }
 
-    /// <summary>
-    /// The field keeps the right-hand end, so the steppers beside it do not move under the pointer as a
-    /// query narrows the count from "9 of 143" to "1 of 2".
-    /// </summary>
+    /// <summary>The page actions end the row, so the steppers and the field stay put as the count changes.</summary>
     [AvaloniaFact]
-    public void TheFieldKeepsTheEnd()
+    public void ThePageActionsKeepTheEnd()
     {
         var panel = Searching();
 
         var row = panel.GetControl<DockPanel>("SearchRow");
-        var field = Where(panel, "SearchInput");
+        var copy = Where(panel, "CopyButton");
         var next = Where(panel, "SearchNext");
 
-        Assert.True(
-            row.Bounds.Width - field.Right <= 1,
-            $"the field is {row.Bounds.Width - field.Right} pixels short of the end");
-        Assert.True(next.Right <= field.Left, "the steppers are not left of the field");
+        Assert.True(row.Bounds.Width - copy.Right <= 1, "the copy button is short of the end");
+        Assert.True(next.Right <= copy.Left, "the steppers are not left of the page actions");
     }
 
-    /// <summary>The Transcript's field is 340 wide at any width with room for it, and pushed to the title line's right-hand end (#430).</summary>
+    /// <summary>The Transcript's field is 340 wide at any width with room for it, and the row pushed to the title line's right-hand end (#430).</summary>
     [AvaloniaTheory]
     [InlineData(1024)]
     [InlineData(1400)]
@@ -114,9 +125,10 @@ public class TheSearchRowSitsTogetherTests
     {
         var panel = Searching(width);
 
-        var bar = panel.GetControl<DockPanel>("TitleLine");
         var field = panel.GetControl<TextBox>("SearchInput");
-        var right = field.TranslatePoint(new Point(field.Bounds.Width, 0), bar)!.Value.X;
+        var row = panel.GetControl<DockPanel>("SearchRow");
+        var bar = panel.GetControl<DockPanel>("TitleLine");
+        var right = row.TranslatePoint(new Point(row.Bounds.Width, 0), bar)!.Value.X;
 
         // Within the pixel that layout rounding moves an edge by.
         Assert.InRange(field.Bounds.Width - PanelView.TranscriptSearchWidth, -1, 1);
