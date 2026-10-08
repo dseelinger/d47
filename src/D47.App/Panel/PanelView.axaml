@@ -672,14 +672,13 @@
       </DockPanel>
 
       <!--
-        The Log file page's own settings — log levels — pinned to the bottom of the page rather than
-        inside the transcript pane, since it is the page's chrome rather than the page's content
-        (#283, #340).
+        The Log file page's own settings rows, under the sub-tab row. Their toggle is the tile on the
+        title line (#283, #340, #954).
       -->
       <ContentControl x:Name="LogSettingsStrip"
-                       DockPanel.Dock="Bottom"
+                       DockPanel.Dock="Top"
                        IsVisible="False"
-                       Margin="14,0,14,8" />
+                       Margin="14,0" />
 
       <Panel>
       <Border x:Name="TranscriptPane"

@@ -240,7 +240,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
 
         var strip = (StackPanel)fleetStrip!.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
-        var content = (StackPanel)strip.Children[1];
+        var content = (StackPanel)strip.Children[0];
 
         Assert.True(content.IsVisible);
 

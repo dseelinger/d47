@@ -15,8 +15,12 @@ using D47.Core.Interface;
 namespace D47.App.Panel;
 
 /// <summary>The Stories tab (Phase 47).</summary>
-public sealed class AdventuresPage : UserControl, IPageSummary
+public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 {
+    public Control? BarTool { get; }
+
+    public string? HelpTopic => null;
+
     public string Summary => "Stories you fly, told by the ship's AI. Progress comes from your own journal.";
 
     event EventHandler? IPageSummary.SummaryChanged
@@ -64,6 +68,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         Func<Func<string, Task<bool>>?>? copy = null)
     {
         _copy = copy;
+        BarTool = PageChrome.ToolOf(settingsStrip);
         _surface = surface;
         _nav = nav;
         _prompts = prompts;
@@ -89,13 +94,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary
         root.Children.Add(bar);
         root.Children.Add(_problems);
 
-        // The lowest element on the page, ahead of the scroller so the scroller stays the child
-        // that fills (#340).
         if (settingsStrip is not null)
         {
-            DockPanel.SetDock(settingsStrip, Dock.Bottom);
-            root.Children.Add(settingsStrip);
-            root.CapStripHeight(settingsStrip);
+            root.DockStripAtTop(settingsStrip);
         }
 
         root.Children.Add(new ScrollViewer

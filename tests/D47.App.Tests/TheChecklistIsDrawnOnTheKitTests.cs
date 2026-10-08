@@ -145,8 +145,7 @@ public class TheChecklistIsDrawnOnTheKitTests
 
         var closed = Save(window, "checklist-settings-strip-closed.png");
 
-        var strip = (StackPanel)view.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
-        ((Button)strip.Children[0]).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        ((Button)view.BarTool!).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         var open = Save(window, "checklist-settings-strip-open.png");
 

@@ -4962,14 +4962,9 @@ public partial class PanelView : UserControl
         SearchInput.IsVisible = field;
         SearchInput.PlaceholderText = filterable?.FilterPlaceholder ?? "Search this page";
 
-        var tool = transcript ? null : (PagePane.Child as IPageChrome)?.BarTool;
+        ShowLogSettingsStrip();
 
-        if (!ReferenceEquals(PageTool.Content, tool))
-        {
-            PageTool.Content = tool;
-        }
-
-        PageTool.IsVisible = tool is not null;
+        var tool = PageTool.Content;
 
         SearchRow.IsVisible = Mode == PanelMode.Full
                               && ModalPane.Child is null
@@ -4981,7 +4976,23 @@ public partial class PanelView : UserControl
 
         ShowTitleLine();
         ShowPageBar();
-        ShowLogSettingsStrip();
+    }
+
+    /// <summary>Puts the page's own control on the title line: the Log file's settings tile on that page, the shown page's <see cref="IPageChrome.BarTool"/> elsewhere off the Transcript.</summary>
+    private void ShowPageTool()
+    {
+        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
+
+        var tool = transcript
+            ? LogSettingsStrip.IsVisible ? (LogSettingsStrip.Content as IPageChrome)?.BarTool : null
+            : (PagePane.Child as IPageChrome)?.BarTool;
+
+        if (!ReferenceEquals(PageTool.Content, tool))
+        {
+            PageTool.Content = tool;
+        }
+
+        PageTool.IsVisible = tool is not null;
     }
 
     private void ShowPageBar()
@@ -5083,6 +5094,7 @@ public partial class PanelView : UserControl
         }
 
         LogSettingsStrip.IsVisible = show && LogSettingsStrip.Content is not null;
+        ShowPageTool();
     }
 
     /// <summary>Opens the sharing window (#160, #238).</summary>

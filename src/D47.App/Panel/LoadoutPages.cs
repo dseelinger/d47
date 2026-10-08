@@ -1421,7 +1421,7 @@ public abstract class LoadoutPage : UserControl
 /// <summary>
 /// The index (Phase 26, "The fleet, and the fleet you intend"; Phase 27, "The same page, on foot").
 /// </summary>
-public sealed class IndexPage : LoadoutPage
+public sealed class IndexPage : LoadoutPage, IPageChrome
 {
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
@@ -1445,6 +1445,8 @@ public sealed class IndexPage : LoadoutPage
     {
         _nav = nav;
         _prompts = prompts;
+
+        BarTool = PageChrome.ToolOf(settingsStrip);
 
         var intend = LoadoutPages.Press(mode.NewLabel, Intend);
 
@@ -1471,12 +1473,9 @@ public sealed class IndexPage : LoadoutPage
         DockPanel.SetDock(head, Dock.Top);
         root.Children.Add(head);
 
-        // Docked first among the bottom children, so it sits below `say` at the very bottom (#340).
         if (settingsStrip is not null)
         {
-            DockPanel.SetDock(settingsStrip, Dock.Bottom);
-            root.Children.Add(settingsStrip);
-            root.CapStripHeight(settingsStrip);
+            root.DockStripAtTop(settingsStrip);
         }
 
         DockPanel.SetDock(say, Dock.Bottom);
@@ -1492,6 +1491,10 @@ public sealed class IndexPage : LoadoutPage
 
         Refresh();
     }
+
+    public Control? BarTool { get; }
+
+    public string? HelpTopic => null;
 
     /// <summary>How wide a card is, and how tall, for the width the page actually has.</summary>
     private void Lay(double available)

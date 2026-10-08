@@ -148,8 +148,8 @@ public class ATabsOwnSettingsShowOnItTests
         var (view, window) = OpenStrip(settings, viewState, paths, "adventures");
 
         var strip = (StackPanel)view.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
-        var content = (StackPanel)strip.Children[1];
-        var header = (Button)strip.Children[0];
+        var content = (StackPanel)strip.Children[0];
+        var header = (Button)view.BarTool!;
 
         Assert.False(content.IsVisible);
 
@@ -157,7 +157,7 @@ public class ATabsOwnSettingsShowOnItTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(content.IsVisible);
-        Assert.StartsWith("▾ Page settings (", header.Content as string, StringComparison.Ordinal);
+        Assert.StartsWith("▾ SETTINGS ", header.Content as string, StringComparison.Ordinal);
 
         window.Close();
     }
@@ -173,16 +173,16 @@ public class ATabsOwnSettingsShowOnItTests
         var (view, window) = OpenStrip(settings, viewState, paths, "adventures");
 
         var strip = (StackPanel)view.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
-        var content = (StackPanel)strip.Children[1];
+        var content = (StackPanel)strip.Children[0];
 
         Assert.True(content.IsVisible);
 
         window.Close();
     }
 
-    /// <summary>The strip sits at the very bottom of the page, below the index (#340).</summary>
+    /// <summary>The strip's rows sit at the top of the page, under its head (#954).</summary>
     [AvaloniaFact]
-    public void TheFleetShipsPageDrawsTheGivenStripAtTheBottom()
+    public void TheFleetShipsPageDrawsTheGivenStripAtTheTop()
     {
         var root = TempFolders.Create("d47-tab-settings-strip-tests");
 
@@ -210,11 +210,47 @@ public class ATabsOwnSettingsShowOnItTests
 
         var host = (Control)marker.GetVisualParent()!;
 
-        Assert.Equal(Dock.Bottom, DockPanel.GetDock(marker));
+        Assert.Equal(Dock.Top, DockPanel.GetDock(marker));
         Assert.True(
-            Math.Abs(host.Bounds.Height - marker.Bounds.Bottom) < 1.0,
-            $"expected the strip flush with the bottom of its {host.GetType().Name}, "
+            marker.Bounds.Bottom < host.Bounds.Height / 2,
+            $"expected the strip in the top half of its {host.GetType().Name}, "
             + $"got host height {host.Bounds.Height} and strip bottom {marker.Bounds.Bottom}");
+
+        window.Close();
+    }
+
+    /// <summary>The Log File page shows the tile on the title line and docks nothing at the bottom (#954).</summary>
+    [AvaloniaFact]
+    public void TheLogFilePageHasItsSettingsTileOnTheTitleLine()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var strip = new SettingsView();
+        strip.Attach(settings, viewState, paths, tabPlaceId: "log-levels");
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        panel.EnableLog(() => strip);
+        panel.Tab = PanelTab.Transcript;
+        panel.Page = TranscriptPage.Log;
+
+        var window = new Window { Content = panel, Width = 1000, Height = 700 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var line = panel.FindControl<Control>("TitleLine")!;
+        var tool = panel.FindControl<ContentControl>("PageTool")!;
+        var holder = panel.FindControl<ContentControl>("LogSettingsStrip")!;
+
+        Assert.Same(strip.BarTool, tool.Content);
+        Assert.True(tool.IsVisible);
+        Assert.True(line.IsVisible);
+        Assert.Equal(Dock.Top, DockPanel.GetDock(holder));
+        Assert.False(((StackPanel)strip.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName)).Children[0].IsVisible);
+
+        ((Button)strip.BarTool!).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(((StackPanel)strip.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName)).Children[0].IsVisible);
+        Assert.StartsWith("▾ SETTINGS ", ((Button)strip.BarTool!).Content as string, StringComparison.Ordinal);
 
         window.Close();
     }

@@ -430,8 +430,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>
-    /// Draws one <see cref="SettingsLayout"/> tab place's rows behind a "Page settings"
-    /// disclosure — no nav, no page-top strip, no card header, no width floor, and no fold (#218).
+    /// Draws one <see cref="SettingsLayout"/> tab place's rows, with no nav, page-top strip, card header, width floor
+    /// or fold. <see cref="BarTool"/> is the tile that opens them (#218, #954).
     /// </summary>
     private void BuildTabPlace(SettingsService settings, string placeId)
     {
@@ -480,27 +480,49 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var count = rows.Count.ToString(CultureInfo.InvariantCulture);
 
-        string Said(bool open) => $"{(open ? "▾" : "▸")} Page settings ({count})";
+        string Said(bool open) => $"{(open ? "▾" : "▸")} SETTINGS {count}";
 
-        var header = new Button
+        var tile = new Button
         {
+            Name = TabTileName,
             Content = Said(expanded),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        AutomationProperties.SetName(header, "Page settings");
-        _tabStripHeader = open => header.Content = Said(open);
+        AutomationProperties.SetName(tile, "Page settings");
 
-        header.Click += (_, _) =>
+        void Show(bool open)
+        {
+            tile.Content = Said(open);
+
+            if (open)
+            {
+                D47.App.Panel.LoadoutPages.Themed(tile, BackgroundProperty, ThemeManager.AKey);
+                D47.App.Panel.LoadoutPages.Themed(tile, ForegroundProperty, ThemeManager.KnockKey);
+            }
+            else
+            {
+                tile.ClearValue(BackgroundProperty);
+                tile.ClearValue(ForegroundProperty);
+            }
+
+            // Collapsed, the view is empty and takes no height.
+            Cards.Margin = new Thickness(0, 0, 0, open ? 10 : 0);
+        }
+
+        Show(expanded);
+        _tabStripHeader = Show;
+        _barTool = tile;
+
+        tile.Click += (_, _) =>
         {
             var open = !content.IsVisible;
             content.IsVisible = open;
-            header.Content = Said(open);
+            Show(open);
             SaveViewState(state => state.With(placeId, open));
         };
 
         var strip = new StackPanel { Name = TabStripName, Spacing = 8 };
-        strip.Children.Add(header);
         strip.Children.Add(content);
 
         Cards.Children.Add(strip);
@@ -510,6 +532,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>Marks the strip a tab place draws, for a test to find it by name (#218).</summary>
     public const string TabStripName = "SettingsForThisPage";
+
+    /// <summary>Marks the tile on the title line that opens the strip, for a test to find it.</summary>
+    public const string TabTileName = "PageSettingsTile";
 
     /// <summary>The capability a page-level row still belongs to.</summary>
     private static CapabilityDescriptor SectionOwning(SettingsService settings, SettingRow row) =>

@@ -37,7 +37,7 @@ public sealed class CarrierSource(
 }
 
 /// <summary>The Commander's fleet carrier, on the tab named after it (#230).</summary>
-public sealed class CarrierPage : UserControl
+public sealed class CarrierPage : UserControl, IPageChrome
 {
     private readonly CarrierSource _carrier;
     private readonly Func<DateTimeOffset> _now;
@@ -64,6 +64,7 @@ public sealed class CarrierPage : UserControl
         // Whether Hull pictures is on.
         bool hullPictures = false)
     {
+        BarTool = PageChrome.ToolOf(settingsStrip);
         _hullPictures = hullPictures;
         _carrier = carrier;
         _planRoute = planRoute;
@@ -75,12 +76,9 @@ public sealed class CarrierPage : UserControl
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("where is my carrier");
 
-        // Docked first among the bottom children, so it sits below `say` at the very bottom (#340).
         if (settingsStrip is not null)
         {
-            DockPanel.SetDock(settingsStrip, Dock.Bottom);
-            root.Children.Add(settingsStrip);
-            root.CapStripHeight(settingsStrip);
+            root.DockStripAtTop(settingsStrip);
         }
 
         DockPanel.SetDock(say, Dock.Bottom);
@@ -92,6 +90,10 @@ public sealed class CarrierPage : UserControl
 
         Refresh();
     }
+
+    public Control? BarTool { get; }
+
+    public string? HelpTopic => null;
 
     private void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(Refresh);
 

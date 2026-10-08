@@ -22,6 +22,17 @@ public static class PageChrome
     /// <summary>Whether this control was marked.</summary>
     public static bool IsChrome(this Control control) => control.Classes.Contains(Class);
 
+    /// <summary>The tile that opens a settings strip, for the page to hand to the title line; null without a strip.</summary>
+    public static Control? ToolOf(Control? strip) => (strip as IPageChrome)?.BarTool;
+
+    /// <summary>Docks an open settings strip under the page's top rows and caps it at half the page.</summary>
+    public static void DockStripAtTop(this DockPanel root, Control strip)
+    {
+        DockPanel.SetDock(strip, Dock.Top);
+        root.Children.Add(strip);
+        root.CapStripHeight(strip);
+    }
+
     /// <summary>Caps an open settings strip at half the height of the page it sits on (#340).</summary>
     public static void CapStripHeight(this Control host, Control strip)
     {
