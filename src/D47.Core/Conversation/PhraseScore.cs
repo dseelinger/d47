@@ -78,24 +78,23 @@ public static class PhraseScore
             KeywordRouter.Words(KeywordRouter.Utterance(phrase)));
 
     /// <summary>
-    /// The word sequence with every "the" removed, every run matching an equivalence class member
-    /// replaced by that class's canonical word, and a trailing plural "s" dropped from the last word.
-    /// "The" folds out here too, so ranking agrees with the exact match <see cref="KeywordRouter.WithoutThe"/>
-    /// gives the router's other routes (#525).
+    /// The word sequence passed through <see cref="KeywordRouter.Folded"/>, so ranking agrees with the
+    /// router's exact match, then every run matching an equivalence class member replaced by that
+    /// class's canonical word, and a trailing plural "s" dropped from the last word.
     /// </summary>
     private static string[] Fold(IReadOnlyList<string> words)
     {
-        var withoutThe = words.Where(word => !string.Equals(word, "the", StringComparison.OrdinalIgnoreCase)).ToList();
-        var folded = new List<string>(withoutThe.Count);
+        var said = KeywordRouter.Folded(string.Join(' ', words)).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var folded = new List<string>(said.Length);
 
         var i = 0;
 
-        while (i < withoutThe.Count)
+        while (i < said.Length)
         {
             var folding = Foldings.FirstOrDefault(entry =>
-                i + entry.Words.Length <= withoutThe.Count
+                i + entry.Words.Length <= said.Length
                 && entry.Words.Select((w, j) => (w, j))
-                    .All(pair => string.Equals(pair.w, withoutThe[i + pair.j], StringComparison.OrdinalIgnoreCase)));
+                    .All(pair => string.Equals(pair.w, said[i + pair.j], StringComparison.OrdinalIgnoreCase)));
 
             if (folding.Words is not null)
             {
@@ -104,7 +103,7 @@ public static class PhraseScore
             }
             else
             {
-                folded.Add(withoutThe[i]);
+                folded.Add(said[i]);
                 i += 1;
             }
         }

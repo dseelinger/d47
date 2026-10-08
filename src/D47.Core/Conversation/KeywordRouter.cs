@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
+using D47.Core.Audio;
 using D47.Core.Capabilities;
 
 namespace D47.Core.Conversation;
@@ -69,12 +71,13 @@ public sealed class KeywordRouter(
             return null;
         }
 
-        var words = bounded ? Words(input).Length : (int?)null;
+        var folded = Folded(input);
+        var words = bounded ? Words(folded).Length : (int?)null;
 
         var candidates =
             from capability in registry.All
             from keyword in Vocabulary(capability.Descriptor, source)
-            where MatchesAsCommand(input, keyword.Phrase, words)
+            where MatchesAsCommand(folded, keyword.Phrase, words)
             orderby keyword.Phrase.Length descending
             select (capability, keyword);
 
@@ -118,12 +121,14 @@ public sealed class KeywordRouter(
             return null;
         }
 
+        var folded = Folded(input);
+
         // The interrupt-only vocabulary first: it exists precisely for phrases too broad to sit in the
         // general list, so it would never be reached if the general list were consulted first.
         var byInterruptPhrase =
             (from capability in registry.All
              from keyword in capability.Descriptor.InterruptKeywords
-             where MatchesAsCommand(input, keyword, words: null)
+             where MatchesAsCommand(folded, keyword, words: null)
              orderby keyword.Length descending
              let tool = capability.Descriptor.Tools.FirstOrDefault(t => t.Interrupting && t.Parameters.Count == 0)
              where tool is not null
@@ -159,13 +164,18 @@ public sealed class KeywordRouter(
         // As said first: `PersonaCapability` declares "switch to Directive 47", which opens with an opener.
         return Readings(utterance).Select(Matching).FirstOrDefault(match => match is not null);
 
-        SettingCommandMatch? Matching(string said) => (
-            from capability in registry.All
-            from row in capability.Descriptor.Settings
-            from command in row.Commands
-            where string.Equals(WithoutThe(said), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
-            select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
-            .FirstOrDefault();
+        SettingCommandMatch? Matching(string said)
+        {
+            var folded = Folded(said);
+
+            return (
+                from capability in registry.All
+                from row in capability.Descriptor.Settings
+                from command in row.Commands
+                where string.Equals(folded, Folded(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
+                .FirstOrDefault();
+        }
     }
 
     /// <summary>Matches a tool command phrase — the model-free way to act on the game (Phase 10).</summary>
@@ -183,9 +193,11 @@ public sealed class KeywordRouter(
 
         ToolCommandMatch? Matching(string said)
         {
+            var folded = Folded(said);
+
             var dynamic = (
                 from command in dynamicCommands?.Invoke() ?? []
-                where string.Equals(WithoutThe(said), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                where string.Equals(folded, Folded(command.Phrase), StringComparison.OrdinalIgnoreCase)
                 orderby command.Phrase.Length descending
                 select new ToolCommandMatch(
                     command.CapabilityId,
@@ -198,7 +210,7 @@ public sealed class KeywordRouter(
                 from capability in registry.All
                 from tool in capability.Descriptor.Tools
                 from command in tool.Commands
-                where string.Equals(WithoutThe(said), WithoutThe(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                where string.Equals(folded, Folded(command.Phrase), StringComparison.OrdinalIgnoreCase)
 
                 // A phrase that is only an answer while there is a question.
                 where command.When?.Invoke() ?? true
@@ -251,45 +263,103 @@ public sealed class KeywordRouter(
     /// phrase — every capability's whole vocabulary is walked for every utterance.
     /// </param>
     /// <remarks>
-    /// The allowance is sized off the phrase as matched — with "the" folded out — not as declared,
-    /// so a phrase carrying more than one "the" is not allowed extra surrounding words for it (#525).
+    /// Both counts are taken after <see cref="Folded"/>, so a phrase carrying more than one "the" is not
+    /// allowed extra surrounding words for it (#525).
     /// </remarks>
-    private static bool MatchesAsCommand(string text, string phrase, int? words) =>
-        ContainsPhrase(text, phrase)
-        && (words is not { } count || count <= Words(WithoutThe(phrase)).Length + MaxWordsAroundAKeyword);
+    private static bool MatchesAsCommand(string folded, string phrase, int? words)
+    {
+        var foldedPhrase = Folded(phrase);
+
+        return ContainsPhrase(folded, foldedPhrase)
+            && (words is not { } count || count <= Words(foldedPhrase).Length + MaxWordsAroundAKeyword);
+    }
 
     /// <summary>
     /// True when the phrase appears in the text bounded by word edges, so "docked" does not match
     /// inside a longer word and "where am i" only matches those three words in that order. Both sides
-    /// are folded by <see cref="WithoutThe"/> first, so "the" is optional wherever it appears (#525).
+    /// must already have passed through <see cref="Folded"/>.
     /// </summary>
-    private static bool ContainsPhrase(string text, string phrase)
+    private static bool ContainsPhrase(string folded, string foldedPhrase)
     {
-        if (string.IsNullOrWhiteSpace(phrase))
+        if (string.IsNullOrWhiteSpace(foldedPhrase))
         {
             return false;
         }
 
-        // Apostrophes vary by keyboard and by autocorrect; "what's" and "what’s" must behave the same, and
-        // neither should be the reason a command does not route.
-        var normalisedText = WithoutThe(text);
-        var normalisedPhrase = WithoutThe(phrase);
-
         return Regex.IsMatch(
-            normalisedText,
-            $@"\b{Regex.Escape(normalisedPhrase)}\b",
+            folded,
+            $@"\b{Regex.Escape(foldedPhrase)}\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
+    /// <summary>Apostrophes vary by keyboard and by autocorrect; "what's" and "what’s" are the same word.</summary>
     private static string Normalise(string value) =>
         value.Replace('’', '\'').Replace('ʼ', '\'');
 
     /// <summary>
     /// An utterance or declared phrase with every "the" removed, so a Commander who says a declared
     /// phrase without its "the" (or adds one where none was declared) still reaches the same target
-    /// (#525). This is the only fold applied to <see cref="Utterance"/>'s output; <see cref="Utterance"/>
-    /// itself is unchanged because most of its call sites are not phrase comparison.
+    /// (#525). <see cref="Utterance"/> leaves "the" in because most of its call sites are not phrase
+    /// comparison.
     /// </summary>
     internal static string WithoutThe(string text) =>
         string.Join(' ', Words(text).Where(word => !string.Equals(word, "the", StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>
+    /// Runs of words written more than one way, each with the single spelling they fold to. Longest
+    /// first, so a longer run is replaced before a shorter one inside it.
+    /// </summary>
+    private static readonly IReadOnlyList<(string[] Run, string Spelling)> Spellings =
+        [.. new (string Run, string Spelling)[]
+            {
+                ("per cent", "percent"),
+                ("super cruise", "supercruise"),
+                ("heatsink", "heat sink"),
+                ("hard points", "hardpoints"),
+                ("e c m", "ecm"),
+            }
+            .Select(entry => (Run: entry.Run.Split(' '), entry.Spelling))
+            .OrderByDescending(entry => entry.Run.Length)];
+
+    /// <summary>
+    /// The form an utterance and a declared phrase are both reduced to before they are compared:
+    /// <see cref="WithoutThe"/>, with hyphens as spaces, "%" as "percent", whole numbers 0 to 100 as
+    /// words and the <see cref="Spellings"/> table applied. For comparison only; never shown or spoken.
+    /// </summary>
+    internal static string Folded(string text)
+    {
+        var words = WithoutThe(text.Replace("%", " percent ", StringComparison.Ordinal))
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .SelectMany(NumberAsWords)
+            .SelectMany(word => word.Split('-', StringSplitOptions.RemoveEmptyEntries))
+            .ToList();
+
+        var folded = new List<string>(words.Count);
+
+        for (var i = 0; i < words.Count;)
+        {
+            var spelling = Spellings.FirstOrDefault(entry =>
+                i + entry.Run.Length <= words.Count
+                && entry.Run.Select((word, j) => string.Equals(word, words[i + j], StringComparison.OrdinalIgnoreCase)).All(same => same));
+
+            if (spelling.Run is not null)
+            {
+                folded.Add(spelling.Spelling);
+                i += spelling.Run.Length;
+            }
+            else
+            {
+                folded.Add(words[i]);
+                i += 1;
+            }
+        }
+
+        return string.Join(' ', folded);
+    }
+
+    /// <summary>A word of digits from 0 to 100 as the words it is said in; any other word unchanged.</summary>
+    private static IEnumerable<string> NumberAsWords(string word) =>
+        word.Length <= 3 && word.All(char.IsAsciiDigit) && int.Parse(word, CultureInfo.InvariantCulture) <= 100
+            ? SpokenNumbers.Expand(word).Split([' ', '-'], StringSplitOptions.RemoveEmptyEntries)
+            : [word];
 }

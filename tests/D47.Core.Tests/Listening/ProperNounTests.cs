@@ -35,12 +35,13 @@ public class ProperNounTests
 
         var fresh = ProperNouns.From(StateFrom());
 
+        var engineers = D47.Core.Knowledge.EngineerDirectory.All.Select(engineer => engineer.Name).ToList();
+
         Assert.NotEmpty(fresh);
+        Assert.Equal("landing gear", fresh[0]);
         Assert.All(
-            fresh,
-            name => Assert.Contains(
-                name,
-                D47.Core.Knowledge.EngineerDirectory.All.Select(engineer => engineer.Name)));
+            fresh.SkipWhile(name => !engineers.Contains(name)),
+            name => Assert.Contains(name, engineers));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using D47.Core.Input;
 using D47.Core.Journal;
 
 namespace D47.Core.Listening;
@@ -14,8 +15,11 @@ public static class ProperNouns
     /// </summary>
     public const int ShippedShare = 20;
 
+    /// <summary>How much of the list is kept for the names of the game actions d47 can take.</summary>
+    public const int CommandShare = 24;
+
     /// <summary>A cap on how many names are offered.</summary>
-    public const int Limit = 60;
+    public const int Limit = 60 + CommandShare;
 
     /// <summary>The names worth biasing towards, most relevant first.</summary>
     public static IReadOnlyList<string> From(CommanderGameState? state, NavRoute? route = null)
@@ -69,18 +73,32 @@ public static class ProperNouns
             // is not. "Sol" is the notable exception and is short enough to be misheard, so length rather
             // than word count is the filter.
             .Where(name => name.Length >= 3)
-            .Take(Limit - ShippedShare)
+            .Take(Limit - ShippedShare - CommandShare)
             .ToList();
 
-        // And the names d47 ships.
+        // Then what the Commander tells the ship to do, and the names d47 ships. A provider's own cap trims
+        // from the end, so the engineer names are the first to be dropped.
         return
         [
             .. journal
+                .Concat(Commands())
                 .Concat(Shipped())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Take(Limit),
         ];
     }
+
+    /// <summary>
+    /// One declared name per game action, the first of more than one word where there is one:
+    /// "landing gear" rather than "gear".
+    /// </summary>
+    private static IEnumerable<string> Commands() =>
+        GameActions.All
+            .Where(action => action.Group is not (GameActions.Steps or GameActions.Weapons))
+            .Where(action => !action.Id.StartsWith("ui_", StringComparison.Ordinal))
+            .Where(action => action.Names.Count > 0)
+            .Select(action => action.Names.FirstOrDefault(name => name.Contains(' ', StringComparison.Ordinal)) ?? action.Names[0])
+            .Take(CommandShare);
 
     /// <summary>
     /// Names that are facts about Elite rather than about this Commander (remediation.md 10, item 17).

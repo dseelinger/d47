@@ -14,6 +14,8 @@ Ship and SRV switches answer to the same set of wordings, so more of them act at
 
 Game commands now run when you add a courtesy such as "please", "now" or "for me": "gear down please", "lights off now" and "engage supercruise for me" act at once instead of asking "Did you mean…?". Phrases you taught D47 work the same way.
 
+Game commands now match however the transcription writes them. Digits, "%", "per cent" and hyphens are read the same as the words, so "throttle to 25", "50 percent" and "75%" set the throttle without the model. "Super Cruise", "heatsink" and "hard points" match "supercruise", "heat sink" and "hardpoints". Speech recognition is also told to expect the names of the ship's controls, such as "landing gear", "cargo scoop" and "silent running", after the names from your journal, as far as each service's limit allows. A phrase you teach D47 is refused when it means the same as a built-in command written another way, such as "throttle to 50". With local Whisper, a long list of names now keeps its first names rather than its last.
+
 The mini panel, in the headset and on the flat overlay, no longer stops following the newest turn when it is first filled. A panel that began following and then had its content re-measured could end up parked above the newest turn with no button to return it.
 
 The Settings row "Model for the quiet calls" is now "Background model", and the model status report and the notice that a default changed use the same name. Your saved choice is unchanged.

@@ -46,6 +46,23 @@ public class TheNamesReachWhisperTests
     }
 
     /// <summary>
+    /// whisper.cpp keeps the end of an overlong prompt, and the most relevant names come first, so the
+    /// local prompt stops at the hosted budget with whole names from the front.
+    /// </summary>
+    [Fact]
+    public void AnOverlongListLosesItsLastNamesNotItsFirst()
+    {
+        var names = Enumerable.Range(0, 200).Select(index => $"Synthetic System {index}").ToArray();
+
+        var prompt = WhisperTranscriber.Vocabulary(names)!;
+
+        Assert.InRange(prompt.Length, 1, OpenAiCompatibleTranscriber.PromptCharacters);
+        Assert.StartsWith("Synthetic System 0, Synthetic System 1, ", prompt, StringComparison.Ordinal);
+        Assert.DoesNotContain("Synthetic System 199", prompt, StringComparison.Ordinal);
+        Assert.Equal(OpenAiCompatibleTranscriber.Prompt(names), prompt);
+    }
+
+    /// <summary>
     /// The ordinary state on a fresh install: no model on disk, and the transcriber asked for a
     /// transcription anyway.
     /// </summary>

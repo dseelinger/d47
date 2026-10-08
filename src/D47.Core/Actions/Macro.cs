@@ -59,9 +59,9 @@ public static class MacroValidation
             return $"\"{name}\" has punctuation in it. Macro names are words, so they can be said out loud.";
         }
 
-        var said = KeywordRouter.WithoutThe(name);
+        var said = KeywordRouter.Folded(name);
 
-        if (reservedPhrases.Any(phrase => string.Equals(KeywordRouter.WithoutThe(phrase), said, StringComparison.OrdinalIgnoreCase)))
+        if (reservedPhrases.Any(phrase => string.Equals(KeywordRouter.Folded(phrase), said, StringComparison.OrdinalIgnoreCase)))
         {
             return $"\"{name}\" is already a command D47 understands, so a macro cannot take that name.";
         }

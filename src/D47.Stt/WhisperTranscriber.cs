@@ -361,17 +361,11 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     internal static int ThreadsFor(int processors) => Math.Clamp(processors - 4, 4, 16);
 
     /// <summary>
-    /// Points the processor at the names this utterance might contain, rebuilding it only when they
-    /// have changed (remediation.md 10, item 17).
+    /// The prompt that points the processor at the names this utterance might contain, within the
+    /// budget the hosted transcriber keeps (remediation.md 10, item 17).
     /// </summary>
-    internal static string? Vocabulary(IReadOnlyList<string> properNouns)
-    {
-        var wanted = string.Join(
-            ", ",
-            properNouns.Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name.Trim()));
-
-        return wanted.Length == 0 ? null : wanted;
-    }
+    internal static string? Vocabulary(IReadOnlyList<string> properNouns) =>
+        OpenAiCompatibleTranscriber.Prompt(properNouns);
 
     private void Prime(IReadOnlyList<string> properNouns)
     {

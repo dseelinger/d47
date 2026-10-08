@@ -146,12 +146,12 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
 
         foreach (var entry in book.Entries)
         {
-            inBook.TryAdd(KeywordRouter.WithoutThe(entry.Phrase), entry);
+            inBook.TryAdd(KeywordRouter.Folded(entry.Phrase), entry);
         }
 
         foreach (var wording in wordings)
         {
-            if (inBook.TryGetValue(KeywordRouter.WithoutThe(wording), out var declared))
+            if (inBook.TryGetValue(KeywordRouter.Folded(wording), out var declared))
             {
                 return new PhraseClash(wording, PhraseClashKind.BookPhrase, declared.Phrase, declared.CapabilityId, null);
             }
