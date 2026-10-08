@@ -1149,6 +1149,8 @@ D47 ships 12 reference clips for the Chatterbox voice, in `assets/voices/chatter
 
 The clips are utterances from LibriTTS-R, which is licensed CC BY 4.0 (https://www.openslr.org/141/). `tools/gen-chatterbox-voices.py` picked them from `train-clean-360`.
 
+`catalog.tsv` beside it lists 847 voices, one per `train-clean-360` speaker with a usable utterance: 408 female and 439 male. Gender comes from the dataset's speaker metadata. Within each gender, `pitch` (`low`, `mid`, `high`) and `pace` (`slow`, `even`, `brisk`) are terciles of the speaker's median pitch and characters per second. `role` is empty except for the 12 voices below. Each row's `source` names the speaker and utterance, and its `sha256` and `bytes` describe the clip. The clips other than the 12 are published as assets of the release `chatterbox-voices-1` by `tools/publish-chatterbox-voices.ps1`. The 12 shipped voices are the only ones the app loads from `voices.tsv`.
+
 | Voice | Gender | Suggested role | Source |
 | --- | --- | --- | --- |
 | Marlow | female | ShipAi | LibriTTS-R speaker 4356, utterance 4356_6498_000003_000005, CC BY 4.0 |
