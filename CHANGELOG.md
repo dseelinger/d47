@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Say "open the fss", "full spectrum scanner" or "fss" to open the full spectrum scanner in normal space or supercruise. Inside it, say "close the fss", "leave the fss" or "exit the fss" to leave, and "discovery scan" or "honk" to hold the discovery scan key for the charge time. Outside the FSS, "close the fss" and "discovery scan" answer "The FSS is not open."; "open the fss" while it is open answers that it is already open. None of them presses a key in those cases.
+
 On foot, say "shields on" or "shields off", "use a medkit", "energy cell", "energylink", "profile analyser", "suit tool" (also "genetic sampler" or "arc cutter"), "primary weapon", "secondary weapon", "sidearm", "holster", "frag grenade", "emp grenade", "shield projector" or "mission help" to press the matching on-foot binding. Shields have one key and the game reports no shield state, so "on" and "off" both press the toggle.
 
 Flight actions now work in a fighter you launched from your ship: flight assist, boost, the throttle settings, the power pips, fire groups, the lights and the targeting commands press the same keys as in the ship. Gear, scoop, hardpoints, the frame shift drive and the panels are still refused there, with "in a fighter".

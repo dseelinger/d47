@@ -80,8 +80,8 @@ public class TargetingDefenceAndFighterOrdersAreSpokenTests
     }
 
     [Fact]
-    public void OnlyTheEcmIsHeld() =>
-        Assert.Equal(["ecm"], GameActions.All.Where(a => a.HoldFor is not null).Select(a => a.Id));
+    public void OnlyTheEcmAndTheDiscoveryScanAreHeld() =>
+        Assert.Equal(["ecm", "fss_discovery_scan"], GameActions.All.Where(a => a.HoldFor is not null).Select(a => a.Id));
 
     [Theory]
     [InlineData("EjectAllCargo")]

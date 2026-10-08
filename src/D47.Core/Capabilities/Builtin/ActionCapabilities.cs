@@ -330,6 +330,11 @@ public static class ActionCapabilities
             return ToolResult.Error("Nothing is plotted, so there is no next system to target.");
         }
 
+        if (FocusRefusal(action, surface.Status()) is { } refusal)
+        {
+            return ToolResult.Error(refusal);
+        }
+
         var wanted = arguments.TryGetString("state", out var state)
             ? state.ToLowerInvariant() switch
             {
@@ -391,6 +396,23 @@ public static class ActionCapabilities
             Write = (s, v) => s with { Actions = s.Actions with { Keyboard = v is "true" } },
         },
     };
+
+    private static string? FocusRefusal(GameAction action, GameStatus status)
+    {
+        if (!status.IsKnown)
+        {
+            return null;
+        }
+
+        var name = Capitalise(action.FocusName ?? "That screen");
+
+        if (action.RequiresFocus is { } required && status.GuiFocus != required)
+        {
+            return $"{name} is not open.";
+        }
+
+        return action.ExcludesFocus is { } excluded && status.GuiFocus == excluded ? $"{name} is already open." : null;
+    }
 
     private static string Capitalise(string label) =>
         label.Length == 0 ? label : char.ToUpperInvariant(label[0]) + label[1..];

@@ -1,3 +1,4 @@
+using D47.Core.Actions;
 using D47.Core.Journal;
 
 namespace D47.Core.Input;
@@ -33,6 +34,15 @@ public sealed record GameAction
 
     /// <summary>How long the key is held; null taps it.</summary>
     public TimeSpan? HoldFor { get; init; }
+
+    /// <summary>The full-screen interface that must have focus; the action is refused with <see cref="FocusName"/> not open otherwise.</summary>
+    public GuiFocus? RequiresFocus { get; init; }
+
+    /// <summary>The full-screen interface that must not have focus; the action is refused as already open otherwise.</summary>
+    public GuiFocus? ExcludesFocus { get; init; }
+
+    /// <summary>How the interface named by <see cref="RequiresFocus"/> or <see cref="ExcludesFocus"/> is spoken: "the FSS".</summary>
+    public string? FocusName { get; init; }
 
     /// <summary>The status flag that reports this toggle's current state, when Elite reports one.</summary>
     public StatusFlags? Reports { get; init; }
@@ -513,6 +523,41 @@ public static class GameActions
         Simple("previous_panel", "the previous panel", Interface, "CyclePreviousPanel", null, "previous panel"),
         Simple("galaxy_map", "the galaxy map", Interface, "GalaxyMapOpen", "GalaxyMapOpen_Buggy", "galaxy map", "open", "GalaxyMapOpen_Humanoid"),
         Simple("system_map", "the system map", Interface, "SystemMapOpen", "SystemMapOpen_Buggy", "system map", "open", "SystemMapOpen_Humanoid"),
+
+        new()
+        {
+            Id = "fss_open",
+            Label = "the FSS",
+            Group = Interface,
+            Variants = [new ActionVariant("ExplorationFSSEnter", ControlContext.Flying)],
+            ExcludesFocus = GuiFocus.FssMode,
+            FocusName = "the FSS",
+            Names = ["fss", "full spectrum scanner"],
+            Verbs = ["open the", "open"],
+        },
+
+        new()
+        {
+            Id = "fss_close",
+            Label = "the FSS",
+            Group = Interface,
+            Variants = [new ActionVariant("ExplorationFSSQuit", ControlContext.Flying)],
+            RequiresFocus = GuiFocus.FssMode,
+            FocusName = "the FSS",
+            Names = ["leave the fss", "close the fss", "exit the fss"],
+        },
+
+        new()
+        {
+            Id = "fss_discovery_scan",
+            Label = "the discovery scan",
+            Group = Interface,
+            Variants = [new ActionVariant("ExplorationFSSDiscoveryScan", ControlContext.Flying)],
+            HoldFor = HonkOnArrival.Charge,
+            RequiresFocus = GuiFocus.FssMode,
+            FocusName = "the FSS",
+            Names = ["discovery scan", "honk"],
+        },
 
         Ui("ui_up", "up"),
         Ui("ui_down", "down"),
