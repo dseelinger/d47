@@ -2,8 +2,24 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
 
-/// <summary>A shipped Chatterbox reference voice.</summary>
-public sealed record ChatterboxVoice(VoiceInfo Voice, VoiceRole? Role, string Source, string ClipPath);
+/// <summary>A Chatterbox reference voice, and where its clip is or will be.</summary>
+public sealed record ChatterboxVoice(VoiceInfo Voice, VoiceRole? Role, string Source, string ClipPath)
+{
+    /// <summary>Whether the clip is beside the exe, so it is never fetched.</summary>
+    public bool Shipped { get; init; } = true;
+
+    /// <summary><c>low</c>, <c>mid</c> or <c>high</c> within its gender; null where the catalogue has no row.</summary>
+    public string? Pitch { get; init; }
+
+    /// <summary><c>slow</c>, <c>even</c> or <c>brisk</c> within its gender; null where the catalogue has no row.</summary>
+    public string? Pace { get; init; }
+
+    /// <summary>The clip's SHA-256, lower-case hex.</summary>
+    public string? Sha256 { get; init; }
+
+    /// <summary>The clip's size in bytes.</summary>
+    public long Bytes { get; init; }
+}
 
 /// <summary>Reads <c>voices.tsv</c> and the reference clips beside it.</summary>
 public static class ChatterboxVoices

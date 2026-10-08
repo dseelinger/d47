@@ -540,8 +540,8 @@ public static class SpeechCapability
                 Label = "Chatterbox voice",
                 Help =
                     "Chatterbox runs on this computer's processor, so nothing D47 says through it leaves "
-                    + "it. The model is downloaded once from huggingface.co and after that this needs no "
-                    + "network at all.",
+                    + "it. The model is downloaded once from huggingface.co. Twelve voices come with D47; "
+                    + "any other is fetched once from github.com the first time it is picked, played or spoken.",
                 Kind = SettingKind.Info,
                 DocsAnchor = "provider",
                 PressLabel = surface.DownloadChatterbox is null ? null : "Download it",
@@ -1563,6 +1563,25 @@ public static class SpeechCapability
     /// <summary>Writes the rate against the provider it was chosen for, never as the general one.</summary>
     public static string? ShipVoiceFor(D47Settings settings, string personaId) =>
         settings.Persona.Voices.GetValueOrDefault(personaId) ?? settings.Speech.Voice;
+
+    /// <summary>The voice a write to a voice row picked and the slot it speaks for; null for any other key or a cleared row.</summary>
+    public static (VoiceGroup Group, string Voice)? PickedVoice(string key, D47Settings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        var (role, voice) = key switch
+        {
+            VoiceKey => (VoiceRole.ShipAi, ShipVoiceFor(settings, settings.Persona.Id)),
+            CarrierCaptainVoiceKey => (VoiceRole.CarrierCaptain, settings.Speech.CarrierCaptainVoice),
+            TowerVoiceKey => (VoiceRole.TowerControl, settings.Speech.TowerVoice),
+            NarratorVoiceKey => (VoiceRole.Narrator, settings.Speech.NarratorVoice),
+            _ when SeatVoiceRoles.Where(seat => SeatVoiceKey(seat) == key).ToList() is [var seat] =>
+                (VoiceRole.Crew, settings.Speech.SeatVoices.GetValueOrDefault(Seats.SeatVoices.KeyOf(seat))),
+            _ => (VoiceRole.Crew, null),
+        };
+
+        return voice is { Length: > 0 } ? (VoiceGroups.Of(role), voice) : null;
+    }
 
     /// <summary>
     /// Stores a chosen voice against the core aboard, and clears the one global choice that used to

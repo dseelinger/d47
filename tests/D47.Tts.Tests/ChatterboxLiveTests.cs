@@ -31,7 +31,7 @@ public class ChatterboxLiveTests
             $"{result.Outcome}: {result.Detail}");
         Assert.True(ChatterboxAssets.IsInstalled(Folder));
 
-        using var provider = new ChatterboxTtsProvider(Folder, Voices, NullLogger<ChatterboxTtsProvider>.Instance);
+        using var provider = new ChatterboxTtsProvider(Folder, Voices, Path.Combine(Path.GetTempPath(), "d47-chatterbox-fetched"), NullLogger<ChatterboxTtsProvider>.Instance);
 
         var voices = await provider.ListVoicesAsync(timeout.Token);
         Assert.Contains(voices.Voices, voice => voice.Id == "marlow");

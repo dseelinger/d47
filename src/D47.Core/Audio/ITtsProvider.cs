@@ -19,6 +19,9 @@ public sealed record VoiceSelection(string? VoiceId, double Rate = 1.0)
     /// <summary>What the voice is called, where the caller could find out.</summary>
     public string? Name { get; init; }
 
+    /// <summary>Who the line is spoken as, where the caller knows.</summary>
+    public VoiceRole? Role { get; init; }
+
     /// <summary>No voice chosen; a provider refuses to speak with it.</summary>
     public static readonly VoiceSelection Default = new(VoiceId: null);
 }

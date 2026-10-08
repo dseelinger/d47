@@ -37,7 +37,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     }
 
     private static ChatterboxTtsProvider Provider(ChatterboxTestFolder folder, CountingEngine engine) =>
-        new(folder.Models, folder.Voices, NullLogger<ChatterboxTtsProvider>.Instance, () => engine, () => true);
+        new(folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => engine, () => true, ChatterboxTestFolder.NoDownload);
 
     [Fact]
     public async Task ALineComesBackInTheStandardFormatWithNoKey()
@@ -74,7 +74,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     {
         using var folder = new ChatterboxTestFolder();
         using var provider = new ChatterboxTtsProvider(
-            folder.Models, folder.Voices, NullLogger<ChatterboxTtsProvider>.Instance);
+            folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance);
 
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
 

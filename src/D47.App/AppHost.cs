@@ -4132,6 +4132,22 @@ public sealed class AppHost : IDisposable
     /// <summary>The shipped reference clips, copied beside the executable.</summary>
     private static string ChatterboxVoicesFolder() => Path.Combine(AppContext.BaseDirectory, "voices", "chatterbox");
 
+    /// <summary>Starts fetching the Chatterbox clip a voice row picked, when it is not on this PC. Never waits.</summary>
+    private void FetchPickedVoice(string key)
+    {
+        if (SpeechCapability.PickedVoice(key, Settings.Current) is not { } picked
+            || !string.Equals(
+                VoiceGroups.ProviderFor(Settings.Current.Speech, picked.Group),
+                TtsProviderCatalog.ChatterboxId,
+                StringComparison.OrdinalIgnoreCase)
+            || _clients.GetValueOrDefault(TtsProviderCatalog.ChatterboxId) is not ChatterboxTtsProvider chatterbox)
+        {
+            return;
+        }
+
+        _ = Task.Run(() => chatterbox.FetchAsync(picked.Voice));
+    }
+
     private string ChatterboxState() =>
         D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."
@@ -4549,6 +4565,7 @@ public sealed class AppHost : IDisposable
         TtsProviderCatalog.ChatterboxId => new ChatterboxTtsProvider(
             ChatterboxFolder(),
             ChatterboxVoicesFolder(),
+            Path.Combine(Paths.Data, "voices", "chatterbox"),
             _loggerFactory.CreateLogger<ChatterboxTtsProvider>(),
             OwnVoice),
 
@@ -6413,6 +6430,14 @@ public sealed class AppHost : IDisposable
 
         if (!_auditions.TryGetValue(key, out var clip))
         {
+            // The voice itself, never a stand-in cached under its name.
+            if (_clients.GetValueOrDefault(provider.Id) is ChatterboxTtsProvider chatterbox
+                && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
+            {
+                throw new InvalidOperationException(
+                    $"That Chatterbox voice could not be fetched from {ChatterboxCatalog.Host}. Press Play to try again.");
+            }
+
             clip = await provider.SynthesizeAsync(
                 role == VoiceRole.ShipAi ? AuditionLine.For(Personas.Current) : AuditionLine.For(role),
                 new VoiceSelection(
@@ -6505,6 +6530,15 @@ public sealed class AppHost : IDisposable
         // something.
         if (source is GuardianVoiceTest.Source.Synthesize or GuardianVoiceTest.Source.FreeSample
             && Speaker(VoiceGroup.Aboard) is null)
+        {
+            source = GuardianVoiceTest.Source.StandIn;
+        }
+
+        // A Chatterbox voice whose clip cannot be fetched would be spoken in a shipped stand-in and cached under its name.
+        if (source is GuardianVoiceTest.Source.Synthesize
+            && !_auditions.ContainsKey(auditionKey)
+            && _clients.GetValueOrDefault(providerInfo.Id) is ChatterboxTtsProvider chatterbox
+            && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
         {
             source = GuardianVoiceTest.Source.StandIn;
         }
@@ -8149,6 +8183,7 @@ public sealed class AppHost : IDisposable
 
             case SettingsSubsystem.Speech:
                 ApplySpeechSettings();
+                FetchPickedVoice(change.Key);
                 break;
 
             case SettingsSubsystem.Audio:

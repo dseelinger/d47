@@ -111,7 +111,9 @@ public sealed class VoiceCast
 
     /// <summary>What a role sounds like right now.</summary>
     public VoiceSelection For(VoiceRole role) =>
-        new(role == VoiceRole.Narrator ? NarratorVoice() : _roleVoices.GetValueOrDefault(role) ?? DefaultVoice, Rate);
+        Of(role == VoiceRole.Narrator ? NarratorVoice() : _roleVoices.GetValueOrDefault(role) ?? DefaultVoice, role);
+
+    private VoiceSelection Of(string? voiceId, VoiceRole role) => new(voiceId, Rate) { Role = role };
 
     /// <summary>
     /// The narrator's pinned voice, or the first castable pool voice that is not the ship's when none is pinned or the
@@ -167,7 +169,7 @@ public sealed class VoiceCast
     {
         if (seatId is not null && SeatVoice?.Invoke(seatId) is { } seated)
         {
-            return new VoiceSelection(seated, Rate);
+            return Of(seated, role);
         }
 
         // A role the Commander has cast has one voice, and a sender does not override it (<a
@@ -181,7 +183,7 @@ public sealed class VoiceCast
 
         if (assignments.TryGetValue(sender, out var already))
         {
-            return new VoiceSelection(already, Rate);
+            return Of(already, role);
         }
 
         if (Pool.Count == 0)
@@ -244,13 +246,13 @@ public sealed class VoiceCast
             if (!assignments.Values.Contains(candidate, StringComparer.OrdinalIgnoreCase))
             {
                 assignments[sender] = candidate;
-                return new VoiceSelection(candidate, Rate);
+                return Of(candidate, role);
             }
         }
 
         // They are all spoken for, so this sender shares one — still of the sex chosen.
         assignments[sender] = drawnFrom[0];
-        return new VoiceSelection(drawnFrom[0], Rate);
+        return Of(drawnFrom[0], role);
     }
 
     /// <summary>

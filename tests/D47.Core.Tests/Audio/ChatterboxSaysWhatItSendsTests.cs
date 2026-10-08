@@ -35,6 +35,29 @@ public class ChatterboxSaysWhatItSendsTests
     }
 
     [Fact]
+    public void AVoiceClipIsAskedForByIdFromGitHub()
+    {
+        var entry = EgressDisclosure.Entry(
+            EgressDisclosure.ChatterboxVoices, With(TtsProviderCatalog.ChatterboxId), llmKeyPresent: false);
+
+        Assert.True(entry.Active);
+        Assert.Equal("github.com", entry.Destination);
+        Assert.Contains("chatterbox-voices-1", entry.What, StringComparison.Ordinal);
+        Assert.Contains("naming the voice's id and nothing else", entry.What, StringComparison.Ordinal);
+        Assert.Contains(EgressDisclosure.ChatterboxVoices, EgressDisclosure.Ids);
+    }
+
+    [Fact]
+    public void WithoutChatterboxNoVoiceClipIsAskedFor()
+    {
+        var entry = EgressDisclosure.Entry(
+            EgressDisclosure.ChatterboxVoices, With(TtsProviderCatalog.KokoroId), llmKeyPresent: false);
+
+        Assert.False(entry.Active);
+        Assert.Equal("nothing sent", entry.Destination);
+    }
+
+    [Fact]
     public void WithoutChatterboxTheModelDownloadDoesNotMentionIt()
     {
         var entry = EgressDisclosure.Entry(

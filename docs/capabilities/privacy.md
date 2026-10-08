@@ -176,6 +176,13 @@ Nothing about you goes with it: no key, no Commander name, no position and nothi
 **Download stock stories** in the Adventures settings turns it off, and the Stories page then lists
 only stories already on disk.
 
+**Chatterbox voices** — `github.com`, which redirects to GitHub's asset storage, from the
+`chatterbox-voices-1` release. Twelve Chatterbox voices come with D47. Any other is asked for the
+first time you pick it, press Play on it, or a line is due in it: one request for that one clip,
+naming the voice's id and nothing else. The clip is kept in `data\voices\chatterbox` and used only
+while its size and SHA-256 match the list that came with D47. Active while Chatterbox speaks for any
+slot or story character.
+
 **Story ratings** — `d47-ratings.dseelinger.workers.dev`. D47 asks for every stock story's average
 rating the first time the Stories page opens in a session, and sends a vote when you rate a story you
 have picked or take your rating back. A vote carries the story, your stars and a random number made on
@@ -351,7 +358,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-notableplaces}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces}
 {#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

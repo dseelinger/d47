@@ -10,6 +10,7 @@ internal sealed class ChatterboxTestFolder : IDisposable
         Root = Path.Combine(Path.GetTempPath(), "d47-chatterbox-" + Guid.NewGuid().ToString("N"));
         Models = Path.Combine(Root, "models");
         Voices = Path.Combine(Root, "voices");
+        Fetched = Path.Combine(Root, "data", "voices", "chatterbox");
 
         Directory.CreateDirectory(Models);
         Directory.CreateDirectory(Voices);
@@ -28,6 +29,13 @@ internal sealed class ChatterboxTestFolder : IDisposable
     public string Models { get; }
 
     public string Voices { get; }
+
+    /// <summary>Where fetched clips are kept; not created.</summary>
+    public string Fetched { get; }
+
+    /// <summary>A download that fails, for a test that must never reach the network.</summary>
+    public static Task<byte[]> NoDownload(Uri url, long bytes, CancellationToken cancellationToken) =>
+        throw new InvalidOperationException($"No download was expected, and {url} was asked for.");
 
     /// <summary>
     /// A byte-level BPE over "h", "i", "!" and the space byte "Ġ", merging "h"+"i", with two tags and the

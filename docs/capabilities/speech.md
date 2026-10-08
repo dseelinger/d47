@@ -299,7 +299,7 @@ that are not built that way, like *don't* and *won't*, are written down individu
 takes the vowel of the voice saying it.
 
 **Chatterbox is the second local voice.** It runs Resemble AI's Chatterbox Turbo on the CPU only,
-never the graphics card, and speaks in one of the [shipped reference voices](#chatterbox-voices).
+never the graphics card, and speaks in one of the [Chatterbox voices](#chatterbox-voices).
 Kokoro stays the default local voice.
 
 - **The download is 691 MB**, fetched once from `huggingface.co/ResembleAI/chatterbox-turbo-ONNX`.
@@ -309,6 +309,9 @@ Kokoro stays the default local voice.
 - **It performs some bracketed directions** rather than reading them out: the ones its tokenizer
   lists, such as `[laugh]`, `[chuckle]`, `[sigh]` and `[gasp]`. Any other direction is removed
   before the line is spoken.
+- **847 voices are listed, and 12 come with D47.** Any other is fetched once from `github.com`
+  the first time it is picked, played or spoken, and is offline from then on. The request names the
+  voice and nothing else; the **Chatterbox voices** entry under **Privacy and egress** says so.
 - **Pronunciations apply to Kokoro only.** Chatterbox is given the text as written, so the
   sound-by-sound handling described below, and your own pronunciation corrections, do not reach it.
 - **It has no speaking rate**, so the rate row is not shown for it.
@@ -1145,11 +1148,17 @@ I couldn't reach the model after 3 tries. Overloaded.
 
 #### Chatterbox voices {#chatterbox-voices}
 
-D47 ships 12 reference clips for the Chatterbox voice, in `assets/voices/chatterbox/` beside `voices.tsv`. Each is a 24 kHz mono 16-bit WAV of 5 to 7 seconds. A row whose clip is missing, is not 24 kHz mono, is outside that length, or has no source is left out, and the reason goes in the log. The clips are not in `data\`, so a Commander cannot add one.
+D47 ships 12 reference clips for the Chatterbox voice, in `assets/voices/chatterbox/` beside `voices.tsv`. Each is a 24 kHz mono 16-bit WAV of 5 to 7 seconds. A row whose clip is missing, is not 24 kHz mono, is outside that length, or has no source is left out, and the reason goes in the log.
 
 The clips are utterances from LibriTTS-R, which is licensed CC BY 4.0 (https://www.openslr.org/141/). `tools/gen-chatterbox-voices.py` picked them from `train-clean-360`.
 
 `catalog.tsv` beside it lists 847 voices, one per `train-clean-360` speaker with a usable utterance: 408 female and 439 male. Gender comes from the dataset's speaker metadata. Within each gender, `pitch` (`low`, `mid`, `high`) and `pace` (`slow`, `even`, `brisk`) are terciles of the speaker's median pitch and characters per second. `role` is empty except for the 12 voices below. Each row's `source` names the speaker and utterance, and its `sha256` and `bytes` describe the clip. The clips other than the 12 are published as assets of the release `chatterbox-voices-1` by `tools/publish-chatterbox-voices.ps1`. The 12 shipped voices are the only ones the app loads from `voices.tsv`.
+
+Chatterbox lists every row of `catalog.tsv`, shipped voices first, each with its gender, pitch and pace. A shipped voice is spoken from its clip beside the exe and never fetched. Any other is fetched from `https://github.com/dseelinger/d47/releases/download/chatterbox-voices-1/<id>.wav` into `data\voices\chatterbox\` when it is picked, when **Play** is pressed on it, or when a line is due in it, and is kept.
+
+**A clip in `data\voices\chatterbox\` is used only when its size and SHA-256 match its `catalog.tsv` row.** A file with no row is never loaded, and a file that does not match is deleted and fetched again, so a Commander cannot add a voice by dropping a file there. Only a recording of your own voice is allowed, below.
+
+A line due in a voice that is not here yet waits up to 3 seconds for the fetch. If the clip has not arrived by then, or the fetch failed earlier this session, the line is spoken in a shipped voice of the same gender, the one cast in that role where there is one, and otherwise the nearest in pitch and pace. The log names both voices. A failed fetch is logged once per session, and is tried again the next time the voice is picked or played.
 
 | Voice | Gender | Suggested role | Source |
 | --- | --- | --- | --- |

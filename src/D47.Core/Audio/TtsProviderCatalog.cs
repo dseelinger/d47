@@ -251,7 +251,7 @@ public static class TtsProviderCatalog
         RateCanBeSet = true,
     };
 
-    /// <summary>Chatterbox Turbo, run on this machine's CPU from reference clips that ship with d47.</summary>
+    /// <summary>Chatterbox Turbo, run on this machine's CPU from reference clips, 12 shipped and the rest fetched on demand.</summary>
     public static TtsProviderInfo Chatterbox { get; } = new()
     {
         Id = ChatterboxId,
@@ -261,8 +261,8 @@ public static class TtsProviderCatalog
         Egress =
             "Nothing is sent anywhere. The voice runs on this computer's processor, so the text D47 "
             + "speaks — including re-voiced in-game messages written by other players — never leaves "
-            + "it. The model is downloaded once, from huggingface.co, and after that this slot needs "
-            + "no network at all.",
+            + "it. The model is downloaded once, from huggingface.co. A voice beyond the twelve that "
+            + "come with D47 is fetched once from github.com, by the voice's id and nothing else.",
         Billed = false,
         VoicesAreStatic = true,
         VoiceIdsAreOpaque = false,

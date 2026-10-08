@@ -67,6 +67,20 @@ public class TheChatterboxCatalogListsEverySpeakerOnceTests
             row => Assert.Equal(string.Empty, row[6]));
     }
 
+    [Fact]
+    public void TheAppListsEveryRowWithTheShippedVoicesFirst()
+    {
+        var log = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        var shipped = D47.Core.Audio.ChatterboxVoices.Load(Folder(), log);
+
+        var voices = D47.Core.Audio.ChatterboxCatalog.Load(Folder(), Path.GetTempPath(), shipped, log);
+
+        Assert.Equal(Rows().Count, voices.Count);
+        Assert.Equal(shipped.Select(voice => voice.Voice.Id), voices.Take(12).Select(voice => voice.Voice.Id));
+        Assert.All(voices.Take(12), voice => Assert.True(voice.Shipped && voice.Pitch is not null));
+        Assert.All(voices.Skip(12), voice => Assert.False(voice.Shipped));
+    }
+
     private static List<string[]> Rows() => ReadLines(Catalog()).Skip(1).Select(line => line.Split('\t')).ToList();
 
     private static string[] ReadLines(string path) => File.ReadAllLines(path).Where(line => line.Length > 0).ToArray();

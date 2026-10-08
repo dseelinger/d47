@@ -37,6 +37,9 @@ public static class EgressDisclosure
     /// <summary>Fetching a speech model.</summary>
     public const string SpeechModels = "models";
 
+    /// <summary>Fetching a Chatterbox voice clip that does not ship.</summary>
+    public const string ChatterboxVoices = "chatterboxvoices";
+
     /// <summary>Sending a donated incident excerpt or journal history (#175).</summary>
     public const string Donation = "donation";
 
@@ -109,6 +112,7 @@ public static class EgressDisclosure
         StockStories,
         StoryRatings,
         SpeechModels,
+        ChatterboxVoices,
         Diagnostics,
         JournalFiles,
         ChosenPictures,
@@ -131,6 +135,7 @@ public static class EgressDisclosure
         Screen => "Screen pictures",
         Recap => "Last session recap",
         SpeechModels => "Speech model download",
+        ChatterboxVoices => "Chatterbox voices",
         HullArt => "Hull pictures",
         AvatarClips => "Avatar animations",
         StockStories => "Stock stories",
@@ -352,6 +357,7 @@ public static class EgressDisclosure
 
         // On demand.
         SpeechModels => SpeechModelsEntry(settings),
+        ChatterboxVoices => ChatterboxVoicesEntry(settings),
 
         Diagnostics => EgressEntry.Silent(
             Diagnostics,
@@ -566,6 +572,33 @@ public static class EgressDisclosure
             Summary: hearing.Active
                 ? $"{hearing.Summary} The Chatterbox voice model, fetched once from {Speech.ChatterboxAssets.Host}."
                 : $"The Chatterbox voice model, fetched once from {Speech.ChatterboxAssets.Host}.");
+    }
+
+    /// <summary>A Chatterbox voice clip, fetched by id the first time a voice that does not ship is needed.</summary>
+    private static EgressEntry ChatterboxVoicesEntry(D47Settings settings)
+    {
+        var used = Audio.VoiceGroups.Selected(settings.Speech).Values.Any(id =>
+                string.Equals(id, Audio.TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase))
+            || settings.StoryVoices.Values.Any(choice =>
+                string.Equals(choice.Provider, Audio.TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase));
+
+        return used
+            ? new EgressEntry(
+                ChatterboxVoices,
+                NameOf(ChatterboxVoices),
+                Audio.ChatterboxCatalog.Host,
+                "Twelve Chatterbox voices come with D47. Any other is fetched from the release "
+                + $"{Audio.ChatterboxCatalog.Release} on {Audio.ChatterboxCatalog.Host} the first time you pick it, "
+                + "press Play on it, or a line is due in it. One request for that one clip, naming the voice's id and nothing else: no "
+                + "text, no audio, no key, no Commander name and nothing from your journal. The clip is kept in "
+                + "data\\voices\\chatterbox and used only while its size and SHA-256 match the list that came "
+                + "with D47.",
+                Active: true,
+                Summary: $"A Chatterbox voice that did not come with D47, fetched once by its id from {Audio.ChatterboxCatalog.Host}.")
+            : EgressEntry.Silent(
+                ChatterboxVoices,
+                NameOf(ChatterboxVoices),
+                "Chatterbox is not speaking anything, so no voice clip is fetched.");
     }
 
     /// <summary>

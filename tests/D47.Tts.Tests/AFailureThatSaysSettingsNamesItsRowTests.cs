@@ -87,9 +87,11 @@ public class AFailureThatSaysSettingsNamesItsRowTests
         return new ChatterboxTtsProvider(
             folder,
             folder,
+            folder,
             NullLogger<ChatterboxTtsProvider>.Instance,
             () => throw new InvalidOperationException("Nothing is spoken here."),
-            () => installed);
+            () => installed,
+            ChatterboxTestFolder.NoDownload);
     }
 
     [Theory]

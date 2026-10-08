@@ -5,13 +5,18 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
 
-/// <summary>Chatterbox Turbo, run on this machine's CPU from the shipped reference clips.</summary>
+/// <summary>
+/// Chatterbox Turbo, run on this machine's CPU from a reference clip: one that ships beside the exe, or one fetched
+/// from the voice release the first time it is picked, previewed or spoken.
+/// </summary>
 public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 {
     public const string ProviderId = TtsProviderCatalog.ChatterboxId;
 
     private readonly string _modelFolder;
     private readonly string _voicesFolder;
+    private readonly string _fetchedFolder;
+    private readonly Func<Uri, long, CancellationToken, Task<byte[]>> _download;
     private readonly ILogger<ChatterboxTtsProvider> _logger;
     private readonly Func<IChatterboxEngine> _open;
     private readonly Func<bool> _installed;
@@ -20,6 +25,16 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly Dictionary<string, IDisposable> _encoded = new(StringComparer.Ordinal);
     private readonly OwnVoice? _own;
 
+    /// <summary>Guards the sets below.</summary>
+    private readonly Lock _clips = new();
+    private readonly HashSet<string> _verified = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Task<bool>> _fetching = new(StringComparer.Ordinal);
+
+    /// <summary>Voices whose fetch failed this session; a line does not ask again, a pick or a preview does.</summary>
+    private readonly HashSet<string> _failed = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _failureLogged = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _standInLogged = new(StringComparer.Ordinal);
+
     private IChatterboxEngine? _engine;
     private ChatterboxTokeniser? _tokeniser;
     private IReadOnlyList<ChatterboxVoice>? _voices;
@@ -27,19 +42,23 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private int _ownVersion;
 
     /// <param name="modelFolder">Where <see cref="ChatterboxInstaller"/> put the graphs and tokenizer.</param>
-    /// <param name="voicesFolder">Where <c>voices.tsv</c> and the reference clips are.</param>
+    /// <param name="voicesFolder">Where <c>voices.tsv</c>, <c>catalog.tsv</c> and the shipped clips are.</param>
+    /// <param name="fetchedFolder">Where fetched clips are kept.</param>
     /// <param name="own">The Commander's own recording, answered as <see cref="OwnVoice.VoiceId"/> and never listed.</param>
     public ChatterboxTtsProvider(
         string modelFolder,
         string voicesFolder,
+        string fetchedFolder,
         ILogger<ChatterboxTtsProvider> logger,
         OwnVoice? own = null)
         : this(
             modelFolder,
             voicesFolder,
+            fetchedFolder,
             logger,
             () => ChatterboxPipeline.Open(modelFolder, PerformanceCores.ForThisMachine()),
             () => ChatterboxAssets.IsInstalled(modelFolder),
+            ChatterboxClipDownload.GetAsync,
             own)
     {
     }
@@ -47,13 +66,17 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     internal ChatterboxTtsProvider(
         string modelFolder,
         string voicesFolder,
+        string fetchedFolder,
         ILogger<ChatterboxTtsProvider> logger,
         Func<IChatterboxEngine> open,
         Func<bool> installed,
+        Func<Uri, long, CancellationToken, Task<byte[]>> download,
         OwnVoice? own = null)
     {
         _modelFolder = modelFolder;
         _voicesFolder = voicesFolder;
+        _fetchedFolder = fetchedFolder;
+        _download = download;
         _logger = logger;
         _open = open;
         _installed = installed;
@@ -81,11 +104,43 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         return Task.FromResult(VoiceCatalogue.Of([.. Voices().Select(voice => voice.Voice)]));
     }
 
+    /// <summary>Every voice with its pitch and pace bands, whether or not its clip is on this machine.</summary>
+    public IReadOnlyList<ChatterboxVoice> Catalogue() => Voices();
+
+    /// <summary>How long a line waits for a clip being fetched before it is spoken in a stand-in.</summary>
+    internal TimeSpan FirstLineWait { get; init; } = TimeSpan.FromSeconds(3);
+
     public Task<AudioClip> SynthesizeAsync(
         string text,
         VoiceSelection voice,
         CancellationToken cancellationToken = default) =>
-        Task.Run(() => Speak(text, voice, cancellationToken), cancellationToken);
+        Task.Run(
+            async () => Speak(text, await SpokenAsync(voice, cancellationToken).ConfigureAwait(false), cancellationToken),
+            cancellationToken);
+
+    /// <summary>
+    /// Fetches a voice's clip when it is not on this machine, for a pick or a preview, trying again after a failure.
+    /// True once the clip is here; false for an unlisted voice or a failed fetch, whose reason is logged.
+    /// </summary>
+    public Task<bool> FetchAsync(string voiceId, CancellationToken cancellationToken = default)
+    {
+        if (Find(voiceId) is not { } voice)
+        {
+            return Task.FromResult(false);
+        }
+
+        if (voice.Shipped)
+        {
+            return Task.FromResult(true);
+        }
+
+        lock (_clips)
+        {
+            _failed.Remove(voice.Voice.Id);
+        }
+
+        return Fetching(voice).WaitAsync(cancellationToken);
+    }
 
     /// <summary>The paralinguistic tags in <c>tokenizer.json</c>'s <c>added_tokens</c>; none before the download.</summary>
     public bool Performs(string tag)
@@ -98,10 +153,13 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         return Tokeniser().Performs(tag);
     }
 
-    private AudioClip Speak(string text, VoiceSelection voice, CancellationToken cancellationToken)
+    /// <summary>
+    /// The voice a line is spoken in: the one asked for once its clip is here, waiting <see cref="FirstLineWait"/> for
+    /// a fetch; otherwise a shipped stand-in while the clip is fetched. Null for the Commander's own voice.
+    /// </summary>
+    private async Task<ChatterboxVoice?> SpokenAsync(VoiceSelection voice, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(voice);
-        cancellationToken.ThrowIfCancellationRequested();
 
         if (!_installed())
         {
@@ -112,15 +170,71 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         if (string.Equals(voice.VoiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
         {
-            return SpeakOwn(text, cancellationToken);
+            return null;
         }
 
-        var chosen = Voices().FirstOrDefault(v => string.Equals(v.Voice.Id, voice.VoiceId, StringComparison.Ordinal))
+        var chosen = Find(voice.VoiceId)
             ?? throw new TtsException(voice.VoiceId is { Length: > 0 } unknown
                 ? $"Chatterbox has no voice called {unknown}. Pick one in Settings."
                 : "No Chatterbox voice has been chosen. Pick one in Settings.",
                 fault: TtsFault.NoVoice,
                 settingKey: SpeechCapability.ChatterboxVoiceKey);
+
+        if (IsHere(chosen))
+        {
+            return chosen;
+        }
+
+        bool failed;
+
+        lock (_clips)
+        {
+            failed = _failed.Contains(chosen.Voice.Id);
+        }
+
+        if (!failed)
+        {
+            var fetch = Fetching(chosen);
+
+            if (await Task.WhenAny(fetch, Task.Delay(FirstLineWait, cancellationToken)).ConfigureAwait(false) == fetch
+                && await fetch.ConfigureAwait(false))
+            {
+                return chosen;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        var standIn = ChatterboxCatalog.StandIn(chosen, voice.Role, Voices())
+            ?? throw new TtsException(
+                $"The Chatterbox voice {chosen.Voice.Name} is not on this PC yet, and no shipped voice can stand in.");
+
+        bool first;
+
+        lock (_clips)
+        {
+            first = _standInLogged.Add(chosen.Voice.Id);
+        }
+
+        if (first)
+        {
+            _logger.LogInformation(
+                "Chatterbox voice {Wanted} is not on this PC yet; its lines are spoken in {StandIn} until it is fetched",
+                chosen.Voice.Id,
+                standIn.Voice.Id);
+        }
+
+        return standIn;
+    }
+
+    private AudioClip Speak(string text, ChatterboxVoice? chosen, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (chosen is null)
+        {
+            return SpeakOwn(text, cancellationToken);
+        }
 
         // One line at a time: each already takes every performance core.
         var ids = Tokeniser().Encode(text);
@@ -218,7 +332,127 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     {
         lock (_load)
         {
-            return _voices ??= ChatterboxVoices.Load(_voicesFolder, _logger);
+            return _voices ??= ChatterboxCatalog.Load(
+                _voicesFolder, _fetchedFolder, ChatterboxVoices.Load(_voicesFolder, _logger), _logger);
+        }
+    }
+
+    /// <summary>A listed voice by its exact id; nothing else is turned into a path or an address.</summary>
+    private ChatterboxVoice? Find(string? voiceId) =>
+        voiceId is { Length: > 0 }
+            ? Voices().FirstOrDefault(v => string.Equals(v.Voice.Id, voiceId, StringComparison.Ordinal))
+            : null;
+
+    /// <summary>Whether a voice's clip can be spoken from, checking a fetched clip's hash once a session.</summary>
+    private bool IsHere(ChatterboxVoice voice)
+    {
+        if (voice.Shipped)
+        {
+            return true;
+        }
+
+        lock (_clips)
+        {
+            if (_verified.Contains(voice.Voice.Id))
+            {
+                return true;
+            }
+        }
+
+        if (ChatterboxCatalog.Here(voice, _logger) is null)
+        {
+            return false;
+        }
+
+        lock (_clips)
+        {
+            _verified.Add(voice.Voice.Id);
+        }
+
+        return true;
+    }
+
+    /// <summary>The fetch of a voice's clip under way, started when there is none. Never faults.</summary>
+    private Task<bool> Fetching(ChatterboxVoice voice)
+    {
+        lock (_clips)
+        {
+            if (_fetching.TryGetValue(voice.Voice.Id, out var running))
+            {
+                return running;
+            }
+
+            var started = Task.Run(() => FetchClipAsync(voice));
+            _fetching[voice.Voice.Id] = started;
+            return started;
+        }
+    }
+
+    private async Task<bool> FetchClipAsync(ChatterboxVoice voice)
+    {
+        var id = voice.Voice.Id;
+        var url = ChatterboxCatalog.Url(voice)!;
+        var partial = voice.ClipPath + ".part";
+
+        try
+        {
+            if (IsHere(voice))
+            {
+                return true;
+            }
+
+            var clip = await _download(url, voice.Bytes, CancellationToken.None).ConfigureAwait(false);
+
+            if (!ChatterboxCatalog.Matches(voice, clip))
+            {
+                throw new InvalidDataException("the clip that arrived does not match its size and SHA-256 in catalog.tsv");
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(voice.ClipPath)!);
+            await File.WriteAllBytesAsync(partial, clip).ConfigureAwait(false);
+            File.Move(partial, voice.ClipPath, overwrite: true);
+
+            lock (_clips)
+            {
+                _verified.Add(id);
+                _failed.Remove(id);
+            }
+
+            _logger.LogInformation("Chatterbox voice {Id} fetched from {Url}", id, url);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            bool first;
+
+            lock (_clips)
+            {
+                _failed.Add(id);
+                first = _failureLogged.Add(id);
+            }
+
+            if (first)
+            {
+                _logger.LogWarning("Chatterbox voice {Id} could not be fetched from {Url}: {Reason}", id, url, ex.Message);
+            }
+
+            try
+            {
+                File.Delete(partial);
+            }
+            catch (Exception)
+            {
+                // A leftover .part is never read.
+            }
+
+            return false;
+        }
+        finally
+        {
+            lock (_clips)
+            {
+                _fetching.Remove(id);
+            }
         }
     }
 

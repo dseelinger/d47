@@ -48,7 +48,7 @@ public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
     }
 
     private ChatterboxTtsProvider Provider() =>
-        new(_folder.Models, _folder.Voices, NullLogger<ChatterboxTtsProvider>.Instance, () => _engine, () => true, _own);
+        new(_folder.Models, _folder.Voices, _folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => _engine, () => true, ChatterboxTestFolder.NoDownload, _own);
 
     private void Record() =>
         Assert.Null(_own.Save(
