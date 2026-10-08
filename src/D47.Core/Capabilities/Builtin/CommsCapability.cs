@@ -144,6 +144,11 @@ public static class CommsCapability
 
         // Elite binds the quick comms box separately from focusing the comms panel; the panel binding is the
         // one that is bound by default, and both land in the same text field.
+        if (actions.Context == ControlContext.OnFoot)
+        {
+            return ToolResult.Error("I could not open the chat box: messages cannot be typed from on foot.");
+        }
+
         var reach = ActionReachability.Resolve(panel, actions.Binds(), actions.Context);
 
         if (!reach.IsOffered)

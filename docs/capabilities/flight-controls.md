@@ -243,6 +243,12 @@ foot your `HumanoidToggleNightVisionButton` binding. In the ship and the SRV, "o
 the game's report first and press nothing if night vision is already there. On foot they press the
 toggle, because Directive 47 cannot yet tell whether your suit's night vision is on.
 
+Lights work in the ship, the SRV and on foot: your `ShipSpotLightToggle`, `HeadlightsBuggyButton`
+and `HumanoidToggleFlashlightButton` bindings. On foot "lights on" and "lights off" press the
+toggle, because the game reports no flag for the suit light. The HUD mode switch uses
+`PlayerHUDModeToggle` in the ship and `PlayerHUDModeToggle_Buggy` in the SRV; in the SRV "analysis
+mode" and "combat mode" press the toggle without checking first.
+
 Firing your weapons is deliberately not on this list. Directive 47 reads text from the galaxy
 that anyone can write, and a companion that can be talked into opening fire is a different kind
 of problem from one that can be talked into turning the lights on.
@@ -250,6 +256,10 @@ of problem from one that can be talked into turning the lights on.
 ### Engage
 
 Say **engage** and you jump. Say **supercruise** and you supercruise.
+
+Supercruise is a switch that works in normal space and in supercruise. Say **drop out**, **exit
+supercruise** or **drop out of supercruise** to leave it. Asking for supercruise while you are in
+it, or to drop out while you are not, gets a sentence saying it is already so and presses nothing.
 
 **The jump has two keys, and Directive 47 will use either.** Elite binds a dedicated `Hyperspace`
 action and a combined frame shift drive key — the J key, on a stock keyboard layout — that jumps

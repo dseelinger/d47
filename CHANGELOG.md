@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Actions that were refused in a mode where Elite has a binding now work there. In the SRV, "next fire group", "previous fire group" and "analysis mode" press the SRV bindings. On foot, "galaxy map", "system map", "comms panel" and "lights" press the on-foot bindings; "lights on" and "lights off" press the toggle there, because the game reports no state for the suit light. Supercruise is now a switch that works in normal space and in supercruise: "drop out", "exit supercruise" and "drop out of supercruise" leave it, and asking for a state you are already in answers that it is so and presses nothing. Sending a chat message still needs the ship or the SRV.
+
 Say "newest", "latest", "jump to the newest" or "scroll to the bottom" to go to the newest line and follow the transcript again. It works on the window, the headset panel and the flat overlay, including the mini panels that have no ↓ Newest button.
 
 Ship and SRV switches answer to the same set of wordings, so more of them act at once instead of going to the model: "raise the landing gear", "toggle landing gear", "turn the lights off", "switch on night vision", "deploy the cargo scoop", "scoop away" and "flight assist" all work, and so do "boost", "jump", "warp", "cruise" and "turret view" on their own. "Analysis mode" and "combat mode" still set that mode, and "switch to combat mode" works too. The short reply after a command names it by its shortest form: "Aye, hardpoints out." rather than "Aye, deploy hardpoints.", and "Aye, hyperspace." rather than "Aye, engage.". Settings › Phrases lists each control as a few patterns, such as "[gear|landing gear] [down|up]", rather than every wording. A macro can no longer take a command's name with "the" added or dropped.

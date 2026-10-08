@@ -57,6 +57,9 @@ public sealed record GameAction
 
     public IReadOnlyList<string> OffVerbs { get; init; } = [];
 
+    /// <summary>Whole utterances that set a state without naming the action: "drop out".</summary>
+    public IReadOnlyList<(string Phrase, DesiredState State)> ExtraPhrases { get; init; } = [];
+
     /// <summary>For a switch, the word after a name that turns it on: "down" in "gear down".</summary>
     public string? OnParticle { get; init; }
 
@@ -143,8 +146,12 @@ public static class GameActions
             [
                 new ActionVariant("ShipSpotLightToggle", ControlContext.AnyShip),
                 new ActionVariant("HeadlightsBuggyButton", ControlContext.Srv),
+                new ActionVariant("HumanoidToggleFlashlightButton", ControlContext.OnFoot),
             ],
             Reports = StatusFlags.LightsOn,
+
+            // Status.json has no flag for the suit light, so on foot "on" and "off" press the toggle.
+            ReportsIn = ControlContext.AnyShip | ControlContext.Srv,
             Shape = PhraseShape.Switch,
             Names = ["lights", "ship lights", "headlights"],
         },
@@ -218,11 +225,13 @@ public static class GameActions
             Id = "supercruise",
             Label = "supercruise",
             Group = Flight,
-            Variants = [new ActionVariant("Supercruise", ControlContext.NormalSpace)],
-
-            // A one-shot while Elite reports no state for it.
+            Variants = [new ActionVariant("Supercruise", ControlContext.Flying)],
+            Reports = StatusFlags.Supercruise,
+            Shape = PhraseShape.Switch,
             Names = ["supercruise", "cruise", "warp"],
-            Verbs = ["engage", "take us to"],
+            OnVerbs = ["engage", "take us to"],
+            OffVerbs = ["drop out of", "exit"],
+            ExtraPhrases = [("drop out", DesiredState.Off)],
         },
 
         new()
@@ -401,8 +410,15 @@ public static class GameActions
             Id = "analysis_mode",
             Label = "the HUD mode",
             Group = Systems,
-            Variants = [new ActionVariant("PlayerHUDModeToggle", ControlContext.AnyShip)],
+            Variants =
+            [
+                new ActionVariant("PlayerHUDModeToggle", ControlContext.AnyShip),
+                new ActionVariant("PlayerHUDModeToggle_Buggy", ControlContext.Srv),
+            ],
             Reports = StatusFlags.AnalysisMode,
+
+            // Whether Elite sets the flag in the SRV is unverified, so there "on" and "off" press the toggle.
+            ReportsIn = ControlContext.AnyShip,
             Shape = PhraseShape.Modes,
             Names = ["hud mode"],
             Modes = ("analysis mode", "combat mode"),
@@ -411,12 +427,12 @@ public static class GameActions
         // ---- Panels, interface and fire groups (item 8) -------------------------------------
         Simple("left_panel", "the left panel", Interface, "FocusLeftPanel", "FocusLeftPanel_Buggy", "left panel", "open"),
         Simple("right_panel", "the right panel", Interface, "FocusRightPanel", "FocusRightPanel_Buggy", "right panel", "open"),
-        Simple("comms_panel", "the comms panel", Interface, "FocusCommsPanel", "FocusCommsPanel_Buggy", "comms panel", "open"),
+        Simple("comms_panel", "the comms panel", Interface, "FocusCommsPanel", "FocusCommsPanel_Buggy", "comms panel", "open", "FocusCommsPanel_Humanoid"),
         Simple("role_panel", "the role panel", Interface, "FocusRadarPanel", "FocusRadarPanel_Buggy", "role panel", "open"),
         Simple("next_panel", "the next panel", Interface, "CycleNextPanel", null, "next panel"),
         Simple("previous_panel", "the previous panel", Interface, "CyclePreviousPanel", null, "previous panel"),
-        Simple("galaxy_map", "the galaxy map", Interface, "GalaxyMapOpen", "GalaxyMapOpen_Buggy", "galaxy map", "open"),
-        Simple("system_map", "the system map", Interface, "SystemMapOpen", "SystemMapOpen_Buggy", "system map", "open"),
+        Simple("galaxy_map", "the galaxy map", Interface, "GalaxyMapOpen", "GalaxyMapOpen_Buggy", "galaxy map", "open", "GalaxyMapOpen_Humanoid"),
+        Simple("system_map", "the system map", Interface, "SystemMapOpen", "SystemMapOpen_Buggy", "system map", "open", "SystemMapOpen_Humanoid"),
 
         Ui("ui_up", "up"),
         Ui("ui_down", "down"),
@@ -430,7 +446,11 @@ public static class GameActions
             Id = "next_fire_group",
             Label = "the next fire group",
             Group = Interface,
-            Variants = [new ActionVariant("CycleFireGroupNext", ControlContext.Flying)],
+            Variants =
+            [
+                new ActionVariant("CycleFireGroupNext", ControlContext.Flying),
+                new ActionVariant("BuggyCycleFireGroupNext", ControlContext.Srv),
+            ],
             Names = ["next fire group"],
         },
 
@@ -439,7 +459,11 @@ public static class GameActions
             Id = "previous_fire_group",
             Label = "the previous fire group",
             Group = Interface,
-            Variants = [new ActionVariant("CycleFireGroupPrevious", ControlContext.Flying)],
+            Variants =
+            [
+                new ActionVariant("CycleFireGroupPrevious", ControlContext.Flying),
+                new ActionVariant("BuggyCycleFireGroupPrevious", ControlContext.Srv),
+            ],
             Names = ["previous fire group"],
         },
 
@@ -527,7 +551,7 @@ public static class GameActions
 
     public static IReadOnlyList<string> Ids => [.. All.Select(action => action.Id)];
 
-    /// <summary>A one-shot with a ship form and, usually, an SRV twin.</summary>
+    /// <summary>A one-shot with a ship form and, optionally, an SRV and an on-foot twin.</summary>
     private static GameAction Simple(
         string id,
         string label,
@@ -535,16 +559,20 @@ public static class GameActions
         string shipAction,
         string? srvAction,
         string name,
-        params IReadOnlyList<string> verbs) => new()
+        string? verb = null,
+        string? onFootAction = null) => new()
     {
         Id = id,
         Label = label,
         Group = group,
-        Variants = srvAction is null
-            ? [new ActionVariant(shipAction, ControlContext.AnyShip)]
-            : [new ActionVariant(shipAction, ControlContext.AnyShip), new ActionVariant(srvAction, ControlContext.Srv)],
+        Variants =
+        [
+            new ActionVariant(shipAction, ControlContext.AnyShip),
+            .. srvAction is null ? [] : (ActionVariant[])[new ActionVariant(srvAction, ControlContext.Srv)],
+            .. onFootAction is null ? [] : (ActionVariant[])[new ActionVariant(onFootAction, ControlContext.OnFoot)],
+        ],
         Names = [name],
-        Verbs = verbs,
+        Verbs = verb is null ? [] : [verb],
     };
 
     /// <summary>One of the six panel-navigation keys.</summary>

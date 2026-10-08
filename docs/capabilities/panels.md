@@ -189,4 +189,10 @@ The panel actions each have a `_Buggy` twin in Elite for the SRV, and the right 
 from the mode rather than from a separate action id, because a Commander who says "left panel"
 means the vehicle they are sitting in.
 
+The galaxy map, the system map and the comms panel also work on foot, through the
+`GalaxyMapOpen_Humanoid`, `SystemMapOpen_Humanoid` and `FocusCommsPanel_Humanoid` bindings. Next
+and previous fire group work in the SRV through `BuggyCycleFireGroupNext` and
+`BuggyCycleFireGroupPrevious`. Sending a chat message still needs the ship or the SRV; it refuses
+on foot.
+
 </details>

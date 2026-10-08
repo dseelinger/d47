@@ -35,7 +35,7 @@ public static class ActionGrammar
             _ => OneShot(action),
         };
 
-        return [.. phrases.DistinctBy(phrase => phrase.Item1, StringComparer.OrdinalIgnoreCase)];
+        return [.. phrases.Concat(action.ExtraPhrases).DistinctBy(phrase => phrase.Item1, StringComparer.OrdinalIgnoreCase)];
     }
 
     /// <summary>The phrases written as patterns, square brackets giving the choices: "[gear|landing gear] [on|off]".</summary>
@@ -71,6 +71,8 @@ public static class ActionGrammar
                     patterns.Add($"{name} {Choice(particles)}");
                     patterns.Add($"put {name} {Choice(particles)}");
                 }
+
+                patterns.AddRange(action.ExtraPhrases.Select(extra => extra.Phrase));
 
                 return patterns;
             }

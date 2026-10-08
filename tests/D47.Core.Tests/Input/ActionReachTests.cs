@@ -119,6 +119,34 @@ public class ActionReachTests
         Assert.Equal("ToggleCargoScoop_Buggy", inSrv.Binding?.Action);
     }
 
+    [Theory]
+    [InlineData("next_fire_group", "BuggyCycleFireGroupNext", ControlContext.Srv)]
+    [InlineData("previous_fire_group", "BuggyCycleFireGroupPrevious", ControlContext.Srv)]
+    [InlineData("analysis_mode", "PlayerHUDModeToggle_Buggy", ControlContext.Srv)]
+    [InlineData("galaxy_map", "GalaxyMapOpen_Humanoid", ControlContext.OnFoot)]
+    [InlineData("system_map", "SystemMapOpen_Humanoid", ControlContext.OnFoot)]
+    [InlineData("comms_panel", "FocusCommsPanel_Humanoid", ControlContext.OnFoot)]
+    [InlineData("lights", "HumanoidToggleFlashlightButton", ControlContext.OnFoot)]
+    [InlineData("supercruise", "Supercruise", ControlContext.Supercruise)]
+    public void AnActionPressesItsOwnBindingInTheModeItWasMissingFrom(string id, string eliteAction, ControlContext mode)
+    {
+        var reach = ActionReachability.Resolve(Action(id), Binds((eliteAction, "Keyboard", "Key_K")), mode);
+
+        Assert.True(reach.IsOffered);
+        Assert.Equal(eliteAction, reach.Binding?.Action);
+    }
+
+    [Fact]
+    public void DropOutIsSupercruiseOff()
+    {
+        var phrases = Action("supercruise").Phrases;
+
+        Assert.Contains(("drop out", DesiredState.Off), phrases);
+        Assert.Contains(("exit supercruise", DesiredState.Off), phrases);
+        Assert.Contains(("drop out of supercruise", DesiredState.Off), phrases);
+        Assert.Contains(("engage supercruise", DesiredState.On), phrases);
+    }
+
     [Fact]
     public void UnknownBindsRefuseEverythingWithOneHonestReason()
     {

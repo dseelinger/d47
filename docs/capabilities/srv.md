@@ -161,6 +161,12 @@ you which of the two you just asked for, because the game does not say.
 
 This is the one action here that also works on foot.
 
+### Shared with the ship
+
+Next fire group, previous fire group and analysis mode also work in the SRV, through your
+`BuggyCycleFireGroupNext`, `BuggyCycleFireGroupPrevious` and `PlayerHUDModeToggle_Buggy` bindings.
+The panels page covers the SRV's panel and map actions.
+
 ### Toggles only
 
 Everything here is a switch. Steering, throttle and turret aim are axes, and an axis has no press
