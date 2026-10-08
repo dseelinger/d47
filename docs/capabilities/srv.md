@@ -151,7 +151,7 @@ ship back.
 > "turret"
 > "handbrake"
 > "recall my ship"
-> "reverse"
+> "reverse the srv"
 
 ### Recall and dismiss
 

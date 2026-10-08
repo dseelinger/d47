@@ -112,6 +112,18 @@ public class APhraseCanBeTaughtAsAPatternTests : IDisposable
     }
 
     [Fact]
+    public void AWordingThatDiffersFromTheBookOnlyByTheClashes()
+    {
+        var store = Store();
+
+        var clash = store.FindClash("F1", ["raise wheels"], "drop the wheels", Book(store));
+
+        Assert.NotNull(clash);
+        Assert.Equal(PhraseClashKind.BookPhrase, clash.Kind);
+        Assert.Equal("raise the wheels", clash.StandsFor);
+    }
+
+    [Fact]
     public void AClashWithTheCommandersOwnPhraseReportsItsPattern()
     {
         var store = Store();

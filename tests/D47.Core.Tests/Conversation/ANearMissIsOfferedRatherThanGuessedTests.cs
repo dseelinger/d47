@@ -118,7 +118,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         var offered = await RunAsync(loop, "put the gear dawn");
 
         Assert.Equal(TurnRoute.Offer, offered.Route);
-        Assert.Contains("'put the gear down'", offered.Text, StringComparison.Ordinal);
+        Assert.Contains("'put gear down'", offered.Text, StringComparison.Ordinal);
         Assert.Empty(ship.Input.Steps);
 
         var next = await RunAsync(loop, "how far is it to Colonia");
@@ -174,7 +174,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         var ship = Ship(OnFoot());
         var loop = Build(ship.Registry);
 
-        await RunAsync(loop, "put the gear dawn");
+        await RunAsync(loop, "put the gar down");
         var picked = await RunAsync(loop, "yes");
 
         Assert.Equal(TurnRoute.ActionCommand, picked.Route);

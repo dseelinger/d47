@@ -11,6 +11,7 @@ using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
+using D47.Core.Input;
 using D47.Core.Journal;
 
 namespace D47.App.Panel;
@@ -215,37 +216,69 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
     /// <summary>
     /// Every phrase in the book once, under the panel title of the first capability it reaches, with the
     /// sentence saying what it does; only those whose phrase, sentence or title contains
-    /// <paramref name="query"/>.
+    /// <paramref name="query"/>. A game action is listed as its patterns rather than every phrase they make.
     /// </summary>
-    public static IReadOnlyList<Group> Groups(PhraseBook book, CapabilityRegistry registry, string query = "")
+    public static IReadOnlyList<Group> Groups(PhraseBook book, CapabilityRegistry registry, string query = "") =>
+        Grouped(book, registry, query, patterns: true);
+
+    /// <summary>The phrases a wording can stand for: every phrase, and a game action by its first phrase for each state.</summary>
+    public static IReadOnlyList<Group> Choices(PhraseBook book, CapabilityRegistry registry) =>
+        Grouped(book, registry, string.Empty, patterns: false);
+
+    private static IReadOnlyList<Group> Grouped(PhraseBook book, CapabilityRegistry registry, string query, bool patterns)
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var actions = new HashSet<string>(StringComparer.Ordinal);
         var groups = new List<(string Title, List<BuiltIn> Phrases)>();
 
         foreach (var entry in book.Entries)
         {
-            if (!seen.Add(entry.Phrase))
+            IReadOnlyList<string> said = [entry.Phrase];
+
+            if (entry.Source == PhraseSource.ToolCommand
+                && entry.Arguments.TryGetValue("action", out var id)
+                && GameActions.Find(id) is { } action)
             {
-                continue;
+                var key = patterns ? id : $"{id}?{entry.Arguments.GetValueOrDefault("state")}";
+
+                if (!actions.Add(key))
+                {
+                    continue;
+                }
+
+                if (patterns)
+                {
+                    said = ActionGrammar.Patterns(action);
+                }
             }
 
             var title = Title(registry, entry.CapabilityId);
-            var phrase = new BuiltIn(entry.Phrase, PhraseBook.Describe(entry, registry));
+            var sentence = PhraseBook.Describe(entry, registry);
 
-            if (query.Length > 0 && !Contains(phrase.Phrase, query) && !Contains(phrase.Sentence, query) && !Contains(title, query))
+            foreach (var text in said)
             {
-                continue;
-            }
+                if (!seen.Add(text))
+                {
+                    continue;
+                }
 
-            var index = groups.FindIndex(group => string.Equals(group.Title, title, StringComparison.Ordinal));
+                var phrase = new BuiltIn(text, sentence);
 
-            if (index < 0)
-            {
-                groups.Add((title, [phrase]));
-            }
-            else
-            {
-                groups[index].Phrases.Add(phrase);
+                if (query.Length > 0 && !Contains(phrase.Phrase, query) && !Contains(phrase.Sentence, query) && !Contains(title, query))
+                {
+                    continue;
+                }
+
+                var index = groups.FindIndex(group => string.Equals(group.Title, title, StringComparison.Ordinal));
+
+                if (index < 0)
+                {
+                    groups.Add((title, [phrase]));
+                }
+                else
+                {
+                    groups[index].Phrases.Add(phrase);
+                }
             }
         }
 
@@ -360,7 +393,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
 
     private void ShowPicker()
     {
-        var options = Groups(_book(), _registry)
+        var options = Choices(_book(), _registry)
             .SelectMany(group => group.Phrases.Select(phrase =>
                 (InlinePickerEntry)new InlinePickerOption(phrase.Phrase, phrase.Phrase, ThemeManager.WhiteKey, group.Title)))
             .ToList();

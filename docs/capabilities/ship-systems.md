@@ -35,14 +35,14 @@ nav_order: 131
 </section>
 <section>
 <h2><span class="num">2</span> Say where the power goes.</h2>
-<p class="say">Say "four pips to engines", "balance the pips" or "two to systems, two to weapons".</p>
-<p class="expect">D47 presses the pip keys the right number of times.</p>
+<p class="say">Say "pips to engines", "pips to weapons" or "balance the power".</p>
+<p class="expect">D47 presses your own pip key once.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">four pips to engines</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">pips to engines</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"balance the pips" — "two to systems, two to weapons"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It presses the pip keys the right number of times.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"pips to weapons" — "balance the power"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">One request is one press of your own pip key.</text>
 </svg>
 </section>
 <section>
@@ -59,12 +59,12 @@ nav_order: 131
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Say "balance the pips" if D47 and the ship disagree.</p>
-<p class="expect">The pips are reset to even, and D47 counts from there.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="Pips are counted, not read.">
+<p class="say">Say "pips to engines" once for each pip you want.</p>
+<p class="expect">Four pips is four requests; "balance the power" puts them back to even.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="One request is one pip.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Pips are counted, not read.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 presses towards what you asked from where it thinks you are. Say "balance the pips" to resync.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">One request is one pip.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 presses your key once per request, the same as you would. Ask again for the next pip.</text>
 </svg>
 </section>
 </div></div>
@@ -81,10 +81,10 @@ nav_order: 131
 <p class="intro">Moving power around, and the two panic buttons: silent running and heat sinks.</p>
 <section>
 <h2><span class="num">1</span> One request is one press, so ask for four.</h2>
-<svg viewBox="0 0 880 226" role="img" aria-label="Four pips to engines is sent as four separate presses of your own power key">
+<svg viewBox="0 0 880 226" role="img" aria-label="Pips to engines, said four times, is four presses of your own power key">
  <rect x="20" y="44" width="210" height="88" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="125" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">“FOUR PIPS</text>
- <text x="125" y="106" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">TO ENGINES”</text>
+ <text x="125" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">“PIPS TO ENGINES”</text>
+ <text x="125" y="106" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SAID FOUR TIMES</text>
  <line x1="242" y1="88" x2="266" y2="88" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="280,88 264,80 264,96" fill="var(--accent-muted)"/>
  <rect x="296" y="56" width="84" height="64" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -161,8 +161,8 @@ Moves power around and reaches the two panic buttons: silent running and heat si
 
 ### Pips
 
-Each request moves power one step, the same as one press of your own key. "Four pips to engines"
-is four presses, so ask for it the way you would press it.
+Each request moves power one step, the same as one press of your own key. Four pips to engines
+is four requests, so ask for it the way you would press it.
 
 ```text
 Pressed Numpad_7 for power to engines.

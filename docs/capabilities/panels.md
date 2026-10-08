@@ -34,25 +34,25 @@ nav_order: 132
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Say which panel and where to go in it.</h2>
-<p class="say">Say "open the right panel and go to modules", "next tab" or "close the panel".</p>
-<p class="expect">D47 presses the panel keys and walks the tabs in order.</p>
+<h2><span class="num">2</span> Say which panel, then walk it.</h2>
+<p class="say">Say "open the right panel", then "down", "select" or "back".</p>
+<p class="expect">D47 presses the panel key, then one of your own UI keys for each word.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">open the right panel and go to modules</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">open the right panel</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"internal panel" — "next tab" — "close the panel"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It walks the tabs with the same keys you would press.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"down" — "select" — "back"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It walks the panel with the same keys you would press.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Leave the panel keys to D47 while it moves through the tabs.</p>
-<p class="expect">D47 ends on the tab you asked for; keys you press yourself make it lose its place.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="D47 cannot see the panel it just opened.">
+<p class="say">Watch the panel as you say each step.</p>
+<p class="expect">Each word is one press; D47 does not know which tab you are on.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="D47 cannot see the panel.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">D47 cannot see the panel it just opened.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It counts presses rather than reading the screen, so if you also press keys it will lose its place.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">D47 cannot see the panel.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It presses your keys and does not read the screen, so watch the panel to see where you are.</text>
 </svg>
 </section>
 </div></div>

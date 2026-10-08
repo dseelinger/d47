@@ -43,10 +43,33 @@ public sealed record GameAction
     /// <summary>The modes in which <see cref="Reports"/> can be trusted; null means every mode.</summary>
     public ControlContext? ReportsIn { get; init; }
 
+    /// <summary>How <see cref="Phrases"/> are built from <see cref="Names"/>.</summary>
+    public PhraseShape Shape { get; init; } = PhraseShape.OneShot;
+
+    /// <summary>What the Commander calls it. The first is the one an acknowledgement says.</summary>
+    public IReadOnlyList<string> Names { get; init; } = [];
+
+    /// <summary>For a one-shot, the words said before a name: "drop a" in "drop a heat sink".</summary>
+    public IReadOnlyList<string> Verbs { get; init; } = [];
+
+    /// <summary>For a switch, the words before a name that turn it on: "deploy" in "deploy the gear".</summary>
+    public IReadOnlyList<string> OnVerbs { get; init; } = [];
+
+    public IReadOnlyList<string> OffVerbs { get; init; } = [];
+
+    /// <summary>For a switch, the word after a name that turns it on: "down" in "gear down".</summary>
+    public string? OnParticle { get; init; }
+
+    public string? OffParticle { get; init; }
+
+    /// <summary>For two named modes, the mode that is on and the mode that is off.</summary>
+    public (string On, string Off)? Modes { get; init; }
+
     /// <summary>
-    /// Whole utterances that reach this action without a model, each with the state it asks for.
+    /// Whole utterances that reach this action without a model, each with the state it asks for. The
+    /// first for each state is the one an acknowledgement says.
     /// </summary>
-    public IReadOnlyList<(string Phrase, DesiredState State)> Phrases { get; init; } = [];
+    public IReadOnlyList<(string Phrase, DesiredState State)> Phrases => ActionGrammar.Phrases(this);
 
     /// <summary>Every mode any variant covers.</summary>
     public ControlContext Contexts =>
@@ -103,16 +126,12 @@ public static class GameActions
             // Deliberately not supercruise.
             Variants = [new ActionVariant("LandingGearToggle", ControlContext.NormalSpace | ControlContext.Landed | ControlContext.Docked)],
             Reports = StatusFlags.LandingGearDown,
-            Phrases =
-            [
-                ("gear down", DesiredState.On),
-                ("lower the gear", DesiredState.On),
-                ("put the gear down", DesiredState.On),
-                ("gear up", DesiredState.Off),
-                ("raise the gear", DesiredState.Off),
-                ("retract the gear", DesiredState.Off),
-                ("landing gear", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["gear", "landing gear"],
+            OnVerbs = ["deploy", "lower"],
+            OnParticle = "down",
+            OffVerbs = ["retract", "raise"],
+            OffParticle = "up",
         },
 
         new()
@@ -126,7 +145,8 @@ public static class GameActions
                 new ActionVariant("HeadlightsBuggyButton", ControlContext.Srv),
             ],
             Reports = StatusFlags.LightsOn,
-            Phrases = [("lights on", DesiredState.On), ("lights off", DesiredState.Off), ("ship lights", DesiredState.Toggle)],
+            Shape = PhraseShape.Switch,
+            Names = ["lights", "ship lights", "headlights"],
         },
 
         new()
@@ -143,12 +163,10 @@ public static class GameActions
 
             // Whether Elite sets the flag on foot is unverified, so on foot "on" and "off" press the toggle.
             ReportsIn = ControlContext.AnyShip | ControlContext.Srv,
-            Phrases =
-            [
-                ("night vision", DesiredState.Toggle),
-                ("night vision on", DesiredState.On),
-                ("night vision off", DesiredState.Off),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["night vision"],
+            OnVerbs = ["enable"],
+            OffVerbs = ["disable"],
         },
 
         new()
@@ -162,12 +180,12 @@ public static class GameActions
                 new ActionVariant("ToggleCargoScoop_Buggy", ControlContext.Srv),
             ],
             Reports = StatusFlags.CargoScoopDeployed,
-            Phrases =
-            [
-                ("open the cargo scoop", DesiredState.On),
-                ("close the cargo scoop", DesiredState.Off),
-                ("cargo scoop", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["cargo scoop", "cargo hatch", "scoop"],
+            OnVerbs = ["open", "deploy"],
+            OnParticle = "out",
+            OffVerbs = ["close", "retract"],
+            OffParticle = "away",
         },
 
         new()
@@ -177,14 +195,12 @@ public static class GameActions
             Group = Flight,
             Variants = [new ActionVariant("DeployHardpointToggle", ControlContext.NormalSpace)],
             Reports = StatusFlags.HardpointsDeployed,
-            Phrases =
-            [
-                ("deploy hardpoints", DesiredState.On),
-                ("hardpoints out", DesiredState.On),
-                ("retract hardpoints", DesiredState.Off),
-                ("hardpoints in", DesiredState.Off),
-                ("toggle hardpoints", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["hardpoints"],
+            OnVerbs = ["deploy"],
+            OnParticle = "out",
+            OffVerbs = ["retract", "stow"],
+            OffParticle = "in",
         },
 
         new()
@@ -193,7 +209,8 @@ public static class GameActions
             Label = "the frame shift drive",
             Group = Flight,
             Variants = [new ActionVariant("HyperSuperCombination", ControlContext.Flying)],
-            Phrases = [("frame shift drive", DesiredState.Toggle), ("engage the frame shift drive", DesiredState.Toggle)],
+            Names = ["frame shift drive"],
+            Verbs = ["engage"],
         },
 
         new()
@@ -203,15 +220,9 @@ public static class GameActions
             Group = Flight,
             Variants = [new ActionVariant("Supercruise", ControlContext.NormalSpace)],
 
-            // The bare word is safe here for the reason the router is whole-utterance: "engage supercruise"
-            // is a different utterance from "supercruise" and matches its own phrase, so the short one
-            // shadows nothing (Phase 52, item 1).
-            Phrases =
-            [
-                ("supercruise", DesiredState.Toggle),
-                ("engage supercruise", DesiredState.Toggle),
-                ("take us to supercruise", DesiredState.Toggle),
-            ],
+            // A one-shot while Elite reports no state for it.
+            Names = ["supercruise", "cruise", "warp"],
+            Verbs = ["engage", "take us to"],
         },
 
         new()
@@ -220,17 +231,7 @@ public static class GameActions
             Label = "the hyperspace jump",
             Group = Flight,
             Variants = [new ActionVariant("Hyperspace", ControlContext.Flying)],
-
-            // "Engage" is the Commander's word for the jump (Phase 52, item 1), and it is a whole utterance
-            // rather than a keyword.
-            Phrases =
-            [
-                ("engage", DesiredState.Toggle),
-                ("engage hyperspace", DesiredState.Toggle),
-                ("hyperspace", DesiredState.Toggle),
-                ("hyperspace jump", DesiredState.Toggle),
-                ("jump to the next system", DesiredState.Toggle),
-            ],
+            Names = ["hyperspace", "jump", "hyperspace jump", "engage", "engage hyperspace", "jump to the next system"],
         },
 
         new()
@@ -243,12 +244,10 @@ public static class GameActions
             // Elite reports the negative, so the flag being set means the feature is off.
             Reports = StatusFlags.FlightAssistOff,
             ReportsInverted = true,
-            Phrases =
-            [
-                ("flight assist on", DesiredState.On),
-                ("flight assist off", DesiredState.Off),
-                ("toggle flight assist", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["flight assist"],
+            OnVerbs = ["enable"],
+            OffVerbs = ["disable"],
         },
 
         new()
@@ -259,7 +258,7 @@ public static class GameActions
             Variants = [new ActionVariant("SetSpeedZero", ControlContext.Flying)],
 
             // Not "stop".
-            Phrases = [("all stop", DesiredState.Toggle), ("throttle to zero", DesiredState.Toggle)],
+            Names = ["all stop", "throttle to zero"],
         },
 
         new()
@@ -268,7 +267,7 @@ public static class GameActions
             Label = "quarter throttle",
             Group = Flight,
             Variants = [new ActionVariant("SetSpeed25", ControlContext.Flying)],
-            Phrases = [("throttle to twenty-five", DesiredState.Toggle), ("twenty-five per cent", DesiredState.Toggle)],
+            Names = ["throttle to twenty-five", "twenty-five per cent"],
         },
 
         new()
@@ -277,7 +276,7 @@ public static class GameActions
             Label = "half throttle",
             Group = Flight,
             Variants = [new ActionVariant("SetSpeed50", ControlContext.Flying)],
-            Phrases = [("throttle to fifty", DesiredState.Toggle), ("fifty per cent", DesiredState.Toggle)],
+            Names = ["throttle to fifty", "fifty per cent"],
         },
 
         new()
@@ -288,13 +287,7 @@ public static class GameActions
             Label = "military thrust",
             Group = Flight,
             Variants = [new ActionVariant("SetSpeed75", ControlContext.Flying)],
-            Phrases =
-            [
-                ("military thrust", DesiredState.Toggle),
-                ("military power", DesiredState.Toggle),
-                ("throttle to seventy-five", DesiredState.Toggle),
-                ("seventy-five per cent", DesiredState.Toggle),
-            ],
+            Names = ["military thrust", "military power", "throttle to seventy-five", "seventy-five per cent"],
         },
 
         new()
@@ -312,7 +305,8 @@ public static class GameActions
             Label = "the boost",
             Group = Flight,
             Variants = [new ActionVariant("UseBoostJuice", ControlContext.NormalSpace)],
-            Phrases = [("engage boost", DesiredState.Toggle), ("boost us", DesiredState.Toggle)],
+            Names = ["boost", "boost us"],
+            Verbs = ["engage"],
         },
 
         new()
@@ -321,12 +315,8 @@ public static class GameActions
             Label = "the next system in the route",
             Group = Flight,
             Variants = [new ActionVariant("TargetNextRouteSystem", ControlContext.Flying)],
-            Phrases =
-            [
-                ("next system", DesiredState.Toggle),
-                ("target the next system", DesiredState.Toggle),
-                ("target the next system in route", DesiredState.Toggle),
-            ],
+            Names = ["next system", "next system in route"],
+            Verbs = ["target"],
         },
 
         // ---- Ship systems (item 7) ----------------------------------------------------------
@@ -340,7 +330,7 @@ public static class GameActions
                 new ActionVariant("IncreaseEnginesPower", ControlContext.AnyShip),
                 new ActionVariant("IncreaseEnginesPower_Buggy", ControlContext.Srv),
             ],
-            Phrases = [("pips to engines", DesiredState.Toggle), ("power to engines", DesiredState.Toggle)],
+            Names = ["pips to engines", "power to engines"],
         },
 
         new()
@@ -353,7 +343,7 @@ public static class GameActions
                 new ActionVariant("IncreaseWeaponsPower", ControlContext.AnyShip),
                 new ActionVariant("IncreaseWeaponsPower_Buggy", ControlContext.Srv),
             ],
-            Phrases = [("pips to weapons", DesiredState.Toggle), ("power to weapons", DesiredState.Toggle)],
+            Names = ["pips to weapons", "power to weapons"],
         },
 
         new()
@@ -366,7 +356,7 @@ public static class GameActions
                 new ActionVariant("IncreaseSystemsPower", ControlContext.AnyShip),
                 new ActionVariant("IncreaseSystemsPower_Buggy", ControlContext.Srv),
             ],
-            Phrases = [("pips to systems", DesiredState.Toggle), ("power to systems", DesiredState.Toggle)],
+            Names = ["pips to systems", "power to systems"],
         },
 
         new()
@@ -379,7 +369,7 @@ public static class GameActions
                 new ActionVariant("ResetPowerDistribution", ControlContext.AnyShip),
                 new ActionVariant("ResetPowerDistribution_Buggy", ControlContext.Srv),
             ],
-            Phrases = [("balance the power", DesiredState.Toggle), ("balance power", DesiredState.Toggle)],
+            Names = ["balance power"],
         },
 
         // Elite's own name for silent running, kept from a much older build.
@@ -390,12 +380,10 @@ public static class GameActions
             Group = Systems,
             Variants = [new ActionVariant("ToggleButtonUpInput", ControlContext.NormalSpace)],
             Reports = StatusFlags.SilentRunning,
-            Phrases =
-            [
-                ("silent running on", DesiredState.On),
-                ("silent running off", DesiredState.Off),
-                ("silent running", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["silent running"],
+            OnVerbs = ["enable", "engage"],
+            OffVerbs = ["disable"],
         },
 
         new()
@@ -404,7 +392,8 @@ public static class GameActions
             Label = "a heat sink",
             Group = Systems,
             Variants = [new ActionVariant("DeployHeatSink", ControlContext.Flying)],
-            Phrases = [("heat sink", DesiredState.Toggle), ("drop a heat sink", DesiredState.Toggle)],
+            Names = ["heat sink"],
+            Verbs = ["drop a"],
         },
 
         new()
@@ -414,35 +403,20 @@ public static class GameActions
             Group = Systems,
             Variants = [new ActionVariant("PlayerHUDModeToggle", ControlContext.AnyShip)],
             Reports = StatusFlags.AnalysisMode,
-            Phrases =
-            [
-                ("analysis mode", DesiredState.On),
-                ("combat mode", DesiredState.Off),
-                ("switch hud mode", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Modes,
+            Names = ["hud mode"],
+            Modes = ("analysis mode", "combat mode"),
         },
 
         // ---- Panels, interface and fire groups (item 8) -------------------------------------
-        Simple("left_panel", "the left panel", Interface, "FocusLeftPanel", "FocusLeftPanel_Buggy",
-            ["left panel", "open the left panel"]),
-
-        Simple("right_panel", "the right panel", Interface, "FocusRightPanel", "FocusRightPanel_Buggy",
-            ["right panel", "open the right panel"]),
-
-        Simple("comms_panel", "the comms panel", Interface, "FocusCommsPanel", "FocusCommsPanel_Buggy",
-            ["comms panel", "open the comms panel"]),
-
-        Simple("role_panel", "the role panel", Interface, "FocusRadarPanel", "FocusRadarPanel_Buggy",
-            ["role panel", "open the role panel"]),
-
-        Simple("next_panel", "the next panel", Interface, "CycleNextPanel", null, ["next panel"]),
-        Simple("previous_panel", "the previous panel", Interface, "CyclePreviousPanel", null, ["previous panel"]),
-
-        Simple("galaxy_map", "the galaxy map", Interface, "GalaxyMapOpen", "GalaxyMapOpen_Buggy",
-            ["galaxy map", "open the galaxy map"]),
-
-        Simple("system_map", "the system map", Interface, "SystemMapOpen", "SystemMapOpen_Buggy",
-            ["system map", "open the system map"]),
+        Simple("left_panel", "the left panel", Interface, "FocusLeftPanel", "FocusLeftPanel_Buggy", "left panel", "open"),
+        Simple("right_panel", "the right panel", Interface, "FocusRightPanel", "FocusRightPanel_Buggy", "right panel", "open"),
+        Simple("comms_panel", "the comms panel", Interface, "FocusCommsPanel", "FocusCommsPanel_Buggy", "comms panel", "open"),
+        Simple("role_panel", "the role panel", Interface, "FocusRadarPanel", "FocusRadarPanel_Buggy", "role panel", "open"),
+        Simple("next_panel", "the next panel", Interface, "CycleNextPanel", null, "next panel"),
+        Simple("previous_panel", "the previous panel", Interface, "CyclePreviousPanel", null, "previous panel"),
+        Simple("galaxy_map", "the galaxy map", Interface, "GalaxyMapOpen", "GalaxyMapOpen_Buggy", "galaxy map", "open"),
+        Simple("system_map", "the system map", Interface, "SystemMapOpen", "SystemMapOpen_Buggy", "system map", "open"),
 
         Ui("ui_up", "up"),
         Ui("ui_down", "down"),
@@ -457,7 +431,7 @@ public static class GameActions
             Label = "the next fire group",
             Group = Interface,
             Variants = [new ActionVariant("CycleFireGroupNext", ControlContext.Flying)],
-            Phrases = [("next fire group", DesiredState.Toggle)],
+            Names = ["next fire group"],
         },
 
         new()
@@ -466,7 +440,7 @@ public static class GameActions
             Label = "the previous fire group",
             Group = Interface,
             Variants = [new ActionVariant("CycleFireGroupPrevious", ControlContext.Flying)],
-            Phrases = [("previous fire group", DesiredState.Toggle)],
+            Names = ["previous fire group"],
         },
 
         // ---- SRV (item 9) -------------------------------------------------------------------
@@ -477,7 +451,8 @@ public static class GameActions
             Group = SrvGroup,
             Variants = [new ActionVariant("ToggleBuggyTurretButton", ControlContext.Srv)],
             Reports = StatusFlags.SrvTurretView,
-            Phrases = [("turret on", DesiredState.On), ("turret off", DesiredState.Off), ("the turret", DesiredState.Toggle)],
+            Shape = PhraseShape.Switch,
+            Names = ["turret", "turret view"],
         },
 
         new()
@@ -487,12 +462,8 @@ public static class GameActions
             Group = SrvGroup,
             Variants = [new ActionVariant("AutoBreakBuggyButton", ControlContext.Srv)],
             Reports = StatusFlags.SrvHandbrake,
-            Phrases =
-            [
-                ("handbrake on", DesiredState.On),
-                ("handbrake off", DesiredState.Off),
-                ("the handbrake", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["handbrake"],
         },
 
         new()
@@ -502,12 +473,10 @@ public static class GameActions
             Group = SrvGroup,
             Variants = [new ActionVariant("ToggleDriveAssist", ControlContext.Srv)],
             Reports = StatusFlags.SrvDriveAssist,
-            Phrases =
-            [
-                ("drive assist on", DesiredState.On),
-                ("drive assist off", DesiredState.Off),
-                ("drive assist", DesiredState.Toggle),
-            ],
+            Shape = PhraseShape.Switch,
+            Names = ["drive assist"],
+            OnVerbs = ["enable"],
+            OffVerbs = ["disable"],
         },
 
         new()
@@ -516,7 +485,7 @@ public static class GameActions
             Label = "the SRV throttle direction",
             Group = SrvGroup,
             Variants = [new ActionVariant("BuggyToggleReverseThrottleInput", ControlContext.Srv)],
-            Phrases = [("reverse the srv", DesiredState.Toggle)],
+            Names = ["reverse the srv"],
         },
 
         // The one action that spans the SRV and standing on the surface, and the only route between a
@@ -527,13 +496,7 @@ public static class GameActions
             Label = "the ship recall",
             Group = SrvGroup,
             Variants = [new ActionVariant("RecallDismissShip", ControlContext.Srv | ControlContext.OnFoot)],
-            Phrases =
-            [
-                ("recall my ship", DesiredState.Toggle),
-                ("recall the ship", DesiredState.Toggle),
-                ("dismiss my ship", DesiredState.Toggle),
-                ("dismiss the ship", DesiredState.Toggle),
-            ],
+            Names = ["recall my ship", "recall the ship", "dismiss my ship", "dismiss the ship"],
         },
 
         // ---- Weapons (the honk's route in, Phase 10 item 3) -------------------------- No phrases and no
@@ -564,14 +527,15 @@ public static class GameActions
 
     public static IReadOnlyList<string> Ids => [.. All.Select(action => action.Id)];
 
-    /// <summary>An action with a ship form and, usually, an SRV twin.</summary>
+    /// <summary>A one-shot with a ship form and, usually, an SRV twin.</summary>
     private static GameAction Simple(
         string id,
         string label,
         string group,
         string shipAction,
         string? srvAction,
-        IReadOnlyList<string> phrases) => new()
+        string name,
+        params IReadOnlyList<string> verbs) => new()
     {
         Id = id,
         Label = label,
@@ -579,7 +543,8 @@ public static class GameActions
         Variants = srvAction is null
             ? [new ActionVariant(shipAction, ControlContext.AnyShip)]
             : [new ActionVariant(shipAction, ControlContext.AnyShip), new ActionVariant(srvAction, ControlContext.Srv)],
-        Phrases = [.. phrases.Select(phrase => (phrase, DesiredState.Toggle))],
+        Names = [name],
+        Verbs = verbs,
     };
 
     /// <summary>One of the six panel-navigation keys.</summary>
@@ -589,6 +554,7 @@ public static class GameActions
         Label = word,
         Group = Interface,
         Variants = [new ActionVariant($"UI_{char.ToUpperInvariant(word[0])}{word[1..]}", ControlContext.AnyShip | ControlContext.Srv)],
-        Phrases = [(word, DesiredState.Toggle)],
+        Shape = PhraseShape.Key,
+        Names = [word],
     };
 }

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Ship and SRV switches answer to the same set of wordings, so more of them act at once instead of going to the model: "raise the landing gear", "toggle landing gear", "turn the lights off", "switch on night vision", "deploy the cargo scoop", "scoop away" and "flight assist" all work, and so do "boost", "jump", "warp", "cruise" and "turret view" on their own. "Analysis mode" and "combat mode" still set that mode, and "switch to combat mode" works too. The short reply after a command names it by its shortest form: "Aye, hardpoints out." rather than "Aye, deploy hardpoints.", and "Aye, hyperspace." rather than "Aye, engage.". Settings › Phrases lists each control as a few patterns, such as "[gear|landing gear] [down|up]", rather than every wording. A macro can no longer take a command's name with "the" added or dropped.
+
 Game commands now run when you add a courtesy such as "please", "now" or "for me": "gear down please", "lights off now" and "engage supercruise for me" act at once instead of asking "Did you mean…?". Phrases you taught D47 work the same way.
 
 The mini panel, in the headset and on the flat overlay, no longer stops following the newest turn when it is first filled. A panel that began following and then had its content re-measured could end up parked above the newest turn with no button to return it.

@@ -45,7 +45,7 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
 
         var entry = Assert.Single(
             PhraseBook.From(TestSurface.For(install).Registry, []).Entries,
-            entry => entry.Phrase == "put the gear down");
+            entry => entry.Phrase == "put gear down");
 
         Assert.Equal("control_flight", entry.ToolName);
         Assert.True(entry.Guarded);

@@ -52,7 +52,7 @@ public class ACommandAfterANarrationReachesTheShipTests
     }
 
     [Fact]
-    public async Task LandingGearDownIsOfferedByTheShipAsItWouldBeWithNoNarration()
+    public async Task LandingGearDownReachesTheShipAsItWouldWithNoNarration()
     {
         var provider = FakeLlmProvider.Answering("The gear came down.");
         var (loop, _, _, _) = Flying(provider);
@@ -61,8 +61,7 @@ public class ACommandAfterANarrationReachesTheShipTests
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
         var result = Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
-        Assert.Equal(TurnRoute.Offer, result.Route);
-        Assert.Contains("'put the gear down'", result.Text, StringComparison.Ordinal);
+        Assert.Equal(TurnRoute.ActionCommand, result.Route);
         Assert.Null(provider.LastRequest);
     }
 

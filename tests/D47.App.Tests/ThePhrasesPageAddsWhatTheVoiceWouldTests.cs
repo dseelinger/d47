@@ -29,7 +29,7 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
         public void Dispose() => Window.Close();
     }
 
-    private static Surface Open(bool seed = true, double width = 1100, double height = 900)
+    private static Surface Open(bool seed = true, double width = 1100, double height = 900, bool actions = false)
     {
         var root = TempFolders.Create("d47-phrases-page-tests");
 
@@ -58,6 +58,7 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
                 () => gameState.Active?.Identity.FrontierId ?? string.Empty,
                 () => PhraseBook.From(registry!, [])),
             InterfaceCapability.Create(),
+            .. actions ? ActionCapabilities.All(ActionSurface.Inert) : [],
         ]);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
@@ -155,6 +156,45 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
         Assert.Contains(LearnedPhrasesCapability.TeachPhrase, drawn);
         Assert.Contains("show me every setting", drawn);
         Assert.Contains(drawn, line => line.StartsWith("Start teaching D47 a new wording by voice", StringComparison.Ordinal));
+    }
+
+    [AvaloniaFact]
+    public void AGameActionIsListedAsItsPatternsRatherThanEveryPhrase()
+    {
+        using var surface = Open(actions: true, height: 1000);
+
+        surface.Page.Filter("landing gear");
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(surface.Page);
+
+        Assert.Contains("[gear|landing gear]", drawn);
+        Assert.Contains("[gear|landing gear] [down|up]", drawn);
+        Assert.Contains("[turn|switch] [on|off] [gear|landing gear]", drawn);
+        Assert.Contains("[deploy|lower|retract|raise] [gear|landing gear]", drawn);
+        Assert.DoesNotContain("turn on landing gear", drawn);
+        Assert.True(File.Exists(Save(surface.Window, "phrases-game-action-patterns.png")));
+    }
+
+    [AvaloniaFact]
+    public void TheWordingPickerOffersAGameActionByItsShortPhrases()
+    {
+        using var surface = Open(actions: true);
+
+        var picker = surface.Page.GetVisualDescendants().OfType<InlinePicker>().Single();
+        picker.IsOpen = true;
+        Dispatcher.UIThread.RunJobs();
+
+        var options = picker.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.Classes.Contains(InlinePicker.OptionClass))
+            .Select(button => AutomationProperties.GetName(button))
+            .ToList();
+
+        Assert.Contains("gear down", options);
+        Assert.Contains("gear up", options);
+        Assert.Contains("gear", options);
+        Assert.DoesNotContain("turn on landing gear", options);
+        Assert.DoesNotContain("[gear|landing gear] [down|up]", options);
     }
 
     [AvaloniaFact]
