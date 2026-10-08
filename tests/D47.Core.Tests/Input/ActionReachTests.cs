@@ -249,4 +249,60 @@ public class ActionReachTests
 
         Assert.Equal(ids.Count, ids.Distinct(StringComparer.Ordinal).Count());
     }
+
+    private static readonly string[] FighterActionIds =
+    [
+        "flight_assist", "boost", "throttle_zero", "throttle_25", "throttle_50", "throttle_75", "throttle_full",
+        "power_to_engines", "power_to_weapons", "power_to_systems", "balance_power",
+        "next_fire_group", "previous_fire_group", "lights",
+        "select_target", "next_target", "previous_target", "next_hostile", "previous_hostile", "highest_threat",
+        "target_wingman_1", "target_wingman_2", "target_wingman_3", "wingman_target", "wingman_nav_lock",
+    ];
+
+    [Fact]
+    public void TheShipFlightActionsAFighterUsesResolveInAFighter()
+    {
+        foreach (var id in FighterActionIds)
+        {
+            var action = Action(id);
+            var binding = action.For(ControlContext.Fighter)?.EliteAction
+                ?? throw new InvalidOperationException($"{id} has no fighter variant.");
+            var reach = ActionReachability.Resolve(action, Binds((binding, "Keyboard", "Key_L")), ControlContext.Fighter);
+
+            Assert.True(reach.IsOffered, id);
+        }
+    }
+
+    [Theory]
+    [InlineData("landing_gear")]
+    [InlineData("cargo_scoop")]
+    [InlineData("hardpoints")]
+    [InlineData("supercruise")]
+    [InlineData("hyperspace")]
+    [InlineData("silent_running")]
+    [InlineData("heat_sink")]
+    public void TheShipOnlyActionsAreRefusedInAFighter(string id)
+    {
+        var action = Action(id);
+        var binding = action.Variants[0].EliteAction;
+        var reach = ActionReachability.Resolve(action, Binds((binding, "Keyboard", "Key_L")), ControlContext.Fighter);
+
+        Assert.Equal(ActionAvailability.WrongMode, reach.Availability);
+        Assert.Contains("in a fighter", reach.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("flight_assist")]
+    [InlineData("lights")]
+    public void OnAndOffPressTheToggleInAFighterWhateverTheFlagSays(string id)
+    {
+        var status = new GameStatus
+        {
+            Flags = StatusFlags.InFighter | StatusFlags.LightsOn | StatusFlags.FlightAssistOff,
+            ReadAt = DateTimeOffset.UnixEpoch,
+        };
+
+        Assert.Null(Action(id).AlreadyIn(DesiredState.On, status));
+        Assert.Null(Action(id).AlreadyIn(DesiredState.Off, status));
+    }
 }

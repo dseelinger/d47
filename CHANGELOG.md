@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Flight actions now work in a fighter you launched from your ship: flight assist, boost, the throttle settings, the power pips, fire groups, the lights and the targeting commands press the same keys as in the ship. Gear, scoop, hardpoints, the frame shift drive and the panels are still refused there, with "in a fighter".
+
 The flat overlay now has every page the headset's mini panel has: Missions, Standing, Statistics, This session, Commanders, Raw Journal, Log, Routing, the rest of Assets and Engineers, and it keeps them current as the game changes. System names and your Commander's name show as chips in its transcript, as they do in the headset.
 
 Say "next hostile", "previous hostile", "next target", "previous target", "target ahead", "highest threat", "next subsystem", "previous subsystem", "target wingman one" (or two, three), "target wingman's target" or "wingman nav lock" to press the matching targeting binding. "Target ahead" also works in the SRV. Say "fighter orders", "recall the fighter", "fighter defend", "fighter engage at will", "fighter attack my target", "fighter hold fire", "fighter hold position" or "fighter follow me" to give the fighter that order. "Chaff", "shield cell" and "ecm" fire the countermeasures in normal space; the ECM key is held for four seconds so it fires on release. Macros can use the countermeasures.

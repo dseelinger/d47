@@ -233,6 +233,12 @@ An action you have left unbound entirely says so too, rather than failing as sil
 
 ### What it can reach
 
+In a ship-launched fighter, flight assist, boost, the throttle settings from zero to a hundred
+per cent, the lights and the targeting commands press the same bindings as in the ship. Gear,
+scoop, hardpoints, the frame shift drive, supercruise and the hyperspace jump are refused there
+with "in a fighter". In a fighter "flight assist on" and "lights on" press the toggle without
+checking the game's report first.
+
 Landing gear, ship lights, night vision, cargo scoop, hardpoints, the frame shift drive,
 supercruise, the hyperspace jump, flight assist, throttle at zero, twenty-five, fifty or
 seventy-five per cent ("military thrust") or a hundred ("full throttle"), the reverse settings in normal space ("full reverse", "half reverse", "throttle to minus twenty-five"), the reverse thrust toggle ("reverse thrust"), boost, and targeting the next system in a plotted route.

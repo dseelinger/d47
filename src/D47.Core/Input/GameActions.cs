@@ -142,7 +142,7 @@ public static class GameActions
             Group = Flight,
             Variants =
             [
-                new ActionVariant("ShipSpotLightToggle", ControlContext.AnyShip),
+                new ActionVariant("ShipSpotLightToggle", ControlContext.AnyShip | ControlContext.Fighter),
                 new ActionVariant("HeadlightsBuggyButton", ControlContext.Srv),
                 new ActionVariant("HumanoidToggleFlashlightButton", ControlContext.OnFoot),
             ],
@@ -246,11 +246,14 @@ public static class GameActions
             Id = "flight_assist",
             Label = "flight assist",
             Group = Flight,
-            Variants = [new ActionVariant("ToggleFlightAssist", ControlContext.Flying)],
+            Variants = [new ActionVariant("ToggleFlightAssist", ControlContext.Flying | ControlContext.Fighter)],
 
             // Elite reports the negative, so the flag being set means the feature is off.
             Reports = StatusFlags.FlightAssistOff,
             ReportsInverted = true,
+
+            // Whether Status.json sets the flag in a fighter is unverified, so there "on" and "off" press the toggle.
+            ReportsIn = ControlContext.AnyShip | ControlContext.Srv,
             Shape = PhraseShape.Switch,
             Names = ["flight assist"],
             OnVerbs = ["enable"],
@@ -262,7 +265,7 @@ public static class GameActions
             Id = "throttle_zero",
             Label = "the throttle",
             Group = Flight,
-            Variants = [new ActionVariant("SetSpeedZero", ControlContext.Flying)],
+            Variants = [new ActionVariant("SetSpeedZero", ControlContext.Flying | ControlContext.Fighter)],
 
             // Not "stop".
             Names = ["all stop", "throttle to zero"],
@@ -273,7 +276,7 @@ public static class GameActions
             Id = "throttle_25",
             Label = "quarter throttle",
             Group = Flight,
-            Variants = [new ActionVariant("SetSpeed25", ControlContext.Flying)],
+            Variants = [new ActionVariant("SetSpeed25", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["throttle to twenty-five", "twenty-five per cent"],
         },
 
@@ -282,7 +285,7 @@ public static class GameActions
             Id = "throttle_50",
             Label = "half throttle",
             Group = Flight,
-            Variants = [new ActionVariant("SetSpeed50", ControlContext.Flying)],
+            Variants = [new ActionVariant("SetSpeed50", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["throttle to fifty", "fifty per cent"],
         },
 
@@ -293,7 +296,7 @@ public static class GameActions
             Id = "throttle_75",
             Label = "military thrust",
             Group = Flight,
-            Variants = [new ActionVariant("SetSpeed75", ControlContext.Flying)],
+            Variants = [new ActionVariant("SetSpeed75", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["military thrust", "military power", "throttle to seventy-five", "seventy-five per cent"],
         },
 
@@ -302,7 +305,7 @@ public static class GameActions
             Id = "throttle_full",
             Label = "full throttle",
             Group = Flight,
-            Variants = [new ActionVariant("SetSpeed100", ControlContext.Flying)],
+            Variants = [new ActionVariant("SetSpeed100", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["full throttle", "full speed", "throttle to a hundred"],
         },
 
@@ -356,7 +359,7 @@ public static class GameActions
             Id = "boost",
             Label = "the boost",
             Group = Flight,
-            Variants = [new ActionVariant("UseBoostJuice", ControlContext.NormalSpace)],
+            Variants = [new ActionVariant("UseBoostJuice", ControlContext.NormalSpace | ControlContext.Fighter)],
             Names = ["boost", "boost us"],
             Verbs = ["engage"],
         },
@@ -379,7 +382,7 @@ public static class GameActions
             Group = Systems,
             Variants =
             [
-                new ActionVariant("IncreaseEnginesPower", ControlContext.AnyShip),
+                new ActionVariant("IncreaseEnginesPower", ControlContext.AnyShip | ControlContext.Fighter),
                 new ActionVariant("IncreaseEnginesPower_Buggy", ControlContext.Srv),
             ],
             Names = ["pips to engines", "power to engines"],
@@ -392,7 +395,7 @@ public static class GameActions
             Group = Systems,
             Variants =
             [
-                new ActionVariant("IncreaseWeaponsPower", ControlContext.AnyShip),
+                new ActionVariant("IncreaseWeaponsPower", ControlContext.AnyShip | ControlContext.Fighter),
                 new ActionVariant("IncreaseWeaponsPower_Buggy", ControlContext.Srv),
             ],
             Names = ["pips to weapons", "power to weapons"],
@@ -405,7 +408,7 @@ public static class GameActions
             Group = Systems,
             Variants =
             [
-                new ActionVariant("IncreaseSystemsPower", ControlContext.AnyShip),
+                new ActionVariant("IncreaseSystemsPower", ControlContext.AnyShip | ControlContext.Fighter),
                 new ActionVariant("IncreaseSystemsPower_Buggy", ControlContext.Srv),
             ],
             Names = ["pips to systems", "power to systems"],
@@ -418,7 +421,7 @@ public static class GameActions
             Group = Systems,
             Variants =
             [
-                new ActionVariant("ResetPowerDistribution", ControlContext.AnyShip),
+                new ActionVariant("ResetPowerDistribution", ControlContext.AnyShip | ControlContext.Fighter),
                 new ActionVariant("ResetPowerDistribution_Buggy", ControlContext.Srv),
             ],
             Names = ["balance power"],
@@ -524,7 +527,7 @@ public static class GameActions
             Group = Interface,
             Variants =
             [
-                new ActionVariant("CycleFireGroupNext", ControlContext.Flying),
+                new ActionVariant("CycleFireGroupNext", ControlContext.Flying | ControlContext.Fighter),
                 new ActionVariant("BuggyCycleFireGroupNext", ControlContext.Srv),
             ],
             Names = ["next fire group"],
@@ -537,7 +540,7 @@ public static class GameActions
             Group = Interface,
             Variants =
             [
-                new ActionVariant("CycleFireGroupPrevious", ControlContext.Flying),
+                new ActionVariant("CycleFireGroupPrevious", ControlContext.Flying | ControlContext.Fighter),
                 new ActionVariant("BuggyCycleFireGroupPrevious", ControlContext.Srv),
             ],
             Names = ["previous fire group"],
@@ -605,7 +608,7 @@ public static class GameActions
             Id = "select_target",
             Label = "the target ahead",
             Group = Combat,
-            Variants = [new ActionVariant("SelectTarget", ControlContext.Flying), new ActionVariant("SelectTarget_Buggy", ControlContext.Srv)],
+            Variants = [new ActionVariant("SelectTarget", ControlContext.Flying | ControlContext.Fighter), new ActionVariant("SelectTarget_Buggy", ControlContext.Srv)],
             Names = ["select target", "target ahead"],
         },
 
@@ -614,7 +617,7 @@ public static class GameActions
             Id = "next_target",
             Label = "the next target",
             Group = Combat,
-            Variants = [new ActionVariant("CycleNextTarget", ControlContext.Flying)],
+            Variants = [new ActionVariant("CycleNextTarget", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["next target"],
         },
 
@@ -623,7 +626,7 @@ public static class GameActions
             Id = "previous_target",
             Label = "the previous target",
             Group = Combat,
-            Variants = [new ActionVariant("CyclePreviousTarget", ControlContext.Flying)],
+            Variants = [new ActionVariant("CyclePreviousTarget", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["previous target"],
         },
 
@@ -632,7 +635,7 @@ public static class GameActions
             Id = "next_hostile",
             Label = "the next hostile",
             Group = Combat,
-            Variants = [new ActionVariant("CycleNextHostileTarget", ControlContext.Flying)],
+            Variants = [new ActionVariant("CycleNextHostileTarget", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["next hostile"],
         },
 
@@ -641,7 +644,7 @@ public static class GameActions
             Id = "previous_hostile",
             Label = "the previous hostile",
             Group = Combat,
-            Variants = [new ActionVariant("CyclePreviousHostileTarget", ControlContext.Flying)],
+            Variants = [new ActionVariant("CyclePreviousHostileTarget", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["previous hostile"],
         },
 
@@ -650,7 +653,7 @@ public static class GameActions
             Id = "highest_threat",
             Label = "the highest threat",
             Group = Combat,
-            Variants = [new ActionVariant("SelectHighestThreat", ControlContext.Flying)],
+            Variants = [new ActionVariant("SelectHighestThreat", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["highest threat"],
             Verbs = ["target the"],
         },
@@ -678,7 +681,7 @@ public static class GameActions
             Id = "target_wingman_1",
             Label = "wingman one",
             Group = Combat,
-            Variants = [new ActionVariant("TargetWingman0", ControlContext.Flying)],
+            Variants = [new ActionVariant("TargetWingman0", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["wingman one"],
             Verbs = ["target"],
         },
@@ -688,7 +691,7 @@ public static class GameActions
             Id = "target_wingman_2",
             Label = "wingman two",
             Group = Combat,
-            Variants = [new ActionVariant("TargetWingman1", ControlContext.Flying)],
+            Variants = [new ActionVariant("TargetWingman1", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["wingman two"],
             Verbs = ["target"],
         },
@@ -698,7 +701,7 @@ public static class GameActions
             Id = "target_wingman_3",
             Label = "wingman three",
             Group = Combat,
-            Variants = [new ActionVariant("TargetWingman2", ControlContext.Flying)],
+            Variants = [new ActionVariant("TargetWingman2", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["wingman three"],
             Verbs = ["target"],
         },
@@ -708,7 +711,7 @@ public static class GameActions
             Id = "wingman_target",
             Label = "the wingman's target",
             Group = Combat,
-            Variants = [new ActionVariant("SelectTargetsTarget", ControlContext.Flying)],
+            Variants = [new ActionVariant("SelectTargetsTarget", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["wingman's target"],
             Verbs = ["target"],
         },
@@ -718,7 +721,7 @@ public static class GameActions
             Id = "wingman_nav_lock",
             Label = "the wingman nav lock",
             Group = Combat,
-            Variants = [new ActionVariant("WingNavLock", ControlContext.Flying)],
+            Variants = [new ActionVariant("WingNavLock", ControlContext.Flying | ControlContext.Fighter)],
             Names = ["wingman nav lock", "nav lock"],
         },
 
