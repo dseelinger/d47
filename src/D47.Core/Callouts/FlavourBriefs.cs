@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Conversation;
+using D47.Core.Journal;
 using D47.Core.Persona;
 
 namespace D47.Core.Callouts;
@@ -105,7 +106,8 @@ public static class FlavourBriefs
 
     /// <summary>The brief for one announcement, or null when it is to be said exactly as written.</summary>
     /// <param name="personalityEnabled">Personality off silences all of it.</param>
-    public static FlavourBrief? For(Announcement announcement, bool personalityEnabled)
+    /// <param name="commanderName">Used only to address the owner of a carrier.</param>
+    public static FlavourBrief? For(Announcement announcement, bool personalityEnabled, string? commanderName = null)
     {
         ArgumentNullException.ThrowIfNull(announcement);
 
@@ -531,8 +533,10 @@ public static class FlavourBriefs
                         "Your station just addressed its own owner with this canned line. Say it "
                         + "in your own words, once, to the owner of this carrier — not a visiting "
                         + "pilot: keep every fact in it, add none, and give them the respect the "
-                        + "deck they own is owed. Address them by rank and surname alone — "
-                        + "\"Commander\" and the last word of their name, never the full name: "
+                        + "deck they own is owed. "
+                        + (CommanderAddress.Surname(commanderName) is null
+                            ? "Address them as \"Commander\" alone: "
+                            : $"Address them as \"{CommanderAddress.Said(commanderName)}\", never the full name: ")
                         + $"\"{announcement.Text}\"",
                     NeedsPersona = false,
                     NeedsGameState = false,

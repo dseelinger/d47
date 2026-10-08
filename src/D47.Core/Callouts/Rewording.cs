@@ -44,7 +44,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             return AsWritten(announcement, "no model", ship, commanderName, checkFacts: false);
         }
 
-        if (FlavourBriefs.For(announcement, personalityEnabled) is not { } brief)
+        if (FlavourBriefs.For(announcement, personalityEnabled, commanderName) is not { } brief)
         {
             return AsWritten(announcement, "personality off", ship, commanderName, checkFacts: false);
         }

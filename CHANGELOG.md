@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The carrier tower now addresses you by rank and surname when it rewords a line, instead of saying it does not have your surname.
+
 The Local voice and Chatterbox voice rows in Settings no longer show a Download it button once the model is installed. The button returns if any file is missing or the wrong size, and goes when a download finishes.
 
 Chatterbox lists its twelve voices in an installed or updated D47, and the speaker portraits arrive with an update. Before, the installer's folder for voices and the updater's zip left them out.
