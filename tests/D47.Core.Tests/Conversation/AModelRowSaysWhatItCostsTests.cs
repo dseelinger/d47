@@ -84,7 +84,7 @@ public class AModelRowSaysWhatItCostsTests
     [Fact]
     public void TheCheapestListedModelIsMarked()
     {
-        Assert.Equal(["gpt-5.6-luna"], Cheapest(OpenAi));
+        Assert.Equal(["gpt-6-luna"], Cheapest(OpenAi));
         Assert.Equal(["claude-haiku-5-5"], Cheapest(Anthropic));
 
         static IReadOnlyList<string> Cheapest(LlmProviderInfo provider)
@@ -157,14 +157,14 @@ public class AModelRowSaysWhatItCostsTests
             var describe = ModelChoice.Describer(OpenAi, endpoint: null, PriceTable.Default);
 
             Assert.Equal(
-                "gpt-5.6-terra — the provider's default — $2 in / $12 out per million",
-                describe("gpt-5.6-terra"));
+                "gpt-6.1-sol — the provider's default — $2 in / $10 out per million",
+                describe("gpt-6.1-sol"));
 
             // The cents only where there are cents: "$2.00" beside "$0.20" reads as a table of figures, and
             // this is a sentence.
             Assert.Equal(
-                "gpt-5.6-luna — cheapest here — $0.20 in / $1.20 out per million",
-                describe("gpt-5.6-luna"));
+                "gpt-6-luna — cheapest here — $0.10 in / $0.50 out per million",
+                describe("gpt-6-luna"));
 
             Assert.Equal("gpt-5.4-nano — $0.20 in / $1.25 out per million", describe("gpt-5.4-nano"));
         });

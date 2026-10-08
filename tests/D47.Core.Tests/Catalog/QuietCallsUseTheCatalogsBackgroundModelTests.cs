@@ -36,7 +36,7 @@ public class QuietCallsUseTheCatalogsBackgroundModelTests
     [Fact]
     public void AProviderWithNoBackgroundModelKeepsTheConversationModel()
     {
-        var settings = new D47Settings { Llm = new LlmSettings { Provider = LlmProviderCatalog.OpenAiId, Model = "gpt-x" } };
+        var settings = new D47Settings { Llm = new LlmSettings { Provider = LlmProviderCatalog.OpenAiCompatibleId, Model = "gpt-x" } };
 
         Assert.Equal("gpt-x", BackgroundModels.Resolve(settings));
     }

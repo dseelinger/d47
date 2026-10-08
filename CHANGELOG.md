@@ -12,6 +12,14 @@ With Model for the quiet calls unset, In Ship chatter, narrator lines, the openi
 
 Claude Haiku 5.5 is in the model list, priced at $0.10 per million input tokens and $0.50 per million output tokens for prompts up to 100,000 tokens. Longer prompts cost five times that, which the spend estimate does not yet include.
 
+Claude Fable 5.1 is in the model list, at $10 per million input tokens and $50 per million output tokens.
+
+OpenAI's default model is now GPT-6.1 Sol, at $2 per million input tokens and $10 per million output tokens. GPT-6 Sol, GPT-6 Astra and GPT-6 Luna are in the model list too. With OpenAI selected and Model for the quiet calls unset, the quiet calls now use GPT-6 Luna, at $0.10 per million input tokens and $0.50 per million output tokens.
+
+The spend estimate now prices cached input correctly for Claude Haiku 5.5 and Claude Sonnet 5.5. It had shown Haiku 5.5's cache cost at a tenth of the real price and Sonnet 5.5's cache reads at twice the real price.
+
+Claude Sonnet 5.5 now searches for the tools it needs instead of receiving every tool up front, as the other current Claude models already do.
+
 A reworded callout in which the model says what it was or was not given, or that it cannot address you a certain way, is no longer spoken; the authored line is used instead.
 
 The carrier tower now addresses you by rank and surname when it rewords a line, instead of saying it does not have your surname.

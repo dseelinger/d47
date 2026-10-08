@@ -12,7 +12,7 @@ public class AModelCatalogItCannotUseIsRefusedTests
         var catalog = ModelCatalog.Embedded;
 
         Assert.Equal("claude-sonnet-5-5", catalog.DefaultFor("anthropic"));
-        Assert.Equal("gpt-5.6-terra", catalog.DefaultFor("openai"));
+        Assert.Equal("gpt-6.1-sol", catalog.DefaultFor("openai"));
         Assert.NotEmpty(catalog.OfferedFor("anthropic"));
         Assert.NotEmpty(catalog.OfferedFor("openai"));
         Assert.Equal("eleven_v4_turbo", catalog.SpeechDefaultFor("elevenlabs"));

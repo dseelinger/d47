@@ -83,7 +83,8 @@ public class SupportedModelsSearchTheirToolsTests
     [InlineData("claude-fable-5", true)]
     [InlineData("claude-mythos-5", true)]
     [InlineData("claude-haiku-4-5", true)]
-    [InlineData("claude-sonnet-5-5", false)]
+    [InlineData("claude-sonnet-5-5", true)]
+    [InlineData("claude-fable-5-1", true)]
     [InlineData("claude-sonnet-5", false)]
     [InlineData("claude-something-7", false)]
     public void ToolSearchIsDeclaredPerModel(string model, bool expected)
