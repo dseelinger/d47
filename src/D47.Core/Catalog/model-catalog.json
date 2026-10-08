@@ -42,6 +42,13 @@
           "traits": { "operatorSystemMessages": false, "toolSearch": true, "minimumCacheablePrefix": 4096, "basicWebSearchOnly": true, "legacyThinking": true }
         },
         {
+          "id": "claude-haiku-5-5",
+          "label": "Claude Haiku 5.5",
+          "offered": true,
+          "price": { "input": 0.1, "output": 0.5, "cacheRead": 0.01, "cacheWrite": 0.125 },
+          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false }
+        },
+        {
           "id": "claude-fable-5",
           "label": "Claude Fable 5",
           "offered": true,

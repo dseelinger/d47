@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Claude Haiku 5.5 is in the model list, priced at $0.10 per million input tokens and $0.50 per million output tokens for prompts up to 100,000 tokens. Longer prompts cost five times that, which the spend estimate does not yet include.
+
 A reworded callout in which the model says what it was or was not given, or that it cannot address you a certain way, is no longer spoken; the authored line is used instead.
 
 The carrier tower now addresses you by rank and surname when it rewords a line, instead of saying it does not have your surname.
