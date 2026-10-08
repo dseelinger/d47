@@ -111,17 +111,56 @@ public class ACommanderIsToldWhenADefaultChangesTests
         Assert.Equal("eleven_v3_conversational", change.Value);
     }
 
+    [Fact]
+    public void ACommanderWhoseQuietCallsChangeModelIsToldOnceAndCanKeepTheOldOne()
+    {
+        var told = Told(Anthropic, "claude-a");
+
+        var change = DefaultChanges.Find(new D47Settings(), Catalog("claude-a", "claude-b"), ref told);
+
+        Assert.NotNull(change);
+        Assert.Equal("The quiet calls now use Claude B.", change.Text);
+        Assert.Equal("Keep Claude A", change.ActionLabel);
+        Assert.Equal("llm.backgroundModel", change.SettingKey);
+        Assert.Equal("claude-a", change.Value);
+
+        told = new Dictionary<string, string>(told) { [change.Key] = change.Default };
+
+        Assert.Null(DefaultChanges.Find(new D47Settings(), Catalog("claude-a", "claude-b"), ref told));
+    }
+
+    [Fact]
+    public void AFirstRunIsNotToldAboutTheQuietCalls()
+    {
+        IReadOnlyDictionary<string, string> told = new Dictionary<string, string>();
+
+        Assert.Null(DefaultChanges.Find(new D47Settings(), Catalog("claude-a", "claude-b"), ref told));
+    }
+
+    [Fact]
+    public void AChosenQuietModelOrACustomEndpointIsNotToldAboutTheQuietCalls()
+    {
+        var chosen = new D47Settings { Llm = new LlmSettings { BackgroundModel = "claude-a" } };
+        var custom = new D47Settings { Llm = new LlmSettings { Endpoint = "http://localhost:1234" } };
+
+        var told = Told(Anthropic, "claude-a");
+        Assert.Null(DefaultChanges.Find(chosen, Catalog("claude-a", "claude-b"), ref told));
+
+        told = Told(Anthropic, "claude-a");
+        Assert.Null(DefaultChanges.Find(custom, Catalog("claude-a", "claude-b"), ref told));
+    }
+
     private static IReadOnlyDictionary<string, string> Told(string key, string value) =>
         new Dictionary<string, string> { [key] = value };
 
-    private static ModelCatalog Catalog(string anthropicDefault) => ModelCatalog.Parse($$"""
+    private static ModelCatalog Catalog(string anthropicDefault, string? background = null) => ModelCatalog.Parse($$"""
         {
           "schema": 1,
           "published": "2026-10-06",
           "providers": {
             "anthropic": {
               "default": "{{anthropicDefault}}",
-              "backgroundDefault": null,
+              "backgroundDefault": {{(background is null ? "null" : $"\"{background}\"")}},
               "models": [
                 { "id": "claude-a", "label": "Claude A", "offered": true, "price": { "input": 3, "output": 15 } },
                 { "id": "claude-b", "label": "Claude B", "offered": true, "price": { "input": 3, "output": 15 } },

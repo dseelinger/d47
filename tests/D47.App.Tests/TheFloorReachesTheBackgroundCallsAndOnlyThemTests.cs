@@ -55,10 +55,10 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
     /// one of the nine behaves exactly as it did.
     /// </summary>
     [Fact]
-    public void TheBackgroundModelFallsBackToTheConversationModelInOnePlace()
+    public void TheBackgroundModelIsResolvedInOnePlace()
     {
         Assert.Contains(
-            "Turns.BackgroundModel = current.Llm.BackgroundModel ?? current.Llm.Model;",
+            "Turns.BackgroundModel = BackgroundModels.Resolve(current);",
             CodeLinesContaining("Turns.BackgroundModel ="));
     }
 

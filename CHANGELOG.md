@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+With Model for the quiet calls unset, In Ship chatter, narrator lines, the opening brief, lore lookups and voice choice use Claude Haiku 5.5 on Anthropic's own endpoint. A custom endpoint, or a Model for the quiet calls you set yourself, is unchanged. D47 tells you once and offers to keep your conversation model for these calls.
+
 Claude Haiku 5.5 is in the model list, priced at $0.10 per million input tokens and $0.50 per million output tokens for prompts up to 100,000 tokens. Longer prompts cost five times that, which the spend estimate does not yet include.
 
 A reworded callout in which the model says what it was or was not given, or that it cannot address you a certain way, is no longer spoken; the authored line is used instead.

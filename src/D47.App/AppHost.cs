@@ -3561,7 +3561,7 @@ public sealed class AppHost : IDisposable
         Turns.Model = current.Llm.Model;
 
         // Resolved once, here, rather than at each of the eight call sites (Phase 54).
-        Turns.BackgroundModel = current.Llm.BackgroundModel ?? current.Llm.Model;
+        Turns.BackgroundModel = BackgroundModels.Resolve(current);
 
         // What the Commander will pay for, kept apart from what the router thinks they asked for.
         Turns.EffortFloor = current.Llm.EffortFloor;

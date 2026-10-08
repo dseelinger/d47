@@ -26,6 +26,8 @@ public static class DefaultChanges
 
     private const string SpeechPrefix = "speech:";
 
+    private const string BackgroundPrefix = "background:";
+
     /// <summary>
     /// The first change to announce, or null. <paramref name="told"/> comes back recorded at the current
     /// default for every provider with nothing to announce, and unchanged for one with a notice pending.
@@ -35,6 +37,7 @@ public static class DefaultChanges
         ModelCatalog catalog,
         ref IReadOnlyDictionary<string, string> told)
     {
+        var firstRun = told.Count == 0;
         var next = new Dictionary<string, string>(told, StringComparer.Ordinal);
 
         foreach (var provider in new[] { LlmProviderCatalog.AnthropicId, LlmProviderCatalog.OpenAiId })
@@ -44,7 +47,15 @@ public static class DefaultChanges
 
         RecordFirst(next, SpeechPrefix + TtsProviderCatalog.ElevenLabsId, catalog.SpeechDefaultFor(TtsProviderCatalog.ElevenLabsId));
 
-        var change = LanguageModel(settings, catalog, next) ?? Speech(settings, catalog, next);
+        if (firstRun)
+        {
+            foreach (var provider in new[] { LlmProviderCatalog.AnthropicId, LlmProviderCatalog.OpenAiId })
+            {
+                RecordFirst(next, BackgroundPrefix + provider, catalog.BackgroundDefaultFor(provider));
+            }
+        }
+
+        var change = LanguageModel(settings, catalog, next) ?? Speech(settings, catalog, next) ?? Background(settings, catalog, next);
 
         foreach (var key in next.Keys.ToArray())
         {
@@ -104,6 +115,34 @@ public static class DefaultChanges
             "D47 now speaks with {0}.");
     }
 
+    private static DefaultChange? Background(D47Settings settings, ModelCatalog catalog, Dictionary<string, string> told)
+    {
+        var provider = settings.Llm.Provider;
+        var key = BackgroundPrefix + provider;
+
+        if (!Selected(settings, key)
+            || catalog.BackgroundDefaultFor(provider) is not { } current
+            || told.TryGetValue(key, out var was) && was == current)
+        {
+            return null;
+        }
+
+        var conversation = settings.Llm.Model ?? catalog.DefaultFor(provider);
+
+        if (conversation is null || conversation == current)
+        {
+            return null;
+        }
+
+        return new DefaultChange(
+            key,
+            current,
+            $"The quiet calls now use {catalog.LabelFor(provider, current)}.",
+            $"Keep {catalog.LabelFor(provider, conversation)}",
+            ConversationCapability.BackgroundModelKey,
+            conversation);
+    }
+
     private static DefaultChange? Build(
         string key,
         string current,
@@ -139,13 +178,19 @@ public static class DefaultChanges
     }
 
     private static bool Selected(D47Settings settings, string key) =>
-        key.StartsWith(LlmPrefix, StringComparison.Ordinal)
+        key.StartsWith(BackgroundPrefix, StringComparison.Ordinal)
+            ? key == BackgroundPrefix + settings.Llm.Provider
+                && string.IsNullOrEmpty(settings.Llm.Endpoint)
+                && settings.Llm.BackgroundModel is null
+            : key.StartsWith(LlmPrefix, StringComparison.Ordinal)
             ? key == LlmPrefix + settings.Llm.Provider && string.IsNullOrEmpty(settings.Llm.Endpoint)
             : VoiceGroups.Selected(settings.Speech).Values.Any(id =>
                 string.Equals(id, TtsProviderCatalog.ElevenLabsId, StringComparison.OrdinalIgnoreCase));
 
     private static string? CurrentDefault(ModelCatalog catalog, string key) =>
-        key.StartsWith(LlmPrefix, StringComparison.Ordinal)
+        key.StartsWith(BackgroundPrefix, StringComparison.Ordinal)
+            ? catalog.BackgroundDefaultFor(key[BackgroundPrefix.Length..])
+            : key.StartsWith(LlmPrefix, StringComparison.Ordinal)
             ? catalog.DefaultFor(key[LlmPrefix.Length..])
             : catalog.SpeechDefaultFor(key[SpeechPrefix.Length..]);
 }

@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "published": "2026-10-07",
+  "published": "2026-10-08",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
-      "backgroundDefault": null,
+      "backgroundDefault": "claude-haiku-5-5",
       "models": [
         {
           "id": "claude-sonnet-5-5",

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using D47.Core.Catalog;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 
@@ -381,9 +382,11 @@ public static class ConversationCapability
                     + "brief, what D47 says after a long gap, a lore lookup, and choosing a voice. None "
                     + "of them carry the conversation, so a cheaper model here costs nothing in cache "
                     + "and saves most of what D47 spends when you are not talking to it. Leave it unset "
-                    + "and they use the model above.",
+                    + "and they use the model named as the default, or the model above where none is named.",
                 Kind = SettingKind.Choice,
-                DefaultDisplay = "(the conversation model)",
+                DefaultDisplaySource = s => BackgroundModels.DefaultFor(s) is { } named
+                    ? ModelCatalogSource.Shared.Current.LabelFor(s.Llm.Provider, named)
+                    : "(the conversation model)",
                 DocsAnchor = "background-model",
 
                 // The model row's contract, for the model row's reason: an endpoint d47 has never heard of
