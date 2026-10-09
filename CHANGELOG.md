@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Changing speech settings while a core change, a voice download or a voice repair was running could corrupt the list of voice clients, or close one that was about to speak. Speech wiring now changes on one thread at a time.
+
 A stated memory that expired while d47 was closed is now shown on the panel at startup and no longer spoken. Expiries found later are still announced.
 
 A leftover diagnostic in the panel wrote a file four seconds after the panel opened, to a folder that exists only on the developer's PC. On any other PC the write failed, which could close d47. It has been removed.

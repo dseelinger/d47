@@ -4172,7 +4172,7 @@ public sealed class AppHost : IDisposable
                 return result.Detail ?? "Chatterbox could not be downloaded.";
             }
 
-            if (_clients.GetValueOrDefault(TtsProviderCatalog.ChatterboxId) is { } client)
+            if (ClientFor(TtsProviderCatalog.ChatterboxId) is { } client)
             {
                 await LoadVoicesAsync(client).ConfigureAwait(false);
             }
@@ -4453,17 +4453,20 @@ public sealed class AppHost : IDisposable
     /// <summary>Closes and forgets the Kokoro client, so nothing is holding <c>model.onnx</c> open.</summary>
     private void DropLocalVoiceClient()
     {
-        if (_clients.Remove(TtsProviderCatalog.KokoroId, out var client)
-            && client is IDisposable disposable)
+        ITtsProvider? client;
+
+        lock (_speechGate)
         {
-            disposable.Dispose();
+            _clients.Remove(TtsProviderCatalog.KokoroId, out client);
         }
+
+        (client as IDisposable)?.Dispose();
     }
 
     /// <summary>Asks the local voice what it offers, now that it has something to offer.</summary>
     private async Task RefreshLocalVoicesAsync()
     {
-        if (_clients.GetValueOrDefault(TtsProviderCatalog.KokoroId) is { } client)
+        if (ClientFor(TtsProviderCatalog.KokoroId) is { } client)
         {
             await LoadVoicesAsync(client).ConfigureAwait(false);
         }
@@ -4475,7 +4478,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private async Task<string?> SpeakLocalVoiceProofAsync(CancellationToken cancellationToken)
     {
-        var shared = _clients.GetValueOrDefault(TtsProviderCatalog.KokoroId);
+        var shared = ClientFor(TtsProviderCatalog.KokoroId);
         var own = shared is null
             ? new KokoroTtsProvider(
                 KokoroFolder(),
@@ -4574,7 +4577,10 @@ public sealed class AppHost : IDisposable
         try
         {
             var listed = await provider.ListVoicesAsync().ConfigureAwait(false);
-            _voicesByProvider[provider.Id] = listed;
+            lock (_speechGate)
+            {
+                _voicesByProvider[provider.Id] = listed;
+            }
 
             _logger.LogInformation(
                 "{Provider}'s voice list has {Count} voices ({Listing})",
@@ -5029,53 +5035,60 @@ public sealed class AppHost : IDisposable
     {
         var speech = ReconcileVoicesWithProvider();
 
-        // What to build, what to release, which slots moved and whose list to ask for again are decided in
-        // Core, where a test can reach them; what to build and how to fetch it stay here, where the loggers
-        // and the secret store are.
-        var plan = SpeechWiring.Plan(
-            _speechWiring,
-            VoiceGroups.Selected(speech),
-            id => HasKeyFor(TtsProviderCatalog.Selected(id)));
+        SpeechWiringPlan plan;
 
-        _speechWiring = plan.Next;
-
-        // Released first, so a slot moving from ElevenLabs to Edge and another moving the other way do not
-        // hold two of each at once.
-        foreach (var released in plan.Dispose)
+        lock (_speechGate)
         {
-            if (_clients.Remove(released, out var client))
+            // What to build, what to release, which slots moved and whose list to ask for again are decided in
+            // Core, where a test can reach them; what to build and how to fetch it stay here, where the loggers
+            // and the secret store are.
+            plan = SpeechWiring.Plan(
+                _speechWiring,
+                VoiceGroups.Selected(speech),
+                id => HasKeyFor(TtsProviderCatalog.Selected(id)));
+
+            _speechWiring = plan.Next;
+
+            // Released first, so a slot moving from ElevenLabs to Edge and another moving the other way do not
+            // hold two of each at once.
+            foreach (var released in plan.Dispose)
             {
-                // Through the interface, so this stays correct for a provider that needs no disposal.
-                (client as IDisposable)?.Dispose();
+                if (_clients.Remove(released, out var client))
+                {
+                    // Through the interface, so this stays correct for a provider that needs no disposal.
+                    (client as IDisposable)?.Dispose();
+                }
+
+                _voicesByProvider.Remove(released);
+                Casting.Forget(released);
+                ModelCatalogSource.Shared.ListSpeech(released, []);
             }
 
-            _voicesByProvider.Remove(released);
-            Casting.Forget(released);
-            ModelCatalogSource.Shared.ListSpeech(released, []);
-        }
-
-        foreach (var wanted in plan.Build)
-        {
-            if (BuildSpeechClient(wanted) is { } built)
+            foreach (var wanted in plan.Build)
             {
-                _clients[wanted] = built;
+                if (BuildSpeechClient(wanted) is { } built)
+                {
+                    _clients[wanted] = built;
+                }
             }
-        }
 
-        // One decorator per slot over the shared client, which is what lets the spend row answer "which slot
-        // is costing money" without a second connection to the provider — the thing
-        // ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on (Phase 57).
-        foreach (var moved in plan.Rewire)
-        {
-            _slots[moved] = _clients.GetValueOrDefault(VoiceGroups.ProviderFor(speech, moved)) is { } client
-                ? new MeteredTtsProvider(client, SpeechSpend, moved)
-                : null;
+            // One decorator per slot over the shared client, which is what lets the spend row answer "which slot
+            // is costing money" without a second connection to the provider — the thing
+            // ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on (Phase 57).
+            foreach (var moved in plan.Rewire)
+            {
+                _slots[moved] = _clients.GetValueOrDefault(VoiceGroups.ProviderFor(speech, moved)) is { } client
+                    ? new MeteredTtsProvider(client, SpeechSpend, moved)
+                    : null;
+            }
+
+            ReleaseCastClients(all: false);
         }
 
         // Fetched in the background.
         foreach (var asking in plan.RefetchVoices)
         {
-            if (_clients.GetValueOrDefault(asking) is { } client)
+            if (ClientFor(asking) is { } client)
             {
                 _ = LoadVoicesAsync(client);
 
@@ -5098,7 +5111,6 @@ public sealed class AppHost : IDisposable
         Voice.SpeakerFor = Speaker;
         Voice.PinnedFor = CastClient;
         Voice.CastVoiceFailed = (key, reason) => _castVoiceFailures[key] = reason;
-        ReleaseCastClients(all: false);
 
         // Everyone d47 can speak as, filled in from settings.
         var aboard = VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard);
@@ -6120,6 +6132,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Guards the callout speaker.</summary>
     private readonly SemaphoreSlim _speaking = new(1, 1);
 
+    /// <summary>Serialises every read and write of <c>_clients</c>, <c>_slots</c>, <c>_speechWiring</c> and <c>_voicesByProvider</c>. Held only for in-memory work.</summary>
+    private readonly Lock _speechGate = new();
+
     /// <summary>The voice provider in use.</summary>
     private readonly Dictionary<string, ITtsProvider> _clients = new(StringComparer.OrdinalIgnoreCase);
 
@@ -6130,7 +6145,22 @@ public sealed class AppHost : IDisposable
     private readonly Dictionary<VoiceGroup, ITtsProvider?> _slots = new();
 
     /// <summary>Which client speaks for a slot.</summary>
-    private ITtsProvider? Speaker(VoiceGroup group) => _slots.GetValueOrDefault(group);
+    private ITtsProvider? Speaker(VoiceGroup group)
+    {
+        lock (_speechGate)
+        {
+            return _slots.GetValueOrDefault(group);
+        }
+    }
+
+    /// <summary>The shared client for a provider, or null.</summary>
+    private ITtsProvider? ClientFor(string providerId)
+    {
+        lock (_speechGate)
+        {
+            return _clients.GetValueOrDefault(providerId);
+        }
+    }
 
     /// <summary>Local clients built for a story's cast, for a provider no slot speaks through.</summary>
     private readonly Dictionary<string, ITtsProvider> _castClients = new(StringComparer.OrdinalIgnoreCase);
@@ -6143,7 +6173,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private ITtsProvider? CastClient(string providerId)
     {
-        if (_clients.GetValueOrDefault(providerId) is { } shared)
+        if (ClientFor(providerId) is { } shared)
         {
             return new MeteredTtsProvider(shared, SpeechSpend);
         }
@@ -6196,7 +6226,7 @@ public sealed class AppHost : IDisposable
     /// <summary>The voices <paramref name="providerId"/> lists, for a story character's voice picker.</summary>
     internal async Task<VoiceCatalogue> CastVoicesAsync(string providerId, CancellationToken cancellationToken)
     {
-        if (_voicesByProvider.GetValueOrDefault(providerId) is { Count: > 0 } held)
+        if (VoicesOf(providerId) is { Count: > 0 } held)
         {
             return held;
         }
@@ -6258,7 +6288,7 @@ public sealed class AppHost : IDisposable
             }
         });
 
-    /// <summary>Disposes the cast's own clients: every one, or those a slot now has a client for.</summary>
+    /// <summary>Disposes the cast's own clients: every one, or those a slot now has a client for. The caller holds <c>_speechGate</c>.</summary>
     private void ReleaseCastClients(bool all)
     {
         lock (_castGate)
@@ -6324,8 +6354,13 @@ public sealed class AppHost : IDisposable
     private readonly Dictionary<string, VoiceCatalogue> _voicesByProvider = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>What one provider offers, or nothing if it has not answered yet.</summary>
-    private VoiceCatalogue VoicesOf(string providerId) =>
-        _voicesByProvider.GetValueOrDefault(providerId) ?? VoiceCatalogue.Silent;
+    private VoiceCatalogue VoicesOf(string providerId)
+    {
+        lock (_speechGate)
+        {
+            return _voicesByProvider.GetValueOrDefault(providerId) ?? VoiceCatalogue.Silent;
+        }
+    }
 
     /// <summary>What one slot's provider offers.</summary>
     private VoiceCatalogue VoicesFor(VoiceGroup group) =>
@@ -8662,14 +8697,18 @@ public sealed class AppHost : IDisposable
         Audio.Silence();
         Audio.Dispose();
         _audioSink.Dispose();
-        foreach (var client in _clients.Values)
+        lock (_speechGate)
         {
-            (client as IDisposable)?.Dispose();
+            foreach (var client in _clients.Values)
+            {
+                (client as IDisposable)?.Dispose();
+            }
+
+            _clients.Clear();
+            _slots.Clear();
+            ReleaseCastClients(all: true);
         }
 
-        _clients.Clear();
-        _slots.Clear();
-        ReleaseCastClients(all: true);
         _warming.Dispose();
         _rewordingProposals.Dispose();
 
