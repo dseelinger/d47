@@ -36,8 +36,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
     [
         "D47.Core.Actions.MacroStore",
         "D47.Core.Activities.ActivityLedger",
-        "D47.Core.Adventures.AdventureBook",
-        "D47.Core.Adventures.AdventureStore",
         "D47.Core.Audio.ChatterboxCatalog",
         "D47.Core.Audio.ChatterboxVoices",
         "D47.Core.Audio.CustomVoices",

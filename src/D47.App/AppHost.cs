@@ -1105,6 +1105,7 @@ public sealed class AppHost : IDisposable
         // The stories the Commander flies (Phase 47).
         var adventureStore = new D47.Core.Adventures.AdventureStore(
             Path.Combine(paths.Data, "adventures.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureStore>());
 
         adventureStore.Poll();
@@ -1401,7 +1402,7 @@ public sealed class AppHost : IDisposable
         // walk is bounded to the files since the earliest acceptance, so with nothing under way it reads
         // nothing, and a beat that fired while d47 was closed is in the standing before the first live event
         // arrives.
-        adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(journalDirectory, adventureBook.EarliestAcceptance()));
+        adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(files, journalDirectory, adventureBook.EarliestAcceptance()));
 
         // Primed synchronously before anything reads game state, so a journal already on disk when d47 starts
         // is answered correctly, backlog and all — and so the panel's first status is not a race against the

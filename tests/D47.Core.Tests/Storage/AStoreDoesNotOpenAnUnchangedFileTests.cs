@@ -67,7 +67,7 @@ public class AStoreDoesNotOpenAnUnchangedFileTests : IDisposable
 
     private static Func<bool> PollOf(string store, string path) => store switch
     {
-        "adventures" => new AdventureStore(path, NullLogger<AdventureStore>.Instance).Poll,
+        "adventures" => new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance).Poll,
         "goals" => new GoalStore(path, new DiskFileSystem(), NullLogger<GoalStore>.Instance).Poll,
         "switches" => new SwitchStore(path, NullLogger<SwitchStore>.Instance).Poll,
         "ship builds" => new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance).Poll,

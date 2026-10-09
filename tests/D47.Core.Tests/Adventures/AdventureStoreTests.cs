@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -23,7 +24,7 @@ public class AdventureStoreTests : IDisposable
     }
 
     private AdventureStore Store() =>
-        new(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        new(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
 
     [Fact]
     public void AnAdventureRoundTripsThroughTheFile()

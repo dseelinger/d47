@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Persona;
@@ -176,7 +177,7 @@ internal sealed class StoryFixtures : IDisposable
 
         Provider = provider;
         Book = new AdventureBook(
-            new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
         Stories = StoryStore.Open(Path.Combine(_folder, "story.json"), NullLogger<StoryStore>.Instance);
 

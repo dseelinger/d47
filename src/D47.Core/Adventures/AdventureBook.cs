@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Adventures;
@@ -735,16 +736,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// earliest acceptance on record, and the one before it — the session that was running when Begin
     /// was pressed. No file sorting after <paramref name="until"/>'s is considered.
     /// </summary>
-    public static IReadOnlyList<string> FilesToWalk(string directory, DateTimeOffset? earliestAcceptance, JournalMark? until = null)
+    public static IReadOnlyList<string> FilesToWalk(IFileSystem files, string directory, DateTimeOffset? earliestAcceptance, JournalMark? until = null)
     {
-        if (!Directory.Exists(directory))
-        {
-            return [];
-        }
-
         var last = until is { } mark ? System.IO.Path.GetFileName(mark.Path) : null;
 
-        var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var names = files.Enumerate(directory, JournalFolder.FilePattern)
             .Where(file => last is null || string.CompareOrdinal(System.IO.Path.GetFileName(file), last) <= 0)
             .OrderBy(System.IO.Path.GetFileName, StringComparer.Ordinal)
             .ToList();
@@ -756,13 +752,13 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         // Elite's file names carry the session start as Journal.2026-08-22T190000.01.log.
         var cutoff = $"Journal.{since.ToUniversalTime():yyyy-MM-dd'T'HHmmss}";
-        var first = files.FindIndex(file => string.CompareOrdinal(System.IO.Path.GetFileName(file), cutoff) >= 0);
+        var first = names.FindIndex(file => string.CompareOrdinal(System.IO.Path.GetFileName(file), cutoff) >= 0);
 
         return first switch
         {
-            < 0 => files.Count > 0 ? [files[^1]] : [],
-            0 => files,
-            _ => files.Skip(first - 1).ToList(),
+            < 0 => names.Count > 0 ? [names[^1]] : [],
+            0 => names,
+            _ => names.Skip(first - 1).ToList(),
         };
     }
 

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -7,25 +8,13 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary> What was said about a story, kept — and the wait between a beat firing and it being said.
 /// </summary>
-[Trait("Category", "Integration")]
-public class AdventureTellingTests : IDisposable
+public class AdventureTellingTests
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-adventure-telling", Guid.NewGuid().ToString("N"));
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
 
     private AdventureBook Wired(bool begun = true)
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(AdventuresFile, new MemoryFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write("F1", LanternRoute(begun ? Accepted : null));
         book.CatchUp([]);

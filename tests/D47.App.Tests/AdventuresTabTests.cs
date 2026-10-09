@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -79,7 +80,7 @@ public class AdventuresTabTests
         var paths = new AppPaths(TempFolders.Create("d47-adventures-tab-tests"));
         paths.EnsureCreated();
 
-        var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
 
         foreach (var adventure in adventures)

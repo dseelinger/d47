@@ -50,7 +50,7 @@ public class TheStoriesPageFiltersItsListTests
         var catalog = new StoryCatalog(cards, () => [.. cards.Select(card => StoryFixture.Secret with { Id = card.Id })]);
 
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
         var generator = new AdventureGenerator(

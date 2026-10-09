@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -26,7 +27,7 @@ public sealed class AnAdventureWrittenByHandStillPlaysTests : IDisposable
         var path = Path.Combine(_folder, "adventures.json");
         File.Copy(Path.Combine(RepositoryRoot(), "tests", "fixtures", "adventures", "hand-written.json"), path);
 
-        var store = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         Assert.True(store.Poll());
 
         return new AdventureBook(store, NullLogger<AdventureBook>.Instance);

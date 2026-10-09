@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -313,10 +314,10 @@ public sealed class ARefusedBeatIsReplacedTests
 
         try
         {
-            var store = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+            var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
             Assert.Null(store.Save("F1", Chapter() with { AcceptedAt = Now, RewrittenAt = RefusedAt, RewrittenFrom = 3 }));
 
-            var reread = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+            var reread = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
             reread.Poll();
 
             var back = Assert.Single(reread.For("F1"));

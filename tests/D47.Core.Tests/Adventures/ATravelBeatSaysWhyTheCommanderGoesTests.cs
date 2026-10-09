@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Storage;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -131,7 +132,7 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
                 [WholeRoute(Accepted).Take(2).Aggregate(AdventureFold.Start(back), AdventureFold.Apply)], _ => null, Accepted.AddHours(1)));
     }
 
-    private AdventureStore Store() => new(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+    private AdventureStore Store() => new(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
 
     private Adventure Reread()
     {

@@ -85,7 +85,7 @@ public class EveryTabDrawsOneHeaderTests
         panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => "Sol", CapabilityRegistry.Build([]), Plans: null, () => true));
 
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(root, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(root, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         var generator = new AdventureGenerator(

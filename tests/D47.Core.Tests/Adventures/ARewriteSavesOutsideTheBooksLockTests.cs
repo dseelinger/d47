@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -6,28 +7,13 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>#908: a rewrite's file write and change handlers do not hold the lock the tick takes.</summary>
-[Trait("Category", "Integration")]
-public sealed class ARewriteSavesOutsideTheBooksLockTests : IDisposable
+public sealed class ARewriteSavesOutsideTheBooksLockTests
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-adventure-rewrite", Guid.NewGuid().ToString("N"));
-
-    public ARewriteSavesOutsideTheBooksLockTests()
-    {
-        Directory.CreateDirectory(_folder);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
 
     private AdventureBook Book()
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(AdventuresFile, new MemoryFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write("F1", LanternRoute(Accepted));
         return book;

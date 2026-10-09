@@ -24,7 +24,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
     public AnAbandonedStoryTakesItsMessagesWithItTests()
     {
         Directory.CreateDirectory(_folder);
-        _adventures = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        _adventures = new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         _messages = new MessageStore(Path.Combine(_folder, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
     }
 

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -34,7 +35,7 @@ public sealed class TheAdventureWalkRunsOffTheTickTests : IDisposable
     /// <summary>A book whose story was just begun again, so a walk is owed.</summary>
     private AdventureBook Moved()
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write("F1", LanternRoute(Accepted.AddDays(-1)));
         book.CatchUp([]);
@@ -131,8 +132,8 @@ public sealed class TheAdventureWalkRunsOffTheTickTests : IDisposable
         // Accepted after both sessions started: without the mark, only the newest file is walked.
         var acceptance = new DateTimeOffset(2026, 8, 22, 21, 0, 0, TimeSpan.Zero);
 
-        Assert.Equal([newer], AdventureBook.FilesToWalk(_folder, acceptance));
-        Assert.Equal([_file], AdventureBook.FilesToWalk(_folder, acceptance, Tail()));
+        Assert.Equal([newer], AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, acceptance));
+        Assert.Equal([_file], AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, acceptance, Tail()));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -47,7 +48,7 @@ public class AdventureCorpusTests
     private static AdventureBook Book(Adventure adventure)
     {
         var folder = Path.Combine(Path.GetTempPath(), "d47-adventure-corpus", Guid.NewGuid().ToString("N"));
-        var store = new AdventureStore(Path.Combine(folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(Path.Combine(folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write(Commander, adventure);
         return book;
@@ -63,7 +64,7 @@ public class AdventureCorpusTests
 
         var book = Book(Fixture(Accepted));
 
-        book.CatchUp(AdventureBook.FilesToWalk(folder, Accepted));
+        book.CatchUp(AdventureBook.FilesToWalk(new DiskFileSystem(), folder, Accepted));
 
         var standing = book.Standing(Commander, "june-2026")!;
 
@@ -94,7 +95,7 @@ public class AdventureCorpusTests
         var after = new DateTimeOffset(2026, 6, 27, 0, 0, 0, TimeSpan.Zero);
         var book = Book(Fixture(after));
 
-        book.CatchUp(AdventureBook.FilesToWalk(folder, after));
+        book.CatchUp(AdventureBook.FilesToWalk(new DiskFileSystem(), folder, after));
 
         var standing = book.Standing(Commander, "june-2026")!;
 
@@ -111,9 +112,9 @@ public class AdventureCorpusTests
         }
 
         var all = Directory.EnumerateFiles(folder, JournalFolder.FilePattern).Count();
-        var walked = AdventureBook.FilesToWalk(folder, Accepted).Count;
+        var walked = AdventureBook.FilesToWalk(new DiskFileSystem(), folder, Accepted).Count;
 
         Assert.True(walked < all, $"{walked} of {all}");
-        Assert.True(AdventureBook.FilesToWalk(folder, null).Count == 0);
+        Assert.True(AdventureBook.FilesToWalk(new DiskFileSystem(), folder, null).Count == 0);
     }
 }

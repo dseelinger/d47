@@ -272,6 +272,7 @@ public class ATabsOwnSettingsShowOnItTests
             new D47.Core.Adventures.AdventureBook(
                 new D47.Core.Adventures.AdventureStore(
                     Path.Combine(TempFolders.Create("d47-tab-settings-strip-tests"), "adventures.json"),
+                    new D47.Core.Storage.DiskFileSystem(),
                     NullLogger<D47.Core.Adventures.AdventureStore>.Instance),
                 NullLogger<D47.Core.Adventures.AdventureBook>.Instance),
             new D47.Core.Adventures.AdventureGenerator(

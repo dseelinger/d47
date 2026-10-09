@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Callouts;
 using D47.Core.Journal;
@@ -11,28 +12,11 @@ namespace D47.Core.Tests.Adventures;
 /// A story that has waited three play sessions and seven days at its next beat makes the next narration a
 /// nudge toward it.
 /// </summary>
-[Trait("Category", "Integration")]
-public class AStalledStoryGetsANudgeTests : IDisposable
+public class AStalledStoryGetsANudgeTests
 {
+    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+
     private static readonly TimeSpan Gap = TimeSpan.FromMinutes(30);
-
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-adventure-nudge", Guid.NewGuid().ToString("N"));
-
-    public AStalledStoryGetsANudgeTests()
-    {
-        Directory.CreateDirectory(_folder);
-    }
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
 
     internal static JournalEvent LoadGame(DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"LoadGame", "FID":"F1", "Commander":"Tester", "GameMode":"Solo" }""");
@@ -52,7 +36,7 @@ public class AStalledStoryGetsANudgeTests : IDisposable
     /// <summary>Begun, the first beat reached a minute in, then a LoadGame on each of the given days.</summary>
     internal AdventureBook Stalled(params int[] loadDays)
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(AdventuresFile, new MemoryFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write("F1", LanternRoute(Accepted));
 

@@ -10,7 +10,7 @@ namespace D47.Core.Adventures;
 public sealed record AdventureProblem(string Where, string Reason);
 
 /// <summary>The adventures on disk — <c>data/adventures.json</c> (Phase 47).</summary>
-public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
+public sealed class AdventureStore(string path, IFileSystem files, ILogger<AdventureStore> logger)
 {
     /// <summary>The key used where the journals never said who was flying.</summary>
     public const string NoCommander = "";
@@ -33,6 +33,8 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
     private readonly FileStamp _stamp = new();
 
     public string Path => path;
+
+    public IFileSystem Files => files;
 
     public event Action? Changed;
 
@@ -73,7 +75,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
 
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -84,7 +86,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 if (_seen is null)
                 {
@@ -103,11 +105,14 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -233,7 +238,7 @@ public sealed class AdventureStore(string path, ILogger<AdventureStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, text);
+            files.WriteText(path, text);
 
             lock (_gate)
             {

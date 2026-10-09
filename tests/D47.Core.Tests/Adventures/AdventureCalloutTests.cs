@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Callouts;
 using D47.Core.Journal;
@@ -9,25 +10,13 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary>A beat, said when it is reached — after a settle, never mid-danger, never from the priming
 /// backlog.</summary>
-[Trait("Category", "Integration")]
-public class AdventureCalloutTests : IDisposable
+public class AdventureCalloutTests
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-adventure-callout", Guid.NewGuid().ToString("N"));
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
 
     private (AdventureBook Book, AdventureCallout Callout) Wired()
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(AdventuresFile, new MemoryFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write("F1", LanternRoute(Accepted));
         book.CatchUp([]);

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -155,14 +156,14 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     public void FollowsSurvivesTheFileAndAFileWithoutItLoadsUnchanged()
     {
         var path = Path.Combine(_folder, "adventures.json");
-        var store = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
 
         Assert.Null(store.Save("F1", First()));
         Assert.Null(store.Save("F1", Second()));
 
         Assert.DoesNotContain("\"follows\": null", File.ReadAllText(path));
 
-        var reread = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+        var reread = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         reread.Poll();
 
         Assert.Empty(reread.Problems);

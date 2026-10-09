@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -27,7 +28,7 @@ public class AnAdventureIsAskedForByVoiceTests
         var paths = new AppPaths(TempFolders.Create("d47-ask-by-voice-tests"));
         paths.EnsureCreated();
 
-        var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         var state = AdventuresTabTests.State();
         var model = canAsk ? new RecordingModel(hold ?? Task.CompletedTask, AdventuresTabTests.Spine, AdventuresTabTests.Beats) : null;

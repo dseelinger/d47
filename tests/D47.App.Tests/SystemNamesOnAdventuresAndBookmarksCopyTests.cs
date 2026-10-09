@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Controls.Documents;
@@ -91,7 +92,7 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         paths.EnsureCreated();
 
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         Assert.Null(book.Write("F1", Story("Shinrarta Dezhra")));

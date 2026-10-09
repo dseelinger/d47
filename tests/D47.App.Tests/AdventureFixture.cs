@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
@@ -16,7 +17,7 @@ internal static class AdventureFixture
         Directory.CreateDirectory(folder);
 
         var store = new AdventureStore(
-            Path.Combine(folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+            Path.Combine(folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
 
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
 

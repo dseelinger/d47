@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Messages;
@@ -169,7 +170,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
-        var reopened = new AdventureStore(fixtures.AdventuresPath, Microsoft.Extensions.Logging.Abstractions.NullLogger<AdventureStore>.Instance);
+        var reopened = new AdventureStore(fixtures.AdventuresPath, new DiskFileSystem(), Microsoft.Extensions.Logging.Abstractions.NullLogger<AdventureStore>.Instance);
         Assert.True(reopened.Poll());
         var chapter = reopened.Find("F1", key)!;
 

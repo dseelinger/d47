@@ -154,7 +154,7 @@ public class CapturesDrawTheAppsOwnLookTests
         var alarms = new AlarmStore(Path.Combine(paths.Data, "alarms.json"), NullLogger<AlarmStore>.Instance);
 
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         var generator = new AdventureGenerator(

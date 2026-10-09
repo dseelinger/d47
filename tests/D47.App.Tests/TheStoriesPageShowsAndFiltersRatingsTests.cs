@@ -48,7 +48,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
         var catalog = new StoryCatalog(cards, () => [.. cards.Select(card => StoryFixture.Secret with { Id = card.Id })]);
 
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
         stories.Save("F1", new Story { Id = "story-1", Title = "Story 1", PublicLayer = "-", State = StoryState.Finished, Rating = 4 });

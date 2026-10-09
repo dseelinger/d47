@@ -45,7 +45,7 @@ public sealed class AdventureWalk
     {
         try
         {
-            var files = AdventureBook.FilesToWalk(_directory, _book.EarliestAcceptance(), _until);
+            var files = AdventureBook.FilesToWalk(_book.Store.Files, _directory, _book.EarliestAcceptance(), _until);
 
             return new AdventureWalkResult(_generation, _book.Walk(files, _until), null);
         }

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -29,7 +30,7 @@ public class AdventureBookTests : IDisposable
 
     private AdventureBook Book()
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         return new AdventureBook(store, NullLogger<AdventureBook>.Instance);
     }
 
@@ -265,12 +266,12 @@ public class AdventureBookTests : IDisposable
             File.WriteAllText(Path.Combine(_folder, name), string.Empty);
         }
 
-        var files = AdventureBook.FilesToWalk(_folder, new DateTimeOffset(2026, 8, 22, 12, 0, 0, TimeSpan.Zero));
+        var files = AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, new DateTimeOffset(2026, 8, 22, 12, 0, 0, TimeSpan.Zero));
 
         Assert.Equal(
             ["Journal.2026-08-22T100000.01.log", "Journal.2026-08-23T100000.01.log"],
             files.Select(Path.GetFileName));
 
-        Assert.Empty(AdventureBook.FilesToWalk(_folder, null));
+        Assert.Empty(AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, null));
     }
 }

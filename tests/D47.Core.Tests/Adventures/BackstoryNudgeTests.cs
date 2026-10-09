@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Callouts;
 using D47.Core.Journal;
@@ -8,23 +9,13 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>Drives the Lantern Route to its midpoint (third beat) and its all-is-lost beat (fourth).</summary>
-public abstract class BackstoryNudgeTestBase : IDisposable
+public abstract class BackstoryNudgeTestBase
 {
-    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-backstory-nudge", Guid.NewGuid().ToString("N"));
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
 
     protected AdventureCallout Wired(bool backstory = true, bool switchedOn = true)
     {
-        var store = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(AdventuresFile, new MemoryFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         book.Write("F1", LanternRoute(Accepted));
         book.CatchUp([]);
@@ -60,7 +51,6 @@ public abstract class BackstoryNudgeTestBase : IDisposable
         announcement.Key.StartsWith(AdventureCallout.BackstoryPrefix, StringComparison.Ordinal);
 }
 
-[Trait("Category", "Integration")]
 public class AMidpointBeatNudgesTheBackstoryOnceTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -91,7 +81,6 @@ public class AMidpointBeatNudgesTheBackstoryOnceTests : BackstoryNudgeTestBase
     }
 }
 
-[Trait("Category", "Integration")]
 public class AnAllIsLostBeatNudgesTheBackstoryTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -110,7 +99,6 @@ public class AnAllIsLostBeatNudgesTheBackstoryTests : BackstoryNudgeTestBase
     }
 }
 
-[Trait("Category", "Integration")]
 public class NoNudgeWithoutABackstoryTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -120,7 +108,6 @@ public class NoNudgeWithoutABackstoryTests : BackstoryNudgeTestBase
     }
 }
 
-[Trait("Category", "Integration")]
 public class NoNudgeWhenTheBeatWasDroppedTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -135,7 +122,6 @@ public class NoNudgeWhenTheBeatWasDroppedTests : BackstoryNudgeTestBase
     }
 }
 
-[Trait("Category", "Integration")]
 public class NoNudgeWhenItsSwitchIsOffTests : BackstoryNudgeTestBase
 {
     [Fact]

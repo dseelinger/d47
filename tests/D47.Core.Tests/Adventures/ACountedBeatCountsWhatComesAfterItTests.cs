@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -216,8 +217,8 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
         var path = Path.Combine(_folder, "stored.json");
         var adventure = Story(new AdventureTrigger { Kind = TriggerKind.Sell, Count = 100, Commodity = "palladium", MarketId = 3228970752 });
 
-        new AdventureStore(path, NullLogger<AdventureStore>.Instance).Save("F1", adventure);
-        var store = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+        new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance).Save("F1", adventure);
+        var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         store.Poll();
 
         var trigger = Assert.Single(store.For("F1")).Beats[1].Trigger;
@@ -230,7 +231,7 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
 
     private AdventureBook Book(string name = "live")
     {
-        var store = new AdventureStore(Path.Combine(_folder, name + ".json"), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(Path.Combine(_folder, name + ".json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         return new AdventureBook(store, NullLogger<AdventureBook>.Instance);
     }
 }

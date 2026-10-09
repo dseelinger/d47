@@ -97,7 +97,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
-        var reopened = new AdventureStore(fixtures.AdventuresPath, NullLogger<AdventureStore>.Instance);
+        var reopened = new AdventureStore(fixtures.AdventuresPath, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         Assert.True(reopened.Poll());
 
         Assert.Equal(fixtures.Book.Store.Find("F1", key)!.Beats, reopened.Find("F1", key)!.Beats);
@@ -117,7 +117,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
             ]}]}]}
             """);
 
-        var store = new AdventureStore(path, NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         store.Poll();
 
         var beat = Assert.Single(Assert.Single(store.For("F1")).Beats);

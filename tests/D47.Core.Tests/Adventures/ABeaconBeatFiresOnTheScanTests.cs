@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Persona;
@@ -96,7 +97,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
     public void BeginningInTheBeaconSystemCountsTheSystemOnTheLivePath()
     {
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         book.Observe(Location(Beacon, Accepted.AddMinutes(-5)), "F1");
@@ -129,7 +130,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         File.WriteAllLines(path, journal.Select(e => e.Raw.GetRawText()));
 
         AdventureBook Book(string name) => new(
-            new AdventureStore(Path.Combine(_folder, name), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(_folder, name), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         var live = Book("live.json");
