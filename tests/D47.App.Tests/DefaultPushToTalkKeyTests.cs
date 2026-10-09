@@ -21,13 +21,12 @@ public class DefaultPushToTalkKeyTests
         Assert.Equal(gesture, key.Gesture);
     }
 
-    /// <summary>And it is the right-hand one.</summary>
+    /// <summary>And it is Scroll Lock.</summary>
     [Fact]
-    public void TheDefaultKeyIsTheRightShift()
+    public void TheDefaultKeyIsScrollLock()
     {
-        Assert.Equal("RightShift", D47Settings.Defaults.Listening.PushToTalkKey);
-        Assert.Equal(0xA1u, VirtualKeys.Of(Avalonia.Input.Key.RightShift));
-        Assert.NotEqual(VirtualKeys.Of(Avalonia.Input.Key.LeftShift), VirtualKeys.Of(Avalonia.Input.Key.RightShift));
+        Assert.Equal("Scroll", D47Settings.Defaults.Listening.PushToTalkKey);
+        Assert.Equal(0x91u, VirtualKeys.Of(Avalonia.Input.Key.Scroll));
     }
 
     /// <summary>

@@ -32,6 +32,7 @@ public static class VirtualKeys
         Key.Right => 0x27,
         Key.Down => 0x28,
         Key.CapsLock => 0x14,
+        Key.Scroll => 0x91,
 
         // The side-specific modifiers.
         Key.LeftShift => 0xA0,

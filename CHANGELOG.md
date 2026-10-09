@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Push-to-talk now starts out bound to Scroll Lock instead of Right Shift, a key Windows gives no shortcut and few games use. Scroll Lock can also be bound by hand. An install that already has a push-to-talk key saved keeps it.
+
 A new help page, Donate your journals, walks through sending your journal history from the Help improve page, with a screenshot of each step and the buttons to press marked.
 
 The consent text for an incident excerpt and a journal history on the Help improve page, and the Help improve, Donation privacy and Data retention help pages, named a replay tool that does not exist. They now say what a donation is used for: reproducing and diagnosing defects against play that really happened. A journal history may now also be read by the maintainer, including through AI coding sessions, to learn what the game writes for parts of the game d47 does not handle yet. Only event names, field names, counts and game symbols from it are published. A journal history is still kept until you ask for it back, and an incident excerpt is still deleted after 30 days.

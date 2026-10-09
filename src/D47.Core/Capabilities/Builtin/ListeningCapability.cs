@@ -242,13 +242,13 @@ public static class ListeningCapability
                 Label = "Push-to-talk",
                 Help =
                     "Held, D47 listens — and pressing it shuts D47 up, whether or not you go on to say "
-                    + "anything. Right shift out of the box, since that is what a Commander on a stick and "
-                    + "throttle has spare. Bind a key, a stick button, or one of each — one at a time: press "
+                    + "anything. Scroll Lock out of the box, a key Windows gives no shortcut and few games use. "
+                    + "Bind a key, a stick button, or one of each — one at a time: press "
                     + "the control and give it a key, then press it again and give it a button. Giving it the "
                     + "same kind twice replaces that one. With both set, either opens the microphone. Unbind "
                     + "clears both, and with neither one D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
-                DefaultDisplay = "RightShift",
+                DefaultDisplay = "Scroll",
                 DocsAnchor = "push-to-talk-key",
 
                 // One row, two properties (#217).

@@ -45,7 +45,7 @@ nav_order: 124
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Push-to-talk</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">RightShift</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Scroll</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Cancel</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+Alt+X</text>
@@ -246,7 +246,7 @@ you should not have to guess which.
 
 Three things, in this order:
 
-**1. Bind a key.** Already done — **right shift**, out of the box. Clear the row if you would
+**1. Bind a key.** Already done — **Scroll Lock**, out of the box. Clear the row if you would
 rather Directive 47 never opened the microphone at all.
 
 **2. Download a speech model.** Also already done, or under way. Directive 47 ships with **Tiny
@@ -311,9 +311,8 @@ words silently.
 
 #### Push-to-talk {#push-to-talk-key}
 
-What you hold to talk. **Right shift out of the box** — a Commander on a stick and throttle has
-a spare thumb and not much else, and it is the right-hand shift specifically, so the left one you
-may already be using in the game is not this.
+What you hold to talk. **Scroll Lock out of the box** — Windows assigns it no shortcut and few games use it, so it
+seldom collides with a key you already use.
 
 **One row, and it takes a key, a stick button, or both.** Press **BIND** and Directive 47
 listens for either at once: press a key and it takes the key, press a button on your stick and it
@@ -321,7 +320,7 @@ works out which one that was.
 
 **To have both, bind twice — one gesture each time.** Press **BIND** and give it a key; press it
 again and give it a button. The two are stored separately, so the second does not replace the first,
-and the row then shows `RIGHTSHIFT` and `BUTTON 11`. Either one opens the microphone, and the last one you
+and the row then shows `SCROLL` and `BUTTON 11`. Either one opens the microphone, and the last one you
 let go of closes it — so letting go of the key while your thumb is still on the button does not cut
 you off mid-sentence.
 
@@ -333,7 +332,7 @@ gestures is the most it will ever say.
 **A key on its own, like right shift, binds when you let it go.** Modifiers are the one kind of key
 that cannot be taken the instant they go down, because that is also how a combination starts. Hold
 one and press something else and you get the combination; press one and release it and you get the
-modifier. Right shift is the default here for exactly that reason — it is a key nothing else wants.
+modifier. Scroll Lock, the default, is not a modifier and binds as soon as you press it.
 
 **Unbind clears both.** That is what the word says, and nobody ends up with two by accident.
 
@@ -355,7 +354,7 @@ speech model does not transcribe as nothing. Interrupting has its own control no
 row directly below this one, which stops the voice and abandons the turn.
 
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
-push-to-talk, which is exactly why the collision check above matters. If right shift is bound to
+push-to-talk, which is exactly why the collision check above matters. If Scroll Lock is bound to
 something in Elite on your setup, the status report above says so by name.
 
 **The model cannot change this.** A model that could unbind your microphone key has taken away

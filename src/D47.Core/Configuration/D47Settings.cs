@@ -390,7 +390,7 @@ public sealed record ListeningSettings
     public string? InputDevice { get; init; }
 
     /// <summary>Hold to talk.</summary>
-    public string? PushToTalkKey { get; init; } = "RightShift";
+    public string? PushToTalkKey { get; init; } = "Scroll";
 
     /// <summary>A stick button to talk with, as <c>NonRoamableId#index</c> (Phase 53).</summary>
     public string? PushToTalkButton { get; init; }

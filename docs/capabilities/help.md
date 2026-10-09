@@ -41,7 +41,7 @@ nav_order: 100
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Any settings card</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Right Shift</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Scroll</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">HELP</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">opens this page at that row</text>
