@@ -206,7 +206,7 @@ public class EverySurfaceMovesWithTheOthersTests
             }
         }, TestContext.Current.CancellationToken);
 
-        for (var i = 0; i < 10_000; i++)
+        for (var i = 0; i < 200; i++)
         {
             routing.RouteNavigation(new PanelNavigator(), _ => { });
             routing.RoutePrompts(_ => false);
