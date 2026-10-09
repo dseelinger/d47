@@ -109,16 +109,8 @@ public partial class PanelView : UserControl
     /// </summary>
     private bool _drivingBar;
 
-    /// <summary>What is being searched for on this surface.</summary>
-    private string _query = string.Empty;
-
-    /// <summary>The hits in the current page, recomputed on every redraw.</summary>
-    private IReadOnlyList<D47.Core.Interface.SearchMatch> _matches = [];
-
-    /// <summary>Which hit is current, and where it starts in the page.</summary>
-    private int _hit = -1;
-
-    private int _hitOffset;
+    /// <summary>What is being searched for on this surface, and its hits in the page.</summary>
+    private readonly D47.Core.Interface.PageSearch _search = new();
 
     private readonly TranscriptScroll _scroll;
 
@@ -2359,7 +2351,7 @@ public partial class PanelView : UserControl
     /// </summary>
     public bool ClearSearch()
     {
-        if (_query.Length == 0)
+        if (!_search.Active)
         {
             return false;
         }
@@ -2429,7 +2421,7 @@ public partial class PanelView : UserControl
     /// <summary>The cross inside the box.</summary>
     private void OnSearchClearClick(object? sender, RoutedEventArgs e)
     {
-        if (_query.Length == 0)
+        if (!_search.Active)
         {
             return;
         }
@@ -2440,12 +2432,7 @@ public partial class PanelView : UserControl
 
     private void OnSearchChanged(object? sender, TextChangedEventArgs e)
     {
-        _query = SearchInput.Text ?? string.Empty;
-
-        // A new query starts at the top of the page rather than near the last hit: the offset that was being
-        // tracked belongs to the string that is no longer being searched for.
-        _hitOffset = 0;
-
+        _search.Ask(SearchInput.Text);
         ApplySearch();
     }
 
@@ -2466,13 +2453,10 @@ public partial class PanelView : UserControl
 
     private void StepSearch(int by)
     {
-        if (_matches.Count == 0)
+        if (!_search.Step(by))
         {
             return;
         }
-
-        _hit = D47.Core.Interface.TextSearch.Step(_matches.Count, _hit, by);
-        _hitOffset = _matches[_hit].Start;
 
         DrawTranscript();
 
@@ -2488,11 +2472,11 @@ public partial class PanelView : UserControl
     {
         // Here rather than in ShowSearchProgress, which is about the count and the steppers and is therefore
         // only true on a page that highlights.
-        SearchClear.IsVisible = _query.Length > 0;
+        SearchClear.IsVisible = _search.Active;
 
         if (Tab != PanelTab.Transcript)
         {
-            (PagePane.Child as IFilterablePage)?.Filter(_query);
+            (PagePane.Child as IFilterablePage)?.Filter(_search.Query);
             ShowSearchProgress(stepping: false);
             return;
         }
@@ -2512,7 +2496,7 @@ public partial class PanelView : UserControl
 
         if (stepping)
         {
-            SearchCount.Text = D47.Core.Interface.TextSearch.Describe(_matches.Count, _hit);
+            SearchCount.Text = _search.Describe();
         }
         SizeSearchRow();
     }
@@ -2520,7 +2504,7 @@ public partial class PanelView : UserControl
     /// <summary>Puts the current hit on screen.</summary>
     private void ScrollToHit()
     {
-        if (_hit < 0)
+        if (_search.Hit < 0)
         {
             return;
         }
@@ -2529,7 +2513,7 @@ public partial class PanelView : UserControl
         var (block, start) = Bubbles.IsVisible
             ? _bubbles
                 .Select(bubble => (bubble.Block, bubble.Start))
-                .LastOrDefault(bubble => bubble.Start <= _matches[_hit].Start)
+                .LastOrDefault(bubble => bubble.Start <= _search.Matches[_search.Hit].Start)
             : (Transcript, 0);
 
         if (block?.TextLayout is not { } layout)
@@ -2537,7 +2521,7 @@ public partial class PanelView : UserControl
             return;
         }
 
-        var where = layout.HitTestTextPosition(_matches[_hit].Start - start);
+        var where = layout.HitTestTextPosition(_search.Matches[_search.Hit].Start - start);
 
         if (Bubbles.IsVisible && block.TranslatePoint(new Point(0, where.Y), Bubbles) is { } placed)
         {
@@ -3373,11 +3357,11 @@ public partial class PanelView : UserControl
         DrawExplainButton();
 
         // Filtered, which is this reading's answer to the search box (#232).
-        var shown = (_query.Length == 0
+        var shown = (!_search.Active
             ? model.Journal
             : model.Journal.Where(entry =>
-                entry.Line.Contains(_query, StringComparison.OrdinalIgnoreCase)
-                || entry.Kind.Contains(_query, StringComparison.OrdinalIgnoreCase))).ToList();
+                entry.Line.Contains(_search.Query, StringComparison.OrdinalIgnoreCase)
+                || entry.Kind.Contains(_search.Query, StringComparison.OrdinalIgnoreCase))).ToList();
 
         // Read before the list is replaced: the ListBox carries its selection across by equality, which lands on
         // the first of two identical events and reports it as a new selection.
@@ -3423,7 +3407,7 @@ public partial class PanelView : UserControl
     /// </summary>
     private void ShowJournalCount(int shown, int held)
     {
-        var searching = _query.Length > 0;
+        var searching = _search.Active;
 
         SearchCount.IsVisible = searching;
         SearchNext.IsVisible = false;
@@ -3546,9 +3530,8 @@ public partial class PanelView : UserControl
             EmptyConversation.IsVisible = bubbled;
             Transcript.Inlines?.Clear();
             ClearBubbles();
-            _matches = [];
-            _hit = -1;
-            ShowSearchProgress(_query.Length > 0);
+            _search.Forget();
+            ShowSearchProgress(_search.Active);
             return;
         }
 
@@ -3564,16 +3547,7 @@ public partial class PanelView : UserControl
         // Matched against the page's text rather than against the controls, so the hits are the same set
         // whether the page has been drawn yet or not — and so the current one can be re-resolved from its
         // offset every time the log grows underneath it.
-        _matches = D47.Core.Interface.TextSearch.Find(
-            string.Concat(messages.SelectMany(turn => turn.Segments).Select(segment => segment.Text)),
-            _query);
-
-        _hit = D47.Core.Interface.TextSearch.Track(_matches, _hitOffset);
-
-        if (_hit >= 0)
-        {
-            _hitOffset = _matches[_hit].Start;
-        }
+        _search.Find(string.Concat(messages.SelectMany(turn => turn.Segments).Select(segment => segment.Text)));
 
         if (bubbled)
         {
@@ -3586,7 +3560,7 @@ public partial class PanelView : UserControl
             Fill(Transcript, messages[0], at: 0);
         }
 
-        ShowSearchProgress(_query.Length > 0);
+        ShowSearchProgress(_search.Active);
     }
 
     /// <summary>
@@ -3613,7 +3587,7 @@ public partial class PanelView : UserControl
         var current = _currentSystem?.Invoke();
 
         if (appended
-            && _query.Length == 0
+            && !_search.Active
             && shape.Length > 0
             && shape.Length == _bubbles.Count
             && shape.Length == _shape.Count
@@ -4112,11 +4086,11 @@ public partial class PanelView : UserControl
                         // you are looking at.
                         run.Bind(
                             Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                            this.GetResourceObservable(match == _hit
+                            this.GetResourceObservable(match == _search.Hit
                                 ? Theming.ThemeManager.AKey
                                 : Theming.ThemeManager.LineKey));
 
-                        if (match == _hit)
+                        if (match == _search.Hit)
                         {
                             run.Bind(
                                 Avalonia.Controls.Documents.TextElement.ForegroundProperty,
@@ -4319,10 +4293,10 @@ public partial class PanelView : UserControl
     {
         var cursor = 0;
 
-        for (var i = 0; i < _matches.Count; i++)
+        for (var i = 0; i < _search.Matches.Count; i++)
         {
-            var start = _matches[i].Start - at;
-            var end = _matches[i].End - at;
+            var start = _search.Matches[i].Start - at;
+            var end = _search.Matches[i].End - at;
 
             if (end <= cursor)
             {
