@@ -107,6 +107,8 @@ nav_order: 10
 
 ## The details
 
+For the steps, with screenshots, see [Donate your journals](donate-journals.html).
+
 This page explains **what the window is offering**. What happens to a donation afterwards — who
 holds it, on what legal basis, for how long, and how to have it erased — is the
 [donation privacy notice](donation-privacy.html), and it is a different question deliberately kept

@@ -50,7 +50,8 @@ which sits on the Log File, Journal and Raw journal readings and opens the same 
 replaces your Commander name and Frontier IDs with stand-ins, drops other players' messages, and
 then shows you the whole thing before anything leaves. One window, two shapes: a scrubbed excerpt
 of the few minutes around the moment something went wrong, or — with *Include journal history*
-on — your journal history at the scale you choose.
+on — your journal history at the scale you choose. [Donate your journals](donate-journals.html)
+walks through it step by step.
 
 **Where it goes is deliberately not a public issue any more.** A comment on a public repository is
 mirrored by third-party archives within the hour and mailed whole to everyone watching, so
