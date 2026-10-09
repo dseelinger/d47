@@ -42,6 +42,7 @@ dotnet test tests/D47.App.Tests --filter "Category=Gate"               # App gat
 
 During issue work, run area-filtered unit tests (each under a second), the integration tests the
 change affects, and the gate filters. An unfiltered `D47.App.Tests` run is part of the release gate.
+A unit test does not cross a process boundary; an integration test does.
 
 - SDK pinned by `global.json` to `10.0.400`, `rollForward: disable` — exact, because the suite
   now runs partly here and partly on the runner and the two must agree on a toolchain.
