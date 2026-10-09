@@ -69,10 +69,10 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
     /// Anything the codec path throws, so a file that will not decode is a skip line rather than a
     /// failed start. File-system failures are left to the caller, which already reports them.
     /// </summary>
-    private static bool IsCodecFailure(Exception ex) =>
+    internal static bool IsCodecFailure(Exception ex) =>
         ex is not (IOException or UnauthorizedAccessException or OutOfMemoryException or AudioDecodeException);
 
-    private static AudioDecodeException Undecodable(Exception ex) =>
+    internal static AudioDecodeException Undecodable(Exception ex) =>
         ex is DllNotFoundException || ex.HResult is UnsupportedByteStream or CodecNotFound or ClassNotRegistered
             ? new("Windows has no decoder for this file. On a Windows N edition, install the Media Feature Pack.", ex)
             : new($"Windows cannot decode it: {ex.Message}", ex);
@@ -111,7 +111,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
     }
 
     /// <summary>Averages every channel into one.</summary>
-    private sealed class Downmix(ISampleProvider source) : ISampleProvider
+    internal sealed class Downmix(ISampleProvider source) : ISampleProvider
     {
         private readonly int _channels = source.WaveFormat.Channels;
         private float[] _frames = [];

@@ -359,7 +359,7 @@ that cannot be undone.
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces}
-{#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice}
+{#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice} {#egress-customvoices}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.

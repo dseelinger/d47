@@ -96,6 +96,11 @@ public static class ChatterboxVoices
             return $"the id \"{OwnVoice.VoiceId}\" is the Commander's own recorded voice.";
         }
 
+        if (fields[0].StartsWith(CustomVoices.IdPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"the id prefix \"{CustomVoices.IdPrefix}\" is for the Commander's custom voices.";
+        }
+
         if (string.IsNullOrWhiteSpace(fields[5]))
         {
             return "the source is empty.";

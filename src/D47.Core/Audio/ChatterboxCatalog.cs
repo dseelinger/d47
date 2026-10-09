@@ -25,9 +25,9 @@ public static partial class ChatterboxCatalog
     private static readonly string[] Columns =
         ["id", "name", "gender", "locale", "pitch", "pace", "role", "source", "sha256", "bytes"];
 
-    private static readonly string[] Pitches = ["low", "mid", "high"];
+    internal static readonly string[] Pitches = ["low", "mid", "high"];
 
-    private static readonly string[] Paces = ["slow", "even", "brisk"];
+    internal static readonly string[] Paces = ["slow", "even", "brisk"];
 
     /// <summary>
     /// The shipped voices first, in their own order, with their catalogue rows' bands; then every other row of
@@ -217,6 +217,11 @@ public static partial class ChatterboxCatalog
         if (string.Equals(fields[0], OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase))
         {
             return $"the id \"{OwnVoice.VoiceId}\" is the Commander's own recorded voice.";
+        }
+
+        if (fields[0].StartsWith(CustomVoices.IdPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"the id prefix \"{CustomVoices.IdPrefix}\" is for the Commander's custom voices.";
         }
 
         if (!seen.Add(fields[0]))

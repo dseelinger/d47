@@ -93,6 +93,9 @@ public static class EgressDisclosure
     /// <summary>The Commander's own recorded voice, kept on this PC and sent nowhere.</summary>
     public const string OwnVoice = "ownvoice";
 
+    /// <summary>The Commander's custom Chatterbox voices, kept on this PC and sent nowhere.</summary>
+    public const string CustomVoices = "customvoices";
+
     /// <summary>Every disclosure d47 makes, in a fixed order.</summary>
     public static IReadOnlyList<string> Ids { get; } =
     [
@@ -117,6 +120,7 @@ public static class EgressDisclosure
         JournalFiles,
         ChosenPictures,
         OwnVoice,
+        CustomVoices,
         Donation,
     ];
 
@@ -144,6 +148,7 @@ public static class EgressDisclosure
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
         OwnVoice => "Your recorded voice",
+        CustomVoices => "Your custom voices",
         // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they see.
         Donation => "Shared excerpts and journals",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
@@ -380,6 +385,14 @@ public static class EgressDisclosure
             + "lines in your voice through Chatterbox. A message spoken in your voice keeps its clip in "
             + "data\\messages\\, encrypted the same way, and deleting the recording deletes those clips.",
             summary: "Kept on this PC, encrypted for your Windows user, and never sent anywhere."),
+
+        CustomVoices => EgressEntry.Silent(
+            CustomVoices,
+            NameOf(CustomVoices),
+            "A custom voice, recorded or imported, is kept in data\\voices\\custom on this PC, encrypted for your "
+            + "Windows user so no other account can read it. It is never sent anywhere and never included in a "
+            + "donation.",
+            summary: "Kept on this PC, encrypted for your Windows user, never sent anywhere and never donated."),
 
         ChosenPictures => EgressEntry.Silent(
             ChosenPictures,
