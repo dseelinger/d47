@@ -30,6 +30,7 @@ using D47.Core.Listening;
 using D47.Core.Lore;
 using D47.Core.Memory;
 using D47.Core.Persona;
+using D47.Core.Storage;
 using D47.Core.Ticking;
 using D47.Llm;
 using D47.Llm.OpenAi;
@@ -52,6 +53,7 @@ public sealed class AppHost : IDisposable
 
     private AppHost(
         AppPaths paths,
+        IFileSystem files,
         KeywordRouter router,
         TurnCancellation cancellation,
         ILoggerFactory loggerFactory,
@@ -97,6 +99,7 @@ public sealed class AppHost : IDisposable
         string? startupError)
     {
         Paths = paths;
+        Files = files;
         PanelRouting = new PanelRouting(() => Vr?.State == Core.Vr.VrState.Active, () => Ships.Fleet());
         Router = router;
         Cancellation = cancellation;
@@ -214,6 +217,9 @@ public sealed class AppHost : IDisposable
     public string? PendingUpdateVersion { get; set; }
 
     public AppPaths Paths { get; }
+
+    /// <summary>The file system on disk, for the stores to read and write through.</summary>
+    public IFileSystem Files { get; }
 
     /// <summary>The speech clients, voice lists and cast.</summary>
     public SpeechClients Speech { get; }
@@ -685,6 +691,7 @@ public sealed class AppHost : IDisposable
     {
         var paths = AppPaths.ForRunningBuild();
         paths.EnsureCreated();
+        var files = new DiskFileSystem();
 
         // **The version, not the stamp** (#92).
         var version = BuildInfo.Semantic;
@@ -2540,6 +2547,7 @@ public sealed class AppHost : IDisposable
 
         var host = self = new AppHost(
             paths,
+            files,
             router,
             cancellation,
             loggerFactory,
