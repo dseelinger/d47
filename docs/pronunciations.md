@@ -1,7 +1,7 @@
 ---
 title: Correcting a pronunciation
 group: General help
-nav_order: 7
+nav_order: 9
 ---
 
 # Correcting a pronunciation

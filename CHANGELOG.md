@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Help has two new pages under General help. First run walks through the setup steps and says where to get each provider's key and which choices it also covers. Choosing providers compares the conversation, voice and listening providers by cost, key, where they run and what leaves the machine.
+
 A switch press or spoken answer in the first seconds after start-up is no longer dropped while the panels are being set up.
 
 The first launch now opens a seven-step setup in place of the key window. It asks which AI to talk to, which voice to speak with and how D47 hears you, listing every provider with one line on it and whether it needs a key, is free, or runs on this PC. It then asks only for the keys those choices need, each key once even when it serves more than one choice, with a link to the provider's key page and a line saying what is sent where. The talk button step binds a stick button or a key, warns when Elite already uses it, and sets Hold, Toggle, Always on or Wake word. The last step lists the choices and every destination they send to. Nothing is saved until Start, and Skip setup closes it with every setting unchanged. A choice whose key was skipped is saved as the free choice for that part: no AI, Edge Neural voices, or listening on this PC. About › Set up keys opens the same setup with the current settings chosen.

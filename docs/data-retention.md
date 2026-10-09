@@ -1,7 +1,7 @@
 ---
 title: Data retention
 group: General help
-nav_order: 8
+nav_order: 10
 ---
 
 **Nothing is kept longer than the purpose it was taken for.** That is the whole policy; everything

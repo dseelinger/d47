@@ -1,7 +1,7 @@
 ---
 title: Journal events
 group: General help
-nav_order: 12
+nav_order: 14
 ---
 
 What each of the 45 commonest journal events is, and what d47 does with it.

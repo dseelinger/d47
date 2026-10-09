@@ -1,7 +1,7 @@
 ---
 title: Community
 group: General help
-nav_order: 2
+nav_order: 4
 ---
 
 # Community
