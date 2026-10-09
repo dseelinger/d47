@@ -605,10 +605,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public event Action<string>? Noted;
 
-    /// <summary>
-    /// <summary> Something the Commander said that no turn is going to write down (change-requests.md
-    /// 31).
-    /// </summary>
+    /// <summary>Something the Commander said that no turn is going to write down.</summary>
     public event Action<string>? HeardText;
 
     private void HeardAside(string text, string why)
@@ -3642,10 +3639,7 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>
-    /// Rebuilds everything downstream of the speech settings: the voice provider, the voice itself, the
-    /// cues, the bed, the output device and the retry policy.
-    /// </summary>
+    /// <summary>The model ids the endpoint reported when last asked.</summary>
     internal IReadOnlyList<string> EndpointModelIds => _endpointModels;
 
     /// <summary>
@@ -4120,7 +4114,7 @@ public sealed class AppHost : IDisposable
         ApplySpeechSettings();
     }
 
-    /// <summary>One provider's client, or null for a provider that does not speak.</summary>
+    /// <summary>The folder holding the local voice's model files.</summary>
     internal string KokoroFolder() => Path.Combine(Paths.Data, "models", "kokoro");
 
     /// <summary>Whether the local voice is here, and what it would cost if not.</summary>
@@ -4195,7 +4189,7 @@ public sealed class AppHost : IDisposable
         "Local voice installed. This is D47, speaking from your own machine. Nothing I say through "
         + "this provider leaves it.";
 
-    /// <summary>Fetches the local voice, off the UI thread, saying how far it has got.</summary>
+    /// <summary>The Frontier id of the Commander flying, or empty before it is known.</summary>
     private string Flying => GameState.Active?.Identity.FrontierId ?? string.Empty;
 
     /// <summary>What d47 has learned this transcriber gets wrong, for the settings row (#134).</summary>
@@ -4359,6 +4353,7 @@ public sealed class AppHost : IDisposable
         static string Noun(string singular, int count) => count == 1 ? singular : singular + "s";
     }
 
+    /// <summary>Fetches the local voice, off the UI thread, saying how far it has got.</summary>
     private async Task<string?> DownloadLocalVoice(
         IProgress<double> progress,
         CancellationToken cancellationToken)
@@ -4518,6 +4513,7 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    /// <summary>One provider's client, or null for a provider that does not speak.</summary>
     private ITtsProvider? BuildSpeechClient(string providerId) => providerId switch
     {
         SpeechCapability.EdgeId =>
@@ -5031,6 +5027,10 @@ public sealed class AppHost : IDisposable
         AudioReloaded?.Invoke();
     }
 
+    /// <summary>
+    /// Rebuilds everything downstream of the speech settings: the voice provider, the voice itself, the
+    /// cues, the bed, the output device and the retry policy.
+    /// </summary>
     private void ApplySpeechSettings()
     {
         var speech = ReconcileVoicesWithProvider();
@@ -5759,10 +5759,6 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>
-    /// Rebuilds everything downstream of the listening settings: the device, the key, the gate policy
-    /// and the pre-roll.
-    /// </summary>
     /// <summary>Closes the listening microphone for a take of the Commander's voice; true when it was open.</summary>
     private bool PauseListening()
     {
@@ -5819,6 +5815,10 @@ public sealed class AppHost : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Rebuilds everything downstream of the listening settings: the device, the key, the gate policy
+    /// and the pre-roll.
+    /// </summary>
     private void ApplyListeningSettings()
     {
         var listening = Settings.Current.Listening;
@@ -6649,7 +6649,6 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>Takes whatever the callouts queued this tick and says it.</summary>
     private readonly D47.Core.Callouts.SpokenReferent _referent = new();
 
     /// <summary>The fight around the Commander, as the chatter callout folds it.</summary>
@@ -7673,6 +7672,7 @@ public sealed class AppHost : IDisposable
     /// <summary>The picture name of the Commander flying, or null before their Frontier id is known.</summary>
     public string? CommanderPicture => Flying is { Length: > 0 } fid ? D47.Core.Interface.SpeakerPictures.Commander(fid) : null;
 
+    /// <summary>Takes whatever the callouts queued this tick and says it.</summary>
     private void SpeakPendingCallouts()
     {
         var pending = Callouts.Drain();
@@ -8182,7 +8182,7 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>The secret store is the real home for a key.</summary>
+    /// <summary>How long a key check waits for the provider.</summary>
     private static readonly TimeSpan KeyCheckBudget = TimeSpan.FromSeconds(20);
 
     /// <summary>
@@ -8362,6 +8362,7 @@ public sealed class AppHost : IDisposable
     private static string Reason(string? detail) =>
         detail is { Length: > 0 } said ? $" — {said}." : ".";
 
+    /// <summary>The secret store is the real home for a key.</summary>
     private (string Key, string Source)? ResolveKey(LlmProviderInfo provider)
     {
         if (provider.KeySecretName is not { } name)
@@ -8386,7 +8387,6 @@ public sealed class AppHost : IDisposable
             : (fromEnvironment, "the ANTHROPIC_API_KEY environment variable");
     }
 
-    /// <summary>Where Elite might be installed, for the shipped control presets.</summary>
     private static string? Join(string? situation, string? actions) =>
         (situation, actions) switch
         {
@@ -8396,7 +8396,6 @@ public sealed class AppHost : IDisposable
             var (both, and) => both + Environment.NewLine + Environment.NewLine + and,
         };
 
-    /// <summary>Waits for Status.json to report the galaxy map showing, or no longer showing.</summary>
     private static async Task<bool?> AwaitStatus(
         GameStatusReader status,
         Func<Core.Journal.GameStatus, bool> arrived,
@@ -8455,6 +8454,7 @@ public sealed class AppHost : IDisposable
         return status.Current;
     }
 
+    /// <summary>Waits for Status.json to report the galaxy map showing, or no longer showing.</summary>
     private static async Task<bool?> AwaitGalaxyMap(
         GameStatusReader status,
         bool open,
@@ -8522,7 +8522,6 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    /// <summary>Every phrase d47 already answers to.</summary>
     private static IReadOnlyList<string> JournalsOnDisk(string directory, Microsoft.Extensions.Logging.ILogger logger)
     {
         try
@@ -8556,6 +8555,7 @@ public sealed class AppHost : IDisposable
                     .Select(entry => entry.Phrase),
             ];
 
+    /// <summary>Where Elite might be installed, for the shipped control presets.</summary>
     private static IReadOnlyList<string> EliteInstallations()
     {
         var candidates = new List<string?>
