@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A leftover diagnostic in the panel wrote a file four seconds after the panel opened, to a folder that exists only on the developer's PC. On any other PC the write failed, which could close d47. It has been removed.
+
 The Page settings toggle is now a tile at the right end of the page's title line, reading `▸ SETTINGS 9` (the count of rows) and `▾ SETTINGS 9` on solid cyan while open. It replaces the bar at the bottom of Transcript › Log File, Stories, Asset Mgmt › Ships and Asset Mgmt › Carrier, in the window and in the headset panel. Open, the settings rows appear at the top of the page under the sub-tab row and push the page down; collapsed, nothing is left at the bottom. The open or closed state is still remembered per page, and a settings search match under "On other tabs" still opens it.
 
 The search row on the title line now reads in the order you use it: the search field with the match count and a clear ✕ inside its right end, then the previous and next match buttons, then a divider, then Copy and "Help improve D47…" at the right edge. The CLEAR button is gone; the ✕ in the field clears the search and puts the cursor back in the field. A page with only a tool and no search field keeps the tool at the right edge with no divider.
