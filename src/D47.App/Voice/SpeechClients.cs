@@ -59,7 +59,7 @@ public sealed class SpeechClients : IDisposable
         voice.CastVoiceFailed = (key, reason) => _castVoiceFailures[key] = reason;
     }
 
-    /// <summary>A provider's voice list arrived, or the ship moved to a provider whose list is held.</summary>
+    /// <summary>A provider's voice list arrived, or the ship moved to a provider whose list is held. Raised for every provider.</summary>
     public event Action<string>? VoicesReady;
 
     /// <summary>The ids the voice picker offers for one slot.</summary>
@@ -494,18 +494,7 @@ public sealed class SpeechClients : IDisposable
                 listed.Count,
                 cast.Feminine.Count);
 
-            // Pairing needs the list, so it starts once the list arrives rather than at startup.
-            if (string.Equals(
-                    provider.Id,
-                    VoiceGroups.ProviderFor(_settings.Current.Speech, VoiceGroup.Aboard),
-                    StringComparison.OrdinalIgnoreCase)
-                || string.Equals(
-                    provider.Id,
-                    VoiceGroups.ProviderFor(_settings.Current.Speech, VoiceGroup.Carrier),
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                VoicesReady?.Invoke(provider.Id);
-            }
+            VoicesReady?.Invoke(provider.Id);
         }
         catch (Exception ex)
         {
@@ -800,9 +789,25 @@ public sealed class SpeechClients : IDisposable
     {
         lock (_speechGate)
         {
-            return _voicesByProvider.GetValueOrDefault(providerId) ?? VoiceCatalogue.Silent;
+            return _heldForTest.GetValueOrDefault(providerId)
+                ?? _voicesByProvider.GetValueOrDefault(providerId)
+                ?? VoiceCatalogue.Silent;
         }
     }
+
+    private readonly Dictionary<string, VoiceCatalogue> _heldForTest = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Holds a voice list for a provider that no fetch or <see cref="Apply"/> replaces.</summary>
+    internal void HoldVoicesForTest(string providerId, VoiceCatalogue catalogue)
+    {
+        lock (_speechGate)
+        {
+            _heldForTest[providerId] = catalogue;
+        }
+    }
+
+    /// <summary>Raises <see cref="VoicesReady"/> as a list arriving does.</summary>
+    internal void AnnounceVoicesForTest(string providerId) => VoicesReady?.Invoke(providerId);
 
     /// <summary>What one slot's provider offers.</summary>
     public VoiceCatalogue VoicesFor(VoiceGroup group) =>
