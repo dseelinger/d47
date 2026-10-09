@@ -7,6 +7,7 @@ namespace D47.Core.Tests;
 /// The third gate: permissive licences only, no copyleft, verified across the transitive package graph
 /// rather than the direct references (CLAUDE.md, "No telemetry" / licences).
 /// </summary>
+[Trait("Category", "Gate")]
 public class PackageLicenceGateTests
 {
     /// <summary>Every project the solution builds, each with its resolved graph.</summary>

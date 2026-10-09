@@ -3,6 +3,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>No source under src/ carries a probe marked for removal, or writes into a Claude session's scratchpad.</summary>
+[Trait("Category", "Gate")]
 public class NoDebuggingProbeShipsGateTests
 {
     private static readonly string[] Markers =

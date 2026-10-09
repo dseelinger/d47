@@ -2,6 +2,7 @@ using Xunit;
 
 namespace D47.Core.Tests;
 
+[Trait("Category", "Gate")]
 public class TheChatterboxCatalogListsEverySpeakerOnceTests
 {
     private static readonly string[] Columns =

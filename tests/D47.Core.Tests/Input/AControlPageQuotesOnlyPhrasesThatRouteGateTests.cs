@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Input;
 /// The pages for the game's controls tell the Commander what to say. Every phrase they quote must
 /// reach something without the model.
 /// </summary>
+[Trait("Category", "Gate")]
 public partial class AControlPageQuotesOnlyPhrasesThatRouteGateTests
 {
     [Theory]

@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>The gate that binds <see cref="HandledEvents"/> to the code.</summary>
+[Trait("Category", "Gate")]
 public sealed class HandledEventsGateTests
 {
     private const string ListPath = "src/D47.Core/Journal/HandledEvents.cs";

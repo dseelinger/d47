@@ -6,6 +6,7 @@ namespace D47.Core.Tests;
 /// <summary>The gate that keeps the docs figures matching the design's zero-radius ruling (#519).</summary>
 public partial class FigureCornersAreSquareAndCapsAreFlatTests
 {
+    [Trait("Category", "Gate")]
     [Fact]
     public void NoInlineSvgInDocsHasARoundedCornerOrARoundCapOrJoin()
     {

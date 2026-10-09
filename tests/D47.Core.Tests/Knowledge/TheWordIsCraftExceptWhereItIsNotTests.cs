@@ -41,6 +41,7 @@ public class TheWordIsCraftExceptWhereItIsNotTests
     /// Pre-roll is audio, not engineering, and one of the two is a published URL fragment — changing it
     /// would break a link rather than a sentence, which is the quietest way for a sweep to do damage.
     /// </summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void ThePreRollAnchorIsUntouched()
     {

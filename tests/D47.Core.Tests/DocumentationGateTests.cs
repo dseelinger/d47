@@ -25,6 +25,7 @@ public partial class DocumentationGateTests
         }
     }
 
+    [Trait("Category", "Gate")]
     [Theory]
     [MemberData(nameof(CapabilityIds))]
     public void EveryRegisteredCapabilityHasADocumentationPage(string id)
@@ -36,6 +37,7 @@ public partial class DocumentationGateTests
             $"Capability '{id}' is registered but has no documentation page. Create {CapabilityDocsFolder}/{id}.md.");
     }
 
+    [Trait("Category", "Gate")]
     [Theory]
     [MemberData(nameof(CapabilityIds))]
     public void EveryPageQuotesRealCodeOrOutput(string id)
@@ -49,6 +51,7 @@ public partial class DocumentationGateTests
             $"The documentation page for '{id}' quotes no code block or real output.");
     }
 
+    [Trait("Category", "Gate")]
     [Theory]
     [MemberData(nameof(CapabilityIds))]
     public void EveryPageQuotesTheCurrentToolSchema(string id)
@@ -81,6 +84,7 @@ public partial class DocumentationGateTests
         }
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void GeneralHelpExistsAlongsideTheCapabilityPages()
     {
@@ -119,6 +123,7 @@ public partial class DocumentationGateTests
     /// The nav is grouped by <see cref="CapabilityDescriptor.Group"/>, and this is what stops that
  /// being a second hand-maintained list.
     /// </summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryCapabilityPageIsFiledUnderTheGroupItsCapabilityDeclares()
     {
@@ -151,6 +156,7 @@ public partial class DocumentationGateTests
         Assert.True(wrong.Count == 0, string.Join(Environment.NewLine, wrong));
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryPublishedPageIsReachableFromTheNav()
     {
@@ -165,6 +171,7 @@ public partial class DocumentationGateTests
             + "Give each one a title, a group and a nav_order in its front matter.");
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryPublishedPageIsNamedAndGroupedAndSitsSomewhereUnique()
     {
@@ -259,6 +266,7 @@ public partial class DocumentationGateTests
             $"Settings jumps naming a capability with no settings rows: {string.Join(", ", dead)}");
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryCapabilityPageBelongsToARegisteredCapability()
     {
@@ -279,6 +287,7 @@ public partial class DocumentationGateTests
     /// Every settings row's documentation anchor resolves to a heading on that row's own capability
     /// page.
     /// </summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void EverySettingsAnchorResolvesToAHeadingOnItsOwnPage()
     {
@@ -351,6 +360,7 @@ public partial class DocumentationGateTests
 
     [GeneratedRegex(@"(?m)^\#{1,6}[ \t]+(.+?)[ \t]*$")]
     private static partial Regex Heading();
+    [Trait("Category", "Gate")]
     [Theory]
     [MemberData(nameof(CapabilityIds))]
     public void EveryHowToStepHasALineToSayAndALineToExpect(string id)
@@ -379,6 +389,7 @@ public partial class DocumentationGateTests
     /// that no longer exists is worse than no documentation at all — they will conclude the feature is
     /// broken rather than that the page is.
     /// </summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryDocumentedDefaultGestureIsSomethingTheAppActuallyShips()
     {

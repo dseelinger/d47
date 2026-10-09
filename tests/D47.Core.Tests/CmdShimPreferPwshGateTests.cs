@@ -3,6 +3,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>Every <c>.cmd</c> shim under tools/ must probe for <c>pwsh</c> before it ever names <c>powershell</c>, so the same command runs on the same PowerShell version whichever shim invoked it.</summary>
+[Trait("Category", "Gate")]
 public class CmdShimPreferPwshGateTests
 {
     public static TheoryData<string> Shims =>

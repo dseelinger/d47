@@ -60,6 +60,7 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
         Assert.True(SystemNameTable.LongestWordCount >= 2);
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void NoticeNamesTheTableAndItsGenerator()
     {

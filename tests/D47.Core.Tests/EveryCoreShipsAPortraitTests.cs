@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>Every shipped core, and the Captain and Tower in both versions, has a portrait in <c>assets\portraits</c>.</summary>
+[Trait("Category", "Gate")]
 public sealed class EveryCoreShipsAPortraitTests
 {
     private const long MaxBytes = 200 * 1024;

@@ -44,6 +44,7 @@ public class LogRoutingTests
     }
 
     /// <summary>The assertion that was missing.</summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryPrefixMatchesCodeThatExists()
     {

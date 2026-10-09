@@ -113,12 +113,12 @@ counted, a capability must have a docs page — so a change can break one withou
 filter (each takes a few seconds):
 
 ```bash
-dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~Gate
+dotnet test tests/D47.Core.Tests --filter "Category=Gate"
 dotnet test tests/D47.App.Tests --filter "Category=Gate"
 ```
 
 Run the second one whenever the diff touches `src/D47.App/`, `docs/` or `installer/`. A new App test
-that reads repository files as text carries `[Trait("Category", "Gate")]`, on the
+that reads shipped files (src, docs, assets, tools) against a rule carries `[Trait("Category", "Gate")]`, on the
 method when its class also has rendering tests.
 
 ## The rules that bite an implementer

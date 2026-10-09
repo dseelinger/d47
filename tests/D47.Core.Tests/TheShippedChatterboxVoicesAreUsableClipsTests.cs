@@ -6,6 +6,7 @@ namespace D47.Core.Tests;
 
 public class TheShippedChatterboxVoicesAreUsableClipsTests
 {
+    [Trait("Category", "Gate")]
     [Fact]
     public void EveryShippedRowHasAClipOfTheRightShapeAndASource()
     {

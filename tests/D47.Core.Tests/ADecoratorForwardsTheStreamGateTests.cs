@@ -8,6 +8,7 @@ namespace D47.Core.Tests;
 /// A provider that wraps another must declare <c>StreamAsync</c>; the interface default would synthesise whole
 /// clips through it and silently stop speech from playing as it arrives.
 /// </summary>
+[Trait("Category", "Gate")]
 public sealed class ADecoratorForwardsTheStreamGateTests
 {
     [Fact]

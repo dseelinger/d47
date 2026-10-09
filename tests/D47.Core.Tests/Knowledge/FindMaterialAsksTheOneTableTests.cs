@@ -68,6 +68,7 @@ public class FindMaterialAsksTheOneTableTests
     }
 
     /// <summary>There is one table.</summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void TheGuideDerivesNoConditionsOfItsOwn()
     {

@@ -175,6 +175,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.Equal(TriggerKind.Beacon, kind);
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void TheStoryAndTheBeatShareOneRuleForABeaconScan()
     {
