@@ -3,6 +3,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -55,7 +56,7 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
 
     private static ExobiologyLedger Ledger(params string[] lines)
     {
-        var ledger = new ExobiologyLedger(null, NullLogger.Instance);
+        var ledger = new ExobiologyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
         ledger.FoldHistory([], TestContext.Current.CancellationToken);
         ledger.Apply([.. new[] { Commander }.Concat(lines).Select(Parse)]);
         return ledger;
@@ -170,20 +171,19 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         Assert.Empty(ledger.Unsold("F1").Held);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AResetClearsTheTotalAndSurvivesARestart()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Paths.Data, "unsold-data.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "unsold-data.json");
 
-        var ledger = new ExobiologyLedger(path, NullLogger.Instance);
+        var ledger = new ExobiologyLedger(path, files, NullLogger.Instance);
         ledger.Apply([Parse(Commander), Parse(Cactoida("2026-09-26T21:00:00Z"))]);
         ledger.Reset("F1", DateTimeOffset.Parse("2026-09-26T22:00:00Z", global::System.Globalization.CultureInfo.InvariantCulture));
 
         Assert.Empty(ledger.Unsold("F1").Held);
 
-        var restarted = new ExobiologyLedger(path, NullLogger.Instance);
+        var restarted = new ExobiologyLedger(path, files, NullLogger.Instance);
         restarted.Load();
         restarted.Apply([
             Parse(Commander),
@@ -196,30 +196,29 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
 
     // ------------------------------------------------------------- the rebuild
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheTotalIsRebuiltFromOlderJournalsWithoutCountingTheLiveOneTwice()
     {
-        using var install = new TempInstall();
+        var files = new MemoryFileSystem();
 
-        var older = Path.Combine(install.Root, "Journal.2026-09-25T190000.01.log");
-        var current = Path.Combine(install.Root, "Journal.2026-09-26T190000.01.log");
+        var older = Path.Combine(@"C:\d47-test", "Journal.2026-09-25T190000.01.log");
+        var current = Path.Combine(@"C:\d47-test", "Journal.2026-09-26T190000.01.log");
 
-        File.WriteAllLines(older, [
+        files.WriteText(older, string.Join("\n", [
             """{"timestamp":"2026-09-25T19:00:00Z","event":"LoadGame","FID":"F1","Commander":"Fixture"}""",
             BodyScan("2026-09-25T20:00:00Z", 41, "Detailed", false).ReplaceLineEndings(" "),
             Cactoida("2026-09-25T21:00:00Z").ReplaceLineEndings(" "),
-        ]);
+        ]) + "\n");
 
-        File.WriteAllLines(current, [
+        files.WriteText(current, string.Join("\n", [
             Commander,
             Frutexa("2026-09-26T21:00:00Z").ReplaceLineEndings(" "),
-        ]);
+        ]) + "\n");
 
-        var ledger = new ExobiologyLedger(null, NullLogger.Instance);
+        var ledger = new ExobiologyLedger(null, files, NullLogger.Instance);
 
         // The live tick reads the current journal before the walk has finished.
-        ledger.Apply([.. File.ReadAllLines(current).Select(Parse)]);
+        ledger.Apply([.. files.ReadText(current)!.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(Parse)]);
         ledger.FoldHistory([older, current], TestContext.Current.CancellationToken);
 
         var unsold = ledger.Unsold("F1");

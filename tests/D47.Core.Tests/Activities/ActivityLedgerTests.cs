@@ -1,31 +1,29 @@
 using D47.Core.Activities;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Activities;
 
-[Trait("Category", "Integration")]
-public sealed class WhenEachActivityWasLastDoneTests : IDisposable
+public sealed class WhenEachActivityWasLastDoneTests
 {
     private const string Fid = "F123";
 
-    private readonly string _dir = Path.Combine(Path.GetTempPath(), "d47-activities-" + Guid.NewGuid().ToString("N"));
+    private const string Dir = @"C:\d47-test";
 
-    public WhenEachActivityWasLastDoneTests() => Directory.CreateDirectory(_dir);
-
-    public void Dispose() => Directory.Delete(_dir, true);
+    private readonly MemoryFileSystem _files = new();
 
     private static string Line(string at, string kind, string extra = "") =>
         $"{{\"timestamp\":\"{at}\",\"event\":\"{kind}\"{extra}}}";
 
     private string Journal(params string[] lines)
     {
-        var file = Path.Combine(_dir, $"Journal.{Guid.NewGuid():N}.log");
-        File.WriteAllLines(file, lines);
+        var file = Path.Combine(Dir, $"Journal.{Guid.NewGuid():N}.log");
+        _files.WriteText(file, string.Join("\n", lines) + "\n");
         return file;
     }
 
-    private ActivityLedger Ledger() => new(Path.Combine(_dir, "activities.json"), NullLogger.Instance);
+    private ActivityLedger Ledger() => new(Path.Combine(Dir, "activities.json"), _files, NullLogger.Instance);
 
     private static readonly (string Key, string Kind, string Extra)[] Dating =
     [

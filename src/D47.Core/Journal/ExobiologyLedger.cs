@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -37,7 +38,7 @@ public sealed record UnsoldExobiology(IReadOnlyList<HeldAnalysis> Held)
 /// Organic data analysed and not yet sold, per Commander, across sessions (#526). An analysis is held until a
 /// <c>SellOrganicData</c> names its species, the Commander dies, or the Commander resets the total.
 /// </summary>
-public sealed class ExobiologyLedger(string? path, ILogger logger)
+public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogger logger)
 {
     private const string ResetProperty = "ExobiologyResetAt";
 
@@ -110,14 +111,14 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
     /// <summary>Reads the reset times from <c>path</c>.</summary>
     public void Load()
     {
-        if (path is null || !File.Exists(path))
+        if (path is null)
         {
             return;
         }
 
         try
         {
-            var resets = UnsoldDataFile.Read(path, ResetProperty);
+            var resets = UnsoldDataFile.Read(fileSystem, path, ResetProperty);
 
             lock (_gate)
             {
@@ -269,7 +270,7 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
 
         try
         {
-            UnsoldDataFile.Write(path, ResetProperty, resets);
+            UnsoldDataFile.Write(fileSystem, path, ResetProperty, resets);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -408,15 +409,20 @@ public sealed class ExobiologyLedger(string? path, ILogger logger)
 
     private IEnumerable<string> Lines(string file)
     {
-        FileStream stream;
+        Stream? stream;
 
         try
         {
-            stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             logger.LogWarning(ex, "Could not read {File} for organic data", file);
+            yield break;
+        }
+
+        if (stream is null)
+        {
             yield break;
         }
 

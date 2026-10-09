@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Mining;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -8,15 +9,13 @@ namespace D47.Core.Tests.Mining;
 
 /// <summary>The mining target is set by phrase or tool and kept per Commander between sessions (#607).</summary>
 [Trait("Category", "Integration")]
-public class AMiningTargetIsSetByVoiceTests : IDisposable
+public class AMiningTargetIsSetByVoiceTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-mining").FullName;
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly MemoryFileSystem _files = new();
 
     private MiningTargetStore Store()
     {
-        var store = new MiningTargetStore(Path.Combine(_root, "mining.json"), NullLogger<MiningTargetStore>.Instance);
+        var store = new MiningTargetStore(Path.Combine(@"C:\d47-test", "mining.json"), _files, NullLogger<MiningTargetStore>.Instance);
         store.Load();
         return store;
     }

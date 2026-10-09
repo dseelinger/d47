@@ -35,6 +35,7 @@ public sealed class MailLedger
     private static readonly IReadOnlyList<string> Ladders = [.. RankState.Careers, "Empire", "Federation"];
 
     private readonly string _path;
+    private readonly IFileSystem _files;
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
 
@@ -56,12 +57,14 @@ public sealed class MailLedger
     private string? _liveCommander;
     private bool _historyFolded;
 
-    public MailLedger(string path, ILogger logger)
+    public MailLedger(string path, IFileSystem fileSystem, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(fileSystem);
         ArgumentNullException.ThrowIfNull(logger);
 
         _path = path;
+        _files = fileSystem;
         _logger = logger;
         _readThrough = Load();
     }
@@ -151,7 +154,7 @@ public sealed class MailLedger
         }
 
         var read = since is { } oldest
-            ? files.Where(file => File.GetLastWriteTimeUtc(file) >= oldest.UtcDateTime).ToList()
+            ? files.Where(file => (_files.Stat(file)?.Written ?? DateTime.MinValue) >= oldest.UtcDateTime).ToList()
             : files.TakeLast(1).ToList();
 
         var found = new List<Found>();
@@ -330,7 +333,7 @@ public sealed class MailLedger
 
             try
             {
-                AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(watermarks.Snapshot, Json));
+                _files.WriteText(_path, JsonSerializer.Serialize(watermarks.Snapshot, Json));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -470,8 +473,8 @@ public sealed class MailLedger
     {
         try
         {
-            if (File.Exists(_path)
-                && JsonSerializer.Deserialize<Dictionary<string, DateTimeOffset>>(File.ReadAllText(_path)) is { } stored)
+            if (_files.ReadText(_path) is { } text
+                && JsonSerializer.Deserialize<Dictionary<string, DateTimeOffset>>(text) is { } stored)
             {
                 return new Dictionary<string, DateTimeOffset>(stored, StringComparer.Ordinal);
             }
@@ -486,15 +489,20 @@ public sealed class MailLedger
 
     private IEnumerable<string> Lines(string file)
     {
-        FileStream stream;
+        Stream? stream;
 
         try
         {
-            stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = _files.OpenRead(file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _logger.LogWarning(ex, "Could not read {File} for mail", file);
+            yield break;
+        }
+
+        if (stream is null)
+        {
             yield break;
         }
 

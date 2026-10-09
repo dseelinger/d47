@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Mining;
 
 /// <summary>Each Commander's mining target, by Frontier id, kept between sessions until cleared.</summary>
-public sealed class MiningTargetStore(string path, ILogger<MiningTargetStore> logger)
+public sealed class MiningTargetStore(string path, IFileSystem files, ILogger<MiningTargetStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -40,14 +40,14 @@ public sealed class MiningTargetStore(string path, ILogger<MiningTargetStore> lo
 
     public void Load()
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            if (files.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
             var loaded = new Dictionary<string, MiningTarget>(StringComparer.Ordinal);
 
             foreach (var commander in document?.Commanders ?? [])
@@ -124,7 +124,7 @@ public sealed class MiningTargetStore(string path, ILogger<MiningTargetStore> lo
 
             try
             {
-                AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+                files.WriteText(path, JsonSerializer.Serialize(document, Json));
             }
             catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
             {

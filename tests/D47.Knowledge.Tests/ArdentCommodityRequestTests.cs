@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -424,12 +425,10 @@ public class ArdentCommodityRequestTests
         Assert.Null(answer.Horizon);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARememberedMarketSpelledTheOtherWayIsStillRanked()
     {
-        using var install = new TempFile();
-        var book = new MarketBook(install.Path, NullLogger.Instance);
+        var book = new MarketBook(Path.Combine(@"C:\d47-test", "markets.json"), new MemoryFileSystem(), NullLogger.Instance);
 
         book.Remember(new MarketSnapshot
         {
@@ -610,12 +609,10 @@ public class ArdentCommodityRequestTests
         Assert.Empty(index.Urls);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AStationMissingFromAWholeReplyIsNotReAddedFromTheBook()
     {
-        using var install = new TempFile();
-        var book = new MarketBook(install.Path, NullLogger.Instance);
+        var book = new MarketBook(Path.Combine(@"C:\d47-test", "markets.json"), new MemoryFileSystem(), NullLogger.Instance);
 
         // The reported row, to the figure: eight hours old, inside the bound by minutes, well over the ten
         // thousand tonne floor, and nearer than anything the index returned.
@@ -655,12 +652,10 @@ public class ArdentCommodityRequestTests
         Assert.Equal(PriceSource.Seen, zeppelin.Market.Source);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACutReplyStillTakesTheBookButOnTheSearchsOwnTerms()
     {
-        using var install = new TempFile();
-        var book = new MarketBook(install.Path, NullLogger.Instance);
+        var book = new MarketBook(Path.Combine(@"C:\d47-test", "markets.json"), new MemoryFileSystem(), NullLogger.Instance);
 
         book.Remember(Remembered(
             "Pettit Relay",
@@ -694,12 +689,10 @@ public class ArdentCommodityRequestTests
         Assert.DoesNotContain(answer.Offers, offer => offer.Market.Station == "Nearly Empty Dock");
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AColonisationSweepStillFoldsInAStationItNeverFetched()
     {
-        using var install = new TempFile();
-        var book = new MarketBook(install.Path, NullLogger.Instance);
+        var book = new MarketBook(Path.Combine(@"C:\d47-test", "markets.json"), new MemoryFileSystem(), NullLogger.Instance);
 
         book.Remember(Remembered(
             "Fisher Terminal",

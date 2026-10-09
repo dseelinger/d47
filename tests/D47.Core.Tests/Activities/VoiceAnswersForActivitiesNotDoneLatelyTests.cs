@@ -31,7 +31,7 @@ public sealed class VoiceAnswersForActivitiesNotDoneLatelyTests : IDisposable
         Directory.CreateDirectory(_install.Paths.Data);
         File.WriteAllLines(file, lines);
 
-        var ledger = new ActivityLedger(Path.Combine(_install.Paths.Data, "activities.json"), NullLogger.Instance);
+        var ledger = new ActivityLedger(Path.Combine(_install.Paths.Data, "activities.json"), _install.Files, NullLogger.Instance);
 
         if (folded)
         {

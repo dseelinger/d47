@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -18,7 +19,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
 
     private string File_ => Path.Combine(_root, "loadouts.json");
 
-    private LoadoutStore Store() => new(File_, NullLogger<LoadoutStore>.Instance);
+    private LoadoutStore Store() => new(File_, new DiskFileSystem(), NullLogger<LoadoutStore>.Instance);
 
     /// <summary>How far a save says the file has been folded.</summary>
     private static readonly DateTimeOffset Folded = new(2026, 8, 20, 5, 0, 0, TimeSpan.Zero);

@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -25,7 +26,7 @@ public class AnUnmappedPlanetSaysWhatMappingPaysTests
 
     private static CartographyLedger Ledger(params string[] lines)
     {
-        var ledger = new CartographyLedger(null, NullLogger.Instance);
+        var ledger = new CartographyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
         ledger.Apply([.. lines.Select(Parse)]);
         return ledger;
     }

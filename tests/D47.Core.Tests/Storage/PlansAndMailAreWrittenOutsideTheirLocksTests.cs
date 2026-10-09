@@ -109,7 +109,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
     public async Task MailIsReadableWhileItsWatermarkIsBeingWritten()
     {
         var path = Path.Combine(_folder, MailLedger.FileName);
-        var ledger = new MailLedger(path, NullLogger.Instance);
+        var ledger = new MailLedger(path, new DiskFileSystem(), NullLogger.Instance);
         var line = """{"timestamp":"2026-10-07T09:00:00Z","event":"MissionCompleted","Name":"Mission_Delivery","MissionID":1,"Reward":1000}""";
         Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
         ledger.Fold([parsed!], live: true, "F1");

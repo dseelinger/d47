@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -278,12 +279,11 @@ public class OrganicSamplingTests
     // ----------------------------------------------------------- outliving a session
 
     /// <summary>The repository's first per-body state that has to survive d47 restarting.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARunSurvivesTheAppRestarting()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "sampling.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "sampling.json");
 
         var before = new GameStateStore();
         before.Apply(Parse(
@@ -291,10 +291,10 @@ public class OrganicSamplingTests
         before.Apply(Parse(Scan("Log")), At(0, 0));
         before.Apply(Parse(Scan("Sample")), At(0, 0.005));
 
-        new SamplingStore(path, NullLogger<SamplingStore>.Instance).Save(before.All);
+        new SamplingStore(path, files, NullLogger<SamplingStore>.Instance).Save(before.All);
 
         // A second run of the app: new store, new state, same file.
-        var store = new SamplingStore(path, NullLogger<SamplingStore>.Instance);
+        var store = new SamplingStore(path, files, NullLogger<SamplingStore>.Instance);
         store.Load();
 
         var after = new GameStateStore { Restore = store.For };
@@ -316,21 +316,20 @@ public class OrganicSamplingTests
     /// A second Commander's history must not merge into the first's — the same rule the whole journal
     /// spine is built on.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoCommandersHistoriesStayApart()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "sampling.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "sampling.json");
 
         var before = new GameStateStore();
         before.Apply(Parse("""{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"One"}"""));
         before.Apply(Parse(Scan("Log")), At(0, 0));
         before.Apply(Parse("""{"timestamp":"2026-08-16T09:30:00Z","event":"Commander","FID":"F2","Name":"Two"}"""));
 
-        new SamplingStore(path, NullLogger<SamplingStore>.Instance).Save(before.All);
+        new SamplingStore(path, files, NullLogger<SamplingStore>.Instance).Save(before.All);
 
-        var store = new SamplingStore(path, NullLogger<SamplingStore>.Instance);
+        var store = new SamplingStore(path, files, NullLogger<SamplingStore>.Instance);
         store.Load();
 
         Assert.NotNull(store.For("F1"));
@@ -338,28 +337,24 @@ public class OrganicSamplingTests
     }
 
     /// <summary>Derived state, so a bad file is discarded and rebuilt by playing rather than refused.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnreadableFileLeavesNoHistoryRatherThanThrowing()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "sampling.json");
-        File.WriteAllText(path, "{ not json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "sampling.json");
+        files.WriteText(path, "{ not json");
 
-        var store = new SamplingStore(path, NullLogger<SamplingStore>.Instance);
+        var store = new SamplingStore(path, files, NullLogger<SamplingStore>.Instance);
         store.Load();
 
         Assert.Null(store.For("F1"));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AMissingFileIsTheNormalFirstRun()
     {
-        using var install = new TempInstall();
-
         var store = new SamplingStore(
-            Path.Combine(install.Root, "sampling.json"), NullLogger<SamplingStore>.Instance);
+            Path.Combine(@"C:\d47-test", "sampling.json"), new MemoryFileSystem(), NullLogger<SamplingStore>.Instance);
 
         store.Load();
 

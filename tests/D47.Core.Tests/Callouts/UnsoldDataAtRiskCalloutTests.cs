@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -29,7 +30,7 @@ public class UnsoldDataAtRiskCalloutTests
     /// <summary>Earth-like worlds, scanned and mapped efficiently; each is worth millions.</summary>
     private static CartographyLedger Maps(int count, bool folded = true)
     {
-        var ledger = new CartographyLedger(null, NullLogger.Instance);
+        var ledger = new CartographyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
         var events = new List<JournalEvent>();
 
         for (var body = 1; body <= count; body++)
@@ -50,7 +51,7 @@ public class UnsoldDataAtRiskCalloutTests
 
     private static ExobiologyLedger Biology(bool folded = true)
     {
-        var ledger = new ExobiologyLedger(null, NullLogger.Instance);
+        var ledger = new ExobiologyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
 
         if (folded)
         {

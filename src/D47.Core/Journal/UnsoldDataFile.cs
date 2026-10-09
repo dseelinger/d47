@@ -15,12 +15,12 @@ internal static class UnsoldDataFile
     private static readonly Lock Gate = new();
 
     /// <summary>The reset times under <paramref name="property"/>; throws what reading or parsing the file throws.</summary>
-    public static Dictionary<string, DateTimeOffset> Read(string path, string property)
+    public static Dictionary<string, DateTimeOffset> Read(IFileSystem files, string path, string property)
     {
         lock (Gate)
         {
-            if (!File.Exists(path)
-                || JsonNode.Parse(File.ReadAllText(path)) is not JsonObject document
+            if (files.ReadText(path) is not { } text
+                || JsonNode.Parse(text) is not JsonObject document
                 || document[property] is not { } resets)
             {
                 return new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
@@ -33,7 +33,7 @@ internal static class UnsoldDataFile
     }
 
     /// <summary>Replaces <paramref name="property"/>; throws what writing the file throws.</summary>
-    public static void Write(string path, string property, IReadOnlyDictionary<string, DateTimeOffset> resets)
+    public static void Write(IFileSystem files, string path, string property, IReadOnlyDictionary<string, DateTimeOffset> resets)
     {
         lock (Gate)
         {
@@ -41,7 +41,7 @@ internal static class UnsoldDataFile
 
             try
             {
-                document = File.Exists(path) && JsonNode.Parse(File.ReadAllText(path)) is JsonObject existing
+                document = files.ReadText(path) is { } text && JsonNode.Parse(text) is JsonObject existing
                     ? existing
                     : [];
             }
@@ -52,7 +52,7 @@ internal static class UnsoldDataFile
 
             document[property] = JsonSerializer.SerializeToNode(resets);
 
-            AtomicFile.WriteAllText(path, document.ToJsonString(Json));
+            files.WriteText(path, document.ToJsonString(Json));
         }
     }
 }

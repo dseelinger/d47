@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>What every suit and weapon the Commander owns was last seen as, kept between sessions (#293).</summary>
-public sealed class KitStore(string path, ILogger<KitStore> logger)
+public sealed class KitStore(string path, IFileSystem files, ILogger<KitStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -59,14 +59,14 @@ public sealed class KitStore(string path, ILogger<KitStore> logger)
     /// <summary>Reads the file.</summary>
     public void Load()
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            if (files.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<string, OwnedKit>(StringComparer.Ordinal);
 
@@ -137,7 +137,7 @@ public sealed class KitStore(string path, ILogger<KitStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {

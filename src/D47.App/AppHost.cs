@@ -787,6 +787,7 @@ public sealed class AppHost : IDisposable
         // newest journal, so a run begun yesterday is otherwise simply gone (Phase 18).
         var sampling = new SamplingStore(
             Path.Combine(paths.Data, "sampling.json"),
+            files,
             loggerFactory.CreateLogger<SamplingStore>());
 
         sampling.Load();
@@ -808,6 +809,7 @@ public sealed class AppHost : IDisposable
         // What every ship the Commander has flown was last seen holding, kept between sessions (#128).
         var loadouts = new LoadoutStore(
             Path.Combine(paths.Data, "loadouts.json"),
+            files,
             loggerFactory.CreateLogger<LoadoutStore>());
 
         loadouts.Load();
@@ -815,6 +817,7 @@ public sealed class AppHost : IDisposable
         // Every suit and hand weapon the Commander owns, kept between sessions the same way (#293).
         var kit = new KitStore(
             Path.Combine(paths.Data, "kit.json"),
+            files,
             loggerFactory.CreateLogger<KitStore>());
 
         kit.Load();
@@ -852,6 +855,7 @@ public sealed class AppHost : IDisposable
 
         var miningTargets = new D47.Core.Mining.MiningTargetStore(
             Path.Combine(paths.Data, "mining.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Mining.MiningTargetStore>());
 
         miningTargets.Load();
@@ -870,6 +874,7 @@ public sealed class AppHost : IDisposable
         // Organic data analysed and not yet sold, rebuilt by the history walk below (#526).
         var exobiology = new D47.Core.Journal.ExobiologyLedger(
             Path.Combine(paths.Data, "unsold-data.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Journal.ExobiologyLedger>());
 
         exobiology.Load();
@@ -877,6 +882,7 @@ public sealed class AppHost : IDisposable
         // Bodies mapped with the DSS and not yet sold, rebuilt by the same walk (#527).
         var cartography = new D47.Core.Journal.CartographyLedger(
             Path.Combine(paths.Data, "unsold-data.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Journal.CartographyLedger>());
 
         cartography.Load();
@@ -887,6 +893,7 @@ public sealed class AppHost : IDisposable
 
         var activities = new D47.Core.Activities.ActivityLedger(
             Path.Combine(paths.Data, "activities.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Activities.ActivityLedger>());
 
         activities.Load();
@@ -894,6 +901,7 @@ public sealed class AppHost : IDisposable
         // Mail Elite also sends and d47 has not said, with its read watermark (#618).
         var mail = new D47.Core.Journal.MailLedger(
             Path.Combine(paths.Data, D47.Core.Journal.MailLedger.FileName),
+            files,
             loggerFactory.CreateLogger<D47.Core.Journal.MailLedger>());
 
         var history = new HistoryBackfill
@@ -973,6 +981,7 @@ public sealed class AppHost : IDisposable
         // A third file of the same kind, and the markets read out of it (Phase 36).
         var marketBook = new D47.Core.Knowledge.MarketBook(
             Path.Combine(paths.Data, "markets.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Knowledge.MarketBook>());
 
         marketBook.Load();
@@ -1016,6 +1025,7 @@ public sealed class AppHost : IDisposable
         var markets = new D47.Core.Knowledge.MarketReader(
             journalDirectory,
             marketBook,
+            files,
             loggerFactory.CreateLogger<D47.Core.Knowledge.MarketReader>());
 
         // After the status reader, because the spine stamps a surface position onto events that carry none —

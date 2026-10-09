@@ -14,6 +14,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -74,13 +75,14 @@ public class TheUnsoldTotalsResetOnlyForTheCommanderTests
         public required CapabilityRegistry Registry { get; init; }
     }
 
-    private static Fixture Carrying(string? folder = null)
+    private static Fixture Carrying(IFileSystem? files = null)
     {
         var gameState = new GameStateStore();
         gameState.Apply(Parse(Commander));
 
-        var exobiology = new ExobiologyLedger(folder is null ? null : Path.Combine(folder, "unsold.json"), NullLogger.Instance);
-        var cartography = new CartographyLedger(folder is null ? null : Path.Combine(folder, "unsold.json"), NullLogger.Instance);
+        var path = files is null ? null : Path.Combine(@"C:\d47-test", "unsold.json");
+        var exobiology = new ExobiologyLedger(path, files ?? new MemoryFileSystem(), NullLogger.Instance);
+        var cartography = new CartographyLedger(path, files ?? new MemoryFileSystem(), NullLogger.Instance);
         exobiology.Load();
         cartography.Load();
         exobiology.FoldHistory([], TestContext.Current.CancellationToken);
@@ -273,12 +275,12 @@ public class TheUnsoldTotalsResetOnlyForTheCommanderTests
     [AvaloniaFact]
     public void TheResetTimeIsReadBackAfterARestart()
     {
-        var folder = TempFolders.Create("d47-unsold-page");
-        var first = Carrying(folder);
+        var files = new MemoryFileSystem();
+        var first = Carrying(files);
         first.Exobiology.Reset("F1", ResetTime);
         first.Cartography.Reset("F1", ResetTime);
 
-        var restarted = Carrying(folder);
+        var restarted = Carrying(files);
         var (window, panel) = Open(restarted);
 
         Assert.Equal(2, Count(panel, UnsoldPage.ResetLine(ResetTime)));

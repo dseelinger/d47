@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -155,20 +156,19 @@ public class TheSamplerSaysWhenItIsFarEnoughAndWhatWasLostTests
         Assert.Empty(Said(new AbandonedSamplesCallout(), Tick(store, GameStatus.Unknown, bacterium)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnOlderSaveWithOnlyTheLastPositionStillLoads()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "sampling.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "sampling.json");
 
-        File.WriteAllText(path, """
+        files.WriteText(path, """
             {"commanders":[{"frontierId":"F1","bodies":[{"systemAddress":2175107336563,"bodyId":37,
               "genera":[{"genus":"Stratum","species":"Stratum Paleas","taken":2,"complete":false,
                 "seenAt":"2026-08-16T10:05:00+00:00","latitude":0,"longitude":0.005,"radius":6371000}]}]}]}
             """);
 
-        var store = new SamplingStore(path, NullLogger<SamplingStore>.Instance);
+        var store = new SamplingStore(path, files, NullLogger<SamplingStore>.Instance);
         store.Load();
 
         var genus = store.For("F1")!.On(2175107336563, 37)!.Genera["Stratum"];
@@ -177,20 +177,19 @@ public class TheSamplerSaysWhenItIsFarEnoughAndWhatWasLostTests
         Assert.Equal([At(0, 0.005)], genus.Specimens);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EverySpecimenPositionSurvivesTheAppRestarting()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "sampling.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "sampling.json");
 
         var before = Commander();
         before.Apply(Parse(Scan("Log")), At(0, 0));
         before.Apply(Parse(Scan("Sample", timestamp: "2026-08-16T10:05:00Z")), At(0, 0.005));
 
-        new SamplingStore(path, NullLogger<SamplingStore>.Instance).Save(before.All);
+        new SamplingStore(path, files, NullLogger<SamplingStore>.Instance).Save(before.All);
 
-        var store = new SamplingStore(path, NullLogger<SamplingStore>.Instance);
+        var store = new SamplingStore(path, files, NullLogger<SamplingStore>.Instance);
         store.Load();
 
         Assert.Equal([At(0, 0), At(0, 0.005)], store.For("F1")!.On(2175107336563, 37)!.Genera["Stratum"].Specimens);

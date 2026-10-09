@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Knowledge;
 
 /// <summary>The markets the Commander has stood in themselves (Phase 36).</summary>
-public sealed class MarketBook(string path, ILogger logger)
+public sealed class MarketBook(string path, IFileSystem files, ILogger logger)
 {
     /// <summary>How many markets are kept.</summary>
     public const int Capacity = 25;
@@ -73,14 +73,15 @@ public sealed class MarketBook(string path, ILogger logger)
 
     public void Load()
     {
-        if (!File.Exists(Path))
-        {
-            return;
-        }
-
         try
         {
-            using var stream = File.OpenRead(Path);
+            using var stream = files.OpenRead(Path);
+
+            if (stream is null)
+            {
+                return;
+            }
+
             using var document = JsonDocument.Parse(stream);
 
             var read = new List<MarketSnapshot>();
@@ -134,7 +135,7 @@ public sealed class MarketBook(string path, ILogger logger)
                 writer.WriteEndObject();
             }
 
-            AtomicFile.WriteAllText(Path, System.Text.Encoding.UTF8.GetString(buffer.ToArray()));
+            files.WriteText(Path, System.Text.Encoding.UTF8.GetString(buffer.ToArray()));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -243,7 +244,7 @@ public sealed class MarketBook(string path, ILogger logger)
 }
 
 /// <summary>Pull-based reads of <c>Market.json</c>, filed into a <see cref="MarketBook"/>.</summary>
-public sealed class MarketReader(string directory, MarketBook book, ILogger logger)
+public sealed class MarketReader(string directory, MarketBook book, IFileSystem files, ILogger logger)
 {
     public const string MarketFile = "Market.json";
 
@@ -254,25 +255,13 @@ public sealed class MarketReader(string directory, MarketBook book, ILogger logg
     {
         var path = System.IO.Path.Combine(directory, MarketFile);
 
-        DateTime written;
-
-        try
+        // Not an error when the file is missing.
+        if (files.Stat(path) is not { } state)
         {
-            var info = new FileInfo(path);
-
-            // Not an error.
-            if (!info.Exists)
-            {
-                return false;
-            }
-
-            written = info.LastWriteTimeUtc;
-        }
-        catch (IOException ex)
-        {
-            logger.LogDebug(ex, "Could not stat {File}", MarketFile);
             return false;
         }
+
+        var written = state.Written;
 
         if (written == _stamp || position is null)
         {
@@ -281,8 +270,12 @@ public sealed class MarketReader(string directory, MarketBook book, ILogger logg
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var stream = files.OpenRead(path);
+
+            if (stream is null)
+            {
+                return false;
+            }
 
             using var document = JsonDocument.Parse(stream);
 

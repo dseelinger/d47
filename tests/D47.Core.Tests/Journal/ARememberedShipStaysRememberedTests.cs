@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -17,7 +18,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
-    private LoadoutStore Store() => new(Path.Combine(_root, "loadouts.json"), NullLogger<LoadoutStore>.Instance);
+    private LoadoutStore Store() => new(Path.Combine(_root, "loadouts.json"), new DiskFileSystem(), NullLogger<LoadoutStore>.Instance);
 
     private static readonly DateTimeOffset Folded = new(2026, 9, 25, 3, 10, 19, TimeSpan.Zero);
 

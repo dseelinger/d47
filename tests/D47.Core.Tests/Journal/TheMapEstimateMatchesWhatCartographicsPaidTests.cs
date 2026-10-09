@@ -2,6 +2,7 @@ using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -74,7 +75,7 @@ public class TheMapEstimateMatchesWhatCartographicsPaidTests
     [Fact]
     public void TheLedgerHoldsTheThreeMappedBodiesUntilTheSaleNamesTheirSystems()
     {
-        var ledger = new CartographyLedger(null, NullLogger.Instance);
+        var ledger = new CartographyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
         ledger.FoldHistory([], TestContext.Current.CancellationToken);
 
         var beforeSale = Fixture.Value.TakeWhile(journalEvent => journalEvent.Kind != "MultiSellExplorationData").ToList();
@@ -99,7 +100,7 @@ public class TheMapEstimateMatchesWhatCartographicsPaidTests
     [Fact]
     public async Task TheDocumentedAnswersAreTheOnesThisSaleGives()
     {
-        var ledger = new CartographyLedger(null, NullLogger.Instance);
+        var ledger = new CartographyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
         ledger.FoldHistory([], TestContext.Current.CancellationToken);
 
         var gameState = new GameStateStore();

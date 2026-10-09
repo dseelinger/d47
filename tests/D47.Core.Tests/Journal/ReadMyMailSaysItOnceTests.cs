@@ -2,26 +2,22 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Input;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
 /// <summary>The read_mail tool answers from the mail ledger and marks what it said as read (#619).</summary>
-[Trait("Category", "Integration")]
-public sealed class ReadMyMailSaysItOnceTests : IDisposable
+public sealed class ReadMyMailSaysItOnceTests
 {
     private const string Doug = "F1";
 
-    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-readmail-" + Guid.NewGuid().ToString("N"));
-
-    public ReadMyMailSaysItOnceTests() => Directory.CreateDirectory(_folder);
-
-    public void Dispose() => Directory.Delete(_folder, recursive: true);
+    private readonly MemoryFileSystem _files = new();
 
     private MailLedger Ledger(bool folded = true)
     {
-        var ledger = new MailLedger(Path.Combine(_folder, MailLedger.FileName), NullLogger.Instance);
+        var ledger = new MailLedger(Path.Combine(@"C:\d47-test", MailLedger.FileName), _files, NullLogger.Instance);
 
         if (folded)
         {

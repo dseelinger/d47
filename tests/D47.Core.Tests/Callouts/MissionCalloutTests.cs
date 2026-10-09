@@ -4,6 +4,7 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -68,7 +69,7 @@ public class MissionCalloutTests
 
     private static MarketBook Market(string commodity, int stock)
     {
-        var book = new MarketBook(Path.Combine(Path.GetTempPath(), $"d47-market-{Guid.NewGuid():N}.json"), NullLogger.Instance);
+        var book = new MarketBook(Path.Combine(@"C:\d47-test", "market.json"), new MemoryFileSystem(), NullLogger.Instance);
 
         book.Remember(new MarketSnapshot
         {

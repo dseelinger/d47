@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>What has been sampled on each body, kept between sessions (Phase 18, "Exobiology sampling").</summary>
-public sealed class SamplingStore(string path, ILogger<SamplingStore> logger)
+public sealed class SamplingStore(string path, IFileSystem files, ILogger<SamplingStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -33,14 +33,14 @@ public sealed class SamplingStore(string path, ILogger<SamplingStore> logger)
     /// <summary>Reads the file.</summary>
     public void Load()
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            if (files.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<string, OrganicSampling>(StringComparer.Ordinal);
 
@@ -88,7 +88,7 @@ public sealed class SamplingStore(string path, ILogger<SamplingStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {

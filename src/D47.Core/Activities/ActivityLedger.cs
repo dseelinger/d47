@@ -12,7 +12,7 @@ public sealed record ActivityDate(string Key, DateTimeOffset At);
 /// When each catalogued activity was last done, per Commander, from the journals and then live (#585).
 /// Only the choice of which activities to suggest is written to disk.
 /// </summary>
-public sealed class ActivityLedger(string? path, ILogger logger)
+public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger logger)
 {
     private sealed class Book
     {
@@ -56,14 +56,19 @@ public sealed class ActivityLedger(string? path, ILogger logger)
     /// <summary>Reads the suggestion choices from <c>path</c>.</summary>
     public void Load()
     {
-        if (path is null || !File.Exists(path))
+        if (path is null)
         {
             return;
         }
 
         try
         {
-            var file = JsonSerializer.Deserialize<DataFile>(File.ReadAllText(path), Json);
+            if (fileSystem.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var file = JsonSerializer.Deserialize<DataFile>(text, Json);
 
             lock (_gate)
             {
@@ -217,14 +222,7 @@ public sealed class ActivityLedger(string? path, ILogger logger)
         {
             try
             {
-                var directory = Path.GetDirectoryName(path);
-
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                AtomicFile.WriteAllText(path, JsonSerializer.Serialize(file, Json));
+                fileSystem.WriteText(path, JsonSerializer.Serialize(file, Json));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -383,15 +381,20 @@ public sealed class ActivityLedger(string? path, ILogger logger)
 
     private IEnumerable<string> Lines(string file)
     {
-        FileStream stream;
+        Stream? stream;
 
         try
         {
-            stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             logger.LogWarning(ex, "Could not read {File} for activity dates", file);
+            yield break;
+        }
+
+        if (stream is null)
+        {
             yield break;
         }
 

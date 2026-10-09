@@ -1,5 +1,6 @@
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -9,9 +10,12 @@ namespace D47.Core.Tests.Knowledge;
 /// The markets the Commander has stood in themselves — read from the file the game writes,
 /// kept in one beside the executable, and preferred over a report when they are newer.
 /// </summary>
-[Trait("Category", "Integration")]
 public class MarketBookTests
 {
+    private const string Root = @"C:\d47-test";
+
+    private readonly MemoryFileSystem _files = new();
+
     private const string Board =
         """
         {
@@ -29,17 +33,16 @@ public class MarketBookTests
         }
         """;
 
-    private static MarketBook Book(TempInstall install) =>
-        new(Path.Combine(install.Paths.Data, "markets.json"), NullLogger.Instance);
+    private MarketBook Book() =>
+        new(Path.Combine(Root, "data", "markets.json"), _files, NullLogger.Instance);
 
     [Fact]
     public void TheCommandersOwnBoardIsReadWithItsPricesAndItsPosition()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(Path.Combine(install.Root, MarketReader.MarketFile), Board);
+        _files.WriteText(Path.Combine(Root, MarketReader.MarketFile), Board);
 
-        var book = Book(install);
-        var reader = new MarketReader(install.Root, book, NullLogger.Instance);
+        var book = Book();
+        var reader = new MarketReader(Root, book, _files, NullLogger.Instance);
 
         Assert.True(reader.Poll(new StarPosition(0, 0, 0)));
 
@@ -66,11 +69,10 @@ public class MarketBookTests
     public void AMarketReadWithoutAPositionIsNotFiled()
     {
         // Market.json names the station and the system and stops.
-        using var install = new TempInstall();
-        File.WriteAllText(Path.Combine(install.Root, MarketReader.MarketFile), Board);
+        _files.WriteText(Path.Combine(Root, MarketReader.MarketFile), Board);
 
-        var book = Book(install);
-        var reader = new MarketReader(install.Root, book, NullLogger.Instance);
+        var book = Book();
+        var reader = new MarketReader(Root, book, _files, NullLogger.Instance);
 
         Assert.False(reader.Poll(position: null));
         Assert.Empty(book.Markets);
@@ -79,14 +81,13 @@ public class MarketBookTests
     [Fact]
     public void TheBookSurvivesARestart()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(Path.Combine(install.Root, MarketReader.MarketFile), Board);
+        _files.WriteText(Path.Combine(Root, MarketReader.MarketFile), Board);
 
-        var written = Book(install);
+        var written = Book();
 
-        new MarketReader(install.Root, written, NullLogger.Instance).Poll(new StarPosition(1, 2, 3));
+        new MarketReader(Root, written, _files, NullLogger.Instance).Poll(new StarPosition(1, 2, 3));
 
-        var read = Book(install);
+        var read = Book();
         read.Load();
 
         var market = Assert.Single(read.Markets);
@@ -101,8 +102,7 @@ public class MarketBookTests
     [Fact]
     public void AnOlderReadingNeverReplacesANewerOne()
     {
-        using var install = new TempInstall();
-        var book = Book(install);
+        var book = Book();
 
         var newer = new MarketSnapshot
         {
@@ -124,8 +124,7 @@ public class MarketBookTests
     public void TheBookIsBoundedAndDropsTheOldestFirst()
     {
         // A market is a few hundred priced rows and the file is meant to stay readable.
-        using var install = new TempInstall();
-        var book = Book(install);
+        var book = Book();
 
         for (var index = 0; index <= MarketBook.Capacity; index++)
         {

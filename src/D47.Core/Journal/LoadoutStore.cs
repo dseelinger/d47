@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>What every ship the Commander has flown was last seen holding, kept between sessions (#128).</summary>
-public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
+public sealed class LoadoutStore(string path, IFileSystem files, ILogger<LoadoutStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -65,14 +65,14 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
     /// <summary>Reads the file.</summary>
     public void Load()
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            if (files.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
 
@@ -148,7 +148,7 @@ public sealed class LoadoutStore(string path, ILogger<LoadoutStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {

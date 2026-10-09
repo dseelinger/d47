@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -19,7 +20,7 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
 
     private string Store => Path.Combine(_folder, MailLedger.FileName);
 
-    private MailLedger Ledger() => new(Store, NullLogger.Instance);
+    private MailLedger Ledger() => new(Store, new DiskFileSystem(), NullLogger.Instance);
 
     private static string Commander(string fid, string at) =>
         $$"""{"timestamp":"2026-09-05T{{at}}Z","event":"Commander","FID":"{{fid}}","Name":"Cmdr"}""";

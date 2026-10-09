@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -114,12 +115,10 @@ public class SpanshTradePlanServiceTests
         Assert.Single(recorder.Requests);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ThePricesTheCommanderReadThemselvesWinWhenTheyAreNewer()
     {
-        using var install = new TempFile();
-        var book = new MarketBook(install.Path, NullLogger.Instance);
+        var book = new MarketBook(Path.Combine(@"C:\d47-test", "markets.json"), new MemoryFileSystem(), NullLogger.Instance);
 
         book.Remember(new MarketSnapshot
         {

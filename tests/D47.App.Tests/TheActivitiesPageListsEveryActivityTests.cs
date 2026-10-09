@@ -41,7 +41,8 @@ public sealed class TheActivitiesPageListsEveryActivityTests
     private static ActivityLedger Ledger()
     {
         var ledger = new ActivityLedger(
-            Path.Combine(TempFolders.Create("d47-activities-page"), "activities.json"),
+            Path.Combine(@"C:\d47-test", "activities.json"),
+            new MemoryFileSystem(),
             NullLogger.Instance);
 
         ledger.Apply(

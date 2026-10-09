@@ -1,20 +1,18 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Every suit and weapon the Commander owns is still answerable after a restart.</summary>
-[Trait("Category", "Integration")]
-public class KitOutlivesTheSessionTests : IDisposable
+public class KitOutlivesTheSessionTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-kit").FullName;
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private static readonly string File_ = Path.Combine(@"C:\d47-test", "kit.json");
 
-    private string File_ => Path.Combine(_root, "kit.json");
-
-    private KitStore Store() => new(File_, NullLogger<KitStore>.Instance);
+    private KitStore Store() => new(File_, _files, NullLogger<KitStore>.Instance);
 
     private static readonly DateTimeOffset Folded = new(2026, 8, 20, 5, 0, 0, TimeSpan.Zero);
 
@@ -163,7 +161,7 @@ public class KitOutlivesTheSessionTests : IDisposable
 
         Assert.Null(reading.For("F1"));
 
-        System.IO.File.WriteAllText(File_, "{ this is not json");
+        _files.WriteText(File_, "{ this is not json");
 
         var corrupt = Store();
         corrupt.Load();

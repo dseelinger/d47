@@ -2,6 +2,7 @@ using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -48,7 +49,7 @@ public class UnsoldMapsAreHeldUntilSoldTests
 
     private static CartographyLedger Ledger(params string[] lines)
     {
-        var ledger = new CartographyLedger(null, NullLogger.Instance);
+        var ledger = new CartographyLedger(null, new MemoryFileSystem(), NullLogger.Instance);
         ledger.FoldHistory([], TestContext.Current.CancellationToken);
         ledger.Apply([.. new[] { Commander }.Concat(lines).Select(Parse)]);
         return ledger;
@@ -162,23 +163,22 @@ public class UnsoldMapsAreHeldUntilSoldTests
         Assert.Empty(ledger.Unsold("F1").Held);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AResetClearsTheTotalSurvivesARestartAndLeavesTheExobiologyResetAlone()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Paths.Data, "unsold-data.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "unsold-data.json");
         var at = DateTimeOffset.Parse("2026-09-26T22:00:00Z", global::System.Globalization.CultureInfo.InvariantCulture);
 
-        new ExobiologyLedger(path, NullLogger.Instance).Reset("F1", at);
+        new ExobiologyLedger(path, files, NullLogger.Instance).Reset("F1", at);
 
-        var ledger = new CartographyLedger(path, NullLogger.Instance);
+        var ledger = new CartographyLedger(path, files, NullLogger.Instance);
         ledger.Apply([Parse(Commander), Parse(Scan("2026-09-26T20:00:00Z", 1, "AutoScan")), Parse(Mapped("2026-09-26T21:00:00Z", 1))]);
         ledger.Reset("F1", at);
 
         Assert.Empty(ledger.Unsold("F1").Held);
 
-        var restarted = new CartographyLedger(path, NullLogger.Instance);
+        var restarted = new CartographyLedger(path, files, NullLogger.Instance);
         restarted.Load();
         restarted.Apply([
             Parse(Commander),
@@ -190,38 +190,37 @@ public class UnsoldMapsAreHeldUntilSoldTests
 
         Assert.Equal($"{System} 2", Assert.Single(restarted.Unsold("F1").Held).BodyName);
 
-        var file = File.ReadAllText(path);
+        var file = files.ReadText(path);
         Assert.Contains("ExobiologyResetAt", file, StringComparison.Ordinal);
         Assert.Contains("CartographyResetAt", file, StringComparison.Ordinal);
     }
 
     // ------------------------------------------------------------- the rebuild
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheTotalIsRebuiltFromOlderJournalsWithoutCountingTheLiveOneTwice()
     {
-        using var install = new TempInstall();
+        var files = new MemoryFileSystem();
 
-        var older = Path.Combine(install.Root, "Journal.2026-09-25T190000.01.log");
-        var current = Path.Combine(install.Root, "Journal.2026-09-26T190000.01.log");
+        var older = Path.Combine(@"C:\d47-test", "Journal.2026-09-25T190000.01.log");
+        var current = Path.Combine(@"C:\d47-test", "Journal.2026-09-26T190000.01.log");
 
-        File.WriteAllLines(older, [
+        files.WriteText(older, string.Join("\n", [
             """{"timestamp":"2026-09-25T19:00:00Z","event":"LoadGame","FID":"F1","Commander":"Fixture"}""",
             Scan("2026-09-25T20:00:00Z", 1, "AutoScan").ReplaceLineEndings(" "),
             Mapped("2026-09-25T21:00:00Z", 1).ReplaceLineEndings(" "),
-        ]);
+        ]) + "\n");
 
-        File.WriteAllLines(current, [
+        files.WriteText(current, string.Join("\n", [
             Commander,
             Scan("2026-09-26T20:00:00Z", 2, "AutoScan").ReplaceLineEndings(" "),
             Mapped("2026-09-26T21:00:00Z", 2).ReplaceLineEndings(" "),
-        ]);
+        ]) + "\n");
 
-        var ledger = new CartographyLedger(null, NullLogger.Instance);
+        var ledger = new CartographyLedger(null, files, NullLogger.Instance);
 
         // The live tick reads the current journal before the walk has finished.
-        ledger.Apply([.. File.ReadAllLines(current).Select(Parse)]);
+        ledger.Apply([.. files.ReadText(current)!.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(Parse)]);
         ledger.FoldHistory([older, current], TestContext.Current.CancellationToken);
 
         var unsold = ledger.Unsold("F1");
