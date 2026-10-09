@@ -191,7 +191,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
 
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths);
+            view.Attach(settings, viewState);
             return view;
         });
 
@@ -202,7 +202,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
             settingsStrip: () =>
             {
                 var strip = new SettingsView();
-                strip.Attach(settings, viewState, paths, tabPlaceId: "fleet-ships");
+                strip.Attach(settings, viewState, tabPlaceId: "fleet-ships");
                 fleetStrip = strip;
                 return strip;
             });

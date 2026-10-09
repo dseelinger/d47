@@ -762,7 +762,6 @@ public partial class MainWindow : Window
         view.Attach(
             _host.Settings,
             _host.ViewState,
-            _host.Paths,
             _host.CoverageRecorder is { } recorder ? recorder.Report : null,
             _host.Macros,
             _host.Checklists,
@@ -772,9 +771,6 @@ public partial class MainWindow : Window
             // The choice is the go-ahead: it states its size in the list it was made from, and the row
             // shows what it is doing while it does it.
             (model, progress) => _host.Listener.InstallModelAsync(model, progress),
-
-            // About's way back in.
-            ShowKeySetupAsync,
 
             // The Commander's own notes, and the search that decides how one is filed.
             _host.LoreEditing,

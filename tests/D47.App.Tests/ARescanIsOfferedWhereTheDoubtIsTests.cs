@@ -32,7 +32,7 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
         var running = new TaskCompletionSource<string?>();
         IProgress<double>? reporting = null;
 
-        var (settings, viewState, paths) = TestSurface.Create(rescan: (progress, _) =>
+        var (settings, viewState, _) = TestSurface.Create(rescan: (progress, _) =>
         {
             reporting = progress;
             return running.Task;
@@ -42,7 +42,7 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
             .FollowSettings(settings);
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, tabPlaceId: "fleet-ships");
+        view.Attach(settings, viewState, tabPlaceId: "fleet-ships");
 
         var window = new Window { Content = view, Width = 600, Height = 600 };
         window.Show();

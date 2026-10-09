@@ -322,7 +322,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths);
+            view.Attach(settings, viewState);
             return view;
         });
 

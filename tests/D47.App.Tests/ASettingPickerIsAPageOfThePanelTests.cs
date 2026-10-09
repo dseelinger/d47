@@ -279,7 +279,7 @@ public class ASettingPickerIsAPageOfThePanelTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths);
+        view.Attach(settings, viewState);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.Classes.Add("headset");

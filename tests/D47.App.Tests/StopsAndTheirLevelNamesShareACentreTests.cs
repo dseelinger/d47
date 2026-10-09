@@ -19,14 +19,14 @@ public class StopsAndTheirLevelNamesShareACentreTests
     [InlineData(900)]
     public void EveryStopsCentreMatchesItsLevelNamesCentre(double width)
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var (settings, viewState, _) = TestSurface.Create();
 
         // The strip's own "Page settings" disclosure is closed by default; opened here so
         // the track underneath it is actually laid out (#218).
         viewState.Save(viewState.Load().With("log-levels", expanded: true));
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, tabPlaceId: "log-levels");
+        view.Attach(settings, viewState, tabPlaceId: "log-levels");
 
         var window = new Window { Content = view, Width = width, Height = 700 };
         window.Show();

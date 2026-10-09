@@ -20,7 +20,7 @@ public class SettingsNavTests
     private static (Window Window, PanelView Panel, SettingsView View) OpenLikeTheApp(
         double height = 880)
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var (settings, viewState, _) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
@@ -29,7 +29,7 @@ public class SettingsNavTests
 
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths);
+            view.Attach(settings, viewState);
             return view;
         });
 

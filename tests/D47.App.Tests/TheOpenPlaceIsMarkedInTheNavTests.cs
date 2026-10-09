@@ -22,7 +22,7 @@ public class TheOpenPlaceIsMarkedInTheNavTests
 
     private static (Window Window, SettingsView View) Open(int zoom)
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var (settings, viewState, _) = TestSurface.Create();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
         settings.Apply(InterfaceCapability.ZoomKey, zoom.ToString(), SettingsCaller.Panel);
@@ -35,7 +35,7 @@ public class TheOpenPlaceIsMarkedInTheNavTests
 
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths);
+            view.Attach(settings, viewState);
             return view;
         });
 

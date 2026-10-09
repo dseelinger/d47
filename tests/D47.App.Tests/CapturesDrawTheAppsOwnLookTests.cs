@@ -176,7 +176,7 @@ public class CapturesDrawTheAppsOwnLookTests
         var view = new SettingsView();
         panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths);
+            view.Attach(settings, viewState);
             return view;
         });
 

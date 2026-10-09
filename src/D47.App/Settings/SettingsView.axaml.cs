@@ -104,13 +104,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private ViewStateStore? _viewStateStore;
     private ViewState _viewState = new();
-    private AppPaths? _paths;
 
     /// <summary>Where a placement group's reset glyph reaches to clear the anchor it holds (#162).</summary>
     private D47.App.Headset.VrHost? _vrHost;
-
-    /// <summary>Reopens the guided key setup from About (Phase 16).</summary>
-    private Func<Task>? _setUpKeys;
 
     private SettingControls _controls = null!;
 
@@ -171,14 +167,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     public void Attach(
         SettingsService settings,
         ViewStateStore viewState,
-        AppPaths paths,
         Func<CoverageReport>? coverage = null,
         D47.Core.Actions.MacroStore? macros = null,
         D47.Core.Checklists.ChecklistService? checklists = null,
         IReadOnlyList<string>? reservedPhrases = null,
         SwitchEditing? switches = null,
         Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? downloadModel = null,
-        Func<Task>? setUpKeys = null,
         LoreEditing? lore = null,
         (D47.Core.Memory.MemoryBook Book, Func<DateTimeOffset> Now)? memories = null,
         D47.Core.Logbook.LogbookBook? logbook = null,
@@ -206,11 +200,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // At the end, by the same rule (#80).
         D47.Core.Input.BindingProfiles? bindingProfiles = null)
     {
-        _setUpKeys = setUpKeys;
         _settings = settings;
         _viewStateStore = viewState;
         _viewState = viewState.Load();
-        _paths = paths;
         _tabPlaceId = tabPlaceId;
         _vrHost = vrHost;
 

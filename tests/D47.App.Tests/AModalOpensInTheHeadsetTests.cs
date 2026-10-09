@@ -78,7 +78,6 @@ public class AModalOpensInTheHeadsetTests
         view.Attach(
             settings,
             viewState,
-            paths,
             () => new CoverageReport([]),
             new D47.Core.Actions.MacroStore(
                 Path.Combine(paths.Data, "macros.json"),

@@ -162,7 +162,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
             _ => null,
             settingsPage: () =>
             {
-                page.Attach(settings, viewState, paths);
+                page.Attach(settings, viewState);
                 return page;
             });
 
@@ -207,7 +207,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
 
         view.EnableSettings(() =>
         {
-            page.Attach(settings, viewState, paths);
+            page.Attach(settings, viewState);
             return page;
         });
 

@@ -76,7 +76,6 @@ internal sealed class SettingsHost
             view.Attach(
                 settings,
                 viewState,
-                paths,
                 coverage,
                 macros,
                 checklists,

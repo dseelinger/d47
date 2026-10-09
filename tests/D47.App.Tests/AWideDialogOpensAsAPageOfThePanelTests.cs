@@ -30,14 +30,14 @@ public class AWideDialogOpensAsAPageOfThePanelTests
 
     private static SettingsView Attached()
     {
-        var (settings, viewState, paths) = TestSurface.Create(coverage: () => "One line, never exercised.");
+        var (settings, viewState, _) = TestSurface.Create(coverage: () => "One line, never exercised.");
 
         settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, () => new CoverageReport([]));
+        view.Attach(settings, viewState, () => new CoverageReport([]));
 
         return view;
     }

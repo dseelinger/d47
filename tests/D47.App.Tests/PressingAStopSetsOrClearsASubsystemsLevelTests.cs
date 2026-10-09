@@ -16,11 +16,11 @@ public class PressingAStopSetsOrClearsASubsystemsLevelTests
 {
     private static (SettingsView View, Window Window, D47.Core.Configuration.SettingsService Settings) Open()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var (settings, viewState, _) = TestSurface.Create();
         viewState.Save(viewState.Load().With("log-levels", expanded: true));
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, tabPlaceId: "log-levels");
+        view.Attach(settings, viewState, tabPlaceId: "log-levels");
 
         var window = new Window { Content = view, Width = 900, Height = 900 };
         window.Show();

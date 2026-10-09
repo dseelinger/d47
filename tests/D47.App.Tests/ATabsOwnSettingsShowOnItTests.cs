@@ -32,7 +32,7 @@ public class ATabsOwnSettingsShowOnItTests
         SettingsService settings, ViewStateStore viewState, AppPaths paths, string tabPlaceId, double width = 400)
     {
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, tabPlaceId: tabPlaceId);
+        view.Attach(settings, viewState, tabPlaceId: tabPlaceId);
 
         var window = new Window { Content = view, Width = width, Height = 400 };
         window.Show();
@@ -225,7 +225,7 @@ public class ATabsOwnSettingsShowOnItTests
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var strip = new SettingsView();
-        strip.Attach(settings, viewState, paths, tabPlaceId: "log-levels");
+        strip.Attach(settings, viewState, tabPlaceId: "log-levels");
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableLog(() => strip);

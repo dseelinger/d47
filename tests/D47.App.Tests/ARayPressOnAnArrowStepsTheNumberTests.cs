@@ -31,7 +31,7 @@ public class ARayPressOnAnArrowStepsTheNumberTests
 
     private static (VrPanelSurface Surface, SettingsView View, SettingsService Settings) Headset()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var (settings, viewState, _) = TestSurface.Create();
 
         settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
@@ -42,7 +42,7 @@ public class ARayPressOnAnArrowStepsTheNumberTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, () => new D47.Core.Coverage.CoverageReport([]));
+        view.Attach(settings, viewState, () => new D47.Core.Coverage.CoverageReport([]));
 
         var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null, settingsPage: () => view);
 

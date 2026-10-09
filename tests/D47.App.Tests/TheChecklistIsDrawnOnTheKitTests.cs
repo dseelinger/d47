@@ -138,7 +138,7 @@ public class TheChecklistIsDrawnOnTheKitTests
 
         var (settings, viewState, paths) = TestSurface.Create();
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, tabPlaceId: "fleet-ships");
+        view.Attach(settings, viewState, tabPlaceId: "fleet-ships");
 
         var window = new Window { Content = view, Width = 924, Height = 400 };
         window.Show();

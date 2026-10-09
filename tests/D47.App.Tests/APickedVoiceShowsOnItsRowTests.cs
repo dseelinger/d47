@@ -209,7 +209,7 @@ public class APickedVoiceShowsOnItsRowTests
         viewState.Save(viewState.Load().With("fleet-carrier", expanded: true));
 
         var view = new SettingsView();
-        view.Attach(settings, viewState, paths, tabPlaceId: "fleet-carrier");
+        view.Attach(settings, viewState, tabPlaceId: "fleet-carrier");
 
         var border = new Border { Child = view };
         var window = new Window { Content = border, Width = 900, Height = 700 };

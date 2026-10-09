@@ -310,7 +310,7 @@ public class SettingsIsATabTests
         var window = new MainWindow(host: null) { PushToTalkGesture = () => "F9" };
         window.Panel.EnableSettings(() =>
         {
-            view.Attach(settings, viewState, paths);
+            view.Attach(settings, viewState);
             return view;
         });
 
