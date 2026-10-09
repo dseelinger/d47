@@ -194,7 +194,7 @@ public partial class MainWindow : Window
                     () => host.GameState.Active,
                     () => host.GameState.Active?.Identity.FrontierId,
                     () => DateTimeOffset.Now,
-                    host.SayAside,
+                    host.Announcer.SayAside,
                     () => host.Turns.Provider is not null,
                     () => host.Settings.Current.Knowledge.GalaxySearch,
                     () => host.Galaxy is { } galaxy && host.Settings.Current.Knowledge.GalaxySearch
@@ -522,7 +522,7 @@ public partial class MainWindow : Window
             () => _model.Append($"\n{text}\n"));
 
         // Every spoken line joins the conversation, attributed to whoever said it.
-        _host.CalloutSaid += (text, speaker, sourceKey, picture) => Avalonia.Threading.Dispatcher.UIThread.Post(
+        _host.Announcer.CalloutSaid += (text, speaker, sourceKey, picture) => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey, picture: picture));
 
         // And what happened to the conversation rather than in it - the core changing under it.
@@ -1164,7 +1164,7 @@ public partial class MainWindow : Window
             // spoken because the Commander is in the headset and cannot see this transcript.
             if (outcome is VrResizeOutcome.NoControllers or VrResizeOutcome.NoHeadset)
             {
-                _host.SayAside(VrResize.Describe(outcome));
+                _host.Announcer.SayAside(VrResize.Describe(outcome));
             }
         });
     }

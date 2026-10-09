@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A line still waiting to be spoken when D47 closed could throw an error on the way out. It is now dropped quietly.
+
 A core picked on the panel while a ship switch was landing is no longer announced as the ship's core, or kept silent.
 
 A direction taken for one core now stays in the prompt after renaming the ship AI, switching core, or a story putting the stock core aboard.

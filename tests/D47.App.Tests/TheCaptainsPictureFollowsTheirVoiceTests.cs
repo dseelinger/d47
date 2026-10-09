@@ -1,3 +1,4 @@
+using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using Xunit;
@@ -25,7 +26,7 @@ public sealed class TheCaptainsPictureFollowsTheirVoiceTests
         var cast = Cast();
         cast.Assign(role, voice);
 
-        return AppHost.ConversationPicture(
+        return Announcer.ConversationPicture(
             new Announcement("carrier.jump", "Jump in fifteen minutes.") { Voice = role },
             "warden",
             spoken => cast.GenderOf(cast.For(spoken).VoiceId),

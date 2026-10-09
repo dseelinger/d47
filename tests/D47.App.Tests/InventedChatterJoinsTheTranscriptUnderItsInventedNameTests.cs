@@ -1,5 +1,6 @@
 using D47.App;
 using D47.App.Panel;
+using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Conversation;
@@ -31,7 +32,7 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
         var hail = Line(NpcChatterKind.Hail, 3);
 
         Assert.True(hail.Invented!.Answerable);
-        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(hail, "COVAS"));
+        Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(hail, "COVAS"));
     }
 
     [Fact]
@@ -40,7 +41,7 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
         var controller = Line(NpcChatterKind.Controller, 3);
 
         Assert.False(controller.Invented!.Answerable);
-        Assert.Equal("Courier Vance (invented)", AppHost.ConversationSpeaker(controller, "COVAS"));
+        Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(controller, "COVAS"));
     }
 
     [Fact]

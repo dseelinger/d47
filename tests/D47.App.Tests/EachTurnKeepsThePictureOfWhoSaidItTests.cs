@@ -2,6 +2,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Panel;
+using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Conversation;
@@ -56,7 +57,7 @@ public sealed class EachTurnKeepsThePictureOfWhoSaidItTests
         var model = Model();
         var crew = new ShipCrew { Members = [new CrewMember("Ava Ross", 4521)] };
 
-        var presenter = new TurnPresenter(model, model.ShipPicture, addressed => AppHost.CrewPicture(addressed.Name, crew));
+        var presenter = new TurnPresenter(model, model.ShipPicture, addressed => Announcer.CrewPicture(addressed.Name, crew));
         presenter.On(new TurnEvent.Addressed(VoiceRole.Crew, "Ava Ross", 1));
         presenter.On(new TurnEvent.TextDelta("On it, Commander."));
 
@@ -86,7 +87,7 @@ public sealed class EachTurnKeepsThePictureOfWhoSaidItTests
         var crew = new ShipCrew { Members = [new CrewMember("Ava Ross", 4521)] };
         var callout = new Announcement("some.key", "Line.") { Voice = role, Speaker = speaker };
 
-        Assert.Equal(expected, AppHost.ConversationPicture(callout, "warden", _ => VoiceGender.Unlabelled, crew));
+        Assert.Equal(expected, Announcer.ConversationPicture(callout, "warden", _ => VoiceGender.Unlabelled, crew));
     }
 
     [Fact]
@@ -94,7 +95,7 @@ public sealed class EachTurnKeepsThePictureOfWhoSaidItTests
     {
         var line = new Announcement("story.line", "Line.") { Voice = VoiceRole.Comms, Speaker = "Juno", Picture = "the-test-story.juno" };
 
-        Assert.Equal("the-test-story.juno", AppHost.ConversationPicture(line, "warden", _ => VoiceGender.Unlabelled, null));
+        Assert.Equal("the-test-story.juno", Announcer.ConversationPicture(line, "warden", _ => VoiceGender.Unlabelled, null));
     }
 
     [AvaloniaFact]

@@ -150,6 +150,19 @@ public sealed class AppHost : IDisposable
         Version = version;
         StartupError = startupError;
 
+        Announcer = new Announcer(
+            voice,
+            audio,
+            () => Cues,
+            turns,
+            personas,
+            gameState,
+            () => Route,
+            loggerFactory,
+            CastFor,
+            RoleGender,
+            line => Said?.Invoke(line));
+
         Listener = new Listener(
             settings,
             secrets,
@@ -350,6 +363,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
+
+    /// <summary>What d47 says unasked, one speaker at a time.</summary>
+    public Announcer Announcer { get; }
 
     /// <summary>The gate the microphone feeds.</summary>
     public ListenGate Listening { get; }
@@ -611,13 +627,6 @@ public sealed class AppHost : IDisposable
     public event Action<string>? Said;
 
     /// <summary>
-    /// Raised with a spoken callout that joins the Conversation page (#276): its text as spoken, who
-    /// said it, and the callout key, once <see cref="VaryAsync"/> and the contradiction check have
-    /// settled what was actually said.
-    /// </summary>
-    public event Action<string, string, string, string?>? CalloutSaid;
-
-    /// <summary>
     /// Raised with something that happened to the conversation rather than something said in it — the
     /// core changing under it being the case this exists for.
     /// </summary>
@@ -668,11 +677,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>For surfaces that need a logger of their own — the theme manager, so far.</summary>
     public ILoggerFactory Loggers => _loggerFactory;
-
-    /// <summary>Where in-game comms are written down (#264).</summary>
-    private Microsoft.Extensions.Logging.ILogger Comms => _comms ??= _loggerFactory.CreateLogger("D47.App.Voice.Comms");
-
-    private Microsoft.Extensions.Logging.ILogger? _comms;
 
     /// <summary>Set when settings could not be loaded.</summary>
     public string? StartupError { get; }
@@ -1948,7 +1952,7 @@ public sealed class AppHost : IDisposable
                             .JumpsRemaining > 0,
 
                     // Not awaited (#158).
-                    Acknowledge = said => _ = self?.SayAsync(
+                    Acknowledge = said => _ = self?.Announcer.SayAsync(
                         new Announcement("action.acknowledge", said)),
                 },
                 () => AutonomousCapability.Describe(autonomous),
@@ -2731,7 +2735,7 @@ public sealed class AppHost : IDisposable
         // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.
         storyDirector.VoicesHere = speech.CastVoicesHere;
         storyDirector.VoicesNotReady += host.PostVoicesNotReady;
-        storyDirector.Says += host.SayAside;
+        storyDirector.Says += host.Announcer.SayAside;
 
         // A story's opening is said before any beat of its chapter one.
         storyOpeningRef = commander => storyDirector.OpeningWaits(commander) || host.IsSayingOpening;
@@ -2961,7 +2965,7 @@ public sealed class AppHost : IDisposable
             tick.Add("reminders", context =>
             {
                 clocks.Alarms.Poll();
-                host.SoundReminders(clocks.Timekeeper.Poll(context.Now));
+                host.Announcer.SoundReminders(clocks.Timekeeper.Poll(context.Now));
             });
         }
 
@@ -4032,21 +4036,18 @@ public sealed class AppHost : IDisposable
                 _logger.LogError(ex, "The Guardian cores waking could not be posted");
             }
 
-            await _speaking.WaitAsync().ConfigureAwait(false);
-
-            try
+            await Announcer.InTurnAsync(async () =>
             {
-                await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-                Keep(posted, await SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "The Guardian cores waking could not be spoken");
-            }
-            finally
-            {
-                _speaking.Release();
-            }
+                try
+                {
+                    await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+                    Keep(posted, await Announcer.SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "The Guardian cores waking could not be spoken");
+                }
+            }).ConfigureAwait(false);
         });
     }
 
@@ -4301,7 +4302,7 @@ public sealed class AppHost : IDisposable
             new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = system }),
             CancellationToken.None).ConfigureAwait(false);
 
-        await SayAsync(new Announcement("action.spelled-system", result.Spoken)).ConfigureAwait(false);
+        await Announcer.SayAsync(new Announcement("action.spelled-system", result.Spoken)).ConfigureAwait(false);
     }
 
     private readonly Core.Help.Walkthrough _walkthrough = new();
@@ -4477,9 +4478,6 @@ public sealed class AppHost : IDisposable
     private TickDriver? _ticking;
 
     private ControllerSampler? _controllerSampler;
-
-    /// <summary>Guards the callout speaker.</summary>
-    private readonly SemaphoreSlim _speaking = new(1, 1);
 
     /// <summary>Sets the voice of the character <paramref name="key"/> names, or with null returns it to the story's own.</summary>
     internal void ChooseCastVoice(string key, string? providerId, string? voiceId, string? voiceName)
@@ -4827,14 +4825,14 @@ public sealed class AppHost : IDisposable
                         {
                             // Through SayAsync rather than straight at the synthesiser (remediation.md 17,
                             // item 4).
-                            await SayAsync(new Announcement(
+                            await Announcer.SayAsync(new Announcement(
                                 action.Id, $"I could not use {action.Label}. {result.Reason}")).ConfigureAwait(false);
                         }
                     }
 
                     if (action.Decision.Say is { } say)
                     {
-                        await SayAsync(new Announcement(action.Id, say)).ConfigureAwait(false);
+                        await Announcer.SayAsync(new Announcement(action.Id, say)).ConfigureAwait(false);
                     }
                 }
             }
@@ -4851,8 +4849,6 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    private readonly D47.Core.Callouts.SpokenReferent _referent = new();
-
     /// <summary>The fight around the Commander, as the chatter callout folds it.</summary>
     private NearbyFight _fight = null!;
     private SceneTracker _scenes = null!;
@@ -4864,54 +4860,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Whether the next carrier exchange may make his owning it the subject (#88).</summary>
     private readonly NpcChatterOwnershipSpotlight _carrierSpotlight = new();
-
-    /// <summary>The systems a line could be about: where the Commander is, and where they are going.</summary>
-    private string[] SystemsIn(string text) =>
-        [.. new[] { GameState.Active?.Location.StarSystem, Route.Hops.LastOrDefault()?.StarSystem }
-            .Where(name => name is { Length: > 0 }
-                && text.Contains(name, StringComparison.OrdinalIgnoreCase))
-            .Select(name => name!)];
-
-    /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
-    private async Task<SpokenClip?> SayAsync(Announcement announcement)
-    {
-        var written = announcement;
-
-        // The voice takes the pronoun; everything written below keeps the name, so a Commander scrolling back
-        // can always see which system "it" was.
-        // Not a narration, which is prose and keeps its names.
-        if (announcement.Voice != VoiceRole.Narrator)
-        {
-            announcement = announcement with
-            {
-                Text = _referent.Speak(announcement.Text, SystemsIn(announcement.Text), DateTimeOffset.Now),
-            };
-        }
-
-        var voice = SpeakerAccent.VoiceOf(CastFor(announcement), announcement);
-
-        // Written before it is spoken, and whether or not the speaking works: a message that could not be
-        // synthesised is still a message that arrived. **Into the log, on the Commander's instruction**
-        // (#264): "In-game comms should appear in the Log File - voice related stuff."
-        if (announcement.Transcript is { Length: > 0 } line)
-        {
-            Comms.LogInformation("{Message}", line.TrimEnd());
-        }
-        else if (announcement.ConversationLine is { Length: > 0 } spoken)
-        {
-            // Onto the story's own feed, so "why did you say that" can answer about a callout too
-            // (remediation.md 17, item 4).
-            Turns.Said(spoken);
-        }
-
-        // Joined only now, so the conversation feed above never carries it.
-        var clip = await Voice.AnnounceAsync(announcement with { Text = announcement.Heard, Verbatim = null }, voice)
-            .ConfigureAwait(false);
-
-        // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key, ConversationPicture(written));
-        return clip;
-    }
 
     /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
     private VoiceCast CastFor(Announcement announcement) =>
@@ -5287,58 +5235,49 @@ public sealed class AppHost : IDisposable
             Interlocked.Increment(ref _narratingScans);
         }
 
-        _ = Task.Run(async () =>
+        _ = Task.Run(() => Announcer.InTurnAsync(async () =>
         {
-            await _speaking.WaitAsync().ConfigureAwait(false);
-
-            try
+            if (opening is not null && openingLines.Count > 0)
             {
-                if (opening is not null && openingLines.Count > 0)
+                try
                 {
-                    try
+                    foreach (var line in openingLines)
                     {
-                        foreach (var line in openingLines)
+                        try
                         {
-                            try
-                            {
-                                await NarrateLineAsync(OpeningKey, opening.StoryId, opening.Title, line, commander).ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "A line of the story opening could not be spoken");
-                            }
+                            await NarrateLineAsync(OpeningKey, opening.StoryId, opening.Title, line, commander).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "A line of the story opening could not be spoken");
                         }
                     }
-                    finally
-                    {
-                        Interlocked.Decrement(ref _sayingOpenings);
-                    }
                 }
-
-                if (scan is not null && scanLine is not null)
+                finally
                 {
-                    try
-                    {
-                        await NarrateLineAsync(NarratedScanKey, scan.StoryId, scan.Title, scanLine, commander).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "The narrated beacon scan could not be spoken");
-                    }
-                    finally
-                    {
-                        Interlocked.Decrement(ref _narratingScans);
-                    }
+                    Interlocked.Decrement(ref _sayingOpenings);
                 }
             }
-            finally
+
+            if (scan is not null && scanLine is not null)
             {
-                _speaking.Release();
+                try
+                {
+                    await NarrateLineAsync(NarratedScanKey, scan.StoryId, scan.Title, scanLine, commander).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "The narrated beacon scan could not be spoken");
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _narratingScans);
+                }
             }
-        });
+        }));
     }
 
-    /// <summary>Posts one fixed story line to Messages and says it, with its Commander tokens resolved now. Call holding <see cref="_speaking"/>.</summary>
+    /// <summary>Posts one fixed story line to Messages and says it, with its Commander tokens resolved now. Call holding the speaking turn.</summary>
     private async Task NarrateLineAsync(string key, string storyId, string title, D47.Core.Stories.StoryLine line, string? commander)
     {
         var voice = Stories?.LineVoice(commander, line.Speaker)
@@ -5359,7 +5298,7 @@ public sealed class AppHost : IDisposable
             await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
         }
 
-        Keep(posted, await SayAsync(Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
+        Keep(posted, await Announcer.SayAsync(Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -5449,28 +5388,25 @@ public sealed class AppHost : IDisposable
     /// <summary>Says each line in the given voice, keeping each clip on the message posted for it.</summary>
     private async Task SpeakStoryLinesAsync(string key, VoiceRole voice, IReadOnlyList<(string Line, D47.Core.Messages.D47Message? Posted)> lines)
     {
-        await _speaking.WaitAsync().ConfigureAwait(false);
-
-        try
+        await Announcer.InTurnAsync(async () =>
         {
-            if (voice == VoiceRole.ShipAi)
+            try
             {
-                await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-            }
+                if (voice == VoiceRole.ShipAi)
+                {
+                    await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
+                }
 
-            foreach (var (line, posted) in lines)
-            {
-                Keep(posted, await SayAsync(new Announcement(key, line) { Voice = voice }).ConfigureAwait(false));
+                foreach (var (line, posted) in lines)
+                {
+                    Keep(posted, await Announcer.SayAsync(new Announcement(key, line) { Voice = voice }).ConfigureAwait(false));
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "A story line could not be spoken");
-        }
-        finally
-        {
-            _speaking.Release();
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "A story line could not be spoken");
+            }
+        }).ConfigureAwait(false);
     }
 
     /// <summary>Keeps a spoken clip on the message posted for it. Called on the pool once synthesis has finished.</summary>
@@ -5656,21 +5592,18 @@ public sealed class AppHost : IDisposable
                 return;
             }
 
-            await _speaking.WaitAsync().ConfigureAwait(false);
-
-            try
+            await Announcer.InTurnAsync(async () =>
             {
-                await SayAsync(new Announcement($"{LoreCallout.KeyPrefix}search.{address}", line))
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "A lore lookup could not be spoken");
-            }
-            finally
-            {
-                _speaking.Release();
-            }
+                try
+                {
+                    await Announcer.SayAsync(new Announcement($"{LoreCallout.KeyPrefix}search.{address}", line))
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "A lore lookup could not be spoken");
+                }
+            }).ConfigureAwait(false);
         });
     }
 
@@ -5749,108 +5682,6 @@ public sealed class AppHost : IDisposable
         _voiceScopeSystem = system;
     }
 
-    /// <summary>Sounds what came due, and says which (Phase 24, "A timer says its own name").</summary>
-    private void SoundReminders(IReadOnlyList<Fired> fired)
-    {
-        if (fired.Count == 0)
-        {
-            return;
-        }
-
-        var zone = TimeZoneInfo.Local;
-
-        foreach (var (reminder, missed) in fired)
-        {
-            _logger.LogInformation(
-                "{Kind} \"{Name}\" {What}",
-                reminder.Kind,
-                reminder.Name,
-                missed ? "was due while d47 was closed" : "went off");
-
-            if (!missed && Voice.CuesEnabled)
-            {
-                Audio.Enqueue(new Core.Audio.AudioRequest
-                {
-                    Channel = Core.Audio.AudioChannel.Cue,
-                    Clip = Cues.For(Core.Audio.AlertCue.TimerElapsed),
-
-                    // Captioned like the warnings are (#201).
-                    Caption = Core.Audio.AlertCues.Caption(Core.Audio.AlertCue.TimerElapsed),
-                });
-            }
-
-            var said = missed ? reminder.AnnounceMissed(zone) : reminder.Announce();
-
-            _ = Voice.AnnounceAsync(said);
-
-            Said?.Invoke(said);
-
-            // A timer going off is d47 speaking unasked, like a callout (remediation.md 17, item 4). "Why did
-            // you just say that?" has to be answerable about this too.
-            Turns.Said(said);
-        }
-    }
-
-    /// <summary>
-    /// A line d47 says because the panel asked it to - a generator's reply, a refusal - spoken, shown,
-    /// and recorded exactly as a timer going off is (Phase 47). "Why did you just say that?" has to be
-    /// answerable about this too.
-    /// </summary>
-    public void SayAside(string line)
-    {
-        if (string.IsNullOrWhiteSpace(line))
-        {
-            return;
-        }
-
-        _ = Voice.AnnounceAsync(line);
-        Said?.Invoke(line);
-        Turns.Said(line);
-    }
-
-    /// <summary>The chip the Conversation page names this speaker with.</summary>
-    internal static string ConversationSpeaker(Announcement announcement, string shipName) =>
-        announcement.Speaker is { Length: > 0 } speaker
-            ? announcement.Invented is null ? speaker : NpcChatter.Invented(speaker)
-            : VoiceRoles.Called(announcement.Voice) ?? shipName;
-
-    /// <summary>The picture name the Conversation page shows a spoken line with, or null.</summary>
-    private string? ConversationPicture(Announcement announcement) =>
-        ConversationPicture(announcement, Personas.Current.Id, RoleGender, GameState.Active?.Crew);
-
-    /// <summary>
-    /// The picture name for a spoken line: a cast line's own, the core aboard for the ship, the Narrator's, the
-    /// captain's or tower's by the gender of its voice, and a hired pilot's by name; null for anyone else.
-    /// </summary>
-    internal static string? ConversationPicture(
-        Announcement announcement,
-        string coreAboard,
-        Func<VoiceRole, D47.Core.Audio.VoiceGender> genderOf,
-        D47.Core.Journal.ShipCrew? crew)
-    {
-        if (D47.Core.Interface.SpeakerPictures.IsName(announcement.Picture))
-        {
-            return announcement.Picture;
-        }
-
-        return announcement.Voice switch
-        {
-            VoiceRole.ShipAi when announcement.Speaker is null => D47.Core.Interface.SpeakerPictures.Core(coreAboard),
-            VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
-            VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
-                D47.Core.Interface.SpeakerPictures.ByVoice(announcement.Voice, genderOf(announcement.Voice)),
-            VoiceRole.Crew => CrewPicture(announcement.Speaker, crew),
-            _ => null,
-        };
-    }
-
-    /// <summary>The picture name of the hired pilot called <paramref name="name"/>, or null when none on the roster is.</summary>
-    internal static string? CrewPicture(string? name, D47.Core.Journal.ShipCrew? crew) =>
-        name is { Length: > 0 } && crew?.Members.FirstOrDefault(member =>
-            string.Equals(member.Name, name, StringComparison.OrdinalIgnoreCase)) is { } pilot
-            ? D47.Core.Interface.SpeakerPictures.Crew(pilot.CrewId)
-            : null;
-
     /// <summary>The gender of the voice <paramref name="role"/> is speaking in, by its provider's listing.</summary>
     private D47.Core.Audio.VoiceGender RoleGender(VoiceRole role)
     {
@@ -5863,7 +5694,7 @@ public sealed class AppHost : IDisposable
     {
         VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
             D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role)),
-        VoiceRole.Crew => CrewPicture(addressed.Name, GameState.Active?.Crew),
+        VoiceRole.Crew => Announcer.CrewPicture(addressed.Name, GameState.Active?.Crew),
         VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
         _ => null,
     };
@@ -5953,68 +5784,65 @@ public sealed class AppHost : IDisposable
             lines = [.. lines.Select(Owing)];
 
             // One at a time, and in order.
-            await _speaking.WaitAsync().ConfigureAwait(false);
-
-            try
+            await Announcer.InTurnAsync(async () =>
             {
-                var beat = 0;
-
-                foreach (var announcement in lines)
+                try
                 {
-                    if (announcement.Key == NpcChatter.LineKey)
-                    {
-                        // Air between the lines of an exchange (#259), reported as two people never once
-                        // leaving a gap.
-                        await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
+                    var beat = 0;
 
-                        // Checked after the beat rather than before it: this loop runs ahead of playback,
-                        // so the Commander starts talking while the next line is still waiting on its beat.
-                        // The arbiter refuses a line synthesised after that anyway; this only saves paying
-                        // to synthesise it (#61).
-                        if (Voice.Engaged)
+                    foreach (var announcement in lines)
+                    {
+                        if (announcement.Key == NpcChatter.LineKey)
                         {
-                            continue;
+                            // Air between the lines of an exchange (#259), reported as two people never once
+                            // leaving a gap.
+                            await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
+
+                            // Checked after the beat rather than before it: this loop runs ahead of playback,
+                            // so the Commander starts talking while the next line is still waiting on its beat.
+                            // The arbiter refuses a line synthesised after that anyway; this only saves paying
+                            // to synthesise it (#61).
+                            if (Voice.Engaged)
+                            {
+                                continue;
+                            }
                         }
+                        else
+                        {
+                            beat = 0;
+                        }
+
+                        var spoken = await Announcer.SayAsync(announcement).ConfigureAwait(false);
+
+                        // Only a line actually spoken can be answered.
+                        if (announcement.Invented is { } chatter)
+                        {
+                            Turns.Lines.OfType<ChatterLine>().FirstOrDefault()
+                                ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
+                        }
+
+                        if (announcement.Voice == VoiceRole.Narrator)
+                        {
+                            Turns.Lines.OfType<NarratorLine>().FirstOrDefault()?.Heard(announcement.Text);
+                        }
+
+                        // What the Commander actually heard about a story, kept (asked for 2026-08-22).
+                        RecordAdventure(announcement, spoken);
+                        RecordNudge(announcement, spoken);
+                        RecordClue(announcement, spoken);
+
+                        // After the fact has been spoken, and not awaited: the search is a round trip through
+                        // somebody else's index, and the rest of this batch is where a danger callout would be
+                        // waiting.
+                        LookUpLore(announcement);
                     }
-                    else
-                    {
-                        beat = 0;
-                    }
-
-                    var spoken = await SayAsync(announcement).ConfigureAwait(false);
-
-                    // Only a line actually spoken can be answered.
-                    if (announcement.Invented is { } chatter)
-                    {
-                        Turns.Lines.OfType<ChatterLine>().FirstOrDefault()
-                            ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
-                    }
-
-                    if (announcement.Voice == VoiceRole.Narrator)
-                    {
-                        Turns.Lines.OfType<NarratorLine>().FirstOrDefault()?.Heard(announcement.Text);
-                    }
-
-                    // What the Commander actually heard about a story, kept (asked for 2026-08-22).
-                    RecordAdventure(announcement, spoken);
-                    RecordNudge(announcement, spoken);
-                    RecordClue(announcement, spoken);
-
-                    // After the fact has been spoken, and not awaited: the search is a round trip through
-                    // somebody else's index, and the rest of this batch is where a danger callout would be
-                    // waiting.
-                    LookUpLore(announcement);
                 }
-            }
-            catch (Exception ex)
-            {
-                // A callout that cannot be synthesised is a callout the Commander does not hear.
-                _logger.LogError(ex, "A callout could not be spoken");
-            }
-            finally
-            {
-                _speaking.Release();
-            }
+                catch (Exception ex)
+                {
+                    // A callout that cannot be synthesised is a callout the Commander does not hear.
+                    _logger.LogError(ex, "A callout could not be spoken");
+                }
+            }).ConfigureAwait(false);
         });
     }
 
@@ -6741,7 +6569,7 @@ public sealed class AppHost : IDisposable
 
         // After the tick, so a serve cannot land on a destroyed overlay handle.
         Vr?.Dispose();
-        _speaking.Dispose();
+        Announcer.Dispose();
 
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
         _ownVoiceRecording.Dispose();

@@ -1,4 +1,5 @@
 using D47.App;
+using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using Xunit;
@@ -7,7 +8,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Every line d47 speaks reaches the Transcript from <c>SayAsync</c>, including in-game comms and
-/// overheard chatter, named by <see cref="AppHost.ConversationSpeaker"/>.
+/// overheard chatter, named by <see cref="Announcer.ConversationSpeaker"/>.
 /// </summary>
 public class EverySpokenLineJoinsTheTranscriptTests
 {
@@ -36,7 +37,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
             Voice = VoiceRole.TowerControl,
         };
 
-        Assert.Equal("Tower", AppHost.ConversationSpeaker(announcement, "COVAS"));
+        Assert.Equal("Tower", Announcer.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
@@ -49,7 +50,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
             CommsChannel = "npc",
         };
 
-        Assert.Equal("Ilse Bruhn", AppHost.ConversationSpeaker(announcement, "COVAS"));
+        Assert.Equal("Ilse Bruhn", Announcer.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
@@ -63,7 +64,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
             CommsChannel = "player",
         };
 
-        Assert.Equal("Vex", AppHost.ConversationSpeaker(announcement, "COVAS"));
+        Assert.Equal("Vex", Announcer.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
@@ -71,14 +72,14 @@ public class EverySpokenLineJoinsTheTranscriptTests
     {
         var announcement = new Announcement("story.end.x", "The beacon went dark.") { Voice = VoiceRole.Narrator };
 
-        Assert.Equal("Narrator", AppHost.ConversationSpeaker(announcement, "COVAS"));
+        Assert.Equal("Narrator", Announcer.ConversationSpeaker(announcement, "COVAS"));
     }
 
     [Fact]
     public void AnOrdinaryCalloutWithNoSpeakerIsNamedForTheShipsAi()
     {
-        Assert.Equal("COVAS", AppHost.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised."), "COVAS"));
-        Assert.Equal("Vesper", AppHost.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised."), "Vesper"));
+        Assert.Equal("COVAS", Announcer.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised."), "COVAS"));
+        Assert.Equal("Vesper", Announcer.ConversationSpeaker(new Announcement("fuel.low", "Fuel scoop advised."), "Vesper"));
     }
 
     [Fact]
