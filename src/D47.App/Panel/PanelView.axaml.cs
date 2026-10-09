@@ -123,22 +123,15 @@ public partial class PanelView : UserControl
     /// <summary>What those bubbles were drawn from, as comparable things each.</summary>
     private IReadOnlyList<(TranscriptVoice Voice, bool Marker, string Text, string Direction, string? Provenance, string? Picture)> _shape = [];
 
-    /// <summary>The block a selection was last made in.</summary>
-    private SelectableTextBlock? _selection;
-
-    /// <summary>The bubble a drag began in, or -1 while no drag is under way (#114).</summary>
-    private int _dragAnchor = -1;
-
-    /// <summary>The character offset within <see cref="_dragAnchor"/> where the drag began (#114).</summary>
-    private int _dragAnchorOffset;
-
-    /// <summary>The bubbles a selection spans, first index to last inclusive, once a drag has crossed
-    /// from one into another (#114).</summary>
-    private (int First, int Last)? _span;
+    private readonly TranscriptSelection _selecting;
 
     public PanelView()
     {
         InitializeComponent();
+        _selecting = new TranscriptSelection(
+            Bubbles,
+            () => [.. _bubbles.Select(bubble => bubble.Block)],
+            ShowCopySelection);
 
         _scroll = new TranscriptScroll(
             TranscriptScroller,
@@ -151,7 +144,7 @@ public partial class PanelView : UserControl
             () => TranscriptShown,
             () => OutputOnly);
 
-        _journalPane = new JournalReadingPane(OpenReadingLink, () => _currentSystem?.Invoke(), Watch);
+        _journalPane = new JournalReadingPane(OpenReadingLink, () => _currentSystem?.Invoke(), _selecting.Watch);
         JournalDetailScroller.Content = _journalPane;
 
         // Set in code rather than bound, because what mini hides is three named regions and a binding for
@@ -195,7 +188,7 @@ public partial class PanelView : UserControl
         Controls.Glyphs.Quiet(ResizeButton, "RESIZE", "Resize the panel");
         Controls.Glyphs.Quiet(HelpButton, "HELP", "Open the documentation");
 
-        Watch(Transcript);
+        _selecting.Watch(Transcript);
 
         // Whether this theme has scanlines at all; the brush itself is built for this surface's scaling.
         this.GetResourceObservable(Theming.ThemeManager.ScanlinesKey)
@@ -3182,160 +3175,17 @@ public partial class PanelView : UserControl
 
     private void OnBubblesPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_dragAnchor >= 0 && e.GetCurrentPoint(Bubbles).Properties.IsLeftButtonPressed)
+        if (_selecting.Dragging && e.GetCurrentPoint(Bubbles).Properties.IsLeftButtonPressed)
         {
             ContinueBubbleDrag(e.GetPosition(Bubbles));
         }
     }
 
-    /// <summary>Where a drag on the conversation page begins, character-exact, so a later move across a
-    /// bubble boundary picks the selection up mid-turn rather than snapping to its edge. <paramref
-    /// name="point"/> is in <see cref="Bubbles"/>'s own coordinate space (#114).</summary>
-    internal void BeginBubbleDrag(Point point)
-    {
-        if (HitBubble(point) is not { } hit)
-        {
-            return;
-        }
+    /// <summary>Where a drag on the conversation page begins, in <see cref="Bubbles"/>'s coordinate space.</summary>
+    internal void BeginBubbleDrag(Point point) => _selecting.Begin(point);
 
-        _dragAnchor = hit.Index;
-        _dragAnchorOffset = hit.Offset;
-        _span = null;
-
-        // A fresh drag starts empty everywhere but where it lands.
-        for (var i = 0; i < _bubbles.Count; i++)
-        {
-            if (i != hit.Index)
-            {
-                _bubbles[i].Block.SelectionStart = 0;
-                _bubbles[i].Block.SelectionEnd = 0;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Extends the selection across every bubble a drag has crossed. A drag that never leaves the
-    /// bubble it began in is left to that block's own selection handling — this only takes over once
-    /// the pointer has crossed a boundary. <paramref name="point"/> is in <see cref="Bubbles"/>'s own
-    /// coordinate space (#114).
-    /// </summary>
-    internal void ContinueBubbleDrag(Point point)
-    {
-        if (_dragAnchor < 0 || HitBubble(point) is not { } hit)
-        {
-            return;
-        }
-
-        if (hit.Index == _dragAnchor && _span is null)
-        {
-            return;
-        }
-
-        if (hit.Index == _dragAnchor)
-        {
-            // Back inside the bubble the drag began in, having left it and returned.
-            _bubbles[_dragAnchor].Block.SelectionStart = _dragAnchorOffset;
-            _bubbles[_dragAnchor].Block.SelectionEnd = hit.Offset;
-
-            for (var i = 0; i < _bubbles.Count; i++)
-            {
-                if (i != _dragAnchor)
-                {
-                    _bubbles[i].Block.SelectionStart = 0;
-                    _bubbles[i].Block.SelectionEnd = 0;
-                }
-            }
-
-            _span = null;
-            return;
-        }
-
-        var down = hit.Index > _dragAnchor;
-        var low = Math.Min(_dragAnchor, hit.Index);
-        var high = Math.Max(_dragAnchor, hit.Index);
-
-        for (var i = 0; i < _bubbles.Count; i++)
-        {
-            var block = _bubbles[i].Block;
-
-            if (i < low || i > high)
-            {
-                block.SelectionStart = 0;
-                block.SelectionEnd = 0;
-                continue;
-            }
-
-            var length = block.Inlines?.Text?.Length ?? 0;
-
-            (block.SelectionStart, block.SelectionEnd) = i switch
-            {
-                _ when i == _dragAnchor && down => (_dragAnchorOffset, length),
-                _ when i == _dragAnchor => (0, _dragAnchorOffset),
-                _ when i == hit.Index && down => (0, hit.Offset),
-                _ when i == hit.Index => (hit.Offset, length),
-                _ => (0, length),
-            };
-        }
-
-        _span = (low, high);
-    }
-
-    /// <summary>A bubble a point falls over, and where in its text — clamped to the nearest bubble and
-    /// character when the point lies past every edge, so a drag that reaches past the transcript still
-    /// resolves to something (#114).</summary>
-    private (int Index, int Offset)? HitBubble(Point point)
-    {
-        if (_bubbles.Count == 0)
-        {
-            return null;
-        }
-
-        var index = 0;
-
-        for (var i = 1; i < _bubbles.Count; i++)
-        {
-            var top = _bubbles[i].Block.TranslatePoint(new Point(0, 0), Bubbles)?.Y ?? double.MaxValue;
-
-            if (point.Y < top)
-            {
-                break;
-            }
-
-            index = i;
-        }
-
-        var block = _bubbles[index].Block;
-        var length = block.Inlines?.Text?.Length ?? 0;
-
-        if (length == 0)
-        {
-            return (index, 0);
-        }
-
-        var origin = block.TranslatePoint(new Point(0, 0), Bubbles) ?? default;
-        var local = point - origin;
-        var offset = block.TextLayout.HitTestPoint(local).TextPosition;
-
-        return (index, Math.Clamp(offset, 0, length));
-    }
-
-    /// <summary>Copy follows the selection (remediation.md 14, item 9).</summary>
-    private void Watch(SelectableTextBlock block) =>
-        block.PropertyChanged += (sender, changed) =>
-        {
-            if (changed.Property != SelectableTextBlock.SelectionStartProperty
-                && changed.Property != SelectableTextBlock.SelectionEndProperty)
-            {
-                return;
-            }
-
-            if (sender is SelectableTextBlock { SelectedText.Length: > 0 } selected)
-            {
-                _selection = selected;
-            }
-
-            ShowCopySelection();
-        };
+    /// <summary>Extends a drag across the bubbles it crosses, in <see cref="Bubbles"/>'s coordinate space.</summary>
+    internal void ContinueBubbleDrag(Point point) => _selecting.Continue(point);
 
     /// <summary>The journal, as a list of sentences with the selected event's fields beside it (#51).</summary>
     /// <param name="appended">
@@ -3627,7 +3477,7 @@ public partial class PanelView : UserControl
                 ContextMenu = Transcript.ContextMenu,
             };
 
-            Watch(block);
+            _selecting.Watch(block);
             Fill(block, turn, at);
 
             var strip = turn.Marker || known is null || _copy is null ? null : new WrapPanel
@@ -4149,8 +3999,7 @@ public partial class PanelView : UserControl
         Bubbles.Children.Clear();
         _bubbles.Clear();
         _shape = [];
-        _dragAnchor = -1;
-        _span = null;
+        _selecting.Reset();
     }
 
     /// <summary>
@@ -4632,33 +4481,19 @@ public partial class PanelView : UserControl
     /// bubbles, in the order it is shown (#114; remediation.md 14, item 9).</summary>
     private void OnCopySelectionClick(object? sender, RoutedEventArgs e)
     {
-        if (SpanText() is { Length: > 0 } joined)
+        if (_selecting.SpanText() is { Length: > 0 } joined)
         {
             _ = TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(joined);
             return;
         }
 
-        Selected()?.Copy();
+        _selecting.Selected()?.Copy();
     }
-
-    /// <summary>Whichever block holds a selection right now, or none at all.</summary>
-    private SelectableTextBlock? Selected() =>
-        _selection is { SelectedText.Length: > 0 } held ? held : null;
-
-    /// <summary>What a selection spanning several bubbles holds, or null with no such span.</summary>
-    private string? SpanText() =>
-        _span is { } span
-            ? string.Join(
-                Environment.NewLine,
-                Enumerable.Range(span.First, span.Last - span.First + 1)
-                    .Select(i => _bubbles[i].Block.SelectedText)
-                    .Where(text => !string.IsNullOrEmpty(text)))
-            : null;
 
     /// <summary>Greys Copy when there is nothing to copy or nowhere to put it.</summary>
     internal void ShowCopySelection() =>
         CopySelectionItem.IsEnabled =
-            (Selected() is not null || !string.IsNullOrEmpty(SpanText()))
+            (_selecting.Selected() is not null || !string.IsNullOrEmpty(_selecting.SpanText()))
             && TopLevel.GetTopLevel(this)?.Clipboard is not null;
 
     private void OnHelpClick(object? sender, RoutedEventArgs e) => OpenHelp();
