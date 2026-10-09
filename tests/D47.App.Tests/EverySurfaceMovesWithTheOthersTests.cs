@@ -181,4 +181,40 @@ public class EverySurfaceMovesWithTheOthersTests
 
         Assert.True(routing.Prompted(heard));
     }
+
+    [Fact]
+    public async Task RoutingWhileTheTickShowsAndSpeechIsHeardThrowsNothing()
+    {
+        var routing = new PanelRouting(() => false, () => []);
+        var routed = false;
+        var failures = new System.Collections.Concurrent.ConcurrentBag<Exception>();
+        var heard = new Heard("five", 1, true);
+
+        var reader = Task.Run(() =>
+        {
+            while (!Volatile.Read(ref routed))
+            {
+                try
+                {
+                    routing.Show("lookup");
+                    routing.Prompted(heard);
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(ex);
+                }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        for (var i = 0; i < 10_000; i++)
+        {
+            routing.RouteNavigation(new PanelNavigator(), _ => { });
+            routing.RoutePrompts(_ => false);
+        }
+
+        Volatile.Write(ref routed, true);
+        await reader;
+
+        Assert.Empty(failures);
+    }
 }

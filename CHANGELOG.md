@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A switch press or spoken answer in the first seconds after start-up is no longer dropped while the panels are being set up.
+
 Push-to-talk now starts out bound to Scroll Lock instead of Right Shift, a key Windows gives no shortcut and few games use. Scroll Lock can also be bound by hand. An install that already has a push-to-talk key saved keeps it.
 
 Privacy and egress has a new entry, Your custom voices: a voice you record or import for Chatterbox is kept in `data\voices\custom` on this PC, encrypted for your Windows user so no other account can read it, and is never sent anywhere or included in a donation. Nothing in the app records or imports one yet.
