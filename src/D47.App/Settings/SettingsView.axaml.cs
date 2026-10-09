@@ -970,7 +970,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         for (var i = 0; i < _sections.Count; i++)
         {
-            if (!_sections[i].Exists)
+            if (!_sift.Places[i].Exists)
             {
                 continue;
             }
@@ -1003,12 +1003,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     {
         var places = Enumerable.Range(area.First, area.Count).ToList();
 
-        if (_query.Length > 0 && places.FirstOrDefault(i => _sections[i].Matches > 0, -1) is var matched and >= 0)
+        if (_query.Length > 0 && places.FirstOrDefault(i => MatchesIn(i) > 0, -1) is var matched and >= 0)
         {
             return matched;
         }
 
-        return places.FirstOrDefault(i => _sections[i].Exists, area.First);
+        return places.FirstOrDefault(i => _sift.Places[i].Exists, area.First);
     }
 
     /// <summary>Opens an area's first place (#220).</summary>
@@ -1171,7 +1171,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var index = _sections.FindIndex(
             section => string.Equals(section.PlaceId, remembered, StringComparison.Ordinal));
 
-        if (index >= 0 && _sections[index].Exists)
+        if (index >= 0 && _sift.Places[index].Exists)
         {
             ShowPlace(index);
         }
@@ -1434,54 +1434,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             return;
         }
 
-        var showing = new int[_sections.Count];
-
-        // Rows a fold would hide in this section, regardless of whether a reveal is currently drawing
-        // them — what "Show N more" counts (#221).
-        var folded = new int[_sections.Count];
-
-        // Which areas the query names, by title (#222).
-        var areaNamed = new bool[_navAreas.Count];
-
-        for (var a = 0; a < _navAreas.Count; a++)
-        {
-            areaNamed[a] = _query.Length > 0
-                           && _navAreas[a].Title.Contains(_query, StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Which sections the query names — by the section's own title, one of its search terms, or the
-        // area holding it (#222).
-        var named = new bool[_sections.Count];
-
-        for (var i = 0; i < _sections.Count; i++)
-        {
-            var section = _sections[i];
-
-            named[i] = _query.Length > 0
-                       && (section.Title.Contains(_query, StringComparison.OrdinalIgnoreCase)
-                           || section.Terms.Any(term => term.Contains(_query, StringComparison.OrdinalIgnoreCase))
-                           || areaNamed[AreaOf(i)]);
-        }
-
-        // Which groups the query matches, by title or help (#222).
-        var groupNamed = new bool[_groups.Count];
-
-        for (var g = 0; g < _groups.Count; g++)
-        {
-            var group = _groups[g];
-
-            groupNamed[g] = _query.Length > 0
-                            && (group.Title.Contains(_query, StringComparison.OrdinalIgnoreCase)
-                                || D47.Core.Interface.HelpLinks.Plain(group.Help)
-                                    .Contains(_query, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Rows that apply in each section, whatever the query or the fold says.
-        var exists = new bool[_sections.Count];
-
-        // Per group: whether any row is drawn, and whether any row that applies differs from its default.
-        var groupShowing = new bool[_groups.Count];
-        var groupChanged = new bool[_groups.Count];
+        _sift = SettingsSieve.Sift(
+            _query,
+            [.. _rows.Select(row => new SieveRow(row.Row, row.Section, row.GroupIndex, row.Heading))],
+            [.. _sections.Select((section, i) => new SievePlace(section.Title, section.Terms, AreaOf(i)))],
+            [.. _navAreas.Select(area => area.Title)],
+            [.. _groups.Select(group => new SieveGroup(group.Title, group.Help))],
+            _settings.Current,
+            _settings.IsChanged,
+            ShowingEverything,
+            _revealedSections);
 
         _refreshing = true;
         try
@@ -1491,30 +1453,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 refresh();
             }
 
-            foreach (var row in _rows)
+            for (var r = 0; r < _rows.Count; r++)
             {
-                // A row that does not apply is absent, not disabled: a greyed-out control still asserts that
-                // the setting exists (Phase 4).
-                var applies = row.Row.Applies(_settings.Current) && !row.Row.DrawnElsewhere;
-
-                var isFolded = applies
-                               && SettingsFold.IsFolded(
-                                   row.Row,
-                                   _settings.Current,
-                                   row.Row.BoundKeys.Any(_settings.IsChanged),
-                                   ShowingEverything);
-
-                // A place's own "Show N more" draws its folded rows without unfolding any other place
-                // (#221).
-                var revealed = row.Section >= 0 && _revealedSections.Contains(row.Section);
-
-                var shown = applies
-                            && (!isFolded || revealed)
-                            && (Matches(row.Row)
-                                || (row.Heading is { } heading
-                                    && heading.Contains(_query, StringComparison.OrdinalIgnoreCase))
-                                || (row.Section >= 0 && named[row.Section])
-                                || (row.GroupIndex >= 0 && groupNamed[row.GroupIndex]));
+                var row = _rows[r];
+                var shown = _sift.Rows[r].Shown;
 
                 row.Container.IsVisible = shown;
                 row.Refresh();
@@ -1532,27 +1474,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 {
                     Illuminate(row);
                 }
-
-                if (shown && row.Section >= 0)
-                {
-                    showing[row.Section]++;
-                }
-
-                if (row.GroupIndex >= 0)
-                {
-                    groupShowing[row.GroupIndex] |= shown;
-                    groupChanged[row.GroupIndex] |= applies && _settings.IsChanged(row.Row.Key);
-                }
-
-                if (applies && row.Section >= 0)
-                {
-                    exists[row.Section] = true;
-                }
-
-                if (isFolded && row.Section >= 0)
-                {
-                    folded[row.Section]++;
-                }
             }
         }
         finally
@@ -1560,7 +1481,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             _refreshing = false;
         }
 
-        var filtering = _query.Length > 0;
+        var filtering = _sift.Filtering;
 
         // The section's name, marked in the nav, and its "Show N more" at the foot of its page.
         for (var i = 0; i < _sections.Count; i++)
@@ -1574,8 +1495,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             var revealed = _revealedSections.Contains(i);
 
-            button.IsVisible = !ShowingEverything && !filtering && (folded[i] > 0 || revealed);
-            button.Content = revealed ? "Show fewer" : $"Show {folded[i]} more";
+            button.IsVisible = !ShowingEverything && !filtering && (_sift.Places[i].Folded > 0 || revealed);
+            button.Content = revealed ? "Show fewer" : $"Show {_sift.Places[i].Folded} more";
         }
 
         // An area's title, marked in the nav (#222).
@@ -1590,8 +1511,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             var group = _groups[g];
 
-            group.Container.IsVisible = groupShowing[g];
-            group.Reset.IsEnabled = groupChanged[g] || (group.Slot is { } slot && HasAnchor(slot));
+            group.Container.IsVisible = _sift.Groups[g].Showing;
+            group.Reset.IsEnabled = _sift.Groups[g].Changed || (group.Slot is { } slot && HasAnchor(slot));
 
             Paint(group.HeadingText, group.Title.ToUpperInvariant());
             Paint(group.HelpText, group.Help);
@@ -1605,7 +1526,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         RefreshMixers();
 
         UpdateOtherTabs();
-        ApplyFilterToNav(showing, exists);
+        ApplyFilterToNav();
         LayoutPage();
     }
 
@@ -1630,7 +1551,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var matches = _tabPlaceRows
             .Where(entry => entry.Row.Applies(_settings.Current) && !entry.Row.DrawnElsewhere)
-            .Where(entry => Matches(entry.Row))
+            .Where(entry => SettingsSieve.Matches(entry.Row, _query))
             .ToList();
 
         foreach (var (tab, row) in matches)
@@ -1870,20 +1791,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// </summary>
     private readonly Dictionary<TextBlock, EventHandler<PointerPressedEventArgs>> _linkHandlers = [];
 
-    // Against the plain sentence rather than the written one (#65): searching the markup would let a query
-    // match a capability id inside (privacy) and show a row whose visible text does not contain the query
-    // anywhere.
-    private bool Matches(SettingRow row) =>
-        _query.Length == 0
-        || row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
-        || D47.Core.Interface.HelpLinks.Plain(row.Help).Contains(_query, StringComparison.OrdinalIgnoreCase)
-        || row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase);
-
     /// <summary>
     /// Marks the nav: every place with a page, and while a query is typed, the count of its matching
     /// rows beside it and every place and area without one drawn in Grey2.
     /// </summary>
-    private void ApplyFilterToNav(int[] showing, bool[] exists)
+    private void ApplyFilterToNav()
     {
         var filtering = _query.Length > 0;
 
@@ -1891,15 +1803,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             var section = _sections[i];
 
-            section.Exists = exists[i];
-            section.Matches = filtering ? showing[i] : 0;
-            section.NavItem.IsVisible = exists[i];
-            section.NavCount.Text = section.Matches.ToString(CultureInfo.InvariantCulture);
-            section.NavCount.IsVisible = section.Matches > 0;
+            var matches = MatchesIn(i);
+
+            section.NavItem.IsVisible = _sift.Places[i].Exists;
+            section.NavCount.Text = matches.ToString(CultureInfo.InvariantCulture);
+            section.NavCount.IsVisible = matches > 0;
         }
 
         // A place none of whose rows apply is not left open.
-        if (_activeSection >= 0 && !exists[_activeSection] && FirstExisting() is var next and >= 0)
+        if (_activeSection >= 0 && !_sift.Places[_activeSection].Exists && FirstExisting() is var next and >= 0)
         {
             _activeSection = next;
             _activeArea = AreaOf(next);
@@ -1912,7 +1824,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             PaintNav(
                 section,
                 i == _activeSection ? NavPaint.Active
-                : filtering && section.Matches == 0 ? NavPaint.Dim
+                : filtering && MatchesIn(i) == 0 ? NavPaint.Dim
                 : NavPaint.Normal);
         }
 
@@ -1921,12 +1833,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             var area = _navAreas[a];
             var places = Enumerable.Range(area.First, area.Count);
 
-            area.Heading.IsVisible = places.Any(i => exists[i]);
+            area.Heading.IsVisible = places.Any(i => _sift.Places[i].Exists);
 
             PaintAreaHeading(
                 area,
                 a == _activeArea ? NavPaint.Active
-                : filtering && !places.Any(i => _sections[i].Matches > 0) ? NavPaint.Dim
+                : filtering && !places.Any(i => MatchesIn(i) > 0) ? NavPaint.Dim
                 : NavPaint.Normal);
         }
 
@@ -1934,7 +1846,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>The first place with a page, or −1 where none has one.</summary>
-    private int FirstExisting() => _sections.FindIndex(section => section.Exists);
+    private int FirstExisting() => _sift.Places.ToList().FindIndex(place => place.Exists);
+
+    /// <summary>The rows a typed query leaves on a place, or 0 with no query.</summary>
+    private int MatchesIn(int place) => _sift.Filtering ? _sift.Places[place].Showing : 0;
+
+    /// <summary>What the last <see cref="Refresh"/> decided.</summary>
+    private SettingsSift _sift = new(string.Empty, [], [], []);
 
     /// <summary>
     /// Assembles the page: the collapsed-nav picker, the open place's head and rows, the line saying
@@ -1963,7 +1881,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             var section = _sections[_activeSection];
             var filtering = _query.Length > 0;
-            var nothing = filtering && section.Matches == 0;
+            var nothing = filtering && MatchesIn(_activeSection) == 0;
 
             crumb.Text = $"{_navAreas[_activeArea].Title.ToUpperInvariant()} ›";
             Paint(title, section.Title.ToUpperInvariant());
@@ -1979,7 +1897,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             {
                 _emptyNote!.Text = $"Nothing on this page matches \"{_query}\".";
 
-                var others = _sections.Count(other => other != section && other.Matches > 0);
+                var others = Enumerable.Range(0, _sections.Count).Count(other => other != _activeSection && MatchesIn(other) > 0);
 
                 _otherPagesNote!.IsVisible = others > 0;
                 _otherPagesNote.Text = others == 1
@@ -2544,12 +2462,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     {
         /// <summary>This place's own "Show N more" for the rows its fold is hiding (#221).</summary>
         public Button? FoldButton { get; init; }
-
-        /// <summary>Whether any of the place's rows applies, so it has a page to show.</summary>
-        public bool Exists { get; set; }
-
-        /// <summary>How many rows the query leaves on this place, or 0 with no query.</summary>
-        public int Matches { get; set; }
 
         /// <summary>How the nav item is currently painted, or null before it has been painted at all.</summary>
         public NavPaint? Painted { get; set; }
