@@ -109,4 +109,8 @@ public sealed class StandingDirectionsSession
     /// <summary>The overlay for the core aboard, or null when that core has none.</summary>
     public string? Overlay(string? persona) =>
         persona is { Length: > 0 } id ? StandingDirections.RenderFor(id, _latched) : null;
+
+    /// <summary>The persona block with the overlay of <paramref name="persona"/> behind it; null when <paramref name="rendered"/> is null.</summary>
+    public string? PersonaBlock(string? rendered, string? persona) =>
+        rendered is not null && Overlay(persona) is { } overlay ? rendered + "\n\n" + overlay : rendered;
 }

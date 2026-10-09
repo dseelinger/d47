@@ -4742,7 +4742,7 @@ public sealed class AppHost : IDisposable
             {
                 // The name may still have changed underneath an unchanged core, and that is part of the persona
                 // block, so the prompt is rebuilt either way.
-                Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+                ApplyPersonaBlock();
                 return;
             }
 
@@ -4753,7 +4753,7 @@ public sealed class AppHost : IDisposable
 
             // Each core owns its transcript, handed over by reference so the turns land in it directly.
             Turns.UseTranscript(Personas.Transcript);
-            Turns.Persona = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
+            ApplyPersonaBlock();
         }
     }
 
@@ -7340,14 +7340,10 @@ public sealed class AppHost : IDisposable
     /// <summary>Position 3, with this core's overlay behind it (#162).</summary>
     private void ApplyPersonaBlock()
     {
-        var block = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
-
-        if (block is not null && _directions.Overlay(Personas.Current.Id) is { } overlay)
+        lock (_personaGate)
         {
-            block = block + "\n\n" + overlay;
+            Turns.Persona = _directions.PersonaBlock(Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled), Personas.Current.Id);
         }
-
-        Turns.Persona = block;
     }
 
     /// <summary>Runs the debrief over what this session sounded like, and files what it drafted (#162).</summary>

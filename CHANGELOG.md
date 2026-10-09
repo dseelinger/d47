@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A direction taken for one core now stays in the prompt after renaming the ship AI, switching core, or a story putting the stock core aboard.
+
 Help has two new pages under General help. First run walks through the setup steps and says where to get each provider's key and which choices it also covers. Choosing providers compares the conversation, voice and listening providers by cost, key, where they run and what leaves the machine.
 
 A switch press or spoken answer in the first seconds after start-up is no longer dropped while the panels are being set up.
