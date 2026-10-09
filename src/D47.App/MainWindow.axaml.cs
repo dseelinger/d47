@@ -211,9 +211,9 @@ public partial class MainWindow : Window
                     new CastVoiceSurface(
                         key => host.Stories?.CastMember(key),
                         host.ChooseCastVoice,
-                        host.CastVoicesAsync,
+                        host.Speech.CastVoicesAsync,
                         host.PlayCastSample,
-                        host.CastVoiceFailure),
+                        host.Speech.CastVoiceFailure),
                     host.StoryRatings);
 
                 Panel.EnableAdventures(
@@ -245,7 +245,7 @@ public partial class MainWindow : Window
                 galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
                 crewSeats: new CrewSeatsHost(
                     () => host.CrewSeats,
-                    () => [.. host.VoiceIds().Select(id => (id, host.VoiceLabelFor(id)))],
+                    () => [.. host.Speech.VoiceIds().Select(id => (id, host.Speech.VoiceLabelFor(id)))],
                     () => D47.Core.Audio.VoiceGroups.ProviderFor(host.Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
                     () => [host.Personas.ShipName, .. new[] { host.Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]),
                 talk: host.BuildTalk,
@@ -339,9 +339,9 @@ public partial class MainWindow : Window
             // figures need.
             Panel.EnableTurnDetails(
                 ShowSpendAsync,
-                () => SpendDialog.SessionDollars(host.Spend, host.SpeechSpend, host.Settings.Current),
-                () => SpendDialog.SessionDetail(host.Spend, host.SpeechSpend, host.Settings.Current));
-            host.SpeechSpend.Recorded += Panel.RefreshSessionSpend;
+                () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current),
+                () => SpendDialog.SessionDetail(host.Spend, host.Speech.Spend, host.Settings.Current));
+            host.Speech.Spend.Recorded += Panel.RefreshSessionSpend;
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
             // 25).
@@ -1180,7 +1180,7 @@ public partial class MainWindow : Window
         await new SpendDialog(
             _host.Spend.Last,
             _host.Spend,
-            _host.SpeechSpend,
+            _host.Speech.Spend,
             _host.SpendLedger,
             _host.Settings.Current,
             TimeZoneInfo.Local,

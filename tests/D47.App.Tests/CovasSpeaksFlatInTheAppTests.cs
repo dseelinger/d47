@@ -8,7 +8,7 @@ public class CovasSpeaksFlatInTheAppTests
     [Fact]
     public void ATurnWithCovasAboardIsNeverToldItMayWriteDeliveryNotes()
     {
-        Assert.True(InTheTree("Turns.CanBeDirected = () => !Personas.Current.Stock && DirectableIn(VoiceGroup.Aboard);"));
+        Assert.True(InTheTree("Turns.CanBeDirected = () => !Personas.Current.Stock && Speech.DirectableIn(VoiceGroup.Aboard);"));
     }
 
     [Fact]

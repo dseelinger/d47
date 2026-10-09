@@ -76,6 +76,9 @@ public sealed class AppHost : IDisposable
         AudioArbiter audio,
         CueLibrary cues,
         VoicePipeline voice,
+        OwnVoice ownVoice,
+        CustomVoices customVoices,
+        SpeechClients speech,
         ListenGate gate,
         EchoCanceller echo,
         WasapiMicrophone microphone,
@@ -118,18 +121,17 @@ public sealed class AppHost : IDisposable
         ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
-        NameAccents = new NameAccents(paths.NameAccentsFile, _logger)
-        {
-            Ask = (names, accents, token) => VoicePairing.AskAccentsAsync(
-                names,
-                accents,
-                Turns.Provider,
-                Turns.BackgroundModel,
-                Spend,
-                PriceTable.Default,
-                _logger,
-                token),
-        };
+        Speech = speech;
+        Speech.NameAccents.Ask = (names, accents, token) => VoicePairing.AskAccentsAsync(
+            names,
+            accents,
+            Turns.Provider,
+            Turns.BackgroundModel,
+            Spend,
+            PriceTable.Default,
+            _logger,
+            token);
+        Speech.VoicesReady += provider => _ = PairVoicesAsync();
         SpendLedger = spendLedger;
         _audioSink = audioSink;
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
@@ -169,8 +171,8 @@ public sealed class AppHost : IDisposable
             wake,
             heardAt);
 
-        OwnVoice = new OwnVoice(paths.Data, new DpapiSecretProtector());
-        CustomVoices = new CustomVoices(paths.Data, new DpapiSecretProtector());
+        OwnVoice = ownVoice;
+        CustomVoices = customVoices;
         _ownVoiceRecording = new OwnVoiceRecording(
             OwnVoice,
             new OwnVoiceCapture(loggerFactory.CreateLogger<OwnVoiceCapture>()),
@@ -203,6 +205,9 @@ public sealed class AppHost : IDisposable
     public string? PendingUpdateVersion { get; set; }
 
     public AppPaths Paths { get; }
+
+    /// <summary>The speech clients, voice lists and cast.</summary>
+    public SpeechClients Speech { get; }
 
     public SerilogVerbosityControl Verbosity { get; }
 
@@ -1523,7 +1528,7 @@ public sealed class AppHost : IDisposable
         var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory)
         {
             // What a voice is called, for the log line that says who spoke (remediation.md 10, item 9).
-            VoiceName = id => id is { Length: > 0 } ? self?.VoiceNameFor(id) : null,
+            VoiceName = id => id is { Length: > 0 } ? self?.Speech.VoiceNameFor(id) : null,
         };
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn returns,
@@ -1752,6 +1757,20 @@ public sealed class AppHost : IDisposable
 
         var buildingRegistry = StartupTimer.Step("capability registry");
 
+        var ownVoice = new OwnVoice(paths.Data, new DpapiSecretProtector());
+        var customVoices = new CustomVoices(paths.Data, new DpapiSecretProtector());
+        var speech = new SpeechClients(
+            settings,
+            secrets,
+            loggerFactory,
+            paths,
+            personas,
+            voice,
+            audio,
+            ownVoice,
+            customVoices,
+            crewSeats: () => self!.CrewSeats);
+
         // Built once and shared with TurnLoop below, so the drill capability (#168) opens an offer TurnLoop
         // itself reads, rather than one nobody looks at.
         var offers = new OfferWindow();
@@ -1775,21 +1794,16 @@ public sealed class AppHost : IDisposable
                     Silence = audio.Silence,
 
                     // The local voice, and what fetching it would cost (Phase 59).
-                    LocalVoiceState = () => self?.LocalVoiceState() ?? "Not available.",
-                    DownloadLocalVoice = () => self is null ? null : self.DownloadLocalVoice,
-                    LocalVoiceInstalled = () =>
-                        self is not null && D47.Core.Speech.KokoroAssets.IsInstalled(self.KokoroFolder()),
+                    LocalVoiceState = speech.LocalVoiceState,
+                    DownloadLocalVoice = () => speech.DownloadLocalVoice,
+                    LocalVoiceInstalled = () => D47.Core.Speech.KokoroAssets.IsInstalled(speech.KokoroFolder()),
 
                     // Which of the eight builds is actually on disk, and the swap onto another (#139).
                     InstalledLocalVoiceBuild = () =>
-                        self is null
-                            ? null
-                            : D47.Core.Speech.KokoroAssets.InstalledBuild(self.KokoroFolder())?.Id,
-                    SwitchLocalVoiceBuild = build => self is null
-                        ? null
-                        : (progress, cancellationToken) =>
-                            self.SwitchLocalVoiceBuild(build, progress, cancellationToken),
-                    ChatterboxState = () => self?.ChatterboxState() ?? "Not available.",
+                        D47.Core.Speech.KokoroAssets.InstalledBuild(speech.KokoroFolder())?.Id,
+                    SwitchLocalVoiceBuild = build => (progress, cancellationToken) =>
+                        speech.SwitchLocalVoiceBuild(build, progress, cancellationToken),
+                    ChatterboxState = speech.ChatterboxState,
                     OwnVoiceState = () => self?._ownVoiceRecording.State() ?? "Not available.",
                     OwnVoiceRecording = () => self?._ownVoiceRecording.Recording ?? false,
                     RecordOwnVoice = () => self?._ownVoiceRecording.Toggle(),
@@ -1805,9 +1819,8 @@ public sealed class AppHost : IDisposable
                         host._ownVoiceRecording.Changed += refresh;
                         return () => host._ownVoiceRecording.Changed -= refresh;
                     },
-                    DownloadChatterbox = () => self is null ? null : self.DownloadChatterbox,
-                    ChatterboxInstalled = () =>
-                        self is not null && D47.Core.Speech.ChatterboxAssets.IsInstalled(self.ChatterboxFolder()),
+                    DownloadChatterbox = () => speech.DownloadChatterbox,
+                    ChatterboxInstalled = () => D47.Core.Speech.ChatterboxAssets.IsInstalled(speech.ChatterboxFolder()),
                     StoryCastUses = providerId => self?.Stories?.CastUses(providerId) == true,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
@@ -1816,26 +1829,25 @@ public sealed class AppHost : IDisposable
 
                     // Late-bound like the headset surface below, and for the same reason: the list is fetched
                     // from the provider over the network after this point.
-                    Voices = group => self?.VoiceIds(group) ?? [],
-                    VoiceLabel = (group, id) => self?.VoiceLabelFor(group, id) ?? id,
-                    VoiceGender = (group, id) => self?.VoiceGenderFor(group, id),
-                    VoiceCustom = (group, id) => self?.VoiceIsCustom(group, id) == true,
-                    WhyNoVoices = group => self?.WhyNoVoices(group),
-                    SpeechSpend = () => self?.SpeechSpend,
+                    Voices = group => speech.VoiceIds(group),
+                    VoiceLabel = (group, id) => speech.VoiceLabelFor(group, id),
+                    VoiceGender = (group, id) => speech.VoiceGenderFor(group, id),
+                    VoiceCustom = (group, id) => speech.VoiceIsCustom(group, id),
+                    WhyNoVoices = group => speech.WhyNoVoices(group),
+                    SpeechSpend = () => speech.Spend,
 
                     KeyStored = settings.HoldsSecret,
 
                     // Asked of the slot's own provider, not the ship's.
-                    HasKey = group => self is not { } host
-                                      || host.HasKeyFor(TtsProviderCatalog.Selected(
-                                          VoiceGroups.ProviderFor(settings.Current.Speech, group))),
+                    HasKey = group => speech.HasKeyFor(TtsProviderCatalog.Selected(
+                        VoiceGroups.ProviderFor(settings.Current.Speech, group))),
                     Audition = (voiceId, role, token) => self is { } host
                         ? host.AuditionVoiceAsync(voiceId, role, token)
                         : Task.CompletedTask,
                     Preview = (voiceId, role, token) => self is { } host
                         ? host.AuditionPreviewAsync(voiceId, role, token)
                         : Task.CompletedTask,
-                    HasPreview = (group, id) => self?.HasPreviewFor(group, id) ?? false,
+                    HasPreview = (group, id) => speech.HasPreviewFor(group, id),
                     GuardianTest = token => self is { } host
                         ? host.GuardianTestAsync(token)
                         : Task.FromResult<string?>(null),
@@ -1843,9 +1855,7 @@ public sealed class AppHost : IDisposable
 
                     // Late-bound like the two above, because the check is a network call made by a host that
                     // does not exist yet at this point in composition.
-                    VerifyKey = (provider, token) => self is { } host
-                        ? host.VerifySpeechKeyAsync(provider, token)
-                        : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
+                    VerifyKey = speech.VerifySpeechKeyAsync,
 
                     // Late-bound for the same reason as the local voice download above.
                     ResetVoices = () => self is null ? null : self.ResetVoicesAsync,
@@ -2549,6 +2559,9 @@ public sealed class AppHost : IDisposable
             audio,
             cues,
             voice,
+            ownVoice,
+            customVoices,
+            speech,
             gate,
             echo,
             microphone,
@@ -2572,7 +2585,7 @@ public sealed class AppHost : IDisposable
 
         // Speech reaches the ledger too, or the running totals would look authoritative while covering only
         // what the model cost.
-        host.SpeechSpend.LedgerTo(spendLedger, () => settings.Current);
+        host.Speech.Spend.LedgerTo(spendLedger, () => settings.Current);
 
         // The avatar's own imagery, if the Commander has dropped any in.
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
@@ -2614,7 +2627,7 @@ public sealed class AppHost : IDisposable
 
         // A voice the provider refuses is written out of settings rather than merely skipped for the turn it
         // broke.
-        voice.VoiceRejected += host.ForgetTheVoice;
+        voice.VoiceRejected += speech.ForgetTheVoice;
 
         using (StartupTimer.Step("model settings"))
         {
@@ -2709,7 +2722,7 @@ public sealed class AppHost : IDisposable
         host.Messages = messageStore;
 
         // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.
-        storyDirector.VoicesHere = host.CastVoicesHere;
+        storyDirector.VoicesHere = speech.CastVoicesHere;
         storyDirector.VoicesNotReady += host.PostVoicesNotReady;
         storyDirector.Says += host.SayAside;
 
@@ -2724,7 +2737,7 @@ public sealed class AppHost : IDisposable
                 _ = Task.Run(messageStore.ForgetOwnVoice);
             }
 
-            host.RelistChatterboxVoices();
+            speech.RelistChatterboxVoices();
         };
 
         // The same for a deleted custom voice.
@@ -2740,7 +2753,7 @@ public sealed class AppHost : IDisposable
             }
 
             customIds = now;
-            host.RelistChatterboxVoices();
+            speech.RelistChatterboxVoices();
         };
 
         if (!host.OwnVoice.Exists)
@@ -3568,7 +3581,7 @@ public sealed class AppHost : IDisposable
 
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
         // describes the voice a Commander will actually hear.
-        Turns.CanBeDirected = () => !Personas.Current.Stock && DirectableIn(VoiceGroup.Aboard);
+        Turns.CanBeDirected = () => !Personas.Current.Stock && Speech.DirectableIn(VoiceGroup.Aboard);
         Turns.HumorFor = HumorFor;
 
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's thirteen
@@ -3694,51 +3707,12 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>The ids the voice picker offers for one slot.</summary>
-    internal IReadOnlyList<string> VoiceIds(VoiceGroup group = VoiceGroup.Aboard) =>
-        [.. VoicesFor(group).Voices.Select(voice => voice.Id)];
-
-    /// <summary>How the picker labels one — "Ava — Female, en-US" rather than the raw id.</summary>
-    internal string? VoiceNameFor(string id) => VoiceGroups.NameFor(VoicesFor, id);
-
-    /// <summary>
-    /// How a voice is shown to the Commander, wherever one is shown — the row, its tooltip and the
-    /// picker all read this.
-    /// </summary>
-    internal string VoiceLabelFor(string id) => VoiceLabelFor(VoiceGroup.Aboard, id);
-
-    /// <summary>What the provider tags one voice's gender as, or null where it says nothing (#146).</summary>
-    internal string? VoiceGenderFor(VoiceGroup group, string id) =>
-        VoicesFor(group).Voices
-            .FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
-            ?.Gender;
-
-    internal bool VoiceIsCustom(VoiceGroup group, string id) =>
-        VoicesFor(group).Voices.Any(voice => voice.Custom && string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
-
-    /// <inheritdoc cref="VoiceLabelFor(string)"/>
-    internal string VoiceLabelFor(VoiceGroup group, string id) =>
-        VoicesFor(group).LabelFor(
-            id,
-            TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, group)));
-
-    /// <summary>
-    /// Why the voice picker has nothing in it, when it has nothing in it (Phase 19;
-    /// docs/spikes/elevenlabs-voice-sources.md §3).
-    /// </summary>
-    internal string? WhyNoVoices(VoiceGroup group = VoiceGroup.Aboard)
-    {
-        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, group));
-
-        return provider.Speaks ? VoicesOf(provider.Id).WhyEmpty(provider.Name) : null;
-    }
-
     /// <summary>A voice for the core aboard, when it has none.</summary>
     private async Task EnsureVoiceForCurrentPersonaAsync()
     {
         var persona = Personas.Current;
 
-        if (AboardVoices.Count == 0 || Settings.Current.Persona.Voices.ContainsKey(persona.Id))
+        if (Speech.VoicesFor(VoiceGroup.Aboard).Count == 0 || Settings.Current.Persona.Voices.ContainsKey(persona.Id))
         {
             return;
         }
@@ -3747,7 +3721,7 @@ public sealed class AppHost : IDisposable
         {
             var voice = await VoicePairing.ChooseOneAsync(
                 persona,
-                AboardVoices.Voices,
+                Speech.VoicesFor(VoiceGroup.Aboard).Voices,
                 Settings.Current.Persona.Voices.Values,
                 Turns.Provider,
                 Turns.BackgroundModel,
@@ -3777,7 +3751,7 @@ public sealed class AppHost : IDisposable
 
             // Nothing else will notice: the pairing is not a settings row, and the core aboard has just
             // acquired the voice it is about to speak in.
-            ApplySpeechSettings();
+            Speech.Apply();
         }
         catch (Exception ex)
         {
@@ -3799,7 +3773,7 @@ public sealed class AppHost : IDisposable
         var before = Settings.Current.Persona.Voices;
 
         var repair = await ReplaceVoicesAsync(
-            before, VoicePairing.WithoutMiscastVoices(before, AboardVoices.Voices, _logger)).ConfigureAwait(false);
+            before, VoicePairing.WithoutMiscastVoices(before, Speech.VoicesFor(VoiceGroup.Aboard).Voices, _logger)).ConfigureAwait(false);
 
         Settings.Replace("persona.voices", current => current with
         {
@@ -3811,7 +3785,7 @@ public sealed class AppHost : IDisposable
             },
         });
 
-        ApplySpeechSettings();
+        Speech.Apply();
     }
 
     private Task<VoicePairing.VoiceRepair> ReplaceVoicesAsync(
@@ -3819,7 +3793,7 @@ public sealed class AppHost : IDisposable
         VoicePairing.WithReplacementsAsync(
             before,
             after,
-            AboardVoices.Voices,
+            Speech.VoicesFor(VoiceGroup.Aboard).Voices,
             Turns.Provider,
             Turns.BackgroundModel,
             Spend,
@@ -3850,7 +3824,7 @@ public sealed class AppHost : IDisposable
             },
         });
 
-        ApplySpeechSettings();
+        Speech.Apply();
     }
 
     /// <summary>Re-casts the COVAS core once where its voice is the automatic pairing.</summary>
@@ -3881,7 +3855,7 @@ public sealed class AppHost : IDisposable
             },
         });
 
-        ApplySpeechSettings();
+        Speech.Apply();
     }
 
     /// <summary>
@@ -3890,7 +3864,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private void ForgetVoicesNotListed()
     {
-        var list = AboardVoices;
+        var list = Speech.VoicesFor(VoiceGroup.Aboard);
 
         if (ReferenceEquals(SpeechCapability.WithoutVoicesNotIn(Settings.Current, list), Settings.Current))
         {
@@ -3922,7 +3896,7 @@ public sealed class AppHost : IDisposable
 
         try
         {
-            if (!forgetFirst && AboardVoices.Count > 0)
+            if (!forgetFirst && Speech.VoicesFor(VoiceGroup.Aboard).Count > 0)
             {
                 ForgetVoicesNotListed();
                 await RepairMiscastVoicesAsync().ConfigureAwait(false);
@@ -3952,8 +3926,8 @@ public sealed class AppHost : IDisposable
         var start = Basis(Settings.Current);
         var speech = start.Speech;
         var persona = start.Persona;
-        var aboard = VoicesFor(VoiceGroup.Aboard);
-        var carrier = VoicesFor(VoiceGroup.Carrier);
+        var aboard = Speech.VoicesFor(VoiceGroup.Aboard);
+        var carrier = Speech.VoicesFor(VoiceGroup.Carrier);
         var shared = string.Equals(
             VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard),
             VoiceGroups.ProviderFor(speech, VoiceGroup.Carrier),
@@ -4018,7 +3992,7 @@ public sealed class AppHost : IDisposable
         if (chosen.Count > 0 || forgetFirst)
         {
             // Nothing else will notice: the core aboard or the carrier may have just changed voice.
-            ApplySpeechSettings();
+            Speech.Apply();
         }
 
         return new PairingPass(pairedCores.Length, chosen.Count - pairedCores.Length);
@@ -4067,136 +4041,6 @@ public sealed class AppHost : IDisposable
             TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard)).Name,
             byModel: Turns.Provider is not null);
     }
-
-    /// <summary>
-    /// Makes the stored voices and the selected provider agree, and answers the speech settings that
-    /// result.
-    /// </summary>
-    private SpeechSettings ReconcileVoicesWithProvider()
-    {
-        var speech = Settings.Current.Speech;
-        var selected = TtsProviderCatalog.Selected(speech.Provider).Id;
-
-        if (speech.VoicesProvider is { } chosenFor && !string.Equals(chosenFor, selected, StringComparison.Ordinal))
-        {
-            _logger.LogInformation(
-                "The live voices were chosen for {Previous}; filing them there and taking back {Now}'s",
-                chosenFor,
-                selected);
-        }
-
-        // The decision itself is a pure function of settings and lives where a test can reach it.
-        Settings.Replace(SpeechCapability.ProviderKey, VoiceMemory.Reconciled);
-
-        return Settings.Current.Speech;
-    }
-
-    /// <summary>Whether the selected provider has whatever credential it needs, if it needs one.</summary>
-    private bool HasKeyFor(TtsProviderInfo provider) =>
-        provider.KeySecretName is not { } secret || Secrets.Has(secret);
-
-    /// <summary>Drops one voice the provider refused, everywhere it is written down.</summary>
-    private void ForgetTheVoice(string voiceId)
-    {
-        _logger.LogInformation("{Voice} was refused by the provider; removing it", voiceId);
-
-        Settings.Replace(
-            SpeechCapability.ProviderKey,
-            current => SpeechCapability.WithoutTheVoice(current, voiceId));
-
-        ApplySpeechSettings();
-    }
-
-    /// <summary>The folder holding the local voice's model files.</summary>
-    internal string KokoroFolder() => Path.Combine(Paths.Data, "models", "kokoro");
-
-    /// <summary>Whether the local voice is here, and what it would cost if not.</summary>
-    private string LocalVoiceState() =>
-        D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder())
-            ? "Installed. Nothing D47 speaks through this provider leaves this machine."
-            : $"Not downloaded. About {D47.Core.Speech.KokoroAssets.TotalMegabytes:0} MB, fetched "
-              + "once from huggingface.co.";
-
-    /// <summary>Whether a download is already running, atomic because the button is a press.</summary>
-    private int _fetchingVoice;
-
-    internal string ChatterboxFolder() => Path.Combine(Paths.Data, "models", "chatterbox");
-
-    /// <summary>The shipped reference clips, copied beside the executable.</summary>
-    private static string ChatterboxVoicesFolder() => Path.Combine(AppContext.BaseDirectory, "voices", "chatterbox");
-
-    /// <summary>Starts fetching the Chatterbox clip a voice row picked, when it is not on this PC. Never waits.</summary>
-    private void FetchPickedVoice(string key)
-    {
-        if (SpeechCapability.PickedVoice(key, Settings.Current) is not { } picked
-            || !string.Equals(
-                VoiceGroups.ProviderFor(Settings.Current.Speech, picked.Group),
-                TtsProviderCatalog.ChatterboxId,
-                StringComparison.OrdinalIgnoreCase)
-            || _clients.GetValueOrDefault(TtsProviderCatalog.ChatterboxId) is not ChatterboxTtsProvider chatterbox)
-        {
-            return;
-        }
-
-        _ = Task.Run(() => chatterbox.FetchAsync(picked.Voice));
-    }
-
-    private string ChatterboxState() =>
-        D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder())
-            ? "Installed. Nothing D47 speaks through this provider leaves this machine."
-            : $"Not downloaded. About {D47.Core.Speech.ChatterboxAssets.TotalMegabytes:0} MB, fetched "
-              + "once from huggingface.co.";
-
-    /// <summary>Fetches Chatterbox's model, off the UI thread, then asks it for its voices.</summary>
-    private async Task<string?> DownloadChatterbox(
-        IProgress<double> progress,
-        CancellationToken cancellationToken)
-    {
-        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
-        {
-            return "A download is already running.";
-        }
-
-        try
-        {
-            using var installer = new ChatterboxInstaller(
-                ChatterboxFolder(), _loggerFactory.CreateLogger<ChatterboxInstaller>());
-
-            var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
-
-            var result = await Task.Run(
-                () => installer.InstallAsync(reported, cancellationToken),
-                cancellationToken).ConfigureAwait(false);
-
-            _logger.LogInformation("The Chatterbox download ended as {Outcome}", result.Outcome);
-
-            if (result.Outcome is not (KokoroInstall.Installed or KokoroInstall.AlreadyPresent))
-            {
-                return result.Detail ?? "Chatterbox could not be downloaded.";
-            }
-
-            if (ClientFor(TtsProviderCatalog.ChatterboxId) is { } client)
-            {
-                await LoadVoicesAsync(client).ConfigureAwait(false);
-            }
-
-            return null;
-        }
-        catch (Exception ex) when (ex is IOException or HttpRequestException)
-        {
-            _logger.LogWarning(ex, "Chatterbox could not be downloaded");
-            return $"Chatterbox could not be downloaded: {ex.Message}";
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _fetchingVoice, 0);
-        }
-    }
-
-    /// <summary>What the local voice says the moment it can say anything.</summary>
-    private const string LocalVoiceProof =
-        "Local voice installed. This is D47, speaking from your own machine. Nothing I say through "
-        + "this provider leaves it.";
 
     /// <summary>The Frontier id of the Commander flying, or empty before it is known.</summary>
     private string Flying => GameState.Active?.Identity.FrontierId ?? string.Empty;
@@ -4308,295 +4152,6 @@ public sealed class AppHost : IDisposable
                + $"and {otherShips} for {others.Count} {Noun("other commander", others.Count)} on this machine.";
 
         static string Noun(string singular, int count) => count == 1 ? singular : singular + "s";
-    }
-
-    /// <summary>Fetches the local voice, off the UI thread, saying how far it has got.</summary>
-    private async Task<string?> DownloadLocalVoice(
-        IProgress<double> progress,
-        CancellationToken cancellationToken)
-    {
-        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
-        {
-            return "A download is already running.";
-        }
-
-        try
-        {
-            using var installer = new KokoroInstaller(
-                KokoroFolder(), _loggerFactory.CreateLogger<KokoroInstaller>());
-
-            var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
-
-            var result = await Task.Run(
-                () => installer.InstallAsync(reported, cancellationToken),
-                cancellationToken).ConfigureAwait(false);
-
-            _logger.LogInformation("The local voice download ended as {Outcome}", result.Outcome);
-
-            if (result.Outcome is not (KokoroInstall.Installed or KokoroInstall.AlreadyPresent))
-            {
-                return result.Detail ?? "The local voice could not be downloaded.";
-            }
-
-            // The picker's list, asked for again now that there is something to list.
-            await RefreshLocalVoicesAsync().ConfigureAwait(false);
-
-            return await SpeakLocalVoiceProofAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is IOException or HttpRequestException)
-        {
-            _logger.LogWarning(ex, "The local voice could not be downloaded");
-            return $"The local voice could not be downloaded: {ex.Message}";
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _fetchingVoice, 0);
-        }
-    }
-
-    /// <summary>Swaps the local voice onto a different one of Kokoro's eight builds (#139).</summary>
-    internal async Task<string?> SwitchLocalVoiceBuild(
-        string buildId,
-        IProgress<double> progress,
-        CancellationToken cancellationToken)
-    {
-        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
-        {
-            return "A download is already running.";
-        }
-
-        try
-        {
-            using var installer = new KokoroInstaller(
-                KokoroFolder(), _loggerFactory.CreateLogger<KokoroInstaller>());
-
-            var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
-
-            // Let go of the file before overwriting it.
-            DropLocalVoiceClient();
-
-            var result = await Task.Run(
-                () => installer.SwitchAsync(buildId, reported, cancellationToken),
-                cancellationToken).ConfigureAwait(false);
-
-            _logger.LogInformation(
-                "The local voice build change to {Build} ended as {Outcome}", buildId, result.Outcome);
-
-            if (result.Outcome is not (KokoroInstall.Installed or KokoroInstall.AlreadyPresent))
-            {
-                return result.Detail ?? $"The {buildId} build could not be downloaded.";
-            }
-
-            await RefreshLocalVoicesAsync().ConfigureAwait(false);
-
-            return await SpeakLocalVoiceProofAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is IOException or HttpRequestException)
-        {
-            _logger.LogWarning(ex, "The local voice build could not be changed");
-            return $"The {buildId} build could not be downloaded: {ex.Message}";
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _fetchingVoice, 0);
-        }
-    }
-
-    /// <summary>Closes and forgets the Kokoro client, so nothing is holding <c>model.onnx</c> open.</summary>
-    private void DropLocalVoiceClient()
-    {
-        ITtsProvider? client;
-
-        lock (_speechGate)
-        {
-            _clients.Remove(TtsProviderCatalog.KokoroId, out client);
-        }
-
-        (client as IDisposable)?.Dispose();
-    }
-
-    /// <summary>Asks the local voice what it offers, now that it has something to offer.</summary>
-    private async Task RefreshLocalVoicesAsync()
-    {
-        if (ClientFor(TtsProviderCatalog.KokoroId) is { } client)
-        {
-            await LoadVoicesAsync(client).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
-    /// Speaks one line in the voice that was just downloaded, through the one arbiter like everything
-    /// else that makes a sound.
-    /// </summary>
-    private async Task<string?> SpeakLocalVoiceProofAsync(CancellationToken cancellationToken)
-    {
-        var shared = ClientFor(TtsProviderCatalog.KokoroId);
-        var own = shared is null
-            ? new KokoroTtsProvider(
-                KokoroFolder(),
-                _loggerFactory.CreateLogger<KokoroTtsProvider>(),
-                Paths.PronunciationsFile)
-            : null;
-
-        try
-        {
-            var clip = await (shared ?? own!).SynthesizeAsync(
-                LocalVoiceProof,
-                new VoiceSelection(
-                    SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id),
-                    SpeechCapability.RateFor(Settings.Current, TtsProviderCatalog.KokoroId)),
-                cancellationToken).ConfigureAwait(false);
-
-            Audio.Enqueue(new AudioRequest
-            {
-                Channel = AudioChannel.Speech,
-                Clip = clip,
-                Group = AuditionGroup,
-                Caption = clip.Name,
-            });
-
-            return null;
-        }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException)
-        {
-            // The files are there and something else is wrong, which is worth saying on the row: the state
-            // above it now reads "installed" and the Commander heard nothing.
-            _logger.LogWarning(ex, "The local voice was downloaded but could not speak");
-            return $"Downloaded, but the voice could not speak: {ex.Message}";
-        }
-        finally
-        {
-            own?.Dispose();
-        }
-    }
-
-    /// <summary>One provider's client, or null for a provider that does not speak.</summary>
-    private ITtsProvider? BuildSpeechClient(string providerId) => providerId switch
-    {
-        SpeechCapability.EdgeId =>
-            new EdgeNeuralTtsProvider(_loggerFactory.CreateLogger<EdgeNeuralTtsProvider>()),
-
-        SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
-            () => Secrets.TryGet(ElevenLabsTtsProvider.KeySecretName, out var key) ? key : null,
-            _loggerFactory.CreateLogger<ElevenLabsTtsProvider>(),
-
-            // Asked per line rather than captured, the same as the key, so switching model applies to the
-            // next thing said rather than to the next session (#291).
-            model: () => Settings.Current.Speech.ElevenLabsModel),
-
-        TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
-            () => Secrets.TryGet(OpenAiTtsProvider.KeySecretName, out var key) ? key : null,
-            _loggerFactory.CreateLogger<OpenAiTtsProvider>(),
-
-            // How the core aboard should be performed, asked per sentence because a Commander switches core
-            // while d47 is running (#49).
-            direction: () => VoiceDirection.For(
-                Settings.Current.Llm.PersonalityEnabled ? Personas.Current : null)),
-
-        TtsProviderCatalog.CartesiaId => new CartesiaTtsProvider(
-            () => Secrets.TryGet(CartesiaTtsProvider.KeySecretName, out var key) ? key : null,
-            _loggerFactory.CreateLogger<CartesiaTtsProvider>()),
-
-        // The local voice (Phase 59).
-        TtsProviderCatalog.KokoroId => new KokoroTtsProvider(
-            KokoroFolder(),
-            _loggerFactory.CreateLogger<KokoroTtsProvider>(),
-            Paths.PronunciationsFile),
-
-        TtsProviderCatalog.ChatterboxId => new ChatterboxTtsProvider(
-            ChatterboxFolder(),
-            ChatterboxVoicesFolder(),
-            Path.Combine(Paths.Data, "voices", "chatterbox"),
-            _loggerFactory.CreateLogger<ChatterboxTtsProvider>(),
-            OwnVoice,
-            CustomVoices),
-
-        _ => null,
-    };
-
-    /// <summary>Records the speech models the provider lists for its key, or none where it lists none.</summary>
-    private async Task ListSpeechModelsAsync(ElevenLabsTtsProvider provider)
-    {
-        try
-        {
-            ModelCatalogSource.Shared.ListSpeech(provider.Id, await provider.ListModelsAsync().ConfigureAwait(false));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Could not record {Provider}'s speech models", provider.Id);
-        }
-    }
-
-    private void RelistChatterboxVoices()
-    {
-        if (_clients.GetValueOrDefault(TtsProviderCatalog.ChatterboxId) is ChatterboxTtsProvider chatterbox)
-        {
-            _ = LoadVoicesAsync(chatterbox);
-        }
-    }
-
-    private async Task LoadVoicesAsync(ITtsProvider provider)
-    {
-        try
-        {
-            var listed = await provider.ListVoicesAsync().ConfigureAwait(false);
-            lock (_speechGate)
-            {
-                _voicesByProvider[provider.Id] = listed;
-            }
-
-            _logger.LogInformation(
-                "{Provider}'s voice list has {Count} voices ({Listing})",
-                provider.Id,
-                listed.Count,
-                listed.Listing);
-
-            // The pool a re-voiced sender is drawn from, on this provider's cast.
-            var cast = Casting.Of(provider.Id);
-            cast.Pool = VoicePool.From(listed.Voices);
-
-            // And which of them are a woman's, so a sender whose name reads as one is given one.
-            cast.Feminine = VoicePool.Feminine(listed.Voices);
-
-            // And which read as British, so an Empire station can be given one (#68).
-            cast.British = VoicePool.British(listed.Voices);
-
-            // And what each sounds like, so an NPC's line can be written for the voice that speaks it (#415).
-            cast.Voices = listed.Voices
-                .GroupBy(voice => voice.Id, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-
-            // A sender's name may suggest an accent and a sex; the question is queued and answered off the speech path.
-            cast.ReadingOfName = name => NameAccents.Get(provider.Id, name);
-            cast.NameUnknown = name => NameAccents.Enqueue(provider.Id, cast.Accents, [name]);
-
-            // Both numbers, because one of them alone is what hid that: "1 voice available" is alarming
-            // beside "473 offered" and unremarkable on its own.
-            _logger.LogInformation(
-                "{Count} of {Offered} voices are available for re-voiced senders, {Feminine} of them women's",
-                cast.Pool.Count,
-                listed.Count,
-                cast.Feminine.Count);
-
-            // Pairing needs the list, so it starts once the list arrives rather than at startup.
-            if (string.Equals(
-                    provider.Id,
-                    VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard),
-                    StringComparison.OrdinalIgnoreCase)
-                || string.Equals(
-                    provider.Id,
-                    VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Carrier),
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                _ = PairVoicesAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            // No list is a capability being partly off, not a failure: the row still accepts a voice name
-            // typed in, and speaking still works with the provider's default.
-            _logger.LogWarning(ex, "Could not fetch the list of voices");
-        }
     }
 
     /// <summary>How often the memory store is checked for entries past their expiry (Phase 31).</summary>
@@ -4838,7 +4393,7 @@ public sealed class AppHost : IDisposable
         AvatarClipStore.Want(change.Current.Id);
 
         // The ship's voice is the core aboard's, so it has to be re-read when the core changes.
-        ApplySpeechSettings();
+        Speech.Apply();
 
         // And what d47 answers to, for the same reason and with the same failure if it is skipped: the wake
         // word defaults to the ship's AI name, so a core switch that did not re-read it would leave a
@@ -4994,148 +4549,31 @@ public sealed class AppHost : IDisposable
         AudioReloaded?.Invoke();
     }
 
-    /// <summary>
-    /// Rebuilds everything downstream of the speech settings: the voice provider, the voice itself, the
-    /// cues, the bed, the output device and the retry policy.
-    /// </summary>
+    /// <summary>Applies the speech settings, then the retry policy and the output device.</summary>
     private void ApplySpeechSettings()
     {
-        var speech = ReconcileVoicesWithProvider();
+        Speech.Apply();
+        Turns.Retry = SpeechCapability.RetryFrom(Settings.Current.Speech);
+        ApplyOutputDevice();
+    }
 
-        SpeechWiringPlan plan;
+    private void ApplyOutputDevice()
+    {
+        var device = Settings.Current.Speech.OutputDevice;
 
-        lock (_speechGate)
+        if (string.Equals(Interlocked.Exchange(ref _openDevice, device), device, StringComparison.Ordinal))
         {
-            // What to build, what to release, which slots moved and whose list to ask for again are decided in
-            // Core, where a test can reach them; what to build and how to fetch it stay here, where the loggers
-            // and the secret store are.
-            plan = SpeechWiring.Plan(
-                _speechWiring,
-                VoiceGroups.Selected(speech),
-                id => HasKeyFor(TtsProviderCatalog.Selected(id)));
-
-            _speechWiring = plan.Next;
-
-            // Released first, so a slot moving from ElevenLabs to Edge and another moving the other way do not
-            // hold two of each at once.
-            foreach (var released in plan.Dispose)
-            {
-                if (_clients.Remove(released, out var client))
-                {
-                    // Through the interface, so this stays correct for a provider that needs no disposal.
-                    (client as IDisposable)?.Dispose();
-                }
-
-                _voicesByProvider.Remove(released);
-                Casting.Forget(released);
-                ModelCatalogSource.Shared.ListSpeech(released, []);
-            }
-
-            foreach (var wanted in plan.Build)
-            {
-                if (BuildSpeechClient(wanted) is { } built)
-                {
-                    _clients[wanted] = built;
-                }
-            }
-
-            // One decorator per slot over the shared client, which is what lets the spend row answer "which slot
-            // is costing money" without a second connection to the provider — the thing
-            // ElevenLabsTtsProvider.MaxConcurrent's reasoning depends on (Phase 57).
-            foreach (var moved in plan.Rewire)
-            {
-                _slots[moved] = _clients.GetValueOrDefault(VoiceGroups.ProviderFor(speech, moved)) is { } client
-                    ? new MeteredTtsProvider(client, SpeechSpend, moved)
-                    : null;
-            }
-
-            ReleaseCastClients(all: false);
+            return;
         }
 
-        // Fetched in the background.
-        foreach (var asking in plan.RefetchVoices)
+        try
         {
-            if (ClientFor(asking) is { } client)
-            {
-                _ = LoadVoicesAsync(client);
-
-                if (client is ElevenLabsTtsProvider elevenLabs)
-                {
-                    _ = Task.Run(() => ListSpeechModelsAsync(elevenLabs));
-                }
-            }
+            _audioSink.Reopen(device);
         }
-
-        // A ship moved to a provider whose list is already held gets no fetch, so its voices are checked here.
-        if (plan.Rewire.Contains(VoiceGroup.Aboard)
-            && !plan.RefetchVoices.Contains(VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard), StringComparer.OrdinalIgnoreCase)
-            && AboardVoices.Count > 0)
+        catch (Exception ex)
         {
-            _ = PairVoicesAsync();
-        }
-
-        Voice.Tts = Speaker(VoiceGroup.Aboard);
-        Voice.SpeakerFor = Speaker;
-        Voice.PinnedFor = CastClient;
-        Voice.CastVoiceFailed = (key, reason) => _castVoiceFailures[key] = reason;
-
-        // Everyone d47 can speak as, filled in from settings.
-        var aboard = VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard);
-        var carrier = VoiceGroups.ProviderFor(speech, VoiceGroup.Carrier);
-
-        foreach (var providerId in VoiceGroups.ProvidersInUse(speech))
-        {
-            var cast = Casting.Of(providerId);
-
-            // A rate is a property of the synthesiser rather than of the Commander's patience, once two of
-            // them can be speaking at once: ElevenLabs *rejects* a speed outside its range rather than
-            // clamping it, so a figure chosen for Edge and applied here would not be a fast carrier but a
-            // silent one (Phase 57).
-            cast.Rate = SpeechCapability.RateFor(Settings.Current, providerId);
-
-            // The ship's voice belongs to the ship's provider and to nobody else's.
-            cast.DefaultVoice = string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase)
-                ? SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id)
-                : null;
-
-            // Likewise the carrier's two, which are ids issued by whoever speaks for the carrier.
-            var speaksForTheCarrier = string.Equals(providerId, carrier, StringComparison.OrdinalIgnoreCase);
-
-            cast.Assign(VoiceRole.CarrierCaptain, speaksForTheCarrier ? speech.CarrierCaptainVoice : null);
-            cast.Assign(VoiceRole.TowerControl, speaksForTheCarrier ? speech.TowerVoice : null);
-
-            // The Narrator speaks for the ship's provider, and never in the ship's voice.
-            cast.Assign(
-                VoiceRole.Narrator,
-                string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase) ? speech.NarratorVoice : null);
-
-            // A crew seat's own voice, else its role's, both from the ship's provider.
-            cast.SeatVoice = string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase)
-                ? seatId => SeatVoiceOf(seatId, providerId, cast)
-                : null;
-        }
-
-        Voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
-        Voice.CuesEnabled = speech.CuesEnabled;
-        Voice.BedEnabled = speech.ThinkingBedEnabled;
-        Voice.GuardianColour = GuardianVoice.ColourFor(speech, Personas.Current);
-        Voice.GuardianRunning = GuardianVoice.RunningColourFor(speech, Personas.Current);
-
-        Turns.Retry = SpeechCapability.RetryFrom(speech);
-
-        if (!string.Equals(_openDevice, speech.OutputDevice, StringComparison.Ordinal))
-        {
-            _openDevice = speech.OutputDevice;
-
-            try
-            {
-                _audioSink.Reopen(speech.OutputDevice);
-            }
-            catch (Exception ex)
-            {
-                // A device that has gone away between being chosen and being opened.
-                _logger.LogError(ex, "Could not move audio output to {Device}", speech.OutputDevice);
-            }
+            // A device that has gone away between being chosen and being opened.
+            _logger.LogError(ex, "Could not move audio output to {Device}", device);
         }
     }
 
@@ -5379,78 +4817,10 @@ public sealed class AppHost : IDisposable
     /// <summary>Guards the callout speaker.</summary>
     private readonly SemaphoreSlim _speaking = new(1, 1);
 
-    /// <summary>Serialises every read and write of <c>_clients</c>, <c>_slots</c>, <c>_speechWiring</c> and <c>_voicesByProvider</c>. Held only for in-memory work.</summary>
-    private readonly Lock _speechGate = new();
-
-    /// <summary>The voice provider in use.</summary>
-    private readonly Dictionary<string, ITtsProvider> _clients = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// What each slot actually speaks through: a thin metering decorator over one of the shared clients
-    /// above, or null for a slot on "none".
-    /// </summary>
-    private readonly Dictionary<VoiceGroup, ITtsProvider?> _slots = new();
-
-    /// <summary>Which client speaks for a slot.</summary>
-    private ITtsProvider? Speaker(VoiceGroup group)
-    {
-        lock (_speechGate)
-        {
-            return _slots.GetValueOrDefault(group);
-        }
-    }
-
-    /// <summary>The shared client for a provider, or null.</summary>
-    private ITtsProvider? ClientFor(string providerId)
-    {
-        lock (_speechGate)
-        {
-            return _clients.GetValueOrDefault(providerId);
-        }
-    }
-
-    /// <summary>Local clients built for a story's cast, for a provider no slot speaks through.</summary>
-    private readonly Dictionary<string, ITtsProvider> _castClients = new(StringComparer.OrdinalIgnoreCase);
-
-    private readonly Lock _castGate = new();
-
-    /// <summary>
-    /// The client a story's cast member speaks through, metered with every slot: the slots' own when one is on that
-    /// provider, otherwise one built for the cast. Null for a provider id d47 does not have.
-    /// </summary>
-    private ITtsProvider? CastClient(string providerId)
-    {
-        if (ClientFor(providerId) is { } shared)
-        {
-            return new MeteredTtsProvider(shared, SpeechSpend);
-        }
-
-        lock (_castGate)
-        {
-            if (!_castClients.TryGetValue(providerId, out var built))
-            {
-                if (BuildSpeechClient(providerId) is not { } client)
-                {
-                    return null;
-                }
-
-                _castClients[providerId] = built = client;
-            }
-
-            return new MeteredTtsProvider(built, SpeechSpend);
-        }
-    }
-
-    /// <summary>Why a character's chosen voice last failed and the story's own spoke instead, by StoryVoices key.</summary>
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _castVoiceFailures = new(StringComparer.Ordinal);
-
-    /// <summary>Why the chosen voice for <paramref name="key"/> last failed, or null.</summary>
-    internal string? CastVoiceFailure(string key) => _castVoiceFailures.GetValueOrDefault(key);
-
     /// <summary>Sets the voice of the character <paramref name="key"/> names, or with null returns it to the story's own.</summary>
     internal void ChooseCastVoice(string key, string? providerId, string? voiceId, string? voiceName)
     {
-        _castVoiceFailures.TryRemove(key, out _);
+        Speech.ForgetCastVoiceFailure(key);
 
         if (providerId is null || voiceId is null)
         {
@@ -5470,19 +4840,6 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>The voices <paramref name="providerId"/> lists, for a story character's voice picker.</summary>
-    internal async Task<VoiceCatalogue> CastVoicesAsync(string providerId, CancellationToken cancellationToken)
-    {
-        if (VoicesOf(providerId) is { Count: > 0 } held)
-        {
-            return held;
-        }
-
-        return CastClient(providerId) is { } client
-            ? await client.ListVoicesAsync(cancellationToken).ConfigureAwait(false)
-            : VoiceCatalogue.Silent;
-    }
-
     private D47.Core.Seats.CrewSeatStore? _crewSeats;
 
     /// <summary>Every ship's crew seats, read on first use.</summary>
@@ -5498,19 +4855,6 @@ public sealed class AppHost : IDisposable
 
             return _crewSeats;
         }
-    }
-
-    private string? SeatVoiceOf(string seatId, string providerId, VoiceCast cast)
-    {
-        var seat = CrewSeats.Ships.SelectMany(ship => ship.Seats).FirstOrDefault(known => known.Id == seatId);
-
-        return seat is null
-            ? null
-            : D47.Core.Seats.SeatVoices.Resolve(
-                seat,
-                providerId,
-                Settings.Current.Speech.SeatVoices,
-                id => cast.Voices.Count == 0 || cast.Voices.ContainsKey(id));
     }
 
     /// <summary>The line a story character's Play sample speaks after its name.</summary>
@@ -5535,28 +4879,6 @@ public sealed class AppHost : IDisposable
             }
         });
 
-    /// <summary>Disposes the cast's own clients: every one, or those a slot now has a client for. The caller holds <c>_speechGate</c>.</summary>
-    private void ReleaseCastClients(bool all)
-    {
-        lock (_castGate)
-        {
-            foreach (var id in _castClients.Keys.Where(id => all || _clients.ContainsKey(id)).ToList())
-            {
-                (_castClients[id] as IDisposable)?.Dispose();
-                _castClients.Remove(id);
-            }
-        }
-    }
-
-    /// <summary>What is on this PC for a story's cast to speak with.</summary>
-    internal D47.Core.Stories.CastVoicesHere CastVoicesHere() => new(
-        D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder()),
-        D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder()),
-        OwnVoice.Exists)
-    {
-        HasKey = id => TtsProviderCatalog.Selected(id).KeySecretName is not { } secret || Secrets.Names.Contains(secret),
-    };
-
     /// <summary>Posts the ship's message naming what a story's cast needs before it can speak, on the pool.</summary>
     private void PostVoicesNotReady(string title, string message)
     {
@@ -5576,46 +4898,6 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>
-    /// Whether a line written for this slot may carry delivery direction — asked of the client that
-    /// will speak it, never of the settings (#291).
-    /// </summary>
-    private bool DirectableIn(VoiceGroup group) => Speaker(group)?.ReadsAudioTags == true;
-
-    /// <summary>
-    /// Which provider each slot is on, and whether it had its key last time speech settings were
-    /// applied.
-    /// </summary>
-    private SpeechWiringState _speechWiring = SpeechWiringState.Nothing;
-
-    /// <summary>Everyone d47 can speak as (Phase 11).</summary>
-    public VoiceCasting Casting { get; } = new();
-
-    /// <summary>The accents the model judged sender names to suggest, asked off the speech path.</summary>
-    public NameAccents NameAccents { get; }
-
-    /// <summary>The cast aboard the ship.</summary>
-    public VoiceCast Cast => Casting.Of(VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroup.Aboard));
-
-    /// <summary>What each provider in use offers, cached.</summary>
-    private readonly Dictionary<string, VoiceCatalogue> _voicesByProvider = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>What one provider offers, or nothing if it has not answered yet.</summary>
-    private VoiceCatalogue VoicesOf(string providerId)
-    {
-        lock (_speechGate)
-        {
-            return _voicesByProvider.GetValueOrDefault(providerId) ?? VoiceCatalogue.Silent;
-        }
-    }
-
-    /// <summary>What one slot's provider offers.</summary>
-    private VoiceCatalogue VoicesFor(VoiceGroup group) =>
-        VoicesOf(VoiceGroups.ProviderFor(Settings.Current.Speech, group));
-
-    /// <summary>The ship's own provider's list.</summary>
-    private VoiceCatalogue AboardVoices => VoicesFor(VoiceGroup.Aboard);
-
     /// <summary>What the language-model endpoint last said it serves (Phase 29).</summary>
     private volatile IReadOnlyList<string> _endpointModels = [];
 
@@ -5625,9 +4907,6 @@ public sealed class AppHost : IDisposable
     /// <summary>How many times an endpoint has been asked, so only the latest answer is kept.</summary>
     private int _endpointModelsAsked;
 
-    /// <summary>What the voices have cost this session (Phase 19).</summary>
-    public SpeechSpend SpeechSpend { get; } = new();
-
     /// <summary>
     /// Auditions already paid for, keyed by the provider that issued the voice, the role being cast and
     /// the voice itself (Phase 19).
@@ -5635,7 +4914,7 @@ public sealed class AppHost : IDisposable
     private readonly Dictionary<(string Provider, string Voice), AudioClip> _auditions = new();
 
     /// <summary>The group auditions play in, so a second one drops the first mid-word.</summary>
-    private const string AuditionGroup = "voice-audition";
+    internal const string AuditionGroup = "voice-audition";
 
     /// <summary>
     /// Speaks one voice so it can be judged before it is chosen (Phase 19, "Hear a voice before you
@@ -5647,7 +4926,7 @@ public sealed class AppHost : IDisposable
         // carrier — and billed to that slot (Phase 57).
         var group = VoiceGroups.Of(role);
 
-        if (Speaker(group) is not { } provider)
+        if (Speech.Speaker(group) is not { } provider)
         {
             throw new InvalidOperationException("No voice provider is selected.");
         }
@@ -5661,7 +4940,7 @@ public sealed class AppHost : IDisposable
         if (!_auditions.TryGetValue(key, out var clip))
         {
             // The voice itself, never a stand-in cached under its name.
-            if (_clients.GetValueOrDefault(provider.Id) is ChatterboxTtsProvider chatterbox
+            if (Speech.ClientFor(provider.Id) is ChatterboxTtsProvider chatterbox
                 && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
             {
                 throw new InvalidOperationException(
@@ -5701,7 +4980,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     internal async Task AuditionPreviewAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
     {
-        if (Speaker(VoiceGroups.Of(role)) is not { } provider)
+        if (Speech.Speaker(VoiceGroups.Of(role)) is not { } provider)
         {
             throw new InvalidOperationException("No voice provider is selected.");
         }
@@ -5749,17 +5028,17 @@ public sealed class AppHost : IDisposable
 
         var auditionKey = (providerInfo.Id, $"{VoiceRole.ShipAi}:{voiceId}");
         var sampleKey = (providerInfo.Id, $"sample:{voiceId}");
-        var hasFreeSample = providerInfo.OffersFreePreviews && HasPreviewFor(VoiceGroup.Aboard, voiceId);
+        var hasFreeSample = providerInfo.OffersFreePreviews && Speech.HasPreviewFor(VoiceGroup.Aboard, voiceId);
 
         var source = GuardianVoiceTest.SourceFor(
             providerInfo, hasFreeSample, _auditions.ContainsKey(auditionKey));
 
-        // Synthesize and FreeSample both need the live client, which Speaker(group) does not have
+        // Synthesize and FreeSample both need the live client, which Speech.Speaker(group) does not have
         // where the provider needs a key that has not been set. Falling back to the stand-in here
         // rather than throwing keeps Test doing what it promises: it never fails, only ever plays
         // something.
         if (source is GuardianVoiceTest.Source.Synthesize or GuardianVoiceTest.Source.FreeSample
-            && Speaker(VoiceGroup.Aboard) is null)
+            && Speech.Speaker(VoiceGroup.Aboard) is null)
         {
             source = GuardianVoiceTest.Source.StandIn;
         }
@@ -5767,7 +5046,7 @@ public sealed class AppHost : IDisposable
         // A Chatterbox voice whose clip cannot be fetched would be spoken in a shipped stand-in and cached under its name.
         if (source is GuardianVoiceTest.Source.Synthesize
             && !_auditions.ContainsKey(auditionKey)
-            && _clients.GetValueOrDefault(providerInfo.Id) is ChatterboxTtsProvider chatterbox
+            && Speech.ClientFor(providerInfo.Id) is ChatterboxTtsProvider chatterbox
             && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
         {
             source = GuardianVoiceTest.Source.StandIn;
@@ -5781,7 +5060,7 @@ public sealed class AppHost : IDisposable
             case GuardianVoiceTest.Source.Synthesize:
                 if (!_auditions.TryGetValue(auditionKey, out var synthesized))
                 {
-                    synthesized = await Speaker(VoiceGroup.Aboard)!.SynthesizeAsync(
+                    synthesized = await Speech.Speaker(VoiceGroup.Aboard)!.SynthesizeAsync(
                         AuditionLine.For(Personas.Current),
                         new VoiceSelection(voiceId, SpeechCapability.RateFor(Settings.Current, providerId)),
                         cancellationToken).ConfigureAwait(false);
@@ -5795,7 +5074,7 @@ public sealed class AppHost : IDisposable
             case GuardianVoiceTest.Source.FreeSample:
                 if (!_auditions.TryGetValue(sampleKey, out var sampled))
                 {
-                    sampled = await Speaker(VoiceGroup.Aboard)!.PreviewAsync(voiceId, cancellationToken)
+                    sampled = await Speech.Speaker(VoiceGroup.Aboard)!.PreviewAsync(voiceId, cancellationToken)
                                   .ConfigureAwait(false)
                               ?? throw new InvalidOperationException(
                                   $"{providerInfo.Name} has no free sample of that voice.");
@@ -5849,11 +5128,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>What the COVAS Test row says once it has played.</summary>
     private const string CovasStandInSaid = "That was a stand-in voice through the COVAS reverb.";
-
-    /// <summary>Whether one voice in a slot's list has a free sample.</summary>
-    internal bool HasPreviewFor(VoiceGroup group, string id) =>
-        VoicesFor(group).Voices.Any(voice =>
-            string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase) && voice.PreviewUrl is not null);
 
     /// <summary>One autonomous action at a time.</summary>
     private readonly SemaphoreSlim _acting = new(1, 1);
@@ -5977,7 +5251,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
     private VoiceCast CastFor(Announcement announcement) =>
-        Casting.Of(VoiceGroups.ProviderFor(
+        Speech.Casting.Of(VoiceGroups.ProviderFor(
             Settings.Current.Speech,
             VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
 
@@ -6010,7 +5284,7 @@ public sealed class AppHost : IDisposable
             (brief, ask, token) =>
             {
                 // Against the slot this line will be spoken in, not the ship's.
-                var directed = DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel));
+                var directed = Speech.DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel));
 
                 return FlavourTurn.AskForAsync(
                     Turns.Provider,
@@ -6111,7 +5385,7 @@ public sealed class AppHost : IDisposable
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 
-        var directed = DirectableIn(VoiceGroup.Npcs);
+        var directed = Speech.DirectableIn(VoiceGroup.Npcs);
 
         var script = await FlavourTurn.AskAsync(
             Turns.Provider,
@@ -6176,7 +5450,7 @@ public sealed class AppHost : IDisposable
                             PriceTable.Default,
                             _logger,
                             budget.Token,
-                            canBeDirected: DirectableIn(VoiceGroup.Npcs)).ConfigureAwait(false),
+                            canBeDirected: Speech.DirectableIn(VoiceGroup.Npcs)).ConfigureAwait(false),
                         line.Role,
                         carrier),
                     _logger,
@@ -6226,7 +5500,7 @@ public sealed class AppHost : IDisposable
         var brief = voice.Cast is { } cast
             ? D47.Core.Stories.StoryClues.Speaking(clue, cast.Name, voice.Who)
             : D47.Core.Stories.StoryClues.Speaking(clue, voice.Narrated);
-        var directed = voice.Pinned is { } pinned ? CastClient(pinned.ProviderId)?.ReadsAudioTags == true : (bool?)null;
+        var directed = voice.Pinned is { } pinned ? Speech.CastClient(pinned.ProviderId)?.ReadsAudioTags == true : (bool?)null;
 
         return await ComposeStoryLineAsync(brief, voice.Role, marker.CommsChannel, marker.Key, directed).ConfigureAwait(false) is { } said
             ? Voiced(marker with { Text = said }, voice)
@@ -6275,7 +5549,7 @@ public sealed class AppHost : IDisposable
         }
 
         var ship = voice == VoiceRole.ShipAi;
-        var directed = canBeDirected ?? DirectableIn(VoiceGroups.Of(voice, channel));
+        var directed = canBeDirected ?? Speech.DirectableIn(VoiceGroups.Of(voice, channel));
 
         using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
@@ -6758,7 +6032,7 @@ public sealed class AppHost : IDisposable
             VoiceRole.Comms => NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
             VoiceRole.Narrator => CastFor(new Announcement(NarratorCallout.KeyPrefix, string.Empty) { Voice = VoiceRole.Narrator })
                 .For(VoiceRole.Narrator),
-            _ => Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
+            _ => Speech.Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
         };
         Voice.SpeakingAs = addressed.Role;
         Voice.CaptionSpeaker = addressed.Name;
@@ -6805,7 +6079,7 @@ public sealed class AppHost : IDisposable
         // Not on the first sample.
         if (_voiceScopeSystem is not null)
         {
-            Casting.EnteredSystem();
+            Speech.Casting.EnteredSystem();
         }
 
         _voiceScopeSystem = system;
@@ -7409,7 +6683,7 @@ public sealed class AppHost : IDisposable
 
             case SettingsSubsystem.Speech:
                 ApplySpeechSettings();
-                FetchPickedVoice(change.Key);
+                Speech.FetchPickedVoice(change.Key);
                 break;
 
             case SettingsSubsystem.Audio:
@@ -7444,7 +6718,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>How long a key check waits for the provider.</summary>
-    private static readonly TimeSpan KeyCheckBudget = TimeSpan.FromSeconds(20);
+    internal static readonly TimeSpan KeyCheckBudget = TimeSpan.FromSeconds(20);
 
     /// <summary>
     /// Tries the stored language-model key for real (Phase 16, "a key is verified, not merely stored").
@@ -7494,134 +6768,6 @@ public sealed class AppHost : IDisposable
             _ => SecretCheck.Unreachable(asked.Detail ?? $"{selected.Name} could not be reached."),
         };
     }
-
-    /// <summary>
-    /// Tries the stored speech key for real, against the provider's own voice list — which is the call
-    /// d47 makes anyway the moment a key lands, so this proves the exact thing that has to work rather
-    /// than a proxy for it.
-    /// </summary>
-    private async Task<SecretCheck> VerifySpeechKeyAsync(string providerId, CancellationToken cancellationToken)
-    {
-        var selected = TtsProviderCatalog.Selected(providerId);
-
-        if (selected.KeySecretName is not { } name)
-        {
-            return SecretCheck.Works($"{selected.Name} needs no key.");
-        }
-
-        if (!Secrets.TryGet(name, out var key))
-        {
-            return SecretCheck.Rejected($"No {selected.Name} key is stored.");
-        }
-
-        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        budget.CancelAfter(KeyCheckBudget);
-
-        // Its own instance rather than the live one, so a refusal surfaces here as a verdict instead of being
-        // swallowed by the background refresh's catch.
-        ITtsProvider? provider = selected.Id switch
-        {
-            SpeechCapability.ElevenLabsId => new ElevenLabsTtsProvider(
-                () => key,
-                _loggerFactory.CreateLogger<ElevenLabsTtsProvider>()),
-
-            TtsProviderCatalog.OpenAiId => new OpenAiTtsProvider(
-                () => key,
-                _loggerFactory.CreateLogger<OpenAiTtsProvider>()),
-
-            TtsProviderCatalog.CartesiaId => new CartesiaTtsProvider(
-                () => key,
-                _loggerFactory.CreateLogger<CartesiaTtsProvider>()),
-
-            _ => null,
-        };
-
-        if (provider is null)
-        {
-            return SecretCheck.Unreachable($"D47 has no client for {selected.Name} yet.");
-        }
-
-        // A provider whose catalogue is static cannot be checked by listing it: the list is known without a
-        // key, so it would answer "accepted the key" for a key that had never left this machine.
-        if (selected.VoicesAreStatic)
-        {
-            return await ProveSpeechKeyAsync(provider, selected, budget.Token).ConfigureAwait(false);
-        }
-
-        try
-        {
-            var voices = await provider.ListVoicesAsync(budget.Token).ConfigureAwait(false);
-
-            // Read from the listing rather than from the count, which is what this check was getting wrong
-            // without saying so: the provider answers an empty list rather than throwing, so a rejected key
-            // arrived here as "accepted the key — 0 voices" (Phase 19).
-            return voices.Listing switch
-            {
-                VoiceListing.KeyRejected => SecretCheck.Rejected(
-                    $"{selected.Name} refused the key{Reason(voices.Detail)}"),
-
-                VoiceListing.Unreachable => SecretCheck.Unreachable(
-                    $"{selected.Name} could not be reached{Reason(voices.Detail)}"),
-
-                VoiceListing.NoKey => SecretCheck.Rejected($"No {selected.Name} key is stored."),
-
-                _ => SecretCheck.Works($"{selected.Name} accepted the key — {voices.Count} voices."),
-            };
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return SecretCheck.Unreachable($"{selected.Name} did not answer within {KeyCheckBudget.TotalSeconds:0} seconds.");
-        }
-        catch (TtsException ex)
-        {
-            // The provider's own refusal, which is the one case that means the key is wrong.
-            return SecretCheck.Rejected(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
-            return SecretCheck.Unreachable(ex.Message);
-        }
-    }
-
-    /// <summary>Proves a key by speaking one character and throwing the audio away (Phase 58).</summary>
-    private async Task<SecretCheck> ProveSpeechKeyAsync(
-        ITtsProvider provider,
-        TtsProviderInfo selected,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            // Any voice from the provider's own list: the check is of the key, not of a choice.
-            var listed = await provider.ListVoicesAsync(cancellationToken).ConfigureAwait(false);
-
-            _ = await provider
-                .SynthesizeAsync(".", new VoiceSelection(listed.Voices.FirstOrDefault()?.Id), cancellationToken)
-                .ConfigureAwait(false);
-
-            return SecretCheck.Works($"{selected.Name} accepted the key.");
-        }
-        catch (OperationCanceledException)
-        {
-            return SecretCheck.Unreachable(
-                $"{selected.Name} did not answer within {KeyCheckBudget.TotalSeconds:0} seconds.");
-        }
-        catch (TtsException ex) when (ex.Fault == TtsFault.KeyRejected)
-        {
-            return SecretCheck.Rejected(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            // Everything else is the network's problem rather than the key's, which is what the Commander
-            // needs to know: there is nothing here for them to change.
-            _logger.LogWarning(ex, "The {Provider} key check could not be completed", selected.Name);
-            return SecretCheck.Unreachable(ex.Message);
-        }
-    }
-
-    /// <summary>The service's own words where it gave any, punctuated to finish the sentence.</summary>
-    private static string Reason(string? detail) =>
-        detail is { Length: > 0 } said ? $" — {said}." : ".";
 
     /// <summary>The secret store is the real home for a key.</summary>
     private (string Key, string Source)? ResolveKey(LlmProviderInfo provider)
@@ -7946,17 +7092,7 @@ public sealed class AppHost : IDisposable
         Audio.Silence();
         Audio.Dispose();
         _audioSink.Dispose();
-        lock (_speechGate)
-        {
-            foreach (var client in _clients.Values)
-            {
-                (client as IDisposable)?.Dispose();
-            }
-
-            _clients.Clear();
-            _slots.Clear();
-            ReleaseCastClients(all: true);
-        }
+        Speech.Dispose();
 
         _warming.Dispose();
         _rewordingProposals.Dispose();
