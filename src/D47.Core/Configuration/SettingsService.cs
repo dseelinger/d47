@@ -47,7 +47,7 @@ public sealed record SettingApplyResult(SettingApplyStatus Status, string Messag
     public bool Ok => Status is SettingApplyStatus.Applied or SettingApplyStatus.Unchanged;
 }
 
-public sealed record SettingsChanged(string Key, D47Settings Settings);
+public sealed record SettingsChanged(string Key, D47Settings Settings, SettingsCaller? Caller = null);
 
 /// <summary>One attempt to set a row, and what came of it — including the attempts that changed nothing.</summary>
 public sealed record SettingApplied(string Key, SettingApplyStatus Status);
@@ -292,7 +292,7 @@ public sealed class SettingsService
 
         // A row that is the Commander's own resets by forgetting their answer rather than by writing a blank
         // one — see CommanderScope.WithOneFieldForgotten for why an ordinary write cannot express that.
-        if (row.Scope == SettingScope.Commander && ForgetCommanderAnswer(row) is { } forgotten)
+        if (row.Scope == SettingScope.Commander && ForgetCommanderAnswer(row, caller) is { } forgotten)
         {
             return forgotten;
         }
@@ -392,7 +392,7 @@ public sealed class SettingsService
     /// Removes this Commander's own answer for a row, or null when there is nothing of theirs to remove
     /// and the ordinary write should handle it.
     /// </summary>
-    private SettingApplyResult? ForgetCommanderAnswer(SettingRow row)
+    private SettingApplyResult? ForgetCommanderAnswer(SettingRow row, SettingsCaller caller)
     {
         if (row.Binding is not { } binding)
         {
@@ -415,7 +415,7 @@ public sealed class SettingsService
             Current = CommanderScope.Project(candidate, _commanderFid);
 
             _logger.LogInformation("Reset {Key} to the installation's value", row.Key);
-            Changed?.Invoke(new SettingsChanged(row.Key, Current));
+            Changed?.Invoke(new SettingsChanged(row.Key, Current, caller));
 
             // The same fence, and the same telling, as an ordinary change (#368): live for this run, refused
             // as a status, so nothing counts it as remembered.
@@ -562,7 +562,7 @@ public sealed class SettingsService
         _logger.LogInformation("{Caller} set {Key} to {Value}", caller, key, Describe(normalised));
         // row.Key, not key, for the same reason Applied uses it — and matching what the two other raise sites
         // already do.
-        Changed?.Invoke(new SettingsChanged(row.Key, Current));
+        Changed?.Invoke(new SettingsChanged(row.Key, Current, caller));
 
         if (_loadFailed)
         {
@@ -585,7 +585,7 @@ public sealed class SettingsService
             {
                 // A key change alters what the provider can do, so it announces itself like any other setting
                 // even though the value never entered D47Settings.
-                Changed?.Invoke(new SettingsChanged(row.Key, Current));
+                Changed?.Invoke(new SettingsChanged(row.Key, Current, caller));
             }
 
             return new SettingApplyResult(
@@ -595,7 +595,7 @@ public sealed class SettingsService
 
         _secrets.Set(name, value);
         _logger.LogInformation("{Caller} stored a new value for {Key}", caller, row.Key);
-        Changed?.Invoke(new SettingsChanged(row.Key, Current));
+        Changed?.Invoke(new SettingsChanged(row.Key, Current, caller));
 
         return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} stored.");
     }

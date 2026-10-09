@@ -3835,33 +3835,34 @@ public sealed class AppHost : IDisposable
     private readonly Dictionary<string, (DateTimeOffset At, SessionSummary? Session)> _personaLastSeen =
         new(StringComparer.Ordinal);
 
-    /// <summary>What kind of switch the settings write about to arrive is (Phase 35).</summary>
-    private PersonaSwitch _personaCause = PersonaSwitch.Selected;
-
     /// <summary>
     /// Puts the core the Commander bound to this ship aboard (Phase 35, "Switching ships switches the
     /// core").
     /// </summary>
     public void PutCoreAboard(ShipCoreSwitch due)
     {
-        _personaCause = due.Announce ? PersonaSwitch.Ship : PersonaSwitch.Adopted;
+        var cause = due.Announce ? PersonaSwitch.Ship : PersonaSwitch.Adopted;
+        var applied = BoardCore(due.Core, cause);
 
-        try
-        {
-            var applied = Settings.Apply(
-                PersonaCapability.PersonaKey, due.Core, SettingsCaller.ShipBinding);
+        _logger.LogInformation(
+            "Ship {ShipId} asks for {Core}: {Status} ({Cause})",
+            due.ShipId,
+            due.Core,
+            applied.Status,
+            cause);
+    }
 
-            _logger.LogInformation(
-                "Ship {ShipId} asks for {Core}: {Status} ({Cause})",
-                due.ShipId,
-                due.Core,
-                applied.Status,
-                _personaCause);
-        }
-        finally
+    /// <summary>Writes the persona setting as the ship binding, then applies it with <paramref name="cause"/> once it has been saved.</summary>
+    private SettingApplyResult BoardCore(string core, PersonaSwitch cause)
+    {
+        var applied = Settings.Apply(PersonaCapability.PersonaKey, core, SettingsCaller.ShipBinding);
+
+        if (applied.Status == SettingApplyStatus.Applied)
         {
-            _personaCause = PersonaSwitch.Selected;
+            ApplyPersonaSettings(cause);
         }
+
+        return applied;
     }
 
     /// <summary>What a new Commander logging in actually changes (Phase 44).</summary>
@@ -3948,7 +3949,7 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>Puts the persona settings into effect. Called from the settings thread and the tick thread.</summary>
-    private void ApplyPersonaSettings()
+    private void ApplyPersonaSettings(PersonaSwitch cause)
     {
         lock (_personaGate)
         {
@@ -3965,7 +3966,7 @@ public sealed class AppHost : IDisposable
                 ? TelemetryDelta.Between(session, GameState.Active?.Session, GameState.Active)
                 : null;
 
-            if (!Personas.Apply(Settings.Current.Persona, away, delta, _personaCause))
+            if (!Personas.Apply(Settings.Current.Persona, away, delta, cause))
             {
                 // The name may still have changed underneath an unchanged core, and that is part of the persona
                 // block, so the prompt is rebuilt either way.
@@ -3991,7 +3992,7 @@ public sealed class AppHost : IDisposable
 
         if (Interlocked.Exchange(ref _heldCores, held) != held)
         {
-            ApplyPersonaSettings();
+            ApplyPersonaSettings(PersonaSwitch.Selected);
             CoreHoldChanged?.Invoke();
         }
     }
@@ -4004,16 +4005,7 @@ public sealed class AppHost : IDisposable
     {
         if (storyCore is not null)
         {
-            _personaCause = PersonaSwitch.Adopted;
-
-            try
-            {
-                Settings.Apply(PersonaCapability.PersonaKey, storyCore.Id, SettingsCaller.ShipBinding);
-            }
-            finally
-            {
-                _personaCause = PersonaSwitch.Selected;
-            }
+            BoardCore(storyCore.Id, PersonaSwitch.Adopted);
         }
 
         var line = GuardianCores.Line(waking, storyCore);
@@ -6375,7 +6367,11 @@ public sealed class AppHost : IDisposable
                 break;
 
             case SettingsSubsystem.Persona:
-                ApplyPersonaSettings();
+                if (change.Caller != SettingsCaller.ShipBinding)
+                {
+                    ApplyPersonaSettings(PersonaSwitch.Selected);
+                }
+
                 break;
 
             default:
