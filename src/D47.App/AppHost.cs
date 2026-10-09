@@ -547,12 +547,6 @@ public sealed class AppHost : IDisposable
     /// <summary>Every phrase already in use, for the panel page's rename prompt (#490).</summary>
     public Func<IReadOnlyCollection<string>> BookmarkPhrasesTaken { get; private set; } = () => [];
 
-    /// <summary>The one name a lookup is waiting to be corrected about.</summary>
-    private readonly MishearingWatch _mishearings = new();
-
-    /// <summary>The outstanding mishearing, for the capability that asks about it.</summary>
-    internal MishearingWatch Mishearings => _mishearings;
-
     /// <summary>Whether a rescan is already running.</summary>
     private int _rescanning;
 
@@ -1908,7 +1902,7 @@ public sealed class AppHost : IDisposable
                 // How a misheard proper noun is recovered (#134).
                 new SpokenNamesSurface(
                     () => gameState.Active?.Names ?? SpokenNames.Empty,
-                    self?.Mishearings ?? new MishearingWatch(),
+                    new MishearingWatch(),
                     (heard, meant) => self?.LearnCorrection(heard, meant)),
                 cancellation,
                 callouts,
