@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A core switched back in reacts to the time since it left, not since it last came aboard. A core aboard when Elite closed counts its absence from then.
+
 A line still waiting to be spoken when D47 closed could throw an error on the way out. It is now dropped quietly.
 
 A core picked on the panel while a ship switch was landing is no longer announced as the ship's core, or kept silent.

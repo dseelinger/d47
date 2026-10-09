@@ -195,12 +195,7 @@ public sealed class AppHost : IDisposable
             Listener.ResumeListening,
             PlayOwnVoice,
             loggerFactory.CreateLogger<OwnVoiceRecording>());
-
-        // When each core was last aboard, from previous runs (Phase 35).
-        foreach (var (core, at) in viewState.Load().CoresLastAboard)
-        {
-            _personaLastSeen[core] = (at, null);
-        }
+        Absences = new CoreAbsences(viewState, () => DateTimeOffset.Now, loggerFactory.CreateLogger<CoreAbsences>());
     }
 
     /// <summary>Shows the changelog that shipped inside this build (#50).</summary>
@@ -3003,6 +2998,8 @@ public sealed class AppHost : IDisposable
         // The cores the Commander wrote, on the tick like every other store.
         tick.Add("own cores", _ => ownPersonas.Poll());
 
+        tick.Add("core absences", context => host.Absences.Observe(arrived, context.IsFirst, host.Personas.Current.Id));
+
         // A core per ship (Phase 35).
         tick.Add("ship cores", context =>
         {
@@ -3833,11 +3830,8 @@ public sealed class AppHost : IDisposable
     /// <summary>How often the memory store is checked for entries past their expiry (Phase 31).</summary>
     private static readonly TimeSpan ExpiryEvery = TimeSpan.FromMinutes(10);
 
-    private DateTimeOffset _personaSelectedAt = DateTimeOffset.Now;
-
-    /// <summary>When each core was last aboard, and what the ship's ledger looked like then.</summary>
-    private readonly Dictionary<string, (DateTimeOffset At, SessionSummary? Session)> _personaLastSeen =
-        new(StringComparer.Ordinal);
+    /// <summary>When each core last left the ship.</summary>
+    public CoreAbsences Absences { get; }
 
     /// <summary>
     /// Puts the core the Commander bound to this ship aboard (Phase 35, "Switching ships switches the
@@ -3927,31 +3921,6 @@ public sealed class AppHost : IDisposable
         Noted?.Invoke($"Commander {change.Current.Name} logged in");
     }
 
-    /// <summary>
-    /// Writes down when the core aboard stopped being aboard, so a gap reaction can be about a month
-    /// rather than about an evening (Phase 35).
-    /// </summary>
-    private void RememberCoreAboard(string id, DateTimeOffset at)
-    {
-        try
-        {
-            var state = ViewState.Load();
-
-            ViewState.Save(state with
-            {
-                CoresLastAboard = new Dictionary<string, DateTimeOffset>(state.CoresLastAboard, StringComparer.Ordinal)
-                {
-                    [id] = at,
-                },
-            });
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Losing this costs one core one gap reaction it will not give.
-            _logger.LogDebug(ex, "Could not record when {Core} was last aboard", id);
-        }
-    }
-
     /// <summary>Puts the persona settings into effect. Called from the settings thread and the tick thread.</summary>
     private void ApplyPersonaSettings(PersonaSwitch cause)
     {
@@ -3959,16 +3928,10 @@ public sealed class AppHost : IDisposable
         {
             var outgoing = Personas.Current;
 
-            // Remembered before the switch, because after it there is nothing left to measure against.
-            _personaLastSeen[outgoing.Id] = (_personaSelectedAt, GameState.Active?.Session ?? SessionSummary.Empty);
+            Absences.Leaving(outgoing.Id, GameState.Active?.Session ?? SessionSummary.Empty);
 
             var incoming = Personas.Cores.Admit(PersonaCatalog.Resolve(Settings.Current.Persona.Id));
-            var seen = _personaLastSeen.TryGetValue(incoming.Id, out var last) ? last : default;
-
-            var away = seen.At == default ? (TimeSpan?)null : DateTimeOffset.Now - seen.At;
-            var delta = seen.At != default && seen.Session is { } session
-                ? TelemetryDelta.Between(session, GameState.Active?.Session, GameState.Active)
-                : null;
+            var (away, delta) = Absences.Returning(incoming.Id, GameState.Active);
 
             if (!Personas.Apply(Settings.Current.Persona, away, delta, cause))
             {
@@ -3978,10 +3941,7 @@ public sealed class AppHost : IDisposable
                 return;
             }
 
-            _personaSelectedAt = DateTimeOffset.Now;
-
-            // The core that just left, written where the next session can read it.
-            RememberCoreAboard(outgoing.Id, _personaLastSeen[outgoing.Id].At);
+            Absences.Switched(outgoing.Id);
 
             // Each core owns its transcript, handed over by reference so the turns land in it directly.
             Turns.UseTranscript(Personas.Transcript);
@@ -6550,8 +6510,7 @@ public sealed class AppHost : IDisposable
         // The debrief, over what this session sounded like (#162).
         RunDebrief();
 
-        // When the core aboard stopped being aboard, which is now (Phase 35).
-        RememberCoreAboard(Personas.Current.Id, DateTimeOffset.Now);
+        Absences.Exiting(Personas.Current.Id);
 
         Settings.Changed -= OnSettingsChanged;
         Personas.Changed -= OnPersonaChanged;
