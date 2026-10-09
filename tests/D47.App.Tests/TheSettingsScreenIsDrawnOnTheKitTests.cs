@@ -150,13 +150,18 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     private static Color Ink(string key) =>
         ((ISolidColorBrush)Avalonia.Application.Current!.Resources[key]!).Color;
 
+    public static TheoryData<string> SettingsSourceFiles()
+    {
+        var folder = Path.Combine(Root(), "src", "D47.App", "Settings");
+        var names = Directory.EnumerateFiles(folder, "SettingsView*").Select(Path.GetFileName).OfType<string>()
+            .Concat(["SecretEditor.cs", "SwitchEditing.cs", "LoreEditing.cs", "FirstRunDialog.cs"])
+            .Distinct();
+
+        return new TheoryData<string>(names);
+    }
+
     [Theory]
-    [InlineData("SettingsView.axaml.cs")]
-    [InlineData("SettingsView.axaml")]
-    [InlineData("SecretEditor.cs")]
-    [InlineData("SwitchEditing.cs")]
-    [InlineData("LoreEditing.cs")]
-    [InlineData("FirstRunDialog.cs")]
+    [MemberData(nameof(SettingsSourceFiles))]
     public void TheSettingsSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Settings", file));
