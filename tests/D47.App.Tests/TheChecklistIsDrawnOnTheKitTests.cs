@@ -49,7 +49,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         checklists.ProposeAdd(ChecklistScope.Universal, ["Run to the supermarket"]);
 
         var goals = new GoalBook(
-            new GoalStore(Path.Combine(paths.Data, "goals.json"), NullLogger<GoalStore>.Instance),
+            new GoalStore(Path.Combine(paths.Data, "goals.json"), new MemoryFileSystem(), NullLogger<GoalStore>.Instance),
             () => null,
             () => null,
             checklists);

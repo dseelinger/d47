@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -35,7 +36,7 @@ public class SpendDialogTests
 
         var root = Path.Combine(TempFolders.Create("d47-spend-dialog"), "spend.jsonl");
         var clock = new StoppedClock(Noon);
-        var ledger = new SpendLedger(root, clock, NullLogger.Instance);
+        var ledger = new SpendLedger(root, new MemoryFileSystem(), clock, NullLogger.Instance);
 
         var usage = new LlmUsage(1_240, 380, 0, 18_400);
         session = new SpendTracker(ledger);
@@ -326,7 +327,7 @@ public class SpendDialogTests
             .Apply(TestSurface.Settings().Current.Ui.Theme);
 
         var root = Path.Combine(TempFolders.Create("d47-spend-dialog-empty"), "spend.jsonl");
-        var ledger = new SpendLedger(root, new StoppedClock(Noon), NullLogger.Instance);
+        var ledger = new SpendLedger(root, new MemoryFileSystem(), new StoppedClock(Noon), NullLogger.Instance);
 
         var dialog = new SpendDialog(
             null,

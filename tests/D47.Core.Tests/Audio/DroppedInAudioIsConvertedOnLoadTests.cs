@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Buffers.Binary;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -177,7 +178,7 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
     }
 
     private FolderAudioSource Source(IAudioDecoder? decoder) =>
-        new(_root, NullLogger<FolderAudioSource>.Instance, decoder);
+        new(_root, new DiskFileSystem(), NullLogger<FolderAudioSource>.Instance, decoder);
 
     private CueLibrary Load() => LoadWith(decoder: null);
 

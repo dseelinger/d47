@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -6,15 +7,11 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Charges kept between runs, so "what has this cost this month" has an answer.</summary>
-[Trait("Category", "Integration")]
-public class SpendLedgerTests : IDisposable
+public class SpendLedgerTests
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        "d47-spend-tests",
-        Guid.NewGuid().ToString("n"));
+    private readonly MemoryFileSystem _files = new();
 
-    private string File => Path.Combine(_root, "spend.jsonl");
+    private const string File = "spend.jsonl";
 
     /// <summary>A clock that is wherever the test puts it.</summary>
     private sealed class StoppedClock(DateTimeOffset at) : IWallClock
@@ -25,26 +22,8 @@ public class SpendLedgerTests : IDisposable
     private static readonly DateTimeOffset Noon =
         new(2026, 8, 17, 12, 0, 0, TimeSpan.Zero);
 
-    public SpendLedgerTests() => Directory.CreateDirectory(_root);
-
-    public void Dispose()
-    {
-        try
-        {
-            if (Directory.Exists(_root))
-            {
-                Directory.Delete(_root, recursive: true);
-            }
-        }
-        catch (IOException)
-        {
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
     private SpendLedger Ledger(IWallClock clock) =>
-        new(File, clock, NullLogger.Instance);
+        new(File, _files, clock, NullLogger.Instance);
 
     private static SpendEntry Model(decimal dollars, bool priced = true) => new()
     {
@@ -173,7 +152,7 @@ public class SpendLedgerTests : IDisposable
         var clock = new StoppedClock(Noon);
         Ledger(clock).Append(Model(0.10m));
 
-        System.IO.File.AppendAllText(File, "{\"at\":\"2026-08-17T12:00:00+00:00\",\"doll");
+        _files.AppendText(File, "{\"at\":\"2026-08-17T12:00:00+00:00\",\"doll");
 
         var next = Ledger(clock);
 

@@ -47,7 +47,7 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
         state.Apply(Event("Progress", "\"Combat\":20, \"Trade\":56, \"Explore\":10, \"Empire\":30, \"Federation\":70"));
 
         var goals = new GoalBook(
-            new GoalStore(Path.Combine(paths.Data, "goals.json"), NullLogger<GoalStore>.Instance),
+            new GoalStore(Path.Combine(paths.Data, "goals.json"), new MemoryFileSystem(), NullLogger<GoalStore>.Instance),
             () => "F1",
             () => state,
             checklists);

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -70,7 +71,7 @@ public class FolderAudioSourceTests : IDisposable
     }
 
     private FolderAudioSource Source() =>
-        new(_root, NullLogger<FolderAudioSource>.Instance);
+        new(_root, new DiskFileSystem(), NullLogger<FolderAudioSource>.Instance);
 
     private CueLibrary Load() =>
         CueLibrary.Load(null, new EmbeddedCueSource(typeof(CueLibrary).Assembly), Source());

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -106,7 +107,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
         var pictures = new SpeakerPictures(paths);
         File.WriteAllBytes(pictures.Default(Picture), Jpeg(300, 300, Colors.DarkOrange));
 
-        var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), NullLogger<MessageStore>.Instance);
+        var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
         var earlier = messages.Post("Juno", "Ride Along", "You did not see me.", DateTimeOffset.Now.AddDays(-1), picture: Picture);
         var later = messages.Post("Juno", "Ride Along", "Still here.", DateTimeOffset.Now, picture: Picture);
 

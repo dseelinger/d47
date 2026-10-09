@@ -43,7 +43,7 @@ public class MiniCarriesNoPageChromeTests
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
 
         var goals = new GoalBook(
-            new GoalStore(Path.Combine(paths.Data, "goals.json"), NullLogger<GoalStore>.Instance),
+            new GoalStore(Path.Combine(paths.Data, "goals.json"), new MemoryFileSystem(), NullLogger<GoalStore>.Instance),
             () => null,
             () => null,
             checklists);

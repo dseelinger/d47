@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Conversation;
 using D47.Core.Persona;
@@ -43,7 +44,7 @@ public class LiveScenarioTests
         var model = Model ?? Blank(provider.DefaultModel);
 
         var ledger = new SpendLedger(
-            Path.Combine(AppContext.BaseDirectory, "scenario-spend.jsonl"),
+            Path.Combine(AppContext.BaseDirectory, "scenario-spend.jsonl"), new DiskFileSystem(),
             SystemWallClock.Instance,
             NullLogger.Instance);
 

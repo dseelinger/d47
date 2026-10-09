@@ -1,10 +1,10 @@
+using D47.Core.Storage;
 using D47.Core.Messages;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests;
 
-[Trait("Category", "Integration")]
 public class OpeningAMessageMarksItReadTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
@@ -13,7 +13,8 @@ public class OpeningAMessageMarksItReadTests
     public void MarkingReadDropsTheUnreadCountAndSurvivesAReload()
     {
         var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json");
-        var store = new MessageStore(path, NullLogger<MessageStore>.Instance);
+        var files = new MemoryFileSystem();
+        var store = new MessageStore(path, files, NullLogger<MessageStore>.Instance);
         var message = store.Post("narrator", "Subject", "Body", Noon);
 
         Assert.Equal(1, store.UnreadCount);
@@ -21,14 +22,14 @@ public class OpeningAMessageMarksItReadTests
         Assert.False(store.MarkRead(message.Key));
         Assert.Equal(0, store.UnreadCount);
 
-        var reloaded = new MessageStore(path, NullLogger<MessageStore>.Instance);
+        var reloaded = new MessageStore(path, files, NullLogger<MessageStore>.Instance);
         Assert.True(Assert.Single(reloaded.All).Read);
     }
 
     [Fact]
     public void MessagesComeNewestFirst()
     {
-        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), NullLogger<MessageStore>.Instance);
+        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
         store.Post("narrator", "old", "x", Noon);
         store.Post("narrator", "new", "x", Noon.AddHours(1));
 

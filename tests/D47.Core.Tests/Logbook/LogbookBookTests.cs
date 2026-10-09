@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -96,7 +97,7 @@ public class LogbookBookTests : IDisposable
         Evening1();
 
         var ledger = new SpendLedger(
-            Path.Combine(_folder, "spend.jsonl"),
+            Path.Combine(_folder, "spend.jsonl"), new MemoryFileSystem(),
             SystemWallClock.Instance,
             NullLogger<SpendLedger>.Instance);
 

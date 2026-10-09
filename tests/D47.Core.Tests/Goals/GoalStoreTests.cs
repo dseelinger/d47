@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Goals;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -5,23 +6,13 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>The arcs on disk.</summary>
-[Trait("Category", "Integration")]
-public class GoalStoreTests : IDisposable
+public class GoalStoreTests
 {
     private static readonly DateTimeOffset Now = new(3311, 6, 1, 0, 0, 0, TimeSpan.Zero);
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-goal-store", Guid.NewGuid().ToString("N"));
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private const string GoalsFile = "goals.json";
 
     [Fact]
     public void AMineRoundTripsThroughTheFile()
@@ -136,10 +127,7 @@ public class GoalStoreTests : IDisposable
     [Fact]
     public void ABadGoalIsRefusedByNameAndTheRestAreKept()
     {
-        var path = Path.Combine(_folder, "goals.json");
-        Directory.CreateDirectory(_folder);
-
-        File.WriteAllText(path, """
+        _files.WriteText(GoalsFile, """
             {
               "commanders": [
                 {
@@ -153,7 +141,7 @@ public class GoalStoreTests : IDisposable
             }
             """);
 
-        var store = new GoalStore(path, NullLogger<GoalStore>.Instance);
+        var store = new GoalStore(GoalsFile, _files, NullLogger<GoalStore>.Instance);
         store.Poll();
 
         Assert.Single(store.AuthoredBy("F1"));
@@ -179,7 +167,7 @@ public class GoalStoreTests : IDisposable
     }
 
     private GoalStore Store() =>
-        new(Path.Combine(_folder, "goals.json"), NullLogger<GoalStore>.Instance);
+        new(GoalsFile, _files, NullLogger<GoalStore>.Instance);
 
     private static GoalArc Authored(string key, string name) =>
         new() { Key = key, Name = name, Done = "Yours to call finished.", Kind = GoalKind.Authored, Written = Now };

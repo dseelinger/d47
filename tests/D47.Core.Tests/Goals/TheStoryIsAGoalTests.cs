@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Goals;
 using D47.Core.Stories;
@@ -87,7 +88,7 @@ public sealed class TheStoryIsAGoalTests : IDisposable
     [Fact]
     public void TheGoalCanBeRemovedButNotFinishedByHand()
     {
-        var store = new GoalStore(Path.Combine(_folder, "goals.json"), NullLogger<GoalStore>.Instance);
+        var store = new GoalStore(Path.Combine(_folder, "goals.json"), new MemoryFileSystem(), NullLogger<GoalStore>.Instance);
         store.Poll();
 
         var book = new GoalBook(store, () => "F1", () => null) { Story = () => Goal(Running) };

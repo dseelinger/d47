@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Messages;
 using D47.Core.Stories;
@@ -24,7 +25,7 @@ public class ARemovedAdventureTakesItsMessagesWithItTests : IDisposable
     {
         Directory.CreateDirectory(_folder);
         _adventures = new AdventureStore(Path.Combine(_folder, "adventures.json"), NullLogger<AdventureStore>.Instance);
-        _messages = new MessageStore(Path.Combine(_folder, "messages.json"), NullLogger<MessageStore>.Instance);
+        _messages = new MessageStore(Path.Combine(_folder, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
     }
 
     public void Dispose()

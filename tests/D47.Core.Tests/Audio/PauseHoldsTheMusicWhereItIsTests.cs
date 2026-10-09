@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Audio;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -199,6 +200,6 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
         return CueLibrary.Load(
             null,
             new EmbeddedCueSource(typeof(CueLibrary).Assembly),
-            new FolderAudioSource(_root, NullLogger<FolderAudioSource>.Instance));
+            new FolderAudioSource(_root, new DiskFileSystem(), NullLogger<FolderAudioSource>.Instance));
     }
 }

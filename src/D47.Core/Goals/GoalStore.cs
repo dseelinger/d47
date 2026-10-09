@@ -9,7 +9,7 @@ namespace D47.Core.Goals;
 public sealed record GoalProblem(string Where, string Reason);
 
 /// <summary>The arcs on disk — <c>data/goals.json</c> (Phase 34).</summary>
-public sealed class GoalStore(string path, ILogger<GoalStore> logger)
+public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore> logger)
 {
     /// <summary>The key used where the journals never said who was flying.</summary>
     public const string NoCommander = "";
@@ -80,7 +80,7 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
 
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -91,7 +91,7 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 if (_seen is null)
                 {
@@ -112,11 +112,14 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -385,7 +388,7 @@ public sealed class GoalStore(string path, ILogger<GoalStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, text);
+            files.WriteText(path, text);
 
             lock (_gate)
             {

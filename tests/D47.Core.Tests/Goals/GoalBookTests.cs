@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Text.Json;
 using D47.Core.Checklists;
 using D47.Core.Goals;
@@ -227,7 +228,7 @@ public class GoalBookTests : IDisposable
         Func<CommanderGameState?>? state = null)
     {
         var store = new GoalStore(
-            Path.Combine(install.Paths.Data, "goals.json"),
+            Path.Combine(install.Paths.Data, "goals.json"), new MemoryFileSystem(),
             NullLogger<GoalStore>.Instance);
 
         store.Poll();

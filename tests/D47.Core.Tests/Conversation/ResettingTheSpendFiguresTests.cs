@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -44,7 +45,7 @@ public class ResettingTheSpendFiguresTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private SpendLedger Ledger(IWallClock clock) => new(File, clock, NullLogger.Instance);
+    private SpendLedger Ledger(IWallClock clock) => new(File, new MemoryFileSystem(), clock, NullLogger.Instance);
 
     private static SpendEntry Model(DateTimeOffset at, decimal dollars) => new()
     {

@@ -9,7 +9,7 @@ namespace D47.Core.Messages;
 /// The Commander's messages on disk — <c>data/messages.json</c>, append-only and capped — with the clips spoken
 /// messages keep, deleted with their message.
 /// </summary>
-public sealed class MessageStore(string path, ILogger<MessageStore> logger, MessageClips? clips = null)
+public sealed class MessageStore(string path, IFileSystem files, ILogger<MessageStore> logger, MessageClips? clips = null)
 {
     public const string Narrator = "narrator";
 
@@ -248,8 +248,8 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger, Mess
 
         try
         {
-            _messages = File.Exists(path)
-                ? JsonSerializer.Deserialize<List<D47Message>>(File.ReadAllText(path), Json) ?? []
+            _messages = files.ReadText(path) is { } text
+                ? JsonSerializer.Deserialize<List<D47Message>>(text, Json) ?? []
                 : [];
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -301,7 +301,7 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger, Mess
     {
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(messages, Json));
+            files.WriteText(path, JsonSerializer.Serialize(messages, Json));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

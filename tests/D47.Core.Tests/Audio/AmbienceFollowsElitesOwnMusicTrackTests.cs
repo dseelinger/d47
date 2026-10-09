@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Audio;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -178,7 +179,7 @@ public class AmbienceFollowsElitesOwnMusicTrackTests : IDisposable
         var library = CueLibrary.Load(
             null,
             new EmbeddedCueSource(typeof(CueLibrary).Assembly),
-            new FolderAudioSource(drops, NullLogger<FolderAudioSource>.Instance));
+            new FolderAudioSource(drops, new DiskFileSystem(), NullLogger<FolderAudioSource>.Instance));
 
         Assert.Empty(library.Skipped);
 

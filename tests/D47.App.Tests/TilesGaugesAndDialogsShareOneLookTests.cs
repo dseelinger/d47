@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -49,7 +50,7 @@ public class TilesGaugesAndDialogsShareOneLookTests
     private static SpendDialog Spend()
     {
         var ledger = new SpendLedger(
-            Path.Combine(TempFolders.Create("d47-modal-spend"), "spend.jsonl"), new StoppedClock(), NullLogger.Instance);
+            Path.Combine(TempFolders.Create("d47-modal-spend"), "spend.jsonl"), new MemoryFileSystem(), new StoppedClock(), NullLogger.Instance);
         var session = new SpendTracker(ledger);
         session.Record(new TurnCost(new LlmUsage(1_240, 380, 0, 18_400), 0.0231m, true), true, "anthropic", "claude-opus-5");
 

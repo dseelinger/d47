@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -48,7 +49,7 @@ public class TheRowAccountsForEveryDroppedFileTests : IDisposable
         var decoder = new RefusingDecoder();
         WriteBytes("beds/broken.mp3", [1, 2, 3]);
 
-        var source = new FolderAudioSource(_root, NullLogger<FolderAudioSource>.Instance, decoder);
+        var source = new FolderAudioSource(_root, new DiskFileSystem(), NullLogger<FolderAudioSource>.Instance, decoder);
         var library = CueLibrary.Load(null, new EmbeddedCueSource(typeof(CueLibrary).Assembly), source);
 
         Assert.Equal(

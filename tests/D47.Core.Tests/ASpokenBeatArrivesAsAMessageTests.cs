@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Messages;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -28,7 +29,7 @@ public class ASpokenBeatArrivesAsAMessageTests
     [Fact]
     public void ABeatIsPostedUnderItsTitleWithTheStoryKey()
     {
-        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), NullLogger<MessageStore>.Instance);
+        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
 
         AdventureMessages.Post(store, "narrator", Story(), "salvage", 0, "There it is.", Noon);
 
@@ -44,7 +45,7 @@ public class ASpokenBeatArrivesAsAMessageTests
     [Fact]
     public void TheOpeningIsPostedUnderTheStoryName()
     {
-        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), NullLogger<MessageStore>.Instance);
+        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
 
         AdventureMessages.Post(store, "narrator", Story(), "salvage", -1, "It begins.", Noon);
 
@@ -54,7 +55,7 @@ public class ASpokenBeatArrivesAsAMessageTests
     [Fact]
     public void TheOldestReadMessageGoesFirstWhenTheStoreIsFull()
     {
-        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), NullLogger<MessageStore>.Instance);
+        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
         var first = store.Post("narrator", "a", "a", Noon);
         var second = store.Post("narrator", "b", "b", Noon.AddMinutes(1));
         store.MarkRead(second.Key);

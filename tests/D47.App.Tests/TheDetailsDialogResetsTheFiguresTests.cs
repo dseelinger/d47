@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
@@ -47,7 +48,7 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
     private SpendDialog Dialog(out SpendLedger ledger, DateTimeOffset? launchedAt)
     {
         ledger = new SpendLedger(
-            Path.Combine(_root, "spend.jsonl"),
+            Path.Combine(_root, "spend.jsonl"), new MemoryFileSystem(),
             new StoppedClock(Noon),
             NullLogger.Instance);
 

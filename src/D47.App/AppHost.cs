@@ -1097,6 +1097,7 @@ public sealed class AppHost : IDisposable
         // The Commander's long arcs (Phase 34).
         var goals = new D47.Core.Goals.GoalStore(
             Path.Combine(paths.Data, "goals.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Goals.GoalStore>());
 
         goals.Poll();
@@ -1110,6 +1111,7 @@ public sealed class AppHost : IDisposable
 
         var messageStore = new D47.Core.Messages.MessageStore(
             Path.Combine(paths.Data, "messages.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>(),
             new D47.Core.Messages.MessageClips(Path.Combine(paths.Data, "messages"), new DpapiSecretProtector()));
 
@@ -1421,6 +1423,7 @@ public sealed class AppHost : IDisposable
         // The history behind the running totals.
         var spendLedger = new SpendLedger(
             paths.SpendFile,
+            files,
             SystemWallClock.Instance,
             loggerFactory.CreateLogger<SpendLedger>());
 
@@ -1534,7 +1537,7 @@ public sealed class AppHost : IDisposable
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
         // and the device list from it.
         var dropsLogger = loggerFactory.CreateLogger<FolderAudioSource>();
-        var drops = new FolderAudioSource(paths.Audio, dropsLogger, new MediaFoundationDecoder());
+        var drops = new FolderAudioSource(paths.Audio, files, dropsLogger, new MediaFoundationDecoder());
         var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
         var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
 
@@ -4174,7 +4177,7 @@ public sealed class AppHost : IDisposable
     /// <summary>Re-reads <c>data/audio/</c> and replaces <see cref="Cues"/>. Runs on the thread pool.</summary>
     private void RebuildAudio(string folder, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
     {
-        var drops = new FolderAudioSource(folder, dropsLogger, new MediaFoundationDecoder());
+        var drops = new FolderAudioSource(folder, Files, dropsLogger, new MediaFoundationDecoder());
         var cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
 
         _cues = cues;

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -125,7 +126,7 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
         paths.EnsureCreated();
         var (surface, _, _) = Open(paths);
 
-        var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), NullLogger<MessageStore>.Instance);
+        var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
         var fromQuill = messages.Post("Quill", "The Test Story", "Your account is overdrawn.", DateTimeOffset.Now, cast: $"{StoryFixture.Story.Id}.teller");
         var fromShip = messages.Post("archivist", "The Test Story", "A song.", DateTimeOffset.Now);
 

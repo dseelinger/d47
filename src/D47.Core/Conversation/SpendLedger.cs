@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Conversation;
@@ -113,6 +114,7 @@ public sealed class SpendLedger
     };
 
     private readonly string _path;
+    private readonly IFileSystem _files;
     private readonly IWallClock _clock;
     private readonly ILogger _logger;
     private readonly List<SpendEntry> _entries;
@@ -125,28 +127,24 @@ public sealed class SpendLedger
     private bool _danglingLine;
 
     /// <summary>Reads the history in.</summary>
-    public SpendLedger(string path, IWallClock clock, ILogger logger)
+    public SpendLedger(string path, IFileSystem files, IWallClock clock, ILogger logger)
     {
         _path = path;
+        _files = files;
         _clock = clock;
         _logger = logger;
-        _entries = Read(path, logger);
-        _danglingLine = EndsMidLine(path);
+        _entries = Read(path, files, logger);
+        _danglingLine = EndsMidLine(path, files);
     }
 
     /// <summary>Whether the file ends without a line terminator.</summary>
-    private static bool EndsMidLine(string path)
+    private static bool EndsMidLine(string path, IFileSystem files)
     {
         try
         {
-            if (!File.Exists(path))
-            {
-                return false;
-            }
+            using var stream = files.OpenRead(path);
 
-            using var stream = File.OpenRead(path);
-
-            if (stream.Length == 0)
+            if (stream is null || stream.Length == 0)
             {
                 return false;
             }
@@ -188,7 +186,7 @@ public sealed class SpendLedger
             {
                 var lead = _danglingLine ? Environment.NewLine : string.Empty;
 
-                File.AppendAllText(
+                _files.AppendText(
                     _path,
                     lead + JsonSerializer.Serialize(stamped, Json) + Environment.NewLine);
 
@@ -330,19 +328,23 @@ public sealed class SpendLedger
         SpendPeriods.Resettable(_clock.UtcNow, zone, launchedAt);
 
     /// <summary>Loads what is on disk, skipping anything that will not parse.</summary>
-    private static List<SpendEntry> Read(string path, ILogger logger)
+    private static List<SpendEntry> Read(string path, IFileSystem files, ILogger logger)
     {
-        if (!File.Exists(path))
-        {
-            return [];
-        }
-
         var entries = new List<SpendEntry>();
         var skipped = 0;
 
         try
         {
-            foreach (var line in File.ReadLines(path))
+            using var stream = files.OpenRead(path);
+
+            if (stream is null)
+            {
+                return entries;
+            }
+
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
             {
                 if (string.IsNullOrWhiteSpace(line))
                 {

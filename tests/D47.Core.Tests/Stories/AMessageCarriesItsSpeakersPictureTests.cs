@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.IO.Compression;
 using System.Text.Json;
 using D47.Core.Configuration;
@@ -94,10 +95,11 @@ public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
     public void TheMessageKeepsItsPictureAcrossAReload()
     {
         var path = Path.Combine(_root, "messages.json");
-        new MessageStore(path, NullLogger<MessageStore>.Instance)
+        var files = new MemoryFileSystem();
+        new MessageStore(path, files, NullLogger<MessageStore>.Instance)
             .Post("Ren", "Ride Along", "Mind the hatch.", Now, picture: $"{Id}.dock-hand");
 
-        Assert.Equal($"{Id}.dock-hand", Assert.Single(new MessageStore(path, NullLogger<MessageStore>.Instance).All).Picture);
+        Assert.Equal($"{Id}.dock-hand", Assert.Single(new MessageStore(path, files, NullLogger<MessageStore>.Instance).All).Picture);
     }
 
     [Theory]

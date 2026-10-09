@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Audio;
 using D47.Core.Messages;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -29,6 +30,7 @@ public class ASpokenMessageKeepsItsClipTests : IDisposable
 
     private MessageStore Open() => new(
         Path.Combine(_folder, "messages.json"),
+        new DiskFileSystem(),
         NullLogger<MessageStore>.Instance,
         new MessageClips(ClipFolder, new ReversibleProtector()));
 

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -50,7 +51,7 @@ public class SpeechCountsInTheSessionTotalTests
             session,
             speech,
             new SpendLedger(
-                Path.Combine(TempFolders.Create("d47-session-total"), "spend.jsonl"),
+                Path.Combine(TempFolders.Create("d47-session-total"), "spend.jsonl"), new MemoryFileSystem(),
                 new StoppedClock(Noon),
                 NullLogger.Instance),
             ElevenAtFiveCents,

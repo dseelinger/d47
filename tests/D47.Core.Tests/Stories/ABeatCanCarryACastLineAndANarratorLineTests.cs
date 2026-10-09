@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Messages;
@@ -78,7 +79,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
         Assert.Equal(VoiceRole.Narrator, voices[1].Role);
         Assert.NotEqual(voices[0].Role, voices[1].Role);
 
-        var messages = new MessageStore(Path.Combine(_folder, "messages.json"), NullLogger<MessageStore>.Instance);
+        var messages = new MessageStore(Path.Combine(_folder, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
 
         foreach (var (announcement, voice) in said.Take(2).Zip(voices))
         {

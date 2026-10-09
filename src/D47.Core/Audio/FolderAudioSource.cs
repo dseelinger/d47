@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -18,6 +19,7 @@ public sealed class FolderAudioSource : ICueSource
     private static readonly string[] KnownFolders = [CuesFolder, AlertsFolder, BedsFolder, MusicFolder];
 
     private readonly string _root;
+    private readonly IFileSystem _disk;
     private readonly ILogger _logger;
     private readonly IAudioDecoder? _decoder;
 
@@ -30,9 +32,10 @@ public sealed class FolderAudioSource : ICueSource
     /// Reads every extension it lists. Without one only <c>.wav</c> is picked up, through
     /// <see cref="WavReader"/>.
     /// </param>
-    public FolderAudioSource(string root, ILogger logger, IAudioDecoder? decoder = null)
+    public FolderAudioSource(string root, IFileSystem files, ILogger logger, IAudioDecoder? decoder = null)
     {
         _root = root;
+        _disk = files;
         _logger = logger;
         _decoder = decoder;
         _files = Scan();
@@ -49,7 +52,7 @@ public sealed class FolderAudioSource : ICueSource
     /// <summary>Every file under the root that was never a candidate to load, with where it should go.</summary>
     public IReadOnlyList<string> Ignored => _ignored;
 
-    public Stream Open(string name) => File.OpenRead(PathOf(name));
+    public Stream Open(string name) => OpenFile(PathOf(name));
 
     /// <summary>
     /// Through the decoder where it reads the extension. A WAV it cannot read falls back to
@@ -80,7 +83,7 @@ public sealed class FolderAudioSource : ICueSource
 
         if (!Decodes(path))
         {
-            return WavReader.OpenStandard(File.OpenRead(path), clipName);
+            return WavReader.OpenStandard(OpenFile(path), clipName);
         }
 
         try
@@ -89,13 +92,16 @@ public sealed class FolderAudioSource : ICueSource
         }
         catch (AudioDecodeException) when (IsWav(path))
         {
-            return WavReader.OpenStandard(File.OpenRead(path), clipName);
+            return WavReader.OpenStandard(OpenFile(path), clipName);
         }
     }
 
-    private static AudioClip ReadWav(string path, string clipName)
+    private Stream OpenFile(string path) =>
+        _disk.OpenRead(path) ?? throw new FileNotFoundException($"{path} is gone.", path);
+
+    private AudioClip ReadWav(string path, string clipName)
     {
-        using var stream = File.OpenRead(path);
+        using var stream = OpenFile(path);
         return WavReader.ReadStandard(stream, clipName);
     }
 
@@ -182,19 +188,11 @@ public sealed class FolderAudioSource : ICueSource
     /// <summary>Every file under the root, sorted; empty where the root does not exist or cannot be read.</summary>
     private List<string> AllFiles()
     {
-        if (!Directory.Exists(_root))
-        {
-            return [];
-        }
-
         var paths = new List<string>();
 
         try
         {
-            foreach (var path in Directory.EnumerateFiles(_root, "*", SearchOption.AllDirectories))
-            {
-                paths.Add(path);
-            }
+            paths.AddRange(_disk.Enumerate(_root, "*", recursive: true));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
