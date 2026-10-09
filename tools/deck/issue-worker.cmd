@@ -1,11 +1,11 @@
 @echo off
-rem Stream Deck launcher. Asks which issue, or which lane to take the next issue from, takes the
-rem model, effort and advisor from the last triage, then opens the session. Press "Desktop" to hand
-rem it over.
+rem Stream Deck launcher. Takes the issue number or lane letter as an argument, or asks for it,
+rem takes the model, effort and advisor from the last triage, then opens the session. Press
+rem "Desktop" to hand it over.
 cd /d C:\dev\d47
 
-set NUM=
-set /p NUM=Issue number or lane letter:
+set NUM=%~1
+if "%NUM%"=="" set /p NUM=Issue number or lane letter:
 echo %NUM%| findstr /r "^[0-9][0-9]*$ ^[A-Za-z]$" >nul
 if errorlevel 1 (
     echo Not an issue number or a lane letter.
