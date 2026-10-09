@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Configuration;
 
 /// <summary>Reads and writes <see cref="D47Settings"/>.</summary>
-public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
+public sealed class SettingsStore(AppPaths paths, IFileSystem files, ILogger<SettingsStore> logger)
 {
     internal static readonly JsonSerializerOptions Json = new()
     {
@@ -39,7 +39,7 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
     {
         UnknownKeys = [];
 
-        if (!File.Exists(paths.SettingsFile))
+        if (files.Stat(paths.SettingsFile) is null)
         {
             logger.LogInformation("No settings file at {Path}; using defaults", paths.SettingsFile);
             return new D47Settings();
@@ -48,7 +48,8 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
         string text;
         try
         {
-            text = File.ReadAllText(paths.SettingsFile);
+            text = files.ReadText(paths.SettingsFile)
+                ?? throw new FileNotFoundException("The settings file disappeared while loading.", paths.SettingsFile);
         }
         catch (IOException ex)
         {
@@ -90,7 +91,7 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
                 try
                 {
-                    File.Copy(paths.SettingsFile, backup, overwrite: true);
+                    files.Copy(paths.SettingsFile, backup);
                 }
                 catch (IOException ex)
                 {
@@ -449,7 +450,7 @@ public sealed class SettingsStore(AppPaths paths, ILogger<SettingsStore> logger)
 
     public void Save(D47Settings settings)
     {
-        AtomicFile.WriteAllText(paths.SettingsFile, JsonSerializer.Serialize(settings, Json));
+        files.WriteText(paths.SettingsFile, JsonSerializer.Serialize(settings, Json));
         logger.LogInformation("Wrote settings to {Path}", paths.SettingsFile);
     }
 }

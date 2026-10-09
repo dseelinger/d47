@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary><c>look_at_screen</c> takes a picture only while the setting is on, and at most one per turn.</summary>
-[Trait("Category", "Integration")]
 public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
 {
     private static readonly byte[] Jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0x04, 0x07];
@@ -29,14 +28,14 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     private static FakeCapture Picture(string source = ScreenPictures.FromWindow) =>
         new(new ScreenCaptureResult(new ScreenPicture(Jpeg, 1280, 720, source), null));
 
-    private static SettingsService Settings(TempInstall install, bool lookAtScreen)
+    private static SettingsService Settings(MemoryInstall install, bool lookAtScreen)
     {
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         var settings = new D47Settings();
 
         return new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             settings with { Llm = settings.Llm with { LookAtScreen = lookAtScreen } },
             NullLogger<SettingsService>.Instance);
     }
@@ -53,7 +52,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     [Fact]
     public async Task WithTheSettingOffNoPictureIsTakenAndTheModelIsToldHowToTurnItOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var capture = Picture();
 
         var result = await LookAsync(Settings(install, lookAtScreen: false), capture);
@@ -68,7 +67,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     [Fact]
     public async Task WithTheSettingOnTheResultCarriesThePictureAndWhatTheModelMayClaim()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var capture = Picture(ScreenPictures.FromHeadset);
 
         var result = await LookAsync(Settings(install, lookAtScreen: true), capture);
@@ -90,7 +89,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     [Fact]
     public async Task ARefusedCaptureIsAnErrorWithNoPicture()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var capture = new FakeCapture(new ScreenCaptureResult(null, "Elite is not running"));
 
         var result = await LookAsync(Settings(install, lookAtScreen: true), capture);
@@ -103,7 +102,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     [Fact]
     public void TheToolIsOfferedToTheModelAndTheRowIsNot()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = Settings(install, lookAtScreen: false);
 
         var tool = Assert.Single(ScreenCapability.Create(settings, Picture()).Tools);
@@ -123,7 +122,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     [Fact]
     public void TheRowNamesAModelThatCannotReadPicturesOnlyWhileItIsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = Settings(install, lookAtScreen: false);
 
         var row = ConversationCapability.Create(
@@ -146,7 +145,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
     [Fact]
     public async Task ASecondLookInOneTurnTakesNoSecondPictureAndTheTurnNamesTheFirst()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var capture = Picture();
         var registry = CapabilityRegistry.Build([ScreenCapability.Create(Settings(install, lookAtScreen: true), capture)]);
 

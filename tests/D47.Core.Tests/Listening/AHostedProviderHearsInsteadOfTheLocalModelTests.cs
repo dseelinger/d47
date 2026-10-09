@@ -106,7 +106,6 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.False(entry.Active);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheModelAndGpuRowsApplyOnlyToTheLocalProvider()
     {
@@ -120,7 +119,6 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.False(gpu.AppliesWhen!(With(SttProviderCatalog.GroqId)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyTheSelectedProvidersKeyRowApplies()
     {
@@ -135,7 +133,6 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.False(openAi.AppliesWhen!(With(SttProviderCatalog.LocalId)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ScribesKeyRowIsTheVoicesStoredKey()
     {
@@ -149,7 +146,6 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     }
 
     /// <summary>Sending the Commander's voice to a third party is not the model's decision.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheProviderRowIsRefusedToTheModel()
     {
@@ -220,13 +216,13 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
 
     private static IReadOnlyList<SettingRow> Rows()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

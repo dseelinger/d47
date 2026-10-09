@@ -93,6 +93,7 @@ public sealed class TheHeadsetFollowsTheWindowTests
     private static ViewStateStore Store() =>
         new(
             new D47.Core.AppPaths(TempFolders.Create("d47-headset-follows-tests")),
+            new DiskFileSystem(),
             NullLogger<ViewStateStore>.Instance);
 
     private static VrPanelSurface Headset()

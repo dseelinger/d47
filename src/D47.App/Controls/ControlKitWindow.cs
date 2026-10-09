@@ -11,6 +11,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using D47.App.Panel;
+using D47.Core.Storage;
 using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core;
@@ -396,11 +397,11 @@ public sealed class ControlKitWindow : Window
         var paths = new AppPaths(_secretsRoot);
         paths.EnsureCreated();
 
-        var secrets = new SecretStore(paths, new DpapiSecretProtector(), NullLogger<SecretStore>.Instance);
+        var secrets = new SecretStore(paths, new DpapiSecretProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
         secrets.Set(SecretName, "kit-not-a-real-key-a91C");
 
         var settings = new SettingsService(
-            new SettingsStore(paths, NullLogger<SettingsStore>.Instance),
+            new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance),
             secrets,
             new D47Settings(),
             NullLogger<SettingsService>.Instance);

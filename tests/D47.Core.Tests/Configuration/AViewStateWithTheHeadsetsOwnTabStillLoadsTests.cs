@@ -1,4 +1,5 @@
 using D47.Core;
+using D47.Core.Storage;
 using D47.Core.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -25,7 +26,7 @@ public class AViewStateWithTheHeadsetsOwnTabStillLoadsTests
             }
             """);
 
-        var state = new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance).Load();
+        var state = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance).Load();
 
         Assert.Equal("Commander", state.LastTab);
         Assert.Equal("standing", state.PanelRoots["Commander"]);

@@ -8,17 +8,16 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>Both headset panels have a resolution of their own, and a dragged one is kept as dragged (#107).</summary>
-[Trait("Category", "Integration")]
 public class TheMiniPanelsPixelsAreTheCommandersTests
 {
     private static SettingsService Settings(string mode)
     {
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

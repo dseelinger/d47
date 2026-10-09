@@ -1,4 +1,5 @@
 using Avalonia.Automation;
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -64,7 +65,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
 
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
-            Stories: director, StoryFilters: new StoryFilterMemory(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance)),
+            Stories: director, StoryFilters: new StoryFilterMemory(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance)),
             Ratings: client);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };

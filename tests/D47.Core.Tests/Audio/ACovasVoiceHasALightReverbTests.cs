@@ -115,7 +115,7 @@ public class ACovasVoiceHasALightReverbTests
         using var install = new TempInstall();
         File.WriteAllText(install.Paths.SettingsFile, """{ "schemaVersion": 1, "speech": { "cuesEnabled": false } }""");
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         Assert.True(store.Load().Speech.CovasReverb);
     }

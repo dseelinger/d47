@@ -273,7 +273,7 @@ public sealed record OverlayPlacement
 }
 
 /// <summary>The third store, and the one that shrugs hardest.</summary>
-public sealed class ViewStateStore(AppPaths paths, ILogger<ViewStateStore> logger)
+public sealed class ViewStateStore(AppPaths paths, IFileSystem files, ILogger<ViewStateStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -284,15 +284,11 @@ public sealed class ViewStateStore(AppPaths paths, ILogger<ViewStateStore> logge
 
     public ViewState Load()
     {
-        if (!File.Exists(paths.ViewStateFile))
-        {
-            return new ViewState();
-        }
-
         try
         {
-            return JsonSerializer.Deserialize<ViewState>(File.ReadAllText(paths.ViewStateFile), Json)
-                   ?? new ViewState();
+            return files.ReadText(paths.ViewStateFile) is { } text
+                ? JsonSerializer.Deserialize<ViewState>(text, Json) ?? new ViewState()
+                : new ViewState();
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
@@ -306,7 +302,7 @@ public sealed class ViewStateStore(AppPaths paths, ILogger<ViewStateStore> logge
     {
         try
         {
-            AtomicFile.WriteAllText(paths.ViewStateFile, JsonSerializer.Serialize(state, Json));
+            files.WriteText(paths.ViewStateFile, JsonSerializer.Serialize(state, Json));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

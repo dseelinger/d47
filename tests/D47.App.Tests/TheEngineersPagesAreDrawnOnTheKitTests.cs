@@ -77,7 +77,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
         var onFoot = new OnFootPlanService(kit, checklists, () => state);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
         var memory = new EngineerDirectoryMemory(
-            new ViewStateStore(new D47.Core.AppPaths(root), NullLogger<ViewStateStore>.Instance));
+            new ViewStateStore(new D47.Core.AppPaths(root), new DiskFileSystem(), NullLogger<ViewStateStore>.Instance));
 
         var panel = new PanelView
         {

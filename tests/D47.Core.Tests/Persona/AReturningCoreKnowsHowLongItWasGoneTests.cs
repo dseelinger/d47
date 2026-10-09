@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Persona;
@@ -17,7 +18,7 @@ public sealed class AReturningCoreKnowsHowLongItWasGoneTests : IDisposable
 
     public void Dispose() => _install.Dispose();
 
-    private ViewStateStore Store() => new(_install.Paths, NullLogger<ViewStateStore>.Instance);
+    private ViewStateStore Store() => new(_install.Paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
 
     private CoreAbsences Open() => new(Store(), () => _now, NullLogger.Instance);
 

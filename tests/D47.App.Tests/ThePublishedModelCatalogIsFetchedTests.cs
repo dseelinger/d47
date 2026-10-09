@@ -1,4 +1,5 @@
 using System.Net;
+using D47.Core.Storage;
 using D47.App.Updates;
 using D47.Core;
 using D47.Core.Catalog;
@@ -81,8 +82,8 @@ public sealed class ThePublishedModelCatalogIsFetchedTests
     private ModelCatalogRefresher Refresher(Endpoint endpoint, bool refresh)
     {
         var paths = new AppPaths(_root);
-        var store = new SettingsStore(paths, NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(paths, new PlainProtector(), NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(paths, new PlainProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
         var settings = new SettingsService(
             store,
             secrets,

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.Core.Storage;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -58,7 +59,7 @@ public class TheStoriesPageFiltersItsListTests
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
-        var store = new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance);
+        var store = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
             Stories: director, StoryFilters: new StoryFilterMemory(store));

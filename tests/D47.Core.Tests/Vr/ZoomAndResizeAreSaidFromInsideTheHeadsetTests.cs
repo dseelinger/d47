@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>Zooming the panel and entering resize mode, with both hands on a stick and no model (#107).</summary>
-[Trait("Category", "Integration")]
 public class ZoomAndResizeAreSaidFromInsideTheHeadsetTests
 {
     private sealed record Fixture(
@@ -22,12 +21,12 @@ public class ZoomAndResizeAreSaidFromInsideTheHeadsetTests
     private static Fixture Build(string mode)
     {
         var resizes = new List<bool>();
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

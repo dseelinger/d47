@@ -40,7 +40,6 @@ public class BringingYourOwnModelTests
     /// The key row still exists — a gateway speaking the same protocol may want one — and it says which
     /// of the two states it is in rather than repeating the required row's wording.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheKeyRowIsStillDrawnAndSaysItIsOptional()
     {
@@ -75,7 +74,6 @@ public class BringingYourOwnModelTests
     }
 
     /// <summary>The endpoint's own list fills the picker only where the provider has none of its own.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheEndpointsOwnModelsFillThePickerOnlyWhereThereWasNothing()
     {
@@ -168,13 +166,13 @@ public class BringingYourOwnModelTests
     private static IReadOnlyList<SettingRow> SettingsCapabilityRows(
         Func<IReadOnlyList<string>>? endpointModels = null)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

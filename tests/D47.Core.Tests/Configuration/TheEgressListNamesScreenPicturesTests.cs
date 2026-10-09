@@ -73,13 +73,12 @@ public class TheEgressListNamesScreenPicturesTests
         Assert.Equal(ids.IndexOf(EgressDisclosure.WebSearch) + 1, ids.IndexOf(EgressDisclosure.Screen));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheToolAndThePrivacyRowAnswerFromTheModelInUse()
     {
-        using var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
         secrets.Set(LlmProviderCatalog.Selected(LlmProviderCatalog.AnthropicId).KeySecretName!, "sk-test");
 
         var settings = new SettingsService(store, secrets, On(), NullLogger<SettingsService>.Instance);

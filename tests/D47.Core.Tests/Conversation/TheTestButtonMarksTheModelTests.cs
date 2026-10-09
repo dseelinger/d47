@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>The Test row in Provider and model probes the provider and records the result.</summary>
-[Trait("Category", "Integration")]
 public class TheTestButtonMarksTheModelTests
 {
     [Fact]
@@ -44,12 +43,12 @@ public class TheTestButtonMarksTheModelTests
         SecretCheck check,
         bool failFirst)
     {
-        using var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

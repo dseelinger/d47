@@ -126,7 +126,7 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
     [Fact]
     public async Task TheStatusReportNamesTheWalkAndItsState()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var history = new HistoryBackfill
         {
@@ -134,11 +134,11 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
             Loggers = NullLoggerFactory.Instance,
         };
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance,
             loadFailed: false);

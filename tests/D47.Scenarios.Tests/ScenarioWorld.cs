@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -37,8 +38,8 @@ public sealed class ScenarioWorld : IDisposable
     {
         services?.Seed(_install.Paths.Data);
 
-        var store = new SettingsStore(_install.Paths, NullLogger<SettingsStore>.Instance);
-        Secrets = new SecretStore(_install.Paths, new PlainProtector(), NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(_install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+        Secrets = new SecretStore(_install.Paths, new PlainProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
         Settings = new SettingsService(store, Secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
         GameState = new GameStateStore();

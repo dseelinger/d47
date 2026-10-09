@@ -6,14 +6,13 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>#237: a saved preset and the basis it sets both come back after a save and reload.</summary>
-[Trait("Category", "Integration")]
 public class GuardianPresetBasisSurvivesAReloadTests
 {
     [Fact]
     public void TheBasisAndSavedPresetSurviveASaveAndReload()
     {
-        using var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         // Reverb alone, ticked by itself, matches none of the four built-ins.
         var custom = store.Load().Speech;
@@ -31,7 +30,7 @@ public class GuardianPresetBasisSurvivesAReloadTests
 
         store.Save(store.Load() with { Speech = saved.Settings! });
 
-        var reloaded = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance).Load();
+        var reloaded = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
 
         Assert.Equal("Hull breach", reloaded.Speech.GuardianVoice.Basis);
         Assert.Equal(["Hull breach"], reloaded.Speech.GuardianVoice.SavedPresets!.Select(preset => preset.Name));

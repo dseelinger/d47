@@ -98,6 +98,6 @@ public class TheAmbientIntervalMovedToSecondsTests
 
         File.WriteAllText(install.Paths.SettingsFile, json);
 
-        return new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance).Load();
+        return new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
     }
 }

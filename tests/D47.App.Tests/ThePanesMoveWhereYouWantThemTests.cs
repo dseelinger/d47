@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.Core.Storage;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -38,7 +39,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
     private static PaneWidthMemory Memory(out AppPaths paths)
     {
         paths = new AppPaths(TempFolders.Create("d47-pane-widths"));
-        return new PaneWidthMemory(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance));
+        return new PaneWidthMemory(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance));
     }
 
     private static DrillView Strip(PanelView panel) =>

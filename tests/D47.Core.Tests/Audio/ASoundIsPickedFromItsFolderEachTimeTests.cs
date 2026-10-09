@@ -76,7 +76,7 @@ public class ASoundIsPickedFromItsFolderEachTimeTests
             install.Paths.SettingsFile,
             """{ "schemaVersion": 1, "speech": { "thinkingBedEnabled": false, "thinkingBed": "thinking-pulse" } }""");
 
-        var settings = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance).Load();
+        var settings = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
 
         Assert.False(settings.Speech.ThinkingBedEnabled);
     }

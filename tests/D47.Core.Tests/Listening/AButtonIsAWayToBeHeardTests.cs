@@ -106,7 +106,6 @@ public class AButtonIsAWayToBeHeardTests
     /// The pre-roll row applies to a button exactly as it does to a key — it covers the polling delay
     /// on whichever opened the gate, and both are polled on the same tick.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ThePreRollRowAppliesToAButton()
     {
@@ -183,13 +182,13 @@ public class AButtonIsAWayToBeHeardTests
 
     private static IReadOnlyList<D47.Core.Capabilities.SettingRow> Rows()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

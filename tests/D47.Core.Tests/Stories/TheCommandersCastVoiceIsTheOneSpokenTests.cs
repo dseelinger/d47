@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 using D47.Core.Configuration;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -53,12 +54,12 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
 
         try
         {
-            new SettingsStore(paths, NullLogger<SettingsStore>.Instance).Save(D47Settings.Defaults with
+            new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance).Save(D47Settings.Defaults with
             {
                 StoryVoices = Chose(DockHand, TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb"),
             });
 
-            var loaded = new SettingsStore(paths, NullLogger<SettingsStore>.Instance).Load();
+            var loaded = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance).Load();
 
             Assert.Equal(new StoryVoiceChoice(TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb") { Story = Card.Title, Character = "Ren" }, loaded.StoryVoices[DockHand]);
         }

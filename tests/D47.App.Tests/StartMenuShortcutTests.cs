@@ -1,4 +1,5 @@
 using D47.App;
+using D47.Core.Storage;
 using D47.Core.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -75,7 +76,7 @@ public class StartMenuShortcutTests
         var paths = new D47.Core.AppPaths(root);
         paths.EnsureCreated();
 
-        var store = new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance);
+        var store = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
 
         Assert.False(store.Load().StartMenuOffered);
 
@@ -96,7 +97,7 @@ public class StartMenuShortcutTests
         var paths = new D47.Core.AppPaths(root);
         paths.EnsureCreated();
 
-        var store = new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance);
+        var store = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
 
         store.Save(new ViewState
         {

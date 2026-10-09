@@ -1,4 +1,5 @@
 ﻿using D47.Core;
+using D47.Core.Storage;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
@@ -104,8 +105,8 @@ public static class TestSurface
         var paths = new AppPaths(root);
         paths.EnsureCreated();
 
-        var store = new SettingsStore(paths, NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(paths, new NoopProtector(), NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(paths, new NoopProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
         var settings = new SettingsService(store, secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
         CapabilityRegistry? built = null;
@@ -216,7 +217,7 @@ public static class TestSurface
         // The registry and the secret store come back too: the guided key setup is built from the real
         // descriptor rows and asks the real store whether a key is present, so a test that cannot reach
         // either could only assert against a copy of them.
-        return (settings, new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance), paths, registry, secrets);
+        return (settings, new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance), paths, registry, secrets);
     }
 
     /// <summary>Where the binding profile store of a surface reads Elite's bindings from.</summary>

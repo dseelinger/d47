@@ -1,4 +1,5 @@
 using D47.Core.Configuration;
+using D47.Core.Storage;
 using D47.Core.Conversation;
 using Xunit;
 
@@ -48,7 +49,7 @@ public class FirstRunTests
         // looks like to a different Windows account.
         var moved = new SecretStore(
             install.Paths,
-            new NeverUnprotects(),
+            new NeverUnprotects(), install.Files,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<SecretStore>.Instance);
 
         Assert.True(FirstRun.IsNeeded(NeedsKey, moved.Has));

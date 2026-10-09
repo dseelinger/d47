@@ -1,4 +1,5 @@
 using D47.Core.Capabilities;
+using D47.Core.Storage;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -12,7 +13,7 @@ namespace D47.Core.Tests.Configuration;
 public class AFloorAndACeilingTests
 {
     private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, NullLogger<SettingsStore>.Instance);
+        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
 
     /// <summary>Decision 3 of the phase: all three null means behaviour identical to today.</summary>
     [Fact]

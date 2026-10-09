@@ -171,7 +171,6 @@ public class AModelRowSaysWhatItCostsTests
     }
 
     /// <summary>Both LLM model rows, from one source.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void BothModelRowsSayTheSameWords()
     {
@@ -195,7 +194,6 @@ public class AModelRowSaysWhatItCostsTests
     /// And the label follows the provider selected right now, which is why it is a function of settings
     /// rather than a string captured when the row was registered.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheLabelFollowsTheSelectedProvider()
     {
@@ -220,7 +218,6 @@ public class AModelRowSaysWhatItCostsTests
     /// A row that has nothing settings-dependent to say still reads as it always did, so widening the
     /// hook cannot have silently changed every other picker in d47.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARowWithoutASettingsAwareLabelIsUnchanged()
     {
@@ -261,13 +258,13 @@ public class AModelRowSaysWhatItCostsTests
     /// <summary>The rows this capability declares, built on a throwaway install.</summary>
     private static IReadOnlyList<SettingRow> SettingsCapabilityRows()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

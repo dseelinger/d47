@@ -23,7 +23,6 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         Assert.Equal("Ctrl+Alt+S", hotkeys.ResizeHeadsetPanel);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheFourRowsAreOnTheHeadsetPageAndSystemWide()
     {
@@ -44,7 +43,6 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void StepZoomMovesTheLadderForAHotkeyCaller()
     {
@@ -57,7 +55,6 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         Assert.Equal(110, settings.Current.Vr.Panel.Zoom);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void StepZoomResetGoesBackToTheDefaultRung()
     {
@@ -71,7 +68,6 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         Assert.Equal(ZoomLadder.Default, settings.Current.Vr.Panel.Zoom);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void StepZoomAtTheTopRungIsUnchanged()
     {
@@ -88,12 +84,12 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
 
     private static Fixture Build()
     {
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

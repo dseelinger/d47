@@ -5,6 +5,7 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -17,6 +18,8 @@ public sealed class MemoryInstall
     public AppPaths Paths { get; } = new(Path.Combine(@"C:\d47-memory", Guid.NewGuid().ToString("N")));
 
     public string Root => Paths.InstallRoot;
+
+    public IFileSystem Files { get; } = new MemoryFileSystem();
 }
 
 public sealed class TempInstall : IDisposable
@@ -32,6 +35,8 @@ public sealed class TempInstall : IDisposable
     public string Root { get; }
 
     public AppPaths Paths { get; }
+
+    public IFileSystem Files { get; } = new DiskFileSystem();
 
     public void Dispose()
     {
@@ -241,8 +246,8 @@ public sealed class TestSurface
         D47.Core.Activities.ActivityLedger? activities = null,
         Func<DateTimeOffset>? now = null)
     {
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
         var state = gameState ?? new GameStateStore();
         var availability = new LlmAvailabilityState(providerConfigured: false);
         var spend = new SpendTracker();

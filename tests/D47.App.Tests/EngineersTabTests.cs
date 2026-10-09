@@ -85,7 +85,7 @@ public class EngineersTabTests
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
 
         var viewState = new ViewStateStore(
-            new D47.Core.AppPaths(root), NullLogger<ViewStateStore>.Instance);
+            new D47.Core.AppPaths(root), new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
         var memory = new EngineerDirectoryMemory(viewState);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
@@ -524,7 +524,7 @@ public class EngineersTabTests
 
         firstPanel.EnableEngineers(
             unlocks, ships, () => state, onFoot,
-            new EngineerDirectoryMemory(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance)));
+            new EngineerDirectoryMemory(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance)));
 
         var firstWindow = new Window { Content = firstPanel, Width = 900, Height = 700 };
         firstWindow.Show();
@@ -540,7 +540,7 @@ public class EngineersTabTests
 
         secondPanel.EnableEngineers(
             unlocks, ships, () => state, onFoot,
-            new EngineerDirectoryMemory(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance)));
+            new EngineerDirectoryMemory(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance)));
 
         var secondWindow = new Window { Content = secondPanel, Width = 900, Height = 700 };
         secondWindow.Show();

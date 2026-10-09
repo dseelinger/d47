@@ -174,7 +174,7 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
 
         File.WriteAllText(install.Paths.SettingsFile, $$"""{ "persona": { "humor": {{humor}} } }""");
 
-        var loaded = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance).Load();
+        var loaded = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
 
         Assert.Equal(level, loaded.Persona.CoreHumor);
         Assert.Equal(25, loaded.Persona.CoreHumorPercent);

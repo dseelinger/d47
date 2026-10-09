@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.Core.Storage;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using D47.App.Panel;
@@ -77,6 +78,7 @@ public sealed class TheSearchTabStaysHiddenUntilItHasARootTests
     {
         var store = new ViewStateStore(
             new D47.Core.AppPaths(TempFolders.Create("d47-search-tab-tests")),
+            new DiskFileSystem(),
             NullLogger<ViewStateStore>.Instance);
 
         store.Save(store.Load() with { LastTab = "Search" });

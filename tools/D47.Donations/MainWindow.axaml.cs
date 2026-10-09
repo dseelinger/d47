@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using D47.Core.Storage;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -29,7 +30,7 @@ public partial class MainWindow : Window
         _paths.EnsureCreated();
 
         // No log sink at all, which is how the credential stays out of one.
-        _secrets = new SecretStore(_paths.Secrets, new DpapiSecretProtector(), NullLogger<SecretStore>.Instance);
+        _secrets = new SecretStore(_paths.Secrets, new DpapiSecretProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
         _state = UtilityState.Read(_paths.StateFile);
         _downloads = new DownloadFolder(_paths.Downloads);
         _inbox = new DonationInbox(_downloads, _state, _paths.StateFile);

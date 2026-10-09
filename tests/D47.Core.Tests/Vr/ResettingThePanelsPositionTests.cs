@@ -17,12 +17,12 @@ public class ResettingThePanelsPositionTests
     private static Fixture Build(VrResetOutcome outcome = VrResetOutcome.Reset)
     {
         var reset = new List<string>();
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 
@@ -56,7 +56,6 @@ public class ResettingThePanelsPositionTests
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("reset the panel")]
     [InlineData("reset the VR panel")]
@@ -71,7 +70,6 @@ public class ResettingThePanelsPositionTests
         Assert.Equal([VrCapability.CurrentSlot], fixture.Reset);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoHeadsetSessionItStillSaysTheResetHappened()
     {
@@ -81,7 +79,6 @@ public class ResettingThePanelsPositionTests
         Assert.Contains("attaches", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithASessionItSaysThePanelIsBack()
     {

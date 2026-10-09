@@ -1,4 +1,5 @@
 ﻿using D47.Core.Audio;
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -425,10 +426,10 @@ public class SettingsServiceTests
             ],
         };
 
-        var store = new SettingsStore(install.Paths, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
         var secrets = new SecretStore(
             install.Paths,
-            new ReversibleProtector(),
+            new ReversibleProtector(), install.Files,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<SecretStore>.Instance);
 
         var service = new SettingsService(
@@ -456,10 +457,10 @@ public class SettingsServiceTests
             Settings = [row],
         };
 
-        var store = new SettingsStore(install.Paths, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsStore>.Instance);
         var secrets = new SecretStore(
             install.Paths,
-            new ReversibleProtector(),
+            new ReversibleProtector(), install.Files,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<SecretStore>.Instance);
 
         SettingsService Service() => new(

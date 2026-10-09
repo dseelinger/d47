@@ -11,7 +11,6 @@ namespace D47.Core.Tests.Ticking;
 /// Pausing a subscriber loses whatever it does, so the diagnostics surface names it rather than leaving
 /// it to be inferred from the log (https://github.com/dseelinger/d47/issues/58).
 /// </summary>
-[Trait("Category", "Integration")]
 public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
 {
     private static TickLoop Broken(string name)
@@ -31,14 +30,14 @@ public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
     }
 
     private static (CapabilityRegistry Registry, CapabilityDescriptor Descriptor) Diagnostics(
-        TempInstall install,
+        MemoryInstall install,
         TickLoop? ticking)
     {
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance,
             loadFailed: false);
@@ -58,7 +57,7 @@ public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
     [Fact]
     public async Task TheStatusReportNamesIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (registry, _) = Diagnostics(install, Broken("journal"));
 
@@ -71,7 +70,7 @@ public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
     [Fact]
     public async Task TheStatusReportSaysNothingWhileEverythingIsRunning()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (registry, _) = Diagnostics(install, new TickLoop(NullLogger<TickLoop>.Instance));
 
@@ -85,7 +84,7 @@ public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
     [Fact]
     public void TheRowAppearsOnlyWhileSomethingIsPaused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var running = new TickLoop(NullLogger<TickLoop>.Instance);
 

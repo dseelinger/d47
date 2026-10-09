@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.Core.Storage;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -173,6 +174,7 @@ public sealed class TheRawSwitchIsWhereItWasLeftTests
     private static ViewStateStore Store() =>
         new(
             new AppPaths(TempFolders.Create("d47-raw-switch-tests")),
+            new DiskFileSystem(),
             NullLogger<ViewStateStore>.Instance);
 
     private static (PanelView Panel, Window Window) Shown(ViewStateStore store, bool rawJournal = true)

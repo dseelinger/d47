@@ -185,11 +185,10 @@ public class ConstructionNeedsAreNettedAndOldSitesAreSetAsideTests
             Task.FromResult<BestCargoAnswer?>(null);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSourcingSearchAsksForWhatIsLeftToBuy()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var gameState = Store(Sites((1, 1, "steel", 1000)));
         gameState.Active!.Hold = Hold("steel", 300);
@@ -198,11 +197,11 @@ public class ConstructionNeedsAreNettedAndOldSitesAreSetAsideTests
             """{"timestamp":"2026-09-29T11:00:00Z","event":"Location","StarSystem":"Ratraii","StarPos":[0,0,0],"Docked":false}"""));
 
         var trade = new FakeTrade();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

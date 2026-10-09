@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Everything one build still needs, and where to buy it.</summary>
-[Trait("Category", "Integration")]
 public class WhereToBuyTheWholeBuildTests
 {
     private sealed class FakeTrade : ITradePlanService
@@ -92,19 +91,19 @@ public class WhereToBuyTheWholeBuildTests
                 StringComparer.OrdinalIgnoreCase),
         };
 
-    private static SettingsService Settings(TempInstall install)
+    private static SettingsService Settings(MemoryInstall install)
     {
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         return new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
     }
 
     private static async Task<(string Said, FakeTrade Trade, SourcingBoard Board)> AskAsync(
-        TempInstall install,
+        MemoryInstall install,
         bool lookups = true,
         SourcingAnswer? answer = null)
     {
@@ -144,7 +143,7 @@ public class WhereToBuyTheWholeBuildTests
     [Fact]
     public async Task TheAnswerNamesTheStationsAndWhatEachOneCovers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var market = Market("Hutton Orbital", ("Aluminium", 300, 1000), ("Steel", 200, 1000));
 
@@ -177,7 +176,7 @@ public class WhereToBuyTheWholeBuildTests
     [Fact]
     public async Task WhatCouldNotBePricedAndWhatRanShortAreSaidSeparately()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, _, _) = await AskAsync(
             install,
@@ -204,7 +203,7 @@ public class WhereToBuyTheWholeBuildTests
     [Fact]
     public async Task TheSearchIsAskedForWhatTheDepotSaysIsOutstanding()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, trade, _) = await AskAsync(install);
 
@@ -223,7 +222,7 @@ public class WhereToBuyTheWholeBuildTests
     [Fact]
     public async Task TheAnswerIsPostedForThePanel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (_, _, board) = await AskAsync(install);
 
@@ -236,7 +235,7 @@ public class WhereToBuyTheWholeBuildTests
     [Fact]
     public async Task WithLookupsOffItSaysSoAndTheHaulingListStillArrives()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, trade, _) = await AskAsync(install, lookups: false);
 
@@ -251,7 +250,7 @@ public class WhereToBuyTheWholeBuildTests
     [Fact]
     public async Task WithoutTheParameterNothingIsSearched()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var gameState = Store();
         var trade = new FakeTrade();

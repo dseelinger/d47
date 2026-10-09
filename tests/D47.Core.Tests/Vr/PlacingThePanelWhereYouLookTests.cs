@@ -86,12 +86,12 @@ public class PlacingThePanelWhereYouLookTests
     private static Fixture Build(VrGazeOutcome outcome = VrGazeOutcome.Placed)
     {
         var placed = new List<int>();
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 
@@ -125,7 +125,6 @@ public class PlacingThePanelWhereYouLookTests
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("place the panel here")]
     [InlineData("put the panel here")]
@@ -141,7 +140,6 @@ public class PlacingThePanelWhereYouLookTests
         Assert.Single(fixture.Placed);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoHeadPoseItAnswersAsANudgeDoes()
     {

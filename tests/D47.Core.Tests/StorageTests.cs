@@ -53,7 +53,7 @@ public class AtomicFileTests
 public class SettingsStoreTests
 {
     private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, NullLogger<SettingsStore>.Instance);
+        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
 
     [Fact]
     public void MissingFileYieldsDefaultsBecauseThatIsAFirstRun()
@@ -139,10 +139,10 @@ public class SecretStoreTests
     {
         using var install = new TempInstall();
 
-        new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance)
+        new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
             .Set("inara.apiKey", "swordfish");
 
-        var reopened = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
+        var reopened = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
 
         Assert.True(reopened.TryGet("inara.apiKey", out var value));
         Assert.Equal("swordfish", value);
@@ -153,7 +153,7 @@ public class SecretStoreTests
     {
         using var install = new TempInstall();
 
-        new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance)
+        new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
             .Set("inara.apiKey", "swordfish");
 
         Assert.DoesNotContain("swordfish", File.ReadAllText(install.Paths.SecretsFile), StringComparison.Ordinal);
@@ -163,7 +163,7 @@ public class SecretStoreTests
     public void MissingSecretIsAbsenceNotFailure()
     {
         using var install = new TempInstall();
-        var store = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
+        var store = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
 
         Assert.False(store.TryGet("never.set", out _));
         Assert.False(store.Has("never.set"));
@@ -173,11 +173,11 @@ public class SecretStoreTests
     public void SecretFromAnotherUserReadsAsAbsentRatherThanThrowing()
     {
         using var install = new TempInstall();
-        new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance)
+        new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
             .Set("inara.apiKey", "swordfish");
 
         // Same file, but nothing can decrypt it now.
-        var elsewhere = new SecretStore(install.Paths, new NeverUnprotects(), NullLogger<SecretStore>.Instance);
+        var elsewhere = new SecretStore(install.Paths, new NeverUnprotects(), install.Files, NullLogger<SecretStore>.Instance);
 
         Assert.False(elsewhere.TryGet("inara.apiKey", out _));
         Assert.Contains("inara.apiKey", elsewhere.Names);
@@ -189,7 +189,7 @@ public class SecretStoreTests
         using var install = new TempInstall();
         File.WriteAllText(install.Paths.SecretsFile, "not json at all");
 
-        var store = new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance);
+        var store = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
 
         Assert.Empty(store.Names);
     }

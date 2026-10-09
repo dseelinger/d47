@@ -11,17 +11,16 @@ namespace D47.Core.Tests.Configuration;
 /// A placement instruction lands on the panel the Commander is looking at, ruled 2026-08-24:
 /// "whichever panel I'm looking at."
 /// </summary>
-[Trait("Category", "Integration")]
 public class ThePanelYouAreLookingAtTests
 {
     private static IReadOnlyList<SettingRow> Rows()
     {
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

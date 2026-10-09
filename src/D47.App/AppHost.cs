@@ -720,7 +720,7 @@ public sealed class AppHost : IDisposable
 
         var loadingStores = StartupTimer.Step("settings and stores");
 
-        var store = new SettingsStore(paths, loggerFactory.CreateLogger<SettingsStore>());
+        var store = new SettingsStore(paths, files, loggerFactory.CreateLogger<SettingsStore>());
 
         var loaded = new D47Settings();
         string? startupError = null;
@@ -756,6 +756,7 @@ public sealed class AppHost : IDisposable
         var secrets = new SecretStore(
             paths,
             new DpapiSecretProtector(),
+            files,
             loggerFactory.CreateLogger<SecretStore>());
 
         // The last of the three defences (#368), and the floor under the other two: while the file stands
@@ -776,7 +777,7 @@ public sealed class AppHost : IDisposable
 
         modelCatalog.Load();
 
-        var viewState = new ViewStateStore(paths, loggerFactory.CreateLogger<ViewStateStore>());
+        var viewState = new ViewStateStore(paths, files, loggerFactory.CreateLogger<ViewStateStore>());
 
         var journalDirectory = ResolveJournalDirectory();
         // Assigned once the bindings have been resolved, below.

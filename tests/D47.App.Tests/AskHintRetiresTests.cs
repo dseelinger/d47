@@ -1,4 +1,5 @@
 using Avalonia;
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -124,13 +125,13 @@ public class AskHintRetiresTests
         var root = TempFolders.Create("d47-ask-hint-tests");
         var paths = new AppPaths(root);
 
-        var store = new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance);
+        var store = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
         Assert.False(store.Load().HasAsked);
 
         store.Save(store.Load() with { HasAsked = true });
 
         // A second store over the same folder, which is what the next launch has.
-        Assert.True(new ViewStateStore(paths, NullLogger<ViewStateStore>.Instance).Load().HasAsked);
+        Assert.True(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance).Load().HasAsked);
     }
 
     /// <summary>Both states, for a human to look at.</summary>

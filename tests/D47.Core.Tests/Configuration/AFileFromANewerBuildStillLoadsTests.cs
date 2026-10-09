@@ -31,7 +31,7 @@ public class AFileFromANewerBuildStillLoadsTests
         using var install = new TempInstall();
         File.WriteAllText(install.Paths.SettingsFile, FromANewerBuild);
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         var settings = store.Load();
 
         // The known settings are honoured rather than lost with the file.
@@ -45,7 +45,7 @@ public class AFileFromANewerBuildStillLoadsTests
         Assert.Contains("left", written, StringComparison.Ordinal);
 
         // And it comes back the same way on the next run, rather than only surviving the first.
-        var restarted = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var restarted = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         restarted.Load();
         Assert.Equal(["vr.controlers"], restarted.UnknownKeys);
     }
@@ -62,7 +62,7 @@ public class AFileFromANewerBuildStillLoadsTests
         File.WriteAllText(install.Paths.SettingsFile, FromANewerBuild);
 
         var logger = new RecordingLogger<SettingsStore>();
-        var store = new SettingsStore(install.Paths, logger);
+        var store = new SettingsStore(install.Paths, install.Files, logger);
 
         store.Load();
 
@@ -93,7 +93,7 @@ public class AFileFromANewerBuildStillLoadsTests
             }
             """);
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         var settings = store.Load();
 
         Assert.Equal(["speech.providerVoices.edge.timbre"], store.UnknownKeys);
@@ -109,7 +109,7 @@ public class AFileFromANewerBuildStillLoadsTests
     public void AFileThisBuildFullyUnderstandsCarriesNoBagAtAll()
     {
         using var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         store.Save(new D47Settings { Ui = new UiSettings { Theme = ThemeCatalog.Dark } });
 
@@ -140,7 +140,7 @@ public class AFileFromANewerBuildStillLoadsTests
         const string Unreadable = "{ this is not json";
         File.WriteAllText(install.Paths.SettingsFile, Unreadable);
 
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         Assert.Throws<SettingsLoadException>(() => store.Load());
 
         var surface = TestSurface.For(install, settings: new D47Settings(), loadFailed: true);

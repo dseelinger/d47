@@ -1,4 +1,5 @@
 using D47.Core;
+using D47.Core.Storage;
 using D47.Core.Configuration;
 using D47.Core.Persona;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -17,7 +18,7 @@ public class IntroductionsAreRememberedTests : IDisposable
         Guid.NewGuid().ToString("n"));
 
     private ViewStateStore Store() =>
-        new(new AppPaths(_root), NullLogger<ViewStateStore>.Instance);
+        new(new AppPaths(_root), new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
 
     public void Dispose()
     {

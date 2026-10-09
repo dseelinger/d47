@@ -1,4 +1,5 @@
 using Avalonia;
+using D47.Core.Storage;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -524,7 +525,7 @@ public class TheRoutingTabTests
             Assert.True(settings.Current.Trade.LargePadOnly);
 
             // A fresh store over the same file, the way a restart reads it.
-            var reloaded = new SettingsStore(paths, NullLogger<SettingsStore>.Instance).Load();
+            var reloaded = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance).Load();
 
             Assert.Equal(8, reloaded.Trade.Hops);
             Assert.Equal(4, reloaded.Trade.MaxJumps);

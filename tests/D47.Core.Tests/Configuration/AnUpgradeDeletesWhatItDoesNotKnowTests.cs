@@ -1,4 +1,5 @@
 using D47.Core.Configuration;
+using D47.Core.Storage;
 using D47.Core.Interface;
 using D47.Core.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,7 +22,7 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
         """;
 
     private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, NullLogger<SettingsStore>.Instance);
+        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
 
     [Fact]
     public void AnUpgradeBacksTheFileUpAndDeletesTheUnknownKeys()

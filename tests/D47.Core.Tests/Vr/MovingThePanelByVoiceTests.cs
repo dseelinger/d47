@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>Saying where the panel goes, end to end and with no model in the path.</summary>
-[Trait("Category", "Integration")]
 public class MovingThePanelByVoiceTests
 {
     /// <summary>What a nudge asked for, so the wire can be checked rather than the arithmetic.</summary>
@@ -21,12 +20,12 @@ public class MovingThePanelByVoiceTests
     private static Fixture Build(VrNudgeOutcome outcome = VrNudgeOutcome.Moved)
     {
         var nudges = new List<Moved>();
-        var install = new TempInstall();
-        var store = new SettingsStore(install.Paths, NullLogger<SettingsStore>.Instance);
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         var settings = new SettingsService(
             store,
-            new SecretStore(install.Paths, new ReversibleProtector(), NullLogger<SecretStore>.Instance),
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
             store.Load(),
             NullLogger<SettingsService>.Instance);
 

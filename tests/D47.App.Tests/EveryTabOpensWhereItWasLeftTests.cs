@@ -1,4 +1,5 @@
 using Avalonia;
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -290,6 +291,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     private static ViewStateStore Store() =>
         new(
             new D47.Core.AppPaths(TempFolders.Create("d47-tab-memory-tests")),
+            new DiskFileSystem(),
             NullLogger<ViewStateStore>.Instance);
 
     private static (PanelView Panel, Window Window) Shown(ViewStateStore store)

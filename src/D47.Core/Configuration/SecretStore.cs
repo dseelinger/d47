@@ -14,13 +14,15 @@ public sealed class SecretStore
 {
     private readonly AppPaths _paths;
     private readonly ISecretProtector _protector;
+    private readonly IFileSystem _files;
     private readonly ILogger<SecretStore> _logger;
     private readonly Dictionary<string, string> _ciphertext = new(StringComparer.OrdinalIgnoreCase);
 
-    public SecretStore(AppPaths paths, ISecretProtector protector, ILogger<SecretStore> logger)
+    public SecretStore(AppPaths paths, ISecretProtector protector, IFileSystem files, ILogger<SecretStore> logger)
     {
         _paths = paths;
         _protector = protector;
+        _files = files;
         _logger = logger;
         Reload();
     }
@@ -87,15 +89,16 @@ public sealed class SecretStore
     {
         _ciphertext.Clear();
 
-        if (!File.Exists(_paths.SecretsFile))
-        {
-            return;
-        }
-
         try
         {
-            var stored = JsonSerializer.Deserialize<Dictionary<string, string>>(
-                File.ReadAllText(_paths.SecretsFile));
+            var text = _files.ReadText(_paths.SecretsFile);
+
+            if (text is null)
+            {
+                return;
+            }
+
+            var stored = JsonSerializer.Deserialize<Dictionary<string, string>>(text);
 
             if (stored is null)
             {
@@ -115,7 +118,7 @@ public sealed class SecretStore
     }
 
     private void Flush() =>
-        AtomicFile.WriteAllText(
+        _files.WriteText(
             _paths.SecretsFile,
             JsonSerializer.Serialize(_ciphertext, new JsonSerializerOptions { WriteIndented = true }));
 }

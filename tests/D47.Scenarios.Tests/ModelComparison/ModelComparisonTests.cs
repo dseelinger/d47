@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Storage;
 using System.Text.Json;
 using D47.Core;
 using D47.Core.Configuration;
@@ -185,7 +186,7 @@ public class ModelComparisonTests
 
         if (key is null && Env("D47_COMPARE_SECRETS_FROM") is { } root)
         {
-            var store = new SecretStore(new AppPaths(root), new DpapiSecretProtector(), NullLogger<SecretStore>.Instance);
+            var store = new SecretStore(new AppPaths(root), new DpapiSecretProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
             key = store.TryGet(info.KeySecretName!, out var stored) ? stored : null;
         }
 

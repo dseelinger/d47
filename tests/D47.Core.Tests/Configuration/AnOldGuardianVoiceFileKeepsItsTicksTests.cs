@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 using D47.Core.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -17,7 +18,7 @@ public class AnOldGuardianVoiceFileKeepsItsTicksTests
         """;
 
     private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, NullLogger<SettingsStore>.Instance);
+        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
 
     [Fact]
     public void TheEffectsItTickedAreTickedInTheDefaultOrder()

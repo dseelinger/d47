@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using D47.Core.Storage;
 using System.Globalization;
 using D47.App.Coverage;
 using D47.Core;
@@ -161,11 +162,11 @@ public class CoverageRecorderTests
             Paths = new AppPaths(TempFolders.Create("d47-coverage-tests"));
             Paths.EnsureCreated();
 
-            var store = new SettingsStore(Paths, NullLogger<SettingsStore>.Instance);
+            var store = new SettingsStore(Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
 
             Settings = new SettingsService(
                 store,
-                new SecretStore(Paths, new PlainProtector(), NullLogger<SecretStore>.Instance),
+                new SecretStore(Paths, new PlainProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance),
                 store.Load(),
                 NullLogger<SettingsService>.Instance);
 
