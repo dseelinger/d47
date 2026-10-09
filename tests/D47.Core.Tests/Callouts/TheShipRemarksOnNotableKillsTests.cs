@@ -33,19 +33,7 @@ public class TheShipRemarksOnNotableKillsTests
 
     private static List<JournalEvent> Mot()
     {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-
-        var path = Path.Combine(
-            directory.FullName, "tests", "fixtures", "kills", "Journal.2026-09-24T090721.01.log");
-
-        return [.. File.ReadAllLines(path).Where(line => line.Length > 0).Select(Event)];
+        return [.. EmbeddedFixture.Lines("kills.Journal.2026-09-24T090721.01.log").Select(Event)];
     }
 
     private static string Bounty(string time, string? pilot, string target, string? localised, long reward) =>

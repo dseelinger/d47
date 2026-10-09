@@ -38,7 +38,7 @@ public class TheBiologyPredictionHoldsOnRealJournalsTests(ITestOutputHelper outp
         var signals = BodySignals.Empty;
         var sampled = new Dictionary<(long, int), HashSet<string>>();
 
-        foreach (var line in File.ReadLines(Path.Combine(RepositoryRoot(), "tests", "fixtures", "exobiology", "sampled-bodies.log")))
+        foreach (var line in EmbeddedFixture.Lines("exobiology.sampled-bodies.log"))
         {
             if (!JournalEvent.TryParse(line, NullLogger.Instance, out var journalEvent) || journalEvent is null)
             {
@@ -85,15 +85,4 @@ public class TheBiologyPredictionHoldsOnRealJournalsTests(ITestOutputHelper outp
             : (bodies, 100.0 * hits / named, 100.0 * hits / sampledCount);
     }
 
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
-    }
 }

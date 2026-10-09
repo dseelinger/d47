@@ -10,8 +10,7 @@ public class ASystemSearchSaysWhenASystemIsAtWarTests
     [Fact]
     public void ActiveAndPendingWarsAndCivilWarsCount()
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory, "Fixtures", "spansh-search-faction-present-eurybia-blue-mafia.json")));
+        using var document = Fixture.Json("spansh-search-faction-present-eurybia-blue-mafia.json");
 
         var systems = SpanshResponse.ReadSearch(document).Systems.ToDictionary(system => system.Name);
 

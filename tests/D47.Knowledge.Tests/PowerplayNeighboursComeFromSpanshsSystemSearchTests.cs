@@ -47,7 +47,7 @@ public class PowerplayNeighboursComeFromSpanshsSystemSearchTests
         new(NullLogger<SpanshStarSystemService>.Instance, new HttpClient(handler));
 
     private static string Captured() =>
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "spansh-powerplay-near-ltt-7786.json"));
+        Fixture.Text("spansh-powerplay-near-ltt-7786.json");
 
     private static async Task<PowerplayNeighbourhood> Near()
     {

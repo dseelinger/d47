@@ -12,19 +12,7 @@ internal static class BeaconFixture
 
     public static IReadOnlyList<JournalEvent> Events()
     {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-
-        return [.. File.ReadAllLines(
-                Path.Combine(directory.FullName, "tests", "fixtures", "beacons", "Journal.2026-09-30T120000.01.log"))
-            .Where(line => line.Length > 0)
-            .Select(Event)];
+        return [.. EmbeddedFixture.Lines("beacons.Journal.2026-09-30T120000.01.log").Select(Event)];
     }
 
     public static JournalEvent Event(string json)

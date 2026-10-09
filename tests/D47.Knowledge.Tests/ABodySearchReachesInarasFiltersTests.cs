@@ -128,8 +128,7 @@ public class ABodySearchReachesInarasFiltersTests
     public void OrderingByMaterialKeepsTheRichestOfACapturedResponse()
     {
         // 50 bodies carrying Polonium within 50 ly of Sol, nearest first, captured 2026-10-06.
-        using var document = JsonDocument.Parse(File.ReadAllText(
-            Path.Combine(AppContext.BaseDirectory, "Fixtures", "spansh-bodies-polonium-near-sol.json")));
+        using var document = Fixture.Json("spansh-bodies-polonium-near-sol.json");
         var captured = SpanshResponse.ReadBodies(document);
 
         var query = Parse(new() { Material = "Polonium", OrderBy = "material", Size = 3 });
@@ -145,8 +144,7 @@ public class ABodySearchReachesInarasFiltersTests
     [Fact]
     public void TheNewFieldsAreReadFromAResult()
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(
-            Path.Combine(AppContext.BaseDirectory, "Fixtures", "spansh-bodies-polonium-near-sol.json")));
+        using var document = Fixture.Json("spansh-bodies-polonium-near-sol.json");
 
         var body = SpanshResponse.ReadBodies(document).Bodies[0];
 

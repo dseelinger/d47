@@ -36,12 +36,12 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
                 _ => throw new InvalidOperationException($"No recording at {query.CapacityUsed} t used."),
             };
 
-            return Task.FromResult<CarrierRoute?>(Read(Path.Combine(AppContext.BaseDirectory, "Fixtures", fixture)));
+            return Task.FromResult<CarrierRoute?>(Read(fixture));
         }
 
-        private static CarrierRoute Read(string path)
+        private static CarrierRoute Read(string fixture)
         {
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            using var document = EmbeddedFixture.Json(fixture);
 
             return new CarrierRoute([.. document.RootElement.GetProperty("result").GetProperty("jumps").EnumerateArray()
                 .Select(jump => new CarrierWaypoint(

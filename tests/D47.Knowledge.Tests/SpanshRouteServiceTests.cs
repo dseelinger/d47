@@ -281,8 +281,7 @@ public class SpanshRouteServiceTests
     {
         var recorder = new Recorder(
             (HttpStatusCode.Accepted, Queued),
-            (HttpStatusCode.OK, File.ReadAllText(Path.Combine(
-                AppContext.BaseDirectory, "Fixtures", "spansh-fleetcarrier-route-sol-colonia-sol.json"))));
+            (HttpStatusCode.OK, Fixture.Text("spansh-fleetcarrier-route-sol-colonia-sol.json")));
 
         using var service = Service(recorder, out _);
 

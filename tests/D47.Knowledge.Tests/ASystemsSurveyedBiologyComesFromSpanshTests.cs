@@ -34,8 +34,7 @@ public class ASystemsSurveyedBiologyComesFromSpanshTests
             new HttpClient(answer) { BaseAddress = new Uri("https://spansh.co.uk/") });
 
     private static string Captured() =>
-        File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory, "Fixtures", "spansh-system-blua-eaec-je-u-c18-283.json"));
+        Fixture.Text("spansh-system-blua-eaec-je-u-c18-283.json");
 
     [Fact]
     public async Task TheCapturedSystemGivesItsTwoSurveyedBodiesWithTheirSpecies()

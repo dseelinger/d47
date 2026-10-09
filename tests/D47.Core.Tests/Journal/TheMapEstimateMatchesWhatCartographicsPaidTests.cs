@@ -17,7 +17,7 @@ public class TheMapEstimateMatchesWhatCartographicsPaidTests
 
     private static readonly Lazy<IReadOnlyList<JournalEvent>> Fixture = new(() =>
     [
-        .. File.ReadAllLines(Path.Combine(FixturesDirectory(), "Journal.2026-09-27T001827.01.log"))
+        .. EmbeddedFixture.Lines("cartography.Journal.2026-09-27T001827.01.log")
             .Select(line => JournalEvent.TryParse(line, NullLogger.Instance, out var parsed) ? parsed! : null)
             .OfType<JournalEvent>(),
     ]);
@@ -140,17 +140,4 @@ public class TheMapEstimateMatchesWhatCartographicsPaidTests
     private static bool Flag(JournalEvent scan, string property) =>
         !scan.Raw.TryGetProperty(property, out var flag) || flag.ValueKind != System.Text.Json.JsonValueKind.False;
 
-    private static string FixturesDirectory()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory is null
-            ? throw new InvalidOperationException($"Could not find the repository root above {AppContext.BaseDirectory}.")
-            : Path.Combine(directory.FullName, "tests", "fixtures", "cartography");
-    }
 }

@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Journal;
 /// <summary>
 /// The signal a surface reading live state needs: the system the Commander is in changed (#93).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheStoreSaysWhenTheShipMovesTests
 {
     private static string FixturesDirectory { get; } = FindFixturesDirectory();

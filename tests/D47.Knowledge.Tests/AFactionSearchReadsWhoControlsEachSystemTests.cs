@@ -12,8 +12,7 @@ public class AFactionSearchReadsWhoControlsEachSystemTests
 
     private static GalaxySearchResult Read(string fixture)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory, "Fixtures", $"spansh-search-faction-{fixture}-eurybia-blue-mafia.json")));
+        using var document = Fixture.Json($"spansh-search-faction-{fixture}-eurybia-blue-mafia.json");
 
         return SpanshResponse.ReadSearch(document);
     }

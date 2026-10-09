@@ -9,7 +9,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\D47.Knowledge.Tests\Fixtures\spansh-fleetcarrier-route-*.json" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\D47.Knowledge.Tests\Fixtures\spansh-fleetcarrier-route-*.json" LogicalName="Fixtures.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\beacons\*.log" LogicalName="Fixtures.beacons.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\cartography\*.log" LogicalName="Fixtures.cartography.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\exobiology\*.log" LogicalName="Fixtures.exobiology.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\kills\*.log" LogicalName="Fixtures.kills.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\scenes\*.log" LogicalName="Fixtures.scenes.%(Filename)%(Extension)" />
     <None Include="..\..\assets\voices\chatterbox\*.wav"
           Link="voices\chatterbox\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />

@@ -10,18 +10,7 @@ public class ASettlementRaidPlaysAsScenesTests
 {
     private static IReadOnlyList<JournalEvent> Raid()
     {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-
-        var path = Path.Combine(directory.FullName, "tests", "fixtures", "scenes", "Journal.2026-09-30T004823.01.log");
-
-        return [.. File.ReadAllLines(path).Where(line => line.Length > 0).Select(line =>
+        return [.. EmbeddedFixture.Lines("scenes.Journal.2026-09-30T004823.01.log").Select(line =>
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
             return parsed!;

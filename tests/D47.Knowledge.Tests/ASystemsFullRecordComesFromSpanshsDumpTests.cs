@@ -48,7 +48,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
         new(NullLogger<SpanshStarSystemService>.Instance, new HttpClient(handler));
 
     private static string Captured() =>
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "spansh-dump-ltt-7786.json"));
+        Fixture.Text("spansh-dump-ltt-7786.json");
 
     private static async Task<StarSystemProfile> Profile()
     {

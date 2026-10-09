@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Journal;
 /// restart. Replayed from <c>tests/fixtures/missions</c>: three sessions, the newest holding only a
 /// <c>Missions</c> snapshot.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheMissionBoardSurvivesARestartTests
 {
     private const string Fid = "F100";

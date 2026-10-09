@@ -12,8 +12,7 @@ namespace D47.Knowledge.Tests;
 public class AStationSearchReadsServicesAndPadsTests
 {
     private static StationSearchResult Read() =>
-        SpanshResponse.ReadStations(JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory, "Fixtures", "spansh-stations-trader-and-broker-near-sol.json"))));
+        SpanshResponse.ReadStations(Fixture.Json("spansh-stations-trader-and-broker-near-sol.json"));
 
     [Fact]
     public void EachStationCarriesItsServicesPadsFactionAndReportDate()
