@@ -1,5 +1,4 @@
-using System.Reflection;
-using D47.App;
+using D47.App.Voice;
 using D47.Core.Hotas;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -87,14 +86,8 @@ public class AnUnsettledPollIsNotAChanceTheStickMissedTests
         return (pushToTalk, cancel, []);
     }
 
-    private static readonly MethodInfo PollTheStick =
-        typeof(AppHost).GetMethod(
-            "PollTheStick",
-            BindingFlags.Static | BindingFlags.NonPublic)
-        ?? throw new InvalidOperationException("AppHost.PollTheStick is not where the test expects it");
-
     private static void Poll(IHotasReader reader, BoundButton pushToTalk, BoundButton cancel, List<string> lines) =>
-        PollTheStick.Invoke(null, [reader, pushToTalk, cancel, new Capture(lines)]);
+        Listener.PollTheStick(reader, pushToTalk, cancel, new Capture(lines));
 
     private sealed class Capture(List<string> lines) : ILogger
     {

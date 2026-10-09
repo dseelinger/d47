@@ -501,7 +501,7 @@ public partial class MainWindow : Window
         }
 
         // Spoken input runs the same turn as typed input, deliberately.
-        _host.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        _host.Listener.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             // Spoken and typed run the same turn - the Commander expects "where am I" to mean the same thing
             // either way - but the router is told which it was, because a couple of phrases only mean what
@@ -513,7 +513,7 @@ public partial class MainWindow : Window
 
         // What was heard, where no response is going to carry it — an utterance a chooser took, or one the
         // wake policy reworded on the way in (change-requests.md 31).
-        _host.HeardText += text => Avalonia.Threading.Dispatcher.UIThread.Post(
+        _host.Listener.HeardText += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append("\n" + text + "\n"));
 
         // Anything d47 says without a turn behind it still belongs in the transcript, so what was heard and
@@ -771,7 +771,7 @@ public partial class MainWindow : Window
 
             // The choice is the go-ahead: it states its size in the list it was made from, and the row
             // shows what it is doing while it does it.
-            (model, progress) => _host.InstallModelAsync(model, progress),
+            (model, progress) => _host.Listener.InstallModelAsync(model, progress),
 
             // About's way back in.
             ShowKeySetupAsync,

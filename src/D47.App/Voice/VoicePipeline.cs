@@ -453,6 +453,21 @@ public sealed class VoicePipeline(
         }
     }
 
+    /// <summary>Plays a state's cue, when cues are on, without moving the loop.</summary>
+    public void Cue(LoopState state)
+    {
+        if (!CuesEnabled)
+        {
+            return;
+        }
+
+        arbiter.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Cue,
+            Clip = cues().For(state),
+        });
+    }
+
     /// <summary>Returns the loop to idle once nothing is audible any more.</summary>
     public void Settle(AudioActivity activity)
     {

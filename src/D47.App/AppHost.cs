@@ -87,6 +87,8 @@ public sealed class AppHost : IDisposable
         HttpModelStore models,
         WhisperTranscriber transcriber,
         LearnedWording wording,
+        WakeWordGate wake,
+        StrongBox<DateTimeOffset?> heardAt,
         string version,
         string? startupError)
     {
@@ -138,17 +140,34 @@ public sealed class AppHost : IDisposable
         Listening = gate;
         Echo = echo;
         _binds = binds;
-        _microphone = microphone;
-        _inputFollow = new DefaultDeviceFollowPolicy(microphone);
-        _pushToTalk = pushToTalk;
-        _pushToTalkButton = pushToTalkButton;
         _pushToTalkSources = pushToTalkSources;
         _gameInput = gameInput;
         Models = models;
-        _transcriber = transcriber;
         Wording = wording;
         Version = version;
         StartupError = startupError;
+
+        Listener = new Listener(
+            settings,
+            secrets,
+            loggerFactory,
+            voice,
+            said: text => Said?.Invoke(text),
+            prompted: PanelRouting.Prompted,
+            properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke()),
+            recorder: () => AudioRecorder,
+            shipName: () => personas.ShipName,
+            panel: Panel,
+            gate,
+            echo,
+            microphone,
+            transcriber,
+            models,
+            binds,
+            pushToTalk,
+            pushToTalkButton,
+            wake,
+            heardAt);
 
         OwnVoice = new OwnVoice(paths.Data, new DpapiSecretProtector());
         CustomVoices = new CustomVoices(paths.Data, new DpapiSecretProtector());
@@ -156,8 +175,8 @@ public sealed class AppHost : IDisposable
             OwnVoice,
             new OwnVoiceCapture(loggerFactory.CreateLogger<OwnVoiceCapture>()),
             () => Settings.Current.Listening.InputDevice,
-            PauseListening,
-            ResumeListening,
+            Listener.PauseListening,
+            Listener.ResumeListening,
             PlayOwnVoice,
             loggerFactory.CreateLogger<OwnVoiceRecording>());
 
@@ -330,8 +349,8 @@ public sealed class AppHost : IDisposable
     /// <summary>What removes d47's own voice from what the microphone hears (Phase 13).</summary>
     public EchoCanceller Echo { get; }
 
-    /// <summary>Whether an utterance was addressed to d47 at all, in wake-word mode.</summary>
-    public WakeWordGate Wake { get; } = new();
+    /// <summary>Hearing: the microphone, the transcribers, push-to-talk and the wake word.</summary>
+    public Listener Listener { get; }
 
     /// <summary>The Commander's Elite bindings.</summary>
     public EliteBinds Binds => _binds.Current;
@@ -578,9 +597,6 @@ public sealed class AppHost : IDisposable
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
-    /// <summary>Raised when an utterance has been turned into words, so a surface can run it.</summary>
-    public event Action<string>? Heard;
-
     /// <summary>
     /// Raised with something d47 is saying that no turn produced, so the transcript can carry it too.
     /// </summary>
@@ -599,17 +615,6 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public event Action<string>? Noted;
 
-    /// <summary>Something the Commander said that no turn is going to write down.</summary>
-    public event Action<string>? HeardText;
-
-    private void HeardAside(string text, string why)
-    {
-        if (text is { Length: > 0 })
-        {
-            HeardText?.Invoke($"{why}: {text}");
-        }
-    }
-
     /// <summary>
     /// Raised true when a core has been chosen and has not yet worked out what to say, and false when
     /// it has (Phase 12, "Anything that might take a moment says it is working").
@@ -622,40 +627,7 @@ public sealed class AppHost : IDisposable
     /// <summary>Raised on the thread that changed it when the story's hold on the Guardian cores changes.</summary>
     public event Action? CoreHoldChanged;
 
-    /// <summary>Downloads a model and loads it.</summary>
-    public async Task<ModelInstallResult> InstallModelAsync(
-        WhisperModel model,
-        IProgress<ModelProgress>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await Models
-            .InstallAsync(model, progress, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (result.Success)
-        {
-            // Load it now rather than at the next restart — the same "apply every setting without a restart"
-            // rule everything else follows (Phase 4).
-            ApplyListeningSettings();
-        }
-
-        return result;
-    }
-
-    /// <summary>Loads the local model, and runs the no-speech probe for every provider.</summary>
-    private readonly WhisperTranscriber _transcriber;
-
-    /// <summary>The hearing provider as of the last apply.</summary>
-    private volatile SttProviderInfo _hearing = SttProviderCatalog.Local;
-
-    /// <summary>One per hosted provider, made on first use and kept until the host is disposed.</summary>
-    private readonly Dictionary<string, ISpeechTranscriber> _hosted = new(StringComparer.Ordinal);
-
     private readonly BindsWatch _binds;
-
-    private readonly WasapiMicrophone _microphone;
-
-    private readonly DefaultDeviceFollowPolicy _inputFollow;
 
     private readonly OwnVoiceRecording _ownVoiceRecording;
 
@@ -665,14 +637,6 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's custom Chatterbox voices, listed where a voice is picked and never drawn for anyone else.</summary>
     internal CustomVoices CustomVoices { get; }
 
-    /// <summary>When the Commander was last heard and understood.</summary>
-    private StrongBox<DateTimeOffset?>? _heardAt;
-
-    private readonly PushToTalkKey _pushToTalk;
-
-    /// <summary>The stick's half of push-to-talk (Phase 53).</summary>
-    private readonly D47.Core.Hotas.BoundButton _pushToTalkButton;
-
     /// <summary>The two of them as one gate.</summary>
     private readonly D47.Core.Hotas.PushToTalkSources _pushToTalkSources;
 
@@ -681,9 +645,6 @@ public sealed class AppHost : IDisposable
     /// whatever it is holding (#206).
     /// </summary>
     private readonly ScancodeInjector _gameInput;
-
-    /// <summary>Cancel's stick button (#221).</summary>
-    private readonly D47.Core.Hotas.BoundButton _cancelButton = new();
 
     /// <summary>
     /// The controllers, for the one question the push-to-talk button has to ask outside the tick:
@@ -1488,6 +1449,8 @@ public sealed class AppHost : IDisposable
 
         AppHost? self = null;
 
+        var wake = new WakeWordGate();
+
         var wording = new LearnedWording(
             heardNames,
             learnedPhrases,
@@ -1939,7 +1902,7 @@ public sealed class AppHost : IDisposable
                     // free is asking when they ask this one (Phase 13).
                     Microphone = () => gate.State,
                     EchoState = () => (echo.IsActive, echo.Unavailable),
-                    WakeWords = () => self?.Wake.Phrases ?? [],
+                    WakeWords = () => wake.Phrases,
 
                     // So the status says "[" where the settings row already does.
                     KeyLabel = Input.Gestures.Describe,
@@ -2597,6 +2560,8 @@ public sealed class AppHost : IDisposable
             models,
             transcriber,
             wording,
+            wake,
+            heardAt,
             version,
             startupError);
 
@@ -2637,7 +2602,7 @@ public sealed class AppHost : IDisposable
 
         // That the microphone is open, on both surfaces, as a property of the gate policy rather than of any
         // one capability (Phase 13).
-        gate.StateChanged += state => host.ShowMicrophone(state);
+        gate.StateChanged += state => host.Listener.ShowMicrophone(state);
 
         // Beside it, because a model that is still loading is not the same as a microphone that is ready
         // (#147).
@@ -2645,7 +2610,7 @@ public sealed class AppHost : IDisposable
 
         // Stated once at startup as well as on every change, because the opening state is the one a Commander
         // sees for longest and nothing had raised an event yet.
-        host.ShowMicrophone(gate.State);
+        host.Listener.ShowMicrophone(gate.State);
 
         // A voice the provider refuses is written out of settings rather than merely skipped for the turn it
         // broke.
@@ -2663,7 +2628,7 @@ public sealed class AppHost : IDisposable
 
         using (StartupTimer.Step("listening settings"))
         {
-            host.ApplyListeningSettings();
+            host.Listener.ApplyListeningSettings();
         }
 
         // The mixer as the file left it, before anything is audible.
@@ -2881,14 +2846,13 @@ public sealed class AppHost : IDisposable
         host.ScreenCapture = screenCapture;
 
         // Captured audio becomes words on the thread pool, never on the audio thread that produced it.
-        gate.Captured += host.TranscribeAsync;
+        gate.Captured += host.Listener.TranscribeAsync;
 
         // The route reader lives in the tick closure, so the host reaches it through this rather than owning
         // it — proper-noun biasing wants the systems the Commander is about to arrive in, and those are only
         // in the route file.
         host._route = () => route.Current;
         host._modulePower = () => modulePower.Current;
-        host._heardAt = heardAt;
 
         // Push-to-talk, sampled here rather than hooked.
         tick.Add("push-to-talk", context =>
@@ -2896,7 +2860,7 @@ public sealed class AppHost : IDisposable
             pushToTalk.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            PollTheStick(sampledControllers, pushToTalkButton, host._cancelButton, host._logger);
+            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CancelButton, host._logger);
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.
@@ -2908,7 +2872,11 @@ public sealed class AppHost : IDisposable
 
         // Windows moves its own default endpoint silently; nothing else notices while d47 holds a device
         // open, so this asks (#67).
-        tick.Add("default-audio-devices", context => host.FollowDefaultDevices(context.Now));
+        tick.Add("default-audio-devices", context =>
+        {
+            host.FollowOutputDevice(context.Now);
+            host.Listener.FollowInputDevice(context.Now);
+        });
 
         // Two sources, one gate (Phase 53).
         pushToTalk.Pressed += sources.KeyPressed;
@@ -2920,7 +2888,7 @@ public sealed class AppHost : IDisposable
         sources.Released += () => gate.KeyUp();
 
         // Cancel, on press and once (#221).
-        host._cancelButton.Pressed += () => host.CancelNow();
+        host.Listener.CancelButton.Pressed += () => host.CancelNow();
 
         // That d47 is listening, said both ways.
         gate.Started += () => host.Voice.EnterState(Core.Audio.LoopState.Listening);
@@ -4875,7 +4843,7 @@ public sealed class AppHost : IDisposable
         // And what d47 answers to, for the same reason and with the same failure if it is skipped: the wake
         // word defaults to the ship's AI name, so a core switch that did not re-read it would leave a
         // Commander calling the new core by the old one's name.
-        ApplyWakeWords();
+        Listener.ApplyWakeWords();
 
         _logger.LogInformation(
             "Persona changed from {Previous} to {Current} ({Arrival})",
@@ -5172,14 +5140,12 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Follows the Windows Default Device as it moves, on whichever direction is left on "system default" —
-    /// a chosen device is unaffected. Waits for the arbiter, or the gate, to go idle unless the device that
-    /// was open has itself disappeared (#67). The reopen runs on the pool; its outcome is reported on a later tick.
+    /// Follows the Windows Default Device for audio output while it is left on "system default". Waits for
+    /// the arbiter to go idle unless the open device has disappeared (#67).
     /// </summary>
-    private void FollowDefaultDevices(DateTimeOffset now)
+    private void FollowOutputDevice(DateTimeOffset now)
     {
         var speech = Settings.Current.Speech;
-        var listening = Settings.Current.Listening;
 
         var outputMove = _outputFollow.Poll(
             now,
@@ -5199,255 +5165,6 @@ public sealed class AppHost : IDisposable
                 output.OldDeviceName ?? "(none)",
                 output.NewDeviceName ?? "(none)");
         }
-
-        var inputMove = _inputFollow.Poll(
-            now,
-            followingDefault: string.IsNullOrEmpty(listening.InputDevice),
-            configuredDeviceId: listening.InputDevice,
-            isBusy: () => Listening.IsListening,
-            interrupt: Listening.Reset);
-
-        if (inputMove is not { } input)
-        {
-            return;
-        }
-
-        if (input.Error is { } inputError)
-        {
-            _logger.LogError(inputError, "Could not follow the Default Device for the microphone");
-            return;
-        }
-
-        _logger.LogInformation(
-            "The Default Device moved input from {Old} to {New}",
-            input.OldDeviceName ?? "(none)",
-            input.NewDeviceName ?? "(none)");
-
-        if (!input.Interrupted)
-        {
-            return;
-        }
-
-        // The gate was reset mid-utterance rather than left to time out silently.
-        const string problem = "I did not catch that — my microphone just moved to a different device.";
-        _ = Voice.AnnounceAsync(problem);
-        Said?.Invoke(problem);
-    }
-
-    /// <summary>The transcriber for a hosted provider.</summary>
-    private ISpeechTranscriber HostedTranscriber(SttProviderInfo provider)
-    {
-        lock (_hosted)
-        {
-            if (!_hosted.TryGetValue(provider.Id, out var transcriber))
-            {
-                var secret = provider.KeySecretName!;
-
-                transcriber = Hearing.Hosted(
-                    provider,
-                    () => Secrets.TryGet(secret, out var key) ? key : null,
-                    _loggerFactory);
-
-                _hosted[provider.Id] = transcriber;
-            }
-
-            return transcriber;
-        }
-    }
-
-    /// <summary>Turns one captured utterance into words and hands them on.</summary>
-    private void TranscribeAsync(Utterance utterance)
-    {
-        // The microphone has closed and the words are being worked out.
-        Voice.EnterState(Core.Audio.LoopState.Transcribing);
-
-        var provider = _hearing;
-
-        // A hosted provider is never loading, so the local model's state does not gate it.
-        var hosted = provider.Hosted ? HostedTranscriber(provider) : null;
-
-        if (hosted is null && !_transcriber.IsReady && !_transcriber.IsLoading)
-        {
-            NoSpeechModel(utterance);
-            return;
-        }
-
-        if (utterance.IsSilent)
-        {
-            // Not "nothing intelligible" — nothing at all arrived.
-            var device = _microphone.OpenDeviceName ?? "the selected microphone";
-
-            _logger.LogWarning(
-                "Captured {Seconds:0.#}s of digital silence from {Device}; it is sending no audio",
-                utterance.Duration.TotalSeconds,
-                device);
-
-            var problem =
-                $"I heard nothing at all — {device} is not sending any audio. "
-                + "Check it is not muted, or pick a different microphone in Settings.";
-
-            _ = Voice.AnnounceAsync(problem);
-            Said?.Invoke(problem);
-            Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
-            return;
-        }
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                // A press made while the model was still loading waits for it here rather than being
-                // discarded (#147).
-                if (hosted is null)
-                {
-                    await _transcriber.Ready.ConfigureAwait(false);
-
-                    if (!_transcriber.IsReady)
-                    {
-                        NoSpeechModel(utterance);
-                        return;
-                    }
-                }
-
-                // Journal-derived and network-free.
-                var nouns = ProperNouns.From(GameState.Active, _route?.Invoke());
-
-                // The unprompted second opinion, beside the prompted pass rather than after it (#196):
-                // tiny.en answers in ~350 ms while the main pass is still working, so the gate costs nothing
-                // in latency. With a hosted provider no main model is loaded, so tiny.en is looked for in
-                // the models folder.
-                var outcome = await Hearing.TranscribeAsync(
-                        hosted ?? _transcriber,
-                        provider,
-                        () => hosted is null
-                            ? _transcriber.NoSpeechAsync(utterance)
-                            : _transcriber.NoSpeechAsync(utterance, Models.Directory),
-                        utterance,
-                        nouns)
-                    .ConfigureAwait(false);
-
-                if (outcome.Problem is { } problem)
-                {
-                    TranscriptionUnavailable(problem);
-                    return;
-                }
-
-                // The exact buffer the transcriber was given, beside what it came back with (#164).
-                AudioRecorder?.Heard(utterance, outcome.Raw!);
-
-                var transcription = outcome.Kept!;
-
-                // **A word hallucinated from silence is refused here** (#196).
-                if (outcome.RefusedAt is { } noSpeech)
-                {
-                    _logger.LogInformation(
-                        "Refused as no-speech: the unprompted probe read {Probability:0.###} against \"{Text}\"",
-                        noSpeech,
-                        outcome.Raw!.Text);
-                }
-
-                // A panel is asking for a value and this is the answer to it (Phase 25, "Say it, or type
-                // it").
-                if (PanelRouting.Prompted(new Core.Interface.Heard(
-                        transcription.Text, transcription.Confidence, Final: true)))
-                {
-                    // Written down, because nothing after this point will.
-                    HeardAside(transcription.Text, "answering the question");
-
-                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
-                    return;
-                }
-
-                if (transcription.IsEmpty)
-                {
-                    // Distinguished from a failure: the model ran and heard nothing worth reporting, which a
-                    // Commander who coughed should not be told is an error.
-                    _logger.LogInformation("Nothing intelligible in {Seconds:0.#}s", utterance.Duration.TotalSeconds);
-
-                    // Without a cue, like every other path here that has nothing to say (remediation.md 14,
-                    // item 8).
-                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
-                    return;
-                }
-
-                if (_heardAt is { } clock)
-                {
-                    clock.Value = DateTimeOffset.Now;
-                }
-
-                // The wake word, applied to the words rather than to the audio (Phase 13).
-                var decision = Wake.Admit(transcription.Text, DateTimeOffset.Now);
-
-                if (decision.Outcome == WakeOutcome.Ignored)
-                {
-                    // Somebody in the room said something that was not to d47.
-                    _logger.LogDebug("Not addressed to me: {Text}", transcription.Text);
-                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
-                    return;
-                }
-
-                if (decision.Outcome == WakeOutcome.Woken)
-                {
-                    // The name and nothing after it.
-                    _logger.LogInformation("Woken by name; listening for what follows");
-
-                    // The cue on its own rather than the loop state behind it.
-                    if (Voice.CuesEnabled)
-                    {
-                        Audio.Enqueue(new Core.Audio.AudioRequest
-                        {
-                            Channel = Core.Audio.AudioChannel.Cue,
-                            Clip = Cues.For(Core.Audio.LoopState.Listening),
-                        });
-                    }
-
-                    Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
-                    return;
-                }
-
-                _logger.LogInformation("Heard: {Text}", transcription.Text);
-
-                // What was heard, where it is not what gets asked.
-                if (!string.Equals(decision.Text, transcription.Text, StringComparison.Ordinal))
-                {
-                    HeardAside(transcription.Text, "heard");
-                }
-
-                Heard?.Invoke(decision.Text);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Could not transcribe an utterance");
-                Voice.EnterState(Core.Audio.LoopState.Failed);
-            }
-        });
-    }
-
-    /// <summary>A hosted provider gave no words: said, and back to idle without a cue.</summary>
-    private void TranscriptionUnavailable(string problem)
-    {
-        _logger.LogWarning("Hearing failed: {Problem}", problem);
-
-        _ = Voice.AnnounceAsync(problem);
-        Said?.Invoke(problem);
-
-        Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
-    }
-
-    /// <summary>An utterance arrived with nothing to transcribe it.</summary>
-    private void NoSpeechModel(Utterance utterance)
-    {
-        _logger.LogInformation(
-            "Heard {Seconds:0.#}s but no speech model is loaded", utterance.Duration.TotalSeconds);
-
-        const string Cannot = "I heard you, but I have no speech model loaded to understand it.";
-
-        _ = Voice.AnnounceAsync(Cannot);
-        Said?.Invoke(Cannot);
-
-        // No cue: a sentence is about to be spoken saying the same thing, and a chime under it is d47
-        // telling the Commander twice.
-        Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
     }
 
     /// <summary>Opens the keyboard on "System to plot", holding <paramref name="initial"/>.</summary>
@@ -5521,91 +5238,6 @@ public sealed class AppHost : IDisposable
     /// <summary>What Elite says each module in the ship being flown draws (Phase 38).</summary>
     public ModulePower ModulePower => _modulePower?.Invoke() ?? ModulePower.None;
 
-    /// <summary>The model currently being fetched, or null.</summary>
-    private string? _fetching;
-
-    /// <summary>
-    /// Loads the speech model off the calling thread, timing the step and setting the indicator while it
-    /// runs (#147).
-    /// </summary>
-    private async Task LoadModelAsync(string path, string modelId, bool useGpu)
-    {
-        // Set before the load is asked for, so the clear that follows the load cannot arrive first.
-        Listening.ModelLoading = true;
-
-        var timing = StartupTimer.Step("speech model");
-
-        try
-        {
-            await _transcriber.LoadAsync(path, modelId, useGpu).ConfigureAwait(false);
-        }
-        finally
-        {
-            timing.Dispose();
-
-            // From the transcriber rather than from here, because a later request may already have
-            // superseded this one.
-            Listening.ModelLoading = _transcriber.IsLoading;
-        }
-    }
-
-    /// <summary>Downloads a selected model that is not on disk, then loads it.</summary>
-    private async Task FetchModelAsync(WhisperModel model)
-    {
-        if (Interlocked.CompareExchange(ref _fetching, model.Id, null) is not null)
-        {
-            return;
-        }
-
-        try
-        {
-            var result = await Models.InstallAsync(model).ConfigureAwait(false);
-
-            if (result.Success)
-            {
-                _logger.LogInformation("{Model} downloaded", model.Id);
-
-                // Re-applied rather than loaded directly, so a file arriving goes through the one path that
-                // knows what loading a model entails.
-                ApplyListeningSettings();
-                return;
-            }
-
-            _logger.LogWarning(
-                "{Model} could not be downloaded: {Detail}",
-                model.Id,
-                result.Detail ?? "no detail given");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "{Model} could not be downloaded", model.Id);
-        }
-        finally
-        {
-            _fetching = null;
-        }
-    }
-
-    /// <summary>Closes the listening microphone for a take of the Commander's voice; true when it was open.</summary>
-    private bool PauseListening()
-    {
-        var open = _microphone.IsCapturing;
-
-        if (open)
-        {
-            _microphone.Close();
-            Listening.Capturing = false;
-        }
-
-        return open;
-    }
-
-    private void ResumeListening()
-    {
-        _microphone.Open(Settings.Current.Listening.InputDevice);
-        Listening.Capturing = _microphone.IsCapturing;
-    }
-
     private void PlayOwnVoice(AudioClip clip)
     {
         Audio.DropGroup(OwnVoiceRecording.PlaybackGroup);
@@ -5640,181 +5272,6 @@ public sealed class AppHost : IDisposable
         });
 
         return null;
-    }
-
-    /// <summary>
-    /// Rebuilds everything downstream of the listening settings: the device, the key, the gate policy
-    /// and the pre-roll.
-    /// </summary>
-    private void ApplyListeningSettings()
-    {
-        var listening = Settings.Current.Listening;
-
-        Listening.Mode = listening.Mode switch
-        {
-            ListeningCapability.ToggleMode => ListenMode.Toggle,
-            ListeningCapability.ContinuousMode => ListenMode.VoiceActivity,
-            ListeningCapability.WakeMode => ListenMode.WakeWord,
-            _ => ListenMode.PushToTalk,
-        };
-
-        Listening.PreRoll = TimeSpan.FromMilliseconds(listening.PreRollMilliseconds);
-        Listening.Voice.Sensitivity = listening.Sensitivity;
-        Listening.Voice.Hangover = TimeSpan.FromMilliseconds(listening.SilenceMilliseconds);
-
-        // Started before the microphone, so the first buffer off a freshly opened device is already going
-        // through it.
-        if (listening.EchoCancellation)
-        {
-            Echo.SuppressNoise = listening.NoiseSuppression;
-            Echo.Start();
-        }
-        else
-        {
-            Echo.Stop();
-        }
-
-        // From the canceller's live state rather than from the row that asked for it.
-        Listening.EchoCancelled = Echo.IsActive;
-
-        ApplyWakeWords();
-
-        // Rebinding while the key is held would leave the gate open with nothing able to close it — the
-        // listening equivalent of a stranded key.
-        _pushToTalk.ForceUp();
-        _pushToTalkButton.ForceUp();
-
-        _hearing = SttProviderCatalog.Selected(listening.Provider);
-
-        // The model, before the key. A hosted provider unloads it.
-        var model = ListeningWiring.PlanModel(listening, Models);
-
-        // Cleared here and set again by the load itself, so the two writes cannot arrive out of order.
-        Listening.ModelLoading = false;
-
-        switch (model.Action)
-        {
-            case SpeechModelAction.Load:
-                // Off the calling thread: this runs on the startup path and again on the UI thread for every
-                // listening.* change, and a medium model takes over a second to load (#147).
-                _ = LoadModelAsync(model.Path!, model.Model!.Id, model.UseGpu);
-                break;
-
-            case SpeechModelAction.Fetch:
-                // Selected but not on disk, so fetch it.
-                _logger.LogInformation("{Model} is selected but not installed; fetching it", model.Model!.Id);
-
-                _transcriber.Unload();
-                _ = FetchModelAsync(model.Model);
-                break;
-
-            default:
-                // Unload, not Dispose: this runs on every listening.* change, and the host keeps one
-                // transcriber for the life of the process.
-                _transcriber.Unload();
-                break;
-        }
-
-        // Deferred to the end, because writing a setting raises Changed, which re-enters this method: doing
-        // it above would run the microphone and key work twice on one apply.
-
-        var boundKey = _pushToTalk.Bind(listening.PushToTalkKey);
-
-        // And the stick (Phase 53).
-        var boundButton = _pushToTalkButton.Bind(
-            D47.Core.Hotas.HotasButton.Parse(listening.PushToTalkButton));
-
-        // Cancel's stick button, rebound on the same apply (#221).
-        _cancelButton.Bind(
-            D47.Core.Hotas.HotasButton.Parse(Settings.Current.Speech.CancelButton));
-
-        // Whether that stick is actually here is asked from the tick, not from here (#45).
-
-        var bound = boundKey || boundButton;
-
-        if (!ListeningWiring.NeedsMicrophone(listening.Mode, bound))
-        {
-            // No key and nothing that opens the gate by itself, so no microphone. d47 opening an input device
-            // it will never read from is exactly the surprise the unset default exists to avoid.
-            _microphone.Close();
-            Listening.Capturing = false;
-            return;
-        }
-
-        _microphone.Open(listening.InputDevice);
-        Listening.Capturing = _microphone.IsCapturing;
-
-        if (!bound)
-        {
-            // Hands free with no key bound is a legitimate configuration, and the collision check below has
-            // nothing to check.
-            return;
-        }
-
-        if (boundKey && Binds.Using(listening.PushToTalkKey!) is { Count: > 0 } collisions)
-        {
-            // Logged at startup as well as answered on request: the symptom of a double-bound key is that
-            // nothing happens, which reads as d47 being broken.
-            _logger.LogWarning(
-                "Push-to-talk {Key} is also bound in Elite ({Preset}) to {Actions}; one of the two will not work",
-                listening.PushToTalkKey,
-                Binds.PresetName,
-                string.Join(", ", collisions.Select(binding => binding.Action).Distinct()));
-        }
-
-        if (_pushToTalkButton.Bound is { } button
-            && Binds.UsingJoystickButton(button.Button) is { Count: > 0 } sharing)
-        {
-            // Hedged, and the hedge is the accurate part.
-            _logger.LogWarning(
-                "Push-to-talk {Button} may collide: Elite ({Preset}) binds a button of that number to "
-                + "{Actions}. D47 cannot tell whether that is the same controller.",
-                button.Describe(),
-                Binds.PresetName,
-                string.Join(", ", sharing.Select(binding => binding.Action).Distinct()));
-        }
-    }
-
-    /// <summary>
-    /// Polls the stick and the buttons bound to it, on settled readings only (#146). An unsettled
-    /// reader returns nothing by construction, and <see cref="D47.Core.Hotas.BoundButton"/> counts every
-    /// poll it is given toward the threshold its absence notice fires at.
-    /// </summary>
-    private static void PollTheStick(
-        D47.Core.Hotas.IHotasReader? reader,
-        D47.Core.Hotas.BoundButton pushToTalkButton,
-        D47.Core.Hotas.BoundButton cancelButton,
-        Microsoft.Extensions.Logging.ILogger logger)
-    {
-        // A single enumeration at startup reported three of six devices on the bench, which is Phase 21's
-        // finding 1.
-        if (reader?.IsSettled != true)
-        {
-            return;
-        }
-
-        var buttons = reader.Poll();
-
-        pushToTalkButton.Poll(buttons);
-        cancelButton.Poll(buttons);
-
-        // And then, and only then, whether the stick it is bound to turned up (#45).
-        WarnIfTheStickIsMissing(pushToTalkButton, logger);
-    }
-
-    /// <summary>The stick bound to push-to-talk is not here (Phase 53). Asked on settled polls only.</summary>
-    private static void WarnIfTheStickIsMissing(
-        D47.Core.Hotas.BoundButton pushToTalkButton,
-        Microsoft.Extensions.Logging.ILogger logger)
-    {
-        if (pushToTalkButton.MissingDeviceNotice() is not { } button)
-        {
-            return;
-        }
-
-        logger.LogWarning(
-            "Push-to-talk is bound to {Button} on a controller that is not here",
-            button.Describe());
     }
 
     /// <summary>Puts what the microphone is doing in front of the Commander, on both surfaces.</summary>
@@ -5891,43 +5348,6 @@ public sealed class AppHost : IDisposable
                 _acting.Release();
             }
         });
-    }
-
-    private void ShowMicrophone(MicrophoneState state)
-    {
-        Panel.Microphone = state;
-
-        var listening = Settings.Current.Listening;
-
-        // Describing a key is the App's business — Core has no keyboard — so the renderer is passed down and
-        // the sentence is chosen in Core, where a test reads what a Commander reads.
-        var gesture = ListeningCapability.PushToTalkGesture(listening, Input.Gestures.Describe);
-
-        Panel.MicrophoneDetail = MicrophoneNarration.For(
-            state,
-            listening.Mode,
-            Wake.Phrases,
-            gesture,
-            listening.PreRollMilliseconds);
-
-        // The same three facts, worded for a prompt that is waiting on one (remediation.md 10, item 12).
-        Panel.ListeningPrompt = MicrophoneNarration.Prompt(
-            listening.Mode,
-            Wake.Phrases,
-            ListeningCapability.PushToTalkGesture(
-                listening,
-                Input.Gestures.Describe,
-                nameTheButton: false));
-    }
-
-    /// <summary>Points the wake-word policy at whatever d47 currently answers to.</summary>
-    private void ApplyWakeWords()
-    {
-        var listening = Settings.Current.Listening;
-
-        Wake.Window = TimeSpan.FromSeconds(listening.WakeWindowSeconds);
-
-        Wake.Phrases = ListeningWiring.WakePhrases(listening.Mode, listening.WakeWords, Personas.ShipName);
     }
 
     /// <summary>Says out loud that the model is not usable, if there is a voice to say it with.</summary>
@@ -8009,7 +7429,7 @@ public sealed class AppHost : IDisposable
                 break;
 
             case SettingsSubsystem.Listening:
-                ApplyListeningSettings();
+                Listener.ApplyListeningSettings();
                 break;
 
             case SettingsSubsystem.Persona:
@@ -8514,20 +7934,8 @@ public sealed class AppHost : IDisposable
         _speaking.Dispose();
 
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
-        _pushToTalk.ForceUp();
-        _pushToTalkButton.ForceUp();
-        _cancelButton.ForceUp();
         _ownVoiceRecording.Dispose();
-        _microphone.Dispose();
-        _transcriber.Dispose();
-
-        lock (_hosted)
-        {
-            foreach (var hosted in _hosted.Values)
-            {
-                hosted.Dispose();
-            }
-        }
+        Listener.Dispose();
         (Models as IDisposable)?.Dispose();
 
         // Before the arbiter and the sink it is subscribed to, and before the last clip stops being writable.
