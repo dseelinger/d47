@@ -7,13 +7,12 @@ namespace D47.Core.Tests.Checklists;
 /// The two events the conversation's proposal card is built from — a proposal recorded, and one
 /// answered — fire regardless of which tool or surface did it (#277).
 /// </summary>
-[Trait("Category", "Integration")]
 public class ARaisedOrSettledProposalTellsTheTranscriptTests
 {
     [Fact]
     public void RecordingAProposalRaisesAddedWithItsAssignedId()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         ChecklistProposal? raised = null;
@@ -29,7 +28,7 @@ public class ARaisedOrSettledProposalTellsTheTranscriptTests
     [Fact]
     public void ARefusedDuplicateDoesNotRaiseAdded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
@@ -45,7 +44,7 @@ public class ARaisedOrSettledProposalTellsTheTranscriptTests
     [Fact]
     public void AcceptingSettlesItsOwnProposalWithItsOwnReport()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
@@ -65,7 +64,7 @@ public class ARaisedOrSettledProposalTellsTheTranscriptTests
     [Fact]
     public void DecliningSettlesEveryProposalItDroppedWithTheSameAggregateOutcome()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
@@ -85,7 +84,7 @@ public class ARaisedOrSettledProposalTellsTheTranscriptTests
     [Fact]
     public void AcceptingWithNothingWaitingSettlesNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         var settled = 0;

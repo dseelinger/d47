@@ -2,6 +2,7 @@ using System.Globalization;
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -14,6 +15,8 @@ namespace D47.Core.Tests.Checklists;
 [Trait("Category", "Integration")]
 public class AnUnknownLoadoutNeverReopensADoneItemTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private const int ShipId = 37;
 
     private const string BlueprintKey = "bp/radar";
@@ -62,7 +65,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
     }
 
     /// <summary>The previous session: the radar is planned at grade 5 and reaches it.</summary>
-    private static void Finish(TempInstall install)
+    private void Finish(TempInstall install)
     {
         var game = new GameStateStore();
 
@@ -88,7 +91,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
     }
 
     /// <summary>A fresh d47 on the same files, with the game at <c>LoadGame</c> and no loadout yet.</summary>
-    private static (GameStateStore Game, ChecklistService Checklists) Start(TempInstall install)
+    private (GameStateStore Game, ChecklistService Checklists) Start(TempInstall install)
     {
         var game = new GameStateStore();
 
@@ -102,10 +105,11 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
         return (game, Checklists(install, game));
     }
 
-    private static ChecklistService Checklists(TempInstall install, GameStateStore game) => new(
-        new ChecklistStore(Path.Combine(install.Root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+    private ChecklistService Checklists(TempInstall install, GameStateStore game) => new(
+        new ChecklistStore(Path.Combine(install.Root, "checklist.json"), _files, NullLogger<ChecklistStore>.Instance),
         new ChecklistProposalStore(
             Path.Combine(install.Root, "checklist-proposals.json"),
+            _files,
             NullLogger<ChecklistProposalStore>.Instance),
         () => game.Active,
         removeFulfilled: () => false);

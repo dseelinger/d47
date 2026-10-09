@@ -12,6 +12,7 @@ using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -175,9 +176,9 @@ public class SearchSettingsByAreaAndSectionNamesTests
         var root = TempFolders.Create("d47-search-other-tabs-tests");
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"), NullLogger<ChecklistProposalStore>.Instance),
+                Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
         var ships = new ShipPlanService(

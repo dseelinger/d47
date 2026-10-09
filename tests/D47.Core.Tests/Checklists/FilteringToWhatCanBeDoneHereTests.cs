@@ -7,11 +7,10 @@ namespace D47.Core.Tests.Checklists;
 public class FilteringToWhatCanBeDoneHereTests
 {
     /// <summary>Not offered where there is no engineer, which is the overwhelmingly common case.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void TheRowIsAbsentWhereNoEngineerIsBased()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.AddNote(ChecklistScope.Universal, "Buy limpets");
@@ -25,11 +24,10 @@ public class FilteringToWhatCanBeDoneHereTests
     /// And an item nobody here can roll is not offered by it either — asked of the same join the spoken
     /// parameter uses, so the page and the voice cannot disagree about what "here" means.
     /// </summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void AnItemNoEngineerHereCanRollIsFilteredOut()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.AddNote(ChecklistScope.Universal, "Buy limpets");

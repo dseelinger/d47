@@ -14,6 +14,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -37,9 +38,10 @@ public class OnFootLoadoutTabTests
         var state = onFoot ? OnFoot() : null;
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state);
 
@@ -75,9 +77,10 @@ public class OnFootLoadoutTabTests
         var state = OnFoot();
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state);
 
@@ -743,9 +746,10 @@ public class OnFootLoadoutTabTests
         var root = TempFolders.Create("d47-onfoot-loadout-tests");
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 

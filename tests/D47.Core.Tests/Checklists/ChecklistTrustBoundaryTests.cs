@@ -85,8 +85,8 @@ public class ChecklistTrustBoundaryTests
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
 
         // Two files, and only one of them moved.
-        Assert.True(File.Exists(checklists.Proposals.Path));
-        Assert.False(File.Exists(checklists.List.Path));
+        Assert.True(TestSurface.FilesFor(install.Paths).Stat(checklists.Proposals.Path) is not null);
+        Assert.False(TestSurface.FilesFor(install.Paths).Stat(checklists.List.Path) is not null);
         Assert.Empty(checklists.Document.Items);
 
         await Task.CompletedTask;

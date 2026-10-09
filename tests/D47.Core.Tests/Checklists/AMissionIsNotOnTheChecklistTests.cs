@@ -1,5 +1,6 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -38,7 +39,7 @@ public sealed class AMissionIsNotOnTheChecklistTests : IDisposable
         game.Apply(Event("""{"timestamp":"2026-09-22T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
 
         var store = new ChecklistStore(
-            Path.Combine(_folder, "checklist.json"), NullLogger<ChecklistStore>.Instance);
+            Path.Combine(_folder, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance);
 
         if (storedMissionLine)
         {
@@ -65,7 +66,7 @@ public sealed class AMissionIsNotOnTheChecklistTests : IDisposable
         var service = new ChecklistService(
             store,
             new ChecklistProposalStore(
-                Path.Combine(_folder, "proposals.json"), NullLogger<ChecklistProposalStore>.Instance),
+                Path.Combine(_folder, "proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             () => game.Active);
 
         return (game, service);

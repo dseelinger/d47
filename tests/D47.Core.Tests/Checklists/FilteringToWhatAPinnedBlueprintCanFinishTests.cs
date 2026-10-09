@@ -1,5 +1,6 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -11,11 +12,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     private const int LeiCheung = 300120;
 
     /// <summary>Not offered where nothing is pinned, which is the overwhelmingly common case.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void TheRowIsAbsentWhereNothingIsPinned()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         Assert.DoesNotContain(
@@ -27,11 +27,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     /// Offered the moment anything is pinned, unlike "here", which needs the engineer's system —
     /// (#113).
     /// </summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void TheRowAppearsAsSoonAsAnythingIsPinned()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.Pin(LeiCheung, pinned: true);
@@ -42,11 +41,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>Its own heading, not "Where you are" — this one is about what is reachable anywhere.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void ItSitsUnderItsOwnHeading()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.Pin(LeiCheung, pinned: true);
@@ -57,11 +55,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>Rank gates a pinned line exactly as it gates one done at the workshop.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void APinnedEngineerIsAskedRegardlessOfWhereTheCommanderStands()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths, Flying("Shinrarta Dezhra", rank: 5));
 
         checklists.AdoptPlan(
@@ -82,11 +79,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>A line the pin only covers part of the way is not kept — this filter is about finishing.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void ALineOutOfRankWithThePinnedEngineerIsNotKept()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths, Flying("Shinrarta Dezhra", rank: 1));
 
         checklists.AdoptPlan(
@@ -103,11 +99,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>A pin toggles both ways, idempotently.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void APinIsSetAndCleared()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         Assert.False(checklists.IsPinned(LeiCheung));
@@ -123,11 +118,10 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>Pinning raises the event a surface under the row redraws from.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void PinningRaisesPinnedChanged()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         var raised = 0;
@@ -139,19 +133,20 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>A pin outlives the session, the same as the chosen filter does.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void APinRoundTripsThroughRememberAndRestore()
     {
         ChecklistView? remembered = null;
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = new ChecklistService(
             new ChecklistStore(
                 System.IO.Path.Combine(install.Paths.Data, "checklist.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 System.IO.Path.Combine(install.Paths.Data, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null,
             view => remembered = view);

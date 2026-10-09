@@ -11,6 +11,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace D47.Core.Tests;
 
 /// <summary>A throwaway folder standing in for an install directory.</summary>
+/// <summary>An install location that exists only as paths, for tests that touch no folder.</summary>
+public sealed class MemoryInstall
+{
+    public AppPaths Paths { get; } = new(Path.Combine(@"C:\d47-memory", Guid.NewGuid().ToString("N")));
+
+    public string Root => Paths.InstallRoot;
+}
+
 public sealed class TempInstall : IDisposable
 {
     public TempInstall()
@@ -172,19 +180,30 @@ public sealed class TestSurface
 
     public KeywordRouter Router => new(Registry);
 
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<AppPaths, D47.Core.Storage.MemoryFileSystem> InstallFiles = new();
+
+    /// <summary>The in-memory file system the checklist stores of one install share.</summary>
+    public static D47.Core.Storage.MemoryFileSystem FilesFor(AppPaths paths) =>
+        InstallFiles.GetValue(paths, _ => new D47.Core.Storage.MemoryFileSystem());
+
     /// <summary>A checklist service over a throwaway install.</summary>
     public static D47.Core.Checklists.ChecklistService Checklists(
         AppPaths paths,
-        GameStateStore? gameState = null)
+        GameStateStore? gameState = null,
+        D47.Core.Storage.IFileSystem? files = null)
     {
         var state = gameState ?? new GameStateStore();
+
+        files ??= FilesFor(paths);
 
         return new D47.Core.Checklists.ChecklistService(
             new D47.Core.Checklists.ChecklistStore(
                 Path.Combine(paths.Data, "checklist.json"),
+                files,
                 NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
             new D47.Core.Checklists.ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
+                files,
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
             () => state.Active);
     }
@@ -199,9 +218,11 @@ public sealed class TestSurface
         new(
             new D47.Core.Checklists.ChecklistStore(
                 Path.Combine(folder, "checklist.json"),
+                new D47.Core.Storage.MemoryFileSystem(),
                 NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
             new D47.Core.Checklists.ChecklistProposalStore(
                 Path.Combine(folder, "checklist-proposals.json"),
+                new D47.Core.Storage.MemoryFileSystem(),
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
             state ?? (() => null));
 

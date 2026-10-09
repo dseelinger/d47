@@ -11,6 +11,7 @@ using D47.Core.Checklists;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -45,7 +46,7 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
         var live = store.Active!;
 
         var checklistStore = new ChecklistStore(
-            Path.Combine(paths.Data, "checklist.json"), NullLogger<ChecklistStore>.Instance);
+            Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance);
 
         if (planned)
         {
@@ -69,6 +70,7 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
             checklistStore,
             new ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => live);
 

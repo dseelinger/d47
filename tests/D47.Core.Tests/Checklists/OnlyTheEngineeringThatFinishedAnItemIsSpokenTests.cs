@@ -9,7 +9,6 @@ namespace D47.Core.Tests.Checklists;
 /// An item is said to be done only on the tick whose events did the engineering that finished it. Every
 /// other move to Done ticks the item with nothing said (#446).
 /// </summary>
-[Trait("Category", "Integration")]
 public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
 {
     private const int ShipId = 37;
@@ -21,7 +20,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void TheLoginLoadoutTicksABlueprintSilently()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists) = AtLogin(install);
         var item = Save(checklists, Blueprint("MainEngines"));
 
@@ -36,7 +35,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void AnEngineerCraftOnTheSlotIsSpoken()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists) = Aboard(install, grade: 4);
         var item = Save(checklists, Blueprint("MainEngines"));
         checklists.Poll();
@@ -53,7 +52,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void AnExperimentalIsSpokenOnTheCraftThatAppliedIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists) = Aboard(install, grade: 5);
         var item = Save(checklists, new ChecklistIntent(ChecklistIntentKind.Experimental, "MainEngines")
         {
@@ -79,7 +78,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void AnEngineerCraftOnAnotherSlotSaysNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists) = AtLogin(install);
         var item = Save(checklists, Blueprint("MainEngines"));
 
@@ -94,7 +93,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void AModuleFittedInOutfittingSaysNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists) = AtLogin(install);
         var item = Save(checklists, new ChecklistIntent(ChecklistIntentKind.Module, "MainEngines")
         {
@@ -113,7 +112,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void ASuitGradeIsSpokenOnTheUpgradeAndNotOnTheSnapshot()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var game = Commander();
         var checklists = TestSurface.Checklists(install.Paths, game);
 
@@ -157,7 +156,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void AWeaponGradeIsSpokenOnTheUpgrade()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var game = Commander();
         var checklists = TestSurface.Checklists(install.Paths, game);
 
@@ -191,7 +190,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void AnEngineerUnlockedLiveSaysNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var game = Commander();
         var checklists = TestSurface.Checklists(install.Paths, game);
 
@@ -229,7 +228,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     [Fact]
     public void ALowerGradeInALoadoutIsStillSaidToBeUndone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists) = Aboard(install, grade: 5);
         Save(checklists, Blueprint("MainEngines"));
         checklists.Poll(announce: false);
@@ -258,7 +257,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     }
 
     /// <summary>At <c>LoadGame</c>, the loadout not yet written, past the priming tick.</summary>
-    private static (GameStateStore Game, ChecklistService Checklists) AtLogin(TempInstall install)
+    private static (GameStateStore Game, ChecklistService Checklists) AtLogin(MemoryInstall install)
     {
         var game = Commander();
         game.Apply(Event(
@@ -273,7 +272,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
     }
 
     /// <summary>Aboard with the thrusters at a grade.</summary>
-    private static (GameStateStore Game, ChecklistService Checklists) Aboard(TempInstall install, int grade)
+    private static (GameStateStore Game, ChecklistService Checklists) Aboard(MemoryInstall install, int grade)
     {
         var game = Commander();
         game.Apply(Loadout(grade));

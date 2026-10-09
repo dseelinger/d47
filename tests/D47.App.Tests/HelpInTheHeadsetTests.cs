@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Headset;
 using D47.App.Panel;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
@@ -72,9 +73,10 @@ public class HelpInTheHeadsetTests
         var state = State();
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state);
 

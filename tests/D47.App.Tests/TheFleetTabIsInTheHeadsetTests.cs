@@ -14,6 +14,7 @@ using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Loadout;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using D47.Vr;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -28,9 +29,9 @@ public class TheFleetTabIsInTheHeadsetTests
 {
     private static ChecklistService Checklists(string folder, Func<CommanderGameState?> state) =>
         new(
-            new ChecklistStore(Path.Combine(folder, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(folder, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
-                Path.Combine(folder, "checklist-proposals.json"), NullLogger<ChecklistProposalStore>.Instance),
+                Path.Combine(folder, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             state);
 
     /// <summary>A Commander in one ship, wearing one suit, so every root has something to draw.</summary>

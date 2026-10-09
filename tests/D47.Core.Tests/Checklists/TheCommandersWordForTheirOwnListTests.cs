@@ -24,15 +24,13 @@ public class TheCommandersWordForTheirOwnListTests
     }
 
     /// <summary>The half that must not have moved.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void WhatIsWrittenDownIsUntouched()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var path = Path.Combine(install.Paths.Data, "checklist.json");
 
-        Directory.CreateDirectory(install.Paths.Data);
-        File.WriteAllText(path, """
+        TestSurface.FilesFor(install.Paths).WriteText(path, """
             {
               "commanders": [
                 {
@@ -53,8 +51,8 @@ public class TheCommandersWordForTheirOwnListTests
 
         var checklists = TestSurface.Checklists(install.Paths);
 
-        // Read off disk rather than trusted from memory: the store polls on write time, and this file was
-        // written behind its back on purpose.
+        // Read from the file system rather than trusted from memory: the store polls on write time, and this
+        // file was written behind its back on purpose.
         Assert.True(checklists.List.Poll());
 
         var item = Assert.Single(checklists.Document.In(ChecklistScope.Universal));
@@ -67,11 +65,10 @@ public class TheCommandersWordForTheirOwnListTests
     }
 
     /// <summary>And a Commander filtering the page asks for it by the word they can see.</summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void TheFilterOffersTheWordTheCommanderReads()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");

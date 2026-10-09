@@ -2,6 +2,7 @@ using D47.App.Panel;
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -21,9 +22,10 @@ public class APriorityMoveFromTheCheckOutlivesARestartTests
     private static ShipsMode Mode(string root, CommanderGameState state)
     {
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 

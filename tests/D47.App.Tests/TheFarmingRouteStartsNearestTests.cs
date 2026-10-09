@@ -13,6 +13,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -40,8 +41,8 @@ public class TheFarmingRouteStartsNearestTests
         CommanderGameState? State() => store.Active;
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(Path.Combine(root, "checklist-proposals.json"), NullLogger<ChecklistProposalStore>.Instance),
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             State);
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance), checklists, State);

@@ -75,11 +75,10 @@ public class WhatTheEngineerHereCanDoTests
     /// The reported question, through the tool the model actually calls: the same list, narrowed to
     /// what can be retired here.
     /// </summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void TheReportNarrowsToWhatCanBeRetiredHere()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 5));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
@@ -292,11 +291,10 @@ public class WhatTheEngineerHereCanDoTests
     /// And through the filter the Commander actually reads (#205, ruled 2026-09-01): the engineer row
     /// shows what this engineer does, rank or no rank.
     /// </summary>
-    [Trait("Category", "Integration")]
-    [Fact]
+        [Fact]
     public void TheHereFilterShowsWorkThisEngineerDoesEvenBelowTheRankForIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 1));
 
         checklists.AdoptPlan(

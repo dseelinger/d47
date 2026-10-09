@@ -1021,9 +1021,11 @@ public sealed class AppHost : IDisposable
         var checklists = new ChecklistService(
             new ChecklistStore(
                 Path.Combine(paths.Data, "checklist.json"),
+                files,
                 loggerFactory.CreateLogger<ChecklistStore>()),
             new ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
+                files,
                 loggerFactory.CreateLogger<ChecklistProposalStore>()),
             () => gameState.Active,
 

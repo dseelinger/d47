@@ -6,10 +6,9 @@ namespace D47.Core.Tests.Checklists;
 /// <summary>
 /// Rewording a line, and moving a whole list to another machine.
 /// </summary>
-[Trait("Category", "Integration")]
 public class ALineCanBeChangedAndCarriedTests
 {
-    private static (ChecklistService Checklists, ChecklistItem Item) One(TempInstall install, string line)
+    private static (ChecklistService Checklists, ChecklistItem Item) One(MemoryInstall install, string line)
     {
         var checklists = TestSurface.Checklists(install.Paths);
 
@@ -21,7 +20,7 @@ public class ALineCanBeChangedAndCarriedTests
     [Fact]
     public void ALineTheCommanderWroteCanBeReworded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (checklists, item) = One(install, "Unlockly Chung");
 
         var change = checklists.Reword(item.Id, "Unlock Lei Cheung");
@@ -34,7 +33,7 @@ public class ALineCanBeChangedAndCarriedTests
     [Fact]
     public void RewordingKeepsTheLinesIdentityAndItsTick()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (checklists, item) = One(install, "buy limpets");
 
         checklists.Complete(item.Id);
@@ -51,7 +50,7 @@ public class ALineCanBeChangedAndCarriedTests
     [InlineData("   ")]
     public void ALineWithNothingOnItIsRefused(string blank)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (checklists, item) = One(install, "buy limpets");
 
         Assert.False(checklists.Reword(item.Id, blank).Changed);
@@ -62,7 +61,7 @@ public class ALineCanBeChangedAndCarriedTests
     [Fact]
     public void ADerivedLineIsNotRewordedHere()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
         var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines") { Grade = 5 };
 

@@ -1,5 +1,6 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -45,14 +46,14 @@ public class ChecklistsGroupIntoNamedListsTests : IDisposable
         Directory.CreateDirectory(_folder);
 
         var store = new ChecklistStore(
-            Path.Combine(_folder, "checklist.json"), NullLogger<ChecklistStore>.Instance);
+            Path.Combine(_folder, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance);
 
         store.Apply("F1", "Jameson", document => new ChecklistChange(seed(document), true, string.Empty));
 
         return new ChecklistService(
             store,
             new ChecklistProposalStore(
-                Path.Combine(_folder, "proposals.json"), NullLogger<ChecklistProposalStore>.Instance),
+                Path.Combine(_folder, "proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             () => state);
     }
 

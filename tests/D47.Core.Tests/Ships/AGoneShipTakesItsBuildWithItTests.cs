@@ -1,6 +1,7 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -12,13 +13,15 @@ namespace D47.Core.Tests.Ships;
 [Trait("Category", "Integration")]
 public class AGoneShipTakesItsBuildWithItTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private const int Gone = 12;
 
     private const int Kept = 14;
 
     private sealed record Bench(GameStateStore Game, ChecklistService Checklists, ShipPlanService Ships);
 
-    private static Bench Set(TempInstall install)
+    private Bench Set(TempInstall install)
     {
         var game = new GameStateStore();
 
@@ -26,9 +29,10 @@ public class AGoneShipTakesItsBuildWithItTests
         game.Apply(Loadout(Gone, "python"));
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(install.Root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(install.Root, "checklist.json"), _files, NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(install.Root, "checklist-proposals.json"),
+                _files,
                 NullLogger<ChecklistProposalStore>.Instance),
             () => game.Active);
 
@@ -115,7 +119,7 @@ public class AGoneShipTakesItsBuildWithItTests
 
         ships.DropGone([Sell(Gone)]);
 
-        var reopened = new ChecklistStore(Path.Combine(install.Root, "checklist.json"), NullLogger<ChecklistStore>.Instance);
+        var reopened = new ChecklistStore(Path.Combine(install.Root, "checklist.json"), _files, NullLogger<ChecklistStore>.Instance);
 
         reopened.Poll();
 

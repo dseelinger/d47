@@ -1,6 +1,7 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -15,9 +16,11 @@ public class TheChecklistAndTheBuildDriftApartTests
         new(
             new ChecklistStore(
                 Path.Combine(install.Root, "checklist.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(install.Root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
@@ -90,9 +93,11 @@ public class TheChecklistAndTheBuildDriftApartTests
         var checklists = new ChecklistService(
             new ChecklistStore(
                 Path.Combine(install.Root, "checklist.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(install.Root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state.Active);
 

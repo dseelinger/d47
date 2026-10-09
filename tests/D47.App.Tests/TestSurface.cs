@@ -16,6 +16,12 @@ namespace D47.App.Tests;
 /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
 public static class TestSurface
 {
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<AppPaths, D47.Core.Storage.MemoryFileSystem> InstallFiles = new();
+
+    /// <summary>The in-memory file system the checklist stores of one install share.</summary>
+    public static D47.Core.Storage.MemoryFileSystem FilesFor(AppPaths paths) =>
+        InstallFiles.GetValue(paths, _ => new D47.Core.Storage.MemoryFileSystem());
+
     /// <summary>Where the render captures land.</summary>
     private static readonly Lazy<string> Captures = new(() =>
     {
@@ -171,9 +177,11 @@ public static class TestSurface
             new D47.Core.Checklists.ChecklistService(
                 new D47.Core.Checklists.ChecklistStore(
                     Path.Combine(paths.Data, "checklist.json"),
+                    FilesFor(paths),
                     NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
                 new D47.Core.Checklists.ChecklistProposalStore(
                     Path.Combine(paths.Data, "checklist-proposals.json"),
+                    FilesFor(paths),
                     NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
                 () => null),
             audioDrops: () => "Nothing in the audio folder in a headless test.",

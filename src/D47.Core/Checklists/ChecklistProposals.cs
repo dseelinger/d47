@@ -51,13 +51,13 @@ public sealed record ChecklistProposal
 /// The proposals file — <c>data/checklist-proposals.json</c> — and the whole of the trust boundary this
 /// phase turns on (Phase 17, "LLM Ship AI may propose that a checklist item is done").
 /// </summary>
-public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposalStore> logger)
+public sealed class ChecklistProposalStore(string path, IFileSystem files, ILogger<ChecklistProposalStore> logger)
 {
     private readonly Lock _gate = new();
 
     private IReadOnlyList<ChecklistProposal> _pending = [];
     private IReadOnlyList<ChecklistProblem> _problems = [];
-    private DateTime _stamp;
+    private FileState? _stamp;
 
     public string Path => path;
 
@@ -94,15 +94,15 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
 
     public bool Poll()
     {
-        DateTime written;
+        FileState? written;
 
         try
         {
-            var info = new FileInfo(path);
+            written = files.Stat(path);
 
-            if (!info.Exists)
+            if (written is null)
             {
-                if (_stamp == default)
+                if (_stamp is null)
                 {
                     return false;
                 }
@@ -111,14 +111,12 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
                 {
                     _pending = [];
                     _problems = [];
-                    _stamp = default;
+                    _stamp = null;
                 }
 
                 Changed?.Invoke();
                 return true;
             }
-
-            written = info.LastWriteTimeUtc;
         }
         catch (IOException ex)
         {
@@ -201,18 +199,11 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
 
     public void Write(IReadOnlyList<ChecklistProposal> proposals)
     {
-        var directory = System.IO.Path.GetDirectoryName(path);
-
-        if (directory is not null)
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        AtomicFile.WriteAllText(
+        files.WriteText(
             path,
             JsonSerializer.Serialize(new ProposalFile { Proposals = [.. proposals] }, ChecklistStore.Json));
 
-        _stamp = default;
+        _stamp = null;
         Poll();
     }
 
@@ -245,16 +236,15 @@ public sealed class ChecklistProposalStore(string path, ILogger<ChecklistProposa
         return next;
     }
 
-    private void Reload(DateTime written)
+    private void Reload(FileState? written)
     {
         ProposalFile? file;
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var text = files.ReadText(path) ?? throw new IOException("The proposals file is gone.");
 
-            file = JsonSerializer.Deserialize<ProposalFile>(stream, ChecklistStore.Json);
+            file = JsonSerializer.Deserialize<ProposalFile>(text, ChecklistStore.Json);
         }
         catch (Exception ex) when (ex is IOException or JsonException)
         {

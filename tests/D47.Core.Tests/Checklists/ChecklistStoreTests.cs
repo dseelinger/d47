@@ -1,5 +1,6 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -10,19 +11,21 @@ namespace D47.Core.Tests.Checklists;
 /// <c>data/</c>, polled on its write time so a hand edit is live with no restart, and problems reported
 /// rather than items silently dropped.
 /// </summary>
-[Trait("Category", "Integration")]
 public class ChecklistStoreTests
 {
-    private static ChecklistStore Store(TempInstall install) =>
-        new(Path.Combine(install.Paths.Data, "checklist.json"), NullLogger<ChecklistStore>.Instance);
+    private const string DataFolder = @"C:\d47\data";
+
+    private readonly MemoryFileSystem _files = new();
+
+    private ChecklistStore Store() =>
+        new(Path.Combine(DataFolder, "checklist.json"), _files, NullLogger<ChecklistStore>.Instance);
 
     [Fact]
     public void AHandEditIsLiveWithNoRestart()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
-        File.WriteAllText(
+        _files.WriteText(
             store.Path,
             """
             {
@@ -41,10 +44,9 @@ public class ChecklistStoreTests
     [Fact]
     public void AStaleLineWrittenByAnOlderVersionStillLoads()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
-        File.WriteAllText(
+        _files.WriteText(
             store.Path,
             """
             {
@@ -66,10 +68,9 @@ public class ChecklistStoreTests
     [Fact]
     public void ATombstonedLineWrittenByAnOlderVersionIsGoneOnLoad()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
-        File.WriteAllText(
+        _files.WriteText(
             store.Path,
             """
             {
@@ -89,17 +90,16 @@ public class ChecklistStoreTests
 
         store.Save(store.Documents);
 
-        Assert.DoesNotContain("tombstone", File.ReadAllText(store.Path), StringComparison.Ordinal);
+        Assert.DoesNotContain("tombstone", _files.ReadText(store.Path)!, StringComparison.Ordinal);
     }
 
     /// <summary>A file written before project ordering was removed (#270) holds a field this shape no longer knows.</summary>
     [Fact]
     public void AFileWithAStaleProjectOrderStillLoads()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
-        File.WriteAllText(
+        _files.WriteText(
             store.Path,
             """
             {
@@ -118,10 +118,9 @@ public class ChecklistStoreTests
     [Fact]
     public void ABadLineIsReportedAndTheRestOfTheFileStillLoads()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
-        File.WriteAllText(
+        _files.WriteText(
             store.Path,
             """
             {
@@ -145,10 +144,9 @@ public class ChecklistStoreTests
     [Fact]
     public void AnUnreadableFileIsOneProblemRatherThanAThrow()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
-        File.WriteAllText(store.Path, "{ this is not json");
+        _files.WriteText(store.Path, "{ this is not json");
 
         store.Poll();
 
@@ -159,8 +157,7 @@ public class ChecklistStoreTests
     [Fact]
     public void TheCommanderKeyIsInsideTheDocumentAndNeverInThePath()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
         // The Frontier id comes out of the journal and journal content is untrusted input, so turning it into
         // a filename would buy a path-traversal surface for an organisational convenience.
@@ -168,7 +165,7 @@ public class ChecklistStoreTests
         store.Apply("F2", "Hicks", document => document.AddNote(ChecklistScope.Universal, "two"));
 
         Assert.Equal(2, store.Documents.Count);
-        Assert.Single(Directory.GetFiles(install.Paths.Data, "checklist*.json"));
+        Assert.Single(_files.Enumerate(@"C:\d47\data", "checklist*.json"));
         Assert.Equal("one", store.For("F1").Items.Single().Text);
         Assert.Equal("two", store.For("F2").Items.Single().Text);
     }
@@ -176,8 +173,7 @@ public class ChecklistStoreTests
     [Fact]
     public void AChangeRaisesTheEventThePanelFollows()
     {
-        using var install = new TempInstall();
-        var store = Store(install);
+        var store = Store();
 
         var raised = 0;
         store.Changed += () => raised++;
@@ -187,12 +183,13 @@ public class ChecklistStoreTests
         Assert.True(raised > 0);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AComputedTickGoingBackwardsIsSaidOnce()
     {
         using var install = new TempInstall();
         var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState);
+        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
         void Apply(string line)
         {
@@ -274,13 +271,14 @@ public class ChecklistStoreTests
     }
 
     /// <summary>A move into Blocked is shown, on the Checklist page and to a direct question, but not spoken.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveIntoBlockedIsShownButNeverSpoken()
     {
         using var install = new TempInstall();
 
         var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState);
+        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
         void Apply(string line)
         {
@@ -342,12 +340,13 @@ public class ChecklistStoreTests
     /// <summary>
     /// Reported 2026-08-23 as a stream of "X is done" for work finished while d47 was not running.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ADocumentThatArrivedFromOutsideIsFoldedWithoutAnnouncingIt()
     {
         using var install = new TempInstall();
         var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState);
+        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
         void Apply(string line)
         {
@@ -373,7 +372,7 @@ public class ChecklistStoreTests
         // Written through a second store over the same file, which is what a hand edit, a restored backup or
         // another process looks like from here: the running service did not write it, so its stamp moves and
         // the whole document is new to it.
-        Store(install).Save(
+        new ChecklistStore(Path.Combine(install.Paths.Data, "checklist.json"), _files, NullLogger<ChecklistStore>.Instance).Save(
         [
             ChecklistDocument.For("F1", "Jameson") with
             {
@@ -413,12 +412,13 @@ public class ChecklistStoreTests
         Assert.Contains("no longer done", undone.Text, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void PrimingFoldsTheBacklogWithoutAnnouncingAnyOfIt()
     {
         using var install = new TempInstall();
         var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState);
+        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
         foreach (var line in new[]
                  {
@@ -467,12 +467,13 @@ public class ChecklistStoreTests
         Assert.True(checklists.Document.Items.Single().IsComplete);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ALineTakenBeforeAnyCommanderWasKnownIsAdoptedRatherThanLost()
     {
         using var install = new TempInstall();
         var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState);
+        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
         // d47 can be running before Elite is, and the Frontier id only exists once a journal has been read.
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
@@ -489,11 +490,12 @@ public class ChecklistStoreTests
         Assert.Equal("F1", checklists.Document.CommanderFid);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheFilterRowIsAProjectionRatherThanAList()
     {
         using var install = new TempInstall();
-        var checklists = TestSurface.Checklists(install.Paths);
+        var checklists = TestSurface.Checklists(install.Paths, files: _files);
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.System("Sol"), "ask Jim about the Krait build");

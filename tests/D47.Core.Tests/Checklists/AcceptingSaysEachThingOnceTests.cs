@@ -3,10 +3,9 @@ using Xunit;
 
 namespace D47.Core.Tests.Checklists;
 
-[Trait("Category", "Integration")]
 public class AcceptingSaysEachThingOnceTests
 {
-    private static ChecklistService Waiting(TempInstall install, params string[] lines)
+    private static ChecklistService Waiting(MemoryInstall install, params string[] lines)
     {
         var checklists = TestSurface.Checklists(install.Paths);
 
@@ -23,7 +22,7 @@ public class AcceptingSaysEachThingOnceTests
     [Fact]
     public void OneOutcomeIsSaidOnceHoweverManyProposalsProducedIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install, "buy limpets", "fit a fuel scoop");
 
         Assert.Equal(2, checklists.Proposals.Pending.Count);
@@ -46,7 +45,7 @@ public class AcceptingSaysEachThingOnceTests
     [Fact]
     public void TwoDifferentOutcomesAreBothReported()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install, "buy limpets", "fit a fuel scoop");
 
         // One of them gone, the other still there.
@@ -65,7 +64,7 @@ public class AcceptingSaysEachThingOnceTests
     [Fact]
     public void TheSameProposalIsNotRecordedTwice()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
@@ -84,7 +83,7 @@ public class AcceptingSaysEachThingOnceTests
     [Fact]
     public void TwoProposalsAboutDifferentLinesBothStand()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install, "buy limpets", "fit a fuel scoop");
 
         Assert.Equal(2, checklists.Proposals.Pending.Count);
@@ -97,7 +96,7 @@ public class AcceptingSaysEachThingOnceTests
     [Fact]
     public void CompletingAndRemovingTheSameLineAreDifferentProposals()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");

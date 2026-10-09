@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Checklists;
 using D47.Core.Interface;
@@ -62,9 +63,11 @@ public class TheChecklistFollowsTheShipTests
         var checklists = new ChecklistService(
             new ChecklistStore(
                 Path.Combine(paths.Data, "checklist.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(paths.Data, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => store.Active);
 

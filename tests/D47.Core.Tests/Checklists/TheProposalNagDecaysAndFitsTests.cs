@@ -4,13 +4,12 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>What d47 says about a proposal nobody has answered yet.</summary>
-[Trait("Category", "Integration")]
 public class TheProposalNagDecaysAndFitsTests
 {
     private const string Hull = "type8";
 
     /// <summary>Six slots on one ship's plan, three of them engineered.</summary>
-    private static ChecklistService Waiting(TempInstall install)
+    private static ChecklistService Waiting(MemoryInstall install)
     {
         var checklists = TestSurface.Checklists(install.Paths);
         var scope = new ChecklistScope(ChecklistGroup.Ship, "53");
@@ -37,7 +36,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void TheProposalIsNeverCutMidWord()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var said = Waiting(install).Standing();
 
         Assert.NotNull(said);
@@ -51,7 +50,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void NoRawJournalSlotNameIsReadOutLoud()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var said = Waiting(install).Standing();
 
         Assert.NotNull(said);
@@ -68,7 +67,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void ASmallRevisionStillNamesWhatItChanges()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
         var scope = new ChecklistScope(ChecklistGroup.Ship, "53");
 
@@ -94,7 +93,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void TheSameProposalIsSaidInFullOnceThenDecaysThenGoesQuiet()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install);
 
         var first = checklists.Standing();
@@ -125,7 +124,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void AskingDoesNotCount()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install);
 
         var before = checklists.Standing();
@@ -141,7 +140,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void ANewProposalResetsTheDecay()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install);
 
         checklists.SaidStanding();
@@ -165,7 +164,7 @@ public class TheProposalNagDecaysAndFitsTests
     [Fact]
     public void DecliningEverythingClearsTheQueue()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = Waiting(install);
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");

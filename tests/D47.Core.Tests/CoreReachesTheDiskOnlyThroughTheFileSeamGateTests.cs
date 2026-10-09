@@ -47,8 +47,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Audio.WavReader",
         "D47.Core.Capabilities.Builtin.DiagnosticsCapability",
         "D47.Core.Catalog.ModelCatalogCache",
-        "D47.Core.Checklists.ChecklistProposalStore",
-        "D47.Core.Checklists.ChecklistStore",
         "D47.Core.Configuration.SecretStore",
         "D47.Core.Configuration.SettingsStore",
         "D47.Core.Configuration.ViewStateStore",

@@ -61,12 +61,14 @@ public sealed class ScenarioWorld : IDisposable
 
         var checklistStore = new D47.Core.Checklists.ChecklistStore(
             Path.Combine(_install.Paths.Data, "checklist.json"),
+            new D47.Core.Storage.DiskFileSystem(),
             NullLogger<D47.Core.Checklists.ChecklistStore>.Instance);
 
         var checklists = new D47.Core.Checklists.ChecklistService(
             checklistStore,
             new D47.Core.Checklists.ChecklistProposalStore(
                 Path.Combine(_install.Paths.Data, "checklist-proposals.json"),
+                new D47.Core.Storage.DiskFileSystem(),
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
             services is null ? () => null : () => GameState.Active);
 

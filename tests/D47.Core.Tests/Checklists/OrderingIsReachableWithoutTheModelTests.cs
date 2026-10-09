@@ -1,13 +1,13 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>Reordering by voice, and the selection that makes "it" mean something.</summary>
-[Trait("Category", "Integration")]
 public class OrderingIsReachableWithoutTheModelTests
 {
     /// <summary>A service over a throwaway install.</summary>
@@ -18,9 +18,11 @@ public class OrderingIsReachableWithoutTheModelTests
         return new ChecklistService(
             new ChecklistStore(
                 Path.Combine(install.Paths.Data, "checklist.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(install.Paths.Data, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
     }

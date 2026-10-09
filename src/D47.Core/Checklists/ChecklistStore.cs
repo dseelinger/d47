@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Checklists;
 
 /// <summary>The Commander's checklist, in one file beside the executable (Phase 17).</summary>
-public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
+public sealed class ChecklistStore(string path, IFileSystem files, ILogger<ChecklistStore> logger)
 {
     /// <summary>How a checklist is written and read.</summary>
     internal static readonly JsonSerializerOptions Json = new()
@@ -23,7 +23,7 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
 
     private IReadOnlyList<ChecklistDocument> _documents = [];
     private IReadOnlyList<ChecklistProblem> _problems = [];
-    private DateTime _stamp;
+    private FileState? _stamp;
 
     public string Path => path;
 
@@ -66,16 +66,16 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        DateTime written;
+        FileState? written;
 
         try
         {
-            var info = new FileInfo(path);
+            written = files.Stat(path);
 
-            if (!info.Exists)
+            if (written is null)
             {
                 // Not an error: no checklist is the normal state on a fresh install.
-                if (_stamp == default)
+                if (_stamp is null)
                 {
                     return false;
                 }
@@ -84,14 +84,12 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
                 {
                     _documents = [];
                     _problems = [];
-                    _stamp = default;
+                    _stamp = null;
                 }
 
                 Changed?.Invoke();
                 return true;
             }
-
-            written = info.LastWriteTimeUtc;
         }
         catch (IOException ex)
         {
@@ -141,38 +139,24 @@ public sealed class ChecklistStore(string path, ILogger<ChecklistStore> logger)
     /// <summary>Writes the file.</summary>
     public void Save(IReadOnlyList<ChecklistDocument> documents)
     {
-        var directory = System.IO.Path.GetDirectoryName(path);
-
-        if (directory is not null)
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        AtomicFile.WriteAllText(
+        files.WriteText(
             path,
             JsonSerializer.Serialize(new ChecklistFile { Commanders = [.. documents] }, Json));
 
         // Forces the next Poll to re-read rather than trusting what was just written, so the in-memory set is
         // always the validated one rather than the one that was submitted.
-        _stamp = default;
+        _stamp = null;
         Poll();
     }
 
-    private void Reload(DateTime written)
+    private void Reload(FileState? written)
     {
         ChecklistFile? file;
         HashSet<(int Document, int Item)> tombstoned;
 
         try
         {
-            string text;
-
-            using (var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-            using (var reader = new StreamReader(stream))
-            {
-                text = reader.ReadToEnd();
-            }
+            var text = files.ReadText(path) ?? throw new IOException("The checklist file is gone.");
 
             file = JsonSerializer.Deserialize<ChecklistFile>(text, Json);
             tombstoned = TombstonedItems(text);

@@ -2,6 +2,7 @@ using D47.Core.Checklists;
 using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -11,7 +12,6 @@ namespace D47.Core.Tests.Checklists;
 /// Narrowing the checklist to one engineer's own unlock — their invitation, their tribute, and the
 /// referral required before either — and nothing else on the list (#265).
 /// </summary>
-[Trait("Category", "Integration")]
 public class FocusingTheChecklistOnOneEngineerTests
 {
     private const int ElviraMartuuk = 300160;
@@ -25,7 +25,7 @@ public class FocusingTheChecklistOnOneEngineerTests
     /// line of the Commander's own that neither filter should keep.</summary>
     private static (ChecklistService Checklists, Engineer Marco, Engineer Hera) Built()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         var marco = Named("Marco Qwent");
@@ -122,13 +122,14 @@ public class FocusingTheChecklistOnOneEngineerTests
     [Fact]
     public void TheFilterReturnsToEverythingOnceItsLastLineIsGone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var game = new GameStateStore();
 
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(install.Root, "checklist.json"), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(install.Root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
                 Path.Combine(install.Root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => game.Active,
             removeFulfilled: () => true);
